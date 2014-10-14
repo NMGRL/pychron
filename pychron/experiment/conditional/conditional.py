@@ -28,7 +28,7 @@ CP_REGEX = re.compile(r'\.(current|cur)')
 #match .std_dev
 STD_REGEX = re.compile(r'\.(std_dev|sd|stddev)')
 
-#match .active
+#match .inactive
 ACTIVE_REGEX = re.compile(r'\.inactive')
 
 #match average(ar##)
@@ -54,6 +54,7 @@ PARENTHESES_REGEX = re.compile(r'\([\w\d\s]+\)')
 
 COMP_REGEX = re.compile(r'<=|>=|>|<|==')
 
+DEFLECTION_REGEX = re.compile(r'\.deflection')
 #todo: add between ability
 
 
@@ -172,10 +173,12 @@ class AutomatedRunConditional(BaseConditional):
 
         return self.active and (cnt_flag or d)
 
-    def _check(self, obj, data):
+    def _check(self, arun, data):
         attr = self.attr
         if not self.attr:
             attr = self._key
+
+        obj = arun.arar_age
 
         comp = self.comp
         for reg, func in ((CP_REGEX, lambda: obj.get_current_intensity(attr)),
@@ -191,19 +194,22 @@ class AutomatedRunConditional(BaseConditional):
                 comp = '{}{}'.format(self._key, remove_attr(comp))
                 break
         else:
-            try:
-                if self.window:
-                    vs = obj.get_values(attr, self.window)
-                    if not vs:
-                        self.warning('Deactivating check. check attr invalid for use with window')
-                        self.active = False
-                        return
-                    v = ufloat(vs.mean(), vs.std())
-                else:
-                    v = obj.get_value(attr)
-            except Exception, e:
-                self.warning('Deactivating check. Check Exception "{}."'.format(e))
-                self.active = False
+            if DEFLECTION_REGEX.findall(comp):
+                v=arun.get_deflection(attr, current=True)
+            else:
+                try:
+                    if self.window:
+                        vs = obj.get_values(attr, self.window)
+                        if not vs:
+                            self.warning('Deactivating check. check attr invalid for use with window')
+                            self.active = False
+                            return
+                        v = ufloat(vs.mean(), vs.std())
+                    else:
+                        v = obj.get_value(attr)
+                except Exception, e:
+                    self.warning('Deactivating check. Check Exception "{}."'.format(e))
+                    self.active = False
 
         self.debug('testing {} (eval={}) key={} attr={} value={}'.format(self.comp, comp, self._key, self.attr, v))
         if v is not None:

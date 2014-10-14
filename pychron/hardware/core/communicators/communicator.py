@@ -28,9 +28,9 @@ from pychron.config_loadable import ConfigLoadable
 
 
 class Communicator(ConfigLoadable):
-    '''
-      
-    '''
+    """
+
+    """
     _lock = None
 #    name = Str
     simulation = Bool(True)
@@ -38,18 +38,22 @@ class Communicator(ConfigLoadable):
     handle = None
     scheduler = None
     def __init__(self, *args, **kw):
-        '''
-        '''
+        """
+        """
         super(Communicator, self).__init__(*args, **kw)
         self._lock = Lock()
+
+    def load(self, config, path):
+        self.set_attribute(config, 'verbose', 'Communications', 'verbose', default=False, optional=True)
+        return True
 
     def close(self):
         pass
 
     def delay(self, ms):
-        '''
-          
-        '''
+        """
+
+        """
         time.sleep(ms / 1000.0)
 
     def ask(self, *args, **kw):
@@ -92,8 +96,8 @@ class Communicator(ConfigLoadable):
         return ns
 
     def log_tell(self, cmd, info=None):
-        '''
-        '''
+        """
+        """
         cmd = self._remove_eol(cmd)
         ncmd = self._prep_str(cmd)
 

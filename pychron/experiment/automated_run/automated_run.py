@@ -14,10 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Any, Str, List, Property, \
     Event, Instance, Bool, HasTraits, Float, Int, Long
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 from itertools import groupby
 import re
@@ -83,8 +83,8 @@ class AutomatedRun(Loggable):
     experiment_executor = Any
     ion_optics_manager = Any
 
-    multi_collector = Instance(MultiCollector, ())
-    peak_hop_collector = Instance(PeakHopCollector, ())
+    multi_collector = Instance(MultiCollector)
+    peak_hop_collector = Instance(PeakHopCollector)
     persister = Instance(AutomatedRunPersister, ())
     collector = Property
 
@@ -261,7 +261,7 @@ class AutomatedRun(Loggable):
             evt.set()
             return evt
 
-        self.info('====== Equilibration Started ======')
+        self.heading('Equilibration Started')
         t = Thread(name='equilibration', target=self._equilibrate, args=(evt,),
                    kwargs=dict(eqtime=eqtime,
                                inlet=inlet,
@@ -625,6 +625,17 @@ class AutomatedRun(Loggable):
     def isAlive(self):
         return self._alive
 
+    def heading(self, msg, color=None, *args, **kw):
+        super(AutomatedRun, self).info(msg, *args, **kw)
+        if self.experiment_executor:
+            if color is None:
+                color = self.info_color
+
+            if color is None:
+                color = 'light green'
+
+            self.experiment_executor.heading(msg, color=color, log=False)
+
     def info(self, msg, color=None, *args, **kw):
         super(AutomatedRun, self).info(msg, *args, **kw)
         if self.experiment_executor:
@@ -635,6 +646,9 @@ class AutomatedRun(Loggable):
                 color = 'light green'
 
             self.experiment_executor.info(msg, color=color, log=False)
+
+    def get_deflection(self, det, current=False):
+        return self.spectrometer_manager.spectrometer.get_deflection(det, current)
 
     def get_detector(self, det):
         return self.spectrometer_manager.spectrometer.get_detector(det)
@@ -815,7 +829,7 @@ class AutomatedRun(Loggable):
 
         self.info_color = EXTRACTION_COLOR
         msg = 'Extraction Started {}'.format(self.extraction_script.name)
-        self.info('======= {} ======='.format(msg))
+        self.heading('{}'.format(msg))
         self.state = 'extraction'
 
         self.debug('DO EXTRACTION {}'.format(self.runner))
@@ -855,7 +869,7 @@ class AutomatedRun(Loggable):
             snapshots = self.extraction_script.snapshots
 
             self.persister.post_extraction_save(rblob, oblob, snapshots)
-            self.info('======== Extraction Finished ========')
+            self.heading('Extraction Finished')
             self.info_color = None
 
             #if overlapping need to wait for previous runs min mass spec pump time
@@ -870,7 +884,7 @@ class AutomatedRun(Loggable):
             self.do_post_measurement()
             self.finish()
 
-            self.info('======== Extraction Finished unsuccessfully ========', color='red')
+            self.heading('Extraction Finished unsuccessfully', color='red')
             self.info_color = None
             return False
 
@@ -896,7 +910,7 @@ class AutomatedRun(Loggable):
         # measurement sequence
         self.info_color = MEASUREMENT_COLOR
         msg = 'Measurement Started {}'.format(script.name)
-        self.info('======== {} ========'.format(msg))
+        self.heading('{}'.format(msg))
         self.state = 'measurement'
 
         self.persister.pre_measurement_save()
@@ -906,7 +920,7 @@ class AutomatedRun(Loggable):
 
         if script.execute():
             mem_log('post measurement execute')
-            self.info('======== Measurement Finished ========')
+            self.heading('Measurement Finished')
             self.measuring = False
             self.info_color = None
 
@@ -919,7 +933,7 @@ class AutomatedRun(Loggable):
                 self.do_post_measurement()
             self.finish()
 
-            self.info('======== Measurement Finished unsuccessfully ========', color='red')
+            self.heading('Measurement Finished unsuccessfully', color='red')
             self.measuring = False
             self.info_color = None
             return False
@@ -935,7 +949,7 @@ class AutomatedRun(Loggable):
             return
 
         msg = 'Post Measurement Started {}'.format(script.name)
-        self.info('======== {} ========'.format(msg))
+        self.heading('{}'.format(msg))
         #        self.state = 'extraction'
         script.runner = self.runner
         script.manager = self.experiment_executor
@@ -944,10 +958,10 @@ class AutomatedRun(Loggable):
             self.debug('setting _ms_pumptime')
             self.experiment_executor.ms_pumptime_start = time.time()
 
-            self.info('======== Post Measurement Finished ========')
+            self.heading('Post Measurement Finished')
             return True
         else:
-            self.info('======== Post Measurement Finished unsuccessfully ========')
+            self.heading('Post Measurement Finished unsuccessfully')
             return False
 
     def do_post_equilibration(self):
@@ -962,20 +976,20 @@ class AutomatedRun(Loggable):
         if self.post_equilibration_script is None:
             return
         msg = 'Post Equilibration Started {}'.format(self.post_equilibration_script.name)
-        self.info('======== {} ========'.format(msg))
+        self.heading('{}'.format(msg))
         self.post_equilibration_script.runner = self.runner
         self.post_equilibration_script.manager = self.experiment_executor
 
         #         self.post_equilibration_script.syntax_checked = True
         if self.post_equilibration_script.execute():
-            self.info('======== Post Equilibration Finished ========')
+            self.heading('Post Equilibration Finished')
         else:
-            self.info('======== Post Equilibration Finished unsuccessfully ========')
+            self.heading('Post Equilibration Finished unsuccessfully')
 
     def do_post_termination(self, do_post_equilibration=True):
         oex = self.experiment_executor.executable
         self.experiment_executor.executable = False
-        self.info('========= Post Termination Started ========')
+        self.heading('Post Termination Started')
         if do_post_equilibration:
             self.do_post_equilibration()
 
@@ -983,7 +997,7 @@ class AutomatedRun(Loggable):
 
         self.stop()
 
-        self.info('========= Post Termination Finished ========')
+        self.heading('Post Termination Finished')
         self.experiment_executor.executable = oex
 
     #===============================================================================
@@ -1431,7 +1445,7 @@ anaylsis_type={}
         self.info('equilibrating for {}sec'.format(eqtime))
         time.sleep(eqtime)
         if self._alive:
-            self.info('======== Equilibration Finished ========')
+            self.heading('Equilibration Finished')
             if elm and inlet and close_inlet:
                 for i in inlet:
                     elm.close_valve(i, mode='script')
@@ -1585,14 +1599,15 @@ anaylsis_type={}
 
         m.trait_set(
             console_display=self.experiment_executor.console_display,
-            plot_panel=self.plot_panel,
-            arar_age=self.arar_age,
+            # plot_panel=self.plot_panel,
+            # arar_age=self.arar_age,
+            automated_run=weakref.ref(self)(),
             measurement_script=script,
             detectors=self._active_detectors,
 
-            truncation_conditionals=self.truncation_conditionals,
-            termination_conditionals=self.termination_conditionals,
-            action_conditionals=self.action_conditionals,
+            # truncation_conditionals=self.truncation_conditionals,
+            # termination_conditionals=self.termination_conditionals,
+            # action_conditionals=self.action_conditionals,
 
             collection_kind=grpname,
             series_idx=series,
@@ -1885,18 +1900,6 @@ anaylsis_type={}
 
         return default
 
-    def _measurement_script_default(self):
-        return self._load_script('measurement')
-
-    def _post_measurement_script_default(self):
-        return self._load_script('post_measurement')
-
-    def _post_equilibration_script_default(self):
-        return self._load_script('post_equilibration')
-
-    def _extraction_script_default(self):
-        return self._load_script('extraction')
-
     def _get_runid(self):
         return make_runid(self.spec.labnumber,
                           self.spec.aliquot,
@@ -1906,7 +1909,10 @@ anaylsis_type={}
     #     return get_analysis_type(self.spec.labnumber)
 
     def _get_collector(self):
-        return self.peak_hop_collector if self.is_peak_hop else self.multi_collector
+        c = self.peak_hop_collector if self.is_peak_hop else self.multi_collector
+        # c.console_bind_preferences('pychron.experiment')
+        # c.spectrometer = self.spectrometer_manager.spectrometer
+        return c
 
     def _assemble_extraction_blob(self):
         _names, txt = self._assemble_script_blob(kinds=('extraction', 'post_equilibration', 'post_measurement'))
@@ -1943,5 +1949,30 @@ anaylsis_type={}
             sc = getattr(self, '{}_script'.format(s))
             if sc is not None:
                 setattr(sc, 'runner', new)
+
+    #===============================================================================
+    # property get/set
+    #===============================================================================
+    def _measurement_script_default(self):
+        return self._load_script('measurement')
+
+    def _post_measurement_script_default(self):
+        return self._load_script('post_measurement')
+
+    def _post_equilibration_script_default(self):
+        return self._load_script('post_equilibration')
+
+    def _extraction_script_default(self):
+        return self._load_script('extraction')
+
+    def _peak_hop_collector_default(self):
+        c = PeakHopCollector()
+        c.console_bind_preferences('pychron.experiment')
+        return c
+
+    def _multi_collector_default(self):
+        c = MultiCollector()
+        c.console_bind_preferences('pychron.experiment')
+        return c
 
 #============= EOF =============================================

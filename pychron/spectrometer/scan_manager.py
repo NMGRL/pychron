@@ -188,6 +188,9 @@ class ScanManager(Manager):
                 except (pickle.PickleError, EOFError, KeyError):
                     self.detector = self.detectors[-1]
                     self.isotope = self.isotopes[-1]
+                    self.warning('Failed unpickling scan settings file {}'.format(p))
+        else:
+            self.warning('No scan settings file {}'.format(p))
 
     def dump_settings(self):
         self.info('dump scan settings')
@@ -367,7 +370,8 @@ class ScanManager(Manager):
     def _isotope_changed(self, old, new):
         self.debug('isotope changed {}'.format(self.isotope))
         if self.isotope != NULL_STR and not self._check_detector_protection(old, False):
-            self._set_position()
+            t = Thread(target=self._set_position)
+            t.start()
 
     def _detector_changed(self, old, new):
         self.debug('detector changed {}'.format(self.detector))

@@ -153,11 +153,14 @@ class EthernetCommunicator(Communicator):
     handler = None
     kind = 'UDP'
     test_cmd = '***'
-    use_end =True
+    use_end = True
+    verbose = False
 
     def load(self, config, path):
         """
         """
+        super(EthernetCommunicator, self).load(config, path)
+
         self.host = self.config_get(config, 'Communications', 'host')
         # self.host = 'localhost'
         self.port = self.config_get(config, 'Communications', 'port', cast='int')
@@ -166,6 +169,7 @@ class EthernetCommunicator(Communicator):
         self.test_cmd = self.config_get(config, 'Communications', 'test_cmd', optional=True, default='***')
         self.use_end = self.config_get(config, 'Communications', 'use_end', cast='boolean', optional=True,
                                        default=False)
+
         if self.kind is None:
             self.kind = 'UDP'
 
@@ -217,7 +221,7 @@ class EthernetCommunicator(Communicator):
     def _reset_connection(self):
         self.handler = None
 
-    def ask(self, cmd, retries=3, verbose=True, info=None, *args, **kw):
+    def ask(self, cmd, retries=3, verbose=True, quiet=False, info=None, *args, **kw):
         """
 
         """
@@ -253,17 +257,17 @@ class EthernetCommunicator(Communicator):
             handler.end()
             self._reset_connection()
 
-        if verbose:
+        if verbose or self.verbose and not quiet:
             self.log_response(cmd, re, info)
 
         return r
 
-    def tell(self, cmd, verbose=True, info=None):
+    def tell(self, cmd, verbose=True, quiet=False, info=None):
         self._lock.acquire()
         handler = self.get_handler()
 
         if handler.send_packet(cmd):
-            if verbose:
+            if verbose or self.verbose and not quiet:
                 self.log_tell(cmd, info)
         self._lock.release()
 

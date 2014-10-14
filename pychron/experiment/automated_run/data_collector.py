@@ -32,14 +32,15 @@ from pychron.core.ui.gui import invoke_in_main_thread
 
 class DataCollector(Consoleable):
     measurement_script = Any
-    plot_panel = Any
-    arar_age = Any
+    # plot_panel = Any
+    # arar_age = Any
+    automated_run = Any
 
     detectors = List
     check_conditionals = Bool(True)
-    truncation_conditionals = List
-    termination_conditionals = List
-    action_conditionals = List
+    # truncation_conditionals = List
+    # termination_conditionals = List
+    # action_conditionals = List
     ncounts = CInt
     #grpname = Str
 
@@ -111,6 +112,9 @@ class DataCollector(Consoleable):
 
         tt = time.time() - st
         self.debug('estimated time: {:0.3f} actual time: :{:0.3f}'.format(et, tt))
+
+    def plot_data(self, *args, **kw):
+        invoke_in_main_thread(self._plot_data, *args, **kw)
 
     def _measure(self, evt):
         self.debug('starting measurment')
@@ -206,9 +210,6 @@ class DataCollector(Consoleable):
                       if di.name == d), None)
         return d
 
-    def plot_data(self, *args, **kw):
-        invoke_in_main_thread(self._plot_data, *args, **kw)
-
     def _plot_baseline_for_peak_hop(self, i, x, keys, signals):
         for k, v in self.arar_age.isotopes.iteritems():
             signal = signals[keys.index(v.detector)]
@@ -284,7 +285,7 @@ class DataCollector(Consoleable):
     #===============================================================================
     def _check_conditionals(self, conditionals, cnt):
         for ti in conditionals:
-            if ti.check(self.arar_age, self._data, cnt):
+            if ti.check(self.automated_run, self._data, cnt):
                 return ti
 
     def _check_iteration(self, evt, i):
@@ -349,5 +350,19 @@ class DataCollector(Consoleable):
                 action_conditional.perform(self.measurement_script)
                 if not action_conditional.resume:
                     return 'break'
+    @property
+    def plot_panel(self):
+        return self.automated_run.plot_panel
 
-        #============= EOF =============================================
+    @property
+    def truncation_conditionals(self):
+        return self.automated_run.truncation_conditions
+
+    @property
+    def termination_conditionals(self):
+        return self.automated_run.termination_conditions
+
+    @property
+    def action_conditionals(self):
+        return self.automated_run.action_conditions
+#============= EOF =============================================

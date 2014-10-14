@@ -1034,7 +1034,7 @@ class AutomatedRunFactory(PersistenceLoggable):
                      'post_equilibration_script, extraction_script]:edit_event')
     def _handle_edit_script(self, new):
         app = self.application
-        task = app.open_task('pychron.pyscript')
+        task = app.open_task('pychron.pyscript.task')
         path, kind = new
         task.kind = kind
         task.open(path=path)

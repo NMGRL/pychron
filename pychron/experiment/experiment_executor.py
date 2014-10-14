@@ -355,7 +355,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     break
 
                 if self._pre_run_check():
-                    self.debug('pre run check failed')
+                    self.warning('pre run check failed')
                     break
 
                 if self.queue_modified:
@@ -518,7 +518,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
             f = getattr(self, step)
             if not f(run):
-                self.warning('{} returned false'.format(step))
+                self.warning('{} returned false'.format(step[1:]))
                 break
         else:
             self.debug('$$$$$$$$$$$$$$$$$$$$ state at run end {}'.format(run.state))
@@ -535,7 +535,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._remove_backup(run.uuid)
 
         # check to see if action should be taken
-        self._post_run_check(run)
+        if self._post_run_check(run):
+            self.warning('post run check failed')
+        else:
+            self.heading('Post Run Check Passed')
 
         t = time.time() - st
         self.info('Automated run {} {} duration: {:0.3f} s'.format(run.runid, run.state, t))
@@ -664,6 +667,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             extraction step
         """
         if self._pre_extraction_check(ai):
+            self.info('pre extraction check failed')
             return
 
         self.extracting_run = ai
@@ -1011,10 +1015,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if not self._alive:
             return
 
-        self.info('Pre extraction check')
         conditionals = self._load_conditionals('pre_run_terminations')
         default_conditionals = self._load_default_conditionals('pre_run_terminations')
         if default_conditionals or conditionals:
+            self.heading('Pre Extraction Check')
+
             self.debug('Get a measurement from the spectrometer')
             data = self.spectrometer_manager.spectrometer.get_intensities()
             ks = ','.join(data[0])
@@ -1022,18 +1027,20 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.debug('Pre Extraction Termination data. keys={}, signals={}'.format(ks, ss))
 
             if conditionals:
-                self._test_conditionals(run, conditionals,
-                                        'Checking user defined pre extraction terminations',
-                                        'Pre Extraction Termination',
-                                        data=data)
-                return True
+                if self._test_conditionals(run, conditionals,
+                                           'Checking user defined pre extraction terminations',
+                                           'Pre Extraction Termination',
+                                           data=data):
+                    return True
 
             if default_conditionals:
-                self._test_conditionals(run, conditionals,
-                                        'Checking default pre extraction terminations',
-                                        'Pre Extraction Termination',
-                                        data=data)
-                return True
+                if self._test_conditionals(run, conditionals,
+                                           'Checking default pre extraction terminations',
+                                           'Pre Extraction Termination',
+                                           data=data):
+                    return True
+
+            self.heading('Pre Extraction Check Passed')
 
     def _pre_queue_check(self, exp):
         """
@@ -1054,7 +1061,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         """
             return True to stop execution loop
         """
-        self.debug('pre run check')
+
+        self.heading('Pre Run Check')
         if self._check_memory():
             self._err_message = 'Not enough memory'
             return True
@@ -1072,7 +1080,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         # if the experiment queue has been modified wait until saved or
         # timed out. if timed out autosave.
         self._wait_for_save()
-        self.debug('pre run finished')
+        self.heading('Pre Run Check Passed')
 
     def _pre_execute_check(self, inform=True):
         if not self.datahub.secondary_connect():
@@ -1129,7 +1137,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             invoke_in_main_thread(self.warning_dialog, msg)
             return
 
-        self.debug('pre check complete')
+        self.debug('pre execute check complete')
         return True
 
     def _post_run_check(self, run):
@@ -1143,31 +1151,37 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         """
         if not self._alive:
             return
+        self.heading('Post Run Check')
 
         #check user defined terminations
         conditionals = self._load_conditionals('post_run_terminations')
-        self._test_conditionals(run, conditionals, 'Checking user defined post run terminations',
-                                'Post Run Termination')
+        if self._test_conditionals(run, conditionals, 'Checking user defined post run terminations',
+                                   'Post Run Termination'):
+            return True
 
         #check default terminations
         conditionals = self._load_default_conditionals('post_run_terminations')
-        self._test_conditionals(run, conditionals, 'Checking default post run terminations',
-                                'Post Run Termination')
+        if self._test_conditionals(run, conditionals, 'Checking default post run terminations',
+                                   'Post Run Termination'):
+            return True
 
         #check user defined post run actions
         conditionals = self._load_conditionals('post_run_actions', klass='ActionConditional')
-        self._action_conditionals(run, conditionals, 'Checking user defined post run actions',
-                                  'Post Run Action')
+        if self._action_conditionals(run, conditionals, 'Checking user defined post run actions',
+                                     'Post Run Action'):
+            return True
 
         #check default post run actions
         conditionals = self._load_default_conditionals('post_run_actions', klass='ActionConditional')
-        self._action_conditionals(run, conditionals, 'Checking default post run actions',
-                                  'Post Run Action')
+        if self._action_conditionals(run, conditionals, 'Checking default post run actions',
+                                     'Post Run Action'):
+            return True
 
         #check queue actions
         exp = self.experiment_queue
-        self._action_conditionals(run, exp.queue_actions, 'Checking queue actions',
-                                  'Queue Action')
+        if self._action_conditionals(run, exp.queue_actions, 'Checking queue actions',
+                                     'Queue Action'):
+            return True
 
     def _load_default_conditionals(self, term_name, **kw):
         p = get_path(paths.spectrometer_dir, 'default_conditionals', ['.yaml', '.yml'])
@@ -1204,21 +1218,21 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 if ci.check(run, None, True):
                     self.info('{}. {}'.format(message2, ci.to_string()))
                     self._do_action(ci)
-                    return
+                    return True
 
     def _test_conditionals(self, run, conditionals, message1, message2,
                            data=None, cnt=True):
         if not self._alive:
-            return
+            return True
 
         if conditionals:
             self.debug('{} n={}'.format(message1, len(conditionals)))
             for ci in conditionals:
-                if ci.check(run.arar_age, data, cnt):
+                if ci.check(run, data, cnt):
                     self.info('{}. {}'.format(message2, ci.to_string()),
                               color='red')
                     self.cancel(confirm=False)
-                    return
+                    return True
 
     def _do_action(self, action):
         self.info('Do queue action {}'.format(action.action))
