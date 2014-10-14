@@ -142,7 +142,7 @@ class Spectrometer(SpectrometerDevice):
         if det:
             if current:
                 det.read_deflection()
-            deflection=det.deflection
+            deflection = det.deflection
 
         return deflection
 

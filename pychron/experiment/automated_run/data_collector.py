@@ -360,13 +360,13 @@ class DataCollector(Consoleable):
 
     @property
     def truncation_conditionals(self):
-        return self.automated_run.truncation_conditions
+        return self.automated_run.truncation_conditionals
 
     @property
     def termination_conditionals(self):
-        return self.automated_run.termination_conditions
+        return self.automated_run.termination_conditionals
 
     @property
     def action_conditionals(self):
-        return self.automated_run.action_conditions
+        return self.automated_run.action_conditionals
 #============= EOF =============================================
