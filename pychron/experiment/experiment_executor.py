@@ -128,7 +128,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     use_memory_check = Bool(True)
     memory_threshold = Int
 
-    _alive = Bool(False)
+    alive = Bool(False)
     _canceled = False
     _state_thread = None
 
@@ -181,7 +181,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.monitor = self._monitor_factory()
 
         if self._pre_execute_check():
-            self._alive = True
+            self.alive = True
             self.end_at_run_completion = False
 
             name = self.experiment_queue.name
@@ -202,7 +202,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             t.start()
             return t
         else:
-            self._alive = False
+            self.alive = False
 
     def set_queue_modified(self):
         self.queue_modified = True
@@ -214,7 +214,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         return self._prev_blank_id, self._prev_blanks
 
     def isAlive(self):
-        return self._alive
+        return self.alive
 
     def reset(self):
         pass
@@ -240,7 +240,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     def stop(self):
         if self.delaying_between_runs:
-            self._alive = False
+            self.alive = False
             self.stats.stop_timer()
             self.wait_group.stop()
             #            self.wait_group.active_control.stop
@@ -324,7 +324,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 self.debug('Previous queue ended at completion. Not continuing to other opened experiments')
                 break
 
-        self._alive = False
+        self.alive = False
 
     def _execute_queue(self, i, exp):
         """
@@ -464,7 +464,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         while 1:
             et = time.time() - st
-            if not self._alive:
+            if not self.alive:
                 break
             if not predicate(et):
                 break
@@ -602,7 +602,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if ret == YES:
                 # stop queue
                 if style == 'queue':
-                    self._alive = False
+                    self.alive = False
                     self.stats.stop_timer()
                 self.set_extract_state(False)
                 self.wait_group.stop()
@@ -658,7 +658,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         ret = True
 
         if not run.start():
-            self._alive = False
+            self.alive = False
             ret = False
             run.state = 'failed'
 
@@ -728,7 +728,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     def _failed_execution_step(self, msg):
         if not self._canceled:
             self._err_message = msg
-            self._alive = False
+            self.alive = False
         return False
 
     #===============================================================================
@@ -1023,7 +1023,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         """
             do pre_run_terminations
         """
-        if not self._alive:
+        if not self.alive:
             return
 
         conditionals = self._load_conditionals('pre_run_terminations')
@@ -1161,7 +1161,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             dont overlap onto blanks
             execute the action and continue the queue
         """
-        if not self._alive:
+        if not self.alive:
             return
         self.heading('Post Run Check')
 
@@ -1233,7 +1233,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     def _test_conditionals(self, run, conditionals, message1, message2,
                            data=None, cnt=True):
-        if not self._alive:
+        if not self.alive:
             return True
 
         if conditionals:

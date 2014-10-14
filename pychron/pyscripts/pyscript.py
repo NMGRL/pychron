@@ -289,6 +289,8 @@ class PyScript(Loggable):
         return self.traceit
 
     def execute(self, new_thread=False, bootstrap=True,
+                delay_start=0,
+                on_completion=None,
                 trace=False,
                 finished_callback=None,
                 argv=None):
@@ -304,7 +306,13 @@ class PyScript(Loggable):
                 finished_callback()
 
             self.finished()
+            if on_completion:
+                on_completion()
+
             return self._completed
+
+        if delay_start:
+            self.sleep(delay_start)
 
         if new_thread:
             t = Thread(target=_ex_)
@@ -563,6 +571,7 @@ class PyScript(Loggable):
         s = klass(root=root,
                   name=name,
                   manager=self.manager,
+                  application=self.application,
                   parent_script=weakref.ref(self)(),
                   syntax_checked=self.syntax_checked,
                   _ctx=self._ctx,

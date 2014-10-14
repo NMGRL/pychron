@@ -631,25 +631,26 @@ class ExperimentEditorTask(EditorTask):
     #    n = Notifier(port=self.notifications_port)
     #    return n
 
-    def _manager_factory(self):
-        from pychron.experiment.experimentor import Experimentor
-        from pychron.initialization_parser import InitializationParser
-
-        ip = InitializationParser()
-        plugin = ip.get_plugin('Experiment', category='general')
-        mode = ip.get_parameter(plugin, 'mode')
-
-        app = None
-        if self.window:
-            app = self.window.application
-
-        exp = Experimentor(application=app,
-                           mode=mode)
-
-        return exp
+    # def _manager_factory(self):
+    #     from pychron.experiment.experimentor import Experimentor
+    #     from pychron.initialization_parser import InitializationParser
+    #
+    #     ip = InitializationParser()
+    #     plugin = ip.get_plugin('Experiment', category='general')
+    #     mode = ip.get_parameter(plugin, 'mode')
+    #
+    #     app = None
+    #     if self.window:
+    #         app = self.window.application
+    #
+    #     exp = Experimentor(application=app,
+    #                        mode=mode)
+    #
+    #     return exp
 
     def _manager_default(self):
-        return self._manager_factory()
+        return self.application.get_service('pychron.experiment.experimentor.Experimentor')
+        # return self._manager_factory()
 
     #def _notifier_default(self):
     #    return self._notifier_factory()
