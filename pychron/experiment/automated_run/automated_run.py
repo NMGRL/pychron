@@ -1599,15 +1599,15 @@ anaylsis_type={}
 
         m.trait_set(
             console_display=self.experiment_executor.console_display,
-            plot_panel=self.plot_panel,
-            arar_age=self.arar_age,
+            # plot_panel=self.plot_panel,
+            # arar_age=self.arar_age,
             automated_run=weakref.ref(self)(),
             measurement_script=script,
             detectors=self._active_detectors,
 
-            truncation_conditionals=self.truncation_conditionals,
-            termination_conditionals=self.termination_conditionals,
-            action_conditionals=self.action_conditionals,
+            # truncation_conditionals=self.truncation_conditionals,
+            # termination_conditionals=self.termination_conditionals,
+            # action_conditionals=self.action_conditionals,
 
             collection_kind=grpname,
             series_idx=series,
