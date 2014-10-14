@@ -367,7 +367,8 @@ class ScanManager(Manager):
     def _isotope_changed(self, old, new):
         self.debug('isotope changed {}'.format(self.isotope))
         if self.isotope != NULL_STR and not self._check_detector_protection(old, False):
-            self._set_position()
+            t = Thread(target=self._set_position)
+            t.start()
 
     def _detector_changed(self, old, new):
         self.debug('detector changed {}'.format(self.detector))
