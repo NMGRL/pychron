@@ -125,6 +125,9 @@ def get_plugin(pname):
     if pname in PACKAGE_DICT:
         package = PACKAGE_DICT[pname]
         klass = get_klass(package, pname)
+    elif pname == 'Update':
+        klass = UpdatePlugin
+
     else:
         logger.warning('****** {} not a valid plugin name******'.format(pname),
                        extra={'threadName_': 'Launcher'})
@@ -178,8 +181,8 @@ def app_factory(klass):
         myTasksPlugin(),
         LoggerPlugin()]
 
-    if UpdatePlugin is not None:
-        plugins.append(UpdatePlugin())
+    # if UpdatePlugin is not None:
+    #     plugins.append(UpdatePlugin())
 
     plugins += get_hardware_plugins()
     plugins += get_user_plugins()
