@@ -204,7 +204,13 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter):
     def _set_use_cdd_warming_text(self, v):
         self.item.use_cdd_warming = to_bool(v)
 
+    def _set_aliquot_text(self, v):
+        self.item.user_defined_aliquot = v
+
     # ==============validate================
+    def _validate_aliquot_text(self, v):
+        return self._validate_number(v, 'aliquot')
+
     def _validate_extract_value_text(self, v):
         return self._validate_number(v, 'extract_value')
 
