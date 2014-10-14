@@ -195,7 +195,8 @@ class AutomatedRunConditional(BaseConditional):
                 break
         else:
             if DEFLECTION_REGEX.findall(comp):
-                v=arun.get_deflection(attr, current=True)
+                v = arun.get_deflection(attr, current=True)
+                comp = '{}{}'.format(self._key, remove_attr(comp))
             else:
                 try:
                     if self.window:

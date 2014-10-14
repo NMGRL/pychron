@@ -83,6 +83,7 @@ class UserNotifierPreferences(BasePreferencesHelper):
     server_password = Password
     server_host = Str
     server_port = Int
+    include_log = Bool
 
 
 class ConsolePreferences(BaseConsolePreferences):
@@ -188,6 +189,7 @@ class UserNotifierPreferencesPane(PreferencesPane):
                           Item('server_password', label='Password'),
                           Item('server_host', label='Host'),
                           Item('server_port', label='Port'),
+                          Item('include_log'),
                           label='User Notifier')
 
         v = View(auth_grp)

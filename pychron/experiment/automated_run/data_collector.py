@@ -351,6 +351,10 @@ class DataCollector(Consoleable):
                 if not action_conditional.resume:
                     return 'break'
     @property
+    def arar_age(self):
+        return self.automated_run.arar_age
+
+    @property
     def plot_panel(self):
         return self.automated_run.plot_panel
 

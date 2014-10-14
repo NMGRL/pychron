@@ -165,7 +165,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._preference_binder(prefid, attrs, mod='color')
 
         #user_notifier
-        attrs = ('server_username', 'server_password', 'server_host', 'server_post')
+        attrs = ('server_username', 'server_password', 'server_host', 'server_post', 'include_log')
         self._preference_binder(prefid, attrs, obj=self.user_notifier.emailer)
 
         #memory
@@ -187,7 +187,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             name = self.experiment_queue.name
 
             msg = 'Starting Execution "{}"'.format(name)
-            self._info_heading(msg)
+            self.heading(msg)
 
             if self.stats:
                 self.stats.reset()
@@ -443,7 +443,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if last_runid:
             self.info('Automated runs ended at {}, runs executed={}'.format(last_runid, total_cnt))
 
-        self._info_heading('experiment queue {} finished'.format(exp.name))
+        self.heading('experiment queue {} finished'.format(exp.name))
 
         if exp.email:
             self.info('Notifying user={} email={}'.format(exp.username, exp.email))
@@ -526,6 +526,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             f = getattr(self, step)
             if not f(run):
                 self.warning('{} returned false'.format(step[1:]))
+                run.state = 'failed'
                 break
         else:
             self.debug('$$$$$$$$$$$$$$$$$$$$ state at run end {}'.format(run.state))
@@ -542,10 +543,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._remove_backup(run.uuid)
 
         # check to see if action should be taken
-        if self._post_run_check(run):
-            self.warning('post run check failed')
-        else:
-            self.heading('Post Run Check Passed')
+        if not run.state in ('canceled', 'failed'):
+            if self._post_run_check(run):
+                self._err_message = 'Post Run Check Failed'
+                self.warning('post run check failed')
+            else:
+                self.heading('Post Run Check Passed')
 
         t = time.time() - st
         self.info('Automated run {} {} duration: {:0.3f} s'.format(run.runid, run.state, t))
@@ -674,7 +677,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             extraction step
         """
         if self._pre_extraction_check(ai):
-            self.info('pre extraction check failed')
+            self.heading('Pre Extraction Check Failed')
+            self._err_message = 'Pre Extraction Check Failed'
             return
 
         self.extracting_run = ai
@@ -1034,6 +1038,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.debug('Pre Extraction Termination data. keys={}, signals={}'.format(ks, ss))
 
             if conditionals:
+                self.debug('testing user defined conditionals')
                 if self._test_conditionals(run, conditionals,
                                            'Checking user defined pre extraction terminations',
                                            'Pre Extraction Termination',
@@ -1041,7 +1046,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     return True
 
             if default_conditionals:
-                if self._test_conditionals(run, conditionals,
+                if self._test_conditionals(run, default_conditionals,
                                            'Checking default pre extraction terminations',
                                            'Pre Extraction Termination',
                                            data=data):
@@ -1444,7 +1449,7 @@ Use Last "blank_{}"= {}
         self.info('')
 
     def _set_message(self, msg, color='black'):
-        self._info_heading(msg)
+        self.heading(msg)
         invoke_in_main_thread(self.trait_set, extraction_state_label=msg,
                               extraction_state_color=color)
 
