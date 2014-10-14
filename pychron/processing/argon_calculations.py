@@ -34,6 +34,7 @@ from pychron.core.stats.core import calculate_weighted_mean
 
 
 
+
 #============= local library imports  ==========================
 
 
@@ -93,14 +94,15 @@ def calculate_isochron(analyses, reg='NewYork'):
     yns, ynes = zip(*[(xi.nominal_value, xi.std_dev) for xi in a36])
     xns, xnes = zip(*[(xi.nominal_value, xi.std_dev) for xi in a39])
 
-
-
     regx = isochron_regressor(ys, yerrs, xs, xerrs,
                               xds,xdes, yns, ynes, xns, xnes)
 
     reg = isochron_regressor(xs, xerrs, ys, yerrs,
                              xds, xdes, xns, xnes, yns, ynes,
                              reg)
+
+    print 'regx', regx.calculate_ci_error(0),regx.get_intercept_error()
+    print 'reg', reg.calculate_ci_error(0), reg.get_intercept_error()
 
     xint = ufloat(regx.get_intercept(), regx.get_intercept_error())
     # xint = ufloat(reg.x_intercept, reg.x_intercept_error)
