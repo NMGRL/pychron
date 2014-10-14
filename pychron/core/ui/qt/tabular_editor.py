@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from PySide.QtGui import QColor
+from PySide.QtGui import QColor, QHeaderView
 
 from traits.api import Bool, Str, List, Any, Instance, Property, Int, HasTraits, Color
 from traits.trait_base import SequenceTypes
@@ -99,6 +99,7 @@ class _myTableView(_TableView, ConsumerMixin):
             size = QtGui.QFontMetrics(fnt)
 
             vheader.setDefaultSectionSize(size.height() + 6)
+            vheader.ResizeMode(QHeaderView.ResizeToContents)
             hheader = self.horizontalHeader()
             #hheader.setStretchLastSection(editor.factory.stretch_last_section)
             vheader.setFont(fnt)
@@ -588,6 +589,11 @@ class UnselectTabularEditorHandler(Handler):
 
 
 class TabularEditorHandler(UnselectTabularEditorHandler):
+    def jump_to_start(self, info, obj):
+        obj.jump_to_start()
+
+    def jump_to_end(self, info, obj):
+        obj.jump_to_end()
 
     def move_to_start(self, info, obj):
         obj.move_selected_first()
