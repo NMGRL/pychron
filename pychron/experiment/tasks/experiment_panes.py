@@ -86,9 +86,7 @@ class ExperimentFactoryPane(TraitsDockPane):
                    icon_button_editor(queue_factory_name('edit_user'), 'database_edit'),
                    Spring(width=-5, springy=False),
                    queue_factory_item('use_email_notifier', show_label=False),
-                   Item(queue_factory_name('email'),
-                        # enabled_when=queue_factory_name('use_email_notifier')
-                   )),
+                   Item(queue_factory_name('email'))),
             HGroup(
                 queue_factory_item('mass_spectrometer',
                                    show_label=False,

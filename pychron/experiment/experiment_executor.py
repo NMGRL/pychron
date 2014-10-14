@@ -444,7 +444,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.info('Automated runs ended at {}, runs executed={}'.format(last_runid, total_cnt))
 
         self._info_heading('experiment queue {} finished'.format(exp.name))
-        self.user_notifier.notify(exp, last_runid, self._err_message)
+
+        if exp.email:
+            self.info('Notifying user={} email={}'.format(exp.username, exp.email))
+            self.user_notifier.notify(exp, last_runid, self._err_message)
 
     def _wait_for(self, predicate, period=1, invert=False):
         """
