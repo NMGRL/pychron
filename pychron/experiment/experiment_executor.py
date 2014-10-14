@@ -39,6 +39,7 @@ from pychron.experiment.connectable import Connectable
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.user_notifier import UserNotifier
 from pychron.experiment.stats import StatsGroup
+from pychron.experiment.utilities.conditionals import test_queue_conditionals_name
 from pychron.experiment.utilities.identifier import convert_extract_device
 from pychron.external_pipette.protocol import IPipetteManager
 from pychron.globals import globalv
@@ -1197,7 +1198,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     def _load_conditionals(self, term_name, **kw):
         exp = self.experiment_queue
         name = exp.queue_conditionals_name
-        if exp.use_queue_conditionals and name:
+        if test_queue_conditionals_name(name):
             p = get_path(paths.queue_conditionals_dir, name, ['.yaml', '.yml'])
             return self._extract_conditionals(p, term_name, **kw)
 

@@ -35,6 +35,7 @@ from pychron.experiment.automated_run.peak_hop_collector import PeakHopCollector
 from pychron.experiment.automated_run.persistence import AutomatedRunPersister
 from pychron.experiment.automated_run.syn_extraction import SynExtractionCollector
 from pychron.experiment.automated_run.hop_util import parse_hops
+from pychron.experiment.utilities.conditionals import test_queue_conditionals_name
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.processing.analyses.view.automated_run_view import AutomatedRunAnalysisView
@@ -1132,7 +1133,7 @@ anaylsis_type={}
         """
         self.debug('Add queue conditionals')
         name = self.spec.queue_conditionals_name
-        if self.spec.use_queue_conditionals and name:
+        if test_queue_conditionals_name(name):
             p = get_path(paths.queue_conditionals_dir, name, ('.yaml', '.yml'))
             if p is not None:
                 self.info('adding queue conditionals from {}'.format(p))
