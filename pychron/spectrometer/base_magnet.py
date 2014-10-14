@@ -72,11 +72,13 @@ class BaseMagnet(HasTraits):
     def finish_loading(self):
         if self.spectrometer:
             molweights = self.spectrometer.molecular_weights
+            name = self.spectrometer.name
         else:
             from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS as molweights
-
+            name = ''
         # self.mftable.molweights = molweights
         self.mftable.initialize(molweights)
+        self.mftable.spectrometer_name = name.lower()
 
         d = self.read_dac()
         if d is not None:

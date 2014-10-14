@@ -118,6 +118,7 @@ class MagnetFieldTableHistoryAction(Action):
             if os.path.isfile(os.path.join(archive_root, os.path.basename(mft.mftable_path))):
                 # from pychron.git_archive.history import GitArchiveHistory, GitArchiveHistoryView
                 from pychron.spectrometer.local_mftable_history_view import LocalMFTableHistory, LocalMFTableHistoryView
+                print archive_root, mft.mftable_path
                 gh = LocalMFTableHistory(archive_root, mft.mftable_path)
                 gh.load_history(os.path.basename(mft.mftable_path))
                 ghv = LocalMFTableHistoryView(model=gh, title='MFTable Archive')

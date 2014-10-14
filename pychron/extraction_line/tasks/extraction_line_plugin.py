@@ -45,6 +45,9 @@ class ProcedureAction(Action):
 
         root = os.path.dirname(self.script_path)
         name = os.path.basename(self.script_path)
+
+        task.execution_context = {'analysis_type': 'blank' if 'blank' in name else 'unknown'}
+
         task.execute_script(name, root)
 
 

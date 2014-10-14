@@ -112,6 +112,8 @@ class GitArchiveHistory(HasTraits):
 
         if p:
             self._loaded_history_path = p
+
+            print self._archive._repo, p
             hx = self._archive.commits_iter(p, keys=['message', 'committed_date'],
                                             limit=self.limit)
             self.items = [Commit(hexsha=a, message=b,

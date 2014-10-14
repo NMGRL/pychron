@@ -17,7 +17,7 @@
 #============= enthought library imports =======================
 from pyface.tasks.action.schema import SToolBar
 from traits.api import String, List, Instance, Any, \
-    on_trait_change, Bool, Int
+    on_trait_change, Bool, Int, Dict
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
 #============= standard library imports ========================
 import os
@@ -54,6 +54,7 @@ class PyScriptTask(EditorTask, ExecuteMixin):
     description = String
 
     tool_bars = [SToolBar(JumpToGosubAction()), ]
+    execution_context = Dict
 
     def __init__(self, *args, **kw):
         super(PyScriptTask, self).__init__(*args, **kw)
@@ -142,7 +143,10 @@ class PyScriptTask(EditorTask, ExecuteMixin):
                        runner=self._runner)
 
         if script.bootstrap():
-            script.set_default_context()
+            if self.execution_context:
+                script.setup_context(**self.execution_context)
+            else:
+                script.set_default_context()
             try:
                 script.test()
             except Exception, e:
