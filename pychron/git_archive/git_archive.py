@@ -65,6 +65,8 @@ class GitArchive(GitRepoManager):
 
     def commits_iter(self, p, keys=None, limit='-'):
         repo = self._repo
+        p = os.path.join(self._repo.working_tree_dir, p)
+        print p
         hx = repo.git.log('--pretty=%H', '--follow', '-{}'.format(limit), p).split('\n')
 
         def func(hi):

@@ -50,3 +50,6 @@ CHANGELOG
 * optimized plotpanel
 * added "window" to AutomatedRunCondition. use to take a mean or std of "window" points
 * added more options for AutomatedRunConditions
+* added Queue/Default Conditionals
+* updated user notification
+* added procedures concept e.g. QuickAir

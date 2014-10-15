@@ -115,6 +115,12 @@ class ExperimentQueue(BaseExperimentQueue):
                 self.automated_runs.remove(si)
             self.automated_runs.extend(self.selected)
 
+    def jump_to_end(self):
+        self.automated_runs_scroll_to_row=len(self.automated_runs)-1
+
+    def jump_to_start(self):
+        self.automated_runs_scroll_to_row=0
+
     def _move_selected(self, idx):
         with no_update(self):
             for si in self.selected:

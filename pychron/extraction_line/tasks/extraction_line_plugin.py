@@ -16,11 +16,13 @@
 
 #============= enthought library imports =======================
 import os
+
 from traits.api import Str
 from envisage.ui.tasks.task_factory import TaskFactory
 from pyface.tasks.action.schema import SMenu
 from pyface.tasks.action.schema_addition import SchemaAddition
 from envisage.ui.tasks.task_extension import TaskExtension
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from traitsui.menu import Action
@@ -36,21 +38,39 @@ from pychron.paths import paths
 
 class ProcedureAction(Action):
     script_path = Str
+    def __init__(self, *args, **kw):
+        super(ProcedureAction, self).__init__(*args, **kw)
+
+        ex = self.application.get_plugin('pychron.experiment')
+        ex = ex.experimentor.executor
+        ex.on_trait_change(self._update_alive, 'alive')
+
+    def _update_alive(self, new):
+        self.enabled = not new
 
     def perform(self, event):
         task = event.task.application.get_task('pychron.pyscript.task', activate=False)
 
         #open extraction line task
-        event.task.application.open_task('pychron.extraction_line')
+        elm_task = event.task.application.open_task('pychron.extraction_line')
 
         root = os.path.dirname(self.script_path)
         name = os.path.basename(self.script_path)
-        task.execute_script(name, root)
+
+        info=lambda x: '======= {} ======='.format(x)
+
+        elm_task.manager.info(info('Started Procedure "{}"'.format(name)))
+
+        task.execution_context = {'analysis_type': 'blank' if 'blank' in name else 'unknown'}
+        task.execute_script(name, root,
+                            delay_start=1,
+                            on_completion=lambda: elm_task.manager.info(info('Finished Procedure "{}"'.format(name))))
 
 
-def procedure_action(name):
+def procedure_action(name, application):
     a = ProcedureAction(id='procedures.action.{}'.format(name),
                         name=name.capitalize(),
+                        application=application,
                         script_path=os.path.join(paths.procedures_dir, name))
     return lambda: a
 
@@ -71,7 +91,7 @@ class ExtractionLinePlugin(BaseTaskPlugin):
             actions = []
             for f in list_directory2(paths.procedures_dir, extension='.py', remove_extension=True):
                 actions.append(SchemaAddition(id='procedure.{}'.format(f),
-                                              factory=procedure_action(f),
+                                              factory=procedure_action(f, self.application),
                                               path='MenuBar/procedures.menu'))
 
             if actions:

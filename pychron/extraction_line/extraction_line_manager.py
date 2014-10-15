@@ -98,6 +98,8 @@ class ExtractionLineManager(Manager, Consoleable):
         bind_preference(self.network, 'inherit_state',
                         'pychron.extraction_line.inherit_state')
 
+        # self.console_bind_preferences('pychron.extraction_line')
+
     def link_valve_actuation(self, name, func, remove=False):
         if remove:
             try:

@@ -31,7 +31,7 @@ class Consoleable(Loggable):
     console_updated = Event
     console_bgcolor = LIGHT_YELLOW
     console_fontsize = Int(11)
-    console_default_color = Color
+    console_default_color = Color('black')
 
     def console_bind_preferences(self, prefid):
         color_bind_preference(self, 'console_bgcolor', '{}.bgcolor'.format(prefid))

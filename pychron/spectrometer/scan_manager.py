@@ -104,10 +104,18 @@ class ScanManager(Manager):
     _log_events_enabled = False
     _valve_event_list = List
 
+    def _bind_listeners(self, remove=False):
+        self.on_trait_change(self._update_magnet, 'magnet:dac_changed', remove=remove)
+        self.on_trait_change(self._toggle_detector, 'detectors:active', remove=remove)
 
     def prepare_destroy(self):
         self.stop_scan()
         self._log_events_enabled=False
+        self._bind_listeners(remove=True)
+
+        plot = self.graph.plots[0]
+        plot.value_range.on_trait_change(self._update_graph_limits,
+                                         '_low_value, _high_value', remove=True)
 
     def stop_scan(self):
         self.dump_settings()
@@ -151,14 +159,14 @@ class ScanManager(Manager):
     def setup_scan(self):
         self._reset_graph()
 
-        # listen to detector for enabling
-        self.on_trait_change(self._toggle_detector, 'detectors:active')
+        # bind
+        self._bind_listeners()
+        # # listen to detector for enabling
+        # self.on_trait_change(self._toggle_detector, 'detectors:active')
+        # self.on_trait_change(self._update_magnet, 'magnet:dac_changed')
 
         # force update
         self.load_settings()
-
-        # bind
-        self.on_trait_change(self._update_magnet, 'magnet:dac_changed')
 
         # force position update
         self._set_position()
@@ -246,7 +254,7 @@ class ScanManager(Manager):
 
     def _update_magnet(self, obj, name, old, new):
         # print obj, name, old, new
-        if new:
+        if new and self.magnet.detector:
             # covnert dac into a mass
             # convert mass to isotope
             #            d = self.magnet.dac

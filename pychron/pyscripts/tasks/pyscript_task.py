@@ -17,7 +17,7 @@
 #============= enthought library imports =======================
 from pyface.tasks.action.schema import SToolBar
 from traits.api import String, List, Instance, Any, \
-    on_trait_change, Bool, Int
+    on_trait_change, Bool, Int, Dict
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
 #============= standard library imports ========================
 import os
@@ -54,6 +54,7 @@ class PyScriptTask(EditorTask, ExecuteMixin):
     description = String
 
     tool_bars = [SToolBar(JumpToGosubAction()), ]
+    execution_context = Dict
 
     def __init__(self, *args, **kw):
         super(PyScriptTask, self).__init__(*args, **kw)
@@ -106,10 +107,12 @@ class PyScriptTask(EditorTask, ExecuteMixin):
         man = app.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
         return man
 
-    def execute_script(self, name, root, kind='Extraction'):
-        self._do_execute(name, root, kind)
+    def execute_script(self, name, root, kind='Extraction', delay_start=0, on_completion=None):
+        self._do_execute(name, root, kind, on_completion=on_completion, delay_start=delay_start)
 
-    def _do_execute(self, name=None, root=None, kind=None, new_thread=True):
+    def _do_execute(self, name=None, root=None, kind=None, new_thread=True,
+                    delay_start=0,
+                    on_completion=None):
         self._start_execute()
 
         self.debug('do execute')
@@ -117,17 +120,17 @@ class PyScriptTask(EditorTask, ExecuteMixin):
         self._current_script = None
 
         if name and root and kind:
-            self._execute_extraction(name, root, kind, new_thread)
+            self._execute_extraction(name, root, kind, new_thread, delay_start, on_completion)
         else:
             ae = self.active_editor
             if isinstance(ae, ExtractionEditor):
                 root, fn = os.path.split(ae.path)
                 kind = self._extract_kind(ae.path)
-                self._execute_extraction(fn, root, kind, new_thread)
+                self._execute_extraction(fn, root, kind, new_thread, delay_start, on_completion)
 
         self.executing = False
 
-    def _execute_extraction(self, name, root, kind, new_thread):
+    def _execute_extraction(self, name, root, kind, new_thread, delay_start, on_completion):
         from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
 
         klass = ExtractionPyScript
@@ -136,13 +139,16 @@ class PyScriptTask(EditorTask, ExecuteMixin):
 
             klass = LaserPyScript
 
-        script = klass(application=self.window.application,
+        script = klass(application=self.application,
                        root=root,
                        name=add_extension(name, '.py'),
                        runner=self._runner)
 
         if script.bootstrap():
-            script.set_default_context()
+            if self.execution_context:
+                script.setup_context(**self.execution_context)
+            else:
+                script.set_default_context()
             try:
                 script.test()
             except Exception, e:
@@ -152,7 +158,7 @@ class PyScriptTask(EditorTask, ExecuteMixin):
             if self.use_trace:
                 self.active_editor.trace_delay = self.trace_delay
 
-            t = script.execute(trace=self.use_trace, new_thread=new_thread)
+            t = script.execute(trace=self.use_trace, new_thread=new_thread, delay_start=delay_start, on_completion=on_completion)
 
     def _start_execute(self):
         self.debug('start execute')

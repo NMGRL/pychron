@@ -124,7 +124,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     sniff_color = Color
     signal_color = Color
 
-    _alive = Bool(False)
+    alive = Bool(False)
     _canceled = False
     _state_thread = None
 
@@ -135,11 +135,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     _prev_baselines = Dict
     _err_message = String
     _prev_blank_id = Long
-
-    baseline_color = Color
-    sniff_color = Color
-    signal_color = Color
-
 
     def __init__(self, *args, **kw):
         super(ExperimentExecutor, self).__init__(*args, **kw)
@@ -162,7 +157,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._preference_binder(prefid, attrs, mod='color')
 
         #user_notifier
-        attrs = ('server_username', 'server_password', 'server_host', 'server_post')
+        attrs = ('server_username', 'server_password', 'server_host', 'server_post', 'include_log')
         self._preference_binder(prefid, attrs, obj=self.user_notifier.emailer)
 
         #memory
@@ -174,9 +169,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._preference_binder(prefid, ('use_message_colormapping',))
 
     def _reset(self):
-        self._alive = True
+        self.alive = True
         self._canceled = False
 
+        self._err_message=''
         self.end_at_run_completion = False
         self.extraction_state_label = ''
         self.experiment_queue.executed = True
@@ -194,15 +190,25 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self._reset()
 
             name = self.experiment_queue.name
-            self.info_heading('Starting Execution "{}"'.format(name))
 
+            msg = 'Starting Execution "{}"'.format(name)
+            self.heading(msg)
+
+            if self.stats:
+                self.stats.reset()
+                self.stats.start_timer()
+
+            self._canceled = False
+            self.extraction_state_label = ''
+
+            self.experiment_queue.executed = True
             t = Thread(name='execute_exp',
                        target=self._execute)
             t.start()
             return t
         else:
+            self.alive = False
             self.info('pre execute check failed')
-            self._alive = False
 
     def set_queue_modified(self):
         self.queue_modified = True
@@ -214,7 +220,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         return self._prev_blank_id, self._prev_blanks
 
     def isAlive(self):
-        return self._alive
+        return self.alive
 
     def continued(self):
         self.stats.continue_run()
@@ -237,7 +243,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     def stop(self):
         if self.delaying_between_runs:
-            self._alive = False
+            self.alive = False
             self.stats.stop_timer()
             self.wait_group.stop()
             #            self.wait_group.active_control.stop
@@ -440,9 +446,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if last_runid:
             self.info('Automated runs ended at {}, runs executed={}'.format(last_runid, total_cnt))
 
-        self._info_heading('experiment queue {} finished'.format(exp.name))
+        self.heading('experiment queue {} finished'.format(exp.name))
 
         if exp.email:
+            if not self._err_message and self.end_at_run_completion:
+                self._err_message='User terminated'
+
             self.info('Notifying user={} email={}'.format(exp.username, exp.email))
             self.user_notifier.notify(exp, last_runid, self._err_message)
 
@@ -461,7 +470,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         while 1:
             et = time.time() - st
-            if not self._alive:
+            if not self.alive:
                 break
             if not predicate(et):
                 break
@@ -523,6 +532,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             f = getattr(self, step)
             if not f(run):
                 self.warning('{} returned false'.format(step[1:]))
+                run.state = 'failed'
                 break
         else:
             self.debug('$$$$$$$$$$$$$$$$$$$$ state at run end {}'.format(run.state))
@@ -539,10 +549,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._remove_backup(run.uuid)
 
         # check to see if action should be taken
-        if self._post_run_check(run):
-            self.warning('post run check failed')
-        else:
-            self.heading('Post Run Check Passed')
+        if not run.state in ('canceled', 'failed'):
+            if self._post_run_check(run):
+                self._err_message = 'Post Run Check Failed'
+                self.warning('post run check failed')
+            else:
+                self.heading('Post Run Check Passed')
 
         t = time.time() - st
         self.info('Automated run {} {} duration: {:0.3f} s'.format(run.runid, run.state, t))
@@ -596,7 +608,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if ret == YES:
                 # stop queue
                 if style == 'queue':
-                    self._alive = False
+                    self.alive = False
                     self.stats.stop_timer()
                 self.set_extract_state(False)
                 self.wait_group.stop()
@@ -618,7 +630,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                         # self.non_clear_update_needed = True
                 self.measuring_run = None
                 self.extracting_run = None
-
+                self._err_message = 'User Canceled'
                 # self.current_run = None
 
     def _end_runs(self):
@@ -652,7 +664,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         ret = True
 
         if not run.start():
-            self._alive = False
+            self.alive = False
             ret = False
             run.state = 'failed'
 
@@ -671,7 +683,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             extraction step
         """
         if self._pre_extraction_check(ai):
-            self.info('pre extraction check failed')
+            self.heading('Pre Extraction Check Failed')
+            self._err_message = 'Pre Extraction Check Failed'
             return
 
         self.extracting_run = ai
@@ -721,7 +734,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     def _failed_execution_step(self, msg):
         if not self._canceled:
             self._err_message = msg
-            self._alive = False
+            self.alive = False
         return False
 
     #===============================================================================
@@ -1016,7 +1029,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         """
             do pre_run_terminations
         """
-        if not self._alive:
+        if not self.alive:
             return
 
         conditionals = self._load_conditionals('pre_run_terminations')
@@ -1031,6 +1044,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.debug('Pre Extraction Termination data. keys={}, signals={}'.format(ks, ss))
 
             if conditionals:
+                self.debug('testing user defined conditionals')
                 if self._test_conditionals(run, conditionals,
                                            'Checking user defined pre extraction terminations',
                                            'Pre Extraction Termination',
@@ -1038,7 +1052,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     return True
 
             if default_conditionals:
-                if self._test_conditionals(run, conditionals,
+                if self._test_conditionals(run, default_conditionals,
                                            'Checking default pre extraction terminations',
                                            'Pre Extraction Termination',
                                            data=data):
@@ -1153,7 +1167,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             dont overlap onto blanks
             execute the action and continue the queue
         """
-        if not self._alive:
+        if not self.alive:
             return
         self.heading('Post Run Check')
 
@@ -1226,7 +1240,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     def _test_conditionals(self, run, conditionals, message1, message2,
                            data=None, cnt=True):
-        if not self._alive:
+        if not self.alive:
             return True
 
         if conditionals:
@@ -1439,7 +1453,7 @@ Use Last "blank_{}"= {}
         return nonfound
 
     def _set_message(self, msg, color='black'):
-        self.info_heading(msg)
+        self.heading(msg)
         invoke_in_main_thread(self.trait_set, extraction_state_label=msg,
                               extraction_state_color=color)
 
