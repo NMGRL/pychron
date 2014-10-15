@@ -13,7 +13,12 @@ def pearson(expected=False):
                                slope_err=0.0702,
                                intercept=5.4799,
                                intercept_err=0.3555,
-                               mswd=1.4832))
+                               mswd=1.4832),
+                     new_york=dict(slope=0,
+                                   slope_err=0,
+                                   intercept=0,
+                                   intercept_err=0,
+                                   mswd=0))
     if expected:
         if not expected in solutions:
             v = ','.join(solutions.keys())

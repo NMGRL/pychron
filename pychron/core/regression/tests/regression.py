@@ -22,9 +22,10 @@
 from unittest import TestCase
 #============= local library imports  ==========================
 from pychron.core.regression.mean_regressor import MeanRegressor  #, WeightedMeanRegressor
+from pychron.core.regression.new_york_regressor import ReedYorkRegressor, NewYorkRegressor
 from pychron.core.regression.ols_regressor import OLSRegressor
 # from pychron.core.regression.york_regressor import YorkRegressor
-from pychron.core.regression.tests.standard_data import mean_data, filter_data, ols_data
+from pychron.core.regression.tests.standard_data import mean_data, filter_data, ols_data, pearson
 
 # class RegressionTestCase(TestCase):
 #     def setUp(self):
@@ -36,11 +37,7 @@ from pychron.core.regression.tests.standard_data import mean_data, filter_data, 
 class RegressionTestCase(object):
     @classmethod
     def setUpClass(cls):
-        cls.reg = cls.regressor_factory()
-
-    @staticmethod
-    def regressor_factory():
-        pass
+        cls.reg = cls.reg_klass()
 
     def testN(self):
         self.assertEqual(self.reg.n, self.solution['n'])
@@ -61,15 +58,9 @@ class MeanRegressionTest(RegressionTestCase, TestCase):
     def testStd(self):
         self.assertAlmostEqual(self.reg.std, self.solution['std'], 2)
 
-    @staticmethod
-    def regressor_factory():
-        return MeanRegressor()
-
 
 class OLSRegressionTest(RegressionTestCase, TestCase):
-    @staticmethod
-    def regressor_factory():
-        return OLSRegressor()
+    reg_klass = OLSRegressor
 
     def setUp(self):
         xs, ys, sol = ols_data()
@@ -90,12 +81,8 @@ class OLSRegressionTest(RegressionTestCase, TestCase):
         self.assertAlmostEqual(e, self.solution['pred_error'], 3)
 
 
-#
-#
 class FilterOLSRegressionTest(RegressionTestCase, TestCase):
-    @staticmethod
-    def regressor_factory():
-        return OLSRegressor()
+    reg_klass = OLSRegressor
 
     def setUp(self):
         xs, ys, sol = filter_data()
@@ -117,8 +104,42 @@ class FilterOLSRegressionTest(RegressionTestCase, TestCase):
         # e=self.reg.coefficient_errors[0]
         self.assertAlmostEqual(e, self.solution['pred_error'], 3)
 
-#
-#
+
+class PearsonRegressionTest(RegressionTestCase):
+    kind = ''
+    def setUp(self):
+        xs, ys, wxs, wys = pearson()
+
+        exs = wxs ** -0.5
+        eys = wys ** -0.5
+
+        self.reg.trait_set(xs=xs, ys=ys,
+                                     xserr=exs,
+                                     yserr=eys)
+        self.reg.calculate()
+        self.solution={'n':len(xs)}
+
+    def test_slope(self):
+        exp = pearson(self.kind)
+        self.assertAlmostEqual(self.reg.slope, exp['slope'], 4)
+
+    def test_y_intercept(self):
+        expected = pearson(self.kind)
+        self.assertAlmostEqual(self.reg.intercept, expected['intercept'], 4)
+
+    def test_mswd(self):
+        expected = pearson(self.kind)
+        self.assertAlmostEqual(self.reg.mswd, expected['mswd'], 3)
+
+
+class ReedRegressionTest(PearsonRegressionTest, TestCase):
+    reg_klass = ReedYorkRegressor
+    kind = 'reed'
+
+
+class NewYorkRegressionTest(PearsonRegressionTest, TestCase):
+    reg_klass = NewYorkRegressor
+    kind = 'reed'
 # class WeightedMeanRegressionTest(RegressionTestCase, TestCase):
 #     @staticmethod
 #     def regressor_factory():

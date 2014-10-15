@@ -15,26 +15,17 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from binascii import hexlify
-from itertools import izip
-import re
-
 from traits.api import HasTraits, Str, Float, Property, Instance, \
     Array, String, Either, Dict, cached_property, Event, List, Bool
-
-
-
-
-
-
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
 from numpy import array, Inf, polyfit
-from pychron.core.helpers.fits import natural_name_fit
-
+from binascii import hexlify
+from itertools import izip
 import struct
+import re
 #============= local library imports  ==========================
-#logger = new_logger('isotopes')
+from pychron.core.helpers.fits import natural_name_fit
 
 
 def fit_abbreviation(fit, ):
@@ -281,7 +272,8 @@ class IsotopicMeasurement(BaseMeasurement):
     def _get_value(self):
         # if not (self.name.endswith('bs') or self.name.endswith('bk')):
         #     print self.name, self.use_static,self.user_defined_value
-        if self.use_static and self._value:
+
+        if self.use_static and self._value is not None:
             return self._value
         elif self.user_defined_value:
             return self._value
@@ -293,7 +285,7 @@ class IsotopicMeasurement(BaseMeasurement):
             return self._value
 
     def _get_error(self):
-        if self.use_static and self._error:
+        if self.use_static and self._error is not None:
             return self._error
         elif self.user_defined_error:
             return self._error
@@ -318,7 +310,10 @@ class IsotopicMeasurement(BaseMeasurement):
         if 'average' in self.fit.lower():
             reg = self._mean_regressor_factory()
         else:
+            # print 'doing import of regresor {}'.format(self.__class__)
+            # st=time.time()
             from pychron.core.regression.ols_regressor import PolynomialRegressor
+            # print 'doing import of regresor {}'.format(time.time()-st)
 
             reg = PolynomialRegressor(tag=self.name,
                                       xs=self.offset_xs,
@@ -403,7 +398,6 @@ class Sniff(BaseMeasurement):
 class BaseIsotope(IsotopicMeasurement):
     baseline = Instance(Baseline, ())
     baseline_fit_abbreviation = Property(depends_on='baseline:fit')
-    # __slots__ = ['baseline']
 
     def get_baseline_corrected_value(self):
         b = self.baseline.uvalue

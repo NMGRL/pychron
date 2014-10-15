@@ -8,10 +8,13 @@ from pychron.processing.isotope import Isotope
 __author__ = 'ross'
 
 import unittest
+
 class Arun(object):
     def __init__(self):
         self.arar_age=ArArAge()
 
+    def get_deflection(self, *args, **kw):
+        return 2000
 
 class ConditionalsTestCase(unittest.TestCase):
     def setUp(self):
@@ -93,6 +96,12 @@ class ConditionalsTestCase(unittest.TestCase):
         d={'check':'CDD.inactive', 'attr':'CDD'}
         c=conditional_from_dict(d, 'TerminationConditional')
         ret = c.check(self.arun, (['H1','AX'],[]), 1000)
+        self.assertTrue(ret)
+
+    def test_Deflection(self):
+        d={'check':'CDD.deflection == 2000', 'attr':'CDD'}
+        c=conditional_from_dict(d, 'TerminationConditional')
+        ret = c.check(self.arun, ([],[]), 1000)
         self.assertTrue(ret)
 
 if __name__ == '__main__':
