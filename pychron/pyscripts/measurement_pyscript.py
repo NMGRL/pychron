@@ -234,7 +234,7 @@ class MeasurementPyScript(ValvePyScript):
                                         fit_series=self._fit_series_count,
                                         group=group):
             self.cancel()
-        self._series_count += 1
+        self._series_count += 2
         self._fit_series_count += 1
         #self._series_count += 4
 
