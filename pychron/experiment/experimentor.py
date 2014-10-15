@@ -351,24 +351,9 @@ class Experimentor(IsotopeDatabaseManager):
     #             return 'Experiment {}'.format(self.experiment_queue.name)
 
     def _executor_factory(self):
-        p1 = 'pychron.extraction_line.extraction_line_manager.ExtractionLineManager'
-        p2 = 'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager'
-        p3 = 'pychron.spectrometer.ion_optics_manager.IonOpticsManager'
-        kw = dict()
-        if self.application:
-            spec = self.application.get_service(p2)
-            kw = dict(extraction_line_manager=self.application.get_service(p1),
-                      spectrometer_manager=spec,
-                      ion_optics_manager=self.application.get_service(p3), )
-
-        # if not self.unique_executor_db:
-        #     kw['db'] = self.db
-        #     kw['connect'] = False
-
         e = ExperimentExecutor(
             mode=self.mode,
-            application=self.application,
-            **kw)
+            application=self.application)
         e.bind_preferences()
 
         return e

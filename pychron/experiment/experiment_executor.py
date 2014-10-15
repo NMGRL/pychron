@@ -147,6 +147,17 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     def __init__(self, *args, **kw):
         super(ExperimentExecutor, self).__init__(*args, **kw)
         self.wait_control_lock = Lock()
+        self.set_managers()
+
+    def set_managers(self):
+        p1 = 'pychron.extraction_line.extraction_line_manager.ExtractionLineManager'
+        p2 = 'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager'
+        p3 = 'pychron.spectrometer.ion_optics_manager.IonOpticsManager'
+
+        if self.application:
+            self.spectrometer_manager = self.application.get_service(p2)
+            self.extraction_line_manager=self.application.get_service(p1)
+            self.ion_optics_manager=self.application.get_service(p3)
 
     def bind_preferences(self):
         self.datahub.bind_preferences()
@@ -177,6 +188,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._preference_binder(prefid, ('use_message_colormapping',))
 
     def execute(self):
+        self.set_managers()
+
         if self.use_automated_run_monitor:
             self.monitor = self._monitor_factory()
 
@@ -774,6 +787,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         arun.experiment_executor = weakref.ref(self)()
 
+        print id(arun), self.spectrometer_manager
         arun.spectrometer_manager = self.spectrometer_manager
         arun.extraction_line_manager = self.extraction_line_manager
         arun.ion_optics_manager = self.ion_optics_manager
