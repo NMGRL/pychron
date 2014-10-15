@@ -183,6 +183,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if self._pre_execute_check():
             self.alive = True
             self.end_at_run_completion = False
+            self._err_message = ''
 
             name = self.experiment_queue.name
 
@@ -446,6 +447,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.heading('experiment queue {} finished'.format(exp.name))
 
         if exp.email:
+            if not self._err_message and self.end_at_run_completion:
+                self._err_message='User terminated'
+
             self.info('Notifying user={} email={}'.format(exp.username, exp.email))
             self.user_notifier.notify(exp, last_runid, self._err_message)
 
@@ -624,7 +628,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                         # self.non_clear_update_needed = True
                 self.measuring_run = None
                 self.extracting_run = None
-
+                self._err_message = 'User Canceled'
                 # self.current_run = None
 
     def _end_runs(self):
