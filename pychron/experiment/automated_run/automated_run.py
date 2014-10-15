@@ -1861,32 +1861,14 @@ anaylsis_type={}
         ctx = self.spec.make_script_context()
         script.setup_context(is_last=self.is_last, **ctx)
 
-        # spec = self.spec
-        # hdn = convert_extract_device(spec.extract_device)
-        # #hdn = spec.extract_device.replace(' ', '_').lower()
-        # an = spec.analysis_type.split('_')[0]
-        # script.setup_context(tray=spec.tray,
-        # position=self.get_position_list(),
-        #                      disable_between_positions=spec.disable_between_positions,
-        #                      duration=spec.duration,
-        #                      extract_value=spec.extract_value,
-        #                      extract_units=spec.extract_units,
-        #                      cleanup=spec.cleanup,
-        #                      extract_device=hdn,
-        #                      analysis_type=an,
-        #                      ramp_rate=spec.ramp_rate,
-        #                      pattern=spec.pattern,
-        #                      beam_diameter=spec.beam_diameter,
-        #                      ramp_duration=spec.ramp_duration,
-        #                      is_last=self.is_last)
-
     def _get_yaml_parameter(self, script, key, default):
         if not script:
             return default
 
         m = ast.parse(script.text)
-        docstr = ast.get_docstring(m).strip()
+        docstr = ast.get_docstring(m)
         if docstr:
+            docstr=docstr.strip()
             self.debug('{} {} metadata\n{}'.format(script.name, key, docstr))
             try:
                 params = yaml.load(docstr)
