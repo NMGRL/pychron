@@ -226,11 +226,9 @@ class DataCollector(Consoleable):
     def _get_fit(self, cnt, det, iso):
         isotopes = self.arar_age.isotopes
         if self.is_baseline:
-            for i in isotopes.itervalues():
-                if i.detector == det:
-                    break
-            name = i.name
-            fit = i.baseline.get_fit(cnt)
+            ix = isotopes[iso]
+            fit = ix.baseline.get_fit(cnt)
+            name = iso
         else:
             try:
                 name = iso
@@ -238,6 +236,7 @@ class DataCollector(Consoleable):
             except KeyError:
                 name = '{}{}'.format(iso, det)
                 iso = isotopes[name]
+
             fit = iso.get_fit(cnt)
 
         return fit, name
@@ -249,7 +248,6 @@ class DataCollector(Consoleable):
 
         #get fit and name
         fit, name = self._get_fit(cnt, det, iso)
-
         graph = self.plot_panel.isotope_graph
         pid=graph.get_plotid_by_ytitle(name)
         if pid is not None:
