@@ -22,7 +22,7 @@
 from unittest import TestCase
 #============= local library imports  ==========================
 from pychron.core.regression.mean_regressor import MeanRegressor  #, WeightedMeanRegressor
-from pychron.core.regression.new_york_regressor import ReedYorkRegressor
+from pychron.core.regression.new_york_regressor import ReedYorkRegressor, NewYorkRegressor
 from pychron.core.regression.ols_regressor import OLSRegressor
 # from pychron.core.regression.york_regressor import YorkRegressor
 from pychron.core.regression.tests.standard_data import mean_data, filter_data, ols_data, pearson
@@ -137,6 +137,9 @@ class ReedRegressionTest(PearsonRegressionTest, TestCase):
     kind = 'reed'
 
 
+class NewYorkRegressionTest(PearsonRegressionTest, TestCase):
+    reg_klass = NewYorkRegressor
+    kind = 'reed'
 # class WeightedMeanRegressionTest(RegressionTestCase, TestCase):
 #     @staticmethod
 #     def regressor_factory():
