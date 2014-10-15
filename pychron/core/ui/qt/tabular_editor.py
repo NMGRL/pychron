@@ -418,6 +418,9 @@ class _TabularEditor(qtTabularEditor):
     col_widths = List
     key_pressed = Any
     model = Instance(myTabularModel)
+    def _update_changed(self):
+        print 'asfdasdf'
+        super(_TabularEditor, self)._update_changed()
 
     def init(self, parent):
         factory = self.factory

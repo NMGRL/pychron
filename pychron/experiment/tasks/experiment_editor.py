@@ -84,13 +84,16 @@ class ExperimentEditor(BaseTraitsEditor):
                 return True
 
     def traits_view(self):
+        # show row titles is causing a layout issue when resetting queues
+        # disabling show_row_titles for the moment.
+
         arun_grp = UItem('automated_runs',
                          editor=myTabularEditor(adapter=self.tabular_adapter_klass(),
                                                 operations=['delete',
                                                             'move', 'edit'],
                                                 bgcolor=self.bgcolor,
                                                 editable=self.automated_runs_editable,
-                                                show_row_titles=True,
+                                                # show_row_titles=True,
                                                 dclicked='dclicked',
                                                 selected='selected',
                                                 paste_function='paste_function',

@@ -226,6 +226,19 @@ class ExperimentEditorTask(EditorTask):
         editor.dirty = False
         self._show_pane(self.experiment_factory_pane)
 
+    #     self._testing()
+    #
+    # def _testing(self):
+    #     editor=self.active_editor
+    #     queue = editor.queue
+    #     editor.executed = True
+    #     queue.executed_runs = queue.automated_runs[:]
+    #     for i,ei in enumerate(queue.executed_runs):
+    #         ei.aliquot = i+1
+    #
+    #     queue.automated_runs = []#queue.automated_runs[2:]
+
+
     def _check_opened(self, path):
         return next((e for e in self.editor_area.editors if e.path == path), None)
 
@@ -478,11 +491,11 @@ class ExperimentEditorTask(EditorTask):
     def _update_blocks(self):
         self.manager.experiment_factory.run_factory.load_run_blocks()
 
-    @on_trait_change('active_editor:queue:update_needed')
-    def _update_runs(self, new):
-        self.manager.update_info()
-        if self.active_editor.queue.initialized:
-            self.active_editor.dirty = True
+    # @on_trait_change('active_editor:queue:update_needed')
+    # def _update_runs(self, new):
+    #     self.manager.update_info()
+    #     if self.active_editor.queue.initialized:
+    #         self.active_editor.dirty = True
 
     @on_trait_change('editor_area:editors[]')
     def _update_editors(self, new):
