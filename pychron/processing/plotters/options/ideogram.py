@@ -64,8 +64,6 @@ class IdeogramOptions(AgeOptions):
     mean_indicator_fontname = Enum(*FONTS)
     mean_indicator_fontsize = Enum(*SIZES)
 
-    label_fontsize = Enum(*SIZES)
-
     mean_sig_figs = Int
 
     refresh_asymptotic_button = Button
@@ -278,11 +276,6 @@ class IdeogramOptions(AgeOptions):
                            self._get_label_font_group(),
                            label='Fonts')
         return orgp, label_grp
-
-    def _get_label_font_group(self):
-        g = VGroup(UItem('label_fontsize'),
-                   label='Labels')
-        return g
 
     def _get_indicator_font_group(self):
         g = VGroup(HGroup(Item('mean_indicator_fontname', label='Mean Indicator'),

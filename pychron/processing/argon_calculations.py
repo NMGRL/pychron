@@ -35,6 +35,7 @@ from pychron.core.stats.core import calculate_weighted_mean
 
 
 
+
 #============= local library imports  ==========================
 
 
@@ -101,19 +102,16 @@ def calculate_isochron(analyses, reg='NewYork'):
                              xds, xdes, xns, xnes, yns, ynes,
                              reg)
 
-    print 'regx', regx.calculate_ci_error(0),regx.get_intercept_error()
-    print 'reg', reg.calculate_ci_error(0), reg.get_intercept_error()
-
     xint = ufloat(regx.get_intercept(), regx.get_intercept_error())
     # xint = ufloat(reg.x_intercept, reg.x_intercept_error)
     try:
-        R = xint ** -1
+        r = xint ** -1
     except ZeroDivisionError:
-        R = 0
+        r = 0
 
     age = ufloat(0, 0)
-    if R > 0:
-        age = age_equation((ref.j.nominal_value, 0), R, arar_constants=ref.arar_constants)
+    if r > 0:
+        age = age_equation((ref.j.nominal_value, 0), r, arar_constants=ref.arar_constants)
     return age, reg, (xs, ys, xerrs, yerrs)
 
 

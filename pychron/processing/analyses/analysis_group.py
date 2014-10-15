@@ -167,12 +167,15 @@ class AnalysisGroup(HasTraits):
 
     @cached_property
     def _get_nanalyses(self):
-        return len([ai for ai in self.analyses if not ai.is_omitted()])
+        return len(list(self.clean_analyses()))
+
+    def clean_analyses(self):
+        return (ai for ai in self.analyses if not ai.is_omitted())
 
     def _get_values(self, attr):
-        vs = (getattr(ai, attr) for ai in self.analyses
-              if not ai.is_omitted())
-
+        # vs = (getattr(ai, attr) for ai in self.analyses
+        #       if not ai.is_omitted())
+        vs = (getattr(ai, attr) for ai in self.clean_analyses())
         vs = [vi for vi in vs if vi is not None]
         if vs:
             vs, es = zip(*[(v.nominal_value, v.std_dev) for v in vs])
@@ -204,10 +207,10 @@ class AnalysisGroup(HasTraits):
         return self._calculate_mean(attr, use_weights=True, error_kind=error_kind)
 
     def get_isochron_data(self):
-        return calculate_isochron(self.analyses)
+        return calculate_isochron(list(self.clean_analyses()))
 
     def _calculate_isochron_age(self):
-        args = calculate_isochron(self.analyses)
+        args = calculate_isochron(list(self.clean_analyses()))
         if args:
             age = args[0]
             reg = args[1]

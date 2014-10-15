@@ -33,7 +33,6 @@ from pychron.processing.plotters.arar_figure import BaseArArFigure
 from pychron.graph.error_ellipse_overlay import ErrorEllipseOverlay
 from pychron.core.stats import validate_mswd
 
-N = 500
 
 
 class OffsetPlotLabel(PlotLabel):
@@ -174,8 +173,8 @@ class InverseIsochron(Isochron):
         l, _ = graph.new_series(rxs, rys, color=scatter.color)
         graph.set_series_label('fit{}'.format(self.group_id))
 
-        # l.index.set_data(rxs)
-        # l.value.set_data(rys)
+        l.index.set_data(rxs)
+        l.value.set_data(rys)
         xs = l.index.get_data()
         lci, uci = reg.calculate_error_envelope(xs)
         ee = ErrorEnvelopeOverlay(component=l,
@@ -239,6 +238,7 @@ class InverseIsochron(Isochron):
         u = self._ref_age_units
 
         age = self.analysis_group.isochron_age
+
         v = age.nominal_value
         e = age.std_dev
         p = format_percent_error(v, e)
@@ -288,18 +288,10 @@ class InverseIsochron(Isochron):
 
         if self._cached_data:
             reg = self._cached_reg
-            # xs, ys, xerr, yerr = self._cached_data
 
-            # nxs = delete(xs, sel)
-            # nys = delete(ys, sel)
-            # nxerr = delete(xerr, sel)
-            # nyerr = delete(yerr, sel)
-
-            # reg = ReedYorkRegressor(xs=nxs, ys=nys,
-            #                         xserr=nxerr, yserr=nyerr)
-            # reg.trait_set(xs=nxs, ys=nys,xserr=nxerr, yserr=nyerr)
             reg.user_excluded = sel
             reg.dirty = True
+            reg.error_calc_type= self.options.error_calc_method
             reg.calculate()
 
             fit = self.graph.plots[0].plots['fit{}'.format(self.group_id)][0]
@@ -311,6 +303,8 @@ class InverseIsochron(Isochron):
 
             fit.index.set_data(rxs)
             fit.value.set_data(rys)
+
+            fit.error_envelope.invalidate()
 
             lci, uci = reg.calculate_error_envelope(rxs)
             fit.error_envelope.lower = lci
@@ -326,7 +320,6 @@ class InverseIsochron(Isochron):
     def update_index_mapper(self, obj, name, old, new):
         if new is True:
             self.update_graph_metadata(None, name, old, new)
-
 
     #===============================================================================
     # utils
