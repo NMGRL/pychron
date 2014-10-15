@@ -1626,9 +1626,7 @@ anaylsis_type={}
             self.plot_panel.total_counts += ncounts
             invoke_in_main_thread(self._setup_isotope_graph, starttime_offset, color, grpname)
 
-        # dm = self.persister.data_manager
         with self.persister.writer_ctx():
-            # with dm.open_file(self.current_data_frame):
             m.measure()
 
         mem_log('post measure')
@@ -1657,7 +1655,6 @@ anaylsis_type={}
 
         graph.set_x_limits(min_=min_, max_=max_)
 
-        # nfs = self.collector.get_fit_block(0, fits)
         series = self.collector.series_idx
         for k, iso in self.arar_age.isotopes.iteritems():
             idx = graph.get_plotid_by_ytitle(k)
@@ -1674,18 +1671,6 @@ anaylsis_type={}
                                      add_inspector=False,
                                      add_tools=False)
 
-        # for pi, (fi, dn) in enumerate(zip(nfs, self._active_detectors)):
-        #     #only add if this series doesnt exist for this plot
-        #     try:
-        #         graph.series[pi][series]
-        #     except IndexError:
-        #         graph.new_series(marker='circle',
-        #                          type='scatter',
-        #                          marker_size=1.25,
-        #                          fit=fi,
-        #                          plotid=pi,
-        #                          add_inspector=False,
-        #                          add_tools=False)
         return graph
 
     def _wait_for(self, predicate, msg):
