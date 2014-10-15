@@ -87,8 +87,7 @@ class BaseEditorTask(BaseManagerTask):
             path = self.open_file_dialog()
 
         if path:
-            self._open_file(path, **kw)
-            return True
+            return self._open_file(path, **kw)
         else:
             self._open_abort()
 

@@ -249,6 +249,7 @@ class ExperimentEditorTask(EditorTask):
 
                 manager.path = path
                 manager.update_info()
+                return True
 
     def _open_experiment(self, path):
         name = os.path.basename(path)
