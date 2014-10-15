@@ -60,6 +60,8 @@ class ExperimentEditorTask(EditorTask):
 
     bgcolor = Color
 
+    automated_runs_editable = Bool
+
     def new_pattern(self):
         pm = PatternMakerView()
         self.window.application.open_view(pm)
@@ -112,25 +114,28 @@ class ExperimentEditorTask(EditorTask):
         if self.use_notifications:
             self.notifier.close()
 
-    def activated(self):
-
+    def bind_preferences(self):
         #notifications
-        bind_preference(self, 'use_notifications',
-                        'pychron.experiment.use_notifications')
-        bind_preference(self.notifier, 'port',
-                        'pychron.experiment.notifications_port')
+
+        self._preference_binder('pychron.experiment',
+                                ('use_notifications',
+                                 'notifications_port',
+                                'automated_run_editable'))
+
         #force notifier setup
         if self.use_notifications:
             self.notifier.setup(self.notifier.port)
 
-            #sys logger
-        bind_preference(self, 'use_syslogger',
-                        'pychron.use_syslogger')
+        #sys logger
+        bind_preference(self, 'use_syslogger', 'pychron.use_syslogger')
         if self.use_syslogger:
             self._use_syslogger_changed()
 
         color_bind_preference(self, 'bgcolor', 'pychron.experiment.bg_color')
 
+    def activated(self):
+
+        self.bind_preferences()
         super(ExperimentEditorTask, self).activated()
 
     def _use_syslogger_changed(self):
@@ -207,7 +212,9 @@ class ExperimentEditorTask(EditorTask):
                 txt, is_uv = self._open_txt(path)
 
             klass = UVExperimentEditor if is_uv else ExperimentEditor
-            editor = klass(path=path, bgcolor=self.bgcolor)
+            editor = klass(path=path,
+                           automated_runs_editable=self.automated_runs_editable,
+                           bgcolor=self.bgcolor)
             editor.new_queue(txt)
             self._open_editor(editor)
         else:

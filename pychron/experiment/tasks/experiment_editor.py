@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Instance, Unicode, Property, DelegatesTo, Color
+from traits.api import Instance, Unicode, Property, DelegatesTo, Color, Bool
 from traitsui.api import View, UItem
 
 #============= standard library imports ========================
@@ -50,6 +50,8 @@ class ExperimentEditor(BaseTraitsEditor):
     tabular_adapter_klass = AutomatedRunSpecAdapter
     executed_tabular_adapter_klass = ExecutedAutomatedRunSpecAdapter
     bgcolor = Color
+
+    automated_runs_editable = Bool
 
     def set_bgcolor(self, c):
         self.bgcolor=c
@@ -87,7 +89,7 @@ class ExperimentEditor(BaseTraitsEditor):
                                                 operations=['delete',
                                                             'move', 'edit'],
                                                 bgcolor=self.bgcolor,
-                                                editable=True,
+                                                editable=self.automated_runs_editable,
                                                 show_row_titles=True,
                                                 dclicked='dclicked',
                                                 selected='selected',
