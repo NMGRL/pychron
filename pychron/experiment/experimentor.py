@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+#   http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -309,17 +309,9 @@ class Experimentor(IsotopeDatabaseManager):
         rf.set_selected_runs(new)
 
     def _executor_factory(self):
-        p1 = 'pychron.extraction_line.extraction_line_manager.ExtractionLineManager'
-        p2 = 'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager'
-        p3 = 'pychron.spectrometer.ion_optics_manager.IonOpticsManager'
-        kw = dict()
-        if self.application:
-            spec = self.application.get_service(p2)
-            kw = dict(extraction_line_manager=self.application.get_service(p1),
-                      spectrometer_manager=spec,
-                      ion_optics_manager=self.application.get_service(p3), )
-
-        e = ExperimentExecutor(mode=self.mode, application=self.application, **kw)
+        e = ExperimentExecutor(
+            mode=self.mode,
+            application=self.application)
         e.bind_preferences()
 
         return e
