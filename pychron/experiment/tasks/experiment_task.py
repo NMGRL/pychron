@@ -364,7 +364,7 @@ class ExperimentEditorTask(EditorTask):
         self._open_editor(editor)
         # self._show_pane(self.experiment_factory_pane)
 
-        if not self.manager.executor.isAlive():
+        if not self.manager.executor.is_alive():
             self.manager.executor.executable = False
 
     def _save_file(self, path):
@@ -470,7 +470,7 @@ class ExperimentEditorTask(EditorTask):
                 self.active_editor.close()
 
                 self._open_editor(editor)
-                if not self.manager.executor.isAlive():
+                if not self.manager.executor.is_alive():
                     self.manager.executor.executable = False
 
 
@@ -624,7 +624,7 @@ class ExperimentEditorTask(EditorTask):
         """
             Prompt the user to save when exiting.
         """
-        if self.manager.executor.isAlive():
+        if self.manager.executor.is_alive():
             name = self.manager.executor.experiment_queue.name
             result = self._confirmation('{} is running. Are you sure you want to quit?'.format(name))
             if result in (CANCEL, NO):
