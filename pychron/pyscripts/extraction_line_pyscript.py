@@ -32,6 +32,7 @@ from traits.api import List
 
 
 
+
 #============= standard library imports ========================
 import time
 #============= local library imports  ==========================
@@ -154,6 +155,7 @@ class ExtractionPyScript(ValvePyScript):
         """
             provide default values for all the properties exposed in the script
         """
+
         self.setup_context(analysis_type='',
                            position='',
                            pattern='',
@@ -618,7 +620,10 @@ class ExtractionPyScript(ValvePyScript):
 
     @property
     def analysis_type(self):
-        return self._get_property('analysis_type')
+        at = self._get_property('analysis_type')
+        self.debug('getting analysis type for {}. '
+                   'analysis_type={}'.format(self.run_identifier, at))
+        return at
         # return self.get_context()['analysis_type']
 
     @property
@@ -655,7 +660,9 @@ class ExtractionPyScript(ValvePyScript):
     def beam_diameter(self):
         return self._get_property('beam_diameter')
         # return self.get_context()['beam_diameter']
-
+    @property
+    def run_identifier(self):
+        return self._get_property('run_identifier')
     #===============================================================================
     # private
     #===============================================================================

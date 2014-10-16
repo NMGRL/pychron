@@ -1695,6 +1695,7 @@ anaylsis_type={}
         valid = True
         if s and os.path.isfile(s.filename):
             if s.bootstrap():
+                self.debug('%%%%%%%%%%%%%%%%%%%%%%%%%%%% setting default context for {}'.format(fname))
                 s.set_default_context()
         else:
             valid = False
