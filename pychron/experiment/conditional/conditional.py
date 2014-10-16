@@ -197,6 +197,11 @@ class AutomatedRunConditional(BaseConditional):
             if DEFLECTION_REGEX.findall(comp):
                 v = arun.get_deflection(attr, current=True)
                 comp = '{}{}'.format(self._key, remove_attr(comp))
+            elif '37/39' in comp:
+                v=obj.get_value('37/39')
+                comp = 'ratio3739{}'.format(remove_attr(comp))
+                self._key='ratio3739'
+
             else:
                 try:
                     if self.window:
