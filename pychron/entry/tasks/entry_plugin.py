@@ -61,6 +61,7 @@ class EntryPlugin(BaseTaskPlugin):
                                    path='MenuBar/tools.menu'),
                     SchemaAddition(id='import_irradiation_holder',
                                    factory=ImportIrradiationHolderAction,
+                                   absolute_position='first',
                                    path='MenuBar/Edit'),
                     SchemaAddition(id='labnumber_entry',
                                    factory=LabnumberEntryAction,

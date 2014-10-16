@@ -43,3 +43,4 @@ CHANGELOG
 * added Queue/Default Conditionals
 * updated user notification
 * added procedures concept e.g. QuickAir
+* added ImportIrradiationHolderAction
