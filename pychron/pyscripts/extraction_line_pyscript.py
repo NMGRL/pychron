@@ -29,6 +29,9 @@ from traits.api import List
 
 
 
+
+
+
 #============= standard library imports ========================
 import time
 #============= local library imports  ==========================
@@ -201,7 +204,7 @@ class ExtractionPyScript(ValvePyScript):
         st = time.time()
         i = 0
         while 1:
-            if self.canceled():
+            if self.is_canceled():
                 self.console_info('waitfor canceled')
                 return
 

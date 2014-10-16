@@ -198,7 +198,7 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
 
         st = time.time()
         while 1:
-            if script and script.canceled():
+            if script and script.is_canceled():
                 return
             if func(*args, **kwargs):
                 return True
@@ -304,6 +304,7 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
         else:
             cmd = self._build_command(cmd)
 
+        resp = None
         for i in range(ntries + 1):
             resp = self._parse_response(self.ask(cmd, verbose=verbose))
             if verbose:

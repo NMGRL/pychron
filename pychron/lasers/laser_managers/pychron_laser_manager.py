@@ -214,6 +214,10 @@ class PychronLaserManager(BaseLaserManager):
 
         return cnt >= nsuccess
 
+    def end_extract(self, *args, **kw):
+        self.info('ending extraction. set laser power to 0')
+        self.set_laser_power(0)
+
     def extract(self, value, units=''):
         self.info('set laser output')
         return self._ask('SetLaserOutput {} {}'.format(value, units)) == 'OK'

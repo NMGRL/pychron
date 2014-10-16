@@ -145,7 +145,7 @@ class ExperimentEditorTask(EditorTask):
         self._preference_binder('pychron.experiment',
                                 ('use_notifications',
                                  'notifications_port',
-                                'automated_run_editable'))
+                                 'automated_runs_editable'))
 
         #force notifier setup
         if self.use_notifications:
