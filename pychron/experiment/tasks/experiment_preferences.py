@@ -69,6 +69,8 @@ class ExperimentPreferences(BasePreferencesHelper):
     set_integration_time_on_start = Bool
     default_integration_time = Enum(*QTEGRA_INTEGRATION_TIMES)
 
+    automated_run_editable = Bool
+
     def _get_memory_threshold(self):
         return self._memory_threshold
 
@@ -116,6 +118,8 @@ class ExperimentPreferencesPane(PreferencesPane):
             label='Notifications')
 
         editor_grp = Group(
+            Item('automated_run_editable',
+                 tooltip='Allow user to edit Automated Runs directly within table'),
             Item('use_auto_save',
                  tooltip='If "Use auto save" experiment queue saved after "timeout" seconds'),
             Item('auto_save_delay',

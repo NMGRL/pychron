@@ -623,7 +623,7 @@ class AutomatedRun(Loggable):
         else:
             self.warning('failed to start monitor')
 
-    def isAlive(self):
+    def is_alive(self):
         return self._alive
 
     def heading(self, msg, color=None, *args, **kw):
@@ -1739,7 +1739,7 @@ anaylsis_type={}
             # print sname, sname in SCRIPTS, self.overlapping, self.isAlive()
             if sname in SCRIPTS:
                 script = SCRIPTS[sname]
-                if script.check_for_modifications() or self.isAlive():
+                if script.check_for_modifications() or self.is_alive():
                     self.debug('script {} modified/overlapping. reloading'.format(sname))
                     script = self._bootstrap_script(sname, name)
             else:

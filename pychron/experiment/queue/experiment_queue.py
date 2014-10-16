@@ -15,23 +15,13 @@
 # ===============================================================================
 
 #============= enthought library imports =======================
-from itertools import groupby
-import os
-
 from traits.api import Any, on_trait_change, Int, List, Bool, \
     Instance, Property, Str, HasTraits, Event
 from traitsui.api import View, Item
 from pyface.timer.do_later import do_later
-
-
-
-
-
-
-
-
 #============= standard library imports ========================
-
+from itertools import groupby
+import os
 #============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.ui.qt.tabular_editor import MoveToRow

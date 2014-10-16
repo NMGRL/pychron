@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Instance, Unicode, Property, DelegatesTo, Color
+from traits.api import Instance, Unicode, Property, DelegatesTo, Color, Bool
 from traitsui.api import View, UItem
 
 #============= standard library imports ========================
@@ -51,6 +51,8 @@ class ExperimentEditor(BaseTraitsEditor):
     executed_tabular_adapter_klass = ExecutedAutomatedRunSpecAdapter
     bgcolor = Color
 
+    automated_runs_editable = Bool
+
     def set_bgcolor(self, c):
         self.bgcolor=c
         self.tabular_adapter_klass.odd_bg_color=c
@@ -82,13 +84,16 @@ class ExperimentEditor(BaseTraitsEditor):
                 return True
 
     def traits_view(self):
+        # show row titles is causing a layout issue when resetting queues
+        # disabling show_row_titles for the moment.
+
         arun_grp = UItem('automated_runs',
                          editor=myTabularEditor(adapter=self.tabular_adapter_klass(),
                                                 operations=['delete',
                                                             'move', 'edit'],
                                                 bgcolor=self.bgcolor,
-                                                editable=True,
-                                                show_row_titles=True,
+                                                editable=self.automated_runs_editable,
+                                                # show_row_titles=True,
                                                 dclicked='dclicked',
                                                 selected='selected',
                                                 paste_function='paste_function',

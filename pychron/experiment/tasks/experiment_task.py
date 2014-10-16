@@ -55,6 +55,8 @@ class ExperimentEditorTask(EditorTask):
 
     bgcolor = Color
 
+    automated_runs_editable = Bool
+
     def new_pattern(self):
         pm = self._pattern_maker_view_factory()
         self.window.application.open_view(pm)
@@ -137,25 +139,28 @@ class ExperimentEditorTask(EditorTask):
         if self.use_notifications:
             self.notifier.close()
 
-    def activated(self):
-
+    def bind_preferences(self):
         #notifications
-        bind_preference(self, 'use_notifications',
-                        'pychron.experiment.use_notifications')
-        bind_preference(self.notifier, 'port',
-                        'pychron.experiment.notifications_port')
+
+        self._preference_binder('pychron.experiment',
+                                ('use_notifications',
+                                 'notifications_port',
+                                'automated_run_editable'))
+
         #force notifier setup
         if self.use_notifications:
             self.notifier.setup(self.notifier.port)
 
-            #sys logger
-        bind_preference(self, 'use_syslogger',
-                        'pychron.use_syslogger')
+        #sys logger
+        bind_preference(self, 'use_syslogger', 'pychron.use_syslogger')
         if self.use_syslogger:
             self._use_syslogger_changed()
 
         color_bind_preference(self, 'bgcolor', 'pychron.experiment.bg_color')
 
+    def activated(self):
+
+        self.bind_preferences()
         super(ExperimentEditorTask, self).activated()
 
     def create_dock_panes(self):
@@ -262,7 +267,9 @@ class ExperimentEditorTask(EditorTask):
                 txt, is_uv = self._open_txt(path)
 
             klass = UVExperimentEditor if is_uv else ExperimentEditor
-            editor = klass(path=path, bgcolor=self.bgcolor)
+            editor = klass(path=path,
+                           automated_runs_editable=self.automated_runs_editable,
+                           bgcolor=self.bgcolor)
             editor.new_queue(txt)
             self._open_editor(editor)
         else:
@@ -273,6 +280,22 @@ class ExperimentEditorTask(EditorTask):
         # clear dirty flag
         editor.dirty = False
         self._show_pane(self.experiment_factory_pane)
+
+    #     self._testing()
+    #
+    # def _testing(self):
+    #     editor=self.active_editor
+    #     queue = editor.queue
+    #     editor.executed = True
+    #     queue.executed_runs = queue.automated_runs[:]
+    #     for i,ei in enumerate(queue.executed_runs):
+    #         ei.aliquot = i+1
+    #
+    #     queue.automated_runs = []#queue.automated_runs[2:]
+
+
+    def _check_opened(self, path):
+        return next((e for e in self.editor_area.editors if e.path == path), None)
 
     def _open_xls(self, path):
         """
@@ -495,7 +518,7 @@ class ExperimentEditorTask(EditorTask):
                 self.active_editor.close()
 
                 self._open_editor(editor)
-                if not self.manager.executor.isAlive():
+                if not self.manager.executor.is_alive():
                     self.manager.executor.executable = False
 
     @on_trait_change('manager.experiment_factory:queue_factory:load_name')
@@ -515,11 +538,11 @@ class ExperimentEditorTask(EditorTask):
     def _update_blocks(self):
         self.manager.experiment_factory.run_factory.load_run_blocks()
 
-    @on_trait_change('active_editor:queue:update_needed')
-    def _update_runs(self):
-        self.manager.update_info()
-        if self.active_editor.queue.initialized:
-            self.active_editor.dirty = True
+    # @on_trait_change('active_editor:queue:update_needed')
+    # def _update_runs(self, new):
+    #     self.manager.update_info()
+    #     if self.active_editor.queue.initialized:
+    #         self.active_editor.dirty = True
 
     @on_trait_change('editor_area:editors[]')
     def _update_editors(self, new):

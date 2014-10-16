@@ -64,15 +64,16 @@ class Experimentor(IsotopeDatabaseManager):
         return True
 
     def reset_run_generator(self):
-        if self.executor.isAlive():
+        if self.executor.is_alive():
             self.debug('Queue modified. Reset run generator')
+            #             self.executor.queue_modified = True
             self.executor.set_queue_modified()
 
     def refresh_executable(self, qs=None):
         if qs is None:
             qs = self.experiment_queues
 
-        if self.executor.isAlive():
+        if self.executor.is_alive():
             qs = (self.executor.experiment_queue, )
 
         self.executor.executable = all([ei.is_executable() for ei in qs])
@@ -239,7 +240,7 @@ class Experimentor(IsotopeDatabaseManager):
             the queues are then passed back to execute_queues()
         """
         self.info('Start Executor')
-        if not self.executor.isAlive():
+        if not self.executor.is_alive():
             self.debug('execute_event fired')
             self.execute_event = True
 
@@ -290,14 +291,15 @@ class Experimentor(IsotopeDatabaseManager):
 
             self._set_factory_runs(new)
 
-            a = new[-1]
-            if not a.skip:
-                self.stats.calculate_at(a)
-                self.stats.calculate()
+            if self.executor.is_alive():
+                a = new[-1]
+                if not a.skip:
+                    self.stats.calculate_at(a)
+                    # self.stats.calculate()
 
     @on_trait_change('experiment_factory:queue_factory:delay_between_analyses')
     def handle_delay_between_analyses(self, new):
-        if self.executor.isAlive():
+        if self.executor.is_alive():
             self.executor.experiment_queue.delay_between_analyses = new
 
     def _set_factory_runs(self, new):

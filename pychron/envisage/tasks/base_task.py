@@ -31,6 +31,7 @@ from pyface.tasks.action.schema import SMenu, SMenuBar, SGroup
 from pyface.action.api import ActionItem, Group
 # from pyface.tasks.action.task_action import TaskAction
 from envisage.ui.tasks.action.task_window_launch_group import TaskWindowLaunchAction
+from pychron.envisage.preference_mixin import PreferenceMixin
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import GenericSaveAction, GenericSaveAsAction, \
     GenericFindAction, RaiseAction, RaiseUIAction, ResetLayoutAction, \
@@ -223,7 +224,7 @@ class TaskGroup(Group):
     items = List
 
 
-class BaseTask(Task, Loggable):
+class BaseTask(Task, Loggable, PreferenceMixin):
     application = DelegatesTo('window')
 
     def _show_pane(self, p):

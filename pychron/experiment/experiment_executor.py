@@ -232,7 +232,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     def get_prev_blanks(self):
         return self._prev_blank_id, self._prev_blanks
 
-    def isAlive(self):
+    def is_alive(self):
         return self.alive
 
     def continued(self):
@@ -328,7 +328,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._delay(delay, message='before')
 
         for i, exp in enumerate(self.experiment_queues):
-            if self.isAlive():
+            if self.is_alive():
                 if self._pre_queue_check(exp):
                     break
 
@@ -371,7 +371,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         is_first_analysis = True
         with consumable(func=self._overlapped_run) as con:
             while 1:
-                if not self.isAlive():
+                if not self.is_alive():
                     break
 
                 if self._pre_run_check():
@@ -386,14 +386,14 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
                 self.ms_pumptime_start = None
                 # overlapping = self.current_run and self.current_run.isAlive()
-                overlapping = self.measuring_run and self.measuring_run.isAlive()
+                overlapping = self.measuring_run and self.measuring_run.is_alive()
                 if not overlapping:
-                    if self.isAlive() and cnt < nruns and not is_first_analysis:
+                    if self.is_alive() and cnt < nruns and not is_first_analysis:
                         # delay between runs
                         self._delay(exp.delay_between_analyses)
                     else:
                         self.debug('not delaying between runs isAlive={}, '
-                                   'cnts<nruns={}, is_first_analysis={}'.format(self.isAlive(),
+                                   'cnts<nruns={}, is_first_analysis={}'.format(self.is_alive(),
                                                                                 cnt < nruns, is_first_analysis))
 
                 try:
@@ -500,7 +500,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._do_run(run)
 
         self.debug('{} finished'.format(run.runid))
-        if self.isAlive():
+        if self.is_alive():
             self.debug('spec analysis type {}'.format(spec.analysis_type))
             if spec.analysis_type.startswith('blank'):
                 pb = run.get_baseline_corrected_signals()
@@ -534,7 +534,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                      '_measurement',
                      '_post_measurement'):
 
-            if not self.isAlive():
+            if not self.is_alive():
                 break
 
             if self.monitor and self.monitor.has_fatal_error():
@@ -707,7 +707,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if not ai.do_extraction():
                 ret = self._failed_execution_step('Extraction Failed')
         else:
-            ret = ai.isAlive()
+            ret = ai.is_alive()
 
         self.trait_set(extraction_state_label='', extracting=False)
         self.extracting_run = None
@@ -728,7 +728,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if not ai.do_measurement():
                 ret = self._failed_execution_step('Measurement Failed')
         else:
-            ret = ai.isAlive()
+            ret = ai.is_alive()
 
         self.measuring_run = None
         self.measuring = False
@@ -1493,20 +1493,20 @@ Use Last "blank_{}"= {}
 
     @on_trait_change('experiment_queue:automated_runs[]')
     def _update_automated_runs(self):
-        if self.isAlive():
+        if self.is_alive():
             is_last = len(self.experiment_queue.cleaned_automated_runs) == 0
             if self.extracting_run:
                 self.extracting_run.is_last = is_last
 
     def _stop_button_fired(self):
-        self.debug('%%%%%%%%%%%%%%%%%% Stop fired alive={}'.format(self.isAlive()))
-        if self.isAlive():
+        self.debug('%%%%%%%%%%%%%%%%%% Stop fired alive={}'.format(self.is_alive()))
+        if self.is_alive():
             self.info('stop execution')
             self.stop()
 
     def _cancel_run_button_fired(self):
-        self.debug('cancel run. Executor.isAlive={}'.format(self.isAlive()))
-        if self.isAlive():
+        self.debug('cancel run. Executor.isAlive={}'.format(self.is_alive()))
+        if self.is_alive():
             for crun, kind in ((self.measuring_run, 'measuring'),
                                (self.extracting_run, 'extracting')):
                 if crun:
@@ -1545,7 +1545,7 @@ Use Last "blank_{}"= {}
     # property get/set
     #===============================================================================
     def _get_can_start(self):
-        return self.executable and not self.isAlive()
+        return self.executable and not self.is_alive()
 
     #===============================================================================
     # defaults
