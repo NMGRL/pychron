@@ -174,7 +174,17 @@ class MassSpecExtractor(Extractor):
                 # is level already in dest
                 dbl = dest.get_irradiation_level(name, mli.Level)
                 if dbl is None:
-                    dest.add_irradiation_level(mli.Level, dbirrad, mli.SampleHolder, dbpr)
+                    hname = mli.SampleHolder
+                    #check that irradiation holder is in the database
+                    dbholder = dest.get_irradiation_holder(hname)
+                    if not dbholder:
+                        self.warning_dialog('Irradiation Holder "{}" does not exist in the database\n'
+                                            'Contact an adminstrator or '
+                                            'add using "Edit/Import Irradaition Holder"'.format(hname))
+                        sess.rollback()
+                        break
+
+                    dest.add_irradiation_level(mli.Level, dbirrad, dbholder, dbpr)
                     added_to_db = True
 
                 # add all irradiation positions for this level
