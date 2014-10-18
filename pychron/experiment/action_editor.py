@@ -36,7 +36,7 @@ from pychron.envisage.tasks.pane_helpers import icon_button_editor
 
 
 class ActionItem(HasTraits):
-    attr = Enum('age', 'kca', 'rad40_percent', 'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36', 'Ar41')
+    attr = Enum('age', 'kca', 'rad40_percent', 'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36', 'Ar41', '37/39')
     comp = Enum('less than', 'greater than', 'between')
     value = Float
     value1 = Float
@@ -54,7 +54,7 @@ class ActionItem(HasTraits):
 
     def assemble(self):
         return dict(attr=self.attr,
-                    comp=self.label,
+                    check=self.label,
                     value=self.value,
                     value1=self.value,
                     abbreviated_count_ratio=1.0,
