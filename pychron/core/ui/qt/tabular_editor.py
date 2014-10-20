@@ -266,10 +266,11 @@ class _myTableView(_TableView, ConsumerMixin):
 
                 if len(si):
                     idx = si[-1].row()
+
+                if self._cut_indices:
                     if not any((ci <= idx for ci in self._cut_indices)):
                         idx += len(self._cut_indices)
 
-                if self._cut_indices:
                     for ci in self._cut_indices:
                         self._editor.model.removeRow(ci)
 

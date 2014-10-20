@@ -1312,12 +1312,15 @@ anaylsis_type={}
                     doc = yaml.load(fp)
 
                     for c in doc:
-                        attr = c['attr']
-                        comp = c['comp']
-                        start = c['start']
-                        freq = c.get('frequency', 1)
-                        acr = c.get('abbreviated_count_ratio', 1)
-                        self.py_add_truncation(attr, comp, int(start), freq, acr)
+                        try:
+                            attr = c['attr']
+                            comp = c['check']
+                            start = c['start']
+                            freq = c.get('frequency', 1)
+                            acr = c.get('abbreviated_count_ratio', 1)
+                            self.py_add_truncation(attr, comp, int(start), freq, acr)
+                        except BaseException:
+                            self.warning('Failed adding truncation. {}'.format(c))
 
             else:
                 try:
