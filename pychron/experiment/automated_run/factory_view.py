@@ -63,9 +63,9 @@ class FactoryView(HasTraits):
             HGroup(
                 Item('use_cdd_warming', label='CDD Warm',
                      tooltip='Use the CDD warming routine at end of measurement'),
-                Item('collection_time_zero_offset',
-                     label='T_o offset (s)',
-                     tooltip='# of seconds afer inlet opens to set time zero'),
+                # Item('collection_time_zero_offset',
+                #      label='T_o offset (s)',
+                #      tooltip='# of seconds afer inlet opens to set time zero'),
                 Item('overlap', label='Overlap (s)', tooltip='Duration to wait before staring next run')),
             self._step_heat_group(),
             HGroup(

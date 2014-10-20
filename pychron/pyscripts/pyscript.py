@@ -78,7 +78,7 @@ def verbose_skip(func):
             raise PyscriptError(obj.name, 'invalid arguments count for {}, args={} kwargs={}'.format(fname,
                                                                                                      args, kw))
         if obj.testing_syntax or obj.is_canceled() or obj.is_truncated():
-            return
+            return 0
 
         obj.debug('{} {} {}'.format(fname, args, kw))
 
@@ -99,7 +99,7 @@ def skip(func):
 def count_verbose_skip(func):
     def decorator(obj, *args, **kw):
         if obj.is_truncated() or obj.is_canceled():
-            return
+            return 0
 
         fname = func.__name__
         if fname.startswith('_m_'):
@@ -115,7 +115,7 @@ def count_verbose_skip(func):
             raise PyscriptError(fname, 'invalid arguments count for {}, args={} kwargs={}'.format(fname, args, kw))
         if obj.testing_syntax:
             func(obj, calc_time=True, *args, **kw)
-            return
+            return 0
 
         obj.debug('{} {} {}'.format(fname, args, kw))
 
@@ -620,6 +620,8 @@ class PyScript(Loggable):
 
         if self.testing_syntax or self._cancel:
             return
+
+        duration = round(duration, 1)
 
         self.info('SLEEP {}'.format(duration))
         if globalv.experiment_debug:

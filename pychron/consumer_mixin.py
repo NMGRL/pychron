@@ -27,6 +27,12 @@ import time
 
 class ConsumerMixin(object):
     _consumer_queue = None
+    _should_consume = False
+    _consume_func = None
+    _main = False
+    _buftime = 0
+    _consumer = None
+    _timeout = 0
 
     def setup_consumer(self, func=None, buftime=None, auto_start=True, main=False, timeout=None):
         self._consume_func = func
@@ -36,6 +42,7 @@ class ConsumerMixin(object):
         self._consumer = Thread(target=self._consume,
                                 args=(timeout, ),
                                 name='consumer')
+        self._timeout = timeout
         self._should_consume = True
         if auto_start:
             self._consumer.setDaemon(1)
@@ -52,13 +59,22 @@ class ConsumerMixin(object):
             return self._consumer_queue.empty()
 
     def start(self):
-        if self._consumer:
+        self._should_consume=True
+        if not self._consumer:
+            self._consumer = Thread(target=self._consume,
+                                    args=(self._timeout, ),
+                                    name='consumer')
+        if not self._consumer.isAlive():
             self._consumer.setDaemon(1)
             self._consumer.start()
 
     def stop(self):
         if self._consumer:
             self._should_consume = False
+        self._consumer = None
+
+    start_consuming = start
+    stop_consuming = stop
 
     def add_consumable(self, v, timeout=None):
         if not self._consumer_queue:

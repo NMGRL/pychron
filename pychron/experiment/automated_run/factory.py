@@ -84,8 +84,8 @@ def increment_value(m, increment=1):
 
 
 def increment_position(pos):
-    for regex, sfunc, ifunc in (SLICE_REGEX, SSLICE_REGEX,
-                                PSLICE_REGEX, CSLICE_REGEX, TRANSECT_REGEX):
+    for regex, sfunc, ifunc, _ in (SLICE_REGEX, SSLICE_REGEX,
+                                   PSLICE_REGEX, CSLICE_REGEX, TRANSECT_REGEX):
         if regex.match(pos):
             return ifunc(pos)
     else:
@@ -103,8 +103,8 @@ def increment_position(pos):
 
 
 def generate_positions(pos):
-    for regex, func, ifunc, name in (SLICE_REGEX, SSLICE_REGEX,
-                                     PSLICE_REGEX, CSLICE_REGEX, TRANSECT_REGEX):
+    for regex, func, ifunc, _ in (SLICE_REGEX, SSLICE_REGEX,
+                                  PSLICE_REGEX, CSLICE_REGEX, TRANSECT_REGEX):
         if regex.match(pos):
             return func(pos)
     else:
@@ -228,6 +228,7 @@ class AutomatedRunFactory(PersistenceLoggable):
     trunc_comp = Enum('>', '<', '>=', '<=', '=')
     trunc_crit = Float(enter_set=True, auto_set=False)
     trunc_start = Int(100, enter_set=True, auto_set=False)
+    use_simple_truncation = Bool
 
     truncation_str = Property(depends_on='trunc_+')
     truncation_path = String
@@ -278,22 +279,24 @@ class AutomatedRunFactory(PersistenceLoggable):
 
     pattributes = ('collection_time_zero_offset',
                    'selected_irradiation', 'selected_level',
-                   'extract_value', 'extract_units','cleanup',
-                   'duration', 'beam_diameter','ramp_duration','overlap',
+                   'extract_value', 'extract_units', 'cleanup',
+                   'duration', 'beam_diameter', 'ramp_duration', 'overlap',
                    'pattern', 'labnumber', 'position',
-                   'weight', 'comment', 'template')
+                   'weight', 'comment', 'template',
+                   'use_simple_truncation', 'truncation_path')
 
     _no_clear_labnumber = False
 
     def setup_files(self):
         self.load_templates()
         self.load_run_blocks()
-        self.remote_patterns = self._get_patterns()
+        # self.remote_patterns = self._get_patterns()
         self.load_patterns()
+        self.load_truncations()
 
     def activate(self, load_persistence):
-        self.load_truncations()
-        self.load_run_blocks()
+        # self.load_run_blocks()
+        self.truncation_path = NULL_STR
         if load_persistence:
             self.load()
 
@@ -504,10 +507,13 @@ class AutomatedRunFactory(PersistenceLoggable):
     def _get_run_attr(self):
         return ['position',
                 'extract_value', 'extract_units', 'cleanup', 'duration',
+                'use_cdd_warming',
+                'truncation_str',
                 'collection_time_zero_offset',
                 'pattern', 'beam_diameter',
                 'weight', 'comment',
                 'sample', 'irradiation',
+                'ramp_duration',
                 'skip', 'mass_spectrometer', 'extract_device']
 
     def _set_run_values(self, arv, excludes=None):
@@ -521,13 +527,18 @@ class AutomatedRunFactory(PersistenceLoggable):
         for attr in self._get_run_attr():
             if attr in excludes:
                 continue
+
+            sattr = attr
+            if attr == 'truncation_str':
+                sattr = 'truncate_conditional'
+
             v = getattr(self, attr)
             if attr == 'pattern':
                 if not self._use_pattern():
                     v = ''
 
-            setattr(arv, attr, v)
-            setattr(arv, '_prev_{}'.format(attr), v)
+            setattr(arv, sattr, v)
+            setattr(arv, '_prev_{}'.format(sattr), v)
 
         if self.aliquot:
             self.debug('setting user defined aliquot')
@@ -929,11 +940,12 @@ class AutomatedRunFactory(PersistenceLoggable):
         return ['RunBlock', LINE_STR] + blocks
 
     def _get_patterns(self):
-        p = paths.pattern_dir
-        extension = '.lp'
-        patterns = list_directory(p, extension)
-        return ['Pattern', 'None', LINE_STR, 'Remote Patterns'] + self.remote_patterns + \
-               [LINE_STR, 'Local Patterns'] + patterns
+        return ['Pattern', LINE_STR] + self.remote_patterns
+        # p = paths.pattern_dir
+        # extension = '.lp'
+        # patterns = list_directory(p, extension)
+        # return ['Pattern', 'None', LINE_STR, 'Remote Patterns'] + self.remote_patterns + \
+        #        [LINE_STR, 'Local Patterns'] + patterns
 
     def _get_templates(self):
         p = paths.incremental_heat_template_dir
@@ -944,13 +956,13 @@ class AutomatedRunFactory(PersistenceLoggable):
         else:
             self.template = 'Step Heat Template'
 
-        return ['Step Heat Template', 'None', ''] + temps
+        return ['Step Heat Template', LINE_STR] + temps
 
     def _get_truncations(self):
         p = paths.conditionals_dir
         extension = '.yaml'
         temps = list_directory(p, extension, remove_extension=True)
-        return ['', ] + temps
+        return [NULL_STR, ] + temps
 
     def _get_beam_diameter(self):
         bd = ''
@@ -966,14 +978,17 @@ class AutomatedRunFactory(PersistenceLoggable):
             pass
 
     def _get_truncation_str(self):
-
-        if self.trunc_attr is not None and \
+        r = ''
+        if self.truncation_path !=NULL_STR:
+            r = os.path.basename(self.truncation_path)
+        elif self.use_simple_truncation and self.trunc_attr is not None and \
                         self.trunc_comp is not None and \
                         self.trunc_crit is not None:
-            return '{}{}{}, {}'.format(self.trunc_attr, self.trunc_comp,
+            r =  '{}{}{}, {}'.format(self.trunc_attr, self.trunc_comp,
                                        self.trunc_crit, self.trunc_start)
-        else:
-            return ''
+        return r
+        # elif self.truncation_path:
+        #     return os.path.basename(self.truncation_path)
 
     @cached_property
     def _get_flux(self):
@@ -1012,6 +1027,14 @@ class AutomatedRunFactory(PersistenceLoggable):
     #===============================================================================
     # handlers
     #===============================================================================
+    def _use_simple_truncation_changed(self, new):
+        if new:
+            self.truncation_path = NULL_STR
+
+    def _truncation_path_changed(self, new):
+        if not new==NULL_STR:
+            self.use_simple_truncation=False
+
     @on_trait_change('[measurement_script, post_measurement_script, '
                      'post_equilibration_script, extraction_script]:edit_event')
     def _handle_edit_script(self, new):
@@ -1079,12 +1102,11 @@ class AutomatedRunFactory(PersistenceLoggable):
                 self._selected_runs and \
                 not self.suppress_update:
 
-            if name == 'truncation_path':
-                t = new
+            # if name == 'truncation_path':
+            #     t = new
                 # t = add_extension(new, '.yaml') if new else None
-            else:
-                t = self.truncation_str
-
+            # else:
+            t = self.truncation_str
             self._set_truncation(t)
 
     def _set_truncation(self, t):

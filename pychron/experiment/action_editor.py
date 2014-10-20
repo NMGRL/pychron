@@ -49,7 +49,7 @@ class ActionItem(HasTraits):
         super(ActionItem, self).__init__(*args, **kw)
 
         if saved_state:
-            saved_state.pop('comp')
+            # saved_state.pop('comp')
             self.trait_set(**saved_state)
 
     def assemble(self):

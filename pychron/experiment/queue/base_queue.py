@@ -301,6 +301,7 @@ class BaseExperimentQueue(ExperimentBlock):
                ('beam_diam', 'beam_diameter'),
                'pattern',
                ('extraction', 'extraction_script'),
+               ('ramp', 'ramp_duration'),
                ('t_o', 'collection_time_zero_offset'),
                ('measurement', 'measurement_script'),
                ('truncate', 'truncate_conditional'),

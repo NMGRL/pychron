@@ -640,7 +640,6 @@ class AutomatedRun(Loggable):
         return self.spectrometer_manager.spectrometer.get_detector(det)
 
     def set_integration_time(self, v):
-        print id(self)
         spectrometer = self.spectrometer_manager.spectrometer
         nv = spectrometer.set_integration_time(v, force=True)
         self._integration_seconds = nv
@@ -822,7 +821,7 @@ class AutomatedRun(Loggable):
         self.debug('DO EXTRACTION {}'.format(self.runner))
         self.extraction_script.runner = self.runner
         self.extraction_script.manager = self.experiment_executor
-        self.extraction_script.run_identifier = self.runid
+        self.extraction_script.set_run_identifier(self.runid)
 
         syn_extractor = None
         if self.extraction_script.syntax_ok(warn=False):
