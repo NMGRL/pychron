@@ -39,9 +39,12 @@ class Emailer(HasTraits):
         server = self.connect()
         if server:
             msg = self._message_factory(addr, sub, msg)
-            server.sendmail(self.sender, [addr], msg.as_string())
-            server.close()
-            return True
+            try:
+                server.sendmail(self.sender, [addr], msg.as_string())
+                server.close()
+                return True
+            except BaseException:
+                pass
 
     def _message_factory(self, addr, sub, txt):
         msg = MIMEMultipart()
@@ -64,6 +67,8 @@ class Emailer(HasTraits):
                 self._server = server
             except smtplib.SMTPServerDisconnected:
                 return
+        else:
+            self._server.connect(self.server_host, self.server_port)
 
         return self._server
 
