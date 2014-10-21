@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from traits.api import Int, on_trait_change, Str, Property, cached_property, \
     Float, Bool, HasTraits, Instance, TraitError, Button
-from traitsui.api import View, Item, EnumEditor, VGroup, HGroup, VFold
+from traitsui.api import View, Item, EnumEditor, VGroup, HGroup
 # ============= standard library imports ========================
 import os
 import ast
@@ -187,8 +187,7 @@ class MeasurementContextEditor(ContextEditor):
             Item('object.multicollect.counts'),
             Item('object.multicollect.isotope'),
             Item('object.multicollect.detector'),
-            show_border=True,
-            label='Multicollect')
+            show_border=True, label='Multicollect')
 
         bs_grp = VGroup(Item('object.baseline.counts'),
                         Item('object.baseline.mass'),
@@ -218,14 +217,15 @@ class MeasurementContextEditor(ContextEditor):
                                icon_button_editor('edit_peakhop_button', 'cog',
                                                   enabled_when='object.peakhop.hops_name',
                                                   tooltip='Edit selected "Hops" file')),
-                        label='Peak Hop')
+                        show_border=True, label='Peak Hop')
 
         gen_grp = VGroup(Item('default_fits',
                               editor=EnumEditor(name='available_default_fits')),
-                         show_border=True,
-                         label='General')
+                         show_border=True, label='General')
 
-        v = View(VFold(gen_grp, mc_grp, bs_grp, pc_grp, eq_grp, ph_grp))
+        #using VFold causing crash. just use VGroup for now
+        # v = View(VFold(gen_grp, mc_grp, bs_grp, pc_grp, eq_grp, ph_grp))
+        v = View(VGroup(gen_grp, mc_grp, bs_grp, pc_grp, eq_grp, ph_grp))
         return v
 
 # ============= EOF =============================================
