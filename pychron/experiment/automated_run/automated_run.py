@@ -640,7 +640,6 @@ class AutomatedRun(Loggable):
         return self.spectrometer_manager.spectrometer.get_detector(det)
 
     def set_integration_time(self, v):
-        print id(self)
         spectrometer = self.spectrometer_manager.spectrometer
         nv = spectrometer.set_integration_time(v, force=True)
         self._integration_seconds = nv
@@ -822,7 +821,7 @@ class AutomatedRun(Loggable):
         self.debug('DO EXTRACTION {}'.format(self.runner))
         self.extraction_script.runner = self.runner
         self.extraction_script.manager = self.experiment_executor
-        self.extraction_script.run_identifier = self.runid
+        self.extraction_script.set_run_identifier(self.runid)
 
         syn_extractor = None
         if self.extraction_script.syntax_ok(warn=False):
@@ -1313,12 +1312,15 @@ anaylsis_type={}
                     doc = yaml.load(fp)
 
                     for c in doc:
-                        attr = c['attr']
-                        comp = c['comp']
-                        start = c['start']
-                        freq = c.get('frequency', 1)
-                        acr = c.get('abbreviated_count_ratio', 1)
-                        self.py_add_truncation(attr, comp, int(start), freq, acr)
+                        try:
+                            attr = c['attr']
+                            comp = c['check']
+                            start = c['start']
+                            freq = c.get('frequency', 1)
+                            acr = c.get('abbreviated_count_ratio', 1)
+                            self.py_add_truncation(attr, comp, int(start), freq, acr)
+                        except BaseException:
+                            self.warning('Failed adding truncation. {}'.format(c))
 
             else:
                 try:

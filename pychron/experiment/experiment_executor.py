@@ -789,7 +789,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         arun.experiment_executor = weakref.ref(self)()
 
-        print id(arun), self.spectrometer_manager
+        # print id(arun), self.spectrometer_manager
         arun.spectrometer_manager = self.spectrometer_manager
         arun.extraction_line_manager = self.extraction_line_manager
         arun.ion_optics_manager = self.ion_optics_manager

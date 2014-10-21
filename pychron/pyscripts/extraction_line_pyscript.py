@@ -97,6 +97,9 @@ class ExtractionPyScript(ValvePyScript):
 
     _extraction_positions = List
 
+    def set_run_identifier(self, v):
+        self.setup_context(run_identifier=v)
+
     def get_extraction_positions(self, clear=True):
         """
             return a list of x,y,z tuples

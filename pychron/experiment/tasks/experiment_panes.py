@@ -190,6 +190,12 @@ class ExperimentFactoryPane(TraitsDockPane):
 
     def _get_truncate_group(self):
         grp = VGroup(
+            HGroup(run_factory_item('use_simple_truncation', label='Use Simple'),
+                icon_button_editor(run_factory_name('clear_truncation'),
+                                   'delete',
+                                   tooltip='Clear truncation from selected runs'
+                                   # enabled_when=run_factory_name('edit_mode')
+                                  )),
             HGroup(
                 run_factory_item('trunc_attr',
                                  editor=EnumEditor(name=run_factory_name('trunc_attrs')),
@@ -198,10 +204,8 @@ class ExperimentFactoryPane(TraitsDockPane):
                 run_factory_item('trunc_crit', show_label=False),
                 spacer(-10),
                 run_factory_item('trunc_start', label='Start Count'),
-                icon_button_editor(run_factory_name('clear_truncation'),
-                                   'delete',
-                                   enabled_when=run_factory_name('edit_mode')),
                 show_border=True,
+                #enabled_when = run_factory_name('use_simple_truncation'),
                 label='Simple'),
             HGroup(
                 run_factory_item('truncation_path',

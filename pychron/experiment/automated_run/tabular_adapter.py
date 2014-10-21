@@ -21,7 +21,7 @@ from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 #============= standard library imports ========================
 from pychron.core.helpers.filetools import to_bool
-from pychron.experiment.utilities.identifier import make_aliquot_step
+from pychron.experiment.utilities.identifier import make_aliquot_step, get_analysis_type
 from pychron.pychron_constants import EXTRACTION_COLOR, MEASUREMENT_COLOR, SUCCESS_COLOR, \
     SKIP_COLOR, NOT_EXECUTABLE_COLOR, CANCELED_COLOR, TRUNCATED_COLOR, \
     FAILED_COLOR, END_AFTER_COLOR
@@ -65,6 +65,7 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter):
     post_measurement_script_width = Int(90)
     post_equilibration_script_width = Int(90)
 
+    position_text = Property
     comment_width = Int(125)
     #===========================================================================
     # number values
@@ -113,6 +114,17 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter):
         return color
 
     # ============ non cell editable ============
+    def _get_position_text(self):
+        at = self.item.analysis_type
+        p = self.item.position
+        if at != 'unknown':
+            if at == 'blank_unknown':
+                if not ',' in p:
+                    p = ''
+            else:
+                p = ''
+        return p
+
     def _get_labnumber_text(self):
         return self.item.labnumber
 
@@ -149,7 +161,10 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter):
     def _set_post_equilibration_script_text(self, v):
         pass
 
+    def _set_position_text(self,v):
+        pass
     #============================================
+
     def _get_overlap_text(self):
         o, m = self.item.overlap
         if m:

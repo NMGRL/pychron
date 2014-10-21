@@ -56,6 +56,7 @@ class MoveToRow(HasTraits):
                  kind='livemodal')
         return v
 
+
 class TabularKeyEvent(object):
     def __init__(self, event):
         self.text = event.text().strip()
@@ -83,8 +84,6 @@ class _myTableView(_TableView, ConsumerMixin):
     def __init__(self, *args, **kw):
         super(_myTableView, self).__init__(*args, **kw)
 
-
-
         self.setup_consumer()
         editor = self._editor
 
@@ -107,24 +106,24 @@ class _myTableView(_TableView, ConsumerMixin):
 
     def set_bg_color(self, bgcolor):
         if isinstance(bgcolor, tuple):
-            if len(bgcolor)==3:
-                bgcolor='rgb({},{},{})'.format(*bgcolor)
-            elif len(bgcolor)==4:
-                bgcolor='rgba({},{},{},{})'.format(*bgcolor)
+            if len(bgcolor) == 3:
+                bgcolor = 'rgb({},{},{})'.format(*bgcolor)
+            elif len(bgcolor) == 4:
+                bgcolor = 'rgba({},{},{},{})'.format(*bgcolor)
         elif isinstance(bgcolor, QColor):
-            bgcolor='rgba({},{},{},{})'.format(*bgcolor.toTuple())
+            bgcolor = 'rgba({},{},{},{})'.format(*bgcolor.toTuple())
         self.setStyleSheet('QTableView {{background-color: {}}}'.format(bgcolor))
 
     def set_vertical_header_font(self, fnt):
         fnt = QtGui.QFont(fnt)
-        vheader=self.verticalHeader()
+        vheader = self.verticalHeader()
         vheader.setFont(fnt)
         size = QtGui.QFontMetrics(fnt)
         vheader.setDefaultSectionSize(size.height() + 6)
 
     def set_horizontal_header_font(self, fnt):
         fnt = QtGui.QFont(fnt)
-        vheader=self.horizontalHeader()
+        vheader = self.horizontalHeader()
         vheader.setFont(fnt)
 
     def set_drag_enabled(self, d):
@@ -191,17 +190,18 @@ class _myTableView(_TableView, ConsumerMixin):
         else:
             QtGui.QTableView.keyPressEvent(self, event)
 
-    def _add(self, items, insert_mode='after'):
-        si = self.selectedIndexes()
+    def _add(self, items, insert_mode='after', idx=None):
+        if idx is None:
+            selection = self.selectedIndexes()
+            if len(selection):
+                offset = 1 if insert_mode == 'after' else 0
+                idx = selection[-1].row() + offset
+            else:
+                idx = len(self._editor.value)
+
         paste_func = self.paste_func
         if paste_func is None:
             paste_func = lambda x: x.clone_traits()
-
-        if len(si):
-            offset = 1 if insert_mode == 'after' else 0
-            idx = si[-1].row() + offset
-        else:
-            idx = len(self._editor.value)
 
         editor = self._editor
         with no_update(editor.object):
@@ -261,7 +261,16 @@ class _myTableView(_TableView, ConsumerMixin):
 
         elif event.matches(QtGui.QKeySequence.Paste):
             if self.pastable:
+                si = self.selectedIndexes()
+                idx = None
+
+                if len(si):
+                    idx = si[-1].row()
+
                 if self._cut_indices:
+                    if not any((ci <= idx for ci in self._cut_indices)):
+                        idx += len(self._cut_indices)
+
                     for ci in self._cut_indices:
                         self._editor.model.removeRow(ci)
 
@@ -275,7 +284,11 @@ class _myTableView(_TableView, ConsumerMixin):
                     items = self._copy_cache
 
                 if items:
-                    self.add_consumable((self._add, items))
+                    # self._add(items, idx=idx)
+                    func = lambda a: self._add(a, idx=idx)
+                    self.add_consumable((func, items))
+
+                    # self.add_consumable((self._add, items))
 
         else:
             self._editor.key_pressed = TabularKeyEvent(event)
@@ -418,6 +431,7 @@ class _TabularEditor(qtTabularEditor):
     col_widths = List
     key_pressed = Any
     model = Instance(myTabularModel)
+
     def _update_changed(self):
         print 'asfdasdf'
         super(_TabularEditor, self)._update_changed()
@@ -586,6 +600,7 @@ class myTabularEditor(TabularEditor):
 class UnselectTabularEditorHandler(Handler):
     refresh_name = Str('refresh_needed')
     selected_name = Str('selected')
+
     def unselect(self, info, obj):
         setattr(obj, self.selected_name, [])
         setattr(obj, self.refresh_name, True)
