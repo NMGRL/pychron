@@ -1,11 +1,11 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,6 +21,7 @@ from traitsui.tabular_adapter import TabularAdapter
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.processing.analyses.view.detector_ic_view import DetectorICView
 from pychron.processing.analyses.view.error_components_view import ErrorComponentsView
 from pychron.processing.analyses.view.snapshot_view import SnapshotView
 from pychron.processing.analyses.view.text_view import ExperimentView, ExtractionView, MeasurementView
@@ -66,14 +67,14 @@ class AnalysisView(HasTraits):
 
     def update_fontsize(self, view, size):
         if 'main' in view:
-            v=self.main_view
-            view=view.split('.')[-1]
+            v = self.main_view
+            view = view.split('.')[-1]
             adapter = getattr(v, '{}_adapter'.format(view))
             adapter.font = 'arial {}'.format(size)
         else:
-            v=getattr(self,'_{}_view'.format(view))
+            v = getattr(self, '_{}_view'.format(view))
             if v is not None:
-                v.fontsize=size
+                v.fontsize = size
 
     def load(self, an):
         analysis_type = an.analysis_type
@@ -87,30 +88,8 @@ class AnalysisView(HasTraits):
             self.history_view = history_view
             history_view.on_trait_change(self.handle_blank_right_clicked, 'blank_right_clicked')
 
-        experiment_view = self._experiment_view
-        if experiment_view is None:
-            experiment_view = ExperimentView(an)
-            self._experiment_view = experiment_view
+        views = self._make_subviews(an)
 
-        extraction_view = self._extraction_view
-        if extraction_view is None:
-            extraction_view = ExtractionView(an)
-            self._extraction_view = extraction_view
-
-        snapshot_view=self._snapshot_view
-        if snapshot_view is None and an.snapshots:
-            snapshot_view = SnapshotView(an.snapshots)
-            self._snapshot_view=snapshot_view
-
-        measurement_view = self._measurement_view
-        if measurement_view is None:
-            measurement_view = MeasurementView(an)
-            self._measurement_view = measurement_view
-            
-        interference_view = self._interference_view
-        if interference_view is None:
-            interference_view = InterferencesView(an)
-            self._interference_view = interference_view
         main_view = self.main_view
         if main_view is None:
             main_view = MainView(an, analysis_type=analysis_type, analysis_id=analysis_id)
@@ -120,11 +99,7 @@ class AnalysisView(HasTraits):
             self.main_view.load(an, refresh=True)
 
         subviews = [main_view,
-                    history_view,
-                    interference_view,
-                    experiment_view,
-                    measurement_view,
-                    extraction_view]
+                    history_view] + views
 
         if analysis_type in ('unknown', 'cocktail'):
             subviews.append(ErrorComponentsView(an))
@@ -133,11 +108,34 @@ class AnalysisView(HasTraits):
         if pch.load(an):
             subviews.append(pch)
 
-        if snapshot_view:
-            subviews.append(snapshot_view)
-
         self.selection_tool = ViewSelection(subviews=subviews,
                                             selected_view=main_view)
+
+    def _make_subviews(self, an):
+        views = []
+        for vname, klass in (('experiment', ExperimentView),
+                             ('extraction', ExtractionView),
+                             ('measurement', MeasurementView),
+                             ('interference', InterferencesView)):
+            name = '_{}_view'.format(vname)
+            view = getattr(self, name)
+            if view is None:
+                view = klass(an)
+            setattr(self, name, view)
+            views.append(view)
+
+        snapshot_view = self._snapshot_view
+        if snapshot_view is None and an.snapshots:
+            snapshot_view = SnapshotView(an.snapshots)
+            self._snapshot_view = snapshot_view
+
+        if an.analysis_type == 'detector_ic':
+            det_view = self._detector_ic_view
+            if det_view is None:
+                det_view = DetectorICView(an)
+                self._detector_ic_view = det_view
+
+        return views
 
     def traits_view(self):
         v = View(UItem('object.selection_tool.selected_view', style='custom',
