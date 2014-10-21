@@ -1,4 +1,3 @@
-
 __author__ = 'ross'
 import unittest
 
@@ -16,24 +15,28 @@ def suite():
     from pychron.pyscripts.tests.extraction_script import WaitForTestCase
     from pychron.pyscripts.tests.measurement_pyscript import InterpolationTestCase, DocstrContextTestCase
     from pychron.experiment.tests.conditionals import ConditionalsTestCase
+    from pychron.experiment.tests.identifier import IdentifierTestCase
 
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
 
-    suite.addTest(loader.loadTestsFromTestCase(XLSAnalysisLoaderTestCase))
-    suite.addTest(loader.loadTestsFromTestCase(RatioTestCase))
-    suite.addTest(loader.loadTestsFromTestCase(InterpolationTestCase))
-    suite.addTest(loader.loadTestsFromTestCase(DocstrContextTestCase))
-    suite.addTest(loader.loadTestsFromTestCase(OLSRegressionTest))
-    suite.addTest(loader.loadTestsFromTestCase(MeanRegressionTest))
-    suite.addTest(loader.loadTestsFromTestCase(FilterOLSRegressionTest))
-    suite.addTest(loader.loadTestsFromTestCase(PlateauTestCase))
-    suite.addTest(loader.loadTestsFromTestCase(ExternalPipetteTestCase))
-    suite.addTest(loader.loadTestsFromTestCase(WaitForTestCase))
-    suite.addTest(loader.loadTestsFromTestCase(XYTestCase))
-    suite.addTest(loader.loadTestsFromTestCase(FrequencyTestCase))
-    suite.addTest(loader.loadTestsFromTestCase(RenumberAliquotTestCase))
-    suite.addTest(loader.loadTestsFromTestCase(ConditionalsTestCase))
+    tests = (XLSAnalysisLoaderTestCase,
+             RatioTestCase,
+             InterpolationTestCase,
+             DocstrContextTestCase,
+             OLSRegressionTest,
+             MeanRegressionTest,
+             FilterOLSRegressionTest,
+             PlateauTestCase,
+             ExternalPipetteTestCase,
+             WaitForTestCase,
+             XYTestCase,
+             FrequencyTestCase,
+             RenumberAliquotTestCase,
+             ConditionalsTestCase,
+             IdentifierTestCase)
+    for t in tests:
+        suite.addTest(loader.loadTestsFromTestCase(t))
 
     return suite
 

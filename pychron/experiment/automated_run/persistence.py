@@ -367,7 +367,10 @@ class AutomatedRunPersister(Loggable):
                 self.debug('pychron save time= {:0.3f} '.format(pt))
                 file_log(pt)
 
-        if self.use_secondary_database:
+        # don't save detector_ic runs to mass spec
+        # measurement of an isotope on multiple detectors likely possible with mass spec but at this point
+        # not worth trying.
+        if self.use_secondary_database and not self.run_spec.analysis_type in ('detector_ic',):
             if not self.datahub.secondary_connect():
                 # if not self.massspec_importer or not self.massspec_importer.db.connected:
                 self.debug('Secondary database is not available')
