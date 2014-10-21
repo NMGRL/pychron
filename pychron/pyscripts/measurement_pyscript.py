@@ -25,6 +25,7 @@ import yaml
 
 
 
+
 #============= local library imports  ==========================
 from pychron.core.helpers.filetools import fileiter
 from pychron.paths import paths
@@ -197,7 +198,7 @@ class MeasurementPyScript(ValvePyScript):
     @count_verbose_skip
     @command_register
     def define_hops(self, hops=None, **kw):
-        if hops is None:
+        if not hops:
             return
 
         self._automated_run_call('py_define_hops', hops)
@@ -205,7 +206,7 @@ class MeasurementPyScript(ValvePyScript):
     @count_verbose_skip
     @command_register
     def peak_hop(self, ncycles=5, hops=None, calc_time=False):
-        if hops is None:
+        if not hops:
             return
 
         integration_time = 1.1
