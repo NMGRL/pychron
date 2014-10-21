@@ -60,56 +60,48 @@ class PyScriptTask(EditorTask, ExecuteMixin):
         super(PyScriptTask, self).__init__(*args, **kw)
         bind_preference(self, 'auto_detab', 'pychron.pyscript.auto_detab')
 
-    def _runner_factory(self):
-        # get the extraction line manager's mode
-        man = self._get_el_manager()
-
-        if man is None:
-            self.warning_dialog('No Extraction line manager available')
-            mode = 'normal'
-        else:
-            mode = man.mode
-
-        if mode == 'client':
-            #            em = self.extraction_line_manager
-            from pychron.initialization_parser import InitializationParser
-
-            ip = InitializationParser()
-            elm = ip.get_plugin('Experiment', category='general')
-            runner = elm.find('runner')
-            host, port, kind = None, None, None
-
-            if runner is not None:
-                comms = runner.find('communications')
-                host = comms.find('host')
-                port = comms.find('port')
-                kind = comms.find('kind')
-
-            if host is not None:
-                host = host.text  # if host else 'localhost'
-            if port is not None:
-                port = int(port.text)  # if port else 1061
-            if kind is not None:
-                kind = kind.text  # if kind else 'udp'
-
-            from pychron.pyscripts.pyscript_runner import RemotePyScriptRunner
-
-            runner = RemotePyScriptRunner(host, port, kind)
-        else:
-            from pychron.pyscripts.pyscript_runner import PyScriptRunner
-
-            runner = PyScriptRunner()
-
-        return runner
-
-    def _get_el_manager(self):
-        app = self.window.application
-        man = app.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
-        return man
+    def jump_to_gosub(self):
+        root = os.path.dirname(self.active_editor.path)
+        name = self.active_editor.get_active_gosub()
+        if name:
+            self._open_pyscript(name, root)
 
     def execute_script(self, name, root, kind='Extraction', delay_start=0, on_completion=None):
         self._do_execute(name, root, kind, on_completion=on_completion, delay_start=delay_start)
 
+    def find(self):
+        if self.active_editor:
+            self.active_editor.control.enable_find()
+
+    def replace(self):
+        if self.active_editor:
+            self.active_editor.control.enable_replace()
+
+    def new(self):
+
+        # todo ask for script type
+        info = self.edit_traits(view='kind_select_view')
+        if info.result:
+            self._open_editor(path='')
+            return True
+
+    #task protocol
+    def create_dock_panes(self):
+        self.commands_pane = CommandsPane()
+        self.command_editor_pane = CommandEditorPane()
+        self.control_pane = ControlPane(model=self)
+        self.script_browser_pane = ScriptBrowserPane()
+
+        self.context_editor_pane = ContextEditorPane()
+        return [
+            self.commands_pane,
+            self.command_editor_pane,
+            self.control_pane,
+            DescriptionPane(model=self),
+            self.script_browser_pane,
+            self.context_editor_pane]
+
+    #private
     def _do_execute(self, name=None, root=None, kind=None, new_thread=True,
                     delay_start=0,
                     on_completion=None):
@@ -180,41 +172,9 @@ class PyScriptTask(EditorTask, ExecuteMixin):
     def _default_directory_default(self):
         return paths.scripts_dir
 
-    def create_dock_panes(self):
-        self.commands_pane = CommandsPane()
-        self.command_editor_pane = CommandEditorPane()
-        self.control_pane = ControlPane(model=self)
-        self.script_browser_pane = ScriptBrowserPane()
-
-        self.context_editor_pane = ContextEditorPane()
-        return [
-            self.commands_pane,
-            self.command_editor_pane,
-            self.control_pane,
-            DescriptionPane(model=self),
-            self.script_browser_pane,
-            self.context_editor_pane,
-        ]
-
     def _save_file(self, path):
         self.active_editor.dump(path)
         return True
-
-    def find(self):
-        if self.active_editor:
-            self.active_editor.control.enable_find()
-
-    def replace(self):
-        if self.active_editor:
-            self.active_editor.control.enable_replace()
-
-    def new(self):
-
-        # todo ask for script type
-        info = self.edit_traits(view='kind_select_view')
-        if info.result:
-            self._open_editor(path='')
-            return True
 
     def _open_file(self, path, **kw):
         self.info('opening pyscript: {}'.format(path))
@@ -240,6 +200,29 @@ class PyScriptTask(EditorTask, ExecuteMixin):
 
         super(PyScriptTask, self)._open_editor(editor)
 
+    def _open_pyscript(self, new, root):
+        new = new.replace('/', ':')
+        new = add_extension(new, '.py')
+        paths = new.split(':')
+
+        for editor in self.editor_area.editors:
+            if editor.name == paths[-1]:
+                self.activate_editor(editor)
+                break
+        else:
+            p = os.path.join(root, *paths)
+
+            if os.path.isfile(p):
+                self._open_file(p)
+            else:
+                self.warning_dialog('File does not exist {}'.format(p))
+
+    def _get_example(self):
+        if self.selected:
+            return self.selected.example
+        return ''
+
+    #handlers
     @on_trait_change('command_editor_pane:insert_button')
     def _insert_fired(self):
         self.active_editor.insert_command(self.command_editor_pane.command_object)
@@ -269,7 +252,7 @@ class PyScriptTask(EditorTask, ExecuteMixin):
         new = self.script_browser_pane.selected
         self.debug('selected file {}'.format(new))
         root = self.script_browser_pane.root
-        self._open_pyscipt(new, root)
+        self._open_pyscript(new, root)
 
     @on_trait_change('active_editor:selected_gosub')
     def _handle_selected_gosub(self, new):
@@ -277,7 +260,7 @@ class PyScriptTask(EditorTask, ExecuteMixin):
         self.debug('selected gosub {}'.format(new))
         if new:
             root = os.path.dirname(self.active_editor.path)
-            self._open_pyscipt(new, root)
+            self._open_pyscript(new, root)
             # self.active_editor.trait_set(selected_gosub='', trait_change_notify=False)
 
     @on_trait_change('active_editor:selected_command')
@@ -286,45 +269,58 @@ class PyScriptTask(EditorTask, ExecuteMixin):
         if new:
             self.commands_pane.set_command(new)
 
-    def jump_to_gosub(self):
-        root = os.path.dirname(self.active_editor.path)
-        name = self.active_editor.get_active_gosub()
-        if name:
-            self._open_pyscipt(name, root)
+    def _runner_factory(self):
+        # get the extraction line manager's mode
+        man = self._get_el_manager()
 
-    def _open_pyscipt(self, new, root):
-        new = new.replace('/', ':')
-        new = add_extension(new, '.py')
-        paths = new.split(':')
-
-        for editor in self.editor_area.editors:
-            if editor.name == paths[-1]:
-                self.activate_editor(editor)
-                break
+        if man is None:
+            self.warning_dialog('No Extraction line manager available')
+            mode = 'normal'
         else:
-            p = os.path.join(root, *paths)
+            mode = man.mode
 
-            if os.path.isfile(p):
-                self._open_file(p)
-            else:
-                self.warning_dialog('File does not exist {}'.format(p))
+        if mode == 'client':
+            #            em = self.extraction_line_manager
+            from pychron.initialization_parser import InitializationParser
 
-    def _get_example(self):
-        if self.selected:
-            return self.selected.example
-        return ''
+            ip = InitializationParser()
+            elm = ip.get_plugin('Experiment', category='general')
+            runner = elm.find('runner')
+            host, port, kind = None, None, None
 
+            if runner is not None:
+                comms = runner.find('communications')
+                host = comms.find('host')
+                port = comms.find('port')
+                kind = comms.find('kind')
+
+            if host is not None:
+                host = host.text  # if host else 'localhost'
+            if port is not None:
+                port = int(port.text)  # if port else 1061
+            if kind is not None:
+                kind = kind.text  # if kind else 'udp'
+
+            from pychron.pyscripts.pyscript_runner import RemotePyScriptRunner
+
+            runner = RemotePyScriptRunner(host, port, kind)
+        else:
+            from pychron.pyscripts.pyscript_runner import PyScriptRunner
+
+            runner = PyScriptRunner()
+
+        return runner
+
+    #defaults
     def _default_layout_default(self):
         left = Splitter(Tabbed(PaneItem('pychron.pyscript.commands', height=300, width=125),
-                               PaneItem('pychron.pyscript.script_browser'),
-                               PaneItem('pychron.pyscript.context_editor')),
+                               PaneItem('pychron.pyscript.script_browser')),
                         PaneItem('pychron.pyscript.commands_editor', height=100, width=125),
                         orientation='vertical')
         bottom = PaneItem('pychron.pyscript.description')
+        right = PaneItem('pychron.pyscript.context_editor')
         return TaskLayout(id='pychron.pyscript',
                           left=left,
-                          bottom=bottom
-        )
-
-
+                          right=right,
+                          bottom=bottom)
         #============= EOF =============================================

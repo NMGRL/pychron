@@ -492,7 +492,7 @@ class BaseManagerTask(BaseTask):
 
 class BaseExtractionLineTask(BaseManagerTask):
     def _get_el_manager(self):
-        app = self.window.application
+        app = self.application
         man = app.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
         return man
 
