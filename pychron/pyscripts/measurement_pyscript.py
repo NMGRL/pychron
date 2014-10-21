@@ -26,6 +26,7 @@ import yaml
 
 
 
+
 #============= local library imports  ==========================
 from pychron.core.helpers.filetools import fileiter
 from pychron.paths import paths
@@ -97,6 +98,11 @@ class MeasurementPyScript(ValvePyScript):
     #===============================================================================
     # commands
     #===============================================================================
+    @verbose_skip
+    @command_register
+    def detector_intercalibration(self, refdet=None, detectors=None):
+        pass
+
     @verbose_skip
     @command_register
     def extraction_gosub(self, *args, **kw):
