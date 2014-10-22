@@ -64,6 +64,7 @@ class AnalysisView(HasTraits):
     _measurement_view = None
     _extraction_view = None
     _snapshot_view = None
+    _detector_ic_view = None
 
     def update_fontsize(self, view, size):
         if 'main' in view:
@@ -128,12 +129,14 @@ class AnalysisView(HasTraits):
         if snapshot_view is None and an.snapshots:
             snapshot_view = SnapshotView(an.snapshots)
             self._snapshot_view = snapshot_view
+            views.append(snapshot_view)
 
         if an.analysis_type == 'detector_ic':
             det_view = self._detector_ic_view
             if det_view is None:
                 det_view = DetectorICView(an)
                 self._detector_ic_view = det_view
+                views.append(det_view)
 
         return views
 

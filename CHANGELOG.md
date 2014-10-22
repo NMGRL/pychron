@@ -10,6 +10,7 @@ CHANGELOG
     date ranges defined by the selected labnumbers
 * added project, irradiation enabled toggles
 * if high or low post only filters defined load the analysis table with the date range
+* added detector ic view
 
 2.0.4
 ------------------
