@@ -3,7 +3,7 @@ __author__ = 'ross'
 
 import unittest
 
-from pychron.experiment.automated_run.comment_template import CommentTemplater
+from pychron.experiment.utilities.comment_template import CommentTemplater
 
 
 class MockFactory(object):

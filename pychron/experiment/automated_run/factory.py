@@ -1060,7 +1060,7 @@ class AutomatedRunFactory(PersistenceLoggable):
 
     def _set_auto_comment(self, temp=None):
         if not temp:
-            from comment_template import CommentTemplater
+            from pychron.experiment.utilities.comment_template import CommentTemplater
             temp = CommentTemplater()
 
         c = temp.render(self)
@@ -1078,7 +1078,7 @@ class AutomatedRunFactory(PersistenceLoggable):
     # handlers
     #===============================================================================
     def _edit_comment_template_fired(self):
-        from comment_template import CommentTemplater
+        from pychron.experiment.utilities.comment_template import CommentTemplater
         ct = CommentTemplater()
         info = ct.edit_traits()
         if info.result:

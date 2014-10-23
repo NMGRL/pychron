@@ -1,3 +1,4 @@
+
 __author__ = 'ross'
 import unittest
 
@@ -16,6 +17,7 @@ def suite():
     from pychron.pyscripts.tests.measurement_pyscript import InterpolationTestCase, DocstrContextTestCase
     from pychron.experiment.tests.conditionals import ConditionalsTestCase
     from pychron.experiment.tests.identifier import IdentifierTestCase
+    from pychron.experiment.tests.comment_template import CommentTemplaterTestCase
 
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
@@ -34,7 +36,8 @@ def suite():
              FrequencyTestCase,
              RenumberAliquotTestCase,
              ConditionalsTestCase,
-             IdentifierTestCase)
+             IdentifierTestCase,
+             CommentTemplaterTestCase)
     for t in tests:
         suite.addTest(loader.loadTestsFromTestCase(t))
 
