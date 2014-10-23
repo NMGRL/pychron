@@ -22,7 +22,7 @@ from traitsui.api import Item, HGroup, Group, VGroup, UItem, EnumEditor, Instanc
 #============= local library imports  ==========================
 from pychron.core.helpers.color_generators import colornames
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
-from pychron.processing.label_maker import LabelMaker
+from pychron.processing.label_maker import LabelTemplater
 from pychron.processing.plotters.options.age import AgeOptions
 from pychron.processing.plotters.options.fill_group_editor import Fill, FillGroupEditor
 from pychron.processing.plotters.options.plotter import FONTS, SIZES
@@ -143,7 +143,7 @@ class IdeogramOptions(AgeOptions):
             ap.clear_ylimits()
 
     def _edit_label_format_fired(self):
-        lm = LabelMaker(label=self.analysis_label_display)
+        lm = LabelTemplater(label=self.analysis_label_display)
 
         info = lm.edit_traits()
         if info.result:

@@ -125,7 +125,7 @@ class ExperimentEditorTask(EditorTask):
                 editor.new_queue()
 
                 self._open_editor(editor)
-                if not self.manager.executor.isAlive():
+                if not self.manager.executor.is_alive():
                     self.manager.executor.executable = False
 
     #===============================================================================

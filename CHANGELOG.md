@@ -11,6 +11,7 @@ CHANGELOG
 * added project, irradiation enabled toggles
 * if high or low post only filters defined load the analysis table with the date range
 * added detector ic view
+* added comment template
 
 2.0.4
 ------------------

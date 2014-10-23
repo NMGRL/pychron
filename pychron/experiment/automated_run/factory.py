@@ -170,6 +170,9 @@ class AutomatedRunFactory(PersistenceLoggable):
     weight = Float
     comment = Str
     auto_fill_comment = Bool
+    comment_template = Str
+    comment_templates = List
+    edit_comment_template = Button
 
     position = Property(depends_on='_position')
     _position = String
@@ -295,6 +298,7 @@ class AutomatedRunFactory(PersistenceLoggable):
         # self.remote_patterns = self._get_patterns()
         self.load_patterns()
         self.load_truncations()
+        # self.load_comment_templates()
 
     def activate(self, load_persistence):
         # self.load_run_blocks()
@@ -326,6 +330,9 @@ class AutomatedRunFactory(PersistenceLoggable):
             return False
 
         return True
+
+    # def load_comment_templates(self):
+    #     self.comment_templates = self._get_comment_templates()
 
     def load_run_blocks(self):
         self.run_blocks = self._get_run_blocks()
@@ -427,6 +434,10 @@ class AutomatedRunFactory(PersistenceLoggable):
                 self.position = increment_position(pos)
 
         return arvs, freq
+
+    def refresh(self):
+        self.changed = True
+        self.refresh_table_needed = True
 
     #===============================================================================
     # private
@@ -957,6 +968,11 @@ class AutomatedRunFactory(PersistenceLoggable):
         blocks = list_directory(p, '.txt')
         return ['RunBlock', LINE_STR] + blocks
 
+    def _get_comment_templates(self):
+        p = paths.comment_templates
+        templates = list_directory(p)
+        return templates
+
     def _get_patterns(self):
         return ['Pattern', LINE_STR] + self.remote_patterns
         # p = paths.pattern_dir
@@ -1042,9 +1058,32 @@ class AutomatedRunFactory(PersistenceLoggable):
         self.set_end_after(v)
         self._end_after = v
 
+    def _set_auto_comment(self, temp=None):
+        if not temp:
+            from comment_template import CommentTemplater
+            temp = CommentTemplater()
+
+        c = temp.render(self)
+        self.debug('Comment template rendered = {}'.format(c))
+        self.comment = c
+
+    def _set_truncation(self, t):
+        for s in self._selected_runs:
+            s.truncate_conditional = t
+
+        self.changed = True
+        self.refresh_table_needed = True
+
     #===============================================================================
     # handlers
     #===============================================================================
+    def _edit_comment_template_fired(self):
+        from comment_template import CommentTemplater
+        ct = CommentTemplater()
+        info = ct.edit_traits()
+        if info.result:
+            self._set_auto_comment(ct)
+
     def _use_simple_truncation_changed(self, new):
         if new:
             self.truncation_path = NULL_STR
@@ -1126,17 +1165,6 @@ class AutomatedRunFactory(PersistenceLoggable):
             # else:
             t = self.truncation_str
             self._set_truncation(t)
-
-    def _set_truncation(self, t):
-        for s in self._selected_runs:
-            s.truncate_conditional = t
-
-        self.changed = True
-        self.refresh_table_needed = True
-
-    def refresh(self):
-        self.changed = True
-        self.refresh_table_needed = True
 
     @on_trait_change('''cleanup, duration, extract_value,ramp_duration,
 collection_time_zero_offset,
@@ -1277,7 +1305,7 @@ post_equilibration_script:name''')
                     self.irradiation = self._make_irrad_level(ln)
 
                     if self.auto_fill_comment:
-                        self.set_auto_comment()
+                        self._set_auto_comment()
 
                     self._load_scripts(old, labnumber)
 
@@ -1303,13 +1331,9 @@ post_equilibration_script:name''')
                     self.warning_dialog(
                         '{} does not exist. Add using "Labnumber Entry" or "Utilities>>Import"'.format(labnumber))
 
-    def set_auto_comment(self):
-        self.comment = '{}:{}'.format(self.irrad_level,
-                                      self.irrad_hole)
-
     def _auto_fill_comment_changed(self):
         if self.auto_fill_comment:
-            self.set_auto_comment()
+            self._set_auto_comment()
         else:
             self.comment = ''
 

@@ -183,7 +183,12 @@ class ExperimentFactoryPane(TraitsDockPane):
                                          'Will be saved in Database with analysis'),
                 run_factory_item('auto_fill_comment',
                                  show_label=False,
-                                 tooltip='Auto fill "Comment" with IrradiationLevel:Hole, e.g A:9')),
+                                 tooltip='Auto fill "Comment" with IrradiationLevel:Hole, e.g A:9'),
+                # run_factory_item('comment_template',
+                #                  editor=EnumEditor(name=run_factory_name('comment_templates')),
+                #                  show_label=False),
+                icon_button_editor(run_factory_name('edit_comment_template'), 'cog',
+                                   tooltip='Edit comment template')),
             show_border=True,
             label='Sample Info')
         return grp
