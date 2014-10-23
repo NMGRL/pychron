@@ -19,11 +19,3 @@ Pychron Course Material
   pychron_week_day1
   course_1
   course_2
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
