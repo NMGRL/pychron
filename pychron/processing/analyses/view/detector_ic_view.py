@@ -15,13 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, List, Float
+from traits.api import HasTraits, List, Float, Str
 from traitsui.api import View, UItem, TabularEditor, VGroup
 from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from uncertainties import std_dev, nominal_value, ufloat
-from pychron.pychron_constants import PLUSMINUS_SIGMA
+from pychron.core.helpers.formatting import floatfmt
+from pychron.pychron_constants import PLUSMINUS_SIGMA, DETECTOR_ORDER
 
 
 class DetectorICTabularAdapter(TabularAdapter):
@@ -30,7 +31,8 @@ class DetectorICTabularAdapter(TabularAdapter):
 
 class RatioItem(HasTraits):
     refvalue = 1.0
-
+    intensity = Str
+    intensity_err = Str
     def add_ratio(self, x):
         v = x.get_corrected_value() / self.refvalue
 
@@ -48,28 +50,41 @@ class DetectorICView(HasTraits):
     def __init__(self, an):
         self.tabular_adapter = DetectorICTabularAdapter()
 
-        isotopes = [an.isotopes[k] for k in an.isotope_keys if k == self._isotope_key]
+        isotopes = [an.isotopes[k] for k in an.isotope_keys if k.startswith(self._isotope_key)]
 
         detcols = list(self._get_columns(isotopes))
 
-        self.tabular_adapter.columns = [('', 'name'), ('Intensity', 'refvalue')] + detcols
+        self.tabular_adapter.columns = [('', 'name'),
+                                        ('Intensity', 'intensity'),
+                                        (PLUSMINUS_SIGMA, 'intensity_err')] + detcols
 
         items = []
-        for ai in isotopes:
-            r = RatioItem(name=ai.detector, refvalue=ai.get_corrected_value())
-            r.add_ratio(ai)
-            for bi in isotopes:
-                r.add_ratio(bi)
+        for det in DETECTOR_ORDER:
+            ai = next((ai for ai in isotopes if ai.detector.upper()==det), None)
+            if ai:
+                rv = ai.get_corrected_value()
+                r = RatioItem(name=ai.detector,
+                              refvalue=rv,
+                              intensity=floatfmt(nominal_value(rv)),
+                              intensity_err=floatfmt(std_dev(rv)))
+                r.add_ratio(ai)
+                for bi in isotopes:
+                    r.add_ratio(bi)
 
-            items.append(r)
+                items.append(r)
 
         self.items = items
 
     def _get_columns(self, isos):
-        for iso in isos:
-            det=iso.detector.upper()
-            yield det, iso.detector
-            yield PLUSMINUS_SIGMA, '{}_err'.format(iso.detector)
+
+        for det in DETECTOR_ORDER:
+            iso = next((iso for iso in isos if iso.detector.upper()==det), None)
+            if iso:
+                yield det, iso.detector
+        # for iso in isos:
+        #     det=iso.detector.upper()
+        #     yield det, iso.detector
+            # yield PLUSMINUS_SIGMA, '{}_err'.format(iso.detector)
 
     def traits_view(self):
         v = View(VGroup(UItem('items', editor=TabularEditor(adapter=self.tabular_adapter)),
@@ -90,8 +105,11 @@ if __name__ == '__main__':
             return ufloat(self.value, 0.1)
 
     class MockAnalysis():
-        isotopes = [MockIsotope(k, d, i + 1.0) for i, (k, d) in
-                    enumerate([('Ar40', 'H1'), ('Ar40', 'AX'), ('Ar40', 'L1'), ('Ar39','CDD')])]
+        isotopes = {k:MockIsotope(k, d, i + 1.0) for i, (k, d) in
+                    enumerate([('Ar40H1', 'H1'), ('Ar40AX', 'AX'), ('Ar40L1', 'L1'), ('Ar39','CDD')])}
+        @property
+        def isotope_keys(self):
+            return [i for i in self.isotopes]
 
     an = MockAnalysis()
 

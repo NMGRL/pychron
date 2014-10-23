@@ -364,7 +364,7 @@ class ExperimentEditorTask(EditorTask):
         """
             Prompt the user to save when exiting.
         """
-        if self.manager.executor.isAlive():
+        if self.manager.executor.is_alive():
             name = self.manager.executor.experiment_queue.name
             result = self._confirmation('{} is running. Are you sure you want to quit?'.format(name))
             if result in (CANCEL, NO):

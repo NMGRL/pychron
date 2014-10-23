@@ -367,7 +367,8 @@ class DBAnalysis(Analysis):
         self.blank_changes = [BlankChange(bi, active=bi.id==bid) for bi in meas_analysis.blanks_histories]
         self.fit_changes = [FitChange(fi) for fi in meas_analysis.fit_histories]
 
-        self.selected_blanks_id = bid
+        if bid is not None:
+            self.selected_blanks_id = bid
 
     def _sync_experiment(self, meas_analysis):
         ext = meas_analysis.extraction
@@ -536,7 +537,6 @@ class DBAnalysis(Analysis):
         # timethis(self._get_signals, args=(isotopes, meas_analysis, dbisos, unpack))
         # timethis(self._get_baselines, args=(isotopes, meas_analysis, dbisos, unpack))
         # timethis(self._get_blanks, args=(isotopes, meas_analysis))
-
         self._get_signals(meas_analysis, dbisos, unpack, selected_histories)
         self._get_baselines(meas_analysis, dbisos, unpack, selected_histories)
 
@@ -549,15 +549,15 @@ class DBAnalysis(Analysis):
             mw = iso.molecular_weight
             if not iso.kind == 'signal' or not mw:
                 continue
-
-            name = mw.name
-            if name in d:
-                continue
-
             if not iso.detector:
                 continue
 
             det = iso.detector.name
+            isoname = mw.name
+            key=isoname
+            if isoname in d:
+                key='{}{}'.format(isoname, det)
+
 
             # todo: this needs to be fixed to handle data_reduction_tag
             # if analysis has a dr tag then get its associated select_histories entry
@@ -571,18 +571,18 @@ class DBAnalysis(Analysis):
             r = Isotope(mass=mw.mass,
                         dbrecord=iso,
                         dbresult=result,
-                        name=name,
+                        name=isoname,
                         detector=det,
                         unpack=unpack)
             if r.unpack_error:
-                self.warning('Bad isotope {} {}. error: {}'.format(self.record_id, name, r.unpack_error))
+                self.warning('Bad isotope {} {}. error: {}'.format(self.record_id, key, r.unpack_error))
                 self.temp_status = 1
             else:
-                fit = self.get_db_fit(meas_analysis, name, 'signal', selected_histories)
+                fit = self.get_db_fit(meas_analysis, isoname, 'signal', selected_histories)
                 if fit is None:
                     fit = default_fit()
                 r.set_fit(fit, notify=False)
-                d[name] = r
+                d[key] = r
 
     def _get_baselines(self, meas_analysis, dbisos, unpack, selected_histories):
         isotopes = self.isotopes
@@ -593,12 +593,12 @@ class DBAnalysis(Analysis):
                 continue
 
             name = mw.name
-            try:
-                iso = isotopes[name]
-            except KeyError:
-                continue
-
             det = dbiso.detector.name
+            try:
+                iso = isotopes['{}{}'.format(name, det)]
+            except KeyError:
+                iso = isotopes[name]
+
             kw = dict(dbrecord=dbiso,
                       name=name,
                       detector=det,

@@ -481,11 +481,12 @@ class AutomatedRunPersister(Loggable):
         return fod
 
     def _save_signal_data(self, db, dbhist, analysis, dbdet, iso, m, kind):
+        if not (len(m.xs) and len(m.ys)):
+            self.debug('no data for {} {}'.format(iso.name, kind))
+            return
 
         self.debug('saving data {} {} xs={}'.format(iso.name, kind, len(m.xs)))
-
         dbiso = db.add_isotope(analysis, iso.name, dbdet, kind=kind)
-
         data = ''.join([struct.pack('>ff', x, y) for x, y in zip(m.xs, m.ys)])
         db.add_signal(dbiso, data)
 

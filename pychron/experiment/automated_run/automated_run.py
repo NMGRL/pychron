@@ -1615,7 +1615,7 @@ anaylsis_type={}
         series = self.collector.series_idx
         for k, iso in self.arar_age.isotopes.iteritems():
             idx = graph.get_plotid_by_ytitle(k)
-            print 'ff', k, iso.name, idx
+            # print 'ff', k, iso.name, idx
             if idx is not None:
                 try:
                     graph.series[idx][series]
