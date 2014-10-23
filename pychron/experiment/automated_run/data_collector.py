@@ -248,6 +248,7 @@ class DataCollector(Consoleable):
 
         #get fit and name
         fit, name = self._get_fit(cnt, det, iso)
+        # print fit, name, det, iso
         graph = self.plot_panel.isotope_graph
         pid=graph.get_plotid_by_ytitle(name)
         if pid is not None:

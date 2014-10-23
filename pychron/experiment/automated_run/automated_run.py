@@ -344,8 +344,9 @@ class AutomatedRun(Loggable):
             add additional isotopes and associated plots if necessary
         """
         if self.plot_panel is None:
-            self.warning('Need to call "define_hops(...)" after "activate_detectors(...)"')
-            return
+            self.plot_panel=self._new_plot_panel(self.plot_panel, stack_order='top_to_bottom')
+        #     self.warning('Need to call "define_hops(...)" after "activate_detectors(...)"')
+        #     return
 
         self.plot_panel.is_peak_hop = True
 
@@ -361,13 +362,14 @@ class AutomatedRun(Loggable):
                              not self.spec.analysis_type.startswith('background'))
         for iso, dets in groupby(hops, key=key):
             dets = list(dets)
+            print iso, dets, dets[0][2]
             if dets[0][2]:
                 continue
 
             add_detector = len(dets) > 1
 
-            plot = g.get_plot_by_ytitle(iso)
             for _, di, _ in dets:
+                self._add_active_detector(di)
                 name = iso
                 if iso in a.isotopes:
                     ii = a.isotopes[iso]
@@ -383,10 +385,12 @@ class AutomatedRun(Loggable):
                         b = pbs[iso]
                         ii.set_baseline(nominal_value(b), std_dev(b))
 
-                    if plot is None:
-                        plot = self.plot_panel.new_plot()
-                        pid = g.plots.index(plot)
-                        g.new_series(kind='scatter', fit=None, plotid=pid)
+                plot = g.get_plot_by_ytitle(iso) or g.get_plot_by_ytitle('{}{}'.format(iso,di))
+                if plot is None:
+                    plot = self.plot_panel.new_plot()
+                    pid = g.plots.index(plot)
+                    print 'adding', pid
+                    g.new_series(type='scatter', fit='linear', plotid=pid)
 
                 if add_detector:
                     name = '{}{}'.format(name, di)
@@ -1226,6 +1230,12 @@ anaylsis_type={}
 
         return True
 
+    def _add_active_detector(self, di):
+        spec = self.spectrometer_manager.spectrometer
+        det =spec.get_detector(di)
+        if not det in self._active_detectors:
+            self._active_detectors.append(det)
+
     def _set_active_detectors(self, dets):
         spec = self.spectrometer_manager.spectrometer
         return [spec.get_detector(n) for n in dets]
@@ -1605,6 +1615,7 @@ anaylsis_type={}
         series = self.collector.series_idx
         for k, iso in self.arar_age.isotopes.iteritems():
             idx = graph.get_plotid_by_ytitle(k)
+            print 'ff', k, iso.name, idx
             if idx is not None:
                 try:
                     graph.series[idx][series]

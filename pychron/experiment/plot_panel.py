@@ -161,6 +161,9 @@ class PlotPanel(Loggable):
         while not evt.is_set():
             time.sleep(0.05)
 
+    def new_plot(self, **kw):
+        return self._new_plot(**kw)
+
     def _new_plot(self, **kw):
         g = self.isotope_graph
         plot = g.new_plot(xtitle='time (s)', padding_left=70,
