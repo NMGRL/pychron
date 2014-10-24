@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,7 +28,6 @@ from traitsui.api import View, Item, HGroup, VGroup, Group, \
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
-from pychron.processing.label_maker import TitleTemplater
 from pychron.processing.plotters.options.base import FigurePlotterOptions
 from pychron.pychron_constants import ALPHAS
 
@@ -79,11 +78,15 @@ class PlotterOptions(FigurePlotterOptions):
     x_filter_str = Str
 
     def _edit_title_format_fired(self):
+        from pychron.processing.label_maker import TitleTemplater, TitleTemplateView
+
         tm = TitleTemplater(label=self.title,
-                        delimiter=self.title_delimiter,
-                        leading_text=self.title_leading_text,
-                        trailing_text=self.title_trailing_text)
-        info = tm.edit_traits()
+                            delimiter=self.title_delimiter,
+                            leading_text=self.title_leading_text,
+                            trailing_text=self.title_trailing_text)
+
+        tv = TitleTemplateView(model=tm)
+        info = tv.edit_traits()
         if info.result:
             self.title_formatter = tm.formatter
             self.title_attribute_keys = tm.attribute_keys

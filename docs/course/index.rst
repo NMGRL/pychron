@@ -17,5 +17,4 @@ Pychron Course Material
   :maxdepth: 1
 
   pychron_week_day1
-  course_1
-  course_2
+  pychron_week_day2

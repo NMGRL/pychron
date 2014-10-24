@@ -20,6 +20,7 @@ from traitsui.api import UItem, HGroup, Item, EnumEditor
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.core.templater.base_templater import BaseTemplater
+from pychron.core.templater.templater_view import BaseTemplateView
 
 
 class TitleTemplater(BaseTemplater):
@@ -93,19 +94,6 @@ class TitleTemplater(BaseTemplater):
             t = '{} {}'.format(t, tt)
         return t
 
-    def _get_additional_groups(self):
-        return (HGroup(UItem('multi_group_example', style='readonly'),
-                       show_border=True, label='Multi Group Example'),
-                HGroup(Item('leading_text', label='Leading'),
-                       UItem('leading_text',
-                             width=-25,
-                             editor=EnumEditor(name='leading_texts')),
-                       Item('trailing_text', label='Trailing'),
-                       UItem('trailing_text',
-                             width=-25,
-                             editor=EnumEditor(name='trailing_texts'))),
-                HGroup(Item('delimiter', editor=EnumEditor(name='delimiters'))))
-
 
 class LabelTemplater(BaseTemplater):
     attributes = List(['Sample', 'Aliquot', 'Step', '<SPACE>'])
@@ -119,6 +107,25 @@ class LabelTemplater(BaseTemplater):
                               'Aliquot Step'])
     view_title = 'Label Maker'
     persistence_name = 'label_maker'
+
+
+class LabelTemplateView(BaseTemplateView):
+    pass
+
+
+class TitleTemplateView(BaseTemplateView):
+    def _get_additional_groups(self):
+        return (HGroup(UItem('multi_group_example', style='readonly'),
+                       show_border=True, label='Multi Group Example'),
+                HGroup(Item('leading_text', label='Leading'),
+                       UItem('leading_text',
+                             width=-25,
+                             editor=EnumEditor(name='leading_texts')),
+                       Item('trailing_text', label='Trailing'),
+                       UItem('trailing_text',
+                             width=-25,
+                             editor=EnumEditor(name='trailing_texts'))),
+                HGroup(Item('delimiter', editor=EnumEditor(name='delimiters'))))
 
 
 # if __name__ == '__main__':
