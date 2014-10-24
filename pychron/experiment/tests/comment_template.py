@@ -16,11 +16,20 @@ class CommentTemplaterTestCase(unittest.TestCase):
     def setUpClass(cls):
         cls.obj=MockFactory()
 
-    def test_render(self):
+    def test_render1(self):
+        self._test_render('irrad_level : irrad_hole', 'A:9')
+
+    def test_render2(self):
+        self._test_render('irrad_level : irrad_hole SCLF', 'A:9SCLF')
+
+    def test_render3(self):
+        self._test_render('irrad_level : irrad_hole <SPACE> SCLF', 'A:9 SCLF')
+
+    def _test_render(self, label, expected):
         ct = CommentTemplater()
-        ct.label='irrad_level : irrad_hole'
+        ct.label=label
         r = ct.render(self.obj)
-        self.assertEqual('A:9', r)
+        self.assertEqual(expected, r)
 
 
 if __name__ == '__main__':

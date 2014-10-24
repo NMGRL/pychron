@@ -41,7 +41,8 @@ class CommentTemplater(BaseTemplater):
     def _generate_context(self, obj):
         ctx = {}
         for ai in self.attributes:
-            ctx[ai] = getattr(obj, ai)
+            v = ' ' if ai=='<SPACE>' else getattr(obj, ai)
+            ctx[ai] = v
         return ctx
 
 
