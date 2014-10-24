@@ -75,6 +75,23 @@ class ExperimentQueue(BaseExperimentQueue):
 
     refresh_blocks_needed = Event
 
+    def toggle_skip(self):
+        for si in self.selected:
+            si.skip=not si.skip
+        self.selected=[]
+        self.refresh_table_needed =True
+
+    def end_after(self):
+        sel=self.selected
+        for ai in self.automated_runs:
+            if ai not in sel:
+                ai.end_after = False
+
+        si =sel[-1]
+        si.end_after = not si.end_after
+        self.selected=[]
+        self.refresh_table_needed =True
+
     def repeat_block(self):
         rbv = RepeatRunBlockView()
         info = rbv.edit_traits()

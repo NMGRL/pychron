@@ -21,7 +21,7 @@ from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 #============= standard library imports ========================
 from pychron.core.helpers.filetools import to_bool
-from pychron.experiment.utilities.identifier import make_aliquot_step, get_analysis_type
+from pychron.experiment.utilities.identifier import make_aliquot_step
 from pychron.pychron_constants import EXTRACTION_COLOR, MEASUREMENT_COLOR, SUCCESS_COLOR, \
     SKIP_COLOR, NOT_EXECUTABLE_COLOR, CANCELED_COLOR, TRUNCATED_COLOR, \
     FAILED_COLOR, END_AFTER_COLOR
@@ -316,10 +316,14 @@ class AutomatedRunMixin(object):
                            Action(name='Move to ...', action='move_to_row'),
                            name='Move')
 
+        blocks = MenuManager(Action(name='Make Block', action='make_block'),
+                             Action(name='Repeat Block', action='repeat_block'),
+                             name='Blocks')
         return MenuManager(move, jump,
                            Action(name='Unselect', action='unselect'),
-                           Action(name='Make Block', action='make_block'),
-                           Action(name='Repeat Block', action='repeat_block'))
+                           Action(name='Toggle End After', action='toggle_end_after'),
+                           Action(name='Toggle Skip', action='toggle_skip')
+                           )
 
 
 class AutomatedRunSpecAdapter(AutomatedRunMixin, ExecutedAutomatedRunSpecAdapter, ):
