@@ -38,6 +38,12 @@ class ExperimentEditorHandler(TabularEditorHandler):
     def repeat_block(self, info, obj):
         obj.repeat_block()
 
+    def toggle_end_after(self, info, obj):
+        obj.end_after()
+
+    def toggle_skip(self, info, obj):
+        obj.toggle_skip()
+
 
 class ExperimentEditor(BaseTraitsEditor):
     queue = Instance(ExperimentQueue, ())  # Any
