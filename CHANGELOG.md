@@ -44,3 +44,4 @@ CHANGELOG
 * updated user notification
 * added procedures concept e.g. QuickAir
 * added ImportIrradiationHolderAction
+* added end_after and skip context menu actions
