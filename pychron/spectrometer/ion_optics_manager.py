@@ -183,7 +183,7 @@ class IonOpticsManager(Manager):
     def setup_peak_center(self, detector=None, isotope=None,
                           integration_time=1.04,
                           directions='Increase',
-                          center_dac=None, plot_panel=None):
+                          center_dac=None, plot_panel=None, new=False):
 
         self._ointegration_time = self.spectrometer.integration_time
 
@@ -218,11 +218,11 @@ class IonOpticsManager(Manager):
             center_dac = self.get_center_dac(ref, isotope)
 
         self._setup_peak_center(detectors, isotope, period,
-                                center_dac, directions, plot_panel)
+                                center_dac, directions, plot_panel, new)
         return self.peak_center
 
     def _setup_peak_center(self, detectors, isotope, period,
-                           center_dac, directions, plot_panel):
+                           center_dac, directions, plot_panel, new):
 
 
         spec = self.spectrometer
@@ -237,7 +237,7 @@ class IonOpticsManager(Manager):
             ad = []
 
         pc = self.peak_center
-        if not pc:
+        if not pc or new:
             pc = PeakCenter()
 
         pc.trait_set(center_dac=center_dac,

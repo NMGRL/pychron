@@ -49,22 +49,32 @@ class ProcedureAction(Action):
         self.enabled = not new
 
     def perform(self, event):
-        task = event.task.application.get_task('pychron.pyscript.task', activate=False)
+        app = event.task.application
 
-        #open extraction line task
-        elm_task = event.task.application.open_task('pychron.extraction_line')
+        task = app.get_task('pychron.pyscript.task', activate=False)
+
+        for tid in ('pychron.experiment','pychron.spectrometer'):
+            task = app.task_is_open(tid)
+            if task:
+                #make sure extraction line canvas is visible
+                break
+        else:
+            #open extraction line task
+            app.open_task('pychron.extraction_line')
+
+        manager = app.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
 
         root = os.path.dirname(self.script_path)
         name = os.path.basename(self.script_path)
 
         info=lambda x: '======= {} ======='.format(x)
 
-        elm_task.manager.info(info('Started Procedure "{}"'.format(name)))
+        manager.info(info('Started Procedure "{}"'.format(name)))
 
         task.execution_context = {'analysis_type': 'blank' if 'blank' in name else 'unknown'}
         task.execute_script(name, root,
                             delay_start=1,
-                            on_completion=lambda: elm_task.manager.info(info('Finished Procedure "{}"'.format(name))))
+                            on_completion=lambda: manager.info(info('Finished Procedure "{}"'.format(name))))
 
 
 def procedure_action(name, application):

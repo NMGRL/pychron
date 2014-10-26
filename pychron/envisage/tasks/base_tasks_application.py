@@ -51,6 +51,11 @@ class BaseTasksApplication(TasksApplication, Loggable):
             win = self.create_window(TaskWindowLayout(tid))
             return win, win.active_task, False
 
+    def task_is_open(self, tid):
+        for win in self.windows:
+            if win.active_task and win.active_task.id==tid:
+                return win.active_task
+
     def is_open(self, win):
         return win in self.windows
 

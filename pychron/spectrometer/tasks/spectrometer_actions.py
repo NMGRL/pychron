@@ -93,7 +93,7 @@ class PeakCenterAction(Action):
 
     def perform(self, event):
         man = get_manager(event, ION_OPTICS_PROTOCOL)
-        if man.setup_peak_center():
+        if man.setup_peak_center(new=True):
             man.do_peak_center(confirm_save=True, warn=True, message='manual peakcenter')
 
 
