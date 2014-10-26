@@ -164,13 +164,14 @@ class IonOpticsManager(Manager):
                        confirm_save=False,
                        warn=False,
                        new_thread=True,
-                       message=''):
+                       message='',
+                       on_end=None):
         self.debug('doing pc')
 
         self.canceled = False
         self.alive = True
 
-        args = (save, confirm_save, warn, message)
+        args = (save, confirm_save, warn, message, on_end)
         if new_thread:
             t = Thread(name='ion_optics.peak_center', target=self._peak_center,
                        args=args)
@@ -183,7 +184,8 @@ class IonOpticsManager(Manager):
     def setup_peak_center(self, detector=None, isotope=None,
                           integration_time=1.04,
                           directions='Increase',
-                          center_dac=None, plot_panel=None, new=False):
+                          center_dac=None, plot_panel=None, new=False,
+                          standalone_graph=True, name=''):
 
         self._ointegration_time = self.spectrometer.integration_time
 
@@ -218,11 +220,13 @@ class IonOpticsManager(Manager):
             center_dac = self.get_center_dac(ref, isotope)
 
         self._setup_peak_center(detectors, isotope, period,
-                                center_dac, directions, plot_panel, new)
+                                center_dac, directions, plot_panel, new,
+                                standalone_graph, name)
         return self.peak_center
 
     def _setup_peak_center(self, detectors, isotope, period,
-                           center_dac, directions, plot_panel, new):
+                           center_dac, directions, plot_panel, new,
+                           standalone_graph, name):
 
 
         spec = self.spectrometer
@@ -250,21 +254,22 @@ class IonOpticsManager(Manager):
 
         self.peak_center = pc
         graph = pc.graph
+        graph.name = name
         if plot_panel:
-        #             plot_panel.peak_center_graph = graph
             plot_panel.set_peak_center_graph(graph)
         else:
-            # bind to the graphs close_func
-            # self.close is called when graph window is closed
-            # use so we can stop the timer
             graph.close_func = self.close
-            # set graph window attributes
-            graph.window_title = 'Peak Center {}({}) @ {:0.3f}'.format(ref, isotope, center_dac)
-            graph.window_width = 300
-            graph.window_height = 250
-            self.open_view(graph)
+            if standalone_graph:
+                # bind to the graphs close_func
+                # self.close is called when graph window is closed
+                # use so we can stop the timer
+                # set graph window attributes
+                graph.window_title = 'Peak Center {}({}) @ {:0.3f}'.format(ref, isotope, center_dac)
+                graph.window_width = 300
+                graph.window_height = 250
+                self.open_view(graph)
 
-    def _peak_center(self, save, confirm_save, warn, message):
+    def _peak_center(self, save, confirm_save, warn, message, on_end):
 
         pc = self.peak_center
         spec = self.spectrometer
@@ -310,6 +315,9 @@ class IonOpticsManager(Manager):
             # the menubar actions. alive=False enables IonOptics>Peak Center
         #        d = lambda:self.trait_set(alive=False)
         # still necessary with qt? and tasks
+
+        if on_end:
+            on_end()
 
         self.trait_set(alive=False)
         if self._ointegration_time:

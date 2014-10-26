@@ -41,7 +41,13 @@ class ColorColumn(TableColumn):
 
 class ScanPane(TraitsTaskPane):
     def traits_view(self):
-        v = View(UItem('graph', style='custom'))
+        # v = View(UItem('graph', style='custom'))
+        v = View(UItem('graphs',
+                       editor=ListEditor(deletable=True,
+                                         use_notebook=True,
+                                         page_name='.name',
+                                         style='custom'),
+                       style='custom'))
         return v
 
 

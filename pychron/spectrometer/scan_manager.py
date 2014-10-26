@@ -48,8 +48,11 @@ from pychron.graph.tools.data_tool import DataTool, DataToolOverlay
 
 class ScanManager(Manager):
     spectrometer = Any
+    ion_optics_manager = Instance('pychron.spectrometer.ion_optics_manager.IonOpticsManager')
 
     graph = Instance(TimeSeriesStreamGraph)
+    graphs = List
+
     readout_view = Instance(ReadoutView)
 
     integration_time = DelegatesTo('spectrometer')
@@ -236,9 +239,31 @@ class ScanManager(Manager):
             self.debug('add spec event marker. {}'.format(msg))
             self.graph.add_visual_marker(msg, bgcolor)
 
+    def peak_center(self):
+
+        man = self.ion_optics_manager
+        if len(self.graphs)>1:
+            i=int(self.graphs[-1].split(' ')[2])+1
+        else:
+            i=1
+
+        self._log_events_enabled=False
+        if man.setup_peak_center(new=True, standalone_graph=False,
+                                 name='Peak Center {:02n}'.format(i)):
+            self.graphs.append(man.peak_center.graph)
+            def func():
+                setattr(self, '_log_events_enabled', True)
+
+            man.do_peak_center(confirm_save=True, warn=True,
+                               message='manual peakcenter',
+                               on_end=func)
+
     #private
     def _reset_graph(self):
         self.graph = self._graph_factory()
+        if len(self.graphs):
+            self.graphs.pop(0)
+        self.graphs.insert(0, self.graph)
 
         #trigger a timer reset. set to 0 then default
         self.reset_scan_timer()
@@ -501,7 +526,8 @@ class ScanManager(Manager):
         #                                               padding=5))
         g = SpectrometerScanGraph(container_dict=dict(bgcolor='lightgray',
                                                       padding=5),
-                                  use_vertical_markers = self.use_vertical_markers)
+                                  use_vertical_markers = self.use_vertical_markers,
+                                  name = 'Stream')
 
         n = self.graph_scan_width * 60
         bottom_pad = 50
@@ -601,7 +627,9 @@ class ScanManager(Manager):
     # defaults
     #===============================================================================
     def _graph_default(self):
-        return self._graph_factory()
+        g = self._graph_factory()
+        self.graphs.append(g)
+        return g
 
     def _rise_rate_default(self):
         r = RiseRate(spectrometer=self.spectrometer,
