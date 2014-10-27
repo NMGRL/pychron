@@ -10,6 +10,8 @@ Pychron
 
 [Website](http://nmgrl.github.io/pychron/)
 
+[Documentation](http://pychron.readthedocs.org)
+
 What is Pychron
 ===============
 
