@@ -101,7 +101,7 @@ class IsotopeEvolutionEditor(GraphEditor):
                 if fits and filters:
                     self._save_fit_dict(unk, meas_analysis, fits, filters, dbaction)
                 else:
-                    self._save_fit(unk, meas_analysis)
+                    self._save_fit(unk, meas_analysis, dbaction)
 
                 proc.remove_from_cache(unk)
 
