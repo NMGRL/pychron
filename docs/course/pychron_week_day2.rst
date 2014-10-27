@@ -51,6 +51,25 @@ Use the Irradiations drop-downs to filter the available samples by irradiation a
 
 .. note:: Selecting an Irradiation Level i.e. "A" filters the Project list.
 
+Subfilters
+~~~~~~~~~~~~~~~~
+The results from the upper level filters can be further refined with Analysis Type and Date Filters
+
+.. note:: You do not have to start with the top level filters. For example you can start with a Date filter.
+
+Results Tables
+~~~~~~~~~~~~~~~~
+The results of the filters are displayed in two tables Samples and Analyses. The Samples table
+displays all the labnumbers that match your query. Select a set of labnumbers and the Analyses table will
+display all the analyses for those labnumbers.
+
+Both the Samples and Analyses tables are filterable. Use the dropdowns to select the attribute to filter on
+then enter a value or selected from available options.
+
+.. note:: To configure what columns are displayed hit the "cog" button.
+
+.. note:: By default only labnumbers that have analyses are displayed. To show all labnumbers deselect
+   "Exclude Non-run" in the configure dialog (hit the "cog" button)
 
 Recall
 -------------------------
