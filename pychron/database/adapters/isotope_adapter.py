@@ -15,13 +15,12 @@
 # ===============================================================================
 
 #============= enthought library imports =======================
-from datetime import datetime, timedelta, date
 
 from traits.api import Long, HasTraits, Date as TDate, Float, Str, Int, Bool, Property, provides
 from traitsui.api import View, Item, HGroup
 
 # ============= standard library imports ========================
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta
 from cStringIO import StringIO
 import hashlib
 from sqlalchemy import Date, distinct
@@ -1435,6 +1434,7 @@ class IsotopeAdapter(DatabaseAdapter):
             q = q.order_by(meas_AnalysisTable.analysis_timestamp.asc())
             if limit:
                 q = q.limit(limit)
+
             return self._query_all(q)
 
     #===========================================================================
@@ -2224,7 +2224,7 @@ class IsotopeAdapter(DatabaseAdapter):
     #===============================================================================
     def _get_post_filter(self, post, comp, cast=True):
         t = meas_AnalysisTable.analysis_timestamp
-        if cast or isinstance(post, date):
+        if cast or not isinstance(post, datetime):
             t = sql_cast(t, Date)
 
         return getattr(t, comp)(post)

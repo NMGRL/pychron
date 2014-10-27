@@ -98,13 +98,25 @@ class RecallTask(AnalysisEditTask):
                 lp=a-pad
                 hp=a+pad
 
-                ans = db.get_analyses_date_range(lp, hp, mass_spectrometers=an.mass_spectrometer)
-                ans = self.manager.make_analyses(ans)
-                ans = sorted(ans, key=lambda x: x.timestamp)
-                editor = ContextEditor(analyses=ans,
-                                       name='Context {}'.format(an.record_id),
-                                       root_analysis=an)
-                self._open_editor(editor)
+                for i in xrange(10):
+                    print lp, hp, an.mass_spectrometer
+                    ans = db.get_analyses_date_range(lp, hp, mass_spectrometers=an.mass_spectrometer)
+                    if not ans:
+                        i+=1
+                        lp=a-pad*i
+                        hp=a+pad*i
+                    else:
+                        break
+
+                if ans:
+                    ans = self.manager.make_analyses(ans)
+                    ans = sorted(ans, key=lambda x: x.timestamp)
+                    editor = ContextEditor(analyses=ans,
+                                           name='Context {}'.format(an.record_id),
+                                           root_analysis=an)
+                    self._open_editor(editor)
+                else:
+                    self.warning_dialog('No runs found within {} hours'.format(i))
 
     def new_summary_project_editor(self):
         from pychron.processing.tasks.recall.summary_project_editor import SummaryProjectEditor
