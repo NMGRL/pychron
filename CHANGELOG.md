@@ -12,6 +12,8 @@ CHANGELOG
 * if high or low post only filters defined load the analysis table with the date range
 * added detector ic view
 * added comment template
+* use notebook for scan manager graphs
+* updated Procedures. don't open multiple extraction line canvases
 
 2.0.4
 ------------------

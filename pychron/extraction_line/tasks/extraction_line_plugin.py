@@ -51,12 +51,11 @@ class ProcedureAction(Action):
     def perform(self, event):
         app = event.task.application
 
-        task = app.get_task('pychron.pyscript.task', activate=False)
-
         for tid in ('pychron.experiment','pychron.spectrometer'):
             task = app.task_is_open(tid)
             if task:
                 #make sure extraction line canvas is visible
+                task.show_pane('pychron.extraction_line.canvas_dock')
                 break
         else:
             #open extraction line task
@@ -71,6 +70,7 @@ class ProcedureAction(Action):
 
         manager.info(info('Started Procedure "{}"'.format(name)))
 
+        task = app.get_task('pychron.pyscript.task', activate=False)
         task.execution_context = {'analysis_type': 'blank' if 'blank' in name else 'unknown'}
         task.execute_script(name, root,
                             delay_start=1,
