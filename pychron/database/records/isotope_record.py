@@ -154,7 +154,8 @@ class IsotopeRecordView(object):
                 try:
                     self.analysis_type = meas.analysis_type.name
                 except AttributeError,e:
-                    print 'IsotopeRecord create meas 1 {}'.format(e)
+                    pass
+                    # print 'IsotopeRecord create meas 1 {}'.format(e)
 
             ext = dbrecord.extraction
             if ext:
@@ -162,7 +163,8 @@ class IsotopeRecordView(object):
                     if ext.extraction_device:
                         self.extract_device = ext.extraction_device.name
                 except AttributeError, e:
-                    print 'IsotopeRecord create ext 2 {}'.format(e)
+                    pass
+                    # print 'IsotopeRecord create ext 2 {}'.format(e)
 
             if not fast_load:
                 self.timestamp = time.mktime(self.rundate.timetuple())
@@ -170,7 +172,8 @@ class IsotopeRecordView(object):
                     try:
                         self.meas_script_name = self._clean_script_name(meas.script.name)
                     except AttributeError, e:
-                        print 'IsotopeRecord create meas 2 {}'.format(e)
+                        pass
+                        # print 'IsotopeRecord create meas 2 {}'.format(e)
                 else:
                     print 'measurment is None'
 
@@ -178,7 +181,8 @@ class IsotopeRecordView(object):
                     try:
                         self.extract_script_name = self._clean_script_name(ext.script.name)
                     except AttributeError, e:
-                        print 'IsotopeRecord create ext 1 {}'.format(e)
+                        pass
+                        # print 'IsotopeRecord create ext 1 {}'.format(e)
                 else:
                     print 'extraction is None'
 

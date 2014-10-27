@@ -10,6 +10,46 @@ Browser
     5. Filtering results
     6. Manual Queries
 
+Browsing is a convienent way of navigating the pychron database. It is similar to Mass Spec's recall/run
+selection window's however pychron's browser pane has the most commonly used query's predefined and organized
+into a simple workflow.
+
+.. note:: If the **Browser** is not open, go to View/Browser. If ``Browser`` is not present then the active window does not support
+          the **Browser** and you must open a window that uses it e.g. **Recall**
+
+The browser is laid out in a top down fashion and divided into multiple levels.
+    1. Mass Spectrometer
+    2. a) Projects
+       b) Irradiations
+    3. Analysis Types
+    4. Date
+    5. Results
+       a) Sample/Identifier (L#)
+       b) Analyses
+
+Filters from the upper levels cascade down to the lower levels. For example selecting Mass Spectrometer=Obama
+limits the Projects list to projects that contain analyses from Obama. The same filtering is applied to the
+Irradiation list.
+
+.. note:: Use the *Binoculars* button to force a refresh using the current filtering criteria.
+
+Browse By Project
+~~~~~~~~~~~~~~~~~~~~
+The **Projects** table lists all projects currently in the database.
+
+.. note:: For faster/easier searching of the **Project** table use the **Filter** textbox to limit the displayed projects to projects that begin with the filtering string.
+   e.g. filter='abc' projects='abc', 'abcd', 'abcd12' but not '1abc'
+
+.. note:: There are a few special projects listed in the **Projects** table. These are the **RECENT ...** entries, one for each mass spectrometer in the database. Selecting a **RECENT** entry
+    will select all samples that have been run within the last *X* hours. To set *X* go to Preferences/Processing/Recent
+
+.. note:: Selecting Projects filters the Irradiation list.
+
+Browser By Irradiation
+~~~~~~~~~~~~~~~~~~~~~~~~
+Use the Irradiations drop-downs to filter the available samples by irradiation and irradiation level.
+
+.. note:: Selecting an Irradiation Level i.e. "A" filters the Project list.
 
 
 Recall

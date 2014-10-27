@@ -23,6 +23,7 @@ from pyface.tasks.action.schema import SToolBar
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.globals import globalv
 from pychron.processing.tasks.actions.processing_actions import ConfigureRecallAction
 from pychron.processing.tasks.browser.util import browser_pane_item
 from pychron.processing.tasks.recall.actions import AddIsoEvoAction, AddDiffAction, EditDataAction, RatioEditorAction, \
@@ -194,12 +195,14 @@ class RecallTask(AnalysisEditTask):
 
     def activated(self):
         super(RecallTask, self).activated()
-        try:
-            a=self.analysis_table.analyses[3]
-            self.recall([a])
-            # self.new_context_editor()
-        except IndexError:
-            pass
+
+        if globalv.recall_debug:
+            try:
+                a=self.analysis_table.analyses[3]
+                self.recall([a])
+                # self.new_context_editor()
+            except IndexError:
+                pass
 
     def _dclicked_sample_changed(self):
         pass

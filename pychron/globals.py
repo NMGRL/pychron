@@ -70,6 +70,7 @@ class Globals(object):
     debug = False
     use_logger_display = True
     use_warning_display = True
+    recall_debug = False
 
     def build(self, ip):
 
@@ -86,8 +87,8 @@ class Globals(object):
                            ('load_soft_locks', to_bool),
                            ('experiment_debug', to_bool),
                            ('experiment_savedb', to_bool),
-                           ('test_experiment_set', str)
-        ]:
+                           ('recall_debug', to_bool),
+                           ('test_experiment_set', str)]:
             a = ip.get_global(attr)
             if a:
                 setattr(globalv, attr, func(a))
