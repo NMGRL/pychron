@@ -5,7 +5,8 @@ import unittest
 
 def suite():
     from pychron.entry.tests.analysis_loader import XLSAnalysisLoaderTestCase
-    from pychron.core.regression.tests.regression import OLSRegressionTest, MeanRegressionTest, FilterOLSRegressionTest
+    from pychron.core.regression.tests.regression import OLSRegressionTest, MeanRegressionTest, \
+        FilterOLSRegressionTest, OLSRegressionTest2
     from pychron.experiment.tests.frequency_test import FrequencyTestCase
     from pychron.experiment.tests.position_regex_test import XYTestCase
     from pychron.experiment.tests.renumber_aliquot_test import RenumberAliquotTestCase
@@ -27,6 +28,7 @@ def suite():
              InterpolationTestCase,
              DocstrContextTestCase,
              OLSRegressionTest,
+             OLSRegressionTest2,
              MeanRegressionTest,
              FilterOLSRegressionTest,
              PlateauTestCase,
