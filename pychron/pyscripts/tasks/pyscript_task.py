@@ -24,7 +24,7 @@ import os
 #============= local library imports  ==========================
 from pychron.envisage.tasks.editor_task import EditorTask
 from pychron.core.helpers.filetools import add_extension
-from pychron.git_archive.repo_manager import GitRepoManager
+from pychron.pyscripts.tasks.git_actions import CommitChangesAction
 from pychron.pyscripts.tasks.pyscript_actions import JumpToGosubAction
 from pychron.pyscripts.tasks.pyscript_editor import ExtractionEditor, MeasurementEditor
 from pychron.pyscripts.tasks.pyscript_panes import CommandsPane, DescriptionPane, \
@@ -43,7 +43,8 @@ class PyScriptTask(EditorTask, ExecuteMixin):
     command_editor_pane = Instance(CommandEditorPane)
     context_editor_pane = Instance(ContextEditorPane)
 
-    repo_manager = Instance(GitRepoManager, ())
+    repo_manager = Instance('pychron.git_archive.repo_manager.GitRepoManager')
+
     wildcard = '*.py'
     _default_extension = '.py'
 
@@ -62,6 +63,16 @@ class PyScriptTask(EditorTask, ExecuteMixin):
     def __init__(self, *args, **kw):
         super(PyScriptTask, self).__init__(*args, **kw)
         self.bind_preferences()
+
+        if self.use_git_repo:
+            if not next((ti for ti in self.tool_bars if ti.name=='Git'), None):
+                self.tool_bars.append(SToolBar(CommitChangesAction(),
+                                           name='Git'))
+
+    def commit_changes(self):
+        self.repo_manager.commit_dialog()
+        if self.active_editor:
+            self.repo_manager.load_file_history(self.active_editor.path)
 
     def jump_to_gosub(self):
         root = os.path.dirname(self.active_editor.path)
@@ -105,6 +116,7 @@ class PyScriptTask(EditorTask, ExecuteMixin):
         self.context_editor_pane = ContextEditorPane()
         if self.use_git_repo:
             self.repo_pane = RepoPane(model=self.repo_manager)
+            self.repo_manager.on_trait_change(self._handle_path_change, 'path_dirty')
 
         return [
             self.commands_pane,
@@ -250,6 +262,12 @@ class PyScriptTask(EditorTask, ExecuteMixin):
         return ''
 
     #handlers
+    def _handle_path_change(self, new):
+        self.debug('path changed {}'.format(new))
+        for ei in self.editor_area.editors:
+            if ei.path==new:
+                ei.load()
+
     def _use_git_repo_changed(self, new):
         self.debug('use git repo changed {}'.format(new))
         if new:
@@ -358,6 +376,10 @@ class PyScriptTask(EditorTask, ExecuteMixin):
         return runner
 
     #defaults
+    def _repo_manager_default(self):
+        from pychron.git_archive.repo_manager import GitRepoManager
+        return GitRepoManager(application=self.application)
+
     def _default_layout_default(self):
         left = Splitter(Tabbed(PaneItem('pychron.pyscript.commands', height=300, width=125),
                                PaneItem('pychron.pyscript.script_browser')),

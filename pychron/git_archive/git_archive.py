@@ -78,15 +78,15 @@ class GitArchive(GitRepoManager):
 
         return (func(ci) for ci in hx)
 
-    def unpack_blob(self, hexsha, p):
-        repo = self._repo
-        for bi in repo.rev_parse(hexsha).tree.blobs:
-            if os.path.basename(bi.abspath) == p:
-                return bi.data_stream.read()
+    # def unpack_blob(self, hexsha, p):
+    #     repo = self._repo
+    #     for bi in repo.rev_parse(hexsha).tree.blobs:
+    #         if os.path.basename(bi.abspath) == p:
+    #             return bi.data_stream.read()
 
-    def diff(self, a, b):
-        repo = self._repo
-        return repo.git.diff(a, b, )
+    # def diff(self, a, b):
+    #     repo = self._repo
+    #     return repo.git.diff(a, b, )
 
 
 # if __name__ == '__main__':

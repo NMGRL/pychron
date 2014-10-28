@@ -17,7 +17,7 @@
 from pyface.constant import OK
 from pyface.directory_dialog import DirectoryDialog
 from traits.api import Property, \
-    Event, List, Str, Any, cached_property, Instance
+    Event, List, Str, cached_property, Instance
 # ============= standard library imports ========================
 import shutil
 import os
@@ -75,7 +75,7 @@ class Manifest(object):
 class WorkspaceManager(GitRepoManager):
     index_db = Instance(IndexAdapter)
     # test = Button
-    selected = Any
+    # selected = Any
     dclicked = Event
     repo_updated = Event
 
@@ -83,7 +83,7 @@ class WorkspaceManager(GitRepoManager):
     commits = List
 
     selected_text = Str
-    selected_commits = List
+    # selected_commits = List
     active = False
 
     def make_analyses(self, ans):
@@ -111,13 +111,13 @@ class WorkspaceManager(GitRepoManager):
         if p:
             self.open_repo(p)
 
-    def diff_selected(self):
-        if self.selected.endswith('.yaml'):
-            if len(self.selected_commits) == 2:
-                l, r = self.selected_commits
-                dd = self._calculate_diff_dict(l, r)
-                dv = DiffView(l.summary, r.summary, dd)
-                self.application.open_view(dv)
+    def _validate_diff(self):
+        return self.selected.endswith('.yaml')
+
+    def _diff_view_factory(self, l, r):
+        dd = self._calculate_diff_dict(l, r)
+        dv = DiffView(l.summary, r.summary, dd)
+        return dv
 
     def open_repo(self, name, root=None):
 
@@ -317,7 +317,7 @@ class WorkspaceManager(GitRepoManager):
 
     def _dclicked_fired(self, new):
         if new:
-            self._load_file_history(new)
+            self.load_file_history(new)
 
     def _selected_branch_changed(self, new):
         if new:

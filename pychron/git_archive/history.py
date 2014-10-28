@@ -17,12 +17,13 @@
 #============= enthought library imports =======================
 from traits.api import HasTraits, List, Str, Date, Int, Button, Property
 from traitsui.api import View, Item, Controller, TextEditor, \
-    TabularEditor, UItem, spring, HGroup, VSplit, VGroup, InstanceEditor, HSplit
+    TabularEditor, UItem, spring, HGroup, VSplit, VGroup, InstanceEditor
 from traitsui.tabular_adapter import TabularAdapter
 #============= standard library imports ========================
 from datetime import datetime
 #============= local library imports  ==========================
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
+from pychron.git_archive.diff_view import DiffView
 from pychron.git_archive.git_archive import GitArchive
 
 
@@ -43,41 +44,6 @@ class Commit(HasTraits):
         return View(UItem('blob',
                           style='custom',
                           editor=TextEditor(read_only=True)))
-
-
-def left_group():
-    return VGroup(HGroup(UItem('left_message', style='readonly'),
-                         UItem('left_date', style='readonly')),
-                  UItem('left',
-                        style='custom',
-                        editor=TextEditor(read_only=True)))
-
-
-def right_group():
-    return VGroup(HGroup(UItem('right_message', style='readonly'),
-                         UItem('right_date', style='readonly')),
-                  UItem('right',
-                        style='custom',
-                        editor=TextEditor(read_only=True)))
-
-
-class DiffView(HasTraits):
-    left = Str
-    left_date = Str
-    right = Str
-    right_date = Str
-    diff = Str
-
-    def traits_view(self):
-        return View(VGroup(HSplit(left_group(), right_group()),
-                           UItem('diff',
-                                 style='custom',
-                                 editor=TextEditor(read_only=True))),
-                    title='Diff',
-                    width=900,
-                    buttons=['OK'],
-                    kind='livemodal',
-                    resizable=True)
 
 
 class GitArchiveHistory(HasTraits):

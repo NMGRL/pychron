@@ -147,7 +147,8 @@ class MagnetFieldTableHistoryAction(Action):
                 from pychron.spectrometer.local_mftable_history_view import LocalMFTableHistory, LocalMFTableHistoryView
                 print archive_root, mft.mftable_path
                 gh = LocalMFTableHistory(archive_root, mft.mftable_path)
-                gh.load_history(os.path.basename(mft.mftable_path))
+                gh.load_history(mft.mftable_path)
+                # gh.load_history(os.path.basename(mft.mftable_path))
                 ghv = LocalMFTableHistoryView(model=gh, title='MFTable Archive')
                 ghv.edit_traits(kind='livemodal')
             else:

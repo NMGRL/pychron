@@ -22,6 +22,7 @@ from traits.api import List, Instance, Str, Property, Any, String, Button, Int
 from traitsui.api import View, Item, UItem, InstanceEditor, ButtonEditor, VGroup, TabularEditor, \
     HGroup, spring, VSplit, Label
 from pyface.tasks.traits_dock_pane import TraitsDockPane
+from traitsui.handler import Handler
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
@@ -34,14 +35,29 @@ from pychron.core.ui.tabular_editor import myTabularEditor
 # from pychron.pyscripts.commands.core import ICommand
 #============= standard library imports ========================
 #============= local library imports  ==========================
+
+
 class CommitAdapter(TabularAdapter):
     columns = [('Commit', 'message'), ('Date', 'date')]
     font = '10'
     date_width = Int(100)
 
-    def get_menu(self, obj, trait, row, column):
-        return MenuManager(Action(name='Diff', action='on_diff'))
+    def get_bg_color( self, obj, trait, row, column = 0):
+        color='white'
+        if self.item.active:
+            color='gray'
+        return color
 
+    def get_menu(self, obj, trait, row, column):
+        return MenuManager(Action(name='Diff', action='on_diff'),
+                           Action(name='Revert To', action='on_revert_to'))
+
+class RepoHandler(Handler):
+    def on_diff(self, info, obj):
+        obj.diff_selected()
+
+    def on_revert_to(self,info, obj):
+        obj.revert_to_selected()
 
 class RepoPane(TraitsDockPane):
     name = 'Repo'
@@ -52,7 +68,9 @@ class RepoPane(TraitsDockPane):
                        editor=TabularEditor(adapter=CommitAdapter(),
                                             editable=False,
                                             multi_select=True,
-                                            selected='selected_commit')))
+                                            refresh='refresh_commits_table_needed',
+                                            selected='selected_commits')),
+                 handler=RepoHandler())
         return v
 
 

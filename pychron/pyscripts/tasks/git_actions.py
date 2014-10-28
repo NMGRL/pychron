@@ -15,22 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Property, Bool
-# ============= standard library imports ========================
+
+#============= standard library imports ========================
 #============= local library imports  ==========================
+from pyface.tasks.action.task_action import TaskAction
 
 
-class Commit(HasTraits):
-    message = Str
-    date = Str
-    hexsha = Str
-    summary = Property
-    active = Bool
-    blob = Str
-    name = Str
-
-    def _get_summary(self):
-        return '{} {}'.format(self.date, self.message)
+class CommitChangesAction(TaskAction):
+    name = 'Commit'
+    method = 'commit_changes'
 
 #============= EOF =============================================
 
