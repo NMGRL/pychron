@@ -117,7 +117,11 @@ class MeasurementContextEditor(ContextEditor):
                 return
 
             if s:
-                ctx = yaml.load(s)
+                try:
+                    ctx = yaml.load(s)
+                except yaml.ScannerError:
+                    return
+
                 self.multicollect.load(ctx)
                 self.baseline.load(ctx)
                 self.peakcenter.load(ctx)

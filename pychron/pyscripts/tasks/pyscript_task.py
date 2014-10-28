@@ -24,12 +24,12 @@ import os
 #============= local library imports  ==========================
 from pychron.envisage.tasks.editor_task import EditorTask
 from pychron.core.helpers.filetools import add_extension
+from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.pyscripts.tasks.pyscript_actions import JumpToGosubAction
 from pychron.pyscripts.tasks.pyscript_editor import ExtractionEditor, MeasurementEditor
 from pychron.pyscripts.tasks.pyscript_panes import CommandsPane, DescriptionPane, \
     CommandEditorPane, ControlPane, ScriptBrowserPane, ContextEditorPane
 from pychron.paths import paths
-from pychron.core.ui.preference_binding import bind_preference
 from pychron.execute_mixin import ExecuteMixin
 
 
@@ -43,6 +43,7 @@ class PyScriptTask(EditorTask, ExecuteMixin):
     command_editor_pane = Instance(CommandEditorPane)
     context_editor_pane = Instance(ContextEditorPane)
 
+    repo_manager = Instance(GitRepoManager, ())
     wildcard = '*.py'
     _default_extension = '.py'
 
@@ -56,9 +57,10 @@ class PyScriptTask(EditorTask, ExecuteMixin):
     tool_bars = [SToolBar(JumpToGosubAction()), ]
     execution_context = Dict
 
-    def __init__(self, *args, **kw):
-        super(PyScriptTask, self).__init__(*args, **kw)
-        bind_preference(self, 'auto_detab', 'pychron.pyscript.auto_detab')
+    use_git_repo=Bool
+    # def __init__(self, *args, **kw):
+    #     super(PyScriptTask, self).__init__(*args, **kw)
+    #     bind_preference(self, 'auto_detab', 'pychron.pyscript.auto_detab')
 
     def jump_to_gosub(self):
         root = os.path.dirname(self.active_editor.path)
@@ -86,6 +88,14 @@ class PyScriptTask(EditorTask, ExecuteMixin):
             return True
 
     #task protocol
+    def activated(self):
+        super(PyScriptTask, self).activated()
+        self.bind_preferences()
+        self._use_git_repo_changed(self.use_git_repo)
+
+    def bind_preferences(self):
+        self._preference_binder('pychron.pyscript', ('auto_detab','use_git_repo'))
+
     def create_dock_panes(self):
         self.commands_pane = CommandsPane()
         self.command_editor_pane = CommandEditorPane()
@@ -102,6 +112,14 @@ class PyScriptTask(EditorTask, ExecuteMixin):
             self.context_editor_pane]
 
     #private
+    def _prompt_for_save(self):
+        ret = super(PyScriptTask, self)._prompt_for_save()
+        if self.use_git_repo:
+            #check for uncommitted changes
+            if self.repo_manager.has_staged():
+                return self.repo_manager.commit_dialog()
+        return ret
+
     def _do_execute(self, name=None, root=None, kind=None, new_thread=True,
                     delay_start=0,
                     on_completion=None):
@@ -174,11 +192,14 @@ class PyScriptTask(EditorTask, ExecuteMixin):
 
     def _save_file(self, path):
         self.active_editor.dump(path)
+        if self.use_git_repo:
+            self.repo_manager.add(path, commit=False)
+
         return True
 
     def _open_file(self, path, **kw):
         self.info('opening pyscript: {}'.format(path))
-        self._open_editor(path, **kw)
+        return self._open_editor(path, **kw)
 
     def _extract_kind(self, path):
         with open(path, 'r') as fp:
@@ -199,6 +220,7 @@ class PyScriptTask(EditorTask, ExecuteMixin):
                        auto_detab=self.auto_detab)
 
         super(PyScriptTask, self)._open_editor(editor)
+        return True
 
     def _open_pyscript(self, new, root):
         new = new.replace('/', ':')
@@ -223,6 +245,22 @@ class PyScriptTask(EditorTask, ExecuteMixin):
         return ''
 
     #handlers
+    def _use_git_repo_changed(self, new):
+        self.debug('use git repo changed {}'.format(new))
+        if new:
+            self.debug('initialize git repo at {}'.format(paths.scripts_dir))
+            if self.repo_manager.init_repo(paths.scripts_dir):
+                pass
+                # self.repo_manager.add_unstaged(None, extension='.py', use_diff=True)
+            else:
+                for p in (paths.measurement_dir, paths.extraction_dir,
+                          paths.post_equilibration_dir, paths.post_measurement_dir):
+                    self.debug('add unstaged files from {}'.format(p))
+                    self.repo_manager.add_unstaged(p, extension='.py', use_diff=False)
+
+                self.debug('committing unstaged pyscripts')
+                self.repo_manager.commit('auto added unstaged pyscripts')
+
     @on_trait_change('command_editor_pane:insert_button')
     def _insert_fired(self):
         self.active_editor.insert_command(self.command_editor_pane.command_object)
@@ -232,6 +270,7 @@ class PyScriptTask(EditorTask, ExecuteMixin):
         self.command_editor_pane.command_object = new
         if new:
             self.description = new.description
+
 
     def _active_editor_changed(self):
         if self.active_editor:

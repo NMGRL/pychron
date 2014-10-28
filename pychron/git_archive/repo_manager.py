@@ -16,13 +16,15 @@
 
 #============= enthought library imports =======================
 import shutil
+from cStringIO import StringIO
 
 from traits.api import Any, Str
+
 
 #============= standard library imports ========================
 import os
 from git.exc import GitCommandError
-from git import Repo
+from git import Repo, Diff
 # from dulwich.repo import Repo
 #============= local library imports  ==========================
 from pychron.core.helpers.filetools import fileiter
@@ -74,11 +76,73 @@ class GitRepoManager(Loggable):
             if os.path.isdir(g):
                 self.debug('initialzied repo {}'.format(path))
                 self._repo = Repo(path)
+                return True
             else:
                 self.debug('{} is not a valid repo'.format(path))
                 self._repo = Repo.init(path)
 
+    def commit_dialog(self):
+
+        from pychron.git_archive.commit_dialog import CommitDialog
+        # print self.index.diff('HEAD')
+        # print self._repo.head
+        # hcommit = self._repo.head.commit
+        # print hcommit.diff('HEAD~1')
+        # print hcommit.diff(None)
+        # ps = [diff.a_blob.name for diff in self._repo.head.commit.diff(None)]
+        ps = self.get_local_changes()
+        cd= CommitDialog(ps)
+        info=cd.edit_traits()
+        if info.result:
+            index=self.index
+            index.add([mp.path for mp in cd.valid_paths()])
+            self.commit(cd.commit_message)
             return True
+
+    def get_local_changes(self):
+        repo = self._repo
+        diff_str = repo.git.diff('HEAD', '--full-index')
+        diff_str = StringIO(diff_str)
+        diff_str.seek(0)
+        diff = Diff._index_from_patch_format(repo, diff_str)
+        return [di.a_blob.path for di in diff.iter_change_type('M')]
+
+        # patches = map(str.strip, diff_str.split('diff --git'))
+        # patches = ['\n'.join(p.split('\n')[2:]) for p in patches[1:]]
+        #
+        # diff_str = StringIO(diff_str)
+        # diff_str.seek(0)
+        # index = Diff._index_from_patch_format(repo, diff_str)
+        #
+        # return index, patches
+        #
+    def has_staged(self):
+        return self._repo.is_dirty()
+
+    def add_unstaged(self, root, extension=None, use_diff=False):
+        index=self.index
+
+        def func(ps, extension):
+            if extension:
+                if not isinstance(extension, tuple):
+                    extension=(extension, )
+                ps = [pp for pp in ps if os.path.splitext(pp)[1] in extension]
+
+            if ps:
+                self.debug('adding to index {}'.format(ps))
+                index.add(ps)
+
+        if use_diff:
+            pass
+            # try:
+            #     ps = [diff.a_blob.path for diff in index.diff(None)]
+            #     func(ps, extension)
+            # except IOError,e:
+            #     print e
+        else:
+            for r, ds, fs in os.walk(root):
+                ps = [os.path.join(r,fi) for fi in fs]
+                func(ps, extension)
 
     def update_gitignore(self, *args):
         p=os.path.join(self.path, '.gitignore')
@@ -168,7 +232,8 @@ class GitRepoManager(Loggable):
     def add(self, p, msg=None, msg_prefix=None, **kw):
         repo=self._repo
         bp = os.path.basename(p)
-        dest = os.path.join(repo.working_dir, bp)
+        dest = os.path.join(repo.working_dir, p)
+
         dest_exists = os.path.isfile(dest)
         if msg_prefix is None:
             msg_prefix = 'modified' if dest_exists else 'added'
@@ -185,7 +250,10 @@ class GitRepoManager(Loggable):
     def _add_to_repo(self, p, msg, commit=True):
         index = self.index
         if index:
-            index.add([p])
+            if not isinstance(p, list):
+                p=[p]
+
+            index.add(p)
             if commit:
                 index.commit(msg)
 
@@ -205,12 +273,11 @@ class GitRepoManager(Loggable):
     def index(self):
         return self._repo.index
 
-    # @property
-    # def path(self):
-    #     if self._repo:
-    #         return self._repo.working_dir
-    #     else:
-    #         return ''
+if __name__ == '__main__':
+    rp=GitRepoManager()
+    rp.init_repo('/Users/ross/Pychrondata_dev/scripts')
+    rp.commit_dialog()
+
 #============= EOF =============================================
         #repo manager protocol
     # def get_local_changes(self, repo=None):
