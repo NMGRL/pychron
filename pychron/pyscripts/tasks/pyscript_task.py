@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,7 +28,7 @@ from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.pyscripts.tasks.pyscript_actions import JumpToGosubAction
 from pychron.pyscripts.tasks.pyscript_editor import ExtractionEditor, MeasurementEditor
 from pychron.pyscripts.tasks.pyscript_panes import CommandsPane, DescriptionPane, \
-    CommandEditorPane, ControlPane, ScriptBrowserPane, ContextEditorPane
+    CommandEditorPane, ControlPane, ScriptBrowserPane, ContextEditorPane, RepoPane
 from pychron.paths import paths
 from pychron.execute_mixin import ExecuteMixin
 
@@ -57,10 +57,11 @@ class PyScriptTask(EditorTask, ExecuteMixin):
     tool_bars = [SToolBar(JumpToGosubAction()), ]
     execution_context = Dict
 
-    use_git_repo=Bool
-    # def __init__(self, *args, **kw):
-    #     super(PyScriptTask, self).__init__(*args, **kw)
-    #     bind_preference(self, 'auto_detab', 'pychron.pyscript.auto_detab')
+    use_git_repo = Bool
+
+    def __init__(self, *args, **kw):
+        super(PyScriptTask, self).__init__(*args, **kw)
+        self.bind_preferences()
 
     def jump_to_gosub(self):
         root = os.path.dirname(self.active_editor.path)
@@ -90,26 +91,29 @@ class PyScriptTask(EditorTask, ExecuteMixin):
     #task protocol
     def activated(self):
         super(PyScriptTask, self).activated()
-        self.bind_preferences()
+
         self._use_git_repo_changed(self.use_git_repo)
 
     def bind_preferences(self):
-        self._preference_binder('pychron.pyscript', ('auto_detab','use_git_repo'))
+        self._preference_binder('pychron.pyscript', ('auto_detab', 'use_git_repo'))
 
     def create_dock_panes(self):
         self.commands_pane = CommandsPane()
         self.command_editor_pane = CommandEditorPane()
         self.control_pane = ControlPane(model=self)
         self.script_browser_pane = ScriptBrowserPane()
-
         self.context_editor_pane = ContextEditorPane()
+        if self.use_git_repo:
+            self.repo_pane = RepoPane(model=self.repo_manager)
+
         return [
             self.commands_pane,
             self.command_editor_pane,
             self.control_pane,
             DescriptionPane(model=self),
             self.script_browser_pane,
-            self.context_editor_pane]
+            self.context_editor_pane,
+            self.repo_pane]
 
     #private
     def _prompt_for_save(self):
@@ -168,7 +172,8 @@ class PyScriptTask(EditorTask, ExecuteMixin):
             if self.use_trace:
                 self.active_editor.trace_delay = self.trace_delay
 
-            t = script.execute(trace=self.use_trace, new_thread=new_thread, delay_start=delay_start, on_completion=on_completion)
+            t = script.execute(trace=self.use_trace, new_thread=new_thread, delay_start=delay_start,
+                               on_completion=on_completion)
 
     def _start_execute(self):
         self.debug('start execute')
@@ -261,17 +266,6 @@ class PyScriptTask(EditorTask, ExecuteMixin):
                 self.debug('committing unstaged pyscripts')
                 self.repo_manager.commit('auto added unstaged pyscripts')
 
-    @on_trait_change('command_editor_pane:insert_button')
-    def _insert_fired(self):
-        self.active_editor.insert_command(self.command_editor_pane.command_object)
-
-    @on_trait_change('commands_pane:command_object')
-    def _update_selected(self, new):
-        self.command_editor_pane.command_object = new
-        if new:
-            self.description = new.description
-
-
     def _active_editor_changed(self):
         if self.active_editor:
             self.commands_pane.name = self.active_editor.kind
@@ -281,6 +275,19 @@ class PyScriptTask(EditorTask, ExecuteMixin):
 
             self.script_browser_pane.root = os.path.dirname(self.active_editor.path)
             self.context_editor_pane.editor = self.active_editor.context_editor
+
+            if self.use_git_repo:
+                self.repo_manager.selected = self.active_editor.path
+
+    @on_trait_change('command_editor_pane:insert_button')
+    def _insert_fired(self):
+        self.active_editor.insert_command(self.command_editor_pane.command_object)
+
+    @on_trait_change('commands_pane:command_object')
+    def _update_selected(self, new):
+        self.command_editor_pane.command_object = new
+        if new:
+            self.description = new.description
 
     @on_trait_change('_current_script:trace_line')
     def _handle_lineno(self, new):
@@ -357,7 +364,12 @@ class PyScriptTask(EditorTask, ExecuteMixin):
                         PaneItem('pychron.pyscript.commands_editor', height=100, width=125),
                         orientation='vertical')
         bottom = PaneItem('pychron.pyscript.description')
-        right = PaneItem('pychron.pyscript.context_editor')
+        if self.use_git_repo:
+            right = Tabbed(PaneItem('pychron.pyscript.repo'),
+                           PaneItem('pychron.pyscript.context_editor'))
+        else:
+            right = PaneItem('pychron.pyscript.context_editor')
+
         return TaskLayout(id='pychron.pyscript',
                           left=left,
                           right=right,

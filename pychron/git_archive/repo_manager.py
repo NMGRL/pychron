@@ -17,8 +17,10 @@
 #============= enthought library imports =======================
 import shutil
 from cStringIO import StringIO
+import time
 
-from traits.api import Any, Str
+from traits.api import Any, Str, List
+
 
 
 #============= standard library imports ========================
@@ -29,6 +31,7 @@ from git import Repo, Diff
 #============= local library imports  ==========================
 from pychron.core.helpers.filetools import fileiter
 from pychron.loggable import Loggable
+from pychron.git_archive.commit import Commit
 
 
 class GitRepoManager(Loggable):
@@ -40,7 +43,10 @@ class GitRepoManager(Loggable):
     _repo = Any
     # root=Directory
     path = Str
+    selected = Any
     selected_branch =Str
+    selected_path_commits = List
+    selected_commit = List
 
     def open_repo(self, name, root=None):
         """
@@ -268,6 +274,40 @@ class GitRepoManager(Loggable):
         repo=self._repo
         hexshas = repo.git.log('--pretty=%H').split('\n')
         return hexshas
+
+    def _load_branch_history(self):
+        hexshas = self._get_branch_history()
+        self.commits = self._parse_commits(hexshas)
+
+    def _parse_commits(self, hexshas):
+        def factory(ci):
+            repo = self._repo
+            obj = repo.rev_parse(ci)
+            cx = Commit(message=obj.message,
+                        hexsha=obj.hexsha,
+                        date=time.strftime("%m/%d/%Y %H:%M", time.gmtime(obj.committed_date)))
+            return cx
+
+        return [factory(ci) for ci in hexshas]
+
+    def _load_file_history(self, p):
+        repo = self._repo
+        try:
+            hexshas = repo.git.log('--pretty=%H', '--follow', '--', p).split('\n')
+            # cs = [repo.rev_parse(c).message for c in hexshas]
+            # self.selected_path_commits = cs
+            self.selected_path_commits = self._parse_commits(hexshas)
+        except GitCommandError:
+            self.selected_path_commits = []
+
+    #handlers
+    def _selected_fired(self, new):
+        if new:
+            self._selected_hook(new)
+            self._load_file_history(new)
+
+    def _selected_hook(self, new):
+        pass
 
     @property
     def index(self):

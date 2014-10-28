@@ -17,11 +17,9 @@
 from pyface.constant import OK
 from pyface.directory_dialog import DirectoryDialog
 from traits.api import Property, \
-    Event, List, Str, HasTraits, Any, cached_property, Instance
+    Event, List, Str, Any, cached_property, Instance
 # ============= standard library imports ========================
 import shutil
-import time
-from git import GitCommandError
 import os
 import yaml
 # ============= local library imports  ==========================
@@ -33,14 +31,6 @@ from pychron.workspace.index import IndexAdapter, Base
 from pychron.workspace.tasks.views import DiffView
 
 
-class Commit(HasTraits):
-    message = Str
-    date = Str
-    hexsha = Str
-    summary = Property
-
-    def _get_summary(self):
-        return '{} {}'.format(self.date, self.message)
 
 
 class Manifest(object):
@@ -91,7 +81,7 @@ class WorkspaceManager(GitRepoManager):
 
     branches = List
     commits = List
-    selected_path_commits = List
+
     selected_text = Str
     selected_commits = List
     active = False
@@ -235,31 +225,6 @@ class WorkspaceManager(GitRepoManager):
             message = 'modified record {}'.format(os.path.relpath(path, self.path))
         index.commit(message)
 
-    def _load_branch_history(self):
-        hexshas = self._get_branch_history()
-        self.commits = self._parse_commits(hexshas)
-
-    def _parse_commits(self, hexshas):
-        def factory(ci):
-            repo = self._repo
-            obj = repo.rev_parse(ci)
-            cx = Commit(message=obj.message,
-                        hexsha=obj.hexsha,
-                        date=time.strftime("%m/%d/%Y %H:%M", time.gmtime(obj.committed_date)))
-            return cx
-
-        return [factory(ci) for ci in hexshas]
-
-    def _load_file_history(self, p):
-        repo = self._repo
-        try:
-            hexshas = repo.git.log('--pretty=%H', '--follow', '--', p).split('\n')
-            # cs = [repo.rev_parse(c).message for c in hexshas]
-            # self.selected_path_commits = cs
-            self.selected_path_commits = self._parse_commits(hexshas)
-        except GitCommandError:
-            self.selected_path_commits = []
-
     def _load_file_text(self, new):
         with open(new, 'r') as fp:
             self.selected_text = fp.read()
@@ -346,10 +311,9 @@ class WorkspaceManager(GitRepoManager):
         return attr_diff
 
     # handlers
-    def _selected_fired(self, new):
+    def _selected_hook(self, new):
         if new:
             self._load_file_text(new)
-            self._load_file_history(new)
 
     def _dclicked_fired(self, new):
         if new:
