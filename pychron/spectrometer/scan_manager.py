@@ -573,8 +573,8 @@ class ScanManager(Manager):
     #===============================================================================
     @cached_property
     def _get_isotopes(self):
-        molweights = self.spectrometer.molecular_weights
-        return [NULL_STR] + sorted(molweights.keys(), key=lambda x: int(x[2:]))
+        # molweights = self.spectrometer.molecular_weights
+        return [NULL_STR] + self.spectrometer.isotopes#sorted(molweights.keys(), key=lambda x: int(x[2:]))
 
     def _validate_graph_ymin(self, v):
         try:

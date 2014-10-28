@@ -317,6 +317,12 @@ class ExtractionLineManager(Manager, Consoleable):
         if self.valve_manager is not None:
             return self.valve_manager.get_valve_by_name(name)
 
+    def get_valve_names(self):
+        names =[]
+        if self.valve_manager is not None:
+            names = self.valve_manager.get_valve_names()
+        return names
+
     def get_pressure(self, controller, name):
         if self.gauge_manager:
             return self.gauge_manager.get_pressure(controller, name)

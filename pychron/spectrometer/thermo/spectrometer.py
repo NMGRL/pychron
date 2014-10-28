@@ -12,11 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import Instance, Int, Property, List, \
-    Any, Enum, Str, DelegatesTo, Bool, TraitError
+    Any, Enum, Str, DelegatesTo, Bool, TraitError, cached_property
 #============= standard library imports ========================
 import os
 from numpy import array, argmin
@@ -68,6 +68,7 @@ class Spectrometer(SpectrometerDevice):
 
     molecular_weight = Str('Ar40')
     molecular_weights = None
+    isotopes = Property
     sub_cup_configurations = List
 
     sub_cup_configuration = Property(depends_on='_sub_cup_configuration')
@@ -373,6 +374,9 @@ class Spectrometer(SpectrometerDevice):
     #===============================================================================
     # private
     #===============================================================================
+    @cached_property
+    def _get_isotopes(self):
+        return sorted(self.molecular_weights.keys(), key=lambda x: int(x[2:]))
 
     def _send_configuration(self):
         COMMAND_MAP = dict(ionrepeller='IonRepeller',

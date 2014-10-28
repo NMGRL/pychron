@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from pyface.tasks.action.schema import SToolBar
@@ -65,9 +65,9 @@ class PyScriptTask(EditorTask, ExecuteMixin):
         self.bind_preferences()
 
         if self.use_git_repo:
-            if not next((ti for ti in self.tool_bars if ti.name=='Git'), None):
+            if not next((ti for ti in self.tool_bars if ti.id == 'pychron.pyscript.git_toolbar'), None):
                 self.tool_bars.append(SToolBar(CommitChangesAction(),
-                                           name='Git'))
+                                               name='pychron.pyscript.git_toolbar'))
 
     def commit_changes(self):
         self.repo_manager.commit_dialog()
@@ -233,8 +233,20 @@ class PyScriptTask(EditorTask, ExecuteMixin):
         else:
             klass = ExtractionEditor
 
+        dets,isotopes,valves = [],[],[]
+        man = self.application.get_service('pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager')
+        if man:
+            dets=[di.name for di in man.spectrometer.detectors]
+            isotopes = man.spectrometer.isotopes
+        man = self.application.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
+        if man:
+            valves = man.get_valve_names()
+
         editor = klass(path=path,
-                       auto_detab=self.auto_detab)
+                       auto_detab=self.auto_detab,
+                       valves=valves,
+                       isotopes=isotopes,
+                       detectors=dets)
 
         super(PyScriptTask, self)._open_editor(editor)
         return True
@@ -265,7 +277,7 @@ class PyScriptTask(EditorTask, ExecuteMixin):
     def _handle_path_change(self, new):
         self.debug('path changed {}'.format(new))
         for ei in self.editor_area.editors:
-            if ei.path==new:
+            if ei.path == new:
                 ei.load()
 
     def _use_git_repo_changed(self, new):
@@ -378,6 +390,7 @@ class PyScriptTask(EditorTask, ExecuteMixin):
     #defaults
     def _repo_manager_default(self):
         from pychron.git_archive.repo_manager import GitRepoManager
+
         return GitRepoManager(application=self.application)
 
     def _default_layout_default(self):
@@ -385,7 +398,7 @@ class PyScriptTask(EditorTask, ExecuteMixin):
                                PaneItem('pychron.pyscript.script_browser')),
                         PaneItem('pychron.pyscript.commands_editor', height=100, width=125),
                         orientation='vertical')
-        bottom = PaneItem('pychron.pyscript.description')
+        # bottom = PaneItem('pychron.pyscript.description')
         if self.use_git_repo:
             right = Tabbed(PaneItem('pychron.pyscript.repo'),
                            PaneItem('pychron.pyscript.context_editor'))
@@ -394,6 +407,5 @@ class PyScriptTask(EditorTask, ExecuteMixin):
 
         return TaskLayout(id='pychron.pyscript',
                           left=left,
-                          right=right,
-                          bottom=bottom)
+                          right=right)
         #============= EOF =============================================

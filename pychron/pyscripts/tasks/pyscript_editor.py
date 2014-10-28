@@ -153,6 +153,8 @@ class PyScriptEditor(Editor, PyScriptEdit):
     selected_command = String
 
     _no_update = False
+    detectors = List
+    isotopes = List
 
     def get_scroll(self):
         return self.control.code.verticalScrollBar().value()
@@ -309,7 +311,9 @@ class MeasurementEditor(PyScriptEditor):
     kind = 'Measurement'
 
     def _context_editor_default(self):
-        return MeasurementContextEditor()
+        return MeasurementContextEditor(detectors=self.detectors,
+                                        isotopes=self.isotopes,
+                                        valves=self.valves)
 
     # def _editor_default(self):
     #     return MeasurementParameterEditor(editor=self)
