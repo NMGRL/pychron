@@ -20,27 +20,26 @@ from PySide.QtGui import QTextEdit, QWidget, QHBoxLayout, QTextFormat, QColor, Q
     QSizePolicy, QPainterPath
 from traits.trait_errors import TraitError
 # ============= standard library imports ========================
+from operator import itemgetter
+from itertools import groupby
 # ============= local library imports  ==========================
 from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
 from pychron.git_archive.diff_util import extract_line_numbers
 
 def get_ranges(data):
-    from operator import itemgetter
-    from itertools import groupby
-    # data = [2, 3, 4, 5, 12, 13, 14, 15, 16, 17]
-    for k, g in groupby(enumerate(data), lambda (i,x):i-x):
-        v=map(itemgetter(1), g)
-        # print v
-        yield v
+    return [map(itemgetter(1), g)
+            for k, g in groupby(enumerate(data),
+                                lambda (i, x): i - x)]
 
 class QDiffConnector(QFrame):
-    _left_y=0
-    _right_y=0
+    _left_y = 0
+    _right_y = 0
+
     def __init__(self):
         super(QDiffConnector, self).__init__()
 
-        self.color = QColor(0,100,0,100)
+        self.color = QColor(0, 100, 0, 100)
         self.setSizePolicy(QSizePolicy(QSizePolicy.Fixed,
                                        QSizePolicy.Ignored))
         self.setFixedWidth(30)
@@ -53,83 +52,112 @@ class QDiffConnector(QFrame):
         qp.setBrush(self.color)
         qp.setPen(self.color)
 
-        rect=event.rect()
-        x= rect.x()
-        w=rect.width()
-        lineheight=16
-        # print '-------------------'
-        # print 'lefts', self.lefts
-        # print 'rights', self.rights
-        # print '-------------------'
-        ly=self._left_y+5
-        ry=self._right_y+5
-        for l,r in zip(self.lefts, self.rights):
-            path=QPainterPath()
-            sl,el=l[0], l[-1]
-            sr,er=r[0], r[-1]
-            y=ly+lineheight*sl
-            y2=ry+lineheight*sr
+        rect = event.rect()
+        x = rect.x()
+        w = rect.width()
+        lineheight = 16
+        print '-------------------'
+        print 'lefts', self.lefts
+        print 'rights', self.rights
+        print '-------------------'
+        ly = self._left_y + 5
+        ry = self._right_y + 5
+        rs=self.rights[:]
 
-            path.moveTo(x,y)
-            path.lineTo(x,y+lineheight*(el-sl+1))
-            path.lineTo(x+w,y2+lineheight*(er-sr+1))
-            path.lineTo(x+w,y2)
+        # offset=1
+        for i, l in enumerate(self.lefts):
+            path = QPainterPath()
+            sl, el = l[0], l[-1]
+            try:
+                r=rs[i]
+                sr, er = r[0], r[-1]
+                rs.pop(i)
+                # offset+=1
+            except IndexError:
+                sr, er = l[-1], l[-1]-1
+
+            y = ly + lineheight * sl
+            y2 = ry + lineheight * sr
+
+            path.moveTo(x, y)
+            path.lineTo(x, y + lineheight * (el - sl + 1))
+            path.lineTo(x + w, y2 + lineheight * (er - sr + 1))
+            path.lineTo(x + w, y2)
+            qp.drawPath(path)
+
+        for i, r in enumerate(rs):
+            path = QPainterPath()
+            sr, er = r[0], r[-1]
+            # try:
+            l=self.lefts[i]
+            sl, el = r[-1], r[-1]-1
+            # except IndexError:
+            #     sl, el = l[-1]+2, l[-1]+1
+                # print sl, el
+
+            y = ly + lineheight * (sl)
+            y2 = ry + lineheight * (sr)
+
+            path.moveTo(x, y)
+            path.lineTo(x, y + lineheight * (el - sl + 1))
+            path.lineTo(x + w, y2 + lineheight * (er - sr + 1))
+            path.lineTo(x + w, y2)
             qp.drawPath(path)
 
         qp.end()
 
     def set_left_y(self, y):
-        self._left_y+=y
+        self._left_y += y
 
     def set_right_y(self, y):
-        self._right_y+=y
+        self._right_y += y
+
 
 class LinkedTextEdit(QTextEdit):
-    linked_widget=None
-    connector=None
-    orientation='left'
-    no_update=False
+    linked_widget = None
+    connector = None
+    orientation = 'left'
+    no_update = False
 
-    def scrollContentsBy(self, x,y):
+    def scrollContentsBy(self, x, y):
         if self.linked_widget and not self.no_update:
             sb = self.linked_widget.verticalScrollBar()
-            v = sb.value()-y
-            self.linked_widget.no_update=True
+            v = sb.value() - y
+            self.linked_widget.no_update = True
             sb.setSliderPosition(v)
-            self.linked_widget.no_update=False
+            self.linked_widget.no_update = False
 
         if self.connector:
-            if self.orientation=='left':
+            if self.orientation == 'left':
                 self.connector.set_left_y(y)
             else:
                 self.connector.set_right_y(y)
 
             self.connector.update()
-        super(LinkedTextEdit, self).scrollContentsBy(x,y)
+        super(LinkedTextEdit, self).scrollContentsBy(x, y)
+
 
 class QDiffEdit(QWidget):
     def __init__(self, parent, *args, **kw):
         super(QDiffEdit, self).__init__(*args, **kw)
         self.left = LinkedTextEdit()
-        self.left.orientation='left'
+        self.left.orientation = 'left'
         self.left.setReadOnly(True)
-        # self.left.setSizePolicy(QSizePolicy(QSizePolicy.Fixed,
-        #                                     QSizePolicy.Fixed))
 
         self.right = LinkedTextEdit()
-        self.right.orientation='right'
+        self.right.orientation = 'right'
         self.right.setReadOnly(True)
-        # self.right.setSizePolicy(QSizePolicy(QSizePolicy.Fixed,
-        #                                     QSizePolicy.Fixed))
 
         self.connector = QDiffConnector()
 
-        self.left.linked_widget=self.right
-        self.right.linked_widget=self.left
-        self.left.connector=self.connector
-        self.right.connector=self.connector
+        self.left.linked_widget = self.right
+        self.right.linked_widget = self.left
+        self.left.connector = self.connector
+        self.right.connector = self.connector
 
         layout = QHBoxLayout()
+
+        layout.setSpacing(0)
         layout.addWidget(self.left)
         layout.addWidget(self.connector)
         layout.addWidget(self.right)
@@ -175,8 +203,8 @@ class QDiffEdit(QWidget):
         self._set_connectors(ls, rs)
 
     def _set_connectors(self, ls, rs):
-        self.connector.lefts=list(get_ranges(ls))
-        self.connector.rights=list(get_ranges(rs))
+        self.connector.lefts = get_ranges(ls)
+        self.connector.rights = get_ranges(rs)
         self.connector.update()
 
 
@@ -231,8 +259,9 @@ class _DiffEditor(Editor):
 
             except TraitError, excp:
                 pass
+
     def _get_user_value(self, attr):
-        ctrl=getattr(self.control, attr)
+        ctrl = getattr(self.control, attr)
         try:
             value = ctrl.text()
         except AttributeError:
@@ -252,6 +281,7 @@ class _DiffEditor(Editor):
             ret = value
 
         return ret
+
 
 class DiffEditor(BasicEditorFactory):
     klass = _DiffEditor

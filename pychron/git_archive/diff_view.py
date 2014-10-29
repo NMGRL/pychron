@@ -89,7 +89,18 @@ f
 13
 3
 3'''
-    dv=DiffView(model=DiffModel(left_text=a, right_text=b))
+    a = '''a=1
+b=1
+c=1
+e=1
+d=1
+f=1'''
+    b = '''a=12
+b=1
+c=1
+e=1
+f=1'''
+    dv=DiffView(model=DiffModel(left_text=b, right_text=a))
     dv.configure_traits()
 #============= EOF =============================================
 

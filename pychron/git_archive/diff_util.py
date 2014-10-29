@@ -81,6 +81,7 @@ def extract_line_numbers(a, b):
     diff_iter = difflib.ndiff(a.split('\n'), b.split('\n'))
     ls, rs = [], []
     llineno,rlineno=0,0
+    print '-----------------------'
     for di in diff_iter:
         di=str(di).rstrip()
         if di:
@@ -94,10 +95,16 @@ def extract_line_numbers(a, b):
             elif d0==' ':
                 llineno+=1
                 rlineno+=1
+            elif d0=='?':
+                pass
+                # if '+' in di:
+                #     rs.append(float(llineno))
+                # else:
+                #     ls.append(float(rlineno))
         else:
             llineno+=1
             rlineno+=1
-        # print di.rstrip()
+        print di.rstrip()
 
     return ls, rs
 
@@ -116,10 +123,12 @@ def extract_line_changes(a, b):
 
 if __name__ == '__main__':
     a = '''a=1
-b=1'''
+b=1
+c=1
+d=1'''
     b = '''a=12
 b=1'''
-    print extract_line_numbers(b,a)
+    print extract_line_numbers(a,b)
 #============= EOF =============================================
 
 
