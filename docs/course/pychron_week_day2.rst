@@ -73,6 +73,22 @@ then enter a value or selected from available options.
 
 Recall
 -------------------------
+Recall an analysis by double clicking on it in the Analyses table. All tasks windows
+support opening a recall tab, however for simple viewing of analyses use Data>Recall or File>Recall (CMD+R).
+This will open the Recall task
+
+The configure the recall view use the Configure View. This will open a dialog that allows
+you to see font sizes and define what information is displayed.
+
+Use Iso Fit to open graphs of the isotope evolutions in a separate tab. You can also
+right click on a set of isotope rows and pop up a standalone iso evo graph.
+
+To manual edit isotope values, e.g. intensities, blanks use Edit Data.
+
+The recall window provides additional information in subviews. to switch
+to different views use the Controls pane. When a recall tab is selected
+Controls will display a list of subviews. The list depends on the type of analysis.
+
     1. Configure View
     2. Isotope Evolution
     3. Edit Data
@@ -83,8 +99,18 @@ Recall
 
 Plotting
 -------------------------
-    1. Ideogram
-       a. selecting analyses
-            i. double click
-            ii. drag and drop
-            iii. Append/Replace buttons
+To make figures open any open of the Figure Tasks, for example Data>Ideogram.
+
+Figure Tasks introduce an new important pane, the "Unknowns" pane. this pane
+holds the list of analyses to plot. There are several ways to load analyses
+into the Unknowns pane.
+
+Use the browser to select a set of analyses.
+
+    1. If you want to plot an entire L# double click it and it will be added to the Unknowns Pane.
+    2. If you want to plot a set of L#'s select the set and right click> Plot Selected or Plot Selected(Grouped). Plot Selected(Grouped)
+        will group the analyses by L#.
+    3. If you want to plot a set of analyses select them and
+        a. Use the append/replace button in the Unknowns Pane
+        b. Right click and use append or replace
+        c. drag the analyses into the unknowns pane
