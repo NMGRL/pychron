@@ -27,7 +27,7 @@ from git.exc import GitCommandError
 from git import Repo, Diff
 #============= local library imports  ==========================
 from pychron.core.helpers.filetools import fileiter
-from pychron.git_archive.diff_view import DiffView
+from pychron.git_archive.diff_view import DiffView, DiffModel
 from pychron.loggable import Loggable
 from pychron.git_archive.commit import Commit
 
@@ -306,8 +306,8 @@ class GitRepoManager(Loggable):
         if not b.blob:
             b.blob = self.unpack_blob(b.hexsha, b.name)
 
-        dv = DiffView(left=a.blob, left_date=a.date, left_message=a.message,
-                      right=b.blob, right_date=b.date, right_message=b.message)
+        model=DiffModel(left_text=b.blob, right_text=a.blob)
+        dv = DiffView(model=model)
         return dv
 
     def _add_to_repo(self, p, msg, commit=True):

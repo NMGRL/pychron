@@ -15,46 +15,82 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str
-from traitsui.api import View, UItem, TextEditor, VGroup, HGroup, HSplit
+from traits.api import HasTraits, Str, Instance
+from traitsui.api import View, UItem, VGroup
 #============= standard library imports ========================
 #============= local library imports  ==========================
-
-def left_group():
-    return VGroup(HGroup(UItem('left_message', style='readonly'),
-                         UItem('left_date', style='readonly')),
-                  UItem('left',
-                        style='custom',
-                        editor=TextEditor(read_only=True)))
+from pychron.git_archive.diff_editor import DiffEditor
 
 
-def right_group():
-    return VGroup(HGroup(UItem('right_message', style='readonly'),
-                         UItem('right_date', style='readonly')),
-                  UItem('right',
-                        style='custom',
-                        editor=TextEditor(read_only=True)))
+class DiffModel(HasTraits):
+    left_text = Str
+    right_text = Str
 
 
 class DiffView(HasTraits):
-    left = Str
-    left_date = Str
-    left_message =Str
-    right = Str
-    right_date = Str
-    right_message =Str
-    diff = Str
-
+    model=Instance(DiffModel)
     def traits_view(self):
-        return View(VGroup(HSplit(left_group(), right_group()),
-                           UItem('diff',
-                                 style='custom',
-                                 editor=TextEditor(read_only=True))),
+        return View(
+                    VGroup(
+                           UItem('model',
+                                 # width=1000,
+                                 # height=200,
+                                 editor=DiffEditor())),
                     title='Diff',
                     width=900,
                     buttons=['OK'],
-                    kind='livemodal',
+                    # kind='livemodal',
                     resizable=True)
+
+if __name__ == '__main__':
+    a='''a=1
+b=1'''
+    b='''a=1
+b=2'''
+    a='''a=1
+b=1'''
+    b='''a=1
+b=1
+c=1'''
+    a='''a=1
+b=1'''
+    b='''a=1
+b=1
+c=1'''
+    a='''a
+b
+c
+d
+e
+f
+1
+2
+2
+3
+4
+4
+56
+31
+13
+3
+3'''
+    b='''
+d
+ee
+f
+1
+2
+2
+3
+4
+4
+56
+31
+13
+3
+3'''
+    dv=DiffView(model=DiffModel(left_text=a, right_text=b))
+    dv.configure_traits()
 #============= EOF =============================================
 
 
