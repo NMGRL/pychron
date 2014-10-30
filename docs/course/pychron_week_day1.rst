@@ -7,12 +7,34 @@ The topics covered today will be general pychron information and new experiment 
 
 General
 -------------
+    0. Launching
     1. Preferences
     2. View Docs
     3. Submit Issue/Lab note
        a) github navigation
        b) gists
     4. Window/Pane layouts
+
+You can launch pychron in one of three ways
+    1. terminal
+    2. pycharm/IDE
+    3. icon
+
+Launch from the terminal
+
+.. code-block::
+
+    >> cd /path/to/pychron/source
+    >> python launchers/pyexperiment.py
+
+Launch from PyCharm
+    Go to the top tool bar and hit the "Play" button, a green triangle.
+
+Launch from Icon
+    Double click the pychron icon an launch like any other application
+
+    .. note:: Not all computers have the application icons. Today we will be running from pycharm on the lab computers
+    and the terminal on personal labtops.
 
 Lets start by going over some general pychron topics. First we will examine pychron's preferences.
 The preference window will open as a drawer from the currently active window. When opened you will
@@ -41,14 +63,18 @@ The processing tab contains misc preference values used during browsing and proc
 Viewing Documentation
 ----------------------
 The pychron documentation is hosted online at pychron.readthedocs.org. You can access this course material in
-addition to a user and developer guide, by navigating to pychron.readthedocs.org in your browser or from pychron's
-Help menu. This is the first place to look for information about pychron. It currently is poorly populated but will
+addition to a user and developer guide, by navigating to **pychron.readthedocs.org in your browser or from pychron's
+Help menu**. This is the first place to look for information about pychron. It currently is poorly populated but will
 evolve and expand as time passes, feedback is received and new features are available.
 
 .. caution:: The documentation is also specific to individual pychron versions, so if you are using an outdated pychron make sure
     to navigate to the current documentation. The documentation follows the same numbering scheme as the application. For
     example documentation for pychron-v2.0.4 (the current beta release) is found at documentation version release-v2.0.4.
     pychron.readthedocs.org will bring you to the latest version of pychron (i.e the develop branch).
+
+.. attention:: Practice going to the documentation page. Practice navigating around the documentation. Use the next and previous
+   buttons, click on links, use the table of contents. **Extra** View different versions of the documentation
+
 
 Submitting Issues
 --------------------
@@ -68,6 +94,10 @@ to surround the text with three backticks (```)
     ```
         peak_hop(hops)
     ```
+
+.. attention:: Practice navigating around github. Go to NMGRL/Laboratory repo and practice submitting bugs. Include a code
+    block and use preview. Add a label.
+
 
 Experiment
 -----------------
