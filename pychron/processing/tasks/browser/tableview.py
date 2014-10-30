@@ -103,6 +103,10 @@ class TableView(PaneModelView):
         if obj.selected:
             obj.context_menu_event = ('open', {'open_copy': True})
 
+    def find_refs(self, info, obj):
+        if obj.selected:
+            obj.context_menu_event = ('find_refs', None)
+
     def on_time_view(self, info, obj):
         obj.load_time_view()
 

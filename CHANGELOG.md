@@ -14,6 +14,7 @@ CHANGELOG
 * added comment template
 * use notebook for scan manager graphs
 * updated Procedures. don't open multiple extraction line canvases
+* added Find References context menu action
 
 2.0.4
 ------------------

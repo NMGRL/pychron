@@ -69,7 +69,8 @@ class AnalysisAdapter(BrowserAdapter):
                    Action(name='Replace', action='replace_items', enabled=e),
                    Action(name='Append', action='append_items', enabled=e),
                    Action(name='Open', action='recall_items'),
-                   Action(name='Open Copy', action='recall_copies')]
+                   Action(name='Open Copy', action='recall_copies'),
+                   Action(name='Find References', action='find_refs')]
         # if obj.id == 'pychron.recall':
         #     actions.pop(1)
         #     actions.pop(1)

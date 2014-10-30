@@ -14,7 +14,8 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
+from datetime import timedelta
 from traits.api import Instance, on_trait_change
 from enable.component import Component
 from pyface.tasks.action.schema import SToolBar
@@ -68,7 +69,7 @@ class AnalysisEditTask(BaseBrowserTask):
     recall_configurer = Instance(RecallTableConfigurer)
 
     def activate_blank_task(self):
-        tid ='pychron.processing.blanks'
+        tid = 'pychron.processing.blanks'
         self._activate_task(tid)
 
     def activate_recall_task(self):
@@ -175,7 +176,7 @@ class AnalysisEditTask(BaseBrowserTask):
             pane.items = ans
 
     def get_recall_editors(self):
-        es=self.editor_area.editors
+        es = self.editor_area.editors
         return [e for e in es if isinstance(e, RecallEditor)]
 
     def configure_recall(self):
@@ -660,6 +661,33 @@ class AnalysisEditTask(BaseBrowserTask):
 
         return items
 
+    def _find_refs(self, ref):
+
+        from pychron.processing.tasks.analysis_edit.selection_view import ReferenceSelectionView, AnalysisSelectionView
+
+        rsd = ReferenceSelectionView()
+        info = rsd.edit_traits(kind='livemodal')
+        if info.result:
+            td = timedelta(hours=4)
+            db = self.db
+            with db.session_ctx():
+                mi = ref.rundate - td
+                ma = ref.rundate + td
+                ans = db.get_analyses_date_range(mi, ma,
+                                                 analysis_type=list(rsd.analysis_types),
+                                                 mass_spectrometers=[ref.mass_spectrometer])
+
+                ans = self._make_records(ans)
+                ans.append(ref)
+                ans=sorted(ans, key=lambda x: x.rundate)
+
+                asv = AnalysisSelectionView(analyses=ans,
+                                            ref=ref)
+                info = asv.edit_traits(kind='livemodal')
+                if info.result:
+                    if asv.selected:
+                        self._recall_item(asv.selected)
+
     #hooks
     def _dclicked_analysis_group_hook(self, unks, b):
         pass
@@ -796,6 +824,9 @@ class AnalysisEditTask(BaseBrowserTask):
 
                     for it in self.analysis_table.selected:
                         self._recall_item(it, open_copy=open_copy)
+            elif action == 'find_refs':
+                if self.analysis_table.selected:
+                    self._find_refs(self.analysis_table.selected[-1])
 
     @on_trait_change('unknowns_pane:previous_selection')
     def _update_up_previous_selection(self, obj, name, old, new):
