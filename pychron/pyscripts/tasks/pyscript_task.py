@@ -60,6 +60,9 @@ class PyScriptTask(EditorTask, ExecuteMixin):
 
     use_git_repo = Bool
 
+    _on_close = None
+    _on_save_as = None
+
     def __init__(self, *args, **kw):
         super(PyScriptTask, self).__init__(*args, **kw)
         self.bind_preferences()
@@ -68,6 +71,12 @@ class PyScriptTask(EditorTask, ExecuteMixin):
             if not next((ti for ti in self.tool_bars if ti.id == 'pychron.pyscript.git_toolbar'), None):
                 self.tool_bars.append(SToolBar(CommitChangesAction(),
                                                name='pychron.pyscript.git_toolbar'))
+
+    def set_on_close_handler(self, func):
+        self._on_close = func
+
+    def set_on_save_as_handler(self, func):
+        self._on_save_as = func
 
     def commit_changes(self):
         self.repo_manager.commit_dialog()
@@ -127,6 +136,11 @@ class PyScriptTask(EditorTask, ExecuteMixin):
             panes.append(self.repo_pane)
         return panes
 
+    def save_as(self):
+        if super(PyScriptTask, self).save_as():
+            if self._on_save_as:
+                self._on_save_as()
+
     #private
     def _prompt_for_save(self):
         ret = super(PyScriptTask, self)._prompt_for_save()
@@ -134,6 +148,10 @@ class PyScriptTask(EditorTask, ExecuteMixin):
             #check for uncommitted changes
             if self.repo_manager.has_staged():
                 return self.repo_manager.commit_dialog()
+        if ret:
+            if self._on_close:
+                self._on_close()
+
         return ret
 
     def _do_execute(self, name=None, root=None, kind=None, new_thread=True,

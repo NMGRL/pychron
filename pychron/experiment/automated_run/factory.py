@@ -1100,6 +1100,14 @@ class AutomatedRunFactory(PersistenceLoggable):
         path, kind = new
         task.kind = kind
         task.open(path=path)
+        task.set_on_save_as_handler(self._update_script_lists)
+        task.set_on_close_handler(self._update_script_lists)
+
+    def _update_script_lists(self):
+        self.debug('update script lists')
+        for si in SCRIPT_NAMES:
+            si = getattr(self, si)
+            si.refresh_lists=True
 
     def _load_defaults_button_fired(self):
         if self.labnumber:

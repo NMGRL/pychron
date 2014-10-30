@@ -117,6 +117,7 @@ class BaseEditorTask(BaseManagerTask):
             if self._save_file(path):
                 self.active_editor.path = path
                 self.active_editor.dirty = False
+                return True
 
     def _save_file(self, path):
         pass
