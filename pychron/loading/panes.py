@@ -24,6 +24,8 @@ from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traitsui.tabular_adapter import TabularAdapter
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.core.ui.combobox_editor import ComboboxEditor
+from pychron.envisage.tasks.pane_helpers import icon_button_editor
 
 
 class PositionsAdapter(TabularAdapter):
@@ -102,12 +104,15 @@ class LoadControlPane(TraitsDockPane):
             label='View')
 
         samplegrp = VGroup(
-            Item('loader_name', label='User'),
+            Item('loader_name', editor=ComboboxEditor(name='available_user_names')),
+            # Item('loader_name', label='User'),
             HGroup(Item('load_name',
                         editor=EnumEditor(name='loads'),
                         label='Loads'),
-                   Item('add_button', show_label=False),
-                   Item('delete_button', show_label=False)),
+                   # Item('add_button', show_label=False),
+                   # Item('delete_button', show_label=False)),
+                   icon_button_editor('add_button', 'add', tooltip='Add a load'),
+                   icon_button_editor('delete_button', 'delete', tooltip='Delete selected load')),
             VGroup(
                 Item('irradiation',
                      editor=EnumEditor(name='irradiations')),

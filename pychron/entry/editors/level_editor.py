@@ -17,7 +17,6 @@
 #============= enthought library imports =======================
 from datetime import datetime
 import os
-import struct
 
 from enable.component_editor import ComponentEditor
 from pyface.constant import OK, YES, NO
@@ -29,10 +28,12 @@ from traitsui.api import View, Item, TabularEditor, HGroup, UItem, VSplit, Group
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
+from pychron.canvas.utils import load_holder_canvas, iter_geom
 from pychron.database.defaults import load_irradiation_map, parse_irradiation_tray_map
 from pychron.entry.editors.base_editor import ModelView
 from pychron.entry.editors.production import IrradiationProduction
@@ -41,18 +42,6 @@ from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pychron_constants import ALPHAS
 
-
-def load_holder_canvas(canvas, geom):
-    if geom:
-        canvas = canvas
-        holes = [(x, y, r, str(c + 1))
-                 for c, (x, y, r) in iter_geom(geom)]
-        canvas.load_scene(holes)
-
-
-def iter_geom(geom):
-    f = lambda x: struct.unpack('>fff', geom[x:x + 12])
-    return ((i, f(gi)) for i, gi in enumerate(xrange(0, len(geom), 12)))
 
 
 class NewProduction(HasTraits):

@@ -22,6 +22,7 @@ from traitsui.api import View, Item, EnumEditor
 
 from itertools import groupby
 #============= local library imports  ==========================
+from pychron.canvas.utils import load_holder_canvas
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.canvas.canvas2D.loading_canvas import LoadingCanvas, group_position
 
@@ -90,6 +91,7 @@ class LoadPosition(HasTraits):
 class LoadingManager(IsotopeDatabaseManager):
     dirty = Bool(False)
     loader_name = Str('Foo')
+    available_user_names = List
 
     labnumber = Str
     labnumbers = Property(depends_on='level')
@@ -114,6 +116,7 @@ class LoadingManager(IsotopeDatabaseManager):
 
     load_name = Str
     loads = List
+
 
     group_positions = Bool
     show_group_positions = Bool(False)
@@ -149,8 +152,6 @@ class LoadingManager(IsotopeDatabaseManager):
 
     def setup(self):
         if self.db.connected:
-        #             self.populate_default_tables()
-
             ls = self._get_loads()
             if ls:
                 self.loads = ls
@@ -159,20 +160,30 @@ class LoadingManager(IsotopeDatabaseManager):
             if ts:
                 self.trays = ts
 
+            us = self._get_users()
+            if us:
+                self.available_user_names = us
+
             ls = self._get_last_load()
             return True
 
+    def _get_users(self):
+        with self.db.session_ctx():
+            users = self.db.get_users()
+            return [u.name for u in users]
 
     def _get_loads(self):
-        loads = self.db.get_loads(order=loading_LoadTable.create_date.desc())
-        if loads:
-            return [li.name for li in loads]
+        with self.db.session_ctx():
+            loads = self.db.get_loads(order=loading_LoadTable.create_date.desc())
+            if loads:
+                return [li.name for li in loads]
 
     def _get_trays(self):
-        trays = self.db.get_load_holders()
-        if trays:
-            ts = [ti.name for ti in trays]
-            return ts
+        with self.db.session_ctx():
+            trays = self.db.get_load_holders()
+            if trays:
+                ts = [ti.name for ti in trays]
+                return ts
 
     def _get_last_load(self, set_tray=True):
 
@@ -280,19 +291,20 @@ class LoadingManager(IsotopeDatabaseManager):
 
         #         with session(None) as s:
             lt = db.get_loadtable(new)
-
             c = self.canvas
             if not c:
                 c = LoadingCanvas(
                     view_x_range=(-2, 2),
                     view_y_range=(-2, 2),
                     editable=editable)
-                self.canvas = c
 
             if lt and lt.holder_:
-                h = lt.holder_.name
-                c.load_scene(h,
-                             show_hole_numbers=self.show_hole_numbers)
+                # h = lt.holder_.name
+                # c.load_scene(lt.holder_.geometry,
+                #              show_hole_numbers=self.show_hole_numbers)
+                print 'make canvas', lt.holder_.name
+                load_holder_canvas(c, lt.holder_.geometry,
+                                   show_hole_numbers=self.show_hole_numbers)
 
                 for pi in lt.loaded_positions:
                     item = c.scene.get_item(str(pi.position))
@@ -321,8 +333,8 @@ class LoadingManager(IsotopeDatabaseManager):
             if not loadtable:
                 return
 
-            if set_tray and loadtable.holder_:
-                self.tray = loadtable.holder_.name
+            # if set_tray and loadtable.holder_:
+            #     self.tray = loadtable.holder_.name
 
             for ln, poss in groupby(loadtable.loaded_positions,
                                     key=lambda x: x.lab_identifier):
@@ -556,6 +568,9 @@ class LoadingManager(IsotopeDatabaseManager):
     def _load_name_changed(self, new):
         if new:
             self.tray = ''
+            # print new
+            self.canvas = self.make_canvas(new)
+            # print self.canvas, self.canvas.scene
             self.load_load(new)
 
     def _show_spans_changed(self, new):
