@@ -147,11 +147,11 @@ class ConnectionPreferencesPane(PreferencesPane):
 
 
 class MassSpecConnectionPreferences(BasePreferencesHelper):
-    preferences_path = 'pychron.database'
-    massspec_dbname = Str
-    massspec_username = Str
-    massspec_password = Password
-    massspec_host = Str
+    preferences_path = 'pychron.massspec.database'
+    name = Str
+    username = Str
+    password = Password
+    host = Str
 
 
 class MassSpecConnectionPane(PreferencesPane):
@@ -161,10 +161,10 @@ class MassSpecConnectionPane(PreferencesPane):
     def traits_view(self):
         massspec_grp = Group(
             Group(
-                Item('massspec_dbname', label='Database'),
-                Item('massspec_host', label='Host'),
-                Item('massspec_username', label='Name'),
-                Item('massspec_password', label='Password'),
+                Item('name', label='Database'),
+                Item('host', label='Host'),
+                Item('username', label='Name'),
+                Item('password', label='Password'),
                 show_border=True,
                 label='Authentication'),
             label='MassSpec DB')

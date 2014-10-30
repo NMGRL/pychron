@@ -217,9 +217,10 @@ class LabnumberEntry(IsotopeDatabaseManager):
                 for idx, cnt in poss:
                     analyzed = bool(cnt)
                     item = scene.get_item(idx)
-                    item.measured_indicator = analyzed
-                    irp = positions[idx - 1]
-                    irp.analyzed = analyzed
+                    if item:
+                        item.measured_indicator = analyzed
+                        irp = positions[idx - 1]
+                        irp.analyzed = analyzed
 
     def _load_holder_canvas(self, holder):
         geom = holder.geometry

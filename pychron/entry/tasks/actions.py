@@ -117,6 +117,11 @@ class ImportSampleMetadataAction(TaskAction):
     method = 'import_sample_metadata'
 
 
+class ExportIrradiationAction(TaskAction):
+    name = 'Export Irradiation...'
+    method ='export_irradiation'
+
+
 class GenerateIrradiationTableAction(Action):
     name = 'Generate Irradiation Table'
     accelerator = 'Ctrl+0'
