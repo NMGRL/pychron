@@ -77,8 +77,11 @@ Recall an analysis by double clicking on it in the Analyses table. All tasks win
 support opening a recall tab, however for simple viewing of analyses use Data>Recall or File>Recall (CMD+R).
 This will open the Recall task
 
-The configure the recall view use the Configure View. This will open a dialog that allows
-you to see font sizes and define what information is displayed.
+To find a set of reference analyses that are near the current analysis (currently hardcored as +/-4 hours),
+right click an analysis in the Analyses table and select Find References
+
+The configure the recall view use the Configure Recall action. This will open a dialog that allows
+you to set font sizes and define what information is displayed.
 
 Use Iso Fit to open graphs of the isotope evolutions in a separate tab. You can also
 right click on a set of isotope rows and pop up a standalone iso evo graph.
