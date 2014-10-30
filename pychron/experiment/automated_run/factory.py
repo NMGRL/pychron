@@ -37,7 +37,7 @@ from pychron.paths import paths
 from pychron.experiment.script.script import Script, ScriptOptions
 from pychron.experiment.queue.increment_heat_template import IncrementalHeatTemplate
 from pychron.experiment.utilities.human_error_checker import HumanErrorChecker
-from pychron.core.helpers.filetools import list_directory, add_extension
+from pychron.core.helpers.filetools import list_directory, add_extension, list_directory2
 from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
 from pychron.core.ui.gui import invoke_in_main_thread
 
@@ -444,10 +444,10 @@ class AutomatedRunFactory(PersistenceLoggable):
     #===============================================================================
     # def _new_runs(self, positions, extract_group_cnt=0):
     def _new_run_block(self):
-        p = os.path.join(paths.run_block_dir, self.run_block)
+        p = os.path.join(paths.run_block_dir, add_extension(self.run_block, '.txt'))
         block = ExperimentBlock(extract_device=self.extract_device,
                                 mass_spectrometer=self.mass_spectrometer)
-        return block.extract_runs(p), self.frequency
+        return block.make_runs(p), self.frequency
 
     def _new_runs(self, exp_queue, positions):
         _ln, special = self._make_short_labnumber()
@@ -965,7 +965,7 @@ class AutomatedRunFactory(PersistenceLoggable):
 
     def _get_run_blocks(self):
         p = paths.run_block_dir
-        blocks = list_directory(p, '.txt')
+        blocks = list_directory2(p, '.txt', remove_extension=True)
         return ['RunBlock', LINE_STR] + blocks
 
     def _get_comment_templates(self):
@@ -996,7 +996,7 @@ class AutomatedRunFactory(PersistenceLoggable):
         p = paths.conditionals_dir
         extension = '.yaml'
         temps = list_directory(p, extension, remove_extension=True)
-        return [NULL_STR, ] + temps
+        return [NULL_STR] + temps
 
     def _get_beam_diameter(self):
         bd = ''

@@ -319,11 +319,10 @@ class AutomatedRunMixin(object):
         blocks = MenuManager(Action(name='Make Block', action='make_block'),
                              Action(name='Repeat Block', action='repeat_block'),
                              name='Blocks')
-        return MenuManager(move, jump,
+        return MenuManager(move, jump, blocks,
                            Action(name='Unselect', action='unselect'),
                            Action(name='Toggle End After', action='toggle_end_after'),
-                           Action(name='Toggle Skip', action='toggle_skip')
-                           )
+                           Action(name='Toggle Skip', action='toggle_skip'))
 
 
 class AutomatedRunSpecAdapter(AutomatedRunMixin, ExecutedAutomatedRunSpecAdapter, ):

@@ -92,7 +92,7 @@ class ExperimentQueueFactory(PersistenceLoggable):
     def _load_queue_conditionals(self):
         root = paths.queue_conditionals_dir
         cs = list_directory2(root, remove_extension=True)
-        self.available_conditionals = ['Queue Conditional', LINE_STR] + cs
+        self.available_conditionals = [NULL_STR] + cs
 
     def _edit_user_fired(self):
         a = UserEntry()

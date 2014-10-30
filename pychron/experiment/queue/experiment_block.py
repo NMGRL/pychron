@@ -14,7 +14,7 @@ class ExperimentBlock(Loggable):
     def _add_queue_meta(self, params):
         pass
 
-    def extract_runs(self, path):
+    def make_runs(self, path):
         with open(path,'r') as fp:
             line_gen=self._get_line_generator(fp)
             return self._load_runs(line_gen)
