@@ -114,18 +114,18 @@ class PyScriptTask(EditorTask, ExecuteMixin):
         self.control_pane = ControlPane(model=self)
         self.script_browser_pane = ScriptBrowserPane()
         self.context_editor_pane = ContextEditorPane()
-        if self.use_git_repo:
-            self.repo_pane = RepoPane(model=self.repo_manager)
-            self.repo_manager.on_trait_change(self._handle_path_change, 'path_dirty')
-
-        return [
+        panes=[
             self.commands_pane,
             self.command_editor_pane,
             self.control_pane,
             DescriptionPane(model=self),
             self.script_browser_pane,
-            self.context_editor_pane,
-            self.repo_pane]
+            self.context_editor_pane]
+        if self.use_git_repo:
+            self.repo_pane = RepoPane(model=self.repo_manager)
+            self.repo_manager.on_trait_change(self._handle_path_change, 'path_dirty')
+            panes.append(self.repo_pane)
+        return panes
 
     #private
     def _prompt_for_save(self):
@@ -255,7 +255,8 @@ class PyScriptTask(EditorTask, ExecuteMixin):
         new = new.replace('/', ':')
         new = add_extension(new, '.py')
         paths = new.split(':')
-
+        print new
+        print paths
         for editor in self.editor_area.editors:
             if editor.name == paths[-1]:
                 self.activate_editor(editor)
