@@ -113,6 +113,7 @@ Experiment
        a) extending the total time
     7. Auto comment
     8. Jump/Move To
+    9. Run blocks
 
 **End After** is a convenient feature that allows you to stop the experiment after a selected analysis, instead of
 the current analysis using the "Stop at Completion" checkbox. The background will be dark gray when you
@@ -134,7 +135,6 @@ is stored in the database and available via the username drop-down widget. If yo
 simply type in any name you wish. If you supply an email address pychron will email you when
 the experiment completes or is canceled.
 
-
 **Conditionals** Conditionals are the pychron mechanism used to take action if a given condition evaluates to True, e.g.
 age>2.0. There are three levels of Conditionals 1) System 2) Queue 3) Run. System conditionals are applied to every
 run of every experiment. A typical system conditional is to cancel the experiment if the CDD is not on/enabled.
@@ -147,6 +147,8 @@ Truncations conditionals truncate the current run (curtail in MassSpec parlance)
 Terminations cancel the experiment immediately. Actions allow you to specify a action to take such as run a blank, etc. Custom
 actions can be programmed using pyscripts.
 
+.. attention:: Practice adding a simple and a path truncation to some runs.
+
 **Wait Dialog** You should be familiar with the basic concepts of the Wait Dialog. One feature that has not been discussed
 in depth is "Set Max Seconds." This is used to extend the wait period beyond the original time. For example say the wait dialog
 starts at 30 seconds but you are doing something and want to delay 5 minutes. Enter 300 into "Set Max Seconds" and the wait
@@ -158,8 +160,23 @@ pychron provides an auto comment feature. Simply check the checkbox to auto fill
 your own comment templates. For example the template "irrad_level : irrad_hole SCLF" when applied to a given labnumber would
 yield "A:9 SCLF".
 
+.. attention:: Try using the auto comment feature.
+
+.. note:: The template feature is not available for the pyexperiment version on the lab computers.
+
 **Jump/Move To** Right click on a run and select move to or jump to... move to... will move the selected rows to
 the specified location. jump to... will move the specified location into view.
+
+.. attention:: Try the jump/move to features
+
+**Run Blocks** provide a mechanism to save commonly used sequences of runs. To save a run block, select the set of runs,
+right click and select "Make Run Block". To add a run block select it from the drop down in the Experiment Editor and
+hit the add button. You don't have to save a run block if its a one off. You can repeat a selected set of runs by right
+clicked and selecting "Repeat Run Block". This will repeat the selected runs, a "run block", every X runs. "Repeat Run Block"
+will ask for the value of X.
+
+.. attention:: Practice using the "Run Block" features
+
 
 Script Editing
 -----------------
