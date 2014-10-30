@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import Str, Property, cached_property, Int, \
-    Any, String, Event, Bool, Dict, List
+    Any, String, Event, Bool, Dict, List, Button
 #============= standard library imports ========================
 import os
 from ConfigParser import ConfigParser
@@ -37,7 +37,9 @@ class ExperimentQueueFactory(PersistenceLoggable):
     _email = Str
     _emails = Dict
 
+    use_group_email = Bool
     use_email_notifier = Bool(True)
+    edit_emails = Button
 
     usernames = Property(depends_on='users_dirty, db_refresh_needed')
     edit_user = Event
@@ -65,6 +67,7 @@ class ExperimentQueueFactory(PersistenceLoggable):
     ok_make = Property(depends_on='mass_spectrometer, username')
 
     pattributes = ('username', 'mass_spectrometer', 'extract_device',
+                   'use_group_email',
                    'delay_between_analyses',
                    'delay_before_analyses',
                    'queue_conditionals_name')
@@ -202,6 +205,16 @@ class ExperimentQueueFactory(PersistenceLoggable):
 
     def _mass_spectrometer_changed(self, new):
         self.debug('mass spectrometer ="{}"'.format(new))
+
+    def _edit_emails_fired(self):
+        from pychron.experiment.utilities.email_selection_view import EmailSelectionView, boiler_plate
+        path = os.path.join(paths.setup_dir, 'users.yaml')
+        if not os.path.isfile(path):
+            boiler_plate(path)
+
+        esv = EmailSelectionView(path=path,
+                                 emails=self._emails)
+        esv.edit_traits(kind='livemodal')
 
 
 if __name__ == '__main__':

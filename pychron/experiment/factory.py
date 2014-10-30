@@ -78,6 +78,7 @@ class ExperimentFactory(Loggable, ConsumerMixin):
         eq = self.queue
         qf = self.queue_factory
         for a in ('username', 'mass_spectrometer', 'extract_device',
+                  'use_group_email',
                   'load_name',
                   'delay_before_analyses', 'delay_between_analyses',
                   'queue_conditionals_name'):

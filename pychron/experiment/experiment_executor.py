@@ -52,7 +52,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     connectables = List
 
     console_bgcolor = 'black'
-    #===========================================================================
+    # ===========================================================================
     # control
     #===========================================================================
     show_conditionals_button = Button('Show Conditionals')
@@ -148,8 +148,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         if self.application:
             self.spectrometer_manager = self.application.get_service(p2)
-            self.extraction_line_manager=self.application.get_service(p1)
-            self.ion_optics_manager=self.application.get_service(p3)
+            self.extraction_line_manager = self.application.get_service(p1)
+            self.ion_optics_manager = self.application.get_service(p3)
 
     def bind_preferences(self):
         self.datahub.bind_preferences()
@@ -183,7 +183,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.alive = True
         self._canceled = False
 
-        self._err_message=''
+        self._err_message = ''
         self.end_at_run_completion = False
         self.extraction_state_label = ''
         self.experiment_queue.executed = True
@@ -461,12 +461,30 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         self.heading('experiment queue {} finished'.format(exp.name))
 
-        if exp.email:
-            if not self._err_message and self.end_at_run_completion:
-                self._err_message='User terminated'
+        if not self._err_message and self.end_at_run_completion:
+            self._err_message = 'User terminated'
 
+        if exp.email:
             self.info('Notifying user={} email={}'.format(exp.username, exp.email))
             self.user_notifier.notify(exp, last_runid, self._err_message)
+
+        if exp.use_group_email:
+            names, addrs = self._get_group_emails(exp.email)
+            if names:
+                self.info('Notifying user group names={}'.format(','.join(names)))
+                self.user_notifier.notify_group(exp, last_runid, self._err_message, addrs)
+
+    def _get_group_emails(self, email):
+        names, addrs = None, None
+        path = os.path.join(paths.setup_dir, 'users.yaml')
+        if os.path.isfile(path):
+            with open(path, 'r') as fp:
+                yl = yaml.load(fp)
+
+                items = [(i['name'], i['email']) for i in yl if i['enabled'] and i['email'] != email]
+
+            names, addrs = zip(*items)
+        return names, addrs
 
     def _wait_for(self, predicate, period=1, invert=False):
         """
@@ -1232,6 +1250,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     def _extract_conditionals(self, p, term_name, klass='TerminationConditional'):
         from pychron.experiment.conditional.conditional import conditional_from_dict
+
         if p and os.path.isfile(p):
             self.debug('loading condiitonals from {}'.format(p))
             with open(p, 'r') as fp:
@@ -1431,11 +1450,11 @@ Use Last "blank_{}"= {}
             ed_connectable = Connectable(name=exp.extract_device)
             man = None
             if self.application:
-                protocol ='pychron.lasers.laser_managers.ilaser_manager.ILaserManager'
+                protocol = 'pychron.lasers.laser_managers.ilaser_manager.ILaserManager'
                 man = self.application.get_service(protocol, 'name=="{}"'.format(extract_device))
 
                 if man is None:
-                    protocol ='pychron.external_pipette.protocol.IPipetteManager'
+                    protocol = 'pychron.external_pipette.protocol.IPipetteManager'
                     man = self.application.get_service(protocol, 'name=="{}"'.format(extract_device))
                 ed_connectable.protocol = protocol
 
@@ -1557,6 +1576,7 @@ Use Last "blank_{}"= {}
     def _pyscript_runner_default(self):
         if self.mode == 'client':
             from pychron.initialization_parser import InitializationParser
+
             ip = InitializationParser()
             elm = ip.get_plugin('Experiment', category='general')
             runner = elm.find('runner')
@@ -1584,9 +1604,11 @@ Use Last "blank_{}"= {}
         self.debug('Experiment Executor mode={}'.format(self.mode))
         if self.mode == 'client':
             from pychron.monitors.automated_run_monitor import RemoteAutomatedRunMonitor
+
             mon = RemoteAutomatedRunMonitor(name='automated_run_monitor')
         else:
             from pychron.monitors.automated_run_monitor import AutomatedRunMonitor
+
             mon = AutomatedRunMonitor()
 
         self.debug('Automated run monitor {}'.format(mon))
@@ -1598,4 +1620,4 @@ Use Last "blank_{}"= {}
                 self.warning('no automated run monitor avaliable. '
                              'Make sure config file is located at setupfiles/monitors/automated_run_monitor.cfg')
 
-#============= EOF =============================================
+# ============= EOF =============================================
