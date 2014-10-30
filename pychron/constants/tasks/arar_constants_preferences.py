@@ -21,25 +21,26 @@ from pyface.message_dialog import warning
 from traits.api import HasTraits, Float, Enum, Str, Bool, on_trait_change, Property, Button, List, Dict
 from traitsui.api import View, Item, UItem, Spring, Label, spring, VGroup, HGroup, EnumEditor, ButtonEditor
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 from pychron.pychron_constants import PLUSMINUS, NULL_STR
 
 LAMBDA_K_ATTRS = ('lambda_e', 'lambda_e_error', 'lambda_b', 'lambda_b_error')
+ATM_ATTRS = ('Ar40_Ar36_atm', 'Ar40_Ar36_atm_error', 'Ar40_Ar38_atm', 'Ar40_Ar38_atm_error')
 
 
 class DecayConstantEntry(HasTraits):
-    name = Str#('Steiger & Jager')
-    lambda_e = Float#(5.81e-11)
-    lambda_e_error = Float#(0)
-    lambda_b = Float#(4.962e-10)
-    lambda_b_error = Float#(0)
+    name = Str  # ('Steiger & Jager')
+    lambda_e = Float  # (5.81e-11)
+    lambda_e_error = Float  # (0)
+    lambda_b = Float  # (4.962e-10)
+    lambda_b_error = Float  # (0)
     total_k_decay = Property(depends_on='lambda_e, lambda_b')
 
     def _get_total_k_decay(self):
-        return self.lambda_e+self.lambda_b
+        return self.lambda_e + self.lambda_b
 
     def totuple(self):
         return tuple([getattr(self, a) for a in LAMBDA_K_ATTRS])
@@ -53,6 +54,27 @@ class DecayConstantEntry(HasTraits):
                         Item('total_k_decay', style='readonly')),
                  buttons=['OK', 'Cancel'],
                  title='Add Decay Constant Entry',
+                 kind='livemodal')
+        return v
+
+
+class AtmConstantsEntry(HasTraits):
+    name = Str
+    Ar40_Ar36_atm = Float
+    Ar40_Ar36_atm_error = Float
+    Ar40_Ar38_atm = Float
+    Ar40_Ar38_atm_error = Float
+    def totuple(self):
+        return tuple([getattr(self, a) for a in ATM_ATTRS])
+
+    def traits_view(self):
+        v = View(VGroup(Item('name'),
+                        HGroup(UItem('Ar40_Ar36_atm'), Label(PLUSMINUS), UItem('Ar40_Ar36_atm_err'),
+                               show_border=True, label='(Ar40/Ar36)atm'),
+                        HGroup(UItem('Ar40_Ar38_atm'), Label(PLUSMINUS), UItem('Ar40_Ar38_atm_err'),
+                               show_border=True, label='(Ar40/Ar38)atm')),
+                 buttons=['OK', 'Cancel'],
+                 title='Add Atm Constant Entry',
                  kind='livemodal')
         return v
 
@@ -79,7 +101,7 @@ class ArArConstantsPreferences(BasePreferencesHelper):
     Ar37_Ar39_error = Float(0.01)
     allow_negative_ca_correction = Bool
 
-    #===========================================================================
+    # ===========================================================================
     # spectrometer
     #===========================================================================
     abundance_sensitivity = Float(0)
@@ -98,27 +120,60 @@ class ArArConstantsPreferences(BasePreferencesHelper):
     lambda_Ar37_citation = Str
     lambda_Ar39_citation = Str
 
-    # decay_constant_name = Enum(NULL_STR, 'Min', 'Steiger & Jagger')
-    # decay_constant_entries = {'Min': (5.80e-11, 0, 4.884e-10, 0),
-    #                           'Steiger & Jagger': (5.81e-11, 0, 4.962e-10, 0)}
-    decay_constant_entries = Dict({'Min': (5.80e-11, 0, 4.884e-10, 0),
-                                   'Steiger & Jager': (5.81e-11, 0, 4.962e-10, 0)})
+    decay_constant_entries = Dict({'Min et al., 2000': (5.80e-11, 0, 4.884e-10, 0),
+                                   'Steiger & Jager 1977': (5.81e-11, 0, 4.962e-10, 0)})
     add_decay_constant = Button
-    delete_decay_constant=Button
-
+    delete_decay_constant = Button
     decay_constant_name = Str(NULL_STR)
-    decay_constant_names = List([NULL_STR, 'Min', 'Steiger & Jager'])
+    decay_constant_names = List([NULL_STR, 'Min et al., 2000', 'Steiger & Jager 1977'])
+
+    atm_constant_entries = Dict({'Nier 1950': (295.5, 0.5, 1575.0, 2.0),
+                                 'Lee et al., 2006': (298.56, 0.31, 1583.87, 3.01)})
+    atm_constant_name = Str(NULL_STR)
+    atm_constant_names = List([NULL_STR, 'Nier 1950', 'Lee et al., 2006'])
+    add_atm_constant = Button
+    delete_atm_constant = Button
 
     total_k_decay = Property(depends_on='lambda_e, lambda_b')
     decay_constant_entry_deletable = Property(depends_on='decay_constant_name')
 
+    def _delete_atm_constant_fired(self):
+        dn = self.atm_constant_name
+        result = confirm(None, 'Are you sure you want to remove "{}"'.format(dn))
+        if result == YES:
+            self.atm_constant_names.remove(dn)
+            self.atm_constant_entries.pop(dn)
+            self.atm_constant_name = self.atm_constant_names[-1] if self.atm_constant_names else NULL_STR
+
     def _delete_decay_constant_fired(self):
         dn = self.decay_constant_name
-        result=confirm(None, 'Are you sure you want to remove "{}"'.format(dn))
-        if result==YES:
+        result = confirm(None, 'Are you sure you want to remove "{}"'.format(dn))
+        if result == YES:
             self.decay_constant_names.remove(dn)
             self.decay_constant_entries.pop(dn)
-            self.decay_constant_name=self.decay_constant_names[-1]
+            self.decay_constant_name = self.decay_constant_names[-1] if self.decay_constant_names else NULL_STR
+
+    def _add_atm_constant_fired(self):
+        e = AtmConstantsEntry()
+        for a in ATM_ATTRS:
+            setattr(e, a, getattr(self, a))
+
+        info = e.edit_traits()
+        name = e.name
+        if info.result and name:
+            if name not in self.atm_constant_names:
+                nv = e.totuple()
+                exists = next((k for k, v in self.atm_constant_entries.iteritems() if nv == v), None)
+                if exists:
+                    warning(None,
+                            'Atm constant entry with those values already exists.\nExisting entry named "{}"'.format(
+                                exists))
+                else:
+                    self.atm_constant_names.append(name)
+                    self.atm_constant_entries[name] = e.totuple()
+                    self.atm_constant_name = name
+            else:
+                warning(None, 'Atm constant entry with that name alreay exists')
 
     def _add_decay_constant_fired(self):
         e = DecayConstantEntry()
@@ -126,17 +181,19 @@ class ArArConstantsPreferences(BasePreferencesHelper):
             setattr(e, a, getattr(self, a))
 
         info = e.edit_traits()
-        name=e.name
+        name = e.name
         if info.result and name:
             if name not in self.decay_constant_names:
                 nv = e.totuple()
                 exists = next((k for k, v in self.decay_constant_entries.iteritems() if nv == v), None)
                 if exists:
-                    warning(None, 'Decay constant entry with those values already exists.\nExisting entry named "{}"'.format(exists))
+                    warning(None,
+                            'Decay constant entry with those values already exists.\nExisting entry named "{}"'.format(
+                                exists))
                 else:
                     self.decay_constant_names.append(name)
                     self.decay_constant_entries[name] = e.totuple()
-                    self.decay_constant_name=name
+                    self.decay_constant_name = name
             else:
                 warning(None, 'Decay constant entry with that name alreay exists')
 
@@ -165,7 +222,7 @@ class ArArConstantsPreferences(BasePreferencesHelper):
         pass
 
     def _get_decay_constant_entry_deletable(self):
-        return self.decay_constant_name not in (NULL_STR, 'Min','Steiger & Jager')
+        return self.decay_constant_name not in (NULL_STR, 'Min', 'Steiger & Jager')
 
     def _set_decay_constant_entry_deletable(self, v):
         pass
@@ -173,7 +230,7 @@ class ArArConstantsPreferences(BasePreferencesHelper):
     def _get_value(self, name, value):
         if name == 'total_k_decay':
             return self._get_total_k_decay()
-        elif name=='decay_constant_entry_deletable':
+        elif name == 'decay_constant_entry_deletable':
             pass
         else:
             return super(ArArConstantsPreferences, self)._get_value(name, value)
