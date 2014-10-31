@@ -17,13 +17,14 @@
 #============= enthought library imports =======================
 from datetime import datetime
 
-from traits.api import List
+from traits.api import List, Str
 from pyface.api import SplashScreen
 from pyface.image_resource import ImageResource
 
 #============= standard library imports ========================
 import os
 #============= local library imports  ==========================
+
 from pychron.paths import paths
 from pychron.applications.about_dialog import myAboutDialog
 from pychron.envisage.tasks.base_tasks_application import BaseTasksApplication
@@ -55,11 +56,12 @@ def revision_str(rev):
 
 class PychronApplication(BaseTasksApplication):
     about_additions = List
-
+    username = Str
     def __init__(self, username=None, *args, **kw):
         if username:
             self.id='{}.{}'.format(self.id, username)
             self.name='{} - {}'.format(self.name, username)
+            self.username=username
 
         super(PychronApplication, self).__init__(*args, **kw)
 
@@ -76,12 +78,7 @@ class PychronApplication(BaseTasksApplication):
         man=self.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
         if man:
             names=man.db.get_usernames()
-            dump_user_file(names=names)
-
-    def set_username(self, name):
-        self.name='{}-{}'.format(self.name, name)
-        # self.id = '{}.{}'.format(self.id, name)
-        globalv.username=name
+            dump_user_file(names=names, last_login_name=self.username)
 
     def set_changes(self, changelist):
         self.about_dialog.changes = changelist

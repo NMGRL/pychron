@@ -2028,7 +2028,7 @@ class IsotopeAdapter(DatabaseAdapter):
         return self._retrieve_items(gen_UserTable, **kw)
 
     def get_usernames(self):
-        return [u.name for u in self.get_users()]
+        return [u.name for u in self.get_users(order=gen_UserTable.name.asc())]
 
     def get_labnumbers_startswith(self, partial_id, mass_spectrometers=None, filter_non_run=True, **kw):
         f = gen_LabTable.identifier.like('{}%'.format(partial_id))

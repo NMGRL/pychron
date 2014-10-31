@@ -17,10 +17,10 @@
 # ============= enthought library imports =======================
 import os
 import pickle
-from traits.api import HasTraits, Button, List, Str
+from traits.api import HasTraits, Button, List, Str, Bool
 from traitsui.api import View, Item, HGroup, UItem, Label, Handler, VGroup
 # ============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.globals import globalv
 from pychron.paths import paths
@@ -35,24 +35,25 @@ class LoginHandler(Handler):
 
 def load_user_file():
     users = []
-    path=paths.users_file
+    last_login = ''
+    path = paths.users_file
     if os.path.isfile(path):
         with open(path, 'r') as fp:
-            users = pickle.load(fp)
-    return users
+            users, last_login = pickle.load(fp)
+    return users, last_login
 
 
-def dump_user_file(names):
-    users = load_user_file()
+def dump_user_file(names, last_login_name):
+    # users = load_user_file()
     if not isinstance(names, list):
-        names=(names,)
+        names = [names, ]
 
-    for name in names:
-        if name not in users:
-            users.append(name)
+    # for name in names:
+    #     if name not in users:
+    #         users.append(name)
 
     with open(paths.users_file, 'w') as fp:
-        pickle.dump(users, fp)
+        pickle.dump((names, last_login_name), fp)
 
 
 class Login(HasTraits):
@@ -60,12 +61,11 @@ class Login(HasTraits):
     user = Str
 
     def dump(self):
-        dump_user_file(self.user)
-
+        dump_user_file(self.user, self.user)
 
     def traits_view(self):
         v = View(Label('Select your username or enter a new one'),
-                 HGroup(UItem('user', editor=ComboboxEditor(name='users'))),
+                 HGroup(UItem('user', width=225, editor=ComboboxEditor(name='users'))),
                  handler=LoginHandler(),
                  buttons=['OK', 'Cancel'],
                  title='Login',
@@ -74,16 +74,26 @@ class Login(HasTraits):
 
 
 class SrcDestUsers(HasTraits):
-    users=List
-    src_user =Str
-    dest_user =Str
+    users = List
+    src_user = Str
+    dest_user = Str
+    copy_all = Bool
+
+    def get_dest_user(self):
+        us = self.users
+        us.remove(self.src_user)
+        return us if self.copy_all else (self.dest_user,)
 
     def traits_view(self):
         v = View(Label('Copy "Source" preferences to "Destination"'),
-                 VGroup(UItem('src_user', editor=ComboboxEditor(name='users')),
+                 VGroup(UItem('src_user', width=225, editor=ComboboxEditor(name='users')),
                         label='Source', show_border=True),
-                 VGroup(UItem('dest_user', editor=ComboboxEditor(name='users')),
-                        label='Destination', show_border=True),
+                 VGroup(
+                     Item('copy_all', label='Copy All', tooltip='Copy "Source" to all destinations'),
+                     UItem('dest_user', editor=ComboboxEditor(name='users'),
+                           enabled_when='not copy_all',
+                           width=225),
+                     label='Destination', show_border=True),
                  buttons=['OK', 'Cancel'],
                  title='Login',
                  kind='livemodal')
@@ -95,18 +105,19 @@ def get_user(current=None):
         #check to see if the login file is set
         if os.path.isfile(paths.login_file):
             with open(paths.login_file, 'r') as fp:
-                u=fp.read()
+                u = fp.read()
             os.remove(paths.login_file)
             return u
 
         #read the existing user file
-        users = load_user_file()
+        users, last_login = load_user_file()
         if current:
-            users =[u for u in users if u!=current]
+            users = [u for u in users if u != current]
 
         login = Login(users=users)
         if users:
-            login.user = users[0]
+            login.user = last_login if last_login in users else users[0]
+
         while 1:
             info = login.edit_traits()
             if info.result:
@@ -119,20 +130,22 @@ def get_user(current=None):
 
 
 def get_src_dest_user(cuser):
-    users = load_user_file()
+    users, _ = load_user_file()
     login = SrcDestUsers(users=users)
-    login.src_user=cuser
-    s,d=None, None
+    login.src_user = cuser
+    s, d = None, None
     while 1:
         info = login.edit_traits()
         if info.result:
-            if login.src_user and login.dest_user:
-                s,d =login.src_user,login.dest_user
+            dusers = login.get_dest_user()
+            if login.src_user and dusers:
+                s, d = login.src_user, dusers
                 break
         else:
             break
 
-    return s,d
+    return s, d
+
 #============= EOF =============================================
 
 
