@@ -462,23 +462,23 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
             if not isinstance(value, (str, int, unicode, long, float)):
                 return value
 
-        sess = self.sess
-        if sess is None:
-            if self.session_factory:
-                sess = self.session_factory()
+        # sess = self.sess
+        # if sess is None:
+        #     if self.session_factory:
+        #         sess = self.session_factory()
 
+        with self.session_ctx() as sess:
+            q = sess.query(table)
+            if value is not None:
+                q = q.filter(getattr(table, key) == value)
 
-        q = sess.query(table)
-        if value is not None:
-            q = q.filter(getattr(table, key) == value)
-
-        try:
-            if order_by is not None:
-                q = q.order_by(order_by)
-            return q.first()
-        except SQLAlchemyError, e:
-            print e
-            return
+            try:
+                if order_by is not None:
+                    q = q.order_by(order_by)
+                return q.first()
+            except SQLAlchemyError, e:
+                print e
+                return
 
     def _query_all(self, q, reraise=False):
         ret = self._query(q, 'all', reraise)

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,7 +17,7 @@
 #============= enthought library imports =======================
 from traits.api import HasTraits, cached_property, List, Str, \
     Property, Int, Event, Any, Bool, Button, Float, on_trait_change
-from traitsui.api import View, Item, EnumEditor
+from traitsui.api import View, Item, EnumEditor, UItem, ListStrEditor
 #============= standard library imports ========================
 
 from itertools import groupby
@@ -62,6 +62,20 @@ def make_position_str(pos):
         s = ','.join(ss)
     return s
 
+
+class LoadSelection(HasTraits):
+    loads = List
+    selected = List
+
+    def traits_view(self):
+        v = View(UItem('loads', editor=ListStrEditor(selected='selected',
+                                                     multi_select=True,
+                                                     editable=False)),
+                 kind='livemodal',
+                 width=300,
+                 buttons=['OK', 'Cancel'],
+                 title='Select Loads to Archive')
+        return v
 
 
 class LoadPosition(HasTraits):
@@ -117,16 +131,16 @@ class LoadingManager(IsotopeDatabaseManager):
     load_name = Str
     loads = List
 
-
     group_positions = Bool
     show_group_positions = Bool(False)
 
     canvas = Any
 
-    add_button = Button('+')
-    delete_button = Button('-')
+    add_button = Button
+    delete_button = Button
+    archive_button = Button
 
-    new_load_name = Str
+    new_load_name = Int
     tray = Str
     trays = List
 
@@ -147,7 +161,7 @@ class LoadingManager(IsotopeDatabaseManager):
         with self.db.session_ctx():
             self._save_load()
             self._save_positions(self.load_name)
-            self.dirty=False
+            self.dirty = False
         return True
 
     def setup(self):
@@ -174,7 +188,7 @@ class LoadingManager(IsotopeDatabaseManager):
 
     def _get_loads(self):
         with self.db.session_ctx():
-            loads = self.db.get_loads(order=loading_LoadTable.create_date.desc())
+            loads = self.db.get_loads()
             if loads:
                 return [li.name for li in loads]
 
@@ -187,7 +201,7 @@ class LoadingManager(IsotopeDatabaseManager):
 
     def _get_last_load(self, set_tray=True):
 
-    #         with self.db.session_():
+        #         with self.db.session_():
         with self.db.session_ctx():
             lt = self.db.get_loadtable()
             if lt:
@@ -260,20 +274,20 @@ class LoadingManager(IsotopeDatabaseManager):
 
     def _auto_increment_labnumber(self):
         if self.auto_increment:
-            idx=self.labnumbers.index(self.labnumber)
+            idx = self.labnumbers.index(self.labnumber)
             try:
-                self.labnumber=self.labnumbers[idx+1]
+                self.labnumber = self.labnumbers[idx + 1]
             except IndexError:
-                idx=self.levels.index(self.level)
+                idx = self.levels.index(self.level)
                 try:
-                    self.level=self.levels[idx+1]
-                    self.labnumber=self.labnumbers[0]
+                    self.level = self.levels[idx + 1]
+                    self.labnumber = self.labnumbers[0]
                 except IndexError:
-                    idx=self.irradiations.index(self.irradiation)
+                    idx = self.irradiations.index(self.irradiation)
                     try:
-                        self.irradiation=self.irradiations[idx+1]
-                        self.level=self.levels[0]
-                        self.labnumber=self.labnumbers[0]
+                        self.irradiation = self.irradiations[idx + 1]
+                        self.level = self.levels[0]
+                        self.labnumber = self.labnumbers[0]
                     except IndexError:
                         pass
 
@@ -289,7 +303,7 @@ class LoadingManager(IsotopeDatabaseManager):
         db = self.db
         with db.session_ctx():
 
-        #         with session(None) as s:
+            #         with session(None) as s:
             lt = db.get_loadtable(new)
             c = self.canvas
             if not c:
@@ -325,7 +339,7 @@ class LoadingManager(IsotopeDatabaseManager):
 
     def load_load(self, loadtable, group_labnumbers=True, set_tray=True):
         with self.db.session_ctx():
-        #         with session(None) as s:
+            #         with session(None) as s:
             if isinstance(loadtable, str):
                 loadtable = self.db.get_loadtable(loadtable)
 
@@ -420,7 +434,7 @@ class LoadingManager(IsotopeDatabaseManager):
                 ls = self._get_loads()
                 self.loads = ls
                 self._get_last_load()
-                self.new_load_name = ''
+                self.new_load_name = 0
 
     def _save_positions(self, name):
         db = self.db
@@ -447,7 +461,7 @@ class LoadingManager(IsotopeDatabaseManager):
                                              note=ip.note)
                     lt.loaded_positions.append(i)
 
-            # sess.commit()
+                    # sess.commit()
 
     @cached_property
     def _get_labnumbers(self):
@@ -458,7 +472,7 @@ class LoadingManager(IsotopeDatabaseManager):
                 level = db.get_irradiation_level(self.irradiation,
                                                  self.level)
                 if level:
-                #             self._positions = [str(li.position) for li in level.positions]
+                    #             self._positions = [str(li.position) for li in level.positions]
                     r = sorted([li.labnumber.identifier
                                 for li in level.positions if li.labnumber])
         return r
@@ -525,23 +539,43 @@ class LoadingManager(IsotopeDatabaseManager):
         return v
 
     def _update_span_indicators(self):
-        canvas=self.canvas
+        canvas = self.canvas
         canvas.clear_spans()
         # for i,p in enumerate(self.positions[:1]):
         for p in self.positions[:1]:
-        # for p in self.positions:
-            pos=p.positions
+            # for p in self.positions:
+            pos = p.positions
             canvas.add_span_indicator(pos, self.show_spans)
 
     #===============================================================================
     # handlers
     #===============================================================================
+    def _archive_button_fired(self):
+        ls = LoadSelection(loads=self.loads)
+        info = ls.edit_traits()
+        if info.result:
+            db = self.db
+            with db.session_ctx():
+                loads = db.get_loads(names=ls.selected)
+                for li in loads:
+                    li.archived = True
+
+            self.loads = self._get_loads()
+
     def _add_button_fired(self):
-        ln = self.loads[0]
+        db = self.db
+        with db.session_ctx():
+            ln = db.get_latest_load()
+            ln = int(ln.name)
+
         try:
-            self.new_load_name = str(int(ln) + 1)
-        except ValueError:
-            pass
+
+            nv = int(ln) + 1
+        except (ValueError, IndexError), e:
+            print e
+            nv = 1
+
+        self.new_load_name = nv
 
         info = self.edit_traits(view='_new_load_view')
 
@@ -635,6 +669,6 @@ class LoadingManager(IsotopeDatabaseManager):
                 self._update_span_indicators()
 
         self.refresh_table = True
-        self.dirty=True
+        self.dirty = True
 
         #============= EOF =============================================

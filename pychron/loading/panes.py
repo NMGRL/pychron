@@ -112,7 +112,8 @@ class LoadControlPane(TraitsDockPane):
                    # Item('add_button', show_label=False),
                    # Item('delete_button', show_label=False)),
                    icon_button_editor('add_button', 'add', tooltip='Add a load'),
-                   icon_button_editor('delete_button', 'delete', tooltip='Delete selected load')),
+                   icon_button_editor('delete_button', 'delete', tooltip='Delete selected load'),
+                   icon_button_editor('archive_button','foo', tooltip='Archive a set of loads')),
             VGroup(
                 Item('irradiation',
                      editor=EnumEditor(name='irradiations')),

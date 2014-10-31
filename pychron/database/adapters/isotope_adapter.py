@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
 from traits.api import Long, HasTraits, Date as TDate, Float, Str, Int, Bool, Property, provides
 from traitsui.api import View, Item, HGroup
@@ -1695,6 +1695,7 @@ class IsotopeAdapter(DatabaseAdapter):
 
     def get_blank(self, value, key='id'):
         return self._retrieve_item(proc_BlanksTable, value, key=key)
+
     def get_blanks_set(self, value, key='set_id'):
         return self._retrieve_item(proc_BlanksSetTable, value, key=key)
 
@@ -2030,14 +2031,14 @@ class IsotopeAdapter(DatabaseAdapter):
         return [u.name for u in self.get_users()]
 
     def get_labnumbers_startswith(self, partial_id, mass_spectrometers=None, filter_non_run=True, **kw):
-        f=gen_LabTable.identifier.like('{}%'.format(partial_id))
-        kw=self._append_filters(f, kw)
+        f = gen_LabTable.identifier.like('{}%'.format(partial_id))
+        kw = self._append_filters(f, kw)
         if mass_spectrometers or filter_non_run:
-            kw=self._append_joins(meas_AnalysisTable, kw)
+            kw = self._append_joins(meas_AnalysisTable, kw)
 
         if mass_spectrometers:
-            kw=self._append_joins([meas_MeasurementTable, gen_MassSpectrometerTable], kw)
-            kw=self._append_filters(gen_MassSpectrometerTable.name.in_(mass_spectrometers), kw)
+            kw = self._append_joins([meas_MeasurementTable, gen_MassSpectrometerTable], kw)
+            kw = self._append_filters(gen_MassSpectrometerTable.name.in_(mass_spectrometers), kw)
 
         if filter_non_run:
             def func(q):
@@ -2190,7 +2191,20 @@ class IsotopeAdapter(DatabaseAdapter):
     def get_load_holders(self, **kw):
         return self._retrieve_items(gen_LoadHolderTable, **kw)
 
-    def get_loads(self, **kw):
+    def get_latest_load(self):
+        return self._retrieve_first(loading_LoadTable,
+                                    order_by=loading_LoadTable.create_date.desc())
+
+    def get_loads(self, names=None, exclude_archived=True, **kw):
+        if not kw.get('order'):
+            kw['order'] = loading_LoadTable.create_date.desc()
+
+        if exclude_archived:
+            kw = self._append_filters(not_(loading_LoadTable.archived), kw)
+
+        if names:
+            kw = self._append_filters(loading_LoadTable.name.in_(names), kw)
+
         return self._retrieve_items(loading_LoadTable, **kw)
 
     def get_molecular_weights(self, **kw):
