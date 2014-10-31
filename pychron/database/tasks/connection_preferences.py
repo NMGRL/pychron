@@ -20,6 +20,7 @@ from traitsui.api import View, Item, Group, VGroup, HGroup, ListStrEditor, sprin
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 
 from pychron.database.core.database_adapter import DatabaseAdapter
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper, \
     FavoritesPreferencesHelper, FavoritesAdapter
 
@@ -27,7 +28,6 @@ from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.core.ui.custom_label_editor import CustomLabel
 
 
@@ -36,7 +36,8 @@ class ConnectionPreferences(FavoritesPreferencesHelper):
     #id = 'pychron.database.preferences_page'
 
     #fav_name = Str
-    save_username = Str
+    # save_username = Str
+
     db_name = Str
     username = Str
     password = Password
@@ -52,7 +53,8 @@ class ConnectionPreferences(FavoritesPreferencesHelper):
         self.connected_color = 'red'
 
     def _test_connection_fired(self):
-        db = DatabaseAdapter(username=self.username,
+        db = DatabaseAdapter(
+                             username=self.username,
                              host=self.host,
                              password=self.password,
                              name=self.db_name,
@@ -139,7 +141,7 @@ class ConnectionPreferencesPane(PreferencesPane):
 
         db_grp = Group(HGroup(Item('kind', show_label=False),
                               Item('db_name', label='Name')),
-                       Item('save_username', label='User'),
+                       # Item('save_username', label='User'),
                        HGroup(fav_grp, db_auth_grp),
                        label='Main DB')
 

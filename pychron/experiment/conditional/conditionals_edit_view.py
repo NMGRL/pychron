@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 from pychron.core.ui import set_qt
+from pychron.envisage.icon_button_editor import icon_button_editor
 
 set_qt()
 # ============= enthought library imports =======================
@@ -29,7 +30,6 @@ from traitsui.tabular_adapter import TabularAdapter
 import os
 import yaml
 # ============= local library imports  ==========================
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.helpers.filetools import get_path
 from pychron.experiment.conditional.conditional import conditional_from_dict, MAX_REGEX, STD_REGEX, \

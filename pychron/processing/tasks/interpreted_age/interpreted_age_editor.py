@@ -28,8 +28,8 @@ from pychron.core.helpers.filetools import view_file, unique_path
 from pychron.core.helpers.iterfuncs import partition
 from pychron.database.adapters.isotope_adapter import InterpretedAge
 from pychron.database.records.isotope_record import IsotopeRecordView
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.core.pdf.options import PDFTableOptions
 from pychron.processing.analyses.analysis_group import StepHeatAnalysisGroup
 from pychron.processing.tables.fusion.pdf_writer import FusionPDFTableWriter

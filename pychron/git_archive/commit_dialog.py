@@ -14,6 +14,8 @@
 # limitations under the License.
 # ===============================================================================
 from pychron.core.ui import set_qt
+from pychron.envisage.icon_button_editor import icon_button_editor
+
 set_qt()
 
 # ============= enthought library imports =======================
@@ -25,7 +27,6 @@ import os
 # ============= local library imports  ==========================
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
 
 
 class ModifiedPath(HasTraits):

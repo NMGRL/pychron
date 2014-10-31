@@ -21,9 +21,9 @@ from traitsui.api import View, Item, VGroup, ListStrEditor, HGroup
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_preferences_helper import FavoritesPreferencesHelper, FavoritesAdapter, \
     BaseConsolePreferences, BaseConsolePreferencesPane, BasePreferencesHelper
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
 
 
 class SystemMonitorPreferences(FavoritesPreferencesHelper):

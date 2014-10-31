@@ -26,7 +26,7 @@ import hashlib
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.core.ui.qt.tabular_editor import UnselectTabularEditorHandler
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.tasks.analysis_edit.table_filter import TableFilter
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.tabular_editor import myTabularEditor

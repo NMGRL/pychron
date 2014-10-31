@@ -56,6 +56,33 @@ def revision_str(rev):
 class PychronApplication(BaseTasksApplication):
     about_additions = List
 
+    def __init__(self, username=None, *args, **kw):
+        if username:
+            self.id='{}.{}'.format(self.id, username)
+            self.name='{} - {}'.format(self.name, username)
+
+        super(PychronApplication, self).__init__(*args, **kw)
+
+    def stop(self):
+        from pychron.globals import globalv
+        if globalv.multi_user:
+            self.dump_user_file()
+
+        super(BaseTasksApplication, self).stop()
+
+    def dump_user_file(self):
+        self.debug('dumping user file')
+        from pychron.envisage.user_login import dump_user_file
+        man=self.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
+        if man:
+            names=man.db.get_usernames()
+            dump_user_file(names=names)
+
+    def set_username(self, name):
+        self.name='{}-{}'.format(self.name, name)
+        # self.id = '{}.{}'.format(self.id, name)
+        globalv.username=name
+
     def set_changes(self, changelist):
         self.about_dialog.changes = changelist
 

@@ -20,7 +20,7 @@ from pyface.tasks.traits_task_pane import TraitsTaskPane
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
+from pychron.envisage.icon_button_editor import icon_button_editor
 
 
 class ExternalPipettePane(TraitsTaskPane):

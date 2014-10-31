@@ -22,7 +22,7 @@ from traitsui.api import View, Item, HGroup, UItem, VGroup, EnumEditor, HSplit, 
 # from pychron.core.ui.qt.tabular_editor import UnselectTabularEditorHandler
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.core.ui.tabular_editor import myTabularEditor
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.tasks.browser.pane_model_view import PaneModelView
 
 

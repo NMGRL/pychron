@@ -24,7 +24,8 @@ from pyface.tasks.traits_dock_pane import TraitsDockPane
 #============= local library imports  ==========================
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn, TableColumn
-from pychron.envisage.tasks.pane_helpers import spacer, icon_button_editor
+from pychron.envisage.icon_button_editor import icon_button_editor
+from pychron.envisage.tasks.pane_helpers import spacer
 
 
 class ColorColumn(TableColumn):

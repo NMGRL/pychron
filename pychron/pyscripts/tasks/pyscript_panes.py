@@ -25,8 +25,8 @@ from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traitsui.handler import Handler
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
+from pychron.envisage.icon_button_editor import icon_button_editor
 
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.tabular_editor import myTabularEditor
 

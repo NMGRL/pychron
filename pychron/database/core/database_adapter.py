@@ -112,7 +112,7 @@ class DatabaseAdapter(Loggable):
     selector = Any
 
     # name used when writing to database
-    save_username = Str
+    # save_username = Str
     connection_parameters_changed = Bool
 
     url = Property(depends_on='connection_parameters_changed')
@@ -141,6 +141,11 @@ class DatabaseAdapter(Loggable):
     @property
     def enabled(self):
         return self.kind in ['mysql', 'sqlite']
+
+    @property
+    def save_username(self):
+        from pychron.globals import globalv
+        return globalv.username
 
     @on_trait_change('username,host,password,name')
     def reset_connection(self, obj, name, old, new):

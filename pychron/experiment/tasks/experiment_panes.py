@@ -27,8 +27,8 @@ from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.combobox_editor import ComboboxEditor
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.experiment.utilities.identifier import SPECIAL_NAMES
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.pychron_constants import MEASUREMENT_COLOR, EXTRACTION_COLOR, \
     NOT_EXECUTABLE_COLOR, SKIP_COLOR, SUCCESS_COLOR, CANCELED_COLOR, \
     TRUNCATED_COLOR, FAILED_COLOR, END_AFTER_COLOR

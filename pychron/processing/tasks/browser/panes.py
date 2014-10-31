@@ -28,7 +28,7 @@ from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traitsui.menu import Action
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.browser.adapters import BrowserAdapter, SampleAdapter
-from pychron.processing.tasks.analysis_edit.panes import icon_button_editor
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.tasks.browser.sample_view import BrowserSampleView
 from pychron.processing.tasks.browser.query_view import BrowserQueryView
 

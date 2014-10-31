@@ -22,7 +22,7 @@ from traitsui.api import View, Item, HGroup, UItem, VGroup, spring
 #============= local library imports  ==========================
 from traitsui.editors import TabularEditor
 from pychron.envisage.browser.adapters import ProjectAdapter
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
+from pychron.envisage.icon_button_editor import icon_button_editor
 
 from pychron.processing.tasks.browser.panes import AnalysisAdapter, AnalysisGroupAdapter
 

@@ -19,7 +19,7 @@ from sqlalchemy.exc import DBAPIError
 from traits.api import HasTraits, Float, Str, List, Instance, Property, Button, Bool, Event
 from traitsui.api import View, Item, HGroup, VGroup, UItem, ListStrEditor, VSplit
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.pychron_constants import PLUSMINUS, SIGMA
 #============= standard library imports ========================
 #============= local library imports  ==========================

@@ -25,7 +25,7 @@ from traitsui.api import View, Item, UItem, HGroup, Group, VGroup
 #============= standard library imports ========================
 #============= local library imports  ==========================
 import yaml
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.paths import paths
 
 

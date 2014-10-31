@@ -32,6 +32,7 @@ from pychron.core.progress import progress_loader, CancelLoadingError
 from pychron.database.adapters.isotope_adapter import IsotopeAdapter
 from pychron.core.helpers.iterfuncs import partition
 from pychron.core.ui.progress_dialog import myProgressDialog
+from pychron.globals import globalv
 
 from pychron.loggable import Loggable
 from pychron.database.orms.isotope.meas import meas_AnalysisTable
@@ -124,7 +125,7 @@ class BaseIsotopeDatabaseManager(Loggable):
             bind_preference(self.db, 'password', '{}.password'.format(prefid))
 
         bind_preference(self.db, 'name', '{}.db_name'.format(prefid))
-        bind_preference(self.db, 'save_username', '{}.save_username'.format(prefid))
+        # bind_preference(self.db, 'save_username', '{}.save_username'.format(prefid))
 
     def open_progress(self, n=2, **kw):
         return self._open_progress(n, **kw)

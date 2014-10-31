@@ -23,7 +23,7 @@ from pyface.tasks.traits_dock_pane import TraitsDockPane
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.experiment.utilities.identifier import pretty_extract_device
 from pychron.core.ui.led_editor import LEDEditor
 from enable.component_editor import ComponentEditor

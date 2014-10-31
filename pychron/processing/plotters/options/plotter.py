@@ -27,7 +27,7 @@ from traitsui.api import View, Item, HGroup, VGroup, Group, \
 #============= local library imports  ==========================
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.plotters.options.base import FigurePlotterOptions
 from pychron.pychron_constants import ALPHAS
 

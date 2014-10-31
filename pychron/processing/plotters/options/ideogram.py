@@ -21,7 +21,7 @@ from traitsui.api import Item, HGroup, Group, VGroup, UItem, EnumEditor, Instanc
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.core.helpers.color_generators import colornames
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.plotters.options.age import AgeOptions
 from pychron.processing.plotters.options.fill_group_editor import Fill, FillGroupEditor
 from pychron.processing.plotters.options.plotter import FONTS, SIZES

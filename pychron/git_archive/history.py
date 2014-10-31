@@ -22,7 +22,7 @@ from traitsui.tabular_adapter import TabularAdapter
 #============= standard library imports ========================
 from datetime import datetime
 #============= local library imports  ==========================
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.git_archive.diff_view import DiffView
 from pychron.git_archive.git_archive import GitArchive
 

@@ -18,7 +18,7 @@
 from traitsui.api import View, Item, VGroup, HGroup, ListStrEditor, EnumEditor, UItem, Controller
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
+from pychron.envisage.icon_button_editor import icon_button_editor
 
 
 class BaseTemplateView(Controller):

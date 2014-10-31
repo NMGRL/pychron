@@ -72,6 +72,10 @@ class Globals(object):
     use_warning_display = True
     recall_debug = False
 
+    username = None
+    multi_user = False
+    use_login = True
+
     def build(self, ip):
 
         for attr, func in [('use_ipc', to_bool),
@@ -88,8 +92,11 @@ class Globals(object):
                            ('experiment_debug', to_bool),
                            ('experiment_savedb', to_bool),
                            ('recall_debug', to_bool),
+                           ('multi_user', to_bool),
+                           ('use_login', to_bool),
                            ('test_experiment_set', str)]:
             a = ip.get_global(attr)
+
             if a:
                 setattr(globalv, attr, func(a))
 

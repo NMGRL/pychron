@@ -23,8 +23,10 @@ from envisage.api import Plugin
 from pychron.displays.gdisplays import gTraceDisplay
 from pychron.envisage.tasks.tasks_plugin import myTasksPlugin
 from pychron.core.helpers.logger_setup import new_logger
+from pychron.globals import globalv
 from pychron.logger.tasks.logger_plugin import LoggerPlugin
 from pychron.initialization_parser import InitializationParser
+from pychron.envisage.user_login import user_login
 
 logger = new_logger('launcher')
 try:
@@ -155,7 +157,7 @@ def get_user_plugins():
     return plugins
 
 
-def app_factory(klass):
+def app_factory(klass, user):
     """
         assemble the plugins
         return a Pychron TaskApplication
@@ -171,7 +173,7 @@ def app_factory(klass):
     plugins += get_hardware_plugins()
     plugins += get_user_plugins()
 
-    app = klass(plugins=plugins)
+    app = klass(username=user, plugins=plugins)
     return app
 
 
@@ -216,9 +218,15 @@ def launch(klass):
     #         return
 
     if not check_dependencies():
-        return
+        logger.info('check dependencies failed')
+        os._exit(0)
 
-    app = app_factory(klass)
+    user = user_login()
+    if not user:
+        logger.info('user login failed')
+        os._exit(0)
+
+    app = app_factory(klass, user)
 
     try:
         app.run()

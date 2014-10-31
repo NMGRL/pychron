@@ -37,7 +37,7 @@ from pychron.canvas.utils import load_holder_canvas, iter_geom
 from pychron.database.defaults import load_irradiation_map, parse_irradiation_tray_map
 from pychron.entry.editors.base_editor import ModelView
 from pychron.entry.editors.production import IrradiationProduction
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pychron_constants import ALPHAS

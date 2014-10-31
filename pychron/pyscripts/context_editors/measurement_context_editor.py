@@ -26,7 +26,7 @@ import yaml
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.helpers.filetools import list_directory2
 from pychron.core.ui.qt.combobox_editor import ComboboxEditor
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.paths import paths
 from pychron.pyscripts.context_editors.context_editor import ContextEditor
 from pychron.pyscripts.hops_editor import HopEditorModel, HopEditorView

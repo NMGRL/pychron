@@ -29,7 +29,7 @@ from traitsui.api import View, HGroup, Item, Group, VGroup, EnumEditor, RangeEdi
 #                               'Programming', 'mercurial', 'pychron_beta'))
 
 from core.core_device import CoreDevice
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.graph.time_series_graph import TimeSeriesStreamStackedGraph
 
 from pychron.graph.plot_record import PlotRecord
