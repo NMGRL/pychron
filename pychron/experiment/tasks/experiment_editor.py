@@ -57,12 +57,19 @@ class ExperimentEditor(BaseTraitsEditor):
     executed_tabular_adapter_klass = ExecutedAutomatedRunSpecAdapter
     bgcolor = Color
 
+
     automated_runs_editable = Bool
 
-    def set_bgcolor(self, c):
+    def set_colors(self, c, ec):
+        print c, ec
         self.bgcolor=c
-        self.tabular_adapter_klass.odd_bg_color=c
-        self.executed_tabular_adapter_klass.odd_bg_color=c
+        self.tabular_adapter = self.tabular_adapter_klass()
+        self.executed_tabular_adapter = self.executed_tabular_adapter_klass()
+
+        self.tabular_adapter.odd_bg_color=c
+        self.executed_tabular_adapter.odd_bg_color=c
+        self.tabular_adapter.even_bg_color=ec
+        self.executed_tabular_adapter.even_bg_color=ec
 
     def new_queue(self, txt=None, **kw):
         queue = self.queue_factory(**kw)
@@ -97,7 +104,7 @@ class ExperimentEditor(BaseTraitsEditor):
             operations.append('edit')
 
         arun_grp = UItem('automated_runs',
-                         editor=myTabularEditor(adapter=self.tabular_adapter_klass(),
+                         editor=myTabularEditor(adapter=self.tabular_adapter,
                                                 operations=operations,
                                                 bgcolor=self.bgcolor,
                                                 editable=True,
@@ -112,7 +119,7 @@ class ExperimentEditor(BaseTraitsEditor):
                          height=200)
 
         executed_grp = UItem('executed_runs',
-                             editor=myTabularEditor(adapter=self.executed_tabular_adapter_klass(),
+                             editor=myTabularEditor(adapter=self.executed_tabular_adapter,
                                                     bgcolor=self.bgcolor,
                                                     editable=False,
                                                     auto_update=True,

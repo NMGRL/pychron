@@ -90,7 +90,6 @@ class CopyPreferencesAction(UserAction):
                 name = 'preferences.ini'
                 dest = os.path.join(dest_dir, name)
                 src = os.path.join(src_dir, name)
-                print 'writing {} to {}'.format(src, dest)
                 shutil.copyfile(src, dest)
 
 

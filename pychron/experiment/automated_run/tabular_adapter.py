@@ -105,11 +105,14 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter):
             elif item.end_after:
                 color = COLORS['end_after']
             else:
+
                 if row % 2 == 0:
                     # color = 'white'
-                    color = self.odd_bg_color
+                    # color = self.even_bg_color
+                    color = self.even_bg_color
                 else:
-                    color = '#E6F2FF'  # light gray blue
+                    color = self.odd_bg_color #'#E6F2FF'  # light gray blue
+                # print row, color, self.odd_bg_color, self.even_bg_color
 
         return color
 

@@ -53,6 +53,7 @@ class ExperimentPreferences(BasePreferencesHelper):
     signal_color = Color
 
     bg_color = Color
+    even_bg_color = Color
 
     min_ms_pumptime = Int
 
@@ -138,6 +139,7 @@ class ExperimentPreferencesPane(PreferencesPane):
                             Item('baseline_color', label='Baseline'),
                             Item('signal_color', label='Signal'),
                             Item('bg_color', label='Background'),
+                            Item('even_bg_color', label='Even Row'),
                             label='Colors')
 
         analysis_grouping_grp = Group(Item('use_analysis_grouping',

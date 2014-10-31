@@ -54,6 +54,7 @@ class ExperimentEditorTask(EditorTask):
     last_experiment_changed = Event
 
     bgcolor = Color
+    even_bgcolor = Color
 
     automated_runs_editable = Bool
 
@@ -122,6 +123,7 @@ class ExperimentEditorTask(EditorTask):
                 self.manager.experiment_factory.activate(load_persistence=True)
 
                 editor = ExperimentEditor()
+                editor.set_colors(self.bgcolor, self.even_bgcolor)
                 editor.new_queue()
 
                 self._open_editor(editor)
@@ -157,6 +159,7 @@ class ExperimentEditorTask(EditorTask):
             self._use_syslogger_changed()
 
         color_bind_preference(self, 'bgcolor', 'pychron.experiment.bg_color')
+        color_bind_preference(self, 'even_bgcolor', 'pychron.experiment.even_bg_color')
 
     def activated(self):
 
@@ -268,8 +271,8 @@ class ExperimentEditorTask(EditorTask):
 
             klass = UVExperimentEditor if is_uv else ExperimentEditor
             editor = klass(path=path,
-                           automated_runs_editable=self.automated_runs_editable,
-                           bgcolor=self.bgcolor)
+                           automated_runs_editable=self.automated_runs_editable)
+            editor.set_colors(self.bgcolor, self.even_bgcolor)
             editor.new_queue(txt)
             self._open_editor(editor)
         else:
