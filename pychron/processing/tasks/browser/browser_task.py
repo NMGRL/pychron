@@ -25,6 +25,7 @@ from traits.api import List, Str, Bool, Any, String, \
 # ============= local library imports  ==========================
 from pychron.core.progress import progress_loader
 from pychron.database.records.isotope_record import GraphicalRecordView
+from pychron.envisage.browser.record_views import ProjectRecordView
 from pychron.envisage.tasks.editor_task import BaseEditorTask
 from pychron.envisage.browser.browser_mixin import BrowserMixin
 from pychron.processing.selection.data_selector import DataSelector
@@ -49,6 +50,12 @@ DEFAULT_AT = 'Analysis Type'
 DEFAULT_ED = 'Extraction Device'
 
 
+def unique_list(seq):
+    seen = set()
+    seen_add = seen.add
+    return [x for x in seq if not (x.name in seen or seen_add(x.name))]
+
+
 class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     analysis_table = Instance(AnalysisTable)
     # danalysis_table = Instance(AnalysisTable)
@@ -63,9 +70,9 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
     auto_select_analysis = Bool(False)
 
-    use_mass_spectrometers = Bool
-    mass_spectrometer_includes = List
-    available_mass_spectrometers = List
+    # use_mass_spectrometers = Bool
+    # mass_spectrometer_includes = List
+    # available_mass_spectrometers = List
     # mass_spectrometer = Str(DEFAULT_SPEC)
     # mass_spectrometers = List
 
@@ -100,6 +107,33 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     _append_replace_analyses_enabled = True
 
     bin_tol_hrs = Int
+
+    def _identifier_change_hook(self, db, new, lns):
+        if len(new) > 2:
+            if self.project_enabled:
+                def get_projects():
+                    for li in lns:
+                        try:
+                            yield li.sample.project
+                        except AttributeError, e:
+                            print e
+
+                ps = sorted(list(set(get_projects())))
+                ps = [ProjectRecordView(p) for p in ps]
+                self.projects = ps
+                self.selected_projects = []
+
+            if self.irradiation_enabled:
+                def get_irradiations():
+                    for li in lns:
+                        try:
+                            yield li.irradiation_position.level.irradiation.name
+                        except AttributeError:
+                            pass
+                irrads =sorted(list(set(get_irradiations())))
+                self.irradiations = irrads
+                if irrads:
+                    self.irradiation=irrads[0]
 
     def refresh_samples(self):
         self.debug('refresh samples')
@@ -197,13 +231,13 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             db = self.db
             with db.session_ctx():
                 ps = db.get_projects(irradiation=self.irradiation,
-                                    level=self.level)
+                                     level=self.level)
                 ps = self._make_project_records(ps, include_recent_first=False)
                 self.projects = ps
 
     def _load_projects_and_irradiations(self):
         if self.use_mass_spectrometers:
-            ms=self.mass_spectrometer_includes
+            ms = self.mass_spectrometer_includes
             if ms:
                 db = self.db
                 with db.session_ctx():
@@ -212,8 +246,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
                     self.projects = ps
 
                     irs = db.get_irradiations(mass_spectrometers=ms)
-                    self.irradiations=[i.name for i in irs]
-                    print self.irradiations
+                    self.irradiations = [i.name for i in irs]
 
     def _activate_query_browser(self):
         psel = self.data_selector
@@ -250,7 +283,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             db = self.manager.db
             with db.session_ctx():
                 self._load_mass_spectrometers()
-            #     self._load_analysis_types()
+            # self._load_analysis_types()
             #     self._load_extraction_devices()
 
             self.datasource_url = db.datasource_url
@@ -289,7 +322,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     def _load_mass_spectrometers(self):
         db = self.db
         ms = [mi.name for mi in db.get_mass_spectrometers()]
-        self.available_mass_spectrometers=ms
+        self.available_mass_spectrometers = ms
         # self.mass_spectrometers = ['Spectrometer', 'None'] + ms
 
     def _load_analysis_types(self):
@@ -309,7 +342,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         return self.browser_pane
 
     # def _ok_query(self):
-    #     ms = self.mass_spectrometer not in (DEFAULT_SPEC, 'None')
+    # ms = self.mass_spectrometer not in (DEFAULT_SPEC, 'None')
     #     at = self.analysis_type not in (DEFAULT_AT, 'None')
     #     return ms and at
 
@@ -341,7 +374,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     def _retrieve_samples_hook(self, db):
         low_post = self.low_post
         high_post = self.high_post
-        ms=None
+        ms = None
         if self.use_mass_spectrometers:
             ms = self.mass_spectrometer_includes
 
@@ -493,8 +526,11 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
     def _mass_spectrometer_includes_changed(self):
         if self.mass_spectrometer_includes:
-            self.refresh_samples()
-            self._load_projects_and_irradiations()
+            if self.identifier:
+                self._identifier_changed(self.identifier)
+            else:
+                self.refresh_samples()
+                self._load_projects_and_irradiations()
 
     def _irradiation_enabled_changed(self, new):
         if not new:

@@ -2026,6 +2026,26 @@ class IsotopeAdapter(DatabaseAdapter):
     def get_users(self, **kw):
         return self._retrieve_items(gen_UserTable, **kw)
 
+    def get_labnumbers_startswith(self, partial_id, mass_spectrometers=None, filter_non_run=True, **kw):
+        f=gen_LabTable.identifier.like('{}%'.format(partial_id))
+        kw=self._append_filters(f, kw)
+        if mass_spectrometers or filter_non_run:
+            kw=self._append_joins(meas_AnalysisTable, kw)
+
+        if mass_spectrometers:
+            kw=self._append_joins([meas_MeasurementTable, gen_MassSpectrometerTable], kw)
+            kw=self._append_filters(gen_MassSpectrometerTable.name.in_(mass_spectrometers), kw)
+
+        if filter_non_run:
+            def func(q):
+                q = q.group_by(gen_LabTable.id)
+                q = q.having(count(meas_AnalysisTable.id) > 0)
+                return q
+
+                kw['query_hook'] = func
+
+        return self._retrieve_items(gen_LabTable, debug_query=True, **kw)
+
     def get_labnumbers(self, identifiers=None, low_post=None, high_post=None,
                        mass_spectrometers=None,
                        filter_non_run=False, **kw):

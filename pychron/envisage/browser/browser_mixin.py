@@ -80,6 +80,8 @@ class BrowserMixin(ColumnSorterMixin):
 
     analysis_groups = List
 
+    identifier = Str
+
     project_filter = Str
     sample_filter = Str
 
@@ -110,6 +112,10 @@ class BrowserMixin(ColumnSorterMixin):
     table_configurer = Instance(SampleTableConfigurer)
 
     search_criteria = Instance(SearchCriteria, ())
+
+    use_mass_spectrometers = Bool
+    mass_spectrometer_includes = List
+    available_mass_spectrometers = List
 
     named_date_range = Enum('this month', 'this week', 'yesterday')
     low_post = Property(Date, depends_on='_low_post')
@@ -188,7 +194,7 @@ class BrowserMixin(ColumnSorterMixin):
             self._load_browser_selection(obj)
 
     def dump_browser_selection(self):
-        #self.debug('$$$$$$$$$$$$$$$$$$$$$ Dumping browser selection')
+        # self.debug('$$$$$$$$$$$$$$$$$$$$$ Dumping browser selection')
 
         ps = []
         if self.selected_projects:
@@ -239,7 +245,7 @@ class BrowserMixin(ColumnSorterMixin):
             recents = [ProjectRecordView('RECENT {}'.format(mi.name.upper())) for mi in ms]
             pss = [ProjectRecordView(p) for p in ps]
 
-            #move references project to after Recent
+            # move references project to after Recent
             p = next((p for p in pss if p.name.lower() == 'references'), None)
             if p is not None:
                 rp = pss.pop(pss.index(p))
@@ -279,7 +285,7 @@ class BrowserMixin(ColumnSorterMixin):
 
         return v
 
-    #database querying
+    # database querying
     def _load_associated_groups(self, names):
         """
             names: list of project names
@@ -341,6 +347,26 @@ class BrowserMixin(ColumnSorterMixin):
             sams = self._retrieve_samples()
 
         return sams
+
+    def _populate_samples(self, lns=None):
+        db = self.db
+
+        with db.session_ctx():
+            if not lns:
+                lns = [db.get_labnumber(self.identifier)]
+
+            n = len(lns)
+            self.debug('_populate_samples n={}'.format(n))
+
+            def func(li, prog, i, n):
+                if prog:
+                    prog.change_message('Loading Labnumber {}'.format(li.identifier))
+                return LabnumberRecordView(li)
+
+            sams = progress_loader(lns, func)
+
+        sel = sams[:1] if n == 1 and sams else []
+        self.set_samples(sams, sel)
 
     def _retrieve_samples_hook(self, db):
         projects = self.selected_projects
@@ -468,6 +494,33 @@ class BrowserMixin(ColumnSorterMixin):
         load('samples', self.samples)
 
     # handlers
+    def _identifier_changed(self, new):
+        db = self.db
+        if new:
+            if len(new) > 2:
+                with db.session_ctx():
+                    lns = self._get_identifiers(db, new)
+                    # lns = db.get_labnumbers_startswith(new)
+                    if lns:
+                        self._identifier_change_hook(db, new, lns)
+                        self._populate_samples(lns)
+                    else:
+                        self.set_samples([])
+                        self.projects = self.oprojects[:]
+        else:
+            self.projects = self.oprojects[:]
+            self.set_samples([])
+
+    def _get_identifiers(self, db, new):
+        ms = None
+        if self.use_mass_spectrometers:
+            ms = self.mass_spectrometer_includes
+
+        return db.get_labnumbers_startswith(new, mass_spectrometers=ms)
+
+    def _identifier_change_hook(self, db, new, lns):
+        pass
+
     def _selected_projects_changed(self, old, new):
         if new and self.project_enabled:
             self._recent_low_post = None

@@ -20,6 +20,7 @@ from traitsui.api import View, UItem, VSplit, VGroup, EnumEditor,\
     HGroup, TabularEditor, CheckListEditor, spring
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.envisage.browser.adapters import ProjectAdapter
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.processing.tasks.browser.pane_model_view import PaneModelView
@@ -109,8 +110,11 @@ class BrowserSampleView(PaneModelView):
                               editor=CheckListEditor(name='available_mass_spectrometers',
                                                      cols=10)),
                         label='Mass Spectrometer', show_border=True)
+        ln_grp = HGroup(
+                        UItem('identifier'),
+                        label='Identifier', show_border=True)
 
-        top_level_filter_grp = VGroup(ms_grp,
+        top_level_filter_grp = VGroup(HGroup(ms_grp,ln_grp),
                                       HGroup(project_grp, irrad_grp),
                                       analysis_type_group,
                                       date_grp)
