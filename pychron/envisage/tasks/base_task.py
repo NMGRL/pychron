@@ -39,7 +39,7 @@ from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import GenericSaveAction, GenericSaveAsAction, \
     GenericFindAction, RaiseAction, RaiseUIAction, ResetLayoutAction, \
     MinimizeAction, PositionAction, IssueAction, CloseAction, CloseOthersAction, AboutAction, OpenAdditionalWindow, \
-    NoteAction, RestartAction, DocumentationAction, CopyPreferencesAction
+    NoteAction, RestartAction, DocumentationAction, CopyPreferencesAction, SwitchUserAction
 from pychron.loggable import Loggable
 
 
@@ -391,6 +391,7 @@ class BaseTask(Task, Loggable, PreferenceMixin):
             AboutAction(),
             DocumentationAction(),
             RestartAction(),
+            SwitchUserAction(),
             id='help.menu',
             name='Help')
         return menu

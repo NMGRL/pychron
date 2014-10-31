@@ -76,7 +76,8 @@ class Paths():
     backup_experiment_dir = None
     plugins_dir = None
     hidden_dir = None
-    user_file = None
+    users_file = None
+    login_file = None
     preferences_dir = None
     comment_templates_dir = None
     plotter_options_dir = None
@@ -231,7 +232,8 @@ class Paths():
         self.generic_experiment_dir = join(self.experiment_dir, 'generic')
         self.backup_experiment_dir = join(self.experiment_dir, 'backup')
         self.hidden_dir = join(root, '.hidden')
-        self.user_file = join(self.hidden_dir, 'users')
+        self.users_file = join(self.hidden_dir, 'users')
+        self.login_file = join(self.hidden_dir, 'login')
         self.preferences_dir = join(root, 'preferences')
         self.plotter_options_dir = join(self.hidden_dir, 'plotter_options')
         self.comment_templates_dir = join(self.hidden_dir, 'comment_templates')

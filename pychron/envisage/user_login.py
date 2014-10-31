@@ -35,7 +35,7 @@ class LoginHandler(Handler):
 
 def load_user_file():
     users = []
-    path=paths.user_file
+    path=paths.users_file
     if os.path.isfile(path):
         with open(path, 'r') as fp:
             users = pickle.load(fp)
@@ -51,7 +51,7 @@ def dump_user_file(names):
         if name not in users:
             users.append(name)
 
-    with open(paths.user_file, 'w') as fp:
+    with open(paths.users_file, 'w') as fp:
         pickle.dump(users, fp)
 
 
@@ -89,11 +89,24 @@ class SrcDestUsers(HasTraits):
                  kind='livemodal')
         return v
 
-def get_user():
+
+def get_user(current=None):
     if globalv.use_login:
+        #check to see if the login file is set
+        if os.path.isfile(paths.login_file):
+            with open(paths.login_file, 'r') as fp:
+                u=fp.read()
+            os.remove(paths.login_file)
+            return u
+
         #read the existing user file
         users = load_user_file()
+        if current:
+            users =[u for u in users if u!=current]
+
         login = Login(users=users)
+        if users:
+            login.user = users[0]
         while 1:
             info = login.edit_traits()
             if info.result:
