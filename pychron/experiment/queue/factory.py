@@ -24,6 +24,7 @@ from ConfigParser import ConfigParser
 from pychron.core.helpers.filetools import list_directory2
 from pychron.entry.user_entry import UserEntry
 from pychron.experiment.utilities.persistence_loggable import PersistenceLoggable
+from pychron.globals import globalv
 from pychron.pychron_constants import NULL_STR, LINE_STR
 from pychron.paths import paths
 
@@ -66,7 +67,7 @@ class ExperimentQueueFactory(PersistenceLoggable):
 
     ok_make = Property(depends_on='mass_spectrometer, username')
 
-    pattributes = ('username', 'mass_spectrometer', 'extract_device',
+    pattributes = ('mass_spectrometer', 'extract_device',
                    'use_group_email',
                    'delay_between_analyses',
                    'delay_before_analyses',
@@ -82,6 +83,7 @@ class ExperimentQueueFactory(PersistenceLoggable):
         self._load_queue_conditionals()
         if load_persistence:
             self.load()
+            self.username=globalv.username
 
     def deactivate(self):
         """

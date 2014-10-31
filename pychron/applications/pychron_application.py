@@ -24,6 +24,7 @@ from pyface.image_resource import ImageResource
 #============= standard library imports ========================
 import os
 #============= local library imports  ==========================
+from pychron.globals import globalv
 
 from pychron.paths import paths
 from pychron.applications.about_dialog import myAboutDialog
@@ -62,6 +63,7 @@ class PychronApplication(BaseTasksApplication):
             self.id='{}.{}'.format(self.id, username)
             self.name='{} - {}'.format(self.name, username)
             self.username=username
+            globalv.username=username
 
         super(PychronApplication, self).__init__(*args, **kw)
 
