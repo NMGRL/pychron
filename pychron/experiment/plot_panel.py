@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import Instance, Property, List, on_trait_change, Bool, \
-    Str, CInt, Tuple, Color, HasTraits, Any
+    Str, CInt, Tuple, Color, HasTraits, Any, Int
 from traitsui.api import View, UItem, VGroup, HGroup, spring, ListEditor
 #============= standard library imports ========================
 from threading import Event
@@ -100,6 +100,7 @@ class PlotPanel(Loggable):
 
     plot_title = Str
 
+    counts = Int
     ncounts = Property(CInt(enter_set=True, auto_set=False), depends_on='_ncounts')
     _ncounts = CInt
 

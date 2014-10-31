@@ -114,6 +114,7 @@ class DataCollector(Consoleable):
         self.debug('estimated time: {:0.3f} actual time: :{:0.3f}'.format(et, tt))
 
     def plot_data(self, *args, **kw):
+
         invoke_in_main_thread(self._plot_data, *args, **kw)
 
     def _measure(self, evt):
@@ -264,6 +265,11 @@ class DataCollector(Consoleable):
                 graph.set_fit(fit, plotid=pid, series=self.fit_series_idx)
 
     def _plot_data(self, i, x, keys, signals):
+        try:
+            self.automated_run.plot_panel.counts = i
+        except AttributeError:
+            pass
+
         if globalv.experiment_debug:
             x *= (self.period_ms * 0.001) ** -1
 

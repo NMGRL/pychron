@@ -183,21 +183,22 @@ def check_dependencies():
     """
     from pyface.api import warning
 
-    try:
-        mod = __import__('uncertainties',
-                         fromlist=['ver'])
-        ver = mod.__version__
-    except ImportError:
-        warning(None, 'Install "{}" package. required version>={} '.format('uncertainties', '2.1'))
-        return
+    for mod,req in (('uncertainties', '2.1'),
+                           ('pint','0.5')):
+        try:
+            mod = __import__(mod)
+            ver = mod.__version__
+        except ImportError:
+            warning(None, 'Install "{}" package. required version>={} '.format(mod, req))
+            return
 
-    vargs = ver.split('.')
-    maj = vargs[0]
-    if int(maj) < 2:
-        warning(None, 'Update "{}" package. your version={}. required version>={} '.format('uncertainties',
-                                                                                           ver,
-                                                                                           '2.1'))
-        return
+        vargs = ver.split('.')
+        maj = int(vargs[0])
+        if maj < int(float(req)):
+            warning(None, 'Update "{}" package. your version={}. required version>={} '.format(mod,
+                                                                                               maj,
+                                                                                               req))
+            return
 
     return True
 

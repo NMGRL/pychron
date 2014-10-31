@@ -340,7 +340,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 self.debug('Previous queue ended at completion. Not continuing to other opened experiments')
                 break
 
-        self._alive = False
+        self.alive = False
 
     def _execute_queue(self, i, exp):
         """
