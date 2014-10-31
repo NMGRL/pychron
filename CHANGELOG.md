@@ -15,6 +15,12 @@ CHANGELOG
 * use notebook for scan manager graphs
 * updated Procedures. don't open multiple extraction line canvases
 * added Find References context menu action
+* added user login
+* added ability to archive loads
+* added identifier (Labnumber) top level filter
+* added Filter/Results focus switching
+* added group emailing
+* gitified pyscripts
 
 2.0.4
 ------------------

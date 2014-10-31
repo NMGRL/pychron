@@ -222,12 +222,13 @@ class ExperimentFactoryPane(TraitsDockPane):
 
                 icon_button_editor(run_factory_name('edit_truncation_button'), 'table_edit',
                                    enabled_when=run_factory_name('truncation_path'),
-                                   tooltip='Edit the selected action file'),
+                                   tooltip='Edit the selected conditionals file'),
                 icon_button_editor(run_factory_name('new_truncation_button'), 'table_add',
-                                   tooltip='Add a new action file. Duplicated currently selected file if applicable'),
+                                   tooltip='Add a new conditionals file. Duplicated currently '
+                                           'selected file if applicable'),
                 show_border=True,
                 label='File'),
-            label='Actions')
+            label='Run Conditionals')
         return grp
 
     def _get_script_group(self):
