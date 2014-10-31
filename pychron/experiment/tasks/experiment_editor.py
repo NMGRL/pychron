@@ -61,7 +61,6 @@ class ExperimentEditor(BaseTraitsEditor):
     automated_runs_editable = Bool
 
     def set_colors(self, c, ec):
-        print c, ec
         self.bgcolor=c
         self.tabular_adapter = self.tabular_adapter_klass()
         self.executed_tabular_adapter = self.executed_tabular_adapter_klass()
