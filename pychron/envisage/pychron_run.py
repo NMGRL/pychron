@@ -26,7 +26,7 @@ from pychron.core.helpers.logger_setup import new_logger
 from pychron.globals import globalv
 from pychron.logger.tasks.logger_plugin import LoggerPlugin
 from pychron.initialization_parser import InitializationParser
-from pychron.envisage.user_login import user_login
+from pychron.envisage.user_login import get_user
 
 logger = new_logger('launcher')
 try:
@@ -221,7 +221,7 @@ def launch(klass):
         logger.info('check dependencies failed')
         os._exit(0)
 
-    user = user_login()
+    user = get_user()
     if not user:
         logger.info('user login failed')
         os._exit(0)

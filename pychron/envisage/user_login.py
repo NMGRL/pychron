@@ -18,7 +18,7 @@
 import os
 import pickle
 from traits.api import HasTraits, Button, List, Str
-from traitsui.api import View, Item, HGroup, UItem, Label, Handler
+from traitsui.api import View, Item, HGroup, UItem, Label, Handler, VGroup
 # ============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.core.ui.combobox_editor import ComboboxEditor
@@ -56,16 +56,12 @@ def dump_user_file(names):
 
 
 class Login(HasTraits):
-    add_user_button = Button
     users = List
-    ousers = List
     user = Str
 
     def dump(self):
         dump_user_file(self.user)
 
-    def _add_user_button_fired(self):
-        self.users = []
 
     def traits_view(self):
         v = View(Label('Select your username or enter a new one'),
@@ -77,11 +73,27 @@ class Login(HasTraits):
         return v
 
 
-def user_login():
+class SrcDestUsers(HasTraits):
+    users=List
+    src_user =Str
+    dest_user =Str
+
+    def traits_view(self):
+        v = View(Label('Copy "Source" preferences to "Destination"'),
+                 VGroup(UItem('src_user', editor=ComboboxEditor(name='users')),
+                        label='Source', show_border=True),
+                 VGroup(UItem('dest_user', editor=ComboboxEditor(name='users')),
+                        label='Destination', show_border=True),
+                 buttons=['OK', 'Cancel'],
+                 title='Login',
+                 kind='livemodal')
+        return v
+
+def get_user():
     if globalv.use_login:
         #read the existing user file
         users = load_user_file()
-        login = Login(users=users, ousers=users)
+        login = Login(users=users)
         while 1:
             info = login.edit_traits()
             if info.result:
@@ -93,6 +105,21 @@ def user_login():
         return 'root'
 
 
+def get_src_dest_user(cuser):
+    users = load_user_file()
+    login = SrcDestUsers(users=users)
+    login.src_user=cuser
+    s,d=None, None
+    while 1:
+        info = login.edit_traits()
+        if info.result:
+            if login.src_user and login.dest_user:
+                s,d =login.src_user,login.dest_user
+                break
+        else:
+            break
+
+    return s,d
 #============= EOF =============================================
 
 

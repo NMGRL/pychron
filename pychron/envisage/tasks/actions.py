@@ -16,6 +16,7 @@
 
 #============= enthought library imports =======================
 import os
+import shutil
 from pyface.tasks.task_window_layout import TaskWindowLayout
 import sys
 from traits.api import on_trait_change, Any
@@ -33,6 +34,35 @@ from pyface.constant import YES
 #===============================================================================
 from pychron.envisage.resources import icon
 
+
+class CopyPreferencesAction(Action):
+    name = 'Copy Preferences'
+    def perform(self, event):
+        from pychron.envisage.user_login import get_src_dest_user
+        app = event.task.application
+        args = app.id.split('.')
+        cuser = args[-1]
+        base_id= '.'.join(args[:-1])
+        src_name, dest_name = get_src_dest_user(cuser)
+
+        if src_name:
+
+
+            dest_id = '{}.{}'.format(base_id,dest_name)
+            src_id = '{}.{}'.format(base_id, src_name)
+
+            root = os.path.join(os.path.expanduser('~'), '.enthought')
+
+            src_dir = os.path.join(root, src_id)
+            dest_dir = os.path.join(root, dest_id)
+            if not os.path.isdir(dest_dir):
+                os.mkdir(dest_dir)
+
+            name = 'preferences.ini'
+            dest=os.path.join(dest_dir, name)
+            src = os.path.join(src_dir, name)
+            print 'writing {} to {}'.format(src, dest)
+            shutil.copyfile(src, dest)
 
 class RestartAction(Action):
     name = 'Restart'
