@@ -51,7 +51,6 @@ def dump_user_file(names, last_login_name):
     # for name in names:
     #     if name not in users:
     #         users.append(name)
-
     with open(paths.users_file, 'w') as fp:
         pickle.dump((names, last_login_name), fp)
 
@@ -61,7 +60,7 @@ class Login(HasTraits):
     user = Str
 
     def dump(self):
-        dump_user_file(self.user, self.user)
+        dump_user_file(self.users, self.user)
 
     def traits_view(self):
         v = View(Label('Select your username or enter a new one'),
@@ -113,7 +112,6 @@ def get_user(current=None):
         users, last_login = load_user_file()
         if current:
             users = [u for u in users if u != current]
-
         login = Login(users=users)
         if users:
             login.user = last_login if last_login in users else users[0]
