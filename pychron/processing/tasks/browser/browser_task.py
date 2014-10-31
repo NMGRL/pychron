@@ -19,7 +19,7 @@ from datetime import datetime, timedelta
 
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import List, Str, Bool, Any, String, \
-    on_trait_change, Date, Int, Time, Instance, Button
+    on_trait_change, Date, Int, Time, Instance, Button, Property
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -57,6 +57,16 @@ def unique_list(seq):
 
 
 class BaseBrowserTask(BaseEditorTask, BrowserMixin):
+    filter_focus = Bool(True)
+    use_focus_switching=Bool(True)
+
+    irradiation_visible = Property(depends_on='filter_focus')
+    analysis_types_visible = Property(depends_on='filter_focus')
+    date_visible = Property(depends_on='filter_focus')
+    mass_spectrometer_visible = Property(depends_on='filter_focus')
+    identifier_visible = Property(depends_on='filter_focus')
+    project_visible =Property(depends_on='filter_focus')
+
     analysis_table = Instance(AnalysisTable)
     # danalysis_table = Instance(AnalysisTable)
 
@@ -98,6 +108,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     graphical_filter_button = Button
     graphical_filtering_max_days = Int
     toggle_view = Button
+    toggle_focus = Button
 
     _activated = False
     update_on_level_change = True
@@ -130,10 +141,11 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
                             yield li.irradiation_position.level.irradiation.name
                         except AttributeError:
                             pass
-                irrads =sorted(list(set(get_irradiations())))
+
+                irrads = sorted(list(set(get_irradiations())))
                 self.irradiations = irrads
                 if irrads:
-                    self.irradiation=irrads[0]
+                    self.irradiation = irrads[0]
 
     def refresh_samples(self):
         self.debug('refresh samples')
@@ -205,6 +217,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         self.load_browser_options()
         if self.sample_view_active:
             self._activate_sample_browser()
+            self.filter_focus = True
         else:
             self._activate_query_browser()
 
@@ -284,7 +297,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             with db.session_ctx():
                 self._load_mass_spectrometers()
             # self._load_analysis_types()
-            #     self._load_extraction_devices()
+            # self._load_extraction_devices()
 
             self.datasource_url = db.datasource_url
 
@@ -343,7 +356,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
     # def _ok_query(self):
     # ms = self.mass_spectrometer not in (DEFAULT_SPEC, 'None')
-    #     at = self.analysis_type not in (DEFAULT_AT, 'None')
+    # at = self.analysis_type not in (DEFAULT_AT, 'None')
     #     return ms and at
 
     def _ok_ed(self):
@@ -360,6 +373,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
     def _browser_options_hook(self, d):
         d['irradiation_enabled'] = self.irradiation_enabled
+        d['use_focus_switching'] = self.use_focus_switching
 
     def _selected_projects_change_hook(self, names):
         if not self._top_level_filter:
@@ -452,6 +466,9 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             self._filter_by_hook()
         else:
             self.data_selector.execute_query()
+
+    def _toggle_focus_fired(self):
+        self.filter_focus=not self.filter_focus
 
     def _toggle_view_fired(self):
         self.sample_view_active = not self.sample_view_active
@@ -656,9 +673,35 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             self.analysis_table.set_analyses(ans)
             self.dump_browser()
 
+        self.filter_focus = not bool(new)
+
     @on_trait_change('data_selector.database_selector.dclicked')
     def _handle_selector_dclick(self, new):
         self._selector_dclick(new.item)
+
+    def _get_analysis_types_visible(self):
+        return self._get_visible(self.use_analysis_type_filtering)
+
+    def _get_irradiation_visible(self):
+        return self._get_visible(self.irradiation_enabled)
+
+    def _get_date_visible(self):
+        return self._get_visible(self.use_low_post or self.use_high_post or self.use_named_date_range)
+
+    def _get_mass_spectrometer_visible(self):
+        return self._get_visible(self.use_mass_spectrometers)
+
+    def _get_identifier_visible(self):
+        return self.filter_focus if self.use_focus_switching else True
+
+    def _get_project_visible(self):
+        return self._get_visible(self.project_enabled)
+
+    def _get_visible(self, default):
+        ret = True
+        if self.use_focus_switching and not self.filter_focus:
+            ret = default
+        return ret
 
     def _analysis_table_default(self):
         at = AnalysisTable(db=self.db,
