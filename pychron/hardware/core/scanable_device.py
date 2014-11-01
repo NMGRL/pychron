@@ -215,7 +215,7 @@ class ScanableDevice(ViewableDevice):
 
         if self.record_scan_data and not self._auto_started:
             if self.use_db:
-                if self.db_save_dialog():
+                if self.confirmation_dialog('Save to Database'):
                     self.save_scan_to_db()
                 else:
                     if self.data_manager:

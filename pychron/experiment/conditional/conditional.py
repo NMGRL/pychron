@@ -14,13 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
 from traits.api import Str, Either, Int, Callable, Bool, Float
 #============= standard library imports ========================
 import re
 from uncertainties import nominal_value, std_dev, ufloat
 #============= local library imports  ==========================
+from pychron.experiment.utilities.identifier import AGE_TESTABLE
 from pychron.loggable import Loggable
 
 #match .current_point
@@ -55,6 +56,8 @@ PARENTHESES_REGEX = re.compile(r'\([\w\d\s]+\)')
 COMP_REGEX = re.compile(r'<=|>=|>|<|==')
 
 DEFLECTION_REGEX = re.compile(r'\.deflection')
+
+RATIO_REGEX = re.compile(r'\d+/\d+')
 #todo: add between ability
 
 
@@ -179,7 +182,6 @@ class AutomatedRunConditional(BaseConditional):
             attr = self._key
 
         obj = arun.arar_age
-
         comp = self.comp
         for reg, func in ((CP_REGEX, lambda: obj.get_current_intensity(attr)),
                           (BASELINECOR_REGEX, lambda: obj.get_baseline_corrected_value(attr)),
@@ -197,34 +199,44 @@ class AutomatedRunConditional(BaseConditional):
             if DEFLECTION_REGEX.findall(comp):
                 v = arun.get_deflection(attr, current=True)
                 comp = '{}{}'.format(self._key, remove_attr(comp))
-            elif '37/39' in comp:
-                v=obj.get_value('37/39')
-                comp = 'ratio3739{}'.format(remove_attr(comp))
-                self._key='ratio3739'
-
             else:
-                try:
-                    if self.window:
-                        vs = obj.get_values(attr, self.window)
-                        if not vs:
-                            self.warning('Deactivating check. check attr invalid for use with window')
-                            self.active = False
-                            return
-                        v = ufloat(vs.mean(), vs.std())
-                    else:
-                        v = obj.get_value(attr)
-                except Exception, e:
-                    self.warning('Deactivating check. Check Exception "{}."'.format(e))
-                    self.active = False
+                ratio = RATIO_REGEX.findall(comp)
+                if ratio:
+                    ratio = ratio[0]
+                    v = obj.get_value(ratio)
+                    key = 'ratio{}'.format(ratio.replace('/', ''))
+                    comp = '{}{}'.format(key, remove_attr(comp))
+                    self._key = key
+                else:
+                    try:
+                        if self.window:
+                            vs = obj.get_values(attr, self.window)
+                            if not vs:
+                                self.warning('Deactivating check. check attr invalid for use with window')
+                                self.active = False
+                                return
+                            v = ufloat(vs.mean(), vs.std())
+                        else:
+                            v = obj.get_value(attr)
+                    except Exception, e:
+                        self.warning('Deactivating check. Check Exception "{}."'.format(e))
+                        self.active = False
 
-        self.debug('testing {} (eval={}) key={} attr={} value={}'.format(self.comp, comp, self._key, self.attr, v))
+        if self._key == 'age':
+            atype = arun.spec.analysis_type
+            if not atype in AGE_TESTABLE:
+                msg = 'age conditional for {} not allowed'.format(atype)
+                self.unique_warning(msg)
+                return
+
         if v is not None:
             vv = std_dev(v) if STD_REGEX.match(comp) else nominal_value(v)
             vv = self._map_value(vv)
             self.value = vv
 
             self.debug('testing {} (eval={}) key={} attr={} value={} mapped_value={}'.format(self.comp, comp,
-                                                                                             self._key, self.attr, v, vv))
+                                                                                             self._key, self.attr, v,
+                                                                                             vv))
             if eval(comp, {self._key: vv}):
                 self.message = 'attr={}, value= {} {} is True'.format(self.attr, vv, self.comp)
                 return True

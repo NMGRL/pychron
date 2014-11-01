@@ -397,12 +397,17 @@ class ConditionalsEditView(ConditionalsViewable):
     path = Str
 
     def __init__(self, detectors=None, *args, **kw):
-        self.available_attrs = ['', 'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36',
-                                'kca', 'kcl']
-        if detectors:
-            self.available_attrs.extend(detectors)
-            self.detectors = detectors
+        attrs = ['', 'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36',
+                                'kca', 'kcl', 'cak','clk']
 
+        ratio_matrix = ['{}/{}'.format(i, j) for i in ('40','39','38','37','36')
+                                                for j in ('40','39','38','37','36')]
+        attrs.extend(ratio_matrix
+        )
+        if detectors:
+            attrs.extend(detectors)
+            self.detectors = detectors
+        self.available_attrs = attrs
         super(ConditionalsEditView, self).__init__(*args, **kw)
 
     @property

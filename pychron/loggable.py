@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,6 +30,28 @@ from threading import current_thread
 
 color_name_gen = colorname_generator()
 NAME_WIDTH = 40
+__gloggers__ = dict()
+
+
+class unique(object):
+    def __init__(self):
+        self._registry = {}
+
+    def __call__(self, f):
+        def wrapped_f(*args, **kw):
+            obj = args[0]
+            msg = args[1]
+            hmsg = hash(msg)
+            ido = id(obj)
+            if not ido in self._registry:
+                self._registry[ido] = []
+
+            msgs = self._registry[ido]
+            if not hmsg in msgs:
+                msgs.append(hmsg)
+                f(*args)
+
+        return wrapped_f
 
 
 def confirmation_dialog(msg, return_retval=False,
@@ -52,14 +74,12 @@ def confirmation_dialog(msg, return_retval=False,
 
     retval = dlg.open(timeout)
     from pyface.api import YES, OK
+
     if return_retval:
         return retval
     else:
 
         return retval in (YES, OK)
-
-
-__gloggers__ = dict()
 
 
 class Loggable(HasTraits):
@@ -84,91 +104,20 @@ class Loggable(HasTraits):
         else:
             self._add_logger()
 
-    def _name_changed(self):
-        self._add_logger()
+    def report_logger_stats(self):
+        self.debug('&&&& len __gloggers__ = {}'.format(len(__gloggers__)))
 
-    def _logger_name_changed(self):
-        self._add_logger()
+    @unique
+    def unique_warning(self, *args, **kw):
+        self.warning(*args, **kw)
 
-    def _add_logger(self):
-        """
+    @unique
+    def unique_info(self, *args, **kw):
+        self.info(*args, **kw)
 
-        """
-
-        if self.logger_name:
-            name = self.logger_name
-        elif self.name:
-            name = self.name
-        else:
-            name = self.__class__.__name__
-
-        if self.logger is None:
-            self.logger = new_logger(name)
-
-        c = color_name_gen.next()
-        if c in ['gray', 'silver', 'greenyellow']:
-            c = color_name_gen.next()
-        self.logcolor = c
-
-    def add_window(self, ui):
-
-        try:
-            if self.application is not None:
-                self.application.uis.append(ui)
-        except AttributeError:
-            pass
-
-    def open_view(self, obj, **kw):
-        def _open_():
-            ui = obj.edit_traits(**kw)
-            self.add_window(ui)
-
-        from pychron.core.ui.gui import invoke_in_main_thread
-
-        invoke_in_main_thread(_open_)
-
-    def warning_dialog(self, msg, sound=None, title='Warning'):
-        from pychron.core.ui.dialogs import myMessageDialog
-
-        dialog = myMessageDialog(
-            parent=None, message=str(msg),
-            title=title,
-            severity='warning')
-        #         if sound:
-        #             from pychron.core.helpers.media import loop_sound
-        #             evt = loop_sound(sound)
-        #             dialog.close = lambda: self._close_warning(evt)
-
-        #         from threading import current_thread
-        #         print current_thread()
-        dialog.open()
-
-    def confirmation_dialog(self, *args, **kw):
-        return confirmation_dialog(*args, **kw)
-
-    def information_dialog(self, msg, title='Information'):
-        from pychron.core.ui.dialogs import myMessageDialog
-
-        dlg = myMessageDialog(parent=None, message=msg,
-                              title=title,
-                              severity='information')
-        dlg.open()
-
-    def db_save_dialog(self):
-        return self.confirmation_dialog('Save to Database')
-
-    def message(self, msg):
-        from pychron.displays.gdisplays import gMessageDisplay
-
-        if not gMessageDisplay.opened and not gMessageDisplay.was_closed:
-            gMessageDisplay.opened = True
-            from pychron.core.ui.gui import invoke_in_main_thread
-
-            invoke_in_main_thread(gMessageDisplay.edit_traits)
-
-        gMessageDisplay.add_text(msg)
-
-        self.info(msg)
+    @unique
+    def unique_debug(self, *args, **kw):
+        self.debug(*args, **kw)
 
     def warning(self, msg):
         """
@@ -199,19 +148,75 @@ class Loggable(HasTraits):
 
             self._log_('info', msg)
 
-    def close_displays(self):
-        from pychron.displays.gdisplays import gLoggerDisplay, gWarningDisplay, gMessageDisplay
-
-        gLoggerDisplay.close_ui()
-        gWarningDisplay.close_ui()
-        gMessageDisplay.close_ui()
-
     def debug_exception(self):
         import traceback
+
         self.debug(traceback.format_exc())
 
     def debug(self, msg):
         self._log_('debug', msg)
+
+    #dialogs
+    def warning_dialog(self, msg, sound=None, title='Warning'):
+        from pychron.core.ui.dialogs import myMessageDialog
+
+        dialog = myMessageDialog(
+            parent=None, message=str(msg),
+            title=title,
+            severity='warning')
+        #         if sound:
+        #             from pychron.core.helpers.media import loop_sound
+        #             evt = loop_sound(sound)
+        #             dialog.close = lambda: self._close_warning(evt)
+
+        #         from threading import current_thread
+        #         print current_thread()
+        dialog.open()
+
+    def confirmation_dialog(self, *args, **kw):
+        return confirmation_dialog(*args, **kw)
+
+    def information_dialog(self, msg, title='Information'):
+        from pychron.core.ui.dialogs import myMessageDialog
+
+        dlg = myMessageDialog(parent=None, message=msg,
+                              title=title,
+                              severity='information')
+        dlg.open()
+
+    def message(self, msg):
+        from pychron.displays.gdisplays import gMessageDisplay
+
+        if not gMessageDisplay.opened and not gMessageDisplay.was_closed:
+            gMessageDisplay.opened = True
+            from pychron.core.ui.gui import invoke_in_main_thread
+
+            invoke_in_main_thread(gMessageDisplay.edit_traits)
+
+        gMessageDisplay.add_text(msg)
+
+        self.info(msg)
+
+    #private
+    def _add_logger(self):
+        """
+
+        """
+
+        if self.logger_name:
+            name = self.logger_name
+        elif self.name:
+            name = self.name
+        else:
+            name = self.__class__.__name__
+
+        if self.logger is None:
+            self.logger = new_logger(name)
+
+        c = color_name_gen.next()
+        if c in ['gray', 'silver', 'greenyellow']:
+            c = color_name_gen.next()
+        self.logcolor = c
 
     def _log_(self, func, msg):
 
@@ -238,6 +243,12 @@ class Loggable(HasTraits):
 
     def _post_process_msg(self, msg):
         return msg
-        #        func(msg)
+
+    #handlers
+    def _name_changed(self):
+        self._add_logger()
+
+    def _logger_name_changed(self):
+        self._add_logger()
 
 #============= EOF =============================================

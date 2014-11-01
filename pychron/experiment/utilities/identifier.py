@@ -40,6 +40,7 @@ ANALYSIS_MAPPING_INTS = dict(unknown=0, background=1,
 NON_EXTRACTABLE = dict(ba='Blank Air', bc='Blank Cocktail', bu='Blank Unknown',
                        bg='Background', c='Cocktail', a='Air', ic='Detector IC')
 
+AGE_TESTABLE = ('unknown','cocktail')
 SPECIAL_NAMES = ['Special Labnumber', LINE_STR, 'Air', 'Cocktail', 'Blank Unknown',
                  'Blank Air', 'Blank Cocktail', 'Background', 'Pause', 'Degas', 'Detector IC']
 

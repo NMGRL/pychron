@@ -67,6 +67,10 @@ class PychronApplication(BaseTasksApplication):
 
         super(PychronApplication, self).__init__(*args, **kw)
 
+    def exit(self, **kw):
+        self.report_logger_stats()
+        super(PychronApplication, self).exit(**kw)
+
     def stop(self):
         from pychron.globals import globalv
         if globalv.multi_user:
