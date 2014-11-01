@@ -107,15 +107,15 @@ class Loggable(HasTraits):
     def report_logger_stats(self):
         self.debug('&&&& len __gloggers__ = {}'.format(len(__gloggers__)))
 
-    @unique
+    @unique()
     def unique_warning(self, *args, **kw):
         self.warning(*args, **kw)
 
-    @unique
+    @unique()
     def unique_info(self, *args, **kw):
         self.info(*args, **kw)
 
-    @unique
+    @unique()
     def unique_debug(self, *args, **kw):
         self.debug(*args, **kw)
 
