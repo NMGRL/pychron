@@ -17,10 +17,11 @@
 # ============= enthought library imports =======================
 from traits.api import Instance
 from traitsui.api import View, UItem, VSplit, VGroup, EnumEditor, \
-    HGroup, TabularEditor, CheckListEditor, spring
+    HGroup, TabularEditor, CheckListEditor, spring, Group
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.combobox_editor import ComboboxEditor
+from pychron.core.ui.qt.tabular_editor import FilterTabularEditor
 from pychron.envisage.browser.adapters import ProjectAdapter
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.tasks.browser.pane_model_view import PaneModelView
@@ -40,7 +41,7 @@ class BrowserSampleView(PaneModelView):
     def traits_view(self):
         # irrad_grp = VGroup(
         # UItem('irradiation_enabled', tooltip='Enable Irradiation filter'),
-        #     VGroup(UItem('irradiation', editor=EnumEditor(name='irradiations')),
+        # VGroup(UItem('irradiation', editor=EnumEditor(name='irradiations')),
         #            UItem('level', editor=EnumEditor(name='levels')),
         #            enabled_when='irradiation_enabled'),
         #     show_border=True,
@@ -59,26 +60,31 @@ class BrowserSampleView(PaneModelView):
             show_border=True,
             label='Irradiations')
 
-        tgrp = HGroup(UItem('project_enabled', label='Enabled',
-                            tooltip='Enable Project filter'),
-                      UItem('project_filter',
-                            tooltip='Filter list of projects',
-                            label='Filter'),
-                      icon_button_editor('clear_selection_button',
-                                         'cross',
-                                         tooltip='Clear selected'))
+        # tgrp = UItem('project_enabled', label='Enabled',
+        #                     tooltip='Enable Project filter')
+        # UItem('project_filter',
+        #       tooltip='Filter list of projects',
+        #       label='Filter'),
+        # icon_button_editor('clear_selection_button',
+        #                    'cross',
+        #                    tooltip='Clear selected'))
         pgrp = UItem('projects',
-                     editor=TabularEditor(editable=False,
-                                          refresh='refresh_needed',
-                                          selected='selected_projects',
-                                          adapter=ProjectAdapter(),
-                                          multi_select=True),
-                     enabled_when='project_enabled')
+                     height=-150,
+                     editor=FilterTabularEditor(editable=False,
+                                                enabled_cb='project_enabled',
+                                                refresh='refresh_needed',
+                                                selected='selected_projects',
+                                                adapter=ProjectAdapter(),
+                                                multi_select=True),
+                     # enabled_when='project_enabled'
+        )
 
-        project_grp = VGroup(tgrp, pgrp,
-                             visible_when='project_visible',
-                             show_border=True,
-                             label='Projects')
+        project_grp = Group(  #tgrp,
+                               pgrp,
+                               springy=False,
+                               visible_when='project_visible',
+                               show_border=True,
+                               label='Projects')
 
         analysis_type_group = HGroup(
             UItem('use_analysis_type_filtering',

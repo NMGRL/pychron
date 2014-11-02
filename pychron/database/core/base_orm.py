@@ -50,7 +50,9 @@ class BaseMixin(object):
 
 
 class UserMixin(BaseMixin):
-    user_id = foreignkey('gen_UserTable')
+    @declared_attr
+    def user_id(self):
+        return foreignkey('gen_UserTable')
 
 
 class NameMixin(BaseMixin):

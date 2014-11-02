@@ -700,7 +700,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     def _get_visible(self, default):
         ret = True
         if self.use_focus_switching and not self.filter_focus:
-            ret = default
+            ret = False#default
         return ret
 
     def _analysis_table_default(self):
