@@ -25,6 +25,7 @@ import os
 from pychron.experiment.action_editor import ActionEditor, ActionModel
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.queue.experiment_block import ExperimentBlock
+from pychron.experiment.utilities.frequency_edit_view import FrequencyModel
 from pychron.experiment.utilities.persistence_loggable import PersistenceLoggable
 from pychron.experiment.utilities.position_regex import SLICE_REGEX, PSLICE_REGEX, \
     SSLICE_REGEX, TRANSECT_REGEX, POSITION_REGEX, CSLICE_REGEX, XY_REGEX
@@ -251,9 +252,12 @@ class AutomatedRunFactory(PersistenceLoggable):
     #===========================================================================
     # frequency
     #===========================================================================
-    frequency = Int
-    freq_before = Bool(True)
-    freq_after = Bool(False)
+    # frequency = Int
+    # freq_before = Bool(True)
+    # freq_after = Bool(False)
+    # freq_template = Str
+    frequency_model = Instance(FrequencyModel, ())
+    edit_frequency_button =Button
     #===========================================================================
     # readonly
     #===========================================================================
@@ -375,7 +379,7 @@ class AutomatedRunFactory(PersistenceLoggable):
     #             self.debug('failed dumping defaults Exception: {}'.format(e))
 
     def use_frequency(self):
-        return self.labnumber in ANALYSIS_MAPPING and self.frequency
+        return self.labnumber in ANALYSIS_MAPPING and self.frequency_model.frequency
 
     def load_from_run(self, run):
         self._clone_run(run)
@@ -447,11 +451,11 @@ class AutomatedRunFactory(PersistenceLoggable):
         p = os.path.join(paths.run_block_dir, add_extension(self.run_block, '.txt'))
         block = ExperimentBlock(extract_device=self.extract_device,
                                 mass_spectrometer=self.mass_spectrometer)
-        return block.make_runs(p), self.frequency
+        return block.make_runs(p), self.frequency_model.frequency
 
     def _new_runs(self, exp_queue, positions):
         _ln, special = self._make_short_labnumber()
-        freq = self.frequency if special else None
+        freq = self.frequency_model.frequency if special else None
 
         if not special:
             if not positions:
@@ -1077,6 +1081,11 @@ class AutomatedRunFactory(PersistenceLoggable):
     #===============================================================================
     # handlers
     #===============================================================================
+    def _edit_frequency_button_fired(self):
+        from pychron.experiment.utilities.frequency_edit_view import FrequencyEditView
+        fev = FrequencyEditView(model=self.frequency_model)
+        fev.edit_traits(kind='modal')
+
     def _edit_comment_template_fired(self):
         from pychron.experiment.utilities.comment_template import CommentTemplater
         ct = CommentTemplater()

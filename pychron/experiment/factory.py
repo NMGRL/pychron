@@ -140,8 +140,8 @@ class ExperimentFactory(Loggable, ConsumerMixin):
                 idx = len(aruns) - 1
 
             runs = q.add_runs(new_runs, freq,
-                              freq_before=rf.freq_before,
-                              freq_after=rf.freq_after,
+                              # freq_before=rf.freq_before,
+                              # freq_after=rf.freq_after,
                               is_run_block=rf.run_block_enabled)
 
             self.undoer.push('add runs', runs)
