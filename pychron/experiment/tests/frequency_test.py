@@ -1,7 +1,7 @@
 import unittest
 
-from pychron.experiment.utilities.frequency_edit_view import validate_frequency_template
-from pychron.experiment.utilities.frequency_generator import frequency_index_gen, parse_frequency_template
+from pychron.experiment.utilities.frequency_generator import frequency_index_gen, parse_frequency_template, \
+    validate_frequency_template
 
 
 class FrequencyTemplateTestCase(unittest.TestCase):
