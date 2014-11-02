@@ -410,8 +410,9 @@ class DBAnalysis(Analysis):
     def _sync_production_ratios(self, level):
         pr = level.production
         if pr:
-            cak, clk = pr.Ca_K, pr.Cl_K
-            self.production_ratios = dict(Ca_K=cak, Cl_K=clk)
+            cak, clk = (pr.Ca_K,pr.Ca_K_err), (pr.Cl_K,pr.Cl_K_err)
+            self.production_ratios = dict(Ca_K=ufloat(*cak),
+                                          Cl_K=ufloat(*clk))
         else:
             raise NoProductionError()
 

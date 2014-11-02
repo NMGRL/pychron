@@ -16,11 +16,13 @@
 
 # ============= enthought library imports =======================
 from traits.api import Property, Instance, List, Either, Int, Float, HasTraits, \
-    Str, Dict
-from traitsui.api import View, UItem, HSplit, TabularEditor
+    Str, Dict, Bool
+from traitsui.api import View, Item, UItem, HSplit, TabularEditor, VGroup, HGroup
 from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from uncertainties import nominal_value
+from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.core.helpers.formatting import floatfmt
 from pychron.processing.tasks.recall.mass_spec_recaller import MassSpecRecaller
@@ -42,13 +44,15 @@ class ValueTabularAdapter(TabularAdapter):
     diff_text = Property
     rvalue_text = Property
     name_width = Int(60)
-    font = '10'
+    font = '9'
+    use_bg_color = Bool(True)
 
     def get_bg_color(self, object, trait, row, column=0):
         color = 'white'
-        v = self.item.diff
-        if abs(v) > 1e-8:
-            color = '#FFCCCC'
+        if self.use_bg_color:
+            v = self.item.diff
+            if abs(v) > 1e-8:
+                color = '#FFCCCC'
         return color
 
     def _get_lvalue_text(self):
@@ -109,8 +113,20 @@ class DiffEditor(BaseTraitsEditor):
     _right = None
     basename = Str
 
+    diffs_only=Bool(True)
+    adapter = None
+
+    def _diffs_only_changed(self, new):
+        if new:
+            self.values = [vi for vi in self.ovalues if vi.diff]
+            self.adapter.use_bg_color=False
+        else:
+            self.adapter.use_bg_color=True
+            self.values = self.ovalues
+
     def setup(self, left):
         right = self._find_right(left)
+        self.adapter = ValueTabularAdapter()
         if right:
             self._right = right
             return True
@@ -137,6 +153,7 @@ class DiffEditor(BaseTraitsEditor):
     def _set_values(self, left, right, isotopes):
         vs = []
         err = u'\u00b11\u03c3'
+
         for a in isotopes:
             iso = left.isotopes[a]
             riso = right.isotopes[a]
@@ -144,6 +161,8 @@ class DiffEditor(BaseTraitsEditor):
             vs.append(Value(name=err, lvalue=iso.error, rvalue=riso.error))
             vs.append(Value(name='N', lvalue=iso.n, rvalue=riso.n))
             vs.append(StrValue(name='Fit', lvalue=iso.fit, rvalue=riso.fit))
+            vs.append(Value(name='IC', lvalue=nominal_value(iso.ic_factor),
+                            rvalue=nominal_value(iso.ic_factor)))
 
         for a in isotopes:
             iso = left.isotopes[a]
@@ -159,12 +178,26 @@ class DiffEditor(BaseTraitsEditor):
             vs.append(Value(name='{}Bl'.format(a), lvalue=iso.blank.value, rvalue=riso.blank.value))
             vs.append(Value(name=err, lvalue=iso.blank.error, rvalue=riso.blank.error))
 
-        self.values = vs
+        rpr = right.production_ratios
+        for k, v in left.production_ratios.iteritems():
+            vs.append(Value(name=k,lvalue=nominal_value(v),
+                            rvalue=nominal_value(rpr[k])))
+
+        rifc=right.interference_corrections
+        for k, v in left.interference_corrections.iteritems():
+            vs.append(Value(name=k, lvalue=nominal_value(v),
+                            rvalue=nominal_value(rifc[k])))
+
+        # self.values = vs
+        self.ovalues=vs[:]
+        self._diffs_only_changed(self.diffs_only)
 
     def traits_view(self):
-        v = View(UItem('values', editor=TabularEditor(adapter=ValueTabularAdapter(),
+        v = View(VGroup(
+            HGroup(Item('diffs_only')),
+            UItem('values', editor=myTabularEditor(adapter=self.adapter,
                                                       editable=False,
-                                                      selected_row='selected_row')))
+                                                      selected_row='selected_row'))))
         return v
 
 #============= EOF =============================================

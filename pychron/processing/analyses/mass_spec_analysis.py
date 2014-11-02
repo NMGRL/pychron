@@ -18,12 +18,15 @@
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from uncertainties import ufloat
 from pychron.processing.analyses.analysis import Analysis
 from pychron.processing.isotope import Isotope, Blank, Baseline
+from pychron.pychron_constants import IRRADIATION_KEYS
 
 
 class MassSpecAnalysis(Analysis):
     def _sync(self, obj):
+
         for dbiso in obj.isotopes:
             r = dbiso.results[-1]
             uv = r.Iso
@@ -35,7 +38,8 @@ class MassSpecAnalysis(Analysis):
             key = dbiso.Label
             n = dbiso.NumCnts
             iso = Isotope(name=key, value=uv, error=ee, n=n)
-
+            det =dbiso.detector
+            iso.ic_factor=ufloat(det.ICFactor, det.ICFactorEr)
             iso.fit = r.fit.Label.lower()
 
             iso.baseline = Baseline(name=key,
@@ -50,5 +54,14 @@ class MassSpecAnalysis(Analysis):
             iso.blank = Blank(name=key, value=bv, error=be)
             self.isotopes[key] = iso
 
+    def sync_irradiation(self, irrad):
+        production = irrad.production
+        self.production_ratios['Ca_K']=ufloat(production.CaOverKMultiplier,
+                                              production.CaOverKMultiplierEr)
+        self.production_ratios['Cl_K']=ufloat(production.ClOverKMultiplier,
+                                              production.ClOverKMultiplierEr)
+
+        for k,_ in IRRADIATION_KEYS:
+            self.interference_corrections[k]=getattr(production,k.capitalize())
 
 #============= EOF =============================================

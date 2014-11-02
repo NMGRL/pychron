@@ -64,6 +64,13 @@ class MassSpecRecaller(Loggable):
             if dbrec:
                 rec = MassSpecAnalysis()
                 rec.sync(dbrec)
+                irradpos = db.get_irradiation_position(dbrec.IrradPosition)
+                r = irradpos.IrradiationLevel
+                n,l=r[:-1],r[-1:]
+
+                dbirrad = db.get_irradiation_level(n, l)
+
+                rec.sync_irradiation(dbirrad)
 
                 return rec
 
