@@ -15,13 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from datetime import datetime, timedelta
 
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import List, Str, Bool, Any, String, \
     on_trait_change, Date, Int, Time, Instance, Button, Property
 
 # ============= standard library imports ========================
+from datetime import datetime, timedelta
+import re
 # ============= local library imports  ==========================
 from pychron.core.progress import progress_loader
 from pychron.database.records.isotope_record import GraphicalRecordView
@@ -55,10 +56,13 @@ def unique_list(seq):
     seen_add = seen.add
     return [x for x in seq if not (x.name in seen or seen_add(x.name))]
 
+NCHARS=60
+REG=re.compile(r'.'*NCHARS)
 
 class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     filter_focus = Bool(True)
     use_focus_switching=Bool(True)
+    filter_label = Property(Str, depends_on='filter_focus')
 
     irradiation_visible = Property(depends_on='filter_focus')
     analysis_types_visible = Property(depends_on='filter_focus')
@@ -118,6 +122,55 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     _append_replace_analyses_enabled = True
 
     bin_tol_hrs = Int
+
+    def _get_filter_label(self):
+        ss=[]
+        if self.identifier:
+            ss.append('Identifier={}'.format(self.identifier))
+
+        if self.use_mass_spectrometers:
+            ss.append('MS={}'.format(','.join(self.mass_spectrometer_includes)))
+
+        if self.project_enabled:
+            if self.selected_projects:
+                s='Project= {}'.format(','.join([s.name for s in self.selected_projects]))
+                ss.append(s)
+
+        if self.irradiation_enabled:
+            if self.irradiation:
+                s='Irradiation= {}'.format(self.irradiation)
+                ss.append(s)
+
+        if self.use_analysis_type_filtering:
+            if self.analysis_include_types:
+                s='Types= {}'.format(self.analysis_include_types)
+                ss.append(s)
+
+        if self.use_low_post:
+            # s='>={}'.format(self.low_post.strftime('%m-%d-%Y %H:%M'))
+            s='>={}'.format(self.low_post)
+            ss.append(s)
+
+        if self.use_high_post:
+            s='<={}'.format(self.high_post)
+            ss.append(s)
+
+        if self.use_named_date_range:
+            ss.append(self.named_date_range)
+
+        txt=''
+        if ss:
+            txt=' + '.join(ss)
+
+        n=len(txt)
+        if n>NCHARS:
+            lines=REG.findall(txt)
+            nn=NCHARS*len(lines)
+            if nn<n:
+                lines.append(txt[nn:])
+            return '\n'.join(lines)
+
+        return txt
 
     def _identifier_change_hook(self, db, new, lns):
         if len(new) > 2:

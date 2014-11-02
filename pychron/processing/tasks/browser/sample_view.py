@@ -21,6 +21,7 @@ from traitsui.api import View, UItem, VSplit, VGroup, EnumEditor, \
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.combobox_editor import ComboboxEditor
+from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.qt.tabular_editor import FilterTabularEditor
 from pychron.envisage.browser.adapters import ProjectAdapter
 from pychron.envisage.icon_button_editor import icon_button_editor
@@ -39,14 +40,6 @@ class BrowserSampleView(PaneModelView):
         return TableTools(model=self.model, pane=self.pane)
 
     def traits_view(self):
-        # irrad_grp = VGroup(
-        # UItem('irradiation_enabled', tooltip='Enable Irradiation filter'),
-        # VGroup(UItem('irradiation', editor=EnumEditor(name='irradiations')),
-        #            UItem('level', editor=EnumEditor(name='levels')),
-        #            enabled_when='irradiation_enabled'),
-        #     show_border=True,
-        #     label='Irradiations')
-
         irrad_grp = VGroup(
             HGroup(UItem('irradiation_enabled',
                          tooltip='Enable Irradiation filter'),
@@ -60,14 +53,6 @@ class BrowserSampleView(PaneModelView):
             show_border=True,
             label='Irradiations')
 
-        # tgrp = UItem('project_enabled', label='Enabled',
-        #                     tooltip='Enable Project filter')
-        # UItem('project_filter',
-        #       tooltip='Filter list of projects',
-        #       label='Filter'),
-        # icon_button_editor('clear_selection_button',
-        #                    'cross',
-        #                    tooltip='Clear selected'))
         pgrp = UItem('projects',
                      height=-150,
                      editor=FilterTabularEditor(editable=False,
@@ -75,16 +60,13 @@ class BrowserSampleView(PaneModelView):
                                                 refresh='refresh_needed',
                                                 selected='selected_projects',
                                                 adapter=ProjectAdapter(),
-                                                multi_select=True),
-                     # enabled_when='project_enabled'
-        )
+                                                multi_select=True))
 
-        project_grp = Group(  #tgrp,
-                               pgrp,
-                               springy=False,
-                               visible_when='project_visible',
-                               show_border=True,
-                               label='Projects')
+        project_grp = Group(pgrp,
+                            springy=False,
+                            visible_when='project_visible',
+                            show_border=True,
+                            label='Projects')
 
         analysis_type_group = HGroup(
             UItem('use_analysis_type_filtering',
@@ -126,7 +108,12 @@ class BrowserSampleView(PaneModelView):
             label='Identifier', show_border=True,
             visible_when='identifier_visible')
 
-        top_level_filter_grp = VGroup(HGroup(ms_grp, ln_grp),
+        top_level_filter_grp = VGroup(
+            CustomLabel('filter_label',
+                  style='custom',
+                        width=-1.0,
+                        visible_when='not filter_focus'),
+            HGroup(ms_grp, ln_grp),
                                       HGroup(project_grp, irrad_grp),
                                       analysis_type_group,
                                       date_grp)

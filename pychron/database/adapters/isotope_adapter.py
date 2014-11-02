@@ -1302,8 +1302,8 @@ class IsotopeAdapter(DatabaseAdapter):
 
             get the min and max analysis_timestamps for all analyses with labnumbers in lns
         """
-        if not lns and not projects:
-            raise NotImplementedError
+        # if not lns and not projects:
+        #     raise NotImplementedError
 
         with self.session_ctx() as sess:
             q = self._analysis_query(sess, attr='analysis_timestamp')
