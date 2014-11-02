@@ -549,9 +549,11 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
             if last:
                 q = q.order_by(last)
 
+            if verbose:
+                self.debug(compile_query(q))
+
             ntries = 3
             import traceback
-
             for i in range(ntries):
                 try:
                     return q.one()

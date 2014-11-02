@@ -33,13 +33,19 @@ class MassSpecAnalysis(Analysis):
             be = r.BkgdEr
 
             key = dbiso.Label
-            iso = Isotope(name=key, value=uv, error=ee)
+            n = dbiso.NumCnts
+            iso = Isotope(name=key, value=uv, error=ee, n=n)
+
+            iso.fit = r.fit.Label.lower()
 
             iso.baseline = Baseline(name=key,
                                     reverse_unpack=True,
                                     dbrecord=dbiso.baseline,
+                                    unpack=True,
                                     unpacker=lambda x: x.PeakTimeBlob,
-                                    fit='average_SEM')
+                                    error_type='SEM',
+                                    fit='average')
+            iso.baseline.set_filter_outliers_dict()
 
             iso.blank = Blank(name=key, value=bv, error=be)
             self.isotopes[key] = iso

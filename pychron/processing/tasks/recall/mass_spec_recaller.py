@@ -61,10 +61,11 @@ class MassSpecRecaller(Loggable):
         db = self.db
         with db.session_ctx():
             dbrec = db.get_analysis(labnumber, aliquot, step)
-            rec = MassSpecAnalysis()
-            rec.sync(dbrec)
+            if dbrec:
+                rec = MassSpecAnalysis()
+                rec.sync(dbrec)
 
-            return rec
+                return rec
 
 
 #============= EOF =============================================
