@@ -16,6 +16,7 @@
 
 #============= enthought library imports =======================
 import binascii
+import hashlib
 
 from traits.api import Instance, Bool, Int, Float, Str, \
     Dict, List, Time, Date, Any, Long
@@ -80,6 +81,8 @@ class AutomatedRunPersister(Loggable):
 
     spec_dict = Dict
     defl_dict = Dict
+    gains = List
+
     active_detectors = List
 
     previous_blank_id = Long
@@ -358,6 +361,9 @@ class AutomatedRunPersister(Loggable):
                 # save monitor
                 self._save_monitor_info(db, a)
 
+                # save gains
+                self._save_gains(db, a)
+
                 if self.use_analysis_grouping:
                     self._save_analysis_group(db, a)
 
@@ -386,6 +392,20 @@ class AutomatedRunPersister(Loggable):
                 # self.is_peak_hop = False
                 # self.plot_panel.is_peak_hop = False
                 # return True
+
+    def _save_gains(self, db, analysis):
+        h = hashlib.md5()
+
+        for v in self.gains:
+            h.update(str(v))
+        ha = h.hexdigest()
+
+        dbhist = db.get_gain_history(ha)
+        if not dbhist:
+            dbhist = db.add_gain_history(ha)
+            db.commit()
+
+        analysis.gain_history_id = dbhist.id
 
     def _save_analysis_group(self, db, analysis):
         """

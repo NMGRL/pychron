@@ -93,6 +93,7 @@ class DatabaseAdapter(Loggable):
     sess = None
 
     sess_stack = 0
+    reraise = False
 
     connected = Bool(False)
     kind = Str  # ('mysql')
@@ -201,6 +202,13 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
 
     def initialize_database(self):
         pass
+
+    def commit(self):
+        if self.sess:
+            try:
+                self.sess.commit()
+            except:
+                self.sess.rollback()
 
     def get_session(self):
         sess = self.sess
@@ -333,14 +341,15 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
         if sess:
             sess.add(obj)
             try:
-                sess.flush()
+                # sess.flush()
                 return obj
             except SQLAlchemyError, e:
                 import traceback
                 # traceback.print_exc()
                 self.debug('add_item exception {} {}'.format(obj, traceback.format_exc()))
                 sess.rollback()
-
+                if self.reraise:
+                    raise
 
                 #     def _add_item(self, obj, sess=None):
 

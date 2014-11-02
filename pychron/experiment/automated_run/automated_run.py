@@ -140,7 +140,7 @@ class AutomatedRun(Loggable):
     min_ms_pumptime = Int(60)
     overlap_evt = None
 
-    #===============================================================================
+    # ===============================================================================
     # pyscript interface
     #===============================================================================
     def py_set_integration_time(self, v):
@@ -344,7 +344,7 @@ class AutomatedRun(Loggable):
             add additional isotopes and associated plots if necessary
         """
         if self.plot_panel is None:
-            self.plot_panel=self._new_plot_panel(self.plot_panel, stack_order='top_to_bottom')
+            self.plot_panel = self._new_plot_panel(self.plot_panel, stack_order='top_to_bottom')
         #     self.warning('Need to call "define_hops(...)" after "activate_detectors(...)"')
         #     return
 
@@ -385,7 +385,7 @@ class AutomatedRun(Loggable):
                         b = pbs[iso]
                         ii.set_baseline(nominal_value(b), std_dev(b))
 
-                plot = g.get_plot_by_ytitle(iso) or g.get_plot_by_ytitle('{}{}'.format(iso,di))
+                plot = g.get_plot_by_ytitle(iso) or g.get_plot_by_ytitle('{}{}'.format(iso, di))
                 if plot is None:
                     plot = self.plot_panel.new_plot()
                     pid = g.plots.index(plot)
@@ -704,6 +704,7 @@ class AutomatedRun(Loggable):
             if self.spectrometer_manager:
                 self.persister.trait_set(spec_dict=self.spectrometer_manager.make_parameters_dict(),
                                          defl_dict=self.spectrometer_manager.make_deflections_dict(),
+                                         gains=self.spectrometer_manager.make_gains_list(),
                                          active_detectors=self._active_detectors)
 
             self.persister.post_measurement_save()
@@ -1232,7 +1233,7 @@ anaylsis_type={}
 
     def _add_active_detector(self, di):
         spec = self.spectrometer_manager.spectrometer
-        det =spec.get_detector(di)
+        det = spec.get_detector(di)
         if not det in self._active_detectors:
             self._active_detectors.append(det)
 
@@ -1863,4 +1864,4 @@ anaylsis_type={}
         c.console_bind_preferences('pychron.experiment')
         return c
 
-#============= EOF =============================================
+# ============= EOF =============================================

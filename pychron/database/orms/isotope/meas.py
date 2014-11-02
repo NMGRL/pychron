@@ -18,24 +18,13 @@
 #============= standard library imports ========================
 from time import mktime
 import uuid
-
 from sqlalchemy import Column, Integer, String, \
     ForeignKey, BLOB, Float, Time, Boolean, DateTime
 from sqlalchemy.orm import relationship, deferred
 from sqlalchemy.sql.expression import func
-
-
-
-
-
-
-
-
-
-
 #============= local library imports  ==========================
 from pychron.database.orms.isotope.util import foreignkey, stringcolumn
-from pychron.database.core.base_orm import BaseMixin, NameMixin
+from pychron.database.core.base_orm import BaseMixin, NameMixin, UserMixin
 from pychron.experiment.utilities.identifier import make_runid
 
 from util import Base
@@ -46,11 +35,6 @@ class meas_SignalTable(Base, BaseMixin):
     isotope_id = foreignkey('meas_IsotopeTable')
 
 
-#    detector_id = foreignkey('gen_DetectorTable')
-# def step_default(context):
-#     return ALPHAS[context.current_parameters['increment']]
-
-
 class meas_AnalysisTable(Base, BaseMixin):
     lab_id = foreignkey('gen_LabTable')
     extraction_id = foreignkey('meas_ExtractionTable')
@@ -58,6 +42,7 @@ class meas_AnalysisTable(Base, BaseMixin):
     experiment_id = foreignkey('meas_ExperimentTable')
     import_id = foreignkey('gen_ImportTable')
     user_id = foreignkey('gen_UserTable')
+    gain_history_id = foreignkey('meas_GainHistoryTable')
     data_reduction_tag_id = foreignkey('proc_DataReductionTagTable')
 
     uuid = stringcolumn(40, default=lambda: str(uuid.uuid4()))
@@ -162,6 +147,17 @@ class meas_ExtractionTable(Base, BaseMixin):
                             backref='extraction')
     positions = relationship('meas_PositionTable', backref='extraction')
     snapshots = relationship('med_SnapshotTable', backref='extraction')
+
+
+class meas_GainHistoryTable(Base, UserMixin):
+    create_date = Column(DateTime, default=func.now())
+    hash = stringcolumn(32)
+
+
+class meas_GainTable(Base, BaseMixin):
+    value = Column(Float(32))
+    detector_id = foreignkey('gen_DetectorTable')
+    history_id = foreignkey('meas_GainHistoryTable')
 
 
 class meas_PositionTable(Base, BaseMixin):

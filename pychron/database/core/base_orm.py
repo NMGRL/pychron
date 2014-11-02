@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,10 @@ from sqlalchemy.orm import relationship
 from sqlalchemy import Column, Integer, String, BLOB, DateTime
 from sqlalchemy.sql.expression import func
 #============= local library imports  ==========================
+from pychron.database.orms.isotope.util import foreignkey
+
 Base = declarative_base()
+
 
 class MigrateVersionTable(Base):
     __tablename__ = 'migrate_version'
@@ -35,7 +38,6 @@ class AlembicVersionTable(Base):
     version_num = Column(String(32), primary_key=True)
 
 
-
 class BaseMixin(object):
     def __init__(self, *args, **kw):
         super(BaseMixin, self).__init__(*args, **kw)
@@ -45,6 +47,10 @@ class BaseMixin(object):
         return self.__name__
 
     id = Column(Integer, primary_key=True)
+
+
+class UserMixin(BaseMixin):
+    user_id = foreignkey('gen_UserTable')
 
 
 class NameMixin(BaseMixin):
@@ -67,6 +73,7 @@ class RIDMixin(ResultsMixin):
 class PathMixin(BaseMixin):
     root = Column(String(200))
     filename = Column(String(80))
+
 
 class ScriptTable(BaseMixin):
     script_name = Column(String(80))
