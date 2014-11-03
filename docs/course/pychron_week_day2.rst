@@ -24,8 +24,8 @@ The browser is laid out in a top down fashion and divided into multiple levels.
     3. Analysis Types
     4. Date
     5. Results
-       a) Sample/Identifier (L#)
-       b) Analyses
+      a) Sample/Identifier (L#)
+      b) Analyses
 
 Filters from the upper levels cascade down to the lower levels. For example selecting Mass Spectrometer=Obama
 limits the Projects list to projects that contain analyses from Obama. The same filtering is applied to the
@@ -129,7 +129,7 @@ Controls will display a list of subviews. The list depends on the type of analys
     3. Edit Data
     4. Split View
     5. History view
-       a. diff blanks
+     a) diff blanks
 
 
 Plotting
@@ -142,13 +142,12 @@ into the Unknowns pane.
 
 Use the browser to select a set of analyses.
 
-    1. If you want to plot an entire L# double click it and it will be added to the Unknowns Pane.
-    2. If you want to plot a set of L#'s select the set and right click> Plot Selected or Plot Selected(Grouped). Plot Selected(Grouped)
-        will group the analyses by L#.
+    1. If you want to plot all analyses from a L# double click it and it will be added to the Unknowns Pane.
+    2. If you want to plot a set of L#'s select the set and right click and choose Plot Selected or Plot Selected(Grouped). Plot Selected(Grouped) will group the analyses by L#.
     3. If you want to plot a set of analyses select them and
-        a. Use the append/replace button in the Unknowns Pane
-        b. Right click and use append or replace
-        c. drag the analyses into the unknowns pane
+     a) Use the append/replace button in the Unknowns Pane
+     b) Right click and use append or replace
+     c) drag the analyses into the unknowns pane
 
 .. |diff| image:: ../images/edit_diff.png
           :height: 16px
