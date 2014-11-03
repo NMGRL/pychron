@@ -26,20 +26,20 @@ from pychron.processing.tasks.actions.processing_actions import myTaskAction
 class AddIsoEvoAction(TaskAction):
     name = 'Iso. Evo'
     method = 'add_iso_evo'
-    image = icon('chart_curve_add.png')
+    image = icon('chart_curve_add')
 
 
 
 class AddDiffAction(TaskAction):
     name = 'Diff'
     method = 'add_diff'
-    image = icon('edit_diff.png')
+    image = icon('edit_diff')
 
 
 class EditDataAction(TaskAction):
     name = 'Edit Data'
     method = 'edit_data'
-    image = icon('edit_diff.png')
+    image = icon('application-form-edit')
 
 
 class RatioEditorAction(TaskAction):
