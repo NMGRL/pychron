@@ -237,12 +237,14 @@ class BrowserMixin(ColumnSorterMixin):
         self.osamples = s
         self.trait_set(selected_samples=sel)
 
-    def _make_project_records(self, ps, include_recent_first=True):
+    def _make_project_records(self, ps, ms=None, include_recent_first=True):
         db = self.db
         with db.session_ctx():
-            ms = db.get_mass_spectrometers()
+            if not ms:
+                ms = db.get_mass_spectrometers()
+                ms = [mi.name for mi in ms]
 
-            recents = [ProjectRecordView('RECENT {}'.format(mi.name.upper())) for mi in ms]
+            recents = [ProjectRecordView('RECENT {}'.format(mi.upper())) for mi in ms]
             pss = [ProjectRecordView(p) for p in ps]
 
             # move references project to after Recent

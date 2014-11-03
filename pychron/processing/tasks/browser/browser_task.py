@@ -293,26 +293,40 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         return obj
 
     def _load_projects_for_irradiation(self):
+        ms = None
+        if self.use_mass_spectrometers:
+            ms = self.mass_spectrometer_includes
+
         if self.irradiation:
             db = self.db
             with db.session_ctx():
                 ps = db.get_projects(irradiation=self.irradiation,
-                                     level=self.level)
-                ps = self._make_project_records(ps, include_recent_first=False)
+                                     level=self.level,
+                                     mass_spectrometers=ms)
+
+                ps = self._make_project_records(ps, include_recent_first=True)
                 self.projects = ps
 
     def _load_projects_and_irradiations(self):
+        ms = None
         if self.use_mass_spectrometers:
             ms = self.mass_spectrometer_includes
-            if ms:
-                db = self.db
-                with db.session_ctx():
-                    ps = db.get_projects(mass_spectrometers=ms)
-                    ps = self._make_project_records(ps, include_recent_first=False)
-                    self.projects = ps
 
-                    irs = db.get_irradiations(mass_spectrometers=ms)
-                    self.irradiations = [i.name for i in irs]
+        db = self.db
+        with db.session_ctx():
+            ps = db.get_projects(mass_spectrometers=ms)
+            ps = self._make_project_records(ps,
+                                            ms, include_recent_first=True)
+            self.projects = ps
+            sp=[]
+            for si in self.selected_projects:
+                cp = next((p for p in ps if p.name==si), None)
+                if cp:
+                    sp.append(cp)
+
+            self.selected_projects = sp
+            irs = db.get_irradiations(mass_spectrometers=ms)
+            self.irradiations = [i.name for i in irs]
 
     def _activate_query_browser(self):
         psel = self.data_selector
@@ -591,16 +605,20 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             self.analysis_table.analyses = ans
             self._graphical_filter_hook(ans, gm.is_append)
 
-    def _use_mass_spectrometer_changed(self):
-        self.refresh_samples()
+    def _use_mass_spectrometer_changed(self, new):
+        if new:
+            self.refresh_samples()
+            self._load_projects_and_irradiations()
 
     def _mass_spectrometer_includes_changed(self):
         if self.mass_spectrometer_includes:
             if self.identifier:
                 self._identifier_changed(self.identifier)
-            else:
-                self.refresh_samples()
-                self._load_projects_and_irradiations()
+                return
+
+            self.refresh_samples()
+
+        self._load_projects_and_irradiations()
 
     def _irradiation_enabled_changed(self, new):
         if not new:
