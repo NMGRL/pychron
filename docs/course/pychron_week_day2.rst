@@ -19,8 +19,9 @@ into a simple workflow.
 
 The browser is laid out in a top down fashion and divided into multiple levels.
     1. Mass Spectrometer
-    2. a) Projects
-       b) Irradiations
+    2. a) Identifier
+       b) Projects
+       c) Irradiations
     3. Analysis Types
     4. Date
     5. Results
@@ -34,6 +35,11 @@ Irradiation list.
 .. note:: Use the |binoc| button to force a refresh using the current filtering criteria.
 
 .. |binoc| image:: ../images/find.png
+
+Browser By Identifier
+~~~~~~~~~~~~~~~~~~~~~~
+Enter at least first three digits to browser by Identifier (aka L#). For example 210
+will populate the Samples table with all Identifiers that start with 210.
 
 Browse By Project
 ~~~~~~~~~~~~~~~~~~~~
@@ -104,7 +110,7 @@ you to set font sizes and define what information is displayed.
 
 Isotope Evolutions
 ~~~~~~~~~~~~~~~~~~~~
-Use Iso Fit to open graphs of the isotope evolutions in a separate tab. You can also
+Use Iso Fit |iso_evo| to open graphs of the isotope evolutions in a separate tab. You can also
 right click on a set of isotope rows and pop up a standalone iso evo graph.
 
 Edit Data
@@ -119,17 +125,28 @@ table.
 
 .. note:: By default only the differences between the analyses are displayed
 
+Summary L# View
+~~~~~~~~~~~~~~~~~
+The Summary L# View |sum_view| provides three summary views
+
+    1. Stats
+    2. Ideogram
+    3. Spectrum
+
+To display, select a row in the Samples table, then hit |sum_view|
+
+Context View
+~~~~~~~~~~~~~~~~
+Context View displays a table of values for analyses that bracket the selected analysis.
+Tabular and graphical views are displayed. To populate the graphical view select a set of
+analyses from the tabular view.
+
+Subviews
+~~~~~~~~~~~~~~~~~
 The recall window provides additional information in subviews. to switch
 to different views use the Controls pane. When a recall tab is selected
 Controls will display a list of subviews. The list depends on the type of analysis.
 
-
-    1. Configure View
-    2. Isotope Evolution
-    3. Edit Data
-    4. Split View
-    5. History view
-     a) diff blanks
 
 
 Plotting
@@ -149,6 +166,8 @@ Use the browser to select a set of analyses.
      b) Right click and use append or replace
      c) drag the analyses into the unknowns pane
 
+.. |sum_view| image:: ../images/window-new.png
+.. |iso_evo| image:: ../images/chart_curve_add.png
 .. |diff| image:: ../images/edit_diff.png
           :height: 16px
           :width: 16px
