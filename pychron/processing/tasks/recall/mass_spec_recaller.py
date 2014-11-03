@@ -61,10 +61,18 @@ class MassSpecRecaller(Loggable):
         db = self.db
         with db.session_ctx():
             dbrec = db.get_analysis(labnumber, aliquot, step)
-            rec = MassSpecAnalysis()
-            rec.sync(dbrec)
+            if dbrec:
+                rec = MassSpecAnalysis()
+                rec.sync(dbrec)
+                irradpos = db.get_irradiation_position(dbrec.IrradPosition)
+                r = irradpos.IrradiationLevel
+                n,l=r[:-1],r[-1:]
 
-            return rec
+                dbirrad = db.get_irradiation_level(n, l)
+
+                rec.sync_irradiation(dbirrad)
+
+                return rec
 
 
 #============= EOF =============================================

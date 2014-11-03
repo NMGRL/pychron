@@ -26,7 +26,7 @@ from pychron.entry.editors.flux_monitor_editor import FluxMonitorEditor
 from pychron.entry.tasks.actions import SaveLabbookPDFAction, MakeIrradiationTemplateAction, LabnumberEntryAction, \
     SensitivityEntryAction, AddMolecularWeightAction, ImportSampleMetadataAction, AddFluxMonitorAction, \
     GenerateTrayAction, \
-    GenerateIrradiationTableAction
+    GenerateIrradiationTableAction, ImportIrradiationHolderAction, ExportIrradiationAction
 from pychron.entry.editors.molecular_weight_editor import MolecularWeightEditor
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 
@@ -45,6 +45,9 @@ class EntryPlugin(BaseTaskPlugin):
         return [
             TaskExtension(task_id='pychron.entry.labnumber',
                           actions=[
+                              SchemaAddition(id='export_irradiation',
+                                             factory=ExportIrradiationAction,
+                                             path='MenuBar/tools.menu'),
                               SchemaAddition(id='import_sample_metadata',
                                              factory=ImportSampleMetadataAction,
                                              path='MenuBar/tools.menu',),
@@ -58,8 +61,11 @@ class EntryPlugin(BaseTaskPlugin):
                 actions=[
                     SchemaAddition(id='generate_irradiation_table',
                                    factory=GenerateIrradiationTableAction,
-                                   path='MenuBar/tools.menu'
-                    ),
+                                   path='MenuBar/tools.menu'),
+                    SchemaAddition(id='import_irradiation_holder',
+                                   factory=ImportIrradiationHolderAction,
+                                   absolute_position='first',
+                                   path='MenuBar/Edit'),
                     SchemaAddition(id='labnumber_entry',
                                    factory=LabnumberEntryAction,
                                    path='MenuBar/Edit',

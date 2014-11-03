@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,13 +18,14 @@
 #============= standard library imports ========================
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy import Column, Integer, String, \
-     ForeignKey, BLOB, Float, DateTime
+    ForeignKey, BLOB, Float, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import func
 
 #============= local library imports  ==========================
 from pychron.database.core.base_orm import BaseMixin
 from util import Base
+
 
 class loading_LoadTable(Base):
     @declared_attr
@@ -38,13 +39,15 @@ class loading_LoadTable(Base):
     measured_positions = relationship('meas_PositionTable')
     loaded_positions = relationship('loading_PositionsTable')
 
+    archived = Column(Boolean, default=False)
+
+
 class loading_PositionsTable(Base, BaseMixin):
     load_identifier = Column(String(80), ForeignKey('loading_LoadTable.name'))
     lab_identifier = Column(Integer, ForeignKey('gen_LabTable.id'))
     position = Column(Integer)
     weight = Column(Float)
     note = Column(BLOB)
-
 
 
 #============= EOF =============================================

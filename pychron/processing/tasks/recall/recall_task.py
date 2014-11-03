@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,6 +23,7 @@ from pyface.tasks.action.schema import SToolBar
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.globals import globalv
 from pychron.processing.tasks.actions.processing_actions import ConfigureRecallAction
 from pychron.processing.tasks.browser.util import browser_pane_item
 from pychron.processing.tasks.recall.actions import AddIsoEvoAction, AddDiffAction, EditDataAction, RatioEditorAction, \
@@ -76,10 +77,10 @@ class RecallTask(AnalysisEditTask):
             cv.edit_traits()
 
     def open_existing_context_editor(self):
-        an=self.active_editor.model.record_id
-        name='Context {}'.format(an)
+        an = self.active_editor.model.record_id
+        name = 'Context {}'.format(an)
         for e in self.editor_area.editors:
-            if e.name==name:
+            if e.name == name:
                 self.activate_editor(e)
                 return True
 
@@ -91,19 +92,31 @@ class RecallTask(AnalysisEditTask):
             db = self.manager.db
             with db.session_ctx():
 
-                an=self.active_editor.model
-                a=an.analysis_timestamp
-                pad=timedelta(hours=1)
-                lp=a-pad
-                hp=a+pad
+                an = self.active_editor.model
+                a = an.analysis_timestamp
+                pad = timedelta(hours=1)
+                lp = a - pad
+                hp = a + pad
 
-                ans = db.get_analyses_date_range(lp, hp, mass_spectrometers=an.mass_spectrometer)
-                ans = self.manager.make_analyses(ans)
-                ans = sorted(ans, key=lambda x: x.timestamp)
-                editor = ContextEditor(analyses=ans,
-                                       name='Context {}'.format(an.record_id),
-                                       root_analysis=an)
-                self._open_editor(editor)
+                for i in xrange(10):
+                    print lp, hp, an.mass_spectrometer
+                    ans = db.get_analyses_date_range(lp, hp, mass_spectrometers=an.mass_spectrometer)
+                    if not ans:
+                        i += 1
+                        lp = a - pad * i
+                        hp = a + pad * i
+                    else:
+                        break
+
+                if ans:
+                    ans = self.manager.make_analyses(ans)
+                    ans = sorted(ans, key=lambda x: x.timestamp)
+                    editor = ContextEditor(analyses=ans,
+                                           name='Context {}'.format(an.record_id),
+                                           root_analysis=an)
+                    self._open_editor(editor)
+                else:
+                    self.warning_dialog('No runs found within {} hours'.format(i))
 
     def new_summary_project_editor(self):
         from pychron.processing.tasks.recall.summary_project_editor import SummaryProjectEditor
@@ -179,8 +192,12 @@ class RecallTask(AnalysisEditTask):
 
         if left:
             editor = DiffEditor()
-            editor.set_diff(left)
-            self.editor_area.add_editor(editor)
+            if editor.setup(left):
+                self.manager.load_raw_data(left)
+                editor.set_diff(left)
+                self.editor_area.add_editor(editor)
+            else:
+                self.warning_dialog('Analysis {} not in Mass Spec database'.format(left.record_id))
 
     def create_dock_panes(self):
         self.controls_pane = ControlsPane()
@@ -194,12 +211,14 @@ class RecallTask(AnalysisEditTask):
 
     def activated(self):
         super(RecallTask, self).activated()
-        try:
-            a=self.analysis_table.analyses[3]
-            self.recall([a])
-            # self.new_context_editor()
-        except IndexError:
-            pass
+
+        if globalv.recall_debug:
+            try:
+                a = self.analysis_table.analyses[3]
+                self.recall([a])
+                # self.new_context_editor()
+            except IndexError:
+                pass
 
     def _dclicked_sample_changed(self):
         pass

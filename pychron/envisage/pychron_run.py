@@ -23,8 +23,10 @@ from envisage.api import Plugin
 from pychron.displays.gdisplays import gTraceDisplay
 from pychron.envisage.tasks.tasks_plugin import myTasksPlugin
 from pychron.core.helpers.logger_setup import new_logger
+from pychron.globals import globalv
 from pychron.logger.tasks.logger_plugin import LoggerPlugin
 from pychron.initialization_parser import InitializationParser
+from pychron.envisage.user_login import get_user
 
 logger = new_logger('launcher')
 try:
@@ -109,6 +111,9 @@ def get_plugin(pname):
     if pname in PACKAGE_DICT:
         package = PACKAGE_DICT[pname]
         klass = get_klass(package, pname)
+    elif pname == 'Update':
+        klass = UpdatePlugin
+
     else:
         logger.warning('****** {} not a valid plugin name******'.format(pname),
                        extra={'threadName_': 'Launcher'})
@@ -152,7 +157,7 @@ def get_user_plugins():
     return plugins
 
 
-def app_factory(klass):
+def app_factory(klass, user):
     """
         assemble the plugins
         return a Pychron TaskApplication
@@ -162,13 +167,13 @@ def app_factory(klass):
         myTasksPlugin(),
         LoggerPlugin()]
 
-    if UpdatePlugin is not None:
-        plugins.append(UpdatePlugin())
+    # if UpdatePlugin is not None:
+    #     plugins.append(UpdatePlugin())
 
     plugins += get_hardware_plugins()
     plugins += get_user_plugins()
 
-    app = klass(plugins=plugins)
+    app = klass(username=user, plugins=plugins)
     return app
 
 
@@ -178,21 +183,22 @@ def check_dependencies():
     """
     from pyface.api import warning
 
-    try:
-        mod = __import__('uncertainties',
-                         fromlist=['ver'])
-        ver = mod.__version__
-    except ImportError:
-        warning(None, 'Install "{}" package. required version>={} '.format('uncertainties', '2.1'))
-        return
+    for mod,req in (('uncertainties', '2.1'),
+                           ('pint','0.5')):
+        try:
+            mod = __import__(mod)
+            ver = mod.__version__
+        except ImportError:
+            warning(None, 'Install "{}" package. required version>={} '.format(mod, req))
+            return
 
-    vargs = ver.split('.')
-    maj = vargs[0]
-    if int(maj) < 2:
-        warning(None, 'Update "{}" package. your version={}. required version>={} '.format('uncertainties',
-                                                                                           ver,
-                                                                                           '2.1'))
-        return
+        vargs = ver.split('.')
+        maj = int(vargs[0])
+        if maj < int(float(req)):
+            warning(None, 'Update "{}" package. your version={}. required version>={} '.format(mod,
+                                                                                               maj,
+                                                                                               req))
+            return
 
     return True
 
@@ -213,9 +219,15 @@ def launch(klass):
     #         return
 
     if not check_dependencies():
-        return
+        logger.info('check dependencies failed')
+        os._exit(0)
 
-    app = app_factory(klass)
+    user = get_user()
+    if not user:
+        logger.info('user login failed')
+        os._exit(0)
+
+    app = app_factory(klass, user)
 
     try:
         app.run()

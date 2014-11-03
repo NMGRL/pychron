@@ -16,8 +16,8 @@
 
 # ============= enthought library imports =======================
 from traits.api import Int, on_trait_change, Str, Property, cached_property, \
-    Float, Bool, HasTraits, Instance, TraitError, Button
-from traitsui.api import View, Item, EnumEditor, VGroup, HGroup, VFold
+    Float, Bool, HasTraits, Instance, TraitError, Button, List
+from traitsui.api import View, Item, EnumEditor, VGroup, HGroup
 # ============= standard library imports ========================
 import os
 import ast
@@ -25,7 +25,8 @@ import yaml
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.helpers.filetools import list_directory2
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
+from pychron.core.ui.qt.combobox_editor import ComboboxEditor
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.paths import paths
 from pychron.pyscripts.context_editors.context_editor import ContextEditor
 from pychron.pyscripts.hops_editor import HopEditorModel, HopEditorView
@@ -33,6 +34,7 @@ from pychron.pyscripts.hops_editor import HopEditorModel, HopEditorView
 
 class YamlObject(HasTraits):
     name = ''
+    excludes=None
 
     def load(self, ctx):
         try:
@@ -48,16 +50,24 @@ class YamlObject(HasTraits):
                 v = str(v)
             return v
 
+        excludes = ['trait_added', 'trait_modified', 'name']
+        if self.excludes:
+            excludes+=self.excludes
+
         return {k: get(k)
-                for k in self.trait_names() if not k in ('trait_added', 'trait_modified', 'name')}
+                for k in self.trait_names() if not k in excludes}
 
 
-class Multicollect(YamlObject):
-    name = 'multicollect'
-    counts = Int(enter_set=True, auto_set=False)
+class IsotopeDetectorObject(YamlObject):
     isotope = Str(enter_set=True, auto_set=False)
     detector = Str(enter_set=True, auto_set=False)
+    detectors = List
+    isotopes = List
+    excludes = ['detectors','isotopes']
 
+class Multicollect(IsotopeDetectorObject):
+    name = 'multicollect'
+    counts = Int(enter_set=True, auto_set=False)
 
 class Baseline(YamlObject):
     name = 'baseline'
@@ -68,12 +78,10 @@ class Baseline(YamlObject):
     after = Bool
 
 
-class PeakCenter(YamlObject):
+class PeakCenter(IsotopeDetectorObject):
     name = 'peakcenter'
     before = Bool
     after = Bool
-    isotope = Str(enter_set=True, auto_set=False)
-    detector = Str(enter_set=True, auto_set=False)
 
 
 class Equilibration(YamlObject):
@@ -107,6 +115,10 @@ class MeasurementContextEditor(ContextEditor):
 
     edit_peakhop_button = Button
 
+    valves = List
+    detectors = List
+    isotopes = List
+
     # persistence
     def load(self, s):
         with no_update(self):
@@ -117,10 +129,20 @@ class MeasurementContextEditor(ContextEditor):
                 return
 
             if s:
-                ctx = yaml.load(s)
+                try:
+                    ctx = yaml.load(s)
+                except yaml.ScannerError:
+                    return
+
                 self.multicollect.load(ctx)
                 self.baseline.load(ctx)
                 self.peakcenter.load(ctx)
+
+                # self.multicollect.detectors = self.detectors
+                # self.multicollect.isotopes = self.isotopes
+                # self.peakcenter.detectors = self.detectors
+                # self.peakcenter.isotopes = self.isotopes
+
                 self.equilibration.load(ctx)
                 self.peakhop.load(ctx)
 
@@ -183,28 +205,34 @@ class MeasurementContextEditor(ContextEditor):
                                extension='.txt', remove_extension=True)
 
     def traits_view(self):
-        mc_grp = VGroup(
+        mc_grp = VGroup(HGroup(Item('object.multicollect.isotope',
+                                    editor=ComboboxEditor(name='isotopes')),
+            Item('object.multicollect.detector',
+                 editor=ComboboxEditor(name='detectors'))),
             Item('object.multicollect.counts'),
-            Item('object.multicollect.isotope'),
-            Item('object.multicollect.detector'),
-            show_border=True,
-            label='Multicollect')
+            show_border=True, label='Multicollect')
 
-        bs_grp = VGroup(Item('object.baseline.counts'),
-                        Item('object.baseline.mass'),
+        bs_grp = VGroup(HGroup(Item('object.baseline.mass'),
+                        Item('object.baseline.counts')),
                         HGroup(Item('object.baseline.before'),
                                Item('object.baseline.after')),
                         show_border=True, label='Baseline')
 
         pc_grp = VGroup(
-            Item('object.peakcenter.isotope'),
-            Item('object.peakcenter.detector'),
+            HGroup(Item('object.peakcenter.isotope',
+                        editor=ComboboxEditor(name='isotopes'),
+                        label='Iso.'),
+            Item('object.peakcenter.detector',
+                 label='Det.',
+                 editor=ComboboxEditor(name='detectors'))),
             HGroup(Item('object.peakcenter.before'),
                    Item('object.peakcenter.after')),
             show_border=True, label='PeakCenter')
 
-        eq_grp = VGroup(Item('object.equilibration.inlet'),
-                        Item('object.equilibration.outlet'),
+        eq_grp = VGroup(HGroup(Item('object.equilibration.inlet',
+                                    editor=ComboboxEditor(name='valves')),
+                        Item('object.equilibration.outlet',
+                             editor=ComboboxEditor(name='valves'))),
                         Item('object.equilibration.inlet_delay'),
                         Item('object.equilibration.use_extraction_eqtime'),
                         Item('object.equilibration.eqtime',
@@ -218,14 +246,15 @@ class MeasurementContextEditor(ContextEditor):
                                icon_button_editor('edit_peakhop_button', 'cog',
                                                   enabled_when='object.peakhop.hops_name',
                                                   tooltip='Edit selected "Hops" file')),
-                        label='Peak Hop')
+                        show_border=True, label='Peak Hop')
 
         gen_grp = VGroup(Item('default_fits',
                               editor=EnumEditor(name='available_default_fits')),
-                         show_border=True,
-                         label='General')
+                         show_border=True, label='General')
 
-        v = View(VFold(gen_grp, mc_grp, bs_grp, pc_grp, eq_grp, ph_grp))
+        #using VFold causing crash. just use VGroup for now
+        # v = View(VFold(gen_grp, mc_grp, bs_grp, pc_grp, eq_grp, ph_grp))
+        v = View(VGroup(gen_grp, mc_grp, bs_grp, pc_grp, eq_grp, ph_grp))
         return v
 
 # ============= EOF =============================================

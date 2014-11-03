@@ -5,17 +5,19 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
-from PySide.QtGui import QColor
+from PySide.QtCore import QRegExp, Qt
+from PySide.QtGui import QColor, QHeaderView, QWidget, QVBoxLayout, QLineEdit, QPushButton, QHBoxLayout, \
+    QSortFilterProxyModel, QStyleOptionButton, QSizePolicy, QCheckBox
 
 from traits.api import Bool, Str, List, Any, Instance, Property, Int, HasTraits, Color
 from traits.trait_base import SequenceTypes
@@ -32,6 +34,7 @@ from PySide import QtCore, QtGui
 #============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.consumer_mixin import ConsumerMixin
+from pychron.envisage.resources import icon
 
 
 class MoveToRow(HasTraits):
@@ -55,6 +58,7 @@ class MoveToRow(HasTraits):
                  title='Move Selected to Row',
                  kind='livemodal')
         return v
+
 
 class TabularKeyEvent(object):
     def __init__(self, event):
@@ -83,8 +87,6 @@ class _myTableView(_TableView, ConsumerMixin):
     def __init__(self, *args, **kw):
         super(_myTableView, self).__init__(*args, **kw)
 
-
-
         self.setup_consumer()
         editor = self._editor
 
@@ -99,6 +101,7 @@ class _myTableView(_TableView, ConsumerMixin):
             size = QtGui.QFontMetrics(fnt)
 
             vheader.setDefaultSectionSize(size.height() + 6)
+            vheader.ResizeMode(QHeaderView.ResizeToContents)
             hheader = self.horizontalHeader()
             #hheader.setStretchLastSection(editor.factory.stretch_last_section)
             vheader.setFont(fnt)
@@ -106,24 +109,24 @@ class _myTableView(_TableView, ConsumerMixin):
 
     def set_bg_color(self, bgcolor):
         if isinstance(bgcolor, tuple):
-            if len(bgcolor)==3:
-                bgcolor='rgb({},{},{})'.format(*bgcolor)
-            elif len(bgcolor)==4:
-                bgcolor='rgba({},{},{},{})'.format(*bgcolor)
+            if len(bgcolor) == 3:
+                bgcolor = 'rgb({},{},{})'.format(*bgcolor)
+            elif len(bgcolor) == 4:
+                bgcolor = 'rgba({},{},{},{})'.format(*bgcolor)
         elif isinstance(bgcolor, QColor):
-            bgcolor='rgba({},{},{},{})'.format(*bgcolor.toTuple())
+            bgcolor = 'rgba({},{},{},{})'.format(*bgcolor.toTuple())
         self.setStyleSheet('QTableView {{background-color: {}}}'.format(bgcolor))
 
     def set_vertical_header_font(self, fnt):
         fnt = QtGui.QFont(fnt)
-        vheader=self.verticalHeader()
+        vheader = self.verticalHeader()
         vheader.setFont(fnt)
         size = QtGui.QFontMetrics(fnt)
         vheader.setDefaultSectionSize(size.height() + 6)
 
     def set_horizontal_header_font(self, fnt):
         fnt = QtGui.QFont(fnt)
-        vheader=self.horizontalHeader()
+        vheader = self.horizontalHeader()
         vheader.setFont(fnt)
 
     def set_drag_enabled(self, d):
@@ -190,17 +193,18 @@ class _myTableView(_TableView, ConsumerMixin):
         else:
             QtGui.QTableView.keyPressEvent(self, event)
 
-    def _add(self, items, insert_mode='after'):
-        si = self.selectedIndexes()
+    def _add(self, items, insert_mode='after', idx=None):
+        if idx is None:
+            selection = self.selectedIndexes()
+            if len(selection):
+                offset = 1 if insert_mode == 'after' else 0
+                idx = selection[-1].row() + offset
+            else:
+                idx = len(self._editor.value)
+
         paste_func = self.paste_func
         if paste_func is None:
             paste_func = lambda x: x.clone_traits()
-
-        if len(si):
-            offset = 1 if insert_mode == 'after' else 0
-            idx = si[-1].row() + offset
-        else:
-            idx = len(self._editor.value)
 
         editor = self._editor
         with no_update(editor.object):
@@ -260,7 +264,16 @@ class _myTableView(_TableView, ConsumerMixin):
 
         elif event.matches(QtGui.QKeySequence.Paste):
             if self.pastable:
+                si = self.selectedIndexes()
+                idx = None
+
+                if len(si):
+                    idx = si[-1].row()
+
                 if self._cut_indices:
+                    if not any((ci <= idx for ci in self._cut_indices)):
+                        idx += len(self._cut_indices)
+
                     for ci in self._cut_indices:
                         self._editor.model.removeRow(ci)
 
@@ -274,7 +287,11 @@ class _myTableView(_TableView, ConsumerMixin):
                     items = self._copy_cache
 
                 if items:
-                    self.add_consumable((self._add, items))
+                    # self._add(items, idx=idx)
+                    func = lambda a: self._add(a, idx=idx)
+                    self.add_consumable((func, items))
+
+                    # self.add_consumable((self._add, items))
 
         else:
             self._editor.key_pressed = TabularKeyEvent(event)
@@ -358,10 +375,109 @@ class _myTableView(_TableView, ConsumerMixin):
         return self._editor.factory.drag_external  # and not self._dragging
 
 
+class _myFilterTableView(_myTableView):
+    pass
+    # def sizeHint(self):
+    #     sh = QtGui.QTableView.sizeHint(self)
+    #     print sh, sh.width(), sh.height()
+    #
+    #     width = 0
+    #     for column in xrange(len(self._editor.adapter.columns)):
+    #         width += self.sizeHintForColumn(column)
+    #     sh.setWidth(width)
+    #
+    #     return sh
+
+
+class _FilterTableView(QWidget):
+    def __init__(self, parent, *args, **kw):
+        super(_FilterTableView, self).__init__(*args, **kw)
+        layout = QVBoxLayout()
+        layout.setSpacing(2)
+        self.table = table = _myFilterTableView(parent)
+
+        table.setSizePolicy(QSizePolicy.Fixed,
+                             QSizePolicy.Fixed)
+        # table.setMinimumHeight(100)
+        # table.setMaximumHeight(50)
+        table.setFixedHeight(50)
+        # table.setFixedWidth(50)
+
+        hl = QHBoxLayout()
+        self.button = button = QPushButton()
+        button.setIcon(icon('delete').create_icon())
+        button.setEnabled(False)
+        button.setFlat(True)
+        button.setSizePolicy(QSizePolicy.Fixed,
+                             QSizePolicy.Fixed)
+        button.setFixedWidth(25)
+
+        self.text = text = QLineEdit()
+        hl.addWidget(text)
+        hl.addWidget(button)
+        layout.addLayout(hl)
+        layout.addWidget(table)
+        self.setLayout(layout)
+
+    # def setSizePolicy(self, *args, **kwargs):
+        # super(_FilterTableView, self).setSizePolicy(*args, **kwargs)
+        # print args, kwargs
+
+    def get_text(self):
+        return self.text.text()
+
+    def __getattr__(self, item):
+        # print item
+        return getattr(self.table, item)
+
+
+class _EnableFilterTableView(_FilterTableView):
+    def __init__(self, parent, *args, **kw):
+        super(_FilterTableView, self).__init__(*args, **kw)
+        layout = QVBoxLayout()
+        # layout.setSpacing(1)
+        self.table = table = _myTableView(parent)
+
+        hl = QHBoxLayout()
+        hl.setSpacing(10)
+
+        self.button = button = QPushButton()
+        button.setIcon(icon('delete').create_icon())
+        button.setEnabled(False)
+        button.setFlat(True)
+        button.setSizePolicy(QSizePolicy.Fixed,
+                             QSizePolicy.Fixed)
+        button.setFixedWidth(25)
+
+        self.text = text = QLineEdit()
+        self.cb = cb = QCheckBox()
+
+
+        text.setEnabled(False)
+        button.setEnabled(False)
+        table.setEnabled(False)
+        # cb.setSizePolicy(QSizePolicy.Fixed,
+                         # QSizePolicy.Fixed)
+        # cb.setFixedWidth(20)
+        # cb.setFixedHeight(20)
+
+        hl.addWidget(cb)
+        hl.addWidget(text)
+        hl.addWidget(button)
+        # hl.addStretch()
+        layout.addLayout(hl)
+        layout.addWidget(table)
+        layout.setSpacing(1)
+        self.setLayout(layout)
+
+
 class myTabularModel(TabularModel):
-    def data(self, mi, role):
+    def data(self, mi, role=None):
         """ Reimplemented to return the data.
         """
+        if role is None:
+            role = QtCore.Qt.DisplayRole
+
         editor = self._editor
         adapter = editor.adapter
         obj, name = editor.object, editor.name
@@ -417,6 +533,9 @@ class _TabularEditor(qtTabularEditor):
     col_widths = List
     key_pressed = Any
     model = Instance(myTabularModel)
+
+    def _update_changed(self):
+        super(_TabularEditor, self)._update_changed()
 
     def init(self, parent):
         factory = self.factory
@@ -579,15 +698,86 @@ class myTabularEditor(TabularEditor):
         return _TabularEditor
 
 
+class _FilterTabularEditor(_TabularEditor):
+    widget_factory = _FilterTableView
+    proxyModel = Any
+
+    def init(self, parent):
+        super(_FilterTabularEditor, self).init(parent)
+
+        self.control.text.textChanged.connect(self.on_text_change)
+        self.control.button.clicked.connect(self.on_action)
+        self.proxyModel = proxyModel = QSortFilterProxyModel()
+        proxyModel.setSourceModel(self.model)
+
+        self.control.setModel(proxyModel)
+
+        if self.factory.multi_select:
+            slot = self._on_rows_selection
+        else:
+            slot = self._on_row_selection
+        signal = 'selectionChanged(QItemSelection,QItemSelection)'
+        QtCore.QObject.connect(self.control.table.selectionModel(),
+                               QtCore.SIGNAL(signal), slot)
+
+    def on_action(self):
+        self.control.text.setText('')
+
+    def on_text_change(self):
+        ft = self.control.get_text()
+        reg = QRegExp('^{}'.format(ft), Qt.CaseInsensitive)
+        self.proxyModel.setFilterRegExp(reg)
+        self.control.button.setEnabled(bool(ft))
+
+
+class _EnableFilterTabularEditor(_FilterTabularEditor):
+    widget_factory = _EnableFilterTableView
+    enabled_cb = Bool
+
+    def init(self, parent):
+        super(_EnableFilterTabularEditor, self).init(parent)
+
+        self.control.cb.stateChanged.connect(self.on_cb)
+        if self.factory.enabled_cb:
+            self.sync_value(self.factory.enabled_cb, 'enabled_cb', 'both')
+
+    def _enabled_cb_changed(self, new):
+        self.control.text.setEnabled(new)
+        if self.control.get_text():
+            self.control.button.setEnabled(new)
+        self.control.table.setEnabled(new)
+        self.control.cb.setChecked(new)
+
+    def on_cb(self, v):
+        v = bool(v)
+        self.enabled_cb = v
+
+
+class FilterTabularEditor(myTabularEditor):
+    enabled_cb = Str
+
+    def _get_klass(self):
+        if self.enabled_cb:
+            return _EnableFilterTabularEditor
+        else:
+            return _FilterTabularEditor
+
+
 class UnselectTabularEditorHandler(Handler):
     refresh_name = Str('refresh_needed')
     selected_name = Str('selected')
+
     def unselect(self, info, obj):
         setattr(obj, self.selected_name, [])
         setattr(obj, self.refresh_name, True)
 
 
 class TabularEditorHandler(UnselectTabularEditorHandler):
+    def jump_to_start(self, info, obj):
+        obj.jump_to_start()
+
+    def jump_to_end(self, info, obj):
+        obj.jump_to_end()
 
     def move_to_start(self, info, obj):
         obj.move_selected_first()

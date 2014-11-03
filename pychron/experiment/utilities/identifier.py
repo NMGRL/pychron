@@ -5,47 +5,55 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 #============= standard library imports ========================
+import os
+
+import yaml
+
 #============= local library imports  ==========================
 from pychron.pychron_constants import LINE_STR, ALPHAS
+from pychron.paths import paths
 
 ANALYSIS_MAPPING = dict(ba='Blank Air', bc='Blank Cocktail', bu='Blank Unknown',
                         bg='Background', u='Unknown', c='Cocktail', a='Air',
-                        pa='Pause')
-ANALYSIS_MAPPING_INTS = dict(unknown=0, background=1, air=2, cocktail=3,
+                        pa='Pause', ic='Detector IC')
+
+ANALYSIS_MAPPING_INTS = dict(unknown=0, background=1,
+                             air=2, cocktail=3,
                              blank_air=4,
                              blank_cocktail=5,
-                             blank_unknown=6)
+                             blank_unknown=6,
+                             detector_ic=7)
 
 
 # "labnumbers" where extract group is disabled
 NON_EXTRACTABLE = dict(ba='Blank Air', bc='Blank Cocktail', bu='Blank Unknown',
-                       bg='Background', c='Cocktail', a='Air')
+                       bg='Background', c='Cocktail', a='Air', ic='Detector IC')
 
+AGE_TESTABLE = ('unknown','cocktail')
 SPECIAL_NAMES = ['Special Labnumber', LINE_STR, 'Air', 'Cocktail', 'Blank Unknown',
-                 'Blank Air', 'Blank Cocktail', 'Background', 'Pause', 'Degas']
+                 'Blank Air', 'Blank Cocktail', 'Background', 'Pause', 'Degas', 'Detector IC']
 
-SPECIAL_MAPPING = dict(background='bg', air='a', cocktail='c',
+SPECIAL_MAPPING = dict(background='bg',
                        blank_air='ba',
                        blank_cocktail='bc',
                        blank_unknown='bu',
                        pause='pa',
                        degas='dg',
+                       detector_ic='ic',
+                       air='a',
+                       cocktail='c',
                        unknown='u')
-
-import os
-from pychron.paths import paths
-import yaml
 
 p = os.path.join(paths.setup_dir, 'identifiers.yaml')
 differed = []
@@ -74,13 +82,12 @@ SPECIAL_KEYS = map(str.lower, SPECIAL_MAPPING.values())
 
 
 def convert_identifier_to_int(ln):
-    m = {'ba':1,'bc':2,'bu':3,'bg':4,'u':5,'c':6}
+    m = {'ba': 1, 'bc': 2, 'bu': 3, 'bg': 4, 'u': 5, 'c': 6, 'ic': 7}
 
     try:
         return int(ln)
     except ValueError:
         return m[ln]
-
 
 
 def convert_special_name(name, output='shortname'):
@@ -140,28 +147,30 @@ def get_analysis_type(idn):
     """
     idn = idn.lower()
 
-    #     if '-' in idn:
-    #         idn=idn.split('-')[0]
-    #
-    # check for Bg before B
-    if idn.startswith('bg'):
-        return 'background'
-    elif idn.startswith('ba'):
-        return 'blank_air'
-    elif idn.startswith('bc'):
-        return 'blank_cocktail'
-    elif idn.startswith('b'):
-        return 'blank_unknown'
-    elif idn.startswith('a'):
-        return 'air'
-    elif idn.startswith('c'):
-        return 'cocktail'
-    elif idn.startswith('dg'):
-        return 'degas'
-    elif idn.startswith('pa'):
-        return 'pause'
+    for atype, tag in SPECIAL_MAPPING.iteritems():
+        if idn.startswith(tag):
+            return atype
     else:
         return 'unknown'
+
+        # if idn.startswith('bg'):
+        #     return 'background'
+        # elif idn.startswith('ba'):
+        #     return 'blank_air'
+        # elif idn.startswith('bc'):
+        #     return 'blank_cocktail'
+        # elif idn.startswith('b'):
+        #     return 'blank_unknown'
+        # elif idn.startswith('a'):
+        #     return 'air'
+        # elif idn.startswith('c'):
+        #     return 'cocktail'
+        # elif idn.startswith('dg'):
+        #     return 'degas'
+        # elif idn.startswith('pa'):
+        #     return 'pause'
+        # else:
+        #     return 'unknown'
 
 
 def make_runid(ln, a, s=''):

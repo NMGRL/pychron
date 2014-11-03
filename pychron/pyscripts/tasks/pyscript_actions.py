@@ -70,6 +70,7 @@ class OpenPyScriptAction(FileOpenAction):
     task_id = 'pychron.pyscript.task'
     # test_path = '/Users/ross/Pychrondata_dev/scripts/extraction/jan_pause.py'
     test_path = '/Users/ross/Pychrondata_dev/scripts/measurement/jan_unknown.py'
+    # test_path = '/Users/argonlab2/Pychrondata_view/scripts/measurement/obama_analysis400_120.py'
 
 
 class NewPyScriptAction(NewAction):

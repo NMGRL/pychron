@@ -10,6 +10,17 @@ CHANGELOG
     date ranges defined by the selected labnumbers
 * added project, irradiation enabled toggles
 * if high or low post only filters defined load the analysis table with the date range
+* added detector ic view
+* added comment template
+* use notebook for scan manager graphs
+* updated Procedures. don't open multiple extraction line canvases
+* added Find References context menu action
+* added user login
+* added ability to archive loads
+* added identifier (Labnumber) top level filter
+* added Filter/Results focus switching
+* added group emailing
+* gitified pyscripts
 
 2.0.4
 ------------------
@@ -50,3 +61,8 @@ CHANGELOG
 * optimized plotpanel
 * added "window" to AutomatedRunCondition. use to take a mean or std of "window" points
 * added more options for AutomatedRunConditions
+* added Queue/Default Conditionals
+* updated user notification
+* added procedures concept e.g. QuickAir
+* added ImportIrradiationHolderAction
+* added end_after and skip context menu actions

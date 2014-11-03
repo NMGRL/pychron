@@ -18,8 +18,8 @@
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from launchers.helpers import entry_point
+from helpers import entry_point
 
-entry_point('pyexperiment', 'PyExperiment', '_dev')
+entry_point('pyexperiment', 'PyExperiment', '')
 
 #============= EOF =============================================

@@ -18,7 +18,7 @@
 from traits.api import Color, Instance, DelegatesTo
 from traitsui.api import View, Item, UItem, VGroup, HGroup, spring, \
     EnumEditor, Group, Spring, VFold, Label, InstanceEditor, \
-    CheckListEditor, VSplit, TabularEditor, UReadonly
+    VSplit, TabularEditor, UReadonly
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traitsui.editors import TableEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
@@ -26,8 +26,9 @@ from traitsui.table_column import ObjectColumn
 from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.ui.combobox_editor import ComboboxEditor
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.experiment.utilities.identifier import SPECIAL_NAMES
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.pychron_constants import MEASUREMENT_COLOR, EXTRACTION_COLOR, \
     NOT_EXECUTABLE_COLOR, SKIP_COLOR, SUCCESS_COLOR, CANCELED_COLOR, \
     TRUNCATED_COLOR, FAILED_COLOR, END_AFTER_COLOR
@@ -35,7 +36,7 @@ from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.experiment.plot_panel import PlotPanel
 
 
-#===============================================================================
+# ===============================================================================
 # editing
 #===============================================================================
 def spacer(w):
@@ -79,14 +80,20 @@ class ExperimentFactoryPane(TraitsDockPane):
                                           tooltip='Clear all runs added using "frequency"')
 
         queue_grp = VGroup(
-            HGroup(queue_factory_item('username'),
-                   queue_factory_item('username',
-                                      editor=EnumEditor(name=queue_factory_name('usernames')),
-                                      width=-25, show_label=False),
+            HGroup(UItem(queue_factory_name('username'),
+                         show_label=False,
+                         editor=ComboboxEditor(name=queue_factory_name('usernames'))),
                    icon_button_editor(queue_factory_name('edit_user'), 'database_edit'),
-                   Spring(width=-5, springy=False),
-                   queue_factory_item('use_email_notifier', show_label=False),
-                   Item(queue_factory_name('email'), enabled_when=queue_factory_name('use_email_notifier'))),
+                   # Spring(width=-5, springy=False),
+                   queue_factory_item('use_email_notifier',
+                                      tooltip='Send email notifications',
+                                      show_label=False),
+                   Item(queue_factory_name('email')),
+                   queue_factory_item('use_group_email',
+                                      tooltip='Email a group of users',
+                                      label='Group'),
+                   icon_button_editor(queue_factory_name('edit_emails'), 'cog',
+                                      tooltip='Edit user group')),
             HGroup(
                 queue_factory_item('mass_spectrometer',
                                    show_label=False,
@@ -97,6 +104,9 @@ class ExperimentFactoryPane(TraitsDockPane):
             queue_factory_item('load_name',
                                show_label=False,
                                editor=EnumEditor(name=queue_factory_name('load_names'))),
+            HGroup(queue_factory_item('queue_conditionals_name',
+                                      label='Queue Conditionals',
+                                      editor=EnumEditor(name=queue_factory_name('available_conditionals')))),
             queue_factory_item('delay_before_analyses'),
             queue_factory_item('delay_between_analyses'))
 
@@ -133,6 +143,7 @@ class ExperimentFactoryPane(TraitsDockPane):
                 CustomLabel(run_factory_name('info_label'), size=14, color='green'),
                 edit_grp,
                 lower_button_bar),
+            kind='live',
             width=225)
         return v
 
@@ -151,16 +162,15 @@ class ExperimentFactoryPane(TraitsDockPane):
                                     editor=EnumEditor(values=SPECIAL_NAMES)),
                    run_factory_item('run_block', show_label=False,
                                     editor=EnumEditor(name=run_factory_name('run_blocks'))),
-                   run_factory_item('frequency', width=50),
-                   run_factory_item('freq_before', label='Before'),
-                   run_factory_item('freq_after', label='After'),
+                   run_factory_item('frequency_model.frequency', width=50),
+                   icon_button_editor(run_factory_name('edit_frequency_button'),'cog'),
+                   # run_factory_item('freq_before', label='Before'),
+                   # run_factory_item('freq_after', label='After'),
                    spring),
             HGroup(run_factory_item('labnumber',
                                     tooltip='Enter a Labnumber',
-                                    width=100, ),
-                   run_factory_item('_labnumber', show_label=False,
-                                    editor=CheckListEditor(name=run_factory_name('labnumbers')),
-                                    width=-20),
+                                    width=100,
+                                    editor=ComboboxEditor(name=run_factory_name('labnumbers'))),
                    run_factory_item('aliquot',
                                     width=50),
                    spring),
@@ -182,13 +192,24 @@ class ExperimentFactoryPane(TraitsDockPane):
                                          'Will be saved in Database with analysis'),
                 run_factory_item('auto_fill_comment',
                                  show_label=False,
-                                 tooltip='Auto fill "Comment" with IrradiationLevel:Hole, e.g A:9')),
+                                 tooltip='Auto fill "Comment" with IrradiationLevel:Hole, e.g A:9'),
+                # run_factory_item('comment_template',
+                #                  editor=EnumEditor(name=run_factory_name('comment_templates')),
+                #                  show_label=False),
+                icon_button_editor(run_factory_name('edit_comment_template'), 'cog',
+                                   tooltip='Edit comment template')),
             show_border=True,
             label='Sample Info')
         return grp
 
     def _get_truncate_group(self):
         grp = VGroup(
+            HGroup(run_factory_item('use_simple_truncation', label='Use Simple'),
+                icon_button_editor(run_factory_name('clear_truncation'),
+                                   'delete',
+                                   tooltip='Clear truncation from selected runs'
+                                   # enabled_when=run_factory_name('edit_mode')
+                                  )),
             HGroup(
                 run_factory_item('trunc_attr',
                                  editor=EnumEditor(name=run_factory_name('trunc_attrs')),
@@ -197,10 +218,8 @@ class ExperimentFactoryPane(TraitsDockPane):
                 run_factory_item('trunc_crit', show_label=False),
                 spacer(-10),
                 run_factory_item('trunc_start', label='Start Count'),
-                icon_button_editor(run_factory_name('clear_truncation'),
-                                   'delete',
-                                   enabled_when=run_factory_name('edit_mode')),
                 show_border=True,
+                #enabled_when = run_factory_name('use_simple_truncation'),
                 label='Simple'),
             HGroup(
                 run_factory_item('truncation_path',
@@ -209,12 +228,13 @@ class ExperimentFactoryPane(TraitsDockPane):
 
                 icon_button_editor(run_factory_name('edit_truncation_button'), 'table_edit',
                                    enabled_when=run_factory_name('truncation_path'),
-                                   tooltip='Edit the selected action file'),
+                                   tooltip='Edit the selected conditionals file'),
                 icon_button_editor(run_factory_name('new_truncation_button'), 'table_add',
-                                   tooltip='Add a new action file. Duplicated currently selected file if applicable'),
+                                   tooltip='Add a new conditionals file. Duplicated currently '
+                                           'selected file if applicable'),
                 show_border=True,
                 label='File'),
-            label='Actions')
+            label='Run Conditionals')
         return grp
 
     def _get_script_group(self):
@@ -400,6 +420,10 @@ class IsotopeEvolutionPane(TraitsDockPane):
                            Spring(springy=False, width=-10),
                            Item('object.plot_panel.ncounts', label='Counts',
                                 tooltip='Set the number of measurement points'),
+                           Spring(springy=False, width=-10),
+                           CustomLabel('object.plot_panel.counts',
+                                       color='red',
+                                       width=100),
                            Spring(springy=False, width=-5)),
                     UItem('object.plot_panel.analysis_view',
                           style='custom',

@@ -70,6 +70,11 @@ class Globals(object):
     debug = False
     use_logger_display = True
     use_warning_display = True
+    recall_debug = False
+
+    username = None
+    multi_user = False
+    use_login = True
 
     def build(self, ip):
 
@@ -86,9 +91,12 @@ class Globals(object):
                            ('load_soft_locks', to_bool),
                            ('experiment_debug', to_bool),
                            ('experiment_savedb', to_bool),
-                           ('test_experiment_set', str)
-        ]:
+                           ('recall_debug', to_bool),
+                           ('multi_user', to_bool),
+                           ('use_login', to_bool),
+                           ('test_experiment_set', str)]:
             a = ip.get_global(attr)
+
             if a:
                 setattr(globalv, attr, func(a))
 

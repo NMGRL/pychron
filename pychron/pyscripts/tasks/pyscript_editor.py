@@ -153,6 +153,8 @@ class PyScriptEditor(Editor, PyScriptEdit):
     selected_command = String
 
     _no_update = False
+    detectors = List
+    isotopes = List
 
     def get_scroll(self):
         return self.control.code.verticalScrollBar().value()
@@ -196,7 +198,15 @@ class PyScriptEditor(Editor, PyScriptEdit):
         line = self.control.code.get_current_line()
         cmd = self._get_command(line)
         if cmd == 'gosub':
-            return line[7:-2]
+            return self._parse_gosub_line(line)
+
+    def _parse_gosub_line(self, line):
+        if ',' in line:
+            line=line.split(',')[0]
+            gosub=line[7:-1]
+        else:
+            gosub=line[7:-2]
+        return gosub
 
     def insert_command(self, cmdobj):
         self.control.insert_command(cmdobj)
@@ -222,7 +232,8 @@ class PyScriptEditor(Editor, PyScriptEdit):
         if line:
             cmd = self._get_command(line)
             if cmd == 'gosub':
-                self.selected_gosub = line[7:-2]
+                gosub=self._parse_gosub_line(line)
+                self.selected_gosub = gosub
                 self.selected_gosub = ''
 
     def _on_dclicked(self, line):
@@ -309,7 +320,9 @@ class MeasurementEditor(PyScriptEditor):
     kind = 'Measurement'
 
     def _context_editor_default(self):
-        return MeasurementContextEditor()
+        return MeasurementContextEditor(detectors=self.detectors,
+                                        isotopes=self.isotopes,
+                                        valves=self.valves)
 
     # def _editor_default(self):
     #     return MeasurementParameterEditor(editor=self)

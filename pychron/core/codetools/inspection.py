@@ -21,6 +21,9 @@
 import inspect
 import traceback
 
+import logging
+
+logger=logging.getLogger('Inspection')
 
 def caller(func):
     def dec(*args, **kw):
@@ -29,9 +32,11 @@ def caller(func):
         cstack = stack[0]
         rstack = stack[1]
 
-        print '{} called by {}. parent call={} {}'.format(func.func_name, rstack[3],
+        msg = '{} called by {}. parent call={} {}'.format(func.func_name, rstack[3],
                                                           cstack[0].f_back.f_locals['self'],
                                                           ''.join(map(str.strip, rstack[4])))
+
+        logger.debug(msg)
         return func(*args, **kw)
 
     return dec

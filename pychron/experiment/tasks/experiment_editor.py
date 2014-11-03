@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Instance, Unicode, Property, DelegatesTo, Color
+from traits.api import Instance, Unicode, Property, DelegatesTo, Color, Bool
 from traitsui.api import View, UItem
 
 #============= standard library imports ========================
@@ -38,6 +38,12 @@ class ExperimentEditorHandler(TabularEditorHandler):
     def repeat_block(self, info, obj):
         obj.repeat_block()
 
+    def toggle_end_after(self, info, obj):
+        obj.end_after()
+
+    def toggle_skip(self, info, obj):
+        obj.toggle_skip()
+
 
 class ExperimentEditor(BaseTraitsEditor):
     queue = Instance(ExperimentQueue, ())  # Any
@@ -51,10 +57,18 @@ class ExperimentEditor(BaseTraitsEditor):
     executed_tabular_adapter_klass = ExecutedAutomatedRunSpecAdapter
     bgcolor = Color
 
-    def set_bgcolor(self, c):
+
+    automated_runs_editable = Bool
+
+    def set_colors(self, c, ec):
         self.bgcolor=c
-        self.tabular_adapter_klass.odd_bg_color=c
-        self.executed_tabular_adapter_klass.odd_bg_color=c
+        self.tabular_adapter = self.tabular_adapter_klass()
+        self.executed_tabular_adapter = self.executed_tabular_adapter_klass()
+
+        self.tabular_adapter.odd_bg_color=c
+        self.executed_tabular_adapter.odd_bg_color=c
+        self.tabular_adapter.even_bg_color=ec
+        self.executed_tabular_adapter.even_bg_color=ec
 
     def new_queue(self, txt=None, **kw):
         queue = self.queue_factory(**kw)
@@ -82,13 +96,18 @@ class ExperimentEditor(BaseTraitsEditor):
                 return True
 
     def traits_view(self):
+        # show row titles is causing a layout issue when resetting queues
+        # disabling show_row_titles for the moment.
+        operations = ['delete','move']
+        if self.automated_runs_editable:
+            operations.append('edit')
+
         arun_grp = UItem('automated_runs',
-                         editor=myTabularEditor(adapter=self.tabular_adapter_klass(),
-                                                operations=['delete',
-                                                            'move', 'edit'],
+                         editor=myTabularEditor(adapter=self.tabular_adapter,
+                                                operations=operations,
                                                 bgcolor=self.bgcolor,
                                                 editable=True,
-                                                show_row_titles=True,
+                                                # show_row_titles=True,
                                                 dclicked='dclicked',
                                                 selected='selected',
                                                 paste_function='paste_function',
@@ -99,7 +118,7 @@ class ExperimentEditor(BaseTraitsEditor):
                          height=200)
 
         executed_grp = UItem('executed_runs',
-                             editor=myTabularEditor(adapter=self.executed_tabular_adapter_klass(),
+                             editor=myTabularEditor(adapter=self.executed_tabular_adapter,
                                                     bgcolor=self.bgcolor,
                                                     editable=False,
                                                     auto_update=True,

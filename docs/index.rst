@@ -20,6 +20,7 @@ Welcome to Pychron's documentation!
   build
   user_guide/index
   dev_guide/index
+  course/index
 
 Indices and tables
 ==================

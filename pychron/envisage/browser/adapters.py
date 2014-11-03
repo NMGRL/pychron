@@ -66,8 +66,12 @@ class SampleAdapter(BrowserAdapter):
     def get_menu(self, obj, trait, row, column):
         from pychron.processing.tasks.figures.figure_task import FigureTask
         if obj.selected_samples:
+            psenabled=isinstance(obj, FigureTask)
             return MenuManager(Action(name='Unselect', action='unselect_samples'),
                                Action(name='Time View', action='on_time_view'),
+                               Action(name='Plot Selected (Grouped)',
+                                      enabled=psenabled,
+                                      action='plot_selected_grouped'),
                                Action(name='Plot Selected',
-                                      enabled=isinstance(obj, FigureTask),
+                                      enabled=psenabled,
                                       action='plot_selected'))

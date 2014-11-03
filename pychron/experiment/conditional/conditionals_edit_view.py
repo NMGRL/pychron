@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 from pychron.core.ui import set_qt
+from pychron.envisage.icon_button_editor import icon_button_editor
 
 set_qt()
 # ============= enthought library imports =======================
@@ -29,7 +30,6 @@ from traitsui.tabular_adapter import TabularAdapter
 import os
 import yaml
 # ============= local library imports  ==========================
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.helpers.filetools import get_path
 from pychron.experiment.conditional.conditional import conditional_from_dict, MAX_REGEX, STD_REGEX, \
@@ -397,12 +397,17 @@ class ConditionalsEditView(ConditionalsViewable):
     path = Str
 
     def __init__(self, detectors=None, *args, **kw):
-        self.available_attrs = ['', 'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36',
-                                'kca', 'kcl']
-        if detectors:
-            self.available_attrs.extend(detectors)
-            self.detectors = detectors
+        attrs = ['', 'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36',
+                                'kca', 'kcl', 'cak','clk']
 
+        ratio_matrix = ['{}/{}'.format(i, j) for i in ('40','39','38','37','36')
+                                                for j in ('40','39','38','37','36')]
+        attrs.extend(ratio_matrix
+        )
+        if detectors:
+            attrs.extend(detectors)
+            self.detectors = detectors
+        self.available_attrs = attrs
         super(ConditionalsEditView, self).__init__(*args, **kw)
 
     @property

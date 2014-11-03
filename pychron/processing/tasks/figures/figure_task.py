@@ -109,9 +109,39 @@ class FigureTask(AnalysisEditTask):
     # ===============================================================================
     # context menu handler
     # ===============================================================================
+    def _clear_group(self):
+        for i in self.unknowns_pane.items:
+            i.group_id=0
+            i.graph_id=0
+
+        self.unknowns_pane.refresh_needed = True
+
+    def plot_selected_grouped(self):
+        self.debug('plot selected grouped')
+        if self.has_active_editor():
+            self._clear_group()
+            self._append_replace_unknowns(False, self.analysis_table.analyses)
+
     def plot_selected(self):
         self.debug('plot selected')
-        self.information_dialog('Plot selected samples not yet implemented')
+        ac=self.has_active_editor()
+        if ac:
+            pane = self.unknowns_pane
+
+            #remember original setting
+            oauto_group1 = ac.auto_group
+            oauto_group2 = pane.auto_group
+
+            #turn off auto grouping
+            ac.auto_group=False
+            pane.auto_group=False
+
+            self._clear_group()
+            self._append_replace_unknowns(False, self.analysis_table.analyses)
+
+            #return to original settings
+            ac.auto_group=oauto_group1
+            pane.auto_group=oauto_group2
 
     # ===============================================================================
     # graph grouping
@@ -149,6 +179,7 @@ class FigureTask(AnalysisEditTask):
 
     def group_by_labnumber(self):
         if self.unknowns_pane and self.unknowns_pane.items:
+            self.debug('group by labnumber')
             self.unknowns_pane.group_by_labnumber()
 
     def group_selected(self):
@@ -403,6 +434,7 @@ class FigureTask(AnalysisEditTask):
         if self.active_editor:
             # if hasattr(self.active_editor, 'auto_group'):
             # if self.active_editor.auto_group:
+
             if self.unknowns_pane.auto_group and self.active_editor.auto_group:
                 self.group_by_labnumber()
                     # for ai in self.active_editor.associated_editors:

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,15 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #===============================================================================
-from datetime import datetime
 
-from pychron.core.ui import set_qt
-
-set_qt()
 #============= enthought library imports =======================
-from traits.api import HasTraits, Str, Int, Instance
-
+from traits.api import HasTraits, Str, Int, Instance, Bool
 #============= standard library imports ========================
+from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import smtplib
@@ -36,16 +32,19 @@ class Emailer(HasTraits):
     server_password = Str
     server_host = Str
     server_port = Int
-
+    include_log = Bool
     sender = Str('pychron@gmail.com')
 
     def send(self, addr, sub, msg):
         server = self.connect()
         if server:
             msg = self._message_factory(addr, sub, msg)
-            server.sendmail(self.sender, [addr], msg.as_string())
-            server.close()
-            return True
+            try:
+                server.sendmail(self.sender, [addr], msg.as_string())
+                server.close()
+                return True
+            except BaseException:
+                pass
 
     def _message_factory(self, addr, sub, txt):
         msg = MIMEMultipart()
@@ -68,6 +67,8 @@ class Emailer(HasTraits):
                 self._server = server
             except smtplib.SMTPServerDisconnected:
                 return
+        else:
+            self._server.connect(self.server_host, self.server_port)
 
         return self._server
 
@@ -78,34 +79,60 @@ class UserNotifier(Loggable):
     def notify(self, exp, last_runid, err):
         address = exp.email
         if address:
-
             subject, msg = self._assemble_message(exp, last_runid, err)
-            self.debug('Subject= {}'.format(subject))
-            self.debug('Body= {}'.format(msg))
+            self._notify(address, subject, msg)
 
-            if not self.emailer.send(address, subject, msg):
-                self.warning('email server not available')
+    def _notify(self, address, subject, msg):
+        # self.debug('Subject= {}'.format(subject))
+        # self.debug('Body= {}'.format(msg))
+        if not self.emailer.send(address, subject, msg):
+            self.warning('email server not available')
+            return True
+
+    def notify_group(self, exp, last_runid, err, addrs):
+        subject, msg = self._assemble_message(exp, last_runid, err)
+        failed = addrs[:]
+        for email in addrs:
+            if self._notify(email, subject, msg):
+                break
+            failed.remove(email)
+
+        if failed:
+            self.warning('Failed sending notification to emails {}'.join(','.join(failed)))
 
     def _assemble_message(self, exp, last_runid, err):
         name = exp.name
+        div = '===================================='
+        header = '============ {} ============'
         if err:
             subject = '{} Canceled'.format(name)
 
-            err = '''============ Error Message =========
-{}
-===================================='''.format(err)
+            err = '{}\n{}\n{}'.format(header.format('Error Message'), err, div)
+            log = ''
+            if self.emailer.include_log:
+                log = self._get_log(100)
+                log = '{}\n{}\n{}'.format(header.format('Log'), log, div)
+
         else:
             subject = '{} Completed Successfully'.format(name)
             err = ''
+            log = ''
 
         msg = '''
 timestamp= {}
 last run=  {}
 runs=      {}
 
-{}'''.format(datetime.now(), last_runid, exp.execution_ratio, err)
+{}
+
+{}'''.format(datetime.now(), last_runid, exp.execution_ratio, err, log)
 
         return subject, msg
+
+    def _get_log(self, n):
+        from pychron.core.helpers.logger_setup import get_log_text
+
+        return get_log_text(n)
 
 
 if __name__ == '__main__':

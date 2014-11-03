@@ -265,7 +265,7 @@ class OLSRegressor(BaseRegressor):
 
     def _calculate_coefficients(self):
         """
-            params = [a,b,c]
+            params = [c,b,a]
             where y=ax**2+bx+c
         """
         if self._result:

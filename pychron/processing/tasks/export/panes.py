@@ -23,7 +23,7 @@ from traitsui.api import View, UItem, HGroup
 #============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.ui.tabular_editor import myTabularEditor
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
+from pychron.envisage.icon_button_editor import icon_button_editor
 
 
 class ExportAnalysisAdapter(TabularAdapter):

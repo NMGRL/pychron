@@ -14,8 +14,6 @@
 # limitations under the License.
 #===============================================================================
 
-
-
 #============= enthought library imports =======================
 from traits.api import Any, Property
 # from traitsui.api import View, Item, Group, HGroup, VGroup
@@ -29,8 +27,6 @@ from pychron.config_loadable import ConfigMixin
 class SpectrometerDevice(ConfigMixin):
     microcontroller = Any
     spectrometer = Any
-    #    simulation = DelegatesTo('microcontroller')
-
     simulation = Property
 
     def _get_simulation(self):

@@ -15,23 +15,13 @@
 # ===============================================================================
 
 #============= enthought library imports =======================
-from itertools import groupby
-import os
-
 from traits.api import Any, on_trait_change, Int, List, Bool, \
     Instance, Property, Str, HasTraits, Event
 from traitsui.api import View, Item
 from pyface.timer.do_later import do_later
-
-
-
-
-
-
-
-
 #============= standard library imports ========================
-
+from itertools import groupby
+import os
 #============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.ui.qt.tabular_editor import MoveToRow
@@ -85,6 +75,23 @@ class ExperimentQueue(BaseExperimentQueue):
 
     refresh_blocks_needed = Event
 
+    def toggle_skip(self):
+        for si in self.selected:
+            si.skip=not si.skip
+        self.selected=[]
+        self.refresh_table_needed =True
+
+    def end_after(self):
+        sel=self.selected
+        for ai in self.automated_runs:
+            if ai not in sel:
+                ai.end_after = False
+
+        si =sel[-1]
+        si.end_after = not si.end_after
+        self.selected=[]
+        self.refresh_table_needed =True
+
     def repeat_block(self):
         rbv = RepeatRunBlockView()
         info = rbv.edit_traits()
@@ -114,6 +121,12 @@ class ExperimentQueue(BaseExperimentQueue):
             for si in self.selected:
                 self.automated_runs.remove(si)
             self.automated_runs.extend(self.selected)
+
+    def jump_to_end(self):
+        self.automated_runs_scroll_to_row=len(self.automated_runs)-1
+
+    def jump_to_start(self):
+        self.automated_runs_scroll_to_row=0
 
     def _move_selected(self, idx):
         with no_update(self):

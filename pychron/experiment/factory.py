@@ -78,9 +78,10 @@ class ExperimentFactory(Loggable, ConsumerMixin):
         eq = self.queue
         qf = self.queue_factory
         for a in ('username', 'mass_spectrometer', 'extract_device',
+                  'use_group_email',
                   'load_name',
-                  'delay_before_analyses','delay_between_analyses',
-                  'use_queue_conditionals','queue_conditionals_name'):
+                  'delay_before_analyses', 'delay_between_analyses',
+                  'queue_conditionals_name'):
 
             if not self._sync_queue_to_factory(eq, qf, a):
                 self._sync_factory_to_queue(eq, qf, a)
@@ -94,7 +95,7 @@ class ExperimentFactory(Loggable, ConsumerMixin):
             v = v.strip()
 
         if v:
-            self.debug('sync queue to factory {}>>{}'.format(a,v))
+            self.debug('sync queue to factory {}>>{}'.format(a, v))
             setattr(qf, a, v)
             return True
 
@@ -103,17 +104,17 @@ class ExperimentFactory(Loggable, ConsumerMixin):
         if isinstance(v, str):
             v = v.strip()
             if v:
-                self.debug('sync factory to queue {}>>{}'.format(a,v))
+                self.debug('sync factory to queue {}>>{}'.format(a, v))
                 setattr(eq, a, v)
 
     def activate(self, load_persistence=True):
-        self._load_persistence_flag=load_persistence
-
+        self.start_consuming()
+        self._load_persistence_flag = load_persistence
         self.queue_factory.activate(load_persistence)
         self.run_factory.activate(load_persistence)
 
     def destroy(self):
-        self._should_consume = False
+        self.stop_consuming()
         self.run_factory.deactivate()
         self.queue_factory.deactivate()
 
@@ -130,6 +131,7 @@ class ExperimentFactory(Loggable, ConsumerMixin):
         new_runs, freq = rf.new_runs(q, positions=positions,
                                      auto_increment_position=self.auto_increment_position,
                                      auto_increment_id=self.auto_increment_id)
+
         if new_runs:
             aruns = q.automated_runs
             if q.selected:
@@ -138,8 +140,8 @@ class ExperimentFactory(Loggable, ConsumerMixin):
                 idx = len(aruns) - 1
 
             runs = q.add_runs(new_runs, freq,
-                              freq_before=rf.freq_before,
-                              freq_after=rf.freq_after,
+                              # freq_before=rf.freq_before,
+                              # freq_after=rf.freq_after,
                               is_run_block=rf.run_block_enabled)
 
             self.undoer.push('add runs', runs)
@@ -148,6 +150,8 @@ class ExperimentFactory(Loggable, ConsumerMixin):
 
             with rf.update_selected_ctx():
                 q.select_run_idx(idx)
+
+            q.changed = True
 
     #===============================================================================
     # handlers
@@ -161,6 +165,7 @@ class ExperimentFactory(Loggable, ConsumerMixin):
 
             use consumermixin.add_consumable instead of frequency limiting
         """
+        self.debug('add run fired')
         self.add_consumable(5)
 
     def _edit_mode_button_fired(self):
@@ -181,9 +186,9 @@ class ExperimentFactory(Loggable, ConsumerMixin):
         self.undoer.queue = new
 
     @on_trait_change('''queue_factory:[mass_spectrometer,
-extract_device, delay_+, tray, username, load_name, email, use_queue_conditionals, queue_conditionals_name]''')
+extract_device, delay_+, tray, username, load_name, email, queue_conditionals_name]''')
     def _update_queue(self, name, new):
-        self.debug('update queue {}={}'.format(name,new))
+        self.debug('update queue {}={}'.format(name, new))
         if name == 'mass_spectrometer':
             self.debug('_update_queue "{}"'.format(new))
             self._mass_spectrometer = new
@@ -210,6 +215,7 @@ extract_device, delay_+, tray, username, load_name, email, use_queue_conditional
         self.extract_device = ed
         self.run_factory = self._run_factory_factory()
 
+        self.run_factory.remote_patterns = self._get_patterns(ed)
         self.run_factory.setup_files()
         self.run_factory.set_mass_spectrometer(self._mass_spectrometer)
 
@@ -240,9 +246,9 @@ extract_device, delay_+, tray, username, load_name, email, use_queue_conditional
         """
         """
         uflag = bool(self._username)
-        msflag = not self._mass_spectrometer in ('', 'Spectrometer',LINE_STR)
+        msflag = not self._mass_spectrometer in ('', 'Spectrometer', LINE_STR)
         ret = uflag and msflag
-        if self.run_factory.run_block in ('RunBlock',LINE_STR):
+        if self.run_factory.run_block in ('RunBlock', LINE_STR):
             ret = ret and self._labnumber
         return ret
 

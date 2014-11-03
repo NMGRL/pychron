@@ -65,6 +65,8 @@ class GitArchive(GitRepoManager):
 
     def commits_iter(self, p, keys=None, limit='-'):
         repo = self._repo
+        p = os.path.join(self._repo.working_tree_dir, p)
+        print p
         hx = repo.git.log('--pretty=%H', '--follow', '-{}'.format(limit), p).split('\n')
 
         def func(hi):
@@ -76,15 +78,15 @@ class GitArchive(GitRepoManager):
 
         return (func(ci) for ci in hx)
 
-    def unpack_blob(self, hexsha, p):
-        repo = self._repo
-        for bi in repo.rev_parse(hexsha).tree.blobs:
-            if os.path.basename(bi.abspath) == p:
-                return bi.data_stream.read()
+    # def unpack_blob(self, hexsha, p):
+    #     repo = self._repo
+    #     for bi in repo.rev_parse(hexsha).tree.blobs:
+    #         if os.path.basename(bi.abspath) == p:
+    #             return bi.data_stream.read()
 
-    def diff(self, a, b):
-        repo = self._repo
-        return repo.git.diff(a, b, )
+    # def diff(self, a, b):
+    #     repo = self._repo
+    #     return repo.git.diff(a, b, )
 
 
 # if __name__ == '__main__':

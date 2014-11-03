@@ -24,7 +24,7 @@ import apptools.sweet_pickle as pickle
 import os
 import yaml
 #============= local library imports  ==========================
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.plotters.options.option import AuxPlotOptions
 from pychron.pychron_constants import NULL_STR
 

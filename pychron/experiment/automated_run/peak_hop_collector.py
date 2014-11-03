@@ -79,7 +79,9 @@ class PeakHopCollector(DataCollector):
         detector = dets[0]
         isotope = isos[0]
         is_baseline = is_baselines[0]
-        self.debug('$$$$$$$$$$$$$$$$$ SETTING is_baseline {}'.format(is_baseline))
+        if count==0:
+            self.debug('$$$$$$$$$$$$$$$$$ SETTING is_baseline {}'.format(is_baseline))
+
         if is_baseline:
             self.parent.is_peak_hop = False
             #remember original settings. return to these values after baseline finished

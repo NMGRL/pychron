@@ -21,6 +21,7 @@ from envisage.ui.tasks.preferences_pane import PreferencesPane
 
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
+
 # from pychron.pychron_constants import PLUSMINUS
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -28,7 +29,8 @@ from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 class PyScriptPreferences(BasePreferencesHelper):
     name = 'Scripts'
     preferences_path = 'pychron.pyscript'
-    auto_detab = Bool(True)
+    auto_detab = Bool
+    use_git_repo = Bool
 
 
 class PyScriptPreferencesPane(PreferencesPane):
@@ -36,7 +38,8 @@ class PyScriptPreferencesPane(PreferencesPane):
     model_factory = PyScriptPreferences
 
     def traits_view(self):
-        v = View(Item('auto_detab'))
+        v = View(Item('auto_detab'),
+                 Item('use_git_repo'))
         return v
 
         #============= EOF =============================================

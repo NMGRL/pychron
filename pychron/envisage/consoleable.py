@@ -29,9 +29,9 @@ class Consoleable(Loggable):
     use_message_colormapping = Bool
     console_display = Instance(DisplayController)
     console_updated = Event
-    console_bgcolor=LIGHT_YELLOW
-    console_fontsize=Int(11)
-    console_default_color = Color
+    console_bgcolor = LIGHT_YELLOW
+    console_fontsize = Int(11)
+    console_default_color = Color('black')
 
     def console_bind_preferences(self, prefid):
         color_bind_preference(self, 'console_bgcolor', '{}.bgcolor'.format(prefid))
@@ -49,6 +49,11 @@ class Consoleable(Loggable):
             self.console_display.add_text(msg, color=color)
 
         self.console_updated = '{}|{}'.format(color, msg)
+
+    def heading(self,msg, decorate_chr='=', *args, **kw):
+        d = decorate_chr*7
+        msg = '{} {} {}'.format(d, msg, d)
+        self.info(msg)
 
     def info(self, msg, log=True, color=None, *args, **kw):
         if color is None or not self.use_message_colormapping:
@@ -68,10 +73,18 @@ class Consoleable(Loggable):
         if self.console_display:
             self.console_display.add_marker(char, color=color)
 
+    def info_heading(self, msg):
+        self.info('')
+        self.info_marker('=')
+        self.info(msg)
+        self.info_marker('=')
+        self.info('')
+
     def _console_display_default(self):
         return DisplayController(
             bgcolor=self.console_bgcolor,
             font_size=self.console_fontsize,
             default_color=self.console_default_color,
             max_blocks=100)
+
 #============= EOF =============================================

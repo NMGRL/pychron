@@ -105,7 +105,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         plot = self.plots[plotid]
         # for idx in range(series, -1, -1):
         key = 'data{}'.format(series)
-        # print 'set fit', fi, plotid, key
+        # print 'set fit', fi, plotid, key, plot.plots.keys()
         if plot.plots.has_key(key):
             scatter = plot.plots[key][0]
             # print key
@@ -115,6 +115,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                     line = plot.plots[lkey][0]
                     line.regressor = None
 
+                # print 'fit for {}={}'.format(key, fi)
                 scatter.fit = fi
                 scatter.index.metadata['selections'] = []
                 scatter.index.metadata['filtered'] = None

@@ -48,12 +48,12 @@ class Datahub(Loggable):
     bind_mainstore = True
 
     def bind_preferences(self):
-        prefid = 'pychron.database'
+        prefid = 'pychron.massspec.database'
 
-        bind_preference(self.secondarystore.db, 'name', '{}.massspec_dbname'.format(prefid))
-        bind_preference(self.secondarystore.db, 'host', '{}.massspec_host'.format(prefid))
-        bind_preference(self.secondarystore.db, 'username', '{}.massspec_username'.format(prefid))
-        bind_preference(self.secondarystore.db, 'password', '{}.massspec_password'.format(prefid))
+        bind_preference(self.secondarystore.db, 'name', '{}.name'.format(prefid))
+        bind_preference(self.secondarystore.db, 'host', '{}.host'.format(prefid))
+        bind_preference(self.secondarystore.db, 'username', '{}.username'.format(prefid))
+        bind_preference(self.secondarystore.db, 'password', '{}.password'.format(prefid))
 
     def secondary_connect(self):
         if self.secondarystore:

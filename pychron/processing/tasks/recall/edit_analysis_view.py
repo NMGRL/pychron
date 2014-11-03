@@ -22,7 +22,7 @@ from traitsui.api import View, UItem, TableEditor, HGroup, spring, Handler, VGro
 #============= local library imports  ==========================
 from traitsui.table_column import ObjectColumn
 from uncertainties import std_dev, nominal_value, ufloat
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
+from pychron.envisage.icon_button_editor import icon_button_editor
 
 
 class AnalysisEditViewHandler(Handler):

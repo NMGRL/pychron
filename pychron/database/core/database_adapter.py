@@ -93,6 +93,7 @@ class DatabaseAdapter(Loggable):
     sess = None
 
     sess_stack = 0
+    reraise = False
 
     connected = Bool(False)
     kind = Str  # ('mysql')
@@ -112,7 +113,7 @@ class DatabaseAdapter(Loggable):
     selector = Any
 
     # name used when writing to database
-    save_username = Str
+    # save_username = Str
     connection_parameters_changed = Bool
 
     url = Property(depends_on='connection_parameters_changed')
@@ -142,10 +143,16 @@ class DatabaseAdapter(Loggable):
     def enabled(self):
         return self.kind in ['mysql', 'sqlite']
 
+    @property
+    def save_username(self):
+        from pychron.globals import globalv
+        return globalv.username
+
     @on_trait_change('username,host,password,name')
     def reset_connection(self, obj, name, old, new):
         self.connection_parameters_changed = True
 
+    # @caller
     def connect(self, test=True, force=False, warn=True):
         if force:
             self.debug('forcing database connection')
@@ -195,6 +202,13 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
 
     def initialize_database(self):
         pass
+
+    def commit(self):
+        if self.sess:
+            try:
+                self.sess.commit()
+            except:
+                self.sess.rollback()
 
     def get_session(self):
         sess = self.sess
@@ -327,14 +341,15 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
         if sess:
             sess.add(obj)
             try:
-                sess.flush()
+                # sess.flush()
                 return obj
             except SQLAlchemyError, e:
                 import traceback
                 # traceback.print_exc()
                 self.debug('add_item exception {} {}'.format(obj, traceback.format_exc()))
                 sess.rollback()
-
+                if self.reraise:
+                    raise
 
                 #     def _add_item(self, obj, sess=None):
 
@@ -456,23 +471,23 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
             if not isinstance(value, (str, int, unicode, long, float)):
                 return value
 
-        sess = self.sess
-        if sess is None:
-            if self.session_factory:
-                sess = self.session_factory()
+        # sess = self.sess
+        # if sess is None:
+        #     if self.session_factory:
+        #         sess = self.session_factory()
 
+        with self.session_ctx() as sess:
+            q = sess.query(table)
+            if value is not None:
+                q = q.filter(getattr(table, key) == value)
 
-        q = sess.query(table)
-        if value is not None:
-            q = q.filter(getattr(table, key) == value)
-
-        try:
-            if order_by is not None:
-                q = q.order_by(order_by)
-            return q.first()
-        except SQLAlchemyError, e:
-            print e
-            return
+            try:
+                if order_by is not None:
+                    q = q.order_by(order_by)
+                return q.first()
+            except SQLAlchemyError, e:
+                print e
+                return
 
     def _query_all(self, q, reraise=False):
         ret = self._query(q, 'all', reraise)
@@ -534,9 +549,11 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
             if last:
                 q = q.order_by(last)
 
+            if verbose:
+                self.debug(compile_query(q))
+
             ntries = 3
             import traceback
-
             for i in range(ntries):
                 try:
                     return q.one()

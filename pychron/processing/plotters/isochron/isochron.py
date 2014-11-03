@@ -1,11 +1,11 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,7 +25,7 @@ from chaco.array_data_source import ArrayDataSource
 from numpy import linspace
 #============= local library imports  ==========================
 
-from pychron.core.helpers.formatting import floatfmt, calc_percent_error
+from pychron.core.helpers.formatting import floatfmt, calc_percent_error, format_percent_error
 from pychron.graph.error_envelope_overlay import ErrorEnvelopeOverlay
 from pychron.processing.argon_calculations import extract_isochron_xy
 from pychron.processing.plotters.arar_figure import BaseArArFigure
@@ -33,7 +33,6 @@ from pychron.processing.plotters.arar_figure import BaseArArFigure
 from pychron.graph.error_ellipse_overlay import ErrorEllipseOverlay
 from pychron.core.stats import validate_mswd
 
-N = 500
 
 
 class OffsetPlotLabel(PlotLabel):
@@ -44,43 +43,45 @@ class OffsetPlotLabel(PlotLabel):
             gc.translate_ctm(*self.offset)
         super(OffsetPlotLabel, self).overlay(component, gc, view_bounds, mode)
 
+
 class AtmInterceptOverlay(AbstractOverlay):
-    line_width=Float(1.5)
+    line_width = Float(1.5)
     font = KivaFont("modern 10")
-    line_style=LineStyle('dash')
-    label=Str
-    value=Float
+    line_style = LineStyle('dash')
+    label = Str
+    value = Float
 
     def overlay(self, component, gc, view_bounds=None, mode="normal"):
-        x,y=component.map_screen((0, self.value))
-        xo=component.x
+        x, y = component.map_screen((0, self.value))
+        xo = component.x
 
         with gc:
             gc.set_line_width(self.line_width)
             gc.set_line_dash(self.line_style_)
-            gc.move_to(xo,y)
-            gc.line_to(x,y)
+            gc.move_to(xo, y)
+            gc.line_to(x, y)
             gc.draw_path()
 
-            txt=self.label
+            txt = self.label
             gc.set_font(self.font)
-            w,h=gc.get_full_text_extent(txt)[:2]
-            gc.set_text_position(xo-w-2, y)
+            w, h = gc.get_full_text_extent(txt)[:2]
+            gc.set_text_position(xo - w - 2, y)
             gc.show_text(txt)
+
 
 class Isochron(BaseArArFigure):
     _omit_key = 'omit_iso'
 
 
 class InverseIsochron(Isochron):
-#     xmi = Float
-#     xma = Float
+    #     xmi = Float
+    #     xma = Float
 
     xs = Array
     _cached_data = None
     _plot_label = None
     suppress = False
-    xpad='0.1'
+    xpad = '0.1'
 
     def plot(self, plots):
         """
@@ -134,7 +135,7 @@ class InverseIsochron(Isochron):
         graph = self.graph
         graph.set_x_title('39Ar/40Ar', plotid=pid)
         graph.set_y_title('36Ar/40Ar', plotid=pid)
-        p=graph.plots[pid]
+        p = graph.plots[pid]
         p.y_axis.title_spacing = 50
 
         graph.set_grid_traits(visible=False)
@@ -154,45 +155,44 @@ class InverseIsochron(Isochron):
 
         eo = ErrorEllipseOverlay(component=scatter,
                                  reg=reg,
-                                 fill=self.options.fill_ellipses
-                                 )
+                                 fill=self.options.fill_ellipses)
         scatter.overlays.append(eo)
 
         # mi, ma = graph.get_x_limits()
 
         # ma = max(ma, max(xs))
         # mi = min(mi, min(xs))
-        mi,ma=min(xs),max(xs)
+        mi, ma = min(xs), max(xs)
         # print len(xs),mi,ma
-        mi=0
+        mi = 0
         rxs = linspace(mi, ma)
         rys = reg.predict(rxs)
 
         graph.set_x_limits(min_=mi, max_=ma, pad='0.1')
 
-        l, _=graph.new_series(rxs, rys, color=scatter.color)
+        l, _ = graph.new_series(rxs, rys, color=scatter.color)
         graph.set_series_label('fit{}'.format(self.group_id))
 
-        # l.index.set_data(rxs)
-        # l.value.set_data(rys)
-        xs=l.index.get_data()
+        l.index.set_data(rxs)
+        l.value.set_data(rys)
+        xs = l.index.get_data()
         lci, uci = reg.calculate_error_envelope(xs)
-        ee=ErrorEnvelopeOverlay(component=l,
-                                upper=uci, lower=lci)
+        ee = ErrorEnvelopeOverlay(component=l,
+                                  upper=uci, lower=lci)
         l.underlays.append(ee)
-        l.error_envelope=ee
+        l.error_envelope = ee
 
         def ad(ai):
-            a=ai.isotopes['Ar39'].get_interference_corrected_value()
-            b=ai.isotopes['Ar40'].get_interference_corrected_value()
-            r=a/b
-            v=r.nominal_value
-            e=r.std_dev
+            a = ai.isotopes['Ar39'].get_interference_corrected_value()
+            b = ai.isotopes['Ar40'].get_interference_corrected_value()
+            r = a / b
+            v = r.nominal_value
+            e = r.std_dev
 
             try:
-                pe='({:0.2f}%)'.format(e/v*100)
+                pe = '({:0.2f}%)'.format(e / v * 100)
             except ZeroDivisionError:
-                pe='(Inf%)'
+                pe = '(Inf%)'
 
             return '39Ar/40Ar = {} +/-{} {}'.format(floatfmt(v, n=6), floatfmt(e, n=7), pe)
 
@@ -212,11 +212,10 @@ class InverseIsochron(Isochron):
     #===============================================================================
 
     def _add_atm_overlay(self, plot):
-        v=self.options.nominal_intercept_value
+        v = self.options.nominal_intercept_value
         plot.overlays.append(AtmInterceptOverlay(component=plot,
                                                  label=self.options.nominal_intercept_label,
-                                                 value=v
-                                                 ))
+                                                 value=v))
 
     def _add_info(self, plot, reg, label=None, text_color='black'):
         intercept = reg.predict(0)
@@ -228,36 +227,22 @@ class InverseIsochron(Isochron):
             inv_intercept = intercept ** -1
             p = calc_percent_error(intercept, err, scale=1)
 
-            err=inv_intercept*p
-
-            v = floatfmt(inv_intercept, s=3)
-            e = floatfmt(err, s=3)
-
+            err = inv_intercept * p
             mse = err * mswd ** 0.5
-            mse = floatfmt(mse, s=3)
-            p=floatfmt(p,n=2)
-
+            v, e, p, mse = floatfmt(inv_intercept, s=3), floatfmt(err, s=3), floatfmt(p * 100, n=2), floatfmt(mse, s=3)
         except ZeroDivisionError:
             v, e, p, mse = 'NaN', 'NaN', 'NaN', 'NaN'
 
         ratio_line = 'Ar40/Ar36= {} +/-{} ({}%) mse= {}'.format(v, e, p, mse)
 
-        # j = self._ref_j
         u = self._ref_age_units
 
-        #xint = ufloat(reg.x_intercept, reg.x_intercept_error)
-        #try:
-        #    R = xint ** -1
-        #except ZeroDivisionError:
-        #    R = 0
-        #
-        #v, e, mse_age = 0, 0, 0
-        #if R > 0:
-        #    age = age_equation(j, R, arar_constants=self._ref_constants)
-
         age = self.analysis_group.isochron_age
+
         v = age.nominal_value
         e = age.std_dev
+        p = format_percent_error(v, e)
+
         mse_age = e * mswd ** 0.5
 
         valid = validate_mswd(mswd, n)
@@ -272,7 +257,7 @@ class InverseIsochron(Isochron):
         mswd_line = 'N= {} mswd= {}'.format(n, mswd)
         if label is None:
             label = OffsetPlotLabel(
-                offset=(1, 1+50 * self.group_id),
+                offset=(1, 1 + 50 * self.group_id),
                 component=plot,
                 overlay_position='inside bottom',
                 hjustify='left',
@@ -302,19 +287,11 @@ class InverseIsochron(Isochron):
         self._set_renderer_selection(ss, sel)
 
         if self._cached_data:
-            reg=self._cached_reg
-            # xs, ys, xerr, yerr = self._cached_data
+            reg = self._cached_reg
 
-            # nxs = delete(xs, sel)
-            # nys = delete(ys, sel)
-            # nxerr = delete(xerr, sel)
-            # nyerr = delete(yerr, sel)
-
-            # reg = ReedYorkRegressor(xs=nxs, ys=nys,
-            #                         xserr=nxerr, yserr=nyerr)
-            # reg.trait_set(xs=nxs, ys=nys,xserr=nxerr, yserr=nyerr)
-            reg.user_excluded=sel
-            reg.dirty=True
+            reg.user_excluded = sel
+            reg.dirty = True
+            reg.error_calc_type= self.options.error_calc_method
             reg.calculate()
 
             fit = self.graph.plots[0].plots['fit{}'.format(self.group_id)][0]
@@ -327,9 +304,11 @@ class InverseIsochron(Isochron):
             fit.index.set_data(rxs)
             fit.value.set_data(rys)
 
+            fit.error_envelope.invalidate()
+
             lci, uci = reg.calculate_error_envelope(rxs)
-            fit.error_envelope.lower=lci
-            fit.error_envelope.upper=uci
+            fit.error_envelope.lower = lci
+            fit.error_envelope.upper = uci
 
             if self._plot_label:
                 self._add_info(self.graph.plots[0], reg, label=self._plot_label)
@@ -342,12 +321,11 @@ class InverseIsochron(Isochron):
         if new is True:
             self.update_graph_metadata(None, name, old, new)
 
-
     #===============================================================================
     # utils
     #===============================================================================
     def max_x(self, *args):
-        xx,yy=extract_isochron_xy(self.analyses)
+        xx, yy = extract_isochron_xy(self.analyses)
         try:
             return max([ai.nominal_value + ai.std_dev
                         for ai in xx])

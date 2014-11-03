@@ -28,7 +28,7 @@ from numpy import linspace, array, min, max, zeros, meshgrid, \
 import math
 #============= local library imports  ==========================
 from pychron.envisage.browser.record_views import RecordView
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.graph.contour_graph import ContourGraph
 from pychron.graph.error_bar_overlay import ErrorBarOverlay
 from pychron.graph.graph import Graph

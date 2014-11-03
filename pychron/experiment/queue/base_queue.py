@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -40,11 +40,11 @@ def extract_meta(line_gen):
     return yaml.load(metastr), metastr
 
 
-__METASTR__='''
+__METASTR__ = '''
 username: {}
 email: {}
+uss_group_email: {}
 date: {}
-use_queue_conditionals: {}
 queue_conditionals_name: {}
 mass_spectrometer: {}
 delay_before_analyses: {}
@@ -63,13 +63,13 @@ class BaseExperimentQueue(ExperimentBlock):
 
     username = String
     email = String
+    use_group_email = Bool
 
     tray = Str
     delay_before_analyses = CInt(5)
     delay_between_analyses = CInt(30)
 
     queue_conditionals_name = Str
-    use_queue_conditionals = Bool
 
     stats = Instance(ExperimentStats, ())
 
@@ -230,12 +230,16 @@ class BaseExperimentQueue(ExperimentBlock):
         return runspecs
 
     def _add_queue_meta(self, params):
-        params['extract_device'] = self.extract_device
-        params['tray'] = self.tray
-        params['username'] = self.username
-        params['email'] = self.email
-        params['use_queue_conditionals'] = self.use_queue_conditionals
-        params['queue_conditionals_name'] = self.queue_conditionals_name
+        for attr in ('extract_device', 'tray', 'username', 'email',
+                     'use_group_email', 'queue_conditionals_name'):
+            params[attr] = getattr(self, attr)
+
+            # params['extract_device'] = self.extract_device
+            # params['tray'] = self.tray
+            # params['username'] = self.username
+            # params['email'] = self.email
+            # params['use_group_email']
+            # params['queue_conditionals_name'] = self.queue_conditionals_name
 
     def _extract_meta(self, f):
         meta, metastr = extract_meta(f)
@@ -263,9 +267,9 @@ class BaseExperimentQueue(ExperimentBlock):
         self._set_meta_param('delay_before_analyses', meta, default_int)
         self._set_meta_param('username', meta, default)
         self._set_meta_param('email', meta, default)
+        self._set_meta_param('use_group_email', meta, bool_default)
         self._set_meta_param('load_name', meta, default, metaname='load')
         self._set_meta_param('queue_conditionals_name', meta, default)
-        self._set_meta_param('use_queue_conditionals', meta, bool_default)
 
     def _load_map(self, meta):
         from pychron.lasers.stage_managers.stage_map import StageMap
@@ -306,6 +310,7 @@ class BaseExperimentQueue(ExperimentBlock):
                ('beam_diam', 'beam_diameter'),
                'pattern',
                ('extraction', 'extraction_script'),
+               ('ramp', 'ramp_duration'),
                ('t_o', 'collection_time_zero_offset'),
                ('measurement', 'measurement_script'),
                ('truncate', 'truncate_conditional'),
@@ -335,8 +340,8 @@ class BaseExperimentQueue(ExperimentBlock):
         s = __METASTR__.format(
             self.username,
             self.email,
+            self.use_group_email,
             datetime.datetime.today(),
-            self.use_queue_conditionals,
             self.queue_conditionals_name,
             ms,
             self.delay_before_analyses,

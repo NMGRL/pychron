@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import Bool, Enum, String, Property
-
+from traitsui.api import VGroup, UItem
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.processing.plotters.options.plotter import PlotterOptions, FONTS, SIZES
@@ -46,6 +46,8 @@ class AgeOptions(PlotterOptions):
     error_info_fontname = Enum(*FONTS)
     error_info_fontsize = Enum(*SIZES)
 
+    label_fontsize = Enum(*SIZES)
+
     def _include_j_error_changed(self, new):
         if new:
             self.include_j_error_in_mean = False
@@ -53,6 +55,11 @@ class AgeOptions(PlotterOptions):
     def _get_error_info_font(self):
         return '{} {}'.format(self.error_info_fontname,
                               self.error_info_fontsize)
+
+    def _get_label_font_group(self):
+        g = VGroup(UItem('label_fontsize'),
+                   label='Labels')
+        return g
 
     def _get_dump_attrs(self):
         attrs = super(AgeOptions, self)._get_dump_attrs()
@@ -66,7 +73,7 @@ class AgeOptions(PlotterOptions):
                   'analysis_label_display',
                   'analysis_label_format',
                   'error_info_fontname',
-                  'error_info_fontsize'
+                  'error_info_fontsize','label_fontsize'
         ]
         return attrs
 

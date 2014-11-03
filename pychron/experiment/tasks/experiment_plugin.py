@@ -19,10 +19,13 @@ from envisage.ui.tasks.task_factory import TaskFactory
 from pyface.tasks.action.schema_addition import SchemaAddition
 from envisage.ui.tasks.task_extension import TaskExtension
 from pyface.action.group import Group
+from traits.api import Instance
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.entry.sensitivity_entry import SensitivitySelector
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
+# from pychron.experiment.experiment_executor import ExperimentExecutor
+from pychron.experiment.experimentor import Experimentor
 from pychron.experiment.signal_calculator import SignalCalculator
 from pychron.experiment.image_browser import ImageBrowser
 from pychron.experiment.tasks.experiment_task import ExperimentEditorTask
@@ -38,6 +41,7 @@ from pychron.experiment.tasks.experiment_actions import NewExperimentQueueAction
 
 class ExperimentPlugin(BaseTaskPlugin):
     id = 'pychron.experiment'
+    experimentor=Instance(Experimentor)
 
     def _my_task_extensions_default(self):
         factory = lambda: Group(DeselectAction(),
@@ -86,10 +90,33 @@ class ExperimentPlugin(BaseTaskPlugin):
         so_sens_selector = self.service_offer_factory(
             protocol=SensitivitySelector,
             factory=self._sens_selector_factory)
-
+        so_ex = self.service_offer_factory(protocol=Experimentor,
+                                           factory=self._experimentor_factory)
         return [so_signal_calculator,
                 so_image_browser,
-                so_sens_selector]
+                so_sens_selector,
+                so_ex]
+
+    def _experimentor_factory(self):
+        return self.experimentor
+
+    def _experimentor_default(self):
+        # from pychron.experiment.experimentor import Experimentor
+        from pychron.initialization_parser import InitializationParser
+
+        ip = InitializationParser()
+        plugin = ip.get_plugin('Experiment', category='general')
+        mode = ip.get_parameter(plugin, 'mode')
+
+        # app = None
+        # if self.window:
+        #     app = self.window.application
+
+        exp = Experimentor(application=self.application,
+                           mode=mode)
+
+        return exp
+
 
     def _signal_calculator_factory(self, *args, **kw):
         return SignalCalculator()

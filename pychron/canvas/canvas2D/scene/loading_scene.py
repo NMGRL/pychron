@@ -16,14 +16,11 @@
 
 #============= enthought library imports =======================
 #============= standard library imports ========================
-import os
 
 from numpy import Inf
 
 #============= local library imports  ==========================
 from pychron.canvas.canvas2D.scene.scene import Scene
-from pychron.paths import paths
-from pychron.lasers.stage_managers.stage_map import StageMap
 from pychron.canvas.canvas2D.scene.primitives.primitives import LoadIndicator, Span
 
 
@@ -79,22 +76,22 @@ class LoadingScene(Scene):
                 pitem=item
                 c+=1
 
-    def load(self, t, show_hole_numbers=True):
+    def load(self, holes, show_hole_numbers=True):
         self.reset_layers()
-        holes = self._get_holes(t)
-
         self._load_holes(holes, show_hole_numbers)
 
-    def _get_holes(self, t):
-        p = os.path.join(paths.map_dir, t)
-        sm = StageMap(file_path=p)
-
-        holes = ((hi.x, hi.y, hi.dimension / 2.0, hi.id) for hi in sm.sample_holes)
-        return holes
+    # def _get_holes(self, t):
+    #     pass
+        # p = os.path.join(paths.map_dir, t)
+        # sm = StageMap(file_path=p)
+        #
+        # holes = ((hi.x, hi.y, hi.dimension / 2.0, hi.id) for hi in sm.sample_holes)
+        # return holes
 
     def _load_holes(self, holes, show_hole_numbers=False):
         xmi, ymi, xma, yma, mr = Inf, Inf, -Inf, -Inf, -Inf
-        for x, y, r, n, in holes:
+        for x, y, r, n in holes:
+            r*=0.5
             xmi = min(xmi, x)
             ymi = min(ymi, y)
             xma = max(xma, x)

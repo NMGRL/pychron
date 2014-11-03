@@ -15,37 +15,32 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from pyface.directory_dialog import DirectoryDialog
+from itertools import groupby
 
+from traits.api import Any, on_trait_change, List, Unicode, DelegatesTo, Instance
+from pyface.directory_dialog import DirectoryDialog
 from pyface.tasks.action.dock_pane_toggle_group import DockPaneToggleGroup
 from pyface.timer.do_later import do_later
-from traits.api import Any, on_trait_change, List, Unicode, DelegatesTo
-
-
-
-# from traitsui.api import View, Item
 from pyface.tasks.task import Task
 from pyface.tasks.action.schema import SMenu, SMenuBar, SGroup
-# from pyface.tasks.action.task_toggle_group import TaskToggleGroup
-# from envisage.ui.tasks.action.task_window_toggle_group import TaskWindowToggleGroup
 from pyface.action.api import ActionItem, Group
-# from pyface.tasks.action.task_action import TaskAction
 from envisage.ui.tasks.action.task_window_launch_group import TaskWindowLaunchAction
+from pyface.file_dialog import FileDialog
+from pyface.constant import OK, CANCEL, YES
+from pyface.confirmation_dialog import ConfirmationDialog
+
+
+#============= standard library imports ========================
+#============= local library imports  ==========================
+from pychron.core.helpers.filetools import add_extension, view_file
+from pychron.core.ui.gui import invoke_in_main_thread
+from pychron.envisage.preference_mixin import PreferenceMixin
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import GenericSaveAction, GenericSaveAsAction, \
     GenericFindAction, RaiseAction, RaiseUIAction, ResetLayoutAction, \
     MinimizeAction, PositionAction, IssueAction, CloseAction, CloseOthersAction, AboutAction, OpenAdditionalWindow, \
-    NoteAction, RestartAction, DocumentationAction
-from pyface.file_dialog import FileDialog
-from pyface.constant import OK, CANCEL, YES
-from itertools import groupby
-from pyface.confirmation_dialog import ConfirmationDialog
-from pychron.core.helpers.filetools import add_extension, view_file
+    NoteAction, RestartAction, DocumentationAction, CopyPreferencesAction, SwitchUserAction
 from pychron.loggable import Loggable
-
-#============= standard library imports ========================
-#============= local library imports  ==========================
-from pychron.core.ui.gui import invoke_in_main_thread
 
 
 class WindowGroup(Group):
@@ -223,8 +218,27 @@ class TaskGroup(Group):
     items = List
 
 
-class BaseTask(Task, Loggable):
+class BaseTask(Task, Loggable, PreferenceMixin):
     application = DelegatesTo('window')
+
+    def show_pane(self, p):
+        op=p
+        if isinstance(p, str):
+            if '.' in p:
+                for k in self.trait_names():
+                    v=getattr(self, k)
+                    try:
+                        if v.id==p:
+                            p=v
+                            break
+                    except AttributeError:
+                        continue
+
+            else:
+                p=getattr(self, p)
+
+        self.debug('showing pane {} ==> {}'.format(op,p))
+        self._show_pane(p)
 
     def _show_pane(self, p):
         def _show():
@@ -347,7 +361,9 @@ class BaseTask(Task, Loggable):
         return file_menu
 
     def _tools_menu(self):
-        tools_menu = SMenu(id='tools.menu', name='Tools')
+        tools_menu = SMenu(
+            CopyPreferencesAction(),
+            id='tools.menu', name='Tools')
         return tools_menu
 
     def _window_menu(self):
@@ -375,6 +391,7 @@ class BaseTask(Task, Loggable):
             AboutAction(),
             DocumentationAction(),
             RestartAction(),
+            SwitchUserAction(),
             id='help.menu',
             name='Help')
         return menu
@@ -388,6 +405,8 @@ class BaseTask(Task, Loggable):
 
 class BaseManagerTask(BaseTask):
     default_directory = Unicode
+    default_open_action = 'open'
+
     _default_extension = ''
     wildcard = None
     manager = Any
@@ -456,7 +475,7 @@ class BaseManagerTask(BaseTask):
             #     r = dialog.paths
             return r
 
-    def open_file_dialog(self, action='open', **kw):
+    def open_file_dialog(self, action=None, **kw):
         if 'default_directory' not in kw:
             kw['default_directory'] = self.default_directory
 
@@ -464,10 +483,10 @@ class BaseManagerTask(BaseTask):
             if self.wildcard:
                 kw['wildcard'] = self.wildcard
 
-        dialog = FileDialog(
-            #parent=self.window.control,
-            action=action,
-            **kw)
+        if action is None:
+            action=self.default_open_action
+
+        dialog = FileDialog(action=action, **kw)
         if dialog.open() == OK:
             r = dialog.path
             if action == 'open files':
@@ -488,8 +507,10 @@ class BaseManagerTask(BaseTask):
 
 
 class BaseExtractionLineTask(BaseManagerTask):
+    canvas_pane = Instance('pychron.extraction_line.tasks.extraction_line_pane.CanvasDockPane')
+
     def _get_el_manager(self):
-        app = self.window.application
+        app = self.application
         man = app.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
         return man
 
@@ -498,18 +519,13 @@ class BaseExtractionLineTask(BaseManagerTask):
         if man:
             man.deactivate()
 
-            #     def activated(self):
-            #         man = self._get_el_manager()
-            #         if man:
-            #             man.activate()
-
     def _add_canvas_pane(self, panes):
         app = self.window.application
         man = app.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
         if man:
             from pychron.extraction_line.tasks.extraction_line_pane import CanvasDockPane
-
-            panes.append(CanvasDockPane(canvas=man.new_canvas(name='alt_config')))
+            self.canvas_pane = CanvasDockPane(canvas=man.new_canvas(name='alt_config'))
+            panes.append(self.canvas_pane)
 
         return panes
 
@@ -517,30 +533,10 @@ class BaseExtractionLineTask(BaseManagerTask):
     def _window_opened(self):
         man = self._get_el_manager()
         if man:
-            #            do_later(man.activate)
             man.activate()
-
-
-#            man.canvas.refresh()
 
 
 class BaseHardwareTask(BaseManagerTask):
     pass
-
-#     def _menu_bar_factory(self, menus=None):
-#         extraction_menu = SMenu(id='Extraction', name='&Extraction')
-#         measure_menu = SMenu(
-# # #                              PeakCenterAction(),
-#                             id='Measure', name='Measure',
-#                             before='help.menu'
-#                             )
-#         ms = [extraction_menu, measure_menu]
-#         if not menus:
-#             menus = ms
-#         else:
-#             menus.extend(ms)
-#         return super(BaseHardwareTask, self)._menu_bar_factory(menus=menus)
-# class BaseManagerTask(BaseTask):
-#    manager = Any
 
 #============= EOF =============================================

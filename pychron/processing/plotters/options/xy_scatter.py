@@ -26,7 +26,7 @@ from traitsui.api import View, Item, EnumEditor, HGroup, VGroup, UItem
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.core.csv.csv_parser import CSVColumnParser
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.plotters.options.base import BasePlotterOptions
 from pychron.pychron_constants import FIT_TYPES, NULL_STR
 

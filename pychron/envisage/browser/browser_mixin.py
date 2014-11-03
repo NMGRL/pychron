@@ -80,7 +80,8 @@ class BrowserMixin(ColumnSorterMixin):
 
     analysis_groups = List
 
-    project_filter = Str
+    identifier = Str
+
     sample_filter = Str
 
     date_configure_button = Button
@@ -111,6 +112,10 @@ class BrowserMixin(ColumnSorterMixin):
 
     search_criteria = Instance(SearchCriteria, ())
 
+    use_mass_spectrometers = Bool
+    mass_spectrometer_includes = List
+    available_mass_spectrometers = List
+
     named_date_range = Enum('this month', 'this week', 'yesterday')
     low_post = Property(Date, depends_on='_low_post')
     high_post = Property(Date, depends_on='_high_post')
@@ -121,6 +126,7 @@ class BrowserMixin(ColumnSorterMixin):
     _high_post = Date
     _recent_low_post = None
     _recent_mass_spectrometers = None
+    _previous_recent_name = ''
 
     use_analysis_type_filtering = Bool
     analysis_include_types = Property(List)
@@ -188,7 +194,7 @@ class BrowserMixin(ColumnSorterMixin):
             self._load_browser_selection(obj)
 
     def dump_browser_selection(self):
-        #self.debug('$$$$$$$$$$$$$$$$$$$$$ Dumping browser selection')
+        # self.debug('$$$$$$$$$$$$$$$$$$$$$ Dumping browser selection')
 
         ps = []
         if self.selected_projects:
@@ -239,7 +245,7 @@ class BrowserMixin(ColumnSorterMixin):
             recents = [ProjectRecordView('RECENT {}'.format(mi.name.upper())) for mi in ms]
             pss = [ProjectRecordView(p) for p in ps]
 
-            #move references project to after Recent
+            # move references project to after Recent
             p = next((p for p in pss if p.name.lower() == 'references'), None)
             if p is not None:
                 rp = pss.pop(pss.index(p))
@@ -279,7 +285,7 @@ class BrowserMixin(ColumnSorterMixin):
 
         return v
 
-    #database querying
+    # database querying
     def _load_associated_groups(self, names):
         """
             names: list of project names
@@ -321,29 +327,45 @@ class BrowserMixin(ColumnSorterMixin):
             hpost = datetime.now()
 
             #use users low_post if set
-            if not self.use_low_post:
+            if not self.use_low_post and not self.use_named_date_range:
                 lpost = hpost - timedelta(hours=self.search_criteria.recent_hours)
                 self.use_low_post = True
                 self._low_post = lpost.date()
-
-                # self.debug('RECENT HOURS {} {}'.format(self.search_criteria.recent_hours, lpost))
-                # lns = db.get_recent_labnumbers(lpost, ms)
                 self._recent_low_post = lpost
 
             self._recent_mass_spectrometers.append(ms)
 
-            # sams = [LabnumberRecordView(li, low_post=lpost)
-            # for li in lns if li.sample]
-
-            self.use_high_post = True
-            self._high_post = hpost.date()
+            if not self.use_named_date_range:
+                self.use_high_post = True
+                self._high_post = hpost.date()
 
             sams = self._retrieve_samples()
 
         return sams
 
+    def _populate_samples(self, lns=None):
+        db = self.db
+
+        with db.session_ctx():
+            if not lns:
+                lns = [db.get_labnumber(self.identifier)]
+
+            n = len(lns)
+            self.debug('_populate_samples n={}'.format(n))
+
+            def func(li, prog, i, n):
+                if prog:
+                    prog.change_message('Loading Labnumber {}'.format(li.identifier))
+                return LabnumberRecordView(li)
+
+            sams = progress_loader(lns, func)
+
+        sel = sams[:1] if n == 1 and sams else []
+        self.set_samples(sams, sel)
+
     def _retrieve_samples_hook(self, db):
         projects = self.selected_projects
+
         if self.use_mass_spectrometers:
             mass_spectrometers = self.mass_spectrometer_includes
         else:
@@ -354,9 +376,13 @@ class BrowserMixin(ColumnSorterMixin):
         atypes = self.analysis_include_types if self.use_analysis_type_filtering else None
 
         lp, hp = self.low_post, self.high_post
-        if atypes:
-            lp, hp = db.get_min_max_analysis_timestamp(projects=[projects], delta=1)
-            print lp, hp
+        if atypes and projects:
+            tlp, thp = db.get_min_max_analysis_timestamp(projects=projects, delta=1)
+            if not lp:
+                lp=tlp
+            if not hp:
+                hp=thp
+
         ls = db.get_project_labnumbers(projects,
                                        self.filter_non_run_samples,
                                        lp, hp,
@@ -468,6 +494,33 @@ class BrowserMixin(ColumnSorterMixin):
         load('samples', self.samples)
 
     # handlers
+    def _identifier_changed(self, new):
+        db = self.db
+        if new:
+            if len(new) > 2:
+                with db.session_ctx():
+                    lns = self._get_identifiers(db, new)
+                    # lns = db.get_labnumbers_startswith(new)
+                    if lns:
+                        self._identifier_change_hook(db, new, lns)
+                        self._populate_samples(lns)
+                    else:
+                        self.set_samples([])
+                        self.projects = self.oprojects[:]
+        else:
+            self.projects = self.oprojects[:]
+            self.set_samples([])
+
+    def _get_identifiers(self, db, new):
+        ms = None
+        if self.use_mass_spectrometers:
+            ms = self.mass_spectrometer_includes
+
+        return db.get_labnumbers_startswith(new, mass_spectrometers=ms)
+
+    def _identifier_change_hook(self, db, new, lns):
+        pass
+
     def _selected_projects_changed(self, old, new):
         if new and self.project_enabled:
             self._recent_low_post = None
@@ -556,12 +609,11 @@ class BrowserMixin(ColumnSorterMixin):
         #
         # self.sample_filter_values = vs
 
-    def _project_filter_changed(self, new):
-        self.projects = filter(filter_func(new, 'name'), self.oprojects)
+    # def _project_filter_changed(self, new):
+    #     self.projects = filter(filter_func(new, 'name'), self.oprojects)
 
     def _sample_filter_changed(self, new):
         name = self._get_sample_filter_parameter()
-        # comp=self.sample_filter_comparator
         self.samples = filter(filter_func(new, name), self.osamples)
 
     # proprty get/set

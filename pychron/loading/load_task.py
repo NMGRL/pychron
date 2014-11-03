@@ -24,7 +24,6 @@ from pyface.tasks.action.schema import SToolBar
 
 from pychron.envisage.tasks.base_task import BaseManagerTask
 from pychron.loading.panes import LoadPane, LoadControlPane, LoadTablePane
-from pychron.canvas.canvas2D.loading_canvas import LoadingCanvas
 from pychron.loading.actions import SaveLoadingAction
 from pychron.loading.loading_pdf_writer import LoadingPDFWriter
 from apptools.preferences.preference_binding import bind_preference
@@ -48,7 +47,7 @@ class LoadingTask(BaseManagerTask):
                           image_size=(32, 32))]
 
     def activated(self):
-        self.manager.tray = 'bat'
+        # self.manager.tray = 'bat'
         self.manager.irradiation = 'NM-264'
         self.manager.level = 'A'
         self.manager.labnumber = '23261'
@@ -104,21 +103,30 @@ class LoadingTask(BaseManagerTask):
     #             self.manager.tray = ''
     #             self.manager.load_load(new)
 
-    @on_trait_change('manager:tray')
-    def _tray_changed(self, new):
-        if new:
-            c = LoadingCanvas(
-                view_x_range=(-2.2, 2.2),
-                view_y_range=(-2.2, 2.2))
+    # @on_trait_change('manager:tray')
+    # def _tray_changed(self, new):
+    #     if new:
+    #         # c = LoadingCanvas(
+    #         #     view_x_range=(-2.2, 2.2),
+    #         #     view_y_range=(-2.2, 2.2))
+    #
+    #         # c.load_scene(new,
+    #         #              show_hole_numbers=self.manager.show_hole_numbers)
+    #         print 'new', new
+    #         c = self.manager.make_canvas(new)
+    #         self.canvas = c
+    #         self.load_pane.component = c
+    #
+    #         self.manager.canvas = c
+    #         self.manager.positions = []
 
-            c.load_scene(new,
-                         show_hole_numbers=self.manager.show_hole_numbers)
+    @on_trait_change('manager:canvas')
+    def _canvas_changed(self, new):
+        self.load_pane.component = new
+        self.canvas = new
+            # self.manager.canvas = c
+            # self.manager.positions = []
 
-            self.canvas = c
-            self.load_pane.component = c
-
-            self.manager.canvas = c
-            self.manager.positions = []
 
     def _prompt_for_save(self):
         if self.manager.dirty:

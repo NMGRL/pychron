@@ -5,18 +5,18 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import Instance, Int, Property, List, \
-    Any, Enum, Str, DelegatesTo, Bool, TraitError
+    Any, Enum, Str, DelegatesTo, Bool, TraitError, cached_property
 #============= standard library imports ========================
 import os
 from numpy import array, argmin
@@ -25,7 +25,7 @@ from pychron.spectrometer.thermo.source import ArgusSource
 from pychron.spectrometer.thermo.magnet import ArgusMagnet
 from pychron.spectrometer.thermo.detector import Detector
 from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
-from pychron.pychron_constants import NULL_STR, DETECTOR_ORDER, QTEGRA_INTEGRATION_TIMES
+from pychron.pychron_constants import NULL_STR, DETECTOR_ORDER, QTEGRA_INTEGRATION_TIMES, DEFAULT_INTEGRATION_TIME
 from pychron.paths import paths
 
 
@@ -68,6 +68,7 @@ class Spectrometer(SpectrometerDevice):
 
     molecular_weight = Str('Ar40')
     molecular_weights = None
+    isotopes = Property
     sub_cup_configurations = List
 
     sub_cup_configuration = Property(depends_on='_sub_cup_configuration')
@@ -84,25 +85,26 @@ class Spectrometer(SpectrometerDevice):
     send_config_on_startup = Bool
 
     def test_connection(self):
-        return self.microcontroller.ask('GetIntegrationTime') is not None
+        return self.ask('GetIntegrationTime') is not None
 
     def get_integration_time(self, current=True):
         if current:
-            if self.microcontroller:
-                resp = self.microcontroller.ask('GetIntegrationTime')
-                if resp:
-                    try:
-                        self.integration_time = float(resp)
-                        self.info('Integration Time {}'.format(self.integration_time))
+            resp = self.ask('GetIntegrationTime')
+            if resp:
+                try:
+                    self.integration_time = float(resp)
+                    self.info('Integration Time {}'.format(self.integration_time))
 
-                    except (TypeError, ValueError, TraitError):
-                        self.warning('Invalid integration time. resp={}'.format(resp))
-                        self.integration_time = QTEGRA_INTEGRATION_TIMES[4]
+                except (TypeError, ValueError, TraitError):
+                    self.warning('Invalid integration time. resp={}'.format(resp))
+                    self.integration_time = DEFAULT_INTEGRATION_TIME
+
         return self.integration_time
 
     def set_integration_time(self, it, force=False):
         it = normalize_integration_time(it)
         if self.integration_time != it or force:
+            self.debug('setting integration time = {}'.format(it))
             name = 'SetIntegrationTime'
             self.set_parameter(name, it)
             self.trait_setq(integration_time=it)
@@ -134,6 +136,16 @@ class Spectrometer(SpectrometerDevice):
     @property
     def detector_names(self):
         return [di.name for di in self.detectors]
+
+    def get_deflection(self, name, current=False):
+        deflection = 0
+        det = self.get_detector(name)
+        if det:
+            if current:
+                det.read_deflection()
+            deflection = det.deflection
+
+        return deflection
 
     def get_detector(self, name):
         if not isinstance(name, str):
@@ -170,7 +182,7 @@ class Spectrometer(SpectrometerDevice):
 
     def _set_sub_cup_configuration(self, v):
         self._sub_cup_configuration = v
-        self.microcontroller.ask('SetSubCupConfiguration {}'.format(v))
+        self.ask('SetSubCupConfiguration {}'.format(v))
 
     #===============================================================================
     # load
@@ -178,17 +190,16 @@ class Spectrometer(SpectrometerDevice):
     def load_configurations(self):
         self.sub_cup_configurations = ['A', 'B', 'C']
         self._sub_cup_configuration = 'B'
-        if self.microcontroller is not None:
 
-            scc = self.microcontroller.ask('GetSubCupConfigurationList Argon', verbose=False)
-            if scc:
-                if 'ERROR' not in scc:
-                    self.sub_cup_configurations = scc.split('\r')
+        scc = self.ask('GetSubCupConfigurationList Argon', verbose=False)
+        if scc:
+            if 'ERROR' not in scc:
+                self.sub_cup_configurations = scc.split('\r')
 
-            n = self.microcontroller.ask('GetActiveSubCupConfiguration')
-            if n:
-                if 'ERROR' not in n:
-                    self._sub_cup_configuration = n
+        n = self.ask('GetActiveSubCupConfiguration')
+        if n:
+            if 'ERROR' not in n:
+                self._sub_cup_configuration = n
 
         self.molecular_weight = 'Ar40'
 
@@ -265,9 +276,10 @@ class Spectrometer(SpectrometerDevice):
     #===============================================================================
     def _get_simulation_data(self):
         from numpy.random import random
+
         signals = [1, 100, 3, 0.01, 0.01, 0.01] + random(6)
         keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
-        return keys,signals
+        return keys, signals
 
     def get_intensities(self, tagged=True):
 
@@ -275,7 +287,7 @@ class Spectrometer(SpectrometerDevice):
             if self.microcontroller.simulation:
                 keys, signals = self._get_simulation_data()
             else:
-                datastr = self.microcontroller.ask('GetData', verbose=False)
+                datastr = self.ask('GetData', verbose=False, quiet=True)
                 keys = []
                 signals = []
                 if datastr:
@@ -362,6 +374,9 @@ class Spectrometer(SpectrometerDevice):
     #===============================================================================
     # private
     #===============================================================================
+    @cached_property
+    def _get_isotopes(self):
+        return sorted(self.molecular_weights.keys(), key=lambda x: int(x[2:]))
 
     def _send_configuration(self):
         COMMAND_MAP = dict(ionrepeller='IonRepeller',
@@ -404,6 +419,6 @@ class Spectrometer(SpectrometerDevice):
         return ArgusSource(spectrometer=self)
 
     def _integration_time_default(self):
-        return QTEGRA_INTEGRATION_TIMES[4]
+        return DEFAULT_INTEGRATION_TIME
 
 #============= EOF =============================================

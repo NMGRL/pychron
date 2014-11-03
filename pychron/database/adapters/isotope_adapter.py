@@ -14,14 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
-from datetime import datetime, timedelta, date
+# ============= enthought library imports =======================
 
 from traits.api import Long, HasTraits, Date as TDate, Float, Str, Int, Bool, Property, provides
 from traitsui.api import View, Item, HGroup
 
 # ============= standard library imports ========================
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta
 from cStringIO import StringIO
 import hashlib
 from sqlalchemy import Date, distinct
@@ -1303,8 +1302,8 @@ class IsotopeAdapter(DatabaseAdapter):
 
             get the min and max analysis_timestamps for all analyses with labnumbers in lns
         """
-        if not lns and not projects:
-            raise NotImplementedError
+        # if not lns and not projects:
+        #     raise NotImplementedError
 
         with self.session_ctx() as sess:
             q = self._analysis_query(sess, attr='analysis_timestamp')
@@ -1435,6 +1434,7 @@ class IsotopeAdapter(DatabaseAdapter):
             q = q.order_by(meas_AnalysisTable.analysis_timestamp.asc())
             if limit:
                 q = q.limit(limit)
+
             return self._query_all(q)
 
     #===========================================================================
@@ -1695,6 +1695,7 @@ class IsotopeAdapter(DatabaseAdapter):
 
     def get_blank(self, value, key='id'):
         return self._retrieve_item(proc_BlanksTable, value, key=key)
+
     def get_blanks_set(self, value, key='set_id'):
         return self._retrieve_item(proc_BlanksSetTable, value, key=key)
 
@@ -2026,6 +2027,29 @@ class IsotopeAdapter(DatabaseAdapter):
     def get_users(self, **kw):
         return self._retrieve_items(gen_UserTable, **kw)
 
+    def get_usernames(self):
+        return [u.name for u in self.get_users(order=gen_UserTable.name.asc())]
+
+    def get_labnumbers_startswith(self, partial_id, mass_spectrometers=None, filter_non_run=True, **kw):
+        f = gen_LabTable.identifier.like('{}%'.format(partial_id))
+        kw = self._append_filters(f, kw)
+        if mass_spectrometers or filter_non_run:
+            kw = self._append_joins(meas_AnalysisTable, kw)
+
+        if mass_spectrometers:
+            kw = self._append_joins([meas_MeasurementTable, gen_MassSpectrometerTable], kw)
+            kw = self._append_filters(gen_MassSpectrometerTable.name.in_(mass_spectrometers), kw)
+
+        if filter_non_run:
+            def func(q):
+                q = q.group_by(gen_LabTable.id)
+                q = q.having(count(meas_AnalysisTable.id) > 0)
+                return q
+
+                kw['query_hook'] = func
+
+        return self._retrieve_items(gen_LabTable, debug_query=True, **kw)
+
     def get_labnumbers(self, identifiers=None, low_post=None, high_post=None,
                        mass_spectrometers=None,
                        filter_non_run=False, **kw):
@@ -2167,7 +2191,20 @@ class IsotopeAdapter(DatabaseAdapter):
     def get_load_holders(self, **kw):
         return self._retrieve_items(gen_LoadHolderTable, **kw)
 
-    def get_loads(self, **kw):
+    def get_latest_load(self):
+        return self._retrieve_first(loading_LoadTable,
+                                    order_by=loading_LoadTable.create_date.desc())
+
+    def get_loads(self, names=None, exclude_archived=True, **kw):
+        if not kw.get('order'):
+            kw['order'] = loading_LoadTable.create_date.desc()
+
+        if exclude_archived:
+            kw = self._append_filters(not_(loading_LoadTable.archived), kw)
+
+        if names:
+            kw = self._append_filters(loading_LoadTable.name.in_(names), kw)
+
         return self._retrieve_items(loading_LoadTable, **kw)
 
     def get_molecular_weights(self, **kw):
@@ -2224,7 +2261,7 @@ class IsotopeAdapter(DatabaseAdapter):
     #===============================================================================
     def _get_post_filter(self, post, comp, cast=True):
         t = meas_AnalysisTable.analysis_timestamp
-        if cast or isinstance(post, date):
+        if cast or not isinstance(post, datetime):
             t = sql_cast(t, Date)
 
         return getattr(t, comp)(post)

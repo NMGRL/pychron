@@ -48,8 +48,11 @@ from pychron.graph.tools.data_tool import DataTool, DataToolOverlay
 
 class ScanManager(Manager):
     spectrometer = Any
+    ion_optics_manager = Instance('pychron.spectrometer.ion_optics_manager.IonOpticsManager')
 
     graph = Instance(TimeSeriesStreamGraph)
+    graphs = List
+
     readout_view = Instance(ReadoutView)
 
     integration_time = DelegatesTo('spectrometer')
@@ -104,10 +107,18 @@ class ScanManager(Manager):
     _log_events_enabled = False
     _valve_event_list = List
 
+    def _bind_listeners(self, remove=False):
+        self.on_trait_change(self._update_magnet, 'magnet:dac_changed', remove=remove)
+        self.on_trait_change(self._toggle_detector, 'detectors:active', remove=remove)
 
     def prepare_destroy(self):
         self.stop_scan()
         self._log_events_enabled=False
+        self._bind_listeners(remove=True)
+
+        plot = self.graph.plots[0]
+        plot.value_range.on_trait_change(self._update_graph_limits,
+                                         '_low_value, _high_value', remove=True)
 
     def stop_scan(self):
         self.dump_settings()
@@ -151,14 +162,14 @@ class ScanManager(Manager):
     def setup_scan(self):
         self._reset_graph()
 
-        # listen to detector for enabling
-        self.on_trait_change(self._toggle_detector, 'detectors:active')
+        # bind
+        self._bind_listeners()
+        # # listen to detector for enabling
+        # self.on_trait_change(self._toggle_detector, 'detectors:active')
+        # self.on_trait_change(self._update_magnet, 'magnet:dac_changed')
 
         # force update
         self.load_settings()
-
-        # bind
-        self.on_trait_change(self._update_magnet, 'magnet:dac_changed')
 
         # force position update
         self._set_position()
@@ -188,6 +199,9 @@ class ScanManager(Manager):
                 except (pickle.PickleError, EOFError, KeyError):
                     self.detector = self.detectors[-1]
                     self.isotope = self.isotopes[-1]
+                    self.warning('Failed unpickling scan settings file {}'.format(p))
+        else:
+            self.warning('No scan settings file {}'.format(p))
 
     def dump_settings(self):
         self.info('dump scan settings')
@@ -225,9 +239,31 @@ class ScanManager(Manager):
             self.debug('add spec event marker. {}'.format(msg))
             self.graph.add_visual_marker(msg, bgcolor)
 
+    def peak_center(self):
+
+        man = self.ion_optics_manager
+        if len(self.graphs)>1:
+            i=int(self.graphs[-1].split(' ')[2])+1
+        else:
+            i=1
+
+        self._log_events_enabled=False
+        if man.setup_peak_center(new=True, standalone_graph=False,
+                                 name='Peak Center {:02n}'.format(i)):
+            self.graphs.append(man.peak_center.graph)
+            def func():
+                setattr(self, '_log_events_enabled', True)
+
+            man.do_peak_center(confirm_save=True, warn=True,
+                               message='manual peakcenter',
+                               on_end=func)
+
     #private
     def _reset_graph(self):
         self.graph = self._graph_factory()
+        if len(self.graphs):
+            self.graphs.pop(0)
+        self.graphs.insert(0, self.graph)
 
         #trigger a timer reset. set to 0 then default
         self.reset_scan_timer()
@@ -243,7 +279,7 @@ class ScanManager(Manager):
 
     def _update_magnet(self, obj, name, old, new):
         # print obj, name, old, new
-        if new:
+        if new and self.magnet.detector:
             # covnert dac into a mass
             # convert mass to isotope
             #            d = self.magnet.dac
@@ -367,7 +403,8 @@ class ScanManager(Manager):
     def _isotope_changed(self, old, new):
         self.debug('isotope changed {}'.format(self.isotope))
         if self.isotope != NULL_STR and not self._check_detector_protection(old, False):
-            self._set_position()
+            t = Thread(target=self._set_position)
+            t.start()
 
     def _detector_changed(self, old, new):
         self.debug('detector changed {}'.format(self.detector))
@@ -489,7 +526,8 @@ class ScanManager(Manager):
         #                                               padding=5))
         g = SpectrometerScanGraph(container_dict=dict(bgcolor='lightgray',
                                                       padding=5),
-                                  use_vertical_markers = self.use_vertical_markers)
+                                  use_vertical_markers = self.use_vertical_markers,
+                                  name = 'Stream')
 
         n = self.graph_scan_width * 60
         bottom_pad = 50
@@ -535,8 +573,8 @@ class ScanManager(Manager):
     #===============================================================================
     @cached_property
     def _get_isotopes(self):
-        molweights = self.spectrometer.molecular_weights
-        return [NULL_STR] + sorted(molweights.keys(), key=lambda x: int(x[2:]))
+        # molweights = self.spectrometer.molecular_weights
+        return [NULL_STR] + self.spectrometer.isotopes#sorted(molweights.keys(), key=lambda x: int(x[2:]))
 
     def _validate_graph_ymin(self, v):
         try:
@@ -589,7 +627,9 @@ class ScanManager(Manager):
     # defaults
     #===============================================================================
     def _graph_default(self):
-        return self._graph_factory()
+        g = self._graph_factory()
+        self.graphs.append(g)
+        return g
 
     def _rise_rate_default(self):
         r = RiseRate(spectrometer=self.spectrometer,

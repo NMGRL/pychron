@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,6 +16,7 @@
 
 #============= enthought library imports =======================
 import os
+import shutil
 from pyface.tasks.task_window_layout import TaskWindowLayout
 import sys
 from traits.api import on_trait_change, Any
@@ -34,10 +35,70 @@ from pyface.constant import YES
 from pychron.envisage.resources import icon
 
 
+def restart():
+    os.execl(sys.executable, *([sys.executable] + sys.argv))
+
+
+class UserAction(Action):
+    def _get_current_user(self, event):
+        app = event.task.application
+        args = app.id.split('.')
+        cuser = args[-1]
+        base_id = '.'.join(args[:-1])
+        return base_id, cuser
+
+
+class SwitchUserAction(UserAction):
+    name = 'Switch User'
+    image = icon('user_suit')
+
+    def perform(self, event):
+        from pychron.envisage.user_login import get_user
+
+        base_id, cuser = self._get_current_user(event)
+        user = get_user(current=cuser)
+        if user:
+            from pychron.paths import paths
+            #set login file
+            with open(paths.login_file, 'w') as fp:
+                fp.write(user)
+            restart()
+
+
+class CopyPreferencesAction(UserAction):
+    name = 'Copy Preferences'
+
+    def perform(self, event):
+        from pychron.envisage.user_login import get_src_dest_user
+
+        base_id, cuser = self._get_current_user(event)
+        src_name, dest_names = get_src_dest_user(cuser)
+
+        if src_name:
+
+            for di in dest_names:
+                dest_id = '{}.{}'.format(base_id, di)
+                src_id = '{}.{}'.format(base_id, src_name)
+
+                root = os.path.join(os.path.expanduser('~'), '.enthought')
+
+                src_dir = os.path.join(root, src_id)
+                dest_dir = os.path.join(root, dest_id)
+                if not os.path.isdir(dest_dir):
+                    os.mkdir(dest_dir)
+
+                name = 'preferences.ini'
+                dest = os.path.join(dest_dir, name)
+                src = os.path.join(src_dir, name)
+                shutil.copyfile(src, dest)
+
+
 class RestartAction(Action):
     name = 'Restart'
+    image =icon('system-restart')
+
     def perform(self, event):
-        os.execl(sys.executable, *([sys.executable]+sys.argv))
+        restart()
 
 
 class WebAction(Action):
@@ -71,7 +132,7 @@ class NoteAction(WebAction):
 
 class DocumentationAction(WebAction):
     name = 'View Documentation'
-    # image = icon('insert-comment')
+    image = icon('document-properties')
 
     def perform(self, event):
         """

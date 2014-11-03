@@ -46,7 +46,7 @@ class ArgusSpectrometerPlugin(BaseSpectrometerPlugin):
                                    factory=lambda: SMenu(id='spectrometer.menu',
                                                          name='Spectrometer'),
                                    path='MenuBar',
-                                   before='Window',
+                                   before='window.menu',
                                    after='tools.menu'),
                     SchemaAddition(id='mftable',
                                    factory=MagnetFieldTableAction,

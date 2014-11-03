@@ -32,14 +32,15 @@ from pychron.core.ui.gui import invoke_in_main_thread
 
 class DataCollector(Consoleable):
     measurement_script = Any
-    plot_panel = Any
-    arar_age = Any
+    # plot_panel = Any
+    # arar_age = Any
+    automated_run = Any
 
     detectors = List
     check_conditionals = Bool(True)
-    truncation_conditionals = List
-    termination_conditionals = List
-    action_conditionals = List
+    # truncation_conditionals = List
+    # termination_conditionals = List
+    # action_conditionals = List
     ncounts = CInt
     #grpname = Str
 
@@ -111,6 +112,10 @@ class DataCollector(Consoleable):
 
         tt = time.time() - st
         self.debug('estimated time: {:0.3f} actual time: :{:0.3f}'.format(et, tt))
+
+    def plot_data(self, *args, **kw):
+
+        invoke_in_main_thread(self._plot_data, *args, **kw)
 
     def _measure(self, evt):
         self.debug('starting measurment')
@@ -206,9 +211,6 @@ class DataCollector(Consoleable):
                       if di.name == d), None)
         return d
 
-    def plot_data(self, *args, **kw):
-        invoke_in_main_thread(self._plot_data, *args, **kw)
-
     def _plot_baseline_for_peak_hop(self, i, x, keys, signals):
         for k, v in self.arar_age.isotopes.iteritems():
             signal = signals[keys.index(v.detector)]
@@ -225,11 +227,9 @@ class DataCollector(Consoleable):
     def _get_fit(self, cnt, det, iso):
         isotopes = self.arar_age.isotopes
         if self.is_baseline:
-            for i in isotopes.itervalues():
-                if i.detector == det:
-                    break
-            name = i.name
-            fit = i.baseline.get_fit(cnt)
+            ix = isotopes[iso]
+            fit = ix.baseline.get_fit(cnt)
+            name = iso
         else:
             try:
                 name = iso
@@ -237,6 +237,7 @@ class DataCollector(Consoleable):
             except KeyError:
                 name = '{}{}'.format(iso, det)
                 iso = isotopes[name]
+
             fit = iso.get_fit(cnt)
 
         return fit, name
@@ -248,7 +249,7 @@ class DataCollector(Consoleable):
 
         #get fit and name
         fit, name = self._get_fit(cnt, det, iso)
-
+        # print fit, name, det, iso
         graph = self.plot_panel.isotope_graph
         pid=graph.get_plotid_by_ytitle(name)
         if pid is not None:
@@ -264,6 +265,11 @@ class DataCollector(Consoleable):
                 graph.set_fit(fit, plotid=pid, series=self.fit_series_idx)
 
     def _plot_data(self, i, x, keys, signals):
+        try:
+            self.automated_run.plot_panel.counts = i
+        except AttributeError:
+            pass
+
         if globalv.experiment_debug:
             x *= (self.period_ms * 0.001) ** -1
 
@@ -284,7 +290,7 @@ class DataCollector(Consoleable):
     #===============================================================================
     def _check_conditionals(self, conditionals, cnt):
         for ti in conditionals:
-            if ti.check(self.arar_age, self._data, cnt):
+            if ti.check(self.automated_run, self._data, cnt):
                 return ti
 
     def _check_iteration(self, evt, i):
@@ -349,5 +355,23 @@ class DataCollector(Consoleable):
                 action_conditional.perform(self.measurement_script)
                 if not action_conditional.resume:
                     return 'break'
+    @property
+    def arar_age(self):
+        return self.automated_run.arar_age
 
-        #============= EOF =============================================
+    @property
+    def plot_panel(self):
+        return self.automated_run.plot_panel
+
+    @property
+    def truncation_conditionals(self):
+        return self.automated_run.truncation_conditionals
+
+    @property
+    def termination_conditionals(self):
+        return self.automated_run.termination_conditionals
+
+    @property
+    def action_conditionals(self):
+        return self.automated_run.action_conditionals
+#============= EOF =============================================

@@ -15,22 +15,12 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-import inspect
-import re
 
 from traits.api import List
-
-
-
-
-
-
-
-
-
-
 #============= standard library imports ========================
 import time
+import inspect
+import re
 #============= local library imports  ==========================
 from pychron.external_pipette.apis_manager import InvalidPipetteError
 from pychron.external_pipette.protocol import IPipetteManager
@@ -38,7 +28,6 @@ from pychron.hardware.core.exceptions import TimeoutError
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.pyscripts.pyscript import verbose_skip, makeRegistry
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
-# from pychron.lasers.laser_managers.extraction_device import ILaserManager
 from pychron.pyscripts.valve_pyscript import ValvePyScript
 from pychron.pychron_constants import EXTRACTION_COLOR
 
@@ -108,6 +97,9 @@ class ExtractionPyScript(ValvePyScript):
 
     _extraction_positions = List
 
+    def set_run_identifier(self, v):
+        self.setup_context(run_identifier=v)
+
     def get_extraction_positions(self, clear=True):
         """
             return a list of x,y,z tuples
@@ -151,6 +143,7 @@ class ExtractionPyScript(ValvePyScript):
         """
             provide default values for all the properties exposed in the script
         """
+
         self.setup_context(analysis_type='',
                            position='',
                            pattern='',
@@ -201,7 +194,7 @@ class ExtractionPyScript(ValvePyScript):
         st = time.time()
         i = 0
         while 1:
-            if self.canceled():
+            if self.is_canceled():
                 self.console_info('waitfor canceled')
                 return
 
@@ -615,7 +608,10 @@ class ExtractionPyScript(ValvePyScript):
 
     @property
     def analysis_type(self):
-        return self._get_property('analysis_type')
+        at = self._get_property('analysis_type')
+        self.debug('getting analysis type for {}. '
+                   'analysis_type={}'.format(self.run_identifier, at))
+        return at
         # return self.get_context()['analysis_type']
 
     @property
@@ -652,7 +648,9 @@ class ExtractionPyScript(ValvePyScript):
     def beam_diameter(self):
         return self._get_property('beam_diameter')
         # return self.get_context()['beam_diameter']
-
+    @property
+    def run_identifier(self):
+        return self._get_property('run_identifier')
     #===============================================================================
     # private
     #===============================================================================
@@ -724,66 +722,3 @@ class ExtractionPyScript(ValvePyScript):
         self._extraction_action([('stop_pattern', (), {})], protocol=protocol)
 
 #============= EOF ====================================
-
-#    @verbose_skip
-#    def _m_open(self, name=None, description=''):
-#
-#        if description is None:
-#            description = '---'
-#
-#        self.info('opening {} ({})'.format(name, description))
-#
-#        self._manager_action([('open_valve', (name,), dict(
-#                                                      mode='script',
-#                                                      description=description
-#                                                      ))], protocol=ELPROTOCOL)
-#
-#    @verbose_skip
-#    def close(self, name=None, description=''):
-#
-#        if description is None:
-#            description = '---'
-#
-#        self.info('closing {} ({})'.format(name, description))
-#        self._manager_action([('close_valve', (name,), dict(
-#                                                      mode='script',
-#                                                      description=description
-#                                                      ))], protocol=ELPROTOCOL)
-#    def get_context(self):
-#        d = super(ExtractionPyScript, self).get_context()
-
-#        #=======================================================================
-#        #Parameters
-#        # this are directly referencable in the script
-#        # e.g if OverlapRuns:
-#        #    or
-#        #    move_to_hole(holeid)
-#        #=======================================================================
-#
-#        d.update(self._context)
-#        return d
-
-#    def gosub(self, *args, **kw):
-#        kw['analysis_type'] = self.analysis_type
-#        kw['_context'] = self._context
-#        super(ExtractionPyScript, self).gosub(*args, **kw)
-
-#    @verbose_skip
-#    def is_open(self, name=None, description=''):
-#        self.info('is {} ({}) open?'.format(name, description))
-#        result = self._get_valve_state(name, description)
-#        if result:
-#            return result[0] == True
-#
-#    @verbose_skip
-#    def is_closed(self, name=None, description=''):
-#        self.info('is {} ({}) closed?'.format(name, description))
-#        result = self._get_valve_state(name, description)
-#        if result:
-#            return result[0] == False
-#
-#    def _get_valve_state(self, name, description):
-#        return self._manager_action([('open_valve', (name,), dict(
-#                                                      mode='script',
-#                                                      description=description
-#                                                      ))], protocol=ELPROTOCOL)

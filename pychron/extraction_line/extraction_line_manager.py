@@ -98,6 +98,8 @@ class ExtractionLineManager(Manager, Consoleable):
         bind_preference(self.network, 'inherit_state',
                         'pychron.extraction_line.inherit_state')
 
+        # self.console_bind_preferences('pychron.extraction_line')
+
     def link_valve_actuation(self, name, func, remove=False):
         if remove:
             try:
@@ -314,6 +316,12 @@ class ExtractionLineManager(Manager, Consoleable):
     def get_valve_by_name(self, name):
         if self.valve_manager is not None:
             return self.valve_manager.get_valve_by_name(name)
+
+    def get_valve_names(self):
+        names =[]
+        if self.valve_manager is not None:
+            names = self.valve_manager.get_valve_names()
+        return names
 
     def get_pressure(self, controller, name):
         if self.gauge_manager:

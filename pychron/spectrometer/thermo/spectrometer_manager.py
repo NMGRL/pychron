@@ -47,12 +47,15 @@ class ArgusSpectrometerManager(BaseSpectrometerManager):
         v = SpectrometerParametersView(model=p)
         v.edit_traits()
 
+    def make_gains_list(self):
+        spec = self.spectrometer
+        return [di.get_gain() for di in spec.detectors]
+
     def make_parameters_dict(self):
         spec = self.spectrometer
         d = dict()
         for attr, cmd in [('extraction_lens', 'ExtractionLens'), ('ysymmetry', 'YSymmetry'),
-                          ('zsymmetry', 'ZSymmetry'), ('zfocus', 'ZFocus')
-        ]:
+                          ('zsymmetry', 'ZSymmetry'), ('zfocus', 'ZFocus')]:
             v = spec.get_parameter('Get{}'.format(cmd))
             if v is not None:
                 d[attr] = v

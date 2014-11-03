@@ -24,7 +24,8 @@ from pyface.tasks.traits_dock_pane import TraitsDockPane
 #============= local library imports  ==========================
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn, TableColumn
-from pychron.envisage.tasks.pane_helpers import spacer, icon_button_editor
+from pychron.envisage.icon_button_editor import icon_button_editor
+from pychron.envisage.tasks.pane_helpers import spacer
 
 
 class ColorColumn(TableColumn):
@@ -41,7 +42,13 @@ class ColorColumn(TableColumn):
 
 class ScanPane(TraitsTaskPane):
     def traits_view(self):
-        v = View(UItem('graph', style='custom'))
+        # v = View(UItem('graph', style='custom'))
+        v = View(UItem('graphs',
+                       editor=ListEditor(deletable=True,
+                                         use_notebook=True,
+                                         page_name='.name',
+                                         style='custom'),
+                       style='custom'))
         return v
 
 

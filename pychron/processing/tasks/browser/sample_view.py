@@ -16,12 +16,15 @@
 
 # ============= enthought library imports =======================
 from traits.api import Instance
-from traitsui.api import View, UItem, VSplit, VGroup, EnumEditor,\
-    HGroup, TabularEditor, CheckListEditor, spring
+from traitsui.api import View, UItem, VSplit, VGroup, EnumEditor, \
+    HGroup, TabularEditor, CheckListEditor, spring, Group
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.ui.combobox_editor import ComboboxEditor
+from pychron.core.ui.custom_label_editor import CustomLabel
+from pychron.core.ui.qt.tabular_editor import FilterTabularEditor
 from pychron.envisage.browser.adapters import ProjectAdapter
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.tasks.browser.pane_model_view import PaneModelView
 from pychron.processing.tasks.browser.tableview import TableView, TableTools
 
@@ -37,14 +40,6 @@ class BrowserSampleView(PaneModelView):
         return TableTools(model=self.model, pane=self.pane)
 
     def traits_view(self):
-        # irrad_grp = VGroup(
-        #     UItem('irradiation_enabled', tooltip='Enable Irradiation filter'),
-        #     VGroup(UItem('irradiation', editor=EnumEditor(name='irradiations')),
-        #            UItem('level', editor=EnumEditor(name='levels')),
-        #            enabled_when='irradiation_enabled'),
-        #     show_border=True,
-        #     label='Irradiations')
-
         irrad_grp = VGroup(
             HGroup(UItem('irradiation_enabled',
                          tooltip='Enable Irradiation filter'),
@@ -54,28 +49,24 @@ class BrowserSampleView(PaneModelView):
             UItem('level',
                   enabled_when='irradiation_enabled',
                   editor=EnumEditor(name='levels')),
+            visible_when='irradiation_visible',
             show_border=True,
             label='Irradiations')
 
-        tgrp = HGroup(UItem('project_enabled', label='Enabled',
-                            tooltip='Enable Project filter'),
-                      UItem('project_filter',
-                            tooltip='Filter list of projects',
-                            label='Filter'),
-                      icon_button_editor('clear_selection_button',
-                                         'cross',
-                                         tooltip='Clear selected'))
         pgrp = UItem('projects',
-                     editor=TabularEditor(editable=False,
-                                          refresh='refresh_needed',
-                                          selected='selected_projects',
-                                          adapter=ProjectAdapter(),
-                                          multi_select=True),
-                     enabled_when='project_enabled')
+                     height=-150,
+                     editor=FilterTabularEditor(editable=False,
+                                                enabled_cb='project_enabled',
+                                                refresh='refresh_needed',
+                                                selected='selected_projects',
+                                                adapter=ProjectAdapter(),
+                                                multi_select=True))
 
-        project_grp = VGroup(tgrp,pgrp,
-                             show_border=True,
-                             label='Projects')
+        project_grp = Group(pgrp,
+                            springy=False,
+                            visible_when='project_visible',
+                            show_border=True,
+                            label='Projects')
 
         analysis_type_group = HGroup(
             UItem('use_analysis_type_filtering',
@@ -87,6 +78,7 @@ class BrowserSampleView(PaneModelView):
                   style='custom',
                   editor=CheckListEditor(cols=5,
                                          name='available_analysis_types')),
+            visible_when='analysis_types_visible',
             show_border=True,
             label='Analysis Types')
 
@@ -98,6 +90,7 @@ class BrowserSampleView(PaneModelView):
                           UItem('named_date_range'),
                           icon_button_editor('date_configure_button', 'view-calendar-month-2.png'),
                           label='Date',
+                          visible_when='date_visible',
                           show_border=True)
 
         ms_grp = HGroup(UItem('use_mass_spectrometers',
@@ -108,9 +101,19 @@ class BrowserSampleView(PaneModelView):
                               enabled_when='use_mass_spectrometers',
                               editor=CheckListEditor(name='available_mass_spectrometers',
                                                      cols=10)),
+                        visible_when='mass_spectrometer_visible',
                         label='Mass Spectrometer', show_border=True)
+        ln_grp = HGroup(
+            UItem('identifier'),
+            label='Identifier', show_border=True,
+            visible_when='identifier_visible')
 
-        top_level_filter_grp = VGroup(ms_grp,
+        top_level_filter_grp = VGroup(
+            CustomLabel('filter_label',
+                  style='custom',
+                        width=-1.0,
+                        visible_when='not filter_focus'),
+            HGroup(ms_grp, ln_grp),
                                       HGroup(project_grp, irrad_grp),
                                       analysis_type_group,
                                       date_grp)
@@ -121,7 +124,7 @@ class BrowserSampleView(PaneModelView):
                           height=0.6,
                           style='custom'))
 
-        grp = VSplit(top_level_filter_grp, g1)
+        grp = VGroup(top_level_filter_grp, g1)
         return View(grp)
 
     def unselect_projects(self, info, obj):

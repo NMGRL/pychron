@@ -1,94 +1,144 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Property, Instance, List, Either, Int, Float, HasTraits, \
-    Str, Dict
-from traitsui.api import View, UItem, HSplit, TabularEditor
-#============= standard library imports ========================
-#============= local library imports  ==========================
+    Str, Dict, Bool
+from traitsui.api import View, Item, UItem, HSplit, TabularEditor, VGroup, HGroup
 from traitsui.tabular_adapter import TabularAdapter
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+from uncertainties import nominal_value
+from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.core.helpers.formatting import floatfmt
 from pychron.processing.tasks.recall.mass_spec_recaller import MassSpecRecaller
+from pychron.pychron_constants import LIGHT_GREEN, LIGHT_RED_COLOR
 
 
 class ValueTabularAdapter(TabularAdapter):
-    columns = [('Name', 'name'), ('Value', 'value')]
-    value_text = Property
-    name_width = Int(60)
+    columns = [('Name', 'name'),
+               ('Pychron', 'lvalue'),
+               ('Diff', 'diff'),
+               ('MassSpec', 'rvalue')]
 
-    def _get_value_text(self):
-        return floatfmt(self.item.value)
+    lvalue_width = Int(100)
+    diff_width = Int(100)
+    rvalue_width = Int(100)
+    name_width = Int(100)
 
-
-class DiffTabularAdapter(TabularAdapter):
-    columns = [('Diff', 'diff')]
+    lvalue_text = Property
     diff_text = Property
+    rvalue_text = Property
+    name_width = Int(60)
+    font = '9'
+    use_bg_color = Bool(True)
+
+    def get_bg_color(self, object, trait, row, column=0):
+        color = 'white'
+        if self.use_bg_color:
+            v = self.item.diff
+            if abs(v) > 1e-8:
+                color = '#FFCCCC'
+        return color
+
+    def _get_lvalue_text(self):
+        v = self.item.lvalue
+        return self._get_value_text(v)
+
+    def _get_rvalue_text(self):
+        v = self.item.rvalue
+        return self._get_value_text(v)
+
+    def _get_value_text(self, v):
+        if isinstance(v, float):
+            v = floatfmt(v, n=8)
+        return v
 
     def _get_diff_text(self):
-        return floatfmt(self.item.diff, n=7)
+        v = self.item.diff
+        if isinstance(v, float):
+            if abs(v) < 1e-8:
+                v = ''
+            else:
+                v = floatfmt(v, n=8)
+        elif isinstance(v, bool):
+            v = '---' if v else ''
+
+        if not v:
+            v = ''
+
+        return v
 
 
 class Value(HasTraits):
     name = Str
-    value = Either(Float, Int)
-
-
-class DiffValue(HasTraits):
-    left = Instance(Value)
-    right = Instance(Value)
-    diff = Property(depends_on='[left,right].value')
+    lvalue = Either(Int, Float)
+    rvalue = Either(Int, Float)
+    diff = Property(depends_on='lvalue,rvalue')
 
     def _get_diff(self):
-        return self.left.value - self.right.value
+        return self.lvalue - self.rvalue
+
+
+class StrValue(Value):
+    lvalue = Str
+    rvalue = Str
+
+    def _get_diff(self):
+        return self.lvalue != self.rvalue
 
 
 class DiffEditor(BaseTraitsEditor):
-    #model = Any
-    #analysis_view = Instance('pychron.processing.analyses.analysis_view.AnalysisView')
-    #analysis_summary = Any
-
-    #name = Property(depends_on='analysis_view.analysis_id')
-    left_values = List
-    diff_values = List
-    right_values = List
+    values = List
 
     recaller = Instance(MassSpecRecaller, ())
     selected_row = Int
 
     left_baselines = Dict
     right_baselines = Dict
+    _right = None
+    basename = Str
+
+    diffs_only=Bool(True)
+    adapter = None
+
+    def _diffs_only_changed(self, new):
+        if new:
+            self.values = [vi for vi in self.ovalues if vi.diff]
+            self.adapter.use_bg_color=False
+        else:
+            self.adapter.use_bg_color=True
+            self.values = self.ovalues
+
+    def setup(self, left):
+        right = self._find_right(left)
+        self.adapter = ValueTabularAdapter()
+        if right:
+            self._right = right
+            return True
 
     def set_diff(self, left):
-        right = self._find_right(left)
+        self.name = '{} Diff'.format(left.record_id)
+        self.basename = left.record_id
+
+        right = self._right
 
         isotopes = ['Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36']
-        self._set_left(left, isotopes)
-        self._set_right(right, isotopes)
-
-        rr = []
-        for l, r in zip(self.left_values, self.right_values):
-            d = DiffValue(left=l, right=r)
-            rr.append(d)
-        self.diff_values = rr
-
-
-        #print self.left_baselines['Ar40'].ys ==self.right_baselines['Ar40'].ys
-        #print self.right_baselines['Ar40'].ys
+        self._set_values(left, right, isotopes)
 
     def _find_right(self, left):
         """
@@ -100,71 +150,54 @@ class DiffEditor(BaseTraitsEditor):
             return recaller.find_analysis(left.labnumber, left.aliquot,
                                           left.step)
 
-    def _set_left(self, item, isotopes):
+    def _set_values(self, left, right, isotopes):
         vs = []
         err = u'\u00b11\u03c3'
-        for a in isotopes:
-            iso = item.isotopes[a]
-            vs.append(Value(name=a, value=iso.value))
-            vs.append(Value(name=err, value=iso.error))
 
         for a in isotopes:
-            iso = item.isotopes[a]
-            vs.append(Value(name='{}Bs'.format(a), value=iso.baseline.value))
-            vs.append(Value(name=err, value=iso.baseline.error))
-            vs.append(Value(name='Nbs', value=len(iso.baseline.xs)))
-            self.left_baselines[a] = iso.baseline
+            iso = left.isotopes[a]
+            riso = right.isotopes[a]
+            vs.append(Value(name=a, lvalue=iso.value, rvalue=riso.value))
+            vs.append(Value(name=err, lvalue=iso.error, rvalue=riso.error))
+            vs.append(Value(name='N', lvalue=iso.n, rvalue=riso.n))
+            vs.append(StrValue(name='Fit', lvalue=iso.fit, rvalue=riso.fit))
+            vs.append(Value(name='IC', lvalue=nominal_value(iso.ic_factor),
+                            rvalue=nominal_value(iso.ic_factor)))
 
         for a in isotopes:
-            iso = item.isotopes[a]
-            vs.append(Value(name='{}Bl'.format(a), value=iso.blank.value))
-            vs.append(Value(name=err, value=iso.blank.error))
-
-        self.left_values = vs
-
-    def _set_right(self, item, isotopes):
-        vs = []
-        err = u'\u00b11\u03c3'
-        for a in isotopes:
-            iso = item.isotopes[a]
-            vs.append(Value(name=a, value=iso.value))
-            vs.append(Value(name=err, value=iso.error))
-
-        for a in isotopes:
-            iso = item.isotopes[a]
-            vs.append(Value(name='{}Bs'.format(a), value=iso.baseline.value))
-            vs.append(Value(name=err, value=iso.baseline.error))
-            vs.append(Value(name='Nbs', value=len(iso.baseline.xs)))
+            iso = left.isotopes[a]
+            riso = right.isotopes[a]
+            vs.append(Value(name='{}Bs'.format(a), lvalue=iso.baseline.value, rvalue=riso.baseline.value))
+            vs.append(Value(name=err, lvalue=iso.baseline.error, rvalue=riso.baseline.error))
+            vs.append(Value(name='Nbs', lvalue=iso.baseline.n, rvalue=riso.baseline.n))
             self.right_baselines[a] = iso.baseline
 
         for a in isotopes:
-            iso = item.isotopes[a]
-            vs.append(Value(name='{}Bl'.format(a), value=iso.blank.value))
-            vs.append(Value(name=err, value=iso.blank.error))
+            iso = left.isotopes[a]
+            riso = right.isotopes[a]
+            vs.append(Value(name='{}Bl'.format(a), lvalue=iso.blank.value, rvalue=riso.blank.value))
+            vs.append(Value(name=err, lvalue=iso.blank.error, rvalue=riso.blank.error))
 
-        self.right_values = vs
+        rpr = right.production_ratios
+        for k, v in left.production_ratios.iteritems():
+            vs.append(Value(name=k,lvalue=nominal_value(v),
+                            rvalue=nominal_value(rpr[k])))
+
+        rifc=right.interference_corrections
+        for k, v in left.interference_corrections.iteritems():
+            vs.append(Value(name=k, lvalue=nominal_value(v),
+                            rvalue=nominal_value(rifc[k])))
+
+        # self.values = vs
+        self.ovalues=vs[:]
+        self._diffs_only_changed(self.diffs_only)
 
     def traits_view(self):
-        l = UItem('left_values',
-                  editor=TabularEditor(adapter=ValueTabularAdapter(),
-                                       editable=False,
-                                       selected_row='selected_row'))
-        d = UItem('diff_values',
-                  editor=TabularEditor(adapter=DiffTabularAdapter(),
-                                       editable=False,
-                                       selected_row='selected_row'))
-        r = UItem('right_values',
-                  editor=TabularEditor(adapter=ValueTabularAdapter(),
-                                       editable=False,
-                                       selected_row='selected_row'))
-        v = View(HSplit(l, d, r))
+        v = View(VGroup(
+            HGroup(Item('diffs_only')),
+            UItem('values', editor=myTabularEditor(adapter=self.adapter,
+                                                      editable=False,
+                                                      selected_row='selected_row'))))
         return v
-
-        #def _get_name(self):
-        #    #if self.model and self.model.analysis_view:
-        #    if self.analysis_view:
-        #        return self.analysis_view.analysis_id
-        #    else:
-        #        return 'None'
 
 #============= EOF =============================================

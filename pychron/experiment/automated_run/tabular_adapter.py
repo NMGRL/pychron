@@ -65,6 +65,7 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter):
     post_measurement_script_width = Int(90)
     post_equilibration_script_width = Int(90)
 
+    position_text = Property
     comment_width = Int(125)
     #===========================================================================
     # number values
@@ -89,6 +90,9 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter):
     sample_text = Property
     use_cdd_warming_text = Property
 
+    def get_row_label(self, section, obj=None):
+        return section + 1
+
     def get_bg_color(self, obj, trait, row, column):
         item = self.item
         if not item.executable:
@@ -101,16 +105,30 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter):
             elif item.end_after:
                 color = COLORS['end_after']
             else:
+
                 if row % 2 == 0:
                     # color = 'white'
-                    color = self.odd_bg_color
+                    # color = self.even_bg_color
+                    color = self.even_bg_color
                 else:
-                    color = '#E6F2FF'  # light gray blue
+                    color = self.odd_bg_color #'#E6F2FF'  # light gray blue
+                # print row, color, self.odd_bg_color, self.even_bg_color
 
         return color
 
     # ============ non cell editable ============
-    def _get_labnumber_text(self, trait, item):
+    def _get_position_text(self):
+        at = self.item.analysis_type
+        p = self.item.position
+        if at != 'unknown':
+            if at == 'blank_unknown':
+                if not ',' in p:
+                    p = ''
+            else:
+                p = ''
+        return p
+
+    def _get_labnumber_text(self):
         return self.item.labnumber
 
     def _set_labnumber_text(self, v):
@@ -122,16 +140,16 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter):
     def _get_sample_text(self):
         return self.item.sample
 
-    def _get_extraction_script_text(self, trait, item):
+    def _get_extraction_script_text(self):
         return self.item.extraction_script
 
-    def _get_measurement_script_text(self, trait, item):
+    def _get_measurement_script_text(self):
         return self.item.measurement_script
 
-    def _get_post_measurement_script_text(self, trait, item):
+    def _get_post_measurement_script_text(self):
         return self.item.post_measurement_script
 
-    def _get_post_equilibration_script_text(self, trait, item):
+    def _get_post_equilibration_script_text(self):
         return self.item.post_equilibration_script
 
     def _set_extraction_script_text(self, v):
@@ -146,7 +164,10 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter):
     def _set_post_equilibration_script_text(self, v):
         pass
 
+    def _set_position_text(self,v):
+        pass
     #============================================
+
     def _get_overlap_text(self):
         o, m = self.item.overlap
         if m:
@@ -156,7 +177,7 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter):
                 return '{}'.format(o)
         return ''
 
-    def _get_aliquot_text(self, trait, item):
+    def _get_aliquot_text(self):
         al = ''
         it = self.item
         if it.aliquot != 0:
@@ -164,22 +185,22 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter):
 
         return al
 
-    def _get_ramp_duration_text(self, trait, item):
+    def _get_ramp_duration_text(self):
         return self._get_number('ramp_duration', fmt='{:n}')
 
-    def _get_beam_diameter_text(self, trait, item):
+    def _get_beam_diameter_text(self):
         return self._get_number('beam_diameter')
 
-    def _get_extract_value_text(self, trait, item):
+    def _get_extract_value_text(self):
         return self._get_number('extract_value')
 
-    def _get_duration_text(self, trait, item):
+    def _get_duration_text(self):
         return self._get_number('duration')
 
-    def _get_cleanup_text(self, trait, item):
+    def _get_cleanup_text(self):
         return self._get_number('cleanup')
 
-    def _get_use_cdd_warming_text(self, trait, item):
+    def _get_use_cdd_warming_text(self):
         return 'Yes' if self.item.use_cdd_warming else 'No'
 
     # ===============set================
@@ -201,7 +222,13 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter):
     def _set_use_cdd_warming_text(self, v):
         self.item.use_cdd_warming = to_bool(v)
 
+    def _set_aliquot_text(self, v):
+        self.item.user_defined_aliquot = int(v)
+
     # ==============validate================
+    def _validate_aliquot_text(self, v):
+        return self._validate_number(v, 'aliquot', kind=int)
+
     def _validate_extract_value_text(self, v):
         return self._validate_number(v, 'extract_value')
 
@@ -224,12 +251,11 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter):
     def _set_number(self, v, attr):
         setattr(self.item, attr, v)
 
-    def _validate_number(self, v, attr):
+    def _validate_number(self, v, attr, kind=float):
         try:
-            return float(v)
+            return kind(v)
         except ValueError:
             return getattr(self.item, attr)
-
 
     def _get_number(self, attr, fmt='{:0.2f}'):
         """
@@ -249,33 +275,30 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter):
 
     def _columns_factory(self):
         cols = [
-            #                ('', 'state'),
             ('Labnumber', 'labnumber'),
             ('Aliquot', 'aliquot'),
             ('Sample', 'sample'),
             ('Position', 'position'),
-            # #                 ('Autocenter', 'autocenter'),
-            # #                 ('Overlap', 'overlap'),
             ('Extract', 'extract_value'),
             ('Units', 'extract_units'),
 
             ('Ramp (s)', 'ramp_duration'),
             ('Duration (s)', 'duration'),
             ('Cleanup (s)', 'cleanup'),
-            ('Overlap (s)', 'overlap'),
+            # ('Overlap (s)', 'overlap'),
 
             ('Beam (mm)', 'beam_diameter'),
             ('Pattern', 'pattern'),
             ('Extraction', 'extraction_script'),
-            ('T_o Offset', 'collection_time_zero_offset'),
+            # ('T_o Offset', 'collection_time_zero_offset'),
             ('Measurement', 'measurement_script'),
             ('Truncate', 'truncate_conditional'),
-            ('SynExtraction', 'syn_extraction'),
+            # ('SynExtraction', 'syn_extraction'),
             ('CDDWarm', 'use_cdd_warming'),
             ('Post Eq.', 'post_equilibration_script'),
             ('Post Meas.', 'post_measurement_script'),
-            ('Options', 'script_options'),
-            ('Comment', 'comment')
+            # ('Options', 'script_options'),
+            # ('Comment', 'comment')
         ]
 
         return cols
@@ -287,15 +310,22 @@ class AutomatedRunMixin(object):
     """
 
     def get_menu(self, *args):
-        return MenuManager(Action(name='Move to Start', action='move_to_start'),
+        jump = MenuManager(Action(name='Jump to End', action='jump_to_end'),
+                           Action(name='Jump to Start', action='jump_to_start'),
+                           name='Jump')
+
+        move = MenuManager(Action(name='Move to Start', action='move_to_start'),
                            Action(name='Move to End', action='move_to_end'),
                            Action(name='Move to ...', action='move_to_row'),
-                           Action(name='Unselect', action='unselect'),
-                           Action(name='Make Block', action='make_block'),
-                           Action(name='Repeat Block', action='repeat_block'))
+                           name='Move')
 
-    def get_row_label(self, section, obj=None):
-        return section + 1
+        blocks = MenuManager(Action(name='Make Block', action='make_block'),
+                             Action(name='Repeat Block', action='repeat_block'),
+                             name='Blocks')
+        return MenuManager(move, jump, blocks,
+                           Action(name='Unselect', action='unselect'),
+                           Action(name='Toggle End After', action='toggle_end_after'),
+                           Action(name='Toggle Skip', action='toggle_skip'))
 
 
 class AutomatedRunSpecAdapter(AutomatedRunMixin, ExecutedAutomatedRunSpecAdapter, ):

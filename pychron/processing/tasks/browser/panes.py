@@ -18,7 +18,7 @@
 from pyface.action.menu_manager import MenuManager
 from traits.api import Int, Str, Instance
 from traitsui.api import View, UItem, VGroup, HGroup, spring, \
-    Group
+    Group, Spring
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 # from pychron.experiment.utilities.identifier import make_runid
 # from traitsui.table_column import ObjectColumn
@@ -28,7 +28,7 @@ from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traitsui.menu import Action
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.browser.adapters import BrowserAdapter, SampleAdapter
-from pychron.processing.tasks.analysis_edit.panes import icon_button_editor
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.tasks.browser.sample_view import BrowserSampleView
 from pychron.processing.tasks.browser.query_view import BrowserQueryView
 
@@ -69,7 +69,8 @@ class AnalysisAdapter(BrowserAdapter):
                    Action(name='Replace', action='replace_items', enabled=e),
                    Action(name='Append', action='append_items', enabled=e),
                    Action(name='Open', action='recall_items'),
-                   Action(name='Open Copy', action='recall_copies')]
+                   Action(name='Open Copy', action='recall_copies'),
+                   Action(name='Find References', action='find_refs')]
         # if obj.id == 'pychron.recall':
         #     actions.pop(1)
         #     actions.pop(1)
@@ -125,8 +126,16 @@ class BrowserPane(TraitsDockPane):
                                        'arrow_switch',
                                        tooltip='Toggle between Sample and Time views'),
                     spring,
+                    UItem('use_focus_switching',
+                          tooltip='Show/Hide Filters on demand'),
+                    Spring(springy=False, width=10),
+                    icon_button_editor('toggle_focus',
+                                       'arrow_switch',
+                                       enabled_when='use_focus_switching',
+                                       tooltip='Toggle Filter and Result focus'),
+                    spring,
                     CustomLabel('datasource_url', color='maroon'),
-                    spring),
+                    ),
                 main_grp),
             # handler=TablesHandler()
             # handler=UnselectTabularEditorHandler(selected_name='selected_projects')

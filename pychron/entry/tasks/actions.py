@@ -17,12 +17,10 @@
 #============= enthought library imports =======================
 from pyface.action.action import Action
 from pyface.tasks.action.task_action import TaskAction
-
-from pychron.envisage.resources import icon
-
-
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.envisage.resources import icon
+
 
 class AddMolecularWeightAction(Action):
     name = 'Add/Edit Molecular Weight'
@@ -119,6 +117,11 @@ class ImportSampleMetadataAction(TaskAction):
     method = 'import_sample_metadata'
 
 
+class ExportIrradiationAction(TaskAction):
+    name = 'Export Irradiation...'
+    method ='export_irradiation'
+
+
 class GenerateIrradiationTableAction(Action):
     name = 'Generate Irradiation Table'
     accelerator = 'Ctrl+0'
@@ -128,5 +131,18 @@ class GenerateIrradiationTableAction(Action):
 
         a = IrradiationTableWriter()
         a.make()
+
+
+class ImportIrradiationHolderAction(Action):
+    name = 'Import Irradiation Holder'
+
+    def perform(self, event):
+        from pychron.entry.loaders.irradiation_holder_loader import IrradiationHolderLoader
+        from pychron.database.isotope_database_manager import IsotopeDatabaseManager
+        man=IsotopeDatabaseManager()
+        db=man.db
+        if db.connect():
+            a = IrradiationHolderLoader()
+            a.do_import(db)
 
 #============= EOF =============================================

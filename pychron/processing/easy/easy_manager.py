@@ -19,6 +19,7 @@ from pychron.core.ui import set_toolkit
 # from pychron.core.ui.thread import Thread
 from pychron.core.ui.thread import Thread
 from pychron.easy_parser import EasyParser
+from pychron.envisage.icon_button_editor import icon_button_editor
 
 set_toolkit('qt4')
 
@@ -28,7 +29,6 @@ from traitsui.api import View, UItem, VGroup, HGroup
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.core.ui.qt.progress_editor import ProgressEditor
 from pychron.loggable import Loggable
 

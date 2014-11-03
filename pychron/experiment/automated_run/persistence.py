@@ -16,6 +16,7 @@
 
 #============= enthought library imports =======================
 import binascii
+import hashlib
 
 from traits.api import Instance, Bool, Int, Float, Str, \
     Dict, List, Time, Date, Any, Long
@@ -80,6 +81,8 @@ class AutomatedRunPersister(Loggable):
 
     spec_dict = Dict
     defl_dict = Dict
+    gains = List
+
     active_detectors = List
 
     previous_blank_id = Long
@@ -358,6 +361,9 @@ class AutomatedRunPersister(Loggable):
                 # save monitor
                 self._save_monitor_info(db, a)
 
+                # save gains
+                self._save_gains(db, a)
+
                 if self.use_analysis_grouping:
                     self._save_analysis_group(db, a)
 
@@ -367,7 +373,10 @@ class AutomatedRunPersister(Loggable):
                 self.debug('pychron save time= {:0.3f} '.format(pt))
                 file_log(pt)
 
-        if self.use_secondary_database:
+        # don't save detector_ic runs to mass spec
+        # measurement of an isotope on multiple detectors likely possible with mass spec but at this point
+        # not worth trying.
+        if self.use_secondary_database and not self.run_spec.analysis_type in ('detector_ic',):
             if not self.datahub.secondary_connect():
                 # if not self.massspec_importer or not self.massspec_importer.db.connected:
                 self.debug('Secondary database is not available')
@@ -383,6 +392,20 @@ class AutomatedRunPersister(Loggable):
                 # self.is_peak_hop = False
                 # self.plot_panel.is_peak_hop = False
                 # return True
+
+    def _save_gains(self, db, analysis):
+        h = hashlib.md5()
+
+        for v in self.gains:
+            h.update(str(v))
+        ha = h.hexdigest()
+
+        dbhist = db.get_gain_history(ha)
+        if not dbhist:
+            dbhist = db.add_gain_history(ha)
+            db.commit()
+
+        analysis.gain_history_id = dbhist.id
 
     def _save_analysis_group(self, db, analysis):
         """
@@ -478,11 +501,12 @@ class AutomatedRunPersister(Loggable):
         return fod
 
     def _save_signal_data(self, db, dbhist, analysis, dbdet, iso, m, kind):
+        if not (len(m.xs) and len(m.ys)):
+            self.debug('no data for {} {}'.format(iso.name, kind))
+            return
 
         self.debug('saving data {} {} xs={}'.format(iso.name, kind, len(m.xs)))
-
         dbiso = db.add_isotope(analysis, iso.name, dbdet, kind=kind)
-
         data = ''.join([struct.pack('>ff', x, y) for x, y in zip(m.xs, m.ys)])
         db.add_signal(dbiso, data)
 
