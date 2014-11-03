@@ -31,7 +31,9 @@ Filters from the upper levels cascade down to the lower levels. For example sele
 limits the Projects list to projects that contain analyses from Obama. The same filtering is applied to the
 Irradiation list.
 
-.. note:: Use the *Binoculars* button to force a refresh using the current filtering criteria.
+.. note:: Use the |binoc| button to force a refresh using the current filtering criteria.
+
+.. |binoc| image:: ../images/find.png
 
 Browse By Project
 ~~~~~~~~~~~~~~~~~~~~
@@ -64,12 +66,25 @@ displays all the labnumbers that match your query. Select a set of labnumbers an
 display all the analyses for those labnumbers.
 
 Both the Samples and Analyses tables are filterable. Use the dropdowns to select the attribute to filter on
-then enter a value or selected from available options.
+then enter a value or select from available options.
 
-.. note:: To configure what columns are displayed hit the "cog" button.
+.. note:: To configure what columns are displayed hit the |cog| button.
 
-.. note:: By default only labnumbers that have analyses are displayed. To show all labnumbers deselect
-   "Exclude Non-run" in the configure dialog (hit the "cog" button)
+.. warning:: By default only labnumbers that have analyses are displayed. To show all labnumbers deselect
+   "Exclude Non-run" in the configure dialog (hit the |cog| button)
+
+.. warning:: By default only 100 analyses are displayed in the Analyses table. Use the |cog| button
+   to set the results limit.
+
+Switching Focus
+~~~~~~~~~~~~~~~~~~~~
+Pychron can switch focus between a filter dominant view and a results dominant view.
+To enable focus switching use the check box at the top middle of the Browser pane.
+To switch to results view select a row in the Sample table. To toggle between views
+use the |switch| button.
+
+.. |switch| image:: ../images/arrow_switch.png
+
 
 Recall
 -------------------------
@@ -77,20 +92,37 @@ Recall an analysis by double clicking on it in the Analyses table. All tasks win
 support opening a recall tab, however for simple viewing of analyses use Data>Recall or File>Recall (CMD+R).
 This will open the Recall task
 
+Find References
+~~~~~~~~~~~~~~~~~
 To find a set of reference analyses that are near the current analysis (currently hardcored as +/-4 hours),
 right click an analysis in the Analyses table and select Find References
 
-The configure the recall view use the Configure Recall action. This will open a dialog that allows
+Configure
+~~~~~~~~~~~~~~~~
+To configure the recall view use the Configure Recall (|cog|) action. This will open a dialog that allows
 you to set font sizes and define what information is displayed.
 
+Isotope Evolutions
+~~~~~~~~~~~~~~~~~~~~
 Use Iso Fit to open graphs of the isotope evolutions in a separate tab. You can also
 right click on a set of isotope rows and pop up a standalone iso evo graph.
 
-To manual edit isotope values, e.g. intensities, blanks use Edit Data.
+Edit Data
+~~~~~~~~~~~~~
+To manual edit isotope values, e.g. intensities, blanks use Edit Data (|edit|).
+
+Diff Analyses
+~~~~~~~~~~~~~~~
+Use the Diff |diff| button to open the Analysis diff tab. This tab is used to systematically
+compare a Pychron analysis to a Mass Spec analysis. This tab displays a Pychron-Diff-MassSpec
+table.
+
+.. note:: By default only the differences between the analyses are displayed
 
 The recall window provides additional information in subviews. to switch
 to different views use the Controls pane. When a recall tab is selected
 Controls will display a list of subviews. The list depends on the type of analysis.
+
 
     1. Configure View
     2. Isotope Evolution
@@ -117,3 +149,9 @@ Use the browser to select a set of analyses.
         a. Use the append/replace button in the Unknowns Pane
         b. Right click and use append or replace
         c. drag the analyses into the unknowns pane
+
+.. |diff| image:: ../images/edit_diff.png
+          :height: 16px
+          :width: 16px
+.. |edit| image:: ../images/application-form-edit.png
+.. |cog| image:: ../images/cog.png
