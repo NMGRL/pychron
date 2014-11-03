@@ -363,7 +363,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
     def _activate_sample_browser(self):
         if not self._activated:
-            self.load_browser_date_bounds()
+            # self.load_browser_date_bounds()
             self.load_projects()
 
             db = self.manager.db

@@ -728,6 +728,7 @@ class AnalysisEditTask(BaseBrowserTask):
         super(AnalysisEditTask, self)._dclicked_sample_changed()
 
     def _active_editor_changed(self, new):
+        print new
         if new:
             if self.controls_pane:
                 tool = None

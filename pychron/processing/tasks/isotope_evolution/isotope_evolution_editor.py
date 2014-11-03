@@ -5,31 +5,31 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 #from chaco.label import Label
-import time
 
-from traits.api import Instance, Bool, Any
+from traits.api import Instance, Bool, Any, Event
 from traitsui.api import View, UItem, InstanceEditor
 
 #============= standard library imports ========================
+import time
 from numpy import Inf, polyfit
-
 #============= local library imports  ==========================
 from pychron.graph.graph import Graph
 from pychron.core.helpers.fits import convert_fit
 from pychron.processing.fits.iso_evo_fit_selector import IsoEvoFitSelector
 from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 #from pychron.core.ui.thread import Thread
+
 
 def fits_equal(dbfit, fit, fod):
     """
@@ -44,6 +44,86 @@ def fits_equal(dbfit, fit, fod):
 
     return same
 
+
+class IsoEvoGraph(Graph):
+    _eq_visible_dict = None
+    _eq_only_dict = None
+    replot_needed = Event
+    def get_child_context_menu_actions(self):
+        sid = self.selected_plotid
+        v=False
+        try:
+            v = self._eq_visible_dict[sid]
+        except KeyError:
+            pass
+        except TypeError:
+            self._eq_visible_dict = {sid: False}
+
+        if v:
+            a = self.action_factory('Hide Equilibration', '_hide_equilibration')
+        else:
+            a = self.action_factory('Show Equilibration', '_show_equilibration')
+
+        v=False
+        try:
+            v = self._eq_only_dict[sid]
+        except KeyError:
+            pass
+        except TypeError:
+            self._eq_only_dict = {sid: False}
+
+        if v:
+            b = self.action_factory('Hide Equilibration Only', '_hide_equilibration_only')
+        else:
+            b = self.action_factory('Show Equilibration Only', '_show_equilibration_only')
+
+        return [a, b]
+
+    def _hide_equilibration(self):
+        self._toggle_eq(False)
+
+    def _show_equilibration(self):
+        self._toggle_eq(True)
+
+    def _toggle_eq(self, v):
+        sid = self.selected_plotid
+        try:
+            self._eq_visible_dict[sid] = v
+        except AttributeError:
+            self._eq_visible_dict = {sid: v}
+        self.replot_needed=True
+
+    def _hide_equilibration_only(self):
+        self._toggle_eq_only(False)
+
+    def _show_equilibration_only(self):
+        self._toggle_eq_only(True)
+
+    def _toggle_eq_only(self, v):
+        sid = self.selected_plotid
+        try:
+            self._eq_only_dict[sid] = v
+        except AttributeError:
+            self._eq_only_dict = {sid: v}
+        self.replot_needed=True
+
+    def set_dicts(self, d):
+        self._eq_visible_dict,self._eq_only_dict=d
+
+    def get_dicts(self):
+        return self._eq_visible_dict, self._eq_only_dict
+
+    def get_eq_visible(self, idx):
+        try:
+            self._eq_visible_dict[idx]
+        except (TypeError, KeyError):
+            return False
+
+    def get_eq_only_visible(self, idx):
+        try:
+            self._eq_only_dict[idx]
+        except (TypeError, KeyError):
+            return False
 
 class IsotopeEvolutionEditor(GraphEditor):
     component = Any
@@ -280,67 +360,74 @@ class IsotopeEvolutionEditor(GraphEditor):
                      plotid=i)
         return xs
 
+    def _plot_ratio(self, add_tools, fd, fit, g, i, isok, trunc, unk):
+        # correct for baseline when plotting ratios
+        n, d = isok.split('/')
+        niso, diso = unk.isotopes[n], unk.isotopes[d]
+        nsniff, dsniff = niso.sniff, diso.sniff
+        nbs, dbs = niso.baseline.value, diso.baseline.value
+        if nsniff and dsniff:
+            offset = niso.time_zero_offset
+            nxs = nsniff.xs - offset
+            ys = (nsniff.ys - nbs) / (dsniff.ys - dbs)
+
+            g.new_series(nxs, ys,
+                         plotid=i,
+                         type='scatter',
+                         fit=False)
+        xs = niso.offset_xs
+        ys = (niso.ys - nbs) / (diso.ys - dbs)
+        g.new_series(xs, ys,
+                     fit=(fit.fit, fit.error_type),
+                     filter_outliers_dict=fd,
+                     truncate=trunc,
+                     add_tools=add_tools,
+                     plotid=i)
+        return xs
+
+    def _get_sniff_visible(self, fit, i):
+        v=self.component.get_eq_visible(i)
+        return fit.use_sniff or v
+
     def _plot_signal(self, add_tools, fd, fit, trunc, g, i, isok, unk):
-
-        display_sniff = True
+        xs=[]
         if "/" in isok:
-
-            #correct for baseline when plotting ratios
-            n, d = isok.split('/')
-            niso, diso = unk.isotopes[n], unk.isotopes[d]
-            nsniff, dsniff = niso.sniff, diso.sniff
-
-            nbs, dbs = niso.baseline.value, diso.baseline.value
-
-            if nsniff and dsniff:
-                offset = niso.time_zero_offset
-                nxs = nsniff.xs - offset
-                ys = (nsniff.ys - nbs) / (dsniff.ys - dbs)
-
-                g.new_series(nxs, ys,
-                             plotid=i,
-                             type='scatter',
-                             fit=False)
-
-            xs = niso.offset_xs
-            ys = (niso.ys - nbs) / (diso.ys - dbs)
-            g.new_series(xs, ys,
-                         fit=(fit.fit, fit.error_type),
-                         filter_outliers_dict=fd,
-                         truncate=trunc,
-                         add_tools=add_tools,
-                         plotid=i)
-
-            return xs
+            return self._plot_ratio(add_tools, fd, fit, g, i, isok, trunc, unk)
         else:
+            eq_only = self.component.get_eq_only_visible(i)
+            if not eq_only:
+                display_sniff = self._get_sniff_visible(fit, i)
+            else:
+                display_sniff=True
+
             if not isok in unk.isotopes:
                 return []
             iso = unk.isotopes[isok]
-            if display_sniff:
-                sniff = iso.sniff
-                offset = iso.time_zero_offset
-
-                if sniff:
-                    g.new_series(sniff.xs - offset, sniff.ys,
-                                 plotid=i,
-                                 type='scatter',
-                                 fit=False)
 
             iso.time_zero_offset = self.tool.time_zero_offset
 
-            iso.trait_setq(fit=fit.fit, error_type=fit.error_type)
-            iso.filter_outlier_dict = fd
+            if display_sniff:
+                sniff = iso.sniff
+                if sniff:
+                    xs=sniff.offset_xs
+                    g.new_series(xs, sniff.ys,
+                                 plotid=i,
+                                 type='scatter',
+                                 fit=False)
+            if not eq_only:
+                iso.trait_setq(fit=fit.fit, error_type=fit.error_type)
+                iso.filter_outlier_dict = fd
 
-            xs, ys = iso.offset_xs, iso.ys
-            g.new_series(xs, ys,
-                         fit=(fit.fit, fit.error_type),
-                         filter_outliers_dict=fd,
-                         truncate=trunc,
-                         add_tools=add_tools,
-                         plotid=i)
+                xs, ys = iso.offset_xs, iso.ys
+                g.new_series(xs, ys,
+                             fit=(fit.fit, fit.error_type),
+                             filter_outliers_dict=fd,
+                             truncate=trunc,
+                             add_tools=add_tools,
+                             plotid=i)
 
-            # iso.set_fit(fit, notify=False)
-            iso.dirty = True
+                # iso.set_fit(fit, notify=False)
+                iso.dirty = True
             return xs
 
     def _rebuild_graph(self):
@@ -357,6 +444,11 @@ class IsotopeEvolutionEditor(GraphEditor):
         #
         # if prog:
         #     prog.close()
+    _new_container=True
+    def simple_rebuild_graph(self):
+        self._new_container=False
+        self.rebuild_graph()
+        self._new_container=True
 
     def __rebuild_graph(self):
         fits = list(self._graph_generator())
@@ -373,8 +465,17 @@ class IsotopeEvolutionEditor(GraphEditor):
                 if c >= 7:
                     r += 1
 
+        # if self._new_container:
         cg = self._container_factory((r, c))
+        if self.component:
+            self.component.on_trait_change(self.rebuild_graph, 'replot_needed', remove=True)
+            cg.set_dicts(self.component.get_dicts())
+
         self.component = cg
+        cg.on_trait_change(self._rebuild_graph, 'replot_needed')
+        # else:
+        #     self.component.plotcontainer.remove(self.component.plotcontainer.components)
+        #     self.graphs=[]
 
         add_tools = not self.tool.auto_update or n == 1
 
@@ -440,10 +541,11 @@ class IsotopeEvolutionEditor(GraphEditor):
 
     def _component_default(self):
         g = self._container_factory((1, 1))
+
         return g
 
     def _container_factory(self, shape):
-        g = Graph(container_dict=dict(kind='g', shape=shape, spacing=(1, 1)))
+        g = IsoEvoGraph(container_dict=dict(kind='g', shape=shape, spacing=(1, 1)))
         return g
 
     #============= deprecated =============================================
