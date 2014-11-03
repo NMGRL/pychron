@@ -23,6 +23,7 @@ import apptools.sweet_pickle as pickle
 import os
 #============= local library imports  ==========================
 from pychron.envisage.icon_button_editor import icon_button_editor
+from pychron.globals import globalv
 from pychron.processing.plotters.options.base import BasePlotterOptions
 from pychron.processing.plotters.options.dashboard import DashboardOptions
 from pychron.processing.plotters.options.ideogram import IdeogramOptions
@@ -64,7 +65,9 @@ class PlotterOptionsManager(HasTraits):
         return po.dump_yaml()
 
     def _get_persistence_root(self):
-        return os.path.join(paths.plotter_options_dir, self.persistence_name)
+        return os.path.join(paths.plotter_options_dir,
+                            globalv.username,
+                            self.persistence_name)
 
     def close(self):
         self.save()

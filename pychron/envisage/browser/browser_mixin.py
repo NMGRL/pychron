@@ -31,6 +31,7 @@ from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.envisage.browser.date_selector import DateSelector
 from pychron.envisage.browser.record_views import ProjectRecordView, LabnumberRecordView, AnalysisGroupRecordView
 from pychron.envisage.browser.table_configurer import SampleTableConfigurer
+from pychron.persistence_loggable import PersistenceLoggable
 from pychron.paths import paths
 
 
@@ -70,7 +71,7 @@ def extract_mass_spectrometer_name(name):
         return ms
 
 
-class BrowserMixin(ColumnSorterMixin):
+class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
     projects = List
     oprojects = List
     project_enabled = Bool(True)
@@ -139,6 +140,10 @@ class BrowserMixin(ColumnSorterMixin):
     workspace = None
     db = Property
 
+    pattributes = ('project_enabled','sample_view_active','use_low_post', 'use_high_post',
+                         'use_named_date_range', 'named_date_range',
+                         'low_post', 'high_post')
+
     def _get_db(self):
         if self.use_workspace:
             return self.workspace.index_db
@@ -146,46 +151,58 @@ class BrowserMixin(ColumnSorterMixin):
             return self.manager.db
 
     def dump_browser(self):
+        self.dump()
         self.dump_browser_selection()
-        self.dump_browser_options()
-
-    # persistence
-    def _browser_options_hook(self, d):
-        pass
-
-    def dump_browser_options(self):
-        d = {
-            # 'include_monitors': self.include_monitors,
-            # 'include_unknowns': self.include_unknowns,
-            'project_enabled': self.project_enabled,
-            'sample_view_active': self.sample_view_active}
-        self._browser_options_hook(d)
-
-        p = os.path.join(paths.hidden_dir, 'browser_options')
-        with open(p, 'w') as fp:
-            pickle.dump(d, fp)
 
     def load_browser_options(self):
-        d = {}
-        p = os.path.join(paths.hidden_dir, 'browser_options')
-        if os.path.isfile(p):
-            with open(p, 'r') as fp:
-                try:
-                    d = pickle.load(fp)
-                except Exception:
-                    pass
-        if d:
-            self.trait_set(**d)
+        self.load()
 
-    def load_browser_date_bounds(self):
-        obj = self._get_browser_persistence()
-        if obj:
-            for attr in ('use_low_post', 'use_high_post',
-                         'use_named_date_range', 'named_date_range',
-                         'low_post', 'high_post', ):
-                sd = obj.get(attr)
-                if sd:
-                    setattr(self, attr, sd)
+    # persistence
+    @property
+    def persistence_path(self):
+        return os.path.join(paths.hidden_dir, 'browser_options')
+
+    @property
+    def selection_persistence_path(self):
+        p=os.path.join(paths.hidden_dir, 'browser_selection')
+        return self._make_persistence_path(p)
+
+    # def _browser_options_hook(self, d):
+    #     pass
+
+    # def dump_browser_options(self):
+    #     d = {
+    #         # 'include_monitors': self.include_monitors,
+    #         # 'include_unknowns': self.include_unknowns,
+    #         'project_enabled': self.project_enabled,
+    #         'sample_view_active': self.sample_view_active}
+    #     self._browser_options_hook(d)
+    #
+    #     p = os.path.join(paths.hidden_dir, 'browser_options')
+    #     with open(p, 'w') as fp:
+    #         pickle.dump(d, fp)
+
+    # def load_browser_options(self):
+    #     d = {}
+    #     p = os.path.join(paths.hidden_dir, 'browser_options')
+    #     if os.path.isfile(p):
+    #         with open(p, 'r') as fp:
+    #             try:
+    #                 d = pickle.load(fp)
+    #             except Exception:
+    #                 pass
+    #     if d:
+    #         self.trait_set(**d)
+
+    # def load_browser_date_bounds(self):
+    #     obj = self._get_browser_persistence()
+    #     if obj:
+    #         for attr in ('use_low_post', 'use_high_post',
+    #                      'use_named_date_range', 'named_date_range',
+    #                      'low_post', 'high_post', ):
+    #             sd = obj.get(attr)
+    #             if sd:
+    #                 setattr(self, attr, sd)
 
     def load_browser_selection(self):
         # self.debug('$$$$$$$$$$$$$$$$$$$$$ Loading browser selection')
@@ -213,9 +230,10 @@ class BrowserMixin(ColumnSorterMixin):
                    low_post=self.low_post,
                    high_post=self.high_post)
 
-        p = os.path.join(paths.hidden_dir, 'browser_selection')
+        # p = os.path.join(paths.hidden_dir, 'browser_selection')
+
         try:
-            with open(p, 'wb') as fp:
+            with open(self.selection_persistence_path, 'wb') as fp:
                 pickle.dump(obj, fp)
         except (pickle.PickleError, EOFError, OSError), e:
             #self.debug('Failed dumping previous browser selection. {}'.format(e))
@@ -469,7 +487,8 @@ class BrowserMixin(ColumnSorterMixin):
 
     # persistence private
     def _get_browser_persistence(self):
-        p = os.path.join(paths.hidden_dir, 'browser_selection')
+        p=self.selection_persistence_path
+        # p = os.path.join(paths.hidden_dir, 'browser_selection')
         if os.path.isfile(p):
             try:
                 with open(p, 'rb') as fp:

@@ -23,7 +23,7 @@ from ConfigParser import ConfigParser
 #============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_directory2
 from pychron.entry.user_entry import UserEntry
-from pychron.experiment.utilities.persistence_loggable import PersistenceLoggable
+from pychron.persistence_loggable import PersistenceLoggable
 from pychron.globals import globalv
 from pychron.pychron_constants import NULL_STR, LINE_STR
 from pychron.paths import paths

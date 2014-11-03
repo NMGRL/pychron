@@ -56,12 +56,14 @@ def unique_list(seq):
     seen_add = seen.add
     return [x for x in seq if not (x.name in seen or seen_add(x.name))]
 
-NCHARS=60
-REG=re.compile(r'.'*NCHARS)
+
+NCHARS = 60
+REG = re.compile(r'.' * NCHARS)
+
 
 class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     filter_focus = Bool(True)
-    use_focus_switching=Bool(True)
+    use_focus_switching = Bool(True)
     filter_label = Property(Str, depends_on='filter_focus')
 
     irradiation_visible = Property(depends_on='filter_focus')
@@ -69,7 +71,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     date_visible = Property(depends_on='filter_focus')
     mass_spectrometer_visible = Property(depends_on='filter_focus')
     identifier_visible = Property(depends_on='filter_focus')
-    project_visible =Property(depends_on='filter_focus')
+    project_visible = Property(depends_on='filter_focus')
 
     analysis_table = Instance(AnalysisTable)
     # danalysis_table = Instance(AnalysisTable)
@@ -123,8 +125,12 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
     bin_tol_hrs = Int
 
+    def __init__(self, *args, **kw):
+        super(BaseBrowserTask, self).__init__(*args, **kw)
+        self.pattributes += ('irradiation_enabled', 'use_focus_switching')
+
     def _get_filter_label(self):
-        ss=[]
+        ss = []
         if self.identifier:
             ss.append('Identifier={}'.format(self.identifier))
 
@@ -133,40 +139,40 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
         if self.project_enabled:
             if self.selected_projects:
-                s='Project= {}'.format(','.join([s.name for s in self.selected_projects]))
+                s = 'Project= {}'.format(','.join([s.name for s in self.selected_projects]))
                 ss.append(s)
 
         if self.irradiation_enabled:
             if self.irradiation:
-                s='Irradiation= {}'.format(self.irradiation)
+                s = 'Irradiation= {}'.format(self.irradiation)
                 ss.append(s)
 
         if self.use_analysis_type_filtering:
             if self.analysis_include_types:
-                s='Types= {}'.format(self.analysis_include_types)
+                s = 'Types= {}'.format(self.analysis_include_types)
                 ss.append(s)
 
         if self.use_low_post:
             # s='>={}'.format(self.low_post.strftime('%m-%d-%Y %H:%M'))
-            s='>={}'.format(self.low_post)
+            s = '>={}'.format(self.low_post)
             ss.append(s)
 
         if self.use_high_post:
-            s='<={}'.format(self.high_post)
+            s = '<={}'.format(self.high_post)
             ss.append(s)
 
         if self.use_named_date_range:
             ss.append(self.named_date_range)
 
-        txt=''
+        txt = ''
         if ss:
-            txt=' + '.join(ss)
+            txt = ' + '.join(ss)
 
-        n=len(txt)
-        if n>NCHARS:
-            lines=REG.findall(txt)
-            nn=NCHARS*len(lines)
-            if nn<n:
+        n = len(txt)
+        if n > NCHARS:
+            lines = REG.findall(txt)
+            nn = NCHARS * len(lines)
+            if nn < n:
                 lines.append(txt[nn:])
             return '\n'.join(lines)
 
@@ -318,9 +324,9 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             ps = self._make_project_records(ps,
                                             ms, include_recent_first=True)
             self.projects = ps
-            sp=[]
+            sp = []
             for si in self.selected_projects:
-                cp = next((p for p in ps if p.name==si), None)
+                cp = next((p for p in ps if p.name == si), None)
                 if cp:
                     sp.append(cp)
 
@@ -424,7 +430,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     # def _ok_query(self):
     # ms = self.mass_spectrometer not in (DEFAULT_SPEC, 'None')
     # at = self.analysis_type not in (DEFAULT_AT, 'None')
-    #     return ms and at
+    # return ms and at
 
     def _ok_ed(self):
         return self.extraction_device not in (DEFAULT_ED, 'None')
@@ -438,9 +444,9 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     def _graphical_filter_hook(self, ans, is_append):
         pass
 
-    def _browser_options_hook(self, d):
-        d['irradiation_enabled'] = self.irradiation_enabled
-        d['use_focus_switching'] = self.use_focus_switching
+    # def _browser_options_hook(self, d):
+    #     d['irradiation_enabled'] = self.irradiation_enabled
+    #     d['use_focus_switching'] = self.use_focus_switching
 
     def _selected_projects_change_hook(self, names):
         if not self._top_level_filter:
@@ -535,7 +541,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             self.data_selector.execute_query()
 
     def _toggle_focus_fired(self):
-        self.filter_focus=not self.filter_focus
+        self.filter_focus = not self.filter_focus
 
     def _toggle_view_fired(self):
         self.sample_view_active = not self.sample_view_active
@@ -771,7 +777,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     def _get_visible(self, default):
         ret = True
         if self.use_focus_switching and not self.filter_focus:
-            ret = False#default
+            ret = False  #default
         return ret
 
     def _analysis_table_default(self):

@@ -26,7 +26,7 @@ from pychron.experiment.action_editor import ActionEditor, ActionModel
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.queue.experiment_block import ExperimentBlock
 from pychron.experiment.utilities.frequency_edit_view import FrequencyModel
-from pychron.experiment.utilities.persistence_loggable import PersistenceLoggable
+from pychron.persistence_loggable import PersistenceLoggable
 from pychron.experiment.utilities.position_regex import SLICE_REGEX, PSLICE_REGEX, \
     SSLICE_REGEX, TRANSECT_REGEX, POSITION_REGEX, CSLICE_REGEX, XY_REGEX
 from pychron.pychron_constants import NULL_STR, SCRIPT_KEYS, SCRIPT_NAMES, LINE_STR

@@ -16,16 +16,19 @@
 
 # ============= enthought library imports =======================
 import os
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import pickle
 #============= local library imports  ==========================
+from pychron.globals import globalv
 from pychron.loggable import Loggable
 
 
-class PersistenceLoggable(Loggable):
+class PersistenceMixin(object):
+    pattributes = None
+
     def get_persistence_path(self):
         try:
-            return self.persistence_path
+            return self._make_persistence_path(self.persistence_path)
         except (AttributeError, NotImplementedError):
             self.warning('persistence path not implemented')
 
@@ -34,13 +37,13 @@ class PersistenceLoggable(Loggable):
         if not self.pattributes:
             raise NotImplementedError
 
-        p=self.get_persistence_path()
+        p = self.get_persistence_path()
         self.debug('{} {}'.format(p, os.path.isfile(p)))
         if p and os.path.isfile(p):
-            d=None
+            d = None
             with open(p, 'r') as fp:
                 try:
-                    d=pickle.load(fp)
+                    d = pickle.load(fp)
                 except (pickle.PickleError, EOFError):
                     self.warning('Invalid pickle file {}'.format(p))
             if d:
@@ -53,25 +56,40 @@ class PersistenceLoggable(Loggable):
                     except KeyError:
                         pass
 
-
     def dump(self, verbose=False):
         if not self.pattributes:
             raise NotImplementedError
 
-        p=self.get_persistence_path()
+        p = self.get_persistence_path()
         if p:
 
             if verbose:
                 self.debug('***************** dumping')
-                d={}
+                d = {}
                 for a in self.pattributes:
-                    v=getattr(self, a)
+                    v = getattr(self, a)
                     self.debug('dump {}="{}"'.format(a, v))
-                    d[a]=v
+                    d[a] = v
             else:
                 d = {a: getattr(self, a) for a in self.pattributes}
             with open(p, 'w') as fp:
                 pickle.dump(d, fp)
+
+    def _make_persistence_path(self, p):
+        return '{}.{}'.format(p, globalv.username)
+
+    def warning(self, *args, **kw):
+        pass
+
+    def debug(self, *args, **kw):
+        pass
+
+    def info(self, *args, **kw):
+        pass
+
+
+class PersistenceLoggable(Loggable, PersistenceMixin):
+    pass
 
 #============= EOF =============================================
 
