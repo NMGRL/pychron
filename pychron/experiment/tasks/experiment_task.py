@@ -400,7 +400,7 @@ class ExperimentEditorTask(EditorTask):
         # ask user if ok to close windows
         windows = []
         names = []
-        for wi in self.application.windows:
+        for wi in self.window.application.windows:
             wid = wi.active_task.id
             if wid == 'pychron.spectrometer':
                 windows.append(wi)

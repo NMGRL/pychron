@@ -145,6 +145,11 @@ class PeakHopCollector(DataCollector):
                                                 update_isotopes=not is_baseline,
                                                 remove_non_active=False)
                 if change:
+                    try:
+                        self.automated_run.plot_panel.counts+=int(settle)
+                    except AttributeError:
+                        pass
+
                     msg = 'delaying {} for detectors to settle after peak hop'.format(settle)
                     self.parent.wait(settle, msg)
                     self.debug(msg)

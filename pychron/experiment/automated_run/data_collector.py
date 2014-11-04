@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -61,7 +61,7 @@ class DataCollector(Consoleable):
     _warned_no_det = None
 
     collection_kind = Enum(('sniff', 'signal', 'baseline'))
-    refresh_age=False
+    refresh_age = False
     _data = None
 
     def wait(self):
@@ -127,7 +127,7 @@ class DataCollector(Consoleable):
         self.debug('measurement finished')
 
     def _iter(self, con, evt, i, prev=0):
-        result =self._check_iteration(evt, i)
+        result = self._check_iteration(evt, i)
 
         if not result:
             if not self._iter_hook(con, i):
@@ -136,15 +136,15 @@ class DataCollector(Consoleable):
 
             ot = time.time()
             p = self.period_ms * 0.001
-            t = Timer(max(0, p-prev), self._iter, args=(con, evt, i + 1,
-                                           time.time() - ot))
+            t = Timer(max(0, p - prev), self._iter, args=(con, evt, i + 1,
+                                                          time.time() - ot))
 
             t.name = 'iter_{}'.format(i + 1)
             t.start()
 
         else:
-            if result=='cancel':
-                self.canceled=True
+            if result == 'cancel':
+                self.canceled = True
 
             #self.debug('no more iter')
             evt.set()
@@ -177,10 +177,11 @@ class DataCollector(Consoleable):
     def _update_baseline_peak_hop(self, x, keys, signals):
         a = self.arar_age
         for iso in self.arar_age.isotopes.itervalues():
-            signal=self._get_signal(keys, signals, iso.detector)
+            signal = self._get_signal(keys, signals, iso.detector)
             if signal is not None:
                 if not a.append_data(iso.name, iso.detector, x, signal, 'baseline'):
-                    self.debug('baselines - failed appending data for {}. not a current isotope {}'.format(iso, a.isotope_keys))
+                    self.debug('baselines - failed appending data for {}. not a current isotope {}'.format(iso,
+                                                                                                           a.isotope_keys))
 
     def _update_isotopes(self, x, keys, signals):
         a = self.arar_age
@@ -193,7 +194,8 @@ class DataCollector(Consoleable):
                 signal = self._get_signal(keys, signals, dn.name)
                 if signal is not None:
                     if not a.append_data(iso, dn.name, x, signal, kind):
-                        self.debug('{} - failed appending data for {}. not a current isotope {}'.format(kind, iso, a.isotope_keys))
+                        self.debug('{} - failed appending data for {}. not a current isotope {}'.format(kind, iso,
+                                                                                                        a.isotope_keys))
 
     def _get_signal(self, keys, signals, det):
         try:
@@ -202,7 +204,7 @@ class DataCollector(Consoleable):
             if not det in self._warned_no_det:
                 self.warning('Detector {} is not available'.format(det))
                 self._warned_no_det.append(det)
-                self.canceled=True
+                self.canceled = True
                 self.stop()
 
     def _get_detector(self, d):
@@ -251,7 +253,7 @@ class DataCollector(Consoleable):
         fit, name = self._get_fit(cnt, det, iso)
         # print fit, name, det, iso
         graph = self.plot_panel.isotope_graph
-        pid=graph.get_plotid_by_ytitle(name)
+        pid = graph.get_plotid_by_ytitle(name)
         if pid is not None:
             # print self.series_idx, self.fit_series_idx
             # print graph.plots[pid].plots
@@ -266,7 +268,10 @@ class DataCollector(Consoleable):
 
     def _plot_data(self, i, x, keys, signals):
         try:
-            self.automated_run.plot_panel.counts = i
+            if i <=1:
+                self.automated_run.plot_panel.counts = 0
+            else:
+                self.automated_run.plot_panel.counts += 1
         except AttributeError:
             pass
 
@@ -349,12 +354,14 @@ class DataCollector(Consoleable):
             action_conditional = self._check_conditionals(self.action_conditionals, i)
             if action_conditional:
                 self.info(
-                    'action conditional {}. measurement iteration executed {}/{} counts'.format(action_conditional.message,
-                                                                                              j, original_counts),
+                    'action conditional {}. measurement iteration executed {}/{} counts'.format(
+                        action_conditional.message,
+                        j, original_counts),
                     color='red')
                 action_conditional.perform(self.measurement_script)
                 if not action_conditional.resume:
                     return 'break'
+
     @property
     def arar_age(self):
         return self.automated_run.arar_age
@@ -374,4 +381,5 @@ class DataCollector(Consoleable):
     @property
     def action_conditionals(self):
         return self.automated_run.action_conditionals
+
 #============= EOF =============================================

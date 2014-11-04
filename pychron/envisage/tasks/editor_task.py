@@ -125,6 +125,9 @@ class BaseEditorTask(BaseManagerTask):
     def _open_file(self, path, **kw):
         pass
 
+    def _open_abort(self):
+        pass
+
     def _pre_open_hook(self):
         pass
 

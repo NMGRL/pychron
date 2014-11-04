@@ -280,8 +280,8 @@ class ConnectionStatusPane(TraitsDockPane):
     name = 'Connection Status'
 
     def traits_view(self):
-        cols = [ObjectColumn(name='name'),
-                CheckboxColumn(name='connected')]
+        cols = [ObjectColumn(name='name', editable=False),
+                CheckboxColumn(name='connected', editable=False)]
         v = View(UItem('connectables',
                        editor=TableEditor(editable=False,
                                           sortable=False,

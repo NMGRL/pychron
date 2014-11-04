@@ -63,7 +63,7 @@ from pychron.database.orms.isotope.meas import meas_AnalysisTable, \
     meas_ExperimentTable, meas_ExtractionTable, meas_IsotopeTable, meas_MeasurementTable, \
     meas_SpectrometerParametersTable, meas_SpectrometerDeflectionsTable, \
     meas_SignalTable, meas_PeakCenterTable, meas_PositionTable, \
-    meas_ScriptTable, meas_MonitorTable
+    meas_ScriptTable, meas_MonitorTable, meas_GainHistoryTable
 
 # proc_
 from pychron.database.orms.isotope.proc import proc_DetectorIntercalibrationHistoryTable, \
@@ -227,7 +227,7 @@ class IsotopeAdapter(DatabaseAdapter):
 
             return it
 
-    #===========================================================================
+    # ===========================================================================
     # adders
     #===========================================================================
     def add_data_reduction_tag(self, name, comment, user=None):
@@ -955,9 +955,20 @@ class IsotopeAdapter(DatabaseAdapter):
         #             ms.sensitivities.append(si)
         return ms
 
+    def add_gain_history(self, ha):
+        item = meas_GainHistoryTable(hash=ha)
+        user = self.get_user(self.save_username)
+        if user:
+            item.user_id = user.id
+
+        return self._add_item(item)
+
     #===========================================================================
     # getters
     #===========================================================================
+    def get_gain_history(self, v):
+        return self._retrieve_item(meas_GainHistoryTable, v, key='hash')
+
     def get_blanks(self, ms=None, limit=100):
         joins = (meas_AnalysisTable, gen_AnalysisTypeTable)
         filters = (gen_AnalysisTypeTable.name.like('blank%'),)
@@ -2500,7 +2511,7 @@ if __name__ == '__main__':
     logging_setup('ia')
     ia = IsotopeAdapter(
 
-        #                        name='isotopedb_dev_migrate',
+        # name='isotopedb_dev_migrate',
         #                        name='isotopedb_FC2',
         name='isotopedb_dev',
         username='root',
@@ -2514,9 +2525,9 @@ if __name__ == '__main__':
 
     if ia.connect():
         dbs = IsotopeAnalysisSelector(db=ia,
-                                      #                                      style='simple'
+                                      # style='simple'
         )
-        #        repo = Repository(root=paths.isotope_dir)
+        # repo = Repository(root=paths.isotope_dir)
         #        repo = Repository(root='/Users/ross/Sandbox/importtest')
         #        repo = ZIPRepository(root='/Users/ross/Sandbox/importtest/archive004.zip')
         #        dbs.set_data_manager(kind='local',
