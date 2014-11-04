@@ -733,7 +733,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
     def _project_date_bins(self, identifier):
         db = self.db
-        hours = self.reference_hours_padding
+        hours = self.search_criteria.reference_hours_padding
         with db.session_ctx():
             for pp in self.selected_projects:
                 for li, hi in db.get_project_date_bins(identifier, pp.name, hours):

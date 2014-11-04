@@ -2431,8 +2431,11 @@ class IsotopeAdapter(DatabaseAdapter):
     def _get_date_range(self, q, hours=0):
         lan = q.order_by(meas_AnalysisTable.analysis_timestamp.asc()).first()
         han = q.order_by(meas_AnalysisTable.analysis_timestamp.desc()).first()
+
+        lan=datetime.now() if not lan else lan[0]
+        han=datetime.now() if not han else han[0]
         td=timedelta(hours=hours)
-        return lan[0]-td, han[0]+td
+        return lan-td, han+td
 
 if __name__ == '__main__':
     from pychron.core.helpers.logger_setup import logging_setup

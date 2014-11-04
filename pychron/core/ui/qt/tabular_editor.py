@@ -729,6 +729,41 @@ class _FilterTabularEditor(_TabularEditor):
         self.proxyModel.setFilterRegExp(reg)
         self.control.button.setEnabled(bool(ft))
 
+    def _on_row_selection(self, added, removed):
+        """ Handle the row selection being changed.
+        """
+        self._no_update = True
+        try:
+            indexes = self.control.selectionModel()
+            if len(indexes):
+                index=self.proxyModel.mapToSource(indexes[0])
+                self.selected_row = index.row()
+                self.selected = self.adapter.get_item(self.object, self.name,
+                                                      self.selected_row)
+            else:
+                self.selected_row = -1
+                self.selected = None
+        finally:
+            self._no_update = False
+
+    def _on_rows_selection(self, added, removed):
+        """ Handle the rows selection being changed.
+        """
+        self._no_update = True
+        try:
+            indexes = self.control.selectionModel().selectedRows()
+            selected_rows = []
+            selected = []
+            for index in indexes:
+                index=self.proxyModel.mapToSource(index)
+                row = index.row()
+                selected_rows.append(row)
+                selected.append(self.adapter.get_item(self.object, self.name,
+                                                      row))
+            self.multi_selected_rows = selected_rows
+            self.multi_selected = selected
+        finally:
+            self._no_update = False
 
 class _EnableFilterTabularEditor(_FilterTabularEditor):
     widget_factory = _EnableFilterTableView

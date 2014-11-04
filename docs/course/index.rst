@@ -18,3 +18,4 @@ Pychron Course Material
 
   pychron_week_day1
   pychron_week_day2
+  pychron_week_day3

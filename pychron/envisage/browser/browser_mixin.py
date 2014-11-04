@@ -362,13 +362,16 @@ class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
         db = self.db
         with db.session_ctx():
             hpost = datetime.now()
+            lpost = hpost - timedelta(hours=self.search_criteria.recent_hours)
+            self.use_low_post = True
+            self._low_post = lpost.date()
 
-            #use users low_post if set
-            if not self.use_low_post and not self.use_named_date_range:
-                lpost = hpost - timedelta(hours=self.search_criteria.recent_hours)
-                self.use_low_post = True
-                self._low_post = lpost.date()
-                self._recent_low_post = lpost
+            # #use users low_post if set
+            # if not self.use_low_post and not self.use_named_date_range:
+            #     lpost = hpost - timedelta(hours=self.search_criteria.recent_hours)
+            #     self.use_low_post = True
+            #     self._low_post = lpost.date()
+            #     self._recent_low_post = lpost
 
             self._recent_mass_spectrometers.append(ms)
 
@@ -563,16 +566,19 @@ class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
         if new and self.project_enabled:
             self._recent_low_post = None
             self._recent_mass_spectrometers = None
+            isrecent = any(['RECENT' in x.name for x in new])
             if old:
-                if any(['RECENT' in x.name for x in old]) and not any(['RECENT' in x.name for x in new]):
+                if any(['RECENT' in x.name for x in old]) and not isrecent:
                     self.use_high_post = False
                     self.use_low_post = False
 
             names = [ni.name for ni in new]
             self.debug('selected projects={}'.format(names))
+            if not isrecent:
+                self._load_project_date_range(names)
+
             self._load_associated_samples(names)
             self._load_associated_groups(names)
-            self._load_project_date_range(names)
 
             self._selected_projects_change_hook(names)
             self.dump_browser_selection()
