@@ -27,10 +27,9 @@ from pychron.processing.analyses.mass_spec_analysis import MassSpecAnalysis
 
 class MassSpecRecaller(Loggable):
     dbconn_spec = Instance(DBConnectionSpec, ())
-    connect_button = Button('Connect')
     db = Instance(MassSpecDatabaseAdapter, ())
-
-    def _dbconn_spec_default(self):
+    # connect_button = Button('Connect')
+    # def _dbconn_spec_default(self):
     #        return DBConnectionSpec(database='massspecdata_minnabluff',
     #                                username='root',
     #                                password='Argon',
@@ -41,16 +40,16 @@ class MassSpecRecaller(Loggable):
     #                            password='DBArgon',
     #                            host='129.138.12.160')
 
-        return DBConnectionSpec(database='massspecdata_minnabluff',
-                                username='root',
-                                password='Argon',
-                                host='localhost')
+        # return DBConnectionSpec(database='massspecdata_minnabluff',
+        #                         username='root',
+        #                         password='Argon',
+        #                         host='localhost')
 
-    def _connect_button_fired(self):
-        self.connect()
+    def is_connected(self):
+        return self.db.connected
 
     def connect(self):
-        self.db.name = self.dbconn_spec.database
+        self.db.name = self.dbconn_spec.name
         self.db.username = self.dbconn_spec.username
         self.db.password = self.dbconn_spec.password
         self.db.host = self.dbconn_spec.host
@@ -74,5 +73,6 @@ class MassSpecRecaller(Loggable):
 
                 return rec
 
-
+    # def _connect_button_fired(self):
+    #     self.connect()
 #============= EOF =============================================

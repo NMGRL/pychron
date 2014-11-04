@@ -20,7 +20,7 @@ from datetime import timedelta
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Tabbed, HSplitter
 from pyface.tasks.action.schema import SToolBar
 
-
+from traits.api import Instance
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.globals import globalv
@@ -54,6 +54,13 @@ class RecallTask(AnalysisEditTask):
                  image_size=(16, 16))]
     auto_select_analysis = False
     _append_replace_analyses_enabled = False
+    recaller = Instance('pychron.processing.tasks.recall.mass_spec_recaller.MassSpecRecaller')
+
+    def activated(self):
+        super(RecallTask, self).activated()
+        self._preference_binder('pychron.massspec.database',
+                                ('username','name','password','host'),
+                                obj=self.recaller.dbconn_spec)
 
     def open_ratio_editor(self):
         if self.has_active_editor():
@@ -186,12 +193,17 @@ class RecallTask(AnalysisEditTask):
         if not self.has_active_editor():
             return
 
+        if not self.recaller.is_connected():
+            if not self.recaller.connect():
+                self.warning_dialog('Diff not enabled')
+                return
+
         left = None
         if self.active_editor:
             left = self.active_editor.model
 
         if left:
-            editor = DiffEditor()
+            editor = DiffEditor(recaller=self.recaller)
             if editor.setup(left):
                 self.manager.load_raw_data(left)
                 editor.set_diff(left)

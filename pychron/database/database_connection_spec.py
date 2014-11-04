@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,11 +21,26 @@ from traitsui.api import View, Item, VGroup, VFold
 #============= local library imports  ==========================
 
 class DBConnectionSpec(HasTraits):
-    database = Str('massspecdata_import')
+    # database = Str('massspecdata_import')
+    _database = Str
     username = Str('root')
     password = Password('Argon')
-#    host = Str('129.138.12.131')
+    #    host = Str('129.138.12.131')
     host = Str('localhost')
+
+    name = Str
+
+    def set_database(self, d):
+        self._database = d
+
+    def get_database(self):
+        if self.name:
+            return self.name
+        else:
+            self._database
+
+    database = property(get_database, set_database)
+
     def make_url(self):
         return '{}:{}@{}/{}'.format(self.username, self.password, self.host, self.database)
 
@@ -34,11 +49,11 @@ class DBConnectionSpec(HasTraits):
 
     def traits_view(self):
         return View(VGroup(
-                           Item('host'),
-                           Item('database'),
-                           Item('username'),
-                           Item('password'),
-                           )
-                    )
+            Item('host'),
+            Item('database'),
+            Item('username'),
+            Item('password'),
+        )
+        )
 
 #============= EOF =============================================
