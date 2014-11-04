@@ -53,6 +53,9 @@ class AnalysisAdapter(BrowserAdapter):
                    ('Spec.', 'mass_spectrometer'),
                    ('Meas.', 'meas_script_name'),
                    ('Ext.', 'extract_script_name'),
+                   ('EVal.', 'extract_value'),
+                   ('Cleanup','cleanup'),
+                   ('Dur','duration'),
                    ('Device', 'extract_device')]
 
     columns = [('Run ID', 'record_id'),

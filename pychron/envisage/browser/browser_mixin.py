@@ -53,9 +53,17 @@ def filter_func(new, attr=None, comp=None):
             x = getattr(x, attr.lower())
 
         if comp is None:
-            return x.lower().startswith(new.lower())
+            if isinstance(x, (float, int)):
+                try:
+                    return x==float(new)
+                except ValueError:
+                    pass
+            else:
+                return x.lower().startswith(new.lower())
         else:
-            return getattr(x, comp_key)(str(new))
+            v=float(new) if isinstance(x, (float, int)) else str(new)
+
+            return getattr(x, comp_key)(v)
 
     return func
 

@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, List, Any, Str, Enum, Bool, Button, \
-    Event, Property, cached_property, Instance, DelegatesTo
+    Event, Property, cached_property, Instance, DelegatesTo,CStr
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.envisage.browser.browser_mixin import filter_func
@@ -33,7 +33,7 @@ class AnalysisTable(HasTraits):
     # append_event = Event
     context_menu_event = Event
 
-    analysis_filter = Str
+    analysis_filter = CStr
     analysis_filter_values = List
     analysis_filter_comparator = Enum('=', '<', '>', '>=', '<=', 'not =', 'startswith')
     analysis_filter_parameter = Str
