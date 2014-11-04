@@ -24,7 +24,7 @@ from traits.api import List, Str, Bool, Any, String, \
 from datetime import datetime, timedelta
 import re
 # ============= local library imports  ==========================
-from pychron.core.progress import progress_loader
+from pychron.core.progress import progress_loader, open_progress
 from pychron.database.records.isotope_record import GraphicalRecordView
 from pychron.envisage.browser.record_views import ProjectRecordView
 from pychron.envisage.tasks.editor_task import BaseEditorTask
@@ -112,7 +112,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
     filter_by_button = Button
     graphical_filter_button = Button
-    graphical_filtering_max_days = Int
+    # graphical_filtering_max_days = Int
     toggle_view = Button
     toggle_focus = Button
 
@@ -123,7 +123,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     _top_level_filter = None
     _append_replace_analyses_enabled = True
 
-    bin_tol_hrs = Int
+
 
     def __init__(self, *args, **kw):
         super(BaseBrowserTask, self).__init__(*args, **kw)
@@ -215,12 +215,12 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         db = self.db
         with db.session_ctx():
             ss = [si.labnumber for si in self.selected_samples]
-            bt = self.bin_tol_hrs
+            bt = self.search_criteria.reference_hours_padding
             if not bt:
-                self.information_dialog('Set "Analysis Series Binning" in Preferences defaulting to 2hrs')
+                self.information_dialog('Set "References Window" in Preferences defaulting to 2hrs')
                 bt = 2
 
-            ts = db.get_analysis_timestamps(ss, binned=bt * 3600)
+            ts = db.get_analysis_date_ranges(ss, bt * 3600)
             ms = db.get_labnumber_mass_spectrometers(ss)
             n = len(ts)
             if n > 1:
@@ -229,8 +229,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
                     return
 
                 xx = []
-                for ti in ts:
-                    lp, hp = ti[0], ti[-1]
+                for lp, hp in ts:
                     pad = get_pad(lp, hp)
                     if not pad:
                         break
@@ -373,11 +372,16 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             # self._load_extraction_devices()
 
             self.datasource_url = db.datasource_url
+            self._preference_binder('pychron.browsing',
+                                    ('recent_hours','graphical_filtering_max_days',
+                                     'reference_hours_padding'),
+                                    obj=self.search_criteria)
 
-            pid = 'pychron.browsing'
-            bind_preference(self.search_criteria, 'recent_hours', '{}.recent_hours'.format(pid))
-            bind_preference(self, 'graphical_filtering_max_days', '{}.graphical_filtering_max_days'.format(pid))
-            bind_preference(self, 'bin_tol_hrs', '{}.bin_tol_hrs'.format(pid))
+            # pid = 'pychron.browsing'
+            # bind_preference(self.search_criteria, 'recent_hours', '{}.recent_hours'.format(pid))
+            # bind_preference(self.search_criteria, 'graphical_filtering_max_days', '{}.graphical_filtering_max_days'.format(pid))
+            # bind_preference(self.search_criteria, 'graphical_filtering_max_days', '{}.graphical_filtering_max_days'.format(pid))
+            # bind_preference(self.search_criteria, 'bin_tol_hrs', '{}.bin_tol_hrs'.format(pid))
             self.load_browser_selection()
 
         self.browser_pane.name = 'Browser/Sample'
@@ -445,8 +449,8 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         pass
 
     # def _browser_options_hook(self, d):
-    #     d['irradiation_enabled'] = self.irradiation_enabled
-    #     d['use_focus_switching'] = self.use_focus_switching
+    # d['irradiation_enabled'] = self.irradiation_enabled
+    # d['use_focus_switching'] = self.use_focus_switching
 
     def _selected_projects_change_hook(self, names):
         if not self._top_level_filter:
@@ -575,7 +579,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
                 ms = ams[:1]
 
             # if date range > X days make user fine tune range
-            tdays = 3600 * 24 * max(1, self.graphical_filtering_max_days)
+            tdays = 3600 * 24 * max(1, self.search_criteria.graphical_filtering_max_days)
 
             if force or (hpost - lpost).total_seconds() > tdays or len(ms) > 1:
                 d = GraphicalFilterSelector(lpost=lpost, hpost=hpost,
@@ -688,10 +692,10 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             # db = self.db
             # with db.session_ctx():
             # level = man.get_level(self.level)
-            #     if level:
-            #         refs, unks = man.group_level(level)
-            #         xs = []
-            #         if 'monitors' in atypes:
+            # if level:
+            # refs, unks = man.group_level(level)
+            # xs = []
+            # if 'monitors' in atypes:
             #             xs.extend(refs)
             #         if 'unknown' in atypes:
             #             xs.extend(unks)
@@ -727,26 +731,56 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             ans = self.analysis_table.analyses
             self.active_editor.set_items(ans)
 
+    def _project_date_bins(self, identifier):
+        db = self.db
+        hours = self.reference_hours_padding
+        with db.session_ctx():
+            for pp in self.selected_projects:
+                for li, hi in db.get_project_date_bins(identifier, pp.name, hours):
+                    yield li, hi
+
     def _selected_samples_changed(self, new):
         if new:
             at = self.analysis_table
-            # lp, hp, lim = at.low_post, at.high_post, at.limit
-            lp, hp, lim = self.low_post, self.high_post, at.limit
-            # if self._recent_low_post:
-            # lp = self._recent_low_post
-            # hp = None
+            lim = at.limit
+            kw = dict(limit=lim,
+                      include_invalid=not at.omit_invalid,
+                      mass_spectrometers=self._recent_mass_spectrometers)
 
-            # lp = self.low_post if self.use_low_post else None
-            # hp = self.high_post if self.use_high_post else None
-            # lim = at.limit
-            ans = self._retrieve_sample_analyses(self.selected_samples,
-                                                 low_post=lp,
-                                                 high_post=hp,
-                                                 limit=lim,
-                                                 include_invalid=not at.omit_invalid,
-                                                 mass_spectrometers=self._recent_mass_spectrometers)
-            self.debug('selected samples changed. loading analyses. '
-                       'low={}, high={}, limit={}'.format(lp, hp, lim))
+            ss = self.selected_samples
+            xx = ss[:]
+            reftypes = ('blank_unknown',)
+            if any((si.analysis_type in reftypes
+                    for si in ss)):
+                with self.db.session_ctx():
+                    ans = []
+                    for si in ss:
+                        if si.analysis_type in reftypes:
+                            xx.remove(si)
+                            dates = list(self._project_date_bins(si.identifier))
+                            progress = open_progress(len(dates))
+                            for lp, hp in dates:
+                                progress.change_message('Loading Date Range '
+                                                        '{} to {}'.format(lp.strftime('%m-%d-%Y %H:%M:%S'),
+                                                                          hp.strftime('%m-%d-%Y %H:%M:%S')))
+                                ais = self._retrieve_sample_analyses([si],
+                                                                     make_records=False,
+                                                                     low_post=lp,
+                                                                     high_post=hp, **kw)
+                                ans.extend(ais)
+                            progress.close()
+
+                    ans = self._make_records(ans)
+                    # print len(ans), len(set([si.record_id for si in ans]))
+            if xx:
+                lp, hp = self.low_post, self.high_post
+                ans = self._retrieve_sample_analyses(xx,
+                                                     low_post=lp,
+                                                     high_post=hp,
+                                                     **kw)
+                self.debug('selected samples changed. loading analyses. '
+                           'low={}, high={}, limit={}'.format(lp, hp, lim))
+
             self.analysis_table.set_analyses(ans)
             self.dump_browser()
 
@@ -777,7 +811,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     def _get_visible(self, default):
         ret = True
         if self.use_focus_switching and not self.filter_focus:
-            ret = False  #default
+            ret = False  # default
         return ret
 
     def _analysis_table_default(self):

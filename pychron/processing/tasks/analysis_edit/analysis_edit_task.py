@@ -666,9 +666,11 @@ class AnalysisEditTask(BaseBrowserTask):
         from pychron.processing.tasks.analysis_edit.selection_view import ReferenceSelectionView, AnalysisSelectionView
 
         rsd = ReferenceSelectionView()
+        rsd.load()
         info = rsd.edit_traits(kind='livemodal')
         if info.result:
-            td = timedelta(hours=4)
+            rsd.dump()
+            td = timedelta(hours=rsd.hours)
             db = self.db
             with db.session_ctx():
                 mi = ref.rundate - td
@@ -728,7 +730,6 @@ class AnalysisEditTask(BaseBrowserTask):
         super(AnalysisEditTask, self)._dclicked_sample_changed()
 
     def _active_editor_changed(self, new):
-        print new
         if new:
             if self.controls_pane:
                 tool = None

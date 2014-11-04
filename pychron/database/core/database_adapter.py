@@ -511,7 +511,8 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
         return self._query(q, 'one', reraise)
 
     def _retrieve_item(self, table, value, key='name', last=None,
-                       joins=None, filters=None, options=None, verbose=True):
+                       joins=None, filters=None, options=None, verbose=True,
+                       verbose_query=False):
         #         sess = self.get_session()
         #         if sess is None:
         #             return
@@ -549,7 +550,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
             if last:
                 q = q.order_by(last)
 
-            if verbose:
+            if verbose_query:
                 self.debug(compile_query(q))
 
             ntries = 3

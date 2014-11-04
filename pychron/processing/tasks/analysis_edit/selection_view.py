@@ -15,17 +15,21 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Button, List, Any
+from traits.api import HasTraits, Button, List, Any, Int
 from traitsui.api import View, Item, UItem, CheckListEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.editors import TabularEditor
 from traitsui.tabular_adapter import TabularAdapter
+from pychron.persistence_loggable import PersistenceMixin
 
 
-class ReferenceSelectionView(HasTraits):
+class ReferenceSelectionView(HasTraits, PersistenceMixin):
     atypes = List(['Blank Unknown'])
     available_atypes = List(['Blank Unknown', 'Blank Air', 'Blank Cocktail', 'Air', 'Cocktail'])
+
+    hours = Int
+    pattributes = ('atypes','hours')
 
     @property
     def analysis_types(self):
@@ -35,6 +39,7 @@ class ReferenceSelectionView(HasTraits):
         v = View(UItem('atypes',
                        style='custom',
                        editor=CheckListEditor(name='available_atypes', cols=10)),
+                 Item('hours'),
                  buttons=['OK', 'Cancel'],
                  title='Select Analysis Types',
                  resizable=True)

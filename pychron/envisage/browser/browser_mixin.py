@@ -62,6 +62,8 @@ def filter_func(new, attr=None, comp=None):
 
 class SearchCriteria(HasTraits):
     recent_hours = Int
+    reference_hours_padding = Int
+    graphical_filtering_max_days = Int
 
 
 def extract_mass_spectrometer_name(name):
@@ -140,9 +142,9 @@ class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
     workspace = None
     db = Property
 
-    pattributes = ('project_enabled','sample_view_active','use_low_post', 'use_high_post',
-                         'use_named_date_range', 'named_date_range',
-                         'low_post', 'high_post')
+    pattributes = ('project_enabled', 'sample_view_active', 'use_low_post', 'use_high_post',
+                   'use_named_date_range', 'named_date_range',
+                   'low_post', 'high_post')
 
     def _get_db(self):
         if self.use_workspace:
@@ -164,14 +166,14 @@ class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
 
     @property
     def selection_persistence_path(self):
-        p=os.path.join(paths.hidden_dir, 'browser_selection')
+        p = os.path.join(paths.hidden_dir, 'browser_selection')
         return self._make_persistence_path(p)
 
     # def _browser_options_hook(self, d):
-    #     pass
+    # pass
 
     # def dump_browser_options(self):
-    #     d = {
+    # d = {
     #         # 'include_monitors': self.include_monitors,
     #         # 'include_unknowns': self.include_unknowns,
     #         'project_enabled': self.project_enabled,
@@ -306,6 +308,13 @@ class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
         return v
 
     # database querying
+    def _load_project_date_range(self, names):
+        lp, hp = self.db.get_project_date_range(names)
+        ol, oh = self.use_low_post, self.use_high_post
+        self.use_low_post, self.use_high_post = True, True
+        self._low_post, self._high_post = lp, hp
+        self.use_low_post, self.use_high_post = ol, oh
+
     def _load_associated_groups(self, names):
         """
             names: list of project names
@@ -399,9 +408,9 @@ class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
         if atypes and projects:
             tlp, thp = db.get_min_max_analysis_timestamp(projects=projects, delta=1)
             if not lp:
-                lp=tlp
+                lp = tlp
             if not hp:
-                hp=thp
+                hp = thp
 
         ls = db.get_project_labnumbers(projects,
                                        self.filter_non_run_samples,
@@ -487,7 +496,7 @@ class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
 
     # persistence private
     def _get_browser_persistence(self):
-        p=self.selection_persistence_path
+        p = self.selection_persistence_path
         # p = os.path.join(paths.hidden_dir, 'browser_selection')
         if os.path.isfile(p):
             try:
@@ -555,6 +564,7 @@ class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
             self.debug('selected projects={}'.format(names))
             self._load_associated_samples(names)
             self._load_associated_groups(names)
+            self._load_project_date_range(names)
 
             self._selected_projects_change_hook(names)
             self.dump_browser_selection()
@@ -722,4 +732,4 @@ class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
     def _table_configurer_default(self):
         return SampleTableConfigurer()
 
-#============= EOF =============================================
+# ============= EOF =============================================

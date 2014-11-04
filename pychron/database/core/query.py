@@ -51,7 +51,8 @@ def compile_query(query):
     comp = comp.string.encode(enc)
     comp = comp.replace('?', '%s')
 
-    return (comp % tuple(params)).decode(enc)
+    txt = (comp % tuple(params)).decode(enc)
+    return txt
 
 
 class TableSelector(HasTraits):

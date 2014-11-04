@@ -54,13 +54,19 @@ class RecallTask(AnalysisEditTask):
                  image_size=(16, 16))]
     auto_select_analysis = False
     _append_replace_analyses_enabled = False
-    recaller = Instance('pychron.processing.tasks.recall.mass_spec_recaller.MassSpecRecaller')
+    recaller = Instance('pychron.processing.tasks.recall.mass_spec_recaller.MassSpecRecaller', ())
 
-    def activated(self):
-        super(RecallTask, self).activated()
-        self._preference_binder('pychron.massspec.database',
-                                ('username','name','password','host'),
-                                obj=self.recaller.dbconn_spec)
+    # def activated(self):
+    #     print 'sdfasfdfsad'
+        # super(RecallTask, self).activated()
+        #
+        # self._preference_binder('pychron.massspec.database',
+        #                         ('username','name','password','host'),
+        #                         obj=self.recaller.dbconn_spec)
+        # print 'asdfsfd', (self.dbconn_spec.name,
+        #  self.dbconn_spec.username,
+        #  self.dbconn_spec.password,
+        #  self.dbconn_spec.host)
 
     def open_ratio_editor(self):
         if self.has_active_editor():
@@ -223,6 +229,10 @@ class RecallTask(AnalysisEditTask):
 
     def activated(self):
         super(RecallTask, self).activated()
+
+        self._preference_binder('pychron.massspec.database',
+                                ('username','name','password','host'),
+                                obj=self.recaller.dbconn_spec)
 
         if globalv.recall_debug:
             try:
