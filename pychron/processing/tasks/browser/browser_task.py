@@ -554,7 +554,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         else:
             self._activate_sample_browser()
 
-        self.dump_browser_options()
+        self.dump()
 
     def _graphical_filter_button_fired(self):
         self.debug('doing graphical filter')
