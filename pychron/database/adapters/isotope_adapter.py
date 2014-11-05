@@ -63,7 +63,7 @@ from pychron.database.orms.isotope.meas import meas_AnalysisTable, \
     meas_ExperimentTable, meas_ExtractionTable, meas_IsotopeTable, meas_MeasurementTable, \
     meas_SpectrometerParametersTable, meas_SpectrometerDeflectionsTable, \
     meas_SignalTable, meas_PeakCenterTable, meas_PositionTable, \
-    meas_ScriptTable, meas_MonitorTable, meas_GainHistoryTable
+    meas_ScriptTable, meas_MonitorTable, meas_GainHistoryTable, meas_GainTable
 
 # proc_
 from pychron.database.orms.isotope.proc import proc_DetectorIntercalibrationHistoryTable, \
@@ -154,8 +154,8 @@ def write_dates(ds):
 #
 # # write_dates(ds)
 #
-#     pt = ds[0][0]
-#     td = timedelta(seconds=delta_seconds * 0.25)
+# pt = ds[0][0]
+# td = timedelta(seconds=delta_seconds * 0.25)
 #
 #     for di in ds[1:]:
 #         di=di[0]
@@ -950,7 +950,42 @@ class IsotopeAdapter(DatabaseAdapter):
     #===========================================================================
     # getters
     #===========================================================================
-    def get_gain_history(self, v):
+    def make_gains_hash(self, gains):
+        h = hashlib.md5()
+
+        for d, v in gains:
+            h.update(d)
+            h.update(str(v))
+
+        return h.hexdigest()
+
+    def add_gain(self, d, v, hist):
+        obj = meas_GainTable()
+        detector = self.get_detector(d)
+        if detector:
+            obj.detector = detector
+        obj.value = v
+        obj.history = hist
+        return self._add_item(obj)
+
+    def get_gain_histories(self, lpost=None, hpost=None, **kw):
+        if lpost:
+            d = sql_cast(meas_GainHistoryTable.create_date, Date)
+            kw = self._append_filters(d >= lpost)
+        if hpost:
+            d = sql_cast(meas_GainHistoryTable.create_date, Date)
+            kw = self._append_filters(d <= hpost)
+
+        return self._retrieve_items(meas_GainHistoryTable, **kw)
+
+    def get_gain_history(self, v, **kw):
+        # kw = self._append_filters(meas_GainHistoryTable.hash == v, kw)
+        # order = meas_GainHistoryTable.create_date.desc()
+        #
+        # histories = self._retrieve_items(meas_GainHistoryTable,
+        #                                  limit=1, order=order, **kw)
+        # if histories:
+        #     return histories[0]
         return self._retrieve_item(meas_GainHistoryTable, v, key='hash')
 
     def get_blanks(self, ms=None, limit=100):
@@ -2432,10 +2467,11 @@ class IsotopeAdapter(DatabaseAdapter):
         lan = q.order_by(meas_AnalysisTable.analysis_timestamp.asc()).first()
         han = q.order_by(meas_AnalysisTable.analysis_timestamp.desc()).first()
 
-        lan=datetime.now() if not lan else lan[0]
-        han=datetime.now() if not han else han[0]
-        td=timedelta(hours=hours)
-        return lan-td, han+td
+        lan = datetime.now() if not lan else lan[0]
+        han = datetime.now() if not han else han[0]
+        td = timedelta(hours=hours)
+        return lan - td, han + td
+
 
 if __name__ == '__main__':
     from pychron.core.helpers.logger_setup import logging_setup

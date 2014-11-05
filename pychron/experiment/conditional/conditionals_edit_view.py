@@ -402,8 +402,7 @@ class ConditionalsEditView(ConditionalsViewable):
 
         ratio_matrix = ['{}/{}'.format(i, j) for i in ('40','39','38','37','36')
                                                 for j in ('40','39','38','37','36')]
-        attrs.extend(ratio_matrix
-        )
+        attrs.extend(ratio_matrix)
         if detectors:
             attrs.extend(detectors)
             self.detectors = detectors

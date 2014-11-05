@@ -151,7 +151,9 @@ class meas_ExtractionTable(Base, BaseMixin):
 
 class meas_GainHistoryTable(Base, UserMixin):
     create_date = Column(DateTime, default=func.now())
+    applied_date = Column(DateTime, default=func.now())
     hash = stringcolumn(32)
+    gains = relationship('meas_GainTable')
 
 
 class meas_GainTable(Base, BaseMixin):
