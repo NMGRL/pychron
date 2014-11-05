@@ -93,6 +93,7 @@ class LabBookTask(BaseEditorTask):
     hierarchy = Instance(Hierarchy, ())
     selected_root = Any
     dclicked = Event
+    chronology_visible = Bool
 
     # tasks protocol
     def activated(self):

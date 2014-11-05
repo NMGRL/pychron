@@ -20,7 +20,8 @@ from traits.api import HasTraits, Button, Str, Int, Bool, Any, List
 from traitsui.api import View, Item, UItem, HGroup, VGroup, TreeEditor, TreeNode
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.core.hierarchy import Hierarchy, FilePath
+from traitsui.editors import ListStrEditor, TabularEditor
+from pychron.core.hierarchy import Hierarchy, FilePath, FilePathAdapter
 
 
 class NotesBrowserPane(TraitsDockPane):
@@ -32,21 +33,28 @@ class NotesBrowserPane(TraitsDockPane):
                           children='children',
                           auto_open=True,
                           # on_click=self.model._on_click,
-                          label='name',),
+                          label='name', ),
                  TreeNode(node_for=[FilePath],
                           label='name')]
 
-        v = View(UItem('hierarchy',
-                       show_label=False,
-                       editor=TreeEditor(
-                           auto_open = 1,
-                           selected='selected_root',
-                           dclick='dclicked',
-                           nodes=nodes,
-                           editable=False)))
+        v = View(VGroup(
+            HGroup(Item('chronology_visible',
+                        label='View Chronology')),
+            UItem('object.hierarchy.chronology',
+                  editor=TabularEditor(adapter=FilePathAdapter()),
+                  visible_when='chronology_visible'),
+            UItem('hierarchy',
+                  visible_when='not chronology_visible',
+                  show_label=False,
+                  editor=TreeEditor(
+                      auto_open=1,
+                      selected='selected_root',
+                      dclick='dclicked',
+                      nodes=nodes,
+                      editable=False))))
         return v
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 
