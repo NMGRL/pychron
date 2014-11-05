@@ -87,6 +87,15 @@ class Spectrometer(SpectrometerDevice):
     def test_connection(self):
         return self.ask('GetIntegrationTime') is not None
 
+    def set_gains(self, history=None):
+        if history:
+            self.debug('setting gains to {}, user={}'.format(history.create_date,
+                                                             history.username))
+        for di in self.detectors:
+            di.set_gain()
+
+        return [(di.name, di.gain) for di in self.detectors]
+
     def get_integration_time(self, current=True):
         if current:
             resp = self.ask('GetIntegrationTime')

@@ -31,6 +31,7 @@ from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.envisage.browser.date_selector import DateSelector
 from pychron.envisage.browser.record_views import ProjectRecordView, LabnumberRecordView, AnalysisGroupRecordView
 from pychron.envisage.browser.table_configurer import SampleTableConfigurer
+from pychron.persistence_loggable import PersistenceLoggable
 from pychron.paths import paths
 
 
@@ -52,15 +53,25 @@ def filter_func(new, attr=None, comp=None):
             x = getattr(x, attr.lower())
 
         if comp is None:
-            return x.lower().startswith(new.lower())
+            if isinstance(x, (float, int)):
+                try:
+                    return x==float(new)
+                except ValueError:
+                    pass
+            else:
+                return x.lower().startswith(new.lower())
         else:
-            return getattr(x, comp_key)(str(new))
+            v=float(new) if isinstance(x, (float, int)) else str(new)
+
+            return getattr(x, comp_key)(v)
 
     return func
 
 
 class SearchCriteria(HasTraits):
     recent_hours = Int
+    reference_hours_padding = Int
+    graphical_filtering_max_days = Int
 
 
 def extract_mass_spectrometer_name(name):
@@ -70,7 +81,7 @@ def extract_mass_spectrometer_name(name):
         return ms
 
 
-class BrowserMixin(ColumnSorterMixin):
+class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
     projects = List
     oprojects = List
     project_enabled = Bool(True)
@@ -139,6 +150,10 @@ class BrowserMixin(ColumnSorterMixin):
     workspace = None
     db = Property
 
+    pattributes = ('project_enabled', 'sample_view_active', 'use_low_post', 'use_high_post',
+                   'use_named_date_range', 'named_date_range',
+                   'low_post', 'high_post')
+
     def _get_db(self):
         if self.use_workspace:
             return self.workspace.index_db
@@ -146,46 +161,58 @@ class BrowserMixin(ColumnSorterMixin):
             return self.manager.db
 
     def dump_browser(self):
+        self.dump()
         self.dump_browser_selection()
-        self.dump_browser_options()
-
-    # persistence
-    def _browser_options_hook(self, d):
-        pass
-
-    def dump_browser_options(self):
-        d = {
-            # 'include_monitors': self.include_monitors,
-            # 'include_unknowns': self.include_unknowns,
-            'project_enabled': self.project_enabled,
-            'sample_view_active': self.sample_view_active}
-        self._browser_options_hook(d)
-
-        p = os.path.join(paths.hidden_dir, 'browser_options')
-        with open(p, 'w') as fp:
-            pickle.dump(d, fp)
 
     def load_browser_options(self):
-        d = {}
-        p = os.path.join(paths.hidden_dir, 'browser_options')
-        if os.path.isfile(p):
-            with open(p, 'r') as fp:
-                try:
-                    d = pickle.load(fp)
-                except Exception:
-                    pass
-        if d:
-            self.trait_set(**d)
+        self.load()
 
-    def load_browser_date_bounds(self):
-        obj = self._get_browser_persistence()
-        if obj:
-            for attr in ('use_low_post', 'use_high_post',
-                         'use_named_date_range', 'named_date_range',
-                         'low_post', 'high_post', ):
-                sd = obj.get(attr)
-                if sd:
-                    setattr(self, attr, sd)
+    # persistence
+    @property
+    def persistence_path(self):
+        return os.path.join(paths.hidden_dir, 'browser_options')
+
+    @property
+    def selection_persistence_path(self):
+        p = os.path.join(paths.hidden_dir, 'browser_selection')
+        return self._make_persistence_path(p)
+
+    # def _browser_options_hook(self, d):
+    # pass
+
+    # def dump_browser_options(self):
+    # d = {
+    #         # 'include_monitors': self.include_monitors,
+    #         # 'include_unknowns': self.include_unknowns,
+    #         'project_enabled': self.project_enabled,
+    #         'sample_view_active': self.sample_view_active}
+    #     self._browser_options_hook(d)
+    #
+    #     p = os.path.join(paths.hidden_dir, 'browser_options')
+    #     with open(p, 'w') as fp:
+    #         pickle.dump(d, fp)
+
+    # def load_browser_options(self):
+    #     d = {}
+    #     p = os.path.join(paths.hidden_dir, 'browser_options')
+    #     if os.path.isfile(p):
+    #         with open(p, 'r') as fp:
+    #             try:
+    #                 d = pickle.load(fp)
+    #             except Exception:
+    #                 pass
+    #     if d:
+    #         self.trait_set(**d)
+
+    # def load_browser_date_bounds(self):
+    #     obj = self._get_browser_persistence()
+    #     if obj:
+    #         for attr in ('use_low_post', 'use_high_post',
+    #                      'use_named_date_range', 'named_date_range',
+    #                      'low_post', 'high_post', ):
+    #             sd = obj.get(attr)
+    #             if sd:
+    #                 setattr(self, attr, sd)
 
     def load_browser_selection(self):
         # self.debug('$$$$$$$$$$$$$$$$$$$$$ Loading browser selection')
@@ -213,9 +240,10 @@ class BrowserMixin(ColumnSorterMixin):
                    low_post=self.low_post,
                    high_post=self.high_post)
 
-        p = os.path.join(paths.hidden_dir, 'browser_selection')
+        # p = os.path.join(paths.hidden_dir, 'browser_selection')
+
         try:
-            with open(p, 'wb') as fp:
+            with open(self.selection_persistence_path, 'wb') as fp:
                 pickle.dump(obj, fp)
         except (pickle.PickleError, EOFError, OSError), e:
             #self.debug('Failed dumping previous browser selection. {}'.format(e))
@@ -237,12 +265,14 @@ class BrowserMixin(ColumnSorterMixin):
         self.osamples = s
         self.trait_set(selected_samples=sel)
 
-    def _make_project_records(self, ps, include_recent_first=True):
+    def _make_project_records(self, ps, ms=None, include_recent_first=True):
         db = self.db
         with db.session_ctx():
-            ms = db.get_mass_spectrometers()
+            if not ms:
+                ms = db.get_mass_spectrometers()
+                ms = [mi.name for mi in ms]
 
-            recents = [ProjectRecordView('RECENT {}'.format(mi.name.upper())) for mi in ms]
+            recents = [ProjectRecordView('RECENT {}'.format(mi.upper())) for mi in ms]
             pss = [ProjectRecordView(p) for p in ps]
 
             # move references project to after Recent
@@ -286,6 +316,13 @@ class BrowserMixin(ColumnSorterMixin):
         return v
 
     # database querying
+    def _load_project_date_range(self, names):
+        lp, hp = self.db.get_project_date_range(names)
+        ol, oh = self.use_low_post, self.use_high_post
+        self.use_low_post, self.use_high_post = True, True
+        self._low_post, self._high_post = lp, hp
+        self.use_low_post, self.use_high_post = ol, oh
+
     def _load_associated_groups(self, names):
         """
             names: list of project names
@@ -325,13 +362,16 @@ class BrowserMixin(ColumnSorterMixin):
         db = self.db
         with db.session_ctx():
             hpost = datetime.now()
+            lpost = hpost - timedelta(hours=self.search_criteria.recent_hours)
+            self.use_low_post = True
+            self._low_post = lpost.date()
 
-            #use users low_post if set
-            if not self.use_low_post and not self.use_named_date_range:
-                lpost = hpost - timedelta(hours=self.search_criteria.recent_hours)
-                self.use_low_post = True
-                self._low_post = lpost.date()
-                self._recent_low_post = lpost
+            # #use users low_post if set
+            # if not self.use_low_post and not self.use_named_date_range:
+            #     lpost = hpost - timedelta(hours=self.search_criteria.recent_hours)
+            #     self.use_low_post = True
+            #     self._low_post = lpost.date()
+            #     self._recent_low_post = lpost
 
             self._recent_mass_spectrometers.append(ms)
 
@@ -379,9 +419,9 @@ class BrowserMixin(ColumnSorterMixin):
         if atypes and projects:
             tlp, thp = db.get_min_max_analysis_timestamp(projects=projects, delta=1)
             if not lp:
-                lp=tlp
+                lp = tlp
             if not hp:
-                hp=thp
+                hp = thp
 
         ls = db.get_project_labnumbers(projects,
                                        self.filter_non_run_samples,
@@ -467,7 +507,8 @@ class BrowserMixin(ColumnSorterMixin):
 
     # persistence private
     def _get_browser_persistence(self):
-        p = os.path.join(paths.hidden_dir, 'browser_selection')
+        p = self.selection_persistence_path
+        # p = os.path.join(paths.hidden_dir, 'browser_selection')
         if os.path.isfile(p):
             try:
                 with open(p, 'rb') as fp:
@@ -525,13 +566,17 @@ class BrowserMixin(ColumnSorterMixin):
         if new and self.project_enabled:
             self._recent_low_post = None
             self._recent_mass_spectrometers = None
+            isrecent = any(['RECENT' in x.name for x in new])
             if old:
-                if any(['RECENT' in x.name for x in old]) and not any(['RECENT' in x.name for x in new]):
+                if any(['RECENT' in x.name for x in old]) and not isrecent:
                     self.use_high_post = False
                     self.use_low_post = False
 
             names = [ni.name for ni in new]
             self.debug('selected projects={}'.format(names))
+            if not isrecent:
+                self._load_project_date_range(names)
+
             self._load_associated_samples(names)
             self._load_associated_groups(names)
 
@@ -701,4 +746,4 @@ class BrowserMixin(ColumnSorterMixin):
     def _table_configurer_default(self):
         return SampleTableConfigurer()
 
-#============= EOF =============================================
+# ============= EOF =============================================

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,9 +17,12 @@
 #============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import List, Button, Any, Int, Str, Enum, Color
+from traits.trait_types import String
+from traits.traits import Property
 from traitsui.api import View, VGroup, UItem, HGroup
 from apptools.preferences.api import PreferencesHelper
 #============= standard library imports ========================
+import re
 #============= local library imports  ==========================
 from traitsui.list_str_adapter import ListStrAdapter
 
@@ -59,6 +62,45 @@ class BasePreferencesHelper(PreferencesHelper):
         else:
             value = super(BasePreferencesHelper, self)._get_value(name, value)
         return value
+
+
+REPO_REGEX = re.compile(r'^[^\\]\w+/\w+')
+
+
+class GitRepoPreferencesHelper(BasePreferencesHelper):
+    remote = Property(String, depends_on='_remote')
+    _remote = String
+    test_connection = Button
+    remote_status = Str
+    remote_status_color = Color
+
+    def _test_connection_fired(self):
+        import urllib2
+
+        if self.remote.strip():
+            try:
+                urllib2.urlopen('https://github.com/{}'.format(self.remote))
+                self.remote_status = 'Valid'
+                self.remote_status_color = 'green'
+                return
+            except:
+                pass
+
+        self.remote_status_color = 'red'
+        self.remote_status = 'Invalid'
+
+    def _set_remote(self, v):
+        self._remote = v
+
+    def _get_remote(self):
+        return self._remote
+
+    def _validate_remote(self, v):
+        if not v.strip():
+            return ''
+
+        if REPO_REGEX.match(v):
+            return v
 
 
 class FavoritesPreferencesHelper(BasePreferencesHelper):
@@ -142,4 +184,4 @@ class BaseConsolePreferencesPane(PreferencesPane):
                         label=self.label))
         return v
 
-    #============= EOF =============================================
+        #============= EOF =============================================

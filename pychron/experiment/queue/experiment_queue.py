@@ -15,8 +15,9 @@
 # ===============================================================================
 
 #============= enthought library imports =======================
+from collections import Counter
 from traits.api import Any, on_trait_change, Int, List, Bool, \
-    Instance, Property, Str, HasTraits, Event
+    Instance, Property, Str, HasTraits, Event, Dict
 from traitsui.api import View, Item
 from pyface.timer.do_later import do_later
 #============= standard library imports ========================
@@ -28,7 +29,7 @@ from pychron.core.ui.qt.tabular_editor import MoveToRow
 from pychron.experiment.queue.base_queue import BaseExperimentQueue
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.experiment.utilities.human_error_checker import HumanErrorChecker
-from pychron.experiment.conditional.experiment_queue_action import ExperimentQueueAction
+# from pychron.experiment.conditional.experiment_queue_action import ExperimentQueueAction
 from pychron.experiment.utilities.uv_human_error_checker import UVHumanErrorChecker
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.paths import paths
@@ -66,7 +67,7 @@ class ExperimentQueue(BaseExperimentQueue):
     executed_runs_scroll_to_row = Int
     automated_runs_scroll_to_row = Int
     linked_copy_cache = List
-    queue_actions = List
+    # queue_actions = List
 
     executed = Bool(False)
 
@@ -235,13 +236,13 @@ class ExperimentQueue(BaseExperimentQueue):
     def _refresh_table1(self):
         self.refresh_table_needed = True
 
-    def _load_meta(self, meta):
-        super(ExperimentQueue, self)._load_meta(meta)
-        if 'actions' in meta:
-            self.queue_actions = [ExperimentQueueAction(astr)
-                                  for astr in meta['actions']]
-        else:
-            self.debug('no actions provided for this queue')
+    # def _load_meta(self, meta):
+    #     super(ExperimentQueue, self)._load_meta(meta)
+    #     if 'actions' in meta:
+    #         self.queue_actions = [ExperimentQueueAction(astr)
+    #                               for astr in meta['actions']]
+    #     else:
+    #         self.debug('no actions provided for this queue')
 
     def _load_actions(self):
         pass

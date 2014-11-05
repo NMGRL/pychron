@@ -52,6 +52,7 @@ class Detector(SpectrometerDevice):
     intensities = Array
     nstd = Int(10)
     active = Bool(True)
+    gain = Float
 
     color = Color
     series_id = Int
@@ -103,13 +104,21 @@ class Detector(SpectrometerDevice):
         c[-1] -= dac
         return optimize.newton(poly1d(c), 1)
 
+    @property
+    def gain_outdated(self):
+        return abs(self.get_gain()-self.gain)<1e-7
+
     def get_gain(self):
         v = self.ask('GetGain {}'.format(self.name))
         try:
             v = float(v)
         except ValueError:
             v = 0
+        self.gain=v
         return v
+
+    def set_gain(self):
+        self.ask('SetGain {},{}'.format(self.name, self.gain))
 
     def _get_isotopes(self):
         molweights = self.spectrometer.molecular_weights

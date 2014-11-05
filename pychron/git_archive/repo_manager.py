@@ -52,9 +52,6 @@ class GitRepoManager(Loggable):
         """
             name: name of repo
             root: root directory to create new repo
-            index: path to sqlite index
-
-            create master and working branches
         """
         if root is None:
             p = name

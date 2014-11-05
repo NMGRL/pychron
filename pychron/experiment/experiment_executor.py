@@ -37,6 +37,7 @@ from pychron.experiment.datahub import Datahub
 from pychron.experiment.user_notifier import UserNotifier
 from pychron.experiment.stats import StatsGroup
 from pychron.experiment.utilities.conditionals import test_queue_conditionals_name
+from pychron.experiment.utilities.conditionals_results import reset_conditional_results
 from pychron.experiment.utilities.identifier import convert_extract_device
 from pychron.globals import globalv
 from pychron.paths import paths
@@ -356,6 +357,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.info('saving experiment "{}" to database'.format(exp.name))
 
         self.datahub.add_experiment(exp)
+
+        #reset conditionals result file
+        reset_conditional_results()
 
         exp.executed = True
         # scroll to the first run
@@ -1227,11 +1231,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                                      'Post Run Action'):
             return True
 
-        #check queue actions
-        exp = self.experiment_queue
-        if self._action_conditionals(run, exp.queue_actions, 'Checking queue actions',
-                                     'Queue Action'):
-            return True
+        # #check queue actions
+        # exp = self.experiment_queue
+        # if self._action_conditionals(run, exp.queue_actions, 'Checking queue actions',
+        #                              'Queue Action'):
+        #     return True
 
     def _load_default_conditionals(self, term_name, **kw):
         p = get_path(paths.spectrometer_dir, 'default_conditionals', ['.yaml', '.yml'])

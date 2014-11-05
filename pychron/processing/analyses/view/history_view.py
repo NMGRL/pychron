@@ -70,7 +70,7 @@ class FitAdapter(TabularAdapter):
 
 class IsotopeBlankAdapter(TabularAdapter):
     font = 'arial 10'
-    columns = [('Isotope', 'isotope'), ('Fit', 'fit')]
+    columns = [('Isotope', 'isotope'), ('Blank Method', 'fit')]
     isotope_width = Int(80)
 
 class AnalysesAdapter(TabularAdapter):

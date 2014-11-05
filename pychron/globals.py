@@ -72,7 +72,7 @@ class Globals(object):
     use_warning_display = True
     recall_debug = False
 
-    username = None
+    username = 'root'
     multi_user = False
     use_login = True
 

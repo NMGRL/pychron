@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -55,19 +55,36 @@ def get_manager(event, protocol):
 #        manager.peak_center(update_mftable=True)
 #
 
+class EditGainsAction(Action):
+    def perform(self, event):
+        from pychron.spectrometer.gains_edit_view import GainsModel, GainsEditView
+
+        app=event.task.window.application
+        spec = app.get_service(SPECTROMETER_PROTOCOL)
+        gv = GainsModel(spectrometer=spec)
+
+        man = app.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
+        if man:
+            gv.db = man.db
+
+        gv.load_histories()
+        gev = GainsEditView(model=gv)
+        gev.edit_traits(kind='livemodal')
+
+
 class ToggleSpectrometerTask(TaskAction):
     name = Property(depends_on='task')
 
     def _get_name(self):
         if self.task:
-            return 'Switch to Scan' if self.task.id=='pychron.spectrometer.scan_inspector' \
+            return 'Switch to Scan' if self.task.id == 'pychron.spectrometer.scan_inspector' \
                 else 'Switch to Inspector'
         else:
             return ''
 
     def perform(self, event):
         window = event.task.window
-        if event.task.id=='pychron.spectrometer':
+        if event.task.id == 'pychron.spectrometer':
             tid = 'pychron.spectrometer.scan_inspector'
         else:
             tid = 'pychron.spectrometer'
@@ -145,6 +162,7 @@ class MagnetFieldTableHistoryAction(Action):
             if os.path.isfile(os.path.join(archive_root, os.path.basename(mft.mftable_path))):
                 # from pychron.git_archive.history import GitArchiveHistory, GitArchiveHistoryView
                 from pychron.spectrometer.local_mftable_history_view import LocalMFTableHistory, LocalMFTableHistoryView
+
                 print archive_root, mft.mftable_path
                 gh = LocalMFTableHistory(archive_root, mft.mftable_path)
                 gh.load_history(mft.mftable_path)

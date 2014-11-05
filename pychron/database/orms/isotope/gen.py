@@ -53,7 +53,7 @@ class gen_DetectorTable(Base, NameMixin):
     deflections = relationship('meas_SpectrometerDeflectionsTable', backref='detector')
     intercalibrations = relationship('proc_DetectorIntercalibrationTable', backref='detector')
     detector_parameters = relationship('proc_DetectorParamTable', backref='detector')
-
+    gains = relationship('meas_GainTable', backref='detector')
 
 class gen_ExtractionDeviceTable(Base, NameMixin):
     extractions = relationship('meas_ExtractionTable',
@@ -150,6 +150,7 @@ class gen_SensitivityTable(Base, BaseMixin):
 class gen_UserTable(Base, NameMixin):
     analyses = relationship('meas_AnalysisTable', backref='user')
     dr_tags = relationship('proc_DataReductionTagTable', backref='user')
+    gain_histories = relationship('meas_GainHistoryTable', backref='user')
     #    project_id = foreignkey('gen_ProjectTable')
     projects = relationship('gen_ProjectTable', secondary=association_table)
 

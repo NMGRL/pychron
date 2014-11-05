@@ -105,7 +105,7 @@ class StrValue(Value):
 class DiffEditor(BaseTraitsEditor):
     values = List
 
-    recaller = Instance(MassSpecRecaller, ())
+    recaller = Instance(MassSpecRecaller)
     selected_row = Int
 
     left_baselines = Dict
@@ -146,36 +146,41 @@ class DiffEditor(BaseTraitsEditor):
         """
         recaller = self.recaller
 
-        if recaller.connect():
-            return recaller.find_analysis(left.labnumber, left.aliquot,
+        # if recaller.connect():
+        return recaller.find_analysis(left.labnumber, left.aliquot,
                                           left.step)
 
     def _set_values(self, left, right, isotopes):
         vs = []
         err = u'\u00b11\u03c3'
+        pfunc=lambda x: lambda n: '{} {}'.format(x,n)
 
         for a in isotopes:
             iso = left.isotopes[a]
             riso = right.isotopes[a]
+            func=pfunc(a)
+
             vs.append(Value(name=a, lvalue=iso.value, rvalue=riso.value))
             vs.append(Value(name=err, lvalue=iso.error, rvalue=riso.error))
-            vs.append(Value(name='N', lvalue=iso.n, rvalue=riso.n))
-            vs.append(StrValue(name='Fit', lvalue=iso.fit, rvalue=riso.fit))
-            vs.append(Value(name='IC', lvalue=nominal_value(iso.ic_factor),
+            vs.append(Value(name=func('N'), lvalue=iso.n, rvalue=riso.n))
+            vs.append(StrValue(name=func('Fit'), lvalue=iso.fit, rvalue=riso.fit))
+            vs.append(Value(name=func('IC'), lvalue=nominal_value(iso.ic_factor),
                             rvalue=nominal_value(iso.ic_factor)))
 
         for a in isotopes:
+            func=pfunc(a)
             iso = left.isotopes[a]
             riso = right.isotopes[a]
-            vs.append(Value(name='{}Bs'.format(a), lvalue=iso.baseline.value, rvalue=riso.baseline.value))
+            vs.append(Value(name=func('Bs'), lvalue=iso.baseline.value, rvalue=riso.baseline.value))
             vs.append(Value(name=err, lvalue=iso.baseline.error, rvalue=riso.baseline.error))
-            vs.append(Value(name='Nbs', lvalue=iso.baseline.n, rvalue=riso.baseline.n))
+            vs.append(Value(name=func('Nbs'), lvalue=iso.baseline.n, rvalue=riso.baseline.n))
             self.right_baselines[a] = iso.baseline
 
         for a in isotopes:
+            func=pfunc(a)
             iso = left.isotopes[a]
             riso = right.isotopes[a]
-            vs.append(Value(name='{}Bl'.format(a), lvalue=iso.blank.value, rvalue=riso.blank.value))
+            vs.append(Value(name=func('Bl'), lvalue=iso.blank.value, rvalue=riso.blank.value))
             vs.append(Value(name=err, lvalue=iso.blank.error, rvalue=riso.blank.error))
 
         rpr = right.production_ratios

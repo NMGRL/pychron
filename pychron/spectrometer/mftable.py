@@ -275,7 +275,7 @@ class MagnetFieldTable(Loggable):
                 return
 
             archive = GitArchive(self.mftable_archive_path)
-            archive.add(p, message=message)
+            archive.add(p, msg=message)
             archive.close()
             self.info('locally archiving mftable')
 

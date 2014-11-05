@@ -126,7 +126,12 @@ class NoteAction(WebAction):
         """
             goto issues page add an request or report bug
         """
-        url = 'https://github.com/NMGRL/Laboratory/issues/new'
+        app=event.task.window.application
+        name = app.preferences.get('pychron.general.remote')
+        if not name:
+            name = 'NMGRL/Laboratory'
+
+        url = 'https://github.com/{}/issues/new'.format(name)
         self._open_url(url)
 
 

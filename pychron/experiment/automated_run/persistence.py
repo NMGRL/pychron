@@ -394,18 +394,16 @@ class AutomatedRunPersister(Loggable):
                 # return True
 
     def _save_gains(self, db, analysis):
-        h = hashlib.md5()
-
-        for v in self.gains:
-            h.update(str(v))
-        ha = h.hexdigest()
-
+        ha = db.make_gains_hash(self.gains)
         dbhist = db.get_gain_history(ha)
         if not dbhist:
             dbhist = db.add_gain_history(ha)
+            for d,v in self.gains:
+                db.add_gain(d,v, dbhist)
             db.commit()
 
         analysis.gain_history_id = dbhist.id
+
 
     def _save_analysis_group(self, db, analysis):
         """

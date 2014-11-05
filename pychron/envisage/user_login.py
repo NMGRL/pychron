@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 import os
 import pickle
+from pyface.message_dialog import information
 from traits.api import HasTraits, Button, List, Str, Bool
 from traitsui.api import View, Item, HGroup, UItem, Label, Handler, VGroup
 # ============= standard library imports ========================
@@ -37,10 +38,13 @@ def load_user_file():
     users = []
     last_login = ''
     path = paths.users_file
+    isfile=False
     if os.path.isfile(path):
+        isfile=True
         with open(path, 'r') as fp:
             users, last_login = pickle.load(fp)
-    return users, last_login
+
+    return users, last_login, isfile
 
 
 def dump_user_file(names, last_login_name):
@@ -100,6 +104,9 @@ class SrcDestUsers(HasTraits):
 
 
 def get_user(current=None):
+    """
+        current: str, current user. if supplied omit from available list
+    """
     if globalv.use_login:
         #check to see if the login file is set
         if os.path.isfile(paths.login_file):
@@ -109,7 +116,11 @@ def get_user(current=None):
             return u
 
         #read the existing user file
-        users, last_login = load_user_file()
+        users, last_login, isfile = load_user_file()
+        if not isfile and globalv.multi_user:
+            information(None, 'Auto login as root. Quit to populate the user list')
+            return 'root'
+
         if current:
             users = [u for u in users if u != current]
         login = Login(users=users)
@@ -120,6 +131,12 @@ def get_user(current=None):
             info = login.edit_traits()
             if info.result:
                 if login.user:
+                    #add the manually entered user name to the users file
+                    if not current and not globalv.multi_user:
+                        if login.user not in users:
+                            users.append(login.user)
+                        dump_user_file(users, login.user)
+
                     return login.user
             else:
                 break
@@ -128,7 +145,7 @@ def get_user(current=None):
 
 
 def get_src_dest_user(cuser):
-    users, _ = load_user_file()
+    users, _,_ = load_user_file()
     login = SrcDestUsers(users=users)
     login.src_user = cuser
     s, d = None, None

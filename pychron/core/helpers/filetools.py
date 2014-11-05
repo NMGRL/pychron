@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -144,16 +144,37 @@ def unique_path2(root, base, extension='.txt'):
         unique_path2 solves this by finding the max path then incrementing by 1
     """
     # find the max path in the root directory
-    basename = '{}-*{}'.format(base, extension)
+    # basename = '{}-*{}'.format(base, extension)
+    # cnt = 0
+    # for p in glob.iglob(os.path.join(root, basename)):
+    #     p = os.path.basename(p)
+    #     head, tail = os.path.splitext(p)
+    #     cnt = max(int(head.split('-')[1]), cnt)
+    #
+    # cnt += 1
+    cnt = max_path_cnt(root, '{}-'.format(base), extension)
+    p = os.path.join(root, '{}-{:03n}{}'.format(base, cnt, extension))
+    return p, cnt
+
+
+def max_path_cnt(root, base, delimiter='_',extension='.txt'):
+    """
+
+    :param root:
+    :param base:
+    :param extension:
+    :return: int max+1
+    """
+    basename = '{}*{}'.format(base, extension)
     cnt = 0
+
     for p in glob.iglob(os.path.join(root, basename)):
         p = os.path.basename(p)
         head, tail = os.path.splitext(p)
-        cnt = max(int(head.split('-')[1]), cnt)
+        cnt = max(int(head.split(delimiter)[1]), cnt)
 
     cnt += 1
-    p = os.path.join(root, '{}-{:03n}{}'.format(base, cnt, extension))
-    return p, cnt
+    return cnt
 
 
 def unique_path(root, base, extension='.txt'):
@@ -342,7 +363,7 @@ def get_path(root, name, extensions):
 
     """
     for ext in extensions:
-        p=os.path.join(root, add_extension(name, ext))
+        p = os.path.join(root, add_extension(name, ext))
         if os.path.isfile(p):
             return p
 

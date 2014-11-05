@@ -134,6 +134,7 @@ class Paths():
     default_cache = None
     loading_dir = None
     power_map_dir = None
+    labbook_dir = None
     # vcs_dir = None
     # initialization_dir = None
     # device_creator_dir = None
@@ -285,6 +286,7 @@ class Paths():
         self.default_cache = join(self.data_dir, 'cache')
         self.loading_dir = join(self.data_dir, 'loads')
         self.power_map_dir = join(self.data_dir, 'power_maps')
+        self.labbook_dir = join(self.data_dir, 'labbook_dir')
         # self.vcs_dir = join(self.data_dir, 'vcs')
         #==============================================================================
         # lovera exectuables

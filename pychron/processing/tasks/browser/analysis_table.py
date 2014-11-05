@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, List, Any, Str, Enum, Bool, Button, \
-    Event, Property, cached_property, Instance, DelegatesTo
+    Event, Property, cached_property, Instance, DelegatesTo, CStr
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.envisage.browser.browser_mixin import filter_func
@@ -33,7 +33,7 @@ class AnalysisTable(HasTraits):
     # append_event = Event
     context_menu_event = Event
 
-    analysis_filter = Str
+    analysis_filter = CStr
     analysis_filter_values = List
     analysis_filter_comparator = Enum('=', '<', '>', '>=', '<=', 'not =', 'startswith')
     analysis_filter_parameter = Str
@@ -113,45 +113,45 @@ class AnalysisTable(HasTraits):
 
     def _analysis_filter_parameter_default(self):
         return 'record_id'
-#============= EOF =============================================
-#def filter_invalid(self, ans):
-#    if self.omit_invalid:
-#        ans = filter(self._omit_invalid_filter, ans)
-#    return ans
+        #============= EOF =============================================
+        #def filter_invalid(self, ans):
+        #    if self.omit_invalid:
+        #        ans = filter(self._omit_invalid_filter, ans)
+        #    return ans
 
-#def _omit_invalid_filter(self, x):
-#    return x.tag != 'invalid'
+        #def _omit_invalid_filter(self, x):
+        #    return x.tag != 'invalid'
 
-#def _omit_invalid_changed(self, new):
-#    if new:
-#        self._
-#        self.analyses = filter(self._omit_invalid_filter, self.oanalyses)
-#    else:
-#        self.analyses = self.oanalyses
-# def load(self):
-    #     p = os.path.join(paths.hidden_dir, 'analysis_table')
-    #     if os.path.isfile(p):
-    #         d={}
-    #         with open(p, 'r') as fp:
-    #             try:
-    #                d=pickle.load(fp)
-    #             except (pickle.PickleError, OSError, EOFError):
-    #                 pass
-    #
-    #         self.trait_set(**d)
-    #
-    # def dump(self):
-    #     p=os.path.join(paths.hidden_dir, 'analysis_table')
-    #     with open(p,'w') as fp:
-    #         pickle.dump({'page_width':self.page_width}, fp)
+        #def _omit_invalid_changed(self, new):
+        #    if new:
+        #        self._
+        #        self.analyses = filter(self._omit_invalid_filter, self.oanalyses)
+        #    else:
+        #        self.analyses = self.oanalyses
+        # def load(self):
+        #     p = os.path.join(paths.hidden_dir, 'analysis_table')
+        #     if os.path.isfile(p):
+        #         d={}
+        #         with open(p, 'r') as fp:
+        #             try:
+        #                d=pickle.load(fp)
+        #             except (pickle.PickleError, OSError, EOFError):
+        #                 pass
+        #
+        #         self.trait_set(**d)
+        #
+        # def dump(self):
+        #     p=os.path.join(paths.hidden_dir, 'analysis_table')
+        #     with open(p,'w') as fp:
+        #         pickle.dump({'page_width':self.page_width}, fp)
 
-    # def _forward_fired(self):
-    #     if self.page < self.npages:
-    #         self.page += 1
-    #         #if self.oanalyses:
-    #         #    self.page+=1
-    #
-    # def _backward_fired(self):
-    #     p = self.page
-    #     p -= 1
-    #     self.page = max(1, p)
+        # def _forward_fired(self):
+        #     if self.page < self.npages:
+        #         self.page += 1
+        #         #if self.oanalyses:
+        #         #    self.page+=1
+        #
+        # def _backward_fired(self):
+        #     p = self.page
+        #     p -= 1
+        #     self.page = max(1, p)

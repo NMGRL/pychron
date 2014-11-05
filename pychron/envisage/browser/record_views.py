@@ -18,6 +18,7 @@
 from traits.api import HasTraits, Str, Date, Float, Property, Long
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.experiment.utilities.identifier import get_analysis_type
 
 
 class RecordView(HasTraits):
@@ -123,6 +124,10 @@ class LabnumberRecordView(RecordView):
 
     def _get_irradiation_and_level(self):
         return '{}{}'.format(self.irradiation, self.irradiation_level)
+
+    @property
+    def analysis_type(self):
+        return get_analysis_type(self.identifier)
 
     @property
     def id(self):

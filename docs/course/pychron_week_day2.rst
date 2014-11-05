@@ -1,6 +1,19 @@
 Pychron Week Day 2. Browsing
 ==============================
 
+Review Day 1.
+    1. go to documentation
+    2. launch pychron
+    3. submit issues
+    4. submit notes
+
+New feature
+    1. User/Session Login
+    2. Frequency templates
+    3. Email group
+
+
+
 Browser
 ------------------------
     1. By Project
@@ -10,7 +23,7 @@ Browser
     5. Filtering results
     6. Manual Queries
 
-Browsing is a convienent way of navigating the pychron database. It is similar to Mass Spec's recall/run
+Browsing is a convenient way of navigating the pychron database. It is similar to Mass Spec's recall/run
 selection window's however pychron's browser pane has the most commonly used query's predefined and organized
 into a simple workflow.
 

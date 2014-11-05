@@ -19,7 +19,8 @@ def upgrade():
                     sa.Column('id',sa.INTEGER, primary_key=True),
                     sa.Column('hash',sa.String(32)),
                     sa.Column('create_date', sa.DateTime),
-                    sa.Column('user_id', sa.INTEGER, sa.ForeignKey('gen_UserTable.id')))
+                    sa.Column('user_id', sa.INTEGER, sa.ForeignKey('gen_UserTable.id')),
+                    mysql_engine='InnoDB')
 
     op.create_table('meas_GainTable',
                     sa.Column('id',sa.INTEGER, primary_key=True),
@@ -27,15 +28,21 @@ def upgrade():
                     sa.Column('history_id', sa.INTEGER,
                               sa.ForeignKey('meas_GainHistoryTable.id')),
                     sa.Column('detector_id',sa.INTEGER,
-                              sa.ForeignKey('gen_DetectorTable.id')))
+                              sa.ForeignKey('gen_DetectorTable.id')),
+                    mysql_engine='InnoDB')
+
     op.add_column('meas_AnalysisTable',
                   sa.Column('gain_history_id',
                             sa.INTEGER,
                             sa.ForeignKey('meas_GainHistoryTable.id')))
 
 def downgrade():
-    op.drop_constraint('meas_analysistable_ibfk_9',
+    try:
+        op.drop_constraint('meas_analysistable_ibfk_9',
                        'meas_AnalysisTable','foreignkey')
+    except:
+        pass
+
     op.drop_column('meas_AnalysisTable', 'gain_history_id')
     op.drop_table('meas_GainTable')
     op.drop_table('meas_GainHistoryTable')

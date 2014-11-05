@@ -49,7 +49,14 @@ class ArgusSpectrometerManager(BaseSpectrometerManager):
 
     def make_gains_list(self):
         spec = self.spectrometer
-        return [di.get_gain() for di in spec.detectors]
+        return [(di.name, di.get_gain()) for di in spec.detectors]
+
+    def set_gains(self, *args, **kw):
+        spec=self.spectrometer
+
+        diff=any([di.gain_outdated for di in spec.detectors])
+        if diff:
+            return spec.set_gains(*args, **kw)
 
     def make_parameters_dict(self):
         spec = self.spectrometer

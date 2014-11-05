@@ -63,7 +63,7 @@ from pychron.database.orms.isotope.meas import meas_AnalysisTable, \
     meas_ExperimentTable, meas_ExtractionTable, meas_IsotopeTable, meas_MeasurementTable, \
     meas_SpectrometerParametersTable, meas_SpectrometerDeflectionsTable, \
     meas_SignalTable, meas_PeakCenterTable, meas_PositionTable, \
-    meas_ScriptTable, meas_MonitorTable
+    meas_ScriptTable, meas_MonitorTable, meas_GainHistoryTable, meas_GainTable
 
 # proc_
 from pychron.database.orms.isotope.proc import proc_DetectorIntercalibrationHistoryTable, \
@@ -140,6 +140,46 @@ class InterpretedAge(HasTraits):
                            Item('mswd',
                                 format_func=lambda x: floatfmt(x, 2),
                                 style='readonly', label='MSWD')))
+
+
+def write_dates(ds):
+    import pickle
+
+    p = '/Users/ross/Sandbox/dates.p'
+    with open(p, 'w') as fp:
+        pickle.dump([di[0] for di in ds], fp)
+
+
+# def binfunc(ds, delta_seconds):
+#
+# # write_dates(ds)
+#
+# pt = ds[0][0]
+# td = timedelta(seconds=delta_seconds * 0.25)
+#
+#     for di in ds[1:]:
+#         di=di[0]
+#         if (di - pt).total_seconds() > delta_seconds:
+#             yield pt-td, di+td
+#             pt = di
+#     yield pt - td, di + td
+
+
+def binfunc(ds, hours):
+    p1 = ds[0][0]
+    delta_seconds = hours * 3600
+    td = timedelta(seconds=delta_seconds * 0.25)
+
+    for i, di in enumerate(ds):
+        i = max(0, i - 1)
+
+        di = di[0]
+        dd = ds[i][0]
+        if (di - dd).total_seconds() > delta_seconds:
+            yield p1 - td, dd + td
+            p1 = di
+
+    yield p1 - td, di + td
 
 
 @provides(IBrowser)
@@ -227,9 +267,9 @@ class IsotopeAdapter(DatabaseAdapter):
 
             return it
 
-    #===========================================================================
+    # ===========================================================================
     # adders
-    #===========================================================================
+    # ===========================================================================
     def add_data_reduction_tag(self, name, comment, user=None):
         if user:
             user = self.get_user(self.save_username)
@@ -290,7 +330,7 @@ class IsotopeAdapter(DatabaseAdapter):
     def add_history(self, dbrecord, kind, **kw):
         func = getattr(self, 'add_{}_history'.format(kind))
         history = func(dbrecord, user=self.save_username, **kw)
-        #        history = db.add_blanks_history(dbrecord, user=db.save_username)
+        # history = db.add_blanks_history(dbrecord, user=db.save_username)
 
         # set analysis' selected history
         sh = self.add_selected_histories(dbrecord)
@@ -375,7 +415,7 @@ class IsotopeAdapter(DatabaseAdapter):
         analysis = self.get_analysis(analysis)
         if analysis:
             dbm.analysis = analysis
-            #dbm.analysis_id = analysis.id
+            # dbm.analysis_id = analysis.id
             #             analysis.monitors.append(dbm)
         self._add_item(dbm)
         return dbm
@@ -386,7 +426,7 @@ class IsotopeAdapter(DatabaseAdapter):
             dbpos = meas_PositionTable(position=pos, **kw)
             if extraction:
                 dbpos.extraction_id = extraction.id
-                #             extraction.positions.append(dbpos)
+                # extraction.positions.append(dbpos)
             self._add_item(dbpos)
             return dbpos
         except (ValueError, TypeError), e:
@@ -397,7 +437,7 @@ class IsotopeAdapter(DatabaseAdapter):
         obj = proc_NotesTable(note=note, user=self.save_username)
         if analysis:
             note.analysis = analysis
-            #analysis.notes.append(obj)
+            # analysis.notes.append(obj)
         return obj
 
     def add_interpreted_age_history(self, labnumber, **kw):
@@ -420,7 +460,7 @@ class IsotopeAdapter(DatabaseAdapter):
                                            interpreted_age_id=interpreted_age.id,
                                            **kw)
         return self._add_item(item)
-        #return self._add_set('InterpretedAge', 'interpreted_age',
+        # return self._add_set('InterpretedAge', 'interpreted_age',
         #                     interpreted_age, analysis, **kw)
 
     def add_blanks_history(self, analysis, **kw):
@@ -466,7 +506,7 @@ class IsotopeAdapter(DatabaseAdapter):
 
         detector = self.get_detector(detector)
         obj.detector = detector
-        #    obj.history_id = history.id
+        # obj.history_id = history.id
 
         self._add_item(obj)
 
@@ -480,7 +520,7 @@ class IsotopeAdapter(DatabaseAdapter):
                                   'detector_intercalibrations', history, **kw)
         if a:
             detector = self.get_detector(detector)
-            #if detector:
+            # if detector:
             a.detector = detector
             #a.detector_id = detector.id
             #             detector.intercalibrations.append(a)
@@ -497,7 +537,7 @@ class IsotopeAdapter(DatabaseAdapter):
         return exp
 
     def add_extraction(self, analysis, extract_device=None, **kw):
-        #        ex = self._get_script('extraction', script_blob)
+        # ex = self._get_script('extraction', script_blob)
         #        if ex is None:
         #            ha = self._make_hash(script_blob)
         ex = meas_ExtractionTable(**kw)
@@ -554,24 +594,15 @@ class IsotopeAdapter(DatabaseAdapter):
         figure = self.get_figure(figure)
         if figure:
             fa.figure = figure
-            #fa.figure_id = figure.id
+            # fa.figure_id = figure.id
 
         analysis = self.get_analysis(analysis)
         if analysis:
             fa.analysis = analysis
-            #fa.analysis_id = analysis.id
+            # fa.analysis_id = analysis.id
 
         self._add_item(fa)
         return fa
-
-
-    #         if figure:
-    #             figure.analyses.append(fa)
-    #             if analysis:
-    #                 analysis.figure_analyses.append(fa)
-    # #                self._add_item(fa)
-    #
-    #         return fa
 
     def add_fit_history(self, analysis, **kw):
         kw['user'] = self.save_username
@@ -717,14 +748,7 @@ class IsotopeAdapter(DatabaseAdapter):
         r = proc_IsotopeResultsTable(**kw)
         r.isotope = isotope
         r.history = history
-        #if isotope:
-        #r.isotope=isotope
-        #r.isotope_id = isotope.id
-        #             isotope.results.append(r)
-        #if history:
-        #r.history=history
-        #r.history_id = history.id
-        #                 history.results.append(r)
+
         self._add_item(r, )
         return r
 
@@ -771,26 +795,6 @@ class IsotopeAdapter(DatabaseAdapter):
         self._add_item(user)
         return user
 
-    #    def add_user(self, name, **kw):
-    #        user = gen_UserTable(name=name, **kw)
-    #        if isinstance(project, str):
-    #            project = self.get_project(project)
-    #
-    #        q = self._build_query_and(gen_UserTable, name, gen_ProjectTable, project)
-    #
-    #        addflag = True
-    #        u = q.one()
-    #        if u is not None:
-    #            addflag = not (u.project == project)
-    #
-    #        if addflag:
-    #            self.info('adding user {}'.format(name))
-    #            if project is not None:
-    #                project.users.append(user)
-    #            self._add_item(user)
-    #        return user
-
-
     def add_sample(self, name, project=None, material=None, **kw):
         with self.session_ctx() as sess:
 
@@ -798,21 +802,12 @@ class IsotopeAdapter(DatabaseAdapter):
             if project:
                 project = self.get_project(project)
                 q = q.filter(gen_SampleTable.project == project)
-                #q=q.join(gen_ProjectTable)
 
             if material:
                 material = self.get_material(material)
                 q = q.filter(gen_SampleTable.material == material)
-                #q=q.join(gen_MaterialTable)
 
             q = q.filter(gen_SampleTable.name == name)
-            #if project:
-            #    q=q.filter()
-
-            #q = q.filter(and_(gen_SampleTable.name == name,
-            #                  getattr(gen_SampleTable, 'material') == material,
-            #                  getattr(gen_SampleTable, 'project') == project,
-            #))
 
             try:
                 sample = q.one()
@@ -855,9 +850,7 @@ class IsotopeAdapter(DatabaseAdapter):
     def add_signal(self, isotope, data):
         s = meas_SignalTable(data=data)
         s.isotope = isotope
-        #if isotope:
-        #    s.isotope_id = isotope.id
-        #            isotope.signals.append(s)
+
         self._add_item(s, )
         return s
 
@@ -870,7 +863,6 @@ class IsotopeAdapter(DatabaseAdapter):
 
         if meas:
             meas.spectrometer_parameters = sp
-            #meas.spectrometer_parameters_id = sp.id
 
         return sp
 
@@ -879,14 +871,6 @@ class IsotopeAdapter(DatabaseAdapter):
         sp.measurement = meas
         det = self.get_detector(det)
         sp.detector = det
-        #if meas:
-
-        #sp.measurement_id = meas.id
-        #             meas.deflections.append(sp)
-        #det = self.get_detector(det, )
-        #if det:
-        #    sp.detector_id = det.id
-        #                 det.deflections.append(sp)
 
         return sp
 
@@ -955,9 +939,55 @@ class IsotopeAdapter(DatabaseAdapter):
         #             ms.sensitivities.append(si)
         return ms
 
+    def add_gain_history(self, ha):
+        item = meas_GainHistoryTable(hash=ha)
+        user = self.get_user(self.save_username)
+        if user:
+            item.user_id = user.id
+
+        return self._add_item(item)
+
     #===========================================================================
     # getters
     #===========================================================================
+    def make_gains_hash(self, gains):
+        h = hashlib.md5()
+
+        for d, v in gains:
+            h.update(d)
+            h.update(str(v))
+
+        return h.hexdigest()
+
+    def add_gain(self, d, v, hist):
+        obj = meas_GainTable()
+        detector = self.get_detector(d)
+        if detector:
+            obj.detector = detector
+        obj.value = v
+        obj.history = hist
+        return self._add_item(obj)
+
+    def get_gain_histories(self, lpost=None, hpost=None, **kw):
+        if lpost:
+            d = sql_cast(meas_GainHistoryTable.create_date, Date)
+            kw = self._append_filters(d >= lpost)
+        if hpost:
+            d = sql_cast(meas_GainHistoryTable.create_date, Date)
+            kw = self._append_filters(d <= hpost)
+
+        return self._retrieve_items(meas_GainHistoryTable, **kw)
+
+    def get_gain_history(self, v, **kw):
+        # kw = self._append_filters(meas_GainHistoryTable.hash == v, kw)
+        # order = meas_GainHistoryTable.create_date.desc()
+        #
+        # histories = self._retrieve_items(meas_GainHistoryTable,
+        #                                  limit=1, order=order, **kw)
+        # if histories:
+        #     return histories[0]
+        return self._retrieve_item(meas_GainHistoryTable, v, key='hash')
+
     def get_blanks(self, ms=None, limit=100):
         joins = (meas_AnalysisTable, gen_AnalysisTypeTable)
         filters = (gen_AnalysisTypeTable.name.like('blank%'),)
@@ -969,19 +999,6 @@ class IsotopeAdapter(DatabaseAdapter):
                                     joins=joins, filters=filters,
                                     order=meas_AnalysisTable.analysis_timestamp.desc(),
                                     limit=limit)
-        # with db.session_ctx() as sess:
-        #     q = sess.query(meas_AnalysisTable)
-        #     q = q.join(meas_MeasurementTable)
-        #     q = q.join(gen_AnalysisTypeTable)
-        #
-        #     q = q.filter(gen_AnalysisTypeTable.name.like('blank%'))
-        #     if ms:
-        #         q = q.join(gen_MassSpectrometerTable)
-        #         q = q.filter(gen_MassSpectrometerTable.name == ms.lower())
-        #
-        #     q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
-        #     q = q.limit(100)
-        #     dbs = q.all()
 
     def get_session_blank_histories(self, s):
         with self.session_ctx() as sess:
@@ -1030,18 +1047,6 @@ class IsotopeAdapter(DatabaseAdapter):
                                     joins=joins,
                                     filters=filters,
                                     group_by=group_by)
-        # q = sess.query(irrad_PositionTable.position,
-        #                # gen_LabTable.identifier,
-        #                func.count(meas_AnalysisTable.id))
-        # q = q.join(irrad_LevelTable)
-        # q = q.join(irrad_IrradiationTable)
-        # q = q.join(gen_LabTable)
-        # q = q.join(meas_AnalysisTable)
-        #
-        # q = q.filter(irrad_IrradiationTable.name == level.irradiation.name)
-        # q = q.filter(irrad_LevelTable.name == level.name)
-        # q = q.group_by(irrad_PositionTable.position)
-        # return self._query_all(q)
 
     def get_analysis_group(self, v, key='id', **kw):
         return self._retrieve_item(proc_AnalysisGroupTable, v, key, **kw)
@@ -1055,22 +1060,6 @@ class IsotopeAdapter(DatabaseAdapter):
             return self._retrieve_items(proc_AnalysisGroupTable,
                                         joins=joins,
                                         filters=filters, order=order_bys)
-            # with self.session_ctx() as sess:
-            #     if projects:
-            #
-            #
-            #         q = sess.query(proc_AnalysisGroupTable)
-            #         q = q.join(proc_AnalysisGroupSetTable)
-            #         q = q.join(meas_AnalysisTable)
-            #         q = q.join(gen_LabTable)
-            #         q = q.join(gen_SampleTable)
-            #         q = q.join(gen_ProjectTable)
-            #
-            #         q = q.filter(gen_ProjectTable.name.in_(projects))
-            #         q = q.order_by(proc_AnalysisGroupTable.create_date)
-            #         q = q.order_by(proc_AnalysisGroupTable.last_modified)
-            #
-            #         return self._query_all(q)
 
     def get_latest_interpreted_age_history(self, value, key='identifier'):
         with self.session_ctx() as sess:
@@ -1146,6 +1135,34 @@ class IsotopeAdapter(DatabaseAdapter):
                                     joins=(gen_ProjectTable,),
                                     filters=(gen_ProjectTable.name.in_(projects),))
 
+    def get_project_date_bins(self, identifier, pname, hours=10):
+        with self.session_ctx() as sess:
+            l, h = self.get_project_date_range([pname])
+            #get date range of this identifier in the projects time frame
+            q = sess.query(meas_AnalysisTable.analysis_timestamp)
+            q = q.join(gen_LabTable)
+            q = q.filter(gen_LabTable.identifier == identifier)
+            q = q.filter(and_(meas_AnalysisTable.analysis_timestamp >= l,
+                              meas_AnalysisTable.analysis_timestamp <= h))
+            l, h = self._get_date_range(q)
+
+            q = sess.query(meas_AnalysisTable.analysis_timestamp)
+            q = q.join(gen_LabTable, gen_SampleTable, gen_ProjectTable)
+            q = q.filter(gen_ProjectTable.name == pname)
+            q = q.filter(and_(meas_AnalysisTable.analysis_timestamp >= l,
+                              meas_AnalysisTable.analysis_timestamp <= h))
+
+            q = q.order_by(meas_AnalysisTable.analysis_timestamp.asc())
+            return binfunc(q.all(), hours)
+
+    def get_project_date_range(self, projects):
+        with self.session_ctx() as sess:
+            q = sess.query(meas_AnalysisTable.analysis_timestamp)
+            q = q.join(gen_LabTable, gen_SampleTable, gen_ProjectTable)
+            q = q.filter(gen_ProjectTable.name.in_(projects))
+
+            return self._get_date_range(q)
+
     def get_labnumber_figures(self, identifiers):
         if not hasattr(identifiers, '__iter__'):
             identifiers = (identifiers,)
@@ -1165,24 +1182,6 @@ class IsotopeAdapter(DatabaseAdapter):
                                     filters=filters,
                                     order=meas_AnalysisTable.analysis_timestamp.desc(),
                                     func='first')
-
-        # return self._retrieve_first()
-        # with self.session_ctx() as sess:
-        # q = sess.query(meas_AnalysisTable)
-        # q = q.join(meas_MeasurementTable)
-        # q = q.join(gen_AnalysisTypeTable)
-        # q = q.join(gen_MassSpectrometerTable)
-        #
-        # q = q.filter(and_(
-        #     gen_AnalysisTypeTable.name == atype,
-        #     gen_MassSpectrometerTable.name == ms,
-        #     meas_AnalysisTable.analysis_timestamp < post))
-        #
-        # q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
-        # try:
-        #     return q.first()
-        # except NoResultFound:
-        #     pass
 
     def get_date_range_analyses(self, start, end,
                                 labnumber=None,
@@ -1248,52 +1247,20 @@ class IsotopeAdapter(DatabaseAdapter):
                                      joins=(meas_MeasurementTable, meas_AnalysisTable, gen_LabTable),
                                      filters=(gen_LabTable.identifier.in_(lns),))
         return [r for r, in items]
-        # q = sess.query(distinct(gen_MassSpectrometerTable.name))
-        # q = q.join(meas_MeasurementTable)
-        # q = q.join(meas_AnalysisTable)
-        #
-        # q = q.join(gen_LabTable)
-        # q = q.filter(gen_LabTable.identifier.in_(lns))
-        #
-        # return [r for r, in q.all()]
 
-    def get_analysis_timestamps(self, lns, binned=False):
+    def get_analysis_date_ranges(self, lns, hours):
         """
             lns: list of labnumbers/identifiers
         """
+
         with self.session_ctx() as sess:
             q = self._analysis_query(sess, attr='analysis_timestamp')
 
             q = q.filter(gen_LabTable.identifier.in_(lns))
             q = q.order_by(meas_AnalysisTable.analysis_timestamp.asc())
-            ans = self._query_all(q)
-            ans = [ai[0] for ai in ans]
-            # n = len(ans)
-            if binned:
-                if not isinstance(binned, int):
-                    binned = 7200
+            ts = self._query_all(q)
 
-                gans = []
-                t1 = ans[0]  #[1]
-                xx = [ans[0]]
-                # for u,t2 in ans[1:]:
-                for t2 in ans[1:]:
-                    if abs((t2 - t1).total_seconds()) > binned:
-                        gans.append(xx)
-                        xx = [t2]
-                    else:
-                        xx.append(t2)
-                    t1 = t2
-
-                if xx:
-                    gans.append(xx)
-
-                s = sum([len(g) for g in gans])
-                # print 'n={}, gans={}'.format(n, s)
-                assert [ai for ai in ans] == [ai for gi in gans for ai in gi]
-                ans = gans
-
-            return ans
+            return list(binfunc(ts, hours))
 
     def get_min_max_analysis_timestamp(self, lns=None, projects=None, delta=0):
         """
@@ -1302,8 +1269,6 @@ class IsotopeAdapter(DatabaseAdapter):
 
             get the min and max analysis_timestamps for all analyses with labnumbers in lns
         """
-        # if not lns and not projects:
-        #     raise NotImplementedError
 
         with self.session_ctx() as sess:
             q = self._analysis_query(sess, attr='analysis_timestamp')
@@ -1314,10 +1279,12 @@ class IsotopeAdapter(DatabaseAdapter):
                 q = q.join(gen_SampleTable, gen_ProjectTable)
                 q = q.filter(gen_ProjectTable.name.in_(projects))
 
-            hpost = q.order_by(meas_AnalysisTable.analysis_timestamp.desc()).first()
-            lpost = q.order_by(meas_AnalysisTable.analysis_timestamp.asc()).first()
-            td = timedelta(hours=delta)
-            return lpost[0] - td, hpost[0] + td
+            return self._get_date_range(q, hours=delta)
+
+            # hpost = q.order_by(meas_AnalysisTable.analysis_timestamp.desc()).first()
+            # lpost = q.order_by(meas_AnalysisTable.analysis_timestamp.asc()).first()
+            # td = timedelta(hours=delta)
+            # return lpost[0] - td, hpost[0] + td
 
     def get_labnumber_mass_spectrometers(self, lns):
         """
@@ -1332,7 +1299,7 @@ class IsotopeAdapter(DatabaseAdapter):
                                      cols=(distinct(gen_MassSpectrometerTable.name),))
 
             q = q.filter(gen_LabTable.identifier.in_(lns))
-            return q.one()
+            return [di[0] for di in q.all()]
 
     def get_labnumber_analyses(self, lns, low_post=None, high_post=None,
                                omit_key=None, exclude_uuids=None, mass_spectrometers=None, **kw):
@@ -2261,7 +2228,7 @@ class IsotopeAdapter(DatabaseAdapter):
     #===============================================================================
     def _get_post_filter(self, post, comp, cast=True):
         t = meas_AnalysisTable.analysis_timestamp
-        if cast or not isinstance(post, datetime):
+        if cast and not isinstance(post, datetime):
             t = sql_cast(t, Date)
 
         return getattr(t, comp)(post)
@@ -2450,6 +2417,9 @@ class IsotopeAdapter(DatabaseAdapter):
 
         q = q.order_by(meas_AnalysisTable.analysis_timestamp.asc())
         tc = int(q.count())
+        if not tc:
+            self.debug(compile_query(q))
+
         if count_only:
             return tc
 
@@ -2493,6 +2463,15 @@ class IsotopeAdapter(DatabaseAdapter):
         kw['joins'] = joins
         return kw
 
+    def _get_date_range(self, q, hours=0):
+        lan = q.order_by(meas_AnalysisTable.analysis_timestamp.asc()).first()
+        han = q.order_by(meas_AnalysisTable.analysis_timestamp.desc()).first()
+
+        lan = datetime.now() if not lan else lan[0]
+        han = datetime.now() if not han else han[0]
+        td = timedelta(hours=hours)
+        return lan - td, han + td
+
 
 if __name__ == '__main__':
     from pychron.core.helpers.logger_setup import logging_setup
@@ -2500,25 +2479,25 @@ if __name__ == '__main__':
     logging_setup('ia')
     ia = IsotopeAdapter(
 
-        #                        name='isotopedb_dev_migrate',
-        #                        name='isotopedb_FC2',
+        # name='isotopedb_dev_migrate',
+        # name='isotopedb_FC2',
         name='isotopedb_dev',
         username='root',
         password='Argon',
         host='localhost',
         kind='mysql'
-        #                        name='/Users/ross/Sandbox/exprepo/root/isotopedb.sqlite',
+        # name='/Users/ross/Sandbox/exprepo/root/isotopedb.sqlite',
         #                        name=paths.isotope_db,
         #                        kind='sqlite'
     )
 
     if ia.connect():
         dbs = IsotopeAnalysisSelector(db=ia,
-                                      #                                      style='simple'
+                                      # style='simple'
         )
-        #        repo = Repository(root=paths.isotope_dir)
-        #        repo = Repository(root='/Users/ross/Sandbox/importtest')
-        #        repo = ZIPRepository(root='/Users/ross/Sandbox/importtest/archive004.zip')
+        # repo = Repository(root=paths.isotope_dir)
+        # repo = Repository(root='/Users/ross/Sandbox/importtest')
+        # repo = ZIPRepository(root='/Users/ross/Sandbox/importtest/archive004.zip')
         #        dbs.set_data_manager(kind='local',
         #                             repository=repo,
         #                             workspace_root=paths.default_workspace_dir

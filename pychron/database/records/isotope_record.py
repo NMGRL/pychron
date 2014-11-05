@@ -69,6 +69,7 @@ class IsotopeRecordView(object):
     __slots__ = ('sample', 'project', 'labnumber', 'identifier', 'aliquot', 'step', 'record_id', 'uuid', 'rundate',
                  'timestamp', 'tag', 'irradiation_info', 'mass_spectrometer', 'analysis_type',
                  'meas_script_name', 'extract_script_name', 'extract_device', 'flux_fit_status',
+                 'extract_value','cleanup','duration',
                  'blank_fit_status',
                  'ic_fit_status',
                  'iso_fit_status', 'is_plateau_step', 'group_id', 'graph_id')
@@ -100,6 +101,10 @@ class IsotopeRecordView(object):
         self.blank_fit_status = ''
         self.ic_fit_status = ''
         self.iso_fit_status = ''
+
+        self.extract_value = 0
+        self.cleanup = 0
+        self.duration = 0
 
         # super(IsotopeRecordView, self).__init__(*args, **kw)
 
@@ -153,12 +158,16 @@ class IsotopeRecordView(object):
                 self.mass_spectrometer = meas.mass_spectrometer.name.lower()
                 try:
                     self.analysis_type = meas.analysis_type.name
-                except AttributeError,e:
+                except AttributeError, e:
                     pass
                     # print 'IsotopeRecord create meas 1 {}'.format(e)
 
             ext = dbrecord.extraction
             if ext:
+                self.extract_value = ext.extract_value
+                self.cleanup = ext.cleanup_duration
+                self.duration = ext.extract_duration
+
                 try:
                     if ext.extraction_device:
                         self.extract_device = ext.extraction_device.name
