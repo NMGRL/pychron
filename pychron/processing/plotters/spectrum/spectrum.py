@@ -223,6 +223,7 @@ class Spectrum(BaseArArFigure):
         sp = SpectrumErrorOverlay(component=ds,
                                   spectrum=self,
                                   alpha=max(min(1.0, a), 0.0),
+                                  use_fill=self.options.use_error_envelope_fill,
                                   nsigma=ns)
         ds.underlays.append(sp)
 

@@ -55,6 +55,7 @@ class SpectrumOptions(AgeOptions):
     plateau_line_color = Color
     plateau_method = Enum('Fleck 1977', 'Mahon 1996')
     error_calc_method = Property
+    use_error_envelope_fill = Bool
 
     def _get_error_calc_method(self):
         return self.plateau_age_error_kind
@@ -107,6 +108,7 @@ class SpectrumOptions(AgeOptions):
                         'include_j_error_in_plateau',
                         'plateau_age_error_kind',
                         'plateau_sig_figs',
+                        'use_error_envelope_fill',
                         # 'plateau_error_sig_figs',
                         'plateau_method']
 
@@ -136,8 +138,10 @@ class SpectrumOptions(AgeOptions):
                                       editor=EnumEditor(values=[1, 2, 3]),
                                       tooltip='Set the size of the error envelope in standard deviations',
                                       label='N. Sigma'),
+                                 Item('use_error_envelope_fill',label='Fill'),
                                  Item('envelope_alpha',
                                       label='Opacity',
+                                      enabled_when='use_error_envelope_fill',
                                       tooltip='Set the opacity (alpha-value) for the error envelope')),
                           show_border=True,
                           label='Error Envelope')
