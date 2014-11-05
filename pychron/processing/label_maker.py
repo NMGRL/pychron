@@ -44,7 +44,6 @@ class TitleTemplater(BaseTemplater):
                        'numericcounter': 1,
                        'alphacounter': 'A'}
 
-    view_title = 'Title Maker'
     base_predefined_labels = List(['Sample ( Identifier )',
                                    'Sample ( Identifier - Aliquot )',
                               'Sample ( Identifier - Aliquot , Material )',
@@ -58,7 +57,6 @@ class TitleTemplater(BaseTemplater):
                        ' ': 'Space',
                        ':': 'Colon',
                        ';': 'Semicolon'})
-    width = 500
 
     example = Property(depends_on='label, delimiter, leading_text, trailing_text')
     multi_group_example = Property(depends_on='label, delimiter, leading_text, trailing_text')
@@ -105,15 +103,15 @@ class LabelTemplater(BaseTemplater):
     base_predefined_labels = List(['Sample - Aliquot Step',
                                    'Sample',
                               'Aliquot Step'])
-    view_title = 'Label Maker'
     persistence_name = 'label_maker'
 
 
 class LabelTemplateView(BaseTemplateView):
-    pass
+    view_title = 'Label Maker'
 
 
 class TitleTemplateView(BaseTemplateView):
+    view_title = 'Title Maker'
     def _get_additional_groups(self):
         return (HGroup(UItem('multi_group_example', style='readonly'),
                        show_border=True, label='Multi Group Example'),

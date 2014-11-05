@@ -19,7 +19,11 @@ from traits.api import List, Dict
 # ============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.core.templater.base_templater import BaseTemplater
+from pychron.core.templater.templater_view import BaseTemplateView
 
+
+class CommentTemplateView(BaseTemplateView):
+    view_title = 'Comment Maker'
 
 class CommentTemplater(BaseTemplater):
     attributes = List(['irrad_level', 'irrad_hole', '<SPACE>'])
@@ -30,9 +34,6 @@ class CommentTemplater(BaseTemplater):
 
     label = 'irrad_level : irrad_hole'
     persistence_name = 'comment'
-
-    width = 600
-    view_title = 'Edit Comment Template'
 
     def render(self, obj):
         f = self.formatter
@@ -48,7 +49,8 @@ class CommentTemplater(BaseTemplater):
 
 if __name__ == '__main__':
     c = CommentTemplater()
-    c.configure_traits()
+    cv = CommentTemplateView(model=c)
+    cv.configure_traits()
 
 #============= EOF =============================================
 

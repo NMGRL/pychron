@@ -47,7 +47,6 @@ class BaseTemplater(HasTraits):
 
     attribute_keys = Property(depends_on='label')
 
-    width = 0.0
     persistence_name = ''
 
     attributes = List

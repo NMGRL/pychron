@@ -16,12 +16,16 @@
 
 # ============= enthought library imports =======================
 from traitsui.api import View, Item, VGroup, HGroup, ListStrEditor, EnumEditor, UItem, Controller
+from traits.api import Int, Str
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.envisage.icon_button_editor import icon_button_editor
 
 
 class BaseTemplateView(Controller):
+    width = Int(500)
+    view_title = Str
+
     #views
     def _get_main_view(self):
         return VGroup(HGroup(Item('predefined_label',

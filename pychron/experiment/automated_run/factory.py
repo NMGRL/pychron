@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import String, Str, Property, Any, Float, Instance, Int, List, \
@@ -257,7 +257,7 @@ class AutomatedRunFactory(PersistenceLoggable):
     # freq_after = Bool(False)
     # freq_template = Str
     frequency_model = Instance(FrequencyModel, ())
-    edit_frequency_button =Button
+    edit_frequency_button = Button
     #===========================================================================
     # readonly
     #===========================================================================
@@ -842,7 +842,7 @@ class AutomatedRunFactory(PersistenceLoggable):
 
     @cached_property
     def _get_irradiations(self):
-        db=self.db
+        db = self.db
         if not db.connected:
             return []
 
@@ -855,7 +855,7 @@ class AutomatedRunFactory(PersistenceLoggable):
     @cached_property
     def _get_levels(self):
         levels = []
-        db=self.db
+        db = self.db
         if not db.connected:
             return []
 
@@ -874,7 +874,7 @@ class AutomatedRunFactory(PersistenceLoggable):
     def _get_projects(self):
 
         if self.db:
-            db=self.db
+            db = self.db
             if not db.connected:
                 return dict()
 
@@ -1017,13 +1017,13 @@ class AutomatedRunFactory(PersistenceLoggable):
 
     def _get_truncation_str(self):
         r = ''
-        if self.truncation_path !=NULL_STR:
+        if self.truncation_path != NULL_STR:
             r = os.path.basename(self.truncation_path)
         elif self.use_simple_truncation and self.trunc_attr is not None and \
                         self.trunc_comp is not None and \
                         self.trunc_crit is not None:
-            r =  '{}{}{}, {}'.format(self.trunc_attr, self.trunc_comp,
-                                       self.trunc_crit, self.trunc_start)
+            r = '{}{}{}, {}'.format(self.trunc_attr, self.trunc_comp,
+                                    self.trunc_crit, self.trunc_start)
         return r
         # elif self.truncation_path:
         #     return os.path.basename(self.truncation_path)
@@ -1065,6 +1065,7 @@ class AutomatedRunFactory(PersistenceLoggable):
     def _set_auto_comment(self, temp=None):
         if not temp:
             from pychron.experiment.utilities.comment_template import CommentTemplater
+
             temp = CommentTemplater()
 
         c = temp.render(self)
@@ -1083,13 +1084,16 @@ class AutomatedRunFactory(PersistenceLoggable):
     #===============================================================================
     def _edit_frequency_button_fired(self):
         from pychron.experiment.utilities.frequency_edit_view import FrequencyEditView
+
         fev = FrequencyEditView(model=self.frequency_model)
         fev.edit_traits(kind='modal')
 
     def _edit_comment_template_fired(self):
-        from pychron.experiment.utilities.comment_template import CommentTemplater
+        from pychron.experiment.utilities.comment_template import CommentTemplater, CommentTemplateView
+
         ct = CommentTemplater()
-        info = ct.edit_traits()
+        ctv = CommentTemplateView(model=ct)
+        info = ctv.edit_traits()
         if info.result:
             self._set_auto_comment(ct)
 
@@ -1098,8 +1102,8 @@ class AutomatedRunFactory(PersistenceLoggable):
             self.truncation_path = NULL_STR
 
     def _truncation_path_changed(self, new):
-        if not new==NULL_STR:
-            self.use_simple_truncation=False
+        if not new == NULL_STR:
+            self.use_simple_truncation = False
 
     @on_trait_change('[measurement_script, post_measurement_script, '
                      'post_equilibration_script, extraction_script]:edit_event')
@@ -1116,7 +1120,7 @@ class AutomatedRunFactory(PersistenceLoggable):
         self.debug('update script lists')
         for si in SCRIPT_NAMES:
             si = getattr(self, si)
-            si.refresh_lists=True
+            si.refresh_lists = True
 
     def _load_defaults_button_fired(self):
         if self.labnumber:
@@ -1175,10 +1179,9 @@ class AutomatedRunFactory(PersistenceLoggable):
         if self.edit_mode and \
                 self._selected_runs and \
                 not self.suppress_update:
-
             # if name == 'truncation_path':
             #     t = new
-                # t = add_extension(new, '.yaml') if new else None
+            # t = add_extension(new, '.yaml') if new else None
             # else:
             t = self.truncation_str
             self._set_truncation(t)
