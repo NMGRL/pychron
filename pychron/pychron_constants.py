@@ -42,14 +42,14 @@ LINE_STR = '---------'
 SCRIPT_KEYS = ['measurement', 'post_measurement', 'extraction', 'post_equilibration']
 SCRIPT_NAMES = ['{}_script'.format(si) for si in SCRIPT_KEYS]
 
-FIT_TYPES = ['linear', 'parabolic', 'cubic',
-             'average', 'weighted_mean']
+FIT_TYPES = ['Linear', 'Parabolic', 'Cubic',
+             'Average', 'Weighted Mean']
 FIT_ERROR_TYPES = ['SD', 'SEM', 'CI']
 
 ERROR_TYPES = ['SD', 'SEM', 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)']
 
-INTERPOLATE_TYPES = ['preceding', 'Bracketing Interpolate', 'Bracketing Average']
-FIT_TYPES_INTERPOLATE = FIT_TYPES + ['preceding', 'Bracketing Interpolate', 'Bracketing Average']
+INTERPOLATE_TYPES = ['Preceding', 'Bracketing Interpolate', 'Bracketing Average']
+FIT_TYPES_INTERPOLATE = FIT_TYPES + ['Preceding', 'Bracketing Interpolate', 'Bracketing Average']
 DELIMITERS = {',': 'comma', '\t': 'tab', ' ': 'space'}
 AGE_SCALARS = {'Ga': 1e9, 'Ma': 1e6, 'ka': 1e3, 'a': 1}
 AGE_MA_SCALARS = {'Ma': 1, 'ka': 1e-3, 'a': 1e-6, 'Ga': 1e3}
