@@ -211,6 +211,7 @@ class IsotopeRecordView(object):
 
     def _clean_script_name(self, name):
         n = name.replace('{}_'.format(self.mass_spectrometer.lower()), '')
+        n = os.path.basename(n)
         n, t = os.path.splitext(n)
         return n
 
