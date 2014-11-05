@@ -36,8 +36,8 @@ class CondCounter(object):
 
 
 cnt = CondCounter()
-reset_conditional_results = cnt.reset_conditional_results
-check_conditional_results = cnt.check_conditional_results
+reset_conditional_results = cnt.reset_counter
+check_conditional_results = cnt.check_counter
 # ============= EOF =============================================
 
 
