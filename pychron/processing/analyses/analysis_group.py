@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,6 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+import math
 from traits.api import HasTraits, List, Property, cached_property, Str, Bool, Int, Event
 #============= standard library imports ========================
 from numpy import array, nan
@@ -35,7 +36,6 @@ def AGProperty(*depends):
 
 
 class AnalysisGroup(HasTraits):
-
     analyses = List
     nanalyses = AGProperty()
 
@@ -128,7 +128,7 @@ class AnalysisGroup(HasTraits):
         try:
             return ufloat(v, e)
         except AttributeError:
-            return ufloat(0,0)
+            return ufloat(0, 0)
 
     def _modify_error(self, v, e, kind, mswd=None, include_j_error=None):
 
@@ -292,8 +292,10 @@ class StepHeatAnalysisGroup(AnalysisGroup):
                                    self.plateau_age_error_kind,
                                    mswd=mswd,
                                    include_j_error=self.include_j_error_in_plateau)
+            if math.isnan(e):
+                e = 0
 
-            return ufloat(v, max(0,e))
+            return ufloat(v, max(0, e))
 
 
 class InterpretedAge(StepHeatAnalysisGroup):
