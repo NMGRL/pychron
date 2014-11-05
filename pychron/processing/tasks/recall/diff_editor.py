@@ -160,7 +160,9 @@ class DiffEditor(BaseTraitsEditor):
             riso = right.isotopes[a]
             func=pfunc(a)
 
-            vs.append(Value(name=a, lvalue=iso.value, rvalue=riso.value))
+            vs.append(Value(name=a,
+                            lvalue=nominal_value(iso.get_intensity()),
+                            rvalue=riso.value))
             vs.append(Value(name=err, lvalue=iso.error, rvalue=riso.error))
             vs.append(Value(name=func('N'), lvalue=iso.n, rvalue=riso.n))
             vs.append(StrValue(name=func('Fit'), lvalue=iso.fit, rvalue=riso.fit))

@@ -199,10 +199,10 @@ class RecallTask(AnalysisEditTask):
         if not self.has_active_editor():
             return
 
-        if not self.recaller.is_connected():
-            if not self.recaller.connect():
-                self.warning_dialog('Diff not enabled')
-                return
+        # if not self.recaller.is_connected():
+        if not self.recaller.connect():
+            self.warning_dialog('Diff not enabled')
+            return
 
         left = None
         if self.active_editor:

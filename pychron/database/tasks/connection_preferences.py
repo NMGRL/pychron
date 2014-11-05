@@ -66,7 +66,7 @@ class ConnectionMixin(HasTraits):
         klass = self._get_adapter()
         db = klass(**kw)
         self.connected_label = ''
-        c = db.connect()
+        c = db.connect(warn=False)
         if c:
             self.connected_color = 'green'
             self.connected_label = 'Connected'
@@ -191,6 +191,7 @@ class MassSpecConnectionPreferences(BasePreferencesHelper, ConnectionMixin):
                         'connected_color_',
                         'test_connection'):
             self._reset_connection_label(False)
+        super(MassSpecConnectionPreferences, self)._anytrait_changed(name, old, new)
 
     def _get_connection_dict(self):
         return dict(username=self.username,
