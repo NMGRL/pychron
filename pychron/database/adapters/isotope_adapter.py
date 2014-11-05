@@ -2295,8 +2295,10 @@ class IsotopeAdapter(DatabaseAdapter):
 
         if analysis_types:
             f = gen_AnalysisTypeTable.name.in_(analysis_types)
-            if 'blank' in analysis_types:
-                f = f | gen_AnalysisTypeTable.name.like('blank%')
+
+            # fix for issue #452
+            # if 'blank' in analysis_types:
+            #     f = f | gen_AnalysisTypeTable.name.like('blank%')
 
             q = q.filter(f)
 
