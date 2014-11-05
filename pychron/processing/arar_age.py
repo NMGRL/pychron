@@ -347,6 +347,7 @@ class ArArAge(Loggable):
         if name in self.isotopes:
             iso = self.isotopes[name]
         else:
+            print 'set isotope detector', name
             iso = Isotope(name=name)
             self.isotopes[name] = iso
 
@@ -386,6 +387,7 @@ class ArArAge(Loggable):
                          if getattr(iso, attr) == value), None)
 
     def set_isotope(self, iso, v, **kw):
+        # print 'set isotope', iso, v
         if not self.isotopes.has_key(iso):
             niso = Isotope(name=iso)
             self.isotopes[iso] = niso
@@ -398,6 +400,7 @@ class ArArAge(Loggable):
         return niso
 
     def set_blank(self, iso, v):
+        #print 'set blank', iso, v
         if not self.isotopes.has_key(iso):
             niso = Isotope(name=iso)
             self.isotopes[iso] = niso
@@ -406,6 +409,7 @@ class ArArAge(Loggable):
         self.isotopes[iso].blank.set_uvalue(v)
 
     def set_baseline(self, iso, v):
+        #print 'set baseline', iso
         if not self.isotopes.has_key(iso):
             niso = Isotope(name=iso)
             self.isotopes[iso] = niso

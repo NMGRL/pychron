@@ -534,7 +534,7 @@ class DBAnalysis(Analysis):
 
     def _make_isotopes(self, meas_analysis, dbisos, unpack, selected_histories):
         # isotopes = dict()
-
+        self.isotopes=dict()
         # timethis(self._get_signals, args=(isotopes, meas_analysis, dbisos, unpack))
         # timethis(self._get_baselines, args=(isotopes, meas_analysis, dbisos, unpack))
         # timethis(self._get_blanks, args=(isotopes, meas_analysis))
