@@ -21,23 +21,23 @@ from traitsui.api import View, Item, UItem, HGroup, VGroup
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
-from pychron.labbook.tasks.preferences import LabbookPreferencesPane
+from pychron.labbook.tasks.preferences import LabBookPreferencesPane
 
 
-class LabbookPlugin(BaseTaskPlugin):
+class LabBookPlugin(BaseTaskPlugin):
     def _labbook_factory(self):
-        from pychron.labbook.tasks.labbook_task import LabbookTask
-        t=LabbookTask()
+        from pychron.labbook.tasks.labbook_task import LabBookTask
+        t=LabBookTask()
         return t
 
     def _tasks_default(self):
         tasks = [TaskFactory(id='pychron.labbook',
                              factory=self._labbook_factory,
-                             name='Labbook')]
+                             name='LabBook')]
         return tasks
 
     def _preferences_panes_default(self):
-        return [LabbookPreferencesPane]
+        return [LabBookPreferencesPane]
 
 #============= EOF =============================================
 

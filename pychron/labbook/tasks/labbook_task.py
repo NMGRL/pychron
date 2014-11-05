@@ -81,7 +81,7 @@ class NewNameView(HasTraits):
         return v
 
 
-class LabbookTask(BaseEditorTask):
+class LabBookTask(BaseEditorTask):
     tool_bars = [SToolBar(AddNoteAction(),
                           SaveNoteAction()),
                  SToolBar(AddFolderAction()),
@@ -117,7 +117,7 @@ class LabbookTask(BaseEditorTask):
         root = paths.labbook_dir
 
         dirs, files = self._make_paths(root)
-        self.hierarchy = Hierarchy(name='Labbook',
+        self.hierarchy = Hierarchy(name='LabBook',
                                    root_path=root, children=dirs + files)
         for di in dirs:
             self._load_hierarchy(di, levels=3)

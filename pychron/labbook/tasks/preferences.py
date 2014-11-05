@@ -27,19 +27,19 @@ from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_preferences_helper import GitRepoPreferencesHelper
 
 
-class LabbookPreferences(GitRepoPreferencesHelper):
+class LabBookPreferences(GitRepoPreferencesHelper):
     preferences_path = 'pychron.labbook'
 
 
-class LabbookPreferencesPane(PreferencesPane):
-    model_factory = LabbookPreferences
+class LabBookPreferencesPane(PreferencesPane):
+    model_factory = LabBookPreferences
     category = 'General'
 
     def traits_view(self):
-        v = View(VGroup(HGroup(Item('remote', label='Labbook Repo'),
+        v = View(VGroup(HGroup(Item('remote', label='LabBook Repo'),
                                icon_button_editor('test_connection','test_connection')),
                         CustomLabel('remote_status', color_name='remote_status_color'),
-                        label='Labbook',
+                        label='LabBook',
                         show_border=True))
         return v
 
