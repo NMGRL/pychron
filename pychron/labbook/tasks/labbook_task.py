@@ -40,29 +40,42 @@ from pychron.paths import paths
 class AddNoteAction(TaskAction):
     name = 'Add Note'
     method = 'add_note'
-    image = icon('add')
+    image = icon('note-add')
 
 
 class SaveNoteAction(TaskAction):
     name = 'Save Note'
     method = 'save_note'
-    image = icon('save')
+    image = icon('document-save')
 
 
 class AddFolderAction(TaskAction):
     name = 'Add Folder'
     method = 'add_folder'
-    image = icon('add')
+    image = icon('folder-new')
+
+
+class PushAction(TaskAction):
+    name='Push'
+    method='push'
+    image = icon('arrow_up')
+
+
+class PullAction(TaskAction):
+    name='Pull'
+    method='pull'
+    image = icon('arrow_down')
 
 
 class NewNameView(HasTraits):
     name = Str
     message = Str
+    title = Str
 
     def traits_view(self):
         v = View(UItem('message', style='readonly', width=1.0),
                  UItem('name'),
-                 title='New Folder Name',
+                 title=self.title,
                  width=300,
                  buttons=['OK', 'Cancel'])
         return v
@@ -71,7 +84,9 @@ class NewNameView(HasTraits):
 class LabbookTask(BaseEditorTask):
     tool_bars = [SToolBar(AddNoteAction(),
                           SaveNoteAction()),
-                 SToolBar(AddFolderAction())]
+                 SToolBar(AddFolderAction()),
+                 SToolBar(PushAction(),
+                          PullAction())]
 
     remote = Str
     _repo = Instance(GitRepoManager)
@@ -87,11 +102,10 @@ class LabbookTask(BaseEditorTask):
 
         self._preference_binder('pychron.labbook', ('remote',))
 
-        self.remote = ''
         if self.remote:
             remote = 'https://github.com/{}'.format(self.remote)
             self._repo.create_remote(remote)
-            self._remote_action('Pulling', self._repo.pull)
+            self.pull()
 
         self.make_hierarchy()
 
@@ -108,9 +122,88 @@ class LabbookTask(BaseEditorTask):
         for di in dirs:
             self._load_hierarchy(di, levels=3)
 
-        # print 'asdadasfs --------'
-        # self.hierarchy.pwalk()
+    def save(self, path=None):
+        self.save_note()
 
+    def save_as(self):
+        self.save_note(save_as=True)
+
+    def create_dock_panes(self):
+        return [NotesBrowserPane(model=self)]
+
+    # action handlers
+    def push(self):
+        if self.remote:
+            self._remote_action('Pushing', self._repo.push)
+
+    def pull(self):
+        if self.remote:
+            self._remote_action('Pulling', self._repo.pull)
+
+    def add_folder(self):
+        d = self.selected_root.path
+        if os.path.isdir(d):
+            p = self.get_new_name(d, os.path.isdir, 'New Folder Name')
+            if p:
+                os.mkdir(p)
+                self.make_hierarchy()
+
+    def get_new_name(self, root, test, title):
+        e = NewNameView(title=title)
+        while 1:
+            info = e.edit_traits(kind='livemodal')
+            if info.result:
+                p = os.path.join(root, e.name)
+                if not test(p):
+                    return p
+                else:
+                    e.message = '{} already exists'.format(e.name)
+            else:
+                break
+
+    def save_note(self, save_as=True):
+        if self.has_active_editor():
+            if not self.active_editor.dirty:
+                return
+
+            if save_as:
+                p = self.get_new_name(self.active_editor.root, os.path.isfile, 'New Note Name')
+            else:
+                p = self.active_editor.path
+
+            if p:
+                self.active_editor.save(p)
+                self._repo.add(p, msg=self.active_editor.commit_message,
+                               msg_prefix='',
+                               commit=True)
+                self.make_hierarchy()
+
+    def add_note(self):
+        names = self.get_editor_names()
+
+        if self.selected_root and self.selected_root.path != paths.labbook_dir:
+            root = self.selected_root.path
+            offset = max_path_cnt(root, 'Note_', extension='')
+            name = 'Note {:03n}'.format(len(names) + offset)
+            name = os.path.join(os.path.relpath(root, paths.labbook_dir), name)
+        else:
+            root = paths.labbook_dir
+            offset = max_path_cnt(root, 'Note_', extension='')
+            name = 'Note {:03n}'.format(len(names) + offset)
+
+        editor = NoteEditor(default_name=name, root=root)
+
+        self._open_editor(editor)
+
+    #handlers
+    def _dclicked_fired(self):
+        root = self.selected_root.path
+        if os.path.isfile(root):
+
+            editor = NoteEditor()
+            editor.load(root)
+            self._open_editor(editor)
+    #private
     def _make_paths(self, root):
 
         xs = [xi for xi in os.listdir(root) if not xi.startswith('.')]
@@ -128,7 +221,6 @@ class LabbookTask(BaseEditorTask):
         return FilePath(name=name)
 
     def _load_hierarchy(self, obj, levels=None, level=0):
-        print 'loading h for {}  levels={}/{}'.format(obj.path, level, levels)
         dirs, files = self._make_paths(obj.path)
         obj.children = dirs + files
 
@@ -137,83 +229,8 @@ class LabbookTask(BaseEditorTask):
 
         # print [ci.path for ci in obj.children]
         for di in dirs:
-            self._load_hierarchy(di,level=level + 1, levels=levels)
+            self._load_hierarchy(di, level=level + 1, levels=levels)
 
-    # def _on_click(self, obj, **kw):
-    #     if isinstance(obj, Hierarchy):
-    #         self._load_hierarchy(obj)
-
-    def _dclicked_fired(self):
-        root = self.selected_root.path
-        if os.path.isfile(root):
-            # name = os.path.relpath(root, paths.labbook_dir)
-
-            editor = NoteEditor()
-            editor.load(root)
-            self._open_editor(editor)
-
-    # def _selected_root_changed(self, new):
-    #     if new:
-    #         print new, new.make_path()
-
-    def create_dock_panes(self):
-        return [NotesBrowserPane(model=self)]
-
-    # action handlers
-    def add_folder(self):
-        d = self.selected_root.path
-        if os.path.isdir(d):
-            p = self.get_new_name(d, os.path.isdir)
-            if p:
-                os.mkdir(p)
-                self.make_hierarchy()
-
-    def get_new_name(self, root, test):
-
-        e = NewNameView()
-        while 1:
-            info = e.edit_traits(kind='livemodal')
-            if info.result:
-                p = os.path.join(root, e.name)
-                if not test(p):
-                    return p
-                    # os.mkdir(p)
-                    # self.make_hierarchy()
-                    # break
-                else:
-                    e.message = '{} already exists'.format(e.name)
-            else:
-                break
-
-    def save_note(self):
-        if self.has_active_editor():
-
-            p=self.get_new_name(self.active_editor.root, os.path.isfile)
-            if p:
-                self.active_editor.save(p)
-                self._repo.add(p, msg=self.active_editor.commit_message,
-                               msg_prefix='',
-                               commit=True)
-                self.make_hierarchy()
-
-    def add_note(self):
-        names = self.get_editor_names()
-
-        if self.selected_root and self.selected_root.path!=paths.labbook_dir:
-            root = self.selected_root.path
-            offset = max_path_cnt(root, 'Note_', extension='')
-            name = 'Note {:03n}'.format(len(names) + offset)
-            name = os.path.join(os.path.relpath(root, paths.labbook_dir),name)
-        else:
-            root = paths.labbook_dir
-            offset = max_path_cnt(root, 'Note_', extension='')
-            name = 'Note {:03n}'.format(len(names) + offset)
-
-        editor = NoteEditor(default_name=name, root=root)
-
-        self._open_editor(editor)
-
-    #private
     def _remote_action(self, name, action):
         msg = '{} changes to {}'.format(name, self.remote)
         prog = open_progress(n=10, message=msg)
