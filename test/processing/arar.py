@@ -97,7 +97,7 @@ class ArArAgeCase(unittest.TestCase):
         an = self.analysis
         iso = an.isotopes['Ar40']
 
-        self.assertAlmostEqual(iso.get_corrected_value().std_dev,
+        self.assertAlmostEqual(iso.get_non_detector_corrected_value().std_dev,
                                self.expected['Ar40bl_ce'], 6)
 
     def test_Ar40_e(self):

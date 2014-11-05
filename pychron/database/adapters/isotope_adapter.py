@@ -1153,7 +1153,9 @@ class IsotopeAdapter(DatabaseAdapter):
                               meas_AnalysisTable.analysis_timestamp <= h))
 
             q = q.order_by(meas_AnalysisTable.analysis_timestamp.asc())
-            return binfunc(q.all(), hours)
+            ans = q.all()
+            if len(ans):
+                return binfunc(ans, hours)
 
     def get_project_date_range(self, projects):
         with self.session_ctx() as sess:

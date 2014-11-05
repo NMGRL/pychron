@@ -34,7 +34,7 @@ class RatioItem(HasTraits):
     intensity = Str
     intensity_err = Str
     def add_ratio(self, x):
-        v = x.get_corrected_value() / self.refvalue
+        v = x.get_non_detector_corrected_value() / self.refvalue
 
         self.add_trait(x.detector, Float(round(nominal_value(v), 5)))
         self.add_trait('{}_err'.format(x.detector), Float(round(std_dev(v), 5)))
@@ -62,7 +62,7 @@ class DetectorICView(HasTraits):
         for det in DETECTOR_ORDER:
             ai = next((ai for ai in isotopes if ai.detector.upper()==det), None)
             if ai:
-                rv = ai.get_corrected_value()
+                rv = ai.get_non_detector_corrected_value()
                 r = RatioItem(name=ai.detector,
                               refvalue=rv,
                               intensity=floatfmt(nominal_value(rv)),
