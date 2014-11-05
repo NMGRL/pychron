@@ -123,6 +123,7 @@ class AutomatedRun(Loggable):
     termination_conditionals = List
     truncation_conditionals = List
     action_conditionals = List
+    cancelation_conditionals = List
 
     peak_center = None
     coincidence_scan = None
@@ -142,7 +143,7 @@ class AutomatedRun(Loggable):
 
     # ===============================================================================
     # pyscript interface
-    #===============================================================================
+    # ===============================================================================
     def py_set_integration_time(self, v):
         self.set_integration_time(v)
 
@@ -345,7 +346,7 @@ class AutomatedRun(Loggable):
         """
         if self.plot_panel is None:
             self.plot_panel = self._new_plot_panel(self.plot_panel, stack_order='top_to_bottom')
-        #     self.warning('Need to call "define_hops(...)" after "activate_detectors(...)"')
+        # self.warning('Need to call "define_hops(...)" after "activate_detectors(...)"')
         #     return
 
         self.plot_panel.is_peak_hop = True
@@ -462,7 +463,7 @@ class AutomatedRun(Loggable):
         self.coincidence_scan = obj
         t.join()
 
-    #===============================================================================
+    # ===============================================================================
     # conditionals
     #===============================================================================
     def py_add_termination(self, attr, comp, start_count, frequency,
@@ -596,6 +597,7 @@ class AutomatedRun(Loggable):
         self.collector.stop()
 
     def start(self):
+
         if self.experiment_executor.set_integration_time_on_start:
             dit = self.experiment_executor.default_integration_time
             self.debug('Setting default integration. t={}'.format(dit))
@@ -1129,45 +1131,59 @@ anaylsis_type={}
     def _add_conditionals_from_file(self, p):
         with open(p, 'r') as fp:
             yd = yaml.load(fp)
-            cs = yd.get('terminations')
-            self._add_default_terminations(cs)
-            cs = yd.get('truncations')
-            self._add_default_truncations(cs)
-            cs = yd.get('actions')
-            self._add_default_actions(cs)
+            cs = (('TruncationConditional', 'truncation', 'truncations'),
+                  ('ActionConditional', 'action', 'actions'),
+                  ('TerminationConditional', 'termination', 'terminations'),
+                  ('CancelationConditional', 'cancelation', 'cancelations'))
+            for klass, var, tag in cs:
+                yl = yd.get(tag)
+                if not yl:
+                    continue
 
-    def _add_default_truncations(self, yl):
-        """
-            yl: list of dicts
-        """
-        if not yl:
-            return
+                var = getattr(self, '{}_conditionals'.format(var))
+                for ti in yl:
+                    cx = conditional_from_dict(ti, klass)
+                    var.append(cx)
 
-        for ti in yl:
-            cx = conditional_from_dict(ti, 'TruncationConditional')
-            self.truncation_conditionals.append(cx)
+                    # cs = yd.get('terminations')
+                    # self._add_default_terminations(cs)
+                    # cs = yd.get('truncations')
+                    # self._add_default_truncations(cs)
+                    # cs = yd.get('actions')
+                    # self._add_default_actions(cs)
 
-    def _add_default_actions(self, yl):
-        """
-            yl: list of dicts
-        """
-        if not yl:
-            return
-
-        for ti in yl:
-            cx = conditional_from_dict(ti, 'ActionConditional')
-            self.action_conditionals.append(cx)
-
-    def _add_default_terminations(self, yl):
-        """
-            yl: list of dicts
-        """
-        if not yl:
-            return
-
-        for ti in yl:
-            cx = conditional_from_dict(ti, 'TerminationConditional')
-            self.termination_conditionals.append(cx)
+    # def _add_default_truncations(self, yl):
+    #     """
+    #         yl: list of dicts
+    #     """
+    #     if not yl:
+    #         return
+    #
+    #     for ti in yl:
+    #         cx = conditional_from_dict(ti, 'TruncationConditional')
+    #         self.truncation_conditionals.append(cx)
+    #
+    # def _add_default_actions(self, yl):
+    #     """
+    #         yl: list of dicts
+    #     """
+    #     if not yl:
+    #         return
+    #
+    #     for ti in yl:
+    #         cx = conditional_from_dict(ti, 'ActionConditional')
+    #         self.action_conditionals.append(cx)
+    #
+    # def _add_default_terminations(self, yl):
+    #     """
+    #         yl: list of dicts
+    #     """
+    #     if not yl:
+    #         return
+    #
+    #     for ti in yl:
+    #         cx = conditional_from_dict(ti, 'TerminationConditional')
+    #         self.termination_conditionals.append(cx)
 
     def _refresh_scripts(self):
         for name in SCRIPT_KEYS:
@@ -1588,6 +1604,10 @@ anaylsis_type={}
             m.measure()
 
         mem_log('post measure')
+        self.debug('measurement canceled')
+        if m.terminated:
+            self.cancel_run()
+
         return not m.canceled
 
     def _setup_isotope_graph(self, starttime_offset, color, grpname):

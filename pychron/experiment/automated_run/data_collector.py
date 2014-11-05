@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,6 +24,7 @@ from threading import Event, Timer
 #============= local library imports  ==========================
 from pychron.envisage.consoleable import Consoleable
 # from pychron.core.ui.gui import invoke_in_main_thread
+from pychron.experiment.utilities.conditionals_results import check_conditional_results
 from pychron.globals import globalv
 from pychron.consumer_mixin import consumable
 # from pychron.core.codetools.memory_usage import mem_log
@@ -52,6 +53,7 @@ class DataCollector(Consoleable):
     #total_counts = CInt
 
     canceled = False
+    terminated = False
 
     _truncate_signal = False
     starttime = None
@@ -84,6 +86,7 @@ class DataCollector(Consoleable):
         if self.canceled:
             return
 
+        self.terminated = False
         self._truncate_signal = False
         self._warned_no_fit = []
         self._warned_no_det = []
@@ -145,6 +148,8 @@ class DataCollector(Consoleable):
         else:
             if result == 'cancel':
                 self.canceled = True
+            elif result == 'terminate':
+                self.terminated = True
 
             #self.debug('no more iter')
             evt.set()
@@ -268,7 +273,7 @@ class DataCollector(Consoleable):
 
     def _plot_data(self, i, x, keys, signals):
         try:
-            if i <=1:
+            if i <= 1:
                 self.automated_run.plot_panel.counts = 0
             else:
                 self.automated_run.plot_panel.counts += 1
@@ -338,6 +343,19 @@ class DataCollector(Consoleable):
                 self.info('termination conditional {}. measurement iteration executed {}/{} counts'.format(
                     termination_conditional.message, j, original_counts),
                           color='red')
+
+                key = repr(termination_conditional)
+                n = termination_conditional.nfails
+                if check_conditional_results(key, n):
+                    return 'cancel'
+                else:
+                    return 'terminated'
+
+            cancelation_conditional = self._check_conditionals(self.cancelation_conditionals, i)
+            if cancelation_conditional:
+                self.info('cancelation conditional {}. measurement iteration executed {}/{} counts'.format(
+                    cancelation_conditional.message, j, original_counts),
+                          color='red')
                 return 'cancel'
 
             truncation_conditional = self._check_conditionals(self.truncation_conditionals, i)
@@ -381,5 +399,9 @@ class DataCollector(Consoleable):
     @property
     def action_conditionals(self):
         return self.automated_run.action_conditionals
+
+    @property
+    def cancelation_conditionals(self):
+        return self.automated_run.cancel_conditionals
 
 #============= EOF =============================================

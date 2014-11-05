@@ -116,6 +116,8 @@ class BaseConditional(Loggable):
     def _should_check(self, run, data, cnt):
         return True
 
+    def __repr__(self):
+        return self.to_string()
 
 class AutomatedRunConditional(BaseConditional):
     start_count = Int
@@ -125,6 +127,7 @@ class AutomatedRunConditional(BaseConditional):
     # used to specify a window (in counts) of data to average, etc.
     window = Int
     mapper = Str
+    analysis_types = None
 
     _key = ''
     _mapper_key = ''
@@ -165,6 +168,10 @@ class AutomatedRunConditional(BaseConditional):
         return s
 
     def _should_check(self, run, data, cnt):
+        if self.analysis_types:
+            if run.analysis_type not in self.analysis_types:
+                return
+
         d = False
         if isinstance(cnt, bool):
             d = True
@@ -252,7 +259,16 @@ class TruncationConditional(AutomatedRunConditional):
 
 
 class TerminationConditional(AutomatedRunConditional):
+    nfails = Int
+
+
+class CancelationConditional(AutomatedRunConditional):
     pass
+    # def check(self, run, data, cnt):
+    #     result = super(CancelationConditional, self).check(run, data, cnt)
+    #     if result:
+    #
+
 
 
 class ActionConditional(AutomatedRunConditional):

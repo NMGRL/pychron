@@ -21,6 +21,8 @@ CHANGELOG
 * added Filter/Results focus switching
 * added group emailing
 * gitified pyscripts
+* added frequency template
+
 
 2.0.4
 ------------------
