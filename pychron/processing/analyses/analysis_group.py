@@ -293,7 +293,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
                                    mswd=mswd,
                                    include_j_error=self.include_j_error_in_plateau)
 
-            return ufloat(v, e)
+            return ufloat(v, max(0,e))
 
 
 class InterpretedAge(StepHeatAnalysisGroup):
