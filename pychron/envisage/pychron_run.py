@@ -21,7 +21,7 @@ from envisage.api import Plugin
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.displays.gdisplays import gTraceDisplay
-from pychron.envisage.tasks.tasks_plugin import myTasksPlugin
+from pychron.envisage.tasks.tasks_plugin import PychronTasksPlugin, myTasksPlugin
 from pychron.core.helpers.logger_setup import new_logger
 from pychron.globals import globalv
 from pychron.logger.tasks.logger_plugin import LoggerPlugin
@@ -58,7 +58,8 @@ PACKAGE_DICT = dict(
     MapSpectrometerPlugin=   'pychron.spectrometer.tasks.map_spectrometer_plugin',
     EmailPlugin=             'pychron.social.tasks.email_plugin',
     SystemMonitorPlugin=     'pychron.system_monitor.tasks.system_monitor_plugin',
-    WorkspacePlugin=         'pychron.workspace.tasks.workspace_plugin')
+    WorkspacePlugin=         'pychron.workspace.tasks.workspace_plugin',
+    LabbookPlugin=           'pychron.labbook.tasks.labbook_plugin')
 
 
 def get_module_name(klass):
@@ -165,6 +166,7 @@ def app_factory(klass, user):
     plugins = [
         CorePlugin(),
         myTasksPlugin(),
+        PychronTasksPlugin(),
         LoggerPlugin()]
 
     # if UpdatePlugin is not None:

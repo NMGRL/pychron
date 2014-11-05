@@ -59,8 +59,7 @@ class EditGainsAction(Action):
     def perform(self, event):
         from pychron.spectrometer.gains_edit_view import GainsModel, GainsEditView
 
-        app = event.window.application
-
+        app=event.task.window.application
         spec = app.get_service(SPECTROMETER_PROTOCOL)
         gv = GainsModel(spectrometer=spec)
 

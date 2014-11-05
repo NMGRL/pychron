@@ -22,7 +22,7 @@ CHANGELOG
 * added group emailing
 * gitified pyscripts
 * added frequency template
-
+* added Labbook Plugin
 
 2.0.4
 ------------------

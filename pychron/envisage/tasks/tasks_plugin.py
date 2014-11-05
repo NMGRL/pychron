@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,14 +15,25 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from envisage.plugin import Plugin
 from envisage.ui.tasks.tasks_plugin import TasksPlugin
-
+from traits.api import List
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.envisage.tasks.panes import GeneralPreferencesPane
+
+
+class PychronTasksPlugin(Plugin):
+    preferences_panes = List(
+        contributes_to='envisage.ui.tasks.preferences_panes')
+
+    def _preferences_panes_default(self):
+        return [GeneralPreferencesPane]
 
 
 class myTasksPlugin(TasksPlugin):
     pass
+
     #def _create_preferences_dialog_service(self):
     #    from preferences_dialog import myPreferencesDialog
     #
