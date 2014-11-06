@@ -221,6 +221,7 @@ class AutomatedRunConditional(BaseConditional):
                    (DEFLECTION_REGEX, lambda: arun.get_deflection(attr, current=True)),
                    (RATIO_REGEX, None, ratio_wrapper),
                    (BETWEEN_REGEX, lambda: obj.get_value(attr), between_wrapper)):
+
             if len(aa) == 2:
                 wrapper = default_wrapper
                 reg, func = aa
@@ -231,9 +232,10 @@ class AutomatedRunConditional(BaseConditional):
             if found:
                 args = wrapper(self.comp, func, found[0])
                 if args:
-                    comp = args
+                    v, comp = args
                     break
         else:
+            comp=self.comp
             try:
                 if self.window:
                     vs = obj.get_values(attr, self.window)

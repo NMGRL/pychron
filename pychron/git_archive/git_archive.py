@@ -63,20 +63,20 @@ class GitArchive(GitRepoManager):
             #     return repo.git.log('--pretty=%H', '--follow', '--', p).split('\n')
             # return repo.git.log('--pretty=%H', '--follow', '--', p).split('\n')
 
-    def commits_iter(self, p, keys=None, limit='-'):
-        repo = self._repo
-        p = os.path.join(self._repo.working_tree_dir, p)
-        print p
-        hx = repo.git.log('--pretty=%H', '--follow', '-{}'.format(limit), p).split('\n')
-
-        def func(hi):
-            commit = repo.rev_parse(hi)
-            r = [hi, ]
-            if keys:
-                r.extend([getattr(commit, ki) for ki in keys])
-            return r
-
-        return (func(ci) for ci in hx)
+    # def commits_iter(self, p, keys=None, limit='-'):
+    #     repo = self._repo
+    #     p = os.path.join(self._repo.working_tree_dir, p)
+    #     print p
+    #     hx = repo.git.log('--pretty=%H', '--follow', '-{}'.format(limit), p).split('\n')
+    #
+    #     def func(hi):
+    #         commit = repo.rev_parse(hi)
+    #         r = [hi, ]
+    #         if keys:
+    #             r.extend([getattr(commit, ki) for ki in keys])
+    #         return r
+    #
+    #     return (func(ci) for ci in hx)
 
     # def unpack_blob(self, hexsha, p):
     #     repo = self._repo

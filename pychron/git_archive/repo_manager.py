@@ -18,7 +18,7 @@
 import hashlib
 
 from traits.api import Any, Str, List, Event
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 import shutil
 from cStringIO import StringIO
@@ -90,12 +90,37 @@ class GitRepoManager(Loggable):
         """
         repo = self._repo
         tree = repo.commit(hexsha).tree
-        blob = next((bi for ti in tree.trees
-                     for bi in ti.blobs
-                     if bi.abspath == p), None)
+        # blob = next((bi for ti in tree.trees
+        #              for bi in ti.blobs
+        #              if bi.abspath == p), None)
+        blob = None
+        for ts in ((tree,), tree.trees):
+            for ti in ts:
+                for bi in ti.blobs:
+                    # print bi.abspath, p
+                    if bi.abspath == p:
+                        blob = bi
+                        break
+        else:
+            print 'failed unpacking', p
 
-        if blob:
-            return blob.data_stream.read()
+        return blob.data_stream.read() if blob else ''
+
+    def commits_iter(self, p, keys=None, limit='-'):
+        repo = self._repo
+        p = os.path.join(repo.working_tree_dir, p)
+
+        p = p.replace(' ', '\ ')
+        hx = repo.git.log('--pretty=%H', '--follow', '-{}'.format(limit), '--', p).split('\n')
+
+        def func(hi):
+            commit = repo.rev_parse(hi)
+            r = [hi, ]
+            if keys:
+                r.extend([getattr(commit, ki) for ki in keys])
+            return r
+
+        return (func(ci) for ci in hx)
 
     def diff(self, a, b):
         repo = self._repo
@@ -103,6 +128,7 @@ class GitRepoManager(Loggable):
 
     def commit_dialog(self):
         from pychron.git_archive.commit_dialog import CommitDialog
+
         ps = self.get_local_changes()
         cd = CommitDialog(ps)
         info = cd.edit_traits()
@@ -129,6 +155,12 @@ class GitRepoManager(Loggable):
         #
         # return index, patches
         #
+
+    def cmd(self, cmd, *args):
+        return getattr(self._repo.git, cmd)(*args)
+
+    def is_dirty(self):
+        return self._repo.is_dirty()
 
     def has_staged(self):
         return self._repo.is_dirty()
@@ -303,7 +335,7 @@ class GitRepoManager(Loggable):
         if not b.blob:
             b.blob = self.unpack_blob(b.hexsha, b.name)
 
-        model=DiffModel(left_text=b.blob, right_text=a.blob)
+        model = DiffModel(left_text=b.blob, right_text=a.blob)
         dv = DiffView(model=model)
         return dv
 
@@ -339,7 +371,7 @@ class GitRepoManager(Loggable):
             obj = repo.rev_parse(ci)
             cx = Commit(message=obj.message,
                         hexsha=obj.hexsha,
-                        name = p,
+                        name=p,
                         date=time.strftime("%m/%d/%Y %H:%M", time.gmtime(obj.committed_date)))
             return cx
 

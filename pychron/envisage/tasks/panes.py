@@ -24,7 +24,7 @@ import re
 # ============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.envisage.tasks.base_preferences_helper import GitRepoPreferencesHelper
+from pychron.envisage.tasks.base_preferences_helper import GitRepoPreferencesHelper, test_connection_item
 
 
 class GeneralPreferences(GitRepoPreferencesHelper):
@@ -34,9 +34,10 @@ class GeneralPreferences(GitRepoPreferencesHelper):
 class GeneralPreferencesPane(PreferencesPane):
     model_factory = GeneralPreferences
     category = 'General'
+
     def traits_view(self):
         v = View(VGroup(HGroup(Item('remote', label='Laboratory Repo'),
-                               icon_button_editor('test_connection', 'test_connection')),
+                               test_connection_item()),
                         CustomLabel('remote_status',
                                     color_name='remote_status_color'),
                         show_border=True))
