@@ -158,7 +158,10 @@ class AutomatedRunConditional(BaseConditional):
         else:
             m = KEY_REGEX.findall(comp)
             if m:
-                self._key = m[0]
+                k=m[0]
+                if k in ('not',):
+                    k=m[1]
+                self._key = k
             else:
                 self._key = self.attr
 
@@ -230,7 +233,7 @@ class AutomatedRunConditional(BaseConditional):
 
             if v is None:
                 v = func()
-            print v, comp
+            # print v, comp
             return v, comp
 
         def ratio_wrapper(comp, func, ratio):
@@ -239,6 +242,12 @@ class AutomatedRunConditional(BaseConditional):
             comp = '{}{}'.format(key, remove_attr(comp))
             self._key = key
             return v, comp
+
+        cc = self.comp
+        invert =False
+        if cc.startswith('not '):
+            cc = cc[4:]
+            invert=True
 
         for aa in ((CP_REGEX, lambda: obj.get_current_intensity(attr)),
                    (BASELINECOR_REGEX, lambda: obj.get_baseline_corrected_value(attr)),
@@ -258,14 +267,14 @@ class AutomatedRunConditional(BaseConditional):
             else:
                 reg, func, wrapper = aa
 
-            found = reg.match(self.comp)
+            found = reg.match(cc)
             if found:
-                args = wrapper(self.comp, func, found.group(0))
+                args = wrapper(cc, func, found.group(0))
                 if args:
                     v, comp = args
                     break
         else:
-            comp = self.comp
+            comp = cc
             try:
                 if self.window:
                     vs = obj.get_values(attr, self.window)
@@ -325,12 +334,13 @@ class AutomatedRunConditional(BaseConditional):
             vv = std_dev(v) if STD_REGEX.match(comp) else nominal_value(v)
             vv = self._map_value(vv)
             self.value = vv
-
+            if invert:
+                comp='not {}'.format(comp)
             self.debug('testing {} (eval={}) key={} attr={} value={} mapped_value={}'.format(self.comp, comp,
                                                                                              self._key, self.attr, v,
                                                                                              vv))
 
-            print comp, self._key, vv
+            # print 'comp={},key={},v={}'.format(comp, self._key, vv)
             if eval(comp, {self._key: vv}):
                 self.message = 'attr={}, value= {} {} is True'.format(self.attr, vv, self.comp)
                 return True

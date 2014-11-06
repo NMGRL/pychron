@@ -1,4 +1,5 @@
 from numpy import linspace
+from uncertainties import ufloat
 
 from pychron.experiment.conditional.conditional import conditional_from_dict
 from pychron.processing.arar_age import ArArAge
@@ -9,12 +10,18 @@ __author__ = 'ross'
 
 import unittest
 
+class MSpec(object):
+    analysis_type = 'unknown'
+
 class Arun(object):
     def __init__(self):
         self.arar_age=ArArAge()
+        self.spec = MSpec()
 
     def get_deflection(self, *args, **kw):
         return 2000
+
+
 
 class ConditionalsTestCase(unittest.TestCase):
     def setUp(self):
@@ -25,6 +32,25 @@ class ConditionalsTestCase(unittest.TestCase):
         ar40=Isotope(name='Ar40',xs=xs,ys=ys)
         ar40.baseline.value=1.23
         self.arun.arar_age.isotopes={'Ar40':ar40}
+        self.arun.arar_age.age = 10
+
+    def test_Age(self):
+        d={'check':'age>0.1', 'attr':'age'}
+        c=conditional_from_dict(d, 'TerminationConditional')
+        ret = c.check(self.arun, ([],[]), 1000)
+        self.assertTrue(ret)
+
+    def test_NotAge(self):
+        d={'check':'not age<0.1', 'attr':'age'}
+        c=conditional_from_dict(d, 'TerminationConditional')
+        ret = c.check(self.arun, ([],[]), 1000)
+        self.assertTrue(ret)
+
+    def test_NotAr40(self):
+        d={'check':'not Ar40>0.1', 'attr':'Ar40'}
+        c=conditional_from_dict(d, 'TerminationConditional')
+        ret = c.check(self.arun, ([],[]), 1000)
+        self.assertTrue(ret)
 
     def test_Between1(self):
         self._test_between(0,5)
@@ -150,6 +176,7 @@ class ConditionalsTestCase(unittest.TestCase):
         c=conditional_from_dict(d, 'TerminationConditional')
         ret = c.check(self.arun, ([],[]), 1000)
         self.assertTrue(ret)
+
 
 if __name__ == '__main__':
     unittest.main()
