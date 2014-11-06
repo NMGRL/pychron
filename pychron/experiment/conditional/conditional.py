@@ -17,10 +17,10 @@
 # ============= enthought library imports =======================
 
 from traits.api import Str, Either, Int, Callable, Bool, Float
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import re
 from uncertainties import nominal_value, std_dev, ufloat
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.experiment.utilities.identifier import AGE_TESTABLE
 from pychron.loggable import Loggable
 
@@ -58,7 +58,8 @@ COMP_REGEX = re.compile(r'<=|>=|>|<|==')
 DEFLECTION_REGEX = re.compile(r'\.deflection')
 
 RATIO_REGEX = re.compile(r'\d+/\d+')
-#todo: add between ability
+
+BETWEEN_REGEX = re.compile(r'[\d\w]+.between\(([-\d+]+(\.\d)*(,[-\d+]+(\.\d)*))\)')
 
 
 def conditional_from_dict(cd, klass):
@@ -118,6 +119,7 @@ class BaseConditional(Loggable):
 
     def __repr__(self):
         return self.to_string()
+
 
 class AutomatedRunConditional(BaseConditional):
     start_count = Int
@@ -189,45 +191,96 @@ class AutomatedRunConditional(BaseConditional):
             attr = self._key
 
         obj = arun.arar_age
-        comp = self.comp
-        for reg, func in ((CP_REGEX, lambda: obj.get_current_intensity(attr)),
-                          (BASELINECOR_REGEX, lambda: obj.get_baseline_corrected_value(attr)),
-                          (BASELINE_REGEX, lambda: obj.get_baseline_value(attr)),
-                          (ACTIVE_REGEX, lambda: not attr in data[0]),
-                          (AVG_REGEX, lambda: obj.get_values(attr, self.window or -1).mean()),
-                          (MAX_REGEX, lambda: obj.get_values(attr, self.window or -1).max()),
-                          (MIN_REGEX, lambda: obj.get_values(attr, self.window or -1).min()),
-                          (SLOPE_REGEX, lambda: obj.get_slope(attr, self.window or -1))):
-            if reg.findall(comp):
-                v = func()
-                comp = '{}{}'.format(self._key, remove_attr(comp))
-                break
-        else:
-            if DEFLECTION_REGEX.findall(comp):
-                v = arun.get_deflection(attr, current=True)
-                comp = '{}{}'.format(self._key, remove_attr(comp))
+
+        def default_wrapper(comp, func, found):
+            comp = '{}{}'.format(self._key, remove_attr(comp))
+            return func(), comp
+
+        def between_wrapper(comp, func, between):
+            self._key = between.split('.')[0]
+            v1, v2 = eval(between.split('between')[-1])
+            nc = '{}<={}<={}'.format(v1, self._key, v2)
+            comp = comp.replace(between, nc)
+            return func(), comp
+
+        def ratio_wrapper(comp, func, ratio):
+            v = obj.get_value(ratio)
+            key = 'ratio{}'.format(ratio.replace('/', ''))
+            comp = '{}{}'.format(key, remove_attr(comp))
+            self._key = key
+            return v, comp
+
+        for aa in ((CP_REGEX, lambda: obj.get_current_intensity(attr)),
+                   (BASELINECOR_REGEX, lambda: obj.get_baseline_corrected_value(attr)),
+                   (BASELINE_REGEX, lambda: obj.get_baseline_value(attr)),
+                   (ACTIVE_REGEX, lambda: not attr in data[0]),
+                   (AVG_REGEX, lambda: obj.get_values(attr, self.window or -1).mean()),
+                   (MAX_REGEX, lambda: obj.get_values(attr, self.window or -1).max()),
+                   (MIN_REGEX, lambda: obj.get_values(attr, self.window or -1).min()),
+                   (SLOPE_REGEX, lambda: obj.get_slope(attr, self.window or -1)),
+                   (DEFLECTION_REGEX, lambda: arun.get_deflection(attr, current=True)),
+                   (RATIO_REGEX, None, ratio_wrapper),
+                   (BETWEEN_REGEX, lambda: obj.get_value(attr), between_wrapper)):
+            if len(aa) == 2:
+                wrapper = default_wrapper
+                reg, func = aa
             else:
-                ratio = RATIO_REGEX.findall(comp)
-                if ratio:
-                    ratio = ratio[0]
-                    v = obj.get_value(ratio)
-                    key = 'ratio{}'.format(ratio.replace('/', ''))
-                    comp = '{}{}'.format(key, remove_attr(comp))
-                    self._key = key
-                else:
-                    try:
-                        if self.window:
-                            vs = obj.get_values(attr, self.window)
-                            if not vs:
-                                self.warning('Deactivating check. check attr invalid for use with window')
-                                self.active = False
-                                return
-                            v = ufloat(vs.mean(), vs.std())
-                        else:
-                            v = obj.get_value(attr)
-                    except Exception, e:
-                        self.warning('Deactivating check. Check Exception "{}."'.format(e))
+                reg, func, wrapper = aa
+
+            found = reg.findall(self.comp)
+            if found:
+                args = wrapper(self.comp, func, found[0])
+                if args:
+                    comp = args
+                    break
+        else:
+            try:
+                if self.window:
+                    vs = obj.get_values(attr, self.window)
+                    if not vs:
+                        self.warning('Deactivating check. check attr invalid for use with window')
                         self.active = False
+                        return
+                    v = ufloat(vs.mean(), vs.std())
+                else:
+                    v = obj.get_value(attr)
+            except Exception, e:
+                self.warning('Deactivating check. Check Exception "{}."'.format(e))
+                self.active = False
+        # else:
+        #     between=BETWEEN_REGEX.findall(comp)
+        #     if between:
+        #         between = between[0]
+        #         self._key = between.split('.')[0]
+        #         v1,v2=eval(between.split('between')[-1])
+        #         nc = '{}<={}<={}'.format(v1, self._key, v2)
+        #         comp = comp.replace(between, nc)
+        #
+        #     if DEFLECTION_REGEX.findall(comp):
+        #         v = arun.get_deflection(attr, current=True)
+        #         comp = '{}{}'.format(self._key, remove_attr(comp))
+        #     else:
+        #         ratio = RATIO_REGEX.findall(comp)
+        #         if ratio:
+        #             ratio = ratio[0]
+        #             v = obj.get_value(ratio)
+        #             key = 'ratio{}'.format(ratio.replace('/', ''))
+        #             comp = '{}{}'.format(key, remove_attr(comp))
+        #             self._key = key
+        #         else:
+        #             try:
+        #                 if self.window:
+        #                     vs = obj.get_values(attr, self.window)
+        #                     if not vs:
+        #                         self.warning('Deactivating check. check attr invalid for use with window')
+        #                         self.active = False
+        #                         return
+        #                     v = ufloat(vs.mean(), vs.std())
+        #                 else:
+        #                     v = obj.get_value(attr)
+        #             except Exception, e:
+        #                 self.warning('Deactivating check. Check Exception "{}."'.format(e))
+        #                 self.active = False
 
         if self._key == 'age':
             atype = arun.spec.analysis_type
@@ -268,7 +321,6 @@ class CancelationConditional(AutomatedRunConditional):
     #     result = super(CancelationConditional, self).check(run, data, cnt)
     #     if result:
     #
-
 
 
 class ActionConditional(AutomatedRunConditional):
