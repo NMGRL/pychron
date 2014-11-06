@@ -472,7 +472,6 @@ class AutomatedRun(Loggable):
         """
         self._conditional_appender('cancelation', kw, CancelationConditional)
 
-    # def py_add_action(self, attr, comp, start_count, frequency, action, resume):
     def py_add_action(self, **kw):
         """
             attr must be an attribute of arar_age
@@ -480,14 +479,7 @@ class AutomatedRun(Loggable):
             perform a specified action if teststr evaluates to true
         """
         self._conditional_appender('action', kw, ActionConditional)
-        # self.action_conditionals.append(ActionConditional(attr, comp,
-        #                                                   start_count,
-        #                                                   frequency,
-        #                                                   action=action,
-        #                                                   resume=resume))
 
-    # def py_add_termination(self, attr, comp, start_count, frequency,
-    #                        window=0, mapper=''):
     def py_add_termination(self, **kw):
         """
             attr must be an attribute of arar_age
@@ -495,11 +487,6 @@ class AutomatedRun(Loggable):
             terminate run and continue experiment if teststr evaluates to true
         """
         self._conditional_appender('termination', kw, TerminationConditional)
-        # self.termination_conditionals.append(TerminationConditional(attr, comp,
-        #                                                             start_count,
-        #                                                             frequency,
-        #                                                             window=window,
-        #                                                             mapper=mapper))
 
     def py_add_truncation(self, **kw):
         """
@@ -512,41 +499,14 @@ class AutomatedRun(Loggable):
         """
         self._conditional_appender('truncation', kw, TruncationConditional)
 
-    def _conditional_appender(self, name, cd, klass):
-        attr = cd.get('attr')
-        if not attr:
-            self.debug('not attr for this {} cd={}'.format(name, cd))
-            return
-
-        comp = cd.get('comp')
-        if not comp:
-            self.debug('not comp for this {} cd={}'.format(name, cd))
-            return
-        start_count = cd.get('start_count')
-        if start_count is None:
-            start_count = 50
-            self.debug('defaulting to start_count={}'.format(start_count))
-
-        self.info('adding {} {} {} {}'.format(name, attr, comp, start_count))
-
-        if attr == 'age' and self.spec.analysis_type not in ('unknown', 'cocktail'):
-            self.debug()
-
-        if not self.arar_age.has_attr(attr):
-            self.warning('invalid {} attribute "{}"'.format(name, attr))
-        else:
-            obj = getattr(self, '{}_conditionals'.format(name))
-            obj.append(conditional_from_dict(cd, klass))
-            # self.truncation_conditionals.append(TruncationConditional(attr, comp,
-            #                                                           start_count,
-            #                                                           frequency,
-            #                                                           abbreviated_count_ratio=abbreviated_count_ratio))
-
-
     def py_clear_conditionals(self):
         self.py_clear_terminations()
         self.py_clear_truncations()
         self.py_clear_actions()
+        self.py_clear_cancelations()
+
+    def py_clear_cancelations(self):
+        self.cancelation_conditionals = []
 
     def py_clear_terminations(self):
         self.termination_conditionals = []
@@ -1186,45 +1146,31 @@ anaylsis_type={}
                     cx = conditional_from_dict(ti, klass)
                     var.append(cx)
 
-                    # cs = yd.get('terminations')
-                    # self._add_default_terminations(cs)
-                    # cs = yd.get('truncations')
-                    # self._add_default_truncations(cs)
-                    # cs = yd.get('actions')
-                    # self._add_default_actions(cs)
+    def _conditional_appender(self, name, cd, klass):
+        attr = cd.get('attr')
+        if not attr:
+            self.debug('not attr for this {} cd={}'.format(name, cd))
+            return
 
-    # def _add_default_truncations(self, yl):
-    #     """
-    #         yl: list of dicts
-    #     """
-    #     if not yl:
-    #         return
-    #
-    #     for ti in yl:
-    #         cx = conditional_from_dict(ti, 'TruncationConditional')
-    #         self.truncation_conditionals.append(cx)
-    #
-    # def _add_default_actions(self, yl):
-    #     """
-    #         yl: list of dicts
-    #     """
-    #     if not yl:
-    #         return
-    #
-    #     for ti in yl:
-    #         cx = conditional_from_dict(ti, 'ActionConditional')
-    #         self.action_conditionals.append(cx)
-    #
-    # def _add_default_terminations(self, yl):
-    #     """
-    #         yl: list of dicts
-    #     """
-    #     if not yl:
-    #         return
-    #
-    #     for ti in yl:
-    #         cx = conditional_from_dict(ti, 'TerminationConditional')
-    #         self.termination_conditionals.append(cx)
+        comp = cd.get('comp')
+        if not comp:
+            self.debug('not comp for this {} cd={}'.format(name, cd))
+            return
+        start_count = cd.get('start_count')
+        if start_count is None:
+            start_count = 50
+            self.debug('defaulting to start_count={}'.format(start_count))
+
+        self.info('adding {} {} {} {}'.format(name, attr, comp, start_count))
+
+        if attr == 'age' and self.spec.analysis_type not in ('unknown', 'cocktail'):
+            self.debug()
+
+        if not self.arar_age.has_attr(attr):
+            self.warning('invalid {} attribute "{}"'.format(name, attr))
+        else:
+            obj = getattr(self, '{}_conditionals'.format(name))
+            obj.append(conditional_from_dict(cd, klass))
 
     def _refresh_scripts(self):
         for name in SCRIPT_KEYS:
