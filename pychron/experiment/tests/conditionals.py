@@ -53,16 +53,22 @@ class ConditionalsTestCase(unittest.TestCase):
     def test_Between9(self):
         self._test_between(0.0,5.0)
 
+    def test_BetweenModifier(self):
+        d={'check':'between(Ar40.bs_corrected, -1,0)', 'attr':'Ar40'}
+        c=conditional_from_dict(d, 'TerminationConditional')
+        ret = c.check(self.arun, ([],[]), 1000)
+        self.assertTrue(ret)
+
     def test_NotBetween(self):
         self.arun.arar_age.isotopes['Ar40'].value=10
-        d={'check':'not Ar40.between(0,5)', 'attr':'Ar40'}
+        d={'check':'not between(Ar40, 0,5)', 'attr':'Ar40'}
         c=conditional_from_dict(d, 'TerminationConditional')
         ret = c.check(self.arun, ([],[]), 1000)
         self.assertTrue(ret)
 
     def _test_between(self, l, h):
         self.arun.arar_age.isotopes['Ar40'].value=3.4
-        d={'check':'Ar40.between({},{})'.format(l, h), 'attr':'Ar40'}
+        d={'check':'between(Ar40, {},{})'.format(l, h), 'attr':'Ar40'}
         c=conditional_from_dict(d, 'TerminationConditional')
         ret = c.check(self.arun, ([],[]), 1000)
         self.assertTrue(ret)

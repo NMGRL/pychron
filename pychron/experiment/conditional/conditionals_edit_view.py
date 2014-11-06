@@ -24,7 +24,7 @@ from traits.api import HasTraits, List, Instance, Any, \
 
 from pyface.file_dialog import FileDialog
 from traitsui.api import View, Tabbed, Group, UItem, \
-    TabularEditor, VGroup, EnumEditor, Item, HGroup, spring, Label, Handler
+    TabularEditor, VGroup, EnumEditor, Item, HGroup, spring, Label, Handler, HSplit
 from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 import os
@@ -61,7 +61,8 @@ class ConditionalsAdapter(TabularAdapter):
 FUNC_DICT = {'Slope': 'slope({})', 'Max': 'max({})', 'Min': 'min({})', 'Averge': 'average({})'}
 MOD_DICT = {'Current': '{}.cur', 'StdDev': '{}.std', 'Baseline': '{}.bs',
             'Inactive': '{}.inactive',
-            'BaselineCorrected': '{}.bs_corrected'}
+            'BaselineCorrected': '{}.bs_corrected',
+            'Between': '{}.between'}
 
 
 class ConditionalGroup(HasTraits):
@@ -75,7 +76,7 @@ class ConditionalGroup(HasTraits):
     comparator = Enum('', '>', '<', '>=', '<=', '==')
     secondary_comparator = Enum('', '>', '<', '>=', '<=', '==')
     secondary_value = Float
-    use_between = Bool
+    # use_between = Bool
     use_invert = Bool
     # use_max = Bool
     # use_min = Bool
@@ -133,6 +134,7 @@ class ConditionalGroup(HasTraits):
                 if cx:
                     self.conditionals.append(cx)
 
+        if self.conditionals:
             self.selected = self.conditionals[0]
         else:
             self.selected = klass('', '')
@@ -168,26 +170,24 @@ class ConditionalGroup(HasTraits):
                     self.function = ''
 
             attr = self.attr
+
             try:
                 s = MOD_DICT[self.modifier]
                 attr = s.format(attr)
             except KeyError:
                 pass
 
-            try:
-                s = FUNC_DICT[self.function]
-                attr = s.format(attr)
-            except KeyError:
-                pass
-
-            if self.use_between:
-                if self.comparator and self.secondary_comparator:
-                    comp = '{}{}{}{}{}'.format(self.secondary_value, self.secondary_comparator,
-                                               attr,
-                                               self.comparator, self.value)
-                else:
-                    comp = '{}'.format(attr)
+            if self.function == 'between':
+                comp = 'between({},{},{})'.format(attr,
+                                                  self.value,
+                                                  self.secondary_value)
             else:
+                try:
+                    s = FUNC_DICT[self.function]
+                    attr = s.format(attr)
+                except KeyError:
+                    pass
+
                 if self.comparator:
                     comp = '{}{}{}'.format(attr, self.comparator, self.value)
                 else:
@@ -259,34 +259,53 @@ class ConditionalGroup(HasTraits):
         return item
 
     def _get_edit_group(self):
-        edit_grp = VGroup(HGroup(spring, UItem('object.selected.comp', style='readonly'), spring),
-                          HGroup(UItem('attr',
-                                       editor=EnumEditor(name='available_attrs')),
-                                 Item('function',
+        # edit_grp = VGroup(HGroup(spring, UItem('object.selected.comp', style='readonly'), spring),
+        # HGroup(UItem('attr',
+        # editor=EnumEditor(name='available_attrs')),
+        # Item('function',
+        #                               editor=EnumEditor(values=['', 'Average', 'Max', 'Min', 'Slope'])),
+        #                          Item('modifier',
+        #                               enabled_when='modifier_enabled',
+        #                               editor=EnumEditor(values=['', 'StdDev', 'Current', 'Inactive',
+        #                                                         'Baseline', 'BaselineCorrected']))),
+        #                   HGroup(UItem('comparator'),
+        #                          Item('value'),
+        #                          # Item('use_between', label='Between'),
+        #                          # UItem('secondary_value', enabled_when='use_between'),
+        #                          # UItem('secondary_comparator', enabled_when='use_between'),
+        #                          Item('use_invert', label='Invert'),
+        #                          enabled_when='attr'),
+        #                   HGroup(Item('start_count',
+        #                               tooltip='Number of counts to wait until performing check',
+        #                               label='Start'),
+        #                          Item('frequency',
+        #                               tooltip='Number of counts between each check')))
+
+        edit_grp = VGroup(Item('attr',
+                               label='Attribute',
+                               editor=EnumEditor(name='available_attrs')),
+                          VGroup(Item('function',
                                       editor=EnumEditor(values=['', 'Average', 'Max', 'Min', 'Slope'])),
                                  Item('modifier',
                                       enabled_when='modifier_enabled',
                                       editor=EnumEditor(values=['', 'StdDev', 'Current', 'Inactive',
-                                                                'Baseline', 'BaselineCorrected']))),
-                          HGroup(UItem('comparator'),
+                                                                'Baseline', 'BaselineCorrected'])),
+                                 Item('comparator', label='Operation'),
                                  Item('value'),
-                                 Item('use_between', label='Between'),
-                                 UItem('secondary_value', enabled_when='use_between'),
-                                 UItem('secondary_comparator', enabled_when='use_between'),
                                  Item('use_invert', label='Invert'),
-                                 enabled_when='attr'),
-                          HGroup(Item('start_count',
+                                 Item('start_count',
                                       tooltip='Number of counts to wait until performing check',
-                                      label='Start')),
-                          Item('frequency',
-                               tooltip='Number of counts between each check'))
+                                      label='Start'),
+                                 Item('frequency',
+                                      tooltip='Number of counts between each check'),
+                                 enabled_when='attr'))
         return edit_grp
 
     def traits_view(self):
         if self.editable:
-            v = View(self._get_conditionals_grp(),
-                     self._get_tool_group(),
-                     self._get_edit_group())
+            v = View(HSplit(self._get_edit_group(),
+                            VGroup(self._get_conditionals_grp(),
+                                   self._get_tool_group())))
         else:
             v = View(self._get_conditionals_grp())
         return v
@@ -364,8 +383,8 @@ class ConditionalsViewable(HasTraits):
             # no = VGroup(spring, HGroup(spring, Label('No {} Defined'.format(uname)), spring), spring,
             # defined_when='not {}'.format(gname))
             # grp = Group(UItem(gname,
-            #                   defined_when=gname, style='custom'),
-            #             no, label=uname)
+            # defined_when=gname, style='custom'),
+            # no, label=uname)
             grp = Group(UItem(gname, style='custom'), label=uname)
             vs.append(grp)
 
@@ -374,17 +393,17 @@ class ConditionalsViewable(HasTraits):
         # trgrp = Group(UItem('truncations_group',
         # defined_when='truncations_group', style='custom'),
         # notrunc,
-        #               label='Truncations')
+        # label='Truncations')
         #
         # nocancel = VGroup(spring, HGroup(spring, Label('No Cancelations Defined'), spring), spring,
-        #                   defined_when='not cancelations_group')
+        # defined_when='not cancelations_group')
         # cgrp = Group(UItem('cancelations_group',
-        #                    defined_when='cancelations_group', style='custom'),
-        #              nocancel,
-        #              label='Cancelations')
+        # defined_when='cancelations_group', style='custom'),
+        # nocancel,
+        # label='Cancelations')
         #
         # noterm = VGroup(spring, HGroup(spring, Label('No Terminations Defined'), spring), spring,
-        #                 defined_when='not terminations_group')
+        # defined_when='not terminations_group')
         # tegrp = Group(UItem('terminations_group',
         #                     defined_when='terminations_group', style='custom'),
         #               noterm,
@@ -423,7 +442,7 @@ class ConditionalsEditView(ConditionalsViewable):
     title = 'Edit Default Conditionals'
 
     def __init__(self, detectors=None, *args, **kw):
-        attrs = ['', 'age', 'kca', 'kcl', 'cak', 'clk','rad40_percent',
+        attrs = ['', 'age', 'kca', 'kcl', 'cak', 'clk', 'rad40_percent',
                  'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36']
 
         ratio_matrix = ['{}/{}'.format(i, j) for i in ('40', '39', '38', '37', '36')
@@ -486,6 +505,9 @@ class ConditionalsEditView(ConditionalsViewable):
         else:
             self.path = path
 
+        if not path:
+            path = get_file_path(self.root, action='save as')
+
         if path:
             with open(path, 'w') as fp:
                 d = {k: getattr(self, '{}_group'.format(k)).dump() for k in self.group_names}
@@ -493,8 +515,8 @@ class ConditionalsEditView(ConditionalsViewable):
                 yaml.dump(d, fp, default_flow_style=False)
 
 
-def get_file_path(root):
-    dlg = FileDialog(action='open',
+def get_file_path(root, action='open'):
+    dlg = FileDialog(action=action,
                      wildcard=FileDialog.create_wildcard('YAML', '*.yaml *.yml'),
                      default_directory=root)
     if dlg.open():
@@ -514,9 +536,9 @@ def edit_conditionals(name, detectors=None, app=None, root=None, save_as=False,
                 return
         else:
             path = os.path.join(root, name)
-
-        if not os.path.isfile(path):
-            return
+            #
+            # if not os.path.isfile(path):
+            # return
     else:
         path = ''
 
@@ -529,17 +551,23 @@ def edit_conditionals(name, detectors=None, app=None, root=None, save_as=False,
         info = app.open_view(cev, kind='livemodal')
     else:
         info = cev.edit_traits(kind='livemodal')
-        # info=cev.configure_traits(kind='livemodal')
+
     if info.result:
         cev.dump()
 
 
 if __name__ == '__main__':
-    c = ConditionalsEditView(detectors=['H2', 'H1', 'AX', 'L1', 'L2', 'CDD'])
-    c.open('normal', False)
-    c.configure_traits()
-    c.dump()
-    # edit_conditions(None)
+    # c = ConditionalsEditView(detectors=['H2', 'H1', 'AX', 'L1', 'L2', 'CDD'])
+    # c.open('normal', False)
+    # c.configure_traits()
+    # c.dump()
+    class D(HasTraits):
+        test = Button
+
+        def _test_fired(self):
+            edit_conditionals('foo', save_as=False)
+
+    D().configure_traits(view=View('test'))
 # ============= EOF =============================================
 
 

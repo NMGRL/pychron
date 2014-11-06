@@ -26,7 +26,7 @@ from pychron.loggable import Loggable
 
 # match .current_point
 CP_REGEX = re.compile(r'[\w\d]+\.(current|cur)')
-#match .std_dev
+# match .std_dev
 STD_REGEX = re.compile(r'[\w\d]+\.(std_dev|sd|stddev)')
 
 #match .inactive
@@ -60,6 +60,8 @@ DEFLECTION_REGEX = re.compile(r'[\w\d]+\.deflection')
 RATIO_REGEX = re.compile(r'\d+/\d+')
 
 BETWEEN_REGEX = re.compile(r'(not ){0,1}[\d\w\s]+.between\(([-\d+]+(\.\d)*(,[-\d+]+(\.\d)*))\)')
+BETWEEN_REGEX = re.compile(r'(not ){0,1}between\([\w\d\s]+(\.\w+)*\s*,\s*[-\d+]+(\.\d)*(\s*,\s*[-\d+]+(\.\d)*)\)')
+ARGS_REGEX = re.compile(r'\(.+\)')
 
 
 def conditional_from_dict(cd, klass):
@@ -185,6 +187,18 @@ class AutomatedRunConditional(BaseConditional):
 
         return self.active and (cnt_flag or d)
 
+    def get_modified_value(self, arun, key, kattr):
+        obj=arun.arar_age
+        for reg, ff in ((DEFLECTION_REGEX, lambda k: arun.get_deflection(k, current=True)),
+                        (BASELINECOR_REGEX, lambda k: obj.get_baseline_corrected_value(k)),
+                        (BASELINE_REGEX, lambda k: obj.get_baseline_value(k)),
+                        (CP_REGEX, lambda k: obj.get_current_intensity(k))):
+            if reg.match(key):
+                return ff(kattr)
+        else:
+            self.unique_warning('invalid modifier comp="{}"'.format(self.comp))
+            return
+
     def _check(self, arun, data):
         attr = self.attr
         if not self.attr:
@@ -197,16 +211,27 @@ class AutomatedRunConditional(BaseConditional):
             return func(), comp
 
         def between_wrapper(comp, func, between):
-            self._key = between.split('.')[0].split(' ')[-1]
-            v1, v2 = eval(between.split('between')[-1])
+            v = None
+            args = ARGS_REGEX.search(between).group(0)[1:-1].split(',')
+            key = args[0]
+            if '.' in key:
+                self._key = key.split('.')[0].strip()
+                v = self.get_modified_value(arun,key, self._key)
+            else:
+                self._key = key
 
+            # self._key=args[0]
+            v1, v2 = args[1:]
             nc = '{}<={}<={}'.format(v1, self._key, v2)
 
             comp = comp.replace(between, nc)
             if between.startswith('not '):
-                comp='not {}'.format(comp)
+                comp = 'not {}'.format(comp)
 
-            return func(), comp
+            if v is None:
+                v = func()
+            print v, comp
+            return v, comp
 
         def ratio_wrapper(comp, func, ratio):
             v = obj.get_value(ratio)
