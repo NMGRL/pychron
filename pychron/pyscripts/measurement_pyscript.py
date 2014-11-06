@@ -348,28 +348,42 @@ class MeasurementPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def add_termination(self, attr, comp, start_count=0, frequency=10, window=0, mapper=''):
-        self._automated_run_call('py_add_termination', attr, comp,
+    def add_termination(self, attr, teststr, start_count=0, frequency=10, window=0, mapper=''):
+        self._automated_run_call('py_add_termination',
+                                 attr=attr,
+                                 teststr=teststr,
                                  start_count=start_count,
                                  frequency=frequency, window=window,
                                  mapper=mapper)
-
     @verbose_skip
     @command_register
-    def add_truncation(self, attr, comp, start_count=0, frequency=10,
+    def add_cancelation(self, attr, teststr, start_count=0, frequency=10, window=0, mapper=''):
+        self._automated_run_call('py_add_cancelation',
+                                 attr=attr,
+                                 teststr=teststr,
+                                 start_count=start_count,
+                                 frequency=frequency, window=window,
+                                 mapper=mapper)
+    @verbose_skip
+    @command_register
+    def add_truncation(self, attr, teststr, start_count=0, frequency=10,
                        abbreviated_count_ratio=1.0):
-        self._automated_run_call('py_add_truncation', attr, comp,
+        self._automated_run_call('py_add_truncation',
+                                 attr=attr,
+                                 teststr=teststr,
                                  start_count=start_count,
                                  frequency=frequency,
                                  abbreviated_count_ratio=abbreviated_count_ratio)
 
     @verbose_skip
     @command_register
-    def add_action(self, attr, comp, start_count=0, frequency=10,
+    def add_action(self, attr, teststr, start_count=0, frequency=10,
                    action=None,
                    resume=False):
 
-        self._automated_run_call('py_add_action', attr, comp,
+
+        self._automated_run_call('py_add_action',
+                                 attr=attr, teststr=teststr,
                                  start_count=start_count,
                                  frequency=frequency,
                                  action=action,

@@ -68,16 +68,20 @@ def conditional_from_dict(cd, klass):
     if isinstance(klass, str):
         klass = globals()[klass]
 
-    comp = cd.get('check', None)
-    if not comp:
-        return
+    teststr = cd.get('teststr', None)
+    if not teststr:
+        #for pre 2.0.5 conditionals files
+        teststr = cd.get('check')
+        if not teststr:
+            return
+
 
     attr = cd.get('attr', '')
     start = cd.get('start', 30)
     freq = cd.get('frequency', 5)
     win = cd.get('window', 0)
     mapper = cd.get('mapper', '')
-    cx = klass(attr, comp, start_count=start, frequency=freq, window=win, mapper=mapper)
+    cx = klass(attr, teststr, start_count=start, frequency=freq, window=win, mapper=mapper)
     return cx
 
 
@@ -94,7 +98,7 @@ def remove_attr(s):
 
 class BaseConditional(Loggable):
     attr = Str
-    comp = Str
+    teststr = Str
 
     def to_string(self):
         raise NotImplementedError
@@ -139,24 +143,24 @@ class AutomatedRunConditional(BaseConditional):
     active = True
     value = Float
 
-    def __init__(self, attr, comp,
+    def __init__(self, attr, teststr,
                  start_count=0,
                  frequency=10,
                  *args, **kw):
 
         self.active = True
         self.attr = attr
-        self.comp = comp
+        self.teststr = teststr
         self.start_count = start_count
         self.frequency = frequency
         super(AutomatedRunConditional, self).__init__(*args, **kw)
 
         # m = re.findall(r'[A-Za-z]+\d*', comp)
-        m = PARENTHESES_REGEX.findall(comp)
+        m = PARENTHESES_REGEX.findall(teststr)
         if m:
             self._key = m[0][1:-1]
         else:
-            m = KEY_REGEX.findall(comp)
+            m = KEY_REGEX.findall(teststr)
             if m:
                 k=m[0]
                 if k in ('not',):
@@ -171,7 +175,7 @@ class AutomatedRunConditional(BaseConditional):
                 self._mapper_key = m[0]
 
     def to_string(self):
-        s = '{} {}'.format(self.comp, self.message)
+        s = '{} {}'.format(self.teststr, self.message)
         return s
 
     def _should_check(self, run, data, cnt):
@@ -199,7 +203,7 @@ class AutomatedRunConditional(BaseConditional):
             if reg.match(key):
                 return ff(kattr)
         else:
-            self.unique_warning('invalid modifier comp="{}"'.format(self.comp))
+            self.unique_warning('invalid modifier teststr="{}"'.format(self.teststr))
             return
 
     def _check(self, arun, data):
@@ -209,11 +213,11 @@ class AutomatedRunConditional(BaseConditional):
 
         obj = arun.arar_age
 
-        def default_wrapper(comp, func, found):
-            comp = '{}{}'.format(self._key, remove_attr(comp))
-            return func(), comp
+        def default_wrapper(teststr, func, found):
+            teststr = '{}{}'.format(self._key, remove_attr(teststr))
+            return func(), teststr
 
-        def between_wrapper(comp, func, between):
+        def between_wrapper(teststr, func, between):
             v = None
             args = ARGS_REGEX.search(between).group(0)[1:-1].split(',')
             key = args[0]
@@ -227,23 +231,23 @@ class AutomatedRunConditional(BaseConditional):
             v1, v2 = args[1:]
             nc = '{}<={}<={}'.format(v1, self._key, v2)
 
-            comp = comp.replace(between, nc)
+            teststr = teststr.replace(between, nc)
             if between.startswith('not '):
-                comp = 'not {}'.format(comp)
+                teststr = 'not {}'.format(teststr)
 
             if v is None:
                 v = func()
             # print v, comp
-            return v, comp
+            return v, teststr
 
-        def ratio_wrapper(comp, func, ratio):
+        def ratio_wrapper(teststr, func, ratio):
             v = obj.get_value(ratio)
             key = 'ratio{}'.format(ratio.replace('/', ''))
-            comp = '{}{}'.format(key, remove_attr(comp))
+            teststr = '{}{}'.format(key, remove_attr(teststr))
             self._key = key
-            return v, comp
+            return v, teststr
 
-        cc = self.comp
+        cc = self.teststr
         invert =False
         if cc.startswith('not '):
             cc = cc[4:]
@@ -271,10 +275,10 @@ class AutomatedRunConditional(BaseConditional):
             if found:
                 args = wrapper(cc, func, found.group(0))
                 if args:
-                    v, comp = args
+                    v, teststr = args
                     break
         else:
-            comp = cc
+            teststr = cc
             try:
                 if self.window:
                     vs = obj.get_values(attr, self.window)
@@ -331,18 +335,18 @@ class AutomatedRunConditional(BaseConditional):
                 return
 
         if v is not None:
-            vv = std_dev(v) if STD_REGEX.match(comp) else nominal_value(v)
+            vv = std_dev(v) if STD_REGEX.match(teststr) else nominal_value(v)
             vv = self._map_value(vv)
             self.value = vv
             if invert:
-                comp='not {}'.format(comp)
-            self.debug('testing {} (eval={}) key={} attr={} value={} mapped_value={}'.format(self.comp, comp,
+                teststr='not {}'.format(teststr)
+            self.debug('testing {} (eval={}) key={} attr={} value={} mapped_value={}'.format(self.teststr, teststr,
                                                                                              self._key, self.attr, v,
                                                                                              vv))
 
-            # print 'comp={},key={},v={}'.format(comp, self._key, vv)
-            if eval(comp, {self._key: vv}):
-                self.message = 'attr={}, value= {} {} is True'.format(self.attr, vv, self.comp)
+            # print 'teststr={},key={},v={}'.format(teststr, self._key, vv)
+            if eval(teststr, {self._key: vv}):
+                self.message = 'attr={}, value= {} {} is True'.format(self.attr, vv, self.teststr)
                 return True
 
     def _map_value(self, vv):

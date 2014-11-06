@@ -48,7 +48,7 @@ from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR, MEASUREMENT_COLOR, \
     EXTRACTION_COLOR, SCRIPT_KEYS
 from pychron.experiment.conditional.conditional import TruncationConditional, \
-    ActionConditional, TerminationConditional, conditional_from_dict
+    ActionConditional, TerminationConditional, conditional_from_dict, CancelationConditional
 from pychron.processing.arar_age import ArArAge
 from pychron.processing.export.export_spec import assemble_script_blob
 from pychron.core.ui.gui import invoke_in_main_thread
@@ -347,7 +347,7 @@ class AutomatedRun(Loggable):
         if self.plot_panel is None:
             self.plot_panel = self._new_plot_panel(self.plot_panel, stack_order='top_to_bottom')
         # self.warning('Need to call "define_hops(...)" after "activate_detectors(...)"')
-        #     return
+        # return
 
         self.plot_panel.is_peak_hop = True
 
@@ -465,42 +465,83 @@ class AutomatedRun(Loggable):
 
     # ===============================================================================
     # conditionals
-    #===============================================================================
-    def py_add_termination(self, attr, comp, start_count, frequency,
-                           window=0, mapper=''):
+    # ===============================================================================
+    def py_add_cancelation(self, **kw):
         """
-            attr must be an attribute of arar_age
+        cancel experiment if teststr evaluates to true
         """
-        self.termination_conditionals.append(TerminationConditional(attr, comp,
-                                                                    start_count,
-                                                                    frequency,
-                                                                    window=window,
-                                                                    mapper=mapper))
+        self._conditional_appender('cancelation', kw, CancelationConditional)
 
-    def py_add_truncation(self, attr, comp, start_count, frequency,
-                          abbreviated_count_ratio):
+    # def py_add_action(self, attr, comp, start_count, frequency, action, resume):
+    def py_add_action(self, **kw):
         """
             attr must be an attribute of arar_age
+
+            perform a specified action if teststr evaluates to true
         """
-        self.info('adding truncation {} {} {}'.format(attr, comp, start_count))
+        self._conditional_appender('action', kw, ActionConditional)
+        # self.action_conditionals.append(ActionConditional(attr, comp,
+        #                                                   start_count,
+        #                                                   frequency,
+        #                                                   action=action,
+        #                                                   resume=resume))
+
+    # def py_add_termination(self, attr, comp, start_count, frequency,
+    #                        window=0, mapper=''):
+    def py_add_termination(self, **kw):
+        """
+            attr must be an attribute of arar_age
+
+            terminate run and continue experiment if teststr evaluates to true
+        """
+        self._conditional_appender('termination', kw, TerminationConditional)
+        # self.termination_conditionals.append(TerminationConditional(attr, comp,
+        #                                                             start_count,
+        #                                                             frequency,
+        #                                                             window=window,
+        #                                                             mapper=mapper))
+
+    def py_add_truncation(self, **kw):
+        """
+            attr must be an attribute of arar_age
+
+            truncate measurement and continue run if teststr evaluates to true
+            default kw:
+            attr='', comp='',start_count=50, frequency=5,
+            abbreviated_count_ratio=1.0
+        """
+        self._conditional_appender('truncation', kw, TruncationConditional)
+
+    def _conditional_appender(self, name, cd, klass):
+        attr = cd.get('attr')
+        if not attr:
+            self.debug('not attr for this {} cd={}'.format(name, cd))
+            return
+
+        comp = cd.get('comp')
+        if not comp:
+            self.debug('not comp for this {} cd={}'.format(name, cd))
+            return
+        start_count = cd.get('start_count')
+        if start_count is None:
+            start_count = 50
+            self.debug('defaulting to start_count={}'.format(start_count))
+
+        self.info('adding {} {} {} {}'.format(name, attr, comp, start_count))
+
+        if attr == 'age' and self.spec.analysis_type not in ('unknown', 'cocktail'):
+            self.debug()
 
         if not self.arar_age.has_attr(attr):
-            self.warning('invalid truncation attribute "{}"'.format(attr))
+            self.warning('invalid {} attribute "{}"'.format(name, attr))
         else:
-            self.truncation_conditionals.append(TruncationConditional(attr, comp,
-                                                                      start_count,
-                                                                      frequency,
-                                                                      abbreviated_count_ratio=abbreviated_count_ratio))
+            obj = getattr(self, '{}_conditionals'.format(name))
+            obj.append(conditional_from_dict(cd, klass))
+            # self.truncation_conditionals.append(TruncationConditional(attr, comp,
+            #                                                           start_count,
+            #                                                           frequency,
+            #                                                           abbreviated_count_ratio=abbreviated_count_ratio))
 
-    def py_add_action(self, attr, comp, start_count, frequency, action, resume):
-        """
-            attr must be an attribute of arar_age
-        """
-        self.action_conditionals.append(ActionConditional(attr, comp,
-                                                          start_count,
-                                                          frequency,
-                                                          action=action,
-                                                          resume=resume))
 
     def py_clear_conditionals(self):
         self.py_clear_terminations()
@@ -1329,25 +1370,39 @@ anaylsis_type={}
         p.analysis_view.load(self)
 
     def _add_conditionals(self):
+        klass_dict = {'actions': ActionConditional, 'truncations': TruncationConditional,
+                      'terminations': TerminationConditional, 'cancelations': CancelationConditional}
+
         t = self.spec.conditionals
         self.debug('adding conditionals {}'.format(t))
         if t:
             p = os.path.join(paths.conditionals_dir, add_extension(t, '.yaml'))
             if os.path.isfile(p):
                 self.debug('extract conditionals from file. {}'.format(p))
-                # with open(p, 'r') as fp:
-                #     doc = yaml.load(fp)
-                #
-                #     for c in doc:
-                #         try:
-                #             attr = c['attr']
-                #             comp = c['check']
-                #             start = c['start']
-                #             freq = c.get('frequency', 1)
-                #             acr = c.get('abbreviated_count_ratio', 1)
-                #             self.py_add_truncation(attr, comp, int(start), freq, acr)
-                #         except BaseException:
-                #             self.warning('Failed adding truncation. {}'.format(c))
+                with open(p, 'r') as fp:
+                    yd = yaml.load(fp)
+                    for kind, items in yd.iteritems():
+                        try:
+                            klass = klass_dict[kind]
+                            for i in items:
+                                try:
+                                    self._conditional_appender(kind, i, klass)
+                                except BaseException:
+                                    self.debug('Failed adding {}. cd={}'.format(kind, i))
+
+                        except KeyError:
+                            self.debug('Invalid conditional kind="{}"'.format(kind))
+                    #
+                    #     for c in doc:
+                    #         try:
+                    #             attr = c['attr']
+                    #             comp = c['check']
+                    #             start = c['start']
+                    #             freq = c.get('frequency', 1)
+                    #             acr = c.get('abbreviated_count_ratio', 1)
+                    #             self.py_add_truncation(attr, comp, int(start), freq, acr)
+                    #         except BaseException:
+                    #             self.warning('Failed adding truncation. {}'.format(c))
 
             else:
                 try:
@@ -1361,7 +1416,10 @@ anaylsis_type={}
                     self.debug('conditionals parse failed {} {}'.format(e, t))
                     return
 
-                self.py_add_truncation(attr, c, int(start), freq, acr)
+                self.py_add_truncation(attr=attr, teststr=c,
+                                       start_count=int(start),
+                                       frequency=freq,
+                                       abbreviated_count_ratio=acr)
 
     def _get_measurement_parameter(self, key, default=None):
         return self._get_yaml_parameter(self.measurement_script, key, default)
