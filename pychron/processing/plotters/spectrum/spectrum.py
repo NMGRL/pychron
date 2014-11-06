@@ -54,7 +54,7 @@ class Spectrum(BaseArArFigure):
             # self.update_options_limits(pid)
 
         try:
-            self.graph.set_x_title('Cumulative %39ArK')
+            self.graph.set_x_title('Cumulative %39ArK', plotid=0)
             self.graph.set_x_limits(0, 100)
         except IndexError:
             pass
