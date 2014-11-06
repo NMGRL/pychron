@@ -24,13 +24,13 @@ from uncertainties import nominal_value, std_dev, ufloat
 from pychron.experiment.utilities.identifier import AGE_TESTABLE
 from pychron.loggable import Loggable
 
-#match .current_point
-CP_REGEX = re.compile(r'\.(current|cur)')
+# match .current_point
+CP_REGEX = re.compile(r'[\w\d]+\.(current|cur)')
 #match .std_dev
-STD_REGEX = re.compile(r'\.(std_dev|sd|stddev)')
+STD_REGEX = re.compile(r'[\w\d]+\.(std_dev|sd|stddev)')
 
 #match .inactive
-ACTIVE_REGEX = re.compile(r'\.inactive')
+ACTIVE_REGEX = re.compile(r'[\w\d]+\.inactive')
 
 #match average(ar##)
 AVG_REGEX = re.compile(r'average\([A-Za-z]+\d*\)')
@@ -48,18 +48,18 @@ MAPPER_KEY_REGEX = re.compile(r'[A-Za-z]+')
 #match kca, ar40, etc..
 KEY_REGEX = re.compile(r'[A-Za-z]+\d*')
 
-BASELINE_REGEX = re.compile(r'\.bs')
-BASELINECOR_REGEX = re.compile(r'\.bs_corrected')
+BASELINE_REGEX = re.compile(r'[\w\d]+\.bs')
+BASELINECOR_REGEX = re.compile(r'[\w\d]+\.bs_corrected')
 
 PARENTHESES_REGEX = re.compile(r'\([\w\d\s]+\)')
 
 COMP_REGEX = re.compile(r'<=|>=|>|<|==')
 
-DEFLECTION_REGEX = re.compile(r'\.deflection')
+DEFLECTION_REGEX = re.compile(r'[\w\d]+\.deflection')
 
 RATIO_REGEX = re.compile(r'\d+/\d+')
 
-BETWEEN_REGEX = re.compile(r'[\d\w]+.between\(([-\d+]+(\.\d)*(,[-\d+]+(\.\d)*))\)')
+BETWEEN_REGEX = re.compile(r'(not ){0,1}[\d\w\s]+.between\(([-\d+]+(\.\d)*(,[-\d+]+(\.\d)*))\)')
 
 
 def conditional_from_dict(cd, klass):
@@ -197,10 +197,15 @@ class AutomatedRunConditional(BaseConditional):
             return func(), comp
 
         def between_wrapper(comp, func, between):
-            self._key = between.split('.')[0]
+            self._key = between.split('.')[0].split(' ')[-1]
             v1, v2 = eval(between.split('between')[-1])
+
             nc = '{}<={}<={}'.format(v1, self._key, v2)
+
             comp = comp.replace(between, nc)
+            if between.startswith('not '):
+                comp='not {}'.format(comp)
+
             return func(), comp
 
         def ratio_wrapper(comp, func, ratio):
@@ -228,14 +233,14 @@ class AutomatedRunConditional(BaseConditional):
             else:
                 reg, func, wrapper = aa
 
-            found = reg.findall(self.comp)
+            found = reg.match(self.comp)
             if found:
-                args = wrapper(self.comp, func, found[0])
+                args = wrapper(self.comp, func, found.group(0))
                 if args:
                     v, comp = args
                     break
         else:
-            comp=self.comp
+            comp = self.comp
             try:
                 if self.window:
                     vs = obj.get_values(attr, self.window)
@@ -299,6 +304,8 @@ class AutomatedRunConditional(BaseConditional):
             self.debug('testing {} (eval={}) key={} attr={} value={} mapped_value={}'.format(self.comp, comp,
                                                                                              self._key, self.attr, v,
                                                                                              vv))
+
+            print comp, self._key, vv
             if eval(comp, {self._key: vv}):
                 self.message = 'attr={}, value= {} {} is True'.format(self.attr, vv, self.comp)
                 return True
