@@ -313,7 +313,7 @@ class BaseExperimentQueue(ExperimentBlock):
                ('ramp', 'ramp_duration'),
                ('t_o', 'collection_time_zero_offset'),
                ('measurement', 'measurement_script'),
-               ('truncate', 'truncate_conditional'),
+               ('conditionals', 'conditionals'),
                'syn_extraction',
                'use_cdd_warming',
                ('post_meas', 'post_measurement_script'),

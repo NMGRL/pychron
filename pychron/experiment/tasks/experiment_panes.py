@@ -205,9 +205,9 @@ class ExperimentFactoryPane(TraitsDockPane):
     def _get_truncate_group(self):
         grp = VGroup(
             HGroup(run_factory_item('use_simple_truncation', label='Use Simple'),
-                icon_button_editor(run_factory_name('clear_truncation'),
+                icon_button_editor(run_factory_name('clear_conditionals'),
                                    'delete',
-                                   tooltip='Clear truncation from selected runs'
+                                   tooltip='Clear Conditionals from selected runs'
                                    # enabled_when=run_factory_name('edit_mode')
                                   )),
             HGroup(
@@ -222,14 +222,14 @@ class ExperimentFactoryPane(TraitsDockPane):
                 #enabled_when = run_factory_name('use_simple_truncation'),
                 label='Simple'),
             HGroup(
-                run_factory_item('truncation_path',
-                                 editor=EnumEditor(name=run_factory_name('truncations')),
+                run_factory_item('conditionals_path',
+                                 editor=EnumEditor(name=run_factory_name('conditionals')),
                                  label='Path'),
 
-                icon_button_editor(run_factory_name('edit_truncation_button'), 'table_edit',
-                                   enabled_when=run_factory_name('truncation_path'),
+                icon_button_editor(run_factory_name('edit_conditionals_button'), 'table_edit',
+                                   enabled_when=run_factory_name('conditionals_path'),
                                    tooltip='Edit the selected conditionals file'),
-                icon_button_editor(run_factory_name('new_truncation_button'), 'table_add',
+                icon_button_editor(run_factory_name('new_conditionals_button'), 'table_add',
                                    tooltip='Add a new conditionals file. Duplicated currently '
                                            'selected file if applicable'),
                 show_border=True,

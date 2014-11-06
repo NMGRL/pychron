@@ -23,6 +23,8 @@ from pychron.experiment.conditional.conditionals_edit_view import ConditionalsVi
 
 
 class ConditionalsView(ConditionalsViewable):
+    title='Active Conditionals'
+
     def __init__(self, run, pret, postt, *args, **kw):
         super(ConditionalsView, self).__init__(*args, **kw)
         self._load(run, pret, postt)

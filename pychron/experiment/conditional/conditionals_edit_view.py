@@ -34,7 +34,7 @@ from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.helpers.filetools import get_path
 from pychron.experiment.conditional.conditional import conditional_from_dict, MAX_REGEX, STD_REGEX, \
     CP_REGEX, MIN_REGEX, TruncationConditional, TerminationConditional, ActionConditional, SLOPE_REGEX, BASELINE_REGEX, \
-    BASELINECOR_REGEX, COMP_REGEX, AVG_REGEX, ACTIVE_REGEX
+    BASELINECOR_REGEX, COMP_REGEX, AVG_REGEX, ACTIVE_REGEX, CancelationConditional
 from pychron.paths import paths
 
 
@@ -65,8 +65,7 @@ MOD_DICT = {'Current': '{}.cur', 'StdDev': '{}.std', 'Baseline': '{}.bs',
 
 
 class ConditionalGroup(HasTraits):
-    editable=True
-
+    editable = True
 
     conditionals = List
     selected = Any
@@ -75,7 +74,7 @@ class ConditionalGroup(HasTraits):
     available_attrs = List
     comparator = Enum('', '>', '<', '>=', '<=', '==')
     secondary_comparator = Enum('', '>', '<', '>=', '<=', '==')
-    secondary_value=Float
+    secondary_value = Float
     use_between = Bool
     use_invert = Bool
     # use_max = Bool
@@ -103,26 +102,26 @@ class ConditionalGroup(HasTraits):
                   ('check', 'comp')]
     tabular_adapter_klass = ConditionalsAdapter
 
-    _conditional_klass=None
+    _conditional_klass = None
 
     def _add_button_fired(self):
         if self.selected:
-            idx=self.conditionals.index(self.selected)
+            idx = self.conditionals.index(self.selected)
 
-            k=self.selected.clone_traits()
+            k = self.selected.clone_traits()
             self.conditionals.insert(idx, k)
         else:
-            k=self._conditional_klass('','')
+            k = self._conditional_klass('', '')
             self.conditionals.append()
 
     def _delete_button_fired(self):
-        idx=self.conditionals.index(self.selected)
+        idx = self.conditionals.index(self.selected)
         self.conditionals.remove(self.selected)
         if not self.conditionals:
-            sel=self._conditional_klass('','')
+            sel = self._conditional_klass('', '')
         else:
-            sel = self.conditionals[idx-1]
-        self.selected=sel
+            sel = self.conditionals[idx - 1]
+        self.selected = sel
 
     def __init__(self, conditionals, klass, *args, **kw):
         if not klass:
@@ -137,9 +136,9 @@ class ConditionalGroup(HasTraits):
             self.selected = self.conditionals[0]
         else:
             self.selected = klass('', '')
-            self.conditionals=[self.selected]
+            self.conditionals = [self.selected]
 
-        self._conditional_klass= klass
+        self._conditional_klass = klass
         super(ConditionalGroup, self).__init__(*args, **kw)
 
     def dump(self):
@@ -195,9 +194,9 @@ class ConditionalGroup(HasTraits):
                     comp = '{}'.format(attr)
 
             if self.use_invert:
-                comp='not {}'.format(comp)
+                comp = 'not {}'.format(comp)
 
-            self.selected.comp=comp
+            self.selected.comp = comp
 
     @on_trait_change('start_count, frequency, attr, window, mapper')
     def _update_selected(self, name, new):
@@ -228,26 +227,26 @@ class ConditionalGroup(HasTraits):
                 # extract comparator
                 m = COMP_REGEX.findall(new.comp)
                 if m:
-                    m1=m[0]
-                    if len(m)==2:
-                        self.use_between=True
-                        self.secondary_comparator = c =m[0]
+                    m1 = m[0]
+                    if len(m) == 2:
+                        self.use_between = True
+                        self.secondary_comparator = c = m[0]
                         self.secondary_value = float(new.comp.split(c)[0])
-                        m1=m[1]
+                        m1 = m[1]
 
                     self.comparator = c = m1
                     self.value = float(new.comp.split(c)[-1])
 
                 # extract use invert
                 if new.comp.startswith('not '):
-                    self.use_invert=True
+                    self.use_invert = True
 
     def _get_modifier_enabled(self):
         return not self.function
 
     def _get_tool_group(self):
-        g=HGroup(icon_button_editor('add_button', 'add'),
-                 icon_button_editor('delete_button', 'delete'))
+        g = HGroup(icon_button_editor('add_button', 'add'),
+                   icon_button_editor('delete_button', 'delete'))
         return g
 
     def _get_conditionals_grp(self):
@@ -289,7 +288,7 @@ class ConditionalGroup(HasTraits):
                      self._get_tool_group(),
                      self._get_edit_group())
         else:
-            v=View(self._get_conditionals_grp())
+            v = View(self._get_conditionals_grp())
         return v
 
 
@@ -324,13 +323,13 @@ class PreRunGroup(ConditionalGroup):
                           HGroup(UItem('attr',
                                        editor=EnumEditor(name='available_attrs')),
                                  # Item('function',
-                                 #      editor=EnumEditor(values=['', 'Max', 'Min', 'Slope', 'Average'])),
+                                 # editor=EnumEditor(values=['', 'Max', 'Min', 'Slope', 'Average'])),
                                  Item('modifier',
                                       enabled_when='modifier_enabled',
                                       editor=EnumEditor(values=['', 'Inactive']))),
                           # HGroup(UItem('comparator', enabled_when='attr'),
-                          #        Item('value', enabled_when='attr and comparator'))
-                        )
+                          # Item('value', enabled_when='attr and comparator'))
+        )
         return edit_grp
 
 
@@ -339,69 +338,96 @@ class CEHandler(Handler):
         info.ui.title = 'Edit Default Conditionals - [{}]'.format(info.object.name)
 
     def save_as(self, info):
-        dlg=FileDialog(default_directory=paths.queue_conditionals_dir, action='save as')
+        dlg = FileDialog(default_directory=paths.queue_conditionals_dir, action='save as')
         if dlg.open():
             if dlg.path:
                 info.object.dump(dlg.path)
 
+
 class ConditionalsViewable(HasTraits):
     actions_group = Instance(ConditionalGroup)
+    cancelations_group = Instance(ConditionalGroup)
     terminations_group = Instance(ConditionalGroup)
     truncations_group = Instance(ConditionalGroup)
     post_run_terminations_group = Instance(ConditionalGroup)
     pre_run_terminations_group = Instance(ConditionalGroup)
 
+    group_names = ('actions', 'truncations', 'cancelations', 'terminations',
+                   'post_run_terminations', 'pre_run_terminations')
+    title = Str
+
     def traits_view(self):
-        noact = VGroup(spring, HGroup(spring, Label('No Actions Defined'), spring), spring,
-                       defined_when='not actions_group')
-        agrp = Group(UItem('actions_group',
-                           defined_when='actions_group', style='custom'),
-                     noact,
-                     label='Actions')
+        vs = []
+        for name in self.group_names:
+            gname = '{}_group'.format(name)
+            uname = ' '.join([ni.capitalize() for ni in name.split('_')])
+            # no = VGroup(spring, HGroup(spring, Label('No {} Defined'.format(uname)), spring), spring,
+            # defined_when='not {}'.format(gname))
+            # grp = Group(UItem(gname,
+            #                   defined_when=gname, style='custom'),
+            #             no, label=uname)
+            grp = Group(UItem(gname, style='custom'), label=uname)
+            vs.append(grp)
 
-        notrunc = VGroup(spring, HGroup(spring, Label('No Truncations Defined'), spring), spring,
-                         defined_when='not truncations_group')
-        trgrp = Group(UItem('truncations_group',
-                            defined_when='truncations_group', style='custom'),
-                      notrunc,
-                      label='Truncations')
+        # notrunc = VGroup(spring, HGroup(spring, Label('No Truncations Defined'), spring), spring,
+        # defined_when='not truncations_group')
+        # trgrp = Group(UItem('truncations_group',
+        # defined_when='truncations_group', style='custom'),
+        # notrunc,
+        #               label='Truncations')
+        #
+        # nocancel = VGroup(spring, HGroup(spring, Label('No Cancelations Defined'), spring), spring,
+        #                   defined_when='not cancelations_group')
+        # cgrp = Group(UItem('cancelations_group',
+        #                    defined_when='cancelations_group', style='custom'),
+        #              nocancel,
+        #              label='Cancelations')
+        #
+        # noterm = VGroup(spring, HGroup(spring, Label('No Terminations Defined'), spring), spring,
+        #                 defined_when='not terminations_group')
+        # tegrp = Group(UItem('terminations_group',
+        #                     defined_when='terminations_group', style='custom'),
+        #               noterm,
+        #               label='Terminations')
+        #
+        # nopterm = VGroup(spring, HGroup(spring, Label('No Post Run Terminations Defined'), spring), spring,
+        #                  defined_when='not post_run_terminations_group')
+        # prtegrp = Group(UItem('post_run_terminations_group',
+        #                       defined_when='post_run_terminations_group', style='custom'),
+        #                 nopterm,
+        #                 label='Post Run Terminations')
+        # prertegrp = Group(UItem('pre_run_terminations_group',
+        #                         defined_when='pre_run_terminations_group', style='custom'),
+        #                   nopterm,
+        #                   label='Pre Run Terminations')
 
-        noterm = VGroup(spring, HGroup(spring, Label('No Terminations Defined'), spring), spring,
-                        defined_when='not terminations_group')
-        tegrp = Group(UItem('terminations_group',
-                            defined_when='terminations_group', style='custom'),
-                      noterm,
-                      label='Terminations')
-
-        nopterm = VGroup(spring, HGroup(spring, Label('No Post Run Terminations Defined'), spring), spring,
-                         defined_when='not post_run_terminations_group')
-        prtegrp = Group(UItem('post_run_terminations_group',
-                              defined_when='post_run_terminations_group', style='custom'),
-                        nopterm,
-                        label='Post Run Terminations')
-        prertegrp = Group(UItem('pre_run_terminations_group',
-                                defined_when='pre_run_terminations_group', style='custom'),
-                          nopterm,
-                          label='Pre Run Terminations')
-
-        v = View(Tabbed(prertegrp, agrp, trgrp, tegrp, prtegrp),
+        v = View(Tabbed(*vs),
                  width=800,
                  resizable=True,
                  handler=CEHandler(),
                  buttons=['OK', 'Cancel', Action(name='Save As', action='save_as')],
-                 title='Edit Default Conditionals')
+                 title=self.title)
+        # v = View(Tabbed(prertegrp, agrp, cgrp, trgrp, tegrp, prtegrp),
+        #          width=800,
+        #          resizable=True,
+        #          handler=CEHandler(),
+        #          buttons=['OK', 'Cancel', Action(name='Save As', action='save_as')],
+        #          title='Edit Default Conditionals')
         return v
 
 
 class ConditionalsEditView(ConditionalsViewable):
     path = Str
+    root = Str
+    detectors = List
+    title = 'Edit Default Conditionals'
 
     def __init__(self, detectors=None, *args, **kw):
-        attrs = ['', 'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36',
-                                'kca', 'kcl', 'cak','clk']
+        attrs = ['', 'age', 'kca', 'kcl', 'cak', 'clk','rad40_percent',
+                 'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36']
 
-        ratio_matrix = ['{}/{}'.format(i, j) for i in ('40','39','38','37','36')
-                                                for j in ('40','39','38','37','36')]
+        ratio_matrix = ['{}/{}'.format(i, j) for i in ('40', '39', '38', '37', '36')
+                        for j in ('40', '39', '38', '37', '36') if i != j]
         attrs.extend(ratio_matrix)
         if detectors:
             attrs.extend(detectors)
@@ -411,34 +437,46 @@ class ConditionalsEditView(ConditionalsViewable):
 
     @property
     def name(self):
-        return os.path.relpath(self.path, paths.queue_conditionals_dir)
+        v = ''
+        if self.path:
+            v = os.path.relpath(self.path, self.root)
 
-    def open(self, name):
-        self.load(name)
+        return v
 
-    def load(self, name):
-        root = paths.queue_conditionals_dir
+    def open(self, path, save_as):
+        self.load(path, save_as)
+
+    def load(self, path, save_as):
+
+        root, name = os.path.split(path)
         p = get_path(root, name, ('.yaml', '.yml'))
+        yd = None
         if p:
-            self.path = p
+            if not save_as:
+                self.path = p
+
             with open(p, 'r') as fp:
                 yd = yaml.load(fp)
-                for name, klass, cklass in (('actions', ConditionalGroup, ActionConditional),
-                                            ('truncations', ConditionalGroup, TruncationConditional),
-                                            ('terminations', ConditionalGroup, TerminationConditional),
-                                            ('post_run_terminations', PostRunGroup, TerminationConditional)):
-                    grp = self._group_factory(yd, name, klass, cklass)
-                    setattr(self, '{}_group'.format(name), grp)
 
-                grp = self._group_factory(yd, 'pre_run_terminations', PreRunGroup)
-                grp.available_attrs = self.detectors
-                self.pre_run_terminations_group = grp
+        for name, klass, cklass in (('actions', ConditionalGroup, ActionConditional),
+                                    ('truncations', ConditionalGroup, TruncationConditional),
+                                    ('cancelations', ConditionalGroup, CancelationConditional),
+                                    ('terminations', ConditionalGroup, TerminationConditional),
+                                    ('post_run_terminations', PostRunGroup, TerminationConditional)):
+            if name in self.group_names:
+                grp = self._group_factory(yd, name, klass, cklass)
+                setattr(self, '{}_group'.format(name), grp)
+
+        if 'pre_run_terminations' in self.group_names:
+            grp = self._group_factory(yd, 'pre_run_terminations', PreRunGroup)
+            grp.available_attrs = self.detectors
+            self.pre_run_terminations_group = grp
 
     def _group_factory(self, yd, name, klass, conditional_klass=None):
         if conditional_klass is None:
             conditional_klass = TerminationConditional
 
-        items = yd.get(name, [])
+        items = yd.get(name, []) if yd else []
         group = klass(items, conditional_klass, available_attrs=self.available_attrs)
         return group
 
@@ -446,41 +484,59 @@ class ConditionalsEditView(ConditionalsViewable):
         if path is None:
             path = self.path
         else:
-            self.path=path
+            self.path = path
 
         if path:
             with open(path, 'w') as fp:
-                d = {k: getattr(self, '{}_group'.format(k)).dump() for k in ('actions', 'terminations', 'truncations',
-                                                                             'post_run_terminations',
-                                                                             'pre_run_terminations')}
+                d = {k: getattr(self, '{}_group'.format(k)).dump() for k in self.group_names}
 
                 yaml.dump(d, fp, default_flow_style=False)
 
 
-def edit_conditionals(name, detectors=None, app=None):
-    if not name:
-        dlg = FileDialog(action='open',
-                         wildcard=FileDialog.create_wildcard('YAML', '*.yaml *.yml'),
-                         default_directory=paths.queue_conditionals_dir)
-        if dlg.open():
-            if dlg.path:
-                name = os.path.basename(dlg.path)
+def get_file_path(root):
+    dlg = FileDialog(action='open',
+                     wildcard=FileDialog.create_wildcard('YAML', '*.yaml *.yml'),
+                     default_directory=root)
+    if dlg.open():
+        if dlg.path:
+            return dlg.path
 
-    if name:
-        cev = ConditionalsEditView(detectors)
-        cev.open(name)
-        if app:
-            info = app.open_view(cev, kind='livemodal')
+
+def edit_conditionals(name, detectors=None, app=None, root=None, save_as=False,
+                      kinds=None, title=''):
+    if not root:
+        root = paths.queue_conditionals_dir
+
+    if not save_as:
+        if not name and not save_as:
+            path = get_file_path(root)
+            if not path:
+                return
         else:
-            info = cev.edit_traits(kind='livemodal')
-            # info=cev.configure_traits(kind='livemodal')
-        if info.result:
-            cev.dump()
+            path = os.path.join(root, name)
+
+        if not os.path.isfile(path):
+            return
+    else:
+        path = ''
+
+    cev = ConditionalsEditView(detectors, root=root, title=title)
+    cev.open(path, save_as)
+    if kinds:
+        cev.group_names = kinds
+
+    if app:
+        info = app.open_view(cev, kind='livemodal')
+    else:
+        info = cev.edit_traits(kind='livemodal')
+        # info=cev.configure_traits(kind='livemodal')
+    if info.result:
+        cev.dump()
 
 
 if __name__ == '__main__':
     c = ConditionalsEditView(detectors=['H2', 'H1', 'AX', 'L1', 'L2', 'CDD'])
-    c.open('normal')
+    c.open('normal', False)
     c.configure_traits()
     c.dump()
     # edit_conditions(None)

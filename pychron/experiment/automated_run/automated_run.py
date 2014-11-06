@@ -234,7 +234,7 @@ class AutomatedRun(Loggable):
 
         self.persister.build_tables(gn, self._active_detectors)
 
-        self._add_truncate_conditionals()
+        self._add_conditionals()
 
         self.multi_collector.is_baseline = False
         self.multi_collector.fit_series_idx = fit_series
@@ -423,7 +423,7 @@ class AutomatedRun(Loggable):
         writer = self.persister.get_data_writer(group)
 
         check_conditionals = True
-        self._add_truncate_conditionals()
+        self._add_conditionals()
 
         ret = self._peak_hop(cycles, counts, hops, group, writer,
                              starttime, starttime_offset, series,
@@ -1328,26 +1328,26 @@ anaylsis_type={}
 
         p.analysis_view.load(self)
 
-    def _add_truncate_conditionals(self):
-        t = self.spec.truncate_conditional
-        self.debug('adding truncate conditional {}'.format(t))
+    def _add_conditionals(self):
+        t = self.spec.conditionals
+        self.debug('adding conditionals {}'.format(t))
         if t:
             p = os.path.join(paths.conditionals_dir, add_extension(t, '.yaml'))
             if os.path.isfile(p):
-                self.debug('extract truncations from file. {}'.format(p))
-                with open(p, 'r') as fp:
-                    doc = yaml.load(fp)
-
-                    for c in doc:
-                        try:
-                            attr = c['attr']
-                            comp = c['check']
-                            start = c['start']
-                            freq = c.get('frequency', 1)
-                            acr = c.get('abbreviated_count_ratio', 1)
-                            self.py_add_truncation(attr, comp, int(start), freq, acr)
-                        except BaseException:
-                            self.warning('Failed adding truncation. {}'.format(c))
+                self.debug('extract conditionals from file. {}'.format(p))
+                # with open(p, 'r') as fp:
+                #     doc = yaml.load(fp)
+                #
+                #     for c in doc:
+                #         try:
+                #             attr = c['attr']
+                #             comp = c['check']
+                #             start = c['start']
+                #             freq = c.get('frequency', 1)
+                #             acr = c.get('abbreviated_count_ratio', 1)
+                #             self.py_add_truncation(attr, comp, int(start), freq, acr)
+                #         except BaseException:
+                #             self.warning('Failed adding truncation. {}'.format(c))
 
             else:
                 try:
@@ -1358,7 +1358,7 @@ anaylsis_type={}
                     freq = 1
                     acr = 0.5
                 except Exception, e:
-                    self.debug('truncate_conditional parse failed {} {}'.format(e, t))
+                    self.debug('conditionals parse failed {} {}'.format(e, t))
                     return
 
                 self.py_add_truncation(attr, c, int(start), freq, acr)

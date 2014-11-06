@@ -99,7 +99,7 @@ class AutomatedRunSpec(Loggable):
     overlap = Property
     _overlap = Int
     _min_ms_pumptime = Int
-    truncate_conditional = Str
+    conditionals = Str
     syn_extraction = Str
 
     collection_time_zero_offset = Float

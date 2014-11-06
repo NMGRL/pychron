@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import String, Str, Property, Any, Float, Instance, Int, List, \
     cached_property, on_trait_change, Bool, Button, Event, Enum
 #============= standard library imports ========================
@@ -23,6 +23,7 @@ import yaml
 import os
 #============= local library imports  ==========================
 from pychron.experiment.action_editor import ActionEditor, ActionModel
+from pychron.experiment.conditional.conditionals_edit_view import edit_conditionals
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.queue.experiment_block import ExperimentBlock
 from pychron.experiment.utilities.frequency_edit_view import FrequencyModel
@@ -220,15 +221,15 @@ class AutomatedRunFactory(PersistenceLoggable):
     edit_template_label = Property(depends_on='template')
 
     #===========================================================================
-    # truncation
+    # conditionals
     #===========================================================================
     trunc_attr = String('age')
     trunc_attrs = List(['age',
-                        'age_err',
                         'kca',
-                        'kca_err',
                         'kcl',
-                        'kcl_err',
+                        'age.std',
+                        'kca.std',
+                        'kcl.std',
                         'rad40_percent',
                         'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36'])
     trunc_comp = Enum('>', '<', '>=', '<=', '=')
@@ -236,12 +237,12 @@ class AutomatedRunFactory(PersistenceLoggable):
     trunc_start = Int(100, enter_set=True, auto_set=False)
     use_simple_truncation = Bool
 
-    truncation_str = Property(depends_on='trunc_+')
-    truncation_path = String
-    truncations = List
-    clear_truncation = Button
-    edit_truncation_button = Button
-    new_truncation_button = Button
+    conditionals_str = Property(depends_on='trunc_+')
+    conditionals_path = String
+    conditionals = List
+    clear_conditionals = Button
+    edit_conditionals_button = Button
+    new_conditionals_button = Button
 
     #===========================================================================
     # blocks
@@ -292,7 +293,7 @@ class AutomatedRunFactory(PersistenceLoggable):
                    'duration', 'beam_diameter', 'ramp_duration', 'overlap',
                    'pattern', 'labnumber', 'position',
                    'weight', 'comment', 'template',
-                   'use_simple_truncation', 'truncation_path')
+                   'use_simple_conditionals', 'conditionals_path')
 
     _no_clear_labnumber = False
 
@@ -301,12 +302,12 @@ class AutomatedRunFactory(PersistenceLoggable):
         self.load_run_blocks()
         # self.remote_patterns = self._get_patterns()
         self.load_patterns()
-        self.load_truncations()
+        self.load_conditionals()
         # self.load_comment_templates()
 
     def activate(self, load_persistence):
         # self.load_run_blocks()
-        self.truncation_path = NULL_STR
+        self.conditionals_path = NULL_STR
         if load_persistence:
             self.load()
 
@@ -347,8 +348,8 @@ class AutomatedRunFactory(PersistenceLoggable):
     def load_patterns(self):
         self.patterns = self._get_patterns()
 
-    def load_truncations(self):
-        self.truncations = self._get_truncations()
+    def load_conditionals(self):
+        self.conditionals = self._get_conditionals()
 
     # def load_defaults(self):
     #     p = os.path.join(paths.hidden_dir, 'run_factory_defaults')
@@ -525,7 +526,7 @@ class AutomatedRunFactory(PersistenceLoggable):
         return ['position',
                 'extract_value', 'extract_units', 'cleanup', 'duration',
                 'use_cdd_warming',
-                'truncation_str',
+                'conditionals_str',
                 'collection_time_zero_offset',
                 'pattern', 'beam_diameter',
                 'weight', 'comment',
@@ -546,8 +547,8 @@ class AutomatedRunFactory(PersistenceLoggable):
                 continue
 
             sattr = attr
-            if attr == 'truncation_str':
-                sattr = 'truncate_conditional'
+            if attr == 'conditionals_str':
+                sattr = 'conditionals'
 
             v = getattr(self, attr)
             if attr == 'pattern':
@@ -996,7 +997,7 @@ class AutomatedRunFactory(PersistenceLoggable):
 
         return ['Step Heat Template', LINE_STR] + temps
 
-    def _get_truncations(self):
+    def _get_conditionalss(self):
         p = paths.conditionals_dir
         extension = '.yaml'
         temps = list_directory(p, extension, remove_extension=True)
@@ -1015,10 +1016,10 @@ class AutomatedRunFactory(PersistenceLoggable):
         except (ValueError, TypeError):
             pass
 
-    def _get_truncation_str(self):
+    def _get_conditionals_str(self):
         r = ''
-        if self.truncation_path != NULL_STR:
-            r = os.path.basename(self.truncation_path)
+        if self.conditionals_path != NULL_STR:
+            r = os.path.basename(self.conditionals_path)
         elif self.use_simple_truncation and self.trunc_attr is not None and \
                         self.trunc_comp is not None and \
                         self.trunc_crit is not None:
@@ -1072,9 +1073,9 @@ class AutomatedRunFactory(PersistenceLoggable):
         self.debug('Comment template rendered = {}'.format(c))
         self.comment = c
 
-    def _set_truncation(self, t):
+    def _set_conditionals(self, t):
         for s in self._selected_runs:
-            s.truncate_conditional = t
+            s.conditionals = t
 
         self.changed = True
         self.refresh_table_needed = True
@@ -1099,9 +1100,9 @@ class AutomatedRunFactory(PersistenceLoggable):
 
     def _use_simple_truncation_changed(self, new):
         if new:
-            self.truncation_path = NULL_STR
+            self.conditionals_path = NULL_STR
 
-    def _truncation_path_changed(self, new):
+    def _conditionals_path_changed(self, new):
         if not new == NULL_STR:
             self.use_simple_truncation = False
 
@@ -1145,37 +1146,40 @@ class AutomatedRunFactory(PersistenceLoggable):
             ed.context_editor.default_fits = str(m.name)
             ed.update_docstr()
 
-    def _new_truncation_button_fired(self):
+    def _new_conditionals_button_fired(self):
+        edit_conditionals(self.conditionals_path,
+                          app=self.application, root=paths.conditionals_dir,
+                          save_as=True,
+                          title='Edit Run Conditionals',
+                          kinds=('actions', 'cancelations', 'terminations', 'truncations'))
+        # edit_conditionals(p)
+        # # e = ActionEditor()
+        # if os.path.isfile(p):
+        #     # e.load(p)
+        #     e.model.path = ''
+        # else:
+        #     e.model = ActionModel()
+        #
+        # info = e.edit_traits(kind='livemodal')
+        # if info.result:
+        #     self.load_truncations()
+        #     p = e.model.path
+        #     d = os.path.splitext(os.path.basename(p))[0]
+        #
+        #     self.conditionals_path = d
 
-        p = os.path.join(paths.conditionals_dir,
-                         add_extension(self.truncation_path, '.yaml'))
+    def _edit_conditionals_button_fired(self):
+        edit_conditionals(self.conditionals_path,
+                          app=self.application, root=paths.conditionals_dir,
+                          title='Edit Run Conditionals',
+                          kinds=('actions', 'cancelations', 'terminations', 'truncations'))
+        # e = ActionEditor()
+        # e.load(p)
 
-        e = ActionEditor()
-        if os.path.isfile(p):
-            e.load(p)
-            e.model.path = ''
-        else:
-            e.model = ActionModel()
+        # e.edit_traits(kind='livemodal')
 
-        info = e.edit_traits(kind='livemodal')
-        if info.result:
-            self.load_truncations()
-            p = e.model.path
-            d = os.path.splitext(os.path.basename(p))[0]
-
-            self.truncation_path = d
-
-    def _edit_truncation_button_fired(self):
-        p = os.path.join(paths.conditionals_dir,
-                         add_extension(self.truncation_path, '.yaml'))
-
-        if os.path.isfile(p):
-            e = ActionEditor()
-            e.load(p)
-            e.edit_traits(kind='livemodal')
-
-    @on_trait_change('trunc_+, truncation_path')
-    def _handle_truncation(self, obj, name, old, new):
+    @on_trait_change('trunc_+, conditionals_path')
+    def _handle_conditionals(self, obj, name, old, new):
         if self.edit_mode and \
                 self._selected_runs and \
                 not self.suppress_update:
@@ -1183,8 +1187,8 @@ class AutomatedRunFactory(PersistenceLoggable):
             #     t = new
             # t = add_extension(new, '.yaml') if new else None
             # else:
-            t = self.truncation_str
-            self._set_truncation(t)
+            t = self.conditionals_str
+            self._set_conditionals(t)
 
     @on_trait_change('''cleanup, duration, extract_value,ramp_duration,
 collection_time_zero_offset,
@@ -1371,11 +1375,11 @@ post_equilibration_script:name''')
     def _edit_mode_button_fired(self):
         self.edit_mode = not self.edit_mode
 
-    def _clear_truncation_fired(self):
+    def _clear_conditionals_fired(self):
         if self.edit_mode and \
                 self._selected_runs and \
                 not self.suppress_update:
-            self._set_truncation('')
+            self._set_conditionals('')
 
     def _aliquot_changed(self):
         if self.edit_mode:
