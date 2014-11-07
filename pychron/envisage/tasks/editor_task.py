@@ -15,34 +15,13 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from pyface import confirmation_dialog
-from pyface.constant import NO
 from traits.api import Property, Instance
 from pyface.tasks.api import IEditor, IEditorAreaPane
 #============= standard library imports ========================
 import os
 #============= local library imports  ==========================
+from pychron.envisage.tasks.advanced_editor_area_pane import myAdvancedEditorAreaPane
 from pychron.envisage.tasks.base_task import BaseManagerTask, BaseExtractionLineTask
-from pyface.tasks.advanced_editor_area_pane import AdvancedEditorAreaPane
-
-
-class myAdvancedEditorAreaPane(AdvancedEditorAreaPane):
-    def remove_editor(self, editor):
-        """ Removes an editor from the pane.
-        """
-        editor_widget = editor.control.parent()
-        if editor.dirty:
-            ret = confirmation_dialog.confirm(editor_widget,
-                                              'Unsaved changes to "{}". '
-                                              'Do you want to continue'.format(editor.name))
-            if ret == NO:
-                return
-
-        self.editors.remove(editor)
-        self.control.remove_editor_widget(editor_widget)
-        editor.editor_area = None
-        if not self.editors:
-            self.active_editor = None
 
 
 class BaseEditorTask(BaseManagerTask):

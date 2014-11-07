@@ -259,11 +259,12 @@ class LabBookTask(BaseEditorTask):
 
     # handlers
     def _dclicked_fired(self):
-        root = self.selected_root.path
-        if os.path.isfile(root):
-            editor = NoteEditor()
-            editor.load(root)
-            self._open_editor(editor)
+        if self.selected_root:
+            root = self.selected_root.path
+            if os.path.isfile(root):
+                editor = NoteEditor()
+                editor.load(root)
+                self._open_editor(editor)
 
     def _filter_hierarchy_str_changed(self):
         self.make_hierarchy()
