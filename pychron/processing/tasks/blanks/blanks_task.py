@@ -156,7 +156,7 @@ class BlanksTask(InterpolationTask):
             iso = fi['name']
             # print an_pa.record_id
             if iso in an_pa.isotopes:
-                blank = an_pa.isotopes[iso].get_corrected_value()
+                blank = an_pa.isotopes[iso].get_non_detector_corrected_value()
                 # print iso, blank.nominal_value, blank.std_dev
 
                 dbblank = db.add_blanks(hist,

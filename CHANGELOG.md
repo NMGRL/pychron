@@ -22,7 +22,10 @@ CHANGELOG
 * added group emailing
 * gitified pyscripts
 * added frequency template
-* added Labbook Plugin
+* added LabBook Plugin
+* added open boxes to spectrum
+* added uncorrected ratios to Series
+
 
 2.0.4
 ------------------

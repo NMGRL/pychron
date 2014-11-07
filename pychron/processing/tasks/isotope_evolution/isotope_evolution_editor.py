@@ -477,8 +477,8 @@ class IsotopeEvolutionEditor(GraphEditor):
         #     self.component.plotcontainer.remove(self.component.plotcontainer.components)
         #     self.graphs=[]
 
-        add_tools = not self.tool.auto_update or n == 1
-
+        # add_tools = not self.tool.auto_update or n == 1
+        add_tools = n==1
         for j, unk in enumerate(self.analyses):
             set_ytitle = j % c == 0
             padding = [40, 10, 40, 40]

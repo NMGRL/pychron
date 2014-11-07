@@ -20,6 +20,19 @@ import os
 import subprocess
 from datetime import datetime
 
+def modified_datetime(path, strformat='%m-%d-%Y %H:%M:%S'):
+    dt = datetime.fromtimestamp(os.path.getmtime(path))
+    if strformat:
+        dt = dt.strftime(strformat)
+    return dt
+
+
+def created_datetime(path, strformat='%m-%d-%Y %H:%M:%S'):
+    dt = datetime.fromtimestamp(os.path.getctime(path))
+    if strformat:
+        dt = dt.strftime(strformat)
+    return dt
+
 
 def view_file(p, application='Preview', logger=None):
     app_path = '/Applications/{}.app'.format(application)

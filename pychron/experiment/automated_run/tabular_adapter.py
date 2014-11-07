@@ -59,7 +59,7 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter):
     #    extract_device_width = Int(125)
     extraction_script_width = Int(80)
     measurement_script_width = Int(90)
-    truncate_conditional_width = Int(80)
+    conditionals_width = Int(80)
     syn_extraction_width = Int(80)
     use_cdd_warming_width = Int(80)
     post_measurement_script_width = Int(90)
@@ -292,7 +292,7 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter):
             ('Extraction', 'extraction_script'),
             # ('T_o Offset', 'collection_time_zero_offset'),
             ('Measurement', 'measurement_script'),
-            ('Truncate', 'truncate_conditional'),
+            ('Conditionals', 'conditionals'),
             # ('SynExtraction', 'syn_extraction'),
             ('CDDWarm', 'use_cdd_warming'),
             ('Post Eq.', 'post_equilibration_script'),
@@ -349,7 +349,7 @@ class ExecutedUVAutomatedRunSpecAdapter(ExecutedAutomatedRunSpecAdapter):
             ('Cleanup (s)', 'cleanup'),
             ('Extraction', 'extraction_script'),
             ('Measurement', 'measurement_script'),
-            ('Truncate', 'truncate_conditional'),
+            ('Conditionals', 'conditionals'),
             ('SynExtraction', 'syn_extraction'),
             ('CDDWarm', 'use_cdd_warming'),
             ('Post Eq.', 'post_equilibration_script'),

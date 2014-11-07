@@ -15,25 +15,29 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from datetime import datetime
 import os
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.action.task_action import TaskAction
 from pyface.tasks.task_layout import PaneItem, TaskLayout
-from traits.api import HasTraits, Button, Str, Int, Bool, Instance, Any, Event
+from traits.api import HasTraits, Button, Str, Int, Bool, \
+    Instance, Any, Event, on_trait_change, Date, Enum
 from traitsui.api import View, Item, UItem, HGroup, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.core.helpers.filetools import max_path_cnt
+from pychron.core.helpers.filetools import max_path_cnt, modified_datetime, created_datetime
 from pychron.core.helpers.iterfuncs import partition
 from pychron.core.hierarchy import Hierarchy, FilePath
 from pychron.core.progress import open_progress
 from pychron.envisage.resources import icon
+from pychron.envisage.tasks.actions import ToggleFullWindowAction
 from pychron.envisage.tasks.base_task import BaseTask
 from pychron.envisage.tasks.editor_task import BaseEditorTask
 from pychron.git_archive.git_archive import GitArchive
+from pychron.git_archive.history import GitArchiveHistory
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.labbook.tasks.note_editor import NoteEditor
-from pychron.labbook.tasks.panes import NotesBrowserPane
+from pychron.labbook.tasks.panes import NotesBrowserPane, FileHistoryPane
 from pychron.paths import paths
 
 
@@ -56,14 +60,14 @@ class AddFolderAction(TaskAction):
 
 
 class PushAction(TaskAction):
-    name='Push'
-    method='push'
+    name = 'Push'
+    method = 'push'
     image = icon('arrow_up')
 
 
 class PullAction(TaskAction):
-    name='Pull'
-    method='pull'
+    name = 'Pull'
+    method = 'pull'
     image = icon('arrow_down')
 
 
@@ -81,44 +85,91 @@ class NewNameView(HasTraits):
         return v
 
 
-class LabbookTask(BaseEditorTask):
+class PostView(HasTraits):
+    low_post = Date
+    high_post = Date
+
+    @property
+    def posts(self):
+        return self.low_post, self.high_post
+
+    def traits_view(self):
+        v = View(UItem('low_post', style='custom'),
+                 UItem('high_post', style='custom'),
+                 title='Select Date Range',
+                 width=500,
+                 buttons=['OK','Cancel'])
+        return v
+
+
+class LabBookTask(BaseEditorTask):
+    name = 'LabBook'
     tool_bars = [SToolBar(AddNoteAction(),
                           SaveNoteAction()),
                  SToolBar(AddFolderAction()),
                  SToolBar(PushAction(),
-                          PullAction())]
+                          PullAction()),
+                 SToolBar(ToggleFullWindowAction())]
 
     remote = Str
     _repo = Instance(GitRepoManager)
     hierarchy = Instance(Hierarchy, ())
+    history_model = Instance(GitArchiveHistory, ())
     selected_root = Any
     dclicked = Event
+    chronology_visible = Bool(True)
+    filter_hierarchy_str = Str  # (auto_set=False, enter_set=True)
+    filter_by_date_button = Button
+    date_filter = Enum('Modified','Created')
 
     # tasks protocol
     def activated(self):
         repo = GitRepoManager()
         repo.open_repo(paths.labbook_dir)
         self._repo = repo
+        self.history_model.repo_man = repo
+        self.history_model.auto_commit_checkouts = False
 
-        self._preference_binder('pychron.labbook', ('remote',))
+        # self._preference_binder('pychron.labbook', ('remote',))
 
         if self.remote:
             remote = 'https://github.com/{}'.format(self.remote)
             self._repo.create_remote(remote)
-            self.pull()
+            self.pull(make=False)
 
         self.make_hierarchy()
 
+    def _prompt_for_save(self):
+        ret = super(LabBookTask, self)._prompt_for_save()
+        if ret and self._repo.is_dirty():
+            ret = self._handle_prompt_for_save('You have uncommitted changes. Would you like to commit them?')
+            if ret == 'save':
+                self._auto_cleanup()
+                return True
+
+        return ret
+
+    def _get_commit_message(self):
+        return 'default commit message'
+
+    def _auto_cleanup(self):
+        m = self._get_commit_message()
+        self._repo.cmd('add', '--all', '.')
+        self._repo.commit(m)
+
     def prepare_destroy(self):
+
+        # check for modifications
         if self.remote:
             self._remote_action('Pushing', self._repo.push)
 
-    def make_hierarchy(self):
+    def make_hierarchy(self, lpost=None, hpost=None):
         root = paths.labbook_dir
 
-        dirs, files = self._make_paths(root)
-        self.hierarchy = Hierarchy(name='Labbook',
-                                   root_path=root, children=dirs + files)
+        dirs, files = self._make_paths(root, lpost, hpost)
+        self.hierarchy = Hierarchy(name='LabBook',
+                                   root_path=root,
+                                   children=dirs + files)
         for di in dirs:
             self._load_hierarchy(di, levels=3)
 
@@ -129,16 +180,19 @@ class LabbookTask(BaseEditorTask):
         self.save_note(save_as=True)
 
     def create_dock_panes(self):
-        return [NotesBrowserPane(model=self)]
+        return [NotesBrowserPane(model=self),
+                FileHistoryPane(model=self.history_model)]
 
     # action handlers
     def push(self):
         if self.remote:
             self._remote_action('Pushing', self._repo.push)
 
-    def pull(self):
+    def pull(self, make=True):
         if self.remote:
             self._remote_action('Pulling', self._repo.pull)
+        if make:
+            self.make_hierarchy()
 
     def add_folder(self):
         d = self.selected_root.path
@@ -153,11 +207,13 @@ class LabbookTask(BaseEditorTask):
         while 1:
             info = e.edit_traits(kind='livemodal')
             if info.result:
-                p = os.path.join(root, e.name)
+                # e=e.name.replace(' ','_')
+                en = e.name
+                p = os.path.join(root, en)
                 if not test(p):
                     return p
                 else:
-                    e.message = '{} already exists'.format(e.name)
+                    e.message = '{} already exists'.format(en)
             else:
                 break
 
@@ -167,7 +223,9 @@ class LabbookTask(BaseEditorTask):
                 return
 
             if save_as:
-                p = self.get_new_name(self.active_editor.root, os.path.isfile, 'New Note Name')
+                p = self.active_editor.path
+                if not p:
+                    p = self.get_new_name(self.active_editor.path, os.path.isfile, 'New Note Name')
             else:
                 p = self.active_editor.path
 
@@ -195,22 +253,90 @@ class LabbookTask(BaseEditorTask):
 
         self._open_editor(editor)
 
-    #handlers
+    def _active_editor_changed(self, new):
+        if new:
+            try:
+                self.history_model.load_history(new.path)
+            except Exception, e:
+                print e
+                self.debug('failed loading file history for {}'.format(new.path))
+
+    # handlers
     def _dclicked_fired(self):
-        root = self.selected_root.path
-        if os.path.isfile(root):
+        if self.selected_root:
+            root = self.selected_root.path
+            if os.path.isfile(root):
+                editor = NoteEditor()
+                editor.load(root)
+                self._open_editor(editor)
 
-            editor = NoteEditor()
-            editor.load(root)
-            self._open_editor(editor)
-    #private
-    def _make_paths(self, root):
+    def _filter_hierarchy_str_changed(self):
+        self.make_hierarchy()
 
+    def _filter_by_date_button_fired(self):
+        posts = self._get_posts()
+        if posts:
+            lp, hp = posts
+            self.make_hierarchy(lpost=lp, hpost=hp)
+
+    _post_view = None
+
+    def _get_posts(self):
+        if not self._post_view:
+            pv = PostView()
+            chron = self.hierarchy.chronology
+            l, h = chron[-1], chron[0]
+            fmt = '%m-%d-%Y %H:%M:%S'
+            pv.low_post = datetime.strptime(l.create_date, fmt)
+            pv.high_post = datetime.strptime(h.create_date, fmt)
+            self._post_view = pv
+
+        pv = self._post_view
+        info = pv.edit_traits(kind='livemodal')
+        if info.result:
+            return pv.posts
+
+    @on_trait_change('history_model:checkout_event')
+    def _handle_checkout(self):
+        self.active_editor.load()
+
+    def _date_filter_changed(self):
+        if self._post_view:
+            self.make_hierarchy(*self._post_view.posts)
+
+    # private
+    def _make_paths(self, root, lpost, hpost):
         xs = [xi for xi in os.listdir(root) if not xi.startswith('.')]
 
         dirs, files = partition(xs, lambda x: not os.path.isfile(os.path.join(root, x)))
 
+        if self.filter_hierarchy_str:
+            files = (ci for ci in files if ci.startswith(self.filter_hierarchy_str))
+
+        if self.date_filter=='Modified':
+            func=modified_datetime
+        else:
+            func=created_datetime
+
+        if lpost:
+            try:
+                lpost=lpost.date()
+            except AttributeError:
+                pass
+            files = (ci for ci in files
+                     if func(os.path.join(root, ci), strformat=None).date() >= lpost)
+
+        if hpost:
+            try:
+                hpost=hpost.date()
+            except AttributeError:
+                pass
+
+            files = (ci for ci in files
+                     if func(os.path.join(root, ci), strformat=None).date() <= hpost)
+
         files = [self._child_factory(ci) for ci in files]
+
         dirs = [self._directory_factory(di) for di in dirs]
         return dirs, files
 
@@ -239,7 +365,8 @@ class LabbookTask(BaseEditorTask):
         prog.close()
 
     def _default_layout_default(self):
-        return TaskLayout(left=PaneItem('pychron.labbook.browser'))
+        return TaskLayout(left=PaneItem('pychron.labbook.browser'),
+                          right=PaneItem('pychron.labbook.file_history'))
 
 # ============= EOF =============================================
 

@@ -56,7 +56,13 @@ class NoteEditor(BaseTraitsEditor):
             c = '{} {}'.format(c, self.name)
         return c
 
-    def load(self, path):
+    def load(self, path=None):
+        if path is None:
+            path = self.path
+
+        if not path or not os.path.isfile(path):
+            return
+
         self.path = path
         # self.root, name = os.path.split(path)
         with open(path, 'r') as fp:

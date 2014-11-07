@@ -36,12 +36,16 @@ class SeriesOptions(FigurePlotterOptions):
             return ff
 
         keys = ref.isotope_keys
-        keys.extend(['{}bs'.format(ki) for ki in keys])
+        ks = ref.isotope_keys[:]
+        keys.extend(['{}bs'.format(ki) for ki in ks])
+        keys.extend(['{}ic'.format(ki) for ki in ks])
         if 'Ar40' in keys:
             if 'Ar39' in keys:
                 keys.append('Ar40/Ar39')
+                keys.append('uAr40/Ar39')
             if 'Ar36' in keys:
                 keys.append('Ar40/Ar36')
+                keys.append('uAr40/Ar36')
 
         keys.append('PC')
         keys.append('AnalysisType')
@@ -51,14 +55,13 @@ class SeriesOptions(FigurePlotterOptions):
 
     def traits_view(self):
         cols = [
-            CheckboxColumn(name='use'),
-            ObjectColumn(name='name'),
+            CheckboxColumn(name='use', label='Show'),
+            ObjectColumn(name='name', editable=False),
             ObjectColumn(name='fit', width=135),
             ObjectColumn(name='scale', label='Y Scale'),
             #               ObjectColumn(name='height'),
             #               CheckboxColumn(name='x_error', label='X Error'),
-            CheckboxColumn(name='y_error', label='Y Error'),
-        ]
+            CheckboxColumn(name='y_error', label='Y Error')]
         aux_plots_grp = Item('aux_plots',
                              style='custom',
                              show_label=False,
@@ -66,8 +69,8 @@ class SeriesOptions(FigurePlotterOptions):
                              editor=TableEditor(columns=cols,
                                                 sortable=False,
                                                 deletable=False,
-                                                reorderable=False
-                             ))
+                                                cell_font='10',
+                                                reorderable=False))
         v = View(VGroup(self._get_refresh_group(), aux_plots_grp))
         return v
 

@@ -41,6 +41,42 @@ def caller(func):
 
     return dec
 
+def conditional_caller(func):
+    def dec(*args, **kw):
+        ret = func(*args, **kw)
+        if ret is None:
+            stack = inspect.stack()
+            # traceback.print_stack()
+            cstack = stack[0]
+            rstack = stack[1]
+
+            msg = '{} called by {}. parent call={} {}'.format(func.func_name, rstack[3],
+                                                              cstack[0].f_back.f_locals['self'],
+                                                              ''.join(map(str.strip, rstack[4])))
+
+            logger.debug(msg)
+        return ret
+
+    return dec
+
+
+def pcaller(func):
+    def dec(*args, **kw):
+        stack = inspect.stack()
+
+        cstack = stack[0]
+        rstack = stack[1]
+
+        msg = '{} called by {}. parent call={} {}'.format(func.func_name, rstack[3],
+                                                          'aaa',
+                                                          # cstack[0].f_back.f_locals['self'],
+                                                          ''.join(map(str.strip, rstack[4])))
+
+        print msg
+        return func(*args, **kw)
+
+    return dec
+
 
 def caller_stack(func):
     def dec(*args, **kw):

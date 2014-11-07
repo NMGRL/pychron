@@ -25,6 +25,7 @@ from numpy import where
 #============= local library imports  ==========================
 from uncertainties import std_dev, nominal_value
 from pychron.core.regression.interpolation_regressor import InterpolationRegressor
+from pychron.core.regression.mean_regressor import WeightedMeanRegressor
 from pychron.core.regression.wls_regressor import WeightedPolynomialRegressor
 from pychron.graph.stacked_regression_graph import StackedRegressionGraph
 from pychron.processing.tasks.analysis_edit.interpolation_editor import InterpolationEditor
@@ -36,10 +37,11 @@ class BlanksEditor(InterpolationEditor):
     pickle_path = 'blank_fits'
 
     def load_fits(self, ref_ans):
-        keys = ref_ans.isotope_keys
+        keys = ref_ans.isotope_keys[:]
         fits = [(ref_ans.isotopes[ki].blank.fit,
                  ref_ans.isotopes[ki].blank.error_type,
                  ref_ans.isotopes[ki].blank.filter_outliers_dict) for ki in keys]
+
         self.tool.load_fits(keys, fits)
 
     def do_fit(self, ans):
@@ -139,11 +141,17 @@ class BlanksEditor(InterpolationEditor):
                 progress.soft_close()
 
     def _get_regressor(self, fit, error_type, xs, ys, es):
+        fit=fit.lower()
         if fit in ('linear','parabolic','cubic'):
             reg = WeightedPolynomialRegressor(fit=fit)
-        efit = fit[0]
-        if efit in ['preceding', 'bracketing interpolate', 'bracketing average']:
-            reg = InterpolationRegressor(kind=efit)
+
+        elif fit in ['preceding', 'bracketing interpolate', 'bracketing average']:
+            reg = InterpolationRegressor(kind=fit)
+        elif fit =='weighted mean':
+            reg = WeightedMeanRegressor()
+        else:
+            print 'fit {} not valid'.format(fit)
+            raise NotImplementedError
 
         mi= min(xs)
         xs=[xi-mi for xi in xs]

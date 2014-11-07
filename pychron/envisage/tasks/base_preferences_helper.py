@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -38,6 +38,7 @@ from traitsui.list_str_adapter import ListStrAdapter
 #                 editor=ButtonEditor(image=image, **editor_kw),
 #                 **kw)
 from pychron.core.ui.custom_label_editor import CustomLabel
+from pychron.envisage.icon_button_editor import icon_button_editor
 
 
 class FavoritesAdapter(ListStrAdapter):
@@ -65,6 +66,11 @@ class BasePreferencesHelper(PreferencesHelper):
 
 
 REPO_REGEX = re.compile(r'^[^\\]\w+/\w+')
+
+
+def test_connection_item():
+    return icon_button_editor('test_connection', 'server-connect',
+                              tooltip='Test connection to Github Repo')
 
 
 class GitRepoPreferencesHelper(BasePreferencesHelper):

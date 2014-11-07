@@ -491,11 +491,11 @@ THIS CHANGE CANNOT BE UNDONE')
             self.level = new_level
             self.updated = True
 
-    def _level_changed(self):
-        self.debug('level changed')
+    def _level_changed(self, new):
+        self.debug('level changed "{}"'.format(new))
         self.irradiated_positions = []
         self.canvas = IrradiationCanvas()
-        if self.level:
+        if new:
             self._update_level(debug=True)
 
     def _auto_increment_irradiation(self):
@@ -523,30 +523,34 @@ THIS CHANGE CANNOT BE UNDONE')
         if name is None:
             name = self.level
 
+        self.debug('update level= "{}"'.format(name))
         db = self.db
-        with db.session_ctx():
+        with db.session_ctx() as sess:
             level = db.get_irradiation_level(self.irradiation, name)
-
+            self.debug('retrieved level {}'.format(level))
             if not level:
                 self.debug('no level for {}'.format(name))
                 return
 
-            if level.holder:
-                self.debug('holder {}'.format(level.holder.name))
-                self._load_holder_positions(level.holder)
-                self._load_holder_canvas(level.holder)
+            holder = level.holder
+            if holder:
+                self.debug('holder {}'.format(holder.name))
+                self._load_holder_positions(holder)
+                self._load_holder_canvas(holder)
                 self._load_canvas_analyses(db, level)
                 #if debug:
             #    return
-
-            positions = level.positions
-            n = len(self.irradiated_positions)
-            self.debug('positions in level {}.  \
-available holder positions {}'.format(n, len(self.irradiated_positions)))
-            if positions:
-                with dirty_ctx(self):
-                    self._make_positions(n, positions)
-
+            try:
+                positions = level.positions
+                n = len(self.irradiated_positions)
+                self.debug('positions in level {}.  \
+    available holder positions {}'.format(n, len(self.irradiated_positions)))
+                if positions:
+                    with dirty_ctx(self):
+                        self._make_positions(n, positions)
+            except:
+                self.warning_dialog('Failed loading Irradiation level="{}"'.format(name))
+                sess.rollback()
     # @simple_timer()
     def _make_positions(self, n, positions):
         with no_update(self):

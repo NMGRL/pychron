@@ -38,8 +38,9 @@ class PersistenceMixin(object):
             raise NotImplementedError
 
         p = self.get_persistence_path()
-        self.debug('{} {}'.format(p, os.path.isfile(p)))
+        self.debug(p)
         if p and os.path.isfile(p):
+            self.debug('loading {}'.format(p))
             d = None
             with open(p, 'r') as fp:
                 try:

@@ -93,17 +93,17 @@ class LabnumberRecordView(RecordView):
                     self.irradiation = irrad.name
 
         sample = dbrecord.sample
-
-        if sample.material:
-            if isinstance(sample.material,(str, unicode)):
-                self.material = sample.material
-            else:
-                self.material = sample.material.name
-        if sample.project:
-            if isinstance(sample.material, (str, unicode)):
-                self.project = sample.project
-            else:
-                self.project = sample.project.name
+        if sample:
+            if sample.material:
+                if isinstance(sample.material,(str, unicode)):
+                    self.material = sample.material
+                else:
+                    self.material = sample.material.name
+            if sample.project:
+                if isinstance(sample.material, (str, unicode)):
+                    self.project = sample.project
+                else:
+                    self.project = sample.project.name
 
         for attr in ('name', 'lat', ('lon', 'long'),
                      'elevation', 'lithology', 'location', 'igsn'):

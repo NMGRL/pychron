@@ -23,6 +23,7 @@ from pyface.tasks.action.schema import SToolBar
 from traits.api import Instance
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.envisage.tasks.actions import ToggleFullWindowAction
 from pychron.globals import globalv
 from pychron.processing.tasks.actions.processing_actions import ConfigureRecallAction
 from pychron.processing.tasks.browser.util import browser_pane_item
@@ -42,6 +43,7 @@ class RecallTask(AnalysisEditTask):
     id = 'pychron.recall'
 
     tool_bars = [
+        SToolBar(ToggleFullWindowAction()),
         SToolBar(AddIsoEvoAction(),
                  AddDiffAction(),
                  EditDataAction(),
@@ -199,10 +201,10 @@ class RecallTask(AnalysisEditTask):
         if not self.has_active_editor():
             return
 
-        if not self.recaller.is_connected():
-            if not self.recaller.connect():
-                self.warning_dialog('Diff not enabled')
-                return
+        # if not self.recaller.is_connected():
+        if not self.recaller.connect():
+            self.warning_dialog('Diff not enabled')
+            return
 
         left = None
         if self.active_editor:

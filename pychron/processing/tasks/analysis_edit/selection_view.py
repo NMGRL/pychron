@@ -15,12 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
 from traits.api import HasTraits, Button, List, Any, Int
 from traitsui.api import View, Item, UItem, CheckListEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.editors import TabularEditor
 from traitsui.tabular_adapter import TabularAdapter
+from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceMixin
 
 
@@ -30,6 +32,7 @@ class ReferenceSelectionView(HasTraits, PersistenceMixin):
 
     hours = Int
     pattributes = ('atypes','hours')
+    persistence_path = os.path.join(paths.hidden_dir, 'reference_selection')
 
     @property
     def analysis_types(self):

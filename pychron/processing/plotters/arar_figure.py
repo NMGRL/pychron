@@ -219,26 +219,26 @@ class BaseArArFigure(HasTraits):
 
     def _unpack_attr(self, attr):
 
-        if '/' in attr:
-            def gen():
-                for ai in self.sorted_analyses:
-                    r = ai.get_ratio(attr)
-                    yield r or ufloat(0,0)
-                    # nv, dv = ai.isotopes[n].get_intensity() , ai.isotopes[d].get_intensity()
-                    # if n is not None and d is not None:
-                    #     yield nv/dv
-        else:
-            def gen():
-                # f = lambda x: x
-                # if attr in ARGON_KEYS:
-                #     f = lambda x: x.get_intensity()
+        # if '/' in attr:
+        #     def gen():
+        #         for ai in self.sorted_analyses:
+        #             r = ai.get_ratio(attr)
+        #             yield r or ufloat(0,0)
+        #             # nv, dv = ai.isotopes[n].get_intensity() , ai.isotopes[d].get_intensity()
+        #             # if n is not None and d is not None:
+        #             #     yield nv/dv
+        # else:
+        def gen():
+            # f = lambda x: x
+            # if attr in ARGON_KEYS:
+            #     f = lambda x: x.get_intensity()
 
-                for ai in self.sorted_analyses:
-                    v = ai.get_value(attr)
-                    yield v or ufloat(0,0)
-                    # if v is not None:
-                    #     yield v
-                    # yield f(ai.get_value(attr))
+            for ai in self.sorted_analyses:
+                v = ai.get_value(attr)
+                yield v or ufloat(0,0)
+                # if v is not None:
+                #     yield v
+                # yield f(ai.get_value(attr))
         return gen()
 
     def _set_y_limits(self, a, b, min_=None, max_=None,

@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,6 +24,7 @@ from pyface.tasks.traits_dock_pane import TraitsDockPane
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
+from pychron.core.ui.qt.tabular_editor import FilterTabularEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.pane_helpers import spacer
 from pychron.entry.irradiated_position import IrradiatedPositionAdapter
@@ -37,23 +38,23 @@ class IrradiationEditorPane(TraitsDockPane):
 
     def traits_view(self):
         project_grp = VGroup(
-            HGroup(spacer(),
-                   Label('Filter'),
-                   UItem('project_filter',
-                         width=75),
-                   icon_button_editor('clear_selection_button',
-                                      'cross',
-                                      tooltip='Clear selected'),
-                   icon_button_editor('edit_project_button', 'database_edit',
-                                      tooltip='Edit selected project in database'),
-                   icon_button_editor('add_project_button', 'database_add',
-                                      tooltip='Add project to database')
-            ),
+            # HGroup(spacer(),
+            #        Label('Filter'),
+            #        UItem('project_filter',
+            #              width=75),
+            #        icon_button_editor('clear_selection_button',
+            #                           'cross',
+            #                           tooltip='Clear selected'),
+            #        icon_button_editor('edit_project_button', 'database_edit',
+            #                           tooltip='Edit selected project in database'),
+            #        icon_button_editor('add_project_button', 'database_add',
+            #                           tooltip='Add project to database')
+            # ),
             UItem('projects',
-                  editor=TabularEditor(editable=False,
-                                       selected='selected_projects',
-                                       adapter=ProjectAdapter(),
-                                       multi_select=False),
+                  editor=FilterTabularEditor(editable=False,
+                                             selected='selected_projects',
+                                             adapter=ProjectAdapter(),
+                                             multi_select=False),
                   width=75))
 
         sample_grp = VGroup(

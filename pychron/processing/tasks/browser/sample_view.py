@@ -88,7 +88,7 @@ class BrowserSampleView(PaneModelView):
                           UItem('high_post', enabled_when='use_high_post'),
                           UItem('use_named_date_range'),
                           UItem('named_date_range'),
-                          icon_button_editor('date_configure_button', 'view-calendar-month-2.png'),
+                          icon_button_editor('date_configure_button', 'calendar.png'),
                           label='Date',
                           visible_when='date_visible',
                           show_border=True)

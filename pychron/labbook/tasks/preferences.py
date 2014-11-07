@@ -24,22 +24,22 @@ from traitsui.api import View, Item, UItem, HGroup, VGroup
 # ============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.envisage.tasks.base_preferences_helper import GitRepoPreferencesHelper
+from pychron.envisage.tasks.base_preferences_helper import GitRepoPreferencesHelper, test_connection_item
 
 
-class LabbookPreferences(GitRepoPreferencesHelper):
+class LabBookPreferences(GitRepoPreferencesHelper):
     preferences_path = 'pychron.labbook'
 
 
-class LabbookPreferencesPane(PreferencesPane):
-    model_factory = LabbookPreferences
+class LabBookPreferencesPane(PreferencesPane):
+    model_factory = LabBookPreferences
     category = 'General'
 
     def traits_view(self):
-        v = View(VGroup(HGroup(Item('remote', label='Labbook Repo'),
-                               icon_button_editor('test_connection','test_connection')),
+        v = View(VGroup(HGroup(Item('remote', label='LabBook Repo'),
+                               test_connection_item()),
                         CustomLabel('remote_status', color_name='remote_status_color'),
-                        label='Labbook',
+                        label='LabBook',
                         show_border=True))
         return v
 

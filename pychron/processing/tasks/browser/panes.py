@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from pyface.action.menu_manager import MenuManager
-from traits.api import Int, Str, Instance
+from traits.api import Int, Str, Instance, Property
 from traitsui.api import View, UItem, VGroup, HGroup, spring, \
     Group, Spring
 from pyface.tasks.traits_dock_pane import TraitsDockPane
@@ -66,9 +66,26 @@ class AnalysisAdapter(BrowserAdapter):
     odd_bg_color = 'lightgray'
     font = 'arial 10'
 
+    # cleanup_tooltip = Property
+    # duration_tooltip = Property
+    # def __init__(self, *args, **kw):
+    #     super(AnalysisAdapter, self).__init__(*args, **kw)
+    #     self._register_tooltips()
+    #
+    # def _register_tooltips(self):
+    #     for c in self.columns:
+    #         self.trait_add
+    #
+    # def _get_duration_tooltip(self, name):
+    #     return self._get_tooltip(name)
+    #
+    # def _get_cleanup_tooltip(self, name):
+    #     return self._get_tooltip(name)
+
     def get_menu(self, obj, trait, row, column):
         e=obj.append_replace_enabled
-        actions = [Action(name='Unselect', action='unselect_analyses'),
+        actions = [
+                   Action(name='Unselect', action='unselect_analyses'),
                    Action(name='Replace', action='replace_items', enabled=e),
                    Action(name='Append', action='append_items', enabled=e),
                    Action(name='Open', action='recall_items'),

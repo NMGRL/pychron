@@ -15,7 +15,8 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, List, Str, Date, Int, Button, Property
+from traits.api import HasTraits, List, Str, Date, Int, Button, Property, Instance,\
+    Event
 from traitsui.api import View, Item, Controller, TextEditor, \
     TabularEditor, UItem, spring, HGroup, VSplit, VGroup, InstanceEditor
 from traitsui.tabular_adapter import TabularAdapter
@@ -54,33 +55,33 @@ class GitArchiveHistory(HasTraits):
     diff_button = Button
     limit = Int(100, enter_set=True, auto_set=False)
 
-    _archive = GitArchive
-    _checkout_path = Str
-
-    _loaded_history_path = None
+    repo_man = Instance('pychron.git_archive.repo_manager.GitRepoManager')
+    _path = Str
 
     diffable = Property(depends_on='selected')
     checkoutable = Property(depends_on='selected')
-
+    checkout_event = Event
     diff_klass = DiffView
-
-    def __init__(self, root, cho, *args, **kw):
+    auto_commit_checkouts = True
+    def __init__(self, path=None, root=None, *args, **kw):
         super(GitArchiveHistory, self).__init__(*args, **kw)
-        self._archive = GitArchive(root)
-        self._checkout_path = cho
+        if root:
+            from pychron.git_archive.repo_manager import GitRepoManager
+            self.repo_man = GitRepoManager(root)
+
+        if path:
+            self._path = path
 
     def close(self):
-        self._archive.close()
+        self.repo_man.close()
 
     def load_history(self, p=None):
         if p is None:
-            p = self._loaded_history_path
+            p = self._path
 
         if p:
-            self._loaded_history_path = p
-
-            print self._archive._repo, p
-            hx = self._archive.commits_iter(p, keys=['message', 'committed_date'],
+            self._path = p
+            hx = self.repo_man.commits_iter(p, keys=['message', 'committed_date'],
                                             limit=self.limit)
             self.items = [Commit(hexsha=a, message=b,
                                  date=datetime.utcfromtimestamp(c),
@@ -93,25 +94,28 @@ class GitArchiveHistory(HasTraits):
         if new:
             new = new[-1]
             if not new.blob:
-                new.blob = self._archive.unpack_blob(new.hexsha, new.name)
+                new.blob = self.repo_man.unpack_blob(new.hexsha, new.name)
 
     def _checkout_button_fired(self):
-        with open(self._checkout_path, 'w') as fp:
-            fp.write(self.selected.blob)
+        with open(self._path, 'w') as fp:
+            fp.write(self.selected_commit.blob)
 
-        self._archive.add(self._checkout_path,
-                          msg_prefix='checked out')
-        self.load_history()
-        self.selected = self.items[0]
+        if self.auto_commit_checkouts:
+            self.repo_man.add(self._path,
+                              msg_prefix='checked out')
+            self.load_history()
+
+        self.selected = self.items[:1]
+        self.checkout_event = self._path
 
     def _diff_button_fired(self):
         a, b = self.selected
-        d = self._archive.diff(a.hexsha, b.hexsha)
+        d = self.repo_man.diff(a.hexsha, b.hexsha)
         if not a.blob:
-            a.blob = self._archive.unpack_blob(a.hexsha, a.name)
+            a.blob = self.repo_man.unpack_blob(a.hexsha, a.name)
 
         if not b.blob:
-            b.blob = self._archive.unpack_blob(b.hexsha, b.name)
+            b.blob = self.repo_man.unpack_blob(b.hexsha, b.name)
 
         ds = '\n'.join([li for li in d.split('\n')
                         if li[0] in ('-', '+')])

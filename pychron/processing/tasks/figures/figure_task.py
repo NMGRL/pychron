@@ -25,6 +25,7 @@ from itertools import groupby
 import os
 import weakref
 #============= local library imports  ==========================
+from pychron.envisage.tasks.actions import ToggleFullWindowAction
 from pychron.paths import paths
 from pychron.processing.plotters.xy.xy_scatter import XYScatterEditor
 from pychron.processing.tasks.actions.edit_actions import TagAction
@@ -57,6 +58,7 @@ class FigureTask(AnalysisEditTask):
     id = 'pychron.processing.figures'
     plotter_options_pane = Instance(PlotterOptionsPane)
     tool_bars = [
+        SToolBar(ToggleFullWindowAction()),
         SToolBar(RefreshActiveEditorAction(),
                  AddIsoEvoAction(),
                  TagAction()),
@@ -70,11 +72,12 @@ class FigureTask(AnalysisEditTask):
                  NewIsochronAction()),
         SToolBar(SetInterpretedAgeTBAction(),
                  BrowseInterpretedAgeTBAction()),
-        SToolBar(GroupSelectedAction(name='Selected'),
-                 GroupbyAliquotAction(name='by Aliquot'),
-                 GroupbyLabnumberAction(name='by Labnumber'),
-                 GroupbySampleAction(name='by Sample'),
-                 ClearGroupAction(name='Clear'))]
+        # SToolBar(GroupSelectedAction(name='Selected'),
+        #          GroupbyAliquotAction(name='by Aliquot'),
+        #          GroupbyLabnumberAction(name='by Labnumber'),
+        #          GroupbySampleAction(name='by Sample'),
+        #          ClearGroupAction(name='Clear'))
+    ]
 
     auto_select_analysis = False
 

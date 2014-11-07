@@ -29,12 +29,12 @@ class SignalsTest(IntensityMixin):
     __metaclass__=SignalsMeta
     def _signal(self, k):
         an = self.analysis
-        v = an.isotopes[k].get_corrected_value()
+        v = an.isotopes[k].get_non_detector_corrected_value()
         self._almost_equal(v.nominal_value, k)
 
     def _signal_err(self, k):
         an = self.analysis
-        v = an.isotopes[k].get_corrected_value()
+        v = an.isotopes[k].get_non_detector_corrected_value()
         self._almost_equal(v.std_dev, '{}Er'.format(k))
 
     def _interference_corrected(self, k):

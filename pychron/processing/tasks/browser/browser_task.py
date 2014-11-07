@@ -736,8 +736,10 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         hours = self.search_criteria.reference_hours_padding
         with db.session_ctx():
             for pp in self.selected_projects:
-                for li, hi in db.get_project_date_bins(identifier, pp.name, hours):
-                    yield li, hi
+                bins = db.get_project_date_bins(identifier, pp.name, hours)
+                if bins:
+                    for li, hi in bins:
+                        yield li, hi
 
     def _selected_samples_changed(self, new):
         if new:

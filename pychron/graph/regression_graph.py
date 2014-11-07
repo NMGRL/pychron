@@ -102,6 +102,8 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         return scatter.filter_outliers_dict['filter_outliers']
 
     def set_fit(self, fi, plotid=0, series=0):
+
+        fi=fi.lower()
         plot = self.plots[plotid]
         # for idx in range(series, -1, -1):
         key = 'data{}'.format(series)
@@ -341,7 +343,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
 
     def _mean_regress(self, scatter, r, fit):
         from pychron.core.regression.mean_regressor import MeanRegressor, WeightedMeanRegressor
-        if hasattr(scatter, 'yerror'):
+        if hasattr(scatter, 'yerror') and fit=='weighted mean':
             if r is None or not isinstance(r, WeightedMeanRegressor):
                 r = WeightedMeanRegressor()
         else:
@@ -349,7 +351,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                 r = MeanRegressor()
 
         self._set_regressor(scatter, r)
-        r.trait_setq(fit=fit)
+        # r.trait_setq(fit=fit)
         r.calculate()
 
         self._set_excluded(scatter, r)

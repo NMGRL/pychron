@@ -219,7 +219,7 @@ class MainView(HasTraits):
 
         if niso and diso:
             try:
-                return niso.get_corrected_value() / diso.get_corrected_value()
+                return niso.get_non_detector_corrected_value() / diso.get_non_detector_corrected_value()
             except ZeroDivisionError:
                 pass
 

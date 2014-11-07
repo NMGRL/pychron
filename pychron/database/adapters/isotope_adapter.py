@@ -1037,8 +1037,12 @@ class IsotopeAdapter(DatabaseAdapter):
 
     def get_analyzed_positions(self, level):
         table = (irrad_PositionTable.position, func.count(meas_AnalysisTable.id))
-        joins = (irrad_LevelTable, irrad_IrradiationTable, gen_LabTable,
-                 meas_AnalysisTable)
+        joins = (gen_LabTable, meas_AnalysisTable,
+                 irrad_LevelTable, irrad_IrradiationTable, )
+        #
+        # table = (irrad_PositionTable.position,)
+        # joins = (irrad_LevelTable, irrad_IrradiationTable)
+
         filters = (irrad_IrradiationTable.name == level.irradiation.name,
                    irrad_LevelTable.name == level.name)
         group_by = irrad_PositionTable.position
@@ -1153,7 +1157,9 @@ class IsotopeAdapter(DatabaseAdapter):
                               meas_AnalysisTable.analysis_timestamp <= h))
 
             q = q.order_by(meas_AnalysisTable.analysis_timestamp.asc())
-            return binfunc(q.all(), hours)
+            ans = q.all()
+            if len(ans):
+                return binfunc(ans, hours)
 
     def get_project_date_range(self, projects):
         with self.session_ctx() as sess:
@@ -2295,8 +2301,10 @@ class IsotopeAdapter(DatabaseAdapter):
 
         if analysis_types:
             f = gen_AnalysisTypeTable.name.in_(analysis_types)
-            if 'blank' in analysis_types:
-                f = f | gen_AnalysisTypeTable.name.like('blank%')
+
+            # fix for issue #452
+            # if 'blank' in analysis_types:
+            #     f = f | gen_AnalysisTypeTable.name.like('blank%')
 
             q = q.filter(f)
 

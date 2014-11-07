@@ -16,6 +16,7 @@
 
 #============= enthought library imports =======================
 from itertools import groupby
+from pyface.tasks.task_layout import TaskLayout
 
 from traits.api import Any, on_trait_change, List, Unicode, DelegatesTo, Instance
 from pyface.directory_dialog import DirectoryDialog
@@ -220,6 +221,17 @@ class TaskGroup(Group):
 
 class BaseTask(Task, Loggable, PreferenceMixin):
     application = DelegatesTo('window')
+
+    _full_window = False
+    def toggle_full_window(self):
+        if self._full_window:
+            self.window.set_layout(self.default_layout)
+            self.debug('set to normal view')
+        else:
+            self.window.set_layout(TaskLayout())
+            self.debug('set full window view')
+
+        self._full_window = not self._full_window
 
     def show_pane(self, p):
         op=p

@@ -37,6 +37,11 @@ class ConfigurableAdapterMixin(HasTraits):
 class BrowserAdapter(TabularAdapter, ConfigurableAdapterMixin):
     font = 'arial 10'
 
+    def get_tooltip( self, obj, trait, row, column ):
+        name = self.column_map[column]
+        # name='_'.join(name.split('_')[:-1])
+        return '{}= {}'.format(name, getattr(self.item, name))
+
 
 class ProjectAdapter(BrowserAdapter):
     columns = [('Name', 'name')]

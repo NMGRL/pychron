@@ -492,12 +492,12 @@ class Isotope(BaseIsotope):
         if disc is None:
             disc = 1
 
-        return self.get_corrected_value() * disc
+        return self.get_non_detector_corrected_value() * disc
 
     def get_ic_corrected_value(self):
-        return self.get_corrected_value() * (self.ic_factor or 1.0)
+        return self.get_non_detector_corrected_value() * (self.ic_factor or 1.0)
 
-    def get_corrected_value(self):
+    def get_non_detector_corrected_value(self):
         v = self.get_baseline_corrected_value()
 
         #this is a temporary hack for handling Minna bluff data
