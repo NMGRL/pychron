@@ -27,6 +27,7 @@ from pychron.core.helpers.iterfuncs import partition
 from pychron.core.progress import progress_iterator
 from pychron.easy_parser import EasyParser
 from pychron.envisage.browser.table_configurer import RecallTableConfigurer
+from pychron.envisage.tasks.actions import ToggleFullWindowAction
 from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter, IntermediateTabularAdapter
 from pychron.processing.k3739_edit import K3739EditModel, K3739EditView
 from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction
@@ -55,6 +56,7 @@ class AnalysisEditTask(BaseBrowserTask):
     ic_factor_editor_count = 0
 
     tool_bars = [SToolBar(DatabaseSaveAction(),
+                          ToggleFullWindowAction(),
                           # FindAssociatedAction(),
                           image_size=(16, 16))]
 

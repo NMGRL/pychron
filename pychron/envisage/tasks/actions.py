@@ -33,6 +33,7 @@ from pyface.constant import YES
 # help
 #===============================================================================
 from pychron.envisage.resources import icon
+from pychron.processing.tasks.actions.processing_actions import myTaskAction
 
 
 def restart():
@@ -308,3 +309,7 @@ class NewAction(Action):
 #            manager.save_as_experiment_queues()
 
 #============= EOF =============================================
+class ToggleFullWindowAction(myTaskAction):
+    name = 'Toggle Full Window'
+    method = 'toggle_full_window'
+    task_ids = ['pychron.recall','pychron.labbook']

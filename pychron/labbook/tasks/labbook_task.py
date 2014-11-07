@@ -30,6 +30,7 @@ from pychron.core.helpers.iterfuncs import partition
 from pychron.core.hierarchy import Hierarchy, FilePath
 from pychron.core.progress import open_progress
 from pychron.envisage.resources import icon
+from pychron.envisage.tasks.actions import ToggleFullWindowAction
 from pychron.envisage.tasks.base_task import BaseTask
 from pychron.envisage.tasks.editor_task import BaseEditorTask
 from pychron.git_archive.git_archive import GitArchive
@@ -102,11 +103,13 @@ class PostView(HasTraits):
 
 
 class LabBookTask(BaseEditorTask):
+    name = 'LabBook'
     tool_bars = [SToolBar(AddNoteAction(),
                           SaveNoteAction()),
                  SToolBar(AddFolderAction()),
                  SToolBar(PushAction(),
-                          PullAction())]
+                          PullAction()),
+                 SToolBar(ToggleFullWindowAction())]
 
     remote = Str
     _repo = Instance(GitRepoManager)
@@ -118,6 +121,7 @@ class LabBookTask(BaseEditorTask):
     filter_hierarchy_str = Str  # (auto_set=False, enter_set=True)
     filter_by_date_button = Button
     date_filter = Enum('Modified','Created')
+
     # tasks protocol
     def activated(self):
         repo = GitRepoManager()

@@ -16,20 +16,34 @@
 
 #============= enthought library imports =======================
 from envisage.plugin import Plugin
+from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.tasks_plugin import TasksPlugin
+from pyface.tasks.action.dock_pane_toggle_group import DockPaneToggleGroup
+from pyface.tasks.action.schema_addition import SchemaAddition
 from traits.api import List
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.envisage.tasks.actions import ToggleFullWindowAction
 from pychron.envisage.tasks.panes import GeneralPreferencesPane
 
 
 class PychronTasksPlugin(Plugin):
     preferences_panes = List(
         contributes_to='envisage.ui.tasks.preferences_panes')
+    task_extensions=List(contributes_to='envisage.ui.tasks.task_extensions')
 
     def _preferences_panes_default(self):
         return [GeneralPreferencesPane]
 
+    def _task_extensions_default(self):
+        actions = [SchemaAddition(id='DockPaneToggleGroup',
+                                  factory=DockPaneToggleGroup,
+                                  path='MenuBar/View'),
+                   SchemaAddition(factory=ToggleFullWindowAction,
+                                  id='toggle_full_window',
+                                  path='MenuBar/window.menu')]
+        # print 'asdsadfasdf'
+        return [TaskExtension(actions=actions)]
 
 class myTasksPlugin(TasksPlugin):
     pass
