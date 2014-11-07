@@ -46,7 +46,7 @@ def conditional_caller(func):
         ret = func(*args, **kw)
         if ret is None:
             stack = inspect.stack()
-
+            # traceback.print_stack()
             cstack = stack[0]
             rstack = stack[1]
 
