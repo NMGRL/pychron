@@ -1037,7 +1037,7 @@ class IsotopeAdapter(DatabaseAdapter):
 
     def get_analyzed_positions(self, level):
         table = (irrad_PositionTable.position, func.count(meas_AnalysisTable.id))
-        joins = (gen_LabTable,meas_AnalysisTable,
+        joins = (gen_LabTable, meas_AnalysisTable,
                  irrad_LevelTable, irrad_IrradiationTable, )
         #
         # table = (irrad_PositionTable.position,)

@@ -434,7 +434,9 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
                 q = sess.query(table)
 
             if joins:
-                joins = list(set(joins))
+                # print joins
+                # joins = list(set(joins))
+                # print joins
                 try:
                     for ji in joins:
                         if ji != table:
@@ -508,6 +510,9 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
             if reraise:
                 raise
             print '_query exception', e
+            # import traceback
+            # traceback.print_exc()
+            self.sess.rollback()
 
     def _query_one(self, q, reraise=False):
         q = q.limit(1)

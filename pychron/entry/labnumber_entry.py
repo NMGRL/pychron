@@ -523,6 +523,7 @@ THIS CHANGE CANNOT BE UNDONE')
         if name is None:
             name = self.level
 
+        self.debug('update level= "{}"'.format(name))
         db = self.db
         with db.session_ctx() as sess:
             level = db.get_irradiation_level(self.irradiation, name)
@@ -531,10 +532,11 @@ THIS CHANGE CANNOT BE UNDONE')
                 self.debug('no level for {}'.format(name))
                 return
 
-            if level.holder:
-                self.debug('holder {}'.format(level.holder.name))
-                self._load_holder_positions(level.holder)
-                self._load_holder_canvas(level.holder)
+            holder = level.holder
+            if holder:
+                self.debug('holder {}'.format(holder.name))
+                self._load_holder_positions(holder)
+                self._load_holder_canvas(holder)
                 self._load_canvas_analyses(db, level)
                 #if debug:
             #    return
