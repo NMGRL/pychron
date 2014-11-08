@@ -32,6 +32,7 @@ class AutoMFTable(Loggable):
     ion_optics_manager = Instance('pychron.spectrometer.ion_optics_manager.IonOpticsManager')
     el_manager = Instance('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
     pyscript_task = Instance('pychron.pyscript.tasks.pyscript_task.PyScriptTask')
+    spectrometer_manager = Instance('pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager')
 
     def do_auto_mftable(self, path=None):
         yd = self._load_config(path)
@@ -57,17 +58,25 @@ class AutoMFTable(Loggable):
         self.debug('setting deflections to config values')
 
     def _do_peak_center(self, detector, isotope, save=True):
-        return True
+        ion = self.ion_optics_manager
+
+        pc = ion.setup_peak_center(detector=[detector],
+                                   isotope=isotope, new=True)
+        ion.do_peak_center(new_thread=False, save=save, message='automated run peakcenter')
+        pcr = ion.peak_center_result
+        if pcr:
+            pc.close_graph()
+        return pcr
 
     def _construct_deflection(self, dets, defls, refiso):
         for di in dets:
             try:
-                defli=defls[di]
+                defli = defls[di]
                 if not isinstance(defli, tuple):
                     defli = (defli,)
             except KeyError:
                 self.warning('No deflection for {}. using 100 as default'.format(di))
-                defli=(100,)
+                defli = (100,)
 
             for de in defli:
                 if de == 0:
@@ -97,10 +106,12 @@ class AutoMFTable(Loggable):
                 self._do_peak_center(di, iso)
 
     def _current_deflection(self, det):
-        return 0
+        self.debug('get deflection for {}'.format(det))
+        return self.spectrometer_man.get_deflection(det)
 
     def _set_deflection(self, det, defl):
         self.debug('setting deflection. det={}, defl={}'.format(det, defl))
+        self.spectrometer_man.set_deflection(det, defl)
 
     def _update_deflection_file_from_mftable(self, di, refiso):
         dac = self.mftable.get_dac(di, refiso)

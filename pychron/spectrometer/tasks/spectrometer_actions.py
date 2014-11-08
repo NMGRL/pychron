@@ -15,7 +15,7 @@
 # ===============================================================================
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Property
 from pyface.action.api import Action
 from pyface.timer.do_later import do_later
@@ -60,14 +60,16 @@ def get_manager(event, protocol):
 class AutoMFTableAction(Action):
     def perform(self, event):
         app = event.task.window.application
-        ion_optics_man = app.get_service(ION_OPTICS_PROTOCOL)
-        if not ion_optics_man:
-            app.warning('No Ion Optics Manager available')
-            return
 
-        el_man = app.get_service(EL_PROTOCOL)
-        if not el_man:
-            app.warning('No Extraction Line Manager available')
+        kw = {}
+        for attr, prot, msg in (('spectrometer_manager', SPECTROMETER_PROTOCOL, 'Spectrometer Manager'),
+                                ('ion_optics_manager', ION_OPTICS_PROTOCOL, 'Ion Optics Manager'),
+                                ('el_manager', EL_PROTOCOL, 'Extraction Line Manager')):
+            srv = app.get_service(prot)
+            if not srv:
+                app.warning('No {} available'.format(msg))
+                return
+            kw[attr] = srv
 
         pyscript_task = app.get_task('pychron.pyscript.task', activate=False)
         if not pyscript_task:
@@ -75,9 +77,7 @@ class AutoMFTableAction(Action):
 
         from pychron.spectrometer.auto_mftable import AutoMFTable
 
-        a = AutoMFTable(ion_optics_manager=ion_optics_man,
-                        extraction_line_manager=el_man,
-                        pyscript_task=pyscript_task)
+        a = AutoMFTable(pyscript_task=pyscript_task, **kw)
 
         do_later(a.do_auto_mftable)
 
