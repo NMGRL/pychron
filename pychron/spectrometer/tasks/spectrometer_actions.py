@@ -22,6 +22,7 @@ from traits.api import Property
 
 #============= local library imports  ==========================
 from pyface.tasks.action.task_action import TaskAction
+from pychron.paths import paths
 
 
 SPECTROMETER_PROTOCOL = 'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager'
@@ -159,13 +160,12 @@ class MagnetFieldTableHistoryAction(Action):
 
             mft = man.spectrometer.magnet.mftable
             archive_root = mft.mftable_archive_path
-            if os.path.isfile(os.path.join(archive_root, os.path.basename(mft.mftable_path))):
+            if os.path.isfile(os.path.join(archive_root, os.path.basename(paths.mftable))):
                 # from pychron.git_archive.history import GitArchiveHistory, GitArchiveHistoryView
                 from pychron.spectrometer.local_mftable_history_view import LocalMFTableHistory, LocalMFTableHistoryView
 
-                print archive_root, mft.mftable_path
-                gh = LocalMFTableHistory(mft.mftable_path, archive_root)
-                gh.load_history(mft.mftable_path)
+                gh = LocalMFTableHistory(paths.mftable, archive_root)
+                gh.load_history(paths.mftable)
                 # gh.load_history(os.path.basename(mft.mftable_path))
                 ghv = LocalMFTableHistoryView(model=gh, title='MFTable Archive')
                 ghv.edit_traits(kind='livemodal')
@@ -181,8 +181,7 @@ class DBMagnetFieldTableHistoryAction(Action):
         if man.spectrometer:
             from pychron.spectrometer.mftable_history_view import MFTableHistory, MFTableHistoryView
 
-            mft = man.spectrometer.magnet.mftable
-            mfh = MFTableHistory(checkout_path=mft.mftable_path,
+            mfh = MFTableHistory(checkout_path=paths.mftable,
                                  spectrometer=man.spectrometer.name)
             mfh.load_history()
             mv = MFTableHistoryView(model=mfh)
