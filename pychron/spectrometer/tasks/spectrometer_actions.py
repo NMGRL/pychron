@@ -5,29 +5,31 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 #============= enthought library imports =======================
-from pyface.action.api import Action
 from traits.api import Property
+from pyface.action.api import Action
+from pyface.timer.do_later import do_later
+from pyface.tasks.action.task_action import TaskAction
 #============= standard library imports ========================
 
 #============= local library imports  ==========================
-from pyface.tasks.action.task_action import TaskAction
 from pychron.paths import paths
 
 
 SPECTROMETER_PROTOCOL = 'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager'
 ION_OPTICS_PROTOCOL = 'pychron.spectrometer.ion_optics_manager.IonOpticsManager'
 SCAN_PROTOCOL = 'pychron.spectrometer.scan_manager.ScanManager'
+EL_PROTOCOL = 'pychron.extraction_line.extraction_line_manager.ExtractionLineManager'
 
 
 def get_manager(event, protocol):
@@ -54,13 +56,37 @@ def get_manager(event, protocol):
 #
 #        manager = app.get_service(SPECTROMETER_PROTOCOL)
 #        manager.peak_center(update_mftable=True)
-#
+
+class AutoMFTableAction(Action):
+    def perform(self, event):
+        app = event.task.window.application
+        ion_optics_man = app.get_service(ION_OPTICS_PROTOCOL)
+        if not ion_optics_man:
+            app.warning('No Ion Optics Manager available')
+            return
+
+        el_man = app.get_service(EL_PROTOCOL)
+        if not el_man:
+            app.warning('No Extraction Line Manager available')
+
+        pyscript_task = app.get_task('pychron.pyscript.task', activate=False)
+        if not pyscript_task:
+            app.warning('PyScript Plugin not available')
+
+        from pychron.spectrometer.auto_mftable import AutoMFTable
+
+        a = AutoMFTable(ion_optics_manager=ion_optics_man,
+                        extraction_line_manager=el_man,
+                        pyscript_task=pyscript_task)
+
+        do_later(a.do_auto_mftable)
+
 
 class EditGainsAction(Action):
     def perform(self, event):
         from pychron.spectrometer.gains_edit_view import GainsModel, GainsEditView
 
-        app=event.task.window.application
+        app = event.task.window.application
         spec = app.get_service(SPECTROMETER_PROTOCOL)
         gv = GainsModel(spectrometer=spec)
 

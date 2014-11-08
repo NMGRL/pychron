@@ -16,23 +16,32 @@
 
 # ============= enthought library imports =======================
 from contextlib import contextmanager
-from traits.api import HasTraits, Button, Str, Int, Bool
+from traits.api import HasTraits, Button, Str, Int, Bool, Instance
 from traitsui.api import View, Item, UItem, HGroup, VGroup
 # ============= standard library imports ========================
 import shutil
 import os
 import yaml
 # ============= local library imports  ==========================
-from pychron.core.helpers.filetools import unique_path2
+from pychron.core.helpers.filetools import unique_path2, add_extension
 from pychron.loggable import Loggable
 from pychron.paths import paths
 
 
 class AutoMFTable(Loggable):
+    ion_optics_manager = Instance('pychron.spectrometer.ion_optics_manager.IonOpticsManager')
+    el_manager = Instance('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
+    pyscript_task = Instance('pychron.pyscript.tasks.pyscript_task.PyScriptTask')
+
     def do_auto_mftable(self, path=None):
         yd = self._load_config(path)
         if yd:
-            with self.ctx():
+
+            if not self._prepare(yd['extraction']):
+                self.warning('Failed preparing system')
+                return
+
+            with self._ctx():
                 dets = yd['detectors']
                 refiso = yd['reference_isotope']
                 if self._construct_mftable(dets, yd['isotopes']):
@@ -44,17 +53,6 @@ class AutoMFTable(Loggable):
         else:
             self.debug('Failed loading configuration')
 
-    @contextmanager
-    def ctx(self):
-        #enter
-        self._backup_mftable()
-
-        yield
-
-        #exit
-        #return to original deflections
-        self._set_config_deflections()
-
     def _set_config_deflections(self):
         self.debug('setting deflections to config values')
 
@@ -62,14 +60,22 @@ class AutoMFTable(Loggable):
         return True
 
     def _construct_deflection(self, dets, defls, refiso):
-        for di, defli in zip(dets, defls):
-            if not isinstance(defli, tuple):
-                defli = (defli, )
+        for di in dets:
+            try:
+                defli=defls[di]
+                if not isinstance(defli, tuple):
+                    defli = (defli,)
+            except KeyError:
+                self.warning('No deflection for {}. using 100 as default'.format(di))
+                defli=(100,)
 
             for de in defli:
                 if de == 0:
                     self._update_deflection_file_from_mftable(di, refiso)
+                    self.info('Deflection=0. Using mftable value for {}'.format(di))
                 else:
+                    self.info('calculating peak center for {} on {}. deflection={}'.format(refiso,
+                                                                                           di, de))
                     self._set_deflection(di, de)
                     pc = self._do_peak_center(di, refiso, save=False)
                     if pc:
@@ -156,6 +162,26 @@ class AutoMFTable(Loggable):
         except BaseException, e:
             self.debug('failed parsing config file {}. exception={}'.format(path, e))
         return yd
+
+    def _prepare(self, extraction_script):
+        extraction_script = add_extension(extraction_script)
+        task = self.pyscript_task
+        root, name = os.path.split(extraction_script)
+        ctx = {'analysis_type': 'blank' if 'blank' in name else 'unknown'}
+        ret = task.execute_script(name, root, new_thread=False, context=ctx)
+        self.info('Extraction script {} {}'.format(name, 'completed successfully' if ret else 'failed'))
+        return ret
+
+    @contextmanager
+    def _ctx(self):
+        # enter
+        self._backup_mftable()
+
+        yield
+
+        # exit
+        # return to original deflections
+        self._set_config_deflections()
 
 # ============= EOF =============================================
 

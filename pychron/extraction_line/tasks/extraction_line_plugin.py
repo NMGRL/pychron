@@ -71,10 +71,11 @@ class ProcedureAction(Action):
         manager.info(info('Started Procedure "{}"'.format(name)))
 
         task = app.get_task('pychron.pyscript.task', activate=False)
-        task.execution_context = {'analysis_type': 'blank' if 'blank' in name else 'unknown'}
+        context = {'analysis_type': 'blank' if 'blank' in name else 'unknown'}
         task.execute_script(name, root,
                             delay_start=1,
-                            on_completion=lambda: manager.info(info('Finished Procedure "{}"'.format(name))))
+                            on_completion=lambda: manager.info(info('Finished Procedure "{}"'.format(name))),
+                            context=context)
 
 
 def procedure_action(name, application):
