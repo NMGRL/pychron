@@ -120,7 +120,7 @@ class ConditionalsTestCase(unittest.TestCase):
     def test_Mapper(self):
         # d = {'check': 'Ar40==-100', 'attr': 'Ar40', 'mapper': 'min(x,-1000)'}
         # self.arun.arar_age.isotopes['Ar40'].set_uvalue((10,0))
-        d = {'check': 'Ar40==999.77', 'attr': 'Ar40', 'mapper': 'x+1000'}
+        d = {'check': 'Ar40>900', 'attr': 'Ar40', 'mapper': 'x+1000'}
         self._test(d)
 
     def test_Inactive1(self):
