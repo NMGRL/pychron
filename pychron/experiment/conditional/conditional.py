@@ -29,7 +29,7 @@ from pychron.loggable import Loggable
 CP_REGEX = re.compile(r'[\w\d]+\.(current|cur)')
 # match .std_dev
 STD_REGEX = re.compile(r'[\w\d]+\.(std_dev|sd|stddev)')
-#match .inactive
+# match .inactive
 ACTIVE_REGEX = re.compile(r'[\w\d]+\.inactive')
 
 #Functions
@@ -76,13 +76,13 @@ def conditional_from_dict(cd, klass):
     if isinstance(klass, str):
         klass = globals()[klass]
 
-    teststr = cd.get('teststr', None)
-    if not teststr:
+    try:
+        teststr = cd['teststr']
+    except KeyError:
         #for pre 2.0.5 conditionals files
         teststr = cd.get('check')
         if not teststr:
             return
-
 
     attr = cd.get('attr', '')
     start = cd.get('start', 30)
@@ -170,9 +170,9 @@ class AutomatedRunConditional(BaseConditional):
         else:
             m = KEY_REGEX.findall(teststr)
             if m:
-                k=m[0]
+                k = m[0]
                 if k in ('not',):
-                    k=m[1]
+                    k = m[1]
                 self._key = k
             else:
                 self._key = self.attr
@@ -203,7 +203,7 @@ class AutomatedRunConditional(BaseConditional):
         return self.active and (cnt_flag or d)
 
     def get_modified_value(self, arun, key, kattr):
-        obj=arun.arar_age
+        obj = arun.arar_age
         for reg, ff in ((DEFLECTION_REGEX, lambda k: arun.get_deflection(k, current=True)),
                         (BASELINECOR_REGEX, lambda k: obj.get_baseline_corrected_value(k)),
                         (BASELINE_REGEX, lambda k: obj.get_baseline_value(k)),
@@ -231,7 +231,7 @@ class AutomatedRunConditional(BaseConditional):
             key = args[0]
             if '.' in key:
                 self._key = key.split('.')[0].strip()
-                v = self.get_modified_value(arun,key, self._key)
+                v = self.get_modified_value(arun, key, self._key)
             else:
                 self._key = key
 
@@ -256,10 +256,10 @@ class AutomatedRunConditional(BaseConditional):
             return v, teststr
 
         cc = self.teststr
-        invert =False
+        invert = False
         if cc.startswith('not '):
             cc = cc[4:]
-            invert=True
+            invert = True
 
         for aa in ((CP_REGEX, lambda: obj.get_current_intensity(attr)),
                    (BASELINECOR_REGEX, lambda: obj.get_baseline_corrected_value(attr)),
@@ -347,7 +347,7 @@ class AutomatedRunConditional(BaseConditional):
             vv = self._map_value(vv)
             self.value = vv
             if invert:
-                teststr='not {}'.format(teststr)
+                teststr = 'not {}'.format(teststr)
             self.debug('testing {} (eval={}) key={} attr={} value={} mapped_value={}'.format(self.teststr, teststr,
                                                                                              self._key, self.attr, v,
                                                                                              vv))

@@ -77,13 +77,7 @@ class ConditionalGroup(HasTraits):
     comparator = Enum('', '>', '<', '>=', '<=', '==')
     # secondary_comparator = Enum('', '>', '<', '>=', '<=', '==')
     secondary_value = Float
-    # use_between = Bool
     use_invert = Bool
-    # use_max = Bool
-    # use_min = Bool
-    # use_current = Bool
-    # use_std_dev = Bool
-    # use_slope = Bool
 
     modifier_enabled = Property(depends_on='function')
     modifier = Str
@@ -153,9 +147,6 @@ class ConditionalGroup(HasTraits):
                     b = a
                 d[a] = getattr(ci, b)
 
-            # d = {k: getattr(ci, k) for k in ('attr', 'frequency', 'window', 'mapper')}
-            # d['start'] = ci.start_count
-            # d['check'] = ci.comp
             cs.append(d)
         return cs
 
@@ -216,21 +207,6 @@ class ConditionalGroup(HasTraits):
                 self.value = 0
                 self.modifier = ''
 
-                for r, a in ((MAX_REGEX, 'Max'),
-                             (MIN_REGEX, 'Min'),
-                             (AVG_REGEX, 'Average'),
-                             (SLOPE_REGEX, 'Slope')):
-                    if r.search(teststr):
-                        setattr(self, 'function', a)
-                        break
-
-                if BETWEEN_REGEX.search(teststr):
-                    self.function = 'Between'
-                    self.comparator = ''
-                    args = ARGS_REGEX.findall(teststr)[0][1:-1].split(',')
-                    self.value = float(args[1].strip())
-                    self.secondary_value = float(args[2].strip())
-
                 for r, a in ((CP_REGEX, 'Current'),
                              (STD_REGEX, 'StdDev'),
                              (ACTIVE_REGEX, 'Inactive'),
@@ -240,15 +216,25 @@ class ConditionalGroup(HasTraits):
                         setattr(self, 'modifier', a)
                         break
 
+                for r, a in ((MAX_REGEX, 'Max'),
+                             (MIN_REGEX, 'Min'),
+                             (AVG_REGEX, 'Average'),
+                             (SLOPE_REGEX, 'Slope')):
+                    if r.search(teststr):
+                        setattr(self, 'function', a)
+                        break
+                else:
+                    if BETWEEN_REGEX.search(teststr):
+                        self.function = 'Between'
+                        self.comparator = ''
+                        args = ARGS_REGEX.findall(teststr)[0][1:-1].split(',')
+                        self.value = float(args[1].strip())
+                        self.secondary_value = float(args[2].strip())
+
                 # extract comparator
                 m = COMP_REGEX.findall(teststr)
                 if m:
                     m1 = m[0]
-                    # if len(m) == 2:
-                    # self.use_between = True
-                    # self.secondary_comparator = c = m[0]
-                    # self.secondary_value = float(teststr.split(c)[0])
-                    # m1 = m[1]
 
                     self.comparator = c = m1
                     self.value = float(teststr.split(c)[-1])
@@ -275,28 +261,6 @@ class ConditionalGroup(HasTraits):
         return item
 
     def _get_edit_group(self):
-        # edit_grp = VGroup(HGroup(spring, UItem('object.selected.comp', style='readonly'), spring),
-        # HGroup(UItem('attr',
-        # editor=EnumEditor(name='available_attrs')),
-        # Item('function',
-        # editor=EnumEditor(values=['', 'Average', 'Max', 'Min', 'Slope'])),
-        #                          Item('modifier',
-        #                               enabled_when='modifier_enabled',
-        #                               editor=EnumEditor(values=['', 'StdDev', 'Current', 'Inactive',
-        #                                                         'Baseline', 'BaselineCorrected']))),
-        #                   HGroup(UItem('comparator'),
-        #                          Item('value'),
-        #                          # Item('use_between', label='Between'),
-        #                          # UItem('secondary_value', enabled_when='use_between'),
-        #                          # UItem('secondary_comparator', enabled_when='use_between'),
-        #                          Item('use_invert', label='Invert'),
-        #                          enabled_when='attr'),
-        #                   HGroup(Item('start_count',
-        #                               tooltip='Number of counts to wait until performing check',
-        #                               label='Start'),
-        #                          Item('frequency',
-        #                               tooltip='Number of counts between each check')))
-
         edit_grp = VGroup(Item('attr',
                                label='Attribute',
                                editor=EnumEditor(name='available_attrs')),
@@ -354,19 +318,14 @@ class PostRunGroup(ConditionalGroup):
 class PreRunGroup(ConditionalGroup):
     dump_attrs = [('attr', ''), ('teststr', 'teststr')]
     tabular_adapter_klass = PRConditionalsAdapter
-    # def traits_view(self):
+
     def _get_edit_group(self):
         edit_grp = VGroup(HGroup(spring, UItem('object.selected.teststr', style='readonly'), spring),
                           HGroup(UItem('attr',
                                        editor=EnumEditor(name='available_attrs')),
-                                 # Item('function',
-                                 # editor=EnumEditor(values=['', 'Max', 'Min', 'Slope', 'Average'])),
                                  Item('modifier',
                                       enabled_when='modifier_enabled',
-                                      editor=EnumEditor(values=['', 'Inactive']))),
-                          # HGroup(UItem('comparator', enabled_when='attr'),
-                          # Item('value', enabled_when='attr and comparator'))
-        )
+                                      editor=EnumEditor(values=['', 'Inactive']))))
         return edit_grp
 
 
@@ -398,45 +357,8 @@ class ConditionalsViewable(HasTraits):
         for name in self.group_names:
             gname = '{}_group'.format(name)
             uname = ' '.join([ni.capitalize() for ni in name.split('_')])
-            # no = VGroup(spring, HGroup(spring, Label('No {} Defined'.format(uname)), spring), spring,
-            # defined_when='not {}'.format(gname))
-            # grp = Group(UItem(gname,
-            # defined_when=gname, style='custom'),
-            # no, label=uname)
             grp = Group(UItem(gname, style='custom'), label=uname)
             vs.append(grp)
-
-        # notrunc = VGroup(spring, HGroup(spring, Label('No Truncations Defined'), spring), spring,
-        # defined_when='not truncations_group')
-        # trgrp = Group(UItem('truncations_group',
-        # defined_when='truncations_group', style='custom'),
-        # notrunc,
-        # label='Truncations')
-        #
-        # nocancel = VGroup(spring, HGroup(spring, Label('No Cancelations Defined'), spring), spring,
-        # defined_when='not cancelations_group')
-        # cgrp = Group(UItem('cancelations_group',
-        # defined_when='cancelations_group', style='custom'),
-        # nocancel,
-        # label='Cancelations')
-        #
-        # noterm = VGroup(spring, HGroup(spring, Label('No Terminations Defined'), spring), spring,
-        # defined_when='not terminations_group')
-        # tegrp = Group(UItem('terminations_group',
-        # defined_when='terminations_group', style='custom'),
-        #               noterm,
-        #               label='Terminations')
-        #
-        # nopterm = VGroup(spring, HGroup(spring, Label('No Post Run Terminations Defined'), spring), spring,
-        #                  defined_when='not post_run_terminations_group')
-        # prtegrp = Group(UItem('post_run_terminations_group',
-        #                       defined_when='post_run_terminations_group', style='custom'),
-        #                 nopterm,
-        #                 label='Post Run Terminations')
-        # prertegrp = Group(UItem('pre_run_terminations_group',
-        #                         defined_when='pre_run_terminations_group', style='custom'),
-        #                   nopterm,
-        #                   label='Pre Run Terminations')
 
         v = View(Tabbed(*vs),
                  width=800,
@@ -444,12 +366,7 @@ class ConditionalsViewable(HasTraits):
                  handler=CEHandler(),
                  buttons=['OK', 'Cancel', Action(name='Save As', action='save_as')],
                  title=self.title)
-        # v = View(Tabbed(prertegrp, agrp, cgrp, trgrp, tegrp, prtegrp),
-        #          width=800,
-        #          resizable=True,
-        #          handler=CEHandler(),
-        #          buttons=['OK', 'Cancel', Action(name='Save As', action='save_as')],
-        #          title='Edit Default Conditionals')
+
         return v
 
 
