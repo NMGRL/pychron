@@ -397,7 +397,7 @@ class AutomatedRunPersister(Loggable):
         ha = db.make_gains_hash(self.gains)
         dbhist = db.get_gain_history(ha)
         if not dbhist:
-            dbhist = db.add_gain_history(ha)
+            dbhist = db.add_gain_history(ha, save_type='arun')
             for d,v in self.gains:
                 db.add_gain(d,v, dbhist)
             db.commit()

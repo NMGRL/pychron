@@ -939,8 +939,8 @@ class IsotopeAdapter(DatabaseAdapter):
         #             ms.sensitivities.append(si)
         return ms
 
-    def add_gain_history(self, ha):
-        item = meas_GainHistoryTable(hash=ha)
+    def add_gain_history(self, ha, **kw):
+        item = meas_GainHistoryTable(hash=ha, **kw)
         user = self.get_user(self.save_username)
         if user:
             item.user_id = user.id
