@@ -24,23 +24,33 @@ from uncertainties import nominal_value, std_dev, ufloat
 from pychron.experiment.utilities.identifier import AGE_TESTABLE
 from pychron.loggable import Loggable
 
+
 # match .current_point
 CP_REGEX = re.compile(r'[\w\d]+\.(current|cur)')
 # match .std_dev
 STD_REGEX = re.compile(r'[\w\d]+\.(std_dev|sd|stddev)')
-
 #match .inactive
 ACTIVE_REGEX = re.compile(r'[\w\d]+\.inactive')
 
-#match average(ar##)
-AVG_REGEX = re.compile(r'average\([A-Za-z]+\d*\)')
-#match max(ar##)
-MAX_REGEX = re.compile(r'max\([A-Za-z]+\d*\)')
-#match min(ar##)
-MIN_REGEX = re.compile(r'min\([A-Za-z]+\d*\)')
+#Functions
+def make_func_regex(r):
+    return re.compile(r'(not ){{0,1}}{}'.format(r))
 
+#match average(ar##)
+AVG_REGEX = make_func_regex('average\([A-Za-z]+\d*\)')
+# AVG_REGEX = re.compile(r'average\([A-Za-z]+\d*\)')
+#match max(ar##)
+MAX_REGEX = make_func_regex(r'max\([A-Za-z]+\d*\)')
+# MAX_REGEX = re.compile(r'max\([A-Za-z]+\d*\)')
+#match min(ar##)
+MIN_REGEX = make_func_regex(r'min\([A-Za-z]+\d*\)')
+# MIN_REGEX = re.compile(r'min\([A-Za-z]+\d*\)')
 #match slope(ar##)
-SLOPE_REGEX = re.compile(r'slope\([A-Za-z]+\d*\)')
+# SLOPE_REGEX = re.compile(r'slope\([A-Za-z]+\d*\)')
+SLOPE_REGEX = make_func_regex(r'slope\([A-Za-z]+\d*\)')
+#match between(age, 0,10)
+BETWEEN_REGEX = make_func_regex(r'between\([\w\d\s]+(\.\w+)*\s*,\s*[-\d+]+(\.\d)*(\s*,\s*[-\d+]+(\.\d)*)\)')
+
 
 #match x in x**2+3x+1
 MAPPER_KEY_REGEX = re.compile(r'[A-Za-z]+')
@@ -59,8 +69,6 @@ DEFLECTION_REGEX = re.compile(r'[\w\d]+\.deflection')
 
 RATIO_REGEX = re.compile(r'\d+/\d+')
 
-BETWEEN_REGEX = re.compile(r'(not ){0,1}[\d\w\s]+.between\(([-\d+]+(\.\d)*(,[-\d+]+(\.\d)*))\)')
-BETWEEN_REGEX = re.compile(r'(not ){0,1}between\([\w\d\s]+(\.\w+)*\s*,\s*[-\d+]+(\.\d)*(\s*,\s*[-\d+]+(\.\d)*)\)')
 ARGS_REGEX = re.compile(r'\(.+\)')
 
 
