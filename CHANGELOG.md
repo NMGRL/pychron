@@ -25,7 +25,8 @@ CHANGELOG
 * added LabBook Plugin
 * added open boxes to spectrum
 * added uncorrected ratios to Series
-
+* unified conditionals editing
+* added database version checking
 
 2.0.4
 ------------------
