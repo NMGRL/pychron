@@ -5,28 +5,31 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
-#============= enthought library imports =======================
-from pyface.action.api import Action
+# ============= enthought library imports =======================
 from traits.api import Property
+from pyface.action.api import Action
+from pyface.timer.do_later import do_later
+from pyface.tasks.action.task_action import TaskAction
 #============= standard library imports ========================
 
 #============= local library imports  ==========================
-from pyface.tasks.action.task_action import TaskAction
+from pychron.paths import paths
 
 
 SPECTROMETER_PROTOCOL = 'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager'
 ION_OPTICS_PROTOCOL = 'pychron.spectrometer.ion_optics_manager.IonOpticsManager'
 SCAN_PROTOCOL = 'pychron.spectrometer.scan_manager.ScanManager'
+EL_PROTOCOL = 'pychron.extraction_line.extraction_line_manager.ExtractionLineManager'
 
 
 def get_manager(event, protocol):
@@ -53,13 +56,37 @@ def get_manager(event, protocol):
 #
 #        manager = app.get_service(SPECTROMETER_PROTOCOL)
 #        manager.peak_center(update_mftable=True)
-#
+
+class AutoMFTableAction(Action):
+    def perform(self, event):
+        app = event.task.window.application
+
+        kw = {}
+        for attr, prot, msg in (('spectrometer_manager', SPECTROMETER_PROTOCOL, 'Spectrometer Manager'),
+                                ('ion_optics_manager', ION_OPTICS_PROTOCOL, 'Ion Optics Manager'),
+                                ('el_manager', EL_PROTOCOL, 'Extraction Line Manager')):
+            srv = app.get_service(prot)
+            if not srv:
+                app.warning('No {} available'.format(msg))
+                return
+            kw[attr] = srv
+
+        pyscript_task = app.get_task('pychron.pyscript.task', activate=False)
+        if not pyscript_task:
+            app.warning('PyScript Plugin not available')
+
+        from pychron.spectrometer.auto_mftable import AutoMFTable
+
+        a = AutoMFTable(pyscript_task=pyscript_task, **kw)
+
+        do_later(a.do_auto_mftable)
+
 
 class EditGainsAction(Action):
     def perform(self, event):
         from pychron.spectrometer.gains_edit_view import GainsModel, GainsEditView
 
-        app=event.task.window.application
+        app = event.task.window.application
         spec = app.get_service(SPECTROMETER_PROTOCOL)
         gv = GainsModel(spectrometer=spec)
 
@@ -159,13 +186,12 @@ class MagnetFieldTableHistoryAction(Action):
 
             mft = man.spectrometer.magnet.mftable
             archive_root = mft.mftable_archive_path
-            if os.path.isfile(os.path.join(archive_root, os.path.basename(mft.mftable_path))):
+            if os.path.isfile(os.path.join(archive_root, os.path.basename(paths.mftable))):
                 # from pychron.git_archive.history import GitArchiveHistory, GitArchiveHistoryView
                 from pychron.spectrometer.local_mftable_history_view import LocalMFTableHistory, LocalMFTableHistoryView
 
-                print archive_root, mft.mftable_path
-                gh = LocalMFTableHistory(mft.mftable_path, archive_root)
-                gh.load_history(mft.mftable_path)
+                gh = LocalMFTableHistory(paths.mftable, archive_root)
+                gh.load_history(paths.mftable)
                 # gh.load_history(os.path.basename(mft.mftable_path))
                 ghv = LocalMFTableHistoryView(model=gh, title='MFTable Archive')
                 ghv.edit_traits(kind='livemodal')
@@ -181,8 +207,7 @@ class DBMagnetFieldTableHistoryAction(Action):
         if man.spectrometer:
             from pychron.spectrometer.mftable_history_view import MFTableHistory, MFTableHistoryView
 
-            mft = man.spectrometer.magnet.mftable
-            mfh = MFTableHistory(checkout_path=mft.mftable_path,
+            mfh = MFTableHistory(checkout_path=paths.mftable,
                                  spectrometer=man.spectrometer.name)
             mfh.load_history()
             mv = MFTableHistoryView(model=mfh)

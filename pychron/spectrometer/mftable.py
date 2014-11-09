@@ -68,7 +68,7 @@ class MagnetFieldTable(Loggable):
 
     def __init__(self, *args, **kw):
         super(MagnetFieldTable, self).__init__(*args, **kw)
-        # p = self.mftable_path
+        # p = paths.mftable
         # if not os.path.isfile(p):
         #     self.warning_dialog('No Magnet Field Table. Create {}'.format(p))
         # else:
@@ -77,7 +77,7 @@ class MagnetFieldTable(Loggable):
 
     def initialize(self, molweights):
         self.molweights = molweights
-        p = self.mftable_path
+        p = paths.mftable
         if not os.path.isfile(p):
             self.warning_dialog('No Magnet Field Table. Create {}'.format(p))
         else:
@@ -89,6 +89,13 @@ class MagnetFieldTable(Loggable):
                         '{}.use_local_mftable_archive'.format(prefid))
         bind_preference(self, 'use_db_archive',
                         '{}.use_db_mftable_archive'.format(prefid))
+
+    def get_dac(self, det, isotope):
+        det = get_detector_name(det)
+        d = self._get_mftable()
+        isos, xs, ys = map(array, d[det][:3])
+        refindex = min(nonzero(isos == isotope)[0])
+        return ys[refindex]
 
     def update_field_table(self, det, isotope, dac, message):
         """
@@ -132,7 +139,7 @@ class MagnetFieldTable(Loggable):
 
     def save(self):
         detectors = self._detectors
-        p = self.mftable_path
+        p = paths.mftable
         p = '{}.temp'.format(p)
         fmt = lambda x: '{:0.5f}'.format(x)
         with open(p, 'w') as f:
@@ -146,7 +153,7 @@ class MagnetFieldTable(Loggable):
 
     def dump(self, isos, d, message):
         detectors = self._detectors
-        p = self.mftable_path
+        p = paths.mftable
         with open(p, 'w') as f:
             writer = csv.writer(f)
             writer.writerow(['iso'] + detectors)
@@ -162,9 +169,9 @@ class MagnetFieldTable(Loggable):
         self._set_mftable_hash(p)
         self._add_to_archive(p, message)
 
-    @property
-    def mftable_path(self):
-        return os.path.join(paths.spectrometer_dir, 'mftable.csv')
+    # @property
+    # def mftable_path(self):
+    #     return os.path.join(paths.spectrometer_dir, 'mftable.csv')
 
     @property
     def mftable_archive_path(self):
@@ -184,7 +191,7 @@ class MagnetFieldTable(Loggable):
             Ar36,5.56072,5.456202,5.56072,5.56072,5.56072,5.56072
 
         """
-        p = self.mftable_path
+        p = paths.mftable
         molweights = self.molweights
 
         self._set_mftable_hash(p)
@@ -247,7 +254,7 @@ class MagnetFieldTable(Loggable):
         """
             return True if mftable externally modified
         """
-        p = self.mftable_path
+        p = paths.mftable
         current_hash = self._make_hash(p)
         return self._mftable_hash != current_hash
 

@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pyface.tasks.action.schema import SToolBar
 from traits.api import String, List, Instance, Any, \
     on_trait_change, Bool, Int, Dict
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 #============= local library imports  ==========================
 from pychron.envisage.tasks.editor_task import EditorTask
@@ -44,6 +44,7 @@ class PyScriptTask(EditorTask, ExecuteMixin):
     context_editor_pane = Instance(ContextEditorPane)
 
     repo_manager = Instance('pychron.git_archive.repo_manager.GitRepoManager')
+    repo_pane = None
 
     wildcard = '*.py'
     _default_extension = '.py'
@@ -56,7 +57,6 @@ class PyScriptTask(EditorTask, ExecuteMixin):
     description = String
 
     tool_bars = [SToolBar(JumpToGosubAction()), ]
-    execution_context = Dict
 
     use_git_repo = Bool
 
@@ -89,8 +89,8 @@ class PyScriptTask(EditorTask, ExecuteMixin):
         if name:
             self._open_pyscript(name, root)
 
-    def execute_script(self, name, root, kind='Extraction', delay_start=0, on_completion=None):
-        self._do_execute(name, root, kind, on_completion=on_completion, delay_start=delay_start)
+    def execute_script(self, *args, **kw):
+        return self._do_execute(*args, **kw)
 
     def find(self):
         if self.active_editor:
@@ -123,7 +123,7 @@ class PyScriptTask(EditorTask, ExecuteMixin):
         self.control_pane = ControlPane(model=self)
         self.script_browser_pane = ScriptBrowserPane()
         self.context_editor_pane = ContextEditorPane()
-        panes=[
+        panes = [
             self.commands_pane,
             self.command_editor_pane,
             self.control_pane,
@@ -154,27 +154,28 @@ class PyScriptTask(EditorTask, ExecuteMixin):
 
         return ret
 
-    def _do_execute(self, name=None, root=None, kind=None, new_thread=True,
-                    delay_start=0,
-                    on_completion=None):
+    def _do_execute(self, name=None, root=None, kind='Extraction', **kw):
         self._start_execute()
 
         self.debug('do execute')
 
         self._current_script = None
 
-        if name and root and kind:
-            self._execute_extraction(name, root, kind, new_thread, delay_start, on_completion)
-        else:
+        if not (name and root and kind):
             ae = self.active_editor
             if isinstance(ae, ExtractionEditor):
                 root, fn = os.path.split(ae.path)
                 kind = self._extract_kind(ae.path)
-                self._execute_extraction(fn, root, kind, new_thread, delay_start, on_completion)
 
-        self.executing = False
+        if name and root and kind:
+            ret = self._execute_extraction(fn, root, kind, **kw)
+            self.executing = False
+            return ret
 
-    def _execute_extraction(self, name, root, kind, new_thread, delay_start, on_completion):
+    def _execute_extraction(self, name, root, kind, new_thread,
+                            delay_start=0,
+                            on_completion=None,
+                            context=None):
         from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
 
         klass = ExtractionPyScript
@@ -189,8 +190,8 @@ class PyScriptTask(EditorTask, ExecuteMixin):
                        runner=self._runner)
 
         if script.bootstrap():
-            if self.execution_context:
-                script.setup_context(**self.execution_context)
+            if context:
+                script.setup_context(**context)
             else:
                 script.set_default_context()
             try:
@@ -202,8 +203,9 @@ class PyScriptTask(EditorTask, ExecuteMixin):
             if self.use_trace:
                 self.active_editor.trace_delay = self.trace_delay
 
-            t = script.execute(trace=self.use_trace, new_thread=new_thread, delay_start=delay_start,
-                               on_completion=on_completion)
+            ret = script.execute(trace=self.use_trace, new_thread=new_thread, delay_start=delay_start,
+                                 on_completion=on_completion)
+            return not script.is_canceled() and ret
 
     def _start_execute(self):
         self.debug('start execute')
@@ -251,10 +253,10 @@ class PyScriptTask(EditorTask, ExecuteMixin):
         else:
             klass = ExtractionEditor
 
-        dets,isotopes,valves = [],[],[]
+        dets, isotopes, valves = [], [], []
         man = self.application.get_service('pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager')
         if man:
-            dets=[di.name for di in man.spectrometer.detectors]
+            dets = [di.name for di in man.spectrometer.detectors]
             isotopes = man.spectrometer.isotopes
         man = self.application.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
         if man:

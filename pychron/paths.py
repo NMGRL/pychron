@@ -102,6 +102,8 @@ class Paths():
     setup_dir = setup_dir = None
     device_dir = None
     spectrometer_dir = None
+    backup_deflection_dir = None
+
     queue_conditionals_dir = None
     canvas2D_dir = None
     canvas3D_dir = None
@@ -149,6 +151,8 @@ class Paths():
     #===========================================================================
     backup_recovery_file = None
     last_experiment = None
+    mftable = None
+    deflection = None
 
     def set_search_paths(self, app_rec=None):
         self.app_resources = app_rec
@@ -248,7 +252,7 @@ class Paths():
         #==============================================================================
         self.setup_dir = setup_dir = join(root, 'setupfiles')
         self.spectrometer_dir = join(setup_dir, 'spectrometer')
-
+        self.backup_deflection_dir = join(self.spectrometer_dir, 'deflection_backup')
         self.device_dir = device_dir = join(setup_dir, 'devices')
         self.canvas2D_dir = join(setup_dir, 'canvas2D')
         # self.canvas3D_dir = join(setup_dir, 'canvas3D')
@@ -299,6 +303,8 @@ class Paths():
         #=======================================================================
         self.backup_recovery_file = join(self.hidden_dir, 'backup_recovery')
         self.last_experiment = join(self.hidden_dir, 'last_experiment')
+        self.mftable = join(self.spectrometer_dir, 'mftable.csv')
+        self.deflection = join(self.spectrometer_dir, 'deflection.yaml')
         self.set_search_paths()
 
 
