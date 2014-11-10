@@ -15,21 +15,23 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+import sys
 from traits.api import Password, Bool, Str, on_trait_change, Any, Property, cached_property
 #=============standard library imports ========================
 from sqlalchemy import create_engine, distinct
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, StatementError, \
     DBAPIError, OperationalError
+from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 import os
+import weakref
 #=============local library imports  ==========================
 from pychron.core.codetools.inspection import conditional_caller
 from pychron.database.core.query import compile_query
-
 from pychron.loggable import Loggable
 from pychron.database.core.base_orm import AlembicVersionTable
-from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
-import weakref
+from pychron import version
+
 
 ATTR_KEYS = ['kind', 'username', 'host', 'name', 'password']
 
@@ -303,7 +305,18 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
                 #                 self.get_session()
                 #                sess = self.session_factory()
                 self.info('testing database connection {}'.format(self.test_func))
-                getattr(self, self.test_func)(reraise=True)
+                ver = getattr(self, self.test_func)(reraise=True)
+                ver=ver.version_num
+                aver = version.__alembic__
+                self.debug('testing database versions current={} local={}'.format(ver, aver))
+                if ver!=aver:
+                    if not self.confirmation_dialog('Your database is out of date and it may not work correctly with '
+                                                'this version of Pychron. Contact admin to update db.\n\n'
+                                                'Current={} Yours={}\n\n'
+                                                'Continue with Pychron despite out of date db?'.format(ver, aver)):
+                        self.application.stop()
+                        sys.exit()
+
                 connected = True
             except Exception, e:
                 print 'exception', e

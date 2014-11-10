@@ -52,7 +52,7 @@ class GainsModel(HasTraits):
                 hashkey = db.make_gains_hash(gains)
                 hist=db.get_gain_history(hashkey)
                 if not hist:
-                    hist = db.add_gain_history(hashkey)
+                    hist = db.add_gain_history(hashkey, save_type='manual')
                     for d, v in gains:
                         db.add_gain(d, v, hist)
 

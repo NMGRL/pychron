@@ -34,30 +34,31 @@ from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.helpers.filetools import get_path
 from pychron.experiment.conditional.conditional import conditional_from_dict, MAX_REGEX, STD_REGEX, \
     CP_REGEX, MIN_REGEX, TruncationConditional, TerminationConditional, ActionConditional, SLOPE_REGEX, BASELINE_REGEX, \
-    BASELINECOR_REGEX, COMP_REGEX, AVG_REGEX, ACTIVE_REGEX, CancelationConditional
+    BASELINECOR_REGEX, COMP_REGEX, AVG_REGEX, ACTIVE_REGEX, CancelationConditional, BETWEEN_REGEX, ARGS_REGEX
 from pychron.paths import paths
 
 
 class PRConditionalsAdapter(TabularAdapter):
     columns = [('Attribute', 'attr'),
-               ('Check', 'comp'), ]
+               ('Check', 'teststr'), ]
 
     attr_width = Int(100)
-    check_width = Int(200)
+    teststr_width = Int(200)
 
 
 class ConditionalsAdapter(TabularAdapter):
     columns = [('Attribute', 'attr'),
                ('Start', 'start_count'),
                ('Frequency', 'frequency'),
-               ('Check', 'comp'), ]
+               ('Check', 'teststr'), ]
 
     attr_width = Int(100)
-    check_width = Int(200)
+    teststr_width = Int(200)
     start_width = Int(50)
     frequency_width = Int(100)
 
 
+FUNCTIONS = ['', 'Max', 'Min', 'Slope', 'Average', 'Between']
 FUNC_DICT = {'Slope': 'slope({})', 'Max': 'max({})', 'Min': 'min({})', 'Averge': 'average({})'}
 MOD_DICT = {'Current': '{}.cur', 'StdDev': '{}.std', 'Baseline': '{}.bs',
             'Inactive': '{}.inactive',
@@ -74,15 +75,9 @@ class ConditionalGroup(HasTraits):
     attr = Str
     available_attrs = List
     comparator = Enum('', '>', '<', '>=', '<=', '==')
-    secondary_comparator = Enum('', '>', '<', '>=', '<=', '==')
+    # secondary_comparator = Enum('', '>', '<', '>=', '<=', '==')
     secondary_value = Float
-    # use_between = Bool
     use_invert = Bool
-    # use_max = Bool
-    # use_min = Bool
-    # use_current = Bool
-    # use_std_dev = Bool
-    # use_slope = Bool
 
     modifier_enabled = Property(depends_on='function')
     modifier = Str
@@ -100,7 +95,7 @@ class ConditionalGroup(HasTraits):
     dump_attrs = [('attr', ''), ('frequency', ''),
                   ('window', ''), ('mapper', ''),
                   ('start', 'start_count'),
-                  ('check', 'comp')]
+                  ('teststr', 'teststr')]
     tabular_adapter_klass = ConditionalsAdapter
 
     _conditional_klass = None
@@ -152,14 +147,11 @@ class ConditionalGroup(HasTraits):
                     b = a
                 d[a] = getattr(ci, b)
 
-            # d = {k: getattr(ci, k) for k in ('attr', 'frequency', 'window', 'mapper')}
-            # d['start'] = ci.start_count
-            # d['check'] = ci.comp
             cs.append(d)
         return cs
 
-    @on_trait_change('function, modifier, comparator, value, attr, use_invert',
-                     'use_between, secondary_comparator, secondary_value')
+    @on_trait_change('function, modifier, comparator, value, attr, use_invert, '
+                     'use_between, secondary_value')
     def _refresh_comp(self, name, new):
         if not self._no_update:
 
@@ -177,13 +169,14 @@ class ConditionalGroup(HasTraits):
             except KeyError:
                 pass
 
-            if self.function == 'between':
+            func = self.function.lower()
+            if func == 'between':
                 comp = 'between({},{},{})'.format(attr,
                                                   self.value,
                                                   self.secondary_value)
             else:
                 try:
-                    s = FUNC_DICT[self.function]
+                    s = FUNC_DICT[func]
                     attr = s.format(attr)
                 except KeyError:
                     pass
@@ -196,7 +189,7 @@ class ConditionalGroup(HasTraits):
             if self.use_invert:
                 comp = 'not {}'.format(comp)
 
-            self.selected.comp = comp
+            self.selected.teststr = comp
 
     @on_trait_change('start_count, frequency, attr, window, mapper')
     def _update_selected(self, name, new):
@@ -204,41 +197,50 @@ class ConditionalGroup(HasTraits):
 
     def _selected_changed(self, new):
         if new:
+            teststr = new.teststr
             with no_update(self):
                 for a in ('start_count', 'frequency', 'attr', 'window', 'mapper'):
                     setattr(self, a, getattr(new, a))
 
-                for r, a in ((MAX_REGEX, 'Max'), (MIN_REGEX, 'Min'),
-                             (AVG_REGEX, 'Average'),
-                             (SLOPE_REGEX, 'Slope')):
-                    if r.findall(new.comp):
-                        setattr(self, 'function', a)
-                        break
+                self.function=''
+                self.secondary_value = 0
+                self.value = 0
+                self.modifier = ''
 
                 for r, a in ((CP_REGEX, 'Current'),
                              (STD_REGEX, 'StdDev'),
                              (ACTIVE_REGEX, 'Inactive'),
                              (BASELINECOR_REGEX, 'BaselineCorrected'),
                              (BASELINE_REGEX, 'Baseline')):
-                    if r.findall(new.comp):
+                    if r.search(teststr):
                         setattr(self, 'modifier', a)
                         break
 
+                for r, a in ((MAX_REGEX, 'Max'),
+                             (MIN_REGEX, 'Min'),
+                             (AVG_REGEX, 'Average'),
+                             (SLOPE_REGEX, 'Slope')):
+                    if r.search(teststr):
+                        setattr(self, 'function', a)
+                        break
+                else:
+                    if BETWEEN_REGEX.search(teststr):
+                        self.function = 'Between'
+                        self.comparator = ''
+                        args = ARGS_REGEX.findall(teststr)[0][1:-1].split(',')
+                        self.value = float(args[1].strip())
+                        self.secondary_value = float(args[2].strip())
+
                 # extract comparator
-                m = COMP_REGEX.findall(new.comp)
+                m = COMP_REGEX.findall(teststr)
                 if m:
                     m1 = m[0]
-                    if len(m) == 2:
-                        self.use_between = True
-                        self.secondary_comparator = c = m[0]
-                        self.secondary_value = float(new.comp.split(c)[0])
-                        m1 = m[1]
 
                     self.comparator = c = m1
-                    self.value = float(new.comp.split(c)[-1])
+                    self.value = float(teststr.split(c)[-1])
 
                 # extract use invert
-                if new.comp.startswith('not '):
+                if teststr.startswith('not '):
                     self.use_invert = True
 
     def _get_modifier_enabled(self):
@@ -259,39 +261,19 @@ class ConditionalGroup(HasTraits):
         return item
 
     def _get_edit_group(self):
-        # edit_grp = VGroup(HGroup(spring, UItem('object.selected.comp', style='readonly'), spring),
-        # HGroup(UItem('attr',
-        # editor=EnumEditor(name='available_attrs')),
-        # Item('function',
-        #                               editor=EnumEditor(values=['', 'Average', 'Max', 'Min', 'Slope'])),
-        #                          Item('modifier',
-        #                               enabled_when='modifier_enabled',
-        #                               editor=EnumEditor(values=['', 'StdDev', 'Current', 'Inactive',
-        #                                                         'Baseline', 'BaselineCorrected']))),
-        #                   HGroup(UItem('comparator'),
-        #                          Item('value'),
-        #                          # Item('use_between', label='Between'),
-        #                          # UItem('secondary_value', enabled_when='use_between'),
-        #                          # UItem('secondary_comparator', enabled_when='use_between'),
-        #                          Item('use_invert', label='Invert'),
-        #                          enabled_when='attr'),
-        #                   HGroup(Item('start_count',
-        #                               tooltip='Number of counts to wait until performing check',
-        #                               label='Start'),
-        #                          Item('frequency',
-        #                               tooltip='Number of counts between each check')))
-
         edit_grp = VGroup(Item('attr',
                                label='Attribute',
                                editor=EnumEditor(name='available_attrs')),
                           VGroup(Item('function',
-                                      editor=EnumEditor(values=['', 'Average', 'Max', 'Min', 'Slope'])),
+                                      editor=EnumEditor(values=FUNCTIONS)),
                                  Item('modifier',
                                       enabled_when='modifier_enabled',
                                       editor=EnumEditor(values=['', 'StdDev', 'Current', 'Inactive',
                                                                 'Baseline', 'BaselineCorrected'])),
-                                 Item('comparator', label='Operation'),
+                                 Item('comparator', label='Operation',
+                                      enabled_when='not function=="Between"'),
                                  Item('value'),
+                                 Item('secondary_value', enabled_when='function=="Between"'),
                                  Item('use_invert', label='Invert'),
                                  Item('start_count',
                                       tooltip='Number of counts to wait until performing check',
@@ -315,15 +297,15 @@ class PostRunGroup(ConditionalGroup):
     dump_attrs = [('attr', ''),
                   ('window', ''),
                   ('mapper', ''),
-                  ('check', 'comp')]
+                  ('teststr', 'teststr')]
     tabular_adapter_klass = PRConditionalsAdapter
 
     def _get_edit_group(self):
-        edit_grp = VGroup(HGroup(spring, UItem('object.selected.comp', style='readonly'), spring),
+        edit_grp = VGroup(HGroup(spring, UItem('object.selected.teststr', style='readonly'), spring),
                           HGroup(UItem('attr',
                                        editor=EnumEditor(name='available_attrs')),
                                  Item('function',
-                                      editor=EnumEditor(values=['', 'Max', 'Min', 'Slope', 'Average'])),
+                                      editor=EnumEditor(values=FUNCTIONS)),
                                  Item('modifier',
                                       enabled_when='modifier_enabled',
                                       editor=EnumEditor(values=['', 'StdDev', 'Current', 'Inactive',
@@ -334,21 +316,16 @@ class PostRunGroup(ConditionalGroup):
 
 
 class PreRunGroup(ConditionalGroup):
-    dump_attrs = [('attr', ''), ('check', 'comp')]
+    dump_attrs = [('attr', ''), ('teststr', 'teststr')]
     tabular_adapter_klass = PRConditionalsAdapter
-    # def traits_view(self):
+
     def _get_edit_group(self):
-        edit_grp = VGroup(HGroup(spring, UItem('object.selected.comp', style='readonly'), spring),
+        edit_grp = VGroup(HGroup(spring, UItem('object.selected.teststr', style='readonly'), spring),
                           HGroup(UItem('attr',
                                        editor=EnumEditor(name='available_attrs')),
-                                 # Item('function',
-                                 # editor=EnumEditor(values=['', 'Max', 'Min', 'Slope', 'Average'])),
                                  Item('modifier',
                                       enabled_when='modifier_enabled',
-                                      editor=EnumEditor(values=['', 'Inactive']))),
-                          # HGroup(UItem('comparator', enabled_when='attr'),
-                          # Item('value', enabled_when='attr and comparator'))
-        )
+                                      editor=EnumEditor(values=['', 'Inactive']))))
         return edit_grp
 
 
@@ -380,45 +357,8 @@ class ConditionalsViewable(HasTraits):
         for name in self.group_names:
             gname = '{}_group'.format(name)
             uname = ' '.join([ni.capitalize() for ni in name.split('_')])
-            # no = VGroup(spring, HGroup(spring, Label('No {} Defined'.format(uname)), spring), spring,
-            # defined_when='not {}'.format(gname))
-            # grp = Group(UItem(gname,
-            # defined_when=gname, style='custom'),
-            # no, label=uname)
             grp = Group(UItem(gname, style='custom'), label=uname)
             vs.append(grp)
-
-        # notrunc = VGroup(spring, HGroup(spring, Label('No Truncations Defined'), spring), spring,
-        # defined_when='not truncations_group')
-        # trgrp = Group(UItem('truncations_group',
-        # defined_when='truncations_group', style='custom'),
-        # notrunc,
-        # label='Truncations')
-        #
-        # nocancel = VGroup(spring, HGroup(spring, Label('No Cancelations Defined'), spring), spring,
-        # defined_when='not cancelations_group')
-        # cgrp = Group(UItem('cancelations_group',
-        # defined_when='cancelations_group', style='custom'),
-        # nocancel,
-        # label='Cancelations')
-        #
-        # noterm = VGroup(spring, HGroup(spring, Label('No Terminations Defined'), spring), spring,
-        # defined_when='not terminations_group')
-        # tegrp = Group(UItem('terminations_group',
-        #                     defined_when='terminations_group', style='custom'),
-        #               noterm,
-        #               label='Terminations')
-        #
-        # nopterm = VGroup(spring, HGroup(spring, Label('No Post Run Terminations Defined'), spring), spring,
-        #                  defined_when='not post_run_terminations_group')
-        # prtegrp = Group(UItem('post_run_terminations_group',
-        #                       defined_when='post_run_terminations_group', style='custom'),
-        #                 nopterm,
-        #                 label='Post Run Terminations')
-        # prertegrp = Group(UItem('pre_run_terminations_group',
-        #                         defined_when='pre_run_terminations_group', style='custom'),
-        #                   nopterm,
-        #                   label='Pre Run Terminations')
 
         v = View(Tabbed(*vs),
                  width=800,
@@ -426,12 +366,7 @@ class ConditionalsViewable(HasTraits):
                  handler=CEHandler(),
                  buttons=['OK', 'Cancel', Action(name='Save As', action='save_as')],
                  title=self.title)
-        # v = View(Tabbed(prertegrp, agrp, cgrp, trgrp, tegrp, prtegrp),
-        #          width=800,
-        #          resizable=True,
-        #          handler=CEHandler(),
-        #          buttons=['OK', 'Cancel', Action(name='Save As', action='save_as')],
-        #          title='Edit Default Conditionals')
+
         return v
 
 
