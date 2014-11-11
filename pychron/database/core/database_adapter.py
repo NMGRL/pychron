@@ -157,7 +157,7 @@ class DatabaseAdapter(Loggable):
         self.connection_parameters_changed = True
 
     # @caller
-    def connect(self, test=True, force=False, warn=True):
+    def connect(self, test=True, force=False, warn=True, version_warn=False, attribute_warn=False):
         if force:
             self.debug('forcing database connection')
             #             self.reset()
@@ -173,7 +173,7 @@ class DatabaseAdapter(Loggable):
             if self.kind == 'sqlite':
                 test = False
 
-            if not self.enabled:
+            if not self.enabled and attribute_warn:
                 self.warning_dialog(
                     'Database "{}" kind not set. Set in Preferences. current kind="{}"'.format(self.name,
                                                                                                self.kind))
@@ -187,7 +187,7 @@ class DatabaseAdapter(Loggable):
                     self.session_factory = sessionmaker(bind=engine, autoflush=False)
                     if test:
                         if self.test_func:
-                            self.connected = self._test_db_connection()
+                            self.connected = self._test_db_connection(version_warn)
                         else:
                             self.connected = True
                     else:
@@ -296,7 +296,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
         self.info('using {}'.format(driver))
         return driver
 
-    def _test_db_connection(self):
+    def _test_db_connection(self, version_warn):
         with self.session_ctx():
             try:
                 # connected = False
@@ -306,16 +306,17 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
                 #                sess = self.session_factory()
                 self.info('testing database connection {}'.format(self.test_func))
                 ver = getattr(self, self.test_func)(reraise=True)
-                ver=ver.version_num
-                aver = version.__alembic__
-                self.debug('testing database versions current={} local={}'.format(ver, aver))
-                if ver!=aver:
-                    if not self.confirmation_dialog('Your database is out of date and it may not work correctly with '
-                                                'this version of Pychron. Contact admin to update db.\n\n'
-                                                'Current={} Yours={}\n\n'
-                                                'Continue with Pychron despite out of date db?'.format(ver, aver)):
-                        self.application.stop()
-                        sys.exit()
+                if version_warn:
+                    ver=ver.version_num
+                    aver = version.__alembic__
+                    self.debug('testing database versions current={} local={}'.format(ver, aver))
+                    if ver!=aver:
+                        if not self.confirmation_dialog('Your database is out of date and it may not work correctly with '
+                                                    'this version of Pychron. Contact admin to update db.\n\n'
+                                                    'Current={} Yours={}\n\n'
+                                                    'Continue with Pychron despite out of date db?'.format(ver, aver)):
+                            self.application.stop()
+                            sys.exit()
 
                 connected = True
             except Exception, e:

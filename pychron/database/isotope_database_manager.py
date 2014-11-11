@@ -52,7 +52,7 @@ class BaseIsotopeDatabaseManager(Loggable):
     datasource_url = Property
     precedence = Int(0)
 
-    def __init__(self, bind=True, connect=True, warn=True, *args, **kw):
+    def __init__(self, bind=True, connect=True, warn=True, version_warn=False, attribute_warn=False, *args, **kw):
         super(BaseIsotopeDatabaseManager, self).__init__(*args, **kw)
 
         if bind:
@@ -64,7 +64,7 @@ class BaseIsotopeDatabaseManager(Loggable):
                 traceback.print_exc()
 
         if connect:
-            self.db.connect(warn=warn)
+            self.db.connect(warn=warn, version_warn=version_warn, attribute_warn=attribute_warn)
 
     #IDatastore protocol
     def get_greatest_aliquot(self, identifier):

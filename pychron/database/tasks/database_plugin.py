@@ -41,7 +41,8 @@ class DatabasePlugin(BaseTaskPlugin):
     #                                                  path='MenuBar/Tools')])]
 
     def start(self):
-        iso = IsotopeDatabaseManager(application=self.application)
+        iso = IsotopeDatabaseManager(application=self.application,
+                                     version_warn=True, attribute_warn=True)
         iso.populate_default_tables()
 
 #============= EOF =============================================
