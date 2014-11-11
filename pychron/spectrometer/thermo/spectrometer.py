@@ -96,6 +96,10 @@ class Spectrometer(SpectrometerDevice):
 
         return [(di.name, di.gain) for di in self.detectors]
 
+    def load_current_detector_gains(self):
+        for di in self.detectors:
+            di.get_gain()
+
     def get_integration_time(self, current=True):
         if current:
             resp = self.ask('GetIntegrationTime')

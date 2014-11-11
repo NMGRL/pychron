@@ -86,10 +86,11 @@ class GainsModel(HasTraits):
         db = self.db
         with db.session_ctx():
             hists = db.get_gain_histories()
-            self.histories = [GainHistory(create_date=hi.create_date,
-                                          applied_date=hi.applied_date,
-                                          hashkey=hi.hash,
-                                          username=hi.user.name) for hi in hists]
+            if hists:
+                self.histories = [GainHistory(create_date=hi.create_date,
+                                              applied_date=hi.applied_date,
+                                              hashkey=hi.hash,
+                                              username=hi.user.name) for hi in hists]
 
 
 class GainHistoryAdapter(TabularAdapter):
