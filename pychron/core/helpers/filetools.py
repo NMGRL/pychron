@@ -144,11 +144,11 @@ def unique_date_path(root, base, extension='.txt'):
         e.g foo_11-01-2012-001
     """
     base = '{}_{}'.format(base, datetime.now().strftime('%m-%d-%Y'))
-    p, _ = unique_path2(root, base, extension)
+    p, _ = unique_path2(root, base, extension=extension)
     return p
 
 
-def unique_path2(root, base, extension='.txt'):
+def unique_path2(root, base, delimiter='-', extension='.txt'):
     """
         unique_path suffers from the fact that it starts at 001.
         this is a problem for log files because the logs are periodically archived which means
@@ -165,12 +165,12 @@ def unique_path2(root, base, extension='.txt'):
     #     cnt = max(int(head.split('-')[1]), cnt)
     #
     # cnt += 1
-    cnt = max_path_cnt(root, '{}-'.format(base), extension)
+    cnt = max_path_cnt(root, '{}-'.format(base), delimiter=delimiter, extension=extension)
     p = os.path.join(root, '{}-{:03n}{}'.format(base, cnt, extension))
     return p, cnt
 
 
-def max_path_cnt(root, base, delimiter='_',extension='.txt'):
+def max_path_cnt(root, base, delimiter='-', extension='.txt'):
     """
 
     :param root:
@@ -184,7 +184,8 @@ def max_path_cnt(root, base, delimiter='_',extension='.txt'):
     for p in glob.iglob(os.path.join(root, basename)):
         p = os.path.basename(p)
         head, tail = os.path.splitext(p)
-        cnt = max(int(head.split(delimiter)[1]), cnt)
+
+        cnt = max(int(head.split(delimiter)[-1]), cnt)
 
     cnt += 1
     return cnt

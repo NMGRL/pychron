@@ -263,6 +263,7 @@ class MassSpecDatabaseImporter(Loggable):
 
         # add the reference detector
         refdbdet = db.add_detector('H1', Label='H1')
+        sess.flush()
 
         spec.runid = rid
         analysis = db.add_analysis(rid, spec.aliquot, spec.step,

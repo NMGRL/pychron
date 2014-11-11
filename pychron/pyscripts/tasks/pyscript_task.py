@@ -164,15 +164,15 @@ class PyScriptTask(EditorTask, ExecuteMixin):
         if not (name and root and kind):
             ae = self.active_editor
             if isinstance(ae, ExtractionEditor):
-                root, fn = os.path.split(ae.path)
+                root, name = os.path.split(ae.path)
                 kind = self._extract_kind(ae.path)
 
         if name and root and kind:
-            ret = self._execute_extraction(fn, root, kind, **kw)
+            ret = self._execute_extraction(name, root, kind, **kw)
             self.executing = False
             return ret
 
-    def _execute_extraction(self, name, root, kind, new_thread,
+    def _execute_extraction(self, name, root, kind, new_thread=True,
                             delay_start=0,
                             on_completion=None,
                             context=None):
