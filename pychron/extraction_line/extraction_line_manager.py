@@ -428,7 +428,7 @@ class ExtractionLineManager(Manager, Consoleable):
             if result:
                 description=vm.get_valve_by_name(name).description
                 self._log_spec_event(name, action)
-                self.info('Valve-{} ({}) {}'.format(name, description, action),
+                self.info('{:<6s} Valve-{} ({})'.format(action.upper(), name, description),
                           color='red' if action=='close' else 'green')
                 vm.actuate_children(name, action, mode)
                 ld = self.link_valve_actuation_dict

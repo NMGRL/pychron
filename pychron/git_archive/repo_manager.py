@@ -290,6 +290,7 @@ class GitRepoManager(Loggable):
         if msg is None:
             msg = '{}'.format(bp)
         msg = '{} - {}'.format(msg_prefix, msg)
+        self.debug('add to repo msg={} dest={}'.format(msg, dest))
         self._add_to_repo(dest, msg, **kw)
 
     #action handlers

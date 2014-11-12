@@ -304,7 +304,7 @@ class MassSpecDatabaseImporter(Loggable):
         analysis.ChangeableItemsID = item.ChangeableItemsID
 
         self._add_isotopes(analysis, spec, refdbdet, runtype)
-        sess.flush()
+        # sess.flush()
 
         t = time.time() - gst
         self.debug('{} added analysis time {}s'.format(spec.runid, t))
