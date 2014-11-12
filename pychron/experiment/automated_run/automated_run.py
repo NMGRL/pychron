@@ -234,8 +234,6 @@ class AutomatedRun(Loggable):
 
         self.persister.build_tables(gn, self._active_detectors)
 
-        self._add_conditionals()
-
         self.multi_collector.is_baseline = False
         self.multi_collector.fit_series_idx = fit_series
 
@@ -598,6 +596,11 @@ class AutomatedRun(Loggable):
         self.collector.stop()
 
     def start(self):
+        try:
+            self._add_conditionals()
+        except BaseException, e:
+            self.warning('Failed adding conditionals {}'.format(e))
+            return
 
         if self.experiment_executor.set_integration_time_on_start:
             dit = self.experiment_executor.default_integration_time
@@ -1152,10 +1155,14 @@ anaylsis_type={}
             self.debug('not attr for this {} cd={}'.format(name, cd))
             return
 
-        comp = cd.get('comp')
+        comp = cd.get('teststr')
         if not comp:
-            self.debug('not comp for this {} cd={}'.format(name, cd))
-            return
+            #for 2.0.4 backwards compatiblity
+            comp = cd.get('check')
+            if not comp:
+                self.debug('not teststr for this conditional "{}" cd={}'.format(name, cd))
+                return
+
         start_count = cd.get('start_count')
         if start_count is None:
             start_count = 50
