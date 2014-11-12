@@ -614,7 +614,6 @@ class AutomatedRun(Loggable):
             self.info('Sending spectrometer configuration')
             man = self.spectrometer_manager
             man.send_configuration()
-            return
 
         if self.monitor is None:
             return self._start()
