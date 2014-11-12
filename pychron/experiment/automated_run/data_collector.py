@@ -117,7 +117,7 @@ class DataCollector(Consoleable):
 
         tt = time.time() - st
         self.debug('estimated time: {:0.3f} actual time: :{:0.3f}'.format(et, tt))
-        self.measurement_result = mresult
+        self.measurement_result = mresult or ''
         return mresult
 
     def plot_data(self, *args, **kw):
