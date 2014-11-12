@@ -25,12 +25,7 @@ from pyface.tasks.action.task_action import TaskAction
 #============= local library imports  ==========================
 from pychron.paths import paths
 
-
-SPECTROMETER_PROTOCOL = 'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager'
-ION_OPTICS_PROTOCOL = 'pychron.spectrometer.ion_optics_manager.IonOpticsManager'
-SCAN_PROTOCOL = 'pychron.spectrometer.scan_manager.ScanManager'
-EL_PROTOCOL = 'pychron.extraction_line.extraction_line_manager.ExtractionLineManager'
-
+from pychron.pychron_constants import SPECTROMETER_PROTOCOL,SCAN_PROTOCOL,EL_PROTOCOL, ION_OPTICS_PROTOCOL
 
 def get_manager(event, protocol):
     app = event.task.window.application

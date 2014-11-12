@@ -32,6 +32,7 @@ from pychron.experiment.queue.base_queue import extract_meta
 from pychron.experiment.tasks.experiment_editor import ExperimentEditor, UVExperimentEditor
 from pychron.messaging.notify.notifier import Notifier
 from pychron.paths import paths
+from pychron.pychron_constants import SPECTROMETER_PROTOCOL
 
 
 class ExperimentEditorTask(EditorTask):
@@ -170,7 +171,12 @@ class ExperimentEditorTask(EditorTask):
         from pychron.experiment.tasks.experiment_panes import ExperimentFactoryPane, StatsPane, \
             ControlsPane, WaitPane, IsotopeEvolutionPane, ConnectionStatusPane
 
-        self.isotope_evolution_pane = IsotopeEvolutionPane()
+        name = 'Isotope Evolutions'
+        man = self.application.get_service(SPECTROMETER_PROTOCOL)
+        if not man or man.spec.simulation:
+            name = '{}(Simulation)'.format(name)
+
+        self.isotope_evolution_pane = IsotopeEvolutionPane(name=name)
 
         self.experiment_factory_pane = ExperimentFactoryPane(model=self.manager.experiment_factory)
         self.wait_pane = WaitPane(model=self.manager.executor)
