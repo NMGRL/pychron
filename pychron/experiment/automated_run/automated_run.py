@@ -1155,13 +1155,16 @@ anaylsis_type={}
             self.debug('not attr for this {} cd={}'.format(name, cd))
             return
 
-        comp = cd.get('teststr')
+        comp = None
+        #for 2.0.4 backwards compatiblity
+        for cattr in ('teststr','check','comp'):
+            comp = cd.get(cattr)
+            if comp:
+                break
+
         if not comp:
-            #for 2.0.4 backwards compatiblity
-            comp = cd.get('check')
-            if not comp:
-                self.debug('not teststr for this conditional "{}" cd={}'.format(name, cd))
-                return
+            self.debug('not teststr for this conditional "{}" cd={}'.format(name, cd))
+            return
 
         start_count = cd.get('start_count')
         if start_count is None:
