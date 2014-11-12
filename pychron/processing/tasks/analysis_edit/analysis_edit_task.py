@@ -22,7 +22,7 @@ from enable.component import Component
 from pyface.tasks.action.schema import SToolBar
 from pyface.qt.QtGui import QTabBar
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import binascii
 #============= local library imports  ==========================
 from pychron.core.helpers.iterfuncs import partition
@@ -685,7 +685,7 @@ class AnalysisEditTask(BaseBrowserTask):
 
                 ans = self._make_records(ans)
                 ans.append(ref)
-                ans=sorted(ans, key=lambda x: x.rundate)
+                ans = sorted(ans, key=lambda x: x.rundate)
 
                 asv = AnalysisSelectionView(analyses=ans,
                                             ref=ref)
@@ -787,9 +787,11 @@ class AnalysisEditTask(BaseBrowserTask):
             if not obj.suppress_pane_change:
                 self._show_pane(self.plot_editor_pane)
 
-
     @on_trait_change('analysis_table:selected')
     def _handle_analysis_selected(self, new):
+        if self.use_focus_switching:
+            self.filter_focus = not bool(new)
+
         if self.auto_show_unknowns_pane:
             if hasattr(self, 'unknowns_pane'):
                 show = bool(new)

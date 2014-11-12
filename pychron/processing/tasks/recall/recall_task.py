@@ -28,8 +28,9 @@ from pychron.globals import globalv
 from pychron.processing.tasks.actions.processing_actions import ConfigureRecallAction
 from pychron.processing.tasks.browser.util import browser_pane_item
 from pychron.processing.tasks.recall.actions import AddIsoEvoAction, AddDiffAction, EditDataAction, RatioEditorAction, \
-    SummaryLabnumberAction, CalculationViewAction, SummaryProjectAction, ContextViewAction
+    SummaryLabnumberAction, CalculationViewAction, SummaryProjectAction, ContextViewAction, DatasetAction
 from pychron.processing.tasks.recall.context_editor import ContextEditor
+from pychron.processing.tasks.recall.dataset_recall_editor import DatasetRecallEditor
 from pychron.processing.tasks.recall.diff_editor import DiffEditor
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
 from pychron.processing.tasks.analysis_edit.panes import ControlsPane
@@ -47,6 +48,7 @@ class RecallTask(AnalysisEditTask):
         SToolBar(AddIsoEvoAction(),
                  AddDiffAction(),
                  EditDataAction(),
+                 DatasetAction(),
                  ConfigureRecallAction(),
                  CalculationViewAction(),
                  RatioEditorAction(),
@@ -69,6 +71,16 @@ class RecallTask(AnalysisEditTask):
         #  self.dbconn_spec.username,
         #  self.dbconn_spec.password,
         #  self.dbconn_spec.host)
+
+    def new_dataset(self):
+        records = self._get_selected_analyses()
+        if records:
+            ans = self.manager.make_analyses(records, calculate_age=True)
+            editor = DatasetRecallEditor(models=ans)
+            editor.tool.available_names = [ri.record_id for ri in ans]
+            editor.set_items(ans[0])
+
+            self._open_editor(editor)
 
     def open_ratio_editor(self):
         if self.has_active_editor():
