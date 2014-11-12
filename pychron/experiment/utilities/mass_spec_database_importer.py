@@ -100,7 +100,7 @@ class MassSpecDatabaseImporter(Loggable):
             db = self.db
             with db.session_ctx() as sess:
                 sl = db.add_sample_loading(ms, tray)
-                sess.flush()
+                #sess.flush()
                 #             db.flush()
                 self.sample_loading_id = sl.SampleLoadingID
 
@@ -109,7 +109,7 @@ class MassSpecDatabaseImporter(Loggable):
         db = self.db
         with db.session_ctx() as sess:
             ls = db.add_login_session(ms)
-            sess.flush()
+            #sess.flush()
             self.login_session_id = ls.LoginSessionID
 
     def add_data_reduction_session(self):
@@ -117,7 +117,7 @@ class MassSpecDatabaseImporter(Loggable):
             db = self.db
             with db.session_ctx() as sess:
                 dr = db.add_data_reduction_session()
-                sess.flush()
+                #sess.flush()
                 self.data_reduction_session_id = dr.DataReductionSessionID
 
     def create_import_session(self, spectrometer, tray):
@@ -223,11 +223,10 @@ class MassSpecDatabaseImporter(Loggable):
                                      'to Mass Spec database.\n {}'.format(spec.runid, rid, tb))
                     else:
                         self.debug('retry mass spec save')
-                    if commit:
-                        sess.rollback()
+                    #if commit:
+                    sess.rollback()
                 finally:
                     self.db.reraise = True
-
 
     def _add_analysis(self, sess, spec, irradpos, rid, runtype):
 
@@ -265,7 +264,7 @@ class MassSpecDatabaseImporter(Loggable):
 
         # add the reference detector
         refdbdet = db.add_detector('H1', Label='H1')
-        sess.flush()
+        #sess.flush()
 
         spec.runid = rid
         analysis = db.add_analysis(rid, spec.aliquot, spec.step,
@@ -288,7 +287,7 @@ class MassSpecDatabaseImporter(Loggable):
                                    SampleLoadingID=self.sample_loading_id,
                                    LoginSessionID=self.login_session_id,
                                    RunScriptID=rs.RunScriptID)
-
+        # sess.flush()
         if spec.update_rundatetime:
             d = datetime.fromtimestamp(spec.timestamp)
             analysis.RunDateTime = d
@@ -463,7 +462,7 @@ class MassSpecDatabaseImporter(Loggable):
         return b
 
     def _db_default(self):
-        db = MassSpecDatabaseAdapter(kind='mysql')
+        db = MassSpecDatabaseAdapter(kind='mysql', autoflush=True)
 
         return db
 

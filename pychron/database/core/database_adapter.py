@@ -114,7 +114,7 @@ class DatabaseAdapter(Loggable):
     test_func = 'get_migrate_version'
 
     selector = Any
-
+    autoflush = False
     # name used when writing to database
     # save_username = Str
     connection_parameters_changed = Bool
@@ -184,7 +184,7 @@ class DatabaseAdapter(Loggable):
                     engine = create_engine(url, echo=self.echo)
                     #                     Session.configure(bind=engine)
 
-                    self.session_factory = sessionmaker(bind=engine, autoflush=False)
+                    self.session_factory = sessionmaker(bind=engine, autoflush=self.autoflush)
                     if test:
                         if self.test_func:
                             self.connected = self._test_db_connection(version_warn)
@@ -357,7 +357,9 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
         if sess:
             sess.add(obj)
             try:
-                # sess.flush()
+
+                if self.autoflush:
+                    sess.flush()
                 return obj
             except SQLAlchemyError, e:
                 import traceback

@@ -596,12 +596,16 @@ class AutomatedRun(Loggable):
         self.collector.stop()
 
     def start(self):
-
-
         if self.experiment_executor.set_integration_time_on_start:
             dit = self.experiment_executor.default_integration_time
-            self.debug('Setting default integration. t={}'.format(dit))
+            self.info('Setting default integration. t={}'.format(dit))
             self.set_integration_time(dit)
+
+        if self.experiment_executor.send_config_before_run:
+            self.info('Sending spectrometer configuration')
+            man = self.spectrometer_manager
+            man.send_configuration()
+            return
 
         if self.monitor is None:
             return self._start()

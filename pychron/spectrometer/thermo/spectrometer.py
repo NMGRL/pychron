@@ -403,6 +403,8 @@ class Spectrometer(SpectrometerDevice):
         dac -= det.get_deflection_correction(current=current)
         return dac
 
+    def send_configuration(self):
+        self._send_configuration()
     #===============================================================================
     # private
     #===============================================================================
@@ -419,10 +421,14 @@ class Spectrometer(SpectrometerDevice):
                            extractionlens='ExtractionLens',
                            ioncountervoltage='IonCounterVoltage')
 
-        self.debug('Sending configuration to spectrometer')
         if self.microcontroller:
 
             p = os.path.join(paths.spectrometer_dir, 'config.cfg')
+            if not os.path.isfile(p):
+                self.warning('Spectrometer configuration file {} not found'.format(p))
+                return
+
+            self.info('Sending configuration "{}" to spectrometer'.format(p))
             config = self.get_configuration_writer(p)
 
             for section in config.sections():

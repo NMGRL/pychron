@@ -120,6 +120,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     min_ms_pumptime = Int(30)
     use_automated_run_monitor = Bool(False)
     set_integration_time_on_start = Bool(False)
+    send_config_before_run = Bool(False)
     default_integration_time = Float(DEFAULT_INTEGRATION_TIME)
 
     use_memory_check = Bool(True)
@@ -166,6 +167,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                  'use_labspy',
                  'min_ms_pumptime',
                  'set_integration_time_on_start',
+                 'send_config_before_run',
                  'default_integration_time')
         self._preference_binder(prefid, attrs)
         if self.use_labspy:

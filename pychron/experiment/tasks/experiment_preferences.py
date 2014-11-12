@@ -42,6 +42,7 @@ class ExperimentPreferences(BasePreferencesHelper):
     use_notifications = Bool
     notifications_port = Int
 
+    send_config_before_run =Bool
     use_auto_save = Bool
     auto_save_delay = Int
     use_labspy = Bool
@@ -183,7 +184,10 @@ class ExperimentPreferencesPane(PreferencesPane):
                             show_border=True,
                             label='Overlap')
 
-        automated_grp = Group(VGroup(Item('set_integration_time_on_start',
+        automated_grp = Group(VGroup(Item('send_config_before_run',
+                                          tooltip='Set the spectrometer configuration before each analysis',
+                                          label='Set Spectrometer Configuration on Start'),
+                                     Item('set_integration_time_on_start',
                                           tooltip='Set integration time on start of analysis',
                                           label='Set Integration Time on Start'),
                                      Item('default_integration_time',

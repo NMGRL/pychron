@@ -173,7 +173,7 @@ class ExperimentEditorTask(EditorTask):
 
         name = 'Isotope Evolutions'
         man = self.application.get_service(SPECTROMETER_PROTOCOL)
-        if not man or man.spec.simulation:
+        if not man or man.simulation:
             name = '{}(Simulation)'.format(name)
 
         self.isotope_evolution_pane = IsotopeEvolutionPane(name=name)
