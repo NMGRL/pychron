@@ -1147,9 +1147,13 @@ anaylsis_type={}
                     continue
 
                 var = getattr(self, '{}_conditionals'.format(var))
-                for ti in yl:
-                    cx = conditional_from_dict(ti, klass)
-                    var.append(cx)
+                conds = [conditional_from_dict(ti, klass) for ti in yl]
+                conds = [c for c in conds if c is not None]
+                if conds:
+                    var.extend(conds)
+                # for ti in yl:
+                #     cx =
+                    # var.append(cx)
 
     def _conditional_appender(self, name, cd, klass):
         if not self.arar_age:

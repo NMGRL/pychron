@@ -1264,7 +1264,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     self.debug('no {}'.format(term_name))
                     return
                 else:
-                    return [conditional_from_dict(cd, klass) for cd in yl]
+                    conds = [conditional_from_dict(cd, klass) for cd in yl]
+                    return [c for c in conds if c is not None]
 
     def _action_conditionals(self, run, conditionals, message1, message2):
         if conditionals:
