@@ -22,8 +22,7 @@ class DatasetRecallTool(HasTraits):
         ctrl_grp = HGroup(icon_button_editor('first_button', 'arrow-left-double-2'),
                           icon_button_editor('prev_button', 'arrow-left-2'),
                           icon_button_editor('next_button', 'arrow-right-2'),
-                          icon_button_editor('last_button', 'arrow-right-double-2'),
-                         )
+                          icon_button_editor('last_button', 'arrow-right-double-2'))
         v = View(VGroup(ctrl_grp,
                         UItem('selected', editor=EnumEditor(name='available_names')),
                         UItem('selection_tool',
@@ -34,11 +33,6 @@ class DatasetRecallTool(HasTraits):
 class DatasetRecallEditor(RecallEditor):
     tool = Instance(DatasetRecallTool)
     models = List
-    # _parent = None
-    # def create(self, parent):
-    # super(DatasetRecallEditor, self).create(parent)
-    #     self._parent = parent
-
 
     @on_trait_change('tool:selected')
     def _selected_changed(self, new):
@@ -64,40 +58,12 @@ class DatasetRecallEditor(RecallEditor):
             self.debug('prev {}'.format(idx))
 
         self.set_items(self.models[idx])
-        # self.debug('next {} {}'.format(idx, self.model))
-        # self.model.analysis_view.load(self.model)
-        # self.model.analysis_view.refresh_needed = True
-        # self.destroy()
-        # self.create(self._parent)
-
-    #
-    # @on_trait_change('tool:prev_button')
-    # def _tool_prev_button_fired(self):
-    #     idx = self.models.index(self.model) - 1
-    #     if idx < 0:
-    #         idx = len(self.models) - 1
-    #
-    #     self.set_items(self.models[idx])
-    #     # self.model = self.models[idx]
-    #     self.debug('prev {} {}'.format(idx, self.model))
 
     def set_items(self, item):
         super(DatasetRecallEditor, self).set_items(item)
 
         tool = self.model.analysis_view.selection_tool
         self.tool.selection_tool = tool
-
-        # self.model.analysis_view.refresh_needed = True
-        # self.destroy()
-        # self.create(self._parent)
-
-    # def _model_changed(self, new):
-    #     tool = None
-    #     if new:
-    #         tool = new.analysis_view.selection_tool
-    #         # self.analysis_view = new.analysis_view
-    #         # print self.analysis_view
-    #     self.tool.selection_tool = tool
 
     def _tool_default(self):
         return DatasetRecallTool()

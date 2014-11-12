@@ -93,18 +93,11 @@ class RecallEditor(BaseTraitsEditor):
         self.manager.application.open_view(g)
 
     def set_items(self, item):
-        # if self.analysis_view:
-        #     self.analysis_view.history_view.on_trait_change(self.handle_load_ages,
-        #                                                     'load_ages_needed', remove=True)
-        #     # self.analysis_view.history_view.on_trait_change('', '', remove=True)
-
         if isinstance(item, (tuple, list)):
             item = item[0]
 
         self.model = item
         self.analysis_view = self.model.analysis_view
-
-        # self.analysis_view.history_view.on_trait_change(self.handle_load_ages, 'load_ages_needed')
 
         #set name
         r = self.analysis_view.analysis_id
@@ -122,20 +115,5 @@ class RecallEditor(BaseTraitsEditor):
                        editor=InstanceEditor()))
         return v
 
-    # def _get_name(self):
-    #     #if self.model and self.model.analysis_view:
-    #     if self.analysis_view:
-    #         r = self.analysis_view.analysis_id
-    #         if self.instance_id:
-    #             r = '{} #{}'.format(r, self.instance_id + 1)
-    #         return r
-    #     else:
-    #         return 'None'
-    #
-    # def _get_basename(self):
-    #     if self.analysis_view:
-    #         return self.analysis_view.analysis_id
-    #     else:
-    #         return 'None'
 
 #============= EOF =============================================
