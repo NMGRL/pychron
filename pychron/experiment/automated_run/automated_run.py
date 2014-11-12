@@ -144,6 +144,12 @@ class AutomatedRun(Loggable):
     # ===============================================================================
     # pyscript interface
     # ===============================================================================
+    def py_whiff(self, ncounts, conditionals, starttime, starttime_offset, series=0, fit_series=0):
+        return self._whiff(ncounts, conditionals, starttime, starttime_offset, series, fit_series)
+
+    def py_reset_data(self):
+        self.persister.pre_measurement_save()
+
     def py_set_integration_time(self, v):
         self.set_integration_time(v)
 
@@ -250,6 +256,9 @@ class AutomatedRun(Loggable):
                                series,
                                check_conditionals, sc, obj)
         return result
+
+    def py_post_equilibration(self):
+        self.do_post_equilibration()
 
     def py_equilibration(self, eqtime=None, inlet=None, outlet=None,
                          do_post_equilibration=True,
@@ -515,9 +524,9 @@ class AutomatedRun(Loggable):
     def py_clear_actions(self):
         self.action_conditionals = []
 
-    #===============================================================================
+    # ===============================================================================
     # run termination
-    #===============================================================================
+    # ===============================================================================
     def cancel_run(self, state='canceled', do_post_equilibration=True):
         """
             terminate the measurement script immediately
@@ -1155,8 +1164,8 @@ anaylsis_type={}
                 conds = [c for c in conds if c is not None]
                 if conds:
                     var.extend(conds)
-                # for ti in yl:
-                #     cx =
+                    # for ti in yl:
+                    #     cx =
                     # var.append(cx)
 
     def _conditional_appender(self, name, cd, klass):
@@ -1192,7 +1201,8 @@ anaylsis_type={}
             obj = getattr(self, '{}_conditionals'.format(name))
             con = conditional_from_dict(cd, klass)
             if con:
-                self.info('adding {} attr="{}" test="{}" start="{}"'.format(name, con.attr, con.teststr, con.start_count))
+                self.info(
+                    'adding {} attr="{}" test="{}" start="{}"'.format(name, con.attr, con.teststr, con.start_count))
                 obj.append(con)
             else:
                 self.warning('Failed adding {}, {}'.format(name, cd))
@@ -1359,7 +1369,7 @@ anaylsis_type={}
                                 try:
                                     #trim off s
                                     if kind.endswith('s'):
-                                        kind=kind[:-1]
+                                        kind = kind[:-1]
 
                                     self._conditional_appender(kind, i, klass)
                                 except BaseException, e:
@@ -1367,17 +1377,17 @@ anaylsis_type={}
 
                         except KeyError:
                             self.debug('Invalid conditional kind="{}"'.format(kind))
-                    #
-                    #     for c in doc:
-                    #         try:
-                    #             attr = c['attr']
-                    #             comp = c['check']
-                    #             start = c['start']
-                    #             freq = c.get('frequency', 1)
-                    #             acr = c.get('abbreviated_count_ratio', 1)
-                    #             self.py_add_truncation(attr, comp, int(start), freq, acr)
-                    #         except BaseException:
-                    #             self.warning('Failed adding truncation. {}'.format(c))
+                            #
+                            #     for c in doc:
+                            #         try:
+                            #             attr = c['attr']
+                            #             comp = c['check']
+                            #             start = c['start']
+                            #             freq = c.get('frequency', 1)
+                            #             acr = c.get('abbreviated_count_ratio', 1)
+                            #             self.py_add_truncation(attr, comp, int(start), freq, acr)
+                            #         except BaseException:
+                            #             self.warning('Failed adding truncation. {}'.format(c))
 
             else:
                 try:
@@ -1527,6 +1537,20 @@ anaylsis_type={}
                 yield spec.get_intensities(tagged=True)
 
         return gen()
+
+    def _whiff(self, ncounts, conditionals, starttime, starttime_offset, series, fit_series):
+        """
+        conditionals: list of dicts
+        """
+
+        conds = [conditional_from_dict(ci, ActionConditional) for ci in conditionals]
+        self.collector.set_temporary_conditionals(conds)
+        self.py_data_collection(None, ncounts, starttime, starttime_offset, series, fit_series)
+        self.collector.clear_temporary_conditionals()
+        mresult = self.collector.measurement_result
+        self.persister.whiff_result = mresult
+
+        return self.collector.measurement_result
 
     def _peak_hop(self, ncycles, ncounts, hops, grpname, data_writer,
                   starttime, starttime_offset, series,

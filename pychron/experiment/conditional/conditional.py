@@ -110,7 +110,8 @@ def conditional_from_dict(cd, klass):
     freq = cd.get('frequency', 5)
     win = cd.get('window', 0)
     mapper = cd.get('mapper', '')
-    cx = klass(attr, teststr, start_count=start, frequency=freq, window=win, mapper=mapper)
+    action = cd.get('action')
+    cx = klass(attr, teststr, start_count=start, frequency=freq, window=win, mapper=mapper, action=action)
     return cx
 
 
