@@ -596,11 +596,7 @@ class AutomatedRun(Loggable):
         self.collector.stop()
 
     def start(self):
-        try:
-            self._add_conditionals()
-        except BaseException, e:
-            self.warning('Failed adding conditionals {}'.format(e))
-            return
+
 
         if self.experiment_executor.set_integration_time_on_start:
             dit = self.experiment_executor.default_integration_time
@@ -1055,6 +1051,12 @@ anaylsis_type={}
 
         self.info('Start automated run {}'.format(self.runid))
 
+        try:
+            self._add_conditionals()
+        except BaseException, e:
+            self.warning('Failed adding conditionals {}'.format(e))
+            return
+
         self.measuring = False
         self.truncated = False
 
@@ -1150,37 +1152,42 @@ anaylsis_type={}
                     var.append(cx)
 
     def _conditional_appender(self, name, cd, klass):
+        if not self.arar_age:
+            self.warning('No ArArAge to use for conditional testing')
+            return
+
         attr = cd.get('attr')
         if not attr:
             self.debug('not attr for this {} cd={}'.format(name, cd))
             return
 
-        comp = None
         #for 2.0.4 backwards compatiblity
-        for cattr in ('teststr','check','comp'):
-            comp = cd.get(cattr)
-            if comp:
-                break
-
-        if not comp:
-            self.debug('not teststr for this conditional "{}" cd={}'.format(name, cd))
-            return
-
-        start_count = cd.get('start_count')
-        if start_count is None:
-            start_count = 50
-            self.debug('defaulting to start_count={}'.format(start_count))
-
-        self.info('adding {} {} {} {}'.format(name, attr, comp, start_count))
+        # comp = dictgetter(cd, ('teststr','check','comp'))
+        # if not comp:
+        #     self.debug('not teststr for this conditional "{}" cd={}'.format(name, cd))
+        #     return
+        #
+        # #for 2.0.4 backwards compatiblity
+        # start_count = dictgetter(cd, ('start','start_count'))
+        # if start_count is None:
+        #     start_count = 50
+        #     self.debug('defaulting to start_count={}'.format(start_count))
+        #
+        # self.info('adding {} {} {} {}'.format(name, attr, comp, start_count))
 
         if attr == 'age' and self.spec.analysis_type not in ('unknown', 'cocktail'):
-            self.debug()
+            self.debug('not adding because analysis_type not unknown or cocktail')
 
         if not self.arar_age.has_attr(attr):
             self.warning('invalid {} attribute "{}"'.format(name, attr))
         else:
             obj = getattr(self, '{}_conditionals'.format(name))
-            obj.append(conditional_from_dict(cd, klass))
+            con = conditional_from_dict(cd, klass)
+            if con:
+                self.info('adding {} attr="{}" test="{}" start="{}"'.format(name, con.attr, con.teststr, con.start_count))
+                obj.append(con)
+            else:
+                self.warning('Failed adding {}, {}'.format(name, cd))
 
     def _refresh_scripts(self):
         for name in SCRIPT_KEYS:
@@ -1342,9 +1349,13 @@ anaylsis_type={}
                             klass = klass_dict[kind]
                             for i in items:
                                 try:
+                                    #trim off s
+                                    if kind.endswith('s'):
+                                        kind=kind[:-1]
+
                                     self._conditional_appender(kind, i, klass)
-                                except BaseException:
-                                    self.debug('Failed adding {}. cd={}'.format(kind, i))
+                                except BaseException, e:
+                                    self.debug('Failed adding {}. excp="{}", cd={}'.format(kind, e, i))
 
                         except KeyError:
                             self.debug('Invalid conditional kind="{}"'.format(kind))

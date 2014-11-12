@@ -211,7 +211,9 @@ class MassSpecDatabaseImporter(Loggable):
                 self._analysis = None
                 self.db.reraise = True
                 try:
-                    return self._add_analysis(sess, spec, irradpos, rid, runtype)
+                    ret = self._add_analysis(sess, spec, irradpos, rid, runtype)
+                    sess.commit()
+                    return ret
                 except Exception, e:
                     self.debug('Mass Spec save exception. {}'.format(e))
                     if i==2:
