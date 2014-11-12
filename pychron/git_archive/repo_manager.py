@@ -25,7 +25,7 @@ from cStringIO import StringIO
 import time
 from git.exc import GitCommandError
 from git import Repo, Diff
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import fileiter
 from pychron.git_archive.diff_view import DiffView, DiffModel
 from pychron.loggable import Loggable
@@ -62,11 +62,13 @@ class GitRepoManager(Loggable):
 
         if os.path.isdir(p):
             self.init_repo(p)
+            return True
         else:
             os.mkdir(p)
             repo = Repo.init(p)
             self.debug('created new repo {}'.format(p))
             self._repo = repo
+            return False
 
     def init_repo(self, path):
         """
@@ -84,6 +86,10 @@ class GitRepoManager(Loggable):
                 self.debug('{} is not a valid repo'.format(path))
                 self._repo = Repo.init(path)
 
+    def clone(self, url):
+        repo = self._repo
+        self._repo = repo.clone_from(url)
+
     def unpack_blob(self, hexsha, p):
         """
             p: str. should be absolute path
@@ -91,7 +97,7 @@ class GitRepoManager(Loggable):
         repo = self._repo
         tree = repo.commit(hexsha).tree
         # blob = next((bi for ti in tree.trees
-        #              for bi in ti.blobs
+        # for bi in ti.blobs
         #              if bi.abspath == p), None)
         blob = None
         for ts in ((tree,), tree.trees):
@@ -105,6 +111,22 @@ class GitRepoManager(Loggable):
             print 'failed unpacking', p
 
         return blob.data_stream.read() if blob else ''
+
+    def truncate_repo(self, date='1 month'):
+        repo = self._repo
+        name = os.path.basename(self.path)
+        backup = '.{}'.format(name)
+        repo.git.clone('--mirror', ''.format(name), './{}'.format(backup))
+        logs = repo.git.log('--pretty=%H', '-after "{}"'.format(date))
+        logs = reversed(logs.split('\n'))
+        sha = logs.next()
+
+        gpath = os.path.join(self.path, '.git', 'info', 'grafts')
+        with open(gpath, 'w') as fp:
+            fp.write(sha)
+
+        repo.git.filter_branch('--tag-name-filter', 'cat', '--', '--all')
+        repo.git.gc('--prune=now')
 
     def commits_iter(self, p, keys=None, limit='-'):
         repo = self._repo
@@ -181,7 +203,7 @@ class GitRepoManager(Loggable):
         if use_diff:
             pass
             # try:
-            #     ps = [diff.a_blob.path for diff in index.diff(None)]
+            # ps = [diff.a_blob.path for diff in index.diff(None)]
             #     func(ps, extension)
             # except IOError,e:
             #     print e
@@ -236,9 +258,8 @@ class GitRepoManager(Loggable):
     def create_remote(self, url, name='origin'):
         repo = self._repo
         if repo:
-            #only create remote if doesnt exist
+            # only create remote if doesnt exist
             if not hasattr(repo.remotes, name):
-                #     url='{}:jir812@{}:{}.git'.format(user, host, repo_name
                 repo.create_remote(name, url)
                 pass
 
@@ -293,7 +314,7 @@ class GitRepoManager(Loggable):
         self.debug('add to repo msg={} dest={}'.format(msg, dest))
         self._add_to_repo(dest, msg, **kw)
 
-    #action handlers
+    # action handlers
     def diff_selected(self):
         if self._validate_diff():
             if len(self.selected_commits) == 2:
@@ -408,7 +429,7 @@ if __name__ == '__main__':
     rp.init_repo('/Users/ross/Pychrondata_dev/scripts')
     rp.commit_dialog()
 
-    #============= EOF =============================================
+    # ============= EOF =============================================
     #repo manager protocol
     # def get_local_changes(self, repo=None):
     #     repo = self._get_repo(repo)

@@ -71,6 +71,7 @@ class AutomatedRunSpec(Loggable):
     _step = Int(-1)
 
     analysis_dbid = Long
+    analysis_timestamp = None
     #===========================================================================
     # scripts
     #===========================================================================

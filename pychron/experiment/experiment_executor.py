@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from datetime import datetime
 from traits.api import Event, Button, String, Bool, Enum, Property, Instance, Int, List, Any, Color, Dict, \
     on_trait_change, Long, Float
 from pyface.constant import CANCEL, YES, NO
@@ -34,6 +35,7 @@ from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.consoleable import Consoleable
 from pychron.envisage.preference_mixin import PreferenceMixin
 from pychron.experiment.datahub import Datahub
+from pychron.experiment.labspy import LabspyUpdater
 from pychron.experiment.user_notifier import UserNotifier
 from pychron.experiment.stats import StatsGroup
 from pychron.experiment.utilities.conditionals import test_queue_conditionals_name
@@ -98,6 +100,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     extracting_run = Instance('pychron.experiment.automated_run.automated_run.AutomatedRun')
 
     datahub = Instance(Datahub)
+    labspy = Instance(LabspyUpdater, ())
     #===========================================================================
     #
     #===========================================================================
@@ -113,6 +116,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     #===========================================================================
     auto_save_delay = Int(30)
     use_auto_save = Bool(True)
+    use_labspy = Bool(True)
     min_ms_pumptime = Int(30)
     use_automated_run_monitor = Bool(False)
     set_integration_time_on_start = Bool(False)
@@ -159,10 +163,13 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         #auto save
         attrs = ('use_auto_save', 'auto_save_delay',
+                 'use_labspy',
                  'min_ms_pumptime',
                  'set_integration_time_on_start',
                  'default_integration_time')
         self._preference_binder(prefid, attrs)
+        if self.use_labspy:
+            self._preference_binder(prefid, ('labspy_root',), obj=self.labspy)
 
         #colors
         attrs = ('signal_color', 'sniff_color', 'baseline_color')
@@ -355,6 +362,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         # save experiment to database
         self.info('saving experiment "{}" to database'.format(exp.name))
+        exp.start_timestamp = datetime.now().strftime('%m-%d-%Y %H:%M:%S')
+        if self.use_labspy:
+            self.labspy.add_experiment(exp)
 
         self.datahub.add_experiment(exp)
 
@@ -477,6 +487,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if names:
                 self.info('Notifying user group names={}'.format(','.join(names)))
                 self.user_notifier.notify_group(exp, last_runid, self._err_message, addrs)
+        if self.use_labspy:
+            self.labspy.update_experiment(exp, self._err_message)
 
     def _get_group_emails(self, email):
         names, addrs = None, None
@@ -597,6 +609,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         run.finish()
 
         self.wait_group.pop()
+        if self.use_labspy:
+            self.labspy.add_run(run)
 
         mem_log('end run')
 

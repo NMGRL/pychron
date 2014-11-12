@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import Str, Int, \
-    Bool, Password, Color, Property, Float, Enum
+    Bool, Password, Color, Property, Float, Enum, File
 from traitsui.api import View, Item, Group, VGroup, HGroup, UItem
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 #============= standard library imports ========================
@@ -44,6 +44,8 @@ class ExperimentPreferences(BasePreferencesHelper):
 
     use_auto_save = Bool
     auto_save_delay = Int
+    use_labspy = Bool
+    labspy_root = File
 
     irradiation_prefix = Str
     monitor_name = Str
@@ -111,12 +113,19 @@ class ExperimentPreferencesPane(PreferencesPane):
     category = 'Experiment'
 
     def traits_view(self):
+        labspy_grp = VGroup(Item('use_labspy'),
+                            Item('labspy_root', label='Root'),
+                            show_border=True,
+                            label='Labspy')
+
         notification_grp = VGroup(
+            labspy_grp,
             Item('use_notifications'),
             Item('notifications_port',
                  enabled_when='use_notifications',
                  label='Port'),
             label='Notifications')
+
 
         editor_grp = Group(
             Item('automated_runs_editable',

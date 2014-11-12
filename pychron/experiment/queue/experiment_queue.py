@@ -67,6 +67,7 @@ class ExperimentQueue(BaseExperimentQueue):
     executed_runs_scroll_to_row = Int
     automated_runs_scroll_to_row = Int
     linked_copy_cache = List
+    start_timestamp = Str
     # queue_actions = List
 
     executed = Bool(False)

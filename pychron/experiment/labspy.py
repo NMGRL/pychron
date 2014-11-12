@@ -1,0 +1,117 @@
+# ===============================================================================
+# Copyright 2014 Jake Ross
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ===============================================================================
+
+# ============= enthought library imports =======================
+import hashlib
+import os
+from traits.api import HasTraits, Button, Str, Int, Bool
+from traitsui.api import View, Item, UItem, HGroup, VGroup
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+import yaml
+from pychron.git_archive.repo_manager import GitRepoManager
+from pychron.loggable import Loggable
+from pychron.pychron_constants import SCRIPT_NAMES
+
+EXPERIMENT_ATTRS = ('username', 'mass_spectrometer',
+                    'extract_device', 'name', 'start_timestamp')
+
+
+class LabspyUpdater(Loggable):
+    spectrometer_name = Str
+    labspy_root = Str
+    def __init__(self, *args, **kw):
+        super(LabspyUpdater, self).__init__(*args, **kw)
+
+    def _labspy_root_changed(self, new):
+        if new:
+            self.repo = GitRepoManager()
+            if os.path.isdir(new):
+                self.repo.open_repo(new)
+            else:
+                self.repo.clone('https://github.com/NMGRL/pychron')
+                self.repo.create_remote('https://github.com/NMGRL/pychron')
+                self.repo.checkout_branch('gh-pages')
+
+    def add_experiment(self, exp):
+        path, yl = self._load_experiment()
+
+        yl.insert(0, self._make_experiment(exp))
+        yl = yl[-10:]
+
+        with open(path, 'w') as fp:
+            yaml.dump(yl, fp)
+
+        self.repo.add(path, commit=True)
+
+    def update_experiment(self, exp, err_msg):
+        path, yl = self._load_experiment()
+
+        def hfunc(yi):
+            h = hashlib.md5()
+            for ai in EXPERIMENT_ATTRS:
+                h.update(yi[ai])
+            return h.hexdigest()
+
+        hkey = hfunc(exp)
+        yy = next((yi for yi in yl if hfunc(yi) == hkey))
+        yy['Status'] = err_msg or 'Successful'
+
+        self.repo.truncate_repo()
+
+    def _make_experiment(self, exp):
+        return {k: getattr(exp, k) for k in EXPERIMENT_ATTRS}
+
+    def _load_experiment(self):
+        root = self.repo.path
+        path = os.path.join(root, '_data', 'labspy_experiment_context.yaml')
+        with open(path, 'r') as fp:
+            yl = yaml.load(fp)
+        return path, yl
+
+    def add_run(self, run):
+        root = self.repo.path
+        path = os.path.join(root, '_data', 'labspy_context.yaml')
+        with open(path, 'r') as fp:
+            yl = yaml.load(fp)
+
+        yl.insert(0, self._make_analysis(run))
+        yl = yl[-50:]
+        with open(path, 'w') as fp:
+            yaml.dump(yl, fp)
+
+        self.repo.add(path, commit=True)
+
+    def _make_analysis(self, run):
+        spec = run.spec
+
+        d = {k: getattr(spec, k) for k in ('record_id', 'analysis_type', 'sample',
+                                           'extract_value', 'duration', 'cleanup', 'position',
+                                           'comment', 'material', 'project',
+                                           'mass_spectrometer',
+                                           'extract_device')}
+
+        d['date'] = spec.analysis_timestamp.strftime('%m-%d-%Y %H:%M:%S')
+
+        for si in SCRIPT_NAMES:
+            d[si] = getattr(run, si)
+
+        return d
+
+# ============= EOF =============================================
+
+
+

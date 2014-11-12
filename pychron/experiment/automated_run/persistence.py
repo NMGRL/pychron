@@ -321,6 +321,7 @@ class AutomatedRunPersister(Loggable):
                                     comment=self.run_spec.comment)
                 sess.flush()
                 self.run_spec.analysis_dbid = a.id
+                self.run_spec.analysis_timestamp = a.analysis_timestamp
 
                 experiment = db.get_experiment(self.experiment_identifier, key='id')
                 if experiment is not None:
