@@ -16,10 +16,12 @@
 
 # ============= enthought library imports =======================
 from datetime import timedelta
+
 from traits.api import Instance, on_trait_change
 from enable.component import Component
 from pyface.tasks.action.schema import SToolBar
 from pyface.qt.QtGui import QTabBar
+
 #============= standard library imports ========================
 import binascii
 #============= local library imports  ==========================
@@ -735,11 +737,10 @@ class AnalysisEditTask(BaseBrowserTask):
         if new:
             if self.controls_pane:
                 tool = None
-                if isinstance(new, RecallEditor):
-                    tool = new.analysis_view.selection_tool
-                elif hasattr(new, 'tool'):
+                if hasattr(new, 'tool'):
                     tool = new.tool
-
+                elif isinstance(new, RecallEditor):
+                    tool = new.analysis_view.selection_tool
                 self.controls_pane.tool = tool
 
             if self.unknowns_pane:
