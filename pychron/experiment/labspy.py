@@ -14,6 +14,8 @@
 # limitations under the License.
 # ===============================================================================
 from datetime import datetime
+import random
+import time
 
 from pychron.core.ui import set_qt
 
@@ -70,12 +72,26 @@ class LabspyUpdater(Loggable):
         if self.use_git:
             self.repo.push()
         else:
-
-
             _, exps = self._load_experiment()
             _, ans = self._load_analyses()
             ctx = {'experiments': exps, 'analyses': ans}
+            ctx['last_update'] = datetime.now().isoformat()
 
+            njan = len([ai for ai in ans if ai['mass_spectrometer'].lower()=='jan'])
+            nobama = len([ai for ai in ans if ai['mass_spectrometer'].lower()=='obama'])
+            nmap = len([ai for ai in ans if ai['mass_spectrometer'].lower()=='nmgrl_map'])
+
+            ctx['spectrometer_usages'] = [{'name': 'Jan', 'usage': njan},
+                                          {'name': 'Obama', 'usage': nobama},
+                                          {'name': 'MAP', 'usage': nmap}]
+
+            nco2 =len([ai for ai in ans if ai['extract_device'].lower()=='co2'])
+            ndiode =len([ai for ai in ans if ai['extract_device'].lower()=='diode'])
+            nuv =len([ai for ai in ans if ai['extract_device'].lower()=='uv'])
+            ctx['extract_device_usages'] = [{'name':'CO2', 'usage':nco2},
+                                            {'name':'Diode', 'usage':ndiode},
+                                            {'name':'UV', 'usage':nuv},
+                                            ]
             txt = Template(self._load_template()).render(**ctx)
             root = os.path.join(self.labspy_root, '_build')
             if not os.path.isdir(root):
@@ -84,8 +100,8 @@ class LabspyUpdater(Loggable):
             path = os.path.join(root, 'index.html')
             with open(path, 'w') as fp:
                 fp.write(txt)
-
-            self.repo.add_file(path)
+            print path
+            # self.repo.add_file(path)
 
     @enabled_dec()
     def add_experiment(self, exp):
@@ -95,10 +111,10 @@ class LabspyUpdater(Loggable):
         d = {k: getattr(exp, k) for k in EXPERIMENT_ATTRS}
         d['status'] = 'Running'
         yl.insert(0, d)
-        yl = yl[-3:]
+        yl = yl[-4:]
 
         with open(path, 'w') as fp:
-            yaml.dump(yl, fp)
+            yaml.dump(yl, fp, default_flow_style=False)
 
         if self.use_git:
             self.repo.add(path, commit=True)
@@ -129,15 +145,18 @@ class LabspyUpdater(Loggable):
     @enabled_dec()
     def add_run(self, run):
         path = self.ans_ctx_path
-        with open(path, 'r') as fp:
-            yl = yaml.load(fp)
+        yl = None
+        if os.path.isfile(path):
+            with open(path, 'r') as fp:
+                yl = yaml.load(fp)
+
         if not yl:
             yl = []
         yl.insert(0, self._make_analysis(run))
         yl = yl[-50:]
 
         with open(path, 'w') as fp:
-            yaml.dump(yl, fp)
+            yaml.dump(yl, fp, default_flow_style=False)
 
         if self.use_git:
             self.repo.add(path, commit=True)
@@ -146,19 +165,24 @@ class LabspyUpdater(Loggable):
 
     def _load_analyses(self):
         path = self.ans_ctx_path
-        with open(path, 'r') as fp:
-            yl = yaml.load(fp)
-        return path, yl
+        yl = None
+        if os.path.isfile(path):
+            with open(path, 'r') as fp:
+                yl = yaml.load(fp)
+
+        return path, yl or []
 
     def _load_experiment(self):
         path = self.exp_ctx_path
-        with open(path, 'r') as fp:
-            yl = yaml.load(fp)
+        yl = []
+        if os.path.isfile(path):
+            with open(path, 'r') as fp:
+                yl = yaml.load(fp)
         return path, yl
 
     def _dump_experiment(self, d):
-        with open(self.exp_ctx_path, 'r') as fp:
-            yaml.dump(d, fp)
+        with open(self.exp_ctx_path, 'w') as fp:
+            yaml.dump(d, fp, default_flow_style=False)
 
     def _load_template(self):
         with open(self.template_path) as fp:
@@ -167,7 +191,7 @@ class LabspyUpdater(Loggable):
     @property
     def template_path(self):
         root = self.repo.path
-        path = os.path.join(root, '_templates', 'main.html')
+        path = os.path.join(root, '_templates', 'labspy_main.txt')
         return path
 
     @property
@@ -189,10 +213,11 @@ class LabspyUpdater(Loggable):
                                            'extract_value', 'duration', 'cleanup', 'position',
                                            'comment', 'material', 'project',
                                            'mass_spectrometer',
-                                           'extract_device')}
+                                           'extract_device', 'experiment_name')}
 
         d['date'] = spec.analysis_timestamp.strftime('%m-%d-%Y %H:%M:%S')
-
+        d['timestamp'] = time.mktime(spec.analysis_timestamp.timetuple())
+        d['runtime'] = spec.analysis_timestamp.strftime('%H:%M')
         for si in SCRIPT_NAMES:
             d[si] = getattr(spec, si)
 
@@ -221,30 +246,33 @@ if __name__ == '__main__':
 
     class Exp(object):
         username = 'foo'
-        mass_spectrometer = 'jan'
-        extract_device = 'co2'
+        mass_spectrometer = random.choice(('jan','obama','nmgrl_map'))
+        extract_device = random.choice(('co2','diode','uv'))
         name = 'current exp'
         start_timestamp = '01-01-2014 01:01:01'
         status = ''
+
+    dt = datetime.now()
 
     class Spec(object):
         record_id = '12345-01A'
         analysis_type = 'unknown'
         sample = 'bar'
-        extract_value = 10
-        duration = 100
-        cleanup = 1000
-        position = 1
+        extract_value = random.randint(0, 100)
+        duration = random.randint(0, 100)
+        cleanup = random.randint(0, 100)
+        position = random.randint(0, 10)
         comment = 'this is a comment'
         material = 'Sanidine'
         project = 'Labspy'
-        mass_spectrometer = 'jan'
-        extract_device = 'co2'
-        analysis_timestamp = datetime.now()
+        mass_spectrometer = ''
+        extract_device = ''
+        analysis_timestamp = dt
         measurement_script = 'm'
         post_measurement_script = 'pm'
         post_equilibration_script = 'pe'
         extraction_script = 'ex'
+        experiment_name = ''
 
     class Ans(object):
         spec = Spec()
@@ -252,6 +280,9 @@ if __name__ == '__main__':
     exp = Exp()
     l.add_experiment(exp)
     a = Ans()
+    a.spec.mass_spectrometer = exp.mass_spectrometer
+    a.spec.experiment_name = exp.name
+    a.spec.extract_device = exp.extract_device
     l.add_run(a)
 
 # ============= EOF =============================================
