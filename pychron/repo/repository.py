@@ -153,8 +153,7 @@ class SFTPRepository(RemoteRepository):
     #        return os.path.isfile(self.get_file_path(n))
 
     def retrieveFile(self, n, out):
-        print n, out
-
+        # print n, out
         def cb(clt):
             clt.get(n, out)
 

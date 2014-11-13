@@ -31,12 +31,12 @@
      });
 
      function refresh() {
-         if(new Date().getTime() - time >= 6000)
+         if(new Date().getTime() - time >= 60000)
              window.location.reload(true);
          else
-             setTimeout(refresh, 1000);
+             setTimeout(refresh, 10000);
     }
-    setTimeout(refresh, 1000);
+    setTimeout(refresh, 10000);
     </script>
 
     <script type="text/javascript" src="https://www.google.com/jsapi"></script>
@@ -45,6 +45,17 @@
       google.setOnLoadCallback(drawCharts);
 
       function drawCharts() {
+       <!-- Draw barchart -->
+          var data = google.visualization.arrayToDataTable([
+          ['Spectrometer', 'Unknowns', 'Airs', 'Blank Unknowns', 'Blank Airs'],
+          % for spec in spectrometer_usages:
+          ['${spec["name"]}', ${spec["nunknowns"]}, ${spec["nairs"]},
+                ${spec["nblank_unknowns"]}, ${spec["nblank_airs"]}, ],
+          % endfor
+          ]);
+          var chart = new google.visualization.BarChart(document.getElementById('bar_div'));
+          chart.draw(data);
+
         <!-- Draw Linechart -->
         var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
 
@@ -95,26 +106,9 @@
         ${make_table(experiments, EXP_ATTRS, 'experiment_div')}
 
         <!-- Draw Analyses -->
-        ${make_table(analyses, ANALYSIS_ATTRS, 'analyses_div')}
-
+        ${make_analyses_table(analyses, ANALYSIS_ATTRS, 'analyses_div')}
       }
     </script>
-    <script type="text/javascript">
-     var time = new Date().getTime();
-     $(document.body).bind("mousemove keypress", function(e) {
-         time = new Date().getTime();
-     });
-
-     function refresh() {
-         if(new Date().getTime() - time >= 6000)
-             window.location.reload(true);
-         else
-             setTimeout(refresh, 1000);
-     }
-
-     setTimeout(refresh, 1000);
-    </script>
-
   </head>
   <body>
      <table>
@@ -141,7 +135,7 @@
             </td>
         </tr>
     </table>
-
+    <div id="bar_div"></div>
     <div id="chart_div"></div>
     <h2>Experiments</h2>
     <div id="experiment_div"></div>
@@ -168,8 +162,54 @@ var data = new google.visualization.DataTable();
         ]);
 
         var table = new google.visualization.Table(document.getElementById('${tag}'));
-        table.draw(data, {showRowNumber: true,
-                         textStyle: { color: '#FF0000',
-                   fontName: 'Arial',
-                   fontSize: '8' }});
+        table.draw(data, {showRowNumber: true});
+</%def>
+
+<%def name="make_analyses_table(items, attrs, tag)">
+
+        var data = new google.visualization.DataTable();
+
+        % for h, attr in attrs:
+        data.addColumn('string', '${h}')
+        % endfor
+
+
+        var cssClassNames = {
+    'headerRow': 'italic-darkblue-font large-font bold-font',
+    'tableRow': '',
+    'oddTableRow': 'beige-background',
+    'selectedTableRow': 'orange-background large-font',
+    'hoverTableRow': '',
+    'headerCell': 'gold-border',
+    'tableCell': '',
+    'rowNumberCell': 'underline-blue-font'};
+        <%
+            n=len(items)
+        %>
+        data.addRows(${n})
+
+        % for i,item in enumerate(items):
+            % for j, (h,attr) in enumerate(attrs):
+            % if item['mass_spectrometer'].lower()=='jan':
+        data.setCell(${i},${j},'${item[attr]}','${item[attr]}', {'style': 'background-color: lightblue;'})
+            % elif item['mass_spectrometer'].lower()=='obama':
+        data.setCell(${i},${j},'${item[attr]}','${item[attr]}', {'style': 'background-color: lightcoral;'})
+            % else:
+        data.setCell(${i},${j},'${item[attr]}','${item[attr]}', {'style': 'background-color: rgba(255, 93, 16, 0.67);'})
+            % endif
+            % endfor
+        % endfor
+        <%doc>
+        data.addRows([
+        % for item in items:
+            [\
+            % for h, attr in attrs:
+'${item[attr]}',\
+            % endfor
+],
+        % endfor
+        ]);
+        </%doc>
+        var table = new google.visualization.Table(document.getElementById('${tag}'));
+        table.draw(data, {showRowNumber: true, allowHtml: true});
 </%def>
