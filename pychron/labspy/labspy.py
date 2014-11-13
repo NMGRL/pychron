@@ -253,19 +253,20 @@ if __name__ == '__main__':
         def __init__(self):
             self.spec = Spec()
 
-    for i in range(4):
-        exp = Exp()
-        exp.name='Experiment {:02n}'.format(i)
-        l.add_experiment(exp)
-        for j in range(2):
-            a = Ans()
-            a.spec.mass_spectrometer = exp.mass_spectrometer
-            a.spec.experiment_name = exp.name
-            a.spec.extract_device = exp.extract_device
-            l.add_run(a)
-            print 'add run'
+    # for i in range(4):
+    i=0
+    exp = Exp()
+    exp.name='Experiment {:02n}'.format(i)
+    l.add_experiment(exp)
+    for j in range(2):
+        a = Ans()
+        a.spec.mass_spectrometer = exp.mass_spectrometer
+        a.spec.experiment_name = exp.name
+        a.spec.extract_device = exp.extract_device
+        l.add_run(a)
+        print 'add run'
 
-        time.sleep(1)
+    time.sleep(1)
 
 # ============= EOF =============================================
     # def _labspy_root_changed(self, new):

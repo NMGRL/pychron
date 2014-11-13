@@ -109,6 +109,15 @@
         ${make_analyses_table(analyses, ANALYSIS_ATTRS, 'analyses_div')}
       }
     </script>
+    <script>
+        function update_date(){
+         var t = new Date();
+         var cd = t.toLocaleDateString()
+         var ct = t.toLocaleTimeString()
+          $("#lastrefresh").html('<p> Last Refresh: '+cd+' '+ct+'</p>');
+        }
+        window.onload= update_date;
+    </script>
   </head>
   <body>
      <table>
@@ -124,7 +133,13 @@
             </td>
         </tr>
     </table>
-    <p>Last Update: ${last_update}</p>
+    <table>
+        <tr>
+            <td><p>Last Update: 2014-11-13T10:16:36.057995</p></td>
+            <td></td>
+            <td><p><div id="lastrefresh"></div><p></td>
+        </tr>
+    </table>
     <table>
         <tr>
             <td>
