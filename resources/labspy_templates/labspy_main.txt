@@ -1,0 +1,175 @@
+<%
+ ANALYSIS_ATTRS=[('Experiment', 'experiment_name'),
+                 ('Date','date'),
+                 ('RunID','record_id'),('Project','project'),('Sample','sample'),
+                 ('Type', 'analysis_type'),
+                 ('Extraction','extraction_script'),
+                 ('Position','position'),
+                 ('Extract Value', 'extract_value'),
+                 ('Duration','duration'),
+                 ('Cleanup','cleanup'),
+                 ('Measurement', 'measurement_script')
+                 ]
+ EXP_ATTRS = [('Name','name'), ('Spectrometer', 'mass_spectrometer'),
+              ('Extraction Device', 'extract_device'), ('User','username'),
+              ('Status','status'), ('Date','start_timestamp')]
+%>
+
+<html>
+  <head>
+    <style>
+    p {background-color: lightblue;
+       font-family: "Helvetica";}
+    h1 {font-family: "Helvetica";}
+    h2 {font-family: "Helvetica";}
+    </style>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script>
+     var time = new Date().getTime();
+     $(document.body).bind("mousemove keypress", function(e) {
+         time = new Date().getTime();
+     });
+
+     function refresh() {
+         if(new Date().getTime() - time >= 6000)
+             window.location.reload(true);
+         else
+             setTimeout(refresh, 1000);
+    }
+    setTimeout(refresh, 1000);
+    </script>
+
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+      google.load("visualization", "1", {packages:["table","corechart"]});
+      google.setOnLoadCallback(drawCharts);
+
+      function drawCharts() {
+        <!-- Draw Linechart -->
+        var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+
+
+        var data = google.visualization.arrayToDataTable([
+        ['Timestamp','Extract Value'],
+        % for ai in reversed(analyses):
+        ['${ai['runtime']}',${ai['extract_value']}],
+        % endfor
+        ]);
+        var options = {
+          title: 'Time Series'
+        };
+        chart.draw(data, options);
+
+        <!-- Draw Spectrometer Usage -->
+        var data = google.visualization.arrayToDataTable([
+          ['Spectrometer', 'Usage'],
+          % for spec in spectrometer_usages:
+          ['${spec["name"]}', ${spec["usage"]}],
+          % endfor
+        ]);
+
+        var options = {
+          title: 'Spectrometer Usage'
+        };
+
+        var chart = new google.visualization.PieChart(document.getElementById('spectrometer_usage_div'));
+        chart.draw(data, options);
+
+        <!-- Draw Extract Device Usage -->
+                var data = google.visualization.arrayToDataTable([
+          ['Device', 'Usage'],
+          % for dev in extract_device_usages:
+          ['${dev["name"]}', ${dev["usage"]}],
+          % endfor
+        ]);
+
+        var options = {
+          title: 'Extract Device Usage'
+        };
+
+        var chart = new google.visualization.PieChart(document.getElementById('extract_usage_div'));
+        chart.draw(data, options);
+
+
+       <!-- Draw Experiments -->
+        ${make_table(experiments, EXP_ATTRS, 'experiment_div')}
+
+        <!-- Draw Analyses -->
+        ${make_table(analyses, ANALYSIS_ATTRS, 'analyses_div')}
+
+      }
+    </script>
+    <script type="text/javascript">
+     var time = new Date().getTime();
+     $(document.body).bind("mousemove keypress", function(e) {
+         time = new Date().getTime();
+     });
+
+     function refresh() {
+         if(new Date().getTime() - time >= 6000)
+             window.location.reload(true);
+         else
+             setTimeout(refresh, 1000);
+     }
+
+     setTimeout(refresh, 1000);
+    </script>
+
+  </head>
+  <body>
+     <table>
+        <tr>
+            <td width="400px">
+                <img src="images/RossLabsLogo.png" style="width:200px" >
+            </td>
+            <td>
+                <h1>NMGRL Labspy</h1>
+            </td>
+            <td width="400px">
+                <img src="images/NMGRL_logo.png" style="width:200px; float: right" >
+            </td>
+        </tr>
+    </table>
+    <p>Last Update: ${last_update}</p>
+    <table>
+        <tr>
+            <td>
+                <div id="spectrometer_usage_div"></div>
+            </td>
+            <td>
+                <div id="extract_usage_div"></div>
+            </td>
+        </tr>
+    </table>
+
+    <div id="chart_div"></div>
+    <h2>Experiments</h2>
+    <div id="experiment_div"></div>
+    <h2>Analyses</h2>
+    <div id="analyses_div"></div>
+  </body>
+</html>
+
+<%def name="make_table(items, attrs, tag)">
+var data = new google.visualization.DataTable();
+
+        % for h, attr in attrs:
+        data.addColumn('string', '${h}')
+        % endfor
+
+        data.addRows([
+        % for item in items:
+            [\
+            % for h, attr in attrs:
+'${item[attr]}',\
+            % endfor
+],
+        % endfor
+        ]);
+
+        var table = new google.visualization.Table(document.getElementById('${tag}'));
+        table.draw(data, {showRowNumber: true,
+                         textStyle: { color: '#FF0000',
+                   fontName: 'Arial',
+                   fontSize: '8' }});
+</%def>

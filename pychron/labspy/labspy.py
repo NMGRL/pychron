@@ -18,6 +18,7 @@ import random
 import time
 
 from pychron.core.ui import set_qt
+from pychron.paths import paths
 
 
 set_qt()
@@ -190,10 +191,11 @@ class LabspyUpdater(Loggable):
 
     @property
     def template_path(self):
-        root = self.repo.path
-        path = os.path.join(root, '_templates', 'labspy_main.txt')
-        return path
-
+        for root in paths.labspy_template_search_path:
+            for di in ('', 'templates'):
+                path = os.path.join(root, di, 'labspy_main.txt')
+                if os.path.isfile(path):
+                    return path
     @property
     def ans_ctx_path(self):
         root = self.repo.path

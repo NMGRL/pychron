@@ -50,7 +50,7 @@ class Paths():
     # _dir suffix ensures the path is checked for existence
     root_dir = root
     stable_root = None
-
+    labspy_template_search_path = None
     icon_search_path = None
     #==============================================================================
     # #database
@@ -158,6 +158,7 @@ class Paths():
         self.app_resources = app_rec
         self.set_icon_search_path()
         self.set_sound_search_path()
+        self.set_labspy_template_search_path()
 
     def set_icon_search_path(self):
         self.icon_search_path = [self.icons,
@@ -166,6 +167,10 @@ class Paths():
     def set_sound_search_path(self):
         self.sound_search_path = [self.sounds,
                                   self.app_resources]
+
+    def set_labspy_template_search_path(self):
+        self.labspy_template_search_path = [self.labspy_templates,
+                                     self.app_resources]
 
     def build(self, version):
         self.version = version
@@ -182,7 +187,7 @@ class Paths():
         self.resources = join(path.dirname(path.dirname(__file__)), 'resources')
         self.icons = join(self.resources, 'icons')
         self.splashes = join(self.resources, 'splashes')
-
+        self.labspy_templates = join(self.resources, 'labspy_templates')
         self.abouts = join(self.resources, 'abouts')
         self.sounds = join(self.resources, 'sounds')
         self.bullets = join(self.resources, 'bullets')
