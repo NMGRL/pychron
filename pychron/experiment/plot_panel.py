@@ -101,7 +101,8 @@ class PlotPanel(Loggable):
     plot_title = Str
 
     counts = Int
-    ncounts = Property(CInt(enter_set=True, auto_set=False), depends_on='_ncounts')
+    ncounts = Property(CInt(enter_set=True, auto_set=False),
+                       depends_on='_ncounts')
     _ncounts = CInt
 
     ncycles = Property(CInt(enter_set=True, auto_set=False),
@@ -212,7 +213,7 @@ class PlotPanel(Loggable):
             #update ncounts
             integration_time = 1.1
             counts = sum([ci * integration_time + s for _h, ci, s in self.hops]) * v
-            self.ncounts = counts
+            self._ncounts = counts
 
     def _graph_factory(self):
         return StackedRegressionGraph(container_dict=dict(padding=5, bgcolor='gray',

@@ -1,11 +1,11 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,14 +17,12 @@
 #============= enthought library imports =======================
 
 #============= standard library imports ========================
+from PySide import QtCore
 #============= local library imports  ==========================
 
 """
     http://stackoverflow.com/questions/10991991/pyside-easier-way-of-updating-gui-from-another-thread
 """
-
-from PySide import QtCore
-from PySide.QtGui import QColor
 
 
 class InvokeEvent(QtCore.QEvent):
@@ -48,17 +46,19 @@ _invoker = Invoker()
 
 
 def invoke_in_main_thread(fn, *args, **kwargs):
-#     invoker = Invoker()
+    #     invoker = Invoker()
     QtCore.QCoreApplication.postEvent(_invoker,
                                       InvokeEvent(fn, *args, **kwargs))
     # QtCore.QCoreApplication.processEvents()
     # does this resolve the GUI responsiveness issue during when screen goes to sleep/screen saver
     # QtCore.QCoreApplication.sendEvent(_invoker, InvokeEvent(fn, *args, **kwargs))
 
+
 #def invoke_in_main_thread2(fn, *args, **kw):
 #    _FutureCall(1, fn, *args, **kw)
 
 def convert_color(color, output='rgbF'):
+    from PySide.QtGui import QColor
     if isinstance(color, QColor):
         rgb = color.toTuple()
 
@@ -68,5 +68,15 @@ def convert_color(color, output='rgbF'):
     elif output == 'rgbaF':
         return map(tofloat, rgb)
 
+
+def wake_screen():
+    import random, time
+    from PySide.QtGui import QCursor
+
+    for i in range(5):
+        x, y = random.randint(0, 300), random.randint(0, 300)
+        q = QCursor()
+        q.setPos(x, y)
+        time.sleep(0.1)
 
 #============= EOF =============================================

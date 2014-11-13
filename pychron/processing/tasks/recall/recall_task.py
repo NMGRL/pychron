@@ -28,8 +28,9 @@ from pychron.globals import globalv
 from pychron.processing.tasks.actions.processing_actions import ConfigureRecallAction
 from pychron.processing.tasks.browser.util import browser_pane_item
 from pychron.processing.tasks.recall.actions import AddIsoEvoAction, AddDiffAction, EditDataAction, RatioEditorAction, \
-    SummaryLabnumberAction, CalculationViewAction, SummaryProjectAction, ContextViewAction
+    SummaryLabnumberAction, CalculationViewAction, SummaryProjectAction, ContextViewAction, DatasetAction
 from pychron.processing.tasks.recall.context_editor import ContextEditor
+from pychron.processing.tasks.recall.dataset_recall_editor import DatasetRecallEditor
 from pychron.processing.tasks.recall.diff_editor import DiffEditor
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
 from pychron.processing.tasks.analysis_edit.panes import ControlsPane
@@ -47,6 +48,7 @@ class RecallTask(AnalysisEditTask):
         SToolBar(AddIsoEvoAction(),
                  AddDiffAction(),
                  EditDataAction(),
+                 DatasetAction(),
                  ConfigureRecallAction(),
                  CalculationViewAction(),
                  RatioEditorAction(),
@@ -58,17 +60,15 @@ class RecallTask(AnalysisEditTask):
     _append_replace_analyses_enabled = False
     recaller = Instance('pychron.processing.tasks.recall.mass_spec_recaller.MassSpecRecaller', ())
 
-    # def activated(self):
-    #     print 'sdfasfdfsad'
-        # super(RecallTask, self).activated()
-        #
-        # self._preference_binder('pychron.massspec.database',
-        #                         ('username','name','password','host'),
-        #                         obj=self.recaller.dbconn_spec)
-        # print 'asdfsfd', (self.dbconn_spec.name,
-        #  self.dbconn_spec.username,
-        #  self.dbconn_spec.password,
-        #  self.dbconn_spec.host)
+    def new_dataset(self):
+        records = self._get_selected_analyses()
+        if records:
+            ans = self.manager.make_analyses(records, calculate_age=True)
+            editor = DatasetRecallEditor(models=ans)
+            editor.tool.available_names = [ri.record_id for ri in ans]
+            editor.set_items(ans[0])
+
+            self._open_editor(editor)
 
     def open_ratio_editor(self):
         if self.has_active_editor():
@@ -161,23 +161,6 @@ class RecallTask(AnalysisEditTask):
                 editor.load()
                 self._open_editor(editor)
 
-    # def append_unknown_analyses(self, ans):
-    #
-    #     for i, ai in enumerate(ans):
-    #         if not (i == 0 and self.active_editor):
-    #             self.new_editor()
-    #         self._set_selected_analysis(ai)
-    #
-    # def replace_unkonwn_analyses(self, ans):
-    #     for ei in self.editor_area.editors:
-    #         ei.close()
-    #
-    #     self.append_unknown_analyses(ans)
-    #
-    # def new_editor(self):
-    #     editor = RecallEditor()
-    #     self._open_editor(editor)
-
     def edit_data(self):
         if not self.has_active_editor():
             return
@@ -253,52 +236,5 @@ class RecallTask(AnalysisEditTask):
             left=HSplitter(Tabbed(
                 browser_pane_item()),
                            PaneItem('pychron.processing.controls')))
-        #============= EOF =============================================
-        # def activated(self, load=False):
-        # super(RecallTask, self).activated()
-        # self.recall([DummyRecord('f4d301bd-a217-42a2-b4c9-c1696089acb2')])
 
-        #     self.load_projects()
-        #     # if load:
-        #         # editor = RecallEditor()
-        #         # self._open_editor(editor)
-        #
-        #         #db = self.manager.db
-        #         #db.selector.limit = 100
-        #         #db.selector.load_recent()
-        #
-        #     super(RecallTask, self).activated()
-        # def _set_selected_analysis(self, an):
-        #     if an and isinstance(self.active_editor, RecallEditor):
-        #         if hasattr(an, '__iter__'):
-        #             an=an[0]
-        #
-        #         an = self.manager.make_analysis(an, calculate_age=True)
-        #         self.active_editor.analysis_view = an.analysis_view
-        #         self.controls_pane.tool = an.analysis_view.selection_tool
-        #         self.active_editor.model = an
-        # def _active_editor_changed(self):
-        #     if self.active_editor:
-        #         if hasattr(self.active_editor, 'analysis_view'):
-        #             self.controls_pane.tool = self.active_editor.analysis_view.selection_tool
-        #         else:
-        #             self.controls_pane.tool = self.active_editor.tool
-
-        # def add_iso_evo(self, name=None, rec=None):
-        #     if rec is None:
-        #         if self.active_editor is not None:
-        #             rec = self.active_editor.model
-        #             name = self.active_editor.name
-        #
-        #     if rec is None:
-        #         return
-        #
-        #     from pychron.processing.tasks.isotope_evolution.isotope_evolution_editor import IsotopeEvolutionEditor
-        #     name='IsoEvo {}'.format(name)
-        #     editor=self.get_editor(name)
-        #     if editor:
-        #         self.activate_editor(editor)
-        #     else:
-        #         ieditor = IsotopeEvolutionEditor(name=name,processor=self.manager)
-        #         ieditor.set_items([rec])
-        #         self.editor_area.add_editor(ieditor)
+#============= EOF =============================================

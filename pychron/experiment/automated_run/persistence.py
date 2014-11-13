@@ -101,6 +101,8 @@ class AutomatedRunPersister(Loggable):
 
     cdd_ic_factor = Any
 
+    whiff_result = None
+
     _db_extraction_id = None
     _temp_analysis_buffer = None
 
@@ -318,9 +320,11 @@ class AutomatedRunPersister(Loggable):
                                     aliquot=aliquot,
                                     step=self.run_spec.step,
                                     increment=self.run_spec.increment,
-                                    comment=self.run_spec.comment)
+                                    comment=self.run_spec.comment,
+                                    whiff_result=self.whiff_result)
                 sess.flush()
                 self.run_spec.analysis_dbid = a.id
+                self.run_spec.analysis_timestamp = a.analysis_timestamp
 
                 experiment = db.get_experiment(self.experiment_identifier, key='id')
                 if experiment is not None:

@@ -16,6 +16,7 @@
 from apptools.preferences.preference_binding import bind_preference
 
 #============= enthought library imports =======================
+import shutil
 from traits.api import HasTraits, List, Str, Dict, Float, Bool
 from traitsui.api import View, Controller, TableEditor, UItem
 from traitsui.table_column import ObjectColumn
@@ -282,7 +283,11 @@ class MagnetFieldTable(Loggable):
                 return
 
             archive = GitArchive(self.mftable_archive_path)
-            archive.add(p, msg=message)
+
+            #copy
+            dest = os.path.join(self.mftable_archive_path, os.path.basename(p))
+            shutil.copyfile(p, dest)
+            archive.add(dest, msg=message)
             archive.close()
             self.info('locally archiving mftable')
 

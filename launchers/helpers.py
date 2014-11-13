@@ -31,10 +31,10 @@ def entry_point(modname, klass, setup_version_id='', debug=False):
                   setup_version_id, debug=debug)
 
     from pychron.core.helpers.logger_setup import logging_setup
-    from pychron.paths import build_directories, paths
+    from pychron.paths import build_directories
 
     # build directories
-    build_directories(paths)
+    build_directories()
 
     # setup logging. set a basename for log files and logging level
     logging_setup('pychron', level='DEBUG')

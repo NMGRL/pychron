@@ -347,7 +347,6 @@ class ArArAge(Loggable):
         if name in self.isotopes:
             iso = self.isotopes[name]
         else:
-            print 'set isotope detector', name
             iso = Isotope(name=name)
             self.isotopes[name] = iso
 

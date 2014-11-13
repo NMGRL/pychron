@@ -293,7 +293,7 @@ class AutomatedRunFactory(PersistenceLoggable):
                    'duration', 'beam_diameter', 'ramp_duration', 'overlap',
                    'pattern', 'labnumber', 'position',
                    'weight', 'comment', 'template',
-                   'use_simple_conditionals', 'conditionals_path')
+                   'use_simple_truncation', 'conditionals_path')
 
     _no_clear_labnumber = False
 
@@ -997,7 +997,7 @@ class AutomatedRunFactory(PersistenceLoggable):
 
         return ['Step Heat Template', LINE_STR] + temps
 
-    def _get_conditionalss(self):
+    def _get_conditionals(self):
         p = paths.conditionals_dir
         extension = '.yaml'
         temps = list_directory(p, extension, remove_extension=True)
@@ -1104,7 +1104,7 @@ class AutomatedRunFactory(PersistenceLoggable):
 
     def _conditionals_path_changed(self, new):
         if not new == NULL_STR:
-            self.use_simple_truncation = False
+            self.use_simple_con = False
 
     @on_trait_change('[measurement_script, post_measurement_script, '
                      'post_equilibration_script, extraction_script]:edit_event')

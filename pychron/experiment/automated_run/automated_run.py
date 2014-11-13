@@ -144,6 +144,12 @@ class AutomatedRun(Loggable):
     # ===============================================================================
     # pyscript interface
     # ===============================================================================
+    def py_whiff(self, ncounts, conditionals, starttime, starttime_offset, series=0, fit_series=0):
+        return self._whiff(ncounts, conditionals, starttime, starttime_offset, series, fit_series)
+
+    def py_reset_data(self):
+        self.persister.pre_measurement_save()
+
     def py_set_integration_time(self, v):
         self.set_integration_time(v)
 
@@ -234,8 +240,6 @@ class AutomatedRun(Loggable):
 
         self.persister.build_tables(gn, self._active_detectors)
 
-        self._add_conditionals()
-
         self.multi_collector.is_baseline = False
         self.multi_collector.fit_series_idx = fit_series
 
@@ -252,6 +256,9 @@ class AutomatedRun(Loggable):
                                series,
                                check_conditionals, sc, obj)
         return result
+
+    def py_post_equilibration(self):
+        self.do_post_equilibration()
 
     def py_equilibration(self, eqtime=None, inlet=None, outlet=None,
                          do_post_equilibration=True,
@@ -517,9 +524,9 @@ class AutomatedRun(Loggable):
     def py_clear_actions(self):
         self.action_conditionals = []
 
-    #===============================================================================
+    # ===============================================================================
     # run termination
-    #===============================================================================
+    # ===============================================================================
     def cancel_run(self, state='canceled', do_post_equilibration=True):
         """
             terminate the measurement script immediately
@@ -598,11 +605,15 @@ class AutomatedRun(Loggable):
         self.collector.stop()
 
     def start(self):
-
         if self.experiment_executor.set_integration_time_on_start:
             dit = self.experiment_executor.default_integration_time
-            self.debug('Setting default integration. t={}'.format(dit))
+            self.info('Setting default integration. t={}'.format(dit))
             self.set_integration_time(dit)
+
+        if self.experiment_executor.send_config_before_run:
+            self.info('Sending spectrometer configuration')
+            man = self.spectrometer_manager
+            man.send_configuration()
 
         if self.monitor is None:
             return self._start()
@@ -1052,6 +1063,12 @@ anaylsis_type={}
 
         self.info('Start automated run {}'.format(self.runid))
 
+        try:
+            self._add_conditionals()
+        except BaseException, e:
+            self.warning('Failed adding conditionals {}'.format(e))
+            return
+
         self.measuring = False
         self.truncated = False
 
@@ -1142,35 +1159,52 @@ anaylsis_type={}
                     continue
 
                 var = getattr(self, '{}_conditionals'.format(var))
-                for ti in yl:
-                    cx = conditional_from_dict(ti, klass)
-                    var.append(cx)
+                conds = [conditional_from_dict(ti, klass) for ti in yl]
+                conds = [c for c in conds if c is not None]
+                if conds:
+                    var.extend(conds)
+                    # for ti in yl:
+                    #     cx =
+                    # var.append(cx)
 
     def _conditional_appender(self, name, cd, klass):
+        if not self.arar_age:
+            self.warning('No ArArAge to use for conditional testing')
+            return
+
         attr = cd.get('attr')
         if not attr:
             self.debug('not attr for this {} cd={}'.format(name, cd))
             return
 
-        comp = cd.get('comp')
-        if not comp:
-            self.debug('not comp for this {} cd={}'.format(name, cd))
-            return
-        start_count = cd.get('start_count')
-        if start_count is None:
-            start_count = 50
-            self.debug('defaulting to start_count={}'.format(start_count))
-
-        self.info('adding {} {} {} {}'.format(name, attr, comp, start_count))
+        #for 2.0.4 backwards compatiblity
+        # comp = dictgetter(cd, ('teststr','check','comp'))
+        # if not comp:
+        #     self.debug('not teststr for this conditional "{}" cd={}'.format(name, cd))
+        #     return
+        #
+        # #for 2.0.4 backwards compatiblity
+        # start_count = dictgetter(cd, ('start','start_count'))
+        # if start_count is None:
+        #     start_count = 50
+        #     self.debug('defaulting to start_count={}'.format(start_count))
+        #
+        # self.info('adding {} {} {} {}'.format(name, attr, comp, start_count))
 
         if attr == 'age' and self.spec.analysis_type not in ('unknown', 'cocktail'):
-            self.debug()
+            self.debug('not adding because analysis_type not unknown or cocktail')
 
         if not self.arar_age.has_attr(attr):
             self.warning('invalid {} attribute "{}"'.format(name, attr))
         else:
             obj = getattr(self, '{}_conditionals'.format(name))
-            obj.append(conditional_from_dict(cd, klass))
+            con = conditional_from_dict(cd, klass)
+            if con:
+                self.info(
+                    'adding {} attr="{}" test="{}" start="{}"'.format(name, con.attr, con.teststr, con.start_count))
+                obj.append(con)
+            else:
+                self.warning('Failed adding {}, {}'.format(name, cd))
 
     def _refresh_scripts(self):
         for name in SCRIPT_KEYS:
@@ -1332,23 +1366,27 @@ anaylsis_type={}
                             klass = klass_dict[kind]
                             for i in items:
                                 try:
+                                    #trim off s
+                                    if kind.endswith('s'):
+                                        kind = kind[:-1]
+
                                     self._conditional_appender(kind, i, klass)
-                                except BaseException:
-                                    self.debug('Failed adding {}. cd={}'.format(kind, i))
+                                except BaseException, e:
+                                    self.debug('Failed adding {}. excp="{}", cd={}'.format(kind, e, i))
 
                         except KeyError:
                             self.debug('Invalid conditional kind="{}"'.format(kind))
-                    #
-                    #     for c in doc:
-                    #         try:
-                    #             attr = c['attr']
-                    #             comp = c['check']
-                    #             start = c['start']
-                    #             freq = c.get('frequency', 1)
-                    #             acr = c.get('abbreviated_count_ratio', 1)
-                    #             self.py_add_truncation(attr, comp, int(start), freq, acr)
-                    #         except BaseException:
-                    #             self.warning('Failed adding truncation. {}'.format(c))
+                            #
+                            #     for c in doc:
+                            #         try:
+                            #             attr = c['attr']
+                            #             comp = c['check']
+                            #             start = c['start']
+                            #             freq = c.get('frequency', 1)
+                            #             acr = c.get('abbreviated_count_ratio', 1)
+                            #             self.py_add_truncation(attr, comp, int(start), freq, acr)
+                            #         except BaseException:
+                            #             self.warning('Failed adding truncation. {}'.format(c))
 
             else:
                 try:
@@ -1498,6 +1536,20 @@ anaylsis_type={}
                 yield spec.get_intensities(tagged=True)
 
         return gen()
+
+    def _whiff(self, ncounts, conditionals, starttime, starttime_offset, series, fit_series):
+        """
+        conditionals: list of dicts
+        """
+
+        conds = [conditional_from_dict(ci, ActionConditional) for ci in conditionals]
+        self.collector.set_temporary_conditionals(conds)
+        self.py_data_collection(None, ncounts, starttime, starttime_offset, series, fit_series)
+        self.collector.clear_temporary_conditionals()
+        mresult = self.collector.measurement_result
+        self.persister.whiff_result = mresult
+
+        return self.collector.measurement_result
 
     def _peak_hop(self, ncycles, ncounts, hops, grpname, data_writer,
                   starttime, starttime_offset, series,

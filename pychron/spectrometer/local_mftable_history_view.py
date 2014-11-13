@@ -16,11 +16,28 @@
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Float, List
 from traitsui.api import View, UItem, VGroup, HSplit, TabularEditor
+from traitsui.editors import TextEditor
+from traitsui.group import HGroup
 from traitsui.tabular_adapter import TabularAdapter
-#============= standard library imports ========================
+# ============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.git_archive.history import GitArchiveHistory, GitArchiveHistoryView, \
-    left_group, right_group, DiffView
+from pychron.git_archive.history import GitArchiveHistory, GitArchiveHistoryView, DiffView
+
+
+def left_group():
+    return VGroup(HGroup(UItem('left_message', style='readonly'),
+                         UItem('left_date', style='readonly')),
+                  UItem('left',
+                        style='custom',
+                        editor=TextEditor(read_only=True)))
+
+
+def right_group():
+    return VGroup(HGroup(UItem('right_message', style='readonly'),
+                         UItem('right_date', style='readonly')),
+                  UItem('right',
+                        style='custom',
+                        editor=TextEditor(read_only=True)))
 
 
 class ItemAdapter(TabularAdapter):

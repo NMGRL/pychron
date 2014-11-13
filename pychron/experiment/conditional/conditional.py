@@ -34,12 +34,13 @@ ACTIVE_REGEX = re.compile(r'[\w\d]+\.inactive')
 
 # Functions
 def make_func_regex(r):
-    return re.compile(r'(not ){{0,1}}{}'.format(r))
+    reg = r'(not ){{0,1}}{}'.format(r)
+    return re.compile(reg)
 
-#match average(ar##)
+# match average(ar##)
 AVG_REGEX = make_func_regex('average\([A-Za-z]+\d*\)')
 # AVG_REGEX = re.compile(r'average\([A-Za-z]+\d*\)')
-#match max(ar##)
+# match max(ar##)
 MAX_REGEX = make_func_regex(r'max\([A-Za-z]+\d*\)')
 # MAX_REGEX = re.compile(r'max\([A-Za-z]+\d*\)')
 #match min(ar##)
@@ -72,24 +73,45 @@ RATIO_REGEX = re.compile(r'\d+/\d+')
 ARGS_REGEX = re.compile(r'\(.+\)')
 
 
+def dictgetter(d, attrs, default=None):
+    if not isinstance(attrs, tuple):
+        attrs = (attrs, )
+
+    for ai in attrs:
+        try:
+            return d[ai]
+        except KeyError:
+            pass
+    else:
+        return default
+
+
 def conditional_from_dict(cd, klass):
     if isinstance(klass, str):
         klass = globals()[klass]
 
-    try:
-        teststr = cd['teststr']
-    except KeyError:
-        #for pre 2.0.5 conditionals files
-        teststr = cd.get('check')
-        if not teststr:
-            return
+    # try:
+    #     teststr = cd['teststr']
+    # except KeyError:
+    #     #for pre 2.0.5 conditionals files
+    #     teststr = cd.get('check')
+    #     if not teststr:
+    #         return
 
-    attr = cd.get('attr', '')
-    start = cd.get('start', 30)
+    attr = cd.get('attr')
+    if not attr:
+        return
+
+    teststr = dictgetter(cd, ('teststr', 'comp', 'check'))
+    if not teststr:
+        return
+
+    start = dictgetter(cd, ('start', 'start_count'), default=50)
     freq = cd.get('frequency', 5)
     win = cd.get('window', 0)
     mapper = cd.get('mapper', '')
-    cx = klass(attr, teststr, start_count=start, frequency=freq, window=win, mapper=mapper)
+    action = cd.get('action')
+    cx = klass(attr, teststr, start_count=start, frequency=freq, window=win, mapper=mapper, action=action)
     return cx
 
 
@@ -107,6 +129,7 @@ def remove_attr(s):
 class BaseConditional(Loggable):
     attr = Str
     teststr = Str
+    start_count = Int
 
     def to_string(self):
         raise NotImplementedError
@@ -136,7 +159,6 @@ class BaseConditional(Loggable):
 
 
 class AutomatedRunConditional(BaseConditional):
-    start_count = Int
     frequency = Int
     message = Str
 

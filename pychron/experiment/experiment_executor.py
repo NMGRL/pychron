@@ -15,11 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from datetime import datetime
+
 from traits.api import Event, Button, String, Bool, Enum, Property, Instance, Int, List, Any, Color, Dict, \
     on_trait_change, Long, Float
 from pyface.constant import CANCEL, YES, NO
 from pyface.timer.do_later import do_after
 from traits.trait_errors import TraitError
+
 # ============= standard library imports ========================
 from threading import Thread, Event as Flag, Lock, currentThread
 import weakref
@@ -40,6 +43,7 @@ from pychron.experiment.utilities.conditionals import test_queue_conditionals_na
 from pychron.experiment.utilities.conditionals_results import reset_conditional_results
 from pychron.experiment.utilities.identifier import convert_extract_device
 from pychron.globals import globalv
+from pychron.labspy.labspy import LabspyUpdater
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR, DEFAULT_INTEGRATION_TIME
 from pychron.pyscripts.pyscript_runner import RemotePyScriptRunner, PyScriptRunner
@@ -55,7 +59,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     console_bgcolor = 'black'
     # ===========================================================================
     # control
-    #===========================================================================
+    # ===========================================================================
     show_conditionals_button = Button('Show Conditionals')
     start_button = Event
     stop_button = Event
@@ -98,6 +102,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     extracting_run = Instance('pychron.experiment.automated_run.automated_run.AutomatedRun')
 
     datahub = Instance(Datahub)
+    labspy = Instance(LabspyUpdater, ())
     #===========================================================================
     #
     #===========================================================================
@@ -113,9 +118,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     #===========================================================================
     auto_save_delay = Int(30)
     use_auto_save = Bool(True)
+    use_labspy = Bool(True)
     min_ms_pumptime = Int(30)
     use_automated_run_monitor = Bool(False)
     set_integration_time_on_start = Bool(False)
+    send_config_before_run = Bool(False)
     default_integration_time = Float(DEFAULT_INTEGRATION_TIME)
 
     use_memory_check = Bool(True)
@@ -157,12 +164,15 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         prefid = 'pychron.experiment'
 
-        #auto save
         attrs = ('use_auto_save', 'auto_save_delay',
+                 'use_labspy',
                  'min_ms_pumptime',
                  'set_integration_time_on_start',
+                 'send_config_before_run',
                  'default_integration_time')
         self._preference_binder(prefid, attrs)
+        if self.use_labspy:
+            self._preference_binder(prefid, ('root', 'username', 'host', 'password'), obj=self.labspy.repo)
 
         #colors
         attrs = ('signal_color', 'sniff_color', 'baseline_color')
@@ -355,6 +365,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         # save experiment to database
         self.info('saving experiment "{}" to database'.format(exp.name))
+        exp.start_timestamp = datetime.now().strftime('%m-%d-%Y %H:%M:%S')
+        if self.use_labspy:
+            self.labspy.add_experiment(exp)
 
         self.datahub.add_experiment(exp)
 
@@ -477,6 +490,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if names:
                 self.info('Notifying user group names={}'.format(','.join(names)))
                 self.user_notifier.notify_group(exp, last_runid, self._err_message, addrs)
+        if self.use_labspy:
+            self.labspy.update_experiment(exp, self._err_message)
 
     def _get_group_emails(self, email):
         names, addrs = None, None
@@ -597,6 +612,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         run.finish()
 
         self.wait_group.pop()
+        if self.use_labspy:
+            self.labspy.add_run(run)
 
         mem_log('end run')
 
@@ -1231,11 +1248,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                                      'Post Run Action'):
             return True
 
-        # #check queue actions
-        # exp = self.experiment_queue
-        # if self._action_conditionals(run, exp.queue_actions, 'Checking queue actions',
-        #                              'Queue Action'):
-        #     return True
+            # #check queue actions
+            # exp = self.experiment_queue
+            # if self._action_conditionals(run, exp.queue_actions, 'Checking queue actions',
+            #                              'Queue Action'):
+            #     return True
 
     def _load_default_conditionals(self, term_name, **kw):
         p = get_path(paths.spectrometer_dir, 'default_conditionals', ['.yaml', '.yml'])
@@ -1264,7 +1281,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     self.debug('no {}'.format(term_name))
                     return
                 else:
-                    return [conditional_from_dict(cd, klass) for cd in yl]
+                    conds = [conditional_from_dict(cd, klass) for cd in yl]
+                    return [c for c in conds if c is not None]
 
     def _action_conditionals(self, run, conditionals, message1, message2):
         if conditionals:

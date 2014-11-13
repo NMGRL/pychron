@@ -19,7 +19,6 @@
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import List, Str, Bool, Any, String, \
     on_trait_change, Date, Int, Time, Instance, Button, Property
-
 # ============= standard library imports ========================
 from datetime import datetime, timedelta
 import re
@@ -74,8 +73,6 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     project_visible = Property(depends_on='filter_focus')
 
     analysis_table = Instance(AnalysisTable)
-    # danalysis_table = Instance(AnalysisTable)
-
     analysis_filter = String(enter_set=True, auto_set=False)
 
     irradiations = List  # Property #DelegatesTo('manager')
@@ -86,16 +83,6 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
     auto_select_analysis = Bool(False)
 
-    # use_mass_spectrometers = Bool
-    # mass_spectrometer_includes = List
-    # available_mass_spectrometers = List
-    # mass_spectrometer = Str(DEFAULT_SPEC)
-    # mass_spectrometers = List
-
-    # analysis_type = Str(DEFAULT_AT)
-    # analysis_types = List
-    # extraction_device = Str(DEFAULT_ED)
-    # extraction_devices = List
     start_date = Date
     start_time = Time
 
@@ -103,16 +90,13 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     end_time = Time
 
     datasource_url = String
-    # clear_selection_button = Button
 
     browser_pane = Any
-    # advanced_query = Button
 
     data_selector = Instance(DataSelector)
 
     filter_by_button = Button
     graphical_filter_button = Button
-    # graphical_filtering_max_days = Int
     toggle_view = Button
     toggle_focus = Button
 
@@ -122,8 +106,6 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     initialize_workspace = True
     _top_level_filter = None
     _append_replace_analyses_enabled = True
-
-
 
     def __init__(self, *args, **kw):
         super(BaseBrowserTask, self).__init__(*args, **kw)
@@ -362,14 +344,11 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
     def _activate_sample_browser(self):
         if not self._activated:
-            # self.load_browser_date_bounds()
             self.load_projects()
 
             db = self.manager.db
             with db.session_ctx():
                 self._load_mass_spectrometers()
-            # self._load_analysis_types()
-            # self._load_extraction_devices()
 
             self.datasource_url = db.datasource_url
             self._preference_binder('pychron.browsing',
@@ -377,11 +356,6 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
                                      'reference_hours_padding'),
                                     obj=self.search_criteria)
 
-            # pid = 'pychron.browsing'
-            # bind_preference(self.search_criteria, 'recent_hours', '{}.recent_hours'.format(pid))
-            # bind_preference(self.search_criteria, 'graphical_filtering_max_days', '{}.graphical_filtering_max_days'.format(pid))
-            # bind_preference(self.search_criteria, 'graphical_filtering_max_days', '{}.graphical_filtering_max_days'.format(pid))
-            # bind_preference(self.search_criteria, 'bin_tol_hrs', '{}.bin_tol_hrs'.format(pid))
             self.load_browser_selection()
 
         self.browser_pane.name = 'Browser/Sample'
@@ -431,11 +405,6 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         self.sample_tabular_adapter = self.browser_pane.sample_tabular_adapter
         return self.browser_pane
 
-    # def _ok_query(self):
-    # ms = self.mass_spectrometer not in (DEFAULT_SPEC, 'None')
-    # at = self.analysis_type not in (DEFAULT_AT, 'None')
-    # return ms and at
-
     def _ok_ed(self):
         return self.extraction_device not in (DEFAULT_ED, 'None')
 
@@ -447,10 +416,6 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
     def _graphical_filter_hook(self, ans, is_append):
         pass
-
-    # def _browser_options_hook(self, d):
-    # d['irradiation_enabled'] = self.irradiation_enabled
-    # d['use_focus_switching'] = self.use_focus_switching
 
     def _selected_projects_change_hook(self, names):
         if not self._top_level_filter:
@@ -674,49 +639,6 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
                 self.refresh_samples()
         else:
             self.samples = []
-
-            # def _find_by_irradiation_fired(self):
-            # if not (self.level and self._activated):
-            # return
-            # self.refresh_samples()
-
-            # atypes=self.analysis_include_types
-            # if self.use_analysis_type_filtering and not atypes:
-            # self.information_dialog('Select analysis types to include')
-            # return
-            # if not atypes:
-            # atypes =('monitors','unknown')
-            #
-            # sam = []
-            # man = self.manager
-            # db = self.db
-            # with db.session_ctx():
-            # level = man.get_level(self.level)
-            # if level:
-            # refs, unks = man.group_level(level)
-            # xs = []
-            # if 'monitors' in atypes:
-            #             xs.extend(refs)
-            #         if 'unknown' in atypes:
-            #             xs.extend(unks)
-            #         if xs:
-            #             lns = [x.identifier for x in xs]
-            #             sam = [LabnumberRecordView(li)
-            #                    for li in db.get_labnumbers(lns, low_post=self.low_post,
-            #                                                high_post=self.high_post)
-            #                    if li.sample]
-
-            # sam=self._retrieve_samples()
-            # self.set_samples(sam)
-
-    # def _advanced_query_fired(self):
-    # app = self.window.application
-    # win, task, is_open = app.get_open_task('pychron.advanced_query')
-    # task.set_append_replace_enabled(True)
-    # if is_open:
-    # win.activate()
-    # else:
-    # win.open()
 
     @on_trait_change('analysis_table:selected')
     def _selected_analysis_changed(self, new):

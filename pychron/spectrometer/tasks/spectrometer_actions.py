@@ -25,12 +25,7 @@ from pyface.tasks.action.task_action import TaskAction
 #============= local library imports  ==========================
 from pychron.paths import paths
 
-
-SPECTROMETER_PROTOCOL = 'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager'
-ION_OPTICS_PROTOCOL = 'pychron.spectrometer.ion_optics_manager.IonOpticsManager'
-SCAN_PROTOCOL = 'pychron.spectrometer.scan_manager.ScanManager'
-EL_PROTOCOL = 'pychron.extraction_line.extraction_line_manager.ExtractionLineManager'
-
+from pychron.pychron_constants import SPECTROMETER_PROTOCOL,SCAN_PROTOCOL,EL_PROTOCOL, ION_OPTICS_PROTOCOL
 
 def get_manager(event, protocol):
     app = event.task.window.application
@@ -58,6 +53,7 @@ def get_manager(event, protocol):
 #        manager.peak_center(update_mftable=True)
 
 class AutoMFTableAction(Action):
+    name = 'Auto MFTable'
     def perform(self, event):
         app = event.task.window.application
 
@@ -83,18 +79,22 @@ class AutoMFTableAction(Action):
 
 
 class EditGainsAction(Action):
+    name = 'Edit Gains...'
+
     def perform(self, event):
         from pychron.spectrometer.gains_edit_view import GainsModel, GainsEditView
 
         app = event.task.window.application
         spec = app.get_service(SPECTROMETER_PROTOCOL)
-        gv = GainsModel(spectrometer=spec)
+        gv = GainsModel(spectrometer=spec.spectrometer)
 
         man = app.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
         if man:
             gv.db = man.db
 
         gv.load_histories()
+        spec.spectrometer.load_current_detector_gains()
+
         gev = GainsEditView(model=gv)
         gev.edit_traits(kind='livemodal')
 

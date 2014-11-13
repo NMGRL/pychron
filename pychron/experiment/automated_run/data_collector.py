@@ -12,10 +12,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-from traits.api import Any, List, CInt, Int, Bool, Enum
+# ============= enthought library imports =======================
+from traits.api import Any, List, CInt, Int, Bool, Enum, Str
 # from traitsui.api import View, Item
 # from pyface.timer.do_later import do_after
 #============= standard library imports ========================
@@ -36,6 +36,7 @@ class DataCollector(Consoleable):
     # plot_panel = Any
     # arar_age = Any
     automated_run = Any
+    measurement_result = Str
 
     detectors = List
     check_conditionals = Bool(True)
@@ -65,6 +66,7 @@ class DataCollector(Consoleable):
     collection_kind = Enum(('sniff', 'signal', 'baseline'))
     refresh_age = False
     _data = None
+    _temp_conds = None
 
     def wait(self):
         st = time.time()
@@ -111,23 +113,32 @@ class DataCollector(Consoleable):
 
         self._alive = True
 
-        self._measure(evt)
+        mresult = self._measure(evt)
 
         tt = time.time() - st
         self.debug('estimated time: {:0.3f} actual time: :{:0.3f}'.format(et, tt))
+        self.measurement_result = mresult or ''
+        return mresult
 
     def plot_data(self, *args, **kw):
 
         invoke_in_main_thread(self._plot_data, *args, **kw)
 
+    def set_temporary_conditionals(self, cd):
+        self._temp_conds = cd
+
+    def clear_temporary_conditionals(self):
+        self._temp_conds = None
+
     def _measure(self, evt):
         self.debug('starting measurment')
         with consumable(func=self._iter_step) as con:
-            self._iter(con, evt, 1)
+            mresult = self._iter(con, evt, 1)
             while not evt.is_set():
                 time.sleep(0.05)
 
         self.debug('measurement finished')
+        return mresult
 
     def _iter(self, con, evt, i, prev=0):
         result = self._check_iteration(evt, i)
@@ -153,6 +164,8 @@ class DataCollector(Consoleable):
 
             #self.debug('no more iter')
             evt.set()
+
+        return result
 
     def _iter_hook(self, con, i):
         return True
@@ -337,12 +350,16 @@ class DataCollector(Consoleable):
 
             return 'break'
 
+        if self._temp_conds:
+            ti = self._check_conditionals(self._temp_conds, i)
+            if ti:
+                return ti.action
+
         if self.check_conditionals:
             termination_conditional = self._check_conditionals(self.termination_conditionals, i)
             if termination_conditional:
                 self.info('termination conditional {}. measurement iteration executed {}/{} counts'.format(
-                    termination_conditional.message, j, original_counts),
-                          color='red')
+                    termination_conditional.message, j, original_counts), color='red')
 
                 key = repr(termination_conditional)
                 n = termination_conditional.nfails
@@ -354,15 +371,13 @@ class DataCollector(Consoleable):
             cancelation_conditional = self._check_conditionals(self.cancelation_conditionals, i)
             if cancelation_conditional:
                 self.info('cancelation conditional {}. measurement iteration executed {}/{} counts'.format(
-                    cancelation_conditional.message, j, original_counts),
-                          color='red')
+                    cancelation_conditional.message, j, original_counts), color='red')
                 return 'cancel'
 
             truncation_conditional = self._check_conditionals(self.truncation_conditionals, i)
             if truncation_conditional:
                 self.info('truncation conditional {}. measurement iteration executed {}/{} counts'.format(
-                    truncation_conditional.message, j, original_counts),
-                          color='red')
+                    truncation_conditional.message, j, original_counts), color='red')
                 self.state = 'truncated'
                 self.measurement_script.abbreviated_count_ratio = truncation_conditional.abbreviated_count_ratio
 
@@ -374,8 +389,7 @@ class DataCollector(Consoleable):
                 self.info(
                     'action conditional {}. measurement iteration executed {}/{} counts'.format(
                         action_conditional.message,
-                        j, original_counts),
-                    color='red')
+                        j, original_counts), color='red')
                 action_conditional.perform(self.measurement_script)
                 if not action_conditional.resume:
                     return 'break'
@@ -402,6 +416,6 @@ class DataCollector(Consoleable):
 
     @property
     def cancelation_conditionals(self):
-        return self.automated_run.cancel_conditionals
+        return self.automated_run.cancelation_conditionals
 
 #============= EOF =============================================

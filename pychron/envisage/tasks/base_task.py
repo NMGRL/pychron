@@ -255,9 +255,12 @@ class BaseTask(Task, Loggable, PreferenceMixin):
     def _show_pane(self, p):
         def _show():
             ctrl = p.control
-            if not p.visible:
-                ctrl.show()
-            ctrl.raise_()
+            if ctrl:
+                if not p.visible:
+                    ctrl.show()
+                ctrl.raise_()
+            else:
+                self.debug('No control for pane={}'.format(p.id))
 
         if p:
             # self.debug('$$$$$$$$$$$$$ show pane {}'.format(p.id))

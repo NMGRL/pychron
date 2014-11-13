@@ -42,6 +42,11 @@ class EditDataAction(TaskAction):
     image = icon('application-form-edit')
 
 
+class DatasetAction(TaskAction):
+    name = 'New Dataset'
+    method = 'new_dataset'
+
+
 class RatioEditorAction(TaskAction):
     name='Ratio'
     method = 'open_ratio_editor'

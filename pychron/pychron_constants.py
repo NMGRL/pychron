@@ -17,6 +17,11 @@
 #============= enthought library imports =======================
 #============= standard library imports ========================
 #============= local library imports  ==========================
+SPECTROMETER_PROTOCOL = 'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager'
+ION_OPTICS_PROTOCOL = 'pychron.spectrometer.ion_optics_manager.IonOpticsManager'
+SCAN_PROTOCOL = 'pychron.spectrometer.scan_manager.ScanManager'
+EL_PROTOCOL = 'pychron.extraction_line.extraction_line_manager.ExtractionLineManager'
+
 
 PLUSMINUS = u'\u00b1'
 try:

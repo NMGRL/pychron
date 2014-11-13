@@ -322,9 +322,8 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
                 ms = 0
 
         sm = SampleLoadingTable(SampleHolder=tray,
-                                SpecSysN=ms
-        )
-        self._add_item(sm, )
+                                SpecSysN=ms)
+        self._add_item(sm)
         return sm
 
     def add_analysis_positions(self, analysis, positions):

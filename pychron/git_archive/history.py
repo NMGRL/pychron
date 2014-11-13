@@ -67,7 +67,8 @@ class GitArchiveHistory(HasTraits):
         super(GitArchiveHistory, self).__init__(*args, **kw)
         if root:
             from pychron.git_archive.repo_manager import GitRepoManager
-            self.repo_man = GitRepoManager(root)
+            self.repo_man = GitRepoManager()
+            self.repo_man.open_repo(root)
 
         if path:
             self._path = path

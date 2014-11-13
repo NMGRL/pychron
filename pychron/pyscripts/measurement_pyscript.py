@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,7 +43,7 @@ command_register = makeRegistry()
 
 class MeasurementCTXObject(object):
     def create(self, yd):
-        for k in ('baseline', 'multicollect', 'peakcenter', 'equilibration'):
+        for k in ('baseline', 'multicollect', 'peakcenter', 'equilibration', 'whiff'):
             try:
                 c = CTXObject()
                 c.update(yd[k])
@@ -74,15 +74,7 @@ class MeasurementPyScript(ValvePyScript):
     def reset(self, arun):
         self.debug('%%%%%%%%%%%%%%%%%% setting automated run {}'.format(arun.runid))
         self.automated_run = arun
-
-        self._baseline_series = None
-        self._series_count = 0
-        self._fit_series_count = 0
-        self._time_zero = None
-        self._detectors = None
-
-        self.abbreviated_count_ratio = None
-        self.ncounts = 0
+        self._reset()
 
     def get_command_register(self):
         cs = super(MeasurementPyScript, self).get_command_register()
@@ -255,6 +247,33 @@ class MeasurementPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
+    def whiff(self, ncounts=0, conditionals=None):
+        ret = self._automated_run_call('py_whiff', ncounts, conditionals,
+                                       self._time_zero, self._time_zero_offset,
+                                       fit_series=self._fit_series_count,
+                                       series=self._series_count)
+        return ret
+
+    @verbose_skip
+    @command_register
+    def reset_measurement(self, detectors=None):
+        if detectors:
+            self.reset_data()
+            self.activate_detectors(*detectors)
+            self._reset()
+
+    @verbose_skip
+    @command_register
+    def reset_data(self):
+        self._automated_run_call('py_reset_data')
+
+    @verbose_skip
+    @command_register
+    def post_equilibration(self):
+        self._automated_run_call('py_post_equilibration')
+
+    @verbose_skip
+    @command_register
     def equilibrate(self, eqtime=20, inlet=None, outlet=None,
                     do_post_equilibration=True, close_inlet=True, delay=3):
         """
@@ -355,6 +374,7 @@ class MeasurementPyScript(ValvePyScript):
                                  start_count=start_count,
                                  frequency=frequency, window=window,
                                  mapper=mapper)
+
     @verbose_skip
     @command_register
     def add_cancelation(self, attr, teststr, start_count=0, frequency=10, window=0, mapper=''):
@@ -364,6 +384,7 @@ class MeasurementPyScript(ValvePyScript):
                                  start_count=start_count,
                                  frequency=frequency, window=window,
                                  mapper=mapper)
+
     @verbose_skip
     @command_register
     def add_truncation(self, attr, teststr, start_count=0, frequency=10,
@@ -572,6 +593,15 @@ class MeasurementPyScript(ValvePyScript):
         except AttributeError:
             pass
 
+    def _reset(self):
+        self._baseline_series = None
+        self._series_count = 0
+        self._fit_series_count = 0
+        self._time_zero = None
+        self._detectors = None
+
+        self.abbreviated_count_ratio = None
+        self.ncounts = 0
     @property
     def truncated(self):
         return self._automated_run_call(lambda: self.automated_run.truncated)
@@ -597,7 +627,6 @@ class MeasurementPyScript(ValvePyScript):
     @property
     def use_cdd_warming(self):
         return self._automated_run_call(lambda: self.automated_run.spec.use_cdd_warming)
-
 
 
 #============= EOF =============================================

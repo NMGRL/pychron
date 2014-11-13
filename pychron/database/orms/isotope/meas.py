@@ -96,6 +96,7 @@ class meas_AnalysisTable(Base, BaseMixin):
     monitors = relationship('meas_MonitorTable', backref='analysis')
     dr_sets = relationship('proc_DataReductionTagSetTable', backref='analysis')
 
+    whiff_result = ''
 
     @property
     def timestamp(self):
