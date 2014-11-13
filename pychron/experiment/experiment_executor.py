@@ -16,11 +16,13 @@
 
 # ============= enthought library imports =======================
 from datetime import datetime
+
 from traits.api import Event, Button, String, Bool, Enum, Property, Instance, Int, List, Any, Color, Dict, \
     on_trait_change, Long, Float
 from pyface.constant import CANCEL, YES, NO
 from pyface.timer.do_later import do_after
 from traits.trait_errors import TraitError
+
 # ============= standard library imports ========================
 from threading import Thread, Event as Flag, Lock, currentThread
 import weakref
@@ -35,13 +37,13 @@ from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.consoleable import Consoleable
 from pychron.envisage.preference_mixin import PreferenceMixin
 from pychron.experiment.datahub import Datahub
-from pychron.experiment.labspy import LabspyUpdater
 from pychron.experiment.user_notifier import UserNotifier
 from pychron.experiment.stats import StatsGroup
 from pychron.experiment.utilities.conditionals import test_queue_conditionals_name
 from pychron.experiment.utilities.conditionals_results import reset_conditional_results
 from pychron.experiment.utilities.identifier import convert_extract_device
 from pychron.globals import globalv
+from pychron.labspy.labspy import LabspyUpdater
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR, DEFAULT_INTEGRATION_TIME
 from pychron.pyscripts.pyscript_runner import RemotePyScriptRunner, PyScriptRunner
@@ -57,7 +59,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     console_bgcolor = 'black'
     # ===========================================================================
     # control
-    #===========================================================================
+    # ===========================================================================
     show_conditionals_button = Button('Show Conditionals')
     start_button = Event
     stop_button = Event
@@ -162,7 +164,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         prefid = 'pychron.experiment'
 
-        #auto save
         attrs = ('use_auto_save', 'auto_save_delay',
                  'use_labspy',
                  'min_ms_pumptime',
@@ -171,7 +172,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                  'default_integration_time')
         self._preference_binder(prefid, attrs)
         if self.use_labspy:
-            self._preference_binder(prefid, ('labspy_root',), obj=self.labspy)
+            self._preference_binder(prefid, ('root', 'username', 'host', 'password'), obj=self.labspy.repo)
 
         #colors
         attrs = ('signal_color', 'sniff_color', 'baseline_color')
@@ -1247,11 +1248,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                                      'Post Run Action'):
             return True
 
-        # #check queue actions
-        # exp = self.experiment_queue
-        # if self._action_conditionals(run, exp.queue_actions, 'Checking queue actions',
-        #                              'Queue Action'):
-        #     return True
+            # #check queue actions
+            # exp = self.experiment_queue
+            # if self._action_conditionals(run, exp.queue_actions, 'Checking queue actions',
+            #                              'Queue Action'):
+            #     return True
 
     def _load_default_conditionals(self, term_name, **kw):
         p = get_path(paths.spectrometer_dir, 'default_conditionals', ['.yaml', '.yml'])

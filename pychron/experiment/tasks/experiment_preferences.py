@@ -5,21 +5,21 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Str, Int, \
-    Bool, Password, Color, Property, Float, Enum, File
+    Bool, Password, Color, Property, Float, Enum
 from traitsui.api import View, Item, Group, VGroup, HGroup, UItem
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-#============= standard library imports ========================
+# ============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper, BaseConsolePreferences, \
@@ -35,6 +35,15 @@ class PositiveInteger(Int):
         self.error(object, name, value)
 
 
+class LabspyPreferences(BasePreferencesHelper):
+    preferences_path = 'pychron.experiment'
+    use_labspy = Bool
+    root = Str
+    username = Str
+    password = Password
+    host = Str
+
+
 class ExperimentPreferences(BasePreferencesHelper):
     preferences_path = 'pychron.experiment'
     id = 'pychron.experiment.preferences_page'
@@ -42,11 +51,9 @@ class ExperimentPreferences(BasePreferencesHelper):
     use_notifications = Bool
     notifications_port = Int
 
-    send_config_before_run =Bool
+    send_config_before_run = Bool
     use_auto_save = Bool
     auto_save_delay = Int
-    use_labspy = Bool
-    labspy_root = File
 
     irradiation_prefix = Str
     monitor_name = Str
@@ -109,24 +116,34 @@ class SysLoggerPreferences(BasePreferencesHelper):
 #======================================================================================================
 # panes
 #======================================================================================================
+class LabspyPreferencesPane(PreferencesPane):
+    model_factory = LabspyPreferences
+    category = 'Experiment'
+
+    def traits_view(self):
+        grp = VGroup(Item('host'),
+                     Item('username'),
+                     Item('password'),
+                     Item('root'),
+                     enabled_when='use_labspy')
+
+        v = View(VGroup(Item('use_labspy', label='Use Labspy'),
+                        grp,
+                        label='Labspy', show_border=True))
+        return v
+
+
 class ExperimentPreferencesPane(PreferencesPane):
     model_factory = ExperimentPreferences
     category = 'Experiment'
 
     def traits_view(self):
-        labspy_grp = VGroup(Item('use_labspy'),
-                            Item('labspy_root', label='Root'),
-                            show_border=True,
-                            label='Labspy')
-
         notification_grp = VGroup(
-            labspy_grp,
             Item('use_notifications'),
             Item('notifications_port',
                  enabled_when='use_notifications',
                  label='Port'),
             label='Notifications')
-
 
         editor_grp = Group(
             Item('automated_runs_editable',
@@ -138,6 +155,8 @@ class ExperimentPreferencesPane(PreferencesPane):
             Item('auto_save_delay',
                  label='Auto save timeout (s)',
                  tooltip='If experiment queue is not saved then wait "timeout" seconds before saving or canceling'),
+            Item('bg_color', label='Background'),
+            Item('even_bg_color', label='Even Row'),
             label='Editor')
 
         irradiation_grp = Group(Item('irradiation_prefix',
@@ -145,12 +164,10 @@ class ExperimentPreferencesPane(PreferencesPane):
                                 Item('monitor_name'),
                                 label='Irradiations')
 
-        color_group = Group(Item('sniff_color', label='Sniff'),
+        color_group = Group(Item('sniff_color', label='Equilibration'),
                             Item('baseline_color', label='Baseline'),
                             Item('signal_color', label='Signal'),
-                            Item('bg_color', label='Background'),
-                            Item('even_bg_color', label='Even Row'),
-                            label='Colors')
+                            label='Measurement Colors')
 
         analysis_grouping_grp = Group(Item('use_analysis_grouping',
                                            label='Auto group analyses',
@@ -176,7 +193,7 @@ class ExperimentPreferencesPane(PreferencesPane):
         monitor_grp = Group(Item('use_automated_run_monitor',
                                  label='Use AutomatedRun Monitor',
                                  tooltip='Use the automated run monitor'),
-                            show_border =True,
+                            show_border=True,
                             label='Monitor')
 
         overlap_grp = Group(Item('min_ms_pumptime',
@@ -206,11 +223,14 @@ class UserNotifierPreferencesPane(PreferencesPane):
     category = 'Experiment'
 
     def traits_view(self):
-        auth_grp = VGroup(Item('server_username', label='User'),
-                          Item('server_password', label='Password'),
+        auth_grp = VGroup(
+
                           Item('server_host', label='Host'),
-                          Item('server_port', label='Port'),
+                          Item('server_username', label='User'),
+                          Item('server_password', label='Password'),
+                          # Item('server_port', label='Port'),
                           Item('include_log'),
+                          show_border=True,
                           label='User Notifier')
 
         v = View(auth_grp)
@@ -248,6 +268,7 @@ class SysLoggerPreferencesPane(PreferencesPane):
 
         v = View(VGroup(Item('use_syslogger', label='Use SysLogger'),
                         auth_grp,
+                        show_border=True,
                         label='SysLogger'))
         return v
 
