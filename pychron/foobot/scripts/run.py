@@ -1,10 +1,12 @@
 import os
+from pyface.timer.do_later import do_later
 
 from pychron.core.helpers.filetools import add_extension, remove_extension
 from pychron.foobot.exceptions import InvalidFunction, InvalidExperiment
 from pychron.foobot.scripts.script import FScript
 from pychron.paths import paths
 
+EXP_ID= 'pychron.experiment.task'
 
 class Run(FScript):
     def _check_tokens(self, tokens):
@@ -21,12 +23,24 @@ class Run(FScript):
         self.debug('.... running ...')
 
         if tokens[0] == 'experiment':
-            exp = self._do_experiment(tokens[1:])
+            name, path = self._get_experiment(tokens[1:])
+            if self.application:
+                def func():
+                    task = self.application.get_task(EXP_ID)
+                    if task:
+                        if task.open(path):
+                            self.console_event='Running experiment "{}"'.format(name)
+                            task.execute()
+                    else:
+                        self.warning('no experiment task available')
+                do_later(func)
+            else:
+                self.debug('no application')
 
         self.info('"Run" finished')
         return True
 
-    def _do_experiment(self, tokens):
+    def _get_experiment(self, tokens):
         if not tokens:
             name = 'Current Experiment'
         else:
@@ -35,7 +49,7 @@ class Run(FScript):
         p = os.path.join(paths.experiment_dir, add_extension(name))
         if not os.path.isfile(p):
             raise InvalidExperiment(name)
-        return name
+        return name,p
 
     def list_exp_dir(self):
         root = paths.experiment_dir

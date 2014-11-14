@@ -88,6 +88,9 @@ class Foobot(Loggable):
 
             try:
                 ret = script_obj.start(tokens)
+                #clear state if successful
+                self._state = None
+
                 return ret  # '{} Finished'.format(script)
             except InvalidSyntax:
                 return 'I do not understand that syntax. "{}"'.format(cmd)
@@ -124,9 +127,13 @@ class Foobot(Loggable):
             mod = __import__('pychron.foobot.scripts.{}'.format(script), fromlist=[name])
             sobj = getattr(mod, name)
         except BaseException:
-            raise InvalidScript
+            try:
+                mod = __import__('pychron.foobot.scripts.generic', fromlist=[name])
+                sobj = getattr(mod, name)
+            except BaseException:
+                raise InvalidScript
 
-        obj = sobj(self.context)
+        obj = sobj(self.context, application=self.application)
         obj.on_trait_change(self._update_console, 'console_event')
         return obj
 

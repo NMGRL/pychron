@@ -38,7 +38,7 @@ class BaseTasksApplication(TasksApplication, Loggable):
     def start(self):
         if globalv.open_logger_on_launch:
             self._load_state()
-            self.get_task('pychron.logger')
+            self.open_task('pychron.logger')
 
         return super(BaseTasksApplication, self).start()
 

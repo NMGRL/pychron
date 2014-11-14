@@ -1,7 +1,9 @@
 <%
  ANALYSIS_ATTRS=[('Experiment', 'experiment_name'),
                  ('Date','date'),
-                 ('RunID','record_id'),('Project','project'),('Sample','sample'),
+                 ('RunID','runid'),
+                 ('Status','state'),
+                 ('Project','project'),('Sample','sample'),
                  ('Type', 'analysis_type'),
                  ('Extraction','extraction_script'),
                  ('Position','position'),
@@ -135,7 +137,7 @@
     </table>
     <table>
         <tr>
-            <td><p>Last Update: 2014-11-13T10:16:36.057995</p></td>
+            <td><p>Last Update: ${last_update}</p></td>
             <td></td>
             <td><p><div id="lastrefresh"></div><p></td>
         </tr>

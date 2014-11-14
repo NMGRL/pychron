@@ -75,6 +75,7 @@ class Globals(object):
     username = 'root'
     multi_user = False
     use_login = True
+    communication_simulation = False
 
     def build(self, ip):
 
@@ -94,6 +95,7 @@ class Globals(object):
                            ('recall_debug', to_bool),
                            ('multi_user', to_bool),
                            ('use_login', to_bool),
+                           ('communication_simulation', to_bool),
                            ('test_experiment_set', str)]:
             a = ip.get_global(attr)
 

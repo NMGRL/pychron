@@ -110,6 +110,7 @@ class SFTPRepository(RemoteRepository):
     _client = None
     _server_root = None
 
+    enabled = False
     def _get_client(self):
         if self._client is not None:
             return self._client
@@ -117,7 +118,7 @@ class SFTPRepository(RemoteRepository):
         t = paramiko.Transport((self.host, 22))
         t.connect(username=self.username,
                   password=self.password)
-
+        self.enabled=True
         sftp = paramiko.SFTPClient.from_transport(t)
         self._client = sftp
         return self._client
@@ -142,13 +143,16 @@ class SFTPRepository(RemoteRepository):
 
     def _execute(self, cb):
         client = self.client
-        if self._server_root is None:
-            self._server_root = client.getcwd()
+        if self.enabled:
+            if self._server_root is None:
+                self._server_root = client.getcwd()
 
-        if not client.getcwd() == os.path.join(self._server_root, self.root):
-            client.chdir(self.root)
-
-        return cb(client)
+            if not client.getcwd() == os.path.join(self._server_root, self.root):
+                client.chdir(self.root)
+            try:
+                return cb(client)
+            except paramiko.BadAuthenticationType:
+                self.enabled=False
 
     #        return os.path.isfile(self.get_file_path(n))
 
@@ -171,8 +175,7 @@ class FTPRepository(Repository):
     def url(self):
         return '{}@{}/{}'.format(self.username,
                                  self.host,
-                                 self.root
-        )
+                                 self.root)
 
     def connect(self):
         c, _ = self.client

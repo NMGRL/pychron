@@ -118,7 +118,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     #===========================================================================
     auto_save_delay = Int(30)
     use_auto_save = Bool(True)
-    use_labspy = Bool(True)
+    use_labspy = Bool
     min_ms_pumptime = Int(30)
     use_automated_run_monitor = Bool(False)
     set_integration_time_on_start = Bool(False)
@@ -365,7 +365,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         # save experiment to database
         self.info('saving experiment "{}" to database'.format(exp.name))
-        exp.start_timestamp = datetime.now().strftime('%m-%d-%Y %H:%M:%S')
+        exp.start_timestamp = datetime.now()#.strftime('%m-%d-%Y %H:%M:%S')
         if self.use_labspy:
             self.labspy.add_experiment(exp)
 

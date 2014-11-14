@@ -39,7 +39,7 @@ class CoreLaserPlugin(BaseTaskPlugin):
 
         # if experiment plugin available dont add pattern actions
         ids = [p.id for p in self.application.plugin_manager._plugins]
-        if not 'pychron.experiment' in ids:
+        if not 'pychron.experiment.task' in ids:
             actions.extend([
                 SchemaAddition(id='Open Pattern',
                                factory=OpenPatternAction,

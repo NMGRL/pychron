@@ -18,6 +18,7 @@
 from collections import Counter
 from traits.api import Any, on_trait_change, Int, List, Bool, \
     Instance, Property, Str, HasTraits, Event, Dict
+from traits.trait_types import Date
 from traitsui.api import View, Item
 from pyface.timer.do_later import do_later
 #============= standard library imports ========================
@@ -67,7 +68,7 @@ class ExperimentQueue(BaseExperimentQueue):
     executed_runs_scroll_to_row = Int
     automated_runs_scroll_to_row = Int
     linked_copy_cache = List
-    start_timestamp = Str
+    start_timestamp = Date
     # queue_actions = List
 
     executed = Bool(False)

@@ -141,9 +141,18 @@ class DataCollector(Consoleable):
         return mresult
 
     def _iter(self, con, evt, i, prev=0):
+
         result = self._check_iteration(evt, i)
 
         if not result:
+            try:
+                if i <= 1:
+                    self.automated_run.plot_panel.counts = 1
+                else:
+                    self.automated_run.plot_panel.counts += 1
+            except AttributeError:
+                pass
+
             if not self._iter_hook(con, i):
                 evt.set()
                 return
@@ -285,14 +294,6 @@ class DataCollector(Consoleable):
                 graph.set_fit(fit, plotid=pid, series=self.fit_series_idx)
 
     def _plot_data(self, i, x, keys, signals):
-        try:
-            if i <= 1:
-                self.automated_run.plot_panel.counts = 0
-            else:
-                self.automated_run.plot_panel.counts += 1
-        except AttributeError:
-            pass
-
         if globalv.experiment_debug:
             x *= (self.period_ms * 0.001) ** -1
 

@@ -28,9 +28,10 @@ import os
 from pychron.envisage.resources import icon
 from pychron.paths import paths
 
+EXP_ID = 'pychron.experiment.task'
 
 class ExperimentAction(Action):
-    task_id = 'pychron.experiment'
+    task_id = EXP_ID
 
     def _get_experimentor(self, event):
         return self._get_service(event, 'pychron.experiment.experimentor.Experimentor')
@@ -136,10 +137,10 @@ class QueueAction(ExperimentAction):
 
         app = event.task.window.application
         task = event.task
-        if task.id == 'pychron.experiment':
+        if task.id == EXP_ID:
             task.open(path)
         else:
-            task = app.get_task('pychron.experiment', False)
+            task = app.get_task(EXP_ID, False)
             if task.open(path):
                 task.window.open()
 
@@ -150,11 +151,11 @@ class NewExperimentQueueAction(QueueAction):
     accelerator = 'Ctrl+N'
 
     def perform(self, event):
-        if event.task.id == 'pychron.experiment':
+        if event.task.id == EXP_ID:
             event.task.new()
         else:
             application = event.task.window.application
-            win = application.create_window(TaskWindowLayout('pychron.experiment'))
+            win = application.create_window(TaskWindowLayout(EXP_ID))
             task = win.active_task
             task.new()
             win.open()

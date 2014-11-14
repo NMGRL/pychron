@@ -48,7 +48,7 @@ class ExperimentPlugin(BaseTaskPlugin):
                                 ResetQueuesAction(),
                                 UndoAction())
 
-        return [TaskExtension(task_id='pychron.experiment',
+        return [TaskExtension(task_id='pychron.experiment.task',
                               actions=[SchemaAddition(
                                   factory=factory,
                                   path='MenuBar/Edit')]),
@@ -128,7 +128,7 @@ class ExperimentPlugin(BaseTaskPlugin):
         return ImageBrowser(application=self.application)
 
     def _tasks_default(self):
-        return [TaskFactory(id=self.id,
+        return [TaskFactory(id='pychron.experiment.task',
                             factory=self._task_factory,
                             name='Experiment',
                             image='applications-science',

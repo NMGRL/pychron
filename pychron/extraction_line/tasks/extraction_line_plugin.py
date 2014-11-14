@@ -51,7 +51,7 @@ class ProcedureAction(Action):
     def perform(self, event):
         app = event.task.application
 
-        for tid in ('pychron.experiment','pychron.spectrometer'):
+        for tid in ('pychron.experiment.task','pychron.spectrometer'):
             task = app.task_is_open(tid)
             if task:
                 #make sure extraction line canvas is visible
