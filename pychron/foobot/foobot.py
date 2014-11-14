@@ -1,98 +1,19 @@
 from pychron.core.ui import set_qt
+from pychron.foobot.exceptions import InvalidScript, InvalidSyntax, InvalidFunction, InvalidExperiment
 
 set_qt()
 import re
 import shlex
-import os
 from pyface.timer.do_later import do_later
-from traits.trait_types import Instance, String, Event
+from traits.trait_types import Instance, String
 from traitsui.editors import TextEditor
 from traitsui.handler import Controller
 from traitsui.item import UItem
 from traitsui.view import View
-from pychron.core.helpers.filetools import add_extension, to_bool, remove_extension
+from pychron.core.helpers.filetools import to_bool
 from pychron.core.helpers.logger_setup import logging_setup
 from pychron.loggable import Loggable
-from pychron.paths import paths
 
-
-class InvalidSyntax(BaseException):
-    pass
-
-
-class InvalidFunction(BaseException):
-    def __init__(self, name, valid):
-        super(InvalidFunction, self).__init__()
-        self.valid = valid
-        self.name = name
-
-
-class InvalidExperiment(BaseException):
-    def __init__(self, name):
-        self.name = name
-
-class InvalidScript(BaseException):
-    pass
-    # def __init__(self, name):
-    #     self.name = name
-
-
-class FScript(Loggable):
-    ctx = None
-    console_event = Event
-
-    def __init__(self, ctx, *args, **kw):
-        self.ctx = ctx
-        super(FScript, self).__init__(*args, **kw)
-
-    def run(self, tokens):
-        pass
-
-    def start(self, tokens):
-        self.debug('start fscript')
-        self._check_tokens(tokens)
-        return self.run(tokens)
-
-    def _check_tokens(self, tokens):
-        return True
-
-
-class Run(FScript):
-    def _check_tokens(self, tokens):
-        valid = ('experiment',)
-        try:
-            func = tokens[0]
-            if not func in valid:
-                raise InvalidFunction(func, valid=valid)
-        except IndexError:
-            raise InvalidFunction('<no function provided>', valid=valid)
-
-    def run(self, tokens):
-        self.info('Do "Run" script. tokens={}'.format(tokens))
-        self.debug('.... running ...')
-
-        if tokens[0] == 'experiment':
-            exp = self._do_experiment(tokens[1:])
-
-        self.info('"Run" finished')
-        return True
-
-    def _do_experiment(self, tokens):
-        if not tokens:
-            name = 'Current Experiment'
-        else:
-            name = ' '.join(tokens)
-
-        p = os.path.join(paths.experiment_dir, add_extension(name))
-        if not os.path.isfile(p):
-            raise InvalidExperiment(name)
-        return name
-
-    def list_exp_dir(self):
-        root = paths.experiment_dir
-
-        for i, di in enumerate((di for di in os.listdir(root) if os.path.isfile(os.path.join(root, di)))):
-            self.console_event = {'message':remove_extension(di), 'indent':i}
 
 CTX_REG = re.compile(r'^%\w+')
 
@@ -107,7 +28,7 @@ class Foobot(Loggable):
 
     """
     console = String
-    message = String#('run experiment foas')
+    message = String  # ('run experiment foas')
 
     context = None
     ee = False
@@ -125,7 +46,7 @@ class Foobot(Loggable):
 
             do_later(self.trait_set, message='')
             cmd = self.process_command(v)
-            if cmd:
+            if isinstance(cmd, str):
                 self._update_console(cmd)
 
     def format_message(self, msg):
@@ -166,8 +87,8 @@ class Foobot(Loggable):
                 return 'I do not understand the command "{}"'.format(cmd)
 
             try:
-                script_obj.start(tokens)
-                return '{} Finished'.format(script)
+                ret = script_obj.start(tokens)
+                return ret  # '{} Finished'.format(script)
             except InvalidSyntax:
                 return 'I do not understand that syntax. "{}"'.format(cmd)
             except InvalidFunction, e:
@@ -198,9 +119,11 @@ class Foobot(Loggable):
         return b
 
     def _load_script(self, script):
+        name = script.capitalize()
         try:
-            sobj = globals()[script.capitalize()]
-        except KeyError:
+            mod = __import__('pychron.foobot.scripts.{}'.format(script), fromlist=[name])
+            sobj = getattr(mod, name)
+        except BaseException:
             raise InvalidScript
 
         obj = sobj(self.context)
@@ -211,14 +134,14 @@ class Foobot(Loggable):
         self.console = '{}\n{}'.format(self.console, self.format_bot_message(new))
 
     def format_bot_message(self, msg):
-        if isinstance(msg, str):
+        if not isinstance(msg, dict):
             s = 'foobot >>> {}'.format(msg)
         else:
-            s=msg.get('message')
+            s = msg.get('message')
             if msg.get('indent'):
                 s = '                  {}'.format(s)
             else:
-                s='foobot >>> {}'.format(s)
+                s = 'foobot >>> {}'.format(s)
         return s
 
 
