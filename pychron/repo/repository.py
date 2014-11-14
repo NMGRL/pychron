@@ -15,15 +15,22 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+import logging
+
 from traits.api import Str, Password, Property
+
 #============= standard library imports ========================
 import os
 import ftplib as ftp
+from zipfile import ZipFile, ZIP_DEFLATED
+import shutil
+import paramiko
 #============= local library imports  ==========================
 from pychron.loggable import Loggable
-import shutil
-from zipfile import ZipFile, ZIP_DEFLATED
 from pychron.core.helpers.filetools import unique_path
+
+
+logging.getLogger("paramiko").setLevel(logging.WARNING)
 
 
 class Repository(Loggable):
@@ -101,8 +108,6 @@ class RemoteRepository(Repository):
     @property
     def path(self):
         return self.local_root
-
-import paramiko
 
 
 class SFTPRepository(RemoteRepository):

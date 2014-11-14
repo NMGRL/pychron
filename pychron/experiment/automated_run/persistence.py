@@ -16,7 +16,6 @@
 
 #============= enthought library imports =======================
 import binascii
-import hashlib
 
 from traits.api import Instance, Bool, Int, Float, Str, \
     Dict, List, Time, Date, Any, Long
@@ -33,7 +32,7 @@ from pychron.core.codetools.memory_usage import mem_log
 from pychron.core.helpers.datetime_tools import get_datetime
 from pychron.core.ui.preference_binding import bind_preference
 from pychron.database.adapters.local_lab_adapter import LocalLabAdapter
-from pychron.experiment.datahub import Datahub
+from pychron.experiment.datahub import Datahub, check_secondary_database_save
 from pychron.experiment.automated_run.hop_util import parse_hops
 
 from pychron.loggable import Loggable
@@ -380,7 +379,7 @@ class AutomatedRunPersister(Loggable):
         # don't save detector_ic runs to mass spec
         # measurement of an isotope on multiple detectors likely possible with mass spec but at this point
         # not worth trying.
-        if self.use_secondary_database and not self.run_spec.analysis_type in ('detector_ic',):
+        if self.use_secondary_database and check_secondary_database_save(ln):#not self.run_spec.analysis_type in ('detector_ic',):
             if not self.datahub.secondary_connect():
                 # if not self.massspec_importer or not self.massspec_importer.db.connected:
                 self.debug('Secondary database is not available')

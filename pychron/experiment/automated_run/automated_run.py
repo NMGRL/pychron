@@ -1541,15 +1541,19 @@ anaylsis_type={}
         """
         conditionals: list of dicts
         """
+        for ci in conditionals:
+            if ci.get('start') is None:
+                ci['start'] = ncounts
 
         conds = [conditional_from_dict(ci, ActionConditional) for ci in conditionals]
         self.collector.set_temporary_conditionals(conds)
         self.py_data_collection(None, ncounts, starttime, starttime_offset, series, fit_series)
         self.collector.clear_temporary_conditionals()
-        mresult = self.collector.measurement_result
-        self.persister.whiff_result = mresult
 
-        return self.collector.measurement_result
+        result = self.collector.measurement_result
+        self.persister.whiff_result = result
+        self.debug('WHIFF Result={}'.format(result))
+        return result
 
     def _peak_hop(self, ncycles, ncounts, hops, grpname, data_writer,
                   starttime, starttime_offset, series,
@@ -1660,8 +1664,8 @@ anaylsis_type={}
             m.measure()
 
         mem_log('post measure')
-        self.debug('measurement canceled')
         if m.terminated:
+            self.debug('measurement terminated')
             self.cancel_run()
 
         return not m.canceled

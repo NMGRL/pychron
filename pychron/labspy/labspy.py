@@ -39,6 +39,15 @@ EXPERIMENT_ATTRS = ('username', 'mass_spectrometer',
                     'extract_device', 'name')
 
 
+def bypass_exception(func):
+    def dec(*args, **kw):
+        try:
+            return func(*args, **kw)
+        except BaseException,e:
+            print 'bypass exception {}'.format(e)
+
+    return dec
+
 
 class LabspyUpdater(Loggable):
     spectrometer_name = Str
@@ -95,10 +104,9 @@ class LabspyUpdater(Loggable):
         with open(path, 'w') as fp:
             fp.write(txt)
 
-        print 'pushing'
         self.repo.add_file(path)
-        print 'pushed', self.repo.enabled, path
 
+    @bypass_exception
     def add_experiment(self, exp):
         self.debug('$$$$$$$$$$$$$$$$$$$$$$ adding experiment {}'.format(exp.name))
         path, yl = self._load_experiment()
@@ -119,6 +127,7 @@ class LabspyUpdater(Loggable):
         self.repo.add_file(self.exp_ctx_path)
         self.push()
 
+    @bypass_exception
     def update_experiment(self, exp, err_msg):
 
         path, yl = self._load_experiment()
@@ -134,20 +143,7 @@ class LabspyUpdater(Loggable):
         self.repo.add_file(self.exp_ctx_path)
         self.push()
 
-    def _generate_experiment_hash(self, exp):
-        h = hashlib.md5()
-        for ai in EXPERIMENT_ATTRS:
-            try:
-                v=getattr(exp, ai)
-            except AttributeError:
-                v=exp[ai]
-            h.update(v)
-
-        v=exp.start_timestamp.strftime('%m/%d/%Y %I:%M:%S %p')
-        h.update(v)
-
-        return h.hexdigest()
-
+    @bypass_exception
     def add_run(self, run):
         path = self.ans_ctx_path
         yl = None
@@ -165,6 +161,21 @@ class LabspyUpdater(Loggable):
 
         self.repo.add_file(self.ans_ctx_path)
         self.push()
+
+    #private
+    def _generate_experiment_hash(self, exp):
+        h = hashlib.md5()
+        for ai in EXPERIMENT_ATTRS:
+            try:
+                v=getattr(exp, ai)
+            except AttributeError:
+                v=exp[ai]
+            h.update(v)
+
+        v=exp.start_timestamp.strftime('%m/%d/%Y %I:%M:%S %p')
+        h.update(v)
+
+        return h.hexdigest()
 
     def _load_analyses(self):
         path = self.ans_ctx_path

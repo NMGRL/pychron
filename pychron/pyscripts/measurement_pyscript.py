@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,6 +22,7 @@ import os
 from ConfigParser import ConfigParser
 
 import yaml
+
 
 
 
@@ -260,6 +261,11 @@ class MeasurementPyScript(ValvePyScript):
         if detectors:
             self.reset_data()
             self.activate_detectors(*detectors)
+            try:
+                self.automated_run.plot_panel.total_counts = 0
+            except AttributeError:
+                pass
+
             self._reset()
 
     @verbose_skip
@@ -602,6 +608,7 @@ class MeasurementPyScript(ValvePyScript):
 
         self.abbreviated_count_ratio = None
         self.ncounts = 0
+
     @property
     def truncated(self):
         return self._automated_run_call(lambda: self.automated_run.truncated)

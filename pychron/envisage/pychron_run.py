@@ -23,8 +23,6 @@ from envisage.api import Plugin
 from pychron.displays.gdisplays import gTraceDisplay
 from pychron.envisage.tasks.tasks_plugin import PychronTasksPlugin, myTasksPlugin
 from pychron.core.helpers.logger_setup import new_logger
-from pychron.foobot.tasks.foobot_plugin import FoobotPlugin
-from pychron.globals import globalv
 from pychron.logger.tasks.logger_plugin import LoggerPlugin
 from pychron.initialization_parser import InitializationParser
 from pychron.envisage.user_login import get_user
@@ -168,7 +166,7 @@ def app_factory(klass, user):
         CorePlugin(),
         myTasksPlugin(),
         PychronTasksPlugin(),
-        FoobotPlugin(),
+        # FoobotPlugin(),
         LoggerPlugin()]
 
     # if UpdatePlugin is not None:

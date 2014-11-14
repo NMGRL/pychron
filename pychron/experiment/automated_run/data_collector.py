@@ -18,7 +18,7 @@
 from traits.api import Any, List, CInt, Int, Bool, Enum, Str
 # from traitsui.api import View, Item
 # from pyface.timer.do_later import do_after
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import time
 from threading import Event, Timer
 #============= local library imports  ==========================
@@ -67,6 +67,7 @@ class DataCollector(Consoleable):
     refresh_age = False
     _data = None
     _temp_conds = None
+    _result = None
 
     def wait(self):
         st = time.time()
@@ -88,6 +89,7 @@ class DataCollector(Consoleable):
         if self.canceled:
             return
 
+        self.measurement_result = ''
         self.terminated = False
         self._truncate_signal = False
         self._warned_no_fit = []
@@ -113,12 +115,11 @@ class DataCollector(Consoleable):
 
         self._alive = True
 
-        mresult = self._measure(evt)
+        self._measure(evt)
 
         tt = time.time() - st
         self.debug('estimated time: {:0.3f} actual time: :{:0.3f}'.format(et, tt))
-        self.measurement_result = mresult or ''
-        return mresult
+
 
     def plot_data(self, *args, **kw):
 
@@ -133,12 +134,11 @@ class DataCollector(Consoleable):
     def _measure(self, evt):
         self.debug('starting measurment')
         with consumable(func=self._iter_step) as con:
-            mresult = self._iter(con, evt, 1)
+            self._iter(con, evt, 1)
             while not evt.is_set():
                 time.sleep(0.05)
 
         self.debug('measurement finished')
-        return mresult
 
     def _iter(self, con, evt, i, prev=0):
 
@@ -173,8 +173,6 @@ class DataCollector(Consoleable):
 
             #self.debug('no more iter')
             evt.set()
-
-        return result
 
     def _iter_hook(self, con, i):
         return True
@@ -321,6 +319,12 @@ class DataCollector(Consoleable):
         if evt and evt.isSet():
             return True
 
+        if self._temp_conds:
+            ti = self._check_conditionals(self._temp_conds, i)
+            if ti:
+                self.measurement_result = ti.action
+                return 'break'
+
         j = i - 1
         user_counts = 0 if self.plot_panel is None else self.plot_panel.ncounts
         script_counts = 0 if self.measurement_script is None else self.measurement_script.ncounts
@@ -350,11 +354,6 @@ class DataCollector(Consoleable):
             self._truncate_signal = False
 
             return 'break'
-
-        if self._temp_conds:
-            ti = self._check_conditionals(self._temp_conds, i)
-            if ti:
-                return ti.action
 
         if self.check_conditionals:
             termination_conditional = self._check_conditionals(self.termination_conditionals, i)

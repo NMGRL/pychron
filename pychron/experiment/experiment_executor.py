@@ -408,6 +408,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     if self.is_alive() and cnt < nruns and not is_first_analysis:
                         # delay between runs
                         self._delay(exp.delay_between_analyses)
+                        if not self.is_alive():
+                            self.debug('User Cancel between runs')
+                            break
+
                     else:
                         self.debug('not delaying between runs isAlive={}, '
                                    'cnts<nruns={}, is_first_analysis={}'.format(self.is_alive(),

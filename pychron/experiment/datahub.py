@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -41,6 +41,16 @@ def check_list(lst):
     return not lst or [lst[0]] * len(lst) == lst
 
 
+def check_secondary_database_save(identifier):
+    ret = True
+    if identifier == 'bu-debug':
+        ret = False
+    elif get_analysis_type(identifier) == 'detector_ic':
+        ret = False
+    print identifier, ret
+    return ret
+
+
 class Datahub(Loggable):
     mainstore = Instance(IsotopeDatabaseManager)
     secondarystore = Instance(MassSpecDatabaseImporter, ())
@@ -70,8 +80,9 @@ class Datahub(Loggable):
         self._new_step = -1
         self._new_aliquot = 1
         self.debug('check for conflicts')
-        self.secondary_connect()
-        self.debug('connected to secondary')
+        if check_secondary_database_save(spec.identifier):
+            self.secondary_connect()
+            self.debug('connected to secondary')
 
         if spec.is_step_heat():
             k = 'Stepheat'
@@ -164,7 +175,7 @@ class Datahub(Loggable):
             pass
 
     def _get_greatest_aliquots(self, identifier):
-        if get_analysis_type(identifier) == 'detector_ic':
+        if not check_secondary_database_save(identifier):
             main = self.mainstore
             return (main.precedence,), (main.db.name,), (main.get_greatest_aliquot(identifier),)
         else:

@@ -43,7 +43,7 @@ AVG_REGEX = make_func_regex('average\([A-Za-z]+\d*\)')
 # match max(ar##)
 MAX_REGEX = make_func_regex(r'max\([A-Za-z]+\d*\)')
 # MAX_REGEX = re.compile(r'max\([A-Za-z]+\d*\)')
-#match min(ar##)
+# match min(ar##)
 MIN_REGEX = make_func_regex(r'min\([A-Za-z]+\d*\)')
 # MIN_REGEX = re.compile(r'min\([A-Za-z]+\d*\)')
 #match slope(ar##)
@@ -71,6 +71,7 @@ DEFLECTION_REGEX = re.compile(r'[\w\d]+\.deflection')
 RATIO_REGEX = re.compile(r'\d+/\d+')
 
 ARGS_REGEX = re.compile(r'\(.+\)')
+
 
 
 def dictgetter(d, attrs, default=None):
@@ -107,10 +108,10 @@ def conditional_from_dict(cd, klass):
         return
 
     start = dictgetter(cd, ('start', 'start_count'), default=50)
-    freq = cd.get('frequency', 5)
+    freq = cd.get('frequency', 1)
     win = cd.get('window', 0)
     mapper = cd.get('mapper', '')
-    action = cd.get('action')
+    action = cd.get('action', '')
     cx = klass(attr, teststr, start_count=start, frequency=freq, window=win, mapper=mapper, action=action)
     return cx
 
@@ -174,7 +175,7 @@ class AutomatedRunConditional(BaseConditional):
 
     def __init__(self, attr, teststr,
                  start_count=0,
-                 frequency=10,
+                 frequency=1,
                  *args, **kw):
 
         self.active = True
@@ -204,7 +205,7 @@ class AutomatedRunConditional(BaseConditional):
         b = ocnt > 0
         c = ocnt % self.frequency == 0
         cnt_flag = b and c
-
+        # print ocnt, self.frequency, b, c
         return self.active and (cnt_flag or d)
 
     def get_modified_value(self, arun, key, kattr):
@@ -317,6 +318,7 @@ class AutomatedRunConditional(BaseConditional):
                                                                                              tkey, self.attr, v,
                                                                                              vv))
             if eval(teststr, {tkey: vv}):
+                self.debug('condition {} is true'.format(teststr))
                 self.message = 'attr={}, value= {} {} is True'.format(self.attr, vv, self.teststr)
                 return True
 
@@ -368,7 +370,7 @@ class ActionConditional(AutomatedRunConditional):
         action = self.action
         if isinstance(action, str):
             script.execute_snippet(action)
-        else:
+        elif hasattr(action, '__call__'):
             action()
 
 #============= EOF =============================================
