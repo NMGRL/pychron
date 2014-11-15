@@ -17,6 +17,7 @@
 #============= enthought library imports =======================
 from traits.api import Instance, Event, Bool, Any, Property, Str, Float, provides
 # from traits.has_traits import provides
+from pychron.core.ui.gui import wake_screen
 
 from pychron.lasers.stage_managers.stage_manager import StageManager
 from pychron.lasers.pattern.pattern_executor import PatternExecutor
@@ -63,6 +64,9 @@ class BaseLaserManager(Manager):
     def initialize_video(self):
         if self.use_video:
             self.stage_manager.initialize_video()
+
+    def wake(self):
+        wake_screen()
 
     def is_ready(self):
         return True
