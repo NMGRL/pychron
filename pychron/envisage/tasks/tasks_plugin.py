@@ -15,6 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from envisage.extension_point import ExtensionPoint
 from envisage.plugin import Plugin
 from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.tasks_plugin import TasksPlugin
@@ -31,6 +32,8 @@ class PychronTasksPlugin(Plugin):
     preferences_panes = List(
         contributes_to='envisage.ui.tasks.preferences_panes')
     task_extensions=List(contributes_to='envisage.ui.tasks.task_extensions')
+
+    actions = ExtensionPoint(List, id='pychron.actions')
 
     def _preferences_panes_default(self):
         return [GeneralPreferencesPane]

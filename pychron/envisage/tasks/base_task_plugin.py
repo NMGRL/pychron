@@ -31,6 +31,7 @@ TASKS = 'envisage.ui.tasks.tasks'
 
 
 class BaseTaskPlugin(Plugin):
+    actions = List(contributes_to='pychron.actions')
 
     tasks = List(contributes_to=TASKS)
     service_offers = List(contributes_to=SERVICE_OFFERS)

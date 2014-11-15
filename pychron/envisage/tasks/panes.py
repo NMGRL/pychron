@@ -36,10 +36,13 @@ class GeneralPreferencesPane(PreferencesPane):
     category = 'General'
 
     def traits_view(self):
+        keybind_grp = VGroup()
+
         v = View(VGroup(HGroup(Item('remote', label='Laboratory Repo'),
                                test_connection_item()),
                         CustomLabel('remote_status',
                                     color_name='remote_status_color'),
+                        keybind_grp,
                         show_border=True))
         return v
 

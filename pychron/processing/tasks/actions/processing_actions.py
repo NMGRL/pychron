@@ -16,54 +16,14 @@
 
 #============= enthought library imports =======================
 from traits.api import Str, List
-from pyface.action.action import Action
-from pyface.tasks.action.task_action import TaskAction
+# from pyface.action.action import Action
+# from pyface.tasks.action.task_action import TaskAction
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-# class ProcessorAction(Action):
-#     def _get_processor(self, event):
-#         app = event.task.window.application
-#         processor = app.get_service('pychron.processing.processor.Processor')
-#         return processor
-
-
-#===============================================================================
-# grouping
-#===============================================================================
 from pychron.envisage.resources import icon
-
-
-class myTaskAction(TaskAction):
-    task_ids = List
-
-    def _task_changed(self):
-        if self.task:
-            if self.task.id in self.task_ids:
-                enabled = True
-                if self.enabled_name:
-                    if self.object:
-                        enabled = bool(self._get_attr(self.object,
-                                                      self.enabled_name, False))
-                if enabled:
-                    self._enabled = True
-            else:
-                self._enabled = False
-
-    def _enabled_update(self):
-        """
-             reimplement ListeningAction's _enabled_update
-        """
-        if self.enabled_name:
-            if self.object:
-                self.enabled = bool(self._get_attr(self.object,
-                                                   self.enabled_name, False))
-            else:
-                self.enabled = False
-        elif self._enabled is not None:
-            self.enabled = self._enabled
-        else:
-            self.enabled = bool(self.object)
+from pychron.envisage.tasks.actions import myTaskAction
+from pychron.envisage.tasks.actions import PAction as Action
 
 
 class ActivateBlankAction(myTaskAction):
@@ -194,27 +154,27 @@ class XYScatterAction(FigureAction):
 
 class IdeogramAction(FigureAction):
     name = 'Ideogram'
-    accelerator = 'Ctrl+J'
     method = 'new_ideogram'
     image = icon('histogram')
+    id ='pychron.ideogram'
 
 
 class SpectrumAction(FigureAction):
     name = 'Spectrum'
-    accelerator = 'Ctrl+D'
     method = 'new_spectrum'
+    id='pychron.spectrum'
 
 
 class SeriesAction(FigureAction):
     name = 'Series'
-    accelerator = 'Ctrl+U'
     method = 'new_series'
+    id='pychron.series'
 
 
 class InverseIsochronAction(FigureAction):
     name = 'Inverse Isochron'
     method = 'new_inverse_isochron'
-    accelerator = 'Ctrl+i'
+    id = 'pychron.inverse_isochron'
 
 
 class IdeogramFromFile(FigureAction):
@@ -226,7 +186,6 @@ class IdeogramFromFile(FigureAction):
 class SpectrumFromFile(FigureAction):
     name = 'Spectrum'
     method = 'new_spectrum_from_file'
-    # accelerator = 'Ctrl+shift+d'
 
 
 #===============================================================================
@@ -234,7 +193,7 @@ class SpectrumFromFile(FigureAction):
 #===============================================================================
 class RecallAction(Action):
     name = 'Recall'
-    accelerator = 'Ctrl+R'
+    id = 'pychron.recall'
 
     def perform(self, event):
         app = event.task.window.application
@@ -262,20 +221,17 @@ class OpenInterpretedAgeAction(Action):
 
 class SetInterpretedAgeAction(FigureTaskAction):
     name = 'Set Interpreted Age...'
-    #accelerator = 'Ctrl+t'
     method = 'set_interpreted_age'
 
 
 class SetInterpretedAgeTBAction(FigureTaskAction):
     name = 'Set Interpreted Age'
-    #accelerator = 'Ctrl+t'
     method = 'set_interpreted_age'
     image = icon('database_add.png')
 
 
 class BrowseInterpretedAgeTBAction(FigureTaskAction):
     name = 'Browse Interpreted Age'
-    #accelerator = 'Ctrl+t'
     method = 'browse_interpreted_age'
     image = icon('application_view_list.png')
 

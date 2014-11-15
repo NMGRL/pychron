@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,7 +41,13 @@ from pychron.experiment.tasks.experiment_actions import NewExperimentQueueAction
 
 class ExperimentPlugin(BaseTaskPlugin):
     id = 'pychron.experiment'
-    experimentor=Instance(Experimentor)
+    experimentor = Instance(Experimentor)
+
+    def _actions_default(self):
+        return [('pychron.open_experiment', 'Ctrl+O', 'Open Experiment'),
+                ('pychron.new_experiment', 'Ctrl+N', 'New Experiment'),
+                ('pychron.deselect', 'Ctrl+Shift+D', 'Deselect'),
+                ('pychron.open_last_experiment', 'Alt+Ctrl+O', 'Open Last Experiment')]
 
     def _my_task_extensions_default(self):
         factory = lambda: Group(DeselectAction(),
