@@ -16,7 +16,7 @@ def suite():
     from pychron.processing.tests.ratio import RatioTestCase
     from pychron.pyscripts.tests.extraction_script import WaitForTestCase
     from pychron.pyscripts.tests.measurement_pyscript import InterpolationTestCase, DocstrContextTestCase
-    from pychron.experiment.tests.conditionals import ConditionalsTestCase
+    from pychron.experiment.tests.conditionals import ConditionalsTestCase, ParseConditionalsTestCase
     from pychron.experiment.tests.identifier import IdentifierTestCase
     from pychron.experiment.tests.comment_template import CommentTemplaterTestCase
 
@@ -39,6 +39,7 @@ def suite():
              FrequencyTemplateTestCase,
              RenumberAliquotTestCase,
              ConditionalsTestCase,
+             ParseConditionalsTestCase,
              IdentifierTestCase, 
              CommentTemplaterTestCase)
 
