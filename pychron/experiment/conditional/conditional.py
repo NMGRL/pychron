@@ -73,6 +73,16 @@ RATIO_REGEX = re.compile(r'\d+/\d+')
 ARGS_REGEX = re.compile(r'\(.+\)')
 
 
+def tokenize(teststr):
+    """
+    Ar40>50 and (age>10 or age<0)
+    """
+    ps = PARENTHESES_REGEX.search(teststr)
+    if ps:
+        print ps
+    tokens = teststr.split(' ')
+    return tokens
+
 
 def dictgetter(d, attrs, default=None):
     if not isinstance(attrs, tuple):

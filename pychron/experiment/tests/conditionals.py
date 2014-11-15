@@ -1,6 +1,8 @@
 import unittest
+
 from numpy import linspace
-from pychron.experiment.conditional.conditional import conditional_from_dict
+
+from pychron.experiment.conditional.conditional import conditional_from_dict, tokenize
 from pychron.processing.arar_age import ArArAge
 from pychron.processing.isotope import Isotope
 
@@ -17,6 +19,35 @@ class Arun(object):
     def get_deflection(self, *args, **kw):
         return 2000
 
+
+class ParseConditionalsTestCase(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def test_single(self):
+        t='Ar40>50'
+        tokens = list(tokenize(t))
+        self.assertListEqual(tokens, [t])
+
+    def test_single_and(self):
+        t='Ar40>50 and age>10'
+        tokens = list(tokenize(t))
+        self.assertListEqual(tokens, ['Ar40>50','and', 'age>10'])
+
+    def test_single_or(self):
+        t='Ar40>50 or age>10'
+        tokens = list(tokenize(t))
+        self.assertListEqual(tokens, ['Ar40>50','or', 'age>10'])
+
+    def test_and_or(self):
+        t='Ar40>50 and age>10 or age<0'
+        tokens = list(tokenize(t))
+        self.assertListEqual(tokens, ['Ar40>50','and', 'age>10', 'or', 'age<0'])
+
+    def test_and_or(self):
+        t='Ar40>50 and (age>10 or age<0)'
+        tokens = list(tokenize(t))
+        self.assertListEqual(tokens, ['Ar40>50','and',['age>10','or','age<10']])
 
 class ConditionalsTestCase(unittest.TestCase):
     def setUp(self):
