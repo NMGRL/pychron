@@ -963,9 +963,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         """
             state: str
         """
+        self.debug('set extraction state {} {}'.format(state, args))
         if state:
             self._extraction_state_on(state, *args)
-
         else:
             self._extraction_state_off()
 
@@ -1028,14 +1028,17 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         """
         t, state = gen.next()
         if state:
+            self.debug('set state label={}, color={}'.format(label, color))
             self.trait_set(extraction_state_label=label,
                            extraction_state_color=color)
         else:
+            self.debug('clear extraction_state_label')
             self.trait_set(extraction_state_label='')
 
         if not self._end_flag.is_set():
             do_after(t * 1000, self._extraction_state_iter, gen, label, color)
         else:
+            self.debug('extract state complete')
             self._complete_flag.set()
             self.trait_set(extraction_state_label='')
 
