@@ -116,6 +116,8 @@ class PyScriptTask(EditorTask, ExecuteMixin):
 
     def bind_preferences(self):
         self._preference_binder('pychron.pyscript', ('auto_detab', 'use_git_repo'))
+        if self.use_git_repo:
+            self._preference_binder('pychron.pyscript',('remote',), obj=self.repo_manager)
 
     def create_dock_panes(self):
         self.commands_pane = CommandsPane()

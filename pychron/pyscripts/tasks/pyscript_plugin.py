@@ -31,6 +31,10 @@ from pychron.pyscripts.tasks.visual_el_programmer.actions import OpenVisualELScr
 
 class PyScriptPlugin(BaseTaskPlugin):
     id = 'pychron.pyscript.plugin'
+    def _actions_default(self):
+        return [('pychron.open_pyscript', 'Ctrl+Shift+O', 'Open PyScript'),
+                ('pychron.new_pyscript', 'Ctrl+Shift+N', 'New PyScript'),]
+
     def _my_task_extensions_default(self):
         def _replace_action():
             return TaskAction(name='Replace',
