@@ -310,7 +310,7 @@ class InitializationParser(XMLParser):
         #                    return p
         else:
             cat = tree.find(category)
-            print 'asss', category, cat
+            # print 'asss', category, cat
             if cat is not None:
                 iterator = lambda: cat.findall(tag)
             else:

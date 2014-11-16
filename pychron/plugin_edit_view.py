@@ -45,6 +45,19 @@ class Plugin(HasTraits):
 
 class PluginTree(Plugin):
     plugins = List(Plugin)
+    all_enabled = Bool
+
+    def set_all_enabled(self, v):
+        """
+
+        :param v: bool true=enabled false=disabled
+        :return:
+        """
+        for pi in self.plugins:
+            if isinstance(pi, PluginTree):
+                pi.set_all_enabled(v)
+            pi.enabled = v
+        self.all_enabled = v
 
 
 class PEVHandler(Handler):
@@ -56,10 +69,21 @@ class PEVHandler(Handler):
         obj.enabled = False
         info.object.update()
 
+    def set_all_enabled(self, info, obj):
+        obj.set_all_enabled(True)
+        info.object.update()
+        info.object.refresh_all_needed=True
+
+    def set_all_disabled(self, info, obj):
+        obj.set_all_enabled(False)
+        info.object.update()
+        info.object.refresh_all_needed=True
+
 
 class PluginEditView(HasTraits):
     plugin_tree = PluginTree
     refresh_needed = Event
+    refresh_all_needed = Event
     _parser = Instance(InitializationParser)
 
     def save(self):
@@ -69,12 +93,10 @@ class PluginEditView(HasTraits):
         ip = self._parser
         for pt in self.plugin_tree.plugins:
             for plugin in pt.plugins:
-                # print plugin.name, plugin.enabled
                 if plugin.enabled:
                     ip.enable_plugin(plugin.name, pt.name.lower(), save=False)
                 else:
                     ip.disable_plugin(plugin.name, save=False)
-        # ip.save()
         self.refresh_needed = True
 
     def traits_view(self):
@@ -82,17 +104,24 @@ class PluginEditView(HasTraits):
             TreeNode(node_for=[PluginTree],
                      auto_open=True,
                      children='plugins',
-                     label='name'),
+                     label='name',
+                     menu=MenuManager(Action(name='Enable All',
+                                             visible_when='not object.all_enabled',
+                                             action='set_all_enabled'),
+                                      Action(name='Disable All',
+                                             visible_when='object.all_enabled',
+                                             action='set_all_disabled'))),
             gTreeNode(node_for=[Plugin],
                       menu=MenuManager(Action(name='Enable',
                                               action='set_enabled',
                                               visible_when='not object.enabled'),
                                        Action(name='Disable',
                                               visible_when='object.enabled',
-                                              action='set_disabled')),
+                                              action='set_disabled'), ),
                       label='name')]
         v = View(UItem('plugin_tree', editor=TreeEditor(nodes=nodes,
                                                         editable=False,
+                                                        refresh_all_icons='refresh_all_needed',
                                                         refresh_icons='refresh_needed')),
                  title='Edit Plugins',
                  handler=PEVHandler(),
