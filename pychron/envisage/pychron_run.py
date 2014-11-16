@@ -25,7 +25,7 @@ from pychron.envisage.key_bindings import update_key_bindings
 from pychron.envisage.tasks.tasks_plugin import PychronTasksPlugin, myTasksPlugin
 from pychron.core.helpers.logger_setup import new_logger
 from pychron.logger.tasks.logger_plugin import LoggerPlugin
-from pychron.initialization_parser import InitializationParser
+from pychron.envisage.initialization.initialization_parser import InitializationParser
 from pychron.envisage.user_login import get_user
 
 logger = new_logger('launcher')

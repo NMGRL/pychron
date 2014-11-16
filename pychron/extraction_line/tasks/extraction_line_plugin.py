@@ -134,7 +134,7 @@ class ExtractionLinePlugin(BaseTaskPlugin):
         return [so]
 
     def _factory(self):
-        from pychron.initialization_parser import InitializationParser
+        from pychron.envisage.initialization.initialization_parser import InitializationParser
 
         ip = InitializationParser()
         try:

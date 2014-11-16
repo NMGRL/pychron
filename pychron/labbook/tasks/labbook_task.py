@@ -25,7 +25,7 @@ from traits.api import HasTraits, Button, Str, Int, Bool, \
 from traitsui.api import View, Item, UItem, HGroup, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.core.helpers.filetools import max_path_cnt, modified_datetime, created_datetime
+from pychron.core.helpers.filetools import max_path_cnt, modified_datetime, created_datetime, max_file_cnt
 from pychron.core.helpers.iterfuncs import partition
 from pychron.core.hierarchy import Hierarchy, FilePath
 from pychron.core.progress import open_progress
@@ -117,7 +117,7 @@ class LabBookTask(BaseEditorTask):
     history_model = Instance(GitArchiveHistory, ())
     selected_root = Any
     dclicked = Event
-    chronology_visible = Bool(True)
+    chronology_visible = Bool(False)
     filter_hierarchy_str = Str  # (auto_set=False, enter_set=True)
     filter_by_date_button = Button
     date_filter = Enum('Modified','Created')
@@ -202,8 +202,8 @@ class LabBookTask(BaseEditorTask):
                 os.mkdir(p)
                 self.make_hierarchy()
 
-    def get_new_name(self, root, test, title):
-        e = NewNameView(title=title)
+    def get_new_name(self, root, test, title, name=''):
+        e = NewNameView(title=title, name=name)
         while 1:
             info = e.edit_traits(kind='livemodal')
             if info.result:
@@ -222,33 +222,43 @@ class LabBookTask(BaseEditorTask):
             if not self.active_editor.dirty:
                 return
 
-            if save_as:
+            p=None
+            if not save_as:
                 p = self.active_editor.path
-                if not p:
-                    p = self.get_new_name(self.active_editor.path, os.path.isfile, 'New Note Name')
-            else:
-                p = self.active_editor.path
+
+            if not p:
+                p = self.get_new_name(self.active_editor.root,
+                                      os.path.isfile, 'New Note Name',
+                                      name=os.path.basename(self.active_editor.name))
 
             if p:
                 self.active_editor.save(p)
-                self._repo.add(p, msg=self.active_editor.commit_message,
-                               msg_prefix='',
-                               commit=True)
+                self._repo.add(p, commit=False)
+                self._repo.commit_dialog()
                 self.make_hierarchy()
 
     def add_note(self):
         names = self.get_editor_names()
 
-        if self.selected_root and self.selected_root.path != paths.labbook_dir:
+        if isinstance(self.selected_root, Hierarchy) and \
+                        self.selected_root.path != paths.labbook_dir:
             root = self.selected_root.path
-            offset = max_path_cnt(root, 'Note_', extension='')
-            name = 'Note {:03n}'.format(len(names) + offset)
-            name = os.path.join(os.path.relpath(root, paths.labbook_dir), name)
+            # offset = max_path_cnt(root, 'Note ', delimiter=' ', extension='')
+            # name = 'Note {:03n}'.format(len(names) + offset)
+            # name = os.path.join(os.path.relpath(root, paths.labbook_dir), name)
+            nfunc = lambda name: os.path.join(os.path.relpath(root, paths.labbook_dir), name)
         else:
             root = paths.labbook_dir
-            offset = max_path_cnt(root, 'Note_', extension='')
-            name = 'Note {:03n}'.format(len(names) + offset)
+            nfunc = lambda name: name
+            # offset = max_path_cnt(root, 'Note ', delimiter=' ', extension='')
 
+        offset = max_file_cnt(root, excludes=['README.md'])
+        name = 'Note {:03n}'.format(offset)
+        while name in names:
+            offset+=1
+            name = 'Note {:03n}'.format(offset)
+
+        name = nfunc(name)
         editor = NoteEditor(default_name=name, root=root)
 
         self._open_editor(editor)
@@ -266,9 +276,15 @@ class LabBookTask(BaseEditorTask):
         if self.selected_root:
             root = self.selected_root.path
             if os.path.isfile(root):
-                editor = NoteEditor()
-                editor.load(root)
-                self._open_editor(editor)
+                name = os.path.relpath(root, paths.labbook_dir)
+                for a in self.editor_area.editors:
+                    if a.name==name:
+                        self.activate_editor(a)
+                        return
+                else:
+                    editor = NoteEditor()
+                    editor.load(root)
+                    self._open_editor(editor)
 
     def _filter_hierarchy_str_changed(self):
         self.make_hierarchy()
@@ -305,7 +321,7 @@ class LabBookTask(BaseEditorTask):
             self.make_hierarchy(*self._post_view.posts)
 
     # private
-    def _make_paths(self, root, lpost, hpost):
+    def _make_paths(self, root, lpost=None, hpost=None):
         xs = [xi for xi in os.listdir(root) if not xi.startswith('.')]
 
         dirs, files = partition(xs, lambda x: not os.path.isfile(os.path.join(root, x)))

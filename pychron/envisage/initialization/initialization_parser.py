@@ -80,6 +80,20 @@ class InitializationParser(XMLParser):
 
         super(InitializationParser, self).__init__(p, *args, **kw)
 
+    def get_globals(self):
+        tree = self.get_root()
+        tree =tree.find('globals')
+        return tree.iter()
+
+    def set_bool_tag(self, tag, v):
+        tree = self.get_root()
+        tree =tree.find('globals')
+        elem = tree.find(tag)
+        if elem is not None:
+            elem.text = v
+        else:
+            tree.append(self.new_element(tag, v))
+
     def add_plugin(self, category, name, save=True, enabled='false'):
         tree = self.get_root()
         tree = tree.find('plugins')

@@ -22,13 +22,14 @@ from traitsui.api import View, Item, UItem, HGroup, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
+from pychron.git_archive.commit_dialog import CommitDialog
 from pychron.paths import paths
 
 
 class NoteEditor(BaseTraitsEditor):
     note = String
-    use_commit = Bool
-    commit = String
+    # use_commit = Bool
+    # commit = String
     name = Property(depends_on='dirty, default_name')
     # _name = Str
     dirty = Bool
@@ -37,6 +38,7 @@ class NoteEditor(BaseTraitsEditor):
     name_editable = Bool(True)
     ohash = Str
     default_name = Str
+    root = Str
 
     def _get_name(self):
         if not self.path:
@@ -45,16 +47,19 @@ class NoteEditor(BaseTraitsEditor):
             name = os.path.relpath(self.path, paths.labbook_dir)
         return name
 
-    @property
-    def commit_message(self):
-        c = None
-        if self.use_commit:
-            c = self.commit
+    # def get_commit_message(self):
+    #     cm = CommitDialog()
 
-        if not c:
-            c = 'modified' if os.path.isfile(self.path) else 'added'
-            c = '{} {}'.format(c, self.name)
-        return c
+    # @property
+    # def commit_message(self):
+    #     c = None
+    #     # if self.use_commit:
+    #     #     c = self.commit
+    #
+    #     if not c:
+    #         c = 'modified' if os.path.isfile(self.path) else 'added'
+    #         c = '{} {}'.format(c, self.name)
+    #     return c
 
     def load(self, path=None):
         if path is None:
@@ -92,14 +97,13 @@ class NoteEditor(BaseTraitsEditor):
         self._check_dirty()
 
     def traits_view(self):
-        cgrp = VGroup(HGroup(Item('use_commit')),
-                      UItem('commit', style='custom'))
+        # cgrp = VGroup(HGroup(Item('use_commit')),
+        #               UItem('commit', style='custom'))
 
         # v = View(VGroup(HGroup(Item('new_name', label='Name', visible_when='name_editable')),
         # VGroup(UItem('note', style='custom'),
         #                        cgrp)))
-        v = View(VGroup(UItem('note', style='custom'),
-                        cgrp))
+        v = View(VGroup(UItem('note', style='custom')))
         return v
 
 # ============= EOF =============================================

@@ -1604,7 +1604,7 @@ Use Last "blank_{}"= {}
 
     def _pyscript_runner_default(self):
         if self.mode == 'client':
-            from pychron.initialization_parser import InitializationParser
+            from pychron.envisage.initialization.initialization_parser import InitializationParser
 
             ip = InitializationParser()
             elm = ip.get_plugin('Experiment', category='general')

@@ -99,7 +99,7 @@ def add_eggs(root):
 
 def build_globals(debug):
     try:
-        from pychron.initialization_parser import InitializationParser
+        from pychron.envisage.initialization.initialization_parser import InitializationParser
     except ImportError, e:
         from pyface.message_dialog import warning
         warning(None, str(e))

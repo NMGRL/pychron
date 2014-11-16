@@ -82,18 +82,20 @@ class CommitDialog(HasTraits):
                 ObjectColumn(name='name'),
                 ObjectColumn(name='directory')]
 
-        v = View(VGroup(HGroup(icon_button_editor('toggle_use','check')),
+        v = View(VGroup(HGroup(icon_button_editor('toggle_use','tick')),
                 VSplit(UItem('paths',
                        editor=TableEditor(columns=cols,
                                           selection_mode='rows',
                                           selected='selected',
                                           editable=False,
                                           sortable=False, deletable=False)),
-                 UItem('commit_message', style='custom'))),
+                 VGroup(UItem('commit_message', style='custom'),
+                        label='Commit',show_border=True))),
                  resizable=True,
                  buttons=['OK','Cancel'],
                  title='Select Files to Commit',
                  kind='livemodal',
+                 width=400,
                  handler=CommitDialogHandler())
         return v
 

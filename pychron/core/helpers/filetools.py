@@ -12,13 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #========== standard library imports ==========
 import glob
 import os
 import subprocess
 from datetime import datetime
+
 
 def modified_datetime(path, strformat='%m-%d-%Y %H:%M:%S'):
     dt = datetime.fromtimestamp(os.path.getmtime(path))
@@ -168,6 +169,20 @@ def unique_path2(root, base, delimiter='-', extension='.txt'):
     cnt = max_path_cnt(root, '{}-'.format(base), delimiter=delimiter, extension=extension)
     p = os.path.join(root, '{}-{:03n}{}'.format(base, cnt, extension))
     return p, cnt
+
+
+def max_file_cnt(root, excludes=None):
+
+    def test(p):
+        if excludes and p in excludes:
+            return
+
+        if os.path.isfile(os.path.join(root, p)):
+            return True
+
+    ps = [p for p in os.listdir(root) if test(p)]
+
+    return len(ps)+1
 
 
 def max_path_cnt(root, base, delimiter='-', extension='.txt'):

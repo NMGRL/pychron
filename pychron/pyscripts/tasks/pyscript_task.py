@@ -380,7 +380,7 @@ class PyScriptTask(EditorTask, ExecuteMixin):
 
         if mode == 'client':
             #            em = self.extraction_line_manager
-            from pychron.initialization_parser import InitializationParser
+            from pychron.envisage.initialization.initialization_parser import InitializationParser
 
             ip = InitializationParser()
             elm = ip.get_plugin('Experiment', category='general')

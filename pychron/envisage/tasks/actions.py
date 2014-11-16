@@ -17,11 +17,13 @@
 #============= enthought library imports =======================
 import os
 import shutil
-from pyface.tasks.task_window_layout import TaskWindowLayout
 import sys
+
+from pyface.tasks.task_window_layout import TaskWindowLayout
 from traits.api import on_trait_change, Any, List
 from pyface.action.action import Action
 from pyface.tasks.action.task_action import TaskAction
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -379,13 +381,15 @@ class ToggleFullWindowAction(myTaskAction):
     task_ids = ['pychron.recall', 'pychron.labbook']
 
 
-class EditPluginsAction(Action):
-    name = 'Edit Plugins'
+class EditInitializationAction(Action):
+    name = 'Edit Initialization'
+    image = icon('brick-edit')
 
     def perform(self, event):
-        from pychron.plugin_edit_view import edit_plugins
+        from pychron.envisage.initialization.initialization_edit_view import edit_initialization
 
-        if edit_plugins():
+        if edit_initialization():
+            print 'resteasd'
             restart()
 
 #============= EOF =============================================

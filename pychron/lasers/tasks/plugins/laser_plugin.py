@@ -25,7 +25,7 @@ import os
 #============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
-from pychron.initialization_parser import InitializationParser
+from pychron.envisage.initialization.initialization_parser import InitializationParser
 from pychron.paths import paths
 from pychron.lasers.tasks.laser_actions import OpenPowerMapAction, OpenPatternAction, NewPatternAction
 from pychron.lasers.tasks.laser_calibration_task import LaserCalibrationTask

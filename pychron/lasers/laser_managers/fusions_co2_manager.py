@@ -94,7 +94,7 @@ class FusionsCO2Manager(FusionsLaserManager):
 
 if __name__ == '__main__':
     from pychron.core.helpers.logger_setup import logging_setup
-    from pychron.initializer import Initializer
+    from pychron.envisage.initialization.initializer import Initializer
 
     from launchers.helpers import build_version
     build_version('_test')

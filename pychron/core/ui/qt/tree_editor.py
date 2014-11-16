@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from PySide.QtGui import QTreeWidgetItem
+from PySide.QtGui import QTreeWidgetItem, QIcon
 from traits.api import HasTraits, Button, Str, Int, Bool, Event
 from traitsui.api import View, Item, UItem, HGroup, VGroup, TreeEditor as _TreeEditor
 # ============= standard library imports ========================
@@ -33,6 +33,7 @@ class SimpleEditor(_SimpleEditor):
         ctrl = self.control
         item = ctrl.currentItem()
         self._refresh_icons(item)
+        self._refresh_icons(item.parent())
 
     def _refresh_icons(self, tree):
         """
@@ -54,10 +55,15 @@ class SimpleEditor(_SimpleEditor):
         self.sync_value(self.factory.refresh_all_icons, 'refresh_all_icons', 'from')
 
 
+    def _get_icon( self, node, obj, is_expanded = False ):
+        if not self.factory.show_disabled and not obj.enabled:
+            return QIcon()
+        return super(SimpleEditor, self)._get_icon(node, obj, is_expanded)
+
 class TreeEditor(_TreeEditor):
     refresh_icons = Str
     refresh_all_icons = Str
-
+    show_disabled = Bool
     def _get_simple_editor_class(self):
         """
         """

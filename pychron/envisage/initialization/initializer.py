@@ -19,10 +19,10 @@ from traits.api import Any
 #============= standard library imports ========================
 import os
 #============= local library imports  ==========================
+from pychron.envisage.initialization.initialization_parser import InitializationParser
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.hardware.core.i_core_device import ICoreDevice
-from pychron.initialization_parser import InitializationParser
 from pychron.core.ui.progress_dialog import myProgressDialog
 from pychron.globals import globalv
 

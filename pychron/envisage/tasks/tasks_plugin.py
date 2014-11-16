@@ -24,7 +24,7 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 from traits.api import List
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.envisage.tasks.actions import ToggleFullWindowAction, EditPluginsAction
+from pychron.envisage.tasks.actions import ToggleFullWindowAction, EditInitializationAction
 from pychron.envisage.tasks.panes import GeneralPreferencesPane
 
 
@@ -45,7 +45,7 @@ class PychronTasksPlugin(Plugin):
                    SchemaAddition(factory=ToggleFullWindowAction,
                                   id='toggle_full_window',
                                   path='MenuBar/window.menu'),
-                   SchemaAddition(factory=EditPluginsAction,
+                   SchemaAddition(factory=EditInitializationAction,
                                   id='edit_plugins',
                                   path='MenuBar/help.menu')]
         return [TaskExtension(actions=actions)]
