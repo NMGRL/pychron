@@ -61,13 +61,13 @@ class ProcessingPlugin(BaseTaskPlugin):
         return [('pychron.ideogram', 'Ctrl+J', 'Open Ideogram'),
                 ('pychron.spectrum', 'Ctrl+D', 'Open Spectrum'),
                 ('pychron.series', 'Ctrl+U', 'Open Series'),
-                ('pychron.inverse_isochron', 'Ctrl+i', 'Open Inverse Isochron'),
-                ('pychron.tag', 'Ctrl+Shift+t', 'Tag'),
-                ('pychron.flux', 'Ctrl+g', 'Flux'),
-                ('pychron.blank', 'Ctrl+b', 'Blanks'),
-                ('pychron.isotope_evolution', 'Ctrl+k', 'Isotope Evolutions'),
-                ('pychron.ic_factor', 'Ctrl+shift+i', 'IC Factors'),
-                ('pychron.refresh_plot','Ctrl+shift+R','Refresh Plot'),
+                ('pychron.inverse_isochron', 'Ctrl+I', 'Open Inverse Isochron'),
+                ('pychron.tag', 'Ctrl+Shift+T', 'Tag'),
+                ('pychron.flux', 'Ctrl+G', 'Flux'),
+                ('pychron.blank', 'Ctrl+B', 'Blanks'),
+                ('pychron.isotope_evolution', 'Ctrl+K', 'Isotope Evolutions'),
+                ('pychron.ic_factor', 'Ctrl+Shift+I', 'IC Factors'),
+                ('pychron.refresh_plot','Ctrl+Shift+R','Refresh Plot'),
                 ('pychron.recall', 'Ctrl+R', 'Open Recall')]
 
     def _service_offers_default(self):

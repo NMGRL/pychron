@@ -15,11 +15,12 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from pyface.action.action import Action
-from pyface.tasks.action.task_action import TaskAction
+# from pyface.action.action import Action
+# from pyface.tasks.action.task_action import TaskAction
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.envisage.resources import icon
+from pychron.envisage.tasks.actions import PAction as Action, PTaskAction as TaskAction
 
 
 class AddMolecularWeightAction(Action):
@@ -42,7 +43,8 @@ class AddFluxMonitorAction(Action):
 
 class LabnumberEntryAction(Action):
     name = 'Labnumber Entry'
-    accelerator = 'Ctrl+Shift+l'
+    # accelerator = 'Ctrl+Shift+l'
+    id = 'pychron.labnumber_entry'
 
     def perform(self, event):
         pid = 'pychron.entry.labnumber'
@@ -52,7 +54,8 @@ class LabnumberEntryAction(Action):
 
 class SensitivityEntryAction(Action):
     name = 'Sensitivity'
-    accelerator = 'Ctrl+Shift+\\'
+    # accelerator = 'Ctrl+Shift+\\'
+    id = 'pychron.sensitivity'
 
     def perform(self, event):
         pid = 'pychron.entry.sensitivity'

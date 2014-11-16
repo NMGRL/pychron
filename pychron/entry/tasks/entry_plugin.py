@@ -34,6 +34,10 @@ from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 class EntryPlugin(BaseTaskPlugin):
     id = 'pychron.entry'
 
+    def _actions_default(self):
+        return [('pychron.labnumber_entry', 'Ctrl+Shift+l', 'Open Labnumber Entry Window'),
+                ('pychron.sensitivity', 'Ctrl+Shift+\\', 'Open Sensistivity Window'),]
+
     def _service_offers_default(self):
         so1=self.service_offer_factory(factory=MolecularWeightEditor,
                                        protocol=MolecularWeightEditor)
