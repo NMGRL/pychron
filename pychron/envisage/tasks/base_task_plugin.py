@@ -55,7 +55,7 @@ class BaseTaskPlugin(Plugin):
     #     actions = [
     #     #SchemaAddition(id='Exit',
     #     #                       factory=ExitAction,
-    #     #                       path='MenuBar/File'),
+    #     #                       path='MenuBar/file.menu'),
     #     #        SchemaAddition(id='Preferences',
     #     #                       factory=PreferencesGroup,
     #     #                       path='MenuBar/Edit'),

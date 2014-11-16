@@ -180,7 +180,6 @@ def app_factory(klass, user):
     app = klass(username=user, plugins=plugins)
 
     #set key bindings
-    print pychron_plugin.actions
     update_key_bindings(pychron_plugin.actions)
 
     return app

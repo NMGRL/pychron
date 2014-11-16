@@ -35,7 +35,7 @@ class CoreLaserPlugin(BaseTaskPlugin):
     def _my_task_extensions_default(self):
         actions = [
             SchemaAddition(factory=OpenPowerMapAction,
-                           path='MenuBar/File/Open')]
+                           path='MenuBar/file.menu/Open')]
 
         # if experiment plugin available dont add pattern actions
         ids = [p.id for p in self.application.plugin_manager._plugins]
@@ -43,10 +43,10 @@ class CoreLaserPlugin(BaseTaskPlugin):
             actions.extend([
                 SchemaAddition(id='Open Pattern',
                                factory=OpenPatternAction,
-                               path='MenuBar/File/Open'),
+                               path='MenuBar/file.menu/Open'),
                 SchemaAddition(id='New Pattern',
                                factory=NewPatternAction,
-                               path='MenuBar/File/New')])
+                               path='MenuBar/file.menu/New')])
 
         return [TaskExtension(actions=actions)]
 

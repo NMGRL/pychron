@@ -46,7 +46,7 @@ class LoadingPlugin(BaseTaskPlugin):
                 TaskExtension(task_id='pychron.loading',
                                actions=[SchemaAddition(id='save_loading_figure',
                                                        factory=SaveLoadingAction,
-                                                       path='MenuBar/File')
+                                                       path='MenuBar/file.menu')
                                         ],
                               ),
                 ]

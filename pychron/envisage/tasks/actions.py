@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 import os
@@ -42,10 +42,12 @@ def restart():
 
 def get_key_binding(k_id):
     from pychron.envisage.key_bindings import user_key_map
+
     try:
         return user_key_map[k_id][0]
     except KeyError:
         pass
+
 
 class myTaskAction(TaskAction):
     task_ids = List
@@ -78,6 +80,7 @@ class myTaskAction(TaskAction):
         else:
             self.enabled = bool(self.object)
 
+
 class PAction(Action):
     def __init__(self, *args, **kw):
         super(PAction, self).__init__(*args, **kw)
@@ -94,8 +97,10 @@ class PTaskAction(TaskAction):
 
 class KeyBindingsAction(PAction):
     name = 'Edit Key Bindings'
+
     def perform(self, event):
         from pychron.envisage.key_bindings import edit_key_bindings
+
         edit_key_bindings()
 
 
@@ -155,7 +160,7 @@ class CopyPreferencesAction(UserAction):
 
 class RestartAction(PAction):
     name = 'Restart'
-    image =icon('system-restart')
+    image = icon('system-restart')
 
     def perform(self, event):
         restart()
@@ -186,7 +191,7 @@ class NoteAction(WebAction):
         """
             goto issues page add an request or report bug
         """
-        app=event.task.window.application
+        app = event.task.window.application
         name = app.preferences.get('pychron.general.remote')
         if not name:
             name = 'NMGRL/Laboratory'
@@ -361,14 +366,26 @@ class NewAction(PAction):
             if task.new():
                 win.open()
 
+
 # class GenericReplaceAction(TaskAction):
 #    pass
 #        else:
 #            manager = self._get_experimentor(event)
 #            manager.save_as_experiment_queues()
 
-#============= EOF =============================================
 class ToggleFullWindowAction(myTaskAction):
     name = 'Toggle Full Window'
     method = 'toggle_full_window'
-    task_ids = ['pychron.recall','pychron.labbook']
+    task_ids = ['pychron.recall', 'pychron.labbook']
+
+
+class EditPluginsAction(Action):
+    name = 'Edit Plugins'
+
+    def perform(self, event):
+        from pychron.plugin_edit_view import edit_plugins
+
+        if edit_plugins():
+            restart()
+
+#============= EOF =============================================

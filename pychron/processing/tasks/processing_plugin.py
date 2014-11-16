@@ -170,9 +170,9 @@ Install to enable MS Excel export''')
                          ActivateRecallAction(),
                          ActivateIdeogramAction())
 
-        default_actions = [('recall_action', RecallAction, 'MenuBar/File'),
-                           #('find_action', OpenAdvancedQueryAction, 'MenuBar/File'),
-                           ('export_analyses', ExportAnalysesAction, 'MenuBar/File'),
+        default_actions = [('recall_action', RecallAction, 'MenuBar/file.menu'),
+                           #('find_action', OpenAdvancedQueryAction, 'MenuBar/file.menu'),
+                           ('export_analyses', ExportAnalysesAction, 'MenuBar/file.menu'),
 
                            ('batch_edit', BatchEditAction, 'MenuBar/Edit'),
 

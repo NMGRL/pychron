@@ -372,7 +372,7 @@ class BaseTask(Task, Loggable, PreferenceMixin):
             #
             #                                 ),
 
-            id='File', name='File')
+            id='file.menu', name='File')
         return file_menu
 
     def _tools_menu(self):

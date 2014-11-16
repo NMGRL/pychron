@@ -54,22 +54,22 @@ class PyScriptPlugin(BaseTaskPlugin):
             TaskExtension(
                 actions=[
                     SchemaAddition(id='open_hops_editor',
-                                   path='MenuBar/File/Open',
+                                   path='MenuBar/file.menu/Open',
                                    factory=OpenHopsEditorAction),
                     SchemaAddition(id='new_hops_editor',
-                                   path='MenuBar/File/New',
+                                   path='MenuBar/file.menu/New',
                                    factory=NewHopsEditorAction),
                     SchemaAddition(id='open_script',
-                                   path='MenuBar/File/Open',
+                                   path='MenuBar/file.menu/Open',
                                    factory=OpenPyScriptAction),
                     SchemaAddition(id='new_script',
-                                   path='MenuBar/File/New',
+                                   path='MenuBar/file.menu/New',
                                    factory=NewPyScriptAction),
                     SchemaAddition(id='new_visual',
-                                   path='MenuBar/File/New',
+                                   path='MenuBar/file.menu/New',
                                    factory=NewVisualELScriptAction),
                     SchemaAddition(id='open_visual',
-                                   path='MenuBar/File/Open',
+                                   path='MenuBar/file.menu/Open',
                                    factory=OpenVisualELScriptAction)])]
         return exts
 

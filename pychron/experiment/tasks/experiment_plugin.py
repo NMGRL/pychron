@@ -64,25 +64,25 @@ class ExperimentPlugin(BaseTaskPlugin):
                                    path='MenuBar/Edit'),
                     SchemaAddition(id='open_experiment',
                                    factory=OpenExperimentQueueAction,
-                                   path='MenuBar/File/Open'),
+                                   path='MenuBar/file.menu/Open'),
                     SchemaAddition(id='open_last_experiment',
                                    factory=OpenLastExperimentQueueAction,
-                                   path='MenuBar/File/Open'),
+                                   path='MenuBar/file.menu/Open'),
                     SchemaAddition(id='test_notify',
                                    factory=SendTestNotificationAction,
-                                   path='MenuBar/File'),
+                                   path='MenuBar/file.menu'),
                     SchemaAddition(id='new_experiment',
                                    factory=NewExperimentQueueAction,
-                                   path='MenuBar/File/New'),
+                                   path='MenuBar/file.menu/New'),
                     SchemaAddition(id='signal_calculator',
                                    factory=SignalCalculatorAction,
                                    path='MenuBar/Tools'),
                     SchemaAddition(id='new_pattern',
                                    factory=NewPatternAction,
-                                   path='MenuBar/File/New'),
+                                   path='MenuBar/file.menu/New'),
                     SchemaAddition(id='open_pattern',
                                    factory=OpenPatternAction,
-                                   path='MenuBar/File/Open')])]
+                                   path='MenuBar/file.menu/Open')])]
 
     def _service_offers_default(self):
         so_signal_calculator = self.service_offer_factory(
