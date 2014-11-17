@@ -24,6 +24,7 @@ from traits.api import on_trait_change, Any, List
 from pyface.action.action import Action
 from pyface.tasks.action.task_action import TaskAction
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -389,7 +390,6 @@ class EditInitializationAction(Action):
         from pychron.envisage.initialization.initialization_edit_view import edit_initialization
 
         if edit_initialization():
-            print 'resteasd'
             restart()
 
 #============= EOF =============================================

@@ -257,13 +257,15 @@ class GitRepoManager(Loggable):
             branch.commit = repo.head.commit
             self.checkout_branch(name)
 
-    def create_remote(self, url, name='origin'):
+    def create_remote(self, url, name='origin', force=False):
         repo = self._repo
         if repo:
             # only create remote if doesnt exist
             if not hasattr(repo.remotes, name):
                 repo.create_remote(name, url)
-                pass
+            elif force:
+                repo.delete_remote(name)
+                repo.create_remote(name, url)
 
     def delete_remote(self, name='origin'):
         repo = self._repo

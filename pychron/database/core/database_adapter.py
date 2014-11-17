@@ -16,16 +16,18 @@
 
 # =============enthought library imports=======================
 import sys
+
 from traits.api import Password, Bool, Str, on_trait_change, Any, Property, cached_property
-#=============standard library imports ========================
-from sqlalchemy import create_engine, distinct
+
+# =============standard library imports ========================
+from sqlalchemy import create_engine, distinct, MetaData
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, StatementError, \
     DBAPIError, OperationalError
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 import os
 import weakref
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 from pychron.core.codetools.inspection import conditional_caller
 from pychron.database.core.query import compile_query
 from pychron.loggable import Loggable
@@ -307,14 +309,15 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
                 self.info('testing database connection {}'.format(self.test_func))
                 ver = getattr(self, self.test_func)(reraise=True)
                 if version_warn:
-                    ver=ver.version_num
+                    ver = ver.version_num
                     aver = version.__alembic__
                     self.debug('testing database versions current={} local={}'.format(ver, aver))
-                    if ver!=aver:
-                        if not self.confirmation_dialog('Your database is out of date and it may not work correctly with '
-                                                    'this version of Pychron. Contact admin to update db.\n\n'
-                                                    'Current={} Yours={}\n\n'
-                                                    'Continue with Pychron despite out of date db?'.format(ver, aver)):
+                    if ver != aver:
+                        if not self.confirmation_dialog(
+                                'Your database is out of date and it may not work correctly with '
+                                'this version of Pychron. Contact admin to update db.\n\n'
+                                'Current={} Yours={}\n\n'
+                                'Continue with Pychron despite out of date db?'.format(ver, aver)):
                             self.application.stop()
                             sys.exit()
 
@@ -404,18 +407,19 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
         return args
 
     def _delete_item(self, value, name=None):
-        sess = self.sess
-        if sess is None:
-            if self.session_factory:
-                sess = self.session_factory()
+        # sess = self.sess
+        # if sess is None:
+        #     if self.session_factory:
+        #         sess = self.session_factory()
 
-        with self.session_ctx(sess):
+        with self.session_ctx() as sess:
             if name is not None:
                 func = getattr(self, 'get_{}'.format(name))
                 item = func(value)
             else:
                 item = value
 
+            self.debug('deleting value={},name={},item={}'.format(value, name, item))
             if item:
                 sess.delete(item)
 
@@ -701,6 +705,20 @@ class PathDatabaseAdapter(DatabaseAdapter):
         p = self.path_table(**kw)
         rec.path = p
         return p
+
+
+class SQLiteDatabaseAdapter(DatabaseAdapter):
+    kind = 'sqlite'
+
+    def build_database(self):
+        self.connect(test=False)
+        if not os.path.isfile(self.path):
+            with self.session_ctx() as sess:
+                meta = MetaData()
+                self._build_database(sess, meta)
+
+    def _build_database(self, sess, meta):
+        raise NotImplementedError
 
 #============= EOF =============================================
 

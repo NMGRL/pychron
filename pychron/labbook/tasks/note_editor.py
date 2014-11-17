@@ -17,12 +17,14 @@
 # ============= enthought library imports =======================
 import hashlib
 import os
-from traits.api import HasTraits, Button, Str, Int, Bool, String, Property
-from traitsui.api import View, Item, UItem, HGroup, VGroup
+
+from traits.api import Str, Bool, String, Property, List
+from traitsui.api import View, UItem, VGroup
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.ui.label_editor import LabelEditor
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
-from pychron.git_archive.commit_dialog import CommitDialog
 from pychron.paths import paths
 
 
@@ -39,6 +41,15 @@ class NoteEditor(BaseTraitsEditor):
     ohash = Str
     default_name = Str
     root = Str
+    labels = List
+
+    def set_label(self, label):
+        if not label.active:
+            l = next((l for l in self.labels if l.text == label.text), None)
+            if l:
+                self.labels.remove(l)
+        else:
+            self.labels.append(label)
 
     def _get_name(self):
         if not self.path:
@@ -48,7 +59,7 @@ class NoteEditor(BaseTraitsEditor):
         return name
 
     # def get_commit_message(self):
-    #     cm = CommitDialog()
+    # cm = CommitDialog()
 
     # @property
     # def commit_message(self):
@@ -86,7 +97,7 @@ class NoteEditor(BaseTraitsEditor):
     def reset_hash(self, note):
         h = hashlib.sha1(note)
         self.ohash = h.hexdigest()
-        self.dirty=False
+        self.dirty = False
 
     def _check_dirty(self):
         ch = hashlib.sha1(self.note)
@@ -103,7 +114,8 @@ class NoteEditor(BaseTraitsEditor):
         # v = View(VGroup(HGroup(Item('new_name', label='Name', visible_when='name_editable')),
         # VGroup(UItem('note', style='custom'),
         #                        cgrp)))
-        v = View(VGroup(UItem('note', style='custom')))
+        v = View(VGroup(UItem('note', style='custom'),
+                        UItem('labels', editor=LabelEditor())))
         return v
 
 # ============= EOF =============================================

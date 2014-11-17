@@ -29,6 +29,8 @@ CHANGELOG
 * added database version checking
 * updated conditionals. can do and/or with multiple variables e.g Ar40>10 and age<10.0
 * added wake command to ExtractionLinePyScript. jitters mouse to wake from screen saver
+* added Edit Initialiation action and view
+* added Labeling to LabBook
 
 2.0.4
 ------------------
