@@ -24,6 +24,7 @@ from datetime import datetime
 import uuid
 import weakref
 #============= local library imports  ==========================
+from pychron.core.helpers.logger_setup import new_logger
 from pychron.experiment.automated_run.automated_run import AutomatedRun
 from pychron.experiment.utilities.identifier import get_analysis_type, make_rid, \
     make_runid, is_special, convert_extract_device

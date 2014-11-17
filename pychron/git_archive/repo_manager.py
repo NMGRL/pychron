@@ -47,6 +47,7 @@ class GitRepoManager(Loggable):
     selected_commits = List
     refresh_commits_table_needed = Event
     path_dirty = Event
+    remote = Str
 
     def open_repo(self, name, root=None):
         """
@@ -263,6 +264,12 @@ class GitRepoManager(Loggable):
                 repo.create_remote(name, url)
                 pass
 
+    def delete_remote(self, name='origin'):
+        repo = self._repo
+        if repo:
+            if hasattr(repo.remotes, name):
+                repo.delete_remote(name)
+
     def pull(self, branch='master', remote='origin', handled=True):
         """
             fetch and merge
@@ -418,6 +425,12 @@ class GitRepoManager(Loggable):
 
     def _selected_hook(self, new):
         pass
+
+    def _remote_changed(self, new):
+        if new:
+            self.delete_remote()
+            r = 'https://github.com/{}'.format(new)
+            self.create_remote(r)
 
     @property
     def index(self):

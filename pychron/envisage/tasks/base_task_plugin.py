@@ -31,6 +31,7 @@ TASKS = 'envisage.ui.tasks.tasks'
 
 
 class BaseTaskPlugin(Plugin):
+    actions = List(contributes_to='pychron.actions')
 
     tasks = List(contributes_to=TASKS)
     service_offers = List(contributes_to=SERVICE_OFFERS)
@@ -54,7 +55,7 @@ class BaseTaskPlugin(Plugin):
     #     actions = [
     #     #SchemaAddition(id='Exit',
     #     #                       factory=ExitAction,
-    #     #                       path='MenuBar/File'),
+    #     #                       path='MenuBar/file.menu'),
     #     #        SchemaAddition(id='Preferences',
     #     #                       factory=PreferencesGroup,
     #     #                       path='MenuBar/Edit'),

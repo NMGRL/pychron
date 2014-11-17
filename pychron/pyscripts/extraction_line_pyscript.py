@@ -162,6 +162,12 @@ class ExtractionPyScript(ValvePyScript):
     #===============================================================================
     @verbose_skip
     @command_register
+    def wake(self):
+        self._extraction_action('wake')
+        self._manager_action('wake')
+
+    @verbose_skip
+    @command_register
     def waitfor(self, func_or_tuple, start_message='', end_message='',
                 check_period=1, timeout=0):
         """

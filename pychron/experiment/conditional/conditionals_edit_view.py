@@ -15,6 +15,10 @@
 # ===============================================================================
 from pychron.core.ui import set_qt
 from pychron.envisage.icon_button_editor import icon_button_editor
+from pychron.experiment.conditional.conditional import conditional_from_dict, ActionConditional, TruncationConditional, \
+    CancelationConditional, TerminationConditional
+from pychron.experiment.conditional.regexes import CP_REGEX, STD_REGEX, ACTIVE_REGEX, BASELINECOR_REGEX, BASELINE_REGEX, \
+    MAX_REGEX, MIN_REGEX, AVG_REGEX, COMP_REGEX, ARGS_REGEX, BETWEEN_REGEX, SLOPE_REGEX
 
 set_qt()
 # ============= enthought library imports =======================
@@ -32,9 +36,6 @@ import yaml
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.helpers.filetools import get_path
-from pychron.experiment.conditional.conditional import conditional_from_dict, MAX_REGEX, STD_REGEX, \
-    CP_REGEX, MIN_REGEX, TruncationConditional, TerminationConditional, ActionConditional, SLOPE_REGEX, BASELINE_REGEX, \
-    BASELINECOR_REGEX, COMP_REGEX, AVG_REGEX, ACTIVE_REGEX, CancelationConditional, BETWEEN_REGEX, ARGS_REGEX
 from pychron.paths import paths
 
 

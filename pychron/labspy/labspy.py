@@ -36,8 +36,17 @@ from pychron.pychron_constants import SCRIPT_NAMES
 from pychron.repo.repository import SFTPRepository
 
 EXPERIMENT_ATTRS = ('username', 'mass_spectrometer',
-                    'extract_device', 'name', 'start_timestamp')
+                    'extract_device', 'name')
 
+
+def bypass_exception(func):
+    def dec(*args, **kw):
+        try:
+            return func(*args, **kw)
+        except BaseException,e:
+            print 'bypass exception {}'.format(e)
+
+    return dec
 
 
 class LabspyUpdater(Loggable):
@@ -45,12 +54,15 @@ class LabspyUpdater(Loggable):
 
     # use webdav instead
     repo = Instance(SFTPRepository, ())
+    experiment_name = Str
 
     def push(self):
         _, exps = self._load_experiment()
         _, ans = self._load_analyses()
-        ctx = {'experiments': exps, 'analyses': ans}
-        ctx['last_update'] = datetime.now().isoformat()
+        # ans, exps =[], []
+
+        ctx = {'experiments': exps, 'analyses': ans,
+               'last_update': datetime.now().strftime('%m/%d/%Y %I:%M:%S %p')}
 
         spec_ctx =[]
         for spec, name in (('jan','Jan'), ('obama','Obama'),('nmgrl_map','MAP')):
@@ -71,7 +83,19 @@ class LabspyUpdater(Loggable):
                                         {'name':'Diode', 'usage':ndiode},
                                         {'name':'UV', 'usage':nuv}]
         # print ctx
-        txt = Template(self._load_template()).render(**ctx)
+        try:
+            txt = Template(self._load_template()).render(**ctx)
+        except KeyError,e:
+            print 'key error {}'.format(e)
+            txt='<html>Error</html>'
+            with open(self.ans_ctx_path, 'w') as fp:
+                yaml.dump([], fp)
+            with open(self.exp_ctx_path, 'w') as fp:
+                yaml.dump([], fp)
+
+            self.repo.add_file(self.ans_ctx_path)
+            self.repo.add_file(self.exp_ctx_path)
+
         # root = os.path.join(self.labspy_root, '_build')
         # if not os.path.isdir(root):
         #     os.mkdir(root)
@@ -80,44 +104,46 @@ class LabspyUpdater(Loggable):
         with open(path, 'w') as fp:
             fp.write(txt)
 
-        # print path
         self.repo.add_file(path)
 
-        self.repo.add_file(self.ans_ctx_path)
-
+    @bypass_exception
     def add_experiment(self, exp):
+        self.debug('$$$$$$$$$$$$$$$$$$$$$$ adding experiment {}'.format(exp.name))
         path, yl = self._load_experiment()
         if not yl:
             yl = []
         d = {k: getattr(exp, k) for k in EXPERIMENT_ATTRS}
         d['status'] = 'Running'
+        d['start_timestamp'] = exp.start_timestamp.strftime('%m/%d/%Y %I:%M:%S %p')
+        d['id'] = self._generate_experiment_hash(exp)
         yl.insert(0, d)
         yl = yl[:4]
 
         with open(path, 'w') as fp:
             yaml.dump(yl, fp, default_flow_style=False)
 
+        self.experiment_name = exp.name
+
         self.repo.add_file(self.exp_ctx_path)
         self.push()
 
+    @bypass_exception
     def update_experiment(self, exp, err_msg):
 
         path, yl = self._load_experiment()
 
-        def hfunc(yi):
-            h = hashlib.md5()
-            for ai in EXPERIMENT_ATTRS:
-                h.update(yi[ai])
-            return h.hexdigest()
+        hfunc =self._generate_experiment_hash
 
-        hkey = hfunc(exp)
-        yy = next((yi for yi in yl if hfunc(yi) == hkey))
-        yy['status'] = err_msg or 'Successful'
+        hkey=hfunc(exp)
+        yy = next((yi for yi in yl if yi['id'] == hkey), None)
+        if yy:
+            yy['status'] = err_msg or 'Successful'
 
         self._dump_experiment(yl)
         self.repo.add_file(self.exp_ctx_path)
         self.push()
 
+    @bypass_exception
     def add_run(self, run):
         path = self.ans_ctx_path
         yl = None
@@ -132,8 +158,24 @@ class LabspyUpdater(Loggable):
 
         with open(path, 'w') as fp:
             yaml.dump(yl, fp, default_flow_style=False)
+
         self.repo.add_file(self.ans_ctx_path)
         self.push()
+
+    #private
+    def _generate_experiment_hash(self, exp):
+        h = hashlib.md5()
+        for ai in EXPERIMENT_ATTRS:
+            try:
+                v=getattr(exp, ai)
+            except AttributeError:
+                v=exp[ai]
+            h.update(v)
+
+        v=exp.start_timestamp.strftime('%m/%d/%Y %I:%M:%S %p')
+        h.update(v)
+
+        return h.hexdigest()
 
     def _load_analyses(self):
         path = self.ans_ctx_path
@@ -190,15 +232,23 @@ class LabspyUpdater(Loggable):
     def _make_analysis(self, run):
         spec = run.spec
 
-        d = {k: getattr(spec, k) for k in ('record_id', 'analysis_type', 'sample',
+        d = {k: getattr(spec, k) for k in ('runid', 'analysis_type', 'sample',
                                            'extract_value', 'duration', 'cleanup', 'position',
                                            'comment', 'material', 'project',
                                            'mass_spectrometer',
-                                           'extract_device', 'experiment_name')}
+                                           'extract_device',
+                                           'state')}
 
-        d['date'] = spec.analysis_timestamp.strftime('%m-%d-%Y %H:%M:%S')
-        d['timestamp'] = time.mktime(spec.analysis_timestamp.timetuple())
-        d['runtime'] = spec.analysis_timestamp.strftime('%H:%M')
+        d['experiment_name'] = self.experiment_name
+        if spec.analysis_timestamp:
+            d['date'] = spec.analysis_timestamp.strftime('%m/%d/%Y %I:%M:%S %p')
+            d['timestamp'] = time.mktime(spec.analysis_timestamp.timetuple())
+            d['runtime'] = spec.analysis_timestamp.strftime('%I:%M:%S %p')
+        else:
+            d['date']=''
+            d['timestamp']=''
+            d['runtime']=''
+
         for si in SCRIPT_NAMES:
             d[si] = getattr(spec, si)
 
@@ -218,16 +268,17 @@ if __name__ == '__main__':
         status = ''
         def __init__(self):
             dt = datetime.now()
-            self.start_timestamp = dt.strftime('%m-%d-%Y %H:%M:%S')
+            self.start_timestamp = dt#.strftime('%m/%d/%Y %I:%M:%S %p')
             self.mass_spectrometer = random.choice(('jan','obama','nmgrl_map'))
             self.extract_device = random.choice(('co2','diode','uv'))
 
 
     class Spec(object):
         record_id = '12345-01A'
+        runid = '12345-01A'
 
         sample = 'bar'
-
+        state = 'success'
         comment = 'this is a comment'
         material = 'Sanidine'
         project = 'Labspy'

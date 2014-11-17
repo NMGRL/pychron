@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,19 +18,19 @@
 #============= enthought library imports =======================
 
 from pyface.message_dialog import warning
-from pyface.action.api import Action
 from pyface.tasks.task_window_layout import TaskWindowLayout
-from pyface.tasks.action.task_action import TaskAction
-
+from pychron.envisage.tasks.actions import PAction as Action, PTaskAction as TaskAction
 #============= standard library imports ========================
 import os
 #============= local library imports  ==========================
 from pychron.envisage.resources import icon
 from pychron.paths import paths
 
+EXP_ID = 'pychron.experiment.task'
+
 
 class ExperimentAction(Action):
-    task_id = 'pychron.experiment'
+    task_id = EXP_ID
 
     def _get_experimentor(self, event):
         return self._get_service(event, 'pychron.experiment.experimentor.Experimentor')
@@ -43,15 +43,6 @@ class ExperimentAction(Action):
         application = event.task.window.application
         application.open_task(self.task_id)
 
-        #         for wi in application.windows:
-
-
-#             if wi.active_task.id == self.task_id:
-#                 wi.activate()
-#                 break
-#         else:
-#             win = application.create_window(TaskWindowLayout(self.task_id))
-#             win.open()
 
 class BasePatternAction(TaskAction):
     _enabled = None
@@ -98,14 +89,14 @@ class NewPatternAction(BasePatternAction):
 class SendTestNotificationAction(TaskAction):
     name = 'Send Test Notification'
     method = 'send_test_notification'
-    accelerator = 'Ctrl+Shift+N'
+    # accelerator = 'Ctrl+Shift+N'
 
 
 class DeselectAction(TaskAction):
     name = 'Deselect'
     method = 'deselect'
-    accelerator = 'Ctrl+Shift+D'
     tooltip = 'Deselect the selected run(s)'
+    id = 'pychron.deselect'
 
 
 class UndoAction(TaskAction):
@@ -116,17 +107,19 @@ class UndoAction(TaskAction):
 
 class QueueConditionalsAction(Action):
     name = 'Edit Queue Conditionals'
+
     def perform(self, event):
-        task=event.task
+        task = event.task
         if hasattr(task, 'edit_queue_conditionals'):
             task.edit_queue_conditionals()
         else:
             from pychron.experiment.conditional.conditionals_edit_view import edit_conditionals
 
-            dnames=None
-            spec=task.application.get_service('pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager')
+            dnames = None
+            spec = task.application.get_service(
+                'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager')
             if spec:
-                dnames=spec.spectrometer.detector_names
+                dnames = spec.spectrometer.detector_names
 
             edit_conditionals(None, detectors=dnames, app=task.application)
 
@@ -136,10 +129,10 @@ class QueueAction(ExperimentAction):
 
         app = event.task.window.application
         task = event.task
-        if task.id == 'pychron.experiment':
+        if task.id == EXP_ID:
             task.open(path)
         else:
-            task = app.get_task('pychron.experiment', False)
+            task = app.get_task(EXP_ID, False)
             if task.open(path):
                 task.window.open()
 
@@ -147,14 +140,14 @@ class QueueAction(ExperimentAction):
 class NewExperimentQueueAction(QueueAction):
     description = 'Create a new experiment queue'
     name = 'New Experiment'
-    accelerator = 'Ctrl+N'
+    id = 'pychron.new_experiment'
 
     def perform(self, event):
-        if event.task.id == 'pychron.experiment':
+        if event.task.id == EXP_ID:
             event.task.new()
         else:
             application = event.task.window.application
-            win = application.create_window(TaskWindowLayout('pychron.experiment'))
+            win = application.create_window(TaskWindowLayout(EXP_ID))
             task = win.active_task
             task.new()
             win.open()
@@ -163,7 +156,7 @@ class NewExperimentQueueAction(QueueAction):
 class OpenLastExperimentQueueAction(QueueAction):
     description = 'Open last executed experiment'
     name = 'Open Last Experiment...'
-    accelerator = 'Alt+Ctrl+O'
+    id ='pychron.open_last_experiment'
 
     def __init__(self, *args, **kw):
         super(OpenLastExperimentQueueAction, self).__init__(*args, **kw)
@@ -175,15 +168,15 @@ class OpenLastExperimentQueueAction(QueueAction):
             self._open_experiment(event, path)
         else:
             warning(None, 'No last experiment available')
-        # if os.path.isfile(paths.last_experiment):
-        #     with open(paths.last_experiment, 'r') as fp:
-        #         path = fp.readline()
-        #         if os.path.isfile(path):
-        #             self._open_experiment(event, path)
-        #         else:
-        #             print 'asdfasdf', path
-        # else:
-        #     warning(None, 'No last experiment available')
+            # if os.path.isfile(paths.last_experiment):
+            #     with open(paths.last_experiment, 'r') as fp:
+            #         path = fp.readline()
+            #         if os.path.isfile(path):
+            #             self._open_experiment(event, path)
+            #         else:
+            #             print 'asdfasdf', path
+            # else:
+            #     warning(None, 'No last experiment available')
 
     def _get_last_experiment(self):
         if os.path.isfile(paths.last_experiment):
@@ -192,41 +185,17 @@ class OpenLastExperimentQueueAction(QueueAction):
                 if os.path.isfile(path):
                     return path
 
+
 class OpenExperimentQueueAction(QueueAction):
     description = 'Open experiment'
     name = 'Open Experiment...'
-    accelerator = 'Ctrl+O'
     image = icon('project-open')
+    id = 'pychron.open_experiment'
 
     def perform(self, event):
         path = '/Users/ross/Pychrondata_dev/experiments/Current Experiment.txt'
         # path = '/Users/ross/Pychrondata_dev/experiments/test.txt'
         self._open_experiment(event, path)
-
-
-class SaveExperimentQueueAction(ExperimentAction):
-    name = 'Save Experiment'
-    enabled = False
-    accelerator = 'Ctrl+s'
-    # image = icon('project-save')
-
-
-    def perform(self, event):
-        manager = self._get_experimentor(event)
-        manager.save_experiment_queues()
-
-    def _update_state(self, v):
-        self.enabled = v
-
-
-class SaveAsExperimentQueueAction(ExperimentAction):
-    name = 'Save As Experiment...'
-    enabled = False
-    accelerator = 'Ctrl+Shift+s'
-
-    def perform(self, event):
-        manager = self._get_experimentor(event)
-        manager.save_as_experiment_queues()
 
 
 #===============================================================================

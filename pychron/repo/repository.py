@@ -15,15 +15,22 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+import logging
+
 from traits.api import Str, Password, Property
+
 #============= standard library imports ========================
 import os
 import ftplib as ftp
+from zipfile import ZipFile, ZIP_DEFLATED
+import shutil
+import paramiko
 #============= local library imports  ==========================
 from pychron.loggable import Loggable
-import shutil
-from zipfile import ZipFile, ZIP_DEFLATED
 from pychron.core.helpers.filetools import unique_path
+
+
+logging.getLogger("paramiko").setLevel(logging.WARNING)
 
 
 class Repository(Loggable):
@@ -102,14 +109,13 @@ class RemoteRepository(Repository):
     def path(self):
         return self.local_root
 
-import paramiko
-
 
 class SFTPRepository(RemoteRepository):
     client = Property(depends_on='host, username, password')
     _client = None
     _server_root = None
 
+    enabled = False
     def _get_client(self):
         if self._client is not None:
             return self._client
@@ -117,7 +123,7 @@ class SFTPRepository(RemoteRepository):
         t = paramiko.Transport((self.host, 22))
         t.connect(username=self.username,
                   password=self.password)
-
+        self.enabled=True
         sftp = paramiko.SFTPClient.from_transport(t)
         self._client = sftp
         return self._client
@@ -142,13 +148,16 @@ class SFTPRepository(RemoteRepository):
 
     def _execute(self, cb):
         client = self.client
-        if self._server_root is None:
-            self._server_root = client.getcwd()
+        if self.enabled:
+            if self._server_root is None:
+                self._server_root = client.getcwd()
 
-        if not client.getcwd() == os.path.join(self._server_root, self.root):
-            client.chdir(self.root)
-
-        return cb(client)
+            if not client.getcwd() == os.path.join(self._server_root, self.root):
+                client.chdir(self.root)
+            try:
+                return cb(client)
+            except paramiko.BadAuthenticationType:
+                self.enabled=False
 
     #        return os.path.isfile(self.get_file_path(n))
 
@@ -171,8 +180,7 @@ class FTPRepository(Repository):
     def url(self):
         return '{}@{}/{}'.format(self.username,
                                  self.host,
-                                 self.root
-        )
+                                 self.root)
 
     def connect(self):
         c, _ = self.client

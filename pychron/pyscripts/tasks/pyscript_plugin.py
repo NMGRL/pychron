@@ -31,6 +31,11 @@ from pychron.pyscripts.tasks.visual_el_programmer.actions import OpenVisualELScr
 
 class PyScriptPlugin(BaseTaskPlugin):
     id = 'pychron.pyscript.plugin'
+
+    def _actions_default(self):
+        return [('pychron.open_pyscript', 'Ctrl+Shift+O', 'Open PyScript'),
+                ('pychron.new_pyscript', 'Ctrl+Shift+N', 'New PyScript'),]
+
     def _my_task_extensions_default(self):
         def _replace_action():
             return TaskAction(name='Replace',
@@ -49,22 +54,22 @@ class PyScriptPlugin(BaseTaskPlugin):
             TaskExtension(
                 actions=[
                     SchemaAddition(id='open_hops_editor',
-                                   path='MenuBar/File/Open',
+                                   path='MenuBar/file.menu/Open',
                                    factory=OpenHopsEditorAction),
                     SchemaAddition(id='new_hops_editor',
-                                   path='MenuBar/File/New',
+                                   path='MenuBar/file.menu/New',
                                    factory=NewHopsEditorAction),
                     SchemaAddition(id='open_script',
-                                   path='MenuBar/File/Open',
+                                   path='MenuBar/file.menu/Open',
                                    factory=OpenPyScriptAction),
                     SchemaAddition(id='new_script',
-                                   path='MenuBar/File/New',
+                                   path='MenuBar/file.menu/New',
                                    factory=NewPyScriptAction),
                     SchemaAddition(id='new_visual',
-                                   path='MenuBar/File/New',
+                                   path='MenuBar/file.menu/New',
                                    factory=NewVisualELScriptAction),
                     SchemaAddition(id='open_visual',
-                                   path='MenuBar/File/Open',
+                                   path='MenuBar/file.menu/Open',
                                    factory=OpenVisualELScriptAction)])]
         return exts
 

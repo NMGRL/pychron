@@ -21,9 +21,9 @@ from envisage.api import Plugin
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.displays.gdisplays import gTraceDisplay
+from pychron.envisage.key_bindings import update_key_bindings
 from pychron.envisage.tasks.tasks_plugin import PychronTasksPlugin, myTasksPlugin
 from pychron.core.helpers.logger_setup import new_logger
-from pychron.globals import globalv
 from pychron.logger.tasks.logger_plugin import LoggerPlugin
 from pychron.initialization_parser import InitializationParser
 from pychron.envisage.user_login import get_user
@@ -163,10 +163,12 @@ def app_factory(klass, user):
         assemble the plugins
         return a Pychron TaskApplication
     """
+    pychron_plugin=PychronTasksPlugin()
     plugins = [
         CorePlugin(),
         myTasksPlugin(),
-        PychronTasksPlugin(),
+        pychron_plugin,
+        # FoobotPlugin(),
         LoggerPlugin()]
 
     # if UpdatePlugin is not None:
@@ -176,6 +178,10 @@ def app_factory(klass, user):
     plugins += get_user_plugins()
 
     app = klass(username=user, plugins=plugins)
+
+    #set key bindings
+    update_key_bindings(pychron_plugin.actions)
+
     return app
 
 

@@ -112,7 +112,7 @@ class Detector(SpectrometerDevice):
         v = self.ask('GetGain {}'.format(self.name))
         try:
             v = float(v)
-        except ValueError:
+        except (TypeError, ValueError):
             v = 0
         self.gain=v
         return v

@@ -138,6 +138,9 @@ class PychronLaserManager(BaseLaserManager):
     #===============================================================================
     # pyscript commands
     #===============================================================================
+    def wake(self):
+        self._ask('WakeScreen')
+
     def set_light(self, value):
         self._ask('SetLight {}'.format(value))
 

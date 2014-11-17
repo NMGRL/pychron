@@ -80,11 +80,13 @@ class InitializationParser(XMLParser):
 
         super(InitializationParser, self).__init__(p, *args, **kw)
 
-    def add_plugin(self, category, name):
+    def add_plugin(self, category, name, save=True, enabled='false'):
         tree = self.get_root()
+        tree = tree.find('plugins')
         cat = tree.find(category)
-        cat.append(self.new_element('plugin', name, enabled='false'))
-        self.save()
+        cat.append(self.new_element('plugin', name, enabled=enabled))
+        if save:
+            self.save()
 
     def get_plugins(self, category=None, all_=False, element=False):
         tree = self.get_root()
@@ -159,15 +161,22 @@ class InitializationParser(XMLParser):
         dev.set('enabled', 'false')
         self.save()
 
-    def enable_plugin(self, name, category=None):
+    def enable_plugin(self, name, category=None, save=True):
         plugin = self.get_plugin(name, category)
-        plugin.set('enabled', 'true')
-        self.save()
+        if plugin is None:
+            self.add_plugin(category, name, save=save, enabled='true')
+        else:
+            plugin.set('enabled', 'true')
 
-    def disable_plugin(self, name, category=None):
+        if save:
+            self.save()
+
+    def disable_plugin(self, name, category=None, save=True):
         plugin = self.get_plugin(name, category)
-        plugin.set('enabled', 'false')
-        self.save()
+        if plugin is not None:
+            plugin.set('enabled', 'false')
+            if save:
+                self.save()
 
     def get_flags(self, manager, **kw):
         return self._get_parameters(manager, 'flag', **kw)
@@ -301,6 +310,7 @@ class InitializationParser(XMLParser):
         #                    return p
         else:
             cat = tree.find(category)
+            print 'asss', category, cat
             if cat is not None:
                 iterator = lambda: cat.findall(tag)
             else:
@@ -308,7 +318,14 @@ class InitializationParser(XMLParser):
                 #            for plugin in cat.findall(tag):
                 #                if plugin.text.strip() == name:
                 #                    return plugin
-        return next((p for p in iterator() if p.text.strip() == name), None)
+        name = name.lower()
+
+        # for ii in iterator():
+        #     print ii.text.strip().lower(), name
+        #     if ii.text.strip().lower()==name:
+        #         break
+
+        return next((p for p in iterator() if p.text.strip().lower() == name), None)
 
     def get_systems(self):
         p = self.get_plugin('ExtractionLine')

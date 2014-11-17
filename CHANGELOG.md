@@ -27,6 +27,8 @@ CHANGELOG
 * added uncorrected ratios to Series
 * unified conditionals editing
 * added database version checking
+* updated conditionals. can do and/or with multiple variables e.g Ar40>10 and age<10.0
+* added wake command to ExtractionLinePyScript. jitters mouse to wake from screen saver
 
 2.0.4
 ------------------

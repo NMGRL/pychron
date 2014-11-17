@@ -19,6 +19,7 @@
 import socket
 #============= local library imports  ==========================
 from communicator import Communicator
+from pychron.globals import globalv
 from pychron.loggable import Loggable
 
 
@@ -111,6 +112,8 @@ class UDPHandler(Handler):
         self.address = addr
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         # self.sock.connect(addr)
+        if globalv.communication_simulation:
+            timeout=0.01
         self.sock.settimeout(timeout)
 
     def get_packet(self, cmd):

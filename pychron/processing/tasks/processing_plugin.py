@@ -5,14 +5,14 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from envisage.ui.tasks.task_factory import TaskFactory
@@ -57,6 +57,19 @@ from pyface.message_dialog import warning
 
 
 class ProcessingPlugin(BaseTaskPlugin):
+    def _actions_default(self):
+        return [('pychron.ideogram', 'Ctrl+J', 'Open Ideogram'),
+                ('pychron.spectrum', 'Ctrl+D', 'Open Spectrum'),
+                ('pychron.series', 'Ctrl+U', 'Open Series'),
+                ('pychron.inverse_isochron', 'Ctrl+I', 'Open Inverse Isochron'),
+                ('pychron.tag', 'Ctrl+Shift+T', 'Tag'),
+                ('pychron.flux', 'Ctrl+G', 'Flux'),
+                ('pychron.blank', 'Ctrl+B', 'Blanks'),
+                ('pychron.isotope_evolution', 'Ctrl+K', 'Isotope Evolutions'),
+                ('pychron.ic_factor', 'Ctrl+Shift+I', 'IC Factors'),
+                ('pychron.refresh_plot','Ctrl+Shift+R','Refresh Plot'),
+                ('pychron.recall', 'Ctrl+R', 'Open Recall')]
+
     def _service_offers_default(self):
         process_so = self.service_offer_factory(
             protocol=Processor,
@@ -157,9 +170,9 @@ Install to enable MS Excel export''')
                          ActivateRecallAction(),
                          ActivateIdeogramAction())
 
-        default_actions = [('recall_action', RecallAction, 'MenuBar/File'),
-                           #('find_action', OpenAdvancedQueryAction, 'MenuBar/File'),
-                           ('export_analyses', ExportAnalysesAction, 'MenuBar/File'),
+        default_actions = [('recall_action', RecallAction, 'MenuBar/file.menu'),
+                           #('find_action', OpenAdvancedQueryAction, 'MenuBar/file.menu'),
+                           ('export_analyses', ExportAnalysesAction, 'MenuBar/file.menu'),
 
                            ('batch_edit', BatchEditAction, 'MenuBar/Edit'),
 

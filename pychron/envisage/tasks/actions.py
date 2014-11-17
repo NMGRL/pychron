@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 import os
 import shutil
 from pyface.tasks.task_window_layout import TaskWindowLayout
 import sys
-from traits.api import on_trait_change, Any
+from traits.api import on_trait_change, Any, List
 from pyface.action.action import Action
 from pyface.tasks.action.task_action import TaskAction
 #============= standard library imports ========================
@@ -33,14 +33,78 @@ from pyface.constant import YES
 # help
 #===============================================================================
 from pychron.envisage.resources import icon
-from pychron.processing.tasks.actions.processing_actions import myTaskAction
+# from pychron.processing.tasks.actions.processing_actions import myTaskAction
 
 
 def restart():
     os.execl(sys.executable, *([sys.executable] + sys.argv))
 
 
-class UserAction(Action):
+def get_key_binding(k_id):
+    from pychron.envisage.key_bindings import user_key_map
+
+    try:
+        return user_key_map[k_id][0]
+    except KeyError:
+        pass
+
+
+class myTaskAction(TaskAction):
+    task_ids = List
+
+    def _task_changed(self):
+        if self.task:
+            if self.task.id in self.task_ids:
+                enabled = True
+                if self.enabled_name:
+                    if self.object:
+                        enabled = bool(self._get_attr(self.object,
+                                                      self.enabled_name, False))
+                if enabled:
+                    self._enabled = True
+            else:
+                self._enabled = False
+
+    def _enabled_update(self):
+        """
+             reimplement ListeningAction's _enabled_update
+        """
+        if self.enabled_name:
+            if self.object:
+                self.enabled = bool(self._get_attr(self.object,
+                                                   self.enabled_name, False))
+            else:
+                self.enabled = False
+        elif self._enabled is not None:
+            self.enabled = self._enabled
+        else:
+            self.enabled = bool(self.object)
+
+
+class PAction(Action):
+    def __init__(self, *args, **kw):
+        super(PAction, self).__init__(*args, **kw)
+        acc = get_key_binding(self.id)
+        self.accelerator = acc or self.accelerator
+
+
+class PTaskAction(TaskAction):
+    def __init__(self, *args, **kw):
+        super(PTaskAction, self).__init__(*args, **kw)
+        acc = get_key_binding(self.id)
+        self.accelerator = acc or self.accelerator
+
+
+class KeyBindingsAction(PAction):
+    name = 'Edit Key Bindings'
+
+    def perform(self, event):
+        from pychron.envisage.key_bindings import edit_key_bindings
+
+        edit_key_bindings()
+
+
+class UserAction(PAction):
     def _get_current_user(self, event):
         app = event.task.application
         args = app.id.split('.')
@@ -94,15 +158,15 @@ class CopyPreferencesAction(UserAction):
                 shutil.copyfile(src, dest)
 
 
-class RestartAction(Action):
+class RestartAction(PAction):
     name = 'Restart'
-    image =icon('system-restart')
+    image = icon('system-restart')
 
     def perform(self, event):
         restart()
 
 
-class WebAction(Action):
+class WebAction(PAction):
     def _open_url(self, url):
         webbrowser.open_new(url)
 
@@ -127,7 +191,7 @@ class NoteAction(WebAction):
         """
             goto issues page add an request or report bug
         """
-        app=event.task.window.application
+        app = event.task.window.application
         name = app.preferences.get('pychron.general.remote')
         if not name:
             name = 'NMGRL/Laboratory'
@@ -148,7 +212,7 @@ class DocumentationAction(WebAction):
         self._open_url(url)
 
 
-class AboutAction(Action):
+class AboutAction(PAction):
     name = 'About Pychron'
 
     def perform(self, event):
@@ -156,7 +220,7 @@ class AboutAction(Action):
         app.about()
 
 
-class ResetLayoutAction(TaskAction):
+class ResetLayoutAction(PTaskAction):
     name = 'Reset Layout'
     image = icon('view-restore')
 
@@ -164,7 +228,7 @@ class ResetLayoutAction(TaskAction):
         self.task.window.reset_layout()
 
 
-class PositionAction(Action):
+class PositionAction(PAction):
     name = 'Window Positions'
     image = icon('window-new')
 
@@ -176,7 +240,7 @@ class PositionAction(Action):
         lm.edit_traits()
 
 
-class MinimizeAction(TaskAction):
+class MinimizeAction(PTaskAction):
     name = 'Minimize'
     accelerator = 'Ctrl+m'
 
@@ -185,7 +249,7 @@ class MinimizeAction(TaskAction):
         app.active_window.control.showMinimized()
 
 
-class CloseAction(TaskAction):
+class CloseAction(PTaskAction):
     name = 'Close'
     accelerator = 'Ctrl+W'
 
@@ -198,7 +262,7 @@ class CloseAction(TaskAction):
             self.task.window.close()
 
 
-class CloseOthersAction(TaskAction):
+class CloseOthersAction(PTaskAction):
     name = 'Close others'
     accelerator = 'Ctrl+Shift+W'
 
@@ -209,7 +273,7 @@ class CloseOthersAction(TaskAction):
                 wi.close()
 
 
-class OpenAdditionalWindow(TaskAction):
+class OpenAdditionalWindow(PTaskAction):
     name = 'Open Additional Window'
     description = 'Open an additional window of the current active task'
 
@@ -219,7 +283,7 @@ class OpenAdditionalWindow(TaskAction):
         win.open()
 
 
-class RaiseAction(TaskAction):
+class RaiseAction(PTaskAction):
     window = Any
     style = 'toggle'
 
@@ -232,14 +296,14 @@ class RaiseAction(TaskAction):
         self.checked = False
 
 
-class RaiseUIAction(TaskAction):
+class RaiseUIAction(PTaskAction):
     style = 'toggle'
 
     def perform(self, event):
         self.checked = True
 
 
-class GenericSaveAction(TaskAction):
+class GenericSaveAction(PTaskAction):
     name = 'Save'
     accelerator = 'Ctrl+S'
     image = icon('document-save')
@@ -250,7 +314,7 @@ class GenericSaveAction(TaskAction):
             task.save()
 
 
-class GenericSaveAsAction(TaskAction):
+class GenericSaveAsAction(PTaskAction):
     name = 'Save As...'
     accelerator = 'Ctrl+Shift+S'
     image = icon('document-save-as')
@@ -261,7 +325,7 @@ class GenericSaveAsAction(TaskAction):
             task.save_as()
 
 
-class GenericFindAction(TaskAction):
+class GenericFindAction(PTaskAction):
     accelerator = 'Ctrl+F'
     name = 'Find text...'
 
@@ -271,7 +335,7 @@ class GenericFindAction(TaskAction):
             task.find()
 
 
-class FileOpenAction(Action):
+class FileOpenAction(PAction):
     task_id = ''
     test_path = ''
     image = icon('document-open')
@@ -288,7 +352,7 @@ class FileOpenAction(Action):
                 win.open()
 
 
-class NewAction(Action):
+class NewAction(PAction):
     task_id = ''
 
     def perform(self, event):
@@ -302,14 +366,26 @@ class NewAction(Action):
             if task.new():
                 win.open()
 
+
 # class GenericReplaceAction(TaskAction):
 #    pass
 #        else:
 #            manager = self._get_experimentor(event)
 #            manager.save_as_experiment_queues()
 
-#============= EOF =============================================
 class ToggleFullWindowAction(myTaskAction):
     name = 'Toggle Full Window'
     method = 'toggle_full_window'
-    task_ids = ['pychron.recall','pychron.labbook']
+    task_ids = ['pychron.recall', 'pychron.labbook']
+
+
+class EditPluginsAction(Action):
+    name = 'Edit Plugins'
+
+    def perform(self, event):
+        from pychron.plugin_edit_view import edit_plugins
+
+        if edit_plugins():
+            restart()
+
+#============= EOF =============================================

@@ -118,7 +118,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     #===========================================================================
     auto_save_delay = Int(30)
     use_auto_save = Bool(True)
-    use_labspy = Bool(True)
+    use_labspy = Bool
     min_ms_pumptime = Int(30)
     use_automated_run_monitor = Bool(False)
     set_integration_time_on_start = Bool(False)
@@ -365,7 +365,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         # save experiment to database
         self.info('saving experiment "{}" to database'.format(exp.name))
-        exp.start_timestamp = datetime.now().strftime('%m-%d-%Y %H:%M:%S')
+        exp.start_timestamp = datetime.now()#.strftime('%m-%d-%Y %H:%M:%S')
         if self.use_labspy:
             self.labspy.add_experiment(exp)
 
@@ -408,6 +408,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     if self.is_alive() and cnt < nruns and not is_first_analysis:
                         # delay between runs
                         self._delay(exp.delay_between_analyses)
+                        if not self.is_alive():
+                            self.debug('User Cancel between runs')
+                            break
+
                     else:
                         self.debug('not delaying between runs isAlive={}, '
                                    'cnts<nruns={}, is_first_analysis={}'.format(self.is_alive(),
@@ -959,9 +963,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         """
             state: str
         """
+        self.debug('set extraction state {} {}'.format(state, args))
         if state:
             self._extraction_state_on(state, *args)
-
         else:
             self._extraction_state_off()
 
@@ -1024,14 +1028,17 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         """
         t, state = gen.next()
         if state:
+            self.debug('set state label={}, color={}'.format(label, color))
             self.trait_set(extraction_state_label=label,
                            extraction_state_color=color)
         else:
+            self.debug('clear extraction_state_label')
             self.trait_set(extraction_state_label='')
 
         if not self._end_flag.is_set():
             do_after(t * 1000, self._extraction_state_iter, gen, label, color)
         else:
+            self.debug('extract state complete')
             self._complete_flag.set()
             self.trait_set(extraction_state_label='')
 
