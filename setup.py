@@ -2,14 +2,15 @@ from traits.etsconfig.etsconfig import ETSConfig
 
 ETSConfig.toolkit = 'qt4'
 
-#required to fix atexit bug with travis ci
+# required to fix atexit bug with travis ci
 import multiprocessing
 
-#prevent pycharm from remove multiprocessing during import optimization
+# prevent pycharm from remove multiprocessing during import optimization
 multiprocessing
 from setuptools import setup
+
 setup(name='pychron',
-      version='2.0.5',
+      version='2.0.6',
       setup_requires=['nose>=1.0'],
       py_modules=['pychron.pychron_constants',
                   'pychron.paths',
@@ -21,7 +22,7 @@ setup(name='pychron',
                   'pychron.experiment.utilities.aliquot_numbering',
                   'pychron.experiment.automated_run.conditional',
                   'pychron.entry.loaders.analysis_loader',
-                  ],
+      ],
       package_data={'pychron.pyscripts.tests': ['data/*.yaml', 'data/*.py'],
                     'pychron.entry.tests': ['data/*.xls']},
       packages=['pychron.core.regression',

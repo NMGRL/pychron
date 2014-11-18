@@ -1,5 +1,8 @@
 CHANGELOG
 ============
+2.0.6
+------------------
+
 2.0.5
 ------------------
 * added switching between blank histories
