@@ -30,20 +30,20 @@ from traitsui.table_column import ObjectColumn
 
 
 class ModifiedPath(HasTraits):
-    use=Bool(True)
-    path=Str
-    name=Str
-    directory=Str
+    use = Bool(True)
+    path = Str
+    name = Str
+    directory = Str
 
     def __init__(self, path, *args, **kw):
         super(ModifiedPath, self).__init__(*args, **kw)
-        self.name=os.path.basename(path)
-        self.directory=os.path.dirname(path)
+        self.name = os.path.basename(path)
+        self.directory = os.path.dirname(path)
         self.path = path
 
 
 class CommitDialogHandler(Handler):
-    def close( self, info, is_ok ):
+    def close(self, info, is_ok):
         print 'asdf', info.object, info.object.commit_message
 
         if is_ok and not info.object.commit_message:
@@ -58,21 +58,22 @@ class CommitDialog(HasTraits):
     toggle_use = Button
     commit_message = String
     _use_state = Bool(True)
-    selected= List
+    selected = List
 
     def __init__(self, ps, *args, **kw):
         super(CommitDialog, self).__init__(*args, **kw)
         self.paths = sorted((ModifiedPath(pp) for pp in ps),
                             key=lambda x: x.directory)
+        self.commit_message = 'Updated {}'.format(','.format([pp.name for pp in self.paths]))
 
     def _toggle_use_fired(self):
         rows = self.paths
         if self.selected:
-            rows =self.selected
-            func=lambda x: not x.use
+            rows = self.selected
+            func = lambda x: not x.use
         else:
-            self._use_state =not self._use_state
-            func=lambda x: self._use_state
+            self._use_state = not self._use_state
+            func = lambda x: self._use_state
 
         for ri in rows:
             ri.use = func(ri)
@@ -80,19 +81,19 @@ class CommitDialog(HasTraits):
     def traits_view(self):
         cols = [CheckboxColumn(name='use'),
                 ObjectColumn(name='name'),
-                ObjectColumn(name='directory')]
+                ObjectColumn(name='directory', width=250)]
 
-        v = View(VGroup(HGroup(icon_button_editor('toggle_use','tick')),
-                VSplit(UItem('paths',
-                       editor=TableEditor(columns=cols,
-                                          selection_mode='rows',
-                                          selected='selected',
-                                          editable=False,
-                                          sortable=False, deletable=False)),
-                 VGroup(UItem('commit_message', style='custom'),
-                        label='Commit',show_border=True))),
+        v = View(VGroup(HGroup(icon_button_editor('toggle_use', 'tick')),
+                        VSplit(UItem('paths',
+                                     editor=TableEditor(columns=cols,
+                                                        selection_mode='rows',
+                                                        selected='selected',
+                                                        editable=False,
+                                                        sortable=False, deletable=False)),
+                               VGroup(UItem('commit_message', style='custom'),
+                                      label='Commit', show_border=True))),
                  resizable=True,
-                 buttons=['OK','Cancel'],
+                 buttons=['OK', 'Cancel'],
                  title='Select Files to Commit',
                  kind='livemodal',
                  width=400,
@@ -102,7 +103,7 @@ class CommitDialog(HasTraits):
     def valid_paths(self):
         return [pp for pp in self.paths if pp.use]
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

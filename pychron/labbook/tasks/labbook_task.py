@@ -80,8 +80,9 @@ class LabBookTask(BaseEditorTask):
 
         self.make_hierarchy()
 
-    def prepare_destroy(self):
+        self._repo.add(os.path.join(paths.labbook_dir, 'labels.db'))
 
+    def prepare_destroy(self):
         # check for modifications
         if self.remote:
             self._remote_action('Pushing', self._repo.push)
@@ -235,8 +236,7 @@ class LabBookTask(BaseEditorTask):
         if ret and self._repo.is_dirty():
             ret = self._handle_prompt_for_save('You have uncommitted changes. Would you like to commit them?')
             if ret == 'save':
-                self._auto_cleanup()
-                return True
+                return self._repo.commit_dialog()
 
         return ret
 
