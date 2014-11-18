@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,8 @@
 from traits.api import Str
 #=============standard library imports ========================
 #=============local library imports  ==========================
+from pychron.core import Q_
+
 from pychron.hardware.core.abstract_device import AbstractDevice
 from pychron.hardware.polyinomial_mapper import PolynomialMapper
 
@@ -29,7 +31,8 @@ class ADCDevice(AbstractDevice):
     mapped_name = Str
     graph_ytitle = Str
     poly_mapper = None
-    def __init__(self, *args,**kw):
+
+    def __init__(self, *args, **kw):
         """
             polynomial mappers coefficients should be in the following form
 
@@ -46,9 +49,9 @@ class ADCDevice(AbstractDevice):
             name = self.config_get(config, adc, default=klass)
 
             pkgs = ('pychron.hardware.adc.analog_digital_converter',
-                      'pychron.hardware.agilent.agilent_multiplexer',
-                      'pychron.hardware.remote.agilent_multiplexer',
-                      'pychron.hardware.ncd.adc')
+                    'pychron.hardware.agilent.agilent_multiplexer',
+                    'pychron.hardware.remote.agilent_multiplexer',
+                    'pychron.hardware.ncd.adc')
 
             for pi in pkgs:
                 factory = self.get_factory(pi, klass)
@@ -61,7 +64,7 @@ class ADCDevice(AbstractDevice):
 
             conv = 'Conversion'
             if config.has_section(conv):
-                pmapper=self.poly_mapper
+                pmapper = self.poly_mapper
                 coeffs = self.config_get(config, conv, 'coefficients')
                 pmapper.parse_coefficient_string(coeffs)
                 pmapper.output_low = self.config_get(config, conv, 'output_low')
@@ -83,6 +86,12 @@ class ADCDevice(AbstractDevice):
                 v = self._cdevice.read_channel(self.channel)
             else:
                 v = self._cdevice.read_device(**kw)
+
+            if not isinstance(v, Q_):
+                v = Q_(v, 'V')
+            else:
+                v = v.to('V')
+
             self._rvoltage = v
             return v
 
