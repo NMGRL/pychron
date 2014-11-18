@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Button, Str, Int, Bool
-from traitsui.api import View, Item, UItem, HGroup, VGroup
 # ============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.core.helpers.filetools import to_bool
@@ -43,11 +41,9 @@ DESCRIPTION_MAP = {'Experiment': 'Execute sets of automated runs',
                    'FusionsUV': "NMGRL's custom Fusions UV",
                    'ExternalPipette': 'Interface with the APIS pipette system',
 
-                   'Use Login': 'ask user for login info on startup.\nIf false login in as "root"',
                    'Use IPC': 'use Inter Process Communication e.g. use RemotHardwareServer',
                    'Ignore Initialization Warnings': 'Ignore initialization warnings',
                    'Ignore Initialization Questions': 'Ignore initialization questions',
-                   'Multi-User': 'Get users from database',
                    'Communication Simulation': 'Simulation communication.\nSet Ethernet timeout to 0'}
 
 DEFAULT_PLUGINS = (('General', ('Experiment', 'PyScript',
@@ -59,11 +55,9 @@ DEFAULT_PLUGINS = (('General', ('Experiment', 'PyScript',
                                  'FusionsCO2', 'FusionsDiode', 'FusionsUV',
                                  'ExternalPipette')),
                    ('Social', (),))
-DEFAULT_GLOBALS = (('Use Login', 'use_login'),
-                   ('Use IPC', 'use_ipc'),
+DEFAULT_GLOBALS = (('Use IPC', 'use_ipc'),
                    ('Ignore Initialization Warnings', 'ignore_initialization_warnings'),
                    ('Ignore Initialization Questions', 'ignore_initialization_questions'),
-                   ('Multi-User', 'multi_user'),
                    ('Communication Simulation', 'communication_simulation'))
 
 

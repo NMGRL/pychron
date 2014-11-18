@@ -17,13 +17,14 @@
 # ============= enthought library imports =======================
 import os
 import pickle
+
 from pyface.message_dialog import information
-from traits.api import HasTraits, Button, List, Str, Bool
+from traits.api import HasTraits, List, Str, Bool
 from traitsui.api import View, Item, HGroup, UItem, Label, Handler, VGroup
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.combobox_editor import ComboboxEditor
-from pychron.globals import globalv
 from pychron.paths import paths
 
 
@@ -48,7 +49,9 @@ def load_user_file():
 
 
 def dump_user_file(names, last_login_name):
-    # users = load_user_file()
+    if names is None:
+        names, _, _ = load_user_file()
+
     if not isinstance(names, list):
         names = [names, ]
 
@@ -103,22 +106,50 @@ class SrcDestUsers(HasTraits):
         return v
 
 
+def get_last_login(last_login):
+    try:
+        with open(os.path.join(paths.enthought, 'login'), 'r') as fp:
+            obj = pickle.load(fp)
+            return obj[last_login]
+    except BaseException:
+        return True, True
+
+
+def set_last_login(name, use_login, multi_user):
+    try:
+        with open(os.path.join(paths.enthought, 'login'), 'r') as fp:
+            obj = pickle.load(fp)
+    except BaseException:
+        obj = {}
+
+    obj[name] = (use_login, multi_user)
+    # print 'set last login', obj
+    with open(os.path.join(paths.enthought, 'login'), 'w') as fp:
+        pickle.dump(obj, fp)
+
+    dump_user_file(names=None, last_login_name=name)
+
+
 def get_user(current=None):
     """
         current: str, current user. if supplied omit from available list
     """
-    if globalv.use_login:
+    if os.path.isfile(paths.login_file):
+        with open(paths.login_file, 'r') as fp:
+            u = fp.read()
+        os.remove(paths.login_file)
+        return u
+
+    users, last_login, isfile = load_user_file()
+    use_login, multi_user = get_last_login(last_login)
+    # print last_login, use_login
+    if use_login:
         #check to see if the login file is set
-        if os.path.isfile(paths.login_file):
-            with open(paths.login_file, 'r') as fp:
-                u = fp.read()
-            os.remove(paths.login_file)
-            return u
 
         #read the existing user file
-        users, last_login, isfile = load_user_file()
-        if not isfile and globalv.multi_user:
+        if not isfile and multi_user:
             information(None, 'Auto login as root. Quit to populate the user list')
+            dump_user_file(['root'], 'root')
             return 'root'
 
         if current:
@@ -132,7 +163,7 @@ def get_user(current=None):
             if info.result:
                 if login.user:
                     #add the manually entered user name to the users file
-                    if not current and not globalv.multi_user:
+                    if not current and not multi_user:
                         if login.user not in users:
                             users.append(login.user)
                         dump_user_file(users, login.user)

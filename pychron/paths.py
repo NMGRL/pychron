@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -32,12 +32,16 @@ from os import path, mkdir
 #    project_root = 'branches/pychron'
 #
 # project_home = join(host_url, project_root)
+import os
 
 
 class Paths():
     dissertation = '/Users/ross/Programming/git/dissertation'
+    enthought = path.join(path.expanduser('~'), '.enthought')
+    users_file = path.join(enthought, 'users')
+    base = path.expanduser('~')
 
-    version = None
+    # version = None
     root = None
     bundle_root = None
     # pychron_src_root = None
@@ -80,7 +84,7 @@ class Paths():
     hidden_dir = None
     labspy_dir = None
     labspy_context_dir = None
-    users_file = None
+    # users_file = None
     login_file = None
     preferences_dir = None
     comment_templates_dir = None
@@ -176,15 +180,16 @@ class Paths():
         self.labspy_template_search_path = [self.labspy_templates,
                                             self.app_resources]
 
-    def build(self, version):
-        self.version = version
-
-        HOME = path.expanduser('~')
-
-        home = 'Pychrondata{}'.format(version)
+    def build(self, root):
         join = path.join
+        # self.version = version
+        if root.startswith('_'):
+            root = join(path.expanduser('~'), 'Pychron{}'.format(root))
 
-        self.root = root = join(HOME, home)
+        if not path.isdir(root):
+            os.mkdir(root)
+
+        # self.root = root
         self.log_dir = join(root, 'logs')
 
         self.resources = join(path.dirname(path.dirname(__file__)), 'resources')
@@ -243,7 +248,7 @@ class Paths():
         self.generic_experiment_dir = join(self.experiment_dir, 'generic')
         self.backup_experiment_dir = join(self.experiment_dir, 'backup')
         self.hidden_dir = join(root, '.hidden')
-        self.users_file = join(self.hidden_dir, 'users')
+        # self.users_file = join(self.hidden_dir, 'users')
         self.login_file = join(self.hidden_dir, 'login')
         self.labspy_dir = join(self.hidden_dir, 'labspy')
         self.labspy_context_dir = join(self.labspy_dir, 'context')

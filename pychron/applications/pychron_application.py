@@ -17,9 +17,11 @@
 #============= enthought library imports =======================
 from datetime import datetime
 
-from traits.api import List, Str
+from apptools.preferences.preference_binding import bind_preference
+from traits.api import List, Str, Bool
 from pyface.api import SplashScreen
 from pyface.image_resource import ImageResource
+
 
 #============= standard library imports ========================
 import os
@@ -58,6 +60,9 @@ def revision_str(rev):
 class PychronApplication(BaseTasksApplication):
     about_additions = List
     username = Str
+    use_login = Bool
+    multi_user = Bool
+
     def __init__(self, username=None, *args, **kw):
         if username:
             self.id='{}.{}'.format(self.id, username)
@@ -67,13 +72,23 @@ class PychronApplication(BaseTasksApplication):
 
         super(PychronApplication, self).__init__(*args, **kw)
 
+        bind_preference(self, 'use_login', 'pychron.general.use_login')
+        bind_preference(self, 'multi_user', 'pychron.general.multi_user')
+
     def exit(self, **kw):
         self.report_logger_stats()
         super(PychronApplication, self).exit(**kw)
 
     def stop(self):
-        from pychron.globals import globalv
-        if globalv.multi_user:
+
+        # from pychron.globals import globalv
+        # if globalv.multi_user:
+        # self.dump_user_file()
+        from pychron.envisage.user_login import set_last_login
+
+        set_last_login(self.username, self.use_login, self.multi_user)
+
+        if self.multi_user:
             self.dump_user_file()
 
         super(BaseTasksApplication, self).stop()

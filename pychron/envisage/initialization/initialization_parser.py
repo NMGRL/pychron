@@ -79,6 +79,7 @@ class InitializationParser(XMLParser):
                 sys.exit()
 
         super(InitializationParser, self).__init__(p, *args, **kw)
+        print 'using Initialization={}'.format(p)
 
     def get_globals(self):
         tree = self.get_root()

@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,12 +23,14 @@ from envisage.api import Plugin
 from pychron.displays.gdisplays import gTraceDisplay
 from pychron.envisage.key_bindings import update_key_bindings
 from pychron.envisage.tasks.tasks_plugin import PychronTasksPlugin, myTasksPlugin
-from pychron.core.helpers.logger_setup import new_logger
+# from pychron.core.helpers.logger_setup import new_logger
 from pychron.logger.tasks.logger_plugin import LoggerPlugin
 from pychron.envisage.initialization.initialization_parser import InitializationParser
-from pychron.envisage.user_login import get_user
 
-logger = new_logger('launcher')
+import logging
+
+logger = logging.getLogger()
+
 try:
     from pychron.updater.tasks.update_plugin import UpdatePlugin
 except ImportError:
@@ -36,30 +38,30 @@ except ImportError:
     UpdatePlugin = None
 
 PACKAGE_DICT = dict(
-    CanvasDesignerPlugin=    'pychron.canvas.tasks.canvas_plugin',
-    ArArConstantsPlugin=     'pychron.constants.tasks.arar_constants_plugin',
-    DashboardServerPlugin=   'pychron.dashboard.tasks.server.plugin',
-    DatabasePlugin=          'pychron.database.tasks.database_plugin',
-    EntryPlugin=             'pychron.entry.tasks.entry_plugin',
-    ExperimentPlugin=        'pychron.experiment.tasks.experiment_plugin',
-    ExternalPipettePlugin=   'pychron.external_pipette.tasks.external_pipette_plugin',
-    ExtractionLinePlugin=    'pychron.extraction_line.tasks.extraction_line_plugin',
-    GeoPlugin=               'pychron.geo.tasks.geo_plugin',
-    VideoPlugin=             'pychron.image.tasks.video_plugin',
-    FusionsDiodePlugin=      'pychron.lasers.tasks.plugins.diode',
-    FusionsCO2Plugin=        'pychron.lasers.tasks.plugins.co2',
-    FusionsUVPlugin=         'pychron.lasers.tasks.plugins.uv',
-    LoadingPlugin=           'pychron.loading.loading_plugin',
-    CoreLaserPlugin=         'pychron.lasers.tasks.plugins.laser_plugin',
-    MediaServerPlugin=       'pychron.media_server.tasks.media_server_plugin',
-    ProcessingPlugin=        'pychron.processing.tasks.processing_plugin',
-    PyScriptPlugin=          'pychron.pyscripts.tasks.pyscript_plugin',
-    ArgusSpectrometerPlugin= 'pychron.spectrometer.tasks.argus_spectrometer_plugin',
-    MapSpectrometerPlugin=   'pychron.spectrometer.tasks.map_spectrometer_plugin',
-    EmailPlugin=             'pychron.social.tasks.email_plugin',
-    SystemMonitorPlugin=     'pychron.system_monitor.tasks.system_monitor_plugin',
-    WorkspacePlugin=         'pychron.workspace.tasks.workspace_plugin',
-    LabBookPlugin=           'pychron.labbook.tasks.labbook_plugin')
+    CanvasDesignerPlugin='pychron.canvas.tasks.canvas_plugin',
+    ArArConstantsPlugin='pychron.constants.tasks.arar_constants_plugin',
+    DashboardServerPlugin='pychron.dashboard.tasks.server.plugin',
+    DatabasePlugin='pychron.database.tasks.database_plugin',
+    EntryPlugin='pychron.entry.tasks.entry_plugin',
+    ExperimentPlugin='pychron.experiment.tasks.experiment_plugin',
+    ExternalPipettePlugin='pychron.external_pipette.tasks.external_pipette_plugin',
+    ExtractionLinePlugin='pychron.extraction_line.tasks.extraction_line_plugin',
+    GeoPlugin='pychron.geo.tasks.geo_plugin',
+    VideoPlugin='pychron.image.tasks.video_plugin',
+    FusionsDiodePlugin='pychron.lasers.tasks.plugins.diode',
+    FusionsCO2Plugin='pychron.lasers.tasks.plugins.co2',
+    FusionsUVPlugin='pychron.lasers.tasks.plugins.uv',
+    LoadingPlugin='pychron.loading.loading_plugin',
+    CoreLaserPlugin='pychron.lasers.tasks.plugins.laser_plugin',
+    MediaServerPlugin='pychron.media_server.tasks.media_server_plugin',
+    ProcessingPlugin='pychron.processing.tasks.processing_plugin',
+    PyScriptPlugin='pychron.pyscripts.tasks.pyscript_plugin',
+    ArgusSpectrometerPlugin='pychron.spectrometer.tasks.argus_spectrometer_plugin',
+    MapSpectrometerPlugin='pychron.spectrometer.tasks.map_spectrometer_plugin',
+    EmailPlugin='pychron.social.tasks.email_plugin',
+    SystemMonitorPlugin='pychron.system_monitor.tasks.system_monitor_plugin',
+    WorkspacePlugin='pychron.workspace.tasks.workspace_plugin',
+    LabBookPlugin='pychron.labbook.tasks.labbook_plugin')
 
 
 def get_module_name(klass):
@@ -163,7 +165,7 @@ def app_factory(klass, user):
         assemble the plugins
         return a Pychron TaskApplication
     """
-    pychron_plugin=PychronTasksPlugin()
+    pychron_plugin = PychronTasksPlugin()
     plugins = [
         CorePlugin(),
         myTasksPlugin(),
@@ -191,8 +193,8 @@ def check_dependencies():
     """
     from pyface.api import warning
 
-    for mod,req in (('uncertainties', '2.1'),
-                           ('pint','0.5')):
+    for mod, req in (('uncertainties', '2.1'),
+                     ('pint', '0.5')):
         try:
             mod = __import__(mod)
             ver = mod.__version__
@@ -211,7 +213,7 @@ def check_dependencies():
     return True
 
 
-def launch(klass):
+def launch(klass, user):
     """
     """
     # login protection
@@ -230,10 +232,6 @@ def launch(klass):
         logger.info('check dependencies failed')
         os._exit(0)
 
-    user = get_user()
-    if not user:
-        logger.info('user login failed')
-        os._exit(0)
 
     app = app_factory(klass, user)
 
