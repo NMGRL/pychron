@@ -1,15 +1,15 @@
-.container { position:relative; padding:0 0 0 200px; }
-#sidebar {
+.mcontainer { position:relative; padding:0 0 0 200px; }
+#msidebar {
     position:absolute;
     top:0; bottom:0; left:0;
-    width:200px;
-    background-color: lightcyan;
+    /*width:200px;*/
+    background-color: whitesmoke;
 }
 
 /*#header { border:1px solid #000; width:100px; height:20px;*/
     /*margin:0 0 5px 0;*/
 /*}*/
-#content {
+#mcontent {
     /*border:1px solid #000;*/
     /*width:100px; height:50px;*/
     margin-left: 10px;
@@ -19,7 +19,7 @@
 }
 
 .entry{
-    background-color: whitesmoke;
+    /*background-color: green;*/
     margin-left: 10px;
     margin-right: 10px;
     padding: 10px;
