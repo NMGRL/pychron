@@ -26,6 +26,7 @@ from chaco.plot import Plot
 from pychron.processing.tasks.plot_editor import PlotEditor, AnnotationEditor
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 class SelectorTool(BaseTool):
@@ -103,7 +104,7 @@ class PlotEditorPane(TraitsDockPane):
     id = 'pychron.plot_editor'
     current_editor = Instance(PlotEditor)
     selectors = List
-    index_attr='uage'
+    index_attr = 'uage'
 
     annotation_editor = Instance(AnnotationEditor, ())
     suppress_pane_change = False
@@ -117,19 +118,16 @@ class PlotEditorPane(TraitsDockPane):
     def _component_changed(self):
         if self.component:
             if hasattr(self.component, 'plotcontainer'):
-                comp=self.component.plotcontainer
+                comp = self.component.plotcontainer
             else:
-                comp=self.component
+                comp = self.component
 
             ncomps = flatten_container(comp)
             if ncomps:
                 self.selectors = []
                 self.current_editor = None
                 for plot in ncomps:
-                    editor = PlotEditor(plot=plot,
-                                        analyses=self.analyses,
-                                        index_attr=self.index_attr
-                                        )
+                    editor = PlotEditor(plot=plot)
 
                     if self.current_editor is None:
                         self.suppress_pane_change = True

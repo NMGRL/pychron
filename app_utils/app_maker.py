@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,7 @@ import shutil
 
 
 def make():
-    flavors = 'diode', 'co2', 'valve', 'uv', 'experiment', 'view', 'bakedpy'
+    flavors = 'diode', 'co2', 'valve', 'uv', 'experiment', 'view', 'bakedpy', 'remote_hardware_server'
     flavorstr = ', '.join(map(lambda x: '"{}"'.format(x), flavors))
 
     parser = argparse.ArgumentParser(description='Make a pychron application')
@@ -61,6 +61,31 @@ def make():
                 #                template.name = name
                 template.icon_name = '{}_icon.icns'.format(name)
                 template.bundle_name = name
+            elif name == 'remote_hardware_server':
+                template.icon_name = 'remote_hardware_server_icon.icns'
+                template.bundle_name = name
+                template.packages = ['pychron.messaging',
+                                     'pychron.messaging.handlers',
+                                     'pychron.remote_hardware',
+                                     'pychron.remote_hardware.errors',
+                                     'pychron.core',
+                                     'pychron.core.helpers',
+                                     'pychron.core.ui','pychron.core.ui.qt',
+                                     'pychron.core.xml',
+                                     'pychron.displays']
+                template.modules = ['pychron.managers.remote_hardware_server_manager',
+                                    'pychron.managers.manager',
+                                    'pychron.paths',
+                                    'pychron.globals',
+                                    'pychron.config_loadable',
+                                    'pychron.version',
+                                    'pychron.initialization_parser',
+                                    'pychron.loggable',
+                                    'pychron.viewable',
+                                    'pychron.saveable',
+                                    'pychron.rpc.rpcable',
+                                    'pychron.utils',
+                                    'pychron.application_controller']
             else:
                 #                template = Template()
 
@@ -80,14 +105,14 @@ class Template(object):
     root = None
     bundle_name = None
     version = None
-
+    packages = None
+    modules = None
     def build(self):
         root = os.path.realpath(self.root)
 
         dest = os.path.join(root, 'launchers',
                             '{}.app'.format(self.bundle_name),
-                            'Contents'
-        )
+                            'Contents')
         ins = Maker()
         ins.root = root
         ins.dest = dest
@@ -102,7 +127,7 @@ class Template(object):
         # build
         #=======================================================================
         ins.build_app(op)
-        ins.make_egg()
+        ins.make_egg(self.packages, self.modules)
         # ins.make_migrate_repos()
         ins.make_argv()
 
@@ -143,6 +168,15 @@ class Template(object):
             m = os.path.join(self.root, 'launchers', '{}.py'.format(a))
             ins.copy_resource(m)
 
+        # for anaconda builds
+        #copy qt.nib
+        p = '/anaconda/python.app/Contents/Resources/qt_menu.nib'
+        if not os.path.isdir(p):
+            p = '{}/{}'.format(os.path.expanduser('~'),
+                               'anaconda/python.app/Contents/Resources/qt_menu.nib')
+
+        ins.copy_resource_dir(p)
+
         #=======================================================================
         # rename
         #=======================================================================
@@ -167,6 +201,15 @@ class Maker(object):
                             self._resource_path(name))
         else:
             print '++++++++++++++++++++++ Not a valid Resource {} +++++++++++++++++++++++'.format(src)
+
+    def copy_resource_dir(self, src, name=None):
+        if os.path.exists(src):
+            if name is None:
+                name = os.path.basename(src)
+            shutil.copytree(src, self._resource_path(name))
+        else:
+            print '++++++++++++++++++++++ Not a valid Resource {} +++++++++++++++++++++++'.format(src)
+
     def _resource_path(self, name):
         return os.path.join(self.dest, 'Resources', name)
 
@@ -176,22 +219,28 @@ class Maker(object):
         p = os.path.join(root, 'pychron', 'database', 'migrate')
         shutil.copytree(p, self._resource_path('migrate_repositories'))
 
+    def make_egg(self, pkgs=None, modules=None):
 
-    def make_egg(self):
         from setuptools import setup, find_packages
-
-        pkgs = find_packages(self.root,
-                             exclude=('launchers', 'tests',
-                                      'app_utils')
-        )
+        if pkgs is None:
+            pkgs = find_packages(self.root,
+                             exclude=('launchers',
+                                      'tests',
+                                      'test',
+                                      'test.*',
+                                      'sandbox',
+                                      'sandbox.*',
+                                      '*.sandbox',
+                                      'app_utils'))
+        if modules is None:
+            modules=[]
 
         setup(name='pychron',
               script_args=('bdist_egg',),
+              py_modules=modules,
               #                           '-b','/Users/argonlab2/Sandbox'),
               version=self.version,
-              packages=pkgs
-
-        )
+              packages=pkgs)
 
         eggname = 'pychron-{}-py2.7.egg'.format(self.version)
         # make the .pth file
@@ -202,8 +251,7 @@ class Maker(object):
 
         egg_root = os.path.join(self.root, 'dist', eggname)
         shutil.copyfile(egg_root,
-                        self._resource_path(eggname)
-        )
+                        self._resource_path(eggname))
 
         # remove build dir
         p = os.path.join(self.root, 'build')

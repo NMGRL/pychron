@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +22,11 @@ from pychron.pychron_constants import LINE_STR, ALPHAS
 ANALYSIS_MAPPING = dict(ba='Blank Air', bc='Blank Cocktail', bu='Blank Unknown',
                         bg='Background', u='Unknown', c='Cocktail', a='Air',
                         pa='Pause')
+ANALYSIS_MAPPING_INTS = dict(unknown=0, background=1, air=2, cocktail=3,
+                             blank_air=4,
+                             blank_cocktail=5,
+                             blank_unknown=6)
+
 
 # "labnumbers" where extract group is disabled
 NON_EXTRACTABLE = dict(ba='Blank Air', bc='Blank Cocktail', bu='Blank Unknown',
@@ -35,23 +40,8 @@ SPECIAL_MAPPING = dict(background='bg', air='a', cocktail='c',
                        blank_cocktail='bc',
                        blank_unknown='bu',
                        pause='pa',
-                       degas='dg')
-
-
-# from ConfigParser import ConfigParser
-# import os
-# from pychron.paths import paths
-#
-# p = os.path.join(paths.setup_dir, 'identifiers.cfg')
-# if os.path.isfile(p):
-#     cp = ConfigParser()
-#     cp.read(p)
-#     for option in cp.options('AnalysisNames'):
-#         v = cp.get('AnalysisNames', option)
-#         labnumber, kname = map(str.strip, v.split(','))
-#         ANALYSIS_MAPPING[option] = kname
-#         SPECIAL_NAMES.append(kname)
-#         SPECIAL_MAPPING[kname.lower()] = option
+                       degas='dg',
+                       unknown='u')
 
 import os
 from pychron.paths import paths
@@ -62,15 +52,18 @@ differed = []
 if os.path.isfile(p):
     with open(p, 'r') as fp:
         yd = yaml.load(fp)
-        for k, v in yd.items():
+        for i, (k, v) in enumerate(yd.items()):
             ANALYSIS_MAPPING[k] = v
 
             #if : assume '01:Value' where 01 is used for preserving order
             if ':' in v:
                 a, v = v.split(':')
-                differed.append((int(a), v))
+                c = int(a)
+                differed.append((c, v))
+                ANALYSIS_MAPPING_INTS[v.lower()] = 7 + c
             else:
                 SPECIAL_NAMES.append(v)
+                ANALYSIS_MAPPING_INTS[v.lower()] = 7 + i
             SPECIAL_MAPPING[v.lower()] = k
 
 if differed:
@@ -78,6 +71,16 @@ if differed:
     SPECIAL_NAMES.extend([di[1] for di in ds])
 
 SPECIAL_KEYS = map(str.lower, SPECIAL_MAPPING.values())
+
+
+def convert_identifier_to_int(ln):
+    m = {'ba':1,'bc':2,'bu':3,'bg':4,'u':5,'c':6}
+
+    try:
+        return int(ln)
+    except ValueError:
+        return m[ln]
+
 
 
 def convert_special_name(name, output='shortname'):
@@ -124,7 +127,6 @@ def convert_identifier(identifier):
 
             #        identifier=identifier.split('-')[0]
 
-
             #    if identifier in ANALYSIS_MAPPING:
             #        sname = ANALYSIS_MAPPING[identifier]
             #        identifier = next((k for k, v in SPECIAL_IDS.iteritems() if v == sname), identifier)
@@ -133,6 +135,9 @@ def convert_identifier(identifier):
 
 
 def get_analysis_type(idn):
+    """
+        idn: str like 'a-...' or '43513'
+    """
     idn = idn.lower()
 
     #     if '-' in idn:
@@ -143,10 +148,10 @@ def get_analysis_type(idn):
         return 'background'
     elif idn.startswith('ba'):
         return 'blank_air'
-    elif idn.startswith('bu') or idn.startswith('bfc'):
-        return 'blank_unknown'
     elif idn.startswith('bc'):
         return 'blank_cocktail'
+    elif idn.startswith('b'):
+        return 'blank_unknown'
     elif idn.startswith('a'):
         return 'air'
     elif idn.startswith('c'):
@@ -185,14 +190,13 @@ def strip_runid(r):
 def make_step(s):
     if isinstance(s, (float, int, long)):
         s = ALPHAS[int(s)]
-
-    return s
+    return s or ''
 
 
 def make_aliquot_step(a, s):
     if not isinstance(a, str):
         a = '{:02n}'.format(int(a))
-
+    s = make_step(s)
     return '{}{}'.format(a, s)
 
 

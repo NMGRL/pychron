@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,12 +16,14 @@
 
 #============= enthought library imports =======================
 from reportlab.lib import colors
+from reportlab.lib.units import inch
 from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.platypus import Table, TableStyle
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.core.pdf.base_pdf_writer import BasePDFWriter
+from pychron.core.pdf.items import FooterRow, FootNoteRow, Row
 from pychron.core.pdf.options import PDFTableOptions
 
 
@@ -49,10 +51,11 @@ class BasePDFTableWriter(BasePDFWriter):
         wcols = []
         for ri in rows:
             for i, ci in enumerate(ri.items):
-                try:
-                    wcols[i]=max(wcols[i], get_width(ci.render()))
-                except IndexError:
-                    wcols.append(get_width(ci.render()))
+                if ci.include_width_calc:
+                    try:
+                        wcols[i] = max(wcols[i], get_width(ci.render()))
+                    except IndexError:
+                        wcols.append(get_width(ci.render()))
 
         self.col_widths = wcols
 
@@ -69,7 +72,7 @@ class BasePDFTableWriter(BasePDFWriter):
                   weight, getattr(colors, color))
 
     def _new_table(self, style, data, hAlign='LEFT',
-                   col_widths=None, extend_last=False, *args, **kw):
+                   col_widths=None, *args, **kw):
 
         # set spans
 
@@ -111,8 +114,15 @@ class BasePDFTableWriter(BasePDFWriter):
 
         return ts
 
-    def _set_row_heights(self, t, data):
-        pass
+    def _set_row_heights(self, table, data):
+        a_idxs = self._get_idxs(data, (FooterRow, FootNoteRow))
+        for a, v in a_idxs:
+            table._argH[a] = 0.19 * inch
+
+        idx = self._get_idxs(data, Row)
+        for i, v in idx:
+            if v.height:
+                table._argH[i] = v.height * inch
 
     def _set_col_widths(self, t, rows, col_widths):
         cs = col_widths
@@ -127,10 +137,6 @@ class BasePDFTableWriter(BasePDFWriter):
                 cs.extend([30 for _ in range(dn - cn)])
 
             t._argW = cs
-
-
-
-
 
 
 #============= EOF =============================================

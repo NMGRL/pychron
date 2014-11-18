@@ -23,9 +23,10 @@ from chaco.tools.api import ZoomTool, PanTool
 from numpy import hstack
 #=============local library imports  ==========================
 
+
 class BaseDataCanvas(DataView):
-    '''
-    '''
+    """
+    """
     fill_padding = True
     #    bgcolor = (0.9, 0.9, 1.0)
     #    bgcolor = (0, 1.0, 0)
@@ -47,10 +48,7 @@ class BaseDataCanvas(DataView):
 
     plot = None
 
-
     def cmap_plot(self, z):
-
-
         from chaco.array_plot_data import ArrayPlotData
         from chaco.plot import Plot
         from chaco.default_colormaps import color_map_name_dict
@@ -62,8 +60,7 @@ class BaseDataCanvas(DataView):
         p.img_plot('cmapdata',
                    xbounds=(-25, 25),
                    ybounds=(-25, 25),
-                   colormap=color_map_name_dict['hot']
-        )
+                   colormap=color_map_name_dict['hot'])
         self.add(p)
         return pd
 
@@ -79,9 +76,7 @@ class BaseDataCanvas(DataView):
                 index=ArrayDataSource(x),
                 value=ArrayDataSource(y),
                 index_mapper=LinearMapper(range=self.index_range),
-                value_mapper=LinearMapper(range=self.value_range)
-
-            )
+                value_mapper=LinearMapper(range=self.value_range))
 
             self.add(self.plot)
         else:
@@ -101,9 +96,9 @@ class BaseDataCanvas(DataView):
         self.request_redraw()
 
     def __init__(self, *args, **kw):
-        '''
+        """
 
-        '''
+        """
         super(BaseDataCanvas, self).__init__(*args, **kw)
         if 'x_range' not in kw:
             self.x_range = (-25, 25)
@@ -146,7 +141,6 @@ class BaseDataCanvas(DataView):
         #        if not self.show_axes:
         #            self.value_axis.visible = False
         #            self.index_axis.visible = False
-
         self.value_axis.visible = self.show_axes
         self.index_axis.visible = self.show_axes
         self.x_grid.visible = self.show_grids
@@ -170,8 +164,8 @@ class BaseDataCanvas(DataView):
             pass
 
     def set_mapper_limits(self, mapper, limits, pad=0):
-        '''
-        '''
+        """
+        """
         mapper = getattr(self, '{}_mapper'.format(mapper))
         if mapper is not None:
             mapper.range.low_setting = limits[0] - pad
@@ -183,20 +177,20 @@ class BaseDataCanvas(DataView):
         return mapper.range.low, mapper.range.high
 
     def update(self, *args, **kw):
-        '''
+        """
 
-        '''
+        """
         pass
 
     def add_pan(self):
-        '''
-        '''
+        """
+        """
         p = PanTool(self)
         self.tools.append(p)
 
     def add_zoom(self):
-        '''
-        '''
+        """
+        """
         z = ZoomTool(component=self, always_on=False, tool_mode='box',
                      max_zoom_out_factor=1,
                      max_zoom_in_factor=10000)
@@ -207,10 +201,13 @@ class BaseDataCanvas(DataView):
 
         # self.tools.append(b)
 
-    def _get_wh(self, w, h):
-        '''
+    def get_wh(self, *args):
+        return self._get_wh(*args)
 
-        '''
+    def _get_wh(self, w, h):
+        """
+
+        """
         wh, oo = self.map_screen([(w, h), (0, 0)])
         w = wh[0] - oo[0]
         h = wh[1] - oo[1]
@@ -219,8 +216,8 @@ class BaseDataCanvas(DataView):
 
 
     def _vertical_line(self, gc, x, y1, y2, color=(0, 0, 0)):
-        '''
-        '''
+        """
+        """
 
         p1 = (x, y1)
         p2 = (x, y2)
@@ -243,16 +240,16 @@ class BaseDataCanvas(DataView):
         gc.draw_path()
 
     def _draw_hook(self, gc, *args, **kw):
-        '''
+        """
 
-        '''
+        """
         pass
 
     def draw(self, gc, *args, **kw):
-        '''
-
-        '''
+        """
+        """
         with gc:
+
             DataView._draw(self, gc, *args, **kw)
 
             #with gc:
@@ -264,6 +261,8 @@ class BaseDataCanvas(DataView):
             for o in self.overlays:
                 if o.visible:
                     o.overlay(None, gc, *args, **kw)
+
+                    #DataView._draw(self, gc, *args, **kw)
                     # super(BaseDataCanvas, self).draw(gc, *args, **kw)
 
 

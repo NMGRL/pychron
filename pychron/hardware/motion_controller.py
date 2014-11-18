@@ -235,8 +235,8 @@ class MotionController(CoreDevice):
             self.parent.canvas.set_stage_position(x, y)
 
     def _sign_correct(self, val, key, ratio=True):
-        '''
-        '''
+        """
+        """
         if val is not None:
             axis = self.axes[key]
             r = 1

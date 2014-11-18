@@ -1,11 +1,11 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,18 +15,34 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Instance, Unicode, Property, DelegatesTo
+from traits.api import Instance, Unicode, Property, DelegatesTo, Color, Bool
 from traitsui.api import View, UItem
 
 #============= standard library imports ========================
 import os
 #============= local library imports  ==========================
-
+from pychron.core.ui.qt.tabular_editor import TabularEditorHandler
 from pychron.core.ui.tabular_editor import myTabularEditor
-from pychron.experiment.automated_run.tabular_adapter import AutomatedRunSpecAdapter, UVAutomatedRunSpecAdapter
+from pychron.experiment.automated_run.tabular_adapter import AutomatedRunSpecAdapter, UVAutomatedRunSpecAdapter, \
+    ExecutedAutomatedRunSpecAdapter, ExecutedUVAutomatedRunSpecAdapter
 from pychron.experiment.queue.experiment_queue import ExperimentQueue
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.core.helpers.filetools import add_extension
+
+
+class ExperimentEditorHandler(TabularEditorHandler):
+    refresh_name = 'refresh_table_needed'
+    def make_block(self, info, obj):
+        obj.make_run_block()
+
+    def repeat_block(self, info, obj):
+        obj.repeat_block()
+
+    def toggle_end_after(self, info, obj):
+        obj.end_after()
+
+    def toggle_skip(self, info, obj):
+        obj.toggle_skip()
 
 
 class ExperimentEditor(BaseTraitsEditor):
@@ -38,24 +54,54 @@ class ExperimentEditor(BaseTraitsEditor):
 
     executed = DelegatesTo('queue')
     tabular_adapter_klass = AutomatedRunSpecAdapter
-    #     merge_id = Int(0)
-    #     group = Int(0)
+    executed_tabular_adapter_klass = ExecutedAutomatedRunSpecAdapter
+    bgcolor = Color
 
-    #     dirty = Bool(False)
+    automated_runs_editable = Bool
 
-    #    def create(self, parent):
-    #        self.control = self._create_control(parent)
+    def set_bgcolor(self, c):
+        self.bgcolor=c
+        self.tabular_adapter_klass.odd_bg_color=c
+        self.executed_tabular_adapter_klass.odd_bg_color=c
 
-    def _dirty_changed(self):
-        self.debug('dirty changed {}'.format(self.dirty))
+    def new_queue(self, txt=None, **kw):
+        queue = self.queue_factory(**kw)
+        if txt:
+            if queue.load(txt):
+                self.queue = queue
+            else:
+                self.warning('failed to load queue')
+        else:
+            self.queue = queue
+
+    def queue_factory(self, **kw):
+        return ExperimentQueue(**kw)
+
+    def save(self, path, queues=None):
+        if queues is None:
+            queues = [self.queue]
+
+        if self._validate_experiment_queues(queues):
+            path = self._dump_experiment_queues(path, queues)
+            if path:
+                self.path = path
+                self.dirty = False
+
+                return True
 
     def traits_view(self):
+        # show row titles is causing a layout issue when resetting queues
+        # disabling show_row_titles for the moment.
+        operations = ['delete','move']
+        if self.automated_runs_editable:
+            operations.append('edit')
 
         arun_grp = UItem('automated_runs',
                          editor=myTabularEditor(adapter=self.tabular_adapter_klass(),
-                                                operations=['delete',
-                                                            'move'],
+                                                operations=operations,
+                                                bgcolor=self.bgcolor,
                                                 editable=True,
+                                                # show_row_titles=True,
                                                 dclicked='dclicked',
                                                 selected='selected',
                                                 paste_function='paste_function',
@@ -66,28 +112,27 @@ class ExperimentEditor(BaseTraitsEditor):
                          height=200)
 
         executed_grp = UItem('executed_runs',
-                             editor=myTabularEditor(adapter=self.tabular_adapter_klass(),
+                             editor=myTabularEditor(adapter=self.executed_tabular_adapter_klass(),
+                                                    bgcolor=self.bgcolor,
                                                     editable=False,
                                                     auto_update=True,
                                                     selectable=True,
+                                                    pastable=False,
+                                                    link_copyable=False,
+                                                    paste_function='executed_paste_function',
                                                     copy_cache='linked_copy_cache',
                                                     selected='executed_selected',
                                                     multi_select=True,
-                                                    scroll_to_row='executed_runs_scroll_to_row'
-                             ),
+                                                    scroll_to_row='executed_runs_scroll_to_row'),
                              height=500,
-                             visible_when='executed'
-        )
+                             visible_when='executed')
 
         v = View(
-            #                 VGroup(
             executed_grp,
             arun_grp,
-            #                     ),
-            resizable=True
-        )
+            handler=ExperimentEditorHandler(),
+            resizable=True)
         return v
-
 
     def trait_context(self):
         """ Use the model object for the Traits UI context, if appropriate.
@@ -96,9 +141,13 @@ class ExperimentEditor(BaseTraitsEditor):
             return {'object': self.queue}
         return super(ExperimentEditor, self).trait_context()
 
-    #    @on_trait_change('queue:automated_runs[], queue:changed')
+    #===============================================================================
+    # handlers
+    #===============================================================================
+    def _dirty_changed(self):
+        self.debug('dirty changed {}'.format(self.dirty))
+
     def _queue_changed(self):
-    #        f = lambda: self.trait_set(dirty=True)
         f = self._set_queue_dirty
         self.queue.on_trait_change(f, 'automated_runs[]')
         self.queue.on_trait_change(f, 'changed')
@@ -108,52 +157,18 @@ class ExperimentEditor(BaseTraitsEditor):
         self.queue.path = self.path
 
     def _set_queue_dirty(self, obj, name, old, new):
-    #         print 'ggg', obj, name, old, new
-    #         print 'set qirty', self.queue._no_update, self.queue.initialized
-
         if not self.queue._no_update and self.queue.initialized:
             self.dirty = True
 
-            #===========================================================================
-            #
-            #===========================================================================
-
-    def new_queue(self, txt=None, **kw):
-        queue = self.queue_factory(**kw)
-        if txt:
-            if queue.load(txt):
-                self.queue = queue
-        else:
-            self.queue = queue
-
-    def queue_factory(self, **kw):
-        return ExperimentQueue(**kw)
-
-    #                             db=self.db,
-    #                             application=self.application,
-    #                             **kw)
-
-    def save(self, path, queues=None):
-        if queues is None:
-            queues = [self.queue]
-
-        if self._validate_experiment_queues(queues):
-            path = self._dump_experiment_queues(path, queues)
-            self.path = path
-            self.dirty = False
-
-            return True
-
     def _validate_experiment_queues(self, eqs):
         # check runs
-        #hec = HumanErrorChecker()
         for qi in eqs:
-            hec=qi.human_error_checker
+            hec = qi.human_error_checker
 
             qi.executable = True
             qi.initialized = True
 
-            err = hec.check_runs(qi.automated_runs, test_all=True,
+            err = hec.check_runs(qi.cleaned_automated_runs, test_all=True,
                                  test_scripts=True)
             if err:
                 qi.executable = False
@@ -164,7 +179,6 @@ class ExperimentEditor(BaseTraitsEditor):
 
             err = hec.check_queue(qi)
             if err:
-                self.warning_dialog(err)
                 break
 
         else:
@@ -189,23 +203,6 @@ class ExperimentEditor(BaseTraitsEditor):
 
         return p
 
-
-    #===============================================================================
-    # handlers
-    #===============================================================================
-    #    def _path_changed(self):
-    #        '''
-    #            parse the file at path
-    #        '''
-    #        if os.path.isfile(self.path):
-    #            with open(self.path) as fp:
-    #                txt = fp.read()
-    #                queues = self._parse_text(txt)
-    #                for qi in queues:
-    #                    qu=self.new_queue()
-    #                    exp.load(text):
-
-
     #===============================================================================
     # property get/set
     #===============================================================================
@@ -216,8 +213,6 @@ class ExperimentEditor(BaseTraitsEditor):
         if self.path:
             name = os.path.basename(self.path)
             name, _ = os.path.splitext(name)
-        #             if self.merge_id:
-        #                 name = '{}-{:02n}'.format(name, self.merge_id)
         else:
             name = 'Untitled'
         return name
@@ -225,5 +220,6 @@ class ExperimentEditor(BaseTraitsEditor):
 
 class UVExperimentEditor(ExperimentEditor):
     tabular_adapter_klass = UVAutomatedRunSpecAdapter
+    executed_tabular_adapter_klass = ExecutedUVAutomatedRunSpecAdapter
 
 #============= EOF =============================================

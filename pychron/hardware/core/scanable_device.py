@@ -22,15 +22,11 @@ import os
 #============= local library imports  ==========================
 from pychron.hardware.core.viewable_device import ViewableDevice
 from pychron.graph.plot_record import PlotRecord
-from pychron.managers.data_managers.h5_data_manager import H5DataManager
 from pychron.paths import paths
 from pychron.database.data_warehouse import DataWarehouse
-from pychron.core.helpers.timer import Timer
 from pychron.managers.data_managers.csv_data_manager import CSVDataManager
 from pychron.core.helpers.datetime_tools import generate_datetimestamp
 from pychron.hardware.core.alarm import Alarm
-from pychron.graph.graph import Graph
-from pychron.graph.time_series_graph import TimeSeriesStreamGraph
 
 
 class ScanableDevice(ViewableDevice):
@@ -51,8 +47,7 @@ class ScanableDevice(ViewableDevice):
     scan_root = Str
     scan_name = Str
 
-    graph_klass = TimeSeriesStreamGraph
-    graph = Instance(Graph)
+    graph = Instance('pychron.graph.graph.Graph')
     graph_ytitle = Str
 
     data_manager = None
@@ -165,6 +160,8 @@ class ScanableDevice(ViewableDevice):
         self.info('Starting scan')
         if self.record_scan_data:
             if self.dm_kind == 'h5':
+                from pychron.managers.data_managers.h5_data_manager import H5DataManager
+
                 klass = H5DataManager
             else:
                 klass = CSVDataManager
@@ -188,6 +185,9 @@ class ScanableDevice(ViewableDevice):
                 self.save_scan_to_db()
 
         sp = self.scan_period * self.time_dict[self.scan_units]
+
+        from pychron.core.helpers.timer import Timer
+
         self.timer = Timer(sp, self.scan)
         self.info('Scan started')
 
@@ -242,11 +242,9 @@ class ScanableDevice(ViewableDevice):
             self.start_scan()
 
     def _graph_default(self):
+        from pychron.graph.time_series_graph import TimeSeriesStreamGraph
 
-        g = self.graph_klass(
-            #container_dict=dict(padding=[40, 10, 10, 10])
-        )
-
+        g = TimeSeriesStreamGraph()
         self.graph_builder(g)
 
         return g

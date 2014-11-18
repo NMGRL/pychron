@@ -61,6 +61,16 @@ class EasyFiguresAction(Action):
         e.make()
 
 
+class EasyCompareAction(Action):
+    name = 'Compare Iso/Spec'
+
+    def perform(self, event):
+        from pychron.processing.easy.compare import CompareIsochronSpec
+
+        e = CompareIsochronSpec()
+        e.make()
+
+
 class EasyTablesAction(Action):
     name = 'Easy Tables'
 
@@ -75,11 +85,31 @@ class EasySensitivityAction(Action):
     name = 'Easy Sensitivity'
 
     def perform(self, event):
-
         from pychron.processing.easy.sensitivity import EasySensitivity
 
         e = EasySensitivity()
         e.make()
+
+
+class EasyFaradayICAction(Action):
+    name = 'Easy Faraday IC'
+
+    def perform(self, event):
+        from pychron.processing.easy.faraday_ic import EasyFaradayIC
+
+        e = EasyFaradayIC()
+        e.make()
+
+
+class EasyAverageBlanksAction(Action):
+    name = 'Easy Average Blanks'
+
+    def perform(self, event):
+        from pychron.processing.easy.average_blanks import EasyAverageBlanks
+
+        e = EasyAverageBlanks()
+        e.make()
+
 
 #============= EOF ====================================
 

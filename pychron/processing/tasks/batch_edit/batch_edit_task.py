@@ -31,6 +31,9 @@ from pychron.paths import paths
 
 
 
+
+
+
 #from pychron.processing.entry.sensitivity_entry import SensitivityEntry
 #from pychron.processing.tasks.entry.sensitivity_entry_panes import SensitivityPane
 from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
@@ -38,6 +41,7 @@ from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
 #============= standard library imports ========================
 #============= local library imports  ==========================
 # from pychron.processing.tasks.smart_selection.panes import SmartSelection
+from pychron.processing.tasks.browser.util import browser_pane_item
 
 
 class BatchEditTask(AnalysisEditTask):
@@ -46,6 +50,7 @@ class BatchEditTask(AnalysisEditTask):
     central_pane = Instance(TraitsTaskPane)
     central_pane_klass = BatchEditPane
     batch_editor = Instance(BatchEditor, ())
+    external_recall_window = True
 
     # unknowns = List
 
@@ -89,6 +94,7 @@ class BatchEditTask(AnalysisEditTask):
             except Exception:
                 pass
 
+        self.batch_editor.clear_use()
         BaseBrowserTask.activated(self)
 
     #             d.close()
@@ -104,6 +110,10 @@ class BatchEditTask(AnalysisEditTask):
         self.debug('save to database')
         cname = 'blanks'
         proc = self.manager
+        save_sens = self.batch_editor.save_sens
+        if save_sens:
+            v, e = self.batch_editor.sens_value, 0
+
         for ui in self.unknowns_pane.items:
             ui = proc.db.get_analysis_uuid(ui.uuid)
 
@@ -134,6 +144,9 @@ class BatchEditTask(AnalysisEditTask):
             dets = [args[0] for args in ics]
             for args in ics:
                 self._add_ic_factory(ui, dets, *args)
+
+            if save_sens:
+                proc.db.set_analysis_sensitivity(ui, v, e)
 
 
     def _add_ic_factory(self, analysis, dets, det, v, e):
@@ -174,12 +187,13 @@ class BatchEditTask(AnalysisEditTask):
 
     @on_trait_change('unknowns_pane:[items, update_needed]')
     def _update_unknowns_runs(self, obj, name, old, new):
-
-        AnalysisEditTask._update_unknowns_runs(self, obj, name, old, new)
-        if not obj.no_update:
-            ans = self.manager.make_analyses(self.unknowns_pane.items)
-            self.unknowns_pane.items = ans
-            self.batch_editor.populate(ans)
+        pass
+        # AnalysisEditTask._update_unknowns_runs(self, obj, name, old, new)
+        # if not obj.no_update:
+        #     pass
+        # ans = self.manager.make_analyses(self.unknowns_pane.items)
+        # self.unknowns_pane.items = ans
+        # self.batch_editor.populate(ans)
 
     @on_trait_change('unknowns_pane:[append_button, replace_button]')
     def _append_unknowns(self, obj, name, old, new):
@@ -240,7 +254,7 @@ class BatchEditTask(AnalysisEditTask):
     #===============================================================================
     def _default_layout_default(self):
         #c=PaneItem('pychron.smart_selection.configure')
-        search = Tabbed(PaneItem('pychron.browser'))
+        search = Tabbed(browser_pane_item())
         #PaneItem('pychron.search.query'))
 
         #a=Splitter(d,orientation='vertical')

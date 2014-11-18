@@ -17,7 +17,12 @@
 #============= enthought library imports =======================
 from traits.api import HasTraits, Any, Int
 from chaco.plot_containers import GridPlotContainer
+
 from pychron.processing.plotters.graph_panel_info import GraphPanelInfo
+
+
+
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -27,17 +32,24 @@ class FigureContainer(HasTraits):
     nrows = Int(1)
     ncols = Int(2)
 
-
     def _model_changed(self):
 
         gpi = GraphPanelInfo()
-        n = self.model.npanels
 
+        self.model.refresh_panels()
+        n = self.model.npanels
         comp, r, c = self._component_factory(n, gpi)
         for i in range(r):
             for j in range(c):
-                p = self.model.next_panel()
+                try:
+                    p = self.model.next_panel()
+                except StopIteration:
+                    break
+
                 comp.add(p.make_graph())
+                for ap in p.plot_options.aux_plots:
+                    ap.clear_ylimits()
+                    ap.clear_xlimits()
 
         self.component = comp
 
@@ -59,7 +71,7 @@ class FigureContainer(HasTraits):
                                bgcolor='white',
                                fill_padding=True,
                                use_backbuffer=True,
-                               padding_top=10)
+                               padding_top=0)
         return op, r, c
 
 

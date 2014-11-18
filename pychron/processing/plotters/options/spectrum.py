@@ -15,8 +15,8 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Str, Int, Property, Bool, Enum, Float, Color
-from traitsui.api import Item, Group, HGroup, UItem, EnumEditor, spring
+from traits.api import Str, Int, Property, Bool, Enum, Float, Color, Range
+from traitsui.api import Item, Group, HGroup, UItem, EnumEditor, spring, VGroup
 
 #============= standard library imports ========================
 import re
@@ -24,6 +24,7 @@ import re
 
 from pychron.processing.plotters.options.age import AgeOptions
 from pychron.processing.plotters.options.option import SpectrumPlotOptions
+from pychron.pychron_constants import ERROR_TYPES
 
 plat_regex = re.compile(r'\w{1,2}-{1}\w{1,2}$')
 
@@ -32,6 +33,8 @@ class SpectrumOptions(AgeOptions):
     step_nsigma = Int(2)
     plot_option_klass = SpectrumPlotOptions
 
+    include_j_error_in_plateau = Bool(True)
+    plateau_age_error_kind = Enum(*ERROR_TYPES)
     force_plateau = Bool(False)
     plateau_steps = Property(Str)
     _plateau_steps = Str
@@ -40,15 +43,24 @@ class SpectrumOptions(AgeOptions):
     display_step = Bool(False)
     display_plateau_info = Bool(True)
     display_integrated_info = Bool(True)
+    plateau_sig_figs = Int
 
-    plateau_font_size = Enum(6, 7, 8, 10, 11, 12, 14, 16, 18, 24, 28, 32)
-    integrated_font_size = Enum(6, 7, 8, 10, 11, 12, 14, 16, 18, 24, 28, 32)
-    step_label_font_size = Enum(6, 7, 8, 10, 11, 12, 14, 16, 18, 24, 28, 32)
-    envelope_alpha = Float
+    plateau_font_size = Enum(6, 7, 8, 10, 11, 12, 14, 15, 18, 24, 28, 32)
+    integrated_font_size = Enum(6, 7, 8, 10, 11, 12, 14, 15, 18, 24, 28, 32)
+    step_label_font_size = Enum(6, 7, 8, 10, 11, 12, 14, 15, 18, 24, 28, 32)
+    envelope_alpha = Range(0, 100, style='simple')
     center_line_style = Enum('solid', 'dash', 'dot dash', 'dot', 'long dash')
     extend_plateau_end_caps = Bool(True)
-    plateau_line_width=Float
-    plateau_line_color=Color
+    plateau_line_width = Float
+    plateau_line_color = Color
+    plateau_method = Enum('Fleck 1977', 'Mahon 1996')
+    error_calc_method = Property
+
+    def _get_error_calc_method(self):
+        return self.plateau_age_error_kind
+
+    def _set_error_calc_method(self, v):
+        self.plateau_age_error_kind = v
 
     # def _get_info_group(self):
     #     g = VGroup(
@@ -91,16 +103,26 @@ class SpectrumOptions(AgeOptions):
                         'envelope_alpha',
                         '_plateau_steps', 'center_line_style',
                         'extend_plateau_end_caps',
-                        'plateau_line_width', 'plateau_line_color']
+                        'plateau_line_width', 'plateau_line_color',
+                        'include_j_error_in_plateau',
+                        'plateau_age_error_kind',
+                        'plateau_sig_figs',
+                        # 'plateau_error_sig_figs',
+                        'plateau_method']
 
     def _get_groups(self):
 
         plat_grp = Group(
+            Item('plateau_method', label='Method'),
             Item('center_line_style'),
             Item('extend_plateau_end_caps'),
             Item('plateau_line_width'),
             Item('plateau_line_color'),
             Item('nsigma'),
+            Item('plateau_age_error_kind',
+                 width=-100,
+                 label='Error Type'),
+            Item('include_j_error_in_plateau', label='Include J Error'),
             HGroup(
                 Item('force_plateau',
                      tooltip='Force a plateau over provided steps'),
@@ -122,19 +144,20 @@ class SpectrumOptions(AgeOptions):
 
         display_grp = Group(HGroup(UItem('show_info',
                                          tooltip='Show general info in the upper right corner'),
-                                   # Item('show_mean_info', label='Mean', enabled_when='show_info'),
-                                   # Item('show_error_type_info', label='Error Type', enabled_when='show_info'),
                                    label='General'),
                             HGroup(Item('display_step', label='Step'),
                                    Item('display_extract_value', label='Power/Temp'),
                                    spring,
                                    Item('step_label_font_size', label='Size'),
                                    label='Labels'),
-                            HGroup(UItem('display_plateau_info',
-                                         tooltip='Display plateau info'),
-                                   spring,
-                                   Item('plateau_font_size', label='Size',
-                                        enabled_when='display_plateau_info'),
+                            VGroup(HGroup(UItem('display_plateau_info',
+                                                tooltip='Display plateau info'),
+                                          spring,
+                                          Item('plateau_font_size', label='Size',
+                                               enabled_when='display_plateau_info')),
+                                   HGroup(Item('plateau_sig_figs', label='Age'),
+                                          # Item('plateau_error_sig_figs', label='Error'),
+                                          show_border=True, label='SigFigs'),
                                    label='Plateau'),
                             HGroup(UItem('display_integrated_info',
                                          tooltip='Display integrated age info'),
@@ -152,6 +175,10 @@ class SpectrumOptions(AgeOptions):
             # self._get_info_group(),
             label='Options')
 
-        return (g, )
+        label_grp = VGroup(self._get_x_axis_group(),
+                           self._get_y_axis_group(),
+                           label='Fonts')
+        return g, label_grp
 
-        #============= EOF =============================================
+
+#============= EOF =============================================

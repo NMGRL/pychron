@@ -22,7 +22,8 @@ if __name__ == '__main__':
     import os
 
     from helpers import build_version
-    build_version('_dev', debug=True)
+
+    build_version(setup_ver='_uv', debug=True)
 
     from pychron.core.helpers.logger_setup import logging_setup
     from pychron.managers.remote_hardware_server_manager import RemoteHardwareServerManager

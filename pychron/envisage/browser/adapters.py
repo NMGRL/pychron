@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,17 +15,18 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import List, Property, Int
+from pyface.action.menu_manager import MenuManager
+from traits.api import List, Property, Int, HasTraits
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
 #============= EOF =============================================
+from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
 
-class BrowserAdapter(TabularAdapter):
-    font = 'arial 10'
+class ConfigurableAdapterMixin(HasTraits):
     all_columns = List
     all_columns_dict = Property
 
@@ -33,8 +34,15 @@ class BrowserAdapter(TabularAdapter):
         return dict(self.all_columns)
 
 
+class BrowserAdapter(TabularAdapter, ConfigurableAdapterMixin):
+    font = 'arial 10'
+
+
 class ProjectAdapter(BrowserAdapter):
     columns = [('Name', 'name')]
+
+    def get_menu(self, obj, trait, row, column):
+        return MenuManager(Action(name='Unselect', action='unselect'))
 
 
 class SampleAdapter(BrowserAdapter):
@@ -44,12 +52,15 @@ class SampleAdapter(BrowserAdapter):
     all_columns = [('Sample', 'name'),
                    ('Identifier', 'labnumber'),
                    ('Material', 'material'),
-                   ('Irradiation','irradiation'),
+                   ('Irradiation', 'irradiation'),
                    ('Level', 'irradiation_and_level'),
-                   ('Irrad. Pos.','irradiation_pos')]
+                   ('Irrad. Pos.', 'irradiation_pos')]
     #     material_text = Property
     odd_bg_color = 'lightgray'
 
     name_width = Int(125)
-    labnumber_width = Int(75)
+    labnumber_width = Int(60)
     material_width = Int(75)
+
+    def get_menu(self, obj, trait, row, column):
+        return MenuManager(Action(name='Unselect', action='unselect'))

@@ -37,7 +37,7 @@ class StackedGraph(Graph):
     equi_stack = True
     panel_height = 100
     _has_title = False
-    padding_bottom = 50
+    padding_bottom = 40
 
     metadata_updated = Event
     vertical_resize = Bool(True)
@@ -62,6 +62,9 @@ class StackedGraph(Graph):
             for p in self.plots:
                 p.trait_set(**{name: new})
 
+    def clear_has_title(self):
+        self._has_title = False
+
     def add_minor_xticks(self, plotid=0, **kw):
         if plotid != 0:
             kw['aux_component'] = self.plots[0]
@@ -84,23 +87,13 @@ class StackedGraph(Graph):
         return c
 
     def new_plot(self, **kw):
-        #        self.plotcontainer.stack_order = 'bottom_to_top'
-        #        bottom = self.plotcontainer.stack_order == 'bottom_to_top'
-        #        if self.equi_stack:
-        #            kw['resizable'] = 'h'
-        #            if 'bounds' not in kw:
-        #                kw['bounds'] = (1, self.panel_height)
-        #
-        n = len(self.plotcontainer.components)
-        #        print n
+
         if 'title' in kw:
             if self._has_title:
                 kw.pop('title')
             self._has_title = True
 
-        #if not self.vertical_resize:
-        #    pass
-
+        n = len(self.plotcontainer.components)
         if n > 0:
             kw['resizable'] = 'h'
             if 'bounds' not in kw:
@@ -110,10 +103,6 @@ class StackedGraph(Graph):
         p.value_axis.ensure_labels_bounded = True
         p.value_axis.title_spacing = 30
 
-        #p.value_axis.on_trait_change(self._update_foo, 'updated')
-        #if self.bind_padding:
-        #    p.on_trait_change(self._update_padding, 'padding_left, padding_right')
-
         if n >= 1:
             pm = self.plotcontainer.components[0]
             pind = pm.index_range
@@ -122,7 +111,6 @@ class StackedGraph(Graph):
 
         self.set_paddings()
         self._bounds_changed(self.plotcontainer.bounds)
-        #        p.border_visible = False
         return p
 
     def set_paddings(self):
@@ -190,6 +178,7 @@ class StackedGraph(Graph):
         s, _p = super(StackedGraph, self).new_series(*args, **kw)
         #print 'new series', bind_id
         #series_id = self.series[plotid][-1]
+
         if self.bind_index:
             if isinstance(s, ScatterPlot):
                 s.bind_id = bind_id
@@ -235,9 +224,7 @@ class StackedGraph(Graph):
                         if si.bind_id == bind_id:
                             si.index.metadata = obj.metadata
 
-
     def _bind_index(self, scatter, bind_id=0, bind_selection=True, **kw):
-        #print bind_selection, scatter
         if bind_selection:
             u = lambda obj, name, old, new: self._update_metadata(bind_id,
                                                                   obj, name, old, new)

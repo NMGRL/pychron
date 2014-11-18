@@ -28,6 +28,7 @@ from cv_wrapper import load_image, asMat, get_size, grayspace, resize, \
     save_image, draw_lines
 from cv_wrapper import swap_rb as cv_swap_rb
 from cv_wrapper import flip as cv_flip
+
 # try:
 #    from cvwrapper import swapRB, grayspace, cvFlip, \
 #    draw_lines, new_dst, \

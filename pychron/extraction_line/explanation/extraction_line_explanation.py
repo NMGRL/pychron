@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,12 +15,12 @@
 #===============================================================================
 
 #=============enthought library imports=======================
-from traits.api import HasTraits, Any, Event, List, Bool, Property
-from traitsui.api import View, Item, TableEditor, \
-    Handler, TabularEditor
-from traitsui.table_column import ObjectColumn
-from traitsui.tabular_adapter import TabularAdapter
 import weakref
+
+from traits.api import HasTraits, Any, Event, List, Bool, Property
+from traitsui.api import View, Item, Handler, TabularEditor
+from traitsui.tabular_adapter import TabularAdapter
+
 # from traitsui.extras.checkbox_column import CheckboxColumn
 
 #=============standard library imports ========================
@@ -35,10 +35,10 @@ class ELEHandler(Handler):
         if not info.initialized:
             info.object.selection_ok = True
 
+
 class ExplanationAdapter(TabularAdapter):
     columns = [('Name', 'name'), ('Description', 'description'),
-             ('State', 'state'), ('Lock', 'lock')
-             ]
+               ('State', 'state'), ('Lock', 'lock')]
 
     lock_text = Property
     state_text = Property
@@ -46,21 +46,22 @@ class ExplanationAdapter(TabularAdapter):
     def get_bg_color(self, obj, trait, row, column):
         item = self.item
         color = 'white'
-#         color='#0000FF'
+        #         color='#0000FF'
         if item.soft_lock:
             color = '#CCE5FF'
 
         return color
+
     def _get_lock_text(self):
-        return 'Yes' if self.soft_lock else 'No'
+        return 'Yes' if self.item.soft_lock else 'No'
 
     def _get_state_text(self):
-        return 'Open' if self._state else 'Closed'
+        return 'Open' if self.item.state else 'Closed'
 
 
 class ExtractionLineExplanation(HasTraits):
-    '''
-    '''
+    """
+    """
     explanable_items = List
     # show_all = Button
     # hide_all = Button
@@ -72,24 +73,24 @@ class ExtractionLineExplanation(HasTraits):
     selected = Any
     selection_ok = False
 
-#     def on_selection(self, s):
-# #        if self.selection_ok and
-#         if s is not None:
-#             for ei in self.explanable_items:
-#                 if ei != s:
-#                     ei.identify = False
-#
-#             s.identify = not s.identify
+    #     def on_selection(self, s):
+    # #        if self.selection_ok and
+    #         if s is not None:
+    #             for ei in self.explanable_items:
+    #                 if ei != s:
+    #                     ei.identify = False
+    #
+    #             s.identify = not s.identify
 
-#    def _show_hide_fired(self):
-#        '''
-#        '''
-#
-#        self.identify = not self.identify
-#        for c in self.explanable_items:
-#            c.identify = self.identify
-#
-#        c.canvas.Refresh()
+    #    def _show_hide_fired(self):
+    #        '''
+    #        '''
+    #
+    #        self.identify = not self.identify
+    #        for c in self.explanable_items:
+    #            c.identify = self.identify
+    #
+    #        c.canvas.Refresh()
 
     def _get_label(self):
         return 'Hide All' if self.identify else 'Show All'
@@ -100,53 +101,27 @@ class ExtractionLineExplanation(HasTraits):
                 self.explanable_items.append(weakref.ref(n)())
 
     def load(self, l):
-        '''
-        '''
+        """
+        """
         if isinstance(l, list):
             for v in l:
                 self.explanable_items.append(weakref.ref(v)())
 
     def traits_view(self):
-        '''
-        '''
-#         ed = TableEditor(columns=[ObjectColumn(name='name',
-#                                                         editable=False),
-#            ObjectColumn(name='description', editable=False),
-#            ObjectColumn(name='state', editable=False, label='State'),
-# #                                           CheckboxColumn(name='identify'),
-#            ObjectColumn(name='lock', editable=False, label='Lock')
-#            ],
-#            selected='selected',
-# #            on_select=self.on_selection,
-#                             editable=False,
-#                             )
+        """
+        """
         v = View(
-#               VGroup(
-#                      HGroup(
-#                       Item('show_hide', editor=ButtonEditor(label_value='label'),
-#                           show_label=False,
-#                           springy=False)),
-
-                      Item('explanable_items',
-                           editor=TabularEditor(
-                                                adapter=ExplanationAdapter(),
-                                                editable=False,
-                                                selected='selected'),
-                           style='custom',
-                           show_label=False,
-#                           height=300,
-#                           width=200
-#                           width= -50
-#                           springy=False
-                           ),
-                           width=300,
-                           height=500,
-
-#                      ),
-#                 handler=ELEHandler,
-                 id='pychron.explanation',
-                resizable=True,
-                title='Explanation'
-                # scrollable = True,
-                )
+            Item('explanable_items',
+                 editor=TabularEditor(
+                     auto_update=True,
+                     adapter=ExplanationAdapter(),
+                     editable=False,
+                     selected='selected'),
+                 style='custom',
+                 show_label=False),
+            width=300,
+            height=500,
+            id='pychron.explanation',
+            resizable=True,
+            title='Explanation')
         return v

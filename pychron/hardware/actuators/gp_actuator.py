@@ -25,6 +25,10 @@ from pychron.hardware.core.core_device import CoreDevice
 
 
 class GPActuator(CoreDevice):
+
+    def get_owners_word(self):
+        pass
+
     def get_state_word(self, *args, **kw):
         pass
 

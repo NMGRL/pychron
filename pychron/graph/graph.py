@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,10 +15,10 @@
 #===============================================================================
 
 #=============enthought library imports=======================
-from traits.api import Instance, Any, Bool, \
-    List, Str, Property, Dict, Callable
-from traitsui.api import View, Item
 
+from traits.api import Instance, Any, Bool, \
+    List, Str, Property, Dict, Callable, Event
+from traitsui.api import View, Item
 from enable.component_editor import ComponentEditor
 from chaco.api import OverlayPlotContainer, \
     VPlotContainer, HPlotContainer, GridPlotContainer, \
@@ -28,13 +28,16 @@ from chaco.tools.api import ZoomTool, LineInspector, RangeSelection, \
 from chaco.axis import PlotAxis
 from pyface.api import FileDialog, OK
 from pyface.timer.api import do_after as do_after_timer
+
 #=============standard library imports ========================
+import os
 # import numpy as np
 from numpy import array, hstack, Inf
 import csv
 import math
 #=============local library imports  ==========================
 from pychron.core.helpers.color_generators import colorname_generator as color_generator
+from pychron.core.helpers.filetools import add_extension
 from pychron.graph.minor_tick_overlay import MinorTicksOverlay
 # from editors.plot_editor import PlotEditor
 from guide_overlay import GuideOverlay
@@ -49,6 +52,7 @@ from pychron.viewable import Viewable
 from pychron.graph.tools.point_inspector import PointInspector, \
     PointInspectorOverlay
 from chaco.array_data_source import ArrayDataSource
+
 # from chaco.tools.pan_tool import PanTool
 VALID_FONTS = [
     #                'Helvetica',
@@ -137,7 +141,7 @@ class Graph(Viewable, ContextMenuMixin):
     #    ui = Any
 
     close_func = Callable
-
+    x_limits_changed = Event
 
     def __init__(self, *args, **kw):
         """
@@ -249,7 +253,7 @@ class Graph(Viewable, ContextMenuMixin):
         pass
 
     def get_plotid_by_ytitle(self, *args, **kw):
-        plot= self.get_plot_by_ytitle(*args, **kw)
+        plot = self.get_plot_by_ytitle(*args, **kw)
         if plot is not None:
             return self.plots.index(plot)
 
@@ -315,13 +319,13 @@ class Graph(Viewable, ContextMenuMixin):
         """
         self._save_(path=path)
 
-    #     def export_raw_data(self, path=None, header=None, plotid=0):
-    #         '''
-    #         '''
-    #         if path is None:
-    #             path = self._path_factory()
-    #         if path is not None:
-    #             self._export_raw_data(path, header, plotid)
+    # def export_raw_data(self, path=None, header=None, plotid=0):
+    #     """
+    #     """
+    #     if path is None:
+    #         path = self._path_factory()
+    #     if path is not None:
+    #         self._export_raw_data(path, header, plotid)
 
     def export_data(self, path=None, plotid=None):
         """
@@ -330,6 +334,7 @@ class Graph(Viewable, ContextMenuMixin):
             path = self._path_factory()
 
         if path is not None:
+            path = add_extension(path, '.csv')
             self._export_data(path, plotid)
 
     def _path_factory(self):
@@ -391,7 +396,7 @@ class Graph(Viewable, ContextMenuMixin):
         #         print '====== {}'.format(self)
         #         print 'len plots {}'.format(len(self.plots))
         for pi in self.plots:
-        #             print 'len pi.renderers {}'.format(len(pi.plots.keys()))
+            #             print 'len pi.renderers {}'.format(len(pi.plots.keys()))
             for k, pp in pi.plots.items():
                 for renderer in pp:
                     try:
@@ -604,19 +609,20 @@ class Graph(Viewable, ContextMenuMixin):
             pass
 
     def get_x_limits(self, plotid=0):
-        '''
-        '''
+        """
+        """
         return self._get_limits('index', plotid=plotid)
 
     def get_y_limits(self, plotid=0):
-        '''
-        '''
+        """
+        """
         return self._get_limits('value', plotid=plotid)
 
     def set_y_limits(self, min_=None, max_=None, pad=0, plotid=0, **kw):
-        '''
-        '''
+        """
+        """
         mmin, mmax = self.get_y_limits(plotid)
+
         if min_ is None:
             min_ = mmin
         if max_ is None:
@@ -628,11 +634,12 @@ class Graph(Viewable, ContextMenuMixin):
     #                               min_, max_, 'value', plotid, pad, **kw)
 
     def set_x_limits(self, min_=None, max_=None, pad=0, plotid=0, **kw):
-        '''
-        '''
+        """
+        """
         #         invoke_in_main_thread(self._set_limits,
         #                               min_, max_, 'index', plotid, pad, **kw)
-        self._set_limits(min_, max_, 'index', plotid, pad, **kw)
+        if self._set_limits(min_, max_, 'index', plotid, pad, **kw):
+            self.x_limits_changed =True
 
     def set_x_tracking(self, track, plotid=0):
         '''
@@ -705,21 +712,21 @@ class Graph(Viewable, ContextMenuMixin):
         self.redraw()
 
     def get_x_title(self, plotid=0):
-        '''
-        '''
+        """
+        """
         return self._get_title('y_axis', plotid)
 
     def get_y_title(self, plotid=0):
-        '''
-        '''
+        """
+        """
         return self._get_title('x_axis', plotid)
 
-    def set_x_title(self, title, plotid=0, **font):
-        '''
-        '''
+    def set_x_title(self, title, plotid=None, **font):
+        """
+        """
         self._set_title('x_axis', title, plotid, **font)
 
-    def set_y_title(self, title, plotid=0, **font):
+    def set_y_title(self, title, plotid=None, **font):
         """
         """
         self._set_title('y_axis', title, plotid, **font)
@@ -742,8 +749,8 @@ class Graph(Viewable, ContextMenuMixin):
 
 
     def add_data_label(self, x, y, plotid=0):
-        '''
-        '''
+        """
+        """
         # print self.plots, plotid
         plot = self.plots[plotid]
         label = DataLabel(component=plot, data_point=(x, y),
@@ -1015,7 +1022,7 @@ class Graph(Viewable, ContextMenuMixin):
         try:
             names = self.series[plotid][series]
         except IndexError:
-           print 'adding data', plotid, series, self.series[plotid]
+            print 'adding data', plotid, series, self.series[plotid]
 
         plot = self.plots[plotid]
 
@@ -1067,7 +1074,7 @@ class Graph(Viewable, ContextMenuMixin):
         self.plotcontainer.request_redraw()
 
     def add_range_selector(self, plotid=0, series=0):
-    #        plot = self.series[plotid][series]
+        #        plot = self.series[plotid][series]
         plot = self.plots[plotid].plots['plot{}'.format(series)][0]
 
         plot.active_tool = RangeSelection(plot, left_button_selects=True)
@@ -1325,6 +1332,7 @@ class Graph(Viewable, ContextMenuMixin):
     def _series_factory(self, x, y, yer=None, plotid=0, add=True, **kw):
         """
         """
+
         if x is None:
             x = array([])
         if y is None:
@@ -1401,13 +1409,13 @@ class Graph(Viewable, ContextMenuMixin):
         """
         """
         if path is None:
-            dlg = FileDialog(action='save as')
+            dlg = FileDialog(action='save as', default_directory=os.path.expanduser('~'))
             if dlg.open() == OK:
                 path = dlg.path
                 self.status_text = 'Image Saved: %s' % path
 
         if path is not None:
-            if type_ == 'pdf':
+            if type_ == 'pdf' or path.endswith('.pdf'):
                 self._render_to_pdf(filename=path)
             else:
                 # auto add an extension to the filename if not present
@@ -1443,12 +1451,13 @@ class Graph(Viewable, ContextMenuMixin):
         from chaco.pdf_graphics_context import PdfPlotGraphicsContext
 
         if filename:
-            if not filename.endswith('.pdf'):
-                filename += '.pdf'
-                #        if dest_box is None:
-                #            dest_box = [0.5, 0.5, 0.5, 0.5]
+            # if not filename.endswith('.pdf'):
+            #     filename += '.pdf'
+            filename=add_extension(filename, ext='.pdf')
+
         gc = PdfPlotGraphicsContext(filename=filename,
-                                    pdf_canvas=canvas)
+                                    pdf_canvas=canvas,
+                                    dest_box=dest_box)
         pc = self.plotcontainer
 
         #pc.do_layout(force=True)
@@ -1512,14 +1521,17 @@ class Graph(Viewable, ContextMenuMixin):
     #            wx.TheClipboard.Close()
 
     def _get_title(self, axis, plotid):
-        '''
-        '''
+        """
+        """
         axis = getattr(self.plots[plotid], axis)
         return axis.title
 
     def _set_title(self, axis, title, plotid, font=None, size=None):
-        '''
-        '''
+        """
+        """
+        if plotid is None:
+            plotid = len(self.plots) - 1
+
         axis = getattr(self.plots[plotid], axis)
         params = dict(title=title)
         if font is not None or size is not None:
@@ -1618,7 +1630,9 @@ class Graph(Viewable, ContextMenuMixin):
                     if pad_style in ('symmetric', 'lower'):
                         mi -= pad
 
+        change=False
         if mi is not None:
+            change = ra.low!=mi
             if isinstance(mi, (int, float)):
                 if mi < ra.high:
                     ra.low = mi
@@ -1626,17 +1640,18 @@ class Graph(Viewable, ContextMenuMixin):
                 ra.low = mi
 
         if ma is not None:
+            change = change or ra.high!=ma
             if isinstance(ma, (int, float)):
                 if ma > ra.low:
                     ra.high = ma
             else:
                 ra.high = ma
 
-        self.redraw(force=force)
+        if change:
+            self.redraw(force=force)
+        return change
 
     def _get_selected_plotid(self):
-        '''
-        '''
         r = 0
         if self.selected_plot is not None:
             try:

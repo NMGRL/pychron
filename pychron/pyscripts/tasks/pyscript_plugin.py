@@ -1,11 +1,11 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,13 +23,14 @@ from pyface.tasks.action.schema import SMenu
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
-from pychron.pyscripts.tasks.pyscript_task import PyScriptTask
 from pychron.pyscripts.tasks.pyscript_actions import OpenPyScriptAction, \
-    NewPyScriptAction
+    NewPyScriptAction, OpenHopsEditorAction, NewHopsEditorAction
 from pychron.pyscripts.tasks.pyscript_preferences import PyScriptPreferencesPane
+from pychron.pyscripts.tasks.visual_el_programmer.actions import OpenVisualELScriptAction, NewVisualELScriptAction
 
 
 class PyScriptPlugin(BaseTaskPlugin):
+    id = 'pychron.pyscript.plugin'
     def _my_task_extensions_default(self):
         def _replace_action():
             return TaskAction(name='Replace',
@@ -37,7 +38,7 @@ class PyScriptPlugin(BaseTaskPlugin):
 
         exts = [
             TaskExtension(
-                task_id='pychron.pyscript',
+                task_id='pychron.pyscript.task',
                 actions=[SchemaAddition(
                     id='Edit',
                     factory=lambda: SMenu(id='Edit', name='Edit'),
@@ -45,26 +46,47 @@ class PyScriptPlugin(BaseTaskPlugin):
                          SchemaAddition(id='replace',
                                         path='MenuBar/Edit',
                                         factory=_replace_action)]),
-
             TaskExtension(
                 actions=[
+                    SchemaAddition(id='open_hops_editor',
+                                   path='MenuBar/File/Open',
+                                   factory=OpenHopsEditorAction),
+                    SchemaAddition(id='new_hops_editor',
+                                   path='MenuBar/File/New',
+                                   factory=NewHopsEditorAction),
                     SchemaAddition(id='open_script',
                                    path='MenuBar/File/Open',
                                    factory=OpenPyScriptAction),
                     SchemaAddition(id='new_script',
                                    path='MenuBar/File/New',
-                                   factory=NewPyScriptAction)])]
+                                   factory=NewPyScriptAction),
+                    SchemaAddition(id='new_visual',
+                                   path='MenuBar/File/New',
+                                   factory=NewVisualELScriptAction),
+                    SchemaAddition(id='open_visual',
+                                   path='MenuBar/File/Open',
+                                   factory=OpenVisualELScriptAction)])]
         return exts
 
     def _tasks_default(self):
-        return [TaskFactory(
-            id='pychron.pyscript',
-            name='PyScript',
-            factory=self._task_factory,
-            task_group='experiment',
-            image='script.png')]
+        return [TaskFactory(id='pychron.pyscript.task',
+                            name='PyScript',
+                            factory=self._task_factory,
+                            task_group='experiment',
+                            image='script.png'),
+                TaskFactory(id='pychron.pyscript.visual_el_programmer',
+                            name='Visual Programmer',
+                            factory=self._visual_task_factory,
+                            task_group='experiment')]
+
+    def _visual_task_factory(self):
+        from pychron.pyscripts.tasks.visual_el_programmer.visual_el_programmer_task import VisualElProgrammerTask
+
+        return VisualElProgrammerTask()
 
     def _task_factory(self):
+        from pychron.pyscripts.tasks.pyscript_task import PyScriptTask
+
         return PyScriptTask()
 
     def _preferences_panes_default(self):

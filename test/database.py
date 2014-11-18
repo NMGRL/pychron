@@ -25,7 +25,7 @@ from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 
 
 def isotope_manager_factory(name='isotopedb_dev'):
-    man = IsotopeDatabaseManager(connect=False)
+    man = IsotopeDatabaseManager(connect=False, bind=False)
     man.db.kind = 'mysql'
     man.db.name = name
     man.db.password = 'Argon'

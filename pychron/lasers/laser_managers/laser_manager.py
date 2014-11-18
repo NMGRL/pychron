@@ -20,9 +20,7 @@ import apptools.sweet_pickle as pickle
 #============= standard library imports ========================
 import os
 #============= local library imports  ==========================
-#
 from pychron.monitors.laser_monitor import LaserMonitor
-# from pychron.managers.graph_manager import GraphManager
 from pychron.lasers.laser_managers.pulse import Pulse
 from pychron.paths import paths
 from pychron.lasers.laser_managers.laser_script_executor import LaserScriptExecutor
@@ -32,9 +30,9 @@ from pychron.core.helpers.filetools import list_directory
 
 
 class LaserManager(BaseLaserManager):
-    '''
+    """
         Base class for a GUI representation of a laser device
-    '''
+    """
 
     laser_script_executor = Instance(LaserScriptExecutor)
 
@@ -66,6 +64,7 @@ class LaserManager(BaseLaserManager):
         bind_preference(self, 'window_y', '{}.y'.format(pref_id))
         bind_preference(self, 'use_calibrated_power', '{}.use_calibrated_power'.format(pref_id))
 
+        self.debug('binding stage manager preferences')
         self.stage_manager.bind_preferences(pref_id)
 
     def set_xy(self, xy, velocity=None):
@@ -74,9 +73,9 @@ class LaserManager(BaseLaserManager):
     def get_pattern_names(self):
         return list_directory(paths.pattern_dir, extension='.lp')
 
-    def enable_laser(self):
+    def enable_laser(self, **kw):
         self.info('enable laser')
-        enabled = self._enable_hook()
+        enabled = self._enable_hook(**kw)
 
         if self.simulation:
             self.enabled = True
@@ -122,10 +121,10 @@ class LaserManager(BaseLaserManager):
         return enabled
 
     def set_laser_output(self, *args, **kw):
-        '''
+        """
             by default set_laser_output simply uses set_laser_power
             but subclasses can override for different units
-        '''
+        """
         self.set_laser_power(*args, **kw)
 
 
@@ -133,8 +132,8 @@ class LaserManager(BaseLaserManager):
                         verbose=True,
                         units=None,
                          *args, **kw):
-        '''
-        '''
+        """
+        """
 
         if units == 'percent':
             p = power
@@ -159,27 +158,29 @@ class LaserManager(BaseLaserManager):
         return super(LaserManager, self).close(ok)
 
     def set_laser_monitor_duration(self, d):
-        '''
+        """
             duration in minutes
-        '''
+        """
         self.monitor.max_duration = d
         self.monitor.reset_start_time()
 
     def reset_laser_monitor(self):
-        '''
-        '''
+        """
+        """
         self.monitor.reset_start_time()
 
     def emergency_shutoff(self, reason):
-        ''' 
-        '''
+        """
+        """
         self.disable_laser()
 
         if reason is not None:
             self.warning('EMERGENCY SHUTOFF reason: {}'.format(reason))
-            self.warning_dialog(reason, sound='alarm1', title='AUTOMATIC LASER SHUTOFF')
+
             from pychron.remote_hardware.errors.laser_errors import LaserMonitorErrorCode
             self.error_code = LaserMonitorErrorCode(reason)
+
+            self.warning_dialog(reason, sound='alarm1', title='AUTOMATIC LASER SHUTOFF')
 
     def start_video_recording(self, *args, **kw):
         pass
@@ -219,8 +220,8 @@ class LaserManager(BaseLaserManager):
 #            self.status_text = 'x = {:n} ({:0.4f} mm), y = {:n} ({:0.4f} mm)'.format(*new)
 
     def _enable_fired(self):
-        '''
-        '''
+        """
+        """
         if not self.enabled:
             self.enable_laser()
         else:
@@ -237,7 +238,7 @@ class LaserManager(BaseLaserManager):
 #         self.disable_laser()
 #         self.pulse.dump()
 
-    def _enable_hook(self):
+    def _enable_hook(self, **kw):
         return True
 
     def _disable_hook(self):

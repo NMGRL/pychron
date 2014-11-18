@@ -18,26 +18,24 @@
 from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
 from pyface.tasks.action.schema_addition import SchemaAddition
-from traits.api import HasTraits
-from traitsui.api import View, Item
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.geo.processor import GeoProcessor
-from pychron.geo.tasks.actions import ExportShapefileAction
+from pychron.geo.tasks.actions import ExportStratCanvasAction
 from pychron.geo.tasks.geo_task import GeoTask
 
 
 class GeoPlugin(BaseTaskPlugin):
     def _tasks_default(self):
-        return [TaskFactory(id='pychron.geo', factory=self._geo_task_factory, name='Geo'),]
+        return [TaskFactory(id='pychron.geo', factory=self._geo_task_factory, name='Geo'), ]
 
     def _my_task_extensions_default(self):
-        return [TaskExtension(actions=[SchemaAddition(id='export_shapefile',
-                                                      factory=ExportShapefileAction,
-                                                      path='MenuBar/Data')])]
+        return [TaskExtension(actions=[SchemaAddition(id='export_strat_canvas',
+                                                      factory=ExportStratCanvasAction,
+                                                      absolute_position='last',
+                                                      path='MenuBar/data.menu')])]
 
     def _geo_task_factory(self):
         return GeoTask(manager=GeoProcessor(application=self.application))

@@ -30,5 +30,6 @@ class InterpolationFit(Fit):
 
 class InterpolationFitSelector(FitSelector):
     fit_klass = InterpolationFit
+    fit_types = FIT_TYPES_INTERPOLATE
 
 #============= EOF =============================================

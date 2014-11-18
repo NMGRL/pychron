@@ -52,7 +52,7 @@ class ProjectEntry(IsotopeDatabaseManager):
     def traits_view(self):
         v = View(Item('project'),
                  kind='modal',
-                 resizable=True, title='New Sample',
+                 resizable=True, title='Edit Project',
                  buttons=['OK', 'Cancel']
         )
         return v

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,57 +17,86 @@
 #============= enthought library imports =======================
 from pyface.action.action import Action
 from pyface.tasks.action.task_action import TaskAction
-from pyface.tasks.task_window_layout import TaskWindowLayout
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.envisage.resources import icon
+from pychron.envisage.tasks.actions import FileOpenAction, NewAction
 
 
-class OpenPyScriptAction(Action):
+class HopsEditorAction(Action):
+    def perform(self, event):
+        from pychron.pyscripts.hops_editor import HopEditorModel, HopEditorView
+
+        application = event.task.window.application
+        spec = application.get_service('pychron.spectrometer.spectrometer_manager.SpectrometerManager')
+        dets = []
+        if spec:
+            dets = [di.name for di in spec.spectrometer.detectors]
+
+        m = HopEditorModel(detectors=dets)
+        h = HopEditorView(model=m)
+        self._perform(m)
+        h.edit_traits(kind='livemodal')
+
+    def _perform(self, h):
+        pass
+
+
+class OpenHopsEditorAction(HopsEditorAction):
+    description = 'Open existing peak hop editor'
+    name = 'Open Peak Hops'
+    image = icon('document-open')
+
+    def _perform(self, m):
+        m.open()
+
+
+class NewHopsEditorAction(HopsEditorAction):
+    description = 'Open new peak hop editor'
+    name = 'New Peak Hops'
+    # image = icon('document-new')
+
+    def _perform(self, m):
+        m.new()
+
+
+class OpenPyScriptAction(FileOpenAction):
     """
     """
     description = 'Open pyscript'
     name = 'Open Script...'
     accelerator = 'Ctrl+Shift+O'
     image = icon('document-open')
+    task_id = 'pychron.pyscript.task'
+    # test_path = '/Users/ross/Pychrondata_dev/scripts/extraction/jan_pause.py'
+    # test_path = '/Users/ross/Pychrondata_dev/scripts/measurement/jan_unknown.py'
+    test_path = '/Users/argonlab2/Pychrondata_view/scripts/measurement/obama_analysis400_120.py'
 
-    def perform(self, event):
-        if event.task.id == 'pychron.pyscript':
-            task = event.task
-            task.open()
-        else:
-            application = event.task.window.application
-            win = application.create_window(TaskWindowLayout('pychron.pyscript',
-                                                             size=(1200, 100)
-                                                             ))
-            task = win.active_task
-            test_path='/Users/ross/Pychrondata_dev/scripts/extraction/jan_pause.py'
-            # test_path='/Users/ross/Pychrondata_dev/scripts/measurement/jan_unknown.py'
-            if task.open(path=test_path):
-                win.open()
 
-class NewPyScriptAction(Action):
+class NewPyScriptAction(NewAction):
     """
     """
     description = 'New pyscript'
     name = 'New Script'
-#    accelerator = 'Shift+Ctrl+O'
+    task_id = 'pychron.pyscript/task'
+    #    accelerator = 'Shift+Ctrl+O'
     #     image = icon('script-new')
-    def perform(self, event):
-        if event.task.id == 'pychron.pyscript':
-            task = event.task
-            task.new()
-        else:
-            application = event.task.window.application
-            win = application.create_window(TaskWindowLayout('pychron.pyscript'))
-            task = win.active_task
-            if task.new():
-                win.open()
+    # def perform(self, event):
+    #     if event.task.id == 'pychron.pyscript':
+    #         task = event.task
+    #         task.new()
+    #     else:
+    #         application = event.task.window.application
+    #         win = application.create_window(TaskWindowLayout('pychron.pyscript'))
+    #         task = win.active_task
+    #         if task.new():
+    #             win.open()
 
 
 class JumpToGosubAction(TaskAction):
-    name='Jump to Gosub'
+    name = 'Jump to Gosub'
     image = icon('script_go.png')
-    method='jump_to_gosub'
+    method = 'jump_to_gosub'
     tooltip = 'Jump to gosub defined at the current line. CMD+click on a gosub will also work.'
+
 #============= EOF =============================================

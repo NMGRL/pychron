@@ -15,32 +15,31 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-import math
-
 from traits.api import HasTraits, Instance, on_trait_change, Float, Str, \
-    Dict, Property, Event, Int, Bool, List, cached_property, Button
+    Dict, Property, Event, Int, Bool, List, cached_property, Button, Any
 from traits.trait_errors import TraitError
 from traitsui.api import View, UItem, InstanceEditor, TableEditor, \
-    VSplit, HGroup, VGroup, spring
-
-# from pychron.envisage.tasks.base_editor import BaseTraitsEditor
-# from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
+    VSplit, HGroup, VGroup, spring, Item
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 #============= standard library imports ========================
-from numpy import linspace, array, max, zeros, meshgrid, vstack, arctan2, sin, cos
-
+from numpy import linspace, array, min, max, zeros, meshgrid, \
+    vstack, arctan2, sin, cos, unravel_index
+import math
 #============= local library imports  ==========================
 from pychron.envisage.browser.record_views import RecordView
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.graph.contour_graph import ContourGraph
 from pychron.graph.error_bar_overlay import ErrorBarOverlay
 from pychron.graph.graph import Graph
-from pychron.core.helpers.formatting import floatfmt
+from pychron.core.helpers.formatting import floatfmt, calc_percent_error
 from pychron.core.helpers.iterfuncs import partition
 from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 from pychron.processing.tasks.flux.irradiation_tray_overlay import IrradiationTrayOverlay
+
+# st=time.time()
 from pychron.core.regression.flux_regressor import BowlFluxRegressor, PlaneFluxRegressor
+# st = report_extime('reg', st)
 from pychron.processing.tasks.flux.tool import FluxTool
 
 
@@ -79,11 +78,34 @@ class MonitorPosition(HasTraits):
     y = Float
     z = Float
     theta = Float
+    saved_j = Float
+    saved_jerr = Float
+
+    mean_j = Float
+    mean_jerr = Float
+
+    n = Int
+
     j = Float(enter_set=True, auto_set=False)
     jerr = Float(enter_set=True, auto_set=False)
     use = Bool(True)
     save = Bool(False)
     dev = Float
+
+    percent_saved_error = Property
+    percent_mean_error = Property
+    percent_pred_error = Property
+
+    def _get_percent_saved_error(self):
+        return calc_percent_error(self.saved_j, self.saved_jerr)
+
+    def _get_percent_mean_error(self):
+        if self.mean_jerr and self.mean_jerr:
+            return calc_percent_error(self.mean_j, self.mean_jerr)
+
+    def _get_percent_pred_error(self):
+        if self.j and self.jerr:
+            return calc_percent_error(self.j, self.jerr)
 
 
 class FluxEditor(GraphEditor):
@@ -99,15 +121,25 @@ class FluxEditor(GraphEditor):
     save_unknowns_button = Button
     _save_all = True
     _save_unknowns = True
+    irradiation_tray_overlay = Instance(IrradiationTrayOverlay)
+
+    recalculate_button = Button('Recalculate')
+
+    min_j = Float
+    max_j = Float
+    percent_j_change = Float
+    j_gradient = Float
+    cmap_scatter = Any
+    _regressor = Any
 
     def set_save_all(self, v):
-        self._save_all=True
-        self._save_unknowns=True
+        self._save_all = True
+        self._save_unknowns = True
         self._save_all_button_fired()
-        self.positions_dirty=True
+        self.positions_dirty = True
 
     def set_save_unknowns(self, v):
-        self._save_unknowns=v
+        self._save_unknowns = v
         self._save_unknowns_button_fired()
 
     def save(self):
@@ -123,7 +155,14 @@ class FluxEditor(GraphEditor):
                     self._remove_analyses(pp.identifier)
 
     def _remove_analyses(self, identifier):
-        pass
+        proc = self.processor
+        db = proc.db
+        with db.session_ctx():
+            ln = db.get_labnumber(identifier)
+            if ln:
+                for ai in ln.analyses:
+                    if ai.uuid:
+                        proc.remove_from_cache(ai)
 
     def _gather_unknowns(self, refresh_data,
                          exclude='invalid',
@@ -151,31 +190,48 @@ class FluxEditor(GraphEditor):
                               sample=sample,
                               hole_id=pid,
                               x=x, y=y,
-                              j=j, jerr=jerr,
+
+                              saved_j=j, saved_jerr=jerr,
                               theta=math.atan2(x, y),
                               use=use)
 
         self.monitor_positions[identifier] = pos
         # self.positions_dirty = True
 
-    def set_unknown_j(self):
+    def set_predicted_j(self):
         reg = self._regressor
-        for p in self.positions:
-            if not p.use:
-                j = reg.predict([(p.x, p.y)])[0]
-                je = reg.predict_error([[(p.x, p.y)]])[0]
-                oj = p.j
-                p.j = j
-                p.jerr =je
-                print je
+        if reg:
+            if self.tool.use_monte_carlo:
+                from pychron.core.stats.monte_carlo import monte_carlo_error_estimation
+                pts = array([[p.x, p.y] for p in self.positions])
+                nominals = reg.predict(pts)
+                errors = monte_carlo_error_estimation(reg, nominals, pts,
+                                                      ntrials=self.tool.monte_carlo_ntrials)
+                for p, j, je in zip(self.positions, nominals, errors):
+                    oj = p.saved_j
 
-                p.dev = (oj - j) / j * 100
-        self.positions_dirty = True
+                    p.j = j
+                    p.jerr = je
 
-    def set_position_j(self, identifier, j, jerr, dev):
+                    p.dev = (oj - j) / j * 100
+            else:
+                for p in self.positions:
+                    j = reg.predict([(p.x, p.y)])[0]
+                    je = reg.predict_error([[(p.x, p.y)]])[0]
+                    oj = p.saved_j
+
+                    p.j = j
+                    p.jerr = je
+
+                    p.dev = (oj - j) / j * 100
+
+            self.positions_dirty = True
+
+    def set_position_j(self, identifier, **kw):
         if identifier in self.monitor_positions:
             mon = self.monitor_positions[identifier]
-            mon.trait_set(j=j, jerr=jerr, dev=dev)
+            mon.trait_set(**kw)
+            # print mon.x, mon.y, mon.mean_j, mon.mean_jerr
         else:
             self.warning('invalid identifier {}'.format(identifier))
 
@@ -184,7 +240,7 @@ class FluxEditor(GraphEditor):
 
     def _rebuild_graph(self):
         try:
-            x, y, z, ze = array([(pos.x, pos.y, pos.j, pos.jerr)
+            x, y, z, ze = array([(pos.x, pos.y, pos.mean_j, pos.mean_jerr)
                                  for pos in self.monitor_positions.itervalues()
                                  if pos.use]).T
 
@@ -199,9 +255,11 @@ class FluxEditor(GraphEditor):
             reg = self._regressor_factory(x, y, z, ze)
             self._regressor = reg
             if self.tool.plot_kind == 'Contour':
-                self._rebuild_contour(x, y, r, reg)
+                self._rebuild_contour(x, y, z, r, reg)
             else:
                 self._rebuild_hole_vs_j(x, y, r, reg)
+        else:
+            self.warning_dialog('At least 4 monitor positions required')
 
     def _rebuild_hole_vs_j(self, x, y, r, reg):
         g = Graph()
@@ -246,11 +304,11 @@ class FluxEditor(GraphEditor):
         point_inspector = PointInspector(scatter)
         pinspector_overlay = PointInspectorOverlay(component=scatter,
                                                    tool=point_inspector)
-        #
+
         scatter.overlays.append(pinspector_overlay)
         scatter.tools.append(point_inspector)
 
-    def _rebuild_contour(self, x, y, r, reg):
+    def _rebuild_contour(self, x, y, z, r, reg):
 
         g = ContourGraph(container_dict={'kind': 'h'})
         self.graph = g
@@ -258,11 +316,10 @@ class FluxEditor(GraphEditor):
         p = g.new_plot(xtitle='X', ytitle='Y')
 
         ito = IrradiationTrayOverlay(component=p,
-                                     geometry=self.geometry)
+                                     geometry=self.geometry,
+                                     show_labels=self.tool.show_labels)
+        self.irradiation_tray_overlay = ito
         p.overlays.append(ito)
-
-        g.new_series(x, y, type='scatter',
-                     marker='circle')
 
         m = self._model_flux(reg, r)
         s, p = g.new_series(z=m,
@@ -274,16 +331,36 @@ class FluxEditor(GraphEditor):
                             style='contour')
         g.add_colorbar(s)
 
+        # pts = vstack((x, y)).T
+        s = g.new_series(x, y,
+                         z=z,
+                         style='cmap_scatter',
+                         color_mapper=s.color_mapper,
+                         marker='circle',
+                         marker_size=self.tool.marker_size)
+        self.cmap_scatter = s[0]
+
     def _regressor_factory(self, x, y, z, ze):
         if self.tool.model_kind == 'Bowl':
+            # from pychron.core.regression.flux_regressor import BowlFluxRegressor
             klass = BowlFluxRegressor
         else:
+            # from pychron.core.regression.flux_regressor import PlaneFluxRegressor
             klass = PlaneFluxRegressor
 
         x = array(x)
         y = array(y)
         xy = vstack((x, y)).T
-        reg = klass(xs=xy, ys=z, yserr=ze, error_calc_type='SD')
+        wf = self.tool.use_weighted_fit
+        if wf:
+            ec = 'SD'
+        else:
+            ec = self.tool.predicted_j_error_type
+
+        reg = klass(xs=xy, ys=z, yserr=ze,
+                    error_calc_type=ec,
+                    use_weighted_fit=wf)
+        # error_calc_type=self.tool.predicted_j_error_type)
         reg.calculate()
         return reg
 
@@ -297,25 +374,53 @@ class FluxEditor(GraphEditor):
             pts = vstack((gx[i], gy[i])).T
             nz[i] = reg.predict(pts)
 
+        self.max_j = maj = max(nz)
+        self.min_j = mij = min(nz)
+        self.percent_j_change = (maj - mij) / maj * 100
+
+        x1, y1 = unravel_index(nz.argmax(), nz.shape)
+        x2, y2 = unravel_index(nz.argmin(), nz.shape)
+
+        d = 2 * r / n * ((x1 - y2) ** 2 + (y1 - y2) ** 2) ** 0.5
+        self.j_gradient = self.percent_j_change / d
+
         return nz
+
+    @on_trait_change('tool:show_labels')
+    def _handle_labels(self):
+        if self.irradiation_tray_overlay:
+            self.irradiation_tray_overlay.show_labels = self.tool.show_labels
+            self.irradiation_tray_overlay.invalidate_and_redraw()
 
     @on_trait_change('monitor_positions:[use, j, jerr]')
     def _handle_monitor_pos_change(self, obj, name, old, new):
-        if obj.use:
-            if not self.suppress_update:
-                print 'monitor pos change'
-                self.rebuild_graph()
+        if not self.suppress_update:
+            self.refresh_j()
 
-    @on_trait_change('tool:[color_map_name, levels, model_kind, plot_kind]')
-    def _handle_tool_change(self):
-        self.rebuild_graph()
+    @on_trait_change('tool:[color_map_name, levels, model_kind, plot_kind, marker_size]')
+    def _handle_tool_change(self, name, new):
+        if name == 'marker_size':
+            self.cmap_scatter.marker_size = new
+            # self.cmap_scatter.invalidate_and_redraw()
+        else:
+            self.rebuild_graph()
+            if name == 'model_kind':
+                self.refresh_j()
 
     @on_trait_change('tool:group_positions')
     def _handle_group_monitors(self):
         self.positions_dirty = True
 
+    def refresh_j(self):
+        self.suppress_update = True
+        self.rebuild_graph()
+        self.set_predicted_j()
+        self.suppress_update = False
+
+    def _recalculate_button_fired(self):
+        self.refresh_j()
+
     def _save_all_button_fired(self):
-        # if self._save_all:
         for pp in self.positions:
             pp.save = self._save_all
 
@@ -341,7 +446,9 @@ class FluxEditor(GraphEditor):
         return g
 
     def _tool_default(self):
-        ft = FluxTool()
+        ft = FluxTool(mean_j_error_type='SEM, but if MSWD>1 use SEM * sqrt(MSWD)',
+                      predicted_j_error_type='SEM, but if MSWD>1 use SEM * sqrt(MSWD)')
+
         db = self.processor.db
         fs = []
         with db.session_ctx():
@@ -364,30 +471,63 @@ class FluxEditor(GraphEditor):
             column(name='hole_id', label='Hole'),
             column(name='identifier', label='Identifier'),
             column(name='sample', label='Sample', width=115),
-            column(name='x', label='X', format='%0.3f', width=50),
-            column(name='y', label='Y', format='%0.3f', width=50),
-            column(name='theta', label=u'\u03b8', format='%0.3f', width=50),
-            column(name='j', label='J',
-                   format_func=lambda x: floatfmt(x, n=7, s=3),
+            #column(name='x', label='X', format='%0.3f', width=50),
+            #column(name='y', label='Y', format='%0.3f', width=50),
+            #column(name='theta', label=u'\u03b8', format='%0.3f', width=50),
+            column(name='n', label='N'),
+            column(name='saved_j', label='Saved J',
+                   format_func=lambda x: floatfmt(x, n=6, s=4)),
+            column(name='saved_jerr', label=u'\u00b1\u03c3',
+                   format_func=lambda x: floatfmt(x, n=6, s=4)),
+            column(name='percent_saved_error',
+                   label='%',
+                   format_func=lambda x: floatfmt(x, n=2)),
+            column(name='mean_j', label='Mean J',
+                   format_func=lambda x: floatfmt(x, n=6, s=4) if x else ''),
+            column(name='mean_jerr', label=u'\u00b1\u03c3',
+                   format_func=lambda x: floatfmt(x, n=6, s=4) if x else ''),
+            column(name='percent_mean_error',
+                   label='%',
+                   format_func=lambda x: floatfmt(x, n=2) if x else ''),
+            column(name='j', label='Pred. J',
+                   format_func=lambda x: floatfmt(x, n=8, s=4),
                    width=75),
             column(name='jerr',
-                   format_func=lambda x: floatfmt(x, n=8, s=3),
+                   format_func=lambda x: floatfmt(x, n=10, s=4),
                    label=u'\u00b1\u03c3',
                    width=75),
+            column(name='percent_pred_error',
+                   label='%',
+                   format_func=lambda x: floatfmt(x, n=2) if x else ''),
             column(name='dev', label='dev',
                    format='%0.2f',
                    width=70),
-            column(klass=CheckboxColumn, name='save', label='Save', editable=True, width=30)
-        ]
+            column(klass=CheckboxColumn, name='save', label='Save', editable=True, width=30)]
 
         editor = TableEditor(columns=cols, sortable=False,
                              reorderable=False)
 
+        jfloatfmt = lambda x: floatfmt(x, n=2)
         v = View(VSplit(
             UItem('graph',
                   style='custom',
                   editor=InstanceEditor(), height=0.72),
-            VGroup(HGroup(spring, icon_button_editor('save_unknowns_button', 'dialog-ok-5',
+            VGroup(HGroup(UItem('recalculate_button'),
+                          Item('min_j', format_str='%0.4e',
+                               style='readonly',
+                               label='Min. J'),
+                          Item('max_j',
+                               style='readonly',
+                               format_str='%0.4e', label='Max. J'),
+                          Item('percent_j_change',
+                               style='readonly',
+                               format_func=floatfmt,
+                               label='Delta J(%)'),
+                          Item('j_gradient',
+                               style='readonly',
+                               format_func=floatfmt,
+                               label='Gradient J(%/cm)'),
+                          spring, icon_button_editor('save_unknowns_button', 'dialog-ok-5',
                                                      tooltip='Toggle "save" for unknown positions'),
                           icon_button_editor('save_all_button', 'dialog-ok-apply-5',
                                              tooltip='Toggle "save" for all positions')),

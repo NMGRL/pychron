@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,10 +15,9 @@
 #===============================================================================
 
 #=============enthought library imports=======================
-from traits.api import HasTraits, Property, Float, Enum, Str
+from traits.api import HasTraits, Property, Float, Enum, Str, Bool
 from uncertainties import ufloat, nominal_value, std_dev
 
-from pychron.core.ui.preference_binding import bind_preference
 from pychron.pychron_constants import AGE_SCALARS
 
 #=============local library imports  ==========================
@@ -55,7 +54,7 @@ class ArArConstants(HasTraits):
 
     lambda_k = Property
     lambda_Cl36 = Property(depends_on='lambda_Cl36_v, lambda_Cl36_e')
-    lambda_Cl36_v = Float(6.3e-9)
+    lambda_Cl36_v = Float(6.308e-9)
     lambda_Cl36_e = Float(0)
     lambda_Ar37 = Property(depends_on='lambda_Ar37_v, lambda_Ar37_e')
     lambda_Ar37_v = Float(0.01975)
@@ -89,16 +88,19 @@ class ArArConstants(HasTraits):
 
     # ic_factors = Either(List, Str)
 
-    atm4036_citation = Str#'Nier (1950)'
-    atm4038_citation = Str#'Nier (1950)'
-    lambda_b_citation = Str#'Min (2008)'
-    lambda_e_citation = Str#'Min (2008)'
-    lambda_Ar39_citation = Str#'Min (2008)'
-    lambda_Ar37_citation = Str#'Min (2008)'
+    atm4036_citation = Str  #'Nier (1950)'
+    atm4038_citation = Str  #'Nier (1950)'
+    lambda_b_citation = Str  #'Min (2008)'
+    lambda_e_citation = Str  #'Min (2008)'
+    lambda_Ar39_citation = Str  #'Min (2008)'
+    lambda_Ar37_citation = Str  #'Min (2008)'
+
+    allow_negative_ca_correction = Bool(True)
 
     def __init__(self, *args, **kw):
         #print 'init arar constants'
         try:
+            from pychron.core.ui.preference_binding import bind_preference
             bind_preference(self, 'lambda_b_v', 'pychron.arar.constants.lambda_b')
             bind_preference(self, 'lambda_b_e', 'pychron.arar.constants.lambda_b_error')
             bind_preference(self, 'lambda_e_v', 'pychron.arar.constants.lambda_e')
@@ -134,23 +136,22 @@ class ArArConstants(HasTraits):
             bind_preference(self, 'lambda_Ar37_citation', '{}.lambda_Ar37_citation'.format(prefid))
             bind_preference(self, 'lambda_Ar39_citation', '{}.lambda_Ar39_citation'.format(prefid))
 
-        except Exception, e:
-            print 'arar_constants ', e
-            import traceback
-            traceback.print_exc()
+            bind_preference(self, 'allow_negative_ca_correction', '{}.allow_negative_ca_correction'.format(prefid))
+
+        except (AttributeError, ImportError):
+            pass
 
         super(ArArConstants, self).__init__(*args, **kw)
 
     def to_dict(self):
-        d=dict()
-        for ai in ('fixed_k3739','atm4036','atm4038',
-                   'lambda_Cl36','lambda_Ar37','lambda_Ar39','lambda_k',):
+        d = dict()
+        for ai in ('fixed_k3739', 'atm4036', 'atm4038',
+                   'lambda_Cl36', 'lambda_Ar37', 'lambda_Ar39', 'lambda_k',):
+            v = getattr(self, ai)
+            d[ai] = nominal_value(v)
+            d['{}_err'.format(ai)] = float(std_dev(v))
 
-            v=getattr(self, ai)
-            d[ai]=nominal_value(v)
-            d['{}_err'.format(ai)]=float(std_dev(v))
-
-        d['abundance_sensitivity']=self.abundance_sensitivity
+        d['abundance_sensitivity'] = self.abundance_sensitivity
         return d
 
     def _get_fixed_k3739(self):
@@ -186,8 +187,9 @@ class ArArConstants(HasTraits):
         return self._get_ufloat('lambda_e')
 
     def _get_lambda_k(self):
-        k = self.lambda_b + self.lambda_e
-        return ufloat(k.nominal_value, k.std_dev)
+        return self.lambda_b + self.lambda_e
+
+        # return ufloat(k.nominal_value, k.std_dev)
 
     def _get_age_scalar(self):
         try:

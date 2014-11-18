@@ -105,11 +105,11 @@ def icslice_func(pos):
 
 
 SLICE_REGEX = (re.compile(r'[\d]+-{1}[\d]+$'),
-               slice_func, islice_func)#1-4
+               slice_func, islice_func, 'Slice')  #1-4
 SSLICE_REGEX = (re.compile(r'\d+:{1}\d+:{1}\d+$'),
-                sslice_func, isslice_func) #1:4:2
+                sslice_func, isslice_func, 'SSlice')  #1:4:2
 PSLICE_REGEX = (re.compile(r'\d+:{1}\d+$'),
-                pslice_func, ipslice_func) #1:4
+                pslice_func, ipslice_func, 'PSlice')  #1:4
 
 # 1-4;6;9;11-15
 # 1-4;6;9
@@ -118,7 +118,7 @@ PSLICE_REGEX = (re.compile(r'\d+:{1}\d+$'),
 # 1-4;6;9;11-15;50-42
 
 CSLICE_REGEX = (re.compile(r'((\d+-\d+)|\d+)(;+\d+)+((-\d+)|(;+\d+))*'),
-                cslice_func, icslice_func)
+                cslice_func, icslice_func, 'CSlice')
 
 '''
     use regex to match valid tansect entry
@@ -141,7 +141,7 @@ def transect_ifunc(pos):
     return '{}-{}'.format(t, int(p)+1)
 
 
-TRANSECT_REGEX = (re.compile('[tT]+[\d\W]+-+[\d\W]+$'), transect_func, transect_ifunc)
+TRANSECT_REGEX = (re.compile('[tT]+[\d\W]+-+[\d\W]+$'), transect_func, transect_ifunc, 'Transect')
 
 '''
     use regex to match valid position
@@ -156,12 +156,22 @@ TRANSECT_REGEX = (re.compile('[tT]+[\d\W]+-+[\d\W]+$'), transect_func, transect_
 
 '''
 # POSITION_REGEX = re.compile('[pPlLrRdD\d]+[\d\W]$|[\d\W]$')
-POSITION_REGEX = (re.compile('[pPlLrRdD\d]?[\d]$|[\d]$'), None, None)
+POSITION_REGEX = (re.compile('[pPlLrRdD\d]?[\d]$|[\d]$'), None, None, 'Position')
 
 '''
     e.g. 1.00,3.01
+         1.0,2.0,3.0
+         1.0,2.0;3.0,4.0
 '''
-XY_REGEX = (re.compile('[-,\d+].*\d*,[-,\d+].*\d*'), None, None)
+
+
+def xy_func(p):
+    return p.split(';')
+    #cant get non match with trailing ; to work so manual trim if present
+    # return [p for p in map(str.strip,p.split(';')) if p]
+
+# XY_REGEX = (re.compile('[-,\d+].*\d*,[-,\d+].*\d*'), None, None)
+XY_REGEX = (re.compile('([-\d+]+.\d+(,[-\d+]+.\d+){1,3})(;([-\d+]+.\d+(,[-\d+]+.\d+){1,3}))*$'), xy_func, None, 'XY')
 
 '''
     e.g d1
@@ -170,4 +180,12 @@ XY_REGEX = (re.compile('[-,\d+].*\d*,[-,\d+].*\d*'), None, None)
 '''
 DRILL_REGEX = re.compile('[dD]\d+$')
 POINT_REGEX = re.compile('p\d+$')
+
+if __name__ == '__main__':
+    for pos in ('-1.0,2.0;', '1.0;', '1.0;2.0', '1.0,2.0;3.0,4.0'):
+        for r, f, _, name in (SLICE_REGEX, SSLICE_REGEX, PSLICE_REGEX,
+                              TRANSECT_REGEX, POSITION_REGEX, XY_REGEX):
+            if r.match(pos):
+                print 'matched {} to {}'.format(name, pos)
+                print f(pos)
 #============= EOF =============================================

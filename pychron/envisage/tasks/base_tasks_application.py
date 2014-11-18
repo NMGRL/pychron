@@ -78,13 +78,14 @@ class BaseTasksApplication(TasksApplication, Loggable):
     def open_view(self, obj, **kw):
         info = obj.edit_traits(**kw)
         self.add_view(info)
+        return info
 
     def exit(self, **kw):
 
         self._cleanup_services()
 
         uis = self.uis
-#         uis = copy.copy(self.uis)
+        #         uis = copy.copy(self.uis)
         for ui in uis:
             try:
                 ui.dispose(abort=True)
@@ -96,7 +97,6 @@ class BaseTasksApplication(TasksApplication, Loggable):
     def _cleanup_services(self):
         for si in self.get_services(ICoreDevice):
             si.close()
-
 
 
 #============= EOF =============================================

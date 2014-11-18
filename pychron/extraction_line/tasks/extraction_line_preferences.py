@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Str, Bool
+from traits.api import Str, Bool, Int
 from traitsui.api import View, Item, VGroup, HGroup, spring
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 
@@ -34,6 +34,12 @@ class ExtractionLinePreferences(BasePreferencesHelper):
     display_volume = Bool
     volume_key = Str
 
+    use_status_monitor = Bool
+    valve_state_frequency = Int
+    valve_lock_frequency = Int
+    valve_owner_frequency = Int
+    update_period = Int
+
 
 class ExtractionLinePreferencesPane(PreferencesPane):
     model_factory = ExtractionLinePreferences
@@ -42,44 +48,45 @@ class ExtractionLinePreferencesPane(PreferencesPane):
     def traits_view(self):
         n_grp = VGroup(
             Item('use_network',
-                 tooltip='Flood the extraction line with the maximum state color'
-            ),
+                 tooltip='Flood the extraction line with the maximum state color'),
             VGroup(
                 Item('inherit_state',
-                     tooltip='Should the valves inherit the maximum state color'
-                ),
-                enabled_when='use_network'
-            ),
+                     tooltip='Should the valves inherit the maximum state color'),
+                enabled_when='use_network'),
             VGroup(
                 HGroup(
                     Item('display_volume',
                          tooltip='Display the volume for selected section. \
-Hover over section and hit the defined volume key (default="v")'
-                    ),
+Hover over section and hit the defined volume key (default="v")'),
                     Item('volume_key',
                          tooltip='Hit this key to display volume',
                          label='Key',
                          width=50,
-                         enabled_when='display_volume'
-                    ),
-                    spring,
-                ),
+                         enabled_when='display_volume'),
+                    spring, ),
                 label='volume',
-                enabled_when='use_network'
-            ),
-            label='Network',
-            #show_border=True
-        )
+                enabled_when='use_network'),
+            label='Network')
+
+        s_grp = VGroup(Item('use_status_monitor'),
+                       VGroup(Item('update_period'),
+                              VGroup(
+                                  Item('valve_state_frequency', label='State'),
+                                  Item('valve_lock_frequency', label='Lock'),
+                                  Item('valve_owner_frequency', label='Owner'),
+                                  label='Frequencies'),
+                              enabled_when='use_status_monitor'),
+                       label='Status Monitor')
 
         v_grp = VGroup(
             Item('check_master_owner',
                  label='Check Master Ownership',
-                 tooltip='Check valve ownership even if this is the master computer'
-            ),
+                 tooltip='Check valve ownership even if this is the master computer'),
             n_grp,
+            s_grp,
             show_border=True,
-            label='Valves'
-        )
+            label='Valves')
+
         return View(v_grp)
 
 #============= EOF =============================================

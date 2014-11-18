@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,23 +15,22 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from itertools import groupby
-import os
-
 from chaco.base_plot_container import BasePlotContainer
+from chaco.plot_label import PlotLabel
+from numpy import isnan
 from traits.api import Any, on_trait_change, \
     List, Event, Int
 from traitsui.api import View, UItem
 from enable.component_editor import ComponentEditor as EnableComponentEditor
-
-
-
-
 #============= standard library imports ========================
+from itertools import groupby
+import os
 #============= local library imports  ==========================
+from uncertainties import nominal_value, std_dev
 from pychron.core.csv.csv_parser import CSVParser
 from pychron.processing.analyses.analysis_group import InterpretedAge
-from pychron.processing.analyses.file_analysis import FileAnalysis
+from pychron.processing.plotters.options.isochron import InverseIsochronOptions
+from pychron.processing.plotters.options.spectrum import SpectrumOptions
 from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 from pychron.processing.tasks.figures.annotation import AnnotationTool, AnnotationOverlay
 from pychron.processing.tasks.figures.interpreted_age_factory import InterpretedAgeFactory
@@ -47,42 +46,46 @@ class FigureEditor(GraphEditor):
 
     annotation_tool = Any
     figure_model = Any
+    figure_container = Any
 
-    tag=Event
-    save_db_figure=Event
-    invalid=Event
+    tag = Event
+    save_db_figure = Event
+    invalid = Event
 
-    saved_figure_id=Int
+    saved_figure_id = Int
+    titles = List
+
+    update_graph_on_set_items = True
+
+    show_caption = False
+    caption_path = None
+    caption_text = None
+
+    def enable_aux_plots(self):
+        po = self.plotter_options_manager.plotter_options
+        for ap in po.aux_plots:
+            ap.enabled = True
 
     def clear_aux_plot_limits(self):
         po = self.plotter_options_manager.plotter_options
         for ap in po.aux_plots:
             ap.clear_ylimits()
+            ap.clear_xlimits()
 
     def set_items_from_file(self, p):
         if os.path.isfile(p):
-            def construct(d):
-                f=FileAnalysis(age=float(d['age']),
-                               age_err=float(d['age_err']),
-                               record_id=d['runid'])
-                return f
-
-            par=CSVParser()
-            par.load(p)
-            ans=[construct(args)
-                    for args in par.itervalues()]
-
-        po=self.plotter_options_manager.plotter_options
-        for ap in po.aux_plots:
-            if ap.name.lower() not in ('ideogram', 'analysis number','analysis number stacked'):
-                ap.use=False
-
-        self.analyses = ans
-        self._update_analyses()
-        self.dump_tool()
+            # def construct(d):
+            if p.endswith('.xls'):
+                self.information_dialog('Plotting Spectra from Excel file not yet implemented')
+            else:
+                par = CSVParser()
+                par.load(p)
+                self.analyses = self._get_items_from_file(par)
+                self._update_analyses()
+                self.dump_tool()
 
     def save_figure(self, name, project, labnumbers):
-        db=self.processor.db
+        db = self.processor.db
         with db.session_ctx():
 
             figure = db.add_figure(project=project, name=name)
@@ -127,31 +130,78 @@ class FigureEditor(GraphEditor):
                     self.add_interpreted_age(ln, g)
 
     def add_interpreted_age(self, ln, ia):
-        db=self.processor.db
+        db = self.processor.db
         with db.session_ctx():
-            hist=db.add_interpreted_age_history(ln)
-            db_ia=db.add_interpreted_age(hist, age=ia.preferred_age_value or 0,
-                                      age_err=ia.preferred_age_error or 0,
-                                      age_kind=ia.preferred_age_kind,
-                                      wtd_kca=float(ia.weighted_kca.nominal_value),
-                                      wtd_kca_err=float(ia.weighted_kca.std_dev),
-                                      mswd=float(ia.preferred_mswd))
+            hist = db.add_interpreted_age_history(ln)
 
-            for ai in ia.analyses:
-                plateau_step=ia.get_is_plateau_step(ai)
+            a = ia.get_ma_scaled_age()
 
-                ai=db.get_analysis_uuid(ai.uuid)
+            mswd = ia.preferred_mswd
 
-                db.add_interpreted_age_set(db_ia, ai, plateau_step=plateau_step)
+            if isnan(mswd):
+                mswd = 0
+
+            db_ia = db.add_interpreted_age(hist,
+                                           age=float(nominal_value(a)),
+                                           age_err=float(std_dev(a)),
+                                           display_age_units=ia.age_units,
+                                           age_kind=ia.preferred_age_kind,
+                                           kca_kind=ia.preferred_kca_kind,
+                                           kca=float(ia.preferred_kca_value),
+                                           kca_err=float(ia.preferred_kca_error),
+                                           mswd=float(mswd),
+
+                                           include_j_error_in_mean=ia.include_j_error_in_mean,
+                                           include_j_error_in_plateau=ia.include_j_error_in_plateau,
+                                           include_j_error_in_individual_analyses=
+                                           ia.include_j_error_in_individual_analyses)
+
+            for ai in ia.all_analyses:
+                plateau_step = ia.get_is_plateau_step(ai)
+
+                ai = db.get_analysis_uuid(ai.uuid)
+
+                db.add_interpreted_age_set(db_ia, ai,
+                                           tag=ai.tag,
+                                           plateau_step=plateau_step)
+
+    def save_interpreted_ages(self):
+        ias = self.get_interpreted_ages()
+        self._set_preferred_age_kind(ias)
+
+        self.add_interpreted_ages(ias)
 
     def get_interpreted_ages(self):
         key = lambda x: x.group_id
         unks = sorted(self.analyses, key=key)
         ias = []
         ok = 'omit_{}'.format(self.basename)
-        for gid, ans in groupby(unks, key=key):
-            ans = filter(lambda x: not x.is_omitted(ok), ans)
-            ias.append(InterpretedAge(analyses=ans, use=True))
+        po = self.plotter_options_manager.plotter_options
+        additional = {}
+        if isinstance(po, SpectrumOptions):
+            ek = po.plateau_age_error_kind
+            pk = 'Plateau'
+            additional['include_j_error_in_plateau'] = po.include_j_error_in_plateau
+        elif isinstance(po, InverseIsochronOptions):
+            pk = 'Isochron'
+            ek = po.error_calc_method
+            additional['include_j_error_in_mean'] = True
+
+        else:
+            ek = po.error_calc_method
+            pk = 'Weighted Mean'
+            additional['include_j_error_in_individual_analyses'] = po.include_j_error
+            additional['include_j_error_in_mean'] = po.include_j_error_in_mean
+
+        for gid, oans in groupby(unks, key=key):
+            oans = list(oans)
+            ans = filter(lambda x: not x.is_omitted(ok), oans)
+            ias.append(InterpretedAge(analyses=ans,
+                                      all_analyses=oans,
+                                      preferred_age_kind=pk,
+                                      preferred_age_error_kind=ek,
+                                      use=True,
+                                      **additional))
 
         return ias
 
@@ -180,15 +230,6 @@ class FigureEditor(GraphEditor):
 
         self._set_group(idxs, gid, 'graph_id', **kw)
 
-    def _set_group(self, idxs, gid, attr, rebuild=True):
-        ans = self.analyses
-        for i in idxs:
-            a = ans[i]
-            setattr(a, attr, gid)
-
-        if rebuild:
-            self.rebuild()
-
     def rebuild(self):
         # ans = self._gather_unknowns(refresh_data, compress_groups=compress_groups)
         ans = self.analyses
@@ -206,8 +247,50 @@ class FigureEditor(GraphEditor):
     def get_component(self, ans, po):
         pass
 
+    def _set_group(self, idxs, gid, attr, refresh=True):
+        ans = self.analyses
+        for i in idxs:
+            a = ans[i]
+            setattr(a, attr, gid)
+
+            # if refresh:
+            #     self.rebuild()
+
+    def _set_preferred_age_kind(self, ias):
+        pass
+
+    def _get_items_from_file(self, parser):
+        pass
+
     def _null_component(self):
         self.component = BasePlotContainer()
+
+    def _add_caption(self, component, plotter_options, default_captext):
+        if self.show_caption:
+            po = plotter_options
+            s = po.nsigma
+            captext = ''
+            if self.caption_path:
+                if os.path.isfile(self.caption_path):
+                    with open(self.caption_path, 'r') as fp:
+                        captext = fp.read()
+
+            elif self.caption_text:
+                captext = self.caption_text
+
+            if captext:
+                captext = captext.format(nsigma=s)
+
+            if not captext:
+                captext = default_captext.format(s)
+
+            cap = PlotLabel(text=captext,
+                            overlay_position='outside bottom',
+                            vjustify='top',
+                            hjustify='left',
+                            component=component)
+            component.overlays.append(cap)
+            component.padding_bottom = 40
 
     @on_trait_change('figure_model:panels:graph:[tag, save_db_figure, invalid]')
     def _handle_graph_event(self, name, new):
@@ -236,7 +319,8 @@ class FigureEditor(GraphEditor):
         v = View(UItem('component',
                        style='custom',
                        width=650,
-                       editor=EnableComponentEditor()))
+                       editor=EnableComponentEditor()),
+                 resizable=True)
         return v
 
     def _rebuild_graph(self):
@@ -248,30 +332,30 @@ class FigureEditor(GraphEditor):
             e.set_items(ans)
             # if isinstance(e, FigureEditor):
             #     pass
-                # e.unknowns = ans
-                # else:
-                #     e.items = ans
+            # e.unknowns = ans
+            # else:
+            #     e.items = ans
 
     def update_figure(self):
-        sid=self.saved_figure_id
+        sid = self.saved_figure_id
 
         db = self.processor.db
         with db.session_ctx() as sess:
             fig = db.get_figure(sid, key='id')
+            if fig:
+                pom = self.plotter_options_manager
+                blob = pom.dump_yaml()
+                fig.preference.options = blob
 
-            pom = self.plotter_options_manager
-            blob = pom.dump_yaml()
-            fig.preference.options = blob
+                for dbai in fig.analyses:
+                    sess.delete(dbai)
 
-            for dbai in fig.analyses:
-                sess.delete(dbai)
-
-            for ai in self.analyses:
-                dbai = db.get_analysis_uuid(ai.uuid)
-                db.add_figure_analysis(fig, dbai,
-                                       status=ai.is_omitted('omit_{}'.format(self.basename)),
-                                       graph=ai.graph_id,
-                                       group=ai.group_id)
+                for ai in self.analyses:
+                    dbai = db.get_analysis_uuid(ai.uuid)
+                    db.add_figure_analysis(fig, dbai,
+                                           status=ai.is_omitted('omit_{}'.format(self.basename)),
+                                           graph=ai.graph_id,
+                                           group=ai.group_id)
 
 #============= EOF =============================================
 # dbans = fig.analyses

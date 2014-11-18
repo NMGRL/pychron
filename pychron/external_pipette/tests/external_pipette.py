@@ -1,5 +1,6 @@
-#from pychron.core.ui import set_qt
-#set_qt()
+from pychron.core.ui import set_qt
+
+set_qt()
 from pychron.globals import globalv
 
 globalv.use_warning_display = False

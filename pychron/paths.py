@@ -71,6 +71,7 @@ class Paths():
     #==============================================================================
     scripts_dir = scripts_dir = None
     experiment_dir = None
+    run_block_dir = None
     generic_experiment_dir = None
     backup_experiment_dir = None
     plugins_dir = None
@@ -80,6 +81,7 @@ class Paths():
     test_dir = None
     custom_queries_dir = None
     template_dir = None
+    log_dir = None
     #===========================================================================
     # scripts
     #===========================================================================
@@ -88,13 +90,16 @@ class Paths():
     post_measurement_dir = None
     extraction_dir = None
     post_equilibration_dir = None
-    truncation_dir = None
+    conditionals_dir = None
+    hops_dir = None
+    fits_dir = None
     #==============================================================================
     # setup
     #==============================================================================
     setup_dir = setup_dir = None
     device_dir = None
     spectrometer_dir = None
+    queue_conditionals_dir = None
     canvas2D_dir = None
     canvas3D_dir = None
     extraction_line_dir = None
@@ -107,7 +112,7 @@ class Paths():
     heating_schedule_dir = None
     map_dir = None
     user_points_dir = None
-    irradiation_tray_maps_dir=None
+    irradiation_tray_maps_dir = None
     #==============================================================================
     # data
     #==============================================================================
@@ -126,7 +131,7 @@ class Paths():
     default_cache = None
     loading_dir = None
     power_map_dir = None
-    vcs_dir=None
+    vcs_dir = None
     # initialization_dir = None
     # device_creator_dir = None
 
@@ -163,6 +168,7 @@ class Paths():
         join = path.join
 
         self.root = root = join(HOME, home)
+        self.log_dir = join(root, 'logs')
         #        self.resources = join('..', '..', '..', 'resources',)
 
         self.resources = join(path.dirname(path.dirname(__file__)), 'resources')
@@ -209,31 +215,36 @@ class Paths():
         # root
         #==============================================================================
         self.scripts_dir = scripts_dir = join(root, 'scripts')
-        #        self.procedures_dir = join(scripts_dir, 'procedures')
+        self.procedures_dir = join(scripts_dir, 'procedures')
         self.measurement_dir = join(scripts_dir, 'measurement')
         self.post_measurement_dir = join(scripts_dir, 'post_measurement')
         self.extraction_dir = join(scripts_dir, 'extraction')
         self.post_equilibration_dir = join(scripts_dir, 'post_equilibration')
-        self.truncation_dir = join(scripts_dir, 'truncation')
+        self.conditionals_dir = join(scripts_dir, 'conditionals')
+        self.hops_dir = join(self.measurement_dir, 'hops')
+        self.fits_dir = join(self.measurement_dir, 'fits')
 
         self.experiment_dir = join(root, 'experiments')
+        self.run_block_dir = join(self.experiment_dir, 'blocks')
         self.generic_experiment_dir = join(self.experiment_dir, 'generic')
         self.backup_experiment_dir = join(self.experiment_dir, 'backup')
         self.hidden_dir = join(root, '.hidden')
         self.preferences_dir = join(root, 'preferences')
         self.plotter_options_dir = join(self.hidden_dir, 'plotter_options')
-        self.test_dir = join(root, 'testing')
-        self.custom_queries_dir = join(root, 'custom_queries')
+        # self.test_dir = join(root, 'testing')
+        # self.custom_queries_dir = join(root, 'custom_queries')
         self.template_dir = join(root, 'templates')
 
+        self.queue_conditionals_dir = join(root, 'queue_conditionals')
         #==============================================================================
         # setup
         #==============================================================================
         self.setup_dir = setup_dir = join(root, 'setupfiles')
         self.spectrometer_dir = join(setup_dir, 'spectrometer')
+
         self.device_dir = device_dir = join(setup_dir, 'devices')
         self.canvas2D_dir = join(setup_dir, 'canvas2D')
-        self.canvas3D_dir = join(setup_dir, 'canvas3D')
+        # self.canvas3D_dir = join(setup_dir, 'canvas3D')
         self.extraction_line_dir = join(setup_dir, 'extractionline')
         self.monitors_dir = join(setup_dir, 'monitors')
         self.pattern_dir = join(setup_dir, 'patterns')
@@ -268,7 +279,7 @@ class Paths():
         self.default_cache = join(self.data_dir, 'cache')
         self.loading_dir = join(self.data_dir, 'loads')
         self.power_map_dir = join(self.data_dir, 'power_maps')
-        self.vcs_dir=join(self.data_dir, 'vcs')
+        self.vcs_dir = join(self.data_dir, 'vcs')
         #==============================================================================
         # lovera exectuables
         #==============================================================================
@@ -279,13 +290,12 @@ class Paths():
         # files
         #=======================================================================
         self.backup_recovery_file = join(self.hidden_dir, 'backup_recovery')
-        self.last_experiment=join(self.hidden_dir, 'last_experiment')
+        self.last_experiment = join(self.hidden_dir, 'last_experiment')
         self.set_search_paths()
 
 
-
 paths = Paths()
-paths.build('_beta')
+paths.build('_dev')
 
 
 # def rec_make(pi):
@@ -306,9 +316,9 @@ def r_mkdir(p):
 
 
 def build_directories(paths):
-#    global paths
-# verify paths
-#    import copy
+    #    global paths
+    # verify paths
+    #    import copy
     for l in dir(paths):
         if l.endswith('_dir'):
             r_mkdir(getattr(paths, l))

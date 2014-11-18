@@ -152,6 +152,10 @@ def find_peaks(y_axis, x_axis=None, lookahead=300, delta=0):
     return [max_peaks, min_peaks]
 
 
+class PeakCenterError(BaseException):
+    pass
+
+
 def calculate_peak_center(x, y, min_peak_height=1.0, percent=80):
     """
         returns: 1. error string
@@ -163,9 +167,10 @@ def calculate_peak_center(x, y, min_peak_height=1.0, percent=80):
 
     ma = max(y)
     max_i = argmax(y)
-
+    # pc=PeakCenterResult()
     if ma < min_peak_height:
-        return 'No peak greater than {}. max = {}'.format(min_peak_height, ma)
+        raise PeakCenterError('No peak greater than {}. max = {}'.format(min_peak_height, ma))
+        # return pc
 
     mx = x[max_i]
     my = ma
@@ -174,13 +179,13 @@ def calculate_peak_center(x, y, min_peak_height=1.0, percent=80):
     for i in range(max_i, max_i - 50, -1):
         # this prevent looping around to the end of the list
         if i < 1:
-            return 'PeakCenterError: could not find a low pos'
+            raise PeakCenterError('PeakCenterError: could not find a low pos')
 
         try:
             if y[i] < (ma * (1 - percent / 100.)):
                 break
         except IndexError:
-            return 'PeakCenterError: could not find a low pos'
+            raise PeakCenterError('PeakCenterError: could not find a low pos')
 
     xstep = (x[i] - x[i - 1]) / 2.
     lx = x[i] - xstep
@@ -192,16 +197,16 @@ def calculate_peak_center(x, y, min_peak_height=1.0, percent=80):
             if y[i] < (ma * (1 - percent / 100.)):
                 break
         except IndexError:
-            return 'PeakCenterError: could not find a high pos'
+            raise PeakCenterError('PeakCenterError: could not find a high pos')
 
     try:
         hx = x[i + 1] - xstep
         hy = y[i] - (y[i] - y[i + 1]) / 2.
     except IndexError:
-        return 'peak not well centered'
+        raise PeakCenterError('peak not well centered')
 
     if (hx - lx) < 0:
-        return 'unable to find peak bounds high_pos < low_pos. {} < {}'.format(hx, lx)
+        raise PeakCenterError('unable to find peak bounds high_pos < low_pos. {} < {}'.format(hx, lx))
 
     cx = (hx + lx) / 2.0
     cy = ma
@@ -215,7 +220,7 @@ def calculate_peak_center(x, y, min_peak_height=1.0, percent=80):
     std = yppts.std()
 
     if std > 5 and abs(slope) < 1:
-        return 'No peak plateau std = {} (>5) slope = {} (<1)'.format(std, slope)
+        raise PeakCenterError('No peak plateau std = {} (>5) slope = {} (<1)'.format(std, slope))
         #        else:
     #            self.info('peak plateau std = {} slope = {}'.format(std, slope)
 

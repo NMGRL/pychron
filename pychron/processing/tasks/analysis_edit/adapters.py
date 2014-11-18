@@ -15,11 +15,19 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from pyface.action.menu_manager import MenuManager
 from traits.api import Int, Property
+from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
+from uncertainties import nominal_value, std_dev
+
 from pychron.core.helpers.color_generators import colornames
 from pychron.core.helpers.formatting import floatfmt
 from pychron.database.records.isotope_record import IsotopeRecordView
+
+
+
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -28,20 +36,27 @@ class UnknownsAdapter(TabularAdapter):
                ('Sample', 'sample'),
                ('Age', 'age'),
                (u'\u00b11\u03c3', 'error'),
-               ('Tag', 'tag')
-    ]
+               ('Tag', 'tag'),
+               ('GID', 'graph_id')]
 
     record_id_width = Int(80)
     sample_width = Int(80)
     age_width = Int(70)
     error_width = Int(60)
     tag_width = Int(50)
+    graph_id_width = Int(30)
 
     font = 'arial 10'
     #     record_id_text_color = Property
     #     tag_text_color = Property
     age_text = Property
     error_text = Property
+    def get_menu( self, object, trait, row, column ):
+        return MenuManager(Action(name='Group Selected', action='group_by_selected'),
+                           Action(name='Group by Labnumber', action='group_by_labnumber'),
+                           Action(name='Group by Aliquot', action='group_by_aliquot'),
+                           Action(name='Clear Grouping', action='clear_grouping'),
+                           Action(name='Unselect', action='unselect'))
 
     def get_bg_color(self, obj, trait, row, column=0):
         c = 'white'
@@ -56,13 +71,13 @@ class UnknownsAdapter(TabularAdapter):
     def _get_age_text(self):
         r = ''
         if not isinstance(self.item, IsotopeRecordView):
-            r = floatfmt(self.item.age, n=2)
+            r = floatfmt(nominal_value(self.item.uage), n=3)
         return r
 
     def _get_error_text(self):
         r = ''
         if not isinstance(self.item, IsotopeRecordView):
-            r = floatfmt(self.item.age_err_wo_j, n=3)
+            r = floatfmt(std_dev(self.item.uage_wo_j_err), n=4)
         return r
 
     def get_text_color(self, obj, trait, row, column=0):
@@ -93,8 +108,7 @@ class UnknownsAdapter(TabularAdapter):
 
 class ReferencesAdapter(TabularAdapter):
     columns = [
-        ('Run ID', 'record_id'),
-    ]
+        ('Run ID', 'record_id'), ]
     font = 'arial 10'
 
 #     font = 'modern 10'

@@ -28,9 +28,9 @@ from pychron.config_loadable import ConfigLoadable
 
 
 class Communicator(ConfigLoadable):
-    '''
-      
-    '''
+    """
+
+    """
     _lock = None
 #    name = Str
     simulation = Bool(True)
@@ -38,18 +38,22 @@ class Communicator(ConfigLoadable):
     handle = None
     scheduler = None
     def __init__(self, *args, **kw):
-        '''
-        '''
+        """
+        """
         super(Communicator, self).__init__(*args, **kw)
         self._lock = Lock()
+
+    def load(self, config, path):
+        self.set_attribute(config, 'verbose', 'Communications', 'verbose', default=False, optional=True)
+        return True
 
     def close(self):
         pass
 
     def delay(self, ms):
-        '''
-          
-        '''
+        """
+
+        """
         time.sleep(ms / 1000.0)
 
     def ask(self, *args, **kw):
@@ -65,8 +69,8 @@ class Communicator(ConfigLoadable):
         pass
 
     def process_response(self, re, replace=None, remove_eol=True):
-        '''
-        '''
+        """
+        """
         if remove_eol:
             re = self._remove_eol(re)
 
@@ -79,8 +83,8 @@ class Communicator(ConfigLoadable):
         return re
 
     def _prep_str(self, s):
-        '''
-        '''
+        """
+        """
         ns = ''
         if s is None:
             s = ''
@@ -92,8 +96,8 @@ class Communicator(ConfigLoadable):
         return ns
 
     def log_tell(self, cmd, info=None):
-        '''
-        '''
+        """
+        """
         cmd = self._remove_eol(cmd)
         ncmd = self._prep_str(cmd)
 
@@ -108,13 +112,16 @@ class Communicator(ConfigLoadable):
         self.info(msg)
 
     def log_response(self, cmd, re, info=None):
-        '''
-        '''
+        """
+        """
         cmd = self._remove_eol(cmd)
 
         ncmd = self._prep_str(cmd)
         if ncmd:
             cmd = ncmd
+
+        if len(re)>100:
+            re='{}...'.format(re[:97])
 
         if info and info != '':
             msg = '{}    {} ===>> {}'.format(info, cmd, re)

@@ -17,16 +17,18 @@
 #============= enthought library imports =======================
 # from traits.api import HasTraits
 import os
+
 from pyface.tasks.task_layout import TaskLayout, PaneItem, HSplitter, Tabbed
+
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.iterfuncs import partition
-from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.paths import r_mkdir
 from pychron.processing.tasks.analysis_edit.interpolation_editor import bin_analyses
-
 from pychron.processing.tasks.analysis_edit.interpolation_task import InterpolationTask, no_auto_ctx
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.processing.tasks.browser.util import browser_pane_item
 
 
 class BlanksTask(InterpolationTask):
@@ -40,16 +42,12 @@ class BlanksTask(InterpolationTask):
             id='pychron.processing.blanks',
             left=HSplitter(
                 Tabbed(
-                    PaneItem('pychron.browser'),
-                    PaneItem('pychron.search.query'),
-                ),
+                    browser_pane_item(),
+                    PaneItem('pychron.search.query')),
                 Tabbed(
                     PaneItem('pychron.processing.unknowns'),
                     PaneItem('pychron.processing.references'),
-                    PaneItem('pychron.processing.controls')
-                ),
-            ),
-        )
+                    PaneItem('pychron.processing.controls'))))
 
     def new_blank(self):
         from pychron.processing.tasks.blanks.blanks_editor import BlanksEditor
@@ -72,23 +70,31 @@ class BlanksTask(InterpolationTask):
         self._do_easy_func()
 
     def _easy_func(self, ep, manager):
-        db=self.manager.db
+        db = self.manager.db
 
         doc = ep.doc('blanks')
         fits = doc['blank_fit_isotopes']
         projects = doc['projects']
 
         unks = [ai for proj in projects
-               for si in db.get_samples(project=proj)
-               for ln in si.labnumbers
-               for ai in ln.analyses]
-
-        prog=manager.progress
+                for si in db.get_samples(project=proj)
+                for ln in si.labnumbers
+                for ai in ln.analyses
+                if ai.measurement.mass_spectrometer.name == 'MAP'
+            and ai.extraction.extraction_device.name in ('Furnace', 'Eurotherm')]
+        # for proj in projects:
+        #     for si in db.get_samples(project=proj):
+        #         for ln in si.labnumbers:
+        #             for ai in ln.analyses:
+        #                 print ai.measurement.mass_spectrometer.name,ai.extraction.extraction_device.name
+        #                 print ai.measurement.mass_spectrometer.name == 'nmgrl map' and ai.extraction.extraction_device.name in ('Furnace','Eurotherm')
+        print len(unks)
+        prog = manager.progress
         # prog = self.manager.open_progress(len(ans) + 1)
         #bin analyses
         prog.increase_max(len(unks))
 
-        preceding_fits, non_preceding_fits=map(list,partition(fits, lambda x: x['fit']=='preceding'))
+        preceding_fits, non_preceding_fits = map(list, partition(fits, lambda x: x['fit'] == 'preceding'))
         if preceding_fits:
             for ai in unks:
                 if prog.canceled:
@@ -109,6 +115,13 @@ class BlanksTask(InterpolationTask):
 
         with no_auto_ctx(self.active_editor):
             if non_preceding_fits:
+                for fi in self.active_editor.tool.fits:
+                    fi.fit = 'average'
+                    fi.error_type = 'SEM'
+                    fi.filter_outliers = True
+                    fi.filter_iterations = 1
+                    fi.filter_std_devs = 2
+
                 for ais in bin_analyses(unks):
                     if prog.canceled:
                         return
@@ -119,15 +132,15 @@ class BlanksTask(InterpolationTask):
                     self.active_editor.find_references(progress=prog)
 
                     #refresh graph
-                    invoke_in_main_thread(self.active_editor.rebuild_graph)
-
-                    if not manager.wait_for_user():
-                        return
+                    # invoke_in_main_thread(self.active_editor.rebuild_graph)
+                    #
+                    # if not manager.wait_for_user():
+                    #     return
 
                     #save a figure
                     if doc['save_figures']:
-                        title=self.active_editor.make_title()
-                        p=os.path.join(root, add_extension(title,'.pdf'))
+                        title = self.active_editor.make_title()
+                        p = os.path.join(root, add_extension(title, '.pdf'))
                         self.active_editor.save_file(p)
 
                     self.active_editor.save(progress=prog)
@@ -137,7 +150,7 @@ class BlanksTask(InterpolationTask):
 
     def _preceding_correct(self, db, fi, ai, hist):
         pa = db.get_preceding(ai.analysis_timestamp,
-                               ai.measurement.mass_spectrometer.name)
+                              ai.measurement.mass_spectrometer.name)
         if pa:
             an_pa = self.manager.make_analysis(pa)
             iso = fi['name']
@@ -159,9 +172,7 @@ class BlanksTask(InterpolationTask):
 
         else:
             self.warning('No preceding analyses for {}-{:02n}{}'.format(ai.labnumber.identifier,
-                                                                         ai.aliquot, ai.step))
-
-
+                                                                        ai.aliquot, ai.step))
 
 
 #============= EOF =============================================

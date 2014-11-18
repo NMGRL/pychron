@@ -17,7 +17,10 @@
 #============= enthought library imports =======================
 from traits.api import HasTraits
 from traitsui.menu import Action, Menu as MenuManager
+
 from pychron.pychron_constants import PLUSMINUS
+
+
 # from pyface.action.group import Group
 # from pyface.action.api import Group, MenuManager
 
@@ -64,15 +67,13 @@ class ContextMenuMixin(HasTraits):
         #            crosshairs_action = self.action_factory('Hide Crosshairs',
         #                           'destroy_crosshairs')
         #
-        #        export_actions = [
-        #                          self.action_factory('Window', 'export_data'),
-        #                          self.action_factory('All', 'export_raw_data'),
-        #
-        #                          ]
-        #
-        #        export_menu = Menu(name='Export',
-        #                         *export_actions)
-        contents = [save_menu,]
+        export_actions = [
+            self.action_factory('CSV', 'export_data'), ]
+        #self.action_factory('All', 'export_raw_data'),]
+
+        export_menu = MenuManager(name='Export',
+                                  *export_actions)
+        contents = [save_menu, export_menu]
         c=self.get_child_context_menu_actions()
         if c:
             contents.extend(c)

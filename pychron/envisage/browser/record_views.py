@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Str, Date, Float, Property
+from traits.api import HasTraits, Str, Date, Float, Property, Long
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -27,6 +27,34 @@ class RecordView(HasTraits):
 
     def _create(self, *args, **kw):
         pass
+
+
+class SampleRecordView(RecordView):
+    name = Str
+    material = Str
+    project = Str
+    lat = Float
+    lon = Float
+    elevation = Float
+    lithology = Str
+    rock_type = Str
+
+    def _create(self, dbrecord):
+        if dbrecord.material:
+            self.material = dbrecord.material.name
+        if dbrecord.project:
+            self.project = dbrecord.project.name
+
+        for attr in ('name', 'lat', ('lon', 'long'),
+                     'elevation', 'lithology', 'location', 'igsn', 'rock_type'):
+            if isinstance(attr, tuple):
+                attr, dbattr = attr
+            else:
+                dbattr = attr
+
+            v = getattr(dbrecord, dbattr)
+            if v is not None:
+                setattr(self, attr, v)
 
 
 class LabnumberRecordView(RecordView):
@@ -105,4 +133,22 @@ class ProjectRecordView(RecordView):
     def id(self):
         return self.name
 
-        #============= EOF =============================================
+
+class AnalysisGroupRecordView(RecordView):
+    name = Str
+    create_date = Date
+    last_modified = Date
+    id = Long
+
+    def _create(self, dbrecord):
+        self.id = dbrecord.id
+        for attr in ('name', 'create_date', 'last_modified'):
+            setattr(self, attr, getattr(dbrecord, attr))
+
+
+class AnalysisRecordView(RecordView):
+    def _create(self, dbrecord):
+        for attr in ('record_id', 'tag'):
+            setattr(self, attr, getattr(dbrecord, attr))
+
+#============= EOF =============================================

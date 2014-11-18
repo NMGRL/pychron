@@ -16,36 +16,53 @@
 
 #============= enthought library imports =======================
 #============= standard library imports ========================
+import ast
 import time
 import os
 from ConfigParser import ConfigParser
+
+import yaml
+
+
+
+
 #============= local library imports  ==========================
 from pychron.core.helpers.filetools import fileiter
-from pychron.pyscripts.pyscript import verbose_skip, count_verbose_skip, \
-    makeRegistry
 from pychron.paths import paths
-from pychron.pyscripts.valve_pyscript import ValvePyScript
 from pychron.pychron_constants import MEASUREMENT_COLOR
+from pychron.pyscripts.pyscript import verbose_skip, count_verbose_skip, \
+    makeRegistry, CTXObject
+from pychron.pyscripts.valve_pyscript import ValvePyScript
 
 ESTIMATED_DURATION_FF = 1.045
 
 command_register = makeRegistry()
 
 
+class MeasurementCTXObject(object):
+    def create(self, yd):
+        for k in ('baseline', 'multicollect', 'peakcenter', 'equilibration'):
+            try:
+                c = CTXObject()
+                c.update(yd[k])
+                setattr(self, k, c)
+            except KeyError:
+                pass
+
+
 class MeasurementPyScript(ValvePyScript):
     automated_run = None
     ncounts = 0
     info_color = MEASUREMENT_COLOR
+    abbreviated_count_ratio = None
+
     _time_zero = None
     _time_zero_offset = 0
 
     _series_count = 0
     _baseline_series = None
 
-    _regress_id = 0
-
     _detectors = None
-    abbreviated_count_ratio = None
     _fit_series_count = 0
 
     def gosub(self, *args, **kw):
@@ -60,8 +77,8 @@ class MeasurementPyScript(ValvePyScript):
         self._series_count = 0
         self._fit_series_count = 0
         self._time_zero = None
-        self._regress_id = 0
         self._detectors = None
+
         self.abbreviated_count_ratio = None
         self.ncounts = 0
 
@@ -74,14 +91,8 @@ class MeasurementPyScript(ValvePyScript):
             self.abbreviated_count_ratio = 0.25
         super(MeasurementPyScript, self).truncate(style=style)
 
-    #    def get_script_commands(self):
-    #        cmds = super(MeasurementPyScript, self).get_script_commands()
-    #
-    #        cmds += []
-    #        return cmds
-
     def get_variables(self):
-        return ['truncated', 'eqtime']
+        return ['truncated', 'eqtime', 'use_cdd_warming']
 
     #===============================================================================
     # commands
@@ -95,14 +106,14 @@ class MeasurementPyScript(ValvePyScript):
     @count_verbose_skip
     @command_register
     def sniff(self, ncounts=0, calc_time=False,
-              integration_time=1.04):
+              integration_time=1.04, block=True):
         if calc_time:
             self._estimated_duration += (ncounts * integration_time * ESTIMATED_DURATION_FF)
             return
         self.ncounts = ncounts
         if not self._automated_run_call('py_sniff', ncounts,
                                         self._time_zero, self._time_zero_offset,
-                                        series=self._series_count):
+                                        series=self._series_count, block=block):
             self.cancel()
         self._series_count += 1
 
@@ -126,7 +137,6 @@ class MeasurementPyScript(ValvePyScript):
                                         series=self._series_count):
             self.cancel()
 
-        #        self._regress_id = self._series_count
         self._series_count += 2
         self._fit_series_count += 1
 
@@ -174,7 +184,6 @@ class MeasurementPyScript(ValvePyScript):
 
         if os.path.isfile(p):
             with open(p, 'r') as fp:
-                # hops = [eval(line) for line in fp if not line.strip().startswith('#')]
                 hops = [eval(li) for li in fileiter(fp)]
                 return hops
 
@@ -189,7 +198,7 @@ class MeasurementPyScript(ValvePyScript):
     @count_verbose_skip
     @command_register
     def define_hops(self, hops=None, **kw):
-        if hops is None:
+        if not hops:
             return
 
         self._automated_run_call('py_define_hops', hops)
@@ -197,7 +206,7 @@ class MeasurementPyScript(ValvePyScript):
     @count_verbose_skip
     @command_register
     def peak_hop(self, ncycles=5, hops=None, calc_time=False):
-        if hops is None:
+        if not hops:
             return
 
         integration_time = 1.1
@@ -219,23 +228,8 @@ class MeasurementPyScript(ValvePyScript):
                                         fit_series=self._fit_series_count,
                                         group=group):
             self.cancel()
-        self._series_count += 1
+        self._series_count += 2
         self._fit_series_count += 1
-        #self._series_count += 4
-
-    #    @count_verbose_skip
-    #    @command_register
-    #    def peak_hop(self, detector=None, isotopes=None, cycles=5, integrations=5, calc_time=False):
-    #        if calc_time:
-    #            self._estimated_duration += (cycles * integrations * ESTIMATED_DURATION_FF)
-    #            return
-    #
-    #        self._automated_run_call('py_peak_hop', detector, isotopes,
-    #                                    cycles,
-    #                                    integrations,
-    #                                    self._time_zero,
-    #                                    self._series_count)
-    #        self._series_count += 3
 
     @count_verbose_skip
     @command_register
@@ -261,7 +255,12 @@ class MeasurementPyScript(ValvePyScript):
     @command_register
     def equilibrate(self, eqtime=20, inlet=None, outlet=None,
                     do_post_equilibration=True, close_inlet=True, delay=3):
+        """
+            inlet: str, tuple, or list
+            outlet: str, tuple, or list
+            e.g. 'A', ('A','B'), ['A','B'], 'A,B'
 
+        """
         evt = self._automated_run_call('py_equilibration', eqtime=eqtime,
                                        inlet=inlet,
                                        outlet=outlet,
@@ -275,26 +274,14 @@ class MeasurementPyScript(ValvePyScript):
             # wait for inlet to open
             evt.wait()
 
-    # @verbose_skip
-    # @command_register
-    # def regress(self, *fits):
-    #     if not fits:
-    #         fits = 'linear'
-    #
-    #     self._automated_run_call('py_set_regress_fits', fits)
-
     @verbose_skip
     @command_register
     def set_fits(self, *fits):
-        if not fits:
-            fits = 'linear'
         self._automated_run_call('py_set_fits', fits)
 
     @verbose_skip
     @command_register
     def set_baseline_fits(self, *fits):
-        if not fits:
-            fits = 'average_SEM'
         self._automated_run_call('py_set_baseline_fits', fits)
 
     @verbose_skip
@@ -315,7 +302,7 @@ class MeasurementPyScript(ValvePyScript):
             position_magnet(4.54312, dac=True) # detector is not relevant
             position_magnet(39.962, detector='AX')
             position_magnet('Ar40', detector='AX') #Ar40 will be converted to 39.962 use mole weight dict
-            
+
         """
         self._automated_run_call('py_position_magnet', pos, detector, dac=dac)
 
@@ -327,27 +314,8 @@ class MeasurementPyScript(ValvePyScript):
     #===============================================================================
     #
     #===============================================================================
-    def _automated_run_call(self, func, *args, **kw):
-        #         return True
-        #         if func not in ('py_activate_detectors',):
-        #             return True
 
-        if self.automated_run is None:
-            return
-
-        if isinstance(func, str):
-            func = getattr(self.automated_run, func)
-
-        return func(*args, **kw)
-
-    def _set_spectrometer_parameter(self, *args, **kw):
-        self._automated_run_call('py_set_spectrometer_parameter', *args, **kw)
-
-    def _get_spectrometer_parameter(self, *args, **kw):
-        return self._automated_run_call('py_get_spectrometer_parameter', *args, **kw)
-
-        #===============================================================================
-
+    # ===============================================================================
     # set commands
     #===============================================================================
 
@@ -358,8 +326,8 @@ class MeasurementPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def clear_conditions(self):
-        self._automated_run_call('py_clear_conditions')
+    def clear_conditionals(self):
+        self._automated_run_call('py_clear_conditionals')
 
     @verbose_skip
     @command_register
@@ -378,10 +346,11 @@ class MeasurementPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def add_termination(self, attr, comp, start_count=0, frequency=10):
+    def add_termination(self, attr, comp, start_count=0, frequency=10, window=0, mapper=''):
         self._automated_run_call('py_add_termination', attr, comp,
                                  start_count=start_count,
-                                 frequency=frequency)
+                                 frequency=frequency, window=window,
+                                 mapper=mapper)
 
     @verbose_skip
     @command_register
@@ -397,10 +366,6 @@ class MeasurementPyScript(ValvePyScript):
     def add_action(self, attr, comp, start_count=0, frequency=10,
                    action=None,
                    resume=False):
-
-        #        if self._syntax_checking:
-        #            if isinstance(action, str):
-        #                self.execute_snippet(action)
 
         self._automated_run_call('py_add_action', attr, comp,
                                  start_count=start_count,
@@ -481,9 +446,9 @@ class MeasurementPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def set_cdd_operating_voltage(self, v=''):
-        '''
+        """
             if v is None use value from file
-        '''
+        """
         if self.automated_run is None:
             return
 
@@ -555,6 +520,42 @@ class MeasurementPyScript(ValvePyScript):
 
         return config
 
+    def _automated_run_call(self, func, *args, **kw):
+        if self.automated_run is None:
+            return
+
+        if isinstance(func, str):
+            func = getattr(self.automated_run, func)
+
+        return func(*args, **kw)
+
+    def _set_spectrometer_parameter(self, *args, **kw):
+        self._automated_run_call('py_set_spectrometer_parameter', *args, **kw)
+
+    def _get_spectrometer_parameter(self, *args, **kw):
+        return self._automated_run_call('py_get_spectrometer_parameter', *args, **kw)
+
+    def _setup_docstr_context(self):
+        """
+        add a context object to the global script context
+        e.g access measurement configuration values such as counts using
+            mx.counts
+
+        """
+        try:
+            m = ast.parse(self.text)
+            try:
+                yd = yaml.load(ast.get_docstring(m))
+                if yd:
+                    mx = MeasurementCTXObject()
+                    mx.create(yd)
+                    self._ctx['mx'] = mx
+
+            except yaml.YAMLError, e:
+                self.debug('failed loading docstring context. {}'.format(e))
+        except AttributeError:
+            pass
+
     @property
     def truncated(self):
         return self._automated_run_call(lambda: self.automated_run.truncated)
@@ -577,62 +578,10 @@ class MeasurementPyScript(ValvePyScript):
         else:
             return 0
 
-#===============================================================================
-# handler
-#===============================================================================
-#    @on_trait_change('automated_run:signals')
-#    def update_signals(self, obj, name, old, new):
-#        try:
-#            det = self._detectors
-#            for k, v in new.iteritems():
-#                det[k].signal = v
-#        except (AttributeError, KeyError):
-#            pass
+    @property
+    def use_cdd_warming(self):
+        return self._automated_run_call(lambda: self.automated_run.spec.use_cdd_warming)
 
-# if __name__ == '__main__':
-#    from pychron.core.helpers.logger_setup import logging_setup
-#    paths.build('_test')
-#    logging_setup('m_pyscript')
-#
-#    d = AutomatedRun()
-#    d.configure_traits()
+
 
 #============= EOF =============================================
-# from traits.api import HasTraits, Button, Dict
-# from traitsui.api import View
-# class AutomatedRun(HasTraits):
-#    test = Button
-#    traits_view = View('test')
-#    signals = Dict
-#    def _test_fired(self):
-#        m = MeasurementPyScript(root=os.path.join(paths.scripts_dir, 'measurement'),
-#                            name='measureTest.py',
-#                            automated_run=self
-#                            )
-#        m.bootstrap()
-#    #    print m._text
-#        m.execute()
-#
-#    def do_sniff(self, ncounts, *args, **kw):
-#        keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
-#        for i in range(ncounts):
-#            vals = [random.random() for _ in range(len(keys))]
-#            self.signals = dict(zip(keys, vals))
-#            time.sleep(0.1)
-#
-#    def set_spectrometer_parameter(self, *args, **kw):
-#        pass
-#    def set_magnet_position(self, *args, **kw):
-#        pass
-#    def activate_detectors(self, *args, **kw):
-#        pass
-#    def do_data_collection(self, *args, **kw):
-#        pass
-# class Detector(object):
-#    name = None
-#    mass = None
-#    signal = None
-#    def __init__(self, name, mass, signal):
-#        self.name = name
-#        self.mass = mass
-#        self.signal = signal

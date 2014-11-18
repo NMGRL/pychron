@@ -1,6 +1,8 @@
 language: python
 notifications:
-  email: False
+  email:
+    on_failure: change
+
 python:
   - "2.7"
 env:
@@ -31,11 +33,12 @@ before_install:
   - PKGS="${PKGS} patsy"; if [ ${PATSY} ]; then PKGS="${PKGS}=${PATSY}"; fi
   - PKGS="${PKGS} pandas"; if [ ${PANDAS} ]; then PKGS="${PKGS}=${PANDAS}"; fi
   - PKGS="${PKGS} Cython"; if [ ${CYTHON} ]; then PKGS="${PKGS}=${CYTHON}"; fi
-  - PKGS="${PKGS} pip traits pyface traitsui enable chaco";
+  - PKGS="${PKGS} pip";
 
 install:
   - conda create --yes --quiet -n pychron-test ${PKGS} ${OPTIONAL}
   - source activate pychron-test
-  - pip install -r requirements.txt
+  - conda install --yes --file requirements_tests.txt
+  - pip install uncertainties
 
 script: python setup.py test

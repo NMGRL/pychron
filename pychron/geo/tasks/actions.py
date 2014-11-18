@@ -17,16 +17,25 @@
 #============= enthought library imports =======================
 from pyface.action.action import Action
 from pyface.tasks.action.task_action import TaskAction
-from traits.api import HasTraits
-from traitsui.api import View, Item
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
+class ExportStratCanvasAction(Action):
+    name = 'Export Strat Canvas...'
+    accelerator = 'Ctrl+.'
+    method = 'export_strat_canvas'
+
+    def perform(self, event):
+        app = event.task.window.application
+        task = app.get_task('pychron.geo', activate=False)
+        if hasattr(task, self.method):
+            getattr(task, self.method)()
+
 
 class ExportShapefileAction(TaskAction):
-    name='Export Shapefile...'
-    method='export_shapefile'
+    name = 'Export Shapefile...'
+    method = 'export_shapefile'
 
 #============= EOF =============================================
 

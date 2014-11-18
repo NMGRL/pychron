@@ -27,15 +27,17 @@ from pychron.core.i_column_parser import IColumnParser
 
 @provides(IColumnParser)
 class BaseColumnParser(HasTraits):
-    _header_offset=1
-    def load(self, p, header_idx=0):
+    _header_offset = 1
+
+    def load(self, p, header_idx=0, **kw):
+        self._header_idx = header_idx
         self._header_offset = header_idx + 1
-        self._load(p, header_idx)
+        self._load(p, header_idx, **kw)
 
     def get_value(self, ri, ci):
         raise NotImplementedError
 
-    def _load(self, p):
+    def _load(self, p, **kw):
         raise NotImplementedError
 
     def has_key(self, key):
@@ -43,6 +45,19 @@ class BaseColumnParser(HasTraits):
             return 0 <= key < len(self._header)
         else:
             return key in self._header
+
+    def list_attributes(self):
+        return self._header
+
+    def get_values(self, keys=None):
+        from numpy import array
+
+        if keys is None:
+            keys = self._header
+
+        gv = self.get_value
+        data = array([[gv(ri, ki) for ki in keys] for ri in self.iternrows()], dtype=float)
+        return data.T
 
     def itervalues(self, keys=None):
         """
@@ -53,15 +68,19 @@ class BaseColumnParser(HasTraits):
         """
         if keys is None:
             keys = self._header
-
-        return (dict([(ki, self.get_value(ri, ki))
-                      for ki in keys])
+        gv = self.get_value
+        return ({ki: gv(ri, ki) for ki in keys}
                 for ri in self.iternrows())
 
     def iternrows(self):
         return xrange(self._header_offset, self.nrows, 1)
 
+    def get_index(self, ks):
+        return self._get_index(ks)
+
     def _get_index(self, ks):
+        if isinstance(ks, int):
+            return ks
 
         if not isinstance(ks, (list, tuple)):
             ks = (ks,)
@@ -76,17 +95,20 @@ class BaseColumnParser(HasTraits):
 
 class CSVParser(BaseColumnParser):
     def _load(self, p, header_idx):
-        with open(p, 'r') as fp:
-            reader=csv.reader(fp)
-            self._lines=list(reader)
-            self._header=map(str.strip, self._lines[header_idx])
-            self._nrows=len(self._lines)
+        with open(p, 'U') as fp:
+            reader = csv.reader(fp)
+            self._lines = list(reader)
+            self._header = map(str.strip, self._lines[header_idx])
+            self._nrows = len(self._lines)
 
     def get_value(self, ri, ci):
         if not isinstance(ci, int):
             ci = self._get_index(ci)
 
-        return self._lines[ri][ci]
+        try:
+            return self._lines[ri][ci]
+        except IndexError:
+            pass
 
     @property
     def nrows(self):

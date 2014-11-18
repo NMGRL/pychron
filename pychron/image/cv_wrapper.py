@@ -17,11 +17,9 @@
 #============= enthought library imports =======================
 #============= standard library imports ========================
 from collections import namedtuple
-
 from numpy import array, asarray, ndarray
 from scipy.ndimage.filters import laplace
 from numpy.lib.function_base import percentile
-from skimage.color.colorconv import gray2rgb, rgb2gray
 
 
 try:
@@ -33,7 +31,6 @@ try:
     from cv import ConvertImage, fromarray, LoadImage, Flip, \
         Resize, CreateImage, CvtColor, Scalar, CreateMat, Copy, GetSubRect, PolyLine, Split, \
         Merge, Laplace, ConvertScaleAbs, GetSize
-
     from cv import CV_CVTIMG_SWAP_RB, CV_8UC1, CV_BGR2GRAY, CV_GRAY2BGR, \
         CV_8UC3, CV_RGB, CV_16UC1, CV_32FC3, CV_CHAIN_APPROX_NONE, CV_RETR_EXTERNAL, \
         CV_AA, CV_16UC3, CV_16SC1
@@ -117,7 +114,7 @@ def colorspace(src, cs=None):
     '''
 
     '''
-
+    from skimage.color.colorconv import gray2rgb
     if not isinstance(src, ndarray):
         src = asarray(src)
 
@@ -155,7 +152,7 @@ def colorspace(src, cs=None):
 
 def grayspace(src):
     if isinstance(src, ndarray):
-        from skimage.color.colorconv import is_gray
+        from skimage.color.colorconv import is_gray, rgb2gray
         if not is_gray(src):
             dst = rgb2gray(src)
         else:

@@ -32,6 +32,7 @@ from pychron.processing.plotters.options.series import SeriesOptions
 from pychron.processing.plotters.options.spectrum import SpectrumOptions
 from pychron.processing.plotters.options.system_monitor import SystemMonitorOptions
 from pychron.paths import paths
+from pychron.processing.plotters.options.xy_scatter import XYScatterOptions
 
 
 class PlotterOptionsManager(HasTraits):
@@ -47,6 +48,10 @@ class PlotterOptionsManager(HasTraits):
     new_options_name = Str
     persistence_name = ''
     persistence_root = Property
+
+    def deinitialize(self):
+        if self.plotter_options:
+            self.plotter_options.deinitialize()
 
     def load_yaml(self, blob):
         po=self.plotter_options_klass(self.persistence_root)
@@ -208,5 +213,10 @@ class SystemMonitorOptionsManager(PlotterOptionsManager):
 class DashboardOptionsManager(PlotterOptionsManager):
     plotter_options_klass = DashboardOptions
     persistence_name = 'dashboard'
+
+
+class XYScatterOptionsManager(PlotterOptionsManager):
+    plotter_options_klass = XYScatterOptions
+    persistence_name = 'xy_scatter'
 
 #============= EOF =============================================

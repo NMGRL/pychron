@@ -17,21 +17,30 @@
 #============= enthought library imports =======================
 from traits.api import HasTraits, List, Any, Str, Int, Date
 from traitsui.api import View, Item, TabularEditor, UItem, HGroup, VGroup
+from pyface.timer.do_later import do_later
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.envisage.browser.adapters import ProjectAdapter
+from pychron.envisage.browser.browser_mixin import filter_func
 
 
 class GroupAdapter(TabularAdapter):
-    columns = [('Name', 'name'), ('Date','create_date')]
+    columns = [('Name', 'name'), ('Date', 'create_date')]
 
 
 class GroupDialog(HasTraits):
     name = Str
     projects = List
+    oprojects = List
     selected_project = Any
+    scroll_to_row = Int
+    project_filter = Str
+
+    def _project_filter_changed(self, new):
+        self.projects = filter(filter_func(new, 'name'),
+                               self.oprojects)
 
 
 class SaveGroupDialog(GroupDialog):
@@ -40,6 +49,7 @@ class SaveGroupDialog(GroupDialog):
                         UItem('projects',
                               editor=TabularEditor(adapter=ProjectAdapter(),
                                                    selected='selected_project',
+
                                                    editable=False))),
                  buttons=['OK', 'Cancel'], resizable=True,
                  title='Save Interpreted Age Group',
@@ -51,13 +61,14 @@ class IAGroup(HasTraits):
     name = Str
     project = Str
     id = Int
-    create_date=Date
+    create_date = Date
+
 
 class SelectionGroupDialog(GroupDialog):
     groups = List
     db = Any
     selected_groups = List
-    title=Str
+    title = Str
 
     def get_selected_ids(self):
         return [gi.id for gi in self.selected_groups]
@@ -76,10 +87,12 @@ class SelectionGroupDialog(GroupDialog):
                                       create_date=hi.create_date))
             self.groups = gs
             if gs:
-                self.selected_groups=gs[-1:]
+                self.selected_groups = gs[-1:]
+                do_later(self.trait_set, scroll_to_row=len(gs) - 1)
 
     def traits_view(self):
         v = View(VGroup(
+            HGroup(Item('project_filter', label='Filter')),
             UItem('projects',
                   editor=TabularEditor(adapter=ProjectAdapter(),
                                        selected='selected_project',
@@ -87,6 +100,7 @@ class SelectionGroupDialog(GroupDialog):
             UItem('groups',
                   editor=TabularEditor(adapter=GroupAdapter(),
                                        selected='selected_groups',
+                                       scroll_to_row='scroll_to_row',
                                        multi_select=True,
                                        editable=False))),
                  buttons=['OK', 'Cancel'], resizable=True,
@@ -96,11 +110,11 @@ class SelectionGroupDialog(GroupDialog):
 
 
 class OpenGroupDialog(SelectionGroupDialog):
-    title='Open Interpreted Age Group'
+    title = 'Open Interpreted Age Group'
 
 
 class DeleteGroupDialog(SelectionGroupDialog):
-    title='Delete Interpreted Age Groups'
+    title = 'Delete Interpreted Age Groups'
 
 #============= EOF =============================================
 

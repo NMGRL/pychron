@@ -19,23 +19,22 @@
 from numpy import average, ones, asarray, where
 #============= local library imports  ==========================
 from base_regressor import BaseRegressor
+from pychron.core.helpers.formatting import floatfmt
+
 
 class MeanRegressor(BaseRegressor):
     ddof = 1
     _fit = 'average'
 
-    def calculate(self):
-        cxs, cys = self.clean_ys, self.clean_ys
-        if not self._filtering:
+    def calculate(self, filtering=False, **kw):
+        # cxs, cys = self.pre_clean_ys, self.pre_clean_ys
+        if not filtering:
             #prevent infinite recursion
-            fx, fy = self.get_filtered_data(cxs, cys)
-        else:
-            fx, fy = cxs, cys
+            self.calculate_filtered_data()
 
     def calculate_outliers(self, nsigma=2):
-        # res = self.calculate_residuals()
-        res=abs(self.clean_ys-self.mean)
-        s=self.std
+        res = abs(self.ys - self.mean)
+        s = self.std
         return where(res > (s * nsigma))[0]
 
     def _calculate_coefficients(self):
@@ -63,7 +62,7 @@ sem={}
     @property
     def mean(self):
         ys = self.clean_ys
-        if self._check_integrity(ys,ys):
+        if self._check_integrity(ys, ys):
             return ys.mean()
         else:
             return 0
@@ -75,9 +74,10 @@ sem={}
             ddof=0 provides a maximum likelihood estimate of the variance for normally distributed variables
             ddof=1 unbiased estimator of the variance of the infinite population
         """
-        if len(self.ys)>self.ddof:
+        ys = self.clean_ys
+        if len(ys) > self.ddof:
             # ys = asarray(self.ys, dtype=float64)
-            return self.ys.std(ddof=self.ddof)
+            return ys.std(ddof=self.ddof)
         else:
             return 0
 
@@ -85,15 +85,22 @@ sem={}
     def sem(self):
         ys = self.clean_ys
         if self._check_integrity(ys, ys):
-            return self.std * 1 / len(ys) ** 0.5
+            n = len(ys) - self.ddof
+            if n > 0:
+                return self.std * n ** -0.5
+            else:
+                return 0
         else:
             return 0
 
-    def predict(self, xs, *args):
-        return ones(asarray(xs).shape) * self.mean
+    def predict(self, xs=None, *args):
+        if xs is not None:
+            return ones(asarray(xs).shape) * self.mean
+        else:
+            return self.mean
 
     def calculate_ci(self, fx, fy):
-#         c = self.predict(fx)
+        #         c = self.predict(fx)
         #fit = self.fit.lower()
         #ec = 'sem' if fit.endswith('sem') else 'sd'
         e = self.predict_error(fx)
@@ -101,15 +108,22 @@ sem={}
         uy = fy + e
         return ly, uy
 
-    def tostring(self, sig_figs=5, error_sig_figs=5):
-        fmt = 'mean={{}} std={{:0.{}f}} ({{:0.2f}}%), sem={{:0.{}f}} ({{:0.2f}}%)'.format(sig_figs, error_sig_figs)
+    def tostring(self, sig_figs=3):
 
         m = self.mean
         std = self.std
         sem = self.sem
-        s = fmt.format(m, std, self.percent_error(m, std),
-                       sem, self.percent_error(m, sem)
-                       )
+
+        sm = floatfmt(m, n=3)
+        sstd = floatfmt(std, n=4)
+        ssem = floatfmt(sem, n=4)
+
+        pstd = self.format_percent_error(m, std)
+        psem = self.format_percent_error(m, sem)
+
+        s = 'mean={}, std={} ({}), sem={} ({})'.format(sm, sstd, pstd, ssem, psem)
+        # s = fmt.format(m, std, self.percent_error(m, std),
+        #                sem, self.percent_error(m, sem))
         return s
 
     def make_equation(self):
@@ -117,25 +131,37 @@ sem={}
 
     def predict_error(self, x, error_calc=None):
         if error_calc is None:
-            error_calc=self.error_calc_type
+            error_calc = self.error_calc_type
             if not error_calc:
-                error_calc='SEM' if 'sem' in self.fit.lower() else 'SD'
+                error_calc = 'SEM' if 'sem' in self.fit.lower() else 'SD'
 
-        if error_calc=='SEM':
+        if error_calc == 'SEM':
             e = self.sem
+        elif error_calc == 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)':
+            e = self.sem * (self.mswd ** 0.5 if self.mswd > 1 else 1)
         else:
             e = self.std
+
         return ones(asarray(x).shape) * e
 
     def calculate_standard_error_fit(self):
         return self.std
 
-class WeightedMeanRegressor(MeanRegressor):
+    def _check_integrity(self, x, y):
+        nx, ny = len(x), len(y)
+        if not nx or not ny:
+            return
+        if nx != ny:
+            return
 
+        return True
+
+
+class WeightedMeanRegressor(MeanRegressor):
     @property
     def mean(self):
         ys = self.clean_ys
-        ws=self._get_weights()
+        ws = self._get_weights()
         if self._check_integrity(ys, ws):
             return average(ys, weights=ws)
         else:
@@ -148,8 +174,8 @@ class WeightedMeanRegressor(MeanRegressor):
     #         return var ** 0.5
 
     def _get_weights(self):
-        e=self.clean_yserr
-        if self._check_integrity(e,e):
+        e = self.clean_yserr
+        if self._check_integrity(e, e):
             return 1 / e ** 2
 
 

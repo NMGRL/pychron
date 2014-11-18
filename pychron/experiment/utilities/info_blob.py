@@ -83,7 +83,8 @@ def decode_infoblob(blob):
         bs_seg_params.append(pp)
         bs_seg_errs.append(mb.get_float())
 
-    return rpts, pos_segments, bs_segments, bs_seg_params, bs_seg_errs
+    return rpts, npos, pos_segments, bs_segments, bs_seg_params, bs_seg_errs
+
 
 def encode_infoblob(rpts, pos_segments, bs_segments, bs_seg_params, bs_seg_errs):
     mb = MemoryBlock()

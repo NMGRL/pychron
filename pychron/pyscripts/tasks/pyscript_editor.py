@@ -15,16 +15,16 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-import os
-import time
 
 from traits.api import HasTraits, Property, Bool, Event, \
     Unicode, List, String, Int, on_trait_change, Instance
 from pyface.tasks.api import Editor
-
-# from pyface.ui.qt4.python_editor import PythonEditorEventFilter
 #============= standard library imports ========================
+import os
+import time
 #============= local library imports  ==========================
+from pychron.core.helpers.ctx_managers import no_update
+from pychron.pyscripts.context_editors.measurement_context_editor import MeasurementContextEditor
 from pychron.pyscripts.tasks.widgets import myAdvancedCodeWidget
 
 SCRIPT_PKGS = dict(Extraction='pychron.pyscripts.extraction_line_pyscript',
@@ -36,7 +36,7 @@ class Commands(HasTraits):
     command_objects = List
 
     def get_command(self, name):
-        return next((ci for ci in self.script_commands if ci==name), None)
+        return next((ci for ci in self.script_commands if ci == name), None)
 
     def load_commands(self, kind):
         ps = self._pyscript_factory(kind)
@@ -59,7 +59,6 @@ class Commands(HasTraits):
         try:
             cmd = getattr(self, cmd_name)
         except AttributeError:
-
             m = __import__(pkg, globals={}, locals={}, fromlist=[klass])
             try:
                 cmd = getattr(m, klass)()
@@ -78,7 +77,61 @@ class Commands(HasTraits):
         return klass(**kw)
 
 
-class PyScriptEditor(Editor):
+class PyScriptEdit(HasTraits):
+    text = ''
+    path = ''
+    context_editor = Instance('pychron.pyscripts.context_editors.context_editor.ContextEditor')
+    _cached_text = ''
+
+    def open_script(self, p):
+        self.path = p
+        with open(p, 'r') as fp:
+            self.text = fp.read()
+        self.context_editor.load(self.get_text())
+
+    def update_docstr(self):
+        docstr = self.context_editor.generate_docstr()
+        self._set_docstr(docstr)
+        with open(self.path, 'w') as fp:
+            fp.write(self.get_text())
+
+    def get_text(self):
+        return self.text
+
+    def set_text(self, s):
+        self.text=s
+
+    def _set_docstr(self, ds):
+        to = list(self._remove_docstr())
+
+        idx = 0
+        if to[0].startswith('#!'):
+            idx = 1
+
+        for di in ds:
+            to.insert(idx, di)
+
+        to = '\n'.join(to)
+        self.set_text(to)
+        self._cached_text = to
+
+    def _remove_docstr(self):
+        docstr_started = False
+        check_docstr = True
+        for i, t in enumerate(self.get_text().split('\n')):
+            if check_docstr:
+                if not docstr_started and t in ('"""', "'''"):
+                    docstr_started = True
+                    continue
+                elif docstr_started:
+                    if t in ('"""', "'''"):
+                        check_docstr = False
+                    continue
+
+            yield t
+
+
+class PyScriptEditor(Editor, PyScriptEdit):
     dirty = Bool(False)
     changed = Event
     show_line_numbers = Bool(True)
@@ -86,7 +139,9 @@ class PyScriptEditor(Editor):
     name = Property(Unicode, depends_on='path')
 
     tooltip = Property(Unicode, depends_on='path')
-    # editor = Any
+
+    # context_editor = Any#Instance('pychron.pyscripts.context_editor.ContextEditor')
+
     suppress_change = False
     kind = String
     commands = Instance(Commands)
@@ -94,9 +149,10 @@ class PyScriptEditor(Editor):
     auto_detab = Bool(True)
     highlight_line = Int
     trace_delay = Int  # ms
-    selected_gosub=String
-    selected_command=String
-    _cached_text=''
+    selected_gosub = String
+    selected_command = String
+
+    _no_update = False
 
     def get_scroll(self):
         return self.control.code.verticalScrollBar().value()
@@ -109,11 +165,11 @@ class PyScriptEditor(Editor):
         cmd.load_commands(self.kind)
         return cmd
 
-    def setText(self, txt):
+    def set_text(self, txt):
         if self.control:
             self.control.code.setPlainText(txt)
 
-    def getText(self):
+    def get_text(self):
         if self.control:
             return self.control.code.document().toPlainText()
 
@@ -123,7 +179,7 @@ class PyScriptEditor(Editor):
     def _create_control(self, parent):
 
         self.control = control = myAdvancedCodeWidget(parent,
-                                              commands=self.commands)
+                                                      commands=self.commands)
         self._show_line_numbers_changed()
 
         # Connect signals for text changes.
@@ -137,10 +193,20 @@ class PyScriptEditor(Editor):
         return control
 
     def get_active_gosub(self):
-        line=self.control.code.get_current_line()
+        line = self.control.code.get_current_line()
         cmd = self._get_command(line)
         if cmd == 'gosub':
             return line[7:-2]
+
+    def insert_command(self, cmdobj):
+        self.control.insert_command(cmdobj)
+
+    @on_trait_change('context_editor:update_event')
+    def handle_context_update(self):
+        with no_update(self):
+            docstr = self.context_editor.generate_docstr()
+            self._set_docstr(docstr)
+            self.dirty = True
 
     @on_trait_change('commands:command_objects:[+]')
     def handle_command_edit(self, obj, name, old, new):
@@ -154,34 +220,34 @@ class PyScriptEditor(Editor):
 
     def _on_modified_select(self, line):
         if line:
-            cmd=self._get_command(line)
-            if cmd=='gosub':
-                self.selected_gosub=line[7:-2]
-                self.selected_gosub=''
+            cmd = self._get_command(line)
+            if cmd == 'gosub':
+                self.selected_gosub = line[7:-2]
+                self.selected_gosub = ''
 
     def _on_dclicked(self, line):
         if line:
-            cmd=self._get_command(line)
+            cmd = self._get_command(line)
             if cmd:
-                self.selected_command=line
+                self.selected_command = line
+                self.control.highlight_line()
+                # self.control.highlight_line(line)
 
     def _on_dirty_changed(self, dirty):
         if dirty:
-            dirty=str(self.getText()) != str(self._cached_text)
+            dirty = str(self.get_text()) != str(self._cached_text)
 
         self.dirty = dirty
-        self._cached_text = self.getText()
+        self._cached_text = self.get_text()
 
     def _on_text_changed(self):
-        # print len(self.getText()), len(self._cached_text)
-        if str(self.getText()) !=str(self._cached_text):
-            # print self.getText()
-            # print self._cached_text
-    #        if not self.suppress_change:
-    #     self.editor.parse(self.getText())
+        if str(self.get_text()) != str(self._cached_text):
             self.changed = True
             self.dirty = True
-            self._cached_text=self.getText()
+            self._cached_text = txt = self.get_text()
+            if not self._no_update:
+                if self.context_editor:
+                    self.context_editor.load(txt)
 
     def _show_line_numbers_changed(self):
         if self.control is not None:
@@ -219,12 +285,16 @@ class PyScriptEditor(Editor):
             self.save(path, text)
         self.control.code.setPlainText(text)
 
+        if self.context_editor:
+            self.context_editor.load(text)
+
+        self._cached_text = text
+
         self.dirty = False
-        self._cached_text=text
 
     def dump(self, path, txt=None):
         if txt is None:
-            txt = self.getText()
+            txt = self.get_text()
         if txt:
             with open(path, 'w') as fp:
                 fp.write(txt)
@@ -237,6 +307,9 @@ class PyScriptEditor(Editor):
 
 class MeasurementEditor(PyScriptEditor):
     kind = 'Measurement'
+
+    def _context_editor_default(self):
+        return MeasurementContextEditor()
 
     # def _editor_default(self):
     #     return MeasurementParameterEditor(editor=self)

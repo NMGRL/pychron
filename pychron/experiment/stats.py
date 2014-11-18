@@ -18,14 +18,22 @@
 import datetime
 import time
 
-from traits.api import Property, String, Float, Any, Int, List
-from traitsui.api import View, Item, VGroup
+from traits.api import Property, String, Float, Any, Int, List, Instance, Bool
+from traitsui.api import View, Item, VGroup, UItem
 
 from pychron.core.helpers.timer import Timer
+from pychron.core.ui.pie_clock import PieClockModel
 from pychron.loggable import Loggable
+
+
+
+
+
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.pychron_constants import MEASUREMENT_COLOR, EXTRACTION_COLOR
+
 FUDGE_COEFFS = (0, 0, 0)  # x**n+x**n-1....+c
 
 
@@ -45,11 +53,13 @@ class ExperimentStats(Loggable):
     delay_before_analyses = Float
     _start_time = None
 
+    use_clock = Bool(False)
+    clock = Instance(PieClockModel, ())
     #    experiment_queue = Any
 
     def calculate_duration(self, runs=None):
-    #        if runs is None:
-    #            runs = self.experiment_queue.cleaned_automated_runs
+        #        if runs is None:
+        #            runs = self.experiment_queue.cleaned_automated_runs
         dur = self._calculate_duration(runs)
         # add an empirical fudge factor
         #         ff = polyval(FUDGE_COEFFS, len(runs))
@@ -74,10 +84,12 @@ class ExperimentStats(Loggable):
             script_ctx = dict()
             warned = []
             ni = len(runs)
-            dur = sum([a.get_estimated_duration(script_ctx, warned, True) for a in runs])
+            run_dur = sum([a.get_estimated_duration(script_ctx, warned, True) for a in runs])
 
-            btw = (self.delay_between_analyses * ni)
-            dur += btw + self.delay_before_analyses
+            btw = self.delay_between_analyses * (ni - 1)
+            dur = run_dur + btw + self.delay_before_analyses
+            self.debug('before={}, run_dur={}, btw={}'.format(self.delay_before_analyses,
+                                                              run_dur, btw))
 
         return dur
 
@@ -101,7 +113,8 @@ class ExperimentStats(Loggable):
             Item('time_at', style='readonly'),
             Item('etf', style='readonly', label='Est. finish'),
             Item('elapsed',
-                 style='readonly')))
+                 style='readonly')),
+                 UItem('clock', style='custom', width=100, height=100, defined_when='use_clock'))
         return v
 
     def start_timer(self):
@@ -127,6 +140,33 @@ class ExperimentStats(Loggable):
         self._start_time = None
         self.nruns_finished = 0
         self._elapsed = 0
+
+    def finish_run(self):
+        self.nruns_finished += 1
+        if self.clock:
+            self.clock.stop()
+
+    def continue_run(self):
+        if self.clock:
+            self.clock.finish_slice()
+
+    def setup_run_clock(self, run):
+        if self.use_clock:
+            ctx = run.spec.make_script_context()
+            extraction_slice = run.extraction_script.calculate_estimated_duration(ctx)
+            measurement_slice = run.measurement_script.calculate_estimated_duration(ctx)
+
+            def convert_hexcolor_to_int(c):
+                c = c[1:]
+                func = lambda i: int(c[i:i + 2], 16)
+                return map(func, (0, 2, 4))
+
+            ec, mc = map(convert_hexcolor_to_int,
+                         (EXTRACTION_COLOR, MEASUREMENT_COLOR))
+
+            self.clock.set_slices([extraction_slice, measurement_slice],
+                                  [ec, mc])
+            self.clock.start()
 
 
 class StatsGroup(ExperimentStats):

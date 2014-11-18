@@ -15,24 +15,23 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Instance, Dict
+from traits.api import Dict
 #============= standard library imports ========================
 import weakref
 import os
 from numpy.core.numeric import Inf
 #============= local library imports  ==========================
+from pychron.canvas.canvas2D.scene.canvas_parser import get_volume
 from pychron.canvas.canvas2D.scene.scene import Scene
-from pychron.canvas.canvas2D.base_data_canvas import BaseDataCanvas
 from pychron.canvas.canvas2D.scene.primitives.primitives import RoundedRectangle, \
     Label, BorderLine, Rectangle, Line, Image, ValueLabel
 from pychron.core.helpers.filetools import to_bool
 from pychron.canvas.canvas2D.scene.primitives.valves import RoughValve, Valve
+from pychron.extraction_line.valve_parser import ValveParser
 from pychron.paths import paths
 
 
 class ExtractionLineScene(Scene):
-    canvas = Instance(BaseDataCanvas)
-
     valves = Dict
 
     def get_is_in(self, px, py, exclude=None):
@@ -87,10 +86,10 @@ class ExtractionLineScene(Scene):
                                 name=key,
                                 border_width=bw,
                                 display_name=display_name,
+                                volume=get_volume(elem),
                                 default_color=c,
                                 type_tag=type_tag,
-                                fill=fill,
-        )
+                                fill=fill)
         font = elem.find('font')
         if font is not None:
             rect.font = font.text.strip()
@@ -146,8 +145,10 @@ class ExtractionLineScene(Scene):
                   width=10)
 
         ref = weakref.ref(l)
-        sanchor.connections.append(('start', ref()))
-        eanchor.connections.append(('end', ref()))
+        if sanchor:
+            sanchor.connections.append(('start', ref()))
+        if eanchor:
+            eanchor.connections.append(('end', ref()))
 
         self.add_item(l, layer=0)
 
@@ -194,8 +195,7 @@ class ExtractionLineScene(Scene):
                   use_border=to_bool(label.get('use_border', 'T')),
                   name=name,
                   text=label.text.strip(),
-                  **kw
-        )
+                  **kw)
         font = label.find('font')
         if font is not None:
             l.font = font.text.strip()
@@ -205,42 +205,44 @@ class ExtractionLineScene(Scene):
 
     def _new_image(self, image):
         path = image.text.strip()
-        #         sp = ''
-        #         name = path
         if not os.path.isfile(path):
             for di in (paths.app_resources, paths.icons, paths.resources):
-                npath = os.path.join(di, path)
-                if os.path.isfile(npath):
-                    path = npath
-                    break
+                if di:
+                    npath = os.path.join(di, path)
+                    if os.path.isfile(npath):
+                        path = npath
+                        break
 
         if os.path.isfile(path):
             x, y = self._get_floats(image, 'translation')
-            scale = 1, 1
+            scale = None
             if image.find('scale') is not None:
                 scale = self._get_floats(image, 'scale')
 
-            im = Image(x, y,
-                       path=path,
-                       scale=scale
-            )
+            im = Image(x, y, path=path, scale=scale)
             self.add_item(im, 0)
 
-    def load(self, pathname, configpath):
-        self.reset_layers()
-
-        origin, color_dict = self._load_config(configpath)
+    def _load_valves(self, cp, origin, vpath):
         ox, oy = origin
-
-        cp = self._get_canvas_parser(pathname)
-
         ndict = dict()
+        vp = ValveParser(vpath)
+
         for v in cp.get_elements('valve'):
             key = v.text.strip()
             x, y = self._get_floats(v, 'translation')
-            v = Valve(x + ox, y + oy, name=key,
-                      border_width=3
-            )
+
+            #get the description from valves.xml
+            vv = vp.get_valve(key)
+            desc = ''
+            if vv is not None:
+                desc = vv.find('description')
+                desc = desc.text.strip() if desc is not None else ''
+
+            v = Valve(x + ox, y + oy,
+                      name=key,
+                      description=desc,
+                      border_width=3)
+
             v.translate = x + ox, y + oy
             # sync the states
             if key in self.valves:
@@ -259,21 +261,19 @@ class ExtractionLineScene(Scene):
             ndict[key] = v
 
         self.valves = ndict
+
+    def load(self, pathname, configpath, valvepath, canvas):
+        self.reset_layers()
+
+        origin, color_dict = self._load_config(configpath, canvas)
+
+        cp = self._get_canvas_parser(pathname)
+
+        self._load_valves(cp, origin, valvepath)
         self._load_rects(cp, origin, color_dict)
 
-
-        #         for g in cp.get_elements('gauge'):
-        #             if 'gauge' in color_dict:
-        #                 c = color_dict['gauge']
-        #             else:
-        #                 c = (255, 255, 0)
-        #             self._new_rectangle(g, c, origin=origin)
-
-
-
-        #         xv, yv = self._get_canvas_view_range()
-        xv = self.canvas.view_x_range
-        yv = self.canvas.view_y_range
+        xv = canvas.view_x_range
+        yv = canvas.view_y_range
         x, y = xv[0], yv[0]
         w = xv[1] - xv[0]
         h = yv[1] - yv[0]
@@ -321,9 +321,7 @@ class ExtractionLineScene(Scene):
     def _load_rects(self, cp, origin, color_dict):
         for key in ('stage', 'laser', 'spectrometer',
                     'turbo', 'getter', 'tank',
-                    'ionpump', 'gauge',
-                    #                      'rect'
-        ):
+                    'ionpump', 'gauge'):
             for b in cp.get_elements(key):
                 if key in color_dict:
                     c = color_dict[key]
@@ -352,8 +350,7 @@ class ExtractionLineScene(Scene):
                 self._new_label(vlabel, name, c,
                                 origin=(ox + rect.x, oy + rect.y),
                                 klass=ValueLabel,
-                                value=0
-                )
+                                value=0)
 
     def _load_legend(self, cp, origin, color_dict):
         ox, oy = origin
@@ -369,7 +366,7 @@ class ExtractionLineScene(Scene):
         if legend is not None:
             lox, loy = self._get_floats(legend, 'origin')
             for b in legend.findall('rect'):
-            #                 print b
+                #                 print b
                 rect = self._new_rectangle(b, c, bw=5, origin=(ox + lox, oy + loy),
                                            type_tag='rect',
                                            layer='legend')
@@ -404,12 +401,11 @@ class ExtractionLineScene(Scene):
                                     fill=False,
                                     identifier='legend',
                                     border_width=5,
-                                    default_color=self._make_color((0, 0, 0))
-            )
+                                    default_color=self._make_color((0, 0, 0)))
 
             self.add_item(rect, layer='legend')
 
-    def _load_config(self, p):
+    def _load_config(self, p, canvas):
         color_dict = dict()
 
         if os.path.isfile(p):
@@ -419,8 +415,8 @@ class ExtractionLineScene(Scene):
             if tree:
                 xv, yv = self._get_canvas_view_range(cp)
 
-                self.canvas.view_x_range = xv
-                self.canvas.view_y_range = yv
+                canvas.view_x_range = xv
+                canvas.view_y_range = yv
                 # get label font
                 font = tree.find('font')
                 if font is not None:
@@ -434,7 +430,7 @@ class ExtractionLineScene(Scene):
                     t = map(float, t.split(',')) if ',' in t else t
 
                     if k == 'bgcolor':
-                        self.canvas.bgcolor = t
+                        canvas.bgcolor = t
                     else:
                         color_dict[k] = t
 

@@ -21,6 +21,7 @@ from envisage.ui.tasks.preferences_pane import PreferencesPane
 
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -35,7 +36,7 @@ class VCSPreferencesPane(PreferencesPane):
     category = 'Processing'
 
     def traits_view(self):
-        a=Group(Item('use_vcs'), label='VCS')
+        a = Group(Item('use_vcs'), label='VCS', show_border=True)
         return View(a)
 
 

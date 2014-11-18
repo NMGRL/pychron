@@ -15,6 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from pyface.action.action import Action
 from pyface.tasks.action.task_action import TaskAction
 
 #============= standard library imports ========================
@@ -24,16 +25,36 @@ from pyface.tasks.action.task_action import TaskAction
 from pychron.envisage.resources import icon
 
 
+class PlotFigureAction(TaskAction):
+    name = 'Figure'
+    method = 'plot_figure'
+    tooltip = 'Plot figure associated with interpreted age'
+    image = icon('chart_curve_go')
+
+
 class PlotIdeogramAction(TaskAction):
     name = 'Ideogram'
     method = 'plot_ideogram'
-    image = icon('file_pdf')
+    image = icon('chart_curve_go')
+    tooltip = 'Plot ideogram of interpreted ages'
 
 
-class SavePDFTablesAction(TaskAction):
-    name = 'Save PDF Tables'
-    method = 'save_pdf_tables'
-    image = icon('file_pdf')
+class SaveTablesAction(TaskAction):
+    name = 'Save Tables'
+    method = 'save_tables'
+    image = icon('table_save')
+
+
+# class SavePDFTablesAction(TaskAction):
+#     name = 'Save PDF Tables'
+#     method = 'save_pdf_tables'
+#     image = icon('file_pdf')
+#
+#
+# class SaveXLSTablesAction(TaskAction):
+#     name = 'Save XLS Tables'
+#     method = 'save_xls_tables'
+#     image = icon('file_xls')
 
 
 class SaveInterpretedAgeGroupAction(TaskAction):
@@ -71,11 +92,7 @@ class OpenInterpretedAgeGroupAction(TaskAction):
                 task.open_interpreted_age_groups(gids)
 
 
-class MakeGroupFromFileAction(TaskAction):
-    name = 'Group From File'
-    method = 'make_group_from_file'
-    image = icon('document-open.png')
-
+class TasklessInterpretedAgeAction(TaskAction):
     def perform(self, event=None):
         app = self.task.window.application
         method = self._get_attr(self.object, self.method)
@@ -88,10 +105,22 @@ class MakeGroupFromFileAction(TaskAction):
                 method()
 
 
+class MakeGroupFromFileAction(TasklessInterpretedAgeAction):
+    name = 'Group From File'
+    method = 'make_group_from_file'
+    image = icon('document-open')
+
+
+class MakeGroupAction(TaskAction):
+    name = 'Make Group'
+    method = 'make_group_from_selected'
+    image = icon('add')
+
+
 class DeleteInterpretedAgeGroupAction(TaskAction):
     name = 'Delete Group'
     method = 'delete_group'
-    image = icon('delete.png')
+    image = icon('database_delete')
 
     def perform(self, event=None):
         app = self.task.window.application
@@ -101,3 +130,25 @@ class DeleteInterpretedAgeGroupAction(TaskAction):
         else:
             task = app.get_task('pychron.processing.interpreted_age', activate=False)
             task.external_delete_group()
+
+
+class MakeTASAction(TasklessInterpretedAgeAction):
+    name = 'Make TAS file'
+    accelerator = 'Ctrl+Shift+3'
+
+    def perform(self, event):
+        app = event.task.window.application
+        task = app.open_task('pychron.processing.interpreted_age')
+        task.open_interpreted_age_groups([22])  #AllAges4
+        task.make_tas()
+
+
+class MakeDataTablesAction(Action):
+    name = 'Make Data Tables(test)'
+    accelerator = 'Ctrl+Shift+2'
+
+    def perform(self, event):
+        app = event.task.window.application
+        task = app.open_task('pychron.processing.interpreted_age')
+        task.open_interpreted_age_groups([22])  #AllAges4
+        task.save_pdf_tables()

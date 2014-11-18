@@ -20,7 +20,7 @@
 from chaco.api import AbstractOverlay
 from traits.api import Bool
 #============= standard library imports ========================
-from numpy import linspace, hstack, sqrt, power, corrcoef, column_stack, array, delete
+from numpy import linspace, hstack, sqrt, corrcoef, column_stack, array, delete
 from numpy.linalg import eig
 import math
 
@@ -62,7 +62,7 @@ def error_ellipse(sx, sy, pxy, aspectratio=1):
 
 
 class ErrorEllipseOverlay(AbstractOverlay):
-    fill=Bool(True)
+    fill = Bool(True)
 
     def overlay(self, component, gc, view_bounds=None, mode='normal'):
         """
@@ -76,13 +76,13 @@ class ErrorEllipseOverlay(AbstractOverlay):
         xer = component.xerror.get_data()
         yer = component.yerror.get_data()
 
-        sel=component.index.metadata['selections']
+        sel = component.index.metadata['selections']
 
-        x=delete(x, sel)
-        y=delete(y, sel)
-        xer=delete(xer, sel)
-        yer=delete(yer, sel)
-        pxy=array(self.reg._calculate_correlation_coefficients())
+        x = delete(x, sel)
+        y = delete(y, sel)
+        xer = delete(xer, sel)
+        yer = delete(yer, sel)
+        pxy = array(self.reg._calculate_correlation_coefficients())
 
         dx = abs(component.index_mapper.range.low -
                  component.index_mapper.range.high)
@@ -96,7 +96,7 @@ class ErrorEllipseOverlay(AbstractOverlay):
         # aspectratio=(height/width)
         # aspectratio=(dy/dx)
         # aspectratio=self.component.aspect_ratio
-        aspectratio=1
+        aspectratio = 1
         try:
             for cx, cy, sx, sy, pxyi in zip(x, y, xer, yer, pxy):
                 a, b, rot = error_ellipse(sx, sy, pxyi, aspectratio=aspectratio)
@@ -118,10 +118,10 @@ class ErrorEllipseOverlay(AbstractOverlay):
         #        gc.translate_ctm(-scx, -scy)
         # gc.rotate_ctm(45)
         x1 = linspace(-a, a, 200)
-        y1 = b * sqrt((1 - power(x1 / a, 2)))
+        y1 = b * sqrt((1 - (x1 / a) ** 2))
 
         x2 = x1[::-1]
-        y2 = -b * sqrt((1 - power(x2 / a, 2)))
+        y2 = -b * sqrt((1 - (x2 / a) ** 2))
 
         x = hstack((x1, x2))
         y = hstack((y1, y2))
@@ -139,7 +139,7 @@ class ErrorEllipseOverlay(AbstractOverlay):
         gc.begin_path()
         gc.lines(pts)
         if self.fill:
-            gc.set_fill_color((0,0,0,0.5))
+            gc.set_fill_color((0, 0, 0, 0.5))
             gc.fill_path()
         else:
             gc.stroke_path()

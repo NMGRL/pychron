@@ -27,16 +27,29 @@ from pychron.core.csv.csv_parser import BaseColumnParser
 # @provides(IColumnParser)
 class XLSParser(BaseColumnParser):
     # def load(self, p, header_idx=0):
-        # wb = xlrd.open_workbook(p)
-        # sheet = wb.sheet_by_index(0)
-        # self._sheet = sheet
-        # self._header = map(str.strip, map(str, sheet.row_values(header_idx)))
-        # self._header_offset=header_idx+1
-    def _load(self, p, header_idx):
+    # wb = xlrd.open_workbook(p)
+    # sheet = wb.sheet_by_index(0)
+    # self.sheet = sheet
+    # self._header = map(str.strip, map(str, sheet.row_values(header_idx)))
+    # self._header_offset=header_idx+1
+    def _load(self, p, header_idx, sheet=None):
         wb = xlrd.open_workbook(p)
+        self.workbook = wb
+        self.set_sheet(sheet, header_idx)
 
-        sheet = wb.sheet_by_index(0)
-        self._sheet = sheet
+    def set_sheet(self, sheet, header_idx=None):
+        if sheet is None:
+            sheet = 0
+
+        if header_idx is None:
+            header_idx = self._header_idx
+
+        wb = self.workbook
+        if isinstance(sheet, int):
+            sheet = wb.sheet_by_index(sheet)
+        elif isinstance(sheet, (str, unicode)):
+            sheet = wb.sheet_by_name(sheet)
+        self.sheet = sheet
         self._header = map(str.strip, map(str, sheet.row_values(header_idx)))
     # def has_key(self, key):
     #     """
@@ -61,13 +74,17 @@ class XLSParser(BaseColumnParser):
     #     return (dict([(ki,self.get_value(ri, ki)) for ki in keys]) for ri in self.iternrows())
     #
     # def iternrows(self):
-    #     return xrange(self._header_offset, self._sheet.nrows, 1)
+    # return xrange(self._header_offset, self.sheet.nrows, 1)
 
     def get_value(self, ri, ci):
-        if not isinstance(ci, int):
-            ci = self._get_index(ci)
+        ci = self._get_index(ci)
+        return self.sheet.cell_value(ri, ci)
 
-        return self._sheet.cell_value(ri, ci)
+    def iterblock(self, col, attr):
+        ci = self._get_index(col)
+        for i in xrange(self.nrows):
+            if self.get_value(i, ci) == attr:
+                yield self.sheet.row(i)
 
     # def _get_index(self, ks):
     #
@@ -83,7 +100,7 @@ class XLSParser(BaseColumnParser):
 
     @property
     def nrows(self):
-        return self._sheet.nrows
+        return self.sheet.nrows
 
 #============= EOF =============================================
 

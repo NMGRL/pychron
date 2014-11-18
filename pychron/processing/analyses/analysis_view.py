@@ -21,9 +21,11 @@ from traitsui.tabular_adapter import TabularAdapter
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-
-from pychron.processing.analyses.view.experiment_view import ExperimentView
+from pychron.processing.analyses.view.error_components_view import ErrorComponentsView
+from pychron.processing.analyses.view.snapshot_view import SnapshotView
+from pychron.processing.analyses.view.text_view import ExperimentView, ExtractionView, MeasurementView
 from pychron.processing.analyses.view.history_view import HistoryView
+from pychron.processing.analyses.view.interferences_view import InterferencesView
 from pychron.processing.analyses.view.main_view import MainView
 from pychron.processing.analyses.view.peak_center_view import PeakCenterView
 
@@ -53,23 +55,84 @@ class AnalysisView(HasTraits):
 
     refresh_needed = Event
 
+    main_view = Instance('pychron.processing.analyses.view.main_view.MainView')
+    _experiment_view = None
+    _history_view = None
+    _interference_view = None
+    _measurement_view = None
+    _extraction_view = None
+    _snapshot_view = None
+
+    def update_fontsize(self, view, size):
+        if 'main' in view:
+            v=self.main_view
+            view=view.split('.')[-1]
+            adapter = getattr(v, '{}_adapter'.format(view))
+            adapter.font = 'arial {}'.format(size)
+        else:
+            v=getattr(self,'_{}_view'.format(view))
+            if v is not None:
+                v.fontsize=size
+
     def load(self, an):
         analysis_type = an.analysis_type
         analysis_id = an.record_id
+
         self.analysis_id = analysis_id
 
-        main_view = MainView(an, analysis_type=analysis_type, analysis_id=analysis_id)
-        experiment_view = ExperimentView(an)
-        history_view=HistoryView(an)
+        history_view = self._history_view
+        if history_view is None:
+            history_view = HistoryView(an)
+            self._history_view = history_view
+        
+        experiment_view = self._experiment_view
+        if experiment_view is None:
+            experiment_view = ExperimentView(an)
+            self._experiment_view = experiment_view
 
+        extraction_view = self._extraction_view
+        if extraction_view is None:
+            extraction_view = ExtractionView(an)
+            self._extraction_view = extraction_view
+
+        snapshot_view=self._snapshot_view
+        if snapshot_view is None and an.snapshots:
+            snapshot_view = SnapshotView(an.snapshots)
+            self._snapshot_view=snapshot_view
+
+        measurement_view = self._measurement_view
+        if measurement_view is None:
+            measurement_view = MeasurementView(an)
+            self._measurement_view = measurement_view
+            
+        interference_view = self._interference_view
+        if interference_view is None:
+            interference_view = InterferencesView(an)
+            self._interference_view = interference_view
+        main_view = self.main_view
+        if main_view is None:
+            main_view = MainView(an, analysis_type=analysis_type, analysis_id=analysis_id)
+            self.main_view = main_view
+
+        else:
+            self.main_view.load(an, refresh=True)
 
         subviews = [main_view,
+                    history_view,
+                    interference_view,
                     experiment_view,
-                    history_view]
+                    measurement_view,
+                    extraction_view]
 
-        pch=PeakCenterView()
+        if analysis_type in ('unknown', 'cocktail'):
+            subviews.append(ErrorComponentsView(an))
+
+        pch = PeakCenterView()
         if pch.load(an):
             subviews.append(pch)
+
+        if snapshot_view:
+            subviews.append(snapshot_view)
 
         self.selection_tool = ViewSelection(subviews=subviews,
                                             selected_view=main_view)

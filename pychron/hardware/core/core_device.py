@@ -132,6 +132,9 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
         if self._communicator:
             return self._communicator.test_connection()
 
+    def set_simulation(self, tf):
+        if self._communicator:
+            self._communicator.simulation=tf
     #==============================================================================================================
     def _communicate_hook(self, cmd, r):
         self.last_command = cmd
@@ -175,6 +178,8 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
 
     def load_additional_args(self, config):
         """
+            remember to return a boolean in any subclass that overrides this method.
+            if True bootstraping of this device will continue. otherwise device will not fully initialize
         """
         return True
 
@@ -193,7 +198,7 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
 
         st = time.time()
         while 1:
-            if script and script.canceled():
+            if script and script.is_canceled():
                 return
             if func(*args, **kwargs):
                 return True
@@ -263,7 +268,7 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
     def get_random_value(self, mi=0, ma=10):
         """
             convienent method for getting a random integer between min and max
-            
+
             Defaults:
                 min=0
                 max=10
@@ -299,6 +304,7 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
         else:
             cmd = self._build_command(cmd)
 
+        resp = None
         for i in range(ntries + 1):
             resp = self._parse_response(self.ask(cmd, verbose=verbose))
             if verbose:

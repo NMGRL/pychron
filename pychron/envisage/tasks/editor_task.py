@@ -15,17 +15,34 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-import os
+from pyface import confirmation_dialog
+from pyface.constant import NO
 from traits.api import Property, Instance
 from pyface.tasks.api import IEditor, IEditorAreaPane
-
 #============= standard library imports ========================
+import os
 #============= local library imports  ==========================
 from pychron.envisage.tasks.base_task import BaseManagerTask, BaseExtractionLineTask
-# from pyface.tasks.split_editor_area_pane import SplitEditorAreaPane
-# from pyface.confirmation_dialog import ConfirmationDialog
-
 from pyface.tasks.advanced_editor_area_pane import AdvancedEditorAreaPane
+
+
+class myAdvancedEditorAreaPane(AdvancedEditorAreaPane):
+    def remove_editor(self, editor):
+        """ Removes an editor from the pane.
+        """
+        editor_widget = editor.control.parent()
+        if editor.dirty:
+            ret = confirmation_dialog.confirm(editor_widget,
+                                              'Unsaved changes to "{}". '
+                                              'Do you want to continue'.format(editor.name))
+            if ret == NO:
+                return
+
+        self.editors.remove(editor)
+        self.control.remove_editor_widget(editor_widget)
+        editor.editor_area = None
+        if not self.editors:
+            self.active_editor = None
 
 
 class BaseEditorTask(BaseManagerTask):
@@ -97,7 +114,8 @@ class BaseEditorTask(BaseManagerTask):
         pass
 
     def create_central_pane(self):
-        self.editor_area = AdvancedEditorAreaPane()
+        # self.editor_area = AdvancedEditorAreaPane()
+        self.editor_area = myAdvancedEditorAreaPane()
         return self.editor_area
 
     def _open_editor(self, editor, **kw):

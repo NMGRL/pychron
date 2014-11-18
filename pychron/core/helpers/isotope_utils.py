@@ -18,6 +18,7 @@
 #============= standard library imports ========================
 #============= local library imports  ==========================
 import re
+
 from pychron.pychron_constants import DETECTOR_MAP
 
 
@@ -36,7 +37,8 @@ def sort_isotopes(keys, reverse=True, key=None):
         rf = lambda x: rank_func(key(x))
     else:
         rf = rank_func
-    return sorted(list(keys), key=rf,
+    keys = list(keys)
+    return sorted(keys, key=rf,
                   reverse=reverse)
 
 

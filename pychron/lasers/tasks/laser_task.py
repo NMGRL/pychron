@@ -28,7 +28,7 @@ from pychron.lasers.tasks.panes.diode import FusionsDiodeClientPane, \
     FusionsDiodePane, FusionsDiodeStagePane, FusionsDiodeControlPane, \
     FusionsDiodeSupplementalPane
 from pychron.lasers.tasks.panes.uv import FusionsUVPane, FusionsUVClientPane, \
-    FusionsUVControlPane, FusionsUVStagePane
+    FusionsUVControlPane, FusionsUVStagePane, FusionsUVSupplementalPane
 # from pyface.tasks.action.schema import SMenu
 # from pychron.lasers.tasks.laser_actions import OpenScannerAction
 #============= standard library imports ========================
@@ -183,7 +183,7 @@ class FusionsUVTask(FusionsTask):
             return [
                 FusionsUVStagePane(model=self.manager),
                 FusionsUVControlPane(model=self.manager),
-                #FusionsUVSupplementalPane(model=self.manager),
+                FusionsUVSupplementalPane(model=self.manager),
 
                 #                TestPane(model=self.manager),
                 #                     PulsePane(model=self.manager),

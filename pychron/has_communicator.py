@@ -42,18 +42,18 @@ class HasCommunicator(ConfigLoadable):
             class_factory = __import__(module_path, fromlist=classlist)
             return getattr(class_factory, class_key)(name='_'.join((self.name, communicator_type.lower())),
                           id_query=self.id_query,
-                          id_response=self.id_response
-                         )
+                          id_response=self.id_response)
+
     def open(self, **kw):
-        '''
-        '''
+        """
+        """
         if self._communicator is not None:
             return self._communicator.open(**kw)
 
     def _communicate_hook(self, cmd, r):
-        '''
+        """
             hook for subclasses. command and response are passed in
-        '''
+        """
 
     def _load_communicator(self, config, comtype):
         communicator = self._communicator_factory(comtype)

@@ -15,8 +15,11 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from numpy import Inf
-from traits.api import HasTraits, Any, on_trait_change, List, Int
+from math import isinf
+
+from numpy import Inf, inf
+from traits.api import HasTraits, Any, on_trait_change, List, Int, Str
+
 #============= standard library imports ========================
 from itertools import groupby
 
@@ -32,8 +35,10 @@ class FigurePanel(HasTraits):
     _index_attr = ''
     equi_stack = False
     graph_klass = AnalysisStackedGraph
-    graph_spacing = Int
+    plot_spacing = Int
     meta = Any
+    title = Str
+    use_previous_limits=True
 
     @on_trait_change('analyses[]')
     def _analyses_items_changed(self):
@@ -42,7 +47,8 @@ class FigurePanel(HasTraits):
     def _make_figures(self):
         key = lambda x: x.group_id
         ans = sorted(self.analyses, key=key)
-        gs = [self._figure_klass(analyses=list(ais), group_id=gid)
+        gs = [self._figure_klass(analyses=list(ais),
+                                 group_id=gid)
               for gid, ais in groupby(ans, key=key)]
         return gs
 
@@ -53,56 +59,70 @@ class FigurePanel(HasTraits):
     #     self.graph.load_metadata(md)
 
     def make_graph(self):
-
+        po = self.plot_options
         g = self.graph_klass(panel_height=200,
                              equi_stack=self.equi_stack,
-                             container_dict=dict(padding=0, spacing=self.graph_spacing), )
+                             container_dict=dict(padding=0,
+                                                 spacing=self.plot_spacing or po.plot_spacing,
+                                                 bgcolor=po.bgcolor))
 
-        po = self.plot_options
-        attr=po.index_attr
-        center=None
-        mi,ma=Inf, -Inf
+
+        attr = po.index_attr
+        center = None
+        mi, ma = Inf, -Inf
         if attr:
-            xmas, xmis = zip(*[(i.max_x(attr), i.min_x(attr))
-                               for i in self.figures])
-            mi, ma = min(xmis), max(xmas)
+            if po.use_static_limits:
+                mi, ma = po.xlow, po.xhigh
+            else:
+                xmas, xmis = zip(*[(i.max_x(attr), i.min_x(attr))
+                                   for i in self.figures])
+                mi, ma = min(xmis), max(xmas)
 
-            cs = [i.mean_x(attr) for i in self.figures]
-            center = sum(cs) / len(cs)
+                cs = [i.mean_x(attr) for i in self.figures]
+                center = sum(cs) / len(cs)
+                if po.use_centered_range:
+                    w2 = po.centered_range / 2.0
+                    mi, ma = center - w2, center + w2
 
-        for i, fig in enumerate(self.figures):
-            fig.trait_set(xma=ma, xmi=mi,
-                          center=center,
-                          options=po,
-                          graph=g)
+        plots = list(po.get_aux_plots())
+        if plots:
+            for i, fig in enumerate(self.figures):
+                fig.trait_set(xma=ma, xmi=mi,
+                              center=center,
+                              options=po,
+                              graph=g,
+                              title=self.title)
 
-            plots = list(po.get_aux_plots())
+                if i == 0:
+                    fig.build(plots)
 
-            if i == 0:
-                fig.build(plots)
-                #print fig
+                fig.suppress_ylimits_update = True
+                fig.suppress_xlimits_update = True
+                fig.plot(plots)
+                fig.suppress_ylimits_update = False
+                fig.suppress_xlimits_update = False
+                ma, mi = max(fig.xma, ma), min(fig.xmi, mi)
 
-            fig.suppress_ylimits_update=True
-            fig.plot(plots)
-            fig.suppress_ylimits_update=False
-            ma, mi = max(fig.xma, ma), min(fig.xmi, mi)
+            if self.use_previous_limits:
+                # print plots[0], plots[0].has_xlimits(), plots[0].name
+                if plots[0].has_xlimits():
+                    tmi, tma = plots[0].xlimits
+                    if tmi != -inf and tma != inf:
+                        mi, ma = tmi, tma
+                        print 'using previous limits', mi, ma
 
+            if mi is None and ma is None:
+                mi, ma = 0, 100
 
-            #timethis(fig.plot, args=(plots,), msg='fit.plot {} {}'.format(i, fig))
+            if not (isinf(mi) or isinf(ma)):
+                # print 'setting xlimits', mi, ma
+                g.set_x_limits(mi, ma, pad=fig.xpad or 0)
 
-            #meta=self.meta
-            #print 'meta',meta
-            #if meta:
-            #    g.load_metadata(meta)
-            # if mi==-Inf and ma==Inf:
-            # mi,ma=0, 100
-        if mi is None and ma is None:
-            mi, ma = 0, 100
-        g.set_x_limits(mi, ma, pad=fig.xpad or 0)
-
+            for fig in self.figures:
+                for i in range(len(plots)):
+                    fig.update_options_limits(i)
 
         self.graph = g
-        #print self.graph
         return g.plotcontainer
 
         #============= EOF =============================================

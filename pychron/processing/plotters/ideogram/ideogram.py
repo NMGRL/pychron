@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,14 +19,15 @@ from traits.api import Float, Array
 #============= standard library imports ========================
 from numpy import linspace, pi, exp, zeros, ones, array, arange, \
     Inf
+from numpy import max as np_max
 #============= local library imports  ==========================
 
 from pychron.processing.plotters.arar_figure import BaseArArFigure
 from pychron.processing.plotters.flow_label import FlowPlotLabel
+from pychron.processing.plotters.ideogram.ideogram_inset_overlay import IdeogramInset
 
 from pychron.processing.plotters.ideogram.mean_indicator_overlay import MeanIndicatorOverlay
 from pychron.core.stats.peak_detection import find_peaks
-from pychron.core.stats.core import calculate_weighted_mean
 from pychron.processing.plotters.point_move_tool import OverlayMoveTool
 
 N = 500
@@ -55,16 +56,17 @@ class Ideogram(BaseArArFigure):
         index_attr = 'uage'
         if opt.index_attr:
             index_attr = opt.index_attr
+            if not opt.include_j_error:
+                index_attr = 'uage_wo_j_err'
 
         graph = self.graph
 
         self._analysis_number_cnt = 0
-
         try:
             self.xs, self.xes = array([(ai.nominal_value, ai.std_dev)
                                        for ai in self._get_xs(key=index_attr)]).T
         except (ValueError, AttributeError), e:
-            print 'asdfasdf', e
+            print 'asdfasdf', e, index_attr
             return
 
         omit = self._get_omitted(self.sorted_analyses,
@@ -84,40 +86,44 @@ class Ideogram(BaseArArFigure):
                 scatter, omits = args
                 omit = omit.union(set(omits))
 
-            self._update_options_limits(pid)
+                # self.update_options_limits(pid)
 
         for i, ai in enumerate(self.sorted_analyses):
             # print ai.record_id, i in omit
             ai.value_filter_omit = i in omit
 
-        # self._asymptotic_limit_flag = True
-        opt = self.options
-        xmi, xma = self.xmi, self.xma
-        # pad = '0.05'
-        if opt.use_asymptotic_limits:
-            xmi, xma = self.xmi, self.xma
-        elif opt.use_centered_range:
-            w2 = opt.centered_range / 2.0
-            r = self.center
-            xmi, xma = r - w2, w2 + r
+            # self._asymptotic_limit_flag = True
+            # opt = self.options
+            # xmi, xma = self.xmi, self.xma
+            # pad = '0.05'
+
+
+            # if opt.use_asymptotic_limits:
+            #     xmi, xma = self.xmi, self.xma
+            # elif opt.use_centered_range:
+            #     w2 = opt.centered_range / 2.0
+            #     r = self.center
+            #     xmi, xma = r - w2, w2 + r
             # pad=False
-        elif opt.xlow or opt.xhigh:
-            xmi, xma = opt.xlow, opt.xhigh
+            # elif opt.xlow or opt.xhigh:
+            #     xmi, xma = opt.xlow, opt.xhigh
             # pad=False
 
-        self.xmi = min(xmi, self.xmi)
-        self.xma = max(xma, self.xma)
+        # print opt.use_centered_range, self.center, xmi, xma
+
+        # self.xmi = min(xmi, self.xmi)
+        # self.xma = max(xma, self.xma)
         # graph.set_x_limits(min_=xmi, max_=xma,pad=pad)
 
         t = index_attr
         if index_attr == 'uF':
             t = 'Ar40*/Ar39k'
-        elif index_attr == 'uage':
+        elif index_attr in ('uage', 'uage_wo_j_err'):
             ref = self.analyses[0]
             age_units = ref.arar_constants.age_units
             t = 'Age ({})'.format(age_units)
 
-        graph.set_x_title(t)
+        graph.set_x_title(t, plotid=0)
 
         #turn off ticks for prob plot by default
         plot = graph.plots[0]
@@ -141,42 +147,50 @@ class Ideogram(BaseArArFigure):
     def max_x(self, attr):
         try:
             return max([ai.nominal_value + ai.std_dev
-                        for ai in self._unpack_attr(attr)])
-        except (AttributeError, ValueError):
+                        for ai in self._unpack_attr(attr) if ai is not None])
+        except (AttributeError, ValueError), e:
+            print 'max', e, 'attr={}'.format(attr)
             return 0
 
     def min_x(self, attr):
         try:
             return min([ai.nominal_value - ai.std_dev
-                        for ai in self._unpack_attr(attr)])
-        except (AttributeError, ValueError):
+                        for ai in self._unpack_attr(attr) if ai is not None])
+        except (AttributeError, ValueError), e:
+            print 'min', e
             return 0
-
 
     #===============================================================================
     # plotters
     #===============================================================================
-
     def _plot_aux(self, title, vk, ys, po, plot, pid,
                   es=None):
 
         omits = self._get_aux_plot_omits(po, ys)
 
         scatter = self._add_aux_plot(ys,
-                                     title, pid)
+                                     title, po, pid)
 
-        self._add_error_bars(scatter, self.xes, 'x', 1,
+        nsigma = self.options.error_bar_nsigma
+
+        self._add_error_bars(scatter, self.xes, 'x', nsigma,
                              end_caps=self.options.x_end_caps,
                              visible=po.x_error)
         if es:
-            self._add_error_bars(scatter, es, 'y', 1,
+            self._add_error_bars(scatter, es, 'y', nsigma,
                                  end_caps=self.options.y_end_caps,
                                  visible=po.y_error)
 
         if po.show_labels:
             self._add_point_labels(scatter)
 
-        self._add_scatter_inspector(scatter)
+        ia = 'uage_wo_j_err'
+        if self.options.include_j_error:
+            ia = 'uage'
+
+        f = lambda x: u'Age= {}'.format(x.value_string(ia))
+        self._add_scatter_inspector(scatter,
+                                    additional_info=f)
 
         return scatter, omits
 
@@ -196,38 +210,40 @@ class Ideogram(BaseArArFigure):
         if stacked:
             name = 'Analysis #'
             for p in self.graph.plots:
-                if p.y_axis.title == name:
+
+                #if title is not visible title=='' so check tag instead
+                if p.y_axis.tag == 'Analysis Number Stacked':
                     for k, rend in p.plots.iteritems():
-                        if k.startswith(name):
+                        #if title is not visible k == e.g '-1' instead of 'Analysis #-1'
+                        if k.startswith(name) or k.startswith('-'):
                             startidx += rend[0].index.get_size()
 
-        ys = arange(startidx, startidx + n)
+        if self.options.analysis_number_sorting == 'Oldest @Top':
+            ys = arange(startidx, startidx + n)
+        else:
+            ys = arange(startidx + n - 1, startidx - 1, -1)
+        scatter = self._add_aux_plot(ys, name, po, pid)
 
-        scatter = self._add_aux_plot(ys, name, pid)
-
-        self._add_error_bars(scatter, self.xes, 'x', 1,
+        self._add_error_bars(scatter, self.xes, 'x', self.options.error_bar_nsigma,
                              end_caps=self.options.x_end_caps,
                              visible=po.x_error)
 
         if po.show_labels:
             self._add_point_labels(scatter)
 
-        #         self._analysis_number_cnt += n
-        # self.graph.set_y_limits(min_=0,
-        #                         max_=max(ys) + 1,
-        #                         # pad='0.01',
-        #                         plotid=pid)
-        if not po.has_ylimits():
-            self._set_y_limits(0, max(ys) + 1, pid=pid)
-
+        my = max(ys) + 1
+        # if not po.has_ylimits():
+        #     self._set_y_limits(0, my, pid=pid)
+        # else:
+        plot.value_range.tight_bounds = True
+        # ly, uh = po.ylimits
+        # if uh < my:
+        self._set_y_limits(0, my, min_=0, max_=my, pid=pid)
+        # print 'settting ylimits {}'.format(my)
         omits = self._get_aux_plot_omits(po, ys)
         ia = self.options.index_attr
-        # if ia == 'uF':
-        #     f = lambda x: u'{}= {}'.format(ia, x.f_string)
-        # elif ia =='uage':
-        #     f = lambda x: u'{}= {}'.format(ia, x.age_string)
-        # else:
-        f= lambda x: u'{}= {}'.format(ia, x.value_string(ia))
+
+        f = lambda x: u'Age= {}'.format(x.value_string(ia))
 
         self._add_scatter_inspector(scatter,
                                     value_format=lambda x: '{:d}'.format(int(x)),
@@ -237,48 +253,68 @@ class Ideogram(BaseArArFigure):
 
     def _plot_relative_probability(self, po, plot, pid):
         graph = self.graph
+
         bins, probs = self._calculate_probability_curve(self.xs, self.xes, calculate_limits=True)
 
         ogid = self.group_id
         gid = ogid + 1
         sgid = ogid * 2
         # print 'ogid={} gid={} sgid={}'.format(ogid, gid, sgid)
-        scatter, _p = graph.new_series(x=bins, y=probs, plotid=pid)
+        plotkw = dict()
+        # if self.group_id==0:
+        # if self.options.use_filled_line:
+        plotkw.update(**self.options.get_fill_dict(ogid))
+        # color= self.options.fill_color
+        # color.setAlphaF(self.options.fill_alpha*0.01)
+        # plotkw['fill_color']=self.options.fill_color
+        # plotkw['type']='filled_line'
+        # else:
+
+        line, _ = graph.new_series(x=bins, y=probs, plotid=pid, **plotkw)
+
         graph.set_series_label('Current-{}'.format(gid), series=sgid, plotid=pid)
 
         # add the dashed original line
         graph.new_series(x=bins, y=probs,
                          plotid=pid,
                          visible=False,
-                         color=scatter.color,
+                         color=line.color,
                          line_style='dash')
 
         graph.set_series_label('Original-{}'.format(gid), series=sgid + 1, plotid=pid)
 
         self._add_info(graph, plot)
-        mo = self._add_mean_indicator(graph, scatter, bins, probs, pid)
-        mo.id = 'mean_{}'.format(self.group_id)
-        if mo.id in po.overlay_positions:
-            ap = po.overlay_positions[mo.id]
-            mo.y = ap[1]
+        self._add_mean_indicator(graph, line, po, bins, probs, pid)
 
         mi, ma = min(probs), max(probs)
 
-        if not po.has_ylimits():
-            self._set_y_limits(mi, ma, min_=0, pad='0.05')
+        # if not po.has_ylimits():
+        self._set_y_limits(mi, ma, min_=0, pad='0.025')
 
         d = lambda a, b, c, d: self.update_index_mapper(a, b, c, d)
         plot.index_mapper.on_trait_change(d, 'updated')
 
-        #===============================================================================
-        # overlays
-        #===============================================================================
-        #def _add_limits_tool(self, plot):
+        if self.group_id == 0:
+            if self.options.display_inset:
+                cfunc = lambda x1, x2: self._cumulative_probability(self.xs, self.xes, x1, x2)
+                xs, ys, xmi, xma = self._calculate_asymptotic_limits(cfunc,
+                                                                     asymptotic_width=10,
+                                                                     tol=10)
+                plot.overlays.append(IdeogramInset(xs, ys,
+                                                   width=self.options.inset_width,
+                                                   height=self.options.inset_height,
+                                                   location=self.options.inset_location))
 
-        #t = LimitsTool(component=plot)
-        #o = LimitOverlay(component=plot, tool=t)
-        #plot.tools.append(t)
-        #plot.overlays.append(o)
+
+                #===============================================================================
+                # overlays
+                #===============================================================================
+                #def _add_limits_tool(self, plot):
+
+                #t = LimitsTool(component=plot)
+                #o = LimitOverlay(component=plot, tool=t)
+                #plot.tools.append(t)
+                #plot.overlays.append(o)
 
     def _add_info(self, g, plot):
         if self.group_id == 0:
@@ -287,7 +323,8 @@ class Ideogram(BaseArArFigure):
                 if self.options.show_mean_info:
                     m = self.options.mean_calculation_kind
                     s = self.options.nsigma
-                    ts.append('Mean: {} +/-{}s'.format(m, s))
+                    es = self.options.error_bar_nsigma
+                    ts.append('Mean: {} +/-{}s Data: +/-{}s'.format(m, s, es))
                 if self.options.show_error_type_info:
                     ts.append('Error Type:{}'.format(self.options.error_calc_method))
 
@@ -295,13 +332,14 @@ class Ideogram(BaseArArFigure):
                     pl = FlowPlotLabel(text='\n'.join(ts),
                                        overlay_position='inside top',
                                        hjustify='left',
+                                       font=self.options.error_info_font,
                                        component=plot)
                     plot.overlays.append(pl)
 
-    def _add_mean_indicator(self, g, line, bins, probs, pid):
+    def _add_mean_indicator(self, g, line, po, bins, probs, pid):
         # maxp = max(probs)
-        wm, we, mswd, valid_mswd = self._calculate_stats(self.xs, self.xes,
-                                                         bins, probs)
+        wm, we, mswd, valid_mswd = self._calculate_stats(bins, probs)
+
         #ym = maxp * percentH + offset
         #set ym in screen space
         #convert to data space
@@ -311,7 +349,9 @@ class Ideogram(BaseArArFigure):
 
         text = ''
         if self.options.display_mean:
-            text = self._build_label_text(wm, we, mswd, valid_mswd, len(self.xs))
+            text = self._build_label_text(wm, we, mswd, valid_mswd, len(self.xs),
+                                          sig_figs=self.options.mean_sig_figs,
+                                          percent_error=self.options.display_percent_error)
 
         m = MeanIndicatorOverlay(component=line,
                                  x=wm,
@@ -319,14 +359,29 @@ class Ideogram(BaseArArFigure):
                                  error=we,
                                  nsgima=self.options.nsigma,
                                  color=line.color,
-                                 text=text,
-                                 visible=self.options.display_mean_indicator)
+                                 visible=self.options.display_mean_indicator,
+                                 id='mean_{}'.format(self.group_id))
+
+        m.font = self.options.mean_indicator_font
+        m.text = text
         line.overlays.append(m)
 
         line.tools.append(OverlayMoveTool(component=m,
                                           constrain='x'))
 
         m.on_trait_change(self._handle_overlay_move, 'altered_screen_point')
+
+        if m.id in po.overlay_positions:
+            ap = po.overlay_positions[m.id]
+            m.y = ap[1]
+
+        if m.label:
+            m.label.on_trait_change(self._handle_label_move, 'altered_screen_point')
+            if m.label.id in po.overlay_positions:
+                ap = po.overlay_positions[m.label.id]
+                m.label.altered_screen_point = (ap[0], ap[1])
+                m.label.trait_set(x=ap[0], y=ap[1])
+
         return m
 
     def update_index_mapper(self, obj, name, old, new):
@@ -391,7 +446,7 @@ class Ideogram(BaseArArFigure):
             fxs, fxes = zip(*[(a, b) for _, (a, b) in d])
 
             xs, ys = self._calculate_probability_curve(fxs, fxes)
-            wm, we, mswd, valid_mswd = self._calculate_stats(fxs, fxes, xs, ys)
+            wm, we, mswd, valid_mswd = self._calculate_stats(xs, ys)
 
             lp.value.set_data(ys)
             lp.index.set_data(xs)
@@ -410,7 +465,9 @@ class Ideogram(BaseArArFigure):
                     #ov.x=wm
                     ov.error = we
                     if ov.label:
-                        ov.label.text = self._build_label_text(wm, we, mswd, valid_mswd, n)
+                        ov.label.text = self._build_label_text(wm, we, mswd, valid_mswd, n,
+                                                               percent_error=self.options.display_percent_error,
+                                                               sig_figs=self.options.mean_sig_figs)
 
             # update the data label position
             #for ov in sp.overlays:
@@ -436,15 +493,13 @@ class Ideogram(BaseArArFigure):
         xs = array([ai for ai in self._unpack_attr(key)])
         return xs
 
-    def _add_aux_plot(self, ys, title, pid, **kw):
+    def _add_aux_plot(self, ys, title, po, pid, **kw):
         plot = self.graph.plots[pid]
         if plot.value_scale == 'log':
             ys = array(ys)
             ys[ys < 0] = 1e-20
 
         graph = self.graph
-        graph.set_y_title(title,
-                          plotid=pid)
 
         #print 'aux plot',title, self.group_id
         s, p = graph.new_series(
@@ -456,15 +511,25 @@ class Ideogram(BaseArArFigure):
             bind_id=self.group_id,
             plotid=pid, **kw)
 
+        if not po.ytitle_visible:
+            title = ''
+
+        graph.set_y_title(title,
+                          plotid=pid)
+
         graph.set_series_label('{}-{}'.format(title, self.group_id + 1),
                                plotid=pid)
         return s
 
-    def _calculate_probability_curve(self, ages, errors, calculate_limits=False):
+    def _calculate_probability_curve(self, ages, errors, calculate_limits=False, limits=None):
+        xmi, xma = None, None
+        if limits:
+            xmi, xma = limits
 
-        xmi, xma = self.graph.get_x_limits()
-        if xmi == -Inf or xma == Inf:
-            xmi, xma = self.xmi, self.xma
+        if not xmi and not xma:
+            xmi, xma = self.graph.get_x_limits()
+            if xmi == -Inf or xma == Inf:
+                xmi, xma = self.xmi, self.xma
 
         opt = self.options
 
@@ -475,11 +540,14 @@ class Ideogram(BaseArArFigure):
             if opt.use_asymptotic_limits and calculate_limits:
                 cfunc = lambda x1, x2: self._cumulative_probability(ages, errors, x1, x2)
                 # bins,probs=cfunc(xmi,xma)
-                bins, probs, x1, x2 = self._calculate_asymptotic_limits(cfunc, xmi, xma,
-                                                                        asymptotic_width=opt.asymptotic_width)
+                # wa = self.analysis_group.weighted_age
+                # m, e = nominal_value(wa), std_dev(wa)
+                # xmi, xma = m - e, m + e
+                bins, probs, x1, x2 = self._calculate_asymptotic_limits(cfunc,
+                                                                        asymptotic_width=(opt.asymptotic_width or 10),
+                                                                        tol=(opt.asymptotic_percent or 10))
                 self.trait_setq(xmi=x1, xma=x2)
-                # print x1, x2
-                # self.xmi, self.xma=x1,x2
+
                 return bins, probs
             else:
                 return self._cumulative_probability(ages, errors, xmi, xma)
@@ -502,7 +570,7 @@ class Ideogram(BaseArArFigure):
                 continue
 
             # calculate probability curve for ai+/-ei
-            # p=1/(2*p*sigma2) *exp (-(x-u)**2)/(2*sigma2)
+            # p=1/(2*pi*sigma2) *exp (-(x-u)**2)/(2*sigma2)
             # see http://en.wikipedia.org/wiki/Normal_distribution
             ds = (ones(N) * ai - bins) ** 2
             es = ones(N) * ei
@@ -515,81 +583,87 @@ class Ideogram(BaseArArFigure):
 
         return bins, probs
 
-    def _calculate_asymptotic_limits(self, cfunc, xmi, xma,
-                                     max_iter=200, asymptotic_width=1,
-                                     tol=0.1):
+    def _calculate_nominal_xlimits(self):
+        return self.min_x(self.options.index_attr), self.max_x(self.options.index_attr)
+
+    def _calculate_asymptotic_limits(self, cfunc, max_iter=200, asymptotic_width=10,
+                                     tol=10):
         """
             cfunc: callable that returns xs,ys and accepts xmin, xmax
                     xs, ys= cfunc(x1,x2)
 
-            asymptotic_width=width of asymptotic section in index units (Ma,ka)
-                    Essentially amount of white space at either end
+            asymptotic_width=percent of total width that is less than tol% of the total curve
 
             returns xs,ys,xmi,xma
         """
+        tol *= 0.01
         rx1, rx2 = None, None
-        step = asymptotic_width * 0.25
-        N2 = N / 2.0
-        for i in xrange(max_iter):
-            x1, x2 = xmi - step * i, xma + step * i
+        xmi, xma = self._calculate_nominal_xlimits()
+        step = 0.01 * (xma - xmi)
+        aw = int(asymptotic_width * N * 0.01)
+        for i in xrange(max_iter if aw else 1):
+            x1 = xmi - step * i if rx1 is None else rx1
+            x2 = xma + step * i if rx2 is None else rx2
+
             xs, ys = cfunc(x1, x2)
-
-            bin_per_ma = N / (x2 - x1)
-
-            aw = int(asymptotic_width * bin_per_ma)
-            if aw > N2:
-                continue
-
-            if aw < 1:
-                break
 
             low = ys[:aw]
             high = ys[-aw:]
 
             tt = tol * max(ys)
-            # print tt, low.mean(), high.mean(), aw, bin_per_ma, asymptotic_width, xmi, xma
-            if low.mean() < tt:  # and low.std()<std_tol:
+
+            if rx1 is None and (low < tt).all():
                 rx1 = x1
-            if high.mean() < tt:  # and high.std()<std_tol:
+            if rx2 is None and (high < tt).all():
                 rx2 = x2
             if rx1 is not None and rx2 is not None:
                 break
+
+        #if tt is not None:
+        #    self.graph.add_horizontal_rule(tt)
 
         if rx1 is None:
             rx1 = x1
         if rx2 is None:
             rx2 = x2
 
-        # print 'x1,x2',rx1, rx2
         return xs, ys, rx1, rx2
 
     def _cmp_analyses(self, x):
         return x.age
 
-    def _calculate_stats(self, ages, errors, xs, ys):
+    def _calculate_stats(self, xs, ys):
+        ag = self.analysis_group
+        ag.weighted_age_error_kind = self.options.error_calc_method
+        ag.include_j_error_in_mean = self.options.include_j_error_in_mean
+        ag.include_j_error_in_individual_analyses = self.options.include_j_error
+
         mswd, valid_mswd, n = self.analysis_group.get_mswd_tuple()
 
         if self.options.mean_calculation_kind == 'kernel':
             wm, we = 0, 0
             delta = 1
             maxs, _mins = find_peaks(ys, xs, delta=delta, lookahead=1)
-            wm = max(maxs, axis=1)[0]
+            wm = np_max(maxs, axis=1)[0]
         else:
-            wm, we = calculate_weighted_mean(ages, errors)
-            we = self._calc_error(we, mswd)
+            wage = self.analysis_group.weighted_age
+            wm, we = wage.nominal_value, wage.std_dev
 
-        return wm, we, mswd, valid_mswd
+            # wm, we = calculate_weighted_mean(ages, errors)
+            # we = self._calc_error(we, mswd)
 
-    def _calc_error(self, we, mswd):
-        ec = self.options.error_calc_method
-        n = self.options.nsigma
-        if ec == 'SEM':
-            a = 1
-        elif ec == 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)':
-            a = 1
-            if mswd > 1:
-                a = mswd ** 0.5
-        return we * a * n
+        return wm, we * self.options.nsigma, mswd, valid_mswd
+
+        # def _calc_error(self, we, mswd):
+        #     ec = self.options.error_calc_method
+        #     n = self.options.nsigma
+        #     if ec == 'SEM':
+        #         a = 1
+        #     elif ec == 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)':
+        #         a = 1
+        #         if mswd > 1:
+        #             a = mswd ** 0.5
+        #     return we * a * n
 
 
         #============= EOF =============================================

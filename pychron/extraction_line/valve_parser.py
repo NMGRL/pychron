@@ -21,6 +21,14 @@ from pychron.core.xml.xml_parser import XMLParser
 
 
 class ValveParser(XMLParser):
+    def get_valve(self, name, groups=None, element=True):
+        if groups is None:
+            groups = self.get_groups()
+
+        return next((v if element else v.text.strip()
+                        for gi in groups
+                        for v in gi.findall('valve') if v.text.strip()==name), None)
+
     def get_groups(self, element=True):
         tree = self.get_root()
 #        tree = self._tree

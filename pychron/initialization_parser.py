@@ -1,11 +1,11 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,7 +15,8 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from lxml.etree import Element
+# from lxml.etree import Element
+from lxml import etree
 from pyface.message_dialog import warning
 #============= standard library imports ========================
 import os
@@ -60,8 +61,10 @@ class InitializationParser(XMLParser):
 
     def __init__(self, *args, **kw):
         ver = '_proc'
-        ver = '_exp'
-        ver = '_apis'
+        # ver = '_valve'
+        # ver ='_apis'
+        ver = '_uv'
+        # ver = '_exp'
         # ver = '_exp_uv'
         # ver= '_spec'
         # ver = '_diode'
@@ -275,7 +278,6 @@ class InitializationParser(XMLParser):
         p = self.get_plugin(plugin)
 
         man = next((pi for pi in p.findall('manager') if pi.text.strip() == name), None)
-
         return man
 
     def get_categories(self):
@@ -283,7 +285,7 @@ class InitializationParser(XMLParser):
         tree = root.find('plugins')
         s = lambda x: x.tag
 
-        cats = map(s, [c for c in tree.iter(Element)])
+        cats = map(s, [c for c in tree.iter(etree.Element)])
         return list(set(cats))
         #return map(s, set([c for c in tree.iter()]))
 

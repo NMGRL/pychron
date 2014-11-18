@@ -16,7 +16,9 @@
 
 #============= enthought library imports =======================
 from traits.api import Callable, List
+
 from pychron.core.regression.base_regressor import BaseRegressor
+
 #============= standard library imports ========================
 from scipy import optimize
 from numpy import asarray, sqrt, matrix, diagonal, array
@@ -51,23 +53,30 @@ class LeastSquaresRegressor(BaseRegressor):
 #    def _errfunc_changed(self):
 #        self.calculate()
 #
-    def calculate(self):
-        if not len(self.xs) or \
-            not len(self.ys):
+    def calculate(self, filtering=False):
+        cxs = self.pre_clean_xs
+        cys = self.pre_clean_ys
+
+        if not self._check_integrity(cxs, cys):
+            # logger.debug('A integrity check failed')
+            # import traceback
+            # traceback.print_stack()
             return
 
-        if len(self.xs) != len(self.ys):
-            return
+        if not filtering:
+            #prevent infinite recursion
+            fx, fy = self.calculate_filtered_data()
+        else:
+            fx, fy = cxs, cys
 
         if self.fitfunc and \
             self.initial_guess is not None and \
                  len(self.initial_guess) and \
-                    len(self.xs) >= len(self.initial_guess):
+                    len(fx) >= len(self.initial_guess):
             errfunc = lambda p, x, v: self.fitfunc(p, x) - v
             r = optimize.leastsq(errfunc,
                                  self.initial_guess,
-                                 args=(self.xs, self.ys), full_output=True)
-
+                                 args=(fx, fy), full_output=True)
 #            r = optimize.curve_fit(self.fitfunc,
 #                                   self.xs, self.ys,
 #                                   p0=self.initial_guess)
@@ -78,6 +87,7 @@ class LeastSquaresRegressor(BaseRegressor):
                 self._covariance = cov
                 try:
                     self._coefficient_errors = list(sqrt(diagonal(cov)))
+
                 except ValueError:
                     pass
 
@@ -99,9 +109,10 @@ class LeastSquaresRegressor(BaseRegressor):
         if return_single:
             fx = fx[0]
 
+
         return fx
 
-    def predict_error(self, x, ys, error_calc='sem'):
+    def predict_error(self, x, error_calc='sem'):
 
         '''
             returns percent error
@@ -125,7 +136,7 @@ class LeastSquaresRegressor(BaseRegressor):
             return se[0, 0]
 
         fx = array([calc_error(xi) for xi in x])
-        fx = ys * fx / 100.
+        # fx = ys * fx / 100.
 
         if return_single:
             fx = fx[0]

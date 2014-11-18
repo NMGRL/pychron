@@ -24,7 +24,9 @@ from pychron.loggable import Loggable
 
 class Handler(Loggable):
     sock = None
+    datasize=2**12
 
+    use_message_len_checking =False
     def get_packet(self):
         pass
 
@@ -34,9 +36,37 @@ class Handler(Loggable):
     def end(self):
         pass
 
+    def _recvall(self, recv):
+        ss=[]
+        sum = 0
+
+        #disable message len checking
+        msg_len=1
+        if self.use_message_len_checking:
+            msg_len=0
+
+        while 1:
+            s = recv(self.datasize)#self._sock.recv(2048)
+            if not s:
+                break
+
+            if not msg_len:
+                msg_len = int(s[:4],16)
+
+            sum+=len(s)
+            ss.append(s)
+            if sum>=msg_len:
+                break
+        data = ''.join(ss)
+
+        if self.use_message_len_checking:
+            #trim off header
+            data=data[4:]
+        return data
+
 
 class TCPHandler(Handler):
-    datasize = 2 ** 10
+    # datasize = 2 ** 10
 
     def open_socket(self, addr, timeout=2.0):
         self.address = addr
@@ -46,7 +76,23 @@ class TCPHandler(Handler):
 
     def get_packet(self, cmd):
         try:
-            return self.sock.recv(self.datasize)
+            # ss=[]
+            # sum = 0
+            # msg_len=0
+            # while 1:
+            #     s = self._sock.recv(2048)
+            #     if not msg_len:
+            #         msg_len = int(s[:4],16)
+            #
+            #     sum+=len(s)
+            #     ss.append(s)
+            #     if sum==msg_len:
+            #         break
+            # data = ''.join(ss)
+            #
+            # #trim off header
+            # return data[4:]
+            return self._recvall(self._sock.recv)
         except socket.timeout:
             return
 
@@ -59,9 +105,9 @@ class TCPHandler(Handler):
 
 
 class UDPHandler(Handler):
-    datasize = 2 ** 10
+    # datasize = 2 ** 10
 
-    def open_socket(self, addr, timeout=2.0):
+    def open_socket(self, addr, timeout=3.0):
         self.address = addr
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         # self.sock.connect(addr)
@@ -71,12 +117,17 @@ class UDPHandler(Handler):
         r = None
         #        cnt = 3
         cnt = 1
+        def recv(ds):
+            r, _ =self.sock.recvfrom(ds)
+            return r
+
         for _ in range(cnt):
             try:
-                r, _address = self.sock.recvfrom(self.datasize)
+                r = self._recvall(recv)
+                # r, _address = self.sock.recvfrom(self.datasize)
                 break
             except socket.error, e:
-                pass
+                self.debug('get_packet {}'.format(e))
         else:
             self.warning('get packet for {} error: {}'.format(cmd, e))
 
@@ -102,11 +153,14 @@ class EthernetCommunicator(Communicator):
     handler = None
     kind = 'UDP'
     test_cmd = '***'
-    use_end =True
+    use_end = True
+    verbose = False
 
     def load(self, config, path):
         """
         """
+        super(EthernetCommunicator, self).load(config, path)
+
         self.host = self.config_get(config, 'Communications', 'host')
         # self.host = 'localhost'
         self.port = self.config_get(config, 'Communications', 'port', cast='int')
@@ -115,6 +169,7 @@ class EthernetCommunicator(Communicator):
         self.test_cmd = self.config_get(config, 'Communications', 'test_cmd', optional=True, default='***')
         self.use_end = self.config_get(config, 'Communications', 'use_end', cast='boolean', optional=True,
                                        default=False)
+
         if self.kind is None:
             self.kind = 'UDP'
 
@@ -166,12 +221,13 @@ class EthernetCommunicator(Communicator):
     def _reset_connection(self):
         self.handler = None
 
-    def ask(self, cmd, retries=3, verbose=True, info=None, *args, **kw):
+    def ask(self, cmd, retries=3, verbose=True, quiet=False, info=None, *args, **kw):
         """
 
         """
 
         def _ask():
+            handler = self.get_handler()
             if handler.send_packet(cmd):
                 return handler.get_packet(cmd)
 
@@ -183,7 +239,6 @@ class EthernetCommunicator(Communicator):
         r = None
         with self._lock:
             re = 'ERROR: Connection refused {}:{}'.format(self.host, self.port)
-            handler = self.get_handler()
             if self.simulation:
                 return 'simulation'
 
@@ -198,20 +253,21 @@ class EthernetCommunicator(Communicator):
             re = self.process_response(r)
 
         if self.use_end:
+            handler = self.get_handler()
             handler.end()
             self._reset_connection()
 
-        if verbose:
+        if verbose or self.verbose and not quiet:
             self.log_response(cmd, re, info)
 
-        return re
+        return r
 
-    def tell(self, cmd, verbose=True, info=None):
+    def tell(self, cmd, verbose=True, quiet=False, info=None):
         self._lock.acquire()
         handler = self.get_handler()
 
         if handler.send_packet(cmd):
-            if verbose:
+            if verbose or self.verbose and not quiet:
                 self.log_tell(cmd, info)
         self._lock.release()
 

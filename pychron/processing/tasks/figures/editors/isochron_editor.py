@@ -15,7 +15,6 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from pyface.timer.do_later import do_later
 from traits.api import Instance, on_trait_change
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -29,6 +28,9 @@ class InverseIsochronEditor(FigureEditor):
     basename = 'iso'
 
     parent_editor = None
+
+    def get_trapped_component(self):
+        print self.model
 
     @on_trait_change('figure_model:panels:figures:refresh_unknowns_table')
     def _handle_refresh(self, obj, name, old, new):
@@ -59,5 +61,9 @@ class InverseIsochronEditor(FigureEditor):
 
         #def replot(self):
         #    print self.model
+
+    def _set_preferred_age_kind(self, ias):
+        for ia in ias:
+            ia.preferred_age_kind = 'Isochron'
 
 #============= EOF =============================================

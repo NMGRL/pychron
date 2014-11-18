@@ -15,14 +15,17 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Any, on_trait_change, DelegatesTo
-from pyface.tasks.task_layout import TaskLayout, PaneItem, HSplitter
+from traits.api import Any, on_trait_change, DelegatesTo, List
+from pyface.tasks.task_layout import TaskLayout, HSplitter
 
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
 from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
+from pychron.processing.tasks.browser.util import browser_pane_item
 from pychron.processing.tasks.repository.panes import RepositoryPane
 from pychron.processing.repository.geochron_repo import GeochronRepository
 from pychron.processing.repository.igsn import IGSN
+
+
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -34,16 +37,19 @@ class RepositoryTask(AnalysisEditTask):
 
     igsn_enabled = DelegatesTo('igsn', prefix='enabled')
     repo_enabled = DelegatesTo('repository', prefix='enabled')
+    auto_show_unknowns_pane = False
 
-    def _selected_projects_changed(self, new):
+    tool_bars = List
+
+    def _selected_projects_changed(self, old, new):
         project = ''
         if new:
             project = new[0].name
 
         self.igsn.project = project
-        BaseBrowserTask._selected_projects_changed(self, new)
+        BaseBrowserTask._selected_projects_changed(self, old, new)
 
-    def _selected_sample_changed(self, new):
+    def _selected_samples_changed(self, new):
         sample = ''
         if new:
             sample = new[0].name
@@ -58,11 +64,11 @@ class RepositoryTask(AnalysisEditTask):
     def create_central_pane(self):
         return RepositoryPane(model=self)
 
-    #def create_dock_panes(self):
+    def create_dock_panes(self):
         #ps = AnalysisEditTask.create_dock_panes(self)
         #ps.extend([BrowserPane(model=self)])
-        #ps.append(self._create_browser_pane())
-        #return ps
+        ps = [self._create_browser_pane(analyses_defined='0')]
+        return ps
 
     def _save_to_db(self):
         """
@@ -115,7 +121,7 @@ class RepositoryTask(AnalysisEditTask):
     def _default_layout_default(self):
         return TaskLayout(id='pychron.repository',
                           left=HSplitter(
-                              PaneItem('pychron.browser'),
+                              browser_pane_item(),
                           )
                           #                           left=HSplitter(
 

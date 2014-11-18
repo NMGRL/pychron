@@ -17,8 +17,10 @@
 #============= enthought library imports =======================
 from PySide.QtGui import QColor
 from traits.api import HasTraits, Int, Color, Str, Event, Bool
-from traitsui.api import View, UItem
+# from traitsui.api import View, UItem
 #from pychron.lasers.scanner import ApplicationController
+from traitsui.item import UItem
+from traitsui.view import View
 from pychron.application_controller import ApplicationController
 from pychron.core.ui.display_editor import DisplayEditor
 from pychron.core.ui.gui import invoke_in_main_thread
@@ -29,14 +31,15 @@ from Queue import Queue
 # from pychron.viewable import Viewable
 
 class DisplayModel(HasTraits):
-#     messages = List
-#     max_messages = Int(300)
-#    message = Tuple
+    #     messages = List
+    #     max_messages = Int(300)
+    #    message = Tuple
     clear_event = Event
     refresh = Event
 
-    font_size = Int(12)
-    bgcolor = Color('white')
+    # font_size = Int(12)
+    # bgcolor = Color('white')
+    text_width = Int(10)
 
     #    message = Queue
     def __init__(self, *args, **kw):
@@ -44,17 +47,9 @@ class DisplayModel(HasTraits):
 
         self.qmessage = Queue()
 
-    def add_text(self, txt, color, force=False, **kw):
-        '''
-            if txt,color same as previous txt,color than message only added if force=True
-        '''
-        #         ms = self.messages[-self.max_messages:]
-        #         ms.append((txt, color))
-        #        self.message = (txt, color, force)
-        self.qmessage.put((txt, color, force))
+    def add_text(self, txt, color, force=False, is_marker=False, **kw):
+        self.qmessage.put((txt, color, force, is_marker))
         invoke_in_main_thread(self.trait_set, refresh=True)
-
-        #        self.refresh = True
 
 
 class DisplayController(ApplicationController):
@@ -66,9 +61,9 @@ class DisplayController(ApplicationController):
 
     default_color = Color('black')
     #    default_size = Int
-    #bg_color = Color
+    bgcolor = Color
     font_name = Str
-    #font_size = Int(12)
+    font_size = Int(12)
     max_blocks = Int(0)
 
     editor_klass = DisplayEditor
@@ -79,11 +74,12 @@ class DisplayController(ApplicationController):
     was_closed = Bool(False)
     text_added = Event
 
-    def __init__(self, font_size=12, bgcolor='white', *args, **kw):
-        super(DisplayController, self).__init__(model=DisplayModel(font_size=font_size,
-                                                                   bgcolor=bgcolor),
+    def __init__(self,  *args, **kw):
+        super(DisplayController, self).__init__(model=DisplayModel(),
                                                 *args, **kw)
         self._lock = Lock()
+        self.model.font_size=self.font_size
+        self.model.bgcolor=self.bgcolor
 
     def init(self, info):
         self.opened = True
@@ -93,7 +89,7 @@ class DisplayController(ApplicationController):
     #        info.object.ui = info.ui
 
     def clear(self, **kw):
-    #        self.clear_event = True
+        #        self.clear_event = True
         self.model.clear_event = True
 
     #        self.model.clear_event = True
@@ -108,6 +104,9 @@ class DisplayController(ApplicationController):
     def thaw(self):
         pass
 
+    def add_marker(self, txt, **kw):
+        self.add_text(txt, is_marker=True, **kw)
+
     def add_text(self, txt, **kw):
         if 'color' not in kw or kw['color'] is None:
             kw['color'] = self.default_color
@@ -118,7 +117,7 @@ class DisplayController(ApplicationController):
             kw['color'] = q
 
         rgba = kw['color'].toTuple()
-        b_rgba = self.model.bgcolor.toTuple()
+        b_rgba = self.bgcolor.toTuple()
         for a, b in zip(rgba, b_rgba):
             if abs(a - b) > tol:
                 break
@@ -138,8 +137,7 @@ class DisplayController(ApplicationController):
             refresh='refresh',
             font_size='font_size',
             bgcolor='bgcolor',
-            font_name=self.font_name,
-            #font_size=self.font_size,
+            text_width='text_width',
             max_blocks=self.max_blocks)
 
         v = View(UItem('qmessage', editor=editor),
@@ -156,6 +154,14 @@ class DisplayController(ApplicationController):
     def closed(self, info, result):
         self.opened = False
         self.was_closed = True
+
+    def _bgcolor_changed(self, new):
+        if self.model:
+            self.model.bgcolor=new
+
+    def _font_size_changed(self, new):
+        if self.model:
+            self.model.font_size=new
 
 
 #    def show(self):

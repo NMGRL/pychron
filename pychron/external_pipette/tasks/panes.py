@@ -42,7 +42,7 @@ class ExternalPipettePane(TraitsTaskPane):
                           HGroup(UItem('test_script_button',
                                        enabled_when='not testing'), spring),
                           HGroup(icon_button_editor('clear_test_response_button',
-                                                    'edit-clear', tooltip='Clear console'),
+                                                    'clear', tooltip='Clear console'),
                                  Item('display_response_info', label='Display Debug Info.'),
                                  spring))
 

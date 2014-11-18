@@ -17,11 +17,12 @@
 #============= enthought library imports =======================
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
-from traits.api import HasTraits, Instance
+from traits.api import Instance
 from traitsui.api import View, Item, VGroup, HGroup, Label, TabularEditor, UItem, EnumEditor, VSplit
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
+from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.envisage.browser.adapters import ProjectAdapter, SampleAdapter
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
@@ -106,7 +107,8 @@ class BrowserPane(TraitsDockPane):
             sample_grp,
             label='Project/Sample')
 
-        v = View(grp)
+        database_label = CustomLabel('datasource_url', color='maroon')
+        v = View(VGroup(database_label, grp))
         return v
 
 #============= EOF =============================================

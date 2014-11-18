@@ -20,7 +20,6 @@ from datetime import datetime
 from traits.api import Instance, Button, Int
 from traits.has_traits import provides
 
-
 #============= standard library imports ========================
 import struct
 from numpy import array
@@ -61,6 +60,9 @@ class MassSpecDatabaseImporter(Loggable):
     _current_spec = None
     _analysis = None
 
+    def make_multipe_runs_sequence(self, exptxt):
+        pass
+
     #IDatastore protocol
     def get_greatest_step(self, identifier, aliquot):
 
@@ -71,7 +73,10 @@ class MassSpecDatabaseImporter(Loggable):
             print identifier, ret
             if ret:
                 _, s = ret
-                ret = ALPHAS.index(s) if s is not None else -1
+                if s is not None and s in ALPHAS:
+                    ret = ALPHAS.index(s) #if s is not None else -1
+                else:
+                    ret = -1
         return ret
 
     def get_greatest_aliquot(self, identifier):
@@ -353,7 +358,7 @@ class MassSpecDatabaseImporter(Loggable):
         """
             build two blobs
             blob 1 PeakTimeBlob
-            x, y - mean(baselines)
+            x, y -
 
             blob 2
             y list
@@ -371,7 +376,7 @@ class MassSpecDatabaseImporter(Loggable):
         cvb = array(vb) - baseline.nominal_value
         blob1 = self._build_timeblob(tb, cvb)
 
-        blob2 = ''.join([struct.pack('>f', float(v)) for v in vb])
+        blob2 = ''.join([struct.pack('>f', v) for v in vb])
         db.add_peaktimeblob(blob1, blob2, dbiso)
 
         #@todo: add filtered points blob
@@ -439,7 +444,7 @@ class MassSpecDatabaseImporter(Loggable):
         """
         blob = ''
         for ti, vi in zip(t, v):
-            blob += struct.pack('>ff', float(vi), float(ti))
+            blob += struct.pack('>ff', vi, ti)
         return blob
 
     def _make_infoblob(self, baseline, baseline_err, n, baseline_position):
@@ -457,9 +462,9 @@ class MassSpecDatabaseImporter(Loggable):
 
         return db
 
-    #===========================================================================
-    # debugging
-    #===========================================================================
+        #===========================================================================
+        # debugging
+        #===========================================================================
         # def _test_fired(self):
         #     import numpy as np
         #

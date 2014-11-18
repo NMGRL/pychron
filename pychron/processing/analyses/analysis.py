@@ -30,7 +30,9 @@ from pychron.processing.arar_age import ArArAge
 from pychron.experiment.utilities.identifier import make_aliquot_step, make_runid
 from pychron.processing.isotope import Isotope
 
-Fit = namedtuple('Fit', 'fit filter_outliers filter_outlier_iterations filter_outlier_std_devs error_type')
+Fit = namedtuple('Fit', 'fit '
+                        'filter_outliers filter_outlier_iterations filter_outlier_std_devs '
+                        'error_type include_baseline_error, time_zero_offset')
 
 logger = new_logger('Analysis')
 
@@ -57,6 +59,7 @@ class Analysis(ArArAge):
     value_filter_omit = Bool
     table_filter_omit = Bool
     tag = Str
+    data_reduction_tag = Str
 
     record_id = Property(depends_on='labnumber,aliquot, step')
     status_text = Property
@@ -66,25 +69,27 @@ class Analysis(ArArAge):
     omit_spec = False
     omit_iso = False
     omit_series = False
+
     has_raw_data = False
+    has_changes = False
 
     recall_event = Event
     tag_event = Event
     invalid_event = Event
 
     def trigger_recall(self):
-        self.recall_event=self
+        self.recall_event = self
 
     def trigger_tag(self, analyses=None):
         if analyses is None:
-            analyses=[self,]
+            analyses = [self, ]
 
-        self.tag_event=analyses
+        self.tag_event = analyses
 
     def trigger_invalid(self, analyses=None):
         if analyses is None:
             analyses = [self, ]
-        self.invalid_event=analyses
+        self.invalid_event = analyses
 
     def is_temp_omitted(self, include_value_filtered=True):
         return self.temp_status or self.table_filter_omit or self.value_filter_omit if include_value_filtered else False
@@ -129,7 +134,10 @@ class Analysis(ArArAge):
         self._sync_view(v)
         return v
 
-    def _sync_view(self, v):
+    def sync_view(self, **kw):
+        self._sync_view(**kw)
+
+    def _sync_view(self, v=None, **kw):
         pass
 
     def _get_record_id(self):
@@ -144,16 +152,16 @@ class Analysis(ArArAge):
 
     def value_string(self, t):
         if t == 'uF':
-            a,e=self.F, self.F_err
+            a, e = self.F, self.F_err
         elif t == 'uage':
-            a, e = self.age, self.age_err
+            a, e = self.uage.nominal_value, self.uage.std_dev
         else:
-            v=self.get_value(t)
+            v = self.get_value(t)
             if isinstance(v, Isotope):
-                v=v.get_intensity()
-            a,e=v.nominal_value, v.std_dev
+                v = v.get_intensity()
+            a, e = v.nominal_value, v.std_dev
         pe = format_percent_error(a, e)
-        return  u'{} +/-{} ({}%)'.format(floatfmt(a), floatfmt(e), pe)
+        return u'{} +/-{} ({}%)'.format(floatfmt(a), floatfmt(e), pe)
 
     def _get_status_text(self):
         r = 'OK'
@@ -163,6 +171,12 @@ class Analysis(ArArAge):
             r = 'Omitted'
 
         return r
+
+    #mirror labnumber
+    @property
+    def identifier(self):
+        return self.labnumber
+
 
 if __name__ == '__main__':
     pass

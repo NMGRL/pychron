@@ -21,6 +21,7 @@
 import struct
 import binascii
 #=============local library imports  =========================
+from pychron.hardware.core.exceptions import CRCError
 from serial_communicator import SerialCommunicator
 from pychron.hardware.core.checksum_helper import computeCRC
 
@@ -36,18 +37,18 @@ class ModbusCommunicator(SerialCommunicator):
 
     _write_func_code = '06'
 
-#    scheduler = None
+    #    scheduler = None
 
     def load(self, config, path):
         '''
         '''
         super(ModbusCommunicator, self).load(config, path)
-#        SerialCommunicator.load(self, config, path)
+        #        SerialCommunicator.load(self, config, path)
         self.set_attribute(config, 'slave_address',
-                            'Communications', 'slave_address')
+                           'Communications', 'slave_address')
 
     def write(self, register, value, nregisters=1,
-               response_type='register_write', **kw):
+              response_type='register_write', **kw):
         '''
         '''
         if nregisters == 1:
@@ -72,7 +73,7 @@ class ModbusCommunicator(SerialCommunicator):
         return self.read_holding_register(register,
                                           nregisters, response_type, **kw)
 
-    def _execute_request(self, args, response_type, ** kw):
+    def _execute_request(self, args, response_type, **kw):
         '''
         '''
         cmd = ''.join([self.slave_address] + args)
@@ -89,7 +90,7 @@ class ModbusCommunicator(SerialCommunicator):
         if self.scheduler is not None:
             resp = self.scheduler.schedule(self.ask, args=(cmd,),
                                            kwargs=kw
-                                           )
+            )
         else:
             resp = self.ask(cmd, **kw)
 
@@ -100,7 +101,7 @@ class ModbusCommunicator(SerialCommunicator):
         '''
         gen = range(0, len(hexstr), 2)
         if return_type == 'int':
-            return [int(hexstr[i:i + 2], 16) for i in  gen]
+            return [int(hexstr[i:i + 2], 16) for i in gen]
         else:
             return [hexstr[i:i + 2] for i in gen]
 
@@ -113,7 +114,7 @@ class ModbusCommunicator(SerialCommunicator):
             if args:
                 if args[0] != cmd[:2]:
                     self.warning('{} != {}     {} >> {}'.format(cmd[:2],
-                                                    args[0], cmd, resp))
+                                                                args[0], cmd, resp))
                     return
             else:
                 return
@@ -124,7 +125,9 @@ class ModbusCommunicator(SerialCommunicator):
             crc = ''.join(args[-2:])
             calc_crc = computeCRC(cargs[:-2])
             if not crc.upper() == calc_crc.upper():
-                self.warning('Returned CRC ({}) does not match calculated ({})'.format(crc, calc_crc))
+                msg='Returned CRC ({}) does not match calculated ({})'.format(crc, calc_crc)
+                self.warning(msg)
+                raise CRCError('{} {}'.format(cmd, msg))
             else:
                 if response_type == 'register_write':
                     return True
@@ -172,7 +175,7 @@ class ModbusCommunicator(SerialCommunicator):
                     return int(data, 16)
 
     def set_multiple_registers(self, startid,
-                                nregisters, value, response_type, **kw):
+                               nregisters, value, response_type, **kw):
         '''
         '''
 
@@ -203,7 +206,7 @@ class ModbusCommunicator(SerialCommunicator):
                                      response_type, **kw)
 
     def set_single_register(self, rid, value,
-                            response_type, func_code='06', ** kw):
+                            response_type, func_code='06', **kw):
         '''
         '''
         register_addr = '{:04X}'.format(int(rid))
@@ -218,7 +221,7 @@ class ModbusCommunicator(SerialCommunicator):
         data_address = '{:04X}'.format(holdid)
         n = '{:04X}'.format(nregisters)
         return self._execute_request([func_code, data_address, n],
-                                      response_type, **kw)
+                                     response_type, **kw)
 
 #    def read_input_status(self, inputid, ninputs):
 #        '''

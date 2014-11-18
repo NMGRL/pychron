@@ -21,6 +21,7 @@ from chaco.api import ColorBar, LinearMapper
 from chaco.data_range_1d import DataRange1D
 from chaco.default_colormaps import color_map_name_dict, gray
 #=============standard library imports ========================
+from numpy import array
 #=============local library imports  ==========================
 from graph import Graph
 from graph import name_generator
@@ -49,9 +50,16 @@ class ContourGraph(Graph):
             if style == 'cmap_scatter':
                 c = 'c1'
                 self.series[plotid][1] += (c,)
+                if z is None:
+                    z = array([])
 
-                self.plots[plotid].data.set_data(c, [])
+                self.plots[plotid].data.set_data(c, z)
                 names += (c,)
+
+            if style == 'xy':
+                style = 'line'
+            print style
+            rd['type'] = style
             return plot.plot(names, **rd)
 
         else:

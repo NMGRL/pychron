@@ -1,37 +1,40 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-import os
+# ============= enthought library imports =======================
 
-from traits.api import HasTraits, List, Any, Bool
+from traits.api import HasTraits, List, Any, Bool, Int, Instance, Enum
 from traits.trait_errors import TraitError
-from traitsui.api import View, Item, UItem, CheckListEditor, VGroup, Handler
+from traitsui.api import View, Item, UItem, CheckListEditor, VGroup, Handler, HGroup, Tabbed
 import apptools.sweet_pickle as pickle
-
-#============= standard library imports ========================
+# ============= standard library imports ========================
+from datetime import datetime
+import os
 #============= local library imports  ==========================
 from pychron.paths import paths
+
+SIZES = (6, 8, 9, 10, 11, 12, 14, 15, 18, 24, 36)
 
 
 class TableConfigurerHandler(Handler):
     def closed(self, info, is_ok):
         if is_ok:
-            info.object.dump()
-            info.object.set_columns()
+            info.object.closed()
+            # info.object.dump()
+            # info.object.set_columns()
 
 
 class TableConfigurer(HasTraits):
@@ -39,6 +42,14 @@ class TableConfigurer(HasTraits):
     available_columns = List
     adapter = Any
     id = 'table'
+    font = Enum(*SIZES)
+
+    fontsize_enabled=Bool(True)
+
+    def closed(self):
+        self.dump()
+        self.set_columns()
+        self.set_font()
 
     def load(self):
         self._load_state()
@@ -46,21 +57,25 @@ class TableConfigurer(HasTraits):
     def dump(self):
         self._dump_state()
 
-    def _adapter_changed(self):
-        #cols=self.adapter.column_dict.keys()
-        adp = self.adapter
+    def _adapter_changed(self, adp):
+        if adp:
+            acols = [c for c, _ in adp.all_columns]
 
-        #acols=adp.ocolumns
-        #if not acols:
-        #    adp.ocolumns=acols=[c for c,_ in adp.columns]
-        acols = [c for c, _ in adp.all_columns]
+            #set currently visible columns
+            t = [c for c, _ in adp.columns]
+            cols = [c for c in acols if c in t]
 
-        t = [c for c, _ in adp.columns]
-        cols = [c for c in acols if c in t]
+            self.trait_setq(columns=cols)
 
-        self.trait_set(columns=cols, trait_change_notify=False)
-        self.available_columns = acols
-        self._load_state()
+            #set all available columns
+            self.available_columns = acols
+
+            self._set_font(adp.font)
+            self._load_state()
+
+    def _set_font(self, f):
+        s = f.pointSize()
+        self.font = s
 
     def _load_state(self):
         p = os.path.join(paths.hidden_dir, self.id)
@@ -81,6 +96,10 @@ class TableConfigurer(HasTraits):
 
                 self.columns = ncols
 
+            font = state.get('font', None)
+            if font:
+                self.font = font
+
             self._load_hook(state)
             self.set_columns()
 
@@ -95,11 +114,16 @@ class TableConfigurer(HasTraits):
                 pass
 
     def _get_dump(self):
-        obj = dict(columns=self.columns)
+        obj = dict(columns=self.columns,
+                   font=self.font)
         return obj
 
     def _load_hook(self, state):
         pass
+
+    def set_font(self):
+        if self.adapter:
+            self.adapter.font = 'arial {}'.format(self.font)
 
     def set_columns(self):
         # def _columns_changed(self):
@@ -108,19 +132,64 @@ class TableConfigurer(HasTraits):
 
     def _assemble_columns(self):
         d = self.adapter.all_columns_dict
-        return [(k, d[k]) for k, _ in self.adapter.all_columns if k in self.columns]
+        return [(k, d[k]) for k, v in self.adapter.all_columns if k in self.columns]
 
     def _get_columns_grp(self):
         return
 
+
+def str_to_time(lp):
+    lp = lp.replace('/', '-')
+    if lp.count('-') == 2:
+        y = lp.split('-')[-1]
+        y = 'y' if len(y) == 2 else 'Y'
+
+        fmt = '%m-%d-%{}'.format(y)
+    elif lp.count('-') == 1:
+        y = lp.split('-')[-1]
+        y = 'y' if len(y) == 2 else 'Y'
+
+        fmt = '%m-%{}'.format(y)
+    else:
+        fmt = '%Y' if len(lp) == 4 else '%y'
+
+    return datetime.strptime(lp, fmt)
+
+
+class AnalysisTableConfigurer(TableConfigurer):
+    id = 'analysis.table'
+    limit = Int
+
+    def _get_dump(self):
+        obj = super(AnalysisTableConfigurer, self)._get_dump()
+        obj['limit'] = self.limit
+
+        return obj
+
+    def _load_hook(self, obj):
+        self.limit = obj.get('limit', 500)
+
     def traits_view(self):
-        v = View(UItem('columns',
-                       style='custom',
-                       editor=CheckListEditor(name='available_columns', cols=3)),
-                 buttons=['OK', 'Revert'],
-                 kind='livemodal',
-                 handler=TableConfigurerHandler,
+        v = View(VGroup(VGroup(UItem('columns',
+                                     style='custom',
+                                     editor=CheckListEditor(name='available_columns', cols=3)),
+                               label='Columns', show_border=True),
+                        # Group(
+                        # VGroup(HGroup(Heading('Lower Bound'), UItem('use_low_post')),
+                        #            UItem('low_post', style='custom', enabled_when='use_low_post')),
+                        #     VGroup(HGroup(Heading('Upper Bound'), UItem('use_high_post')),
+                        #            UItem('high_post', style='custom', enabled_when='use_high_post')),
+                        #     VGroup(HGroup(Heading('Named Range'), UItem('use_named_date_range')),
+                        #            UItem('named_date_range', enabled_when='use_named_date_range'))),
+                        Item('limit',
+                             tooltip='Limit number of displayed analyses',
+                             label='Limit'),
+                        show_border=True,
+                        label='Limiting'),
+                 buttons=['OK', 'Cancel', 'Revert'],
+                 kind='modal',
                  title=self.title,
+                 handler=TableConfigurerHandler,
                  resizable=True,
                  width=300)
         return v
@@ -159,13 +228,161 @@ class SampleTableConfigurer(TableConfigurer):
         return v
 
 
+class IsotopeTableConfigurer(TableConfigurer):
+    id = 'recall.isotopes'
 
-#    column_mapper={'Sample':'name',
-#                   'Material':'material'}
-#    available_columns=(['Sample','Material'])
-#
-#class AnalysisTableConfigurer(HasTraits):
-#
-#    available_columns=(['Sample','Material'])
+    def traits_view(self):
+        v = View(VGroup(UItem('columns',
+                              style='custom',
+                              editor=CheckListEditor(name='available_columns', cols=3)),
+                        Item('font', enabled_when='fontsize_enabled'),
+                        show_border=True,
+                        label='Isotopes'))
+        return v
+
+
+class IntermediateTableConfigurer(TableConfigurer):
+    id = 'recall.intermediate'
+
+    def traits_view(self):
+        v = View(VGroup(UItem('columns',
+                              style='custom',
+                              editor=CheckListEditor(name='available_columns', cols=3)),
+                        Item('font', enabled_when='fontsize_enabled'),
+                        show_border=True,
+                        label='Intermediate'))
+        return v
+
+
+class RecallTableConfigurer(TableConfigurer):
+    isotope_table_configurer = Instance(IsotopeTableConfigurer, ())
+    intermediate_table_configurer = Instance(IntermediateTableConfigurer, ())
+    show_intermediate = Bool
+    experiment_fontsize = Enum(*SIZES)
+    measurement_fontsize = Enum(*SIZES)
+    extraction_fontsize = Enum(*SIZES)
+    main_measurement_fontsize =Enum(*SIZES)
+    main_extraction_fontsize=Enum(*SIZES)
+    main_computed_fontsize=Enum(*SIZES)
+
+    subview_names = ('experiment', 'measurement', 'extraction')
+    main_names=('measurement','extraction','computed')
+    bind_fontsizes=Bool(False)
+    global_fontsize=Enum(*SIZES)
+
+    # def closed(self):
+    #     super(RecallTableConfigurer, self).closed()
+    #     self.experiment_view
+
+    def _get_dump(self):
+        obj = super(RecallTableConfigurer, self)._get_dump()
+        obj['show_intermediate'] = self.show_intermediate
+        for a in self.subview_names:
+            a = '{}_fontsize'.format(a)
+            obj[a] = getattr(self, a)
+
+        for a in self.main_names:
+            a = 'main_{}_fontsize'.format(a)
+            obj[a] = getattr(self, a)
+
+        for attr in ('global_fontsize', 'bind_fontsizes'):
+            obj[attr]=getattr(self, attr)
+
+        return obj
+
+    def _load_hook(self, obj):
+        self.show_intermediate = obj.get('show_intermediate', True)
+        self.isotope_table_configurer.load()
+        self.intermediate_table_configurer.load()
+
+        for a in self.subview_names:
+            a = '{}_fontsize'.format(a)
+            setattr(self, a, obj.get(a, 10))
+
+        for a in self.main_names:
+            a = 'main_{}_fontsize'.format(a)
+            setattr(self, a, obj.get(a, 10))
+
+        for attr in ('global_fontsize', 'bind_fontsizes'):
+            try:
+                setattr(self, attr, obj[attr])
+            except KeyError:
+                pass
+
+    def dump(self):
+        super(RecallTableConfigurer, self).dump()
+        self.intermediate_table_configurer.dump()
+        self.isotope_table_configurer.dump()
+
+    def set_columns(self):
+        self.isotope_table_configurer.set_columns()
+        self.intermediate_table_configurer.set_columns()
+
+    def set_font(self):
+        self.isotope_table_configurer.set_font()
+        self.intermediate_table_configurer.set_font()
+
+    def set_fonts(self, av):
+        self.set_font()
+
+        for a in self.subview_names:
+            s = getattr(self, '{}_fontsize'.format(a))
+            av.update_fontsize(a, s)
+
+        for a in self.main_names:
+            av.update_fontsize('main.{}'.format(a),
+                               getattr(self,'main_{}_fontsize'.format(a)))
+
+        av.main_view.refresh_needed=True
+
+    def _bind_fontsizes_changed(self, new):
+        if new:
+            self._global_fontsize_changed()
+        self.isotope_table_configurer.fontsize_enabled=not new
+        self.intermediate_table_configurer.fontsize_enabled=not new
+
+    def _global_fontsize_changed(self):
+        gf =self.global_fontsize
+        self.isotope_table_configurer.font=gf
+        self.intermediate_table_configurer.font=gf
+
+        self.main_measurement_fontsize =gf
+        self.main_extraction_fontsize = gf
+        self.main_computed_fontsize = gf
+
+    def traits_view(self):
+        main_grp = VGroup(HGroup(Item('bind_fontsizes'),
+                                         Item('global_fontsize', enabled_when='bind_fontsizes')),
+                           Item('main_extraction_fontsize', enabled_when='not bind_fontsizes'),
+                           Item('main_measurement_fontsize', enabled_when='not bind_fontsizes'),
+                           Item('main_computed_fontsize', enabled_when='not bind_fontsizes'))
+
+        main_view = VGroup(main_grp,
+                           UItem('isotope_table_configurer', style='custom'),
+                           HGroup(Item('show_intermediate', label='Show Intermediate Table')),
+                           UItem('intermediate_table_configurer', style='custom', enabled_when='show_intermediate'),
+                           label='Main')
+
+        experiment_view = VGroup(Item('experiment_fontsize',label='Size'),
+                                 show_border=True,
+                                 label='Experiment')
+        measurement_view = VGroup(Item('measurement_fontsize', label='Size'),
+                                  show_border=True,
+                                  label='Measurement')
+        extraction_view = VGroup(Item('extraction_fontsize', label='Size'),
+                                 show_border=True,
+                                 label='Extraction')
+        v = View(Tabbed(main_view,
+                        VGroup(experiment_view,
+                        measurement_view,
+                        extraction_view, label='Scripts')),
+
+                 buttons=['OK', 'Cancel', 'Revert'],
+                 kind='modal',
+                 title='Configure Table',
+                 handler=TableConfigurerHandler,
+                 resizable=True,
+                 width=300)
+        return v
+
 #============= EOF =============================================
-

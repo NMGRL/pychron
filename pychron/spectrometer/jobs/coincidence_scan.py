@@ -16,11 +16,13 @@
 
 #============= enthought library imports =======================
 #============= standard library imports ========================
-import numpy as np
 from ConfigParser import ConfigParser
 import os
-import time
+
+import numpy as np
+
 #============= local library imports  ==========================
+from pychron.core.stats.peak_detection import PeakCenterError
 from pychron.spectrometer.jobs.peak_center import calculate_peak_center
 from pychron.paths import paths
 from pychron.spectrometer.jobs.magnet_scan import MagnetScan
@@ -49,14 +51,17 @@ class CoincidenceScan(MagnetScan):
             xs = lp.index.get_data()
             ys = lp.value.get_data()
 
-            result = None
+            # result = None
             cx = None
             if len(xs) and len(ys):
-                result = calculate_peak_center(xs, ys)
-            if result is None or isinstance(result, str):
-                self.warning('no peak center for {} {}'.format(di.name, di.isotope))
-            else:
-                cx = result[0][1]
+                try:
+                    result = calculate_peak_center(xs, ys)
+                    cx = result[0][1]
+                except PeakCenterError:
+                    self.warning('no peak center for {} {}'.format(di.name, di.isotope))
+            # if result is None or isinstance(result, str):
+            #     self.warning('no peak center for {} {}'.format(di.name, di.isotope))
+            # else:
             return cx
 
         spec = self.spectrometer

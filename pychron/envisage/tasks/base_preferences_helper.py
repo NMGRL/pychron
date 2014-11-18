@@ -49,10 +49,13 @@ class FavoritesAdapter(ListStrAdapter):
 class BasePreferencesHelper(PreferencesHelper):
     def _get_value(self, name, value):
         if 'color' in name:
-            value = value.split('(')[1]
-            value = value[:-1]
-            value = map(float, value.split(','))
-            value = ','.join(map(lambda x: str(int(x * 255)), value))
+            try:
+                value = value.split('(')[1]
+                value = value[:-1]
+                value = map(float, value.split(','))
+                value = ','.join(map(lambda x: str(int(x * 255)), value))
+            except IndexError:
+                value = super(BasePreferencesHelper, self)._get_value(name, value)
         else:
             value = super(BasePreferencesHelper, self)._get_value(name, value)
         return value
@@ -79,6 +82,10 @@ class FavoritesPreferencesHelper(BasePreferencesHelper):
             vs = sel.split(',')
             for v, attr in zip(vs, self._get_attrs()):
                 setattr(self, attr, str(v))
+        self._selected_change_hook()
+
+    def _selected_change_hook(self):
+        pass
 
     def _delete_favorite_fired(self):
         if self.selected:

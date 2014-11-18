@@ -159,6 +159,7 @@ class BaselinesTable(Base):
     PeakTimeBlob = Column(BLOB, nullable=True)
     isotope = relationship('IsotopeTable', backref='baseline', uselist=False)
 
+
 #    changeable_item = relationship('baselineschangeableitemstable', uselist=False)
 
 class DatabaseVersionTable(Base):
@@ -205,8 +206,8 @@ class DetectorTypeTable(Base):
 
 
 class IrradiationPositionTable(Base):
-    '''
-    '''
+    """
+    """
     __tablename__ = 'IrradiationPositionTable'
 
     IrradPosition = Column(Integer, primary_key=True)
@@ -336,6 +337,7 @@ class FittypeTable(Base):
     results = relationship('IsotopeResultsTable', backref='fit',
                            #                          uselist=False
     )
+
 
 #    baseline_results = relationship('baselineschangeableitemstable', backref='fit',
 # #                          uselist=False

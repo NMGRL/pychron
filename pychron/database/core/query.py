@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,17 +17,24 @@
 #============= enthought library imports =======================
 from datetime import datetime, timedelta
 
+from sqlalchemy import cast, Date
 from traits.api import HasTraits, String, Property, Str, List, Button, Any, \
     Bool, cached_property, Event
 from traitsui.api import View, Item, EnumEditor, HGroup, CheckListEditor, \
     VGroup
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
+
+
 class NItem(Item):
     pass
-    padding = -15
+    # padding = -15
 
+now =datetime.now()
+one_year = timedelta(days=365)
+# RECENT_YEARS = [now.year, (now-one_year).year, (now-2*one_year).year]
 
 def compile_query(query):
     from sqlalchemy.sql import compiler
@@ -84,7 +91,6 @@ class TableSelector(HasTraits):
 class Query(HasTraits):
     use = Bool(True)
     parameter = String
-    #    parameters = Property(depends_on='query_table')
     parameters = Property
 
     comparator = Str('=')
@@ -92,10 +98,8 @@ class Query(HasTraits):
                         'starts with',
                         'contains', 'between'])
     criterion = String('')
-    #    criterion = String('')
     criteria = Property(depends_on='parameter,criteria_dirty')
     criteria_dirty = Event
-    #    query_table = Any
 
     selector = Any
 
@@ -105,9 +109,16 @@ class Query(HasTraits):
 
     parent_parameters = List(String)
     parent_criterions = List(String)
-    #    date_str = 'rundate'
+    parent_comparators = List(String)
 
     def assemble_filter(self, query, attr):
+        """
+            query: sqlalchemy.Query object
+            attr: sqlalchemy.Table.Column object
+
+            modify the query object by chaining .filter calls
+
+        """
         comp = self.comparator
         if self.parameter == 'Run Date/Time':
             query = self.date_query(query, attr)
@@ -131,9 +142,7 @@ class Query(HasTraits):
         if crit == 'this month':
             d = datetime.today()
             if '=' in comp:
-                d = d - timedelta(days=d.day, seconds=d.second, hours=d.hour, minutes=d.minute)
-                # query = query.filter(and_(attr <= today,
-                #                           attr >= d))
+                d,_ = self._convert_named_date(crit)
                 query = query.filter(attr.between(today, d))
                 return query
 
@@ -150,15 +159,27 @@ class Query(HasTraits):
         query = query.filter(getattr(attr, comp)(dt))
         return query
 
-    def date_query(self, q, attr):
-        criterion = self.criterion
-        comp = self.comparator
-        comp = self._convert_comparator(comp)
-        c = criterion.replace('/', '-')
+    def _convert_named_date(self, c, comp=None):
         if c in ('this month', 'yesterday', 'this week'):
-            return self._named_date_query(q, attr, comp, c)
-        else:
+            fmt = ''
+            today = datetime.today()
+            if c == 'this month':
+                d = datetime.today()
+                if comp is None:
+                    comp = self.comparator
+                    comp = self._convert_comparator(comp)
 
+                if '=' in comp:
+                    ret = d - timedelta(days=d.day, seconds=d.second, hours=d.hour, minutes=d.minute)
+                else:
+                    ret = d - timedelta(days=d.day - 1)
+            elif c == 'this week':
+                days = today.weekday()
+                ret = timedelta(days=days)
+            elif c == 'yesterday':
+                ret = today - timedelta(days=1)
+        else:
+            c=c.replace('/','-')
             if c.count('-') == 2:
                 y = c.split('-')[-1]
                 y = 'y' if len(y) == 2 else 'Y'
@@ -172,24 +193,30 @@ class Query(HasTraits):
             else:
                 fmt = '%Y' if len(c) == 4 else '%y'
 
-            d = datetime.strptime(c, fmt)
-            # print attr, comp, c, d
+            ret = datetime.strptime(c, fmt)
 
+        return ret, fmt
+
+    def date_query(self, q, attr):
+        criterion = self.criterion
+        comp = self.comparator
+        comp = self._convert_comparator(comp)
+        # c = criterion.replace('/', '-')
+        if criterion in ('this month', 'yesterday', 'this week'):
+            return self._named_date_query(q, attr, comp, criterion)
+        else:
+            d, fmt = self._convert_named_date(criterion, comp)
             if comp == 'between':
                 d = (d, datetime.strptime(self.rcriterion, fmt))
             else:
                 d = (d, )
-            q = q.filter(getattr(attr, comp)(*d))
-            #        c = '{}'.format(c)
-        return q
 
-    #
+            attr = cast(attr, Date)
+            q = q.filter(getattr(attr, comp)(*d))
+        return q
     #===============================================================================
     # private
     #===============================================================================
-    #    def _between(self, p, l, g):
-    #        return '{}<="{}" AND {}>="{}"'.format(p, l, p, g)
-
     def _convert_comparator(self, c):
         if c == '=':
             c = '__eq__'
@@ -201,20 +228,10 @@ class Query(HasTraits):
             c = '__le__'
         elif c == '>=':
             c = '__ge__'
-            #        elif c=='like':
 
         return c
 
-    #    @cached_property
     def _get_parameters(self):
-
-    #        b = self.query_table
-    #        params = [str(fi.column).split('.')[0].replace('Table', '').lower() for fi in b.__table__.foreign_keys]
-    #
-    #        params += [str(col) for col in b.__table__.columns]
-    # #        f = lambda x:[str(col)
-    # #                           for col in x.__table__.columns]
-    # #        params = list(f(b))
         params = self.__params__
         if not self.parameter:
             self.parameter = params[0]
@@ -230,20 +247,26 @@ class Query(HasTraits):
     def _remove_fired(self):
         self.selector.remove_query(self)
 
-    def _update_parent_parameter(self, obj, name, old, new):
+    def update_parent_parameter(self, obj, name, old, new):
         if old in self.parent_parameters:
             self.parent_parameters.remove(old)
 
         self.parent_parameters.append(new)
         self.criteria_dirty = True
 
-    def _update_parent_criterion(self, obj, name, old, new):
+    def update_parent_criterion(self, obj, name, old, new):
         if old in self.parent_criterions:
             self.parent_criterions.remove(old)
 
         self.parent_criterions.append(new)
         self.criteria_dirty = True
 
+    def update_parent_comparator(self, obj, name, old, new):
+        if old in self.parent_comparators:
+            self.parent_comparators.remove(old)
+
+        self.parent_comparators.append(new)
+        self.criteria_dirty = True
     #===============================================================================
     # property get/set
     #===============================================================================
@@ -253,29 +276,54 @@ class Query(HasTraits):
         db = self.selector.db
         param = self.parameter.lower()
         if param == 'run date/time':
-            cs = ['2013', '2012', 'this month', 'yesterday', 'this week']
+            ys = db.get_years_active()
+            cs = ys + ['this month', 'yesterday', 'this week']
         else:
-            funcname = 'get_{}s'.format(param)
+            kw = {}
+            func=None
+            display_name = 'name'
+            def extract(ci, _):
+                return ci[0]
+
+            if param =='irradiation':
+                funcname='get_irradiations_join_analysis'
+                func=extract
+            elif param =='labnumber':
+                funcname = 'get_labnumbers_join_analysis'
+                display_name='idenfifier'
+                func=extract
+            elif param == 'aliquot':
+                    display_name = 'aliquot'
+            elif param == 'step':
+                display_name = 'step'
+            else:
+                funcname = 'get_{}s'.format(param)
+
             if hasattr(db, funcname):
-                display_name = 'name'
                 if param == 'labnumber':
                     display_name = 'identifier'
-                elif param == 'aliquot':
-                    display_name = 'aliquot'
-                elif param == 'step':
-                    display_name = 'step'
 
-                cs = getattr(db, funcname)(joins=self._cumulate_joins(),
-                                           filters=self._cumulate_filters())
-                cs = list(set([getattr(ci, display_name) for ci in cs]))
-                cs.sort()
+                cj = self._cumulate_joins()
+                cf = self._cumulate_filters()
+                cs = getattr(db, funcname)(joins=cj,
+                                           filters=cf,
+                                           # distinct_=True,
+                                           debug_query=True,
+                                           **kw)
+                if func is None:
+                    func=getattr
+                # cs = list(set([getattr(ci, display_name) for ci in cs]))
+                cs = [func(ci, display_name) for ci in cs]
+                # cs.sort()
                 cs = map(str, cs)
         return cs
 
     def _cumulate_joins(self):
-        if self.parent_parameters:
+        ps = self.parent_parameters#+[self.parameter]
+        if ps:
             tjs = []
-            for pi in self.parent_parameters:
+
+            for pi in ps:
                 if pi in self.selector.lookup:
                     js = self.selector.lookup[pi][0]
                     for ji in js:
@@ -284,12 +332,27 @@ class Query(HasTraits):
             return tjs
 
     def _cumulate_filters(self):
-        if self.parent_parameters:
+        ps = self.parent_parameters#+[self.parameter]
+        pc = self.parent_comparators#+[self.comparator]
+        pr = self.parent_criterions#+[self.criterion]
+        if ps:
             tfs = []
-            for pi, ci in zip(self.parent_parameters, self.parent_criterions):
+            for pi, co, ci in zip(ps,
+                                  pc,
+                                  pr):
+
+                co=self._convert_comparator(co)
+                if pi=='Run Date/Time':
+                    ci, _ = self._convert_named_date(ci)
+
                 if pi in self.selector.lookup:
                     fi = self.selector.lookup[pi][1]
-                    tfs.append(fi == ci)
+                    if co is None:
+                        f = fi==ci
+                    else:
+                        f = getattr(fi, co)(ci)
+
+                    tfs.append(f)
             return tfs
 
             #===============================================================================

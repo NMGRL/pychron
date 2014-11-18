@@ -27,9 +27,9 @@ import os
 from pychron.paths import paths
 import yaml
 
+
 def DefaultInt(value=40):
     return Int(value)
-
 
 
 class SummaryPDFTableWriter(BasePDFTableWriter):
@@ -40,13 +40,13 @@ class SummaryPDFTableWriter(BasePDFTableWriter):
         title_para = self._new_paragraph(title)
         flowables = [title_para, self._vspacer(0.1)]
 
-#         t, t2 = self._make_table(samples)
+        #         t, t2 = self._make_table(samples)
         t = self._make_table(samples)
         flowables.append(t)
         flowables.append(self._vspacer(0.1))
-#         flowables.append(t2)
-#         n = self._make_notes()
-#         flowables.append(n)
+        #         flowables.append(t2)
+        #         n = self._make_notes()
+        #         flowables.append(n)
 
         return flowables, None
 
@@ -60,6 +60,7 @@ class SummaryPDFTableWriter(BasePDFTableWriter):
         style = self._new_style(header_line_idx=1)
 
         style.add('ALIGN', (0, 0), (-1, -1), 'LEFT')
+        style.add('VALIGN', (0, 0), (-1, -1), 'BOTTOM')
         style.add('LEFTPADDING', (0, 0), (-1, -1), 1)
         self._new_line(style, 0, cmd='LINEABOVE')
 
@@ -78,7 +79,6 @@ class SummaryPDFTableWriter(BasePDFTableWriter):
             if self.options.use_alternating_background:
                 idx = cnt + i
                 if i % 2 != 0:
-
                     style.add('BACKGROUND', (0, idx), (-1, idx),
                               self.options.get_alternating_background())
 
@@ -95,37 +95,54 @@ class SummaryPDFTableWriter(BasePDFTableWriter):
         return t
 
     def _make_header(self, style):
-        PMS = u'\u00b1 1\u03c3'
+        PMS_kca = u'\u00b1 {}\u03c3'.format(self.options.kca_nsigma)
+        PMS_age = u'\u00b1 {}\u03c3'.format(self.options.age_nsigma)
 
-        pr = Row()
-        pr.add_blank_item(6)
+        pr = Row(height=self.options.default_header_height)
+        pr.add_blank_item(7)
         pr.add_item(value='Preferred Age', span=-1)
-#         style.add('ALIGN', (0, 3), (0, -1), 'CENTER')
-        self._new_line(style, 0, weight=0.75, start=4, end=-1)
+        #         style.add('ALIGN', (0, 3), (0, -1), 'CENTER')
+        self._new_line(style, 0, weight=0.75, start=5, end=-1)
 
-        r = Row()
+        r = Row(height=self.options.default_header_height)
 
         r.add_item(value='Sample')
         r.add_item(value='L#')
         r.add_item(value='Irrad')
         r.add_item(value='Material')
+        r.add_item(value='Lithology')
 
         r.add_item(value='Type')
         r.add_item(value='N')
         r.add_item(value='MSWD')
         r.add_item(value='K/Ca')
-        r.add_item(value=PMS)
-        r.add_item(value='Age')
-        r.add_item(value=PMS)
+        r.add_item(value=PMS_kca)
+        r.add_item(value='Age({})'.format(self.options.age_units))
+        r.add_item(value=PMS_age)
 
         return (pr, r,)
 
     def _make_interpreted_age_row(self, interpreted_age):
-        row = Row()
+        age_nsigma = self.options.age_nsigma
+        kca_nsigma = self.options.kca_nsigma
+
+        #age in Ma
+        age = interpreted_age.age
+        age_err = interpreted_age.age_err
+
+        if self.options.age_units == 'ka':
+            age *= 1000
+            age_err *= 1000
+
+        age_sig_figs = self.options.age_sig_figs
+        kca_sig_figs = self.options.kca_sig_figs
+
+        row = Row(height=self.options.default_row_height)
         row.add_item(value=interpreted_age.sample)
         row.add_item(value=interpreted_age.identifier)
         row.add_item(value=interpreted_age.irradiation)
         row.add_item(value=self._short_material_name(interpreted_age.material))
+        row.add_item(value=interpreted_age.lithology)
         row.add_item(value=interpreted_age.age_kind)
         row.add_item(value=interpreted_age.nanalyses)
         row.add_item(value=floatfmt(interpreted_age.mswd, n=1))
@@ -133,10 +150,12 @@ class SummaryPDFTableWriter(BasePDFTableWriter):
         # row.add_item(value=self._error(n=1)(interpreted_age.weighted_kca))
         # row.add_item(value=self._value(n=4)(interpreted_age.weighted_age))
         # row.add_item(value=self._error(n=4)(interpreted_age.weighted_age))
-        row.add_item(value=floatfmt(interpreted_age.wtd_kca, n=4))
-        row.add_item(value=floatfmt(interpreted_age.wtd_kca_err, n=4))
-        row.add_item(value=floatfmt(interpreted_age.age, n=4))
-        row.add_item(value=floatfmt(interpreted_age.age_err, n=4))
+        row.add_item(value=floatfmt(interpreted_age.kca,
+                                    n=kca_sig_figs))
+        row.add_item(value=floatfmt(interpreted_age.kca_err * kca_nsigma,
+                                    n=kca_sig_figs))
+        row.add_item(value=floatfmt(age, n=age_sig_figs))
+        row.add_item(value=floatfmt(age_err * age_nsigma, n=age_sig_figs))
 
         return row
 
@@ -150,9 +169,10 @@ class SummaryPDFTableWriter(BasePDFTableWriter):
             if v.height:
                 table._argH[i] = v.height * inch
 
-#===============================================================================
-# summary
-#===============================================================================
+            #===============================================================================
+            # summary
+            #===============================================================================
+
     def _make_notes(self, data, style):
         p = os.path.join(paths.template_dir, self.notes_template)
 
@@ -182,8 +202,7 @@ class SummaryPDFTableWriter(BasePDFTableWriter):
                 if hasattr(colors, bgcolor):
                     idx = len(data) - 1
                     style.add('BACKGROUND', (0, idx), (-1, idx),
-                          getattr(colors, bgcolor),
-                          )
+                              getattr(colors, bgcolor))
 
 #===============================================================================
 # footnotes

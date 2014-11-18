@@ -1,11 +1,11 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,7 +21,7 @@ from traits.api import HasTraits, List, Dict
 #============= standard library imports ========================
 import csv
 from pychron.loggable import Loggable
-from pychron.pychron_constants import ARGON_KEYS, IRRADIATION_KEYS, DECAY_KEYS
+from pychron.pychron_constants import IRRADIATION_KEYS, DECAY_KEYS
 #============= local library imports  ==========================
 # from pychron.core.stats import calculate_mswd, calculate_weighted_mean
 # from pychron.data_processing.argon_calculations import calculate_arar_age, find_plateaus
@@ -71,6 +71,7 @@ class AutoupdateParser(Loggable):
                 get_value = lambda x, **kw: self._get_value(x, header, line, **kw)
 
                 sample = get_value('Sample', cast=str)
+
                 if not sample:
                     break
 
@@ -92,8 +93,25 @@ class AutoupdateParser(Loggable):
 
                 params['j'] = get_value('J')
                 params['j_err'] = get_value('J_Er')
+                params['lambda_b_v'] = get_value('Lambda_40K_Beta')
+                params['lambda_b_e'] = get_value('Lambda_40K_epsilon')
+                params['ar39decayfactor'] = get_value('39_Decay')
+                params['ar37decayfactor'] = get_value('37_Decay')
 
-                params['k_ca'] = 1 / float(get_value('Ca_Over_K'))
+                params['ca3937'] = get_value('Ca_39_Over_37')
+                params['ca3837'] = get_value('Ca_38_Over_37')
+                params['ca3637'] = get_value('Ca_36_Over_37')
+
+                params['k3839'] = get_value('K_38_Over_39')
+                params['k3739'] = get_value('K_37_Over_39')
+                params['k4039'] = get_value('K_40_Over_39')
+                params['cl3638'] = get_value('P36Cl_Over_38Cl')
+
+                try:
+                    params['k_ca'] = 1 / float(get_value('Ca_Over_K'))
+                except ZeroDivisionError:
+                    params['k_ca'] = 0
+
                 params['k_ca_err'] = get_value('Ca_Over_K_Er')
 
                 params['rad40_percent'] = get_value('PctAr40Rad')
@@ -106,7 +124,10 @@ class AutoupdateParser(Loggable):
                 params['Isoch_39_40err'] = get_value('Pct_i39_Over_40_Er')
                 params['Isoch_36_40err'] = get_value('Pct_i36_Over_40_Er')
 
-                for si in ARGON_KEYS:
+                fts = get_value('Fit_Type', cast=str)
+
+                #mass spec measures 36 before 37
+                for i, si in enumerate(('Ar40', 'Ar39', 'Ar38', 'Ar36', 'Ar37')):
                     params[si] = get_value('{}_'.format(si))
                     bs_only = '{}_BslnCorOnly'.format(si)
                     bs_only_err = '{}_Er_BslnCorOnly'.format(si)
@@ -124,6 +145,7 @@ class AutoupdateParser(Loggable):
                     cetag = '{}_DecayCor'.format(si)
                     params[ctag] = get_value(ctag)
                     params[cetag] = get_value(cetag)
+                    params['{}_fit'.format(si)] = fts[i]
 
                 for attr, key in DECAY_KEYS:
                     params[attr] = float(get_value(key))
@@ -140,7 +162,10 @@ class AutoupdateParser(Loggable):
         try:
             v = line[header.index(key)]
             if cast:
-                v = cast(v)
+                try:
+                    v = cast(v)
+                except ValueError:
+                    v = 0
         except IndexError:
             v = default
 

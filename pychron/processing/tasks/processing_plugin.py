@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,6 +17,7 @@
 #============= enthought library imports =======================
 from envisage.ui.tasks.task_factory import TaskFactory
 from envisage.ui.tasks.task_extension import TaskExtension
+from pyface.action.menu_manager import MenuManager
 from pyface.tasks.action.schema_addition import SchemaAddition
 from pyface.action.group import Group
 from pyface.tasks.action.schema import SMenu
@@ -27,18 +28,27 @@ from pychron.core.helpers.filetools import to_bool
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.processing.processor import Processor
 from pychron.processing.tasks.actions.import_actions import EasyImportAction
-from pychron.processing.tasks.actions.easy_actions import EasyFitAction, EasyBlanksAction, EasyDiscriminationAction, EasyFiguresAction, EasyTablesAction, EasyICAction, EasyFluxAction, EasySensitivityAction
+from pychron.processing.tasks.actions.easy_actions import EasyFitAction, EasyBlanksAction, EasyDiscriminationAction, \
+    EasyFiguresAction, EasyTablesAction, EasyICAction, EasyFluxAction, EasySensitivityAction, EasyCompareAction, \
+    EasyFaradayICAction, EasyAverageBlanksAction
 from pychron.processing.tasks.actions.processing_actions import IdeogramAction, \
     RecallAction, SpectrumAction, \
     EquilibrationInspectorAction, InverseIsochronAction, GroupSelectedAction, \
     GroupbyAliquotAction, GroupbyLabnumberAction, ClearGroupAction, \
-    SeriesAction, SetInterpretedAgeAction, OpenAdvancedQueryAction, OpenInterpretedAgeAction, ClearAnalysisCacheAction, ExportAnalysesAction, \
-    GraphGroupSelectedAction, FigureFromFile
+    SeriesAction, SetInterpretedAgeAction, OpenInterpretedAgeAction, ClearAnalysisCacheAction, \
+    ExportAnalysesAction, \
+    GraphGroupSelectedAction, IdeogramFromFile, SpectrumFromFile, MakeAnalysisGroupAction, GraphGroupbySampleAction, \
+    DeleteAnalysisGroupAction, XYScatterAction, ModifyK3739Action, GroupbySampleAction, \
+    SplitEditorActionVert, ConfigureRecallAction, ActivateBlankAction, ActivateRecallAction, ActivateIdeogramAction
 
 from pychron.processing.tasks.actions.edit_actions import BlankEditAction, \
     FluxAction, IsotopeEvolutionAction, ICFactorAction, \
-    BatchEditAction, TagAction, DatabaseSaveAction, DiscriminationAction
-from pychron.processing.tasks.interpreted_age.actions import OpenInterpretedAgeGroupAction, DeleteInterpretedAgeGroupAction, MakeGroupFromFileAction
+    BatchEditAction, TagAction, DatabaseSaveAction, DiscriminationAction, DataReductionTagAction, \
+    SelectDataReductionTagAction
+from pychron.processing.tasks.figures.actions import RefreshActiveEditorAction
+from pychron.processing.tasks.interpreted_age.actions import OpenInterpretedAgeGroupAction, \
+    DeleteInterpretedAgeGroupAction, MakeGroupFromFileAction, MakeDataTablesAction, MakeTASAction
+from pychron.processing.tasks.recall.actions import SummaryLabnumberAction, CalculationViewAction
 from pychron.processing.tasks.vcs_data.actions import PushVCSAction, PullVCSAction
 from pychron.processing.tasks.isotope_evolution.actions import CalcOptimalEquilibrationAction
 from pychron.processing.tasks.preferences.offline_preferences import OfflinePreferencesPane
@@ -83,8 +93,12 @@ Install to enable MS Excel export''')
                 IdeogramAction(),
                 InverseIsochronAction(),
                 SeriesAction(),
-                FigureFromFile()
-                )
+                XYScatterAction(),
+                MenuManager(IdeogramFromFile(),
+                            SpectrumFromFile(),
+                            name='From File'),
+                RefreshActiveEditorAction(),
+                name='Figures')
 
         def data_menu():
             return SMenu(id='data.menu', name='Data')
@@ -93,50 +107,90 @@ Install to enable MS Excel export''')
             return SMenu(id='vcs.menu', name='VCS')
 
         def grouping_group():
-            return Group(GroupSelectedAction(),
-                         GroupbyAliquotAction(),
-                         GroupbyLabnumberAction(),
-                         ClearGroupAction(),)
-
-        def graph_grouping_group():
-            return Group(GraphGroupSelectedAction())
+            return SMenu(Group(GroupSelectedAction(),
+                               GroupbyAliquotAction(),
+                               GroupbyLabnumberAction(),
+                               GroupbySampleAction(),
+                               ClearGroupAction()),
+                         Group(GraphGroupSelectedAction(),
+                               GraphGroupbySampleAction()),
+                         name='Grouping')
 
         def reduction_group():
             return Group(IsotopeEvolutionAction(),
                          BlankEditAction(),
                          ICFactorAction(),
                          DiscriminationAction(),
-                         FluxAction())
+                         FluxAction(),
+                         name='Reduction')
 
         def interpreted_group():
-            return Group(SetInterpretedAgeAction(),
+            return SMenu(SetInterpretedAgeAction(),
                          OpenInterpretedAgeAction(),
                          OpenInterpretedAgeGroupAction(),
                          DeleteInterpretedAgeGroupAction(),
-                         MakeGroupFromFileAction())
+                         MakeGroupFromFileAction(),
+                         name='Interpreted Ages')
 
-        def easy_group():
-            return Group(EasyImportAction(),
-                         EasyFiguresAction(),
-                         EasyTablesAction(),
-                         EasySensitivityAction())
+        def analysis_group():
+            return SMenu(MakeAnalysisGroupAction(),
+                         DeleteAnalysisGroupAction(),
+                         name='Analysis Grouping')
+
+        def recall_group():
+            return Group(RecallAction(),
+                         # OpenAdvancedQueryAction(),
+                         ConfigureRecallAction())
+
+        def misc_group():
+            return Group(TagAction(),
+                         DataReductionTagAction(),
+                         SelectDataReductionTagAction(),
+                         DatabaseSaveAction(),
+                         ClearAnalysisCacheAction(),
+                         MakeTASAction(),
+                         ModifyK3739Action(),
+                         CalculationViewAction(),
+                         SummaryLabnumberAction(),
+                         name='misc')
+
+        def activate_group():
+            return Group(ActivateBlankAction(),
+                         ActivateRecallAction(),
+                         ActivateIdeogramAction())
 
         default_actions = [('recall_action', RecallAction, 'MenuBar/File'),
-                           ('find_action', OpenAdvancedQueryAction, 'MenuBar/File'),
+                           #('find_action', OpenAdvancedQueryAction, 'MenuBar/File'),
+                           ('export_analyses', ExportAnalysesAction, 'MenuBar/File'),
+
                            ('batch_edit', BatchEditAction, 'MenuBar/Edit'),
 
+                           ('recall_group', recall_group, 'MenuBar/data.menu', {'absolute_position': 'first'}),
                            ('data', data_menu, 'MenuBar', {'before': 'tools.menu', 'after': 'view.menu'}),
+
+
+                           ('activate_group', activate_group, 'MenuBar/view.menu'),
                            ('reduction_group', reduction_group, 'MenuBar/data.menu'),
                            ('figure_group', figure_group, 'MenuBar/data.menu'),
                            ('interpreted_group', interpreted_group, 'MenuBar/data.menu'),
-
-                           ('tag', TagAction, 'MenuBar/data.menu'),
-                           ('database_save', DatabaseSaveAction, 'MenuBar/data.menu'),
                            ('grouping_group', grouping_group, 'MenuBar/data.menu'),
-                           ('graph_grouping_group', graph_grouping_group, 'MenuBar/data.menu'),
-                           ('clear_cache', ClearAnalysisCacheAction, 'MenuBar/data.menu'),
-                           ('export_analyses', ExportAnalysesAction, 'MenuBar/File'),
-                           ('equil_inspector', EquilibrationInspectorAction, 'MenuBar/tools.menu')]
+
+                           ('misc_group', misc_group, 'MenuBar/data.menu'),
+                           # ('tag', TagAction, 'MenuBar/data.menu'),
+                           # ('database_save', DatabaseSaveAction, 'MenuBar/data.menu'),
+
+                           # ('graph_grouping_group', graph_grouping_group, 'MenuBar/data.menu'),
+                           # ('clear_cache', ClearAnalysisCacheAction, 'MenuBar/data.menu'),
+                           ('make_analysis_group', analysis_group, 'MenuBar/data.menu'),
+                           ('make_data_tables', MakeDataTablesAction, 'MenuBar/data.menu',
+                            {'absolute_position': 'last'}),
+                           # ('make_tas', MakeTASAction, 'MenuBar/data.menu'),
+                           # ('modify_k3739', ModifyK3739Action, 'MenuBar/data.menu'),
+
+                           ('equil_inspector', EquilibrationInspectorAction, 'MenuBar/tools.menu'),
+                           # ('split_editor_area', SplitEditorActionHor, 'MenuBar/window.menu'),
+                           ('split_editor_area', SplitEditorActionVert, 'MenuBar/window.menu')
+        ]
 
         exts = [self._make_task_extension(default_actions)]
 
@@ -148,19 +202,29 @@ Install to enable MS Excel export''')
 
         use_easy = to_bool(self.application.preferences.get('pychron.processing.use_easy'))
         if use_easy:
+            def easy_group():
+                return Group(EasyImportAction(),
+                             EasyFiguresAction(),
+                             EasyCompareAction(),
+                             EasyTablesAction(),
+                             EasySensitivityAction(),
+                             EasyFaradayICAction(),
+                             EasyAverageBlanksAction(),
+                             id='easy.group')
+
             grp = self._make_task_extension([('easy_group', easy_group, 'MenuBar/tools.menu')])
             a = self._make_task_extension(
                 [('optimal_equilibration', CalcOptimalEquilibrationAction, 'MenuBar/tools.menu'),
-                 ('easy_fit', EasyFitAction, 'MenuBar/tools.menu/easy.group')],
+                 ('easy_fit', EasyFitAction, 'MenuBar/tools.menu')],
                 task_id='pychron.processing.isotope_evolution')
 
-            b = self._make_task_extension([('easy_blanks', EasyBlanksAction, 'MenuBar/Tools/easy.group')],
+            b = self._make_task_extension([('easy_blanks', EasyBlanksAction, 'MenuBar/tools.menu')],
                                           task_id='pychron.processing.blanks')
 
-            c = self._make_task_extension([('easy_disc', EasyDiscriminationAction, 'MenuBar/tools.menu/easy.group')],
+            c = self._make_task_extension([('easy_disc', EasyDiscriminationAction, 'MenuBar/tools.menu')],
                                           task_id='pychron.processing.discrimination')
 
-            d = self._make_task_extension([('easy_ic', EasyICAction, 'MenuBar/tools.menu/easy.group')],
+            d = self._make_task_extension([('easy_ic', EasyICAction, 'MenuBar/tools.menu')],
                                           task_id='pychron.processing.ic_factor')
 
             e = self._make_task_extension([('easy_flux', EasyFluxAction, 'MenuBar/tools.menu')],
@@ -172,8 +236,7 @@ Install to enable MS Excel export''')
 
     def _meta_task_factory(self, i, f, n, task_group=None,
                            accelerator='', include_view_menu=False,
-                           image=None
-    ):
+                           image=None):
         return TaskFactory(id=i, factory=f, name=n,
                            task_group=task_group,
                            accelerator=accelerator,
@@ -184,8 +247,8 @@ Install to enable MS Excel export''')
         tasks = [
             ('pychron.recall',
              self._recall_task_factory, 'Recall'),
-            ('pychron.advanced_query',
-             self._advanced_query_task_factory, 'Advanced Query'),
+            # ('pychron.advanced_query',
+            #  self._advanced_query_task_factory, 'Advanced Query'),
 
             ('pychron.processing.blanks',
              self._blanks_edit_task_factory, 'Blanks'),
@@ -218,13 +281,13 @@ Install to enable MS Excel export''')
             ('pychron.export',
              self._export_task_factory, 'Export', '', '')]
 
-        return [
-            self._meta_task_factory(*args)
-            for args in tasks
-        ]
+        return [self._meta_task_factory(*args) for args in tasks]
 
     def _processor_factory(self):
         return Processor(application=self.application)
+
+    # def _dataset_factory(self):
+    #     return DataSetTask(manager=self._prcoessor_factory())
 
     def _blanks_edit_task_factory(self):
         from pychron.processing.tasks.blanks.blanks_task import BlanksTask
@@ -236,10 +299,10 @@ Install to enable MS Excel export''')
 
         return FluxTask(manager=self._processor_factory())
 
-    def _advanced_query_task_factory(self):
-        from pychron.processing.tasks.query.advanced_query_task import AdvancedQueryTask
-
-        return AdvancedQueryTask(manager=self._processor_factory())
+    # def _advanced_query_task_factory(self):
+    #     from pychron.processing.tasks.query.advanced_query_task import AdvancedQueryTask
+    #
+    #     return AdvancedQueryTask(manager=self._processor_factory())
 
     def _recall_task_factory(self):
         from pychron.processing.tasks.recall.recall_task import RecallTask
@@ -252,7 +315,8 @@ Install to enable MS Excel export''')
         return IsotopeEvolutionTask(manager=self._processor_factory())
 
     def _ic_factor_task_factory(self):
-        from pychron.processing.tasks.detector_calibration.intercalibration_factor_task import IntercalibrationFactorTask
+        from pychron.processing.tasks.detector_calibration.intercalibration_factor_task import \
+            IntercalibrationFactorTask
 
         return IntercalibrationFactorTask(manager=self._processor_factory())
 

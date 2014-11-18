@@ -16,16 +16,14 @@
 
 
 #============= enthought library imports =======================
-import os
 
 from pyface.message_dialog import warning
 from pyface.action.api import Action
 from pyface.tasks.task_window_layout import TaskWindowLayout
 from pyface.tasks.action.task_action import TaskAction
 
-
 #============= standard library imports ========================
-
+import os
 #============= local library imports  ==========================
 from pychron.envisage.resources import icon
 from pychron.paths import paths
@@ -46,6 +44,7 @@ class ExperimentAction(Action):
         application.open_task(self.task_id)
 
         #         for wi in application.windows:
+
 
 #             if wi.active_task.id == self.task_id:
 #                 wi.activate()
@@ -71,9 +70,9 @@ class BasePatternAction(TaskAction):
                 self._enabled = False
 
     def _enabled_update(self):
-        '''
+        """
              reimplement ListeningAction's _enabled_update
-        '''
+        """
         if self.enabled_name:
             if self.object:
                 self.enabled = bool(self._get_attr(self.object,
@@ -109,6 +108,28 @@ class DeselectAction(TaskAction):
     tooltip = 'Deselect the selected run(s)'
 
 
+class UndoAction(TaskAction):
+    name = 'Undo'
+    method = 'undo'
+    accelerator = 'Ctrl+Z'
+
+
+class QueueConditionalsAction(Action):
+    name = 'Edit Queue Conditionals'
+    def perform(self, event):
+        task=event.task
+        if hasattr(task, 'edit_queue_conditionals'):
+            task.edit_queue_conditionals()
+        else:
+            from pychron.experiment.conditional.conditionals_edit_view import edit_conditionals
+
+            dnames=None
+            spec=task.application.get_service('pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager')
+            if spec:
+                dnames=spec.spectrometer.detector_names
+
+            edit_conditionals(None, detectors=dnames, app=task.application)
+
 
 class QueueAction(ExperimentAction):
     def _open_experiment(self, event, path=None):
@@ -143,19 +164,33 @@ class OpenLastExperimentQueueAction(QueueAction):
     description = 'Open last executed experiment'
     name = 'Open Last Experiment...'
     accelerator = 'Alt+Ctrl+O'
+
     def __init__(self, *args, **kw):
-        super(OpenLastExperimentQueueAction,self).__init__(*args, **kw)
-        self.enabled=os.path.isfile(paths.last_experiment)
+        super(OpenLastExperimentQueueAction, self).__init__(*args, **kw)
+        self.enabled = bool(self._get_last_experiment())
 
     def perform(self, event):
+        path = self._get_last_experiment()
+        if path:
+            self._open_experiment(event, path)
+        else:
+            warning(None, 'No last experiment available')
+        # if os.path.isfile(paths.last_experiment):
+        #     with open(paths.last_experiment, 'r') as fp:
+        #         path = fp.readline()
+        #         if os.path.isfile(path):
+        #             self._open_experiment(event, path)
+        #         else:
+        #             print 'asdfasdf', path
+        # else:
+        #     warning(None, 'No last experiment available')
+
+    def _get_last_experiment(self):
         if os.path.isfile(paths.last_experiment):
             with open(paths.last_experiment, 'r') as fp:
                 path = fp.readline()
                 if os.path.isfile(path):
-                    self._open_experiment(event, path)
-        else:
-            warning(None, 'No last experiment available')
-
+                    return path
 
 class OpenExperimentQueueAction(QueueAction):
     description = 'Open experiment'
@@ -165,6 +200,7 @@ class OpenExperimentQueueAction(QueueAction):
 
     def perform(self, event):
         path = '/Users/ross/Pychrondata_dev/experiments/Current Experiment.txt'
+        # path = '/Users/ross/Pychrondata_dev/experiments/test.txt'
         self._open_experiment(event, path)
 
 

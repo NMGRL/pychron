@@ -25,7 +25,7 @@ from pychron.managers.manager import Manager
 from pychron.graph.graph import Graph
 from pychron.spectrometer.jobs.peak_center import PeakCenter
 # from threading import Thread
-from pychron.spectrometer.detector import Detector
+from pychron.spectrometer.thermo.detector import Detector
 from pychron.pychron_constants import NULL_STR, QTEGRA_INTEGRATION_TIMES
 from pychron.core.ui.thread import Thread
 from pychron.paths import paths
@@ -103,6 +103,12 @@ class IonOpticsManager(Manager):
         return molweights[isotope_key]
 
     def position(self, pos, detector, use_dac=False, update_isotopes=True):
+        """
+            pos can be str or float
+            "Ar40", "39.962", 39.962
+
+            to set in DAC space set use_dac=True
+        """
         if pos == NULL_STR:
             return
 
@@ -117,15 +123,17 @@ class IonOpticsManager(Manager):
         else:
             self.debug('POSITION {} {}'.format(pos, detector))
             if isinstance(pos, str):
-                if update_isotopes:
-                    # if the pos is an isotope then update the detectors
-                    spec.update_isotopes(pos, detector)
+                try:
+                    pos = float(pos)
+                except ValueError:
+                    # pos is isotope
+                    if update_isotopes:
+                        # if the pos is an isotope then update the detectors
+                        spec.update_isotopes(pos, detector)
+                    pos = self.get_mass(pos)
 
-                # pos is isotope
-                pos = self.get_mass(pos)
-                mag._mass = pos
+                mag.mass_change(pos)
 
-            #this is not necessary and potential a source of issues
             # else:
             #     #get nearst isotope
             #     self.debug('rounding mass {} to {}'.format(pos, '  {:n}'.format(round(pos))))
@@ -155,13 +163,14 @@ class IonOpticsManager(Manager):
                        save=True,
                        confirm_save=False,
                        warn=False,
-                       new_thread=True):
+                       new_thread=True,
+                       message=''):
         self.debug('doing pc')
 
         self.canceled = False
         self.alive = True
 
-        args = (save, confirm_save, warn)
+        args = (save, confirm_save, warn, message)
         if new_thread:
             t = Thread(name='ion_optics.peak_center', target=self._peak_center,
                        args=args)
@@ -255,7 +264,7 @@ class IonOpticsManager(Manager):
             graph.window_height = 250
             self.open_view(graph)
 
-    def _peak_center(self, save, confirm_save, warn):
+    def _peak_center(self, save, confirm_save, warn, message):
 
         pc = self.peak_center
         spec = self.spectrometer
@@ -288,7 +297,7 @@ class IonOpticsManager(Manager):
                     msg = 'Update Magnet Field Table with new peak center- {} ({}) @ RefDetUnits= {}'.format(*args)
                     save = self.confirmation_dialog(msg)
                 if save:
-                    spec.magnet.update_field_table(det, isotope, dac_a)
+                    spec.magnet.update_field_table(det, isotope, dac_a, message)
                     spec.magnet.set_dac(self.peak_center_result)
 
         elif not self.canceled:

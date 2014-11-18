@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,8 +15,10 @@
 #===============================================================================
 
 #========== standard library imports ==========
+import glob
 import os
 import subprocess
+from datetime import datetime
 
 
 def view_file(p, application='Preview', logger=None):
@@ -30,6 +32,46 @@ def view_file(p, application='Preview', logger=None):
         if logger:
             logger.debug('failed opening {} using {}'.format(p, app_path))
         subprocess.call(['open', p])
+
+
+def ilist_directory2(root, extension=None, filtername=None, remove_extension=False):
+    """
+        uses glob
+        root: directory to list
+        extension: only return files of this file type e.g .txt or txt
+                extension can be list, tuple or str
+
+        return iterator
+    """
+    if filtername is None:
+        filtername = ''
+
+    def gen(gf):
+        for p in glob.iglob(gf):
+            p = os.path.basename(p)
+            if remove_extension:
+                p, _ = os.path.splitext(p)
+            yield p
+
+    gfilter = root
+    if extension:
+        if not isinstance(extension, (list, tuple)):
+            extension = (extension, )
+
+        for ext in extension:
+            if not ext.startswith('.'):
+                ext = '.{}'.format(ext)
+            gfilter = '{}/{}*{}'.format(root, filtername, ext)
+            # print gfilter
+            for yi in gen(gfilter):
+                yield yi
+    else:
+        for yi in gen('{}/*'.format(gfilter)):
+            yield yi
+
+
+def list_directory2(root, extension=None, filtername=None, remove_extension=False):
+    return list(ilist_directory2(root, extension, filtername, remove_extension))
 
 
 def list_directory(p, extension=None, filtername=None, remove_extension=False):
@@ -61,8 +103,14 @@ def list_directory(p, extension=None, filtername=None, remove_extension=False):
 
 def add_extension(p, ext='.txt'):
     if not p.endswith(ext):
-        p += ext
+        # p += ext
+        p = '{}{}'.format(p, ext)
     return p
+
+
+def remove_extension(p):
+    h, _ = os.path.splitext(p)
+    return h
 
 
 def unique_dir(root, base):
@@ -77,7 +125,38 @@ def unique_dir(root, base):
     return p
 
 
-def unique_path(root, base, extension='txt'):
+def unique_date_path(root, base, extension='.txt'):
+    """
+        make a unique path with the a timestamp appended
+        e.g foo_11-01-2012-001
+    """
+    base = '{}_{}'.format(base, datetime.now().strftime('%m-%d-%Y'))
+    p, _ = unique_path2(root, base, extension)
+    return p
+
+
+def unique_path2(root, base, extension='.txt'):
+    """
+        unique_path suffers from the fact that it starts at 001.
+        this is a problem for log files because the logs are periodically archived which means
+        low paths are removed.
+
+        unique_path2 solves this by finding the max path then incrementing by 1
+    """
+    # find the max path in the root directory
+    basename = '{}-*{}'.format(base, extension)
+    cnt = 0
+    for p in glob.iglob(os.path.join(root, basename)):
+        p = os.path.basename(p)
+        head, tail = os.path.splitext(p)
+        cnt = max(int(head.split('-')[1]), cnt)
+
+    cnt += 1
+    p = os.path.join(root, '{}-{:03n}{}'.format(base, cnt, extension))
+    return p, cnt
+
+
+def unique_path(root, base, extension='.txt'):
     """
 
     """
@@ -199,6 +278,17 @@ def parse_canvasfile(p, kw):
             return indices
 
 
+def pathtolist(p, **kw):
+    """
+        p: absolute path to file
+
+        kw: same keyword arguments accepted by filetolist
+        return: list
+    """
+    with open(p, 'r') as fp:
+        return filetolist(fp, **kw)
+
+
 def filetolist(f, commentchar='#'):
     """
         f: file-like object
@@ -226,7 +316,7 @@ def filetolist(f, commentchar='#'):
     return r
 
 
-def fileiter(fp, commentchar='#'):
+def fileiter(fp, commentchar='#', strip=False):
     def isNewLine(c):
         return c in ('\r', '\n')
 
@@ -236,5 +326,23 @@ def fileiter(fp, commentchar='#'):
 
     for line in fp:
         if test(line):
+            if strip:
+                line = line.strip()
             yield line
+
+
+def get_path(root, name, extensions):
+    """
+        return a valid file path ``p``
+        where ``p`` == root/name.extension
+
+        root: str. directory path
+        name: str. basename for file
+        extensions: list or tuple. list of file extensions to try e.g. ('.yml','.yaml')
+
+    """
+    for ext in extensions:
+        p=os.path.join(root, add_extension(name, ext))
+        if os.path.isfile(p):
+            return p
 

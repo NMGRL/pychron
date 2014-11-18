@@ -21,6 +21,22 @@ from enable.base_tool import BaseTool
 from kiva.fonttools import Font
 #============= standard library imports ========================
 #============= local library imports  ==========================
+
+def intersperse(m, delim):
+    """
+        intersperse ```delim``` in m
+         m=[1,2,3]
+         delim='---'
+         result=[1,'---',2,'---',3]
+
+    """
+    m=iter(m)
+    yield next(m)
+    for x in m:
+        yield delim
+        yield x
+
+
 class InfoInspector(BaseTool):
     metadata_changed = Event
     current_position = None
@@ -43,7 +59,7 @@ class InfoInspector(BaseTool):
         self.metadata_changed = True
 
     def assemble_lines(self):
-        return []
+        return
 
     def normal_mouse_leave(self, event):
         self.current_screen = None
@@ -52,26 +68,21 @@ class InfoInspector(BaseTool):
 
 
 class InfoOverlay(AbstractOverlay):
+    """
+        abstract class for displaying hover data
+    """
     tool = Instance(BaseTool)
     visible = False
 
-    '''
-        abstract class for displaying hover data
-        subclasses should implement _assemble_lines
-    '''
-
-    @on_trait_change('tool:metadata_changed')
-    def _update_(self, new):
-        if self.tool.current_position:
+    def _update_(self):
+        if self.tool.current_position is not None:
             self.visible = True
         else:
             self.visible = False
-
         self.request_redraw()
 
     def overlay(self, plot, gc, *args, **kw):
         with gc:
-        #            if self.visible:
             lines = self.tool.assemble_lines()
             if lines:
                 lines = [li for li in lines if li and li.strip()]
@@ -83,38 +94,53 @@ class InfoOverlay(AbstractOverlay):
         if not self.tool.current_screen:
             return
 
-        x, y = self.tool.current_screen
+        x, y = sx, sy = self.tool.current_screen
 
         gc.set_font(Font('Arial'))
         gc.set_fill_color((0.8, 0.8, 0.8))
 
         lws, lhs = zip(*[gc.get_full_text_extent(mi)[:2] for mi in lines])
 
-        lw = max(lws)+4
-        lh = sum(lhs) + len(lhs)*0.75
+        lw = max(lws) + 4
+        lh = max(lhs) * len(lhs) + 2
 
         xoffset = 12
         yoffset = -10
         gc.translate_ctm(xoffset, yoffset)
-        # x += xoffset
-        # y -= yoffset
 
         # if the box doesnt fit in window
         # move left
         x2 = self.component.x2
-        if x+xoffset + lw> x2:
-            x = x2 - lw - xoffset-1
+        y2 = self.component.y2
+
+        if x + xoffset + lw > x2:
+            x = x2 - lw - xoffset - 1
+
+        #move down if to tall
+        if y + yoffset + lh > y2:
+            y = y2 - lh - yoffset -1
+
+        # if current point within bounds of box, move box to left
+        if x < sx:
+            x = sx - lw - xoffset - 6
 
         h = lhs[0]
-        py = max(0, y - lh)
 
-        gc.rect(x,py, lw, lh)
+        gc.rect(x, y, lw, lh)
         gc.draw_path()
         gc.set_fill_color((0, 0, 0))
 
-        gc.translate_ctm(x+2,py+2)
+        gc.translate_ctm(x + 2, y + 2)
+
         for i, mi in enumerate(lines[::-1]):
             gc.set_text_position(0, h * i)
             gc.show_text(mi)
+
+    def _tool_changed(self, old, new):
+        if old:
+            old.on_trait_change(self._update_, 'metadata_changed', remove=True)
+
+        if new:
+            new.on_trait_change(self._update_, 'metadata_changed')
 
 #============= EOF =============================================

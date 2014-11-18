@@ -41,7 +41,7 @@ class RectSelectionTool(BaseTool):
     """
     """
 
-    filter_near_edge = True
+    filter_near_edge = False
 
     threshold = 5
     hover_metadata_name = Str('hover')
@@ -52,6 +52,11 @@ class RectSelectionTool(BaseTool):
     _end_pos = None
     group_id = 0
 
+    def select_key_pressed(self, event):
+        if event.character=='Esc':
+            self._end_select(event)
+
+
     def normal_mouse_move(self, event):
         if event.handled:
             return
@@ -60,7 +65,7 @@ class RectSelectionTool(BaseTool):
         index = plot.map_index((event.x, event.y), threshold=self.threshold)
 
         if index is not None:
-        #            plot.index.metadata['mouse_xy'] = mxy
+            #            plot.index.metadata['mouse_xy'] = mxy
 
             plot.index.metadata[self.hover_metadata_name] = [index]
             if hasattr(plot, "value"):
@@ -87,27 +92,29 @@ class RectSelectionTool(BaseTool):
                 continue
             if token in md[self.selection_metadata_name]:
                 already = True
+
         return already
 
     def normal_left_dclick(self, event):
         if self._end_pos is None:
-        #            print id(self), self.component, 'meta []'
+            #            print id(self), self.component, 'meta []'
             self.component.index.metadata[self.selection_metadata_name] = []
         elif abs(self._end_pos[0] - self._start_pos[0]) < 2 and \
                         abs(self._end_pos[1] - self._start_pos[1]) < 2:
             self.component.index.metadata[self.selection_metadata_name] = []
 
     def normal_left_down(self, event):
-
-        token = self._get_selection_token(event)
-        if token is None:
-            if not self._near_edge(event):
-                self._start_select(event)
-        else:
-            if self._already_selected(token):
-                self._deselect_token(token)
+        if not event.handled:
+            token = self._get_selection_token(event)
+            if token is None:
+                if not self._near_edge(event):
+                    self._start_select(event)
             else:
-                self._select_token(token)
+                if self._already_selected(token):
+                    self._deselect_token(token)
+                else:
+                    self._select_token(token)
+                    event.handled = True
 
     def _near_edge(self, event, tol=5):
         if self.filter_near_edge:
@@ -134,7 +141,7 @@ class RectSelectionTool(BaseTool):
                 new = md[self.selection_metadata_name][:]
                 new.remove(token)
                 md[self.selection_metadata_name] = new
-                getattr(plot, name).metadata_changed = True
+                # getattr(plot, name).metadata_changed = True
 
     def _select_token(self, token, append=True):
         plot = self.component
@@ -150,7 +157,6 @@ class RectSelectionTool(BaseTool):
                     if token not in md[self.selection_metadata_name]:
                         new_list = md[self.selection_metadata_name] + [token]
                         md[self.selection_metadata_name] = new_list
-                        getattr(plot, name).metadata_changed = True
 
     def select_left_up(self, event):
         self._update_selection()
@@ -182,8 +188,8 @@ class RectSelectionTool(BaseTool):
                       (dx >= xi >= dx2) and dy <= yi <= dy2]
 
         selection = index.metadata[self.selection_metadata_name]
-        nind=list(set(ind) ^ set(selection))
-        index.metadata[self.selection_metadata_name]=nind
+        nind = list(set(ind) ^ set(selection))
+        index.metadata[self.selection_metadata_name] = nind
         # index.metadata_changed = True
 
     def _end_select(self, event):

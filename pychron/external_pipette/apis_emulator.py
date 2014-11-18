@@ -12,6 +12,9 @@ cnt = 0
 
 
 class APISEmulator(BaseRequestHandler):
+    # def __init__(self, request, addr, server):
+    #     self.request=request
+
     def handle(self):
         cmd = self.request.recv(1024)
         r = 'invalid command'
@@ -95,6 +98,17 @@ Ar36	6.0790579e-19'''
         """
         return 'ok'
 
+    # def LoadPipette(self, a):
+    #     global CNT
+    #     CNT=0
+    #     return 'OK'
+    #
+    # def PipetteReady(self):
+    #     global CNT
+    #     CNT=CNT+1
+    #
+    #     return 'OK' if CNT==3 else 'NO'
+
     def _parse(self, cmd):
         args = cmd.split(',')
         c = args[0]
@@ -105,24 +119,22 @@ Ar36	6.0790579e-19'''
 
 if __name__ == '__main__':
     import sys, os, socket
-
-    #=============================================
-    #add to pythonpath
-    root = os.getcwd()
+#    root='/Users/ross/Programming/git/pychron_dev'
+ #   if not os.path.isdir(root):
+  #      root='/Users/argonlab
+    root=os.getcwd()
     while 1:
-        args = root.split('/')
-        if args[-2] == 'git' and args[-1].startswith('pychron'):
+        args=root.split('/')
+        if args[-2]=='git' and args[-1].startswith('pychron'):
             break
         else:
-            root = os.path.dirname(root)
-
+            root=os.path.dirname(root)
+            
     sys.path.insert(0, root)
-    #==============================================
-
     from pychron.emulation_server import EmulationServer
     from pychron.external_pipette.apis_emulator import APISEmulator
 
-    host = socket.gethostbyname(socket.gethostname())
+    host=socket.gethostbyname(socket.gethostname())
     e = EmulationServer(host, 1080, APISEmulator)
     e.start()
 

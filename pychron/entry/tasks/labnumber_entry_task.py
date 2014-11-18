@@ -16,9 +16,11 @@
 
 #============= enthought library imports =======================
 import os
+
 from pyface.tasks.action.schema import SToolBar
 from traits.api import Instance, on_trait_change, Button
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, Tabbed
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.entry.graphic_generator import GraphicModel, GraphicGeneratorController
@@ -58,7 +60,7 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
             message = 'You have unsaved changes. Save changes to Database?'
             ret = self._handle_prompt_for_save(message)
             if ret == 'save':
-                self.manager.save()
+                return self.manager.save()
             return ret
         return True
 
@@ -67,7 +69,7 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
 
     def generate_tray(self):
         # p='/Users/ross/Sandbox/entry_tray'
-        p=self.open_file_dialog()
+        p = self.open_file_dialog()
         if p is not None:
             gm = GraphicModel()
 
@@ -86,9 +88,10 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
             # #    p = '/Users/ross/Sandbox/graphic_gen_from_csv.xml'
             # gm.load(p)
             gcc = GraphicGeneratorController(model=gm)
-            info=gcc.edit_traits(kind='livemodal')
+            info = gcc.edit_traits(kind='livemodal')
             if info.result:
-                if self.confirmation_dialog('Do you want to save this tray to the database. Saving tray as "{}"'.format(gm.name)):
+                if self.confirmation_dialog(
+                        'Do you want to save this tray to the database. Saving tray as "{}"'.format(gm.name)):
                     self.manager.save_tray_to_db(gm.srcpath, gm.name)
 
 
@@ -120,15 +123,17 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
     def make_irradiation_load_template(self):
         path = self.open_file_dialog()
         if path:
-        #        p = '/Users/ross/Sandbox/irrad_load_template.xls'
+            #        p = '/Users/ross/Sandbox/irrad_load_template.xls'
             self.manager.make_irradiation_load_template(path)
             #self.information_dialog('Template saved to {}'.format(p))
             self.view_xls(path)
 
     def import_sample_metadata(self):
-        path='/Users/ross/Programming/git/dissertation/data/minnabluff/sample.xls'
+        path = '/Users/ross/Programming/git/dissertation/data/minnabluff/lithologies.xls'
+        path = '/Users/ross/Programming/git/dissertation/data/minnabluff/tables/TAS.xls'
+        path = '/Users/ross/Programming/git/dissertation/data/minnabluff/tables/environ.xls'
         if not os.path.isfile(path):
-            path=self.open_file_dialog()
+            path = self.open_file_dialog()
 
         if path:
             self.manager.import_sample_metadata(path)

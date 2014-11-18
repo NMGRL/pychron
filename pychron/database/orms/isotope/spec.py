@@ -16,16 +16,14 @@
 
 #============= enthought library imports =======================
 #============= standard library imports ========================
-from sqlalchemy.ext.declarative import declarative_base, declared_attr
-from sqlalchemy import Column, Integer, String, \
-    ForeignKey, BLOB, Float, Time, Boolean, DateTime
+from sqlalchemy import Column, Integer, BLOB, Float, DateTime
 from sqlalchemy.orm import relationship
 #============= local library imports  ==========================
 
-from pychron.database.core.base_orm import BaseMixin, NameMixin
+from pychron.database.core.base_orm import BaseMixin
 # from pychron.database.core.base_orm import PathMixin, ResultsMixin, ScriptTable
 from sqlalchemy.sql.expression import func
-from pychron.database.orms.isotope.util import foreignkey, stringcolumn
+from pychron.database.orms.isotope.util import foreignkey
 
 from util import Base
 
@@ -43,5 +41,10 @@ class spec_MassCalScanTable(Base, BaseMixin):
     center = Column(Float)
     molecular_weight_id = foreignkey('gen_MolecularWeightTable')
 
+
+class spec_MFTableTable(Base, BaseMixin):
+    spectrometer_id = foreignkey('gen_MassSpectrometerTable')
+    blob = Column(BLOB)
+    create_date = Column(DateTime, default=func.now())
 
 #============= EOF =============================================

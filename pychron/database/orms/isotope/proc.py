@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,7 @@
 #============= standard library imports ========================
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy import Column, Integer, String, \
-    BLOB, Float, Boolean, DateTime
+    BLOB, Float, Boolean, DateTime, TIMESTAMP
 from sqlalchemy.orm import relationship
 #============= local library imports  ==========================
 
@@ -26,6 +26,8 @@ from pychron.database.core.base_orm import BaseMixin, NameMixin
 # from pychron.database.core.base_orm import PathMixin, ResultsMixin, ScriptTable
 from sqlalchemy.sql.expression import func
 from pychron.database.orms.isotope.util import foreignkey, stringcolumn
+from pychron.experiment.utilities.identifier import make_runid
+from pychron.pychron_constants import INTERPOLATE_TYPES
 
 from util import Base
 
@@ -43,6 +45,35 @@ class HistoryMixin(BaseMixin, History):
     pass
 
 
+class proc_DataReductionTagTable(Base, BaseMixin):
+    name = stringcolumn(140)
+    create_date = Column(TIMESTAMP, default=func.now())
+    comment = Column(BLOB)
+    user_id = foreignkey('gen_UserTable')
+    analyses = relationship('proc_DataReductionTagSetTable', backref='tag')
+
+    analysis = relationship('meas_AnalysisTable', backref='data_reduction_tag')
+
+
+class proc_DataReductionTagSetTable(Base, BaseMixin):
+    tag_id = foreignkey('proc_DataReductionTagTable')
+    analysis_id = foreignkey('meas_AnalysisTable')
+    selected_histories_id = foreignkey('proc_SelectedHistoriesTable')
+
+
+class proc_AnalysisGroupTable(Base, NameMixin):
+    create_date = Column(TIMESTAMP, default=func.now())
+    last_modified = Column(TIMESTAMP)
+    analyses = relationship('proc_AnalysisGroupSetTable',
+                            backref='group')
+
+
+class proc_AnalysisGroupSetTable(Base, BaseMixin):
+    group_id = foreignkey('proc_AnalysisGroupTable')
+    analysis_id = foreignkey('meas_AnalysisTable')
+    analysis_type_id = foreignkey('gen_AnalysisTypeTable')
+
+
 class proc_SensitivityHistoryTable(Base, HistoryMixin):
     sensitivity = relationship('proc_SensitivityTable', backref='history',
                                uselist=False)
@@ -50,12 +81,11 @@ class proc_SensitivityHistoryTable(Base, HistoryMixin):
                             backref='selected_sensitivity',
                             uselist=False)
 
-class proc_SensitivityTable(Base, BaseMixin):
 
+class proc_SensitivityTable(Base, BaseMixin):
     value = Column(Float(32))
     error = Column(Float(32))
     history_id = foreignkey('proc_SensitivityHistoryTable')
-
 
 
 class proc_TagTable(Base):
@@ -126,6 +156,7 @@ class proc_InterpretedAgeSetTable(Base, BaseMixin):
     analysis_id = foreignkey('meas_AnalysisTable')
     forced_plateau_step = Column(Boolean)
     plateau_step = Column(Boolean)
+    tag = stringcolumn(80)
 
 
 class proc_InterpretedAgeHistoryTable(Base, BaseMixin):
@@ -144,11 +175,26 @@ class proc_InterpretedAgeHistoryTable(Base, BaseMixin):
 class proc_InterpretedAgeTable(Base, BaseMixin):
     history_id = foreignkey('proc_InterpretedAgeHistoryTable')
     age_kind = stringcolumn(32)
+    kca_kind = stringcolumn(32)
+
     age = Column(Float)
     age_err = Column(Float)
-    wtd_kca = Column(Float)
-    wtd_kca_err = Column(Float)
+    display_age_units = stringcolumn(2)
+
+    kca = Column(Float)
+    kca_err = Column(Float)
+    # wtd_kca = Column(Float)
+    # wtd_kca_err = Column(Float)
+
+    # arith_kca = Column(Float)
+    # arith_kca_err = Column(Float)
     mswd = Column(Float)
+
+    age_error_kind = stringcolumn(80)
+    include_j_error_in_mean = Column(Boolean)
+    include_j_error_in_plateau = Column(Boolean)
+    include_j_error_in_individual_analyses = Column(Boolean)
+
     sets = relationship('proc_InterpretedAgeSetTable', backref='analyses')
 
 
@@ -156,6 +202,7 @@ class proc_BlanksSetTable(Base, BaseMixin):
     blanks_id = foreignkey('proc_BlanksTable')
     blank_analysis_id = foreignkey('meas_AnalysisTable')
     set_id = Column(Integer)
+
 
 class proc_BlanksHistoryTable(Base, HistoryMixin):
     blanks = relationship('proc_BlanksTable', backref='history')
@@ -175,11 +222,28 @@ class proc_BlanksTable(Base, BaseMixin):
     error_type = stringcolumn(default='SD')
 
     set_id = Column(Integer)
+    preceding_id = foreignkey('meas_AnalysisTable')
+
+    def make_summary(self):
+        s = ''
+        f = self.fit
+        if f:
+            if not f in INTERPOLATE_TYPES:
+                f = f[:1].upper()
+
+            s = '{}{}'.format(self.isotope, f)
+            if self.preceding_id:
+                p = self.preceding_analysis
+                rid = make_runid(p.labnumber.identifier, p.aliquot, p.step)
+                s = '{} ({})'.format(s, rid)
+        return s
+
 
 class proc_BackgroundsSetTable(Base, BaseMixin):
     backgrounds_id = foreignkey('proc_BackgroundsTable')
     background_analysis_id = foreignkey('meas_AnalysisTable')
     set_id = Column(Integer)
+
 
 class proc_BackgroundsHistoryTable(Base, HistoryMixin):
     backgrounds = relationship('proc_BackgroundsTable',
@@ -226,6 +290,7 @@ class proc_DetectorIntercalibrationSetTable(Base, BaseMixin):
     ic_analysis_id = foreignkey('meas_AnalysisTable')
     set_id = Column(Integer)
 
+
 class proc_DetectorParamHistoryTable(Base, HistoryMixin):
     detector_params = relationship('proc_DetectorParamTable',
                                    backref='history')
@@ -243,6 +308,7 @@ class proc_DetectorParamTable(Base, BaseMixin):
 
     #@todo: add refmass to detector param table
     refmass = 35.9675
+
 
 #     selected = relationship('proc_SelectedHistoriesTable',
 #                             backref='selected_detector_param',
@@ -295,11 +361,12 @@ class proc_FitTable(Base, BaseMixin):
     isotope_id = foreignkey('meas_IsotopeTable')
 
     fit = stringcolumn()
-    error_type=stringcolumn(default='SD')
+    error_type = stringcolumn(default='SD')
     filter_outliers = Column(Boolean)
     filter_outlier_iterations = Column(Integer, default=1)
     filter_outlier_std_devs = Column(Integer, default=1)
-
+    include_baseline_error = Column(Boolean)
+    time_zero_offset = Column(Float)
 
     def make_summary(self):
         f = self.fit[:1].upper()
@@ -317,6 +384,7 @@ class proc_SelectedHistoriesTable(Base, BaseMixin):
     selected_det_param_id = foreignkey('proc_DetectorParamHistoryTable')
     selected_sensitivity_id = foreignkey('proc_SensitivityHistoryTable')
 
+    dr_sets = relationship('proc_DataReductionTagSetTable', backref='selected_histories')
 
 class proc_IsotopeResultsTable(Base, BaseMixin):
     signal_ = Column(Float(32))
@@ -327,6 +395,7 @@ class proc_IsotopeResultsTable(Base, BaseMixin):
 
 class proc_NotesTable(Base, HistoryMixin):
     note = Column(BLOB)
+
 
 # class proc_WorkspaceHistoryTable(Base, HistoryMixin):
 #    workspace_id = foreignkey('WorkspaceTable')

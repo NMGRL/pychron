@@ -26,6 +26,7 @@ class AutomatedRunAnalysisView(MainView):
     # def update_values(self, arar_age):
     #     for ci in self.computed_values:
     #         v = getattr(arar_age, ci)
+    _corrected_enabled = False
 
     def load(self, ar):
         an = ar.arar_age
@@ -47,7 +48,7 @@ class AutomatedRunAnalysisView(MainView):
     def traits_view(self):
         teditor, ieditor, ceditor, eeditor, meditor = es = self._get_editors()
         for ei in es:
-            ei.adapter.font = 'arial 10'
+            ei.adapter.font = '10'
 
         isotopes = UItem('isotopes', editor=teditor, label='Isotopes')
 

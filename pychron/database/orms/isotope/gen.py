@@ -44,6 +44,7 @@ class gen_LoadHolderTable(Base):
 
 class gen_AnalysisTypeTable(Base, NameMixin):
     measurements = relationship('meas_MeasurementTable', backref='analysis_type')
+    groups = relationship('proc_AnalysisGroupSetTable', backref='analysis_type')
 
 
 class gen_DetectorTable(Base, NameMixin):
@@ -85,10 +86,12 @@ class gen_LabTable(Base, BaseMixin):
 
     figures = relationship('proc_FigureLabTable', backref='labnumber')
 
+
 class gen_MassSpectrometerTable(Base, NameMixin):
-#    experiments = relationship('ExperimentTable', backref='mass_spectrometer')
+    #    experiments = relationship('ExperimentTable', backref='mass_spectrometer')
     measurements = relationship('meas_MeasurementTable', backref='mass_spectrometer')
     sensitivities = relationship('gen_SensitivityTable', backref='mass_spectrometer')
+    mftables = relationship('spec_MFTableTable', backref='mass_spectrometer')
 
 
 class gen_MaterialTable(Base, NameMixin):
@@ -117,15 +120,22 @@ class gen_SampleTable(Base, NameMixin):
     labnumbers = relationship('gen_LabTable', backref='sample')
     monitors = relationship('flux_MonitorTable', backref='sample')
 
-    igsn=Column(CHAR(9))
-    location=stringcolumn(80)
-    lat=Column(Float)
-    long=Column(Float)
-    elevation=Column(Float)
-    note=Column(BLOB)
+    igsn = Column(CHAR(9))
+    location = stringcolumn(80)
+    lat = Column(Float)
+    long = Column(Float)
+    elevation = Column(Float)
+    note = Column(BLOB)
 
-    alt_name=stringcolumn(80)
-    lithology=stringcolumn(80)
+    alt_name = stringcolumn(80)
+    lithology = stringcolumn(80)
+    environment = stringcolumn(140)
+    rock_type = stringcolumn(80)
+
+    sio2 = Column(Float(32))
+    na2o = Column(Float(32))
+    k2o = Column(Float(32))
+
 
 class gen_SensitivityTable(Base, BaseMixin):
     mass_spectrometer_id = foreignkey('gen_MassSpectrometerTable')
@@ -139,11 +149,16 @@ class gen_SensitivityTable(Base, BaseMixin):
 
 class gen_UserTable(Base, NameMixin):
     analyses = relationship('meas_AnalysisTable', backref='user')
+    dr_tags = relationship('proc_DataReductionTagTable', backref='user')
     #    project_id = foreignkey('gen_ProjectTable')
     projects = relationship('gen_ProjectTable', secondary=association_table)
 
     password = stringcolumn(80)
     salt = stringcolumn(80)
+
+    email = stringcolumn(140)
+    affiliation = stringcolumn(140)
+    category = Column(Integer, default=0)
 
     #===========================================================================
     # permissions

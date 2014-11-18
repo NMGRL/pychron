@@ -157,9 +157,6 @@ class WaitControl(Loggable):
                                     editor=RangeEditor(mode='slider',
                                                            low_name='low_name',
                                                            high_name='wtime',
-                                                           ))
-                               ),
-                        ),
-               )
+                                    )))))
         return v
 #============= EOF =============================================

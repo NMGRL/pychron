@@ -15,9 +15,10 @@
 #===============================================================================
 
 #=============enthought library imports=======================
+
 from traits.api import Instance, Button, Bool, Float
 from traitsui.api import VGroup, Item, InstanceEditor
-from apptools.preferences.preference_binding import bind_preference
+
 #=============standard library imports ========================
 from threading import Timer
 #=============local library imports  ==========================
@@ -30,6 +31,7 @@ from pychron.hardware.temperature_monitor import DPi32TemperatureMonitor
 from pychron.hardware.pyrometer_temperature_monitor import PyrometerTemperatureMonitor
 
 from pychron.lasers.laser_managers.vue_metrix_manager import VueMetrixManager
+from pychron.lasers.response_recorder import ResponseRecorder
 from pychron.paths import paths
 from pychron.monitors.fusions_diode_laser_monitor import FusionsDiodeLaserMonitor
 
@@ -45,7 +47,8 @@ class FusionsDiodeManager(FusionsLaserManager):
 
     pyrometer = Instance(MikronGA140Pyrometer)
     temperature_controller = Instance(WatlowEZZone)
-    # temperature_monitor = Instance(DPi32TemperatureMonitor)
+    temperature_monitor = Instance(DPi32TemperatureMonitor)
+    response_recorder = Instance(ResponseRecorder)
 
     control_module_manager = Instance(VueMetrixManager)
 
@@ -72,78 +75,10 @@ class FusionsDiodeManager(FusionsLaserManager):
     db_root = paths.diodelaser_db_root
 
     use_calibrated_temperature = Bool(False)
-    #    def finish_loading(self):
-    #        super(FusionsDiodeManager, self).finish_loading()
-    #
-    #        self.pyrometer.start_scan()
-    # #        self.control_module_manager.start_scan()
-    #def open_scanner(self):
-    #    from pychron.lasers.scanner import PIDScanner
-    #
-    #    self._open_scanner(PIDScanner, 'scanner.yaml')
-    #
-    #def open_autotuner(self):
-    #    from pychron.lasers.autotuner import AutoTuner
-    #
-    #    self._open_scanner(AutoTuner, 'autotuner.yaml')
-    #
-    #def _open_scanner(self, klass, name):
-    #    from pychron.lasers.scanner import ScannerController
-    #
-    #    p = os.path.join(paths.scripts_dir, name)
-    #
-    #    s = klass(control_path=p,
-    #              manager=self
-    #    )
-    #
-    #    tc = self.temperature_controller
-    #    tm = self.get_device('temperature_monitor')
-    #
-    #    def tc_gen():
-    #        while 1:
-    #            pr = tc.get_temp_and_power(verbose=False)
-    #            for pi in pr.data:
-    #                yield pi
-    #
-    #    # populate scanner with functions
-    #    gen = tc_gen()
-    #    s.setup(directory='diode_autotune_scans')
-    #    s.new_function(gen, name='Temp. Pyrometer (C)')
-    #    s.new_function(gen, name='Power (%)')
-    #
-    #    if tm is not None:
-    #        func = partial(tm.read_temperature, verbose=False)
-    #        s.new_function(func, name='Reflector Temp (C)')
-    #
-    #    # bind to request_power change. set Setpoint static value
-    #    s.new_static_value('Setpoint')
-    #    self.on_trait_change(lambda v: s.set_static_value('Setpoint', v), self._requested_power)
-    #
-    #    # bind to Scanner's stop_event. Set laser power to 0.
-    #    s.on_trait_change(lambda: self.set_laser_temperature(0), 'stop_event')
-    #
-    #    # bind to Scanners setpoint
-    #    #        s.on_trait_change(lambda v: self.set_laser_temperature(v), 'setpoint')
-    #
-    #    sc = ScannerController(model=s,
-    #                           application=self.application)
-    #    self.open_view(sc)
-
-
-    def bind_preferences(self, pref_id):
-        super(FusionsDiodeManager, self).bind_preferences(pref_id)
-        bind_preference(self, 'use_calibrated_temperature', '{}.use_calibrated_temperature'.format(pref_id))
-        #bind_preference(self.temperature_controller, '_use_calibrated_temperature',
-        #                '{}.use_calibrated_temperature'.format(pref_id))
 
     def _use_calibrated_temperature_changed(self, new):
         if self.temperature_controller:
             self.temperature_controller.use_calibrated_temperature = new
-            #    def get_process_temperature(self):
-            #        '''
-            #        '''
-            #        return self.temperature_controller.get_temperature()
-
 
     def map_temperature(self, v):
         #if self.use_calibrated_temperature:
@@ -191,6 +126,12 @@ class FusionsDiodeManager(FusionsLaserManager):
         return self._set_laser_power_hook(temp, mode='closed', set_pid=set_pid)
         #use_calibration=self.use_calibrated_temperature)
 
+    def get_response_blob(self):
+        return self.response_recorder.get_response_blob() if self.response_recorder else ''
+
+    def get_output_blob(self):
+        return self.response_recorder.get_output_blob() if self.response_recorder else ''
+
     #===============================================================================
     # private
     #===============================================================================
@@ -206,14 +147,18 @@ class FusionsDiodeManager(FusionsLaserManager):
         func = getattr(tc, 'set_{}_loop_setpoint'.format(mode))
         func(power, set_pid=set_pid, **kw)
 
-    def _enable_hook(self):
+    def _enable_hook(self, clear_setpoint=True):
         if super(FusionsDiodeManager, self)._enable_hook():  # logic board sucessfully enabled
             if self.fiber_light.auto_onoff and self.fiber_light.state:
                 self.fiber_light.power_off()
 
+            if clear_setpoint:
+                #disable the temperature_controller unit a value is set
+                self.temperature_controller.disable()
+
+            self.response_recorder.start()
             if self.pyrometer:
                 self.pyrometer.start_scan()
-
             return self.control_module_manager.enable()
 
     def _disable_hook(self):
@@ -224,8 +169,10 @@ class FusionsDiodeManager(FusionsLaserManager):
             else:
                 self.fiber_light.power_on()
 
+        self.response_recorder.stop()
         self.temperature_controller.disable()
         self.control_module_manager.disable()
+
         if self.pyrometer:
             self.pyrometer.stop_scan()
 
@@ -261,18 +208,13 @@ class FusionsDiodeManager(FusionsLaserManager):
     #===============================================================================
     # defaults
     #===============================================================================
-    #    def _monitor_factory(self):
-    #        '''
-    #        '''
-    #        return DiodeLaserMonitor
 
-    #    def monitor_factory(self):
-    #        lm = self.monitor
-    #        if lm is None:
-    #            lm = self._monitor_factory()(manager = self,
-    #                            configuration_dir_name = paths.monitors_dir,
-    #                            name = 'diode_laser_monitor')
-    #        return lm
+    def _response_recorder_default(self):
+        r = ResponseRecorder(response_device=self.temperature_controller,
+                             # response_device_secondary = self.temperature_monitor,
+                             response_device_secondary=self.pyrometer,
+                             output_device=self.temperature_controller)
+        return r
 
     def _temperature_monitor_default(self):
         tm = DPi32TemperatureMonitor(name='temperature_monitor',
@@ -289,14 +231,6 @@ class FusionsDiodeManager(FusionsLaserManager):
                                    configuration_name='laser_controller',
                                    configuration_dir_name=self.configuration_dir_name)
         return b
-
-    #    def _control_module_default(self):
-    #        '''
-    #        '''
-    #        b = VueDiodeControlModule(name = 'diodecontrolmodule',
-    #                                      configuration_dir_name = 'diode'
-    #                                      )
-    #        return b
 
     def _stage_manager_default(self):
         args = dict(name='stage',
@@ -342,6 +276,67 @@ if __name__ == '__main__':
     f.configure_traits()
 
 #======================= EOF ============================
+#    def finish_loading(self):
+#        super(FusionsDiodeManager, self).finish_loading()
+#
+#        self.pyrometer.start_scan()
+# #        self.control_module_manager.start_scan()
+#def open_scanner(self):
+#    from pychron.lasers.scanner import PIDScanner
+#
+#    self._open_scanner(PIDScanner, 'scanner.yaml')
+#
+#def open_autotuner(self):
+#    from pychron.lasers.autotuner import AutoTuner
+#
+#    self._open_scanner(AutoTuner, 'autotuner.yaml')
+#
+#def _open_scanner(self, klass, name):
+#    from pychron.lasers.scanner import ScannerController
+#
+#    p = os.path.join(paths.scripts_dir, name)
+#
+#    s = klass(control_path=p,
+#              manager=self
+#    )
+#
+#    tc = self.temperature_controller
+#    tm = self.get_device('temperature_monitor')
+#
+#    def tc_gen():
+#        while 1:
+#            pr = tc.get_temp_and_power(verbose=False)
+#            for pi in pr.data:
+#                yield pi
+#
+#    # populate scanner with functions
+#    gen = tc_gen()
+#    s.setup(directory='diode_autotune_scans')
+#    s.new_function(gen, name='Temp. Pyrometer (C)')
+#    s.new_function(gen, name='Power (%)')
+#
+#    if tm is not None:
+#        func = partial(tm.read_temperature, verbose=False)
+#        s.new_function(func, name='Reflector Temp (C)')
+#
+#    # bind to request_power change. set Setpoint static value
+#    s.new_static_value('Setpoint')
+#    self.on_trait_change(lambda v: s.set_static_value('Setpoint', v), self._requested_power)
+#
+#    # bind to Scanner's stop_event. Set laser power to 0.
+#    s.on_trait_change(lambda: self.set_laser_temperature(0), 'stop_event')
+#
+#    # bind to Scanners setpoint
+#    #        s.on_trait_change(lambda v: self.set_laser_temperature(v), 'setpoint')
+#
+#    sc = ScannerController(model=s,
+#                           application=self.application)
+#    self.open_view(sc)
+
+# def bind_preferences(self, pref_id):
+#     super(FusionsDiodeManager, self).bind_preferences(pref_id)
+#     bind_preference(self, 'use_calibrated_temperature', '{}.use_calibrated_temperature'.format(pref_id))
+
 #    def get_laser_amps(self):
 #        '''
 #        '''

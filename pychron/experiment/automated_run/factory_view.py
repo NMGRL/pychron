@@ -23,15 +23,16 @@ from traitsui.api import View, Item, VGroup, Spring, HGroup, ButtonEditor, EnumE
 
 POSITION_TOOLTIP = '''Set the position for this analysis or group of analyses.
 Examples:
-1. 4 or p4 (goto position 4)
-2. 3,4,5 (goto positions 3,4,5. treat as one analysis)
-3. 7-12 (goto positions 7,8,9,10,11,12. treat as individual analyses)
-4. 7:12 (same as #3)
-5. 10:16:2 (goto positions 10,12,14,16. treat as individual analyses)
-6. D1 (drill position 1)
-7. T1-2 (goto named position T1-2 i.e transect 1, point 2)
-8. L3 (trace path L3)
-9. 1-6;9;11;15-20 (combination of rules 2. and 3. treat all positions as individual analyses)
+1.  4 or p4 (goto position 4)
+2.  3,4,5 (goto positions 3,4,5. treat as one analysis)
+3.  7-12 (goto positions 7,8,9,10,11,12. treat as individual analyses)
+4.  7:12 (same as #3)
+5.  10:16:2 (goto positions 10,12,14,16. treat as individual analyses)
+6.  D1 (drill position 1)
+7.  T1-2 (goto named position T1-2 i.e transect 1, point 2)
+8.  L3 (trace path L3)
+9.  1-6;9;11;15-20 (combination of rules 2. and 3. treat all positions as individual analyses)
+10. 1.0,2.0 (goto the point defined by x,y[,z]. Use ";" to treat multiple points as one analysis e.g 1.0,2.0;3.0,4.0)
 '''
 
 PATTERN_TOOLTIP = 'Select a pattern from Remote or Local Patterns. \
@@ -54,28 +55,28 @@ class FactoryView(HasTraits):
             HGroup(sspring(width=33),
                    Item('extract_value', label='Extract',
                         tooltip='Set the extract value in extract units',
-                        enabled_when='extractable'
-                   ),
+                        enabled_when='extractable'),
                    Item('extract_units',
                         show_label=False,
                         editor=EnumEditor(name='extract_units_names')),
-                   Item('ramp_duration', label='Ramp Dur. (s)'),
-            ),
+                   Item('ramp_duration', label='Ramp Dur. (s)'), ),
+            HGroup(
+                Item('use_cdd_warming', label='CDD Warm',
+                     tooltip='Use the CDD warming routine at end of measurement'),
+                # Item('collection_time_zero_offset',
+                #      label='T_o offset (s)',
+                #      tooltip='# of seconds afer inlet opens to set time zero'),
+                Item('overlap', label='Overlap (s)', tooltip='Duration to wait before staring next run')),
             self._step_heat_group(),
             HGroup(
                 Item('duration', label='Duration (s)',
-                     tooltip='Set the number of seconds to run the extraction device.'
-
-                ),
+                     tooltip='Set the number of seconds to run the extraction device.'),
                 Item('cleanup', label='Cleanup (s)',
-                     tooltip='Set the number of seconds to getter the sample gas'
-                )
-            ),
+                     tooltip='Set the number of seconds to getter the sample gas')),
             Item('beam_diameter'),
             self._position_group(),
             label='Extract',
-            show_border=True
-        )
+            show_border=True)
         return extract_grp
 
     def _position_group(self):
@@ -88,8 +89,7 @@ class FactoryView(HasTraits):
                  editor=EnumEditor(name='patterns')),
             Item('edit_pattern',
                  show_label=False,
-                 editor=ButtonEditor(label_value='edit_pattern_label')
-            ))
+                 editor=ButtonEditor(label_value='edit_pattern_label')))
         return grp
 
     def _step_heat_group(self):
@@ -97,8 +97,7 @@ class FactoryView(HasTraits):
             Item('template',
                  label='Step Heat Template',
                  editor=EnumEditor(name='templates'),
-                 show_label=False,
-            ),
+                 show_label=False, ),
             Item('edit_template',
                  show_label=False,
                  editor=ButtonEditor(label_value='edit_template_label')))

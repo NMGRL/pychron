@@ -33,7 +33,7 @@ class myProgressDialog(ProgressDialog):
     width = Int(400)
     height = Int(10)
     _user_accepted = Bool(False)
-    close_at_end=Bool(True)
+    close_at_end = Bool(True)
 
     def soft_close(self):
         if self.close_at_end:
@@ -57,6 +57,7 @@ class myProgressDialog(ProgressDialog):
     def _create_control(self, parent):
         control = super(myProgressDialog, self)._create_control(parent)
         control.resize(self.width, self.height)
+        control.setWindowFlags(Qt.WindowStaysOnTopHint)
         return control
 
     def _create_buttons(self, dialog, layout):
@@ -84,8 +85,7 @@ class myProgressDialog(ProgressDialog):
         return self._user_accepted
 
     def change_message(self, message, auto_increment=True):
-    #         print message
-        self.message = message
+        #self.message = message
         try:
             self.message_control.setText(message)
             if auto_increment:

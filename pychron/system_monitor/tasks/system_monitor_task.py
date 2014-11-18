@@ -106,23 +106,24 @@ class SystemMonitorTask(FigureTask):
                 pass
 
     def _editor_factory(self):
-        self.connection = self.connections[0]
+        # self.connection = self.connections[0]
         #ask user for system
-        #info = self.edit_traits(view='get_connection_view')
-        if 1:
-        #if info.result and self.connection:
+        info = self.edit_traits(view='get_connection_view')
+        # if 1:
+        if info.result and self.connection:
             editor = SystemMonitorEditor(processor=self.manager,
                                          conn_spec=self.connection,
                                          task=self)
             editor.start()
             self._open_editor(editor)
+
             #if editor:
             #    do_later(editor.run_added_handler)
 
             return editor
 
     def _dashboard_editor_factory(self, names):
-        editor = DashboardEditor()
+        editor = DashboardEditor(processor=self.manager)
         editor.set_measurements(names)
         self._open_editor(editor)
         self.dashboard_editor = editor
@@ -130,26 +131,29 @@ class SystemMonitorTask(FigureTask):
         #do_after(1000, self.tab_editors,1,2)
         return editor
 
-    def _active_editor_changed(self):
-        if self.active_editor:
+    def _active_editor_changed(self, new):
+        if new:
             if self.controls_pane:
                 tool = None
-                if hasattr(self.active_editor, 'tool'):
-                    tool = self.active_editor.tool
+                # if hasattr(new, 'tool'):
+                #     tool = new.tool
+
+                if hasattr(new, 'search_tool'):
+                    tool = new.search_tool
 
                 self.controls_pane.tool = tool
-            if isinstance(self.active_editor, FigureEditor):
-                self.plotter_options_pane.pom = self.active_editor.plotter_options_manager
-            if isinstance(self.active_editor, SystemMonitorEditor):
-                self.console_pane.name = '{} - Console'.format(self.active_editor.name)
-                self.console_pane.console_display = self.active_editor.console_display
-                self.connection_pane.conn_spec = self.active_editor.conn_spec
+            if isinstance(new, FigureEditor):
+                self.plotter_options_pane.pom = new.plotter_options_manager
+            if isinstance(new, SystemMonitorEditor):
+                self.console_pane.name = '{} - Console'.format(new.name)
+                self.console_pane.console_display = new.console_display
+                self.connection_pane.conn_spec = new.conn_spec
 
             if self.unknowns_pane:
-                if hasattr(self.active_editor, 'analyses'):
-                    #print self.active_editor, len(self.active_editor.unknowns)
+                if hasattr(new, 'analyses'):
+                    #print new, len(new.unknowns)
                     #self.unknowns_pane._no_update=True
-                    self.unknowns_pane.items = self.active_editor.analyses
+                    self.unknowns_pane.items = new.analyses
                     #self.unknowns_pane._no_update=False
 
     def _prompt_for_save(self):
@@ -171,8 +175,8 @@ class SystemMonitorTask(FigureTask):
 
     def activated(self):
         self._make_connections()
-        #editor = self.add_system_monitor()
-        self._setup_dashboard_client()
+        # editor = self.add_system_monitor()
+        # self._setup_dashboard_client()
 
         #if editor:
         #    ideo = self.new_ideogram(add_table=False, add_iso=False)
@@ -183,7 +187,7 @@ class SystemMonitorTask(FigureTask):
     @on_trait_change('window:opened')
     def _opened(self):
         editor = self.add_system_monitor()
-        self.add_dashboard_editor()
+        # self.add_dashboard_editor()
 
         #if editor:
         #    ideo = self.new_ideogram(add_table=False, add_iso=False)

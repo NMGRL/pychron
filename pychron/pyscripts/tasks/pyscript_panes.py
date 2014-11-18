@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,14 +16,17 @@
 
 #============= enthought library imports =======================
 import os
+
 from traits.api import List, Instance, Str, Property, Any, String, Button
 from traitsui.api import View, Item, UItem, InstanceEditor, ButtonEditor, VGroup, TabularEditor, \
     HGroup, spring, VSplit, Label
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traitsui.tabular_adapter import TabularAdapter
+
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.tabular_editor import myTabularEditor
+
 
 # from pychron.pyscripts.commands.core import ICommand
 #============= standard library imports ========================
@@ -37,16 +40,12 @@ class ControlPane(TraitsDockPane):
         v = View(
             VGroup(
                 UItem('execute',
-                      editor=ButtonEditor(label_value='execute_label')
-                ),
+                      editor=ButtonEditor(label_value='execute_label')),
                 VGroup(
                     UItem('use_trace'),
                     UItem('trace_delay', label='Delay (ms)'),
                     show_border=True,
-                    label='Trace'
-                )
-            )
-        )
+                    label='Trace')))
         return v
 
 
@@ -57,8 +56,7 @@ class DescriptionPane(TraitsDockPane):
     def traits_view(self):
         v = View(
             UItem('description',
-                  style='readonly'
-            )
+                  style='readonly')
 
             #                 'object.selected_command_object',
             #                 show_label=False,
@@ -76,22 +74,24 @@ class ExamplePane(TraitsDockPane):
     def traits_view(self):
         v = View(
             UItem('example',
-                  style='readonly'
-            )
-
-            #                 'object.selected_command_object',
-            #                 show_label=False,
-            #                 style='custom',
-            #                 height=0.25,
-            #                 editor=InstanceEditor(view='help_view')
-        )
+                  style='readonly'))
         return v
 
 
-class EditorPane(TraitsDockPane):
-    name = 'Editor'
-    id = 'pychron.pyscript.editor'
-    editor = Instance('pychron.pyscripts.parameter_editor.ParameterEditor')
+# class EditorPane(TraitsDockPane):
+# name = 'Editor'
+#     id = 'pychron.pyscript.editor'
+#     editor = Instance('pychron.pyscripts.parameter_editor.ParameterEditor')
+#
+#     def traits_view(self):
+#         v = View(UItem('editor', style='custom'))
+#         return v
+
+
+class ContextEditorPane(TraitsDockPane):
+    name = 'Context'
+    id = 'pychron.pyscript.context_editor'
+    editor = Instance('pychron.pyscripts.context_editors.context_editor.ContextEditor')
 
     def traits_view(self):
         v = View(UItem('editor', style='custom'))
@@ -101,7 +101,6 @@ class EditorPane(TraitsDockPane):
 class CommandsAdapter(TabularAdapter):
     columns = [('Name', 'name')]
     name_text = Property
-    #
     def _get_name_text(self, *args, **kw):
         return self.item
 
@@ -110,12 +109,15 @@ class CommandEditorPane(TraitsDockPane):
     name = 'Commands Editor'
     id = 'pychron.pyscript.commands_editor'
     command_object = Any
+    insert_button = Button
 
     def traits_view(self):
-        v = View(UItem('command_object',
-                       width=-275,
-                       editor=InstanceEditor(),
-                       style='custom'))
+        v = View(
+            UItem('insert_button', enabled_when='command_object'),
+            UItem('command_object',
+                  width=-275,
+                  editor=InstanceEditor(),
+                  style='custom'))
         return v
 
 
@@ -132,19 +134,18 @@ class CommandsPane(TraitsDockPane):
     command_objects = List
 
     def set_command(self, line):
-        args=line.split('(')
-        cmd=args[0]
+        args = line.split('(')
+        cmd = args[0]
         if cmd:
-            self.selected_command=cmd
-            s='('.join(args[1:])
-            s=s[:-1]
+            self.selected_command = cmd
+            s = '('.join(args[1:])
+            s = s[:-1]
             self.command_object.load_str(s)
-
 
     def _selected_command_changed(self):
         if self.selected_command:
             obj = next((ci for ci in self.command_objects
-                        if ci.name == self.selected_command), None)
+                        if ci and ci.name == self.selected_command), None)
             self.command_object = obj
 
     def _set_commands(self, cs):
@@ -160,11 +161,8 @@ class CommandsPane(TraitsDockPane):
                       editor=myTabularEditor(operations=['move'],
                                              adapter=CommandsAdapter(),
                                              editable=True,
-                                             selected='selected_command'
-                      ),
-                      width=200,
-        )
-        )
+                                             selected='selected_command'),
+                      width=200, ))
         return v
 
 

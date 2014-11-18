@@ -15,20 +15,21 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from chaco.legend import Legend
 from traits.api import Str
 # from chaco.array_data_source import ArrayDataSource
 
 #============= standard library imports ========================
-# from numpy import asarray, Inf
+from numpy import where
 #============= local library imports  ==========================
 # from pychron.pychron_constants import FIT_TYPES
 # from pychron.processing.tasks.analysis_edit.ianalysis_edit_tool import IAnalysisEditTool
-from pychron.graph.regression_graph import StackedRegressionGraph
 # from pychron.core.regression.interpolation_regressor import InterpolationRegressor
 # from pychron.core.regression.ols_regressor import OLSRegressor
 # from pychron.core.regression.mean_regressor import MeanRegressor
 # from pychron.core.helpers.datetime_tools import convert_timestamp
 # from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
+from pychron.graph.stacked_regression_graph import StackedRegressionGraph
 from pychron.processing.tasks.analysis_edit.interpolation_editor import InterpolationEditor
 
 
@@ -38,7 +39,9 @@ class BlanksEditor(InterpolationEditor):
 
     def load_fits(self, ref_ans):
         keys = ref_ans.isotope_keys
-        fits = [ref_ans.isotopes[ki].blank.fit or 'average_sem' for ki in keys]
+        fits = [(ref_ans.isotopes[ki].blank.fit,
+                 ref_ans.isotopes[ki].blank.error_type,
+                 ref_ans.isotopes[ki].blank.filter_outliers_dict) for ki in keys]
         self.tool.load_fits(keys, fits)
 
     def do_fit(self, ans):
@@ -56,12 +59,13 @@ class BlanksEditor(InterpolationEditor):
             n = len(self.analyses)
             if n > 1:
                 if progress is None:
-                    progress=self.processor.open_progress(n)
+                    progress = self.processor.open_progress(n)
                 else:
                     progress.increase_max(n)
 
-            set_id=self.processor.add_predictor_set(self._clean_references())
-            
+            refs = self._clean_references()
+            set_id = self.processor.add_predictor_set(refs)
+
             for unk in self.analyses:
                 if progress:
                     progress.change_message('Saving blanks for {}'.format(unk.record_id))
@@ -78,11 +82,16 @@ class BlanksEditor(InterpolationEditor):
                     else:
                         self.debug('saving {} {}'.format(unk.record_id, si.name))
 
-                        self.processor.apply_correction(history, unk, si, set_id, cname)
-                # unk.sync(meas_analysis)
+                        dbblank = self.processor.apply_correction(history, unk, si, set_id, cname)
+                        if si.fit == 'preceding':
+                            dbid = self._get_preceding_analysis(db, unk, refs)
+                            if dbid:
+                                dbblank.preceding_id = dbid.id
 
-            if self.auto_plot:
-                self.rebuild_graph()
+                                # unk.sync(meas_analysis)
+
+            # if self.auto_plot:
+            self.rebuild_graph()
 
             fits = ','.join(('{} {}'.format(fi.name, fi.fit) for fi in self.tool.fits if fi.use))
             self.processor.update_vcs_analyses(self.analyses,
@@ -91,15 +100,23 @@ class BlanksEditor(InterpolationEditor):
             if progress:
                 progress.soft_close()
 
+    def _get_preceding_analysis(self, db, unk, refs):
+        xs = [ri.timestamp for ri in refs]
+        try:
+            ti = where(xs <= unk.timestamp)[0][-1]
+        except IndexError:
+            ti = 0
+
+        return db.get_analysis_uuid(refs[ti].uuid)
+
     def _set_interpolated_values(self, iso, ans, p_uys, p_ues):
         for ui, v, e in zip(ans, p_uys, p_ues):
             if v is not None and e is not None:
                 ui.set_temporary_blank(iso, v, e)
 
-
     def _get_current_values(self, iso, ans=None):
         if ans is None:
-            ans=self.analyses
+            ans = self.analyses
 
         return zip(*[self._get_isotope(ui, iso, 'blank')
                      for ui in ans])
@@ -114,11 +131,47 @@ class BlanksEditor(InterpolationEditor):
 
     def _get_reference_values(self, iso, ans=None):
         if ans is None:
-            ans=self.references
+            ans = self.references
 
         return zip(*[self._get_baseline_corrected(ui, iso)
                      for ui in ans])
 
+    def _add_legend(self):
+        # mapping = {'plot1': 'Blanks',
+        #            'Unknowns-Current': 'Current',
+        #            'Unknowns-predicted': 'Predicted'}
+        plot = self.graph.plots[-1]
+        ps = {}
+
+        for k, v in plot.plots.items():
+            if k == 'Unknowns-Current':
+                ps['Current'] = v
+            elif k.startswith('Unknowns-predicted'):
+                ps['Predicted'] = v
+            elif k.startswith('data') or k == 'plot1':
+                ps['Blanks'] = v
+
+        # print plot.plots.keys()
+        # for k, v in plot.plots.items():
+        #     for ki in mapping.keys():
+        #         if k.startswith(ki):
+        #             n = mapping[ki]
+        #             ps[n] = v
+        #             break
+        #     else:
+        #         if k in mapping:
+        #             n = mapping[k]
+        #             ps[n] = v
+
+        l = Legend(plots=ps)
+        plot.overlays.append(l)
+        # plot.invalidate_and_redraw()
+
+    def _graph_default(self):
+        return StackedRegressionGraph(container_dict=dict(stack_order='top_to_bottom'))
+
+
+        #============= EOF =============================================
         #     def _rebuild_graph(self):
         #         graph = self.graph
         #
@@ -252,9 +305,3 @@ class BlanksEditor(InterpolationEditor):
         #pass
         #self.tool.load_fits(refiso.isotope_keys,
         #                    refiso.isotope_fits)
-
-    def _graph_default(self):
-        return StackedRegressionGraph(container_dict=dict(stack_order='top_to_bottom'))
-
-
-#============= EOF =============================================

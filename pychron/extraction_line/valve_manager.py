@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -335,8 +335,8 @@ class ValveManager(Manager):
                     D,E owned by 150
                     F free
         """
-        self.valves['C'].owner = '129.138.12.135'
-        self.valves['X'].owner = '129.138.12.135'
+        #self.valves['C'].owner = '129.138.12.135'
+        #self.valves['X'].owner = '129.138.12.135'
 
         vs = [(v.name.split('-')[1], v.owner) for v in self.valves.itervalues()]
         key = lambda x: x[1]
@@ -475,6 +475,7 @@ class ValveManager(Manager):
         return state
 
     def get_actuator_by_name(self, name):
+        act = None
         if self.actuators:
             act = next((a for a in self.actuators
                         if a.name == name), None)
@@ -497,7 +498,7 @@ class ValveManager(Manager):
         """
         """
         cv = self.get_valve_by_name(name)
-        self.debug('check software interlocks {} {}'.format(name, cv))
+        self.debug('check software interlocks {}'.format(name))
         if cv is not None:
             interlocks = cv.interlocks
             valves = self.valves
@@ -635,25 +636,28 @@ class ValveManager(Manager):
             self.valves[name] = hv
             return hv
 
-        parser = ValveParser(path)
-        for g in parser.get_groups():
-            for v in parser.get_valves(group=g):
+        parser = ValveParser()
+        if not parser.load(path):
+            self.warning_dialog('No valves.xml file located in "{}"'.format(os.path.dirname(path)))
+        else:
+            for g in parser.get_groups():
+                for v in parser.get_valves(group=g):
+                    factory(v)
+
+            for v in parser.get_valves():
                 factory(v)
 
-        for v in parser.get_valves():
-            factory(v)
+            for s in parser.get_switches():
+                name, sw = self._switch_factory(s, klass=Switch)
+                self.valves[name] = sw
 
-        for s in parser.get_switches():
-            name, sw = self._switch_factory(s, klass=Switch)
-            self.valves[name] = sw
+            ps = []
+            for p in parser.get_pipettes():
+                pip = self._pipette_factory(p)
+                if pip:
+                    ps.append(pip)
 
-        ps = []
-        for p in parser.get_pipettes():
-            pip = self._pipette_factory(p)
-            if pip:
-                ps.append(pip)
-
-        self.pipette_trackers = ps
+            self.pipette_trackers = ps
 
     def _pipette_factory(self, p):
         inner = p.find('inner')
@@ -701,10 +705,22 @@ class ValveManager(Manager):
             if inverted is not None:
                 parent_inverted = to_bool(inverted.text.strip())
 
+        check_actuation_enabled = True
+        cae = v_elem.find('check_actuation_enabled')
+        if cae is not None:
+            check_actuation_enabled = to_bool(cae.text.strip())
+
+        check_actuation_delay = 0
+        cad = v_elem.find('check_actuation_delay')
+        if cad is not None:
+            check_actuation_delay = float(cad.text.strip())
+
         hv = klass(name,
                    address=address.text.strip() if address is not None else '',
                    parent=parent_name,
                    parent_inverted=parent_inverted,
+                   check_actuation_enabled=check_actuation_enabled,
+                   check_actuation_delay=check_actuation_delay,
                    actuator=actuator,
                    description=description,
                    query_state=qs,

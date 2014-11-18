@@ -21,13 +21,14 @@ from traits.api import HasTraits, Str, Either, Float, Int, Property, Bool
 #============= local library imports  ==========================
 class NamedValue(HasTraits):
     name = Str
-    value = Either(Str, Float, Int)
+    value = Either(Str, Float, Int, None)
 
 
 class ComputedValue(NamedValue):
     error = Either(Str, Float, Int)
     tag = Str
     display_value=Bool(True)
+    sig_figs = Int(5)
 
 
 class DetectorRatio(ComputedValue):

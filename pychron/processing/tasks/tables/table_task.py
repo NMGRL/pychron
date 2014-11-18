@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,8 +16,10 @@
 
 #============= enthought library imports =======================
 from itertools import groupby
+
 from traits.api import Instance
 from pyface.tasks.action.schema import SToolBar, SGroup
+
 # from pyface.action.action import Action
 # from pyface.tasks.action.task_action import TaskAction
 # from pyface.tasks.task_layout import TaskLayout, PaneItem
@@ -118,8 +120,8 @@ class TableTask(BaseBrowserTask):
         self._open_editor(editor)
 
 
-    # def _dclicked_sample_changed(self, new):
-    #     self._append_table()
+        # def _dclicked_sample_changed(self, new):
+        #     self._append_table()
         #         man = self.manager
         #         ans = [ai for ai in self.analyses
         # #                 if not ai.step
@@ -182,7 +184,7 @@ class TableTask(BaseBrowserTask):
 
     def append_summary_table(self):
         if isinstance(self.active_editor, SummaryTableEditor):
-        #             do_later(self._append_summary_table)
+            #             do_later(self._append_summary_table)
             self._append_summary_table()
 
     def append_table(self):
@@ -199,7 +201,7 @@ class TableTask(BaseBrowserTask):
 
         ss = [sa for sa in self.selected_samples if not find(sa.name)]
         man = self.manager
-        ans = self._get_sample_analyses(ss)
+        ans = self._retrieve_sample_analyses(ss)
         ans = man.make_analyses(ans)
 
         items = self.active_editor.items
@@ -251,7 +253,7 @@ class TableTask(BaseBrowserTask):
             if s.material:
                 mat = s.material
 
-            ans = self._get_sample_analyses(s)
+            ans = self._retrieve_sample_analyses(s)
             #             ans = [ai for ai in ans if ai.step == ''][:5]
             #             ans = [ai for ai in ans][:5]
             #            ans = self.manager.make_analyses(ans[:4])

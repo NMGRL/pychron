@@ -23,8 +23,10 @@
 # from xml.etree.ElementTree import ElementTree, Element, ParseError
 import os
 
+from lxml import etree
 from lxml.etree import ElementTree, Element, ParseError, XML
 from pyface.message_dialog import warning
+
 #============= local library imports  ==========================
 
 
@@ -66,9 +68,11 @@ class XMLParser(object):
         if path:
             txt = path.read()
             self._root = XML(txt)
+            path.close()
+            return True
 
     def load(self, fp):
-        self._parse_file(fp)
+        return self._parse_file(fp)
 
     def add(self, tag, value, root, **kw):
         if root is None:
@@ -79,7 +83,7 @@ class XMLParser(object):
 
     def new_element(self, tag, value, **kw):
         e = Element(tag, attrib=kw)
-        if value:
+        if value not in ('', None):
             e.text = str(value)
         return e
 
@@ -100,10 +104,10 @@ class XMLParser(object):
                        method='xml',
                        pretty_print=pretty_print)
 
-    def tostring(self):
+    def tostring(self, pretty_print=True):
         tree = self.get_tree()
         if tree:
-            return tree.tostring()
+            return etree.tostring(tree, pretty_print=pretty_print)
 
     def get_elements(self, name=None):
         root = self.get_root()

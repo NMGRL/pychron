@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,6 +15,9 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+import os
+from pyface.tasks.task_window_layout import TaskWindowLayout
+import sys
 from traits.api import on_trait_change, Any
 from pyface.action.action import Action
 from pyface.tasks.action.task_action import TaskAction
@@ -31,6 +34,12 @@ from pyface.constant import YES
 from pychron.envisage.resources import icon
 
 
+class RestartAction(Action):
+    name = 'Restart'
+    def perform(self, event):
+        os.execl(sys.executable, *([sys.executable]+sys.argv))
+
+
 class WebAction(Action):
     def _open_url(self, url):
         webbrowser.open_new(url)
@@ -38,7 +47,7 @@ class WebAction(Action):
 
 class IssueAction(WebAction):
     name = 'Add Request/Report Bug'
-    image = icon('bug.png')
+    image = icon('bug')
 
     def perform(self, event):
         """
@@ -48,8 +57,33 @@ class IssueAction(WebAction):
         self._open_url(url)
 
 
+class NoteAction(WebAction):
+    name = 'Add Laboratory Note'
+    image = icon('insert-comment')
+
+    def perform(self, event):
+        """
+            goto issues page add an request or report bug
+        """
+        url = 'https://github.com/NMGRL/Laboratory/issues/new'
+        self._open_url(url)
+
+
+class DocumentationAction(WebAction):
+    name = 'View Documentation'
+    # image = icon('insert-comment')
+
+    def perform(self, event):
+        """
+            goto issues page add an request or report bug
+        """
+        url = 'http://pychron.readthedocs.org/en/latest/index.html'
+        self._open_url(url)
+
+
 class AboutAction(Action):
-    name='About Pychron'
+    name = 'About Pychron'
+
     def perform(self, event):
         app = event.task.window.application
         app.about()
@@ -108,6 +142,16 @@ class CloseOthersAction(TaskAction):
                 wi.close()
 
 
+class OpenAdditionalWindow(TaskAction):
+    name = 'Open Additional Window'
+    description = 'Open an additional window of the current active task'
+
+    def perform(self, event):
+        app = self.task.window.application
+        win = app.create_window(TaskWindowLayout(self.task.id))
+        win.open()
+
+
 class RaiseAction(TaskAction):
     window = Any
     style = 'toggle'
@@ -131,7 +175,7 @@ class RaiseUIAction(TaskAction):
 class GenericSaveAction(TaskAction):
     name = 'Save'
     accelerator = 'Ctrl+S'
-    image = icon('document-save.png')
+    image = icon('document-save')
 
     def perform(self, event):
         task = self.task
@@ -142,7 +186,7 @@ class GenericSaveAction(TaskAction):
 class GenericSaveAsAction(TaskAction):
     name = 'Save As...'
     accelerator = 'Ctrl+Shift+S'
-    image = icon('document-save-as.png')
+    image = icon('document-save-as')
 
     def perform(self, event):
         task = self.task
@@ -158,6 +202,38 @@ class GenericFindAction(TaskAction):
         task = self.task
         if hasattr(task, 'find'):
             task.find()
+
+
+class FileOpenAction(Action):
+    task_id = ''
+    test_path = ''
+    image = icon('document-open')
+
+    def perform(self, event):
+        if event.task.id == self.task_id:
+            task = event.task
+            task.open()
+        else:
+            application = event.task.window.application
+            win = application.create_window(TaskWindowLayout(self.task_id))
+            task = win.active_task
+            if task.open(path=self.test_path):
+                win.open()
+
+
+class NewAction(Action):
+    task_id = ''
+
+    def perform(self, event):
+        if event.task.id == self.task_id:
+            task = event.task
+            task.new()
+        else:
+            application = event.task.window.application
+            win = application.create_window(TaskWindowLayout(self.task_id))
+            task = win.active_task
+            if task.new():
+                win.open()
 
 # class GenericReplaceAction(TaskAction):
 #    pass

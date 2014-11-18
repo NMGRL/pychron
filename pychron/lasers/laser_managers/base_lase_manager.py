@@ -15,8 +15,8 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Instance, Event, Bool, Any, Property, Str, Float
-from traits.has_traits import provides
+from traits.api import Instance, Event, Bool, Any, Property, Str, Float, provides
+# from traits.has_traits import provides
 
 from pychron.lasers.stage_managers.stage_manager import StageManager
 from pychron.lasers.pattern.pattern_executor import PatternExecutor
@@ -54,6 +54,12 @@ class BaseLaserManager(Manager):
     _requested_power = Float
     _calibrated_power = None
 
+    def test_connection(self):
+        if self.mode == 'client':
+            return self._test_connection()
+        else:
+            return True
+
     def initialize_video(self):
         if self.use_video:
             self.stage_manager.initialize_video()
@@ -82,13 +88,19 @@ class BaseLaserManager(Manager):
     def get_motor(self, name):
         pass
 
-    def enable_device(self):
-        return self.enable_laser()
+    def get_response_blob(self):
+        return ''
+
+    def get_output_blob(self):
+        return ''
+
+    def enable_device(self, **kw):
+        return self.enable_laser(**kw)
 
     def disable_device(self):
         self.disable_laser()
 
-    def enable_laser(self):
+    def enable_laser(self, **kw):
         pass
 
     def disable_laser(self):
@@ -112,8 +124,13 @@ class BaseLaserManager(Manager):
 #             self.open_view(pm)
 
     def execute_pattern(self, name=None, block=False):
+        if not self.stage_manager.temp_hole:
+            self.information_dialog('Need to specify a hole')
+            return
+
         pm = self.pattern_executor
         if pm.load_pattern(name):
+            pm.set_stage_values(self.stage_manager)
             pm.execute(block)
 
     def stop_pattern(self):
@@ -129,7 +146,9 @@ class BaseLaserManager(Manager):
         if hasattr(self, 'stage_manager'):
             controller = self.stage_manager.stage_controller
 
-        pm = PatternExecutor(application=self.application, controller=controller)
+        pm = PatternExecutor(application=self.application,
+                             controller=controller,
+                             laser_manager=self)
         return pm
 
     def move_to_position(self, pos, *args, **kw):

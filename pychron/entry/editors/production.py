@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, Instance, Str, Float, Unicode, Bool, on_trait_change
-from traitsui.api import View, Item, HGroup, VGroup, UCustom
+from traitsui.api import View, Item, HGroup, VGroup, UCustom, Tabbed, UItem, Group
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -38,9 +38,11 @@ class EUCustom(UCustom):
 
 
 class IrradiationProduction(HasTraits):
-    reactor=Str
+    reactor = Str
+    note = Str
+    last_modified = Str
 
-    dirty=Bool
+    dirty = Bool
 
     # K interferences
     k4039 = Instance(ProductionValue, (), {'name': 'K 40/39'})
@@ -59,31 +61,34 @@ class IrradiationProduction(HasTraits):
     # elemental production ratio
     Ca_K = Instance(ProductionValue, (), {'name': 'Ca/K'})
     Cl_K = Instance(ProductionValue, (), {'name': 'Cl/K'})
-    editable=Bool(False)
+    editable = Bool(False)
+
     def __init__(self, *args, **kw):
         super(IrradiationProduction, self).__init__(*args, **kw)
 
-        self.__edited__=dict()
-        self.__dirty__=[]
+        self.__edited__ = dict()
+        self.__dirty__ = []
 
-    @on_trait_change('k+:[value,error],ca+:[value,error], cl+:[value,error], Ca_K:[value,error],Cl_K:[value,error]')
-    def _set_dirty(self,obj,name,old,new):
+    @on_trait_change('''k+:[value,error],ca+:[value,error],cl+:[value,error],
+Ca_K:[value,error],Cl_K:[value,error],note''')
+    def _set_dirty(self, obj, name, old, new):
         # print name, new
 
         if name in self.__edited__:
-            old_value=self.__edited__[name]
-            if old_value!=new:
+            old_value = self.__edited__[name]
+            if old_value != new:
                 self.__dirty__.append(1)
             else:
-                self.__dirty__.pop()
+                if self.__dirty__:
+                    self.__dirty__.pop()
         else:
-            self.__edited__[name]=old
+            self.__edited__[name] = old
             # self.__dirty__.append(1)
 
-        self.dirty=bool(self.__dirty__)
+        self.dirty = bool(self.__dirty__)
 
     def get_params(self):
-        params={}
+        params = {}
         keys = ['k4039', 'k3839', 'k3739',
                 'ca3937', 'ca3837', 'ca3637',
                 'cl3638']
@@ -92,8 +97,8 @@ class IrradiationProduction(HasTraits):
             obj = getattr(self, ki)
 
             ki = ki.capitalize()
-            params[ki]=obj.value
-            params['{}_err'.format(ki)]=obj.error
+            params[ki] = obj.value
+            params['{}_err'.format(ki)] = obj.error
 
             # setattr(ip, ki, obj.value)
             # setattr(ip, '{}_err'.format(ki), obj.error)
@@ -111,20 +116,24 @@ class IrradiationProduction(HasTraits):
         return params
 
     def create(self, dbrecord):
-        for attr in ('K4039','K3839','K3739',
-                    'Ca3937','Ca3837','Ca3637',
-                    'Cl3638'):
-            v=getattr(dbrecord, attr)
-            e=getattr(dbrecord, '{}_err'.format(attr))
-            obj=getattr(self, attr.lower())
-            obj.value=v if v is not None else 0
-            obj.error=e if e is not None else 0
+        for attr in ('K4039', 'K3839', 'K3739',
+                     'Ca3937', 'Ca3837', 'Ca3637',
+                     'Cl3638'):
+            v = getattr(dbrecord, attr)
+            e = getattr(dbrecord, '{}_err'.format(attr))
+            obj = getattr(self, attr.lower())
+            obj.value = v if v is not None else 0
+            obj.error = e if e is not None else 0
 
         self.Ca_K.value = dbrecord.Ca_K if dbrecord.Ca_K else 0
         self.Ca_K.error = dbrecord.Ca_K_err if dbrecord.Ca_K_err else 0
 
         self.Cl_K.value = dbrecord.Cl_K if dbrecord.Cl_K else 0
         self.Cl_K.error = dbrecord.Cl_K_err if dbrecord.Cl_K_err else 0
+
+        if dbrecord.last_modified:
+            self.last_modified=dbrecord.last_modified.strftime('%m-%d-%Y %H:%M:%S')
+        self.note = dbrecord.note or ''
 
     def traits_view(self):
         kgrp = VGroup(EUCustom('k4039'),
@@ -145,26 +154,15 @@ class IrradiationProduction(HasTraits):
             label='Elemental', show_border=True)
 
         v = View(
-            VGroup(
-                # HGroup(Item('name'),
-                #        Item('db_name',
-                #             show_label=False,
-                #             editor=CheckListEditor(name='names'))
-                # ),
-                VGroup(HGroup(kgrp,
-                       cagrp),
+            Tabbed(VGroup(HGroup(kgrp,
+                              cagrp),
                        clgrp,
-                       elem_grp)),
-            width=300,
-            # resizable=True,
-            # buttons=[Action(name='Save', action='save',
-            #                 #                                enabled_when='object.save_enabled'
-            # ),
-            #          'Cancel'
-            # ],
-            # handler=self.handler_klass,
-            # title='Production Ratio Input'
-        )
+                       elem_grp,
+                    label='Ratios'),
+                   Group(UItem('note', enabled_when='editable',
+                               style='custom'),
+                         label='Note')),
+            width=300)
         return v
 
 #============= EOF =============================================

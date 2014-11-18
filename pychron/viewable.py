@@ -24,8 +24,6 @@ from traitsui.api import Handler
 #============= local library imports  ==========================
 # from pychron.utils import IsQt
 from pychron.loggable import Loggable
-from pychron.core.ui.gui import invoke_in_main_thread
-
 
 # class ViewableHandler(Controller):
 class ViewableHandler(Handler):
@@ -109,6 +107,8 @@ class Viewable(Loggable):
         pass
 
     def close_ui(self):
+        from pychron.core.ui.gui import invoke_in_main_thread
+
         self.debug('disposed')
         invoke_in_main_thread(self.trait_set, disposed=True)
 

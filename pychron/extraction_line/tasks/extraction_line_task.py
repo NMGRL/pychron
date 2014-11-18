@@ -17,11 +17,11 @@
 #============= enthought library imports =======================
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem
-from traits.api import Bool
 # from pyface.tasks.action.schema import SMenu
 # from pychron.extraction_line.tasks.extraction_line_actions import RefreshCanvasAction
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.envisage.tasks.pane_helpers import ConsolePane
 from pychron.extraction_line.tasks.extraction_line_actions import FinishChamberChangeAction, \
     EvacuateChamberAction, IsolateChamberAction
 from pychron.extraction_line.tasks.extraction_line_pane import CanvasPane, GaugePane, \
@@ -38,15 +38,14 @@ class ExtractionLineTask(BaseHardwareTask):
             IsolateChamberAction(),
             EvacuateChamberAction(),
             FinishChamberChangeAction(),
-            image_size=(16, 16)
-        )
+            image_size=(16, 16))
         return [tb, ]
 
     def _default_layout_default(self):
         return TaskLayout(
             top=PaneItem('pychron.extraction_line.gauges'),
-            left=PaneItem('pychron.extraction_line.explanation')
-        )
+            left=PaneItem('pychron.extraction_line.explanation'),
+            right=PaneItem('pychron.console'))
 
     def activated(self):
         self.manager.activate()
@@ -61,8 +60,8 @@ class ExtractionLineTask(BaseHardwareTask):
 
     def create_dock_panes(self):
         panes = [GaugePane(model=self.manager),
-                 ExplanationPane(model=self.manager)
-        ]
+                 ExplanationPane(model=self.manager),
+                 ConsolePane(model=self.manager)]
         return panes
 
     #=======================================================================

@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Str, Float
+from traits.api import Str, Float, Int
 from traitsui.api import Item
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -207,8 +207,39 @@ class SetXy(Command):
     def _to_string(self):
         return '{},{}'.format(self.xvalue, self.yvalue)
 
+
 class GetValue(Command):
     pass
+
+
+class Waitfor(Command):
+    timeout = Int
+
+    def _get_view(self):
+        return Item('timeout')
+
+    def _to_string(self):
+        return 'waitfor(timeout={})'.format(self.timeout)
+
+
+class LoadPipette(Command):
+    pipette_name = Str
+
+    def _get_view(self):
+        return Item('pipette_name')
+
+    def _to_string(self):
+        return "load_pipette('{}')".format(self.pipette_name)
+
+
+class ExtractPipette(Command):
+    pipette_name = Str
+
+    def _get_view(self):
+        return Item('pipette_name')
+
+    def _to_string(self):
+        return "extract_pipette('{}')".format(self.pipette_name)
 
 # class HeatSample(Command):
 #    value = Float

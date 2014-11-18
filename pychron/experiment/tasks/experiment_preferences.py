@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,22 +16,26 @@
 
 #============= enthought library imports =======================
 from traits.api import Str, Int, \
-    Bool, Password, Color
-from traitsui.api import View, Item, Group, VGroup
+    Bool, Password, Color, Property, Float, Enum
+from traitsui.api import View, Item, Group, VGroup, HGroup, UItem
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-
-from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper, BaseConsolePreferences, \
-    BaseConsolePreferencesPane
-
-
-
-
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.core.ui.custom_label_editor import CustomLabel
+from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper, BaseConsolePreferences, \
+    BaseConsolePreferencesPane
+from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES
+
+
+class PositiveInteger(Int):
+    def validate(self, object, name, value):
+        if value >= 0:
+            return value
+
+        self.error(object, name, value)
 
 
 class ExperimentPreferences(BasePreferencesHelper):
-    name = 'Experiment'
     preferences_path = 'pychron.experiment'
     id = 'pychron.experiment.preferences_page'
 
@@ -48,11 +52,59 @@ class ExperimentPreferences(BasePreferencesHelper):
     sniff_color = Color
     signal_color = Color
 
-    filter_outliers = Bool(False)
-    fo_iterations = Int(1)
-    fo_std_dev = Int(2)
+    bg_color = Color
+
+    min_ms_pumptime = Int
+
+    use_memory_check = Bool
+    memory_threshold = Property(PositiveInteger,
+                                depends_on='_memory_threshold')
+    _memory_threshold = Int
+
+    use_analysis_grouping = Bool
+    grouping_threshold = Float
+    grouping_suffix = Str
+
+    use_automated_run_monitor = Bool
+    set_integration_time_on_start = Bool
+    default_integration_time = Enum(*QTEGRA_INTEGRATION_TIMES)
+
+    automated_runs_editable = Bool
+
+    def _get_memory_threshold(self):
+        return self._memory_threshold
+
+    def _set_memory_threshold(self, v):
+        if v is not None:
+            self._memory_threshold = v
 
 
+class UserNotifierPreferences(BasePreferencesHelper):
+    preferences_path = 'pychron.experiment'
+    server_username = Str
+    server_password = Password
+    server_host = Str
+    server_port = Int
+    include_log = Bool
+
+
+class ConsolePreferences(BaseConsolePreferences):
+    preferences_path = 'pychron.experiment'
+    use_message_colormapping = Bool
+
+
+class SysLoggerPreferences(BasePreferencesHelper):
+    use_syslogger = Bool
+    preferences_path = 'pychron.syslogger'
+    username = Str
+    password = Password
+
+    host = Str
+
+
+#======================================================================================================
+# panes
+#======================================================================================================
 class ExperimentPreferencesPane(PreferencesPane):
     model_factory = ExperimentPreferences
     category = 'Experiment'
@@ -66,6 +118,10 @@ class ExperimentPreferencesPane(PreferencesPane):
             label='Notifications')
 
         editor_grp = Group(
+            Item('automated_runs_editable',
+                 label='Direct editing',
+                 tooltip='Allow user to edit Automated Runs directly within table. '
+                         'Reopen experiment tab required to take effect'),
             Item('use_auto_save',
                  tooltip='If "Use auto save" experiment queue saved after "timeout" seconds'),
             Item('auto_save_delay',
@@ -81,34 +137,88 @@ class ExperimentPreferencesPane(PreferencesPane):
         color_group = Group(Item('sniff_color', label='Sniff'),
                             Item('baseline_color', label='Baseline'),
                             Item('signal_color', label='Signal'),
+                            Item('bg_color', label='Background'),
                             label='Colors')
 
-        filter_grp = Group(Item('filter_outliers'),
-                           VGroup(Item('fo_iterations', label='N. Iterations'),
-                                  Item('fo_std_dev', label='N. standard deviations'),
-                                  enabled_when='filter_outliers',
-                                  show_border=True),
-                           label='Post Fit Filtering')
+        analysis_grouping_grp = Group(Item('use_analysis_grouping',
+                                           label='Auto group analyses',
+                                           tooltip=''),
+                                      Item('grouping_suffix',
+                                           label='Suffix',
+                                           tooltip='Append "Suffix" to the Project name. e.g. MinnaBluff-autogen '
+                                                   'where Suffix=autogen'),
+                                      Item('grouping_threshold',
+                                           label='Grouping Threshold (hrs)',
+                                           tooltip='Associate Reference analyses with the project of an analysis that '
+                                                   'is within X hours of the current run',
+                                           enabled_when='use_analysis_grouping'),
+                                      label='Analysis Grouping')
 
-        return View(color_group, notification_grp, editor_grp, irradiation_grp, filter_grp)
+        memory_grp = Group(Item('use_memory_check', label='Check Memory',
+                                tooltip='Ensure enough memory is available during experiment execution'),
+                           Item('memory_threshold', label='Threshold',
+                                enabled_when='use_memory_check',
+                                tooltip='Do not continue experiment if available memory less than "Threshold"'),
+                           label='Memory')
+
+        monitor_grp = Group(Item('use_automated_run_monitor',
+                                 label='Use AutomatedRun Monitor',
+                                 tooltip='Use the automated run monitor'),
+                            show_border =True,
+                            label='Monitor')
+
+        overlap_grp = Group(Item('min_ms_pumptime',
+                                 label='Min. Mass Spectrometer Pumptime (s)'),
+                            show_border=True,
+                            label='Overlap')
+
+        automated_grp = Group(VGroup(Item('set_integration_time_on_start',
+                                          tooltip='Set integration time on start of analysis',
+                                          label='Set Integration Time on Start'),
+                                     Item('default_integration_time',
+                                          enabled_when='set_integration_time_on_start'),
+                                     monitor_grp, overlap_grp),
+                              label='Automated Run')
+
+        return View(color_group,
+                    automated_grp, notification_grp,
+                    editor_grp, irradiation_grp,
+                    analysis_grouping_grp, memory_grp)
 
 
-class ConsolePreferences(BaseConsolePreferences):
-    preferences_path = 'pychron.experiment'
+class UserNotifierPreferencesPane(PreferencesPane):
+    model_factory = UserNotifierPreferences
+    category = 'Experiment'
+
+    def traits_view(self):
+        auth_grp = VGroup(Item('server_username', label='User'),
+                          Item('server_password', label='Password'),
+                          Item('server_host', label='Host'),
+                          Item('server_port', label='Port'),
+                          Item('include_log'),
+                          label='User Notifier')
+
+        v = View(auth_grp)
+        return v
 
 
 class ConsolePreferencesPane(BaseConsolePreferencesPane):
     model_factory = ConsolePreferences
     label = 'Experiment'
 
+    def traits_view(self):
+        preview = CustomLabel('preview',
+                              size_name='fontsize',
+                              color_name='textcolor',
+                              bgcolor_name='bgcolor')
 
-class SysLoggerPreferences(BasePreferencesHelper):
-    use_syslogger = Bool
-    preferences_path = 'pychron.syslogger'
-    username = Str
-    password = Password
-
-    host = Str
+        v = View(VGroup(HGroup(UItem('fontsize'),
+                               UItem('textcolor'),
+                               UItem('bgcolor')),
+                        preview,
+                        Item('use_message_colormapping'),
+                        label=self.label))
+        return v
 
 
 class SysLoggerPreferencesPane(PreferencesPane):
@@ -122,7 +232,8 @@ class SysLoggerPreferencesPane(PreferencesPane):
                           enabled_when='use_syslogger')
 
         v = View(VGroup(Item('use_syslogger', label='Use SysLogger'),
-                        auth_grp))
+                        auth_grp,
+                        label='SysLogger'))
         return v
 
 #============= EOF =============================================

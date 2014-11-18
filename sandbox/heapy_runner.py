@@ -14,10 +14,12 @@
 # limitations under the License.
 #===============================================================================
 from traits.etsconfig.etsconfig import ETSConfig
+
 from test.database import isotope_manager_factory
+
 # from pychron.core.helpers import logger_setup
 from pychron.core.helpers.logger_setup import logging_setup
-from pychron.spectrometer.spectrometer_manager import SpectrometerManager
+from pychron.spectrometer.thermo.spectrometer_manager import ArgusSpectrometerManager
 # from pychron.core.codetools.memory_usage import count_instances
 from pychron.globals import globalv
 ETSConfig.toolkit = 'qt4'
@@ -82,7 +84,7 @@ def run():
                         ]
 
     dbman = isotope_manager_factory()
-    specman = SpectrometerManager()
+    specman = ArgusSpectrometerManager()
     specman.load()
 
     ex = ExperimentExecutor(db=dbman.db,

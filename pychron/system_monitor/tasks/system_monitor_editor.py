@@ -19,6 +19,7 @@ from datetime import datetime, timedelta
 from threading import Thread, Lock
 import time
 #from apptools.preferences.preference_binding import bind_preference
+from pyface.timer.do_later import do_later
 from traits.api import Instance, Property, Int, Bool, on_trait_change, Any
 
 #============= standard library imports ========================
@@ -51,7 +52,7 @@ def camel_case(name):
 class SystemMonitorEditor(SeriesEditor):
     conn_spec = Instance(ConnectionSpec, ())
     name = Property(depends_on='conn_spec:+')
-    tool = Instance(SystemMonitorControls)
+    search_tool = Instance(SystemMonitorControls)
     subscriber = Instance(Subscriber)
     plotter_options_manager_klass = SystemMonitorOptionsManager
 
@@ -67,19 +68,20 @@ class SystemMonitorEditor(SeriesEditor):
 
     _air_editor = None
     _blank_air_editor = None
+    _blank_unknown_editor = None
     _cocktail_editor = None
     _blank_cocktail_editor = None
     _background_editor = None
 
     task = Any
 
-    db_lock=None
+    db_lock = None
 
     def __init__(self, *args, **kw):
         super(SystemMonitorEditor, self).__init__(*args, **kw)
         color_bind_preference(self.console_display.model, 'bgcolor', 'pychron.sys_mon.bgcolor')
         color_bind_preference(self.console_display, 'default_color', 'pychron.sys_mon.textcolor')
-        self.db_lock=Lock()
+        self.db_lock = Lock()
 
     def prepare_destroy(self):
         self.stop()
@@ -114,25 +116,24 @@ class SystemMonitorEditor(SeriesEditor):
                 else
                     add to ideogram
         """
-        def func():
-            #with self.db_lock:
-            self.info('refresh analyses. last UUID={}'.format(last_run_uuid))
-            proc = self.processor
-            db = proc.db
-            with db.session_ctx():
-                if last_run_uuid is None:
-                    dbrun = db.get_last_analysis(spectrometer=self.conn_spec.system_name)
-                else:
-                    dbrun = db.get_analysis_uuid(last_run_uuid)
 
-                #if last_run_uuid:
-                #    dbrun = db.get_analysis_uuid(last_run_uuid)
-                if dbrun:
-                    an = proc.make_analysis(dbrun)
-                    self._refresh_sys_mon_series(an)
-                    self._refresh_figures(an)
+        self.info('refresh analyses. last UUID={}'.format(last_run_uuid))
+        proc = self.processor
+        db = proc.db
+        with db.session_ctx():
+            if last_run_uuid is None:
+                dbrun = db.get_last_analysis(spectrometer=self.conn_spec.system_name)
+            else:
+                dbrun = db.get_analysis_uuid(last_run_uuid)
 
-        invoke_in_main_thread(func)
+            self.debug('run_added_handler dbrun={}'.format(dbrun))
+            if dbrun:
+                self.debug('run_added_handler identifier={}'.format(dbrun.labnumber.identifier))
+                an = proc.make_analysis(dbrun)
+                self._refresh_sys_mon_series(an)
+                self._refresh_figures(an)
+                # self._refresh_spectrum('62908', 11)
+
 
     def start(self):
 
@@ -157,20 +158,21 @@ class SystemMonitorEditor(SeriesEditor):
                 url = self.conn_spec.url
                 self.warning('System publisher not available url={}'.format(url))
 
-        last_run_uuid = self._get_last_run_uuid()
+        # last_run_uuid = self._get_last_run_uuid()
         #self.run_added_handler(last_run_uuid)
 
-        t = Thread(name='poll', target=self._poll, args=(last_run_uuid,))
+        t = Thread(name='poll', target=self._poll)
+        # args=(last_run_uuid,))
         t.setDaemon(True)
         t.start()
 
     def _get_dump_tool(self):
-        return self.tool
+        return self.search_tool
 
-    def _load_tool(self, obj):
-        self.tool = obj
+    def _load_tool(self, obj, **kw):
+        self.search_tool = obj
 
-    def _poll(self, last_run_uuid):
+    def _poll(self, last_run_uuid=None):
         self._polling = True
         sub = self.subscriber
 
@@ -198,10 +200,10 @@ class SystemMonitorEditor(SeriesEditor):
                     if time.time() - st > db_poll_interval:
                         st = time.time()
                         lr = self._get_last_run_uuid()
-                        self.debug('current uuid {} <> {}'.format(last_run_uuid, lr))
                         if lr != last_run_uuid:
+                            self.debug('current uuid {} <> {}'.format(last_run_uuid, lr))
                             last_run_uuid = lr
-                        invoke_in_main_thread(self.run_added_handler, lr)
+                            invoke_in_main_thread(self.run_added_handler, lr)
             else:
                 break
 
@@ -224,14 +226,18 @@ class SystemMonitorEditor(SeriesEditor):
     def _refresh_sys_mon_series(self, an):
 
         ms = an.mass_spectrometer
-        kw = dict(weeks=self.tool.weeks,
-                  days=self.tool.days,
-                  hours=self.tool.hours,
-                  limit=self.tool.limit)
+        kw = dict(weeks=self.search_tool.weeks,
+                  days=self.search_tool.days,
+                  hours=self.search_tool.hours,
+                  limit=self.search_tool.limit)
 
-        ans = self.processor.analysis_series(ms,
-                                             **kw)
-        self.analyses = ans
+        ans = self.processor.analysis_series(ms, **kw)
+        # for ai in ans:
+        #     print ai.record_id, ai.timestamp
+
+        ans = self._sort_analyses(ans)
+        self.set_items(ans)
+        self.rebuild_graph()
 
     def _refresh_figures(self, an):
         if an.analysis_type == 'unknown':
@@ -244,6 +250,9 @@ class SystemMonitorEditor(SeriesEditor):
 
             func = getattr(self, '_refresh_{}'.format(atype))
             func(an.labnumber)
+
+    def _refresh_blank_unknown(self, identifier):
+        self._set_series('blank_unknown', identifier)
 
     def _refresh_air(self, identifier):
         self._set_series('air', identifier)
@@ -270,6 +279,7 @@ class SystemMonitorEditor(SeriesEditor):
                                      add_iso=False)
             self.task.tab_editors(0, -1)
             e.basename = '{} Series'.format(camel_case(attr))
+            e.search_tool = SystemMonitorControls()
             return e
 
         editor = self._update_editor(editor, new, identifier, None, layout=False,
@@ -282,60 +292,73 @@ class SystemMonitorEditor(SeriesEditor):
         """
         editor = self._ideogram_editor
         f = lambda: self.task.new_ideogram(add_table=False, add_iso=False)
-        editor = self._update_editor(editor, f, identifier, None)
+        editor = self._update_editor(editor, f, identifier, None, calculate_age=True)
         self._ideogram_editor = editor
 
     def _refresh_spectrum(self, identifier, aliquot):
         editor = self._spectrum_editor
         f = lambda: self.task.new_spectrum(add_table=False, add_iso=False)
-        editor = self._update_editor(editor, f, identifier, aliquot)
+        editor = self._update_editor(editor, f, identifier, aliquot, calculate_age=True)
         self._spectrum_editor = editor
 
     def _update_editor(self, editor, editor_factory,
                        identifier, aliquot, layout=True,
-                       use_date_range=False):
+                       use_date_range=False, calculate_age=False):
         if editor is None:
             editor = editor_factory()
-            if layout:
-                self.task.split_editors(-2, -1)
-        else:
-            if not self._polling:
-                self.task.activate_editor(editor)
+        #     if layout:
+        #         self.task.split_editors(-2, -1)
+        # else:
+        #     if not self._polling:
+        #         self.task.activate_editor(editor)
 
         #gather analyses
-        ans = self._get_analyses(identifier,
+        tool=None
+        if hasattr(editor, 'search_tool'):
+            tool = editor.search_tool
+
+        ans = self._get_analyses(tool, identifier,
                                  aliquot, use_date_range)
+        ans = self._sort_analyses(ans)
 
-        editor.unknowns = ans
-        group_analyses_by_key(editor, editor.unknowns, 'labnumber')
-        #        self.task.group_by_labnumber()
+        if calculate_age:
+            for ai in ans:
+                ai.calculate_age()
 
+        editor.set_items(ans, update_graph=False)
+        group_analyses_by_key(editor.analyses, 'labnumber')
+
+        editor.clear_aux_plot_limits()
+        do_later(editor.rebuild)
+        # editor.rebuild()
         return editor
 
-    def _get_analyses(self, identifier, aliquot=None, use_date_range=False):
+    def _sort_analyses(self, ans):
+        return sorted(ans, key=lambda x: x.timestamp)
+
+    def _get_analyses(self, tool, identifier, aliquot=None, use_date_range=False):
         db = self.processor.db
         with db.session_ctx():
-            limit = self.tool.limit
             if aliquot is not None:
                 def func(a, l):
                     return l.identifier == identifier, a.aliquot == aliquot
 
-                ans = db.get_analyses(func=func, limit=limit)
+                ans = db.get_analyses(func=func)
             elif use_date_range:
                 end = datetime.now()
-                start = end - timedelta(hours=self.tool.hours,
-                                        weeks=self.tool.weeks,
-                                        days=self.tool.days)
+                start = end - timedelta(hours=tool.hours,
+                                        weeks=tool.weeks,
+                                        days=tool.days)
 
                 ans = db.get_date_range_analyses(start, end,
                                                  labnumber=identifier,
-                                                 limit=limit)
+                                                 limit=tool.limit)
             else:
-                ans, tc = db.get_labnumber_analyses(identifier, limit=limit)
+                ans, tc = db.get_labnumber_analyses(identifier)
 
             return self.processor.make_analyses(ans)
 
-    @on_trait_change('tool:[+, refresh_button]')
+    @on_trait_change('search_tool:[+, refresh_button]')
     def _handle_tool_change(self):
         self.run_added_handler()
 
@@ -349,7 +372,7 @@ class SystemMonitorEditor(SeriesEditor):
         return '{}-{}'.format(self.conn_spec.system_name,
                               self.conn_spec.host)
 
-    def _tool_default(self):
+    def _search_tool_default(self):
         tool = SystemMonitorControls()
         return tool
 

@@ -1,0 +1,11 @@
+package:
+  name: pyexperiment
+  version: 2.0.4
+
+source:
+  git_url: git@github.com/NMGRL/pychron.git
+
+
+requirements:
+  run:
+    - reportlab

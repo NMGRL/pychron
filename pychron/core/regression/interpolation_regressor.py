@@ -16,13 +16,17 @@
 
 #============= enthought library imports =======================
 from traits.api import Str
+
 from pychron.core.regression.base_regressor import BaseRegressor
+
 #============= standard library imports ========================
-from numpy import where, polyval, polyfit, asarray
+from numpy import where, polyval, polyfit
 #============= local library imports  ==========================
+
 
 class InterpolationRegressor(BaseRegressor):
     kind = Str
+
     def _calculate_coefficients(self):
         pass
 
@@ -37,22 +41,27 @@ class InterpolationRegressor(BaseRegressor):
         func = getattr(self, '{}_predictors'.format(kind))
         if not hasattr(xs, '__iter__'):
             xs = (xs,)
+        xs = (func(xi, attr) for xi in xs)
 
-        return [func(xi, attr) for xi in xs]
+        #filter out None values. None values will occur if integrity checks on xs,ys and yserr fail
+        #if preceding and no value found use the first following value e.g index 0
+        return [xi for xi in xs if xi is not None]
 
     def preceding_predictors(self, timestamp, attr='value'):
         xs = self.xs
         ys = self.ys
-
         es = self.yserr
-        try:
-            ti = where(xs <= timestamp)[0][-1]
+
+        if self._check_integrity(xs, ys) and self._check_integrity(ys, es):
+            try:
+                ti = where(xs <= timestamp)[0][-1]
+            except IndexError:
+                ti = 0
+
             if attr == 'value':
                 return ys[ti]
             else:
                 return es[ti]
-        except IndexError:
-            pass
 
     def bracketing_average_predictors(self, tm, attr='value'):
         try:
@@ -103,63 +112,63 @@ class InterpolationRegressor(BaseRegressor):
         except IndexError:
             return 0
 
-class GaussianRegressor(BaseRegressor):
-    def _calculate_coefficients(self):
-        pass
-    def predict(self, xs):
-        if isinstance(xs, (float, int)):
-            xs = [xs]
-        xs = asarray(xs)
+# class GaussianRegressor(BaseRegressor):
+#     def _calculate_coefficients(self):
+#         pass
+#     def predict(self, xs):
+#         if isinstance(xs, (float, int)):
+#             xs = [xs]
+#         xs = asarray(xs)
+#
+#         gp = self._calculate()
+#         ypred, mse = gp.predict(xs, eval_MSE=True)
+#         sigma = mse ** 0.5
+#         return ypred, sigma
+#
+#     def _calculate(self):
+#         from sklearn.gaussian_process.gaussian_process import GaussianProcess
+#
+#         X = self.xs.reshape((self.xs.shape[0], 1))
+#         y = self.ys
+#         yserr = self.yserr
+#         nugget = (yserr / y) ** 2
+#         gp = GaussianProcess(
+# #                             nugget=nugget
+#                              )
+#
+#         gp.fit(X, y)
+#         return gp
 
-        gp = self._calculate()
-        ypred, mse = gp.predict(xs, eval_MSE=True)
-        sigma = mse ** 0.5
-        return ypred, sigma
-
-    def _calculate(self):
-        from sklearn.gaussian_process.gaussian_process import GaussianProcess
-
-        X = self.xs.reshape((self.xs.shape[0], 1))
-        y = self.ys
-        yserr = self.yserr
-        nugget = (yserr / y) ** 2
-        gp = GaussianProcess(
-#                             nugget=nugget
-                             )
-
-        gp.fit(X, y)
-        return gp
-
-if __name__ == '__main__':
-    import numpy as np
-    from matplotlib import pyplot as pl
-    n = 20
-    xs = np.linspace(0, 10, n)
-#    ys = a * xs + b
-    def f(xx):
-        a = 0
-        b = 2
-        return a * xx + b
-
-    yserr = [np.random.normal() for _ in range(n)]
-    gp = GaussianRegressor(xs=xs, ys=f(xs) + yserr, yserr=yserr)
-
-    x = np.atleast_2d(np.linspace(0, 10, 1000)).T
-    y_pred, sigma = gp.predict(x)
-    fig = pl.figure()
-
-    pl.plot(x, f(x), 'r:', label=u'$f(x) = x\,\sin(x)$')
-    pl.plot(xs, f(xs) + yserr, 'r.', markersize=10, label=u'Observations')
-    pl.plot(x, y_pred, 'b-', label=u'Prediction')
-    pl.fill(np.concatenate([x, x[::-1]]), \
-            np.concatenate([y_pred - 1.9600 * sigma,
-                           (y_pred + 1.9600 * sigma)[::-1]]), \
-            alpha=.5, fc='b', ec='None', label='95% confidence interval')
-    pl.xlabel('$x$')
-    pl.ylabel('$f(x)$')
-    pl.ylim(-10, 20)
-    pl.legend(loc='upper left')
-
-    pl.show()
+# if __name__ == '__main__':
+#     import numpy as np
+#     from matplotlib import pyplot as pl
+#     n = 20
+#     xs = np.linspace(0, 10, n)
+# #    ys = a * xs + b
+#     def f(xx):
+#         a = 0
+#         b = 2
+#         return a * xx + b
+#
+#     yserr = [np.random.normal() for _ in range(n)]
+#     gp = GaussianRegressor(xs=xs, ys=f(xs) + yserr, yserr=yserr)
+#
+#     x = np.atleast_2d(np.linspace(0, 10, 1000)).T
+#     y_pred, sigma = gp.predict(x)
+#     fig = pl.figure()
+#
+#     pl.plot(x, f(x), 'r:', label=u'$f(x) = x\,\sin(x)$')
+#     pl.plot(xs, f(xs) + yserr, 'r.', markersize=10, label=u'Observations')
+#     pl.plot(x, y_pred, 'b-', label=u'Prediction')
+#     pl.fill(np.concatenate([x, x[::-1]]), \
+#             np.concatenate([y_pred - 1.9600 * sigma,
+#                            (y_pred + 1.9600 * sigma)[::-1]]), \
+#             alpha=.5, fc='b', ec='None', label='95% confidence interval')
+#     pl.xlabel('$x$')
+#     pl.ylabel('$f(x)$')
+#     pl.ylim(-10, 20)
+#     pl.legend(loc='upper left')
+#
+#     pl.show()
 
 #============= EOF =============================================

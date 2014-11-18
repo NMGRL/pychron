@@ -14,6 +14,7 @@
 # limitations under the License.
 #===============================================================================
 #============= enthought library imports =======================
+import os
 
 from envisage.core_plugin import CorePlugin
 from envisage.api import Plugin
@@ -30,7 +31,7 @@ try:
     from pychron.updater.tasks.update_plugin import UpdatePlugin
 except ImportError:
     logger.warning('Git is required to use UpdatePlugin')
-    UpdatePlugin=None
+    UpdatePlugin = None
 
 PACKAGE_DICT = dict(
     ExperimentPlugin='pychron.experiment.tasks.experiment_plugin',
@@ -52,7 +53,8 @@ PACKAGE_DICT = dict(
 
     #                   SynradCO2Plugin='pychron.lasers.plugins.synrad_co2_plugin',
 
-    SpectrometerPlugin='pychron.spectrometer.tasks.spectrometer_plugin',
+    ArgusSpectrometerPlugin='pychron.spectrometer.tasks.argus_spectrometer_plugin',
+    MapSpectrometerPlugin='pychron.spectrometer.tasks.map_spectrometer_plugin',
 
     #                   GraphPlugin='pychron.graph.plugins.graph_plugin',
 
@@ -109,8 +111,7 @@ def get_klass(package, name):
         traceback.print_exc()
         klass = None
         logger.warning('****** {} could not be imported {} ******'.format(name, e),
-                       extra={'threadName_': 'Launcher'}
-        )
+                       extra={'threadName_': 'Launcher'})
     return klass
 
 
@@ -124,6 +125,12 @@ def get_plugin(pname):
     if pname in PACKAGE_DICT:
         package = PACKAGE_DICT[pname]
         klass = get_klass(package, pname)
+    elif pname == 'Update':
+        klass = UpdatePlugin
+
+    else:
+        logger.warning('****** {} not a valid plugin name******'.format(pname),
+                       extra={'threadName_': 'Launcher'})
 
     if klass is not None:
         plugin = klass()
@@ -174,8 +181,8 @@ def app_factory(klass):
         myTasksPlugin(),
         LoggerPlugin()]
 
-    if UpdatePlugin is not None:
-        plugins.append(UpdatePlugin())
+    # if UpdatePlugin is not None:
+    #     plugins.append(UpdatePlugin())
 
     plugins += get_hardware_plugins()
     plugins += get_user_plugins()
@@ -192,20 +199,18 @@ def check_dependencies():
 
     try:
         mod = __import__('uncertainties',
-                         fromlist=['__version__']
-        )
-        __version__ = mod.__version__
+                         fromlist=['ver'])
+        ver = mod.__version__
     except ImportError:
         warning(None, 'Install "{}" package. required version>={} '.format('uncertainties', '2.1'))
         return
 
-    vargs = __version__.split('.')
+    vargs = ver.split('.')
     maj = vargs[0]
     if int(maj) < 2:
         warning(None, 'Update "{}" package. your version={}. required version>={} '.format('uncertainties',
-                                                                                           __version__,
-                                                                                           '2.1'
-        ))
+                                                                                           ver,
+                                                                                           '2.1'))
         return
 
     return True
@@ -214,6 +219,17 @@ def check_dependencies():
 def launch(klass):
     """
     """
+    # login protection
+    #
+    # moving app.run to a compiled object would be more robust
+    #
+    # from pychron.login.login import check_login
+    # from pychron.paths import paths
+    # import os
+    # with open(os.path.join(paths.hidden_dir, 'login_pwd'), 'r') as fp:
+    #     if not check_login(fp.read()):
+    #         logger.critical('Login failed')
+    #         return
 
     if not check_dependencies():
         return
@@ -233,6 +249,7 @@ def launch(klass):
 
     finally:
         app.exit()
+        os._exit(0)
 
     return
 

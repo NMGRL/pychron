@@ -15,13 +15,15 @@
 #===============================================================================
 
 #=============enthought library imports=======================
-from traits.api import Instance, List, Any, Bool, on_trait_change, Str, Dict
+from traits.api import Instance, List, Any, Bool, on_trait_change, Str, Int, Dict
+from apptools.preferences.preference_binding import bind_preference
 #=============standard library imports ========================
 import os
 import time
 from threading import Thread
 from socket import gethostbyname, gethostname
 #=============local library imports  ==========================
+from pychron.envisage.consoleable import Consoleable
 from pychron.extraction_line.explanation.extraction_line_explanation import ExtractionLineExplanation
 from pychron.extraction_line.extraction_line_canvas import ExtractionLineCanvas
 from pychron.extraction_line.sample_changer import SampleChanger
@@ -41,13 +43,13 @@ from pychron.extraction_line.graph.extraction_line_graph import ExtractionLineGr
 # play_macro = None
 
 
-class ExtractionLineManager(Manager):
-    '''
+class ExtractionLineManager(Manager, Consoleable):
+    """
     Manager for interacting with the extraction line
     contains 2 interaction canvases, 2D and 3D
     contains reference to valve manager, gauge manager and laser manager
-    
-    '''
+
+    """
     canvas = Instance(ExtractionLineCanvas)
     _canvases = List
 
@@ -72,10 +74,12 @@ class ExtractionLineManager(Manager):
 
     mode = 'normal'
 
+    use_status_monitor = Bool
     _update_status_flag = None
     _monitoring_valve_status = False
-    _valve_state_frequency = 3
-    _valve_lock_frequency = 10
+
+    valve_state_frequency = Int
+    valve_lock_frequency = Int
 
     check_master_owner = Bool
     use_network = Bool
@@ -85,18 +89,16 @@ class ExtractionLineManager(Manager):
     sample_changer = Instance(SampleChanger)
     link_valve_actuation_dict = Dict
 
-    def _sample_changer_factory(self):
-        sc = self.sample_changer
-        if sc is None:
-            sc = SampleChanger(manager=self,
-                               chamber='CO2')
+    def bind_preferences(self):
 
-        result = 1
-        result = sc.edit_traits(view='chamber_select_view')
-        if result:
-            if sc.chamber and sc.chamber != 'None':
-                self.sample_changer = sc
-                return sc
+        bind_preference(self, 'check_master_owner',
+                        'pychron.extraction_line.check_master_owner')
+        bind_preference(self, 'use_network',
+                        'pychron.extraction_line.use_network')
+        bind_preference(self.network, 'inherit_state',
+                        'pychron.extraction_line.inherit_state')
+
+        # self.console_bind_preferences('pychron.extraction_line')
 
     def link_valve_actuation(self, name, func, remove=False):
         if remove:
@@ -168,8 +170,7 @@ class ExtractionLineManager(Manager):
     def finish_loading(self):
         if self.mode != 'client':
             self.monitor = SystemMonitor(manager=self,
-                                         name='system_monitor'
-            )
+                                         name='system_monitor')
             self.monitor.monitor()
 
         if self.use_network:
@@ -232,29 +233,7 @@ class ExtractionLineManager(Manager):
 
     def start_status_monitor(self):
         self.info('starting status monitor')
-        #        return
-        #        self.info('starting status monitor NOT')
-        self.status_monitor.start()
-
-    def bind_preferences(self):
-        from apptools.preferences.preference_binding import bind_preference
-
-        bind_preference(self, 'check_master_owner',
-                        'pychron.extraction_line.check_master_owner')
-        bind_preference(self, 'use_network',
-                        'pychron.extraction_line.use_network')
-        bind_preference(self.network, 'inherit_state',
-                        'pychron.extraction_line.inherit_state')
-
-        bind_preference(self, 'display_volume', 'pychron.extraction_line.display_volume')
-        bind_preference(self, 'volume_key', 'pychron.extraction_line.volume_key')
-
-
-        #         bind_preference(self, 'enable_close_after', 'pychron.extraction_line.enable_close_after')
-
-    #         bind_preference(self, 'close_after_minutes', 'pychron.extraction_line.close_after')
-
-    #        from pychron.extraction_line.plugins.extraction_line_preferences_page import get_valve_group_names
+        self.status_monitor.start(self.valve_manager)
 
     def reload_scene_graph(self):
         self.info('reloading canvas scene')
@@ -263,32 +242,12 @@ class ExtractionLineManager(Manager):
             if c is not None:
                 c.load_canvas_file(c.config_name)
 
-                #                 # load state
                 if self.valve_manager:
                     for k, v in self.valve_manager.valves.iteritems():
                         vc = c.get_object(k)
                         if vc:
                             vc.soft_lock = v.software_lock
                             vc.state = v.state
-
-
-                        #     def load_canvas(self):
-                        #         '''
-                        #         '''
-                        #         p = self._file_dialog_('open', **dict(default_dir=paths.canvas2D_dir))
-                        #
-                        #         if p is not None:
-                        #             self.canvas.load_canvas(p)
-
-                        #     def set_canvas_size(self, width=None, height=None):
-                        #         self.canvas.set_size(width, height)
-                        #    def pressure_update(self, o, oo, n):
-                        #        '''
-                        #        on_trait_change handler for gauge_manager.gauges.pressure
-                        #
-                        #        '''
-                        #        if self.canvas:
-                        #            self.canvas.update_pressure(o.name, n, o.state)
 
     def update_valve_state(self, name, state, *args, **kw):
 
@@ -330,6 +289,9 @@ class ExtractionLineManager(Manager):
             else:
                 self.valve_manager.unlock(name)
 
+            description=self.valve_manager.get_valve_by_name(name).description
+            self.info('Valve-{} ({}) {}'.format(name, description, 'lock' if lock else 'unlock'),
+                      color='blue' if lock else 'black')
             self.update_valve_lock_state(name, lock)
 
     def get_valve_owners(self):
@@ -418,6 +380,16 @@ class ExtractionLineManager(Manager):
         #===============================================================================
         # private
         #===============================================================================
+
+    def _log_spec_event(self, name, action):
+        sm = self.application.get_service('pychron.spectrometer.scan_manager.ScanManager')
+        if sm:
+            color = 0x98FF98 if action=='open' else 0xFF9A9A
+            sm.add_spec_event_marker('{} ({})'.format(name, action),
+                                     mode='valve',
+                                     extra=name,
+                                     bgcolor=color)
+
     def _enable_valve(self, description, state):
         if self.valve_manager:
             valve = self.valve_manager.get_valve_by_description(description)
@@ -434,16 +406,25 @@ class ExtractionLineManager(Manager):
                           description=None, address=None, mode='remote', **kw):
         vm = self.valve_manager
         if vm is not None:
+            oname = name
             if address:
                 name = vm.get_name_by_address(address)
 
             if description and description != '---':
                 name = vm.get_name_by_description(description)
 
+            #check if specified valve is in the valves.xml file
+            if not name:
+                self.warning('Invalid valve name={}, description={}'.format(oname, description))
+                return False
+
             result = self._change_valve_state(name, mode, action, **kw)
             if result:
+                description=vm.get_valve_by_name(name).description
+                self._log_spec_event(name, action)
+                self.info('Valve-{} ({}) {}'.format(name, description, action),
+                          color='red' if action=='close' else 'green')
                 vm.actuate_children(name, action, mode)
-
                 ld = self.link_valve_actuation_dict
                 if ld:
                     try:
@@ -479,19 +460,89 @@ class ExtractionLineManager(Manager):
             set check_master_owner=True
             
         """
+        ret = True
         if self.mode == 'client' or self.check_master_owner:
             if requestor is None:
                 requestor = gethostbyname(gethostname())
 
             self.debug('checking ownership. requestor={}'.format(requestor))
-            if name in self.valve_manager.valves:
+            try:
                 v = self.valve_manager.valves[name]
-            return not (v.owner and v.owner != requestor)
-        return True
+                ret = not (v.owner and v.owner != requestor)
+            except KeyError:
+                pass
+        return ret
+
+    def _set_pipette_counts(self, name, value):
+        for c in self._canvases:
+            scene = c.canvas2D.scene
+            obj = scene.get_item('vlabel_{}Pipette'.format(name))
+            if obj is not None:
+                obj.value = value
+                c.refresh()
+
+    def _sample_changer_factory(self):
+        sc = self.sample_changer
+        if sc is None:
+            sc = SampleChanger(manager=self,
+                               chamber='CO2')
+
+        result = sc.edit_traits(view='chamber_select_view')
+        if result:
+            if sc.chamber and sc.chamber != 'None':
+                self.sample_changer = sc
+                return sc
+
+    def _create_manager(self, klass, manager, params, **kw):
+        # try a lazy load of the required module
+        if 'fusions' in manager:
+            package = 'pychron.managers.laser_managers.{}'.format(manager)
+            self.laser_manager_id = manager
+        elif 'rpc' in manager:
+            package = 'pychron.rpc.manager'
+        else:
+            package = 'pychron.managers.{}'.format(manager)
+
+        class_factory = self.get_manager_factory(package, klass, warn=False)
+        if class_factory is None:
+            package = 'pychron.extraction_line.{}'.format(manager)
+            class_factory = self.get_manager_factory(package, klass)
+
+        if class_factory:
+            m = class_factory(**params)
+
+            if manager in ['gauge_manager',
+                           'valve_manager',
+                           'multiplexer_manager',
+                           # 'environmental_manager', 'device_stream_manager',
+                           'multruns_report_manager']:
+                self.trait_set(**{manager: m})
+            else:
+                self.add_trait(manager, m)
+
+            return m
+        else:
+            self.debug('could not create manager {}, {},{},{}'.format(klass, manager, params, kw))
 
     #===============================================================================
     # handlers
     #===============================================================================
+    def _use_status_monitor_changed(self):
+        if self.mode == 'client':
+            if self.use_status_monitor:
+                #start
+                bind_preference(self.status_monitor, 'state_freq',
+                                'pychron.extraction_line.valve_state_frequency')
+                bind_preference(self.status_monitor, 'lock_freq',
+                                'pychron.extraction_line.valve_lock_frequency')
+                bind_preference(self.status_monitor, 'owner_freq',
+                                'pychron.extraction_line.valve_owner_frequency')
+                bind_preference(self.status_monitor, 'update_period',
+                                'pychron.extraction_line.update_period')
+            else:
+                if self.status_monitor.isAlive():
+                    self.status_monitor.stop()
+
     def _valve_manager_changed(self):
         if self.valve_manager is not None:
             self.status_monitor.valve_manager = self.valve_manager
@@ -503,14 +554,6 @@ class ExtractionLineManager(Manager):
     @on_trait_change('valve_manager:pipette_trackers:counts')
     def _update_pipette_counts(self, obj, name, old, new):
         self._set_pipette_counts(obj.name, new)
-
-    def _set_pipette_counts(self, name, value):
-        for c in self._canvases:
-            scene = c.canvas2D.scene
-            obj = scene.get_item('vlabel_{}Pipette'.format(name))
-            if obj is not None:
-                obj.value = value
-                c.refresh()
 
     @on_trait_change('use_network,network:inherit_state')
     def _update_network(self):
@@ -534,17 +577,12 @@ class ExtractionLineManager(Manager):
     def _update_canvas_inspector(self, name, new):
         for c in self._canvases:
             c.canvas2D.trait_set(**{name: new})
-            #===============================================================================
-        # defaults
-        #===============================================================================
-        #        return self._view_controller_factory()
-        #    def _pyscript_editor_default(self):
-        #        return PyScriptManager(parent=self)
 
+    #===============================================================================
+    # defaults
+    #===============================================================================
     def _status_monitor_default(self):
-        sm = StatusMonitor(valve_manager=self.valve_manager,
-                           state_freq=self._valve_state_frequency,
-                           lock_freq=self._valve_lock_frequency)
+        sm = StatusMonitor(valve_manager=self.valve_manager)
         return sm
 
     def _valve_manager_default(self):

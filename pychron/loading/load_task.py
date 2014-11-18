@@ -18,7 +18,6 @@
 from traits.api import on_trait_change, Any, List, Str
 # from traitsui.api import View, Item
 from pyface.tasks.task_layout import PaneItem, TaskLayout
-from pyface.constant import CANCEL, NO
 from pyface.tasks.action.schema import SToolBar
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -32,7 +31,6 @@ from apptools.preferences.preference_binding import bind_preference
 import os
 from pychron.paths import paths
 from datetime import datetime
-from pyface.timer.do_later import do_later
 
 
 class LoadingTask(BaseManagerTask):
@@ -40,50 +38,40 @@ class LoadingTask(BaseManagerTask):
     load_pane = Any
 
     dirty = False
-    control_pane = Any
+    # control_pane = Any
     canvas = Any
     _positions = List
 
     save_directory = Str
 
     tool_bars = [SToolBar(SaveLoadingAction(),
-                          image_size=(32, 32)
-    )]
+                          image_size=(32, 32))]
 
     def activated(self):
-    #         self.manager.tray = 'A'
-    #         self.manager.irradiation = 'NM-251'
-    #         self.manager.level = 'H'
-    #         self.manager.labnumber = '61311'
+        self.manager.tray = 'bat'
+        self.manager.irradiation = 'NM-264'
+        self.manager.level = 'A'
+        self.manager.labnumber = '23261'
 
         if self.manager.setup():
             bind_preference(self, 'save_directory', 'pychron.loading.save_directory')
-        else:
-            do_later(self.window.close)
-
-
-            #     def _manager_default(self):
-            #         return LoadingManager()
+        # else:
+        #     do_later(self.window.close)
 
     def _default_layout_default(self):
         return TaskLayout(
             left=PaneItem('pychron.loading.controls'),
-            bottom=PaneItem('pychron.loading.positions')
-        )
+            bottom=PaneItem('pychron.loading.positions'))
 
     def prepare_destroy(self):
         pass
 
     def create_dock_panes(self):
 
-        self.control_pane = LoadControlPane(model=self.manager)
-        self.table_pane = LoadTablePane(model=self.manager)
-        #         self.irradiation_pane = LoadIrradiationPane(model=self.manager)
-        return [self.control_pane,
-                self.table_pane,
-                #                 self.irradiation_pane
+        control_pane = LoadControlPane(model=self.manager)
+        table_pane = LoadTablePane(model=self.manager)
 
-        ]
+        return [control_pane, table_pane]
 
     def create_central_pane(self):
         self.load_pane = LoadPane()
@@ -106,8 +94,7 @@ class LoadingTask(BaseManagerTask):
         date_str = dt.strftime("%Y-%m-%d %H:%M:%S")
         meta = dict(load_name=ln, username=un,
                     load_date=date_str,
-                    projects='Ross, Test'
-        )
+                    projects='Ross, Test')
         path = os.path.join(root, '{}.pdf'.format(ln))
         p.build(path, positions, self.canvas, meta)
 
@@ -122,9 +109,8 @@ class LoadingTask(BaseManagerTask):
         if new:
             c = LoadingCanvas(
                 view_x_range=(-2.2, 2.2),
-                view_y_range=(-2.2, 2.2),
+                view_y_range=(-2.2, 2.2))
 
-            )
             c.load_scene(new,
                          show_hole_numbers=self.manager.show_hole_numbers)
 
@@ -132,22 +118,30 @@ class LoadingTask(BaseManagerTask):
             self.load_pane.component = c
 
             self.manager.canvas = c
-
             self.manager.positions = []
 
+    def _prompt_for_save(self):
+        if self.manager.dirty:
+            message = 'You have unsaved changes. Save changes to Database?'
+            ret = self._handle_prompt_for_save(message)
+            if ret == 'save':
+                return self.manager.save()
+            return ret
+        return True
 
-    @on_trait_change('window:closing')
-    def _prompt_on_close(self, event):
-        '''
-            Prompt the user to save when exiting.
-        '''
-        if self.dirty:
-            result = self._confirmation('ffoo')
-
-            if result in (CANCEL, NO):
-                event.veto = True
-            else:
-                self._save()
+    # @on_trait_change('window:closing')
+    # def _prompt_on_close(self, event):
+    #     """
+    #         Prompt the user to save when exiting.
+    #     """
+    #     if self.dirty:
+    #
+    #         # result = self._confirmation('ffoo')
+    #
+    #         if result in (CANCEL, NO):
+    #             event.veto = True
+    #         else:
+    #             self._save()
 
 #============= EOF =============================================
 #     def save_loading2(self):

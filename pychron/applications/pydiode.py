@@ -15,20 +15,18 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-# from traits.api import HasTraits
-# from traitsui.api import View, Item
-from pychron.applications.pychron_application import PychronApplication
 from pyface.tasks.task_window_layout import TaskWindowLayout
+
+from pychron.applications.pychron_application import PychronApplication
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
 class PyDiode(PychronApplication):
     id = 'pychron.diode.application'
     name = 'pyDiode'
-#     default_layout = [
-#                       TaskWindowLayout(
-#                                         'tasks.hardware'),
-# #                      TaskWindowLayout(
-# #                                        'pychron.fusions.diode'),
-#                       ]
+    default_layout = [
+        TaskWindowLayout('tasks.hardware'),
+        TaskWindowLayout('pychron.fusions.diode')]
+
 #============= EOF =============================================

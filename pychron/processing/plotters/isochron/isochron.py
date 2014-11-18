@@ -27,7 +27,7 @@ from numpy import linspace
 
 from pychron.core.helpers.formatting import floatfmt, calc_percent_error
 from pychron.graph.error_envelope_overlay import ErrorEnvelopeOverlay
-from pychron.processing.argon_calculations import calculate_isochron, extract_isochron_xy
+from pychron.processing.argon_calculations import extract_isochron_xy
 from pychron.processing.plotters.arar_figure import BaseArArFigure
 
 from pychron.graph.error_ellipse_overlay import ErrorEllipseOverlay
@@ -46,7 +46,7 @@ class OffsetPlotLabel(PlotLabel):
 
 class AtmInterceptOverlay(AbstractOverlay):
     line_width=Float(1.5)
-    font=KivaFont("arial 10")
+    font = KivaFont("modern 10")
     line_style=LineStyle('dash')
     label=Str
     value=Float
@@ -121,15 +121,15 @@ class InverseIsochron(Isochron):
         self._ref_age_scalar = refiso.arar_constants.age_scalar
         self._ref_age_units = refiso.arar_constants.age_units
 
-        try:
-            age, reg, data = calculate_isochron(analyses)
-        except TypeError:
-            return
+        # try:
+        #     age, reg, data = calculate_isochron(analyses)
+        # except TypeError:
+        #     return
+        data = self.analysis_group.get_isochron_data()
 
-        xs, ys, xerrs, yerrs = data
+        _, reg, (xs, ys, xerrs, yerrs) = data
         self._cached_data = data
         self._cached_reg = reg
-        self._age = age
 
         graph = self.graph
         graph.set_x_title('39Ar/40Ar', plotid=pid)
@@ -176,7 +176,7 @@ class InverseIsochron(Isochron):
         # l.index.set_data(rxs)
         # l.value.set_data(rys)
         xs=l.index.get_data()
-        lci, uci=reg.calculate_ci(xs)
+        lci, uci = reg.calculate_error_envelope(xs)
         ee=ErrorEnvelopeOverlay(component=l,
                                 upper=uci, lower=lci)
         l.underlays.append(ee)
@@ -255,7 +255,7 @@ class InverseIsochron(Isochron):
         #if R > 0:
         #    age = age_equation(j, R, arar_constants=self._ref_constants)
 
-        age = self._age
+        age = self.analysis_group.isochron_age
         v = age.nominal_value
         e = age.std_dev
         mse_age = e * mswd ** 0.5
@@ -320,14 +320,14 @@ class InverseIsochron(Isochron):
             fit = self.graph.plots[0].plots['fit{}'.format(self.group_id)][0]
 
             mi, ma = self.graph.get_x_limits()
-            rxs = linspace(mi, ma)
+            rxs = linspace(0, ma)
 
             rys = reg.predict(rxs)
 
             fit.index.set_data(rxs)
             fit.value.set_data(rys)
 
-            lci,uci=reg.calculate_ci(rxs)
+            lci, uci = reg.calculate_error_envelope(rxs)
             fit.error_envelope.lower=lci
             fit.error_envelope.upper=uci
 

@@ -52,6 +52,16 @@ class OpenFigureAction(TaskAction):
     image = icon('page_white_database.png')
 
 
+class NewXYScatterAction(TaskAction):
+    name = 'New XY Scatter'
+    method = 'tb_xy_scatter'
+
+
+class NewIsochronAction(TaskAction):
+    name = 'New Isochron'
+    method = 'tb_new_isochron'
+
+
 class NewIdeogramAction(TaskAction):
     name = 'New Ideogram'
     method = 'tb_new_ideogram'
@@ -63,6 +73,12 @@ class NewSpectrumAction(TaskAction):
     method = 'tb_new_spectrum'
     image = icon('chart_curve.png')
 
+
+class RefreshActiveEditorAction(TaskAction):
+    name = 'Refresh Plot'
+    method = 'refresh_active_editor'
+    image = icon('refresh')
+    accelerator = 'Ctrl+Shift+R'
 
 #============= EOF =============================================
 # class AppendSpectrumAction(TaskAction):

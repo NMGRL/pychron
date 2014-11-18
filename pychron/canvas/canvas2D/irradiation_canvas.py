@@ -24,5 +24,6 @@ from pychron.canvas.canvas2D.scene.irradiation_scene import IrradiationScene
 
 class IrradiationCanvas(LoadingCanvas):
     _scene_klass = IrradiationScene
+    editable = False
 
 #============= EOF =============================================

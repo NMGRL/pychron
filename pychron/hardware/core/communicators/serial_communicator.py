@@ -27,7 +27,6 @@ import sys
 import serial
 
 
-
 #=============local library imports  ==========================
 from communicator import Communicator
 from pychron.globals import globalv

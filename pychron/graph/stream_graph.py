@@ -57,10 +57,19 @@ class StreamGraph(Graph):
     force_track_x_flag = None
 
 
+    def __init__(self, *args, **kw):
+        super(StreamGraph, self).__init__(*args, **kw)
+        self.scan_delays = []
+        self.time_generators = []
+        self.data_limits = []
+        self.scan_widths = []
+
     def clear(self):
         self.scan_delays = []
         self.time_generators = []
         self.data_limits = []
+        self.scan_widths = []
+
         self.cur_min = []
         self.cur_max = []
         self.track_x_max = True
@@ -72,12 +81,17 @@ class StreamGraph(Graph):
         super(StreamGraph, self).clear()
 
     def new_plot(self, **kw):
-        '''
-        '''
-        sd = kw['scan_delay'] if 'scan_delay' in kw else 0.5
-        dl = kw['data_limit'] if 'data_limit' in kw else 500
+        """
+        """
+        # sd = kw['scan_delay'] if 'scan_delay' in kw else 0.5
+        # dl = kw['data_limit'] if 'data_limit' in kw else 500
+
+        sd = kw.get('scan_delay', 0.5)
+        dl = kw.get('data_limit', 500)
+        sw = kw.get('scan_width', 0)
 
         self.scan_delays.append(sd)
+        self.scan_widths.append(sw)
         self.data_limits.append(dl)
         self.cur_min.append(Inf)
         self.cur_max.append(-Inf)
@@ -151,13 +165,23 @@ class StreamGraph(Graph):
             self.cur_min[plotid] = Inf
 
         if track_x:
-            dl = self.data_limits[plotid]
-            mi = max(1, x - dl * self.scan_delays[plotid])
-            self.set_x_limits(# max=x,
+            # dl = self.data_limits[plotid]
+            # mi = max(1, x - dl * self.scan_delays[plotid])
+            # ma = max(x*1.05, mi+)
+            sw = self.scan_widths[plotid]
+            if sw:
+                ma = max(x*1.05, sw)
+                mi = 0
+                if ma > sw:
+                    mi = ma-sw
+            else:
+                ma = None
+                dl = self.data_limits[plotid]
+                mi = max(1, x - dl * self.scan_delays[plotid])
+
+            self.set_x_limits(max_=ma,
                               min_=mi,
-                              plotid=plotid,
-                              #                          pad=1
-            )
+                              plotid=plotid)
         return x
 
     def record(self, y, x=None, series=0, plotid=0,

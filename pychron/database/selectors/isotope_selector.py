@@ -33,6 +33,7 @@ from pychron.database.core.base_results_adapter import BaseResultsAdapter
 # from pychron.database.records.isotope_record import IsotopeRecord, IsotopeRecordView
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.database.core.query import IsotopeQuery
+from pychron.experiment.utilities.identifier import make_aliquot_step
 from pychron.pychron_constants import LINE_STR
 
 
@@ -42,56 +43,33 @@ class IsotopeResultsAdapter(BaseResultsAdapter):
         ('Aliquot', 'aliquot'),
         #('Analysis Time', 'rundate'),
         #               ('Time', 'runtime'),
+        ('Analysis Time', 'rundate'),
         ('Irradiation', 'irradiation_info'),
         ('Mass Spec.', 'mass_spectrometer'),
-        ('Type', 'analysis_type')
-        #               ('Irradiation', 'irradiation_level')
-    ]
-    #     font = 'monospace 14'
+        ('Type', 'analysis_type')]
+
+    font = '10'
     #    rid_width = Int(50)
-    labnumber_width = Int(90)
-    rundate_width = Int(140)
     aliquot_text = Property
 
+    aliquot_width = Int(75)
+    mass_spectrometer_width = Int(90)
+    labnumber_width = Int(90)
+    analysis_type_width = Int(100)
+    rundate_width = Int(120)
+
     def _get_aliquot_text(self):
-        return '{:02n}{}'.format(self.item.aliquot, self.item.step)
+        return make_aliquot_step(self.item.aliquot, self.item.step)
 
-        #     def _get_daliquot_str_text(self):
-
-#         print 'ffff'
-#         return '{:02n}{}'.format(self.item.aliquot, self.item.step)
-
-#    runtime_width = Int(90)
-#    aliquot_text = Property
-#    irradiation_text = Property
-#    irradiation_level_text = Property
-
-#    def _get_irradiation_text(self):
-#        if self.item.irradiation:
-#            return '{}{} {}'.format(self.item.irradiation.name,
-#                                self.item.irradiation_level.name,
-#                                self.item.irradiation_position.position
-#                                )
-#        else:
-#            return ''
-
-#    def _get_aliquot_text(self, trait, item):
-#        a = self.item.aliquot
-#        s = self.item.step
-#        return '{}{}'.format(a, s)
-#        return '1'
-#    width = Int(50)
 
 class IsotopeAnalysisSelector(DatabaseSelector):
     title = 'Recall Analyses'
-    #    orm_path = 'pychron.database.orms.isotope_orm'
 
     query_table = meas_AnalysisTable
     record_view_klass = IsotopeRecordView
-    #     record_klass = IsotopeRecord
-    #    record_klass = DummyIsotopeRecord
+
     query_klass = IsotopeQuery
-    tabular_adapter = IsotopeResultsAdapter
+    tabular_adapter_klass = IsotopeResultsAdapter
 
     lookup = {'Labnumber': ([gen_LabTable], gen_LabTable.identifier),
               'Step': ([], meas_AnalysisTable.step),
@@ -112,9 +90,7 @@ class IsotopeAnalysisSelector(DatabaseSelector):
               'Run Date/Time': ([], meas_AnalysisTable.analysis_timestamp),
               'Project': ([gen_LabTable, gen_SampleTable, gen_ProjectTable, ], gen_ProjectTable.name),
               'Mass Spectrometer': ([meas_MeasurementTable, gen_MassSpectrometerTable], gen_MassSpectrometerTable.name),
-              'Analysis Type': ([meas_MeasurementTable, gen_AnalysisTypeTable], gen_AnalysisTypeTable.name)
-
-    }
+              'Analysis Type': ([meas_MeasurementTable, gen_AnalysisTypeTable], gen_AnalysisTypeTable.name)}
 
     mass_spectrometer = Str('Spectrometer')
     mass_spectrometers = Property
@@ -122,6 +98,22 @@ class IsotopeAnalysisSelector(DatabaseSelector):
     analysis_types = Property
 
     omit_invalid = Bool(True)
+
+    def set_columns(self, include=None, exclude=None, append=None):
+        ta = self.tabular_adapter
+        cols = ta.columns
+        if append:
+            if len(append[0]) == 3:
+                for _, n, w in append:
+                    ta.add_trait('{}_width'.format(n), Int(w))
+                cols.extend([c[:2] for c in append])
+            else:
+                cols.extend(append)
+
+        if exclude:
+            cols = [c for c in cols if c[1] not in exclude]
+
+        self.tabular_adapter.columns = cols
 
     def _record_factory(self, idn):
         if isinstance(idn, meas_AnalysisTable):
@@ -136,19 +128,15 @@ class IsotopeAnalysisSelector(DatabaseSelector):
 
     def _get_selector_records(self, queries=None, limit=None, use_filters=True, **kw):
         with self.db.session_ctx() as sess:
-        #             sess = self.db.get_session()
             q = sess.query(meas_AnalysisTable)
 
             if self.omit_invalid:
                 q = q.filter(meas_AnalysisTable.tag != 'invalid')
 
-            #             q = q.filter(meas_AnalysisTable.status != -1)
-
             if queries and use_filters:
                 qs = self._build_filters()
                 if qs:
                     queries = queries + qs
-                    #                queries.extend(qs)
 
             return self._get_records(q, queries, limit, timestamp='analysis_timestamp')
 
@@ -176,19 +164,15 @@ class IsotopeAnalysisSelector(DatabaseSelector):
 
     def _refresh_results(self):
         import inspect
-
         stack = inspect.stack()
         self.debug('refresh results by {}'.format(stack[1][3]))
-
-        self.execute_query(load=False)
+        self.execute_query()
 
     def _build_filters(self):
         ma = self.mass_spectrometer
         an = self.analysis_type
         qs = []
-        #        if pr != NULL_STR:
-        #            q = selector.query_factory(parameter='Project', criterion=pr)
-        #            qs.append(q)
+
         if ma not in ('Spectrometer', LINE_STR):
             q = self.query_factory(parameter='Mass Spectrometer', criterion=ma)
             qs.append(q)

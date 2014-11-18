@@ -31,7 +31,7 @@ class Change(HasTraits):
 
 class BlankChange(Change):
     def _make_summary(self, dbrecord):
-        s=''
+        s = ', '.join([bi.make_summary() for bi in dbrecord.blanks])
         self.summary=s
 
 

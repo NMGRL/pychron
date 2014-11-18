@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,15 +31,14 @@ from pychron.core.ui.led_editor import LED, LEDEditor
 
 class CRHandler(Handler):
     def init(self, info):
-        '''
-  
-        '''
+        """
+        """
         info.object.test_connection()
 
 
 class CommandRepeater(ConfigLoadable):
-    '''
-    '''
+    """
+    """
     path = String(enter_set=True, auto_set=False)
     target_name = Property(depends_on='path')
     test = Button
@@ -51,8 +50,8 @@ class CommandRepeater(ConfigLoadable):
         return ta
 
     def load(self, *args, **kw):
-        '''
-        '''
+        """
+        """
         config = self.get_configuration()
 
         if config:
@@ -67,7 +66,6 @@ class CommandRepeater(ConfigLoadable):
             kind = socket.SOCK_DGRAM
 
         sock = socket.socket(socket.AF_UNIX, kind)
-
         sock.settimeout(2)
         self._sock = sock
 
@@ -77,8 +75,8 @@ class CommandRepeater(ConfigLoadable):
         return True
 
     def get_response(self, rid, data, sender_address, verbose=True):
-        '''
-        '''
+        """
+        """
         # intercept the pychron ready command
         # sent a test query
         with self._lock:
@@ -110,7 +108,8 @@ class CommandRepeater(ConfigLoadable):
                 if ready_flag and ready_data == rd:
                     rd = 'OK'
 
-                result = rd.split('|')[1] if '|' in rd else rd
+                result = rd
+                #result = rd.split('|')[1] if '|' in rd else rd
 
             else:
                 self.led.state = 'red'
@@ -121,12 +120,12 @@ class CommandRepeater(ConfigLoadable):
 
             return result
 
-#===============================================================================
-# commands
-#===============================================================================
+    #===============================================================================
+    # commands
+    #===============================================================================
     def test_connection(self, verbose=True):
-        '''
-        '''
+        """
+        """
         ra = '{:0.3f}'.format(random())
 
         r = self.get_response('test', ra, None, verbose=verbose)
@@ -156,16 +155,16 @@ class CommandRepeater(ConfigLoadable):
 
         return result
 
-#===============================================================================
-# response helpers
-#===============================================================================
+    #===============================================================================
+    # response helpers
+    #===============================================================================
     def _send_(self, s, verbose=True):
         success = True
         e = None
         try:
             totalsent = 0
             mlen = len(s)
-            s = '{:02X}{}'.format(mlen, s)
+            s = '{:04X}{}'.format(mlen, s)
 
             while totalsent < mlen:
                 sent = self._sock.send(s[totalsent:])
@@ -177,9 +176,23 @@ class CommandRepeater(ConfigLoadable):
         return success, e
 
     def _read_(self, count=0, verbose=True):
-        rd = None
         try:
-            rd = self._sock.recv(2048)
+            ss=[]
+            sum = 0
+            msg_len=0
+            while 1:
+                s = self._sock.recv(2048)
+                if not msg_len:
+                    msg_len = int(s[:4],16)
+
+                sum+=len(s)
+                ss.append(s)
+                #self.debug('msg_len={} sum={}'.format(msg_len, sum))
+                if sum==msg_len:
+                    break
+
+            rd=''.join(ss)
+            #self.debug('processor response len {}'.format(len(rd)))
             success = True
         except socket.error, e:
             success, rd = self._handle_socket_read_error(e, count, verbose)
@@ -209,7 +222,7 @@ class CommandRepeater(ConfigLoadable):
                                    format(self.path, e))
 
                 self._send_(s, verbose)
-#                self._sock.send(s)
+                #                self._sock.send(s)
                 if verbose:
                     self.debug('send success on retry {}'.format(i + 1))
                 return True
@@ -231,63 +244,58 @@ class CommandRepeater(ConfigLoadable):
 
         return False, e
 
-#==============================================================================
-# View
-#==============================================================================
+    #==============================================================================
+    # View
+    #==============================================================================
     def _path_changed(self, old, new):
-        '''
-        '''
+        """
+        """
         if old:
             self.info('reconfigured for {}'.format(self.path))
 
     def _test_fired(self):
-        '''
-        '''
+        """
+        """
         self.test_connection()
 
     def simple_view(self):
         v = View(
-                 HGroup(
-                        Item('led', editor=LEDEditor(), show_label=False),
-                        Item('target_name',
-                             style='readonly',
-                             width=100,
-                             show_label=False),
-                        ),
-                 )
+            HGroup(
+                Item('led', editor=LEDEditor(), show_label=False),
+                Item('target_name',
+                     style='readonly',
+                     width=100,
+                     show_label=False)))
         return v
+
     def traits_view(self):
-        '''
-        '''
-        v = View(
-                 'path',
-                    HGroup(
-                           Item('led', editor=LEDEditor(), show_label=False),
-                           Item('test', show_label=False),
-
-                           ),
-                    handler=CRHandler,
-                    )
+        """
+        """
+        v = View('path',
+                 HGroup(
+                     Item('led', editor=LEDEditor(), show_label=False),
+                     Item('test', show_label=False)),
+                 handler=CRHandler)
         return v
-
-
-def profiling():
-    import profile
-
-    repeator = CommandRepeater(configuration_dir_name='servers',
-                               name='repeater')
-#    repeator.load()
-    repeator.bootstrap()
-#    repeator.test_connection()
-
-    profile.runctx('repeator.get_response(*args)', globals(), {'repeator':repeator, 'args':(1, 2, 3) })
-
-if __name__ == '__main__':
-    from pychron.core.helpers.logger_setup import logging_setup
-
-    logging_setup('profile_repeator')
-    profiling()
 #============= EOF ====================================
+
+#
+# if __name__ == '__main__':
+#     def profiling():
+#     import profile
+#
+#     repeator = CommandRepeater(configuration_dir_name='servers',
+#                                name='repeater')
+#     #    repeator.load()
+#     repeator.bootstrap()
+#     #    repeator.test_connection()
+#
+#     profile.runctx('repeator.get_response(*args)', globals(), {'repeator': repeator, 'args': (1, 2, 3)})
+#
+#     from pychron.core.helpers.logger_setup import logging_setup
+#
+#     logging_setup('profile_repeator')
+#     profiling()
 
 #===============================================================================
 # SHMCommandRepeater

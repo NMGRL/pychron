@@ -16,7 +16,9 @@
 
 #============= enthought library imports =======================
 import os
+
 import shapefile
+
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -24,23 +26,33 @@ from pychron.loggable import Loggable
 
 
 class ShapeFileWriter(Loggable):
+    """
+    http://pygis.blogspot.co.uk/2012/10/pyshp-attribute-types-and-point-files.html
+    C is ASCII characters
+    N is a double precision integer limited to around 18 characters in length
+    D is for dates in the YYYYMMDD format, with no spaces or hyphens between the sections
+    F is for floating point numbers with the same length limits as N
+    L is for logical data which is stored in the shapefile's attribute table as a short integer as a 1 (true) or a 0
+    (false). The values it can receive are 1, 0, y, n, Y, N, T, F or the python builtins True and False
+    """
+
     def write_points(self, p, points, attrs=None, epsg=None):
         """
-            points: list of Point objects
+            points: list of SamplePoint objects
             if epsg is not None write a .prj file
 
         """
-        writer=shapefile.Writer(shapefile.POINT)
+        writer = shapefile.Writer(shapefile.POINT)
 
         if attrs:
             #register attrs as fields
             for ai in attrs:
-                writer.field(ai)
+                writer.field(*ai)
 
         for pp in points:
             writer.point(pp.x, pp.y)
             if attrs:
-                d=dict([(ai, getattr(pp, ai)) for ai in attrs])
+                d = dict([(ai[0], getattr(pp, ai[0])) for ai in attrs])
                 writer.record(**d)
 
         writer.save(p)
@@ -52,12 +64,12 @@ class ShapeFileWriter(Loggable):
     def write_prj(self, p, epsg):
         import urllib
 
-        head, tail=os.path.splitext(p)
-        p='{}.prj'.format(head)
+        head, tail = os.path.splitext(p)
+        p = '{}.prj'.format(head)
 
         with open(p, 'w') as fp:
-            ref="http://spatialreference.org/ref/epsg/{}/prettywkt/".format(epsg)
-            f=urllib.urlopen(ref)
+            ref = "http://spatialreference.org/ref/epsg/{}/prettywkt/".format(epsg)
+            f = urllib.urlopen(ref)
             fp.write(f.read())
 
     def write_polygon(self, p, polygons):
@@ -71,7 +83,6 @@ class ShapeFileWriter(Loggable):
             writer.poly(parts=[pp.points])
 
         writer.save(p)
-
 
 
 #============= EOF =============================================

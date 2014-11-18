@@ -26,10 +26,9 @@ from pychron.social.tasks.email_task import EmailTask
 
 
 class EmailPlugin(BaseTaskPlugin):
-    def _service_offer_defaults(self):
+    def _service_offers_default(self):
         so = self.service_offer_factory(factory=self._email_factory,
                                         protocol=Emailer)
-
         return [so]
 
     def _email_factory(self):
@@ -42,7 +41,7 @@ class EmailPlugin(BaseTaskPlugin):
         return t
 
     def _task_factory(self):
-        return EmailTask()
+        return EmailTask(manager=self.application.get_service(Emailer))
 
     def _preferences_panes_default(self):
         return [EmailPreferencesPane]

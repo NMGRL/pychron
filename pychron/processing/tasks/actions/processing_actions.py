@@ -1,11 +1,11 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -66,23 +66,46 @@ class myTaskAction(TaskAction):
             self.enabled = bool(self.object)
 
 
+class ActivateBlankAction(myTaskAction):
+    name= 'Activate Blanks'
+    task_ids = ['pychron.processing.figures', 'pychron.recall']
+    method = 'activate_blank_task'
+
+
+class ActivateRecallAction(myTaskAction):
+    name= 'Activate Recall'
+    task_ids = ['pychron.processing.figures', 'pychron.processing.blanks']
+    method = 'activate_recall_task'
+
+
+class ActivateIdeogramAction(myTaskAction):
+    name= 'Activate Ideogram'
+    task_ids = ['pychron.processing.blanks','pychron.recall']
+    method = 'activate_ideogram_task'
+
+
 class FigureTaskAction(myTaskAction):
     task_ids = List(['pychron.processing.figures', ])
 
 
+class GraphGroupSelectedAction(FigureTaskAction):
+    name = 'Graph Group Selected'
+    method = 'graph_group_selected'
+
+
+class GraphGroupbySampleAction(FigureTaskAction):
+    name = 'Graph Group by Sample'
+    method = 'graph_group_by_sample'
+
+
 class GroupAction(FigureTaskAction):
-    pass
+    image = icon('blockdevice-3')
 
 
 class GroupSelectedAction(GroupAction):
     name = 'Group Selected'
     method = 'group_selected'
-
-
-class GraphGroupSelectedAction(GroupAction):
-    name = 'Graph Group Selected'
-    method = 'graph_group_selected'
-
+    # image = icon('placeholder')
 
 #     def perform(self, event):
 #         task = event.task
@@ -92,21 +115,47 @@ class GraphGroupSelectedAction(GroupAction):
 class GroupbySampleAction(GroupAction):
     name = 'Group by Sample'
     method = 'group_by_sample'
+    # image = icon('placeholder')
 
 
 class GroupbyLabnumberAction(GroupAction):
     name = 'Group by Labnumber'
     method = 'group_by_labnumber'
+    # image = icon('placeholder')
 
 
 class GroupbyAliquotAction(GroupAction):
     name = 'Group by Aliquot'
     method = 'group_by_aliquot'
+    # image = icon('placeholder')
 
 
 class ClearGroupAction(GroupAction):
     name = 'Clear Grouping'
     method = 'clear_grouping'
+    # image = icon('placeholder')
+
+
+class AnalysisAction(myTaskAction):
+    task_ids = List(['pychron.processing.figures',
+                     'pychron.processing.blanks',
+                     'pychron.processing.isotope_evolution',
+                     'pychron.processing.ic_factor',
+                     'pychron.processing.flux',
+                     'pychron.processing.batch',
+                     'pychron.processing.discrimination'])
+
+
+class MakeAnalysisGroupAction(AnalysisAction):
+    name = 'Make Analysis Group'
+    method = 'make_analysis_group'
+    image = icon('database_add')
+
+
+class DeleteAnalysisGroupAction(AnalysisAction):
+    name = 'Delete Analysis Group'
+    method = 'delete_analysis_group'
+    image = icon('database_delete')
 
 
 #===============================================================================
@@ -137,6 +186,12 @@ class FigureAction(Action):
             getattr(task, self.method)()
 
 
+class XYScatterAction(FigureAction):
+    name = 'XY Scatter'
+    method = 'new_xy_scatter'
+    accelerator = 'Ctrl+Shift+x'
+
+
 class IdeogramAction(FigureAction):
     name = 'Ideogram'
     accelerator = 'Ctrl+J'
@@ -162,10 +217,16 @@ class InverseIsochronAction(FigureAction):
     accelerator = 'Ctrl+i'
 
 
-class FigureFromFile(FigureAction):
-    name = 'Ideogram from File'
+class IdeogramFromFile(FigureAction):
+    name = 'Ideogram'
     method = 'new_ideogram_from_file'
     accelerator = 'Ctrl+shift+j'
+
+
+class SpectrumFromFile(FigureAction):
+    name = 'Spectrum'
+    method = 'new_spectrum_from_file'
+    # accelerator = 'Ctrl+shift+d'
 
 
 #===============================================================================
@@ -178,6 +239,17 @@ class RecallAction(Action):
     def perform(self, event):
         app = event.task.window.application
         task = app.get_task('pychron.recall')
+
+
+class ConfigureRecallAction(myTaskAction):
+    name = 'Configure Recall'
+    method = 'configure_recall'
+    image = icon('cog.png')
+    task_ids = List(['pychron.recall', 'pychron.processing.figures',
+                     'pychron.processing.blanks',
+                     'pychron.processing.isotope_evolution',
+                     'pychron.processing.ic_factor',
+                     'pychron.processing.discrimination'])
 
 
 class OpenInterpretedAgeAction(Action):
@@ -208,19 +280,19 @@ class BrowseInterpretedAgeTBAction(FigureTaskAction):
     image = icon('application_view_list.png')
 
 
-class OpenAdvancedQueryAction(Action):
-    name = 'Find Analysis...'
-    image = icon('edit-find.png')
-
-    def perform(self, event):
-        app = event.task.window.application
-        task = app.open_task('pychron.advanced_query')
-        task.set_append_replace_enabled(False)
+# class OpenAdvancedQueryAction(Action):
+#     name = 'Find Analysis...'
+#     image = icon('find.png')
+#
+#     def perform(self, event):
+#         app = event.task.window.application
+#         task = app.open_task('pychron.advanced_query')
+#         task.set_append_replace_enabled(False)
 
 
 class ClearAnalysisCacheAction(Action):
     name = 'Clear Analysis Cache'
-    image = icon('edit-clear')
+    image = icon('clear')
 
     def perform(self, event=None):
         from pychron.database.isotope_database_manager import ANALYSIS_CACHE, ANALYSIS_CACHE_COUNT
@@ -235,6 +307,25 @@ class ExportAnalysesAction(Action):
     def perform(self, event):
         app = event.task.window.application
         app.open_task('pychron.export')
+
+
+class ModifyK3739Action(myTaskAction):
+    name = 'Modify (37/39)K...'
+    method = 'modify_k3739'
+    task_ids = List(['pychron.processing.figures', 'pychron.recall', 'pychron.processing.isotope_evolution'])
+
+
+class SplitEditorActionHor(myTaskAction):
+    name = 'Split Editor Horizontal'
+    task_ids = List(['pychron.processing.figures', 'pychron.recall'])
+    method = 'split_editor_area_hor'
+
+
+class SplitEditorActionVert(myTaskAction):
+    name = 'Split Editor Vertical'
+    task_ids = List(['pychron.processing.figures', 'pychron.recall'])
+    method = 'split_editor_area_vert'
+    image = icon('split_vertical')
 
 
 #============= EOF =============================================

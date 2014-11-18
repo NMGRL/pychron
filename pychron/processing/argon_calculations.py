@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,14 +20,37 @@
 import math
 from copy import deepcopy
 
-from numpy import asarray, argmax, average
+from numpy import asarray, average
 from uncertainties import ufloat, umath
 from numpy import array
 
 from pychron.processing.arar_constants import ArArConstants
 from pychron.core.stats.core import calculate_weighted_mean
 
+
+
+
+
+
+
 #============= local library imports  ==========================
+
+
+def calculate_F_ratio(m4039, m3739, m3639, pr):
+    """
+    required ratios
+    (40/39)m
+    (36/39)m
+    (37/39)m
+
+
+    """
+
+    atm4036 = 295.5
+    n = m4039 - atm4036 * m3639 + atm4036 * pr.get('ca3637') * m3739
+    d = 1 - pr.get('ca3937') * m3739
+    F = n / d - pr.get('k4039')
+    return F
 
 
 def extract_isochron_xy(analyses):
@@ -79,7 +102,7 @@ def calculate_isochron(analyses, reg='NewYork'):
 
     age = ufloat(0, 0)
     if R > 0:
-        age = age_equation(ref.j, R, arar_constants=ref.arar_constants)
+        age = age_equation((ref.j.nominal_value, 0), R, arar_constants=ref.arar_constants)
     return age, reg, (xs, ys, xerrs, yerrs)
 
 
@@ -99,7 +122,7 @@ def isochron_regressor(xs, xes, ys, yes,
     return reg
 
 
-def calculate_plateau_age(ages, errors, k39, kind='inverse_variance'):
+def calculate_plateau_age(ages, errors, k39, kind='inverse_variance', method='fleck 1977'):
     """
         ages: list of ages
         errors: list of corresponding  1sigma errors
@@ -107,12 +130,22 @@ def calculate_plateau_age(ages, errors, k39, kind='inverse_variance'):
 
         return age, error
     """
+    # print 'ages=array({})'.format(ages)
+    # print 'errors=array({})'.format(errors)
+    # print 'k39=array({})'.format(k39)
+
     ages = asarray(ages)
     errors = asarray(errors)
 
     k39 = asarray(k39)
-    pidx = find_plateaus(ages, errors, k39,
-                         overlap_sigma=2)
+    from pychron.processing.plateau import Plateau
+
+    p = Plateau(ages=ages,
+                errors=errors,
+                signals=k39)
+    pidx = p.find_plateaus(method)
+    # pidx = find_plateaus(ages, errors, k39,
+    #                      overlap_sigma=2)
     if pidx:
         sx = slice(*pidx)
         plateau_ages = ages[sx]
@@ -127,29 +160,36 @@ def calculate_plateau_age(ages, errors, k39, kind='inverse_variance'):
         return wm, we, pidx
 
 
-def calculate_flux(rad40, k39, age, arar_constants=None):
+def calculate_flux(f, age, arar_constants=None):
     """
-        rad40: radiogenic 40Ar
-        k39: 39Ar from potassium
+        #rad40: radiogenic 40Ar
+        #k39: 39Ar from potassium
+        f: F value rad40Ar/39Ar
         age: age of monitor in years
 
         solve age equation for J
     """
-    if isinstance(rad40, (list, tuple)):
-        rad40 = ufloat(*rad40)
-    if isinstance(k39, (list, tuple)):
-        k39 = ufloat(*k39)
+    # if isinstance(rad40, (list, tuple)):
+    #     rad40 = ufloat(*rad40)
+    # if isinstance(k39, (list, tuple)):
+    #     k39 = ufloat(*k39)
+
+    if isinstance(f, (list, tuple)):
+        f = ufloat(*f)
+
     if isinstance(age, (list, tuple)):
         age = ufloat(*age)
         #    age = (1 / constants.lambdak) * umath.log(1 + JR)
     try:
-        r = rad40 / k39
+        # r = rad40 / k39
         if arar_constants is None:
             arar_constants = ArArConstants()
-        j = (umath.exp(age * arar_constants.lambda_k) - 1) / r
+
+        j = (umath.exp(age * arar_constants.lambda_k.nominal_value) - 1) / f
         return j.nominal_value, j.std_dev
     except ZeroDivisionError:
         return 1, 0
+
 
 #    return j
 def calculate_decay_time(dc, f):
@@ -190,9 +230,30 @@ def abundance_sensitivity_correction(isos, abundance_sensitivity):
     return [n40, n39, n38, n37, n36]
 
 
+def apply_fixed_k3739(a39, pr, fixed_k3739):
+    """
+        x=ca37/k39
+        y=ca37/ca39
+        T=s39dec_cor
+
+        T=ca39+k39
+        T=ca37/y+ca37/x
+
+        ca37=(T*x*y)/(x+y)
+    """
+    x = fixed_k3739
+    y = 1 / pr.get('ca3937', 1)
+    ca37 = (a39 * x * y) / (x + y)
+    ca39 = pr.get('ca3937', 0) * ca37
+    k39 = a39 - ca39
+    k37 = x * k39
+    return ca37, ca39, k37, k39
+
+
 def interference_corrections(a40, a39, a38, a37, a36,
                              production_ratios,
-                             arar_constants=None):
+                             arar_constants=None,
+                             fixed_k3739=False):
     if production_ratios is None:
         production_ratios = {}
 
@@ -200,9 +261,9 @@ def interference_corrections(a40, a39, a38, a37, a36,
         arar_constants = ArArConstants()
 
     pr = production_ratios
-
     k37 = ufloat(0, 1e-20)
-    if arar_constants.k3739_mode.lower() == 'normal':
+
+    if arar_constants.k3739_mode.lower() == 'normal' and not fixed_k3739:
         # iteratively calculate 37, 39
         for _ in range(5):
             ca37 = a37 - k37
@@ -210,25 +271,16 @@ def interference_corrections(a40, a39, a38, a37, a36,
             k39 = a39 - ca39
             k37 = pr.get('k3739', 0) * k39
     else:
-        '''
-            x=ca37/k39
-            y=ca37/ca39
-            T=s39dec_cor
+        if not fixed_k3739:
+            fixed_k3739 = arar_constants.fixed_k3739
 
-            T=ca39+k39
-            T=ca37/y+ca37/x
-
-            ca37=(T*x*y)/(x+y)
-        '''
-        x = arar_constants.fixed_k3739
-        y = 1 / pr.get('ca3937', 1)
-
-        ca37 = (a39 * x * y) / (x + y)
-        ca39 = pr.get('ca3937', 0) * ca37
-        k39 = a39 - ca39
-        k37 = x * k39
+        ca37, ca39, k37, k39 = apply_fixed_k3739(a39, pr, fixed_k3739)
 
     k38 = pr.get('k3839', 0) * k39
+
+    if not arar_constants.allow_negative_ca_correction:
+        ca37 = max(ufloat(0, 0), ca37)
+
     ca36 = pr.get('ca3637', 0) * ca37
     ca38 = pr.get('ca3837', 0) * ca37
 
@@ -266,7 +318,8 @@ def calculate_atmospheric(a38, a36, k38, ca38, ca36, decay_time,
 def calculate_F(isotopes,
                 decay_time,
                 interferences=None,
-                arar_constants=None):
+                arar_constants=None,
+                fixed_k3739=False):
     """
         isotope values corrected for blank, baseline, (background)
         ic_factor, (discrimination), ar37 and ar39 decay
@@ -288,7 +341,7 @@ def calculate_F(isotopes,
     #for k,v in pr.iteritems():
     #    print k, v
     k37, k38, k39, ca36, ca37, ca38, ca39 = interference_corrections(a40, a39, a38, a37, a36,
-                                                                     pr, arar_constants)
+                                                                     pr, arar_constants, fixed_k3739)
     atm36, cl36 = calculate_atmospheric(a38, a36, k38, ca38, ca36,
                                         decay_time,
                                         pr,
@@ -307,7 +360,8 @@ def calculate_F(isotopes,
 
     rf = deepcopy(f)
     # f = ufloat(f.nominal_value, f.std_dev, tag='F')
-    non_ar_isotopes = dict(ca39=ca39,
+    non_ar_isotopes = dict(k40=k40,
+                           ca39=ca39,
                            k38=k38,
                            ca38=ca38,
                            k37=k37,
@@ -321,13 +375,13 @@ def calculate_F(isotopes,
         rp = ufloat(0, 0)
 
     computed = dict(rad40=rad40, rad40_percent=rp,
-                    k39=k39)
+                    k39=k39, atm40=atm40)
     #print 'Ar40', a40-k40, a40, k40
     #print 'Ar39', a39-k39, a39, k39
     interference_corrected = dict(Ar40=a40 - k40,
                                   Ar39=k39,
-                                  Ar38=a38, #- k38 - ca38,
-                                  Ar37=a37, #- ca37 - k37,
+                                  Ar38=a38,  #- k38 - ca38,
+                                  Ar37=a37,  #- ca37 - k37,
                                   Ar36=atm36)
     ##clear errors in irrad
     for pp in pr.itervalues():
@@ -340,15 +394,19 @@ def calculate_F(isotopes,
 def age_equation(j, f,
                  include_decay_error=False,
                  arar_constants=None):
-    if isinstance(j, (tuple, str)):
+    if isinstance(j, tuple):
+        j = ufloat(*j)
+    elif isinstance(j, str):
         j = ufloat(j)
-    if isinstance(f, (tuple, str)):
+
+    if isinstance(f, tuple):
+        f = ufloat(*f)
+    elif isinstance(f, str):
         f = ufloat(f)
     if arar_constants is None:
         arar_constants = ArArConstants()
 
     scalar = float(arar_constants.age_scalar)
-
     lk = arar_constants.lambda_k
     if not include_decay_error:
         lk = lk.nominal_value
@@ -357,139 +415,17 @@ def age_equation(j, f,
     except (ValueError, TypeError):
         return ufloat(0, 0)
 
-# plateau definition
-plateau_criteria = {'number_steps': 3}
-
-
-def overlap(a1, a2, e1, e2, overlap_sigma):
-    e1 *= overlap_sigma
-    e2 *= overlap_sigma
-    if a1 - e1 < a2 + e2 and a1 + e1 > a2 - e2:
-        return True
 
 #===============================================================================
 # non-recursive
 #===============================================================================
-def find_plateaus(ages, errors, signals, overlap_sigma=1, exclude=None):
-    """
-        return list of plateau indices
-    """
-
-    if exclude is None:
-        exclude = []
-    plats = []
-    platids = []
-    for i in range(len(ages)):
-        if i in exclude:
-            continue
-        ids = _find_plateau(ages, errors, signals, i, overlap_sigma, exclude)
-        if ids is not None and ids.any():
-            start, end = ids
-            plats.append(end - start)
-            platids.append((start, end))
-
-            #    print plats, platids
-    if plats:
-        plats = asarray(plats)
-        #platids = asarray(platids)
-
-        ps = platids[argmax(plats)]
-        if ps[0] != ps[1]:
-            return ps
-
-
-def _find_plateau(ages, errors, signals, start, overlap_sigma, exclude):
-    plats = []
-    platids = []
-    for i in range(1, len(ages)):
-        if i in exclude:
-            continue
-        if check_plateau(ages, errors, signals, start, i, overlap_sigma, exclude):
-            plats.append(i - start)
-            platids.append((start, i))
-    if plats:
-        plats = asarray(plats)
-        platids = asarray(platids)
-        return platids[argmax(plats)]
-
-
-def check_plateau(ages, errors, signals, start, end, overlap_sigma, exclude):
-    for i in range(start, min(len(ages), end + 1)):
-        if i in exclude:
-            continue
-        for j in range(start, min(len(ages), end + 1)):
-            if j in exclude:
-                continue
-            if i != j:
-                obit = not overlap(ages[i], ages[j], errors[i], errors[j], overlap_sigma)
-                mswdbit = not check_mswd(ages, errors, start, end)
-                percent_releasedbit = not check_percent_released(signals, start, end)
-                n_steps_bit = (end - start) + 1 < 3
-                if (obit or
-                        mswdbit or
-                        percent_releasedbit or
-                        n_steps_bit):
-                    return False
-
-    return True
-
-
-def check_percent_released(signals, start, end):
-    tot = sum(signals)
-    s = sum(signals[start:end + 1])
-    return s / tot >= 0.5
-
-
-def check_mswd(ages, errors, start, end):
-#    a_s = ages[start:end + 1]
-#    e_s = errors[start:end + 1]
-#    print calculate_mswd(a_s, e_s)
-    return True
-
-#===============================================================================
-# recursive
-# from timeit testing recursive method is not any faster
-#  use non recursive method instead purely for readablity
-#===============================================================================
-
-def find_plateaus_r(ages, errors, start=0, end=1, plats=None, platids=None):
-    if plats is None:
-        plats = []
-        platids = []
-
-    if start == len(ages) or end == len(ages):
-        plats = asarray(plats)
-        platids = asarray(platids)
-        return platids[argmax(plats)]
-    else:
-        a = check_plateau_r(ages, errors, start, end)
-        if a:
-            plats.append((end - start))
-            platids.append((start, end))
-
-            return find_plateaus_r(ages, errors, start, end + 1, plats, platids)
-        else:
-            return find_plateaus_r(ages, errors, start + 1, end + 1, plats, platids)
-
-
-def check_plateau_r(ages, errors, start, end, isplat=True):
-    if end < len(ages):
-        return isplat and check_plateau_r(ages, errors, start, end + 1, isplat)
-    else:
-        for i in range(start, min(len(ages), end + 1)):
-            for j in range(start, min(len(ages), end + 1)):
-                if i != j:
-                    if not overlap(ages[i], ages[j], errors[i], errors[j]):
-                        return False
-        return True
-
 
 def calculate_error_F(signals, F, k4039, ca3937, ca3637):
-    '''
+    """
         McDougall and Harrison
         p92 eq 3.43
-     
-    '''
+
+    """
 
     m40, m39, m38, m37, m36 = signals
     G = m40 / m39
@@ -512,10 +448,10 @@ def calculate_error_F(signals, F, k4039, ca3937, ca3637):
 
 
 def calculate_error_t(F, ssF, j, ssJ):
-    '''
+    """
         McDougall and Harrison
         p92 eq. 3.43
-    '''
+    """
     JJ = j * j
     FF = F * F
     constants = ArArConstants()
@@ -523,563 +459,131 @@ def calculate_error_t(F, ssF, j, ssJ):
     sst = (JJ * ssF + FF * ssJ) / (ll * (1 + F * j) ** 2)
     return sst ** 0.5
 
-
-#def calculate_arar_age2(signals, baselines, blanks, backgrounds,
-#                        j, irradinfo,
-#                        ic_factors=None,
-#                        discrimination=None,
-#                        abundance_sensitivity=0,
-#                        a37decayfactor=None,
-#                        a39decayfactor=None,
-#                        include_decay_error=False,
-#                        arar_constants=None):
-#    '''
-#        signals: measured uncorrected isotope intensities, tuple of value,error pairs
-#            value==intensity, error==error in regression coefficient
-#        baselines: measured baseline intensity
-#        !!!
-#            this method will not work if you want to make a time dependent baseline correction
-#            mass spec corrects each signal point with a modeled baseline.
-#        !!!
-#        blanks: time dependent background, same format as signals
-#        background: static spectrometer background, same format as signals
-#        j: flux, tuple(value,error)
-#        irradinfo: tuple of production ratios + chronology + decay_time
-#            production_ratios = k4039, k3839, k3739, ca3937, ca3837, ca3637, cl3638
-#
-#        #changed: 10/13 use ic_factors
-#        #ic: CDD correction factor
-#
-#        ic_factors= dict of detector intercalibration factors.
-#                dictionary should contain a key for each Ar isotope
-#                values are scalars. ideally one of the values is 1.0 i.e the ref
-#                detector, !!but this is not strictly enforced!!
-#
-#        disc: Multiplier 1amu discrimination
-#
-#        return:
-#            returns a results dictionary with computed values
-#            result keys
-#                age_err_wo_j,
-#                rad40,
-#                tot40,
-#                k39,
-#                ca37,
-#                atm36,
-#                cl36,
-#
-#                s40,
-#                s39,
-#                s38,
-#                s37,
-#                s36,
-#                ar39decayfactor,
-#                ar37decayfactor
-#
-#    '''
-#
-#    def to_ufloat(v):
-#        if isinstance(v, tuple):
-#            v = ufloat(*v)
-#        return v
-#
-#    if arar_constants is None:
-#        # lazy load constants
-#        arar_constants = ArArConstants()
-#
-#    if ic_factors is None:
-#        ic_factors = dict()
-#
-#    s40, s39, s38, s37, s36 = map(to_ufloat, signals)
-#    s40bs, s39bs, s38bs, s37bs, s36bs = map(to_ufloat, baselines)
-#    s40bl, s39bl, s38bl, s37bl, s36bl = map(to_ufloat, blanks)
-#    s40bk, s39bk, s38bk, s37bk, s36bk = map(to_ufloat, backgrounds)
-#    #k4039, k3839, k3739, ca3937, ca3837, ca3637, cl3638, chronology_segments, decay_time = irradinfo
-#    chronology_segments, decay_time = irradinfo[-2:]
-#    k4039, k3839, k3739, ca3937, ca3837, ca3637, cl3638 = map(to_ufloat, irradinfo[:2])
-#
-#    j = to_ufloat(j)
-#
-#    #===============================================================================
-#    #
-#    #===============================================================================
-#    # correct for abundance sensitivity
-#    # assumes symmetric and equal abundant sens for all peaks
-#    n40 = s40 - abundance_sensitivity * (s39 + s39)
-#    n39 = s39 - abundance_sensitivity * (s40 + s38)
-#    n38 = s38 - abundance_sensitivity * (s39 + s37)
-#    n37 = s37 - abundance_sensitivity * (s38 + s36)
-#    n36 = s36 - abundance_sensitivity * (s37 + s37)
-#    s40, s39, s38, s37, s36 = n40, n39, n38, n37, n36
-#
-#    # subtract blanks and baselines (and backgrounds)
-#    s40 -= (s40bl + s40bs + s40bk)
-#    s39 -= (s39bl + s39bs + s39bk)
-#    s38 -= (s38bl + s38bs + s38bk)
-#    s37 -= (s37bl + s37bs + s37bk)
-#    s36 -= (s36bl + s36bs + s36bk)
-#    #print 'arargon',discrimination
-#    if discrimination:
-#        disc = to_ufloat(discrimination)
-#        # correct for discrimination
-#        s40 = s40 * disc ** 4
-#        s39 = s39 * disc ** 3
-#        s38 = s38 * disc ** 2
-#        s37 = s37 * disc ** 1
-#    else:
-#        s40 *= ic_factors.get('Ar40', 1)
-#        s39 *= ic_factors.get('Ar39', 1)
-#        s38 *= ic_factors.get('Ar38', 1)
-#        s37 *= ic_factors.get('Ar37', 1)
-#        s36 *= ic_factors.get('Ar36', 1)
-#
-#    if decay_time is None:
-#        decay_time = calculate_decay_time(arar_constants.lambda_Ar37.nominal_value,
-#                                          a37decayfactor)
-#        a37decayfactor = 1
-#
-#    # calculate decay factor
-#    if a37decayfactor is None:
-#        try:
-#            dc = arar_constants.lambda_Ar37.nominal_value
-#            a37decayfactor = calculate_decay_factor(dc, chronology_segments)
-#        except ZeroDivisionError:
-#            a37decayfactor = 1
-#
-#    if a39decayfactor is None:
-#        try:
-#            dc = arar_constants.lambda_Ar39.nominal_value
-#            a39decayfactor = calculate_decay_factor(dc, chronology_segments)
-#        except ZeroDivisionError:
-#            a39decayfactor = 1
-#
-#
-#            #     print a39decayfactor, a37decayfactor
-#            #    print type(s37), type(a37decayfactor)
-#            # calculate interference corrections
-#    s37dec_cor = s37 * a37decayfactor
-#    s39dec_cor = s39 * a39decayfactor
-#
-#    k37 = ufloat(0, 1e-20)
-#    if arar_constants.k3739_mode.lower() == 'normal':
-#        # iteratively calculate 37, 39
-#        for _ in range(5):
-#            ca37 = s37dec_cor - k37
-#            ca39 = ca3937 * ca37
-#            k39 = s39dec_cor - ca39
-#            k37 = k3739 * k39
-#    else:
-#        '''
-#            x=ca37/k39
-#            y=ca37/ca39
-#            T=s39dec_cor
-#
-#            T=ca39+k39
-#            T=ca37/y+ca37/x
-#
-#            ca37=(T*x*y)/(x+y)
-#        '''
-#        x = arar_constants.fixed_k3739
-#        y = 1 / ca3937
-#
-#        ca37 = (s39dec_cor * x * y) / (x + y)
-#        ca39 = ca3937 * ca37
-#        k39 = s39dec_cor - ca39
-#
-#    k38 = k3839 * k39
-#    ca36 = ca3637 * ca37
-#    ca38 = ca3837 * ca37
-#
-#    '''
-#        McDougall and Harrison
-#        Roddick 1983
-#        Foland 1993
-#
-#        iteratively calculate atm36
-#    '''
-#
-#    m = cl3638 * arar_constants.lambda_Cl36.nominal_value * decay_time
-#    atm36 = ufloat(0, 1e-20)
-#    for _ in range(5):
-#        ar38atm = arar_constants.atm3836.nominal_value * atm36
-#        cl38 = s38 - ar38atm - k38 - ca38
-#        cl36 = cl38 * m
-#        atm36 = s36 - ca36 - cl36
-#
-#    # calculate rodiogenic
-#    # dont include error in 40/36
-#    atm40 = atm36 * arar_constants.atm4036.nominal_value
-#    k40 = k39 * k4039
-#
-#    ar40rad = s40 - atm40 - k40
-#    #     print map(lambda x: x.nominal_value, (ar40rad, s40, atm40, s36, ca36, cl36, atm36))
-#
-#    #    age_with_jerr = ufloat(0, 0)
-#    #    age_wo_jerr = ufloat(0, 0)
-#    try:
-#        R = ar40rad / k39
-#        # dont include error in decay constant
-#        age = age_equation(j, R, include_decay_error=include_decay_error,
-#                           arar_constants=arar_constants)
-#        #        age = age_equation(j, R)
-#
-#        #        age_with_jerr = deepcopy(age)
-#        #        print 'j', age
-#        # dont include error in decay constant
-#        pe = j.std_dev
-#        j.std_dev = 0
-#        #        j.set_std_dev(0)
-#        wo_jerr = age.std_dev
-#        #        print 'jo', age
-#        j.std_dev = pe
-#    #        j.set_std_dev(pe)
-#
-#    #        age = age_equation(j, R, include_decay_error=include_decay_error,
-#    #                           arar_constants=arar_constants)
-#    #        age = age_equation(j, R)
-#    #        age_wo_jerr = deepcopy(age)
-#
-#    except (ZeroDivisionError, ValueError), e:
-#        age = ufloat(0, 0)
-#        wo_jerr = 0
-#
-#    #    print s40 / s36
-#    result = dict(
-#        age=age,
-#        age_err_wo_j=wo_jerr,
-#        rad40=ar40rad,
-#
-#        k39=k39,
-#        ca37=ca37,
-#        atm36=atm36,
-#        cl36=cl36,
-#
-#        Ar40=s40,
-#        Ar39=s39,
-#        Ar38=s38,
-#        Ar37=s37,
-#        Ar36=s36,
-#
-#        s37decay_cor=s37dec_cor,
-#        s39decay_cor=s39dec_cor,
-#
-#        ar39decayfactor=a39decayfactor,
-#        ar37decayfactor=a37decayfactor
-#    )
-#    return result
-
-# def calculate_arar_age(signals, baselines, blanks, backgrounds,
-#                       j, irradinfo,
-#                       ic=(1.0, 0),
-#                       a37decayfactor=None,
-#                       a39decayfactor=None
-#                       ):
-# #    s40, s39, s38, s37, s36 = signals
-#    s40bs, s39bs, s38bs, s37bs, s36bs = baselines
-#    s40bl, s39bl, s38bl, s37bl, s36bl = blanks
-#    s40bk, s39bk, s38bk, s37bk, s36bk = backgrounds
-#
-# #    k4039, k3839, ca3937, ca3837, ca3637, cl3638, t = irradinfo
-#    pr, t = irradinfo[:-1], irradinfo[-1]
-#
-#    s40, s39, s38, s37, s36 = map(ufloat, signals)
-#    s40bs, s39bs, s38bs, s37bs, s36bs = map(ufloat, baselines)
-#    s40bl, s39bl, s38bl, s37bl, s36bl = map(ufloat, blanks)
-#    s40bk, s39bk, s38bk, s37bk, s36bk = map(ufloat, blanks)
-#    k4039, k3839, ca3937, ca3837, ca3637, cl3638 = map(ufloat, pr)
-#
-#    j = ufloat(j)
-#    ic = ufloat(ic)
-#
-#    s36 *= ic
-#    s36bs *= ic
-#
-#    #subtract blanks and baselines
-#    s40 -= (s40bl + s40bs + s40bk)
-#    s39 -= (s39bl + s39bs + s39bk)
-#    s38 -= (s38bl + s38bs + s38bk)
-#    s37 -= (s37bl + s37bs + s37bk)
-#    s36 -= (s36bl + s36bs + s36bk)
-#
-#    #calculate decay factors
-#    #2004-11-16 21:16:00
-#    if a37decayfactor is None:
-#        try:
-# #            a37decayfactor = 1 / umath.exp(-t * (1 * constants.lambda_37.nominal_value * 365.25))
-#            a37decayfactor = 1 / umath.exp(-t * (1 * constants.lambda_37.nominal_value * 365.25))
-#            #t = umath.log(a39decayfactor) / (constants.lambda_39.nominal_value * 365.25)
-#        except ZeroDivisionError:
-#            a37decayfactor = 1
-#
-#    if a39decayfactor is None:
-#        try:
-# #            a39decayfactor = 1 / umath.exp(-t * (1 * constants.lambda_39.nominal_value * 365.25))
-#            a39decayfactor = 1 / umath.exp(-t * (1 * constants.lambda_39.nominal_value * 365.25))
-#            #t1 = umath.log(a37decayfactor) / (constants.lambda_37.nominal_value * 365.25)
-#        except ZeroDivisionError:
-#            a39decayfactor = 1
-#
-#    #calculate interference corrections
-#    ca37 = s37 * a37decayfactor
-#    s39 = s39 * a39decayfactor
-#    ca36 = ca3637 * ca37
-#    ca38 = ca3837 * ca37
-#    ca39 = ca3937 * ca37
-#    k39 = s39 - ca39
-#    k38 = k3839 * k39
-#
-#    if constants.lambda_cl36 < 0.1:
-#        m = cl3638 * constants.lambda_cl36 * 365.25 * t
-#    else:
-#        m = cl3638
-#
-#    mcl = m / (m * constants.atm3836 - 1)
-#    cl36 = mcl * (constants.atm3836 * (s36 - ca36) - s38 + k38 + ca38)
-#    atm36 = s36 - ca36 - cl36
-#
-#    #calculate rodiogenic
-#    #dont include error in 40/36
-#    atm40 = atm36 * constants.atm4036.nominal_value
-#    k40 = k39 * k4039
-#    ar40rad = s40 - atm40 - k40
-#
-#    try:
-#        JR = j * ar40rad / k39
-#        #dont include error in decay constant
-#        age = (1 / constants.lambdak.nominal_value) * umath.log(1 + JR)
-#
-# #        j.set_std_dev(0)
-# #        JR = j * ar40rad / k39
-# #        #dont include error in decay constant
-# #        age_wo_jerr = (1 / constants.lambdak.nominal_value) * umath.log(1 + JR)
-#    except (ZeroDivisionError, ValueError):
-#        age = ufloat((0, 0))
-# #        age_wo_jerr = ufloat((0, 0))
-#
-#    result = dict(age=age,
-# #                  age_wo_jerr=age_wo_jerr,
-#                  rad40=ar40rad,
-#                  tot40=s40,
-#                  k39=k39,
-#                  ca37=ca37,
-#                  atm36=atm36,
-#
-#                  s40=s40,
-#                  s39=s39,
-#                  s38=s38,
-#                  s37=s37,
-#                  s36=s36,
-#                  ar39decayfactor=a39decayfactor,
-#                  ar37decayfactor=a37decayfactor
-#                  )
-#    return result
-
-#    try:
-#    except ValueError, e:
-#        print e
-#        return e
 #============= EOF =====================================
-
-# #=============enthought library imports=======================oup
-#
-##=============standard library imports ========================
-# from uncertainties import ufloat
-# from uncertainties.umath import log, exp
-#
-##=============local library imports  ==========================
-# import constants
-# #from data_adapter import new_unknown
-#
-#
-#ages = [10] * 50
-#errors = [1] * 1
-#
-#
-#def time_recursive():
-#    find_plateaus_r(ages, errors)
-#
-#
-#def time_non_recursive():
-#    find_plateaus(ages, errors)
-#
-#
-##if __name__ == '__main__':
-## 21055-02
-##    signals = ((8.681775, 0.004059),
-##                   (9.557604, 0.003301),
-##                   (0.128056, 0.000320),
-##                   (0.055542, 0.000151), (0.000267, 0.000013))
-##    baselines = ((0, 0), (0, 0), (0, 0), (0, 0), (0, 0))
-##    blanks = ((0.013131, 0.00069),
-##              (0.0008725, 0.00007),
-##              (0.00003314, 0.0000088),
-##
-##              (0.0002788, 0.000013), (0.00005382, 0.0000048))
-##    t =
-##    print 'asdfs', 1 / umath.exp(-constants.lambda_37 * t)
-##    print 1 / (constants.lambda_37) * umath.log(3.801e1)
-#    # 60754-10
-#    signals = ((2655.294, 0.12),
-#               (377.5964, 0.046),
-#               (4.999, 0.012),
-#               (0.0853, 0.014),
-#               (0.013245, 0.00055)
-#    )
-#    baselines = ((0, 0), (0, 0), (0, 0), (0, 0), (0, 0))
-#    blanks = ((1.5578, 0.023),
-#              (0.0043, 0.024),
-#              (-0.0198, 0.011),
-#              (0.0228, 0.012),
-#              (0.00611, 0.00033))
-#    backgrounds = ((0, 0), (0, 0), (0, 0), (0, 0), (0, 0))
-#    j = (2.2408e-3, 1.7795e-6)
-#    irradinfo = ((1e-2, 2e-3),
-#                 (1.3e-2, 0),
-#
-#                 (7e-4, 2e-6),
-#                 (0, 0),
-#                 (2.8e-4, 2e-5),
-#                 (2.5e2, 0), 0.50429815306)
-#    calculate_arar_age(signals, baselines, blanks, backgrounds, j, irradinfo,
-#
-#                       #                       a37decayfactor=1.956,
-#                       #                       a39decayfactor=1.0
-#                       #                       a37decayfactor=3.801e1, a39decayfactor=1.001
-#    )
-#    from timeit import Timer
-#    t = Timer('time_recursive', 'from __main__ import time_recursive')
-#
-#    n = 5
-#    tr = t.timeit(n)
-#    print 'time r', tr / 5
-#
-#    t = Timer('time_non_recursive', 'from __main__ import time_non_recursive')
-#    tr = t.timeit(n)
-#    print 'time nr', tr / 5
-#    find_plateaus(ages, errors)
-# def find_plateaus(ages, errors):
-#    def __add_plateau(s, e, p, di):
-#        d = e - s
-#        if d >= plateau_criteria['number_steps']:
-#            p.append((s, e))
-#            di.append(d)
-#
-#    start_i = 0
-#    end_i = 0
-#    plateaus = []
-#    plateau_lengths = []
-#    for i in range(1, len(ages)):
-#        a1 = ages[start_i]
-#        a2 = ages[i]
-#
-#        e1 = 2 * errors[start_i]
-#        e2 = 2 * errors[i]
-#        #a1 = aa1.nominal_value
-#        #a2 = aa2.nominal_value
-#        #e1 = 2.0 * aa1.std_dev()
-#        #e2 = 2.0 * aa2.std_dev()
-#        print a1, a2, e1, e2
-#        if not (a1 - e1) >= (a2 + e2) and not (a1 + e1) <= (a2 - e2):
-#            end_i += 1
-#        else:
-#            __add_plateau(start_i, end_i, plateaus, plateau_lengths)
-#
-#            start_i = end_i + 1
-#            end_i = start_i
-#
-#    __add_plateau(start_i, end_i, plateaus, plateau_lengths)
-#
-#    if len(plateau_lengths) == 0:
-#        return
-#
-#    #get and return the indices of the longest plateau
-#    max_i = plateau_lengths.index(max(plateau_lengths))
-#
-#    return (plateaus[max_i][0], plateaus[max_i][1] + 1)
-
-
-# def age_calculation(*args):
-#    '''
-#    j, m40, m39, m38, m37, m36, production_ratio, days_since_irradiation, irradiation_time
-#    return age in years
-#    '''
-#    j_value = args[0]
-#    isotope_components = get_isotope_components(*args[1:])
-#    #calculate the age
-#
-#    JR = j_value * isotope_components['rad40'] / isotope_components['k39']
-#    age = (1 / constants.lambdak) * log(1 + JR)
-#
-#    return age
-# def j_calculation(*args):
-#    '''
-#    age, m40, m39, m38, m37, m36, production_ratio, days_since_irradiation, irradiation_time
-#        age in a (years)
-#    '''
-#    age = args[0]
-#    isotope_components = get_isotope_components(*args[1:])
-#    j_val = (exp(age * constants.lambdak) - 1) * isotope_components['k39'] / isotope_components['rad40']
-#    return j_val
-#
-# def get_isotope_components(m40, m39, m38, m37, m36, production_ratio, days_since_irradiation, irradiation_time):
-#    #iteratively calculate 37 and 39
-#    k37 = 0
-#    for i in range(10):
-#        ca37 = m37 - k37
-#        ca39 = production_ratio.ca3937 * ca37
-#        k39 = m39 - ca39
-#        k37 = production_ratio.k3739 * k39
-#
-#    #correct for decay
-#    k37, k39 = correct_for_decay(k37, k39, days_since_irradiation, irradiation_time)
-#
-#    #38 from potassium and calcium
-#    k38 = k39 * production_ratio.k3839
-#    ca38 = ca37 * production_ratio.ca3837
-#
-#    #36 from calcium
-#    ca36 = production_ratio.ca3637 * ca37
-#
-#    #cosmogenic 36 from cl
-#    if constants.lambda_cl36 < 0.1:
-#        m = production_ratio.cl3638 * constants.lambda_cl36 * days_since_irradiation
-#    a3836 = 1 / constants.atm36_38
-#    mcl = m / (m * a3836 - 1)
-#    cl36 = mcl * (a3836 * (m36 - ca36) - m38 + k38 + ca38)
-#
-#    #36 from atm
-#    atm36 = m36 - ca36 - cl36
-#
-#    #38 from atm and cl
-#    atm38 = atm36 / constants.atm36_38
-#    cl38 = m38 - k38 - atm38 - ca38
-#
-#    #40 from atm
-#    atm40 = atm36 * constants.atm40_36
-#
-#    #40 from potassium
-#    k40 = production_ratio.k4039 * k39
-#
-#    rad40 = m40 - atm40 - k40
-#    values = [rad40, atm40, atm38, atm36, k40, k39, k38, k37, cl38, cl36, ca39, ca38, ca37, ca36]
-#    keys = ['rad40', 'atm40', 'atm38', 'atm36', 'k40', 'k39', 'k38', 'k37', 'cl38', 'cl36', 'ca39', 'ca38', 'ca37', 'ca36']
-#
-#    return dict(zip(keys, values))
-#
-# def correct_for_decay(m37, m39, days_since_irradiation, irradiation_time):
-#    '''
-#    '''
-#    lam = constants.lambda_37
-#    m37 *= lam * irradiation_time * exp(lam * days_since_irradiation) / (1 - exp(-lam * irradiation_time))
-#
-#    lam = constants.lambda_39
-#    m39 *= lam * irradiation_time * exp(lam * days_since_irradiation) / (1 - exp(-lam * irradiation_time))
-#    return m37, m39
-#
-#
-#
-#
 ##============= EOF ====================================
+# # plateau definition
+# plateau_criteria = {'number_steps': 3}
+#
+#
+# def overlap(a1, a2, e1, e2, overlap_sigma):
+#     e1 *= overlap_sigma
+#     e2 *= overlap_sigma
+#     if a1 - e1 < a2 + e2 and a1 + e1 > a2 - e2:
+#         return True
+#
+# def find_plateaus(ages, errors, signals, overlap_sigma=1, exclude=None):
+#     """
+#         return list of plateau indices
+#     """
+#
+#     if exclude is None:
+#         exclude = []
+#     plats = []
+#     platids = []
+#     for i in range(len(ages)):
+#         if i in exclude:
+#             continue
+#         ids = _find_plateau(ages, errors, signals, i, overlap_sigma, exclude)
+#         if ids is not None and ids.any():
+#             start, end = ids
+#             plats.append(end - start)
+#             platids.append((start, end))
+#
+#             #    print plats, platids
+#     if plats:
+#         plats = asarray(plats)
+#         #platids = asarray(platids)
+#
+#         ps = platids[argmax(plats)]
+#         if ps[0] != ps[1]:
+#             return ps
+#
+#
+# def _find_plateau(ages, errors, signals, start, overlap_sigma, exclude):
+#     plats = []
+#     platids = []
+#     for i in range(1, len(ages)):
+#         if i in exclude:
+#             continue
+#         if check_plateau(ages, errors, signals, start, i, overlap_sigma, exclude):
+#             plats.append(i - start)
+#             platids.append((start, i))
+#     if plats:
+#         plats = asarray(plats)
+#         platids = asarray(platids)
+#         return platids[argmax(plats)]
+#
+#
+# def check_plateau(ages, errors, signals, start, end, overlap_sigma, exclude):
+#     for i in range(start, min(len(ages), end + 1)):
+#         if i in exclude:
+#             continue
+#         for j in range(start, min(len(ages), end + 1)):
+#             if j in exclude:
+#                 continue
+#             if i != j:
+#                 obit = not overlap(ages[i], ages[j], errors[i], errors[j], overlap_sigma)
+#                 mswdbit = not check_mswd(ages, errors, start, end)
+#                 percent_releasedbit = not check_percent_released(signals, start, end)
+#                 n_steps_bit = (end - start) + 1 < 3
+#                 if (obit or
+#                         mswdbit or
+#                         percent_releasedbit or
+#                         n_steps_bit):
+#                     return False
+#
+#     return True
+#
+#
+# def check_percent_released(signals, start, end):
+#     tot = sum(signals)
+#     s = sum(signals[start:end + 1])
+#     return s / tot >= 0.5
+#
+#
+# def check_mswd(ages, errors, start, end):
+#     #    a_s = ages[start:end + 1]
+#     #    e_s = errors[start:end + 1]
+#     #    print calculate_mswd(a_s, e_s)
+#     return True
+#
+#
+# #===============================================================================
+# # recursive
+# # from timeit testing recursive method is not any faster
+# #  use non recursive method instead purely for readablity
+# #===============================================================================
+#
+# def find_plateaus_r(ages, errors, start=0, end=1, plats=None, platids=None):
+#     if plats is None:
+#         plats = []
+#         platids = []
+#
+#     if start == len(ages) or end == len(ages):
+#         plats = asarray(plats)
+#         platids = asarray(platids)
+#         return platids[argmax(plats)]
+#     else:
+#         a = check_plateau_r(ages, errors, start, end)
+#         if a:
+#             plats.append((end - start))
+#             platids.append((start, end))
+#
+#             return find_plateaus_r(ages, errors, start, end + 1, plats, platids)
+#         else:
+#             return find_plateaus_r(ages, errors, start + 1, end + 1, plats, platids)
+#
+#
+# def check_plateau_r(ages, errors, start, end, isplat=True):
+#     if end < len(ages):
+#         return isplat and check_plateau_r(ages, errors, start, end + 1, isplat)
+#     else:
+#         for i in range(start, min(len(ages), end + 1)):
+#             for j in range(start, min(len(ages), end + 1)):
+#                 if i != j:
+#                     if not overlap(ages[i], ages[j], errors[i], errors[j]):
+#                         return False
+#         return True
 #
 #
 #

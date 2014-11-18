@@ -21,14 +21,14 @@ from traitsui.api import View, Item, TableEditor, VGroup
 #============= local library imports  ==========================
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
-from pychron.processing.plotters.options.base import BasePlotterOptions
+from pychron.processing.plotters.options.base import FigurePlotterOptions
 from pychron.processing.plotters.options.option import FitPlotterOptions
 
 
-class SeriesOptions(BasePlotterOptions):
+class SeriesOptions(FigurePlotterOptions):
     def load_aux_plots(self, ref):
         def f(kii):
-            ff=next((x for x in self.aux_plots if x.name==kii))
+            ff = next((x for x in self.aux_plots if x.name == kii), None)
             if not ff:
                 ff = FitPlotterOptions(name=kii)
                 ff.trait_set(use=False, fit='')
@@ -44,6 +44,8 @@ class SeriesOptions(BasePlotterOptions):
                 keys.append('Ar40/Ar36')
 
         keys.append('PC')
+        keys.append('AnalysisType')
+
         ap = [f(k) for k in keys]
         self.trait_set(aux_plots=ap)
 

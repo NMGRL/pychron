@@ -1,11 +1,11 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,28 +15,23 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Str, Any, Bool, Property, Int
+from traits.api import Str, Any, Bool, Property, Int, Dict
 from pyface.confirmation_dialog import confirm
 #============= standard library imports ========================
+from threading import Event, Thread, Lock
+from Queue import Empty, LifoQueue
+import hashlib
 import time
 import os
 import inspect
-from threading import Event, Thread, Lock
 import traceback
-#============= local library imports  ==========================
 import yaml
-
-from pychron.loggable import Loggable
-
-from Queue import Empty, LifoQueue
-# from pychron.globals import globalv
-# from pychron.core.ui.gui import invoke_in_main_thread
 import sys
-# import bdb
-# from pychron.core.ui.thread import Thread
 import weakref
+#============= local library imports  ==========================
+from pychron.paths import paths
+from pychron.loggable import Loggable
 from pychron.globals import globalv
-
 from pychron.pyscripts.error import PyscriptError, IntervalError, GosubError, \
     KlassError, MainError
 
@@ -69,9 +64,7 @@ class IntervalContext(object):
 def verbose_skip(func):
     def decorator(obj, *args, **kw):
 
-
         fname = func.__name__
-        #        print fname, obj.testing_syntax, obj._cancel
         if fname.startswith('_m_'):
             fname = fname[3:]
 
@@ -82,12 +75,10 @@ def verbose_skip(func):
         min_args = len(args1) - 1 - nd
         an = len(args) + len(kw)
         if an < min_args:
-            raise PyscriptError('invalid arguments count for {}, args={} kwargs={}'.format(fname,
-                                                                                           args, kw))
-            #        if obj.testing_syntax or obj._cancel:
-        #            return
-        if obj.testing_syntax or obj._cancel or obj._truncate:
-            return
+            raise PyscriptError(obj.name, 'invalid arguments count for {}, args={} kwargs={}'.format(fname,
+                                                                                                     args, kw))
+        if obj.testing_syntax or obj.is_canceled() or obj.is_truncated():
+            return 0
 
         obj.debug('{} {} {}'.format(fname, args, kw))
 
@@ -98,7 +89,7 @@ def verbose_skip(func):
 
 def skip(func):
     def decorator(obj, *args, **kw):
-        if obj.testing_syntax or obj._cancel or obj._truncate:
+        if obj.testing_syntax or obj.is_canceled() or obj.is_truncated():
             return
         return func(obj, *args, **kw)
 
@@ -107,11 +98,10 @@ def skip(func):
 
 def count_verbose_skip(func):
     def decorator(obj, *args, **kw):
-        if obj._truncate or obj._cancel:
-            return
+        if obj.is_truncated() or obj.is_canceled():
+            return 0
 
         fname = func.__name__
-        #        print fname, obj.testing_syntax, obj._cancel
         if fname.startswith('_m_'):
             fname = fname[3:]
 
@@ -122,14 +112,10 @@ def count_verbose_skip(func):
         min_args = len(args1) - 1 - nd
         an = len(args) + len(kw)
         if an < min_args:
-            raise PyscriptError('invalid arguments count for {}, args={} kwargs={}'.format(fname,
-                                                                                           args, kw))
-            #        if obj._cancel:
+            raise PyscriptError(fname, 'invalid arguments count for {}, args={} kwargs={}'.format(fname, args, kw))
         if obj.testing_syntax:
-            #             print func.func_name, obj._estimated_duration
             func(obj, calc_time=True, *args, **kw)
-            #             print func.func_name, obj._estimated_duration
-            return
+            return 0
 
         obj.debug('{} {} {}'.format(fname, args, kw))
 
@@ -168,6 +154,8 @@ named_register = makeNamedRegistry(command_register)
 @todo: cancel script if action fails. eg fatal comm. error
 '''
 
+__CACHED_DURATIONS__ = {}
+
 
 class PyScript(Loggable):
     text = Property
@@ -177,7 +165,7 @@ class PyScript(Loggable):
     parent_script = Any
 
     root = Str
-    filename = Str
+    # filename = Str
     info_color = Str
 
     testing_syntax = Bool(False)
@@ -200,25 +188,64 @@ class PyScript(Loggable):
     _wait_control = None
 
     _estimated_duration = 0
+    _estimated_durations = Dict
     _graph_calc = False
 
     trace_line = Int
     interpolation_path = Str
 
+    _interpolation_context = None
+
     def __init__(self, *args, **kw):
         super(PyScript, self).__init__(*args, **kw)
         self._block_lock = Lock()
 
+    def is_canceled(self):
+        return self._cancel
+
+    def is_truncated(self):
+        return self._truncate
+
+    def finish(self):
+        self._finish()
+
     def console_info(self, *args, **kw):
         self._m_info(*args, **kw)
 
-    def calculate_estimated_duration(self, force=False):
-        if not self.syntax_checked or force:
+    def calculate_estimated_duration(self, ctx=None, force=False):
+        """
+            maintain a dictionary of previous calculated durations.
+            key=hash(ctx), value=duration
+
+        """
+
+        def calc_dur():
+            self.setup_context(**ctx)
             self.syntax_checked = False
             self.debug('calculate_estimated duration. syntax requires testing')
             self.test()
+            self.debug('estimated duration= {}'.format(self._estimated_duration))
 
-        return self.get_estimated_duration()
+        if not ctx:
+            calc_dur()
+            return self.get_estimated_duration()
+
+        h = self._generate_ctx_hash(ctx)
+
+        self.debug('calculate estimated duration force={}, syntax_checked={}'.format(force, self.syntax_checked))
+
+        if force or not self.syntax_checked:
+            calc_dur()
+        else:
+            try:
+                self._get_cached_duration(h)
+                self.debug('current context in the cached durations')
+            except KeyError:
+                calc_dur()
+
+        d = self.get_estimated_duration()
+        self._update_cached_duration(h, d)
+        return d
 
     def traceit(self, frame, event, arg):
         if event == "line":
@@ -230,8 +257,9 @@ class PyScript(Loggable):
         return self.traceit
 
     def execute(self, new_thread=False, bootstrap=True,
+                delay_start=0,
+                on_completion=None,
                 trace=False,
-                finished_callback=None,
                 argv=None):
         if bootstrap:
             self.bootstrap()
@@ -241,11 +269,14 @@ class PyScript(Loggable):
 
         def _ex_():
             self._execute(trace=trace, argv=argv)
-            if finished_callback:
-                finished_callback()
+            self.finish()
+            if on_completion:
+                on_completion()
 
-            self.finished()
             return self._completed
+
+        if delay_start:
+            self.sleep(delay_start)
 
         if new_thread:
             t = Thread(target=_ex_)
@@ -256,6 +287,8 @@ class PyScript(Loggable):
 
     def test(self, argv=None):
         if not self.syntax_checked:
+            self.setup_context()
+
             self.debug('testing...')
             self._estimated_duration = 0
             self.syntax_checked = True
@@ -285,12 +318,6 @@ class PyScript(Loggable):
             return e
         else:
             return code
-
-    def _tracer(self, frame, event, arg):
-        if event == 'line':
-            print frame.f_code.co_filename, frame.f_lineno
-
-        return self._tracer
 
     def execute_snippet(self, snippet=None, trace=False, argv=None):
         safe_dict = self.get_context()
@@ -369,14 +396,13 @@ class PyScript(Loggable):
             self._ctx = dict()
         if self._exp_obj is None:
             self._exp_obj = EXPObject()
-        # self._ctx.update(kw)
 
         self._exp_obj.update(kw)
-        # self._exp_obj.__dict__.update(**kw)
-        self._ctx['exp'] = self._exp_obj
+        self._ctx['ex'] = self._exp_obj
 
         #for backwards compatiblity add kw to main context
         self._ctx.update(**kw)
+        self._setup_docstr_context()
 
     def get_context(self):
         ctx = dict()
@@ -396,7 +422,7 @@ class PyScript(Loggable):
 
         if self._exp_obj:
             self._exp_obj.update(exp_ctx)
-            ctx['exp'] = self._exp_obj
+            ctx['ex'] = self._exp_obj
 
         if self._ctx:
             ctx.update(self._ctx)
@@ -428,11 +454,11 @@ class PyScript(Loggable):
     def cancel(self, **kw):
         self._cancel = True
         if self._gosub_script is not None:
-            if not self._gosub_script._cancel:
+            if not self._gosub_script.is_canceled():
                 self._gosub_script.cancel(**kw)
 
         if self.parent_script:
-            if not self.parent_script._cancel:
+            if not self.parent_script.is_canceled():
                 self.parent_script.cancel(**kw)
 
         if self._wait_control:
@@ -452,50 +478,16 @@ class PyScript(Loggable):
     #===============================================================================
     # interpolation
     #===============================================================================
-    def __getattr__(self, item):
-        v = self.interpolate(item)
-        if v is None:
-            raise AttributeError
-
-        return v
-
     def load_interpolation_context(self):
         ctx = self._get_interpolation_context()
         return ctx.keys()
 
-    def interpolate(self, attr):
-        ctx = self._get_interpolation_context()
-        return ctx.get(attr, None)
-
-    _interpolation_context = None
-
-    def _get_interpolation_context(self):
-        if self._interpolation_context is None:
-            self._interpolation_context = self._load_interpolation_file()
-        return self._interpolation_context
-
-    def _load_interpolation_file(self):
-        d = {}
-        if self.interpolation_path:
-            if os.path.isfile(self.interpolation_path):
-                try:
-                    with open(self.interpolation_path, 'r') as fp:
-                        d = yaml.load(fp)
-                except yaml.YAMLError, e:
-                    self.debug(e)
-            else:
-                self.debug('not a file. {}'.format(self.interpolation_path))
-        else:
-            self.debug('no interpolation path defined')
-
-        return d
-
-        #==============================================================================
-        # commands
-        #==============================================================================
-
+    #==============================================================================
+    # commands
+    #==============================================================================
     @command_register
     def gosub(self, name=None, root=None, klass=None, argv=None, **kw):
+
         if not name.endswith('.py'):
             name += '.py'
 
@@ -514,12 +506,11 @@ class PyScript(Loggable):
 
             root = self.root
 
-        p = os.path.join(root, name)
-        if not os.path.isfile(p):
-            raise GosubError(p)
+        root, name = self._find_root(root, name)
 
         if klass is None:
             klass = self.__class__
+            klassname = str(self.__class__)
         else:
             klassname = klass
             pkg = 'pychron.pyscripts.api'
@@ -532,6 +523,7 @@ class PyScript(Loggable):
         s = klass(root=root,
                   name=name,
                   manager=self.manager,
+                  application=self.application,
                   parent_script=weakref.ref(self)(),
                   syntax_checked=self.syntax_checked,
                   _ctx=self._ctx,
@@ -629,6 +621,8 @@ class PyScript(Loggable):
         if self.testing_syntax or self._cancel:
             return
 
+        duration = round(duration, 1)
+
         self.info('SLEEP {}'.format(duration))
         if globalv.experiment_debug:
             self.debug('using debug sleep {}'.format(duration))
@@ -651,31 +645,43 @@ class PyScript(Loggable):
         except AttributeError, e:
             self.debug('m_info {}'.format(e))
 
-    def canceled(self):
-        return self._cancel
-
-    def finished(self):
-        #         self._ctx = None
-        self._finished()
-
     #===============================================================================
     # handlers
     #===============================================================================
+    def _find_root(self, root, name):
+        p = os.path.join(root, name)
+        if not os.path.isfile(p):
+            while root != paths.scripts_dir:
+                root = os.path.dirname(root)
+                p = os.path.join(root, name)
+                if os.path.isfile(p):
+                    break
+
+                for d in os.listdir(root):
+                    d = os.path.join(root, d)
+                    if os.path.isdir(d):
+                        p = os.path.join(d, name)
+                        if os.path.isfile(p):
+                            break
+                if os.path.isfile(p):
+                    break
+            else:
+                raise GosubError(name)
+        return os.path.dirname(p), os.path.basename(p)
+
     def _cancel_flag_changed(self, v):
         if v:
             result = confirm(None,
                              'Are you sure you want to cancel {}'.format(self.logger_name),
                              title='Cancel Script')
-            #            result = confirmation(None, 'Are you sure you want to cancel {}'.format(self.logger_name))
             if result != 5104:
                 self.cancel()
             else:
                 self.cancel_flag = False
 
-                #===============================================================================
-                # private
-                #===============================================================================
-
+    #===============================================================================
+    # private
+    #===============================================================================
     def _execute(self, **kw):
 
         self._cancel = False
@@ -696,25 +702,30 @@ class PyScript(Loggable):
             self.info('{} completed successfully'.format(self.name))
             self._completed = True
 
+    def _get_application(self):
+        app = self.application
+        if app is None:
+            if self.manager:
+                app = self.manager.application
+        return app
+
     def _manager_action(self, func, name=None, protocol=None, *args, **kw):
         man = self.manager
-        if protocol is not None and man is not None:
-            app = man.application
-        else:
-            app = self.application
+        if protocol:
+            app = self._get_application()
+            if app is not None:
+                app_args = (protocol,)
+                if name is not None:
+                    app_args = (protocol, 'name=="{}"'.format(name))
 
-        if app is not None:
-            app_args = (protocol,)
-            if name is not None:
-                app_args = (protocol, 'name=="{}"'.format(name))
-
-            man = app.get_service(*app_args)
+                man = app.get_service(*app_args)
 
         if man is not None:
             if not isinstance(func, list):
                 func = [(func, args, kw)]
             rs = []
             for f, a, k in func:
+
                 r = None
                 if hasattr(man, f):
                     r = getattr(man, f)(*a, **k)
@@ -724,12 +735,6 @@ class PyScript(Loggable):
         elif name:
             self.warning('could not find manager name="{}" func="{}"'.format(name,
                                                                              ','.join([f for f, _, _ in func])))
-
-    def _cancel_hook(self, **kw):
-        pass
-
-    def _finished(self):
-        pass
 
     #==============================================================================
     # Sleep/ Wait
@@ -788,6 +793,8 @@ class PyScript(Loggable):
                 self.cancel()
             elif wd.is_continued():
                 self.info('continuing script after {:0.3f} s'.format(time.time() - st))
+                if self.manager:
+                    self.manager.continued()
 
         else:
             while time.time() - st < timeout:
@@ -797,9 +804,71 @@ class PyScript(Loggable):
 
         self.debug('block finished. duration {}'.format(time.time() - st))
 
-        #===============================================================================
-        # properties
+    def _setup_docstr_context(self):
+        pass
 
+    def _get_interpolation_context(self):
+        if self._interpolation_context is None:
+            self._interpolation_context = self._load_interpolation_file()
+        return self._interpolation_context
+
+    def _load_interpolation_file(self):
+        d = {}
+        if self.interpolation_path:
+            if os.path.isfile(self.interpolation_path):
+                try:
+                    with open(self.interpolation_path, 'r') as fp:
+                        d = yaml.load(fp)
+                except yaml.YAMLError, e:
+                    self.debug(e)
+            else:
+                self.debug('not a file. {}'.format(self.interpolation_path))
+        else:
+            self.debug('no interpolation path defined')
+
+        return d
+
+    def _tracer(self, frame, event, arg):
+        if event == 'line':
+            print frame.f_code.co_filename, frame.f_lineno
+
+        return self._tracer
+
+    def _generate_ctx_hash(self, ctx):
+        """
+            generate a sha1 hash from self.__class__, duration, cleanup and len(position)
+
+            need to add __class__ to the hash because the durations of a MeasurementScript
+            and a ExtractionScript will be different for the same context
+        """
+        sha1 = hashlib.sha1()
+        for v in (self.__class__,
+                  ctx['duration'],
+                  ctx['cleanup'],
+                  len(ctx['position'])):
+
+            sha1.update(str(v))
+        h = sha1.hexdigest()
+        return h
+
+    def _update_cached_duration(self, h, d):
+        global __CACHED_DURATIONS__
+        if len(__CACHED_DURATIONS__) > 100:
+            self.debug('clearing global cached durations dict')
+            __CACHED_DURATIONS__ = {}
+
+        __CACHED_DURATIONS__[h] = d
+
+    def _get_cached_duration(self, h):
+        return __CACHED_DURATIONS__[h]
+
+    def _cancel_hook(self, **kw):
+        pass
+
+    def _finish(self):
+        pass
+    #===============================================================================
+    # properties
     #===============================================================================
     @property
     def filename(self):
@@ -828,24 +897,12 @@ class PyScript(Loggable):
     def __str__(self):
         return self.name
 
+    def __getattr__(self, item):
+        ctx = self._get_interpolation_context()
+        v = ctx.get(item, None)
+        if v is None:
+            raise AttributeError
 
-if __name__ == '__main__':
-    class DummyManager(Loggable):
-        def open_valve(self, *args, **kw):
-            self.info('open valve')
+        return v
 
-        def close_valve(self, *args, **kw):
-            self.info('close valve')
-
-    from pychron.core.helpers.logger_setup import logging_setup
-
-    logging_setup('pscript')
-    #    execute_script(t)
-    from pychron.paths import paths
-
-    p = PyScript(root=os.path.join(paths.scripts_dir, 'pyscripts'),
-                 path='test.py',
-                 _manager=DummyManager())
-
-    p.execute()
 #============= EOF =============================================

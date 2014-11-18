@@ -24,6 +24,7 @@ from traits.api import Enum, Any, Bool
 class CursorToolOverlay(TextBoxOverlay):
     border_visible = True
     bgcolor = 'lightgreen'
+    border_color = 'darkgreen'
     tool = Any
     visibility = Enum("auto", True, False)
     visible = False
@@ -52,9 +53,8 @@ class CursorToolOverlay(TextBoxOverlay):
         else:
             self.alternate_position = None
 
-        ns=['DAC      ={:0.5f}'.format(new[0]),
-            'Intensity={:0.5f}'.format(new[1])
-            ]
+        ns = ['DAC      ={:0.5f}'.format(new[0]),
+              'Intensity={:0.5f}'.format(new[1])]
 
         self.text = '\n'.join(ns)
         self.component.request_redraw()
@@ -66,5 +66,6 @@ class CursorToolOverlay(TextBoxOverlay):
         self.visibility = self.tool.visible
         if self.visibility != "auto":
             self.visible = self.visibility
+
 #============= EOF =============================================
 

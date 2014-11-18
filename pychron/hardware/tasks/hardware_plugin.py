@@ -75,7 +75,7 @@ class HardwarePlugin(BaseTaskPlugin):
     def _my_task_extensions_default(self):
         return [TaskExtension(actions=[SchemaAddition(id='Flag Manager',
                                                       factory=OpenFlagManagerAction,
-                                                      path='MenuBar/Tools'), ])]
+                                                      path='MenuBar/tools.menu'), ])]
 
     def _tasks_default(self):
         return [TaskFactory(id='tasks.hardware',
@@ -101,8 +101,7 @@ class HardwarePlugin(BaseTaskPlugin):
 
         so_fm = self.service_offer_factory(
             protocol=FlagManager,
-            factory=self._flag_manager_factory
-        )
+            factory=self._flag_manager_factory)
         #        return [so, so1, so2]
         return [so_hm, so_rhm, so_fm]
 

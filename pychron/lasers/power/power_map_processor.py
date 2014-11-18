@@ -65,7 +65,6 @@ class PowerMapProcessor(HasTraits):
         z, metadata = self._extract_power_map_data(reader)
         self._data = z
         self._metadata = metadata
-
         center_plot = cg.new_plot(
             add=False,
             padding=0,
@@ -209,7 +208,7 @@ class PowerMapProcessor(HasTraits):
         return d
 
     def _extract_h5(self, dm):
-    #         cells = []
+        #         cells = []
         tab = dm.get_table('power_map', '/')
         metadata = dict()
         try:

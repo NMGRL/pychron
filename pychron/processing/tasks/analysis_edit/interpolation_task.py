@@ -16,32 +16,73 @@
 
 #============= enthought library imports =======================
 from datetime import timedelta
+
 from pyface.tasks.action.schema import SToolBar
-from traits.api import on_trait_change
-from traits.api import Any
+from traits.api import on_trait_change, Any, HasTraits, Str, List, Property
+from traitsui.api import View, VGroup, HGroup, Item, UItem, TabularEditor
+
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.processing.analyses.analysis import Analysis
 from pychron.processing.easy.easy_manager import EasyManager
-from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction, BinAnalysesAction
+from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction, BinAnalysesAction, FindAssociatedAction
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
 from pychron.processing.tasks.analysis_edit.panes import ReferencesPane
 from pychron.processing.tasks.analysis_edit.adapters import ReferencesAdapter
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.processing.tasks.browser.browser_task import DEFAULT_AT
+from pychron.processing.tasks.browser.panes import AnalysisAdapter
+from pychron.processing.tasks.recall.recall_editor import RecallEditor
+
+
+class InterpolationAnalysisGroupEntry(HasTraits):
+    name = Str
+    items = List
+    ritems = List
+    analysis_type = Str
+    ranalysis_type = Str
+    analyses = Property
+
+    def _get_analyses(self):
+        return (self.items, self.analysis_type), (self.ritems, self.ranalysis_type)
+
+    def set_items(self, ans):
+        (items, at), (ritems, rat) = ans
+        self.ranalysis_type = rat
+        self.analysis_type = at
+
+        self.items = items
+        if ritems:
+            self.ritems = ritems
+
+    def traits_view(self):
+        v = View(
+            VGroup(
+                HGroup(Item('name', label='Analysis Group Name')),
+                VGroup(
+                    UItem('items', editor=TabularEditor(adapter=AnalysisAdapter(),
+                                                        operations=['delete'])),
+                    UItem('ritems', editor=TabularEditor(adapter=AnalysisAdapter(),
+                                                         operations=['delete'])))),
+            resizable=True,
+            buttons=['OK', 'Cancel'],
+            kind='livemodal',
+            title='Analysis Group Entry')
+        return v
 
 
 class no_auto_ctx(object):
     def __init__(self, obj):
-        self.obj=obj
+        self.obj = obj
 
     def __enter__(self):
-        self.obj.auto_find=False
-        self.obj.update_on_analyses=False
+        self.obj.auto_find = False
+        # self.obj.update_on_analyses = False
 
     def __exit__(self, *args):
-        self.obj.auto_find=True
-        self.obj.update_on_analyses=True
+        self.obj.auto_find = True
+        # self.obj.update_on_analyses = True
 
 
 class InterpolationTask(AnalysisEditTask):
@@ -50,13 +91,41 @@ class InterpolationTask(AnalysisEditTask):
     references_pane_klass = ReferencesPane
     default_reference_analysis_type = 'air'
 
-    tool_bars = [SToolBar(DatabaseSaveAction(),
-                          BinAnalysesAction()
-                          )]
+    tool_bars = [SToolBar(FindAssociatedAction(), ),
+                 SToolBar(DatabaseSaveAction(),
+                          BinAnalysesAction())]
+    analysis_group_edit_klass = InterpolationAnalysisGroupEntry
+
+    def _dclicked_analysis_group_hook(self, unks, b):
+        self.active_editor.set_references([bi.analysis for bi in b
+                                           if bi.analysis_type.name == self.default_reference_analysis_type])
+
+    def _get_analyses_to_group(self):
+        sitems = super(InterpolationTask, self)._get_analyses_to_group()
+        if self.references_pane:
+            items = self.references_pane.selected
+
+        if not items:
+            if self.references_pane:
+                items = self.references_pane.items
+
+        if not items:
+            items = self.analysis_table.selected
+            if sitems:
+                if items == sitems[0][0]:
+                    items = []
+
+        if sitems:
+            return sitems[0], (items, self.default_reference_analysis_type)
+        elif items:
+            return ((items, self.default_reference_analysis_type),)
+
+    def _make_analysis_group_hook(self, *args, **kw):
+        pass
 
     def _set_tag_hook(self):
         if self.references_pane:
-            self.references_pane.refresh_needed=True
+            self.references_pane.refresh_needed = True
 
     def _get_analyses_to_tag(self):
         ritems = None
@@ -67,14 +136,18 @@ class InterpolationTask(AnalysisEditTask):
             if not ritems:
                 ritems = self.references_pane.selected
 
-        items=super(InterpolationTask, self)._get_analyses_to_tag()
+        items = super(InterpolationTask, self)._get_analyses_to_tag()
         if ritems:
             if items:
                 items.extend(ritems)
             else:
-                items=ritems
+                items = ritems
 
         return items
+
+    def find_associated_analyses(self):
+        if self.has_active_editor():
+            self.active_editor.find_references()
 
     def bin_analyses(self):
         self.debug('binning analyses')
@@ -109,22 +182,27 @@ class InterpolationTask(AnalysisEditTask):
 
         is_append = name == 'append_button'
         if self.active_editor:
-            refs = None
-            if is_append:
-                refs = self.active_editor.references
-
-            s = self._get_selected_analyses(refs)
-            if s:
+            if not isinstance(self.active_editor, RecallEditor):
+                refs = None
                 if is_append:
                     refs = self.active_editor.references
-                    refs.extend(s)
-                else:
-                    self.active_editor.references = s
+
+                s = self._get_selected_analyses(refs)
+                if s:
+                    if is_append:
+                        refs = self.active_editor.references
+                        refs.extend(s)
+                    else:
+                        self.active_editor.references = s
 
     @on_trait_change('active_editor:references')
     def _update_references(self):
         if self.references_pane:
-            self.references_pane.items = self.active_editor.references
+            items = self.active_editor.references
+            if self.references_pane.auto_sort:
+                items = self.references_pane.sort_items(items)
+
+            self.references_pane.items = items
 
     #def _handle_key_pressed(self, c):
     #    s = self.data_selector.selector.selected
@@ -167,7 +245,7 @@ class InterpolationTask(AnalysisEditTask):
                                              mass_spectrometer=ms,
                                              extract_device=exd)
             ans = [self._record_view_factory(ai) for ai in ans]
-            self.danalysis_table.set_analyses(ans)
+            # self.danalysis_table.set_analyses(ans)
             return ans
 
     def _do_easy_func(self):

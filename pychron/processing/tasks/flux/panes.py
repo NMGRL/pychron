@@ -15,23 +15,39 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traitsui.api import View, Item, EnumEditor, VGroup
+from traitsui.api import View, Item, EnumEditor, VGroup, TabularEditor, UItem
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from traitsui.tabular_adapter import TabularAdapter
+
+
 class IrradiationPane(TraitsDockPane):
     name = 'Irradiation'
     id = 'pychron.processing.irradiation'
-    def traits_view(self):
-        v = View(
-               VGroup(
-                      Item('irradiation',
-                            editor=EnumEditor(name='irradiations')
-                            ),
-                      Item('level', editor=EnumEditor(name='levels')
-                           ),
 
-                  )
-               )
+    def traits_view(self):
+        v = View(VGroup(
+            Item('irradiation',
+                 editor=EnumEditor(name='irradiations')),
+            Item('level', editor=EnumEditor(name='levels'))))
+
         return v
+
+
+class AnalysisAdapter(TabularAdapter):
+    columns = [('RunID', 'record_id'),
+               ('Tag', 'tag')]
+
+
+class AnalysesPane(TraitsDockPane):
+    id = 'pychron.processing.analyses'
+    name = 'Anaylses'
+
+    def traits_view(self):
+        v = View(UItem('analyses',
+                       editor=TabularEditor(adapter=AnalysisAdapter())
+        ))
+        return v
+
 #============= EOF =============================================

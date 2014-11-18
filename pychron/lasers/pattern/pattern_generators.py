@@ -1,45 +1,132 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
+# ============= enthought library imports =======================
 
-
-#============= enthought library imports =======================
-
-#============= standard library imports ========================
-from numpy import linspace, cos, sin, hstack
+# ============= standard library imports ========================
 import math
 import random
-#============= local library imports  ==========================
-def circular_contour_pattern(cx, cy, radius, nsteps, pc):
 
+from numpy import linspace, cos, sin, hstack
+
+#============= local library imports  ==========================
+from pychron.core.geometry.affine import AffineTransform
+
+
+def raster_rubberband_pattern(cx, cy, offset, l, dx, rotation, single_pass):
+
+    a = AffineTransform()
+    a.translate(cx, cy)
+    a.rotate(rotation)
+    a.translate(-cx, -cy)
+    # print offset, l
+    n = int((l + 2 * offset) / dx)
+    if n*dx<=l+2*offset:
+        n = n+1 if n%2 else n
+        dx = (l+2*offset)/float(n+1)
+        n = int((l + 2 * offset) / dx)
+
+    for i in xrange(0, n+1):
+        y = cy - offset if i % 2 else cy + offset
+        yield a.transform(cx - offset + dx * i, y)
+
+    if not single_pass:
+        for i in xrange(0, n+1):
+            y = cy - offset if i % 2 else cy + offset
+            yield a.transform(cx +l+offset - dx * i, y)
+        yield a.transform(cx-offset, cy+offset)
+
+def rubberband_pattern(cx, cy, offset, l, rotation):
+    p1 = cx - offset, cy + offset
+    p2 = cx + l + offset, cy + offset
+    p3 = cx + l + offset, cy - offset
+    p4 = cx - offset, cy - offset
+
+    a = AffineTransform()
+
+    a.translate(cx, cy)
+    a.rotate(rotation)
+    a.translate(-cx, -cy)
+
+    ps = (p1, p2, p3, p4, p1)
+    for p in ps:
+        yield a.transform(*p)
+
+
+def trough_pattern(cx, cy, length, width, rotation, use_x):
+    """
+    1 -------------- 2
+    |                |
+    4 -------------- 3
+    """
+    p1 = (cx, cy)
+    p2 = (cx + length, cy)
+    p3 = (cx + length, cy - width)
+    p4 = (cx, cy - width)
+
+    a = AffineTransform()
+    a.translate(cx, cy)
+    a.rotate(rotation)
+    a.translate(-cx, -cy)
+
+    if use_x:
+        ps = (p1, p2, p4, p3, p1)
+    else:
+        ps = (p1, p2, p3, p4, p1)
+
+    for p in ps:
+        yield a.transform(*p)
+
+
+def line_pattern(cx, cy, length, rotation, n):
+    p1 = (cx, cy)
+    p2 = (cx + length, cy)
+
+    for i in xrange(n):
+        a = AffineTransform()
+        a.translate(cx, cy)
+        a.rotate(rotation)
+        a.translate(-cx, -cy)
+        if i % 2 == 0:
+            ps = (p1, p2)
+
+        else:
+            ps = (p2, p1)
+
+        for x, y in ps:
+            yield a.transform(x, y)
+
+
+def circular_contour_pattern(cx, cy, radius, nsteps, pc):
     for ni in range(nsteps):
         ps = [pi for pi in arc_pattern(cx, cy, 360, radius * (1 + ni * pc))][1:-1]
         for pi in ps:
             yield pi
 
-def polygon_pattern(cx, cy, radius, nsides, rotation=0):
 
+def polygon_pattern(cx, cy, radius, nsides, rotation=0):
     for i in range(nsides + 1):
-#        if i == 0: #or i == nsides + 2:
-#            x, y = cx, cy
-#        else:
+        #        if i == 0: #or i == nsides + 2:
+        #            x, y = cx, cy
+        #        else:
         a = 360 * i / float(nsides) + rotation
         x = cx + radius * math.cos(math.radians(a))
         y = cy + radius * math.sin(math.radians(a))
         yield x, y
+
 
 def arc_pattern(cx, cy, degrees, radius):
     '''
@@ -55,11 +142,11 @@ def arc_pattern(cx, cy, degrees, radius):
     ys = hstack(([cy], y))
     ys = hstack((ys, [cy]))
 
-
     for pt in zip(xs, ys):
         yield pt
 
-def random_pattern(cx, cy, walk_x, walk_y, ns, shape='circle', ** kw):
+
+def random_pattern(cx, cy, walk_x, walk_y, ns, shape='circle', **kw):
     '''
         this method generates a more even distribution around the center than 
         method 1.
@@ -90,6 +177,7 @@ def random_pattern(cx, cy, walk_x, walk_y, ns, shape='circle', ** kw):
 
         yield x, y
 
+
 def diamond_pattern(cx, cy, width, height, **kw):
     '''
          2
@@ -109,9 +197,10 @@ def diamond_pattern(cx, cy, width, height, **kw):
            (cx, cy - half_height),
            (cx + half_width, cy),
            (cx, cy)
-           ]
+    ]
     for pt in pts:
         yield pt
+
 
 def square_spiral_pattern(cx, cy, R, ns, p, direction='out', ox=None, oy=None, **kw):
     '''
@@ -124,13 +213,13 @@ def square_spiral_pattern(cx, cy, R, ns, p, direction='out', ox=None, oy=None, *
     rfunc = lambda i: R * (1 + (i) * p)
     ns = 4 * ns + 1
     steps = xrange(ns)
-    funclist = [lambda x, y, r:(x + r, y),
-                lambda x, y, r:(x, y + r),
-                lambda x, y, r:(x - r, y),
-                lambda x, y, r:(x, y - r)]
+    funclist = [lambda x, y, r: (x + r, y),
+                lambda x, y, r: (x, y + r),
+                lambda x, y, r: (x - r, y),
+                lambda x, y, r: (x, y - r)]
 
     if direction == 'in':
-        rfunc = lambda i:R * (1 + (ns - i) * p)
+        rfunc = lambda i: R * (1 + (ns - i) * p)
         funclist = funclist[1:] + funclist[:1]
 
     x = cx
@@ -138,7 +227,6 @@ def square_spiral_pattern(cx, cy, R, ns, p, direction='out', ox=None, oy=None, *
     if ox is not None and oy is not None:
         x = ox
         y = oy
-
 
     for i in steps:
         r = rfunc(i)
@@ -151,6 +239,7 @@ def square_spiral_pattern(cx, cy, R, ns, p, direction='out', ox=None, oy=None, *
 
         yield x, y
 
+
 def line_spiral_pattern(cx, cy, R, ns, p, ss, direction='out', **kw):
     '''
         cx,cy= center point to spiral around
@@ -160,10 +249,10 @@ def line_spiral_pattern(cx, cy, R, ns, p, ss, direction='out', **kw):
         ss= step scalar ie min number of steps per rotation
     '''
     stepfunc = lambda i: 2 * i + ss
-    rfunc = lambda i, j :R * (1 + (i + j / 360.) * p)
+    rfunc = lambda i, j: R * (1 + (i + j / 360.) * p)
     if direction == 'in':
         stepfunc = lambda i: 2 * (ns - i) + ss
-        rfunc = lambda i, j :R * (1 + ((ns - i - 1) + (360 - j) / 360.) * p)
+        rfunc = lambda i, j: R * (1 + ((ns - i - 1) + (360 - j) / 360.) * p)
 
     for ni in xrange(ns):
         nstep = stepfunc(ni)
@@ -177,6 +266,7 @@ def line_spiral_pattern(cx, cy, R, ns, p, ss, direction='out', **kw):
             y = cy + r * math.sin(theta)
 
             yield x, y
+
 #============= EOF ====================================
 
 

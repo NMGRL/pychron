@@ -15,43 +15,26 @@
 #===============================================================================
 
 
-
 #=============enthought library imports=======================
-from traits.api import List, HasTraits, Str, Float
-from traitsui.api import View, Item, ListEditor, InstanceEditor, HGroup
-
-from pychron.managers.manager import Manager
-import time
+from traitsui.api import View, Item, ListEditor, InstanceEditor
 #============= standard library imports ========================
+import time
 #============= local library imports  ==========================
+from pychron.managers.manager import Manager
 
-# class Gauge(HasTraits):
-#    name = Str
-#    pressure = Float
-#    def traits_view(self):
-#        v = View(HGroup(Item('name', show_label=False, style='readonly'),
-#                         Item('pressure', format_str='%0.2e', show_label=False, style='readonly')))
-#        return v
 
 class GaugeManager(Manager):
-#    gauges = List
-#    def finish_loading(self, *args, **kw):
-#        for di in self.devices:
-#            if hasattr(di, 'gauges'):
-#                self.gauges.extend(di.gauges)
-
     def finish_loading(self, *args, **kw):
         width = int(250 / float(len(self.devices)))
         for k in self.devices:
             if hasattr(k, 'gauges'):
                 for gi in k.gauges:
                     gi.width = width
-#        self.load_gauges()
-#        print 'load gm', args, kw
-#
-#        for k, v in self.traits().items():
-#            if 'gauge_controller' in k:
-#                print v
+                    # if gi.name in ('CG1', 'CG2'):
+                    #     gi.pressure = random.randint(1, 50) * 1e-2
+                    # else:
+                    #     gi.pressure = random.randint(1, 50) * 1e-8
+
     def get_pressure(self, controller, name):
         dev = next((di for di in self.devices if di.name == controller), None)
         if dev is not None:
@@ -65,6 +48,7 @@ class GaugeManager(Manager):
                 k.stop_scan()
 
     def start_scans(self):
+
         self.info('starting gauge scans')
         # stop scans first
         self.stop_scans()
@@ -74,10 +58,7 @@ class GaugeManager(Manager):
                 k.start_scan()
                 # stagger starts to reduce collisions
                 time.sleep(0.25)
-#            if 'gauge_controller' in k:
-#                print v
-#                v.start_scan()
-# #
+
     def traits_view(self):
 
         v = View(Item('devices', style='custom',
@@ -86,10 +67,10 @@ class GaugeManager(Manager):
                                         columns=len(self.devices),
                                         style='custom',
                                         editor=InstanceEditor(view='gauge_view'))),
-                 height=-100
-                 )
+                 height=-100)
         return v
-#    controllers = List(GaugeControllers)
+
+
 if __name__ == '__main__':
     g = GaugeManager()
     g.configure_traits()

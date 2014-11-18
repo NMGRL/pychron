@@ -24,11 +24,15 @@ from threading import Thread
 from Queue import Queue, Empty
 import time
 
-from pychron.core.ui.gui import invoke_in_main_thread
-
 
 class ConsumerMixin(object):
     _consumer_queue = None
+    _should_consume = False
+    _consume_func = None
+    _main = False
+    _buftime = 0
+    _consumer = None
+    _timeout = 0
 
     def setup_consumer(self, func=None, buftime=None, auto_start=True, main=False, timeout=None):
         self._consume_func = func
@@ -38,6 +42,7 @@ class ConsumerMixin(object):
         self._consumer = Thread(target=self._consume,
                                 args=(timeout, ),
                                 name='consumer')
+        self._timeout = timeout
         self._should_consume = True
         if auto_start:
             self._consumer.setDaemon(1)
@@ -54,13 +59,22 @@ class ConsumerMixin(object):
             return self._consumer_queue.empty()
 
     def start(self):
-        if self._consumer:
+        self._should_consume=True
+        if not self._consumer:
+            self._consumer = Thread(target=self._consume,
+                                    args=(self._timeout, ),
+                                    name='consumer')
+        if not self._consumer.isAlive():
             self._consumer.setDaemon(1)
             self._consumer.start()
 
     def stop(self):
         if self._consumer:
             self._should_consume = False
+        self._consumer = None
+
+    start_consuming = start
+    stop_consuming = stop
 
     def add_consumable(self, v, timeout=None):
         if not self._consumer_queue:
@@ -72,6 +86,7 @@ class ConsumerMixin(object):
         bt = self._buftime
         if bt:
             bt = bt / 1000.
+
             def get_func():
                 q = self._consumer_queue
                 v = None
@@ -104,19 +119,25 @@ class ConsumerMixin(object):
                 if v:
                     if cfunc:
                         if self._main:
+                            from pychron.core.ui.gui import invoke_in_main_thread
+
                             invoke_in_main_thread(cfunc, v)
                         else:
                             cfunc(v)
                     elif isinstance(v, tuple):
                         func, a = v
                         if self._main:
+                            from pychron.core.ui.gui import invoke_in_main_thread
+
                             invoke_in_main_thread(func, a)
                         else:
                             func(a)
             except Exception, e:
                 import traceback
+
                 traceback.print_exc()
                 #pass
+
 
 #             if not self._should_consume:
 #                 break
@@ -126,9 +147,11 @@ class consumable(object):
     _func = None
     _consumer = None
     _main = False
+
     def __init__(self, func=None, main=False):
         self._func = func
         self._main = main
+
     def __enter__(self):
         self._consumer = c = ConsumerMixin()
         c.setup_consumer(func=self._func, main=self._main)

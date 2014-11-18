@@ -734,16 +734,16 @@ ABLE TO USE THE HARDWARE JOYSTICK
                 time.sleep(0.1)
 
     def _get_axis_by_id(self, aid):
-        '''
-        '''
+        """
+        """
         for k in self.axes:
             a = self.axes[k]
             if a.id == aid:
                 return a
 
     def _linear_move_(self, kwargs, block=False, grouped_move=True, sign_correct=True, **kw):
-        '''
-        '''
+        """
+        """
 
         self.configure_group(grouped_move, **kw)
         self.debug('group configured')
@@ -766,10 +766,8 @@ ABLE TO USE THE HARDWARE JOYSTICK
             self.tell(st, verbose=True)
         else:
 
-            self.multiple_axis_move([
-                                     (self.axes['y'].id, kwargs['y']),
-                                     (self.axes['x'].id, kwargs['x'])
-                                     ])
+            self.multiple_axis_move([(self.axes['y'].id, kwargs['y']),
+                                     (self.axes['x'].id, kwargs['x'])])
 
         if block:
             self.info('moving to {x:0.5f},{y:0.5f}'.format(**kwargs))
@@ -778,8 +776,8 @@ ABLE TO USE THE HARDWARE JOYSTICK
             self.update_axes()
 
     def _axis_move(self, com, block=False, verbose=True, **kw):
-        '''
-        '''
+        """
+        """
 
         if self.group_commands:
             self.tell(com, verbose=verbose)

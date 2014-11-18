@@ -13,29 +13,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #===============================================================================
-from pychron.core.ui import set_toolkit
-set_toolkit('qt4')
 #============= enthought library imports =======================
 from traits.api import List, Any, Event, Callable
 #============= standard library imports ========================
-from numpy import linspace, random
-
+from numpy import linspace
 #============= local library imports  ==========================
 from pychron.graph.graph import Graph
 from pychron.graph.tools.rect_selection_tool import RectSelectionTool, \
     RectSelectionOverlay
-from pychron.graph.time_series_graph import TimeSeriesGraph
-from pychron.graph.stacked_graph import StackedGraph
 from pychron.core.helpers.fits import convert_fit
-from pychron.core.regression.ols_regressor import PolynomialRegressor
-from pychron.core.regression.mean_regressor import MeanRegressor, WeightedMeanRegressor
+
 from pychron.graph.context_menu_mixin import RegressionContextMenuMixin
 from pychron.graph.tools.regression_inspector import RegressionInspectorTool, \
     RegressionInspectorOverlay
 from pychron.graph.tools.point_inspector import PointInspector, \
     PointInspectorOverlay
-from pychron.core.regression.wls_regressor import WeightedPolynomialRegressor
-from pychron.core.regression.least_squares_regressor import LeastSquaresRegressor
+
 from pychron.core.regression.base_regressor import BaseRegressor
 from pychron.graph.error_envelope_overlay import ErrorEnvelopeOverlay
 
@@ -66,6 +59,10 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
     use_inspector_tool = True
     use_point_inspector = True
     convert_index_func = Callable
+
+    # def __init__(self, *args, **kw):
+    #     super(RegressionGraph, self).__init__(*args, **kw)
+    #     self._regression_lock = Lock()
 
     #===============================================================================
     # context menu handlers
@@ -106,21 +103,23 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
 
     def set_fit(self, fi, plotid=0, series=0):
         plot = self.plots[plotid]
-        for idx in range(series, -1, -1):
-            key = 'data{}'.format(idx)
-            if plot.plots.has_key(key):
-                scatter = plot.plots[key][0]
-                if scatter.fit != fi:
-                    lkey = 'line{}'.format(idx)
-                    if plot.plots.has_key(lkey):
-                        line = plot.plots[lkey][0]
-                        line.regressor = None
+        # for idx in range(series, -1, -1):
+        key = 'data{}'.format(series)
+        # print 'set fit', fi, plotid, key
+        if plot.plots.has_key(key):
+            scatter = plot.plots[key][0]
+            # print key
+            if scatter.fit != fi:
+                lkey = 'line{}'.format(series)
+                if plot.plots.has_key(lkey):
+                    line = plot.plots[lkey][0]
+                    line.regressor = None
 
-                    scatter.fit = fi
-                    scatter.index.metadata['selections'] = []
-                    scatter.index.metadata['filtered'] = None
-                    self.redraw()
-                break
+                scatter.fit = fi
+                scatter.index.metadata['selections'] = []
+                scatter.index.metadata['filtered'] = None
+                self.redraw()
+                # break
 
     def get_fit(self, plotid=0, series=0):
         try:
@@ -155,40 +154,44 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         """
             fired when the index metadata changes e.i user selection
         """
-        sel = obj.metadata.get('selections', None)
-        if sel:
-            obj.was_selected = True
-            self._update_graph()
-        elif hasattr(obj, 'was_selected'):
-            if obj.was_selected:
-                self._update_graph()
-            obj.was_selected = False
+        self._update_graph()
+        # sel = obj.metadata.get('selections', None)
+        # if sel:
+        #     obj.was_selected = True
+        #     self._update_graph()
+        # elif hasattr(obj, 'was_selected'):
+        #     if obj.was_selected:
+        #         self._update_graph()
+        #     obj.was_selected = False
 
     def _update_graph(self, *args, **kw):
-        if self.suppress_regression:
-            return
+        # with self._regression_lock:
+        # if self.suppress_regression:
+        #     return
 
         #self.regressors = []
         regs = []
-        for plot in self.plots:
+        for i, plot in enumerate(self.plots):
             ps = plot.plots
             ks = ps.keys()
-
             try:
                 scatters, idxes = zip(*[(ps[k][0], k[4:]) for k in ks if k.startswith('data')])
-                # idx = idxes[0]
-                # fls = [ps[kk][0] for kk in ks if kk == 'fit{}'.format(idx)]
 
-                fls=[ps['fit{}'.format(idx)][0] for idx in idxes]
+                fls = [ps['fit{}'.format(idx)][0] for idx in idxes]
                 for si, fl in zip(scatters, fls):
-                    r = self._plot_regression(plot, si, fl)
-                    regs.append((plot, r))
-            except ValueError,e:
+                    if not si.no_regression:
+                        r = self._plot_regression(plot, si, fl)
+
+                        regs.append((plot, r))
+
+            except ValueError, e:
+                #add a float instead of regressor to regs
                 try:
-                    si=ps[ks[0]][0]
-                    regs.append((plot,si.value.get_data()[-1]))
+                    si = ps[ks[0]][0]
+                    regs.append((plot, si.value.get_data()[-1]))
                 except IndexError:
                     break
+
         self.regressors = regs
         self.regression_results = regs
 
@@ -212,31 +215,30 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
             r = line.regressor
 
         if fit in [1, 2, 3]:
-            r=self._poly_regress(scatter, r, fit)
+            r = self._poly_regress(scatter, r, fit)
 
         elif isinstance(fit, tuple):
-            r=self._least_square_regress(scatter, r, fit)
+            r = self._least_square_regress(scatter, r, fit)
 
         elif isinstance(fit, BaseRegressor):
-            r=self._custom_regress(scatter, r, fit)
+            r = self._custom_regress(scatter, r, fit)
         else:
-            r=self._mean_regress(scatter, r, fit)
+            r = self._mean_regress(scatter, r, fit)
 
         if r:
-            r.error_calc_type=err
+            r.error_calc_type = err
 
             if line:
                 plow = plot.index_range.low
                 phigh = plot.index_range.high
                 if hasattr(line, 'regression_bounds') and line.regression_bounds:
-                    low, high, first, last=line.regression_bounds
+                    low, high, first, last = line.regression_bounds
                     if first:
-                        low=min(low, plow)
+                        low = min(low, plow)
                     elif last:
-                        high=max(high, phigh)
+                        high = max(high, phigh)
                 else:
-                    low,high=plow, phigh
-
+                    low, high = plow, phigh
 
                 fx = linspace(low, high, 100)
                 fy = r.predict(fx)
@@ -246,28 +248,43 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                 line.value.set_data(fy)
 
                 if hasattr(line, 'error_envelope'):
-                    ci = r.calculate_ci(fx, fy)
+                    ci = r.calculate_error_envelope(fx, fy)
+                    # ci = r.calculate_ci(fx, fy)
                     #                 print ci
                     if ci is not None:
                         ly, uy = ci
                     else:
                         ly, uy = fy, fy
 
+                    # not_ok=False
+                    # if isinstance(r, LeastSquaresRegressor):
+                    #     try:
+                    #         (uy-ly).sum()
+                    #     except OverflowError:
+                    #         not_ok = True
+                    #
+                    # if not_ok:
+                    #     line.error_envelope.visible=False
+                    # else:
                     line.error_envelope.lower = ly
                     line.error_envelope.upper = uy
-                    line.error_envelope.invalidate()
+                    # line.error_envelope.invalidate()
 
         return r
 
     def _set_regressor(self, scatter, r):
+
         selection = scatter.index.metadata['selections']
+
         # selection = list(set(r.outlier_excluded + r.truncate_excluded).difference(selection))
-        selection=set(selection).difference(set(r.outlier_excluded+r.truncate_excluded))
+        # selection=set(selection).difference(set(r.outlier_excluded+r.truncate_excluded))
+        # selection = set(selection) - set(r.outlier_excluded+r.truncate_excluded)
+        selection = set(selection) ^ set(r.outlier_excluded + r.truncate_excluded)
         x = scatter.index.get_data()
         y = scatter.value.get_data()
 
-        sel=list(selection)
-
+        sel = list(selection)
+        # print sel
         if hasattr(scatter, 'yerror'):
             yserr = scatter.yerror.get_data()
             r.trait_set(yserr=yserr)
@@ -275,15 +292,20 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         r.trait_set(xs=x, ys=y,
                     user_excluded=sel,
                     filter_outliers_dict=scatter.filter_outliers_dict)
-        r.dirty=True
+        r.dirty = True
 
     def _set_excluded(self, scatter, r):
         scatter.no_regression = True
-        scatter.index.metadata['selections'] = r.get_excluded()
+        d = scatter.index.metadata.copy()
+        d['selections'] = x = r.get_excluded()
+        scatter.index.trait_setq(metadata=d)
+        # scatter.invalidate_and_redraw()
+        # scatter.index.metadata['selections'] = r.get_excluded()
         scatter.no_regression = False
 
     def _poly_regress(self, scatter, r, fit):
-
+        from pychron.core.regression.ols_regressor import PolynomialRegressor
+        from pychron.core.regression.wls_regressor import WeightedPolynomialRegressor
         if hasattr(scatter, 'yerror'):
             if r is None or not isinstance(r, WeightedPolynomialRegressor):
                 r = WeightedPolynomialRegressor()
@@ -303,19 +325,21 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         return r
 
     def _least_square_regress(self, scatter, r, fit):
-        fitfunc, errfunc = fit
+        from pychron.core.regression.least_squares_regressor import LeastSquaresRegressor
+        func, initial_guess = fit
         if r is None or not isinstance(r, LeastSquaresRegressor):
             r = LeastSquaresRegressor()
 
         self._set_regressor(scatter, r)
-        r.trait_set(fitfunc=fitfunc,
-                    errfunc=errfunc,
+        r.trait_set(fitfunc=func,
+                    initial_guess=initial_guess,
                     trait_change_notify=False)
         r.calculate()
         self._set_excluded(scatter, r)
         return r
 
     def _mean_regress(self, scatter, r, fit):
+        from pychron.core.regression.mean_regressor import MeanRegressor, WeightedMeanRegressor
         if hasattr(scatter, 'yerror'):
             if r is None or not isinstance(r, WeightedMeanRegressor):
                 r = WeightedMeanRegressor()
@@ -324,14 +348,14 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                 r = MeanRegressor()
 
         self._set_regressor(scatter, r)
-        r.trait_set(fit=fit, trait_change_notify=False)
+        r.trait_setq(fit=fit)
         r.calculate()
 
         self._set_excluded(scatter, r)
         return r
 
     def _custom_regress(self, scatter, r, fit):
-        kw={}
+        kw = {}
         if hasattr(scatter, 'yerror'):
             es = scatter.yerror.get_data()
             kw['yserr'] = es
@@ -343,9 +367,10 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         if r is None or not isinstance(r, fit):
             r = fit()
 
-        self._set_regressor(scatter,r)
-        r.trait_set(trait_change_notify=False,
-                    **kw)
+        self._set_regressor(scatter, r)
+        # r.trait_set(trait_change_notify=False,
+        #             **kw)
+        r.trait_setq(**kw)
         r.calculate()
 
         self._set_excluded(scatter, r)
@@ -366,13 +391,15 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         self.set_series_label('data{}'.format(si), plotid=plotid)
         if filter_outliers_dict is None:
             filter_outliers_dict = dict(filter_outliers=False)
+        else:
+            filter_outliers_dict = filter_outliers_dict.copy()
 
         scatter.fit = fit
         scatter.filter = None
         scatter.filter_outliers_dict = filter_outliers_dict
-        scatter.truncate=truncate
+        scatter.truncate = truncate
         scatter.index.on_trait_change(self.update_metadata, 'metadata_changed')
-        scatter.no_regression=False
+        scatter.no_regression = False
 
         return scatter, si
 
@@ -388,11 +415,14 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                    add_tools=True,
                    add_inspector=True,
                    convert_index=None,
-                   plotid=0, *args,
+                   plotid=None, *args,
                    **kw):
 
         kw['marker'] = marker
         kw['marker_size'] = marker_size
+
+        if plotid is None:
+            plotid = len(self.plots) - 1
 
         if not fit:
             s, p = super(RegressionGraph, self).new_series(x, y,
@@ -421,7 +451,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         if use_error_envelope:
             self._add_error_envelope_overlay(line)
 
-        r = None
         if x is not None and y is not None:
             if not self.suppress_regression:
                 self._regress(plot, scatter, line)
@@ -431,7 +460,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         except:
             pass
 
-        self._bind_index(scatter, **kw)
+        # self._bind_index(scatter, **kw)
 
         if add_tools:
             self.add_tools(plot, scatter, line,
@@ -440,7 +469,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         return plot, scatter, line
 
     def _add_error_envelope_overlay(self, line):
-
         o = ErrorEnvelopeOverlay(component=line)
         line.underlays.append(o)
         line.error_envelope = o
@@ -458,7 +486,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
 
         # broadcaster = BroadcasterTool()
         # scatter.tools.append(broadcaster)
-
         if add_inspector:
             point_inspector = PointInspector(scatter,
                                              convert_index=convert_index or self.convert_index_func)
@@ -466,123 +493,88 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                                                        tool=point_inspector)
 
             scatter.overlays.append(pinspector_overlay)
+            scatter.tools.append(point_inspector)
             # broadcaster.tools.append(point_inspector)
 
         rect_tool = RectSelectionTool(scatter)
         rect_overlay = RectSelectionOverlay(tool=rect_tool)
 
         scatter.overlays.append(rect_overlay)
+        scatter.tools.append(rect_tool)
         # broadcaster.tools.append(rect_tool)
 
-    def _bind_index(self, *args, **kw):
-        pass
+        # def _bind_index(self, *args, **kw):
+        #     pass
 
-
-class RegressionTimeSeriesGraph(RegressionGraph, TimeSeriesGraph):
-    pass
-
-
-class StackedRegressionGraph(RegressionGraph, StackedGraph):
-    pass
-
-
-class StackedRegressionTimeSeriesGraph(StackedRegressionGraph, TimeSeriesGraph):
-    pass
-
-
-if __name__ == '__main__':
-    rg = RegressionGraph()
-    rg.new_plot()
-    n=50
-    x = linspace(0, 10, n)
-
-    y=5+random.rand(n)
-    # y = 2 * x + random.rand(n)
-
-    # d = np.zeros(n)
-    # d[::10] = random.rand() + 5
-    # d[::15] = random.rand() + 2
-
-    # y += d
-
-    fod={'filter_outliers':True, 'iterations':1, 'std_devs':2}
-    rg.new_series(x, y,
-                  yerror=random.rand(n)*5,
-                  fit='average'
-                  # truncate='x<1',
-                  # filter_outliers_dict=fod
-    )
-
-    rg.configure_traits()
-#============= EOF =============================================
-# @classmethod
-#     def _apply_block_filter(cls, xs, ys):
-#         '''
-#             filter data using stats
-#
-#             1. group points into blocks
-#             2. find mean of block
-#             3. find outliers
-#             4. exclude outliers
-#         '''
-#
-#         try:
-#             import numpy as np
-#
-#             sf = StatsFilterParameters()
-#             blocksize = sf.blocksize
-#             tolerance_factor = sf.tolerance_factor
-#
-#             # group into blocks
-#             n = ys.shape[0]
-#             r = n / blocksize
-#             c = blocksize
-#
-#             dev = n - (r * c)
-#             #            remainder_block = None
-#             if dev:
-#                 ys = ys[:-dev]
-#                 #                remainder_block = ys[-dev:]
-#             #            remainder_
-#
-#             blocks = ys.reshape(r, c)
-#
-#             # calculate stats
-#             block_avgs = average(blocks, axis=1)
-#             block_stds = np.std(blocks, axis=1)
-#             devs = (blocks - block_avgs.reshape(r, 1)) ** 2
-#             #        devs = abs(blocks - block_avgs.reshape(r, 1))
-#
-#             # find outliers
-#             tol = block_stds.reshape(r, 1) * tolerance_factor
-#             exc_r, exc_c = np.where(devs > tol)
-#             #            inc_r, inc_c = np.where(devs <= tol)
-#             #            ny = blocks[inc_r, inc_c]
-#             #            nx = xs[inc_c + inc_r * blocksize]
-#             exc_xs = list(exc_c + exc_r * blocksize)
-#
-#             #        if remainder_block:
-#             #        #do filter on remainder block
-#             #            avg = average(remainder_block)
-#             #            stds = np.std(remainder_block)
-#             #            tol = stds * tolerance_factor
-#             #            devs = (remainder_block - avg) ** 2
-#             #            exc_i, _ = np.where(devs > tol)
-#             #            inc_i, _ = np.where(devs < tol)
-#             #            exc_i = exc_i + n - 1
-#             #            nnx = xs[inc_i + n - 1]
-#             #            nny = ys[inc_i + n - 1]
-#             #
-#             #            nx = hstack((nx, nnx))
-#             #            ny = hstack((ny, nny))
-#             #            exc_xs += exc_i
-#             #        print exc_xs
-#             #        return nx, ny, exc_xs
-#         except:
-#             exc_xs = []
-#
-#         return exc_xs
-# def _apply_outlier_filter(self, reg, ox, oy, index, fod):
+    #============= EOF =============================================
+    # @classmethod
+    #     def _apply_block_filter(cls, xs, ys):
+    #         '''
+    #             filter data using stats
+    #
+    #             1. group points into blocks
+    #             2. find mean of block
+    #             3. find outliers
+    #             4. exclude outliers
+    #         '''
+    #
+    #         try:
+    #             import numpy as np
+    #
+    #             sf = StatsFilterParameters()
+    #             blocksize = sf.blocksize
+    #             tolerance_factor = sf.tolerance_factor
+    #
+    #             # group into blocks
+    #             n = ys.shape[0]
+    #             r = n / blocksize
+    #             c = blocksize
+    #
+    #             dev = n - (r * c)
+    #             #            remainder_block = None
+    #             if dev:
+    #                 ys = ys[:-dev]
+    #                 #                remainder_block = ys[-dev:]
+    #             #            remainder_
+    #
+    #             blocks = ys.reshape(r, c)
+    #
+    #             # calculate stats
+    #             block_avgs = average(blocks, axis=1)
+    #             block_stds = np.std(blocks, axis=1)
+    #             devs = (blocks - block_avgs.reshape(r, 1)) ** 2
+    #             #        devs = abs(blocks - block_avgs.reshape(r, 1))
+    #
+    #             # find outliers
+    #             tol = block_stds.reshape(r, 1) * tolerance_factor
+    #             exc_r, exc_c = np.where(devs > tol)
+    #             #            inc_r, inc_c = np.where(devs <= tol)
+    #             #            ny = blocks[inc_r, inc_c]
+    #             #            nx = xs[inc_c + inc_r * blocksize]
+    #             exc_xs = list(exc_c + exc_r * blocksize)
+    #
+    #             #        if remainder_block:
+    #             #        #do filter on remainder block
+    #             #            avg = average(remainder_block)
+    #             #            stds = np.std(remainder_block)
+    #             #            tol = stds * tolerance_factor
+    #             #            devs = (remainder_block - avg) ** 2
+    #             #            exc_i, _ = np.where(devs > tol)
+    #             #            inc_i, _ = np.where(devs < tol)
+    #             #            exc_i = exc_i + n - 1
+    #             #            nnx = xs[inc_i + n - 1]
+    #             #            nny = ys[inc_i + n - 1]
+    #             #
+    #             #            nx = hstack((nx, nnx))
+    #             #            ny = hstack((ny, nny))
+    #             #            exc_xs += exc_i
+    #             #        print exc_xs
+    #             #        return nx, ny, exc_xs
+    #         except:
+    #             exc_xs = []
+    #
+    #         return exc_xs
+    # def _apply_outlier_filter(self, reg, ox, oy, index, fod):
     #     try:
     #         if fod['filter_outliers']:
     #         #                 t_fx, t_fy = ox[:], oy[:]
