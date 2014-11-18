@@ -17,15 +17,14 @@
 # ============= enthought library imports =======================
 from traits.api import String, Str, Property, Any, Float, Instance, Int, List, \
     cached_property, on_trait_change, Bool, Button, Event, Enum
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from traits.trait_errors import TraitError
 import yaml
 import os
 #============= local library imports  ==========================
-from pychron.experiment.action_editor import ActionEditor, ActionModel
 from pychron.experiment.conditional.conditionals_edit_view import edit_conditionals
 from pychron.experiment.datahub import Datahub
-from pychron.experiment.queue.experiment_block import ExperimentBlock
+from pychron.experiment.queue.run_block import RunBlock
 from pychron.experiment.utilities.frequency_edit_view import FrequencyModel
 from pychron.persistence_loggable import PersistenceLoggable
 from pychron.experiment.utilities.position_regex import SLICE_REGEX, PSLICE_REGEX, \
@@ -249,6 +248,7 @@ class AutomatedRunFactory(PersistenceLoggable):
     #===========================================================================
     run_block = Str('RunBlock')
     run_blocks = List
+    edit_run_blocks = Button
 
     #===========================================================================
     # frequency
@@ -450,8 +450,8 @@ class AutomatedRunFactory(PersistenceLoggable):
     # def _new_runs(self, positions, extract_group_cnt=0):
     def _new_run_block(self):
         p = os.path.join(paths.run_block_dir, add_extension(self.run_block, '.txt'))
-        block = ExperimentBlock(extract_device=self.extract_device,
-                                mass_spectrometer=self.mass_spectrometer)
+        block = RunBlock(extract_device=self.extract_device,
+                         mass_spectrometer=self.mass_spectrometer)
         return block.make_runs(p), self.frequency_model.frequency
 
     def _new_runs(self, exp_queue, positions):
@@ -1083,6 +1083,12 @@ class AutomatedRunFactory(PersistenceLoggable):
     #===============================================================================
     # handlers
     #===============================================================================
+    def _edit_run_blocks(self):
+        from pychron.experiment.queue.run_block import RunBlockEditView
+
+        rbev = RunBlockEditView()
+        rbev.edit_traits()
+
     def _edit_frequency_button_fired(self):
         from pychron.experiment.utilities.frequency_edit_view import FrequencyEditView
 

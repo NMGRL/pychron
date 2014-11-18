@@ -162,6 +162,7 @@ class ExperimentFactoryPane(TraitsDockPane):
                                     editor=EnumEditor(values=SPECIAL_NAMES)),
                    run_factory_item('run_block', show_label=False,
                                     editor=EnumEditor(name=run_factory_name('run_blocks'))),
+                   icon_button_editor(run_factory_name('edit_run_blocks', 'cog')),
                    run_factory_item('frequency_model.frequency', width=50),
                    icon_button_editor(run_factory_name('edit_frequency_button'),'cog'),
                    # run_factory_item('freq_before', label='Before'),

@@ -21,7 +21,7 @@ import yaml
 import os
 import datetime
 #============= local library imports  ==========================
-from pychron.experiment.queue.experiment_block import ExperimentBlock
+from pychron.experiment.queue.run_block import RunBlock
 from pychron.experiment.utilities.frequency_generator import frequency_index_gen
 from pychron.pychron_constants import NULL_STR, LINE_STR
 from pychron.experiment.stats import ExperimentStats
@@ -55,7 +55,7 @@ load: {}
 '''
 
 
-class BaseExperimentQueue(ExperimentBlock):
+class BaseExperimentQueue(RunBlock):
     selected = List
 
     automated_runs = List

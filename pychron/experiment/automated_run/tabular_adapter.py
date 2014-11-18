@@ -332,6 +332,37 @@ class AutomatedRunSpecAdapter(AutomatedRunMixin, ExecutedAutomatedRunSpecAdapter
     pass
 
 
+class RunBlockAdapter(AutomatedRunSpecAdapter):
+    def _columns_factory(self):
+        cols = [
+            ('Labnumber', 'labnumber'),
+            # ('Aliquot', 'aliquot'),
+            ('Sample', 'sample'),
+            ('Position', 'position'),
+            ('Extract', 'extract_value'),
+            ('Units', 'extract_units'),
+
+            ('Ramp (s)', 'ramp_duration'),
+            ('Duration (s)', 'duration'),
+            ('Cleanup (s)', 'cleanup'),
+            # ('Overlap (s)', 'overlap'),
+
+            ('Beam (mm)', 'beam_diameter'),
+            ('Pattern', 'pattern'),
+            ('Extraction', 'extraction_script'),
+            # ('T_o Offset', 'collection_time_zero_offset'),
+            ('Measurement', 'measurement_script'),
+            ('Conditionals', 'conditionals'),
+            # ('SynExtraction', 'syn_extraction'),
+            ('CDDWarm', 'use_cdd_warming'),
+            ('Post Eq.', 'post_equilibration_script'),
+            ('Post Meas.', 'post_measurement_script'),
+            # ('Options', 'script_options'),
+            # ('Comment', 'comment')
+        ]
+
+        return cols
+
 class ExecutedUVAutomatedRunSpecAdapter(ExecutedAutomatedRunSpecAdapter):
     def _columns_factory(self):
         cols = [
