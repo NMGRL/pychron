@@ -14,7 +14,6 @@
 # limitations under the License.
 # ===============================================================================
 
-
 # ============= enthought library imports =======================
 from pyface.constant import YES
 from traits.api import HasTraits, Str, List, Event, Instance
@@ -129,7 +128,7 @@ class InitializationEditView(HasTraits):
                                                          refresh_icons='refresh_needed')),
                         VGroup(UItem('description', style='readonly'), show_border=True),
                         VGroup(UItem('help_str', style='readonly'), show_border=True)),
-                 title='Edit Initialization',
+                 title='Edit Initialization - {}'.format(self.model.path_name),
                  handler=PEVHandler(),
                  height=600,
                  width=400,
@@ -151,7 +150,7 @@ def edit_initialization():
     if info.result:
         pev.model.save()
         if pev.model.is_dirty():
-            return confirm(None, 'Restart for changes to take effect. Restart now?')==YES
+            return confirm(None, 'Restart for changes to take effect. Restart now?') == YES
 
 
 # ============= EOF =============================================

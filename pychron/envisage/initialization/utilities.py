@@ -16,10 +16,13 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
+import os
+
 from pychron.core.helpers.filetools import to_bool
 from pychron.envisage.initialization.initialization_parser import InitializationParser
 from pychron.envisage.initialization.nodes import Plugin, PluginTree, GlobalTree, GlobalValue, InitializationModel
+
 
 DESCRIPTION_MAP = {'Experiment': 'Execute sets of automated runs',
                    'PyScript': "Edit PyScripts; pychron's internal scripting language",
@@ -50,7 +53,7 @@ DEFAULT_PLUGINS = (('General', ('Experiment', 'PyScript',
                                 'ArArConstants', 'Loading',
                                 'Processing', 'Database',
                                 'Entry', 'SystemMonitor',
-                                'Workspace', 'LabBook', 'MediaServer','Video')),
+                                'Workspace', 'LabBook', 'MediaServer', 'Video')),
                    ('Hardware', ('ArgusSpectrometer', 'ExtractionLine',
                                  'FusionsCO2', 'FusionsDiode', 'FusionsUV',
                                  'ExternalPipette')),
@@ -98,7 +101,7 @@ def get_plugin(name, tree):
 
 
 def get_initialization_model():
-    ip=InitializationParser()
+    ip = InitializationParser()
     rtree = load_plugin_tree()
     gtree = load_global_tree()
     for gi in ip.get_plugin_groups():
@@ -115,10 +118,12 @@ def get_initialization_model():
             gv.enabled = to_bool(gi.text.strip())
 
     model = InitializationModel(trees=[gtree, rtree],
+                                path_name=os.path.basename(ip.path),
                                 parser=ip)
     model.init_hash()
 
     return model
+
 #============= EOF =============================================
 
 

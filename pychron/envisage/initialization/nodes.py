@@ -16,8 +16,9 @@
 
 # ============= enthought library imports =======================
 import hashlib
-from traits.api import HasTraits, Button, Str, Int, Bool, List, Instance
-from traitsui.api import View, Item, UItem, HGroup, VGroup
+
+from traits.api import HasTraits, Str, Bool, List, Instance
+
 # ============= standard library imports ========================
 #============= local library imports  ==========================
 from traitsui.tree_node import TreeNode
@@ -86,14 +87,15 @@ class InitializationModel(BaseNode):
     name = 'Initalization'
     trees = List  #(PluginTree)
     parser = Instance(InitializationParser)
-
+    path_name = Str
     _hash = Str
+
 
     def init_hash(self):
         self._hash = self._current_hash()
 
     def _current_hash(self):
-        with open(self.parser._path) as fp:
+        with open(self.parser.path) as fp:
             return hashlib.md5(fp.read()).hexdigest()
 
     def is_dirty(self):
