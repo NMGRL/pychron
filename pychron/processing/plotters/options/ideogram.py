@@ -43,7 +43,7 @@ class IdeogramOptions(AgeOptions):
     display_percent_error = Bool(True)
     plot_option_name = 'Ideogram'
     # index_attr = Enum('Age', 'Ar40*/Ar39k','Ar40/Ar36')
-    index_attr = String
+    #index_attr = String
 
     use_asymptotic_limits = Bool
     _use_asymptotic_limits = Bool

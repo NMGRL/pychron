@@ -36,7 +36,7 @@ class AgeOptions(PlotterOptions):
     show_error_type_info = Bool(True)
     label_box = Bool(False)
 
-    index_attr = None
+    index_attr = String('uage')
     use_static_limits = False
 
     analysis_label_format = String

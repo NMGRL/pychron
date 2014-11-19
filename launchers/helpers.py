@@ -59,6 +59,7 @@ def initialize_version(appname, debug):
     if appname.startswith('py'):
         appname = appname[2:]
 
+    from pychron.paths import paths
     pref_path = os.path.join(paths.base, '.enthought',
                              'pychron.{}.application.{}'.format(appname, user),
                              'preferences.ini')
@@ -72,9 +73,8 @@ def initialize_version(appname, debug):
         proot = cp.get('pychron.general', 'root_dir')
     except BaseException, e:
         print 'root_dir exception={}'.format(e)
-        proot = '/Users/ross/Pychron'
+        proot = os.path.join(os.path.expanduser('~'),'Pychron')
 
-    from pychron.paths import paths
     paths.build(proot)
 
     # build globals

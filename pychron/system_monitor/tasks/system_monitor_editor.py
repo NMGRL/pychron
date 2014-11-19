@@ -354,7 +354,7 @@ class SystemMonitorEditor(SeriesEditor):
                                                  labnumber=identifier,
                                                  limit=tool.limit)
             else:
-                ans, tc = db.get_labnumber_analyses(identifier)
+                ans, tc = db.get_labnumber_analyses(identifier, limit=25)
 
             return self.processor.make_analyses(ans)
 

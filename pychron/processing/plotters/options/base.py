@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, List, Str, TraitError, \
-    Button, Bool, Event, Color, Range
+    Button, Bool, Event, Color, Range, String
 from traitsui.api import View, HGroup, spring
 
 import apptools.sweet_pickle as pickle
@@ -104,7 +104,7 @@ class FigurePlotterOptions(BasePlotterOptions):
     auto_refresh = Bool(False)
     initialized = True
     auto_generate_title = Bool(False)
-    index_attr = Str
+    index_attr = String
 
     bgcolor = Color
     plot_bgcolor = Color

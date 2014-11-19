@@ -20,5 +20,5 @@
 #============= local library imports  ==========================
 from helpers import entry_point
 
-entry_point('pyview', 'PyView', '_view', debug=True)
+entry_point('pyview', 'PyView', debug=True)
 #============= EOF =============================================

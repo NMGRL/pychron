@@ -53,7 +53,7 @@ class Ideogram(BaseArArFigure):
             plot data on plots
         """
         opt = self.options
-        index_attr = 'uage'
+        # index_attr = 'uage'
         if opt.index_attr:
             index_attr = opt.index_attr
             if not opt.include_j_error:

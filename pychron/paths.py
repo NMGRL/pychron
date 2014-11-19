@@ -12,9 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
-
-
+# ===============================================================================
 
 """
 Global path structure
@@ -33,6 +31,20 @@ from os import path, mkdir
 #
 # project_home = join(host_url, project_root)
 import os
+
+
+DEFAULT_INITIALIZATION = '''<root>
+    <globals>
+    </globals>
+    <plugins>
+        <general></general>
+        <hardware>
+        </hardware>
+        <social>
+        </social>
+    </plugins>
+</root>
+'''
 
 
 class Paths():
@@ -188,6 +200,15 @@ class Paths():
 
         if not path.isdir(root):
             os.mkdir(root)
+
+        sd = os.path.join(root, 'setupfiles')
+        if not path.isdir(sd):
+            os.mkdir(sd)
+
+        ip = os.path.join(sd, 'initialization.xml')
+        if not path.isfile(ip):
+            with open(ip, 'w') as fp:
+                fp.write(DEFAULT_INITIALIZATION)
 
         # self.root = root
         self.log_dir = join(root, 'logs')
