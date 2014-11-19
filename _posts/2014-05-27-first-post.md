@@ -2,6 +2,7 @@
 layout: post
 title: My first blog entry
 author: Jake Ross
+comments: True
 ---
 this is my first blog entry
 
