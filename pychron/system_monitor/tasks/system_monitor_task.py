@@ -56,6 +56,7 @@ class SystemMonitorTask(FigureTask):
 
     dashboard_client = Instance(DashboardClient, ())
     dashboard_editor = Instance(DashboardEditor)
+    dashboard_pane = Instance(DashboardPane)
 
     def prepare_destroy(self):
         for e in self.editor_area.editors:
