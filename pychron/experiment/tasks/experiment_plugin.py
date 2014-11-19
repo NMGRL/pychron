@@ -108,7 +108,8 @@ class ExperimentPlugin(BaseTaskPlugin):
 
     def _experimentor_default(self):
         # from pychron.experiment.experimentor import Experimentor
-        from pychron.initialization_parser import InitializationParser
+        # from pychron.initialization_parser import InitializationParser
+        from pychron.envisage.initialization.initialization_parser import InitializationParser
 
         ip = InitializationParser()
         plugin = ip.get_plugin('Experiment', category='general')
