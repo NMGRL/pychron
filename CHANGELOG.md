@@ -32,11 +32,11 @@ CHANGELOG
 * added database version checking
 * updated conditionals. can do and/or with multiple variables e.g Ar40>10 and age<10.0
 * added wake command to ExtractionLinePyScript. jitters mouse to wake from screen saver
-* added Edit Initialiation action and view
+* added Edit Initialization action and view
 * added Labeling to LabBook
 * changed Pychrondata to Pychron. 
 * added ability to set Pychron root directory in the preferences. Uses ~/Pychron as default
-* moved use_login,multi_user from initializtion file to preferences.
+* moved use_login,multi_user from initialization file to preferences.
 
 2.0.4
 ------------------
