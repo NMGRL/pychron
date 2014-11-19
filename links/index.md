@@ -7,6 +7,10 @@ Laboratories
 =============
 - [New Mexico Geochronology Research Laboratory](https://geoinfo.nmt.edu/labs/argon/home.html)
 - [Berkeley Geochronology Center](http://www.bgc.org/)
+- [U. Wis.](http://www.geology.wisc.edu/~raregas/)
+- [Rutgers](http://geology.rutgers.edu/people/26-research/436-noble-gas-lab)
+- [Lamont-Doherty](http://www.ldeo.columbia.edu/res/fac/argon/)
+- [USGS Denver](http://minerals.cr.usgs.gov/projects/argon_geochronology/index.html)
 
 Python
 =============
