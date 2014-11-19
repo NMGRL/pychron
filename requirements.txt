@@ -11,6 +11,7 @@ Reportlab
 lxml
 xlrd
 xlwt
+jinja2
 
 #uncertainties
 #xlrd==0.7.1

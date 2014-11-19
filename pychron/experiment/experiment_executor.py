@@ -37,7 +37,7 @@ from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.consoleable import Consoleable
 from pychron.envisage.preference_mixin import PreferenceMixin
 from pychron.experiment.datahub import Datahub
-from pychron.experiment.user_notifier import UserNotifier
+from pychron.experiment.notifier.user_notifier import UserNotifier
 from pychron.experiment.stats import StatsGroup
 from pychron.experiment.utilities.conditionals import test_queue_conditionals_name
 from pychron.experiment.utilities.conditionals_results import reset_conditional_results

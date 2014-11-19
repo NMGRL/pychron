@@ -5,14 +5,14 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, Str, Int, Instance, Bool
@@ -21,7 +21,10 @@ from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import smtplib
+import socket
 #============= local library imports  ==========================
+from pychron.version import __version__
+from pychron.experiment.notifier.templates import email_template
 from pychron.loggable import Loggable
 
 
@@ -102,47 +105,54 @@ class UserNotifier(Loggable):
 
     def _assemble_message(self, exp, last_runid, err):
         name = exp.name
-        div = '===================================='
-        header = '============ {} ============'
         if err:
             subject = '{} Canceled'.format(name)
-
-            err = '{}\n{}\n{}'.format(header.format('Error Message'), err, div)
-            log = ''
-            if self.emailer.include_log:
-                log = self._get_log(100)
-                log = '{}\n{}\n{}'.format(header.format('Log'), log, div)
-
         else:
             subject = '{} Completed Successfully'.format(name)
-            err = ''
-            log = ''
 
-        msg = '''
-timestamp= {}
-last run=  {}
-runs=      {}
-
-{}
-
-{}'''.format(datetime.now(), last_runid, exp.execution_ratio, err, log)
-
+        ctx = self._assemble_ctx(exp, last_runid, err)
+        msg = email_template(**ctx)
         return subject, msg
+
+    def _assemble_ctx(self, exp, last_runid, err):
+        log = ''
+        if self.emailer.include_log:
+            log = self._get_log(100)
+
+        shorthost = socket.gethostname()
+        ctx = {'timestamp': datetime.now(),
+               'last_runid': last_runid,
+               'error': err,
+               'log': log,
+               'host': socket.gethostbyname(shorthost),
+               'shorthost': shorthost,
+               'experiment': exp,
+               'version': __version__}
+
+        return ctx
 
     def _get_log(self, n):
         from pychron.core.helpers.logger_setup import get_log_text
-
-        return get_log_text(n)
+        return get_log_text(n) or 'No log available'
 
 
 if __name__ == '__main__':
     class Exp(object):
         name = 'Foo'
+        username = 'root'
+        mass_spectrometer = 'jan'
+        extract_device = 'co2'
         email = 'jirhiker@gmail.com'
         execution_ratio = '4/5'
 
     e = Exp()
     a = UserNotifier()
-    a.notify(e, 'adsfafd', 'this is an error\nmultiomasdf')
+    a.emailer.include_log = True
+    sub, msg = a._assemble_message(e, 'adsfafd', 'this is an error\nmultiomasdf')
+    for l in msg.split('\n'):
+        print l
+
+
+        # a.notify(e, 'adsfafd', 'this is an error\nmultiomasdf')
 #============= EOF =============================================
 
