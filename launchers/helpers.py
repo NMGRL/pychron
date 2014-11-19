@@ -23,8 +23,6 @@ import logging
 #============= local library imports  ==========================
 
 logger = logging.getLogger()
-
-
 def entry_point(modname, klass, setup_version_id='', debug=False):
     """
         entry point
@@ -33,16 +31,7 @@ def entry_point(modname, klass, setup_version_id='', debug=False):
 
     ETSConfig.toolkit = "qt4"
 
-    # build_version('', setup_version_id, debug=debug)
     user = initialize_version(modname, debug)
-    # from pychron.core.helpers.logger_setup import logging_setup
-    # from pychron.paths import build_directories
-    #
-    # # build directories
-    # build_directories()
-    #
-    # # setup logging. set a basename for log files and logging level
-    # logging_setup('pychron', level='DEBUG')
 
     #import app klass and pass to launch function
     mod = __import__('pychron.applications.{}'.format(modname), fromlist=[klass])
@@ -60,12 +49,6 @@ def initialize_version(appname, debug):
         build_sys_path()
 
     # can now use pychron.
-    from pychron.paths import paths
-
-    # paths.bundle_root = root
-    # if '-' in setup_ver:
-    # setup_ver = setup_ver.split('-')[0]
-
     from pychron.envisage.user_login import get_user
 
     user = get_user()
@@ -87,9 +70,11 @@ def initialize_version(appname, debug):
 
     try:
         proot = cp.get('pychron.general', 'root_dir')
-    except BaseException:
+    except BaseException, e:
+        print 'root_dir exception={}'.format(e)
         proot = '/Users/ross/Pychron'
 
+    from pychron.paths import paths
     paths.build(proot)
 
     # build globals
@@ -105,36 +90,6 @@ def initialize_version(appname, debug):
     logging_setup('pychron', level='DEBUG')
 
     return user
-
-
-# def build_version(ver=None, setup_ver=None, debug=False):
-# """
-#         set the python path and build/setup Pychrondata for support files
-#     """
-#
-#     if ver is None:
-#         ver = ''
-#
-#     # if setup_ver is None:
-#     #     setup_ver = ''
-#
-#     root = os.path.dirname(__file__)
-#
-#     if not debug:
-#         add_eggs(root)
-#     else:
-#         build_sys_path()
-#
-#         # can now use pychron.
-#         # from pychron.paths import paths
-#         #
-#         # paths.bundle_root = root
-#         # if '-' in setup_ver:
-#         #     setup_ver = setup_ver.split('-')[0]
-#         # paths.build(setup_ver)
-#
-#         # build globals
-#         # build_globals(debug)
 
 
 def build_sys_path():

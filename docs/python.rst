@@ -1,54 +1,39 @@
-Pychron  
+Python Primer
+==================
 
-0.2.0
-requirements
+Think of python as a program. what it does is takes
+human readable source code (.py) and parses,compiles and executes in real time.
 
- -epd7.0.2
- -scikits.statsmodels
- -pyserial
+`Python 2.7 Documentation <https://docs.python.org/2.7>`_
 
+Best place to start. `Python Tutorial <http://docs.python.org/tutorial/index.html>`_
 
-
-
-
-
-
-
-
-Python, Enthought and Pychron need to knows
-
-Think of python as a program. what it does is takes 
-human readable source code (.py) and parses,compiles and executes in real time. 
-
-Documentation 
-*** http://docs.python.org/ ***
-
-Best place to start *** http://docs.python.org/tutorial/index.html ***
-
-You can run python in 2 ways. (there is actually many ways to run from the command line but 
+You can run python in 2 ways. (there is actually many ways to run from the command line but
 	only 2 are used frequently)
 Open terminal
 
 1. with no arguments. opens the python interpreter
-$ python 
+$ python
 
 2. with a path to python script (absolute or relative path). executes the script
 $ python hello_world.py
 
-Using Python Interpreter			
+Using Python Interpreter
 Zen of Python
->>> import this 
+
+>>> import this
 
 you can use the command line as a powerful calculator
-*** see http://docs.python.org/tutorial/introduction.html ***
+see http://docs.python.org/tutorial/introduction.html
 
 >>> x=1
 >>> y=2
 >>> x+y
 3
->>>	x=50
+>>> x=50
 
 Use the up and down arrows to cycle thru previous commands
+
 >>> x+y
 53
 >>> y=x+y
@@ -58,7 +43,7 @@ Use the up and down arrows to cycle thru previous commands
 >>> i+=1    #same as i = i+1 works for all math operators i -=1, i*=2 etc...
 
 strings are defined using ', ", or ''' blocks
-' and " are equivalent. convenient when needing to nest quotes. 
+' and " are equivalent. convenient when needing to nest quotes.
 
 >>> s='foo'
 >>> b='bar'
@@ -69,39 +54,49 @@ foo bar
 >>> b
 'bar'
 
+to make a list of items use a list or tuple
+see http://docs.python.org/tutorial/datastructures.html
 
-
-to make a list of items use a list or tuple 
-*** see http://docs.python.org/tutorial/datastructures.html ***
-list 
 >>> l1=[1,2,3,4]
 >>> l2=['foo','bar']
 >>> t1=(1,2,3)
 >>> t2=('foo','bar')
+
 get the length of the sequence use builtin len
+
 >>> len(l1)
 4
+
 to generate a list of numbers use builtin range
+
 >>> range(10)
 [0,1,2,3,4,5,6,7,8,9]
+
+
 >>> range(0,10,2)
 [0,2,4,6,8]
 
 get item from list
+
 >>> l1[0]
 1
+
 get the last item
+
 >>> l1[-1]
 9
+
 get a sublist
->>> l1[0:2] 		#list[startindex:stopindex:step] 
-					#each parameter is optional but at least needs to be set
-					#startindex defaults to 0
-					#stopindex defaults to the last index
-					#step defaults to 1
-					l1[0:2] same as l1[0:2:1] and l1[:2] (preferred)
-					
+
+>>> l1[0:2]    #list[startindex:stopindex:step]
+                #each parameter is optional but at least needs to be set
+                #startindex defaults to 0
+                #stopindex defaults to the last index
+                #step defaults to 1
+                #l1[0:2] same as l1[0:2:1] and l1[:2] (preferred)
+
 same slicing operations work on strings. just think of them as a list of characters
+
 >>> s= 'hello world'
 >>> s[:5]
 'hello'
@@ -111,6 +106,7 @@ same slicing operations work on strings. just think of them as a list of charact
 'world'
 
 you can split and join strings easily
+
 >>> s.split(' ') #str.list(character to  split on) returns a list
 ['hello', 'world']
 >>> ', '.join(s.split(' ')) #join_str.join(list of strings to join)
@@ -122,6 +118,7 @@ line text
 
 dictionaries are key:value containers
 there are two syntaxes for creating a dictionary
+
 >>> d=dict(name='Jake', office=316, building='MSEC')
 >>> d2 = {'name':'Jake','office':316, 'building':'MSEC'} #convenient when the keys are variables as well
 >>> key1='person'
@@ -130,7 +127,7 @@ there are two syntaxes for creating a dictionary
 >>> val2=10394303
 >>> d3 = {key1:val1, key2:val2}
 
-to get a value from the dictionary you specifiy a key. To get the definition of a word you find the 
+to get a value from the dictionary you specifiy a key. To get the definition of a word you find the
 word (key) in are dictionary and read the associated entry
 
 >>> d['name']
@@ -139,20 +136,20 @@ entries can be modified
 >>> d['name']='Jake Ross'
 >>> d['name']
 Jake Ross
- 
- 
-#string formating is awesome in python
-#lets say you want to display some text with your results
+
+string formating is awesome in python
+lets say you want to display some text with your results
+
 >>> 'the result of {} plus {} is {}'.format(x,y,x+y)
 'the result of 50 plus 53 is 103'
 >>> 'the result of {1} plus {0} is {2}'.format(x,y,x+y)
 'the result of 53 plus 50 is 103'
 
-#you can use pass in a key:pairs
+you can use pass in a key:pairs
+
 >>> "{name}'s office is {building} {office}".format(name='Jake',building='MSEC',office=316)
+
 or better
+
 >>> "{name}'s office is {building} {office}".format(**d2)
-"Jake's office is MSEC 316" 
-
-
-
+"Jake's office is MSEC 316"
