@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,7 +27,7 @@ from pychron.core.helpers.filetools import list_directory
 from filetools import unique_path2
 
 NAME_WIDTH = 40
-gFORMAT = '%(name)-{}s: %(asctime)s %(levelname)-7s (%(threadName)-10s) %(message)s'.format(NAME_WIDTH)
+gFORMAT = '%(name)-{}s: %(asctime)s %(levelname)-9s (%(threadName)-10s) %(message)s'.format(NAME_WIDTH)
 gLEVEL = logging.DEBUG
 
 
@@ -77,6 +77,28 @@ def tail(f, lines=20):
         block_number -= 1
     all_read_text = ''.join(reversed(blocks))
     return '\n'.join(all_read_text.splitlines()[-total_lines_wanted:])
+
+
+def set_exception_handler(func=None):
+    """
+        set sys.excepthook to func.  if func is None use a default handler
+
+        default handler formats and logs the traceback as critical and calls sys.__excepthook__
+        for normal exception handling
+
+    :return:
+    """
+    import sys
+    import traceback
+
+    root = logging.getLogger()
+    if func is None:
+        def func(exctype, value, tb):
+            for ti in traceback.format_tb(tb):
+                root.critical(ti.strip())
+            sys.__excepthook__(exctype, value, tb)
+
+    sys.excepthook = func
 
 
 def logging_setup(name, use_archiver=True, **kw):

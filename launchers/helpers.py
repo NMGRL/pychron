@@ -23,6 +23,7 @@ import logging
 #============= local library imports  ==========================
 
 logger = logging.getLogger()
+
 def entry_point(modname, klass, setup_version_id='', debug=False):
     """
         entry point
@@ -33,7 +34,7 @@ def entry_point(modname, klass, setup_version_id='', debug=False):
 
     user = initialize_version(modname, debug)
 
-    #import app klass and pass to launch function
+    # import app klass and pass to launch function
     mod = __import__('pychron.applications.{}'.format(modname), fromlist=[klass])
     from pychron.envisage.pychron_run import launch
 
@@ -80,7 +81,7 @@ def initialize_version(appname, debug):
     # build globals
     build_globals(debug)
 
-    from pychron.core.helpers.logger_setup import logging_setup
+    from pychron.core.helpers.logger_setup import logging_setup, set_exception_handler
     from pychron.paths import build_directories
 
     # build directories
@@ -88,7 +89,7 @@ def initialize_version(appname, debug):
 
     # setup logging. set a basename for log files and logging level
     logging_setup('pychron', level='DEBUG')
-
+    set_exception_handler()
     return user
 
 
