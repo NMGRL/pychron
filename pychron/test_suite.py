@@ -4,6 +4,8 @@ import unittest
 
 
 def suite():
+    from pychron.core.xml.tests.xml_parser import XMLParserTestCase
+
     from pychron.entry.tests.analysis_loader import XLSAnalysisLoaderTestCase
     from pychron.core.regression.tests.regression import OLSRegressionTest, MeanRegressionTest, \
         FilterOLSRegressionTest, OLSRegressionTest2
@@ -23,7 +25,8 @@ def suite():
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
 
-    tests = (XLSAnalysisLoaderTestCase,
+    tests = (XMLParserTestCase,
+             XLSAnalysisLoaderTestCase,
              RatioTestCase,
              InterpolationTestCase,
              DocstrContextTestCase,

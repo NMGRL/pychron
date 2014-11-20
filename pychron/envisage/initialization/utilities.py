@@ -90,7 +90,9 @@ def get_tree(gi, tree):
             if plugin.name.lower() == gi.lower():
                 return plugin
             else:
-                return get_tree(gi, plugin)
+                t = get_tree(gi, plugin)
+                if t:
+                    return t
 
 
 def get_plugin(name, tree):
@@ -106,6 +108,7 @@ def get_initialization_model():
     gtree = load_global_tree()
     for gi in ip.get_plugin_groups():
         tree = get_tree(gi, rtree)
+        print '--------', gi, tree
         if tree:
             for pp in ip.get_plugins(gi, element=True):
                 plugin = get_plugin(pp.text.strip(), tree)
@@ -125,6 +128,5 @@ def get_initialization_model():
     return model
 
 #============= EOF =============================================
-
 
 
