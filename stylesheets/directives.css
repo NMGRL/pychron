@@ -1,0 +1,9 @@
+.note{
+    background-color: lightgreen;
+    padding:12px;line-height:24px;margin-bottom:24px;background:#e7f2fa
+}
+
+.note-title{
+    color:#fff;font-weight:bold;display:block;color:#fff;
+    background:#6ab0de;margin:-12px;padding:6px 12px;margin-bottom:12px
+}
