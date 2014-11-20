@@ -4,9 +4,10 @@ import unittest
 
 
 def suite():
-    from pychron.core.xml.tests.xml_parser import XMLParserTestCase
 
+    from pychron.core.xml.tests.xml_parser import XMLParserTestCase
     from pychron.entry.tests.analysis_loader import XLSAnalysisLoaderTestCase
+    from pychron.entry.tests.irradiation_loader import XLSIrradiationLoaderTestCase
     from pychron.core.regression.tests.regression import OLSRegressionTest, MeanRegressionTest, \
         FilterOLSRegressionTest, OLSRegressionTest2
     from pychron.experiment.tests.frequency_test import FrequencyTestCase, FrequencyTemplateTestCase
@@ -26,6 +27,7 @@ def suite():
     suite = unittest.TestSuite()
 
     tests = (XMLParserTestCase,
+             XLSIrradiationLoaderTestCase,
              XLSAnalysisLoaderTestCase,
              RatioTestCase,
              InterpolationTestCase,
@@ -43,7 +45,7 @@ def suite():
              RenumberAliquotTestCase,
              ConditionalsTestCase,
              ParseConditionalsTestCase,
-             IdentifierTestCase, 
+             IdentifierTestCase,
              CommentTemplaterTestCase)
 
     for t in tests:
