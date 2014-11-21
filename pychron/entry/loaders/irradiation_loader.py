@@ -197,9 +197,12 @@ class XLSIrradiationLoader(Loggable):
 
     def _add_level(self, irrad, name, pr, holder):
         db= self.db
-        with db.session_ctx():
-            if db.add_irradiation_level(irrad, name, holder, pr):
-                self._added_levels.append((irrad, name, pr, holder))
+        if db:
+            with db.session_ctx():
+                if db.add_irradiation_level(irrad, name, holder, pr):
+                    self._added_levels.append((irrad, name, pr, holder))
+        else:
+            self._added_levels.append((irrad, name, pr, holder))
 
     def _add_irradiation(self, name):
         self._added_irradiations.append(name)
