@@ -30,6 +30,7 @@ from pychron.envisage.tasks.editor_task import EditorTask
 from pychron.envisage.tasks.pane_helpers import ConsolePane
 from pychron.experiment.queue.base_queue import extract_meta
 from pychron.experiment.tasks.experiment_editor import ExperimentEditor, UVExperimentEditor
+from pychron.experiment.tasks.experiment_panes import LoggerPane
 from pychron.messaging.notify.notifier import Notifier
 from pychron.paths import paths
 from pychron.pychron_constants import SPECTROMETER_PROTOCOL
@@ -188,6 +189,7 @@ class ExperimentEditorTask(EditorTask):
         panes = [StatsPane(model=self.manager),
                  ControlsPane(model=ex),
                  ConsolePane(model=ex),
+                 LoggerPane(),
                  #AnalysisHealthPane(model=self.analysis_health),
                  ConnectionStatusPane(model=ex),
                  self.experiment_factory_pane,

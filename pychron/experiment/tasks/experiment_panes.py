@@ -15,10 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Color, Instance, DelegatesTo
+from traits.api import Color, Instance, DelegatesTo, List, Any
 from traitsui.api import View, Item, UItem, VGroup, HGroup, spring, \
     EnumEditor, Group, Spring, VFold, Label, InstanceEditor, \
-    VSplit, TabularEditor, UReadonly
+    VSplit, TabularEditor, UReadonly, ListEditor
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traitsui.editors import TableEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
@@ -460,5 +460,25 @@ class AnalysisHealthPane(TraitsDockPane):
                  Item('isotopes', editor=TabularEditor(adapter=AnalysisHealthAdapter())))
         return v
 
+
+class LoggerPane(TraitsDockPane):
+    loggers = List
+    selected = Any
+    name = 'Logger'
+    id = 'pychron.experiment.logger'
+
+    def __init__(self, *args, **kw):
+        super(LoggerPane, self).__init__(*args, **kw)
+        from pychron.displays.gdisplays import gWarningDisplay, gLoggerDisplay
+        self.loggers = [gLoggerDisplay, gWarningDisplay]
+
+    def traits_view(self):
+        v = View(UItem('loggers',
+                       editor=ListEditor(use_notebook=True,
+                                         page_name='.title',
+                                         selected='selected'),
+                       style='custom'))
+
+        return v
 
 #============= EOF =============================================
