@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,10 +27,12 @@ from pychron.database.core.base_orm import BaseMixin, NameMixin
 
 from util import Base
 
+
 class med_ImageTable(Base, NameMixin):
     create_date = Column(DateTime, default=func.now())
     image = Column(BLOB)
     extractions = relationship('meas_ExtractionTable', backref='image')
+
 
 class med_SnapshotTable(Base, BaseMixin):
     path = stringcolumn(200)
@@ -38,4 +40,5 @@ class med_SnapshotTable(Base, BaseMixin):
     create_date = Column(DateTime, default=func.now())
     image = Column(BLOB)
     extraction_id = foreignkey('meas_ExtractionTable')
+
 #============= EOF =============================================

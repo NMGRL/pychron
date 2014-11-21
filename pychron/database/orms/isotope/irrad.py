@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 
 from datetime import datetime
 
 from sqlalchemy import Column, Integer, BLOB, Float, DateTime
 from sqlalchemy.orm import relationship
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.database.orms.isotope.util import foreignkey, stringcolumn
 from pychron.database.core.base_orm import BaseMixin, NameMixin
 from util import Base
@@ -146,4 +146,4 @@ class irrad_ChronologyTable(Base, BaseMixin):
 
         return dd
 
-        #============= EOF =============================================
+# ============= EOF =============================================

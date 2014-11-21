@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 from sqlalchemy import Column, Float, DateTime
 from sqlalchemy.orm import relationship
-#============= local library imports  ==========================
-
-from pychron.database.core.base_orm import BaseMixin, NameMixin
-# from pychron.database.core.base_orm import PathMixin, ResultsMixin, ScriptTable
 from sqlalchemy.sql.expression import func
+# ============= local library imports  ==========================
+from pychron.database.core.base_orm import BaseMixin, NameMixin
 from pychron.database.orms.isotope.util import foreignkey
 
 from util import Base
@@ -52,4 +50,4 @@ class flux_HistoryTable(Base, BaseMixin):
                         uselist=False)
     create_date = Column(DateTime, default=func.now())
 
-#============= EOF =============================================
+# ============= EOF =============================================
