@@ -47,9 +47,7 @@ class XLSIrradiationLoaderLoadTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.loader = XLSIrradiationLoader()
-        p = 'pychron/entry/tests/data/irradiation_import.xls'
-        if not os.path.isfile(p):
-            p = './data/irradiation_import.xls'
+        p = os.path.join(get_data_dir(), 'irradiation_import.xls')
         cls.input_path = p
 
     def setUp(self):
@@ -77,23 +75,21 @@ class XLSIrradiationLoaderParseTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.loader = XLSIrradiationLoader()
-        p = 'pychron/entry/tests/data/irradiation_import.xls'
-        if not os.path.isfile(p):
-            p = './data/irradiation_import.xls'
+        p = os.path.join(get_data_dir(), 'irradiation_import.xls')
         cls.input_path = p
+
+    def tearDown(self):
+        ip = os.path.join(get_data_dir(), 'template.xls')
+        if os.path.isfile(ip):
+            os.remove(ip)
 
     def setUp(self):
         self.loader.open(self.input_path)
 
     def test_make_template(self):
-        op = get_data_dir()
-        # op = './data'
 
-        self.loader.make_template(os.path.join(op, 'template.xls'))
-        ip = 'pychron/entry/tests/template.xls'
-        if not os.path.isfile(ip):
-            ip = os.path.join('.', 'data', 'template.xls')
-
+        ip = os.path.join(get_data_dir(), 'template.xls')
+        self.loader.make_template(ip)
         self.assertTrue(os.path.isfile(ip))
 
     def test_irradiation1(self):
