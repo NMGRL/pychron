@@ -12,6 +12,7 @@ Pychron
 
 [Documentation](http://pychron.readthedocs.org)
 
+[RoadMap](ROADMAP.md)
 What is Pychron
 ===============
 
