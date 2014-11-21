@@ -37,7 +37,6 @@ from pychron.database.orms.massspec_orm import IsotopeResultsTable, \
     IrradiationChronologyTable, IrradiationLevelTable, IrradiationProductionTable
 from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.database.core.functions import delete_one
-from pychron.database.selectors.massspec_selector import MassSpecSelector
 
 
 class MissingAliquotPychronException(BaseException):
@@ -45,9 +44,15 @@ class MissingAliquotPychronException(BaseException):
 
 
 class MassSpecDatabaseAdapter(DatabaseAdapter):
-    selector_klass = MassSpecSelector
+    # selector_klass = MassSpecSelector
     test_func = 'get_database_version'
     kind = 'mysql'
+
+    @property
+    def selector_klass(self):
+        # lazy load selector klass.
+        from pychron.database.selectors.massspec_selector import MassSpecSelector
+        return MassSpecSelector
 
     def get_irradiation_positions(self, name, level):
         with self.session_ctx() as sess:
