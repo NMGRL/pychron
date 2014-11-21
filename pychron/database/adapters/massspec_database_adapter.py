@@ -259,7 +259,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
                                       SampleHolder=holder,
                                       ProductionRatiosID=production,
                                       **kw)
-            self._add_item(i)
+            return self._add_item(i)
 
     def add_irradiation_position(self, identifier, irrad_level, hole, material='', sample=6, j=1e-4, jerr=1e-7):
         with self.session_ctx() as sess:

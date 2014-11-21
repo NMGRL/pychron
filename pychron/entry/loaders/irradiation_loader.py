@@ -43,6 +43,33 @@ class XLSIrradiationLoader(Loggable):
     _added_positions = List
     _added_chronologies = List
 
+    def open(self, p):
+        self.dm = self._dm_factory(p)
+
+    def load_irradiation(self, p, dry_run=True):
+        if not os.path.isfile(p):
+            return
+
+        try:
+            with self.db.session_ctx(commit=not dry_run):
+                self._load_irradiation_from_file(p)
+                return True
+        except BaseException, e:
+            print e
+
+    # def load_level(self, p, positions, irradiation, level):
+    #     with self.db.session_ctx():
+    #         self._load_level_from_file(p, positions, irradiation, level)
+    def add_irradiation_level(self, irrad, name, holder, pr, dry=False):
+        db= self.db
+        with db.session_ctx(commit=not dry):
+            self._add_level(irrad, name, holder, pr)
+
+    def make_template(self, p):
+        from pychron.entry.loaders.irradiation_template import IrradiationTemplate
+        i = IrradiationTemplate()
+        i.make_template(p)
+
     def iterate_irradiations(self, start=1):
         """
         usage
@@ -93,8 +120,6 @@ class XLSIrradiationLoader(Loggable):
     def add_positions(self):
         dm = self.dm
         sheet = dm.get_sheet(('Positions', 2))
-        # nameidx = dm.get_column_idx(NAME, sheet)
-        # levelidx = dm.get_column_idx(LEVEL, sheet)
         idxdict = self._get_idx_dict(sheet, ('position', 'sample', 'material', 'weight',
                                              'irradiation',
                                              'project', 'level', 'note'))
@@ -102,6 +127,12 @@ class XLSIrradiationLoader(Loggable):
             self._add_position(row, idxdict)
 
     def add_irradiations(self):
+        """
+            calls _add_irradiation
+                  _add_chronology
+                  _add_level - >
+        :return:
+        """
         self._added_irradiations = []
         self._added_levels = []
         self._added_positions = []
@@ -124,63 +155,12 @@ class XLSIrradiationLoader(Loggable):
                 self._add_level(irrad, row[levelidx].value,
                                 row[pridx].value, row[holderidx].value)
 
-    def open(self, p):
-        self.dm = self._dm_factory(p)
-
-    def load_irradiation(self, p, dry_run=False):
-        with self.db.session_ctx(commit=not dry_run):
-            self._load_irradiation_from_file(p)
-
-    def load_level(self, p, positions, irradiation, level):
-        with self.db.session_ctx():
-            self._load_level_from_file(p, positions, irradiation, level)
-
-    def make_template(self, p):
-        from pychron.entry.loaders.irradiation_template import IrradiationTemplate
-        i = IrradiationTemplate()
-        i.make_template(p)
-
-    # def make_template2(self, p, n, level):
-    #     import xlwt
-    #
-    #     wb = xlwt.Workbook()
-    #     sheet = wb.add_sheet('IrradiationLoading')
-    #
-    #     s2 = xlwt.XFStyle()
-    #     borders = xlwt.Borders()
-    #     borders.bottom = 2
-    #     s2.borders = borders
-    #
-    #     idx = 1
-    #     for i, c in enumerate(('position', 'sample', 'material', 'weight', 'project', 'level', 'note')):
-    #         sheet.write(0, i, c, style=s2)
-    #         if c == 'level':
-    #             idx = i
-    #
-    #     for i in range(n):
-    #         i += 1
-    #         sheet.write(i, 0, i)
-    #         sheet.write(i, idx, level)
-    #
-    #     wb.save(p)
-
-    # def _get_idxs(self, dm, sheet):
-    # idxs = {}
-    #     for i in self.columns:
-    #         idx = dm.get_column_idx(i, sheet=sheet)
-    #         if idx is None:
-    #             return
-    #
-    #         idxs[i] = idx
-    #     return idxs
     def _load_irradiation_from_file(self, p):
         """
 
         :param p: abs path to xls file
         :return:
         """
-        if not os.path.isfile(p):
-            return
 
         self.dm = self._dm_factory(p)
         self.add_irradiations()
@@ -216,7 +196,10 @@ class XLSIrradiationLoader(Loggable):
         self._added_positions.append((irrad, level, pos))
 
     def _add_level(self, irrad, name, pr, holder):
-        self._added_levels.append((irrad, name, pr, holder))
+        db= self.db
+        with db.session_ctx():
+            if db.add_irradiation_level(irrad, name, holder, pr):
+                self._added_levels.append((irrad, name, pr, holder))
 
     def _add_irradiation(self, name):
         self._added_irradiations.append(name)

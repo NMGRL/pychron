@@ -202,8 +202,8 @@ class LabnumberEntry(IsotopeDatabaseManager):
         loader.progress = prog
         loader.canvas = self.canvas
 
-        loader.load_level(p, self.irradiated_positions,
-                    self.irradiation, self.level)
+        # loader.load_level(p, self.irradiated_positions,
+        #             self.irradiation, self.level)
 
         self.refresh_table = True
 
