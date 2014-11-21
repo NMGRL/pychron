@@ -32,7 +32,7 @@ HOLDER = ('Holder', )
 
 
 class XLSIrradiationLoader(Loggable):
-    columns = ('position', 'sample', 'material', 'weight', 'project', 'level', 'note')
+    # columns = ('position', 'sample', 'material', 'weight', 'project', 'level', 'note')
     db = Any
     progress = Any
     canvas = Any
@@ -135,29 +135,34 @@ class XLSIrradiationLoader(Loggable):
         with self.db.session_ctx():
             self._load_level_from_file(p, positions, irradiation, level)
 
-    def make_template(self, p, n, level):
-        import xlwt
+    def make_template(self, p):
+        from pychron.entry.loaders.irradiation_template import IrradiationTemplate
+        i = IrradiationTemplate()
+        i.make_template(p)
 
-        wb = xlwt.Workbook()
-        sheet = wb.add_sheet('IrradiationLoading')
-
-        s2 = xlwt.XFStyle()
-        borders = xlwt.Borders()
-        borders.bottom = 2
-        s2.borders = borders
-
-        idx = 1
-        for i, c in enumerate(self.columns):
-            sheet.write(0, i, c, style=s2)
-            if c == 'level':
-                idx = i
-
-        for i in range(n):
-            i += 1
-            sheet.write(i, 0, i)
-            sheet.write(i, idx, level)
-
-        wb.save(p)
+    # def make_template2(self, p, n, level):
+    #     import xlwt
+    #
+    #     wb = xlwt.Workbook()
+    #     sheet = wb.add_sheet('IrradiationLoading')
+    #
+    #     s2 = xlwt.XFStyle()
+    #     borders = xlwt.Borders()
+    #     borders.bottom = 2
+    #     s2.borders = borders
+    #
+    #     idx = 1
+    #     for i, c in enumerate(('position', 'sample', 'material', 'weight', 'project', 'level', 'note')):
+    #         sheet.write(0, i, c, style=s2)
+    #         if c == 'level':
+    #             idx = i
+    #
+    #     for i in range(n):
+    #         i += 1
+    #         sheet.write(i, 0, i)
+    #         sheet.write(i, idx, level)
+    #
+    #     wb.save(p)
 
     # def _get_idxs(self, dm, sheet):
     # idxs = {}
@@ -183,7 +188,7 @@ class XLSIrradiationLoader(Loggable):
 
     def _add_chronology(self, irrad):
         dm = self.dm
-        sheet = dm.get_sheet(('Chronology', 1))
+        sheet = dm.get_sheet(('Chronologies', 1))
 
         idx_d = self._get_idx_dict(sheet, ('name', 'start', 'end', 'power'))
 

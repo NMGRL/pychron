@@ -9,6 +9,8 @@ set_qt()
 import unittest
 from pychron.entry.loaders.irradiation_loader import XLSIrradiationLoader
 
+TEST_LOAD = False
+
 
 class XLSIrradiationLoaderTestCase(unittest.TestCase):
     @classmethod
@@ -25,7 +27,20 @@ class XLSIrradiationLoaderTestCase(unittest.TestCase):
     # self.assertEqual(len(irrads), 2)
     #     self.assertEqual(len(irrads[0]), 6)
     #     self.assertEqual(len(irrads[1]), 5)
+    def test_make_template(self):
+        op = 'pychron/entry/tests/data'
+        if not os.path.isdir(op):
+            op = os.path.join('.','data')
+            # op = './data'
 
+        self.loader.make_template(os.path.join(op,'template.xls'))
+        ip = 'pychron/entry/tests/template.xls'
+        if not os.path.isfile(ip):
+            ip = os.path.join('.','data','template.xls')
+
+        self.assertTrue(os.path.isfile(ip))
+
+    @unittest.skipUnless(TEST_LOAD,'Not testing loader')
     def test_iteration1(self):
         irrads = self.loader.iterate_irradiations()
         irrads = list(irrads)
@@ -33,6 +48,7 @@ class XLSIrradiationLoaderTestCase(unittest.TestCase):
         self.assertEqual(len(list(irrads[0])), 5)
         self.assertEqual(len(list(irrads[1])), 4)
 
+    @unittest.skipUnless(TEST_LOAD,'Not testing loader')
     def test_iteration2(self):
         irrads = self.loader.iterate_irradiations()
         irrads = list(irrads)
@@ -45,10 +61,12 @@ class XLSIrradiationLoaderTestCase(unittest.TestCase):
         self.assertEqual('NM-1000', aheader[0].value)
         self.assertEqual('NM-1001', bheader[0].value)
 
+    @unittest.skipUnless(TEST_LOAD,'Not testing loader')
     def test_add_irradiations(self):
         self.loader.add_irradiations()
         self.assertEqual(self.loader.added_irradiations, ['NM-1000', 'NM-1001'])
 
+    @unittest.skipUnless(TEST_LOAD,'Not testing loader')
     def test_add_levels(self):
         self.loader.add_irradiations()
 
@@ -61,7 +79,7 @@ class XLSIrradiationLoaderTestCase(unittest.TestCase):
                                                     ('NM-1001', 'B', 'Triga PR', '8-Hole'),
                                                     ('NM-1001', 'C', 'Triga PR', '8-Hole'),
                                                     ('NM-1001', 'D', 'Triga PR', '8-Hole')])
-
+    @unittest.skipUnless(TEST_LOAD,'Not testing loader')
     def test_add_chronologies(self):
         self.loader.add_irradiations()
         # self.assertListEqual(self.loader.added_chronologies, [('NM-1000', '2012-12-12 01:01:01', 'ED', 1),
@@ -74,7 +92,7 @@ class XLSIrradiationLoaderTestCase(unittest.TestCase):
                                ('NM-1001', '2012-01-12 01:01:00', '2012-01-12 02:01:00', 1),
                                ('NM-1001', '2012-01-12 04:01:00', '2012-01-12 05:01:00', 10),
                                ])
-
+    @unittest.skipUnless(TEST_LOAD,'Not testing loader')
     def test_add_positions(self):
         self.loader.add_positions()
 
