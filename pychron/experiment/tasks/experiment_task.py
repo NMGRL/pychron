@@ -34,19 +34,21 @@ from pychron.experiment.tasks.experiment_panes import LoggerPane
 from pychron.messaging.notify.notifier import Notifier
 from pychron.paths import paths
 from pychron.pychron_constants import SPECTROMETER_PROTOCOL
+from pychron.experiment.tasks.experiment_panes import ExperimentFactoryPane, StatsPane, \
+    ControlsPane, WaitPane, IsotopeEvolutionPane, ConnectionStatusPane
 
 
 class ExperimentEditorTask(EditorTask):
     name = 'Experiment'
 
-    default_filename='Experiment Current.txt'
+    default_filename = 'Experiment Current.txt'
     default_directory = paths.experiment_dir
     default_open_action = 'open files'
     wildcard = '*.txt'
 
     use_notifications = Bool
     use_syslogger = Bool
-    #notifications_port = Int
+    # notifications_port = Int
 
     loading_manager = Instance('pychron.loading.loading_manager.LoadingManager')
     notifier = Instance(Notifier, ())
@@ -60,6 +62,13 @@ class ExperimentEditorTask(EditorTask):
 
     automated_runs_editable = Bool
 
+    isotope_evolution_pane = Instance(IsotopeEvolutionPane)
+    experiment_factory_pane = Instance(ExperimentFactoryPane)
+    wait_pane = Instance(WaitPane)
+    load_pane = Instance('pychron.loading.panes.LoadDockPane')
+    load_table_pane = Instance('pychron.loading.panes.LoadTablePane')
+    laser_control_client_pane = None
+
     def new_pattern(self):
         pm = self._pattern_maker_view_factory()
         self.window.application.open_view(pm)
@@ -72,7 +81,7 @@ class ExperimentEditorTask(EditorTask):
     def send_test_notification(self):
         self.debug('sending test notification')
         db = self.manager.db
-        #         an=db.get_last_analysis('bu-FD-o')
+        # an=db.get_last_analysis('bu-FD-o')
         an = db.get_last_analysis('ba-01-o')
         an = self.manager.make_analysis(an)
         if an:
@@ -135,9 +144,10 @@ class ExperimentEditorTask(EditorTask):
     def execute(self):
         if not self.manager.executor.is_alive():
             self._execute()
-    #===============================================================================
+
+    # ===============================================================================
     # tasks protocol
-    #===============================================================================
+    # ===============================================================================
     def prepare_destroy(self):
         super(ExperimentEditorTask, self).prepare_destroy()
 
@@ -147,18 +157,18 @@ class ExperimentEditorTask(EditorTask):
             self.notifier.close()
 
     def bind_preferences(self):
-        #notifications
+        # notifications
 
         self._preference_binder('pychron.experiment',
                                 ('use_notifications',
                                  'notifications_port',
                                  'automated_runs_editable'))
 
-        #force notifier setup
+        # force notifier setup
         if self.use_notifications:
             self.notifier.setup(self.notifier.port)
 
-        #sys logger
+        # sys logger
         bind_preference(self, 'use_syslogger', 'pychron.use_syslogger')
         if self.use_syslogger:
             self._use_syslogger_changed()
@@ -172,8 +182,6 @@ class ExperimentEditorTask(EditorTask):
         super(ExperimentEditorTask, self).activated()
 
     def create_dock_panes(self):
-        from pychron.experiment.tasks.experiment_panes import ExperimentFactoryPane, StatsPane, \
-            ControlsPane, WaitPane, IsotopeEvolutionPane, ConnectionStatusPane
 
         name = 'Isotope Evolutions'
         man = self.application.get_service(SPECTROMETER_PROTOCOL)
@@ -190,7 +198,7 @@ class ExperimentEditorTask(EditorTask):
                  ControlsPane(model=ex),
                  ConsolePane(model=ex),
                  LoggerPane(),
-                 #AnalysisHealthPane(model=self.analysis_health),
+                 # AnalysisHealthPane(model=self.analysis_health),
                  ConnectionStatusPane(model=ex),
                  self.experiment_factory_pane,
                  self.isotope_evolution_pane,
@@ -225,38 +233,12 @@ class ExperimentEditorTask(EditorTask):
 
         return panes
 
-    # def open(self, path=None):
-        # self.manager.experiment_factory.activate(load_persistence=False)
-        #
-        # if not os.path.isfile(path):
-        #     path = None
-        #
-        # if path is None:
-        #     ps = self.open_file_dialog(action='open files',
-        #                                default_filename='Current Experiment.txt')
-        # else:
-        #     ps = (path,)
-        #
-        # if ps:
-        #     manager = self.manager
-        #     if manager.verify_database_connection(inform=True):
-        #         if manager.load():
-        #             for path in ps:
-        #                 self.manager.info('Opening experiment {}'.format(path))
-        #                 self._open_experiment(path)
-        #
-        #             manager.path = path
-        #             manager.update_info()
-        #
-        #     return True
-        # else:
-        #     self.notifier.close()
     def _open_abort(self):
         self.notifier.close()
 
     def _open_file(self, path, **kw):
         if not isinstance(path, (tuple, list)):
-            path=(path, )
+            path = (path, )
 
         manager = self.manager
         if manager.verify_database_connection(inform=True):
@@ -294,19 +276,6 @@ class ExperimentEditorTask(EditorTask):
         # clear dirty flag
         editor.dirty = False
         self._show_pane(self.experiment_factory_pane)
-
-    #     self._testing()
-    #
-    # def _testing(self):
-    #     editor=self.active_editor
-    #     queue = editor.queue
-    #     editor.executed = True
-    #     queue.executed_runs = queue.automated_runs[:]
-    #     for i,ei in enumerate(queue.executed_runs):
-    #         ei.aliquot = i+1
-    #
-    #     queue.automated_runs = []#queue.automated_runs[2:]
-
 
     def _check_opened(self, path):
         return next((e for e in self.editor_area.editors if e.path == path), None)
@@ -647,23 +616,15 @@ class ExperimentEditorTask(EditorTask):
             if self.active_editor.dirty:
                 self.manager.executor.executable = False
 
-    #===============================================================================
+    # ===============================================================================
     # default/factory
-    #===============================================================================
-    #def _notifier_factory(self):
-    #    n = Notifier(port=self.notifications_port)
-    #    return n
+    # ===============================================================================
     def _pattern_maker_view_factory(self):
         from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
-
         return PatternMakerView()
 
-    def _manager_default(self):
-        return self.application.get_service('pychron.experiment.experimentor.Experimentor')
-        # return self._manager_factory()
-
-    #def _notifier_default(self):
-    #    return self._notifier_factory()
+    # def _manager_default(self):
+    #     return self.application.get_service('pychron.experiment.experimentor.Experimentor')
 
     # def _analysis_health_default(self):
     #     ah = AnalysisHealth(db=self.manager.db)
@@ -674,9 +635,6 @@ class ExperimentEditorTask(EditorTask):
         if lm:
             lm.trait_set(db=self.manager.db,
                          show_group_positions=True)
-            #         lm = LoadingManager(db=self.manager.db,
-            #                             show_group_positions=True
-            #                             )
             return lm
 
     def _default_directory_default(self):
@@ -699,4 +657,42 @@ class ExperimentEditorTask(EditorTask):
                 orientation='vertical'),
             top=PaneItem('pychron.experiment.controls'))
 
-#============= EOF =============================================
+# ============= EOF =============================================
+            # self._testing()
+    #
+    # def _testing(self):
+    #     editor=self.active_editor
+    #     queue = editor.queue
+    #     editor.executed = True
+    #     queue.executed_runs = queue.automated_runs[:]
+    #     for i,ei in enumerate(queue.executed_runs):
+    #         ei.aliquot = i+1
+    #
+    #     queue.automated_runs = []#queue.automated_runs[2:]
+
+# def open(self, path=None):
+        # self.manager.experiment_factory.activate(load_persistence=False)
+        #
+        # if not os.path.isfile(path):
+        # path = None
+        #
+        # if path is None:
+        #     ps = self.open_file_dialog(action='open files',
+        #                                default_filename='Current Experiment.txt')
+        # else:
+        #     ps = (path,)
+        #
+        # if ps:
+        #     manager = self.manager
+        #     if manager.verify_database_connection(inform=True):
+        #         if manager.load():
+        #             for path in ps:
+        #                 self.manager.info('Opening experiment {}'.format(path))
+        #                 self._open_experiment(path)
+        #
+        #             manager.path = path
+        #             manager.update_info()
+        #
+        #     return True
+        # else:
+        #     self.notifier.close()

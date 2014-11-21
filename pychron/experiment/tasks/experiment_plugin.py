@@ -96,15 +96,16 @@ class ExperimentPlugin(BaseTaskPlugin):
         so_sens_selector = self.service_offer_factory(
             protocol=SensitivitySelector,
             factory=self._sens_selector_factory)
-        so_ex = self.service_offer_factory(protocol=Experimentor,
-                                           factory=self._experimentor_factory)
+        # so_ex = self.service_offer_factory(protocol=Experimentor,
+        #                                    factory=self._experimentor_factory)
         return [so_signal_calculator,
                 so_image_browser,
                 so_sens_selector,
-                so_ex]
+                # so_ex
+                ]
 
-    def _experimentor_factory(self):
-        return self.experimentor
+    # def _experimentor_factory(self):
+    #     return self.experimentor
 
     def _experimentor_default(self):
         # from pychron.experiment.experimentor import Experimentor
@@ -124,7 +125,6 @@ class ExperimentPlugin(BaseTaskPlugin):
 
         return exp
 
-
     def _signal_calculator_factory(self, *args, **kw):
         return SignalCalculator()
 
@@ -141,9 +141,8 @@ class ExperimentPlugin(BaseTaskPlugin):
                             image='applications-science',
                             task_group='experiment')]
 
-
     def _task_factory(self):
-        return ExperimentEditorTask()
+        return ExperimentEditorTask(manager=self.experimentor)
 
     def _preferences_panes_default(self):
         return [ExperimentPreferencesPane,

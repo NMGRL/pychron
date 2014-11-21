@@ -19,7 +19,9 @@
 
 from pyface.message_dialog import warning
 from pyface.tasks.task_window_layout import TaskWindowLayout
+
 from pychron.envisage.tasks.actions import PAction as Action, PTaskAction as TaskAction
+
 #============= standard library imports ========================
 import os
 #============= local library imports  ==========================
@@ -32,8 +34,8 @@ EXP_ID = 'pychron.experiment.task'
 class ExperimentAction(Action):
     task_id = EXP_ID
 
-    def _get_experimentor(self, event):
-        return self._get_service(event, 'pychron.experiment.experimentor.Experimentor')
+    # def _get_experimentor(self, event):
+    #     return self._get_service(event, 'pychron.experiment.experimentor.Experimentor')
 
     def _get_service(self, event, name):
         app = event.task.window.application
