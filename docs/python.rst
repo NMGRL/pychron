@@ -2,7 +2,7 @@ Python Primer
 ==================
 
 Think of python as a program. what it does is takes
-human readable source code (.py) and parses,compiles and executes in real time.
+human readable source code (.py) and parses, compiles and executes in real time.
 
 `Python 2.7 Documentation <https://docs.python.org/2.7>`_
 
@@ -13,10 +13,11 @@ You can run python in 2 ways. (there is actually many ways to run from the comma
 Open terminal
 
 1. with no arguments. opens the python interpreter
-$ python
+
+>>> python
 
 2. with a path to python script (absolute or relative path). executes the script
-$ python hello_world.py
+>>> python hello_world.py
 
 Using Python Interpreter
 Zen of Python
@@ -42,8 +43,7 @@ Use the up and down arrows to cycle thru previous commands
 >>> i=0
 >>> i+=1    #same as i = i+1 works for all math operators i -=1, i*=2 etc...
 
-strings are defined using ', ", or ''' blocks
-' and " are equivalent. convenient when needing to nest quotes.
+strings are defined using \', \", or \'\'\' blocks. \' and \" are equivalent. convenient when needing to nest quotes.
 
 >>> s='foo'
 >>> b='bar'
@@ -53,6 +53,8 @@ foo bar
 'foo'
 >>> b
 'bar'
+>>> "foo" == 'foo' == '''foo'''
+True
 
 to make a list of items use a list or tuple
 see http://docs.python.org/tutorial/datastructures.html
@@ -61,6 +63,16 @@ see http://docs.python.org/tutorial/datastructures.html
 >>> l2=['foo','bar']
 >>> t1=(1,2,3)
 >>> t2=('foo','bar')
+
+lists are mutable, tuples are immutable
+
+>>> l1[0]=10
+>>> l1
+[10,2,3,4]
+>>> t1[0]=10
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+TypeError: 'tuple' object does not support item assignment
 
 get the length of the sequence use builtin len
 
@@ -116,8 +128,7 @@ this is a good
 way to write multi
 line text
 
-dictionaries are key:value containers
-there are two syntaxes for creating a dictionary
+Dictionaries are key:value containers. There are two syntaxes for creating a dictionary
 
 >>> d=dict(name='Jake', office=316, building='MSEC')
 >>> d2 = {'name':'Jake','office':316, 'building':'MSEC'} #convenient when the keys are variables as well
@@ -132,13 +143,14 @@ word (key) in are dictionary and read the associated entry
 
 >>> d['name']
 Jake
+
 entries can be modified
+
 >>> d['name']='Jake Ross'
 >>> d['name']
 Jake Ross
 
-string formating is awesome in python
-lets say you want to display some text with your results
+String formating is awesome in python. Lets say you want to display some text with your results
 
 >>> 'the result of {} plus {} is {}'.format(x,y,x+y)
 'the result of 50 plus 53 is 103'
