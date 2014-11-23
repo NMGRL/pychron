@@ -15,8 +15,8 @@
 
   {% for post in site.posts %}
   <entry>
-    <id>http://nmgrl.github.io/pychron/{{ post.id }}</id>
-    <link type="text/html" rel="alternate" href="http://nmgrl.github.io/pychron/{{ post.url }}"/>
+    <id>http://nmgrl.github.io/pychron{{ post.id }}</id>
+    <link type="text/html" rel="alternate" href="http://nmgrl.github.io/pychron{{ post.url }}"/>
     <title>{{ post.title | xml_escape }}</title>
     <updated>{{ post.date | date_to_xmlschema }}</updated>
     <author>
