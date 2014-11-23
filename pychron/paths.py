@@ -22,22 +22,13 @@ make sure directory exists and build if not
 """
 from os import path, mkdir
 
-# host_url = 'https://arlab.googlecode.com/svn'
-# project_root = 'trunk'
-
-# if beta:
-#    home = '{}_beta{}'.format(home, version)
-#    project_root = 'branches/pychron'
-#
-# project_home = join(host_url, project_root)
-import os
-
 
 DEFAULT_INITIALIZATION = '''<root>
     <globals>
     </globals>
     <plugins>
-        <general></general>
+        <general>
+        </general>
         <hardware>
         </hardware>
         <social>
@@ -47,7 +38,7 @@ DEFAULT_INITIALIZATION = '''<root>
 '''
 
 
-class Paths():
+class Paths(object):
     dissertation = '/Users/ross/Programming/git/dissertation'
     enthought = path.join(path.expanduser('~'), '.enthought')
     users_file = path.join(enthought, 'users')
@@ -69,24 +60,12 @@ class Paths():
     labspy_templates = None
     labspy_template_search_path = None
     icon_search_path = None
+    sound_search_path = None
     resources = None
-    #==============================================================================
-    # #database
-    #==============================================================================
-    device_scan_root = device_scan_root = None
-    device_scan_db = None
 
-    co2laser_db_root = None
-    co2laser_db = None
-
-    diodelaser_db_root = None
-    diodelaser_db = None
-
-    isotope_db_root = None
-    isotope_db = None
-    #==============================================================================
+    # ==============================================================================
     # root
-    #==============================================================================
+    # ==============================================================================
     scripts_dir = scripts_dir = None
     experiment_dir = None
     run_block_dir = None
@@ -105,9 +84,9 @@ class Paths():
     custom_queries_dir = None
     template_dir = None
     log_dir = None
-    #===========================================================================
+    # ===========================================================================
     # scripts
-    #===========================================================================
+    # ===========================================================================
     procedures_dir = None
     measurement_dir = None
     post_measurement_dir = None
@@ -116,9 +95,9 @@ class Paths():
     conditionals_dir = None
     hops_dir = None
     fits_dir = None
-    #==============================================================================
+    # ==============================================================================
     # setup
-    #==============================================================================
+    # ==============================================================================
     setup_dir = setup_dir = None
     device_dir = None
     spectrometer_dir = None
@@ -138,9 +117,9 @@ class Paths():
     map_dir = None
     user_points_dir = None
     irradiation_tray_maps_dir = None
-    #==============================================================================
+    # ==============================================================================
     # data
-    #==============================================================================
+    # ==============================================================================
     data_dir = None
     modeling_data_dir = None
     argus_data_dir = None
@@ -161,18 +140,19 @@ class Paths():
     # initialization_dir = None
     # device_creator_dir = None
 
-    #==============================================================================
+    # ==============================================================================
     # lovera exectuables
-    #==============================================================================
+    # ==============================================================================
     clovera_root = None
 
-    #===========================================================================
+    # ===========================================================================
     # files
-    #===========================================================================
+    # ===========================================================================
     backup_recovery_file = None
     last_experiment = None
     mftable = None
     deflection = None
+    system_test = None
 
     def set_search_paths(self, app_rec=None):
         self.app_resources = app_rec
@@ -199,18 +179,18 @@ class Paths():
             root = join(path.expanduser('~'), 'Pychron{}'.format(root))
 
         if not path.isdir(root):
-            os.mkdir(root)
+            mkdir(root)
 
-        sd = os.path.join(root, 'setupfiles')
+        sd = join(root, 'setupfiles')
         if not path.isdir(sd):
-            os.mkdir(sd)
+            mkdir(sd)
 
-        ip = os.path.join(sd, 'initialization.xml')
+        ip = join(sd, 'initialization.xml')
         if not path.isfile(ip):
             with open(ip, 'w') as fp:
                 fp.write(DEFAULT_INITIALIZATION)
 
-        # self.root = root
+        self.root_dir = root
         self.log_dir = join(root, 'logs')
 
         self.resources = join(path.dirname(path.dirname(__file__)), 'resources')
@@ -219,41 +199,10 @@ class Paths():
         self.labspy_templates = join(self.resources, 'labspy_templates')
         self.abouts = join(self.resources, 'abouts')
         self.sounds = join(self.resources, 'sounds')
-        # self.bullets = join(self.resources, 'bullets')
-        #        src_repo_name = 'pychron{}'.format(version)
-        #        self.pychron_src_root = pychron_src_root = join('.', 'pychron.app', 'Contents', 'Resources')
-        #        self.pychron_dev_src_root = join(HOME, 'Programming', 'mercurial',
-        #                                             'pychron{}'.format(version),
-        #                                             'resources'
-        #                                            )
 
-        self.root_dir = root
-        # stable_root = join(HOME, 'Pychrondata')
-        #==============================================================================
-        # #database
-        #==============================================================================
-        #        db_path = '/usr/local/pychron
-        # db_path = stable_root
-        # self.device_scan_root = device_scan_root = join(db_path, 'device_scans')
-        # self.device_scan_db = join(device_scan_root, 'device_scans.sqlite')
-
-        # self.co2laser_db_root = join(db_path, 'co2laserdb')
-        # self.co2laser_db = join(db_path, 'co2.sqlite')
-        # self.uvlaser_db_root = join(db_path, 'uvlaserdb')
-        # self.uvlaser_db = join(db_path, 'uv.sqlite')
-        #
-        # self.powermap_db_root = join(db_path, 'powermap')
-        # self.powermap_db = join(db_path, 'powermap.sqlite')
-        #
-        # self.diodelaser_db_root = join(db_path, 'diodelaserdb')
-        # self.diodelaser_db = join(db_path, 'diode.sqlite')
-        # self.isotope_db_root = join(db_path, 'isotopedb')
-
-        # ROOT = '/Users/ross/Sandbox/pychron_test_data/data'
-        # self.isotope_db = join(ROOT, 'isotopedb.sqlite')
-        #==============================================================================
+        # ==============================================================================
         # root
-        #==============================================================================
+        # ==============================================================================
         self.scripts_dir = scripts_dir = join(root, 'scripts')
         self.procedures_dir = join(scripts_dir, 'procedures')
         self.measurement_dir = join(scripts_dir, 'measurement')
@@ -281,13 +230,13 @@ class Paths():
         self.template_dir = join(root, 'templates')
 
         self.queue_conditionals_dir = join(root, 'queue_conditionals')
-        #==============================================================================
+        # ==============================================================================
         # setup
-        #==============================================================================
+        # ==============================================================================
         self.setup_dir = setup_dir = join(root, 'setupfiles')
         self.spectrometer_dir = join(setup_dir, 'spectrometer')
         self.backup_deflection_dir = join(self.spectrometer_dir, 'deflection_backup')
-        self.device_dir = device_dir = join(setup_dir, 'devices')
+        self.device_dir = join(setup_dir, 'devices')
         self.canvas2D_dir = join(setup_dir, 'canvas2D')
         # self.canvas3D_dir = join(setup_dir, 'canvas3D')
         self.extraction_line_dir = join(setup_dir, 'extractionline')
@@ -300,9 +249,9 @@ class Paths():
         self.user_points_dir = join(map_dir, 'user_points')
 
         self.irradiation_tray_maps_dir = join(setup_dir, 'irradiation_tray_maps')
-        #==============================================================================
+        # ==============================================================================
         # data
-        #==============================================================================
+        # ==============================================================================
         self.data_dir = data_dir = join(root, 'data')
         self.spectrometer_scans_dir = join(data_dir, 'spectrometer_scans')
         self.modeling_data_dir = join(data_dir, 'modeling')
@@ -326,19 +275,19 @@ class Paths():
         self.power_map_dir = join(self.data_dir, 'power_maps')
         self.labbook_dir = join(self.data_dir, 'labbook')
         # self.vcs_dir = join(self.data_dir, 'vcs')
-        #==============================================================================
+        # ==============================================================================
         # lovera exectuables
-        #==============================================================================
+        # ==============================================================================
         #        self.clovera_root = join(pychron_src_root, 'pychron', 'modeling', 'lovera', 'bin')
-
-
-        #=======================================================================
+        # =======================================================================
         # files
-        #=======================================================================
+        # =======================================================================
         self.backup_recovery_file = join(self.hidden_dir, 'backup_recovery')
         self.last_experiment = join(self.hidden_dir, 'last_experiment')
         self.mftable = join(self.spectrometer_dir, 'mftable.csv')
         self.deflection = join(self.spectrometer_dir, 'deflection.yaml')
+        self.system_test = join(self.setup_dir, 'system_test.yaml')
+
         self.set_search_paths()
 
 
@@ -371,4 +320,40 @@ def build_directories():
         if l.endswith('_dir'):
             r_mkdir(getattr(paths, l))
 
-#============= EOF ==============================================
+# ============= EOF ==============================================
+# ==============================================================================
+# # #database
+# # ==============================================================================
+# device_scan_root = device_scan_root = None
+# device_scan_db = None
+#
+# co2laser_db_root = None
+# co2laser_db = None
+#
+# diodelaser_db_root = None
+# diodelaser_db = None
+#
+# isotope_db_root = None
+# isotope_db = None
+# ==============================================================================
+# #database
+# ==============================================================================
+#        db_path = '/usr/local/pychron
+# db_path = stable_root
+# self.device_scan_root = device_scan_root = join(db_path, 'device_scans')
+# self.device_scan_db = join(device_scan_root, 'device_scans.sqlite')
+
+# self.co2laser_db_root = join(db_path, 'co2laserdb')
+# self.co2laser_db = join(db_path, 'co2.sqlite')
+# self.uvlaser_db_root = join(db_path, 'uvlaserdb')
+# self.uvlaser_db = join(db_path, 'uv.sqlite')
+#
+# self.powermap_db_root = join(db_path, 'powermap')
+# self.powermap_db = join(db_path, 'powermap.sqlite')
+#
+# self.diodelaser_db_root = join(db_path, 'diodelaserdb')
+# self.diodelaser_db = join(db_path, 'diode.sqlite')
+# self.isotope_db_root = join(db_path, 'isotopedb')
+
+# ROOT = '/Users/ross/Sandbox/pychron_test_data/data'
+# self.isotope_db = join(ROOT, 'isotopedb.sqlite')

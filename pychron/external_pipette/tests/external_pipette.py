@@ -28,6 +28,9 @@ class DummyManager(object):
     def set_extract_state(self, state):
         pass
 
+    def info(self, *args, **kw):
+        pass
+
 
 class ExternalPipetteTestCase(unittest.TestCase):
     def setUp(self):
