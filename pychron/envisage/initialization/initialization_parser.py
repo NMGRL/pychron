@@ -12,11 +12,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 # from lxml.etree import Element
-from lxml import etree
 from pyface.message_dialog import warning
 #============= standard library imports ========================
 import os
@@ -83,12 +82,12 @@ class InitializationParser(XMLParser):
 
     def get_globals(self):
         tree = self.get_root()
-        tree =tree.find('globals')
+        tree = tree.find('globals')
         return tree.iter()
 
     def set_bool_tag(self, tag, v):
         tree = self.get_root()
-        tree =tree.find('globals')
+        tree = tree.find('globals')
         elem = tree.find(tag)
         if elem is not None:
             elem.text = v
@@ -292,8 +291,16 @@ class InitializationParser(XMLParser):
                 name = ''.join([a.capitalize() for a in name.split('_')])
         else:
             name = name[0].upper() + name[1:]
+        if not category:
+            category = self.get_categories()
 
-        return self._get_element(category, name)
+        if not isinstance(category, (list, tuple)):
+            category = (category, )
+
+        for cat in category:
+            elem = self._get_element(cat, name)
+            if elem is not None:
+                return elem
 
     def get_manager(self, name, plugin):
 
@@ -305,12 +312,13 @@ class InitializationParser(XMLParser):
         return man
 
     def get_categories(self):
-        root = self.get_root()
-        tree = root.find('plugins')
-        s = lambda x: x.tag
-
-        cats = map(s, [c for c in tree.iter(etree.Element)])
-        return list(set(cats))
+        return ['General', 'Data', 'Hardware', 'Social']
+        # root = self.get_root()
+        # tree = root.find('plugins')
+        # s = lambda x: x.tag
+        #
+        # cats = map(s, [c for c in tree.iter(etree.Element)])
+        # return list(set(cats))
         #return map(s, set([c for c in tree.iter()]))
 
     def _get_element(self, category, name, tag='plugin'):
