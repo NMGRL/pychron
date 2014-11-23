@@ -91,7 +91,7 @@ logger = new_logger('ExtractionLinePlugin')
 
 class ExtractionLinePlugin(BaseTaskPlugin):
     id = 'pychron.extraction_line'
-
+    name = 'ExtractionLine'
     #    manager = Instance(ExtractionLineManager)
     def _my_task_extensions_default(self):
         ex = [TaskExtension(actions=[SchemaAddition(id='refresh_canvas',

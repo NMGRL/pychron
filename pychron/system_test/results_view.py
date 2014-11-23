@@ -32,8 +32,11 @@ COLOR_MAP = {'Passed': LIGHT_GREEN,
 
 
 class ResultsAdapter(TabularAdapter):
-    columns = [('Name', 'name'), ('Duration (s)', 'duration'), ('Result', 'result')]
-
+    columns = [('Plugin', 'plugin'),
+               ('Name', 'name'),
+               ('Duration (s)', 'duration'),
+               ('Result', 'result')]
+    plugin_width = Int(200)
     name_width = Int(200)
     duration_text = Property
 
@@ -61,8 +64,15 @@ class ResultsView(Controller):
             do_after(self.auto_close * 1000, self._do_auto_close)
 
     def _do_auto_close(self):
-        if not self._cancel_auto_close:
+        if self.should_close:
             self.info.ui.dispose()
+
+    @property
+    def should_close(self):
+        a = self._cancel_auto_close
+        b = self.model.all_passed
+
+        return not a and b
 
     def traits_view(self):
         v = View(VGroup(UItem('results', editor=TabularEditor(adapter=ResultsAdapter(),

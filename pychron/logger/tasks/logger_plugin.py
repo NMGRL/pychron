@@ -15,14 +15,18 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from envisage.ui.tasks.task_factory import TaskFactory
+
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.logger.tasks.logger_task import LoggerTask
-from envisage.ui.tasks.task_factory import TaskFactory
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
 class LoggerPlugin(BaseTaskPlugin):
     id = 'pychron.logger'
+    name = 'Logger'
+
     def _tasks_default(self):
         return [
                 TaskFactory(id=self.id,
