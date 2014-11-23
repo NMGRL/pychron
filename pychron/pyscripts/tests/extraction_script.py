@@ -8,8 +8,8 @@ from pychron.core.ui import set_qt
 set_qt()
 
 from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
-from pychron.core.helpers.logger_setup import logging_setup
-logging_setup('extraction_tests')
+# from pychron.core.helpers.logger_setup import logging_setup
+# logging_setup('extraction_tests')
 
 
 # class ExtractionTestCase(unittest.TestCase):

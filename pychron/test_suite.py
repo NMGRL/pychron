@@ -6,9 +6,9 @@ use_logger = False
 
 
 def suite():
-    # if use_logger:
-        # from pychron.core.helpers.logger_setup import logging_setup
-        # logging_setup('unittests')
+    if use_logger:
+        from pychron.core.helpers.logger_setup import logging_setup
+        logging_setup('unittests')
 
     from pychron.core.xml.tests.xml_parser import XMLParserTestCase
     from pychron.entry.tests.analysis_loader import XLSAnalysisLoaderTestCase
