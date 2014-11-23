@@ -43,6 +43,12 @@ class DummyApplication(object):
 class DummyManager(object):
     application = DummyApplication()
 
+    def set_extract_state(self):
+        pass
+
+    def info(self):
+        pass
+
 
 class WaitForTestCase(unittest.TestCase):
     def setUp(self):

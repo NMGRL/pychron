@@ -5,13 +5,9 @@ import unittest
 
 from pychron.core.ui import set_qt
 
-
 set_qt()
 
 from pychron.entry.loaders.irradiation_loader import XLSIrradiationLoader
-from pychron.core.helpers.logger_setup import logging_setup
-
-logging_setup('irradiation_loader')
 
 TEST_PARSE_XLS = False
 DEBUGGING = False

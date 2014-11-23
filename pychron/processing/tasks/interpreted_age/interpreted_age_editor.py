@@ -26,7 +26,7 @@ from traitsui.tabular_adapter import TabularAdapter
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.helpers.filetools import view_file, unique_path
 from pychron.core.helpers.iterfuncs import partition
-from pychron.database.adapters.isotope_adapter import InterpretedAge
+from pychron.database.interpreted_age import InterpretedAge
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor

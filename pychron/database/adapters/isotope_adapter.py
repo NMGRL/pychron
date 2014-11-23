@@ -16,8 +16,7 @@
 
 # ============= enthought library imports =======================
 
-from traits.api import Long, HasTraits, Date as TDate, Float, Str, Int, Bool, Property, provides
-from traitsui.api import View, Item, HGroup
+from traits.api import provides
 
 # ============= standard library imports ========================
 from datetime import datetime, timedelta
@@ -28,12 +27,10 @@ from sqlalchemy.sql.functions import count
 from sqlalchemy.sql.expression import and_, func, not_, cast as sql_cast
 from sqlalchemy.orm.exc import NoResultFound
 # ============= local library imports  ==========================
-from pychron.core.helpers.formatting import floatfmt
 from pychron.database.core.functions import delete_one
 from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.database.core.query import compile_query
 from pychron.database.i_browser import IBrowser
-from pychron.database.selectors.isotope_selector import IsotopeAnalysisSelector
 
 # spec_
 from pychron.database.orms.isotope.spec import spec_MassCalHistoryTable, spec_MassCalScanTable, spec_MFTableTable
@@ -80,91 +77,6 @@ from pychron.database.orms.isotope.proc import proc_DetectorIntercalibrationHist
 from pychron.pychron_constants import ALPHAS, alpha_to_int, NULL_STR
 
 
-class InterpretedAge(HasTraits):
-    create_date = TDate
-    id = Long
-
-    sample = Str
-    lithology = Str
-    identifier = Str
-    material = Str
-    irradiation = Str
-
-    age = Float
-    age_err = Float
-    kca = Float
-    kca_err = Float
-
-    age_kind = Str
-    kca_kind = Str
-    mswd = Float
-    nanalyses = Int
-
-    age_error_kind = Str
-    include_j_error_in_mean = Bool
-    include_j_error_in_plateau = Bool
-    include_j_error_in_individual_analyses = Bool
-
-    display_age = Property
-    display_age_err = Property
-    display_age_units = Str('Ma')
-
-    def _get_display_age(self):
-        a = self.age
-        return self._scale_age(a)
-
-    def _get_display_age_err(self):
-        e = self.age_err
-        return self._scale_age(e)
-
-    def _scale_age(self, a):
-        if self.display_age_units == 'ka':
-            a *= 1000
-        elif self.display_age_units == 'Ga':
-            a *= 0.001
-
-        return a
-
-    def traits_view(self):
-        return View(HGroup(Item('age_kind',
-                                style='readonly', show_label=False),
-                           Item('display_age', format_func=lambda x: floatfmt(x, 3),
-                                label='Age',
-                                style='readonly'),
-                           Item('display_age_err',
-                                label=u'\u00b11\u03c3',
-                                format_func=lambda x: floatfmt(x, 4),
-                                style='readonly'),
-                           Item('display_age_units',
-                                style='readonly', show_label=False),
-                           Item('mswd',
-                                format_func=lambda x: floatfmt(x, 2),
-                                style='readonly', label='MSWD')))
-
-
-def write_dates(ds):
-    import pickle
-
-    p = '/Users/ross/Sandbox/dates.p'
-    with open(p, 'w') as fp:
-        pickle.dump([di[0] for di in ds], fp)
-
-
-# def binfunc(ds, delta_seconds):
-#
-# # write_dates(ds)
-#
-# pt = ds[0][0]
-# td = timedelta(seconds=delta_seconds * 0.25)
-#
-#     for di in ds[1:]:
-#         di=di[0]
-#         if (di - pt).total_seconds() > delta_seconds:
-#             yield pt-td, di+td
-#             pt = di
-#     yield pt - td, di + td
-
-
 def binfunc(ds, hours):
     p1 = ds[0][0]
     delta_seconds = hours * 3600
@@ -191,7 +103,12 @@ class IsotopeAdapter(DatabaseAdapter):
         using decorators is the new model
     """
 
-    selector_klass = IsotopeAnalysisSelector
+    # selector_klass = IsotopeAnalysisSelector
+
+    @property
+    def selector_klass(self):
+        from pychron.database.selectors.isotope_selector import IsotopeAnalysisSelector
+        return IsotopeAnalysisSelector
 
     def set_analysis_sensitivity(self, analysis, v, e):
         hist = proc_SensitivityHistoryTable()
@@ -222,6 +139,8 @@ class IsotopeAdapter(DatabaseAdapter):
                     self.debug(msg)
 
     def interpreted_age_factory(self, hi):
+        from pychron.database.interpreted_age import InterpretedAge
+
         dbln = self.get_labnumber(hi.identifier)
         sample = None
         irrad = None
@@ -2486,46 +2405,46 @@ class IsotopeAdapter(DatabaseAdapter):
         return lan - td, han + td
 
 
-if __name__ == '__main__':
-    from pychron.core.helpers.logger_setup import logging_setup
-
-    logging_setup('ia')
-    ia = IsotopeAdapter(
-
-        # name='isotopedb_dev_migrate',
-        # name='isotopedb_FC2',
-        name='isotopedb_dev',
-        username='root',
-        password='Argon',
-        host='localhost',
-        kind='mysql'
-        # name='/Users/ross/Sandbox/exprepo/root/isotopedb.sqlite',
-        #                        name=paths.isotope_db,
-        #                        kind='sqlite'
-    )
-
-    if ia.connect():
-        dbs = IsotopeAnalysisSelector(db=ia,
-                                      # style='simple'
-        )
-        # repo = Repository(root=paths.isotope_dir)
-        # repo = Repository(root='/Users/ross/Sandbox/importtest')
-        # repo = ZIPRepository(root='/Users/ross/Sandbox/importtest/archive004.zip')
-        #        dbs.set_data_manager(kind='local',
-        #                             repository=repo,
-        #                             workspace_root=paths.default_workspace_dir
-        #                             )
-        #    dbs._execute_query()
-        #        dbs.load_recent()
-        dbs.load_last(n=100)
-
-        dbs.configure_traits()
-        #    ia.add_user(project=p, name='mosuer', commit=True)
-        #    p = ia.get_project('Foo3')
-        #    m = ia.get_material('sanidine')
-        #    ia.add_sample(name='FC-7sdh2n', project=p, material=m, commit=True)
-        #===========================================================================
-        # test getting
-        #===========================================================================
-        #    print ia.get_user('mosuer').id
-        #============= EOF =============================================
+# if __name__ == '__main__':
+#     from pychron.core.helpers.logger_setup import logging_setup
+#
+#     logging_setup('ia')
+#     ia = IsotopeAdapter(
+#
+#         # name='isotopedb_dev_migrate',
+#         # name='isotopedb_FC2',
+#         name='isotopedb_dev',
+#         username='root',
+#         password='Argon',
+#         host='localhost',
+#         kind='mysql'
+#         # name='/Users/ross/Sandbox/exprepo/root/isotopedb.sqlite',
+#         #                        name=paths.isotope_db,
+#         #                        kind='sqlite'
+#     )
+#
+#     if ia.connect():
+#         dbs = IsotopeAnalysisSelector(db=ia,
+#                                       # style='simple'
+#         )
+#         # repo = Repository(root=paths.isotope_dir)
+#         # repo = Repository(root='/Users/ross/Sandbox/importtest')
+#         # repo = ZIPRepository(root='/Users/ross/Sandbox/importtest/archive004.zip')
+#         #        dbs.set_data_manager(kind='local',
+#         #                             repository=repo,
+#         #                             workspace_root=paths.default_workspace_dir
+#         #                             )
+#         #    dbs._execute_query()
+#         #        dbs.load_recent()
+#         dbs.load_last(n=100)
+#
+#         dbs.configure_traits()
+#         #    ia.add_user(project=p, name='mosuer', commit=True)
+#         #    p = ia.get_project('Foo3')
+#         #    m = ia.get_material('sanidine')
+#         #    ia.add_sample(name='FC-7sdh2n', project=p, material=m, commit=True)
+#         #===========================================================================
+#         # test getting
+#         #===========================================================================
+#         #    print ia.get_user('mosuer').id
+# ============= EOF =============================================
