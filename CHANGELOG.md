@@ -2,6 +2,7 @@ CHANGELOG
 ============
 2.0.6
 ------------------
+* added StartupTester. use setupfiles/startup_tests.yaml to configure
 
 2.0.5
 ------------------

@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.confirmation_dialog import confirm
+from pyface.constant import YES
 from traits.api import Instance, Int, Property, Any, Str
 from traitsui.api import View, Controller, UItem, TabularEditor, VGroup, UReadonly
 from pyface.timer.do_later import do_after
@@ -63,6 +65,14 @@ class ResultsView(Controller):
         else:
             self.help_str = ''
 
+    def closed( self, info, is_ok ):
+        if not is_ok:
+            if confirm(info.ui.control, 'Are you sure you want to Quit?')==YES:
+                self.model.info('User quit because of Startup fail')
+
+                import sys
+                sys.exit()
+
     def _do_auto_close(self):
         if not self._cancel_auto_close:
             self.info.ui.dispose()
@@ -71,10 +81,14 @@ class ResultsView(Controller):
         v = View(VGroup(UItem('results', editor=TabularEditor(adapter=ResultsAdapter(),
                                                               editable=False,
                                                               selected='controller.selected')),
-                        VGroup(UReadonly('controller.help_str'), show_border=True)),
+                        VGroup(UReadonly('controller.help_str'),
+                               show_border=True,
+                               visible_when='controller.help_str')),
                  title='Test Results',
-                 buttons=['OK'],
+
+                 buttons=['OK', 'Cancel'],
                  width=600,
+                 kind='livemodal',
                  resizable=True)
         return v
 

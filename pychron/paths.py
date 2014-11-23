@@ -294,7 +294,7 @@ class Paths(object):
         self.last_experiment = join(self.hidden_dir, 'last_experiment')
         self.mftable = join(self.spectrometer_dir, 'mftable.csv')
         self.deflection = join(self.spectrometer_dir, 'deflection.yaml')
-        self.startup_tests = join(self.setup_dir, 'startup_test.yaml')
+        self.startup_tests = join(self.setup_dir, 'startup_tests.yaml')
 
         self.set_search_paths()
 

@@ -21,6 +21,7 @@ import time
 from traits.api import HasTraits, Str, Float, Enum, List
 
 
+
 # ============= standard library imports ========================
 import yaml
 # ============= local library imports  ==========================
@@ -74,7 +75,7 @@ class StartupTester(Loggable):
                 self.add_test_result(plugin=pname, name=ti, result='Invalid')
                 continue
 
-            self.info('Testing "{}" "{}"'.format(pname, ti))
+            self.info('Testing "{} - {}"'.format(pname, ti))
             st = time.time()
             result = func()
             if isinstance(result, bool):
