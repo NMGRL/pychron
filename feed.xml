@@ -1,11 +1,12 @@
 ---
 ---
+
 <?xml version="1.0"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title>Pychron Blog</title>
   <link href="http://nmgrl.github.io/pychron/blog/"/>
-  <link type="application/atom+xml" rel="self" href="http://nmgrl.github.io/pychron/atom.xml"/>
+  <link type="application/atom+xml" rel="self" href="http://nmgrl.github.io/pychron/feed.xml"/>
   <updated>{{ site.time | date_to_xmlschema }}</updated>
   <id>http://nmgrl.github.io/pychron/blog/</id>
   <author>
