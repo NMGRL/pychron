@@ -67,7 +67,7 @@ class ResultsView(Controller):
 
     def closed( self, info, is_ok ):
         if not is_ok:
-            if confirm(info.ui.control, 'Are you sure you want to Quit?')==YES:
+            if confirm(info.ui.control,  'Are you sure you want to Quit?')==YES:
                 self.model.info('User quit because of Startup fail')
 
                 import sys
