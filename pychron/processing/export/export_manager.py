@@ -21,11 +21,12 @@ from traits.api import Instance, Enum, Any
 #============= local library imports  ==========================
 from pychron.loggable import Loggable
 from pychron.processing.export.export_spec import ExportSpec
-from pychron.processing.export.exporter import MassSpecExporter, Exporter
+from pychron.processing.export.exporter import Exporter
+from pychron.processing.export.massspec_analysis_exporter import MassSpecAnalysisExporter
 from pychron.processing.export.xml_analysis_exporter import XMLAnalysisExporter
 from pychron.processing.export.yaml_analysis_exporter import YAMLAnalysisExporter
 
-EX_KLASS_DICT={'MassSpec':MassSpecExporter,
+EX_KLASS_DICT={'MassSpec':MassSpecAnalysisExporter,
                'XML':XMLAnalysisExporter,
                'YAML':YAMLAnalysisExporter}
 
@@ -60,7 +61,7 @@ class ExportManager(Loggable):
         return exp
 
     def _exporter_default(self):
-        return MassSpecExporter()
+        return MassSpecAnalysisExporter()
 
     def _kind_changed(self):
 

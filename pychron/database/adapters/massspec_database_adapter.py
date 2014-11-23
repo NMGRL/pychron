@@ -253,10 +253,10 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
             q = q.filter(IrradiationLevelTable.Level == name)
             q = q.filter(IrradiationLevelTable.IrradBaseID == irrad)
             return self._query_one(q)
-            #===============================================================================
-            # adders
-            #===============================================================================
 
+    # ===============================================================================
+    # adders
+    # ===============================================================================
     def add_irradiation_level(self, irrad, name, holder, production, **kw):
         if not self.get_irradiation_level(irrad, name):
             i = IrradiationLevelTable(IrradBaseID=irrad,
@@ -276,9 +276,8 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
                                              HoleNumber=hole,
                                              Material=material,
                                              SampleID=sample,
-                                             J=j, JEr=jerr
-                )
-                self._add_item(i)
+                                             J=j, JEr=jerr)
+                return self._add_item(i)
 
     def add_irradiation_production(self, name, pr, ifc):
         kw = {}

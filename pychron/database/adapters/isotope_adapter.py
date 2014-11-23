@@ -687,7 +687,8 @@ class IsotopeAdapter(DatabaseAdapter):
                 dbpos.level = level
                 self._add_item(dbpos)
 
-            labnumber.irradiation_position = dbpos
+            if labnumber:
+                labnumber.irradiation_position = dbpos
 
             return dbpos
 
@@ -875,43 +876,41 @@ class IsotopeAdapter(DatabaseAdapter):
         return sp
 
     def add_labnumber(self, labnumber,
-                      #                      aliquot,
                       sample=None,
                       unique=True,
-                      sess=None,
                       **kw):
-
-        sample = self.get_sample(sample)
-        if unique:
-            ln = self.get_labnumber(labnumber)
-            #print labnumber, ln, sample, ln.sample
-            if ln and sample and ln.sample != sample:
-                ln = None
-        else:
-            ln = None
-
-        if ln is None:
-            ln = gen_LabTable(identifier=labnumber, **kw)
-            ln.sample = sample
-
-            if sample is None:
-                self.debug('sample {} does not exist'.format(sample))
-                sname = ''
+        with self.session_ctx():
+            sample = self.get_sample(sample)
+            if unique:
+                ln = self.get_labnumber(labnumber)
+                #print labnumber, ln, sample, ln.sample
+                if ln and sample and ln.sample != sample:
+                    ln = None
             else:
-                sname = sample.name
+                ln = None
 
-            #if sample is not None:
-            #    ln.sample_id = sample.id
-            #    #                 sample.labnumbers.append(ln)
-            #    sname = sample.name
-            #else:
-            #    self.debug('sample {} does not exist'.format(sample))
-            #    sname = ''
+            if ln is None:
+                ln = gen_LabTable(identifier=labnumber, **kw)
+                ln.sample = sample
 
-            self.info('adding labnumber={} sample={}'.format(labnumber, sname))
-            self._add_item(ln)
+                if sample is None:
+                    self.debug('sample {} does not exist'.format(sample))
+                    sname = ''
+                else:
+                    sname = sample.name
 
-        return ln
+                #if sample is not None:
+                #    ln.sample_id = sample.id
+                #    #                 sample.labnumbers.append(ln)
+                #    sname = sample.name
+                #else:
+                #    self.debug('sample {} does not exist'.format(sample))
+                #    sname = ''
+
+                self.info('adding labnumber={} sample={}'.format(labnumber, sname))
+                self._add_item(ln)
+
+            return ln
 
     def add_analysis(self, labnumber, **kw):
         #        if isinstance(labnumber, (str, int, unicode)):
@@ -1451,6 +1450,13 @@ class IsotopeAdapter(DatabaseAdapter):
                 self.debug('get last labnumber {}'.format(e))
                 return
 
+    def get_greatest_identifier(self, **kw):
+        with self.session_ctx() as sess:
+            q = sess.query(gen_LabTable.identifier)
+            q = q.order_by(gen_LabTable.identifier.desc())
+            ret = self._query_first(q)
+            return int(ret[0]) if ret else 0
+
     def get_greatest_aliquot(self, ln):
         with self.session_ctx() as sess:
             if ln:
@@ -1744,19 +1750,18 @@ class IsotopeAdapter(DatabaseAdapter):
         return self._retrieve_item(irrad_ProductionTable, value, )
 
     def get_irradiation(self, value):
-        return self._retrieve_item(irrad_IrradiationTable, value, )
+        return self._retrieve_item(irrad_IrradiationTable, value, verbose_query=True)
 
     def get_irradiation_level_byid(self, lid):
         return self._retrieve_item(irrad_LevelTable, lid, key='id')
 
     def get_irradiation_level(self, irrad, level, mass_spectrometers=None):
-
-
         return self._retrieve_items(irrad_LevelTable,
                                     joins=(irrad_IrradiationTable,),
                                     filters=(irrad_IrradiationTable.name == irrad,
                                              irrad_LevelTable.name == level),
-                                    func='one')
+                                    func='one',
+                                    verbose_query=True)
         # with self.session_ctx() as s:
         #     #         with session(sess) as s:
         #     #         sess = self.get_session()
@@ -2021,7 +2026,7 @@ class IsotopeAdapter(DatabaseAdapter):
 
                 kw['query_hook'] = func
 
-        return self._retrieve_items(gen_LabTable, debug_query=True, **kw)
+        return self._retrieve_items(gen_LabTable, verbose_query=True, **kw)
 
     def get_labnumbers(self, identifiers=None, low_post=None, high_post=None,
                        mass_spectrometers=None,
@@ -2059,7 +2064,7 @@ class IsotopeAdapter(DatabaseAdapter):
 
                 kw['query_hook'] = func
 
-        return self._retrieve_items(gen_LabTable, debug_query=True, **kw)
+        return self._retrieve_items(gen_LabTable, verbose_query=True, **kw)
 
     def get_flux_monitors(self, **kw):
         return self._retrieve_items(flux_MonitorTable, **kw)
@@ -2125,7 +2130,7 @@ class IsotopeAdapter(DatabaseAdapter):
 
         return self._retrieve_items(irrad_IrradiationTable,
                                     order=getattr(irrad_IrradiationTable.name, order_func)(),
-                                    debug_query=True,
+                                    verbose_query=True,
                                     **kw)
 
     def get_irradiation_productions(self, **kw):

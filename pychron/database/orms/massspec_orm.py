@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -233,6 +233,7 @@ class IrradiationLevelTable(Base):
     Level = Column(String(80), primary_key=True)
     SampleHolder = Column(String(40))
     ProductionRatiosID = Column(Integer, ForeignKey('IrradiationProductionTable.ProductionRatiosID'))
+    ExperimentType = Column(Integer, default=1)
 
 
 class IrradiationProductionTable(Base):
@@ -265,6 +266,7 @@ class IrradiationProductionTable(Base):
     @property
     def Cl3638(self):
         return self.P36Cl38Cl
+
 
 class IrradiationChronologyTable(Base):
     __tablename__ = 'irradiationchronologytable'

@@ -28,7 +28,6 @@ from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 import os
 import weakref
 # =============local library imports  ==========================
-from pychron.core.codetools.inspection import conditional_caller
 from pychron.database.core.query import compile_query
 from pychron.loggable import Loggable
 from pychron.database.core.base_orm import AlembicVersionTable
@@ -72,7 +71,7 @@ class SessionCTX(object):
             if not self._parent.sess_stack:
                 self._parent.sess = None
 
-        #print 'exit',self._commit, self._close_at_exit, self._parent._sess_stack
+        # print 'exit',self._commit, self._close_at_exit, self._parent._sess_stack
         # self._sess.flush()
         if self._close_at_exit:
             try:
@@ -104,7 +103,7 @@ class DatabaseAdapter(Loggable):
     kind = Str  # ('mysql')
     username = Str  # ('root')
     host = Str  # ('localhost')
-    #    name = Str#('massspecdata_local')
+    # name = Str#('massspecdata_local')
     password = Password  # ('Argon')
 
     selector_klass = Any
@@ -126,6 +125,7 @@ class DatabaseAdapter(Loggable):
 
     path = Str
     echo = False
+    verbose_retrieve_query = False
 
     def __init__(self, *args, **kw):
         super(DatabaseAdapter, self).__init__(*args, **kw)
@@ -432,7 +432,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
                         reraise=False,
                         func='all',
                         group_by=None,
-                        debug_query=False):
+                        verbose_query=False):
 
         sess = self.sess
         if sess is None:
@@ -485,7 +485,8 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
             if query_hook:
                 q = query_hook(q)
 
-            if debug_query:
+            if verbose_query or self.verbose_retrieve_query:
+                # print compile_query(q)
                 self.debug(compile_query(q))
 
             return self._query(q, func, reraise)
@@ -513,15 +514,22 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
                 print 'execption first', e
                 return
 
-    def _query_all(self, q, reraise=False):
-        ret = self._query(q, 'all', reraise)
-        if not ret:
-            ret = []
+    def _query_all(self, q, **kw):
+        ret = self._query(q, 'all', **kw)
+        return ret or []
 
-        return ret
+    def _query_first(self, q, **kw):
+        return self._query(q, 'first', **kw)
 
-    @conditional_caller
-    def _query(self, q, func, reraise):
+    def _query_one(self, q, **kw):
+        q = q.limit(1)
+        return self._query(q, 'one', **kw)
+
+    # @conditional_caller
+    def _query(self, q, func, reraise=False, verbose_query=False):
+        if verbose_query:
+            self.debug(compile_query(q))
+
         # print compile_query(q)
         f = getattr(q, func)
         try:
@@ -533,10 +541,6 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
             # import traceback
             # traceback.print_exc()
             self.sess.rollback()
-
-    def _query_one(self, q, reraise=False):
-        q = q.limit(1)
-        return self._query(q, 'one', reraise)
 
     def _retrieve_item(self, table, value, key='name', last=None,
                        joins=None, filters=None, options=None, verbose=True,
@@ -578,7 +582,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
             if last:
                 q = q.order_by(last)
 
-            if verbose_query:
+            if verbose_query or self.verbose_retrieve_query:
                 self.debug(compile_query(q))
 
             ntries = 3
@@ -675,7 +679,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
             return s
 
 
-#    def _get(self, table, query_dict, func='one'):
+# def _get(self, table, query_dict, func='one'):
 #        sess = self.get_session()
 #        q = sess.query(table)
 #        f = q.filter_by(**query_dict)

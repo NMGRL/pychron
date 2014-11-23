@@ -220,7 +220,7 @@ class proc_BlanksSetTable(Base, BaseMixin):
     blank_analysis_id = foreignkey('meas_AnalysisTable')
     # set_id = Column(Integer)
     set_id = stringcolumn()
-    blanks = relationship('proc_BlanksTable', backref='analysis_set')
+    # blanks = relationship('proc_BlanksTable', backref='analysis_set')
 
 
 class proc_BlanksHistoryTable(Base, HistoryMixin):
@@ -249,6 +249,7 @@ class proc_BlanksTable(Base, BaseMixin):
 
     analysis_set = relationship('proc_BlanksSetTable',
                                 primaryjoin='proc_BlanksTable.set_id==proc_BlanksSetTable.set_id',
+                                backref = 'blanks',
                                 uselist=True)
 
     # analysis_set = relationship('proc_BlanksSetTable')

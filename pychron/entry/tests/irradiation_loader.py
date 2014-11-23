@@ -9,9 +9,12 @@ from pychron.core.ui import set_qt
 set_qt()
 
 from pychron.entry.loaders.irradiation_loader import XLSIrradiationLoader
+from pychron.core.helpers.logger_setup import logging_setup
 
+logging_setup('irradiation_loader')
 
 TEST_PARSE_XLS = False
+DEBUGGING = False
 
 DBNAME = 'loader.db'
 
@@ -24,11 +27,11 @@ def get_data_dir():
 
 
 def db_factory():
-    from pychron.database.adapters.massspec_database_adapter import MassSpecDatabaseAdapter
-    from pychron.database.orms.massspec_orm import Base
+    from pychron.database.adapters.isotope_adapter import IsotopeAdapter
+    from pychron.database.orms.isotope.util import Base
 
-
-    db = MassSpecDatabaseAdapter()
+    db = IsotopeAdapter()
+    db.verbose_retrieve_query = True
     db.trait_set(kind='sqlite', path=os.path.join(get_data_dir(), DBNAME))
     db.connect()
 
@@ -55,22 +58,125 @@ class XLSIrradiationLoaderLoadTestCase(unittest.TestCase):
         # rebuild the local db
         self.loader.db = db_factory()
 
-    # def test_load_irradiation(self):
-    # ret = self.loader.load_irradiation(self.input_path)
-    #     self.assertTrue(ret)
-
+    @unittest.skipIf(DEBUGGING, 'Debugging tests')
     def test_add_irradiation_dry(self):
+        self.loader.add_irradiation('NM-1000', dry=True)
+        obj = self.loader.db.get_irradiation('NM-1000')
+        self.assertIsNone(obj)
+
+    @unittest.skipIf(DEBUGGING, 'Debugging tests')
+    def test_add_irradiation(self):
+        self.loader.add_irradiation('NM-1000')
+        with self.loader.db.session_ctx():
+            obj = self.loader.db.get_irradiation('NM-1000')
+            self.assertEqual(obj.name, 'NM-1000')
+
+    @unittest.skipIf(DEBUGGING, 'Debugging tests')
+    def test_add_level_dry(self):
+        self.loader.add_irradiation('NM-1000')
         self.loader.add_irradiation_level('NM-1000', 'A', '8-Hole', 1, dry=True)
         obj = self.loader.db.get_irradiation_level('NM-1000', 'A')
         self.assertIsNone(obj)
 
-    def test_add_irradiation(self):
+    @unittest.skipIf(DEBUGGING, 'Debugging tests')
+    def test_add_level(self):
+        self.loader.add_irradiation('NM-1000')
         self.loader.add_irradiation_level('NM-1000', 'A', '8-Hole', 1)
         with self.loader.db.session_ctx():
             obj = self.loader.db.get_irradiation_level('NM-1000', 'A')
-            self.assertEqual(obj.IrradBaseID, 'NM-1000')
+            self.assertTupleEqual((obj.irradiation.name, obj.name),
+                                  ('NM-1000', 'A'))
+
+    @unittest.skipIf(DEBUGGING, 'Debugging tests')
+    def test_add_position_dry(self):
+        self.loader.add_irradiation('NM-1000')
+        self.loader.add_irradiation_level('NM-1000', 'A', '8-Hole', 1)
+        pdict = {'irradiation': 'NM-1000',
+                 'level': 'A',
+                 'position': 1,
+                 'material': 'sanidine',
+                 'sample': 'FC-2',
+                 'is_monitor': True,
+                 'weight': 100,
+                 'note': 'this is a note'}
+
+        self.loader.add_position(pdict, dry=True)
+        obj = self.loader.db.get_irradiation_position('NM-1000', 'A', 1)
+        self.assertIsNone(obj)
+
+    @unittest.skipIf(DEBUGGING, 'Debugging tests')
+    def test_add_position(self):
+        self.loader.add_irradiation('NM-1000')
+        self.loader.add_irradiation_level('NM-1000', 'A', '8-Hole', 1)
+        pdict = {'irradiation': 'NM-1000',
+                 'level': 'A',
+                 'position': 1,
+                 'material': 'sanidine',
+                 'sample': 'FC-2',
+                 'is_monitor': True,
+                 'weight': 100,
+                 'note': 'this is a note'}
+
+        self.loader.add_position(pdict)
+        with self.loader.db.session_ctx():
+            obj = self.loader.db.get_irradiation_position('NM-1000', 'A', 1)
+            self.assertTupleEqual((obj.position, obj.level.name, obj.level.irradiation.name),
+                                  (1, 'A', 'NM-1000'))
 
 
+    @unittest.skipIf(DEBUGGING, 'Debugging tests')
+    def test_generate_offsets1(self):
+        # fool loader into thinking 1 irradiation and 1 level were added
+        self.loader._added_irradiations = [0]
+        self.loader._added_levels = [0]
+
+        io, lo = self.loader.update_offsets()
+        self.assertTupleEqual((io, lo), (100,0))
+
+    # @unittest.skipIf(DEBUGGING, 'Debugging tests')
+    def test_generate_labnumber(self):
+        # add a placeholder labnumber
+
+        self.loader.db.add_labnumber(1000, 'FC-2')
+
+        # fool loader into thinking 1 irradiation and 1 level were added
+        self.loader._added_irradiations = [0]
+        self.loader._added_levels = [0]
+
+        gen = self.loader.identifier_generator()
+
+        self.assertEqual((gen.next(), gen.next()), (1100,1101))
+
+    # def test_generate_offsets2(self):
+    #     # fool loader into thinking 2 irradiations and 8 level were added (4 to each irradiation)
+    #     self.loader._added_irradiations = [0,1]
+    #     self.loader._added_levels = [0,0,0,0,1,1,1,1]
+    #
+    #     io, lo = self.loader.update_offsets()
+    #     self.assertTupleEqual((io, lo), (200, 0))
+
+        # idn2 = self.loader.next_identifier()
+
+        # self.assertTupleEqual((idn1,idn2), (1100, 1110))
+
+        # self.loader.autogenerate_labnumber = True
+        # self.loader.add_irradiation('NM-1000')
+        # self.loader.add_irradiation_level('NM-1000', 'A', '8-Hole', 1)
+        # pdict = {'irradiation': 'NM-1000',
+        #          'level': 'A',
+        #          'position': 1,
+        #          'material': 'sanidine',
+        #          'sample': 'FC-2',
+        #          'is_monitor': True,
+        #          'weight': 100,
+        #          'note': 'this is a note'}
+        #
+        # self.loader.add_position(pdict)
+        # with self.loader.db.session_ctx():
+        #     obj = self.loader.db.get_irradiation_position('NM-1000', 'A', 1)
+        #     self.assertTupleEqual((obj.labnumber.identifier, obj.position, obj.level.name, obj.level.irradiation.name),
+        #                           (1000, 1, 'A', 'NM-1000'))
+        #
 class XLSIrradiationLoaderParseTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -87,13 +193,11 @@ class XLSIrradiationLoaderParseTestCase(unittest.TestCase):
         self.loader.open(self.input_path)
 
     def test_make_template(self):
-
         ip = os.path.join(get_data_dir(), 'template.xls')
         self.loader.make_template(ip)
         self.assertTrue(os.path.isfile(ip))
 
     def test_irradiation1(self):
-
         p = get_data_dir()
         p = os.path.join(p, DBNAME)
 
@@ -140,8 +244,7 @@ class XLSIrradiationLoaderParseTestCase(unittest.TestCase):
                              [('NM-1000', '2012-12-12 01:01:00', '2012-12-12 02:01:00', 1),
                               ('NM-1000', '2012-12-12 04:01:00', '2012-12-12 05:01:00', 1),
                               ('NM-1001', '2012-01-12 01:01:00', '2012-01-12 02:01:00', 1),
-                              ('NM-1001', '2012-01-12 04:01:00', '2012-01-12 05:01:00', 10),
-                             ])
+                              ('NM-1001', '2012-01-12 04:01:00', '2012-01-12 05:01:00', 10)])
 
     def test_add_positions(self):
         self.loader.add_positions()
