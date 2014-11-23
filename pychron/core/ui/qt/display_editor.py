@@ -96,11 +96,10 @@ class _DisplayEditor(Editor):
 
     def update_editor(self, *args, **kw):
         ctrl = self.control
-
         if self.value:
             while 1:
                 try:
-                    v, c, force, is_marker = self.value.get(timeout=0.0001)
+                    v, c, force, is_marker = self.value.get(timeout=0.01)
                 except Empty:
                     return
                 fmt = ctrl.currentCharFormat()

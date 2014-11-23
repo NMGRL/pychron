@@ -48,31 +48,24 @@ class ResultsAdapter(TabularAdapter):
 
 
 class ResultsView(Controller):
-    model = Instance('pychron.system_test.tester.SystemTester')
+    model = Instance('pychron.startup_test.tester.StartupTester')
     auto_close = 5
     selected = Any
 
-    # def close( self, info, is_ok ):
-    # print info, is_ok
     help_str = Str('Select any row to cancel auto close')
 
     def _selected_changed(self, new):
         self._cancel_auto_close = bool(new)
 
     def init(self, info):
-        if self.auto_close:
+        if self.auto_close and self.model.all_passed:
             do_after(self.auto_close * 1000, self._do_auto_close)
+        else:
+            self.help_str = ''
 
     def _do_auto_close(self):
-        if self.should_close:
+        if not self._cancel_auto_close:
             self.info.ui.dispose()
-
-    @property
-    def should_close(self):
-        a = self._cancel_auto_close
-        b = self.model.all_passed
-
-        return not a and b
 
     def traits_view(self):
         v = View(VGroup(UItem('results', editor=TabularEditor(adapter=ResultsAdapter(),

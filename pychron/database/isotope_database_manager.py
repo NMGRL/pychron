@@ -15,22 +15,19 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from itertools import groupby
 
 from traits.api import String, Property, Event, \
     cached_property, Any, Int
+from traits.has_traits import provides
 from apptools.preferences.preference_binding import bind_preference
-
 # ============= standard library imports ========================
+from itertools import groupby
 import weakref
 # ============= local library imports  ==========================
-from traits.has_traits import provides
 from pychron.core.i_datastore import IDatastore
 from pychron.core.progress import progress_loader, CancelLoadingError
 from pychron.database.adapters.isotope_adapter import IsotopeAdapter
 from pychron.core.helpers.iterfuncs import partition
-from pychron.core.ui.progress_dialog import myProgressDialog
-
 from pychron.loggable import Loggable
 from pychron.database.orms.isotope.meas import meas_AnalysisTable
 from pychron.experiment.utilities.identifier import make_runid
@@ -128,7 +125,7 @@ class BaseIsotopeDatabaseManager(Loggable):
         return self._open_progress(n, **kw)
 
     def _open_progress(self, n, close_at_end=True):
-
+        from pychron.core.ui.progress_dialog import myProgressDialog
         pd = myProgressDialog(max=n - 1,
                               #dialog_size=(0,0, 550, 15),
                               close_at_end=close_at_end,

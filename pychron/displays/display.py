@@ -1,37 +1,37 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from PySide.QtGui import QColor
 from traits.api import HasTraits, Int, Color, Str, Event, Bool
 # from traitsui.api import View, UItem
-#from pychron.lasers.scanner import ApplicationController
+# from pychron.lasers.scanner import ApplicationController
 from traitsui.item import UItem
 from traitsui.view import View
 from pychron.application_controller import ApplicationController
 from pychron.core.ui.display_editor import DisplayEditor
-from pychron.core.ui.gui import invoke_in_main_thread
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from threading import Lock
 from Queue import Queue
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 # from pychron.viewable import Viewable
 
+
 class DisplayModel(HasTraits):
-    #     messages = List
+    # messages = List
     #     max_messages = Int(300)
     #    message = Tuple
     clear_event = Event
@@ -49,7 +49,8 @@ class DisplayModel(HasTraits):
 
     def add_text(self, txt, color, force=False, is_marker=False, **kw):
         self.qmessage.put((txt, color, force, is_marker))
-        invoke_in_main_thread(self.trait_set, refresh=True)
+        self.refresh = True
+        # invoke_in_main_thread(self.trait_set, refresh=True)
 
 
 class DisplayController(ApplicationController):
@@ -60,7 +61,7 @@ class DisplayController(ApplicationController):
     title = Str
 
     default_color = Color('black')
-    #    default_size = Int
+    # default_size = Int
     bgcolor = Color
     font_name = Str
     font_size = Int(12)
@@ -74,12 +75,12 @@ class DisplayController(ApplicationController):
     was_closed = Bool(False)
     text_added = Event
 
-    def __init__(self,  *args, **kw):
+    def __init__(self, *args, **kw):
         super(DisplayController, self).__init__(model=DisplayModel(),
                                                 *args, **kw)
         self._lock = Lock()
-        self.model.font_size=self.font_size
-        self.model.bgcolor=self.bgcolor
+        self.model.font_size = self.font_size
+        self.model.bgcolor = self.bgcolor
 
     def init(self, info):
         self.opened = True
@@ -157,14 +158,14 @@ class DisplayController(ApplicationController):
 
     def _bgcolor_changed(self, new):
         if self.model:
-            self.model.bgcolor=new
+            self.model.bgcolor = new
 
     def _font_size_changed(self, new):
         if self.model:
-            self.model.font_size=new
+            self.model.font_size = new
 
 
-#    def show(self):
+# def show(self):
 #        if not self.visible:
 #            invoke_in_main_thread(self.edit_traits)
 #        elif self.info:

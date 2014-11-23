@@ -25,17 +25,17 @@ import weakref
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.hardware.core.i_core_device import ICoreDevice
-from pychron.system_test.results_view import ResultsView
-from pychron.system_test.tester import SystemTester
+from pychron.startup_test.results_view import ResultsView
+from pychron.startup_test.tester import StartupTester
 
 
 class BaseTasksApplication(TasksApplication, Loggable):
     about_dialog = Instance(Dialog)
-    system_tester = Instance(SystemTester, ())
+    startup_tester = Instance(StartupTester)
     uis = List
 
     def _started_fired(self):
-        st = self.system_tester
+        st = self.startup_tester
         if st.results:
             v = ResultsView(model=st)
             self.open_view(v)
@@ -47,6 +47,8 @@ class BaseTasksApplication(TasksApplication, Loggable):
         if globalv.open_logger_on_launch:
             self._load_state()
             self.open_task('pychron.logger')
+
+        self.startup_tester = StartupTester()
 
         return super(BaseTasksApplication, self).start()
 

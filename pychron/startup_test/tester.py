@@ -15,9 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
 import time
 
 from traits.api import HasTraits, Str, Float, Enum, List
+
 
 # ============= standard library imports ========================
 import yaml
@@ -43,12 +45,11 @@ class TestResult(HasTraits):
     result = Enum('Passed', 'Failed', 'Skipped', 'Invalid')
 
 
-class SystemTester(Loggable):
+class StartupTester(Loggable):
     results = List
 
     def __init__(self, *args, **kw):
-        super(SystemTester, self).__init__(*args, **kw)
-
+        super(StartupTester, self).__init__(*args, **kw)
         self._tests = self._load()
 
     def test_plugin(self, plugin):
@@ -59,7 +60,7 @@ class SystemTester(Loggable):
         try:
             tests = self._get_tests(pname)
         except KeyError:
-            self.warning('Could not load tests for "{}". Check system_test.yaml format'.format(pname))
+            self.warning('Could not load tests for "{}". Check startup_test.yaml format'.format(pname))
             return
 
         if not tests:
@@ -95,12 +96,16 @@ class SystemTester(Loggable):
             self.results.append(TestResult(**kw))
 
     def _get_tests(self, name):
-        return next((ti['tests'] for ti in self._tests if ti['plugin'].lower() == name.lower()), None)
+        if self._tests:
+            return next((ti['tests'] for ti in self._tests if ti['plugin'].lower() == name.lower()), None)
 
     def _load(self):
-        with open(paths.system_test, 'r') as fp:
-            yd = yaml.load(fp)
-        return yd
+        if os.path.isfile(paths.startup_tests):
+            with open(paths.startup_tests, 'r') as fp:
+                yd = yaml.load(fp)
+            return yd
+        else:
+            self.warning('No Startup Test file located at "{}"'.format(paths.startup_tests))
 
     @property
     def all_passed(self):

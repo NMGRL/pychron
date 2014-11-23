@@ -37,6 +37,19 @@ DEFAULT_INITIALIZATION = '''<root>
 </root>
 '''
 
+DEFAULT_STARTUP_TESTS = '''- plugin: Database
+  tests:
+      - test_pychron
+      - test_massspec
+- plugin: LabBook
+  tests:
+- plugin: ArArConstants
+  tests:
+- plugin: ArgusSpectrometer
+  tests:
+      - test_communication
+'''
+
 
 class Paths(object):
     dissertation = '/Users/ross/Programming/git/dissertation'
@@ -152,7 +165,7 @@ class Paths(object):
     last_experiment = None
     mftable = None
     deflection = None
-    system_test = None
+    startup_tests = None
 
     def set_search_paths(self, app_rec=None):
         self.app_resources = app_rec
@@ -184,11 +197,6 @@ class Paths(object):
         sd = join(root, 'setupfiles')
         if not path.isdir(sd):
             mkdir(sd)
-
-        ip = join(sd, 'initialization.xml')
-        if not path.isfile(ip):
-            with open(ip, 'w') as fp:
-                fp.write(DEFAULT_INITIALIZATION)
 
         self.root_dir = root
         self.log_dir = join(root, 'logs')
@@ -286,22 +294,26 @@ class Paths(object):
         self.last_experiment = join(self.hidden_dir, 'last_experiment')
         self.mftable = join(self.spectrometer_dir, 'mftable.csv')
         self.deflection = join(self.spectrometer_dir, 'deflection.yaml')
-        self.system_test = join(self.setup_dir, 'system_test.yaml')
+        self.startup_tests = join(self.setup_dir, 'startup_test.yaml')
 
         self.set_search_paths()
+
+        self._write_default_files()
+
+    def _write_default_files(self):
+        for p, d in ((path.join(self.setup_dir, 'initialization.xml'), DEFAULT_INITIALIZATION),
+                     (self.startup_tests, DEFAULT_STARTUP_TESTS)):
+            self._write_default_file(p, d)
+
+    def _write_default_file(self, p, default):
+        if not path.isfile(p):
+            with open(p, 'w') as fp:
+                fp.write(default)
 
 
 paths = Paths()
 paths.build('_dev')
 
-
-# def rec_make(pi):
-#     if pi and not path.exists(pi):
-#         try:
-#             mkdir(pi)
-#         except OSError:
-#             rec_make(path.split(pi)[0])
-#             mkdir(pi)
 
 def r_mkdir(p):
     if p and not path.isdir(p):

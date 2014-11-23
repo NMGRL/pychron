@@ -25,7 +25,7 @@ from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 class DatabasePlugin(BaseTaskPlugin):
     id = 'pychron.database'
     name = 'Database'
-    _connectable = True
+    _connectable = False
     _db = None
 
     def test_pychron(self):
@@ -69,7 +69,7 @@ class DatabasePlugin(BaseTaskPlugin):
         return [so, ]
 
     def start(self):
-        self.system_test()
+        self.startup_test()
         if self._connectable:
             self._db.populate_default_tables()
             del self._db
