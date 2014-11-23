@@ -49,13 +49,11 @@ class BaseTaskPlugin(Plugin):
     def check(self):
         return True
 
-    # def system_test(self):
-    #     for t in self._tests:
-    #         result = self._do_test(t)
-    #         self.application.system_tester.add_test_result(result)
+    def system_test(self):
+        self.application.system_tester.test_plugin(self)
 
     def start(self):
-        self.application.system_tester.test_plugin(self)
+        self.system_test()
 
     # private
     def _get_task_extensions(self):

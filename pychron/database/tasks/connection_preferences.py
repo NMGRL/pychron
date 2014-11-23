@@ -12,26 +12,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pyface.timer.do_later import do_later
 from traits.api import Str, Password, Enum, Button, Bool, \
-    on_trait_change, Color, String, Event
+    on_trait_change, Color, String
 from traits.has_traits import HasTraits
 from traitsui.api import View, Item, Group, VGroup, HGroup, ListStrEditor, spring, Label, Spring
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from pychron.database.adapters.massspec_database_adapter import MassSpecDatabaseAdapter
 
-from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper, \
     FavoritesPreferencesHelper, FavoritesAdapter
 
 
-
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
 
 
@@ -77,10 +74,6 @@ class ConnectionMixin(HasTraits):
 
 class ConnectionPreferences(FavoritesPreferencesHelper, ConnectionMixin):
     preferences_path = 'pychron.database'
-    #id = 'pychron.database.preferences_page'
-
-    #fav_name = Str
-    # save_username = Str
 
     db_name = Str
     username = Str
@@ -185,6 +178,7 @@ class MassSpecConnectionPreferences(BasePreferencesHelper, ConnectionMixin):
     password = Password
     host = Str
     adapter_klass = 'pychron.database.adapters.massspec_database_adapter.MassSpecDatabaseAdapter'
+    enabled = Bool
 
     def _anytrait_changed(self, name, old, new):
         if name not in ('connected_label', 'connected_color',
@@ -206,7 +200,8 @@ class MassSpecConnectionPane(PreferencesPane):
     category = 'Database'
 
     def traits_view(self):
-        cgrp = HGroup(icon_button_editor('test_connection', 'database_connect',
+        cgrp = HGroup(Spring(width=10, springy=False),
+                      icon_button_editor('test_connection', 'database_connect',
                                          tooltip='Test connection'),
                       Spring(width=10, springy=False),
                       Label('Status:'),
@@ -214,17 +209,18 @@ class MassSpecConnectionPane(PreferencesPane):
                                   label='Status',
                                   weight='bold',
                                   color_name='connected_color'))
-        massspec_grp = Group(
-            VGroup(
-                cgrp,
-                Item('name', label='Database'),
-                Item('host', label='Host'),
-                Item('username', label='Name'),
-                Item('password', label='Password'),
-                show_border=True,
-                label='Authentication'),
-            label='MassSpec DB')
+
+        massspec_grp = VGroup(Item('enabled', label='Use MassSpec'),
+                              VGroup(
+                                  cgrp,
+                                  Item('name', label='Database'),
+                                  Item('host', label='Host'),
+                                  Item('username', label='Name'),
+                                  Item('password', label='Password'),
+                                  enabled_when='enabled',
+                                  show_border=True,
+                                  label='Authentication'),
+                              label='MassSpec DB')
 
         return View(massspec_grp)
-
-        #============= EOF =============================================
+# ============= EOF =============================================
