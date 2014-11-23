@@ -15,29 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import HasTraits, Str, Float, Enum, List
+# ============= standard library imports ========================
 import os
 import time
-
-from traits.api import HasTraits, Str, Float, Enum, List
-
-
-
-# ============= standard library imports ========================
 import yaml
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
 from pychron.paths import paths
 
-
-# def convert_plugin_name(name):
-#     """
-#         remove spaces and trailing "Plugin"
-#     :param name: str
-#     :return: new name: str
-#     """
-#     ns = name.split(' ')[:-1]
-#     name = ''.join(ns)
-#     return name
 
 class TestResult(HasTraits):
     name = Str
@@ -54,10 +40,7 @@ class StartupTester(Loggable):
         self._tests = self._load()
 
     def test_plugin(self, plugin):
-
-        # pname = convert_plugin_name(plugin.name)
         pname = plugin.name
-
         try:
             tests = self._get_tests(pname)
         except KeyError:

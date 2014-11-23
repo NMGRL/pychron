@@ -82,17 +82,16 @@ class BaseLaserPlugin(BaseTaskPlugin):
                 klass = 'PychronLaserManager'
 
             pkg = 'pychron.lasers.laser_managers.pychron_laser_manager'
-            try:
-                tag = ip.get_parameter(plugin, 'communications', element=True)
-                #                tag = plugin.find('communications')
-                params = dict()
-                for attr in ['host', 'port', 'kind']:
-                    try:
-                        params[attr] = tag.find(attr).text.strip()
-                    except Exception, e:
-                        print 'client comms fail', attr, e
-            except Exception, e:
-                print 'client comms fail', e
+            params = dict()
+            # try:
+            #     tag = ip.get_parameter(plugin, 'communications', element=True)
+            #     for attr in ['host', 'port', 'kind']:
+            #         try:
+            #             params[attr] = tag.find(attr).text.strip()
+            #         except Exception, e:
+            #             print 'client comms fail a', attr, e
+            # except Exception, e:
+            #     print 'client comms fail b', e
 
             params['name'] = self.name
             factory = __import__(pkg, fromlist=[klass])
@@ -135,6 +134,11 @@ class BaseLaserPlugin(BaseTaskPlugin):
 
 class FusionsPlugin(BaseLaserPlugin):
     task_name = Str
+
+    def test_communication(self):
+        man = self._get_manager()
+        c = man.test_connection()
+        return 'Passed' if c else 'Failed'
 
     def _tasks_default(self):
         return [TaskFactory(id=self.id,

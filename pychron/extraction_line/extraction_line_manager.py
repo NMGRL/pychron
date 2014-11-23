@@ -1,52 +1,42 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import Instance, List, Any, Bool, on_trait_change, Str, Int, Dict
 from apptools.preferences.preference_binding import bind_preference
-#=============standard library imports ========================
+# =============standard library imports ========================
 import os
 import time
 from threading import Thread
 from socket import gethostbyname, gethostname
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 from pychron.envisage.consoleable import Consoleable
 from pychron.extraction_line.explanation.extraction_line_explanation import ExtractionLineExplanation
 from pychron.extraction_line.extraction_line_canvas import ExtractionLineCanvas
 from pychron.extraction_line.sample_changer import SampleChanger
 from pychron.paths import paths
 from pychron.managers.manager import Manager
-# from pychron.pyscripts.manager import PyScriptManager
 from pychron.monitors.system_monitor import SystemMonitor
-
 from pychron.extraction_line.status_monitor import StatusMonitor
 from pychron.extraction_line.graph.extraction_line_graph import ExtractionLineGraph
-
-# from pychron.managers.multruns_report_manager import MultrunsReportManager
-
-# Macro = None
-# start_recording = None
-# stop_recording = None
-# play_macro = None
 
 
 class ExtractionLineManager(Manager, Consoleable):
     """
     Manager for interacting with the extraction line
-    contains 2 interaction canvases, 2D and 3D
     contains reference to valve manager, gauge manager and laser manager
 
     """
@@ -57,17 +47,10 @@ class ExtractionLineManager(Manager, Consoleable):
     gauge_manager = Instance(Manager)
     monitor = Instance(SystemMonitor)
 
-    valve_manager = Any  # Instance(Manager)
+    valve_manager = Any
     status_monitor = Any
-    multiplexer_manager = Any  # Instance(Manager)
-    multruns_report_manager = Any  # Instance(Manager)
+    multiplexer_manager = Any
     network = Instance(ExtractionLineGraph)
-
-    #    multruns_report_manager = Instance(MultrunsReportManager)
-    #    environmental_manager = Instance(Manager)
-    #    device_stream_manager = Instance(Manager)
-    #     view_controller = Instance(ViewController)
-    #    pumping_monitor = Instance(PumpingMonitor)
 
     runscript = None
     learner = None
@@ -89,6 +72,29 @@ class ExtractionLineManager(Manager, Consoleable):
     sample_changer = Instance(SampleChanger)
     link_valve_actuation_dict = Dict
 
+    def activate(self):
+        if self.mode == 'client':
+            self.start_status_monitor()
+        else:
+            if self.gauge_manager:
+                self.info('start gauge scans')
+                self.gauge_manager.start_scans()
+
+        self.reload_canvas(load_states=True)
+
+        # need to wait until now to load the ptrackers
+        # this way our canvases are created
+        for p in self.valve_manager.pipette_trackers:
+            p.load()
+
+    def deactivate(self):
+        self.stop_status_monitor()
+        if self.gauge_manager:
+            self.gauge_manager.stop_scans()
+
+        if self.monitor:
+            self.monitor.stop()
+
     def bind_preferences(self):
 
         bind_preference(self, 'check_master_owner',
@@ -97,8 +103,6 @@ class ExtractionLineManager(Manager, Consoleable):
                         'pychron.extraction_line.use_network')
         bind_preference(self.network, 'inherit_state',
                         'pychron.extraction_line.inherit_state')
-
-        # self.console_bind_preferences('pychron.extraction_line')
 
     def link_valve_actuation(self, name, func, remove=False):
         if remove:
@@ -113,14 +117,14 @@ class ExtractionLineManager(Manager, Consoleable):
             self.link_valve_actuation_dict[name] = func
 
     def isolate_chamber(self):
-        #get chamber name
+        # get chamber name
         sc = self._sample_changer_factory()
         if sc:
             sc.isolate_chamber()
 
     def evacuate_chamber(self):
         sc = self.sample_changer
-        #confirm evacuation if sample chamber is not (not isolated)
+        # confirm evacuation if sample chamber is not (not isolated)
         # or check for evacuation fails
         msg = None
         if sc is None:
@@ -161,7 +165,7 @@ class ExtractionLineManager(Manager, Consoleable):
         return v
 
     def test_connection(self):
-        return self.get_valve_states() is not None
+        return bool(self.get_valve_states())
 
     def refresh_canvas(self):
         for ci in self._canvases:
@@ -176,14 +180,6 @@ class ExtractionLineManager(Manager, Consoleable):
         if self.use_network:
             p = os.path.join(paths.canvas2D_dir, 'canvas.xml')
             self.network.load(p)
-
-    def deactivate(self):
-        self.stop_status_monitor()
-        if self.gauge_manager:
-            self.gauge_manager.stop_scans()
-
-        if self.monitor:
-            self.monitor.stop()
 
     def stop_status_monitor(self):
         self.info('stopping status monitor')
@@ -214,22 +210,6 @@ class ExtractionLineManager(Manager, Consoleable):
             self._set_pipette_counts(p.name, p.counts)
 
         self.refresh_canvas()
-
-    def activate(self):
-        self.debug('$$$$$$$$$$$$$$$$$$$$$$$$ EL Activated')
-        if self.mode == 'client':
-            self.start_status_monitor()
-        else:
-            if self.gauge_manager:
-                self.info('start gauge scans')
-                self.gauge_manager.start_scans()
-
-        self.reload_canvas(load_states=True)
-
-        # need to wait until now to load the ptrackers
-        # this way our canvases are created
-        for p in self.valve_manager.pipette_trackers:
-            p.load()
 
     def start_status_monitor(self):
         self.info('starting status monitor')
@@ -289,7 +269,7 @@ class ExtractionLineManager(Manager, Consoleable):
             else:
                 self.valve_manager.unlock(name)
 
-            description=self.valve_manager.get_valve_by_name(name).description
+            description = self.valve_manager.get_valve_by_name(name).description
             self.info('Valve-{} ({}) {}'.format(name, description, 'lock' if lock else 'unlock'),
                       color='blue' if lock else 'black')
             self.update_valve_lock_state(name, lock)
@@ -318,7 +298,7 @@ class ExtractionLineManager(Manager, Consoleable):
             return self.valve_manager.get_valve_by_name(name)
 
     def get_valve_names(self):
-        names =[]
+        names = []
         if self.valve_manager is not None:
             names = self.valve_manager.get_valve_names()
         return names
@@ -383,14 +363,22 @@ class ExtractionLineManager(Manager, Consoleable):
 
             self.explanation.selected = selected
 
-        #===============================================================================
-        # private
-        #===============================================================================
+    def new_canvas(self, name='canvas_config'):
+        c = ExtractionLineCanvas(manager=self,
+                                 config_name='{}.xml'.format(name))
+        self._canvases.append(c)
+        c.canvas2D.trait_set(display_volume=self.display_volume,
+                             volume_key=self.volume_key)
 
+        return c
+
+    # ===============================================================================
+    # private
+    # ===============================================================================
     def _log_spec_event(self, name, action):
         sm = self.application.get_service('pychron.spectrometer.scan_manager.ScanManager')
         if sm:
-            color = 0x98FF98 if action=='open' else 0xFF9A9A
+            color = 0x98FF98 if action == 'open' else 0xFF9A9A
             sm.add_spec_event_marker('{} ({})'.format(name, action),
                                      mode='valve',
                                      extra=name,
@@ -419,17 +407,17 @@ class ExtractionLineManager(Manager, Consoleable):
             if description and description != '---':
                 name = vm.get_name_by_description(description)
 
-            #check if specified valve is in the valves.xml file
+            # check if specified valve is in the valves.xml file
             if not name:
                 self.warning('Invalid valve name={}, description={}'.format(oname, description))
                 return False
 
             result = self._change_valve_state(name, mode, action, **kw)
             if result:
-                description=vm.get_valve_by_name(name).description
+                description = vm.get_valve_by_name(name).description
                 self._log_spec_event(name, action)
                 self.info('{:<6s} Valve-{} ({})'.format(action.upper(), name, description),
-                          color='red' if action=='close' else 'green')
+                          color='red' if action == 'close' else 'green')
                 vm.actuate_children(name, action, mode)
                 ld = self.link_valve_actuation_dict
                 if ld:
@@ -519,9 +507,7 @@ class ExtractionLineManager(Manager, Consoleable):
 
             if manager in ['gauge_manager',
                            'valve_manager',
-                           'multiplexer_manager',
-                           # 'environmental_manager', 'device_stream_manager',
-                           'multruns_report_manager']:
+                           'multiplexer_manager']:
                 self.trait_set(**{manager: m})
             else:
                 self.add_trait(manager, m)
@@ -530,13 +516,12 @@ class ExtractionLineManager(Manager, Consoleable):
         else:
             self.debug('could not create manager {}, {},{},{}'.format(klass, manager, params, kw))
 
-    #===============================================================================
+    # ===============================================================================
     # handlers
-    #===============================================================================
+    # ===============================================================================
     def _use_status_monitor_changed(self):
         if self.mode == 'client':
             if self.use_status_monitor:
-                #start
                 bind_preference(self.status_monitor, 'state_freq',
                                 'pychron.extraction_line.valve_state_frequency')
                 bind_preference(self.status_monitor, 'lock_freq',
@@ -584,9 +569,9 @@ class ExtractionLineManager(Manager, Consoleable):
         for c in self._canvases:
             c.canvas2D.trait_set(**{name: new})
 
-    #===============================================================================
+    # ===============================================================================
     # defaults
-    #===============================================================================
+    # ===============================================================================
     def _status_monitor_default(self):
         sm = StatusMonitor(valve_manager=self.valve_manager)
         return sm
@@ -596,28 +581,13 @@ class ExtractionLineManager(Manager, Consoleable):
 
         return ValveManager(extraction_line_manager=self)
 
-    #    def _gauge_manager_default(self):
-    #        from pychron.extraction_line.gauge_manager import GaugeManager
-    #        return GaugeManager()
-
     def _explanation_default(self):
-    #        '''
-    #        '''
         e = ExtractionLineExplanation()
         if self.valve_manager is not None:
             e.load(self.valve_manager.explanable_items)
             self.valve_manager.on_trait_change(e.load_item, 'explanable_items[]')
 
         return e
-
-    def new_canvas(self, name='canvas_config'):
-        c = ExtractionLineCanvas(manager=self,
-                                 config_name='{}.xml'.format(name))
-        self._canvases.append(c)
-        c.canvas2D.trait_set(display_volume=self.display_volume,
-                             volume_key=self.volume_key)
-
-        return c
 
     def _canvas_default(self):
         """
@@ -627,6 +597,13 @@ class ExtractionLineManager(Manager, Consoleable):
     def _network_default(self):
         return ExtractionLineGraph()
 
+if __name__ == '__main__':
+    elm = ExtractionLineManager()
+    elm.bootstrap()
+    elm.canvas.style = '2D'
+    elm.configure_traits()
+
+# =================== EOF ================================
 #    def _pumping_monitor_default(self):
 #        '''
 #        '''
@@ -635,13 +612,6 @@ class ExtractionLineManager(Manager, Consoleable):
 
 #    def _multruns_report_manager_default(self):
 #        return MultrunsReportManager(application=self.application)
-if __name__ == '__main__':
-    elm = ExtractionLineManager()
-    elm.bootstrap()
-    elm.canvas.style = '2D'
-    elm.configure_traits()
-
-#=================== EOF ================================
 #     def _view_controller_factory(self):
 #         if self.canvas.canvas3D:
 #             v = ViewController(scene_graph=self.canvas.canvas3D.scene_graph)
