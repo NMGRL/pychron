@@ -17,7 +17,8 @@ From initial testing it appears the major bottle neck occurs when construction t
 analysis; ~50 ms per analysis. It is currently unclear how isotope construction time can be minimized. 
 Traits overhead maybe considerable but it doesn't seem likely the Traits dependency can be removed. 
 
-Low hangin fruit
+### Low hangin fruit
+
 - temporally cache irradiation data. When loading multiple analyses use a irradiation cache. Maintaining
  the cache outside of a session may be necessary as sqlachemy does internal caching. This suggests that 
  little to no performance gain will be achieved by discarding the irradiation cache at the end of ``make_analyses``.
