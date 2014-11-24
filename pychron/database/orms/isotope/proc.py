@@ -312,6 +312,12 @@ class proc_DetectorIntercalibrationHistoryTable(Base, HistoryMixin):
                             backref='selected_detector_intercalibration',
                             uselist=False)
 
+class proc_DetectorIntercalibrationSetTable(Base, BaseMixin):
+    ## intercalibration_id = foreignkey('proc_DetectorIntercalibrationTable')
+    ic_analysis_id = foreignkey('meas_AnalysisTable')
+    # set_id = Column(Integer)
+    set_id = stringcolumn()
+
 
 class proc_DetectorIntercalibrationTable(Base, BaseMixin):
     history_id = foreignkey('proc_DetectorIntercalibrationHistoryTable')
@@ -324,11 +330,7 @@ class proc_DetectorIntercalibrationTable(Base, BaseMixin):
     set_id = Column(String(40), ForeignKey('proc_DetectorIntercalibrationSetTable.set_id'))
 
 
-class proc_DetectorIntercalibrationSetTable(Base, BaseMixin):
-    ## intercalibration_id = foreignkey('proc_DetectorIntercalibrationTable')
-    ic_analysis_id = foreignkey('meas_AnalysisTable')
-    # set_id = Column(Integer)
-    set_id = stringcolumn()
+
 
 
 class proc_DetectorParamHistoryTable(Base, HistoryMixin):

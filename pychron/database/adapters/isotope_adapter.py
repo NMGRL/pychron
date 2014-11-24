@@ -585,8 +585,9 @@ class IsotopeAdapter(DatabaseAdapter):
 
         ir = irrad_IrradiationTable(name=name,
                                     chronology=chronology)
-        self._add_item(ir)
-        return ir
+        # self._add_item(ir)
+        return self._add_unique(ir, 'irradiation', name)
+        # return ir
 
     def add_load_holder(self, name, **kw):
         lh = gen_LoadHolderTable(name=name, **kw)
@@ -1692,7 +1693,7 @@ class IsotopeAdapter(DatabaseAdapter):
         return self._retrieve_item(irrad_ProductionTable, value, )
 
     def get_irradiation(self, value):
-        return self._retrieve_item(irrad_IrradiationTable, value, verbose_query=True)
+        return self._retrieve_item(irrad_IrradiationTable, value)
 
     def get_irradiation_level_byid(self, lid):
         return self._retrieve_item(irrad_LevelTable, lid, key='id')
@@ -1702,8 +1703,7 @@ class IsotopeAdapter(DatabaseAdapter):
                                     joins=(irrad_IrradiationTable,),
                                     filters=(irrad_IrradiationTable.name == irrad,
                                              irrad_LevelTable.name == level),
-                                    func='one',
-                                    verbose_query=True)
+                                    func='one')
         # with self.session_ctx() as s:
         #     #         with session(sess) as s:
         #     #         sess = self.get_session()

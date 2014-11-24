@@ -77,11 +77,14 @@ class XLSIrradiationLoader(Loggable):
 
     def load_irradiation(self, p, dry_run=True):
         if not os.path.isfile(p):
+            self.warning('{} does not exist'.format(p))
             return
 
+        self.info('loading irradiation file. {}'.format(p))
+        self.info('dry= {}'.format(dry_run))
         try:
             with self.db.session_ctx(commit=not dry_run):
-                self._load_irradiation_from_file(p)
+                self._load_irradiation_from_file(p, dry_run)
                 return True
         except BaseException, e:
             print e
@@ -234,7 +237,7 @@ class XLSIrradiationLoader(Loggable):
                 # 'identifier': gen.next(), 'sample':sample, 'project':''}
                 self._add_position(d)
 
-    def add_irradiations(self):
+    def add_irradiations(self, dry_run):
         """
             calls _add_irradiation
                   _add_chronology
@@ -258,13 +261,15 @@ class XLSIrradiationLoader(Loggable):
             for i, row in enumerate(igen):
                 irrad = row[nameidx].value
                 if i == 0:
-                    self._add_irradiation(irrad)
                     self._add_chronology(irrad)
+                    self._add_irradiation(irrad)
+                    if not dry_run:
+                        self.db.commit()
 
                 self._add_level(irrad, row[levelidx].value,
                                 row[pridx].value, row[holderidx].value)
 
-    def _load_irradiation_from_file(self, p):
+    def _load_irradiation_from_file(self, p, dry_run):
         """
 
         :param p: abs path to xls file
@@ -272,7 +277,7 @@ class XLSIrradiationLoader(Loggable):
         """
 
         self.dm = self._dm_factory(p)
-        self.add_irradiations()
+        self.add_irradiations(dry_run)
         # self.add_positions()
         # self.set_identifiers()
 
@@ -364,6 +369,7 @@ class XLSIrradiationLoader(Loggable):
             with db.session_ctx():
                 if db.add_irradiation_level(name, irrad, holder, pr):
                     self._added_levels.append((irrad, name, pr, holder))
+                    self.add_positions(irrad, name)
         else:
             self._added_levels.append((irrad, name, pr, holder))
 

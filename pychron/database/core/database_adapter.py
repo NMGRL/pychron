@@ -135,9 +135,9 @@ class DatabaseAdapter(Loggable):
         # logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 
     def create_all(self, metadata):
-        if self.kind == 'sqlite':
-            with self.session_ctx() as sess:
-                metadata.create_all(sess.bind)
+        # if self.kind == 'sqlite':
+        with self.session_ctx() as sess:
+            metadata.create_all(sess.bind)
 
     def session_ctx(self, sess=None, commit=True):
         if sess is None:
