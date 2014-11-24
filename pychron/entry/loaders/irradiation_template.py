@@ -16,12 +16,19 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-# ============= local library imports  ==========================
 import xlwt
+# ============= local library imports  ==========================
 
 IRRADIATION_COLUMNS = ('Name', 'Level', 'PR', 'Holder')
 CHRONOLOGY_COLUMNS = ('Name', 'Start', 'End', 'Power')
 POSITION_COLUMNS = ('Irradiation', 'Level', 'Position', 'Sample', 'Project', 'Material', 'Weight', 'Note')
+CONFIG_COLUMNS = ('Name', 'Value', 'Description')
+CONFIG_ATTRS = (('autogenerate_labnumber', 'False', 'Automatically generate labnumbers'),
+                ('base_irradiation_offset', 100,
+                 'Increment labnumbers by irradiation offset for each irradiation added'),
+                ('base_level_offset', 0, 'Increment labnumbers by level offset for each level added'),
+                ('quiet', 'False', 'If true do not ask for confirmation if project, material, sample does not exist, '
+                                   'just do it'))
 
 
 class IrradiationTemplate(object):
@@ -43,6 +50,14 @@ class IrradiationTemplate(object):
     def _make_positions_sheet(self, wb):
         sheet = wb.add_sheet('Positions')
         self._make_header(sheet, POSITION_COLUMNS)
+
+    def _make_positions_sheet(self, wb):
+        sheet = wb.add_sheet('Configuration')
+        self._make_header(sheet, CONFIG_COLUMNS)
+        for i, (ai, vi, di) in enumerate(CONFIG_ATTRS):
+            sheet.write(i + 1, 0, ai)
+            sheet.write(i + 1, 1, vi)
+            sheet.write(i + 1, 2, di)
 
     def _make_header(self, sheet, columns, style=None):
         if style is None:

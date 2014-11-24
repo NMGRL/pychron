@@ -15,12 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Any, Instance, List
+from traits.api import Any, Instance, List, Dict
 # ============= standard library imports ========================
 import os
 from xlrd.sheet import ctype_text
 
 # ============= local library imports  ==========================
+from pychron.core.helpers.filetools import to_bool
 from pychron.loggable import Loggable
 from pychron.managers.data_managers.xls_data_manager import XLSDataManager
 
@@ -38,23 +39,41 @@ class XLSIrradiationLoader(Loggable):
     canvas = Any
     dm = Instance(XLSDataManager)
 
+    # configuation attributes
     autogenerate_labnumber = False
+    base_irradiation_offset = 0
+    base_level_offset = 0
+    quiet = False
 
     # when adding a new level bump identifier by irradiation_offset+level_offset
     # if offset is zero bump by 1
     irradiation_offset = 0
     level_offset = 0
 
-    base_irradiation_offset = 100
-    base_level_offset = 0
-
     _added_levels = List
     _added_irradiations = List
     _added_positions = List
     _added_chronologies = List
 
+    _user_confirmation = Dict
     def open(self, p):
         self.dm = self._dm_factory(p)
+        self.load_configuration()
+
+    def load_configuration(self):
+        dm = self.dm
+        sheet = dm.get_sheet(('Configuration', 4))
+        for ri in dm.iterrows(sheet, 1):
+            name = ri[0].value
+            v = ri[1].value
+            if name == 'autogenerate_labnumber':
+                v = to_bool(v)
+
+            self.debug('setting "{}"={}'.format(name, v))
+            if not hasattr(self, name):
+                self.warning('Invalid configuration option "{}"'.format(name))
+            else:
+                setattr(self, name, v)
 
     def load_irradiation(self, p, dry_run=True):
         if not os.path.isfile(p):
@@ -68,13 +87,24 @@ class XLSIrradiationLoader(Loggable):
             print e
 
     def identifier_generator(self):
+        """
+        make a new generator after each irradiation+set of levels.
+
+
+
+        :return: generator
+        """
+
         def func():
             self.update_offsets()
             offset = max(1, self.irradiation_offset + self.level_offset)
             db = self.db
-            with db.session_ctx():
-                # get the greatest identifier
-                idn = db.get_greatest_identifier()
+
+            idn = 0
+            if db:
+                with db.session_ctx():
+                    # get the greatest identifier
+                    idn = db.get_greatest_identifier()
 
             i = 0
             while 1:
@@ -148,7 +178,7 @@ class XLSIrradiationLoader(Loggable):
 
     @property
     def nadded_levels(self):
-        return len(self._added_levels)
+        return len(self._added_levels)-1
 
     @property
     def added_irradiations(self):
@@ -166,19 +196,43 @@ class XLSIrradiationLoader(Loggable):
     def added_chronologies(self):
         return self._added_chronologies
 
-    def add_positions(self):
+    def sheet_identifier_generator(self, sheet):
+        pass
+
+    def add_positions(self, irradiation=None, level=None):
+
         dm = self.dm
         sheet = dm.get_sheet(('Positions', 2))
         idxdict = self._get_idx_dict(sheet, ('position', 'sample', 'material', 'weight',
                                              'irradiation',
                                              'project', 'level', 'note'))
 
+        if self.autogenerate_labnumber:
+            gen = self.identifier_generator()
+        else:
+            idn_idx = dm.get_column_idx(('labnumber', 'identifier'), sheet=sheet, optional=True)
+
         for row in dm.iterrows(sheet, 1):
             irrad = row[idxdict['irradiation']].value
-            level = row[idxdict['level']].value
-            pos = int(row[idxdict['position']].value)
-            d = {'irradiation': irrad, 'level': level, 'position': pos}
-            self._add_position(d)
+            lv = row[idxdict['level']].value
+            if (irradiation is None and level is None) or irrad == irradiation and lv == level:
+                pos = int(row[idxdict['position']].value)
+
+                idn = None
+                if self.autogenerate_labnumber:
+                    idn = gen.next()
+                else:
+                    if idn_idx is not None:
+                        idn = row[idn_idx].value
+
+                d = {'irradiation': irrad, 'level': lv, 'position': pos,
+                     'identifier': idn}
+
+                for ai in ('sample', 'material', 'weight', 'note', 'project'):
+                    d[ai] = row[idxdict[ai]].value
+                # d = {'irradiation': irrad, 'level': lv, 'position': pos,
+                # 'identifier': gen.next(), 'sample':sample, 'project':''}
+                self._add_position(d)
 
     def add_irradiations(self):
         """
@@ -200,6 +254,7 @@ class XLSIrradiationLoader(Loggable):
         levelidx = dm.get_column_idx(LEVEL, sheet)
         holderidx = dm.get_column_idx(HOLDER, sheet)
         for igen in self.iterate_irradiations():
+            self._added_levels = []
             for i, row in enumerate(igen):
                 irrad = row[nameidx].value
                 if i == 0:
@@ -218,7 +273,8 @@ class XLSIrradiationLoader(Loggable):
 
         self.dm = self._dm_factory(p)
         self.add_irradiations()
-        self.add_positions()
+        # self.add_positions()
+        # self.set_identifiers()
 
     def _add_chronology(self, irrad):
         dm = self.dm
@@ -248,16 +304,59 @@ class XLSIrradiationLoader(Loggable):
         db = self.db
         if db:
             with db.session_ctx():
-                labnumber = None
-                if self.autogenerate_labnumber:
-                    labnumber = self.identifier_generator()
-                    db.add_labnumber(labnumber, pdict['sample'])
+                labnumber = pdict['identifier']
+                if labnumber is not None:
+                    dbprj = self._add_project(db, pdict['project'])
+                    if dbprj:
+                        dbmat = self._add_material(db, pdict['material'])
+                        if dbmat:
+                            dbsam = self._add_sample(db, pdict['sample'], dbprj, dbmat)
+                            if dbsam:
+                                db.add_labnumber(labnumber, dbsam)
 
                 if db.add_irradiation_position(pos, labnumber, irrad, level):
                     self._added_positions.append((irrad, level, pos))
 
         else:
             self._added_positions.append((irrad, level, pos))
+
+    def _add_project(self, db, prj):
+        return self._user_confirm_add(db,prj, 'project')
+
+    def _add_material(self,db, mat):
+        return self._user_confirm_add(db, mat, 'material')
+
+    def _add_sample(self, db, sam, dbprj, dbmat):
+        def func(v):
+            db.add_sample(v, dbprj, dbmat)
+
+        return self._user_confirm_add(db, sam, 'sample', adder=func)
+
+    def _user_confirm_add(self, db, v, key, adder=None):
+        if adder is None:
+            adder = getattr(db, 'add_{}'.format(key))
+
+        if not self.quiet:
+            obj = getattr(db, 'get_{}'.format(key))(v)
+            if not obj:
+                try:
+                    ret = self._user_confirmation[key]
+                except KeyError:
+                    ret = self.confirmation_dialog('{} "{}" not in database. Do you want to add it.\n'
+                                                   'If "No" a labnumber will not be '
+                                                   'generated fro this position'.format(key.capitalize(), v))
+                rem = self.confirmation_dialog('Remember decision?')
+                if rem:
+                    self._user_confirmation[key] = ret
+
+                if ret:
+                    obj = adder(v)
+                    # dbprj = db.add_project(v)
+        else:
+            obj = adder(v)
+            # dbprj = db.add_project(v)
+
+        return obj
 
     def _add_level(self, irrad, name, pr, holder):
         db = self.db
@@ -306,10 +405,10 @@ class XLSIrradiationLoader(Loggable):
         # sheet = self.dm.get_sheet(('Irradiations',0))
         # idx = dm.get_column_idx('Name', sheet=sheet)
         # lidx = dm.get_column_idx('Levels', sheet=sheet)
-        #     for ri, ni in enumerate(sheet.col(idx)):
-        #         if ni.value==irradname:
-        #             level_str = sheet.cell(ri, lidx)
-        #             ps = parse_level_str(level_str.value)
+        # for ri, ni in enumerate(sheet.col(idx)):
+        # if ni.value==irradname:
+        # level_str = sheet.cell(ri, lidx)
+        # ps = parse_level_str(level_str.value)
         #             return len(ps) if ps else 0
         # def iterate_irradiations2(self):
         #         dm = self.dm

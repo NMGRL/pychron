@@ -21,13 +21,14 @@ import xlrd
 from xlrd.biffh import XLRDError
 
 
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.managers.data_managers.data_manager import DataManager
 
 
 class XLSDataManager(DataManager):
+    wb = None
+
     def open(self, p):
         self.wb = xlrd.open_workbook(p)
 
@@ -79,4 +80,4 @@ class XLSDataManager(DataManager):
                 cols = ','.join(names)
                 self.warning_dialog('Invalid sheet. No column named "{}"'.format(cols))
 
-#============= EOF =============================================
+# ============= EOF =============================================
