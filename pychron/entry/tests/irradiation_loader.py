@@ -245,12 +245,7 @@ class XLSIrradiationLoaderParseTestCase(unittest.TestCase):
 
     def test_add_levels(self):
         self.loader.add_irradiations()
-        self.assertEqual(self.loader.added_levels, [('NM-1000', 'A', 'Triga PR', '8-Hole'),
-                                                    ('NM-1000', 'B', 'Triga PR', '8-Hole'),
-                                                    ('NM-1000', 'C', 'Triga PR', '8-Hole'),
-                                                    ('NM-1000', 'D', 'Triga PR', '8-Hole'),
-                                                    ('NM-1000', 'E', 'Triga PR', '8-Hole'),
-                                                    ('NM-1001', 'A', 'Triga PR', '8-Hole'),
+        self.assertEqual(self.loader.added_levels, [('NM-1001', 'A', 'Triga PR', '8-Hole'),
                                                     ('NM-1001', 'B', 'Triga PR', '8-Hole'),
                                                     ('NM-1001', 'C', 'Triga PR', '8-Hole'),
                                                     ('NM-1001', 'D', 'Triga PR', '8-Hole')])
