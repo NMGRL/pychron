@@ -20,10 +20,10 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 from pyface.action.group import Group
 
 from pychron.lasers.tasks.plugins.laser_plugin import FusionsPlugin
-from pychron.lasers.tasks.laser_task import FusionsCO2Task
 from pychron.lasers.tasks.laser_preferences import FusionsCO2PreferencesPane
 from pychron.lasers.tasks.laser_actions import PowerMapAction, \
     PowerCalibrationAction, TestDegasAction
+
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -37,6 +37,7 @@ class FusionsCO2Plugin(FusionsPlugin):
     accelerator = 'Ctrl+Shift+]'
 
     def _task_factory(self):
+        from pychron.lasers.tasks.laser_task import FusionsCO2Task
         t = FusionsCO2Task(manager=self._get_manager())
         return t
 

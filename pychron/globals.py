@@ -12,7 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
+
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import to_bool
 
 
@@ -74,6 +78,7 @@ class Globals(object):
 
     username = 'root'
     communication_simulation = False
+    use_startup_tests = True
 
     def build(self, ip):
 
@@ -92,6 +97,7 @@ class Globals(object):
                            ('experiment_savedb', to_bool),
                            ('recall_debug', to_bool),
                            ('communication_simulation', to_bool),
+                           ('use_startup_tests', to_bool),
                            ('test_experiment_set', str)]:
             a = ip.get_global(attr)
 
@@ -104,9 +110,9 @@ class Globals(object):
     # mode is readonly. set once in the launchers/pychron.py module
     test = property(fget=_get_test)
 
-
 globalv = Globals()
 
+# ============= EOF =============================================
 # class Globals():
 #    _use_ipc = True
 #    def get_use_ipc(self):

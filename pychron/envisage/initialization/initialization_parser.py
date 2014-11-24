@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 # from lxml.etree import Element
 from pyface.message_dialog import warning
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 import sys
 import inspect
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import to_bool
 from pychron.core.xml.xml_parser import XMLParser
 from pychron.paths import paths
@@ -68,8 +68,8 @@ class InitializationParser(XMLParser):
         # ver= '_spec'
         # ver = '_diode'
         # ver = '_dash'
-        #ver = '_dash_client'
-        #ver = ''
+        # ver = '_dash_client'
+        # ver = ''
         p = os.path.join(paths.setup_dir, 'initialization{}.xml'.format(ver))
         if not os.path.isfile(p):
             p = os.path.join(paths.setup_dir, 'initialization.xml')
@@ -78,7 +78,6 @@ class InitializationParser(XMLParser):
                 sys.exit()
 
         super(InitializationParser, self).__init__(p, *args, **kw)
-        print 'using Initialization={}'.format(p)
 
     def get_globals(self):
         tree = self.get_root()

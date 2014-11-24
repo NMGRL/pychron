@@ -23,8 +23,6 @@ from pychron.lasers.tasks.plugins.laser_plugin import FusionsPlugin
 from pychron.lasers.tasks.laser_actions import PowerMapAction, PowerCalibrationAction, TestDegasAction, PyrometerCalibrationAction, \
     PIDTuningAction, ExecutePatternAction
 from pychron.lasers.tasks.laser_preferences import FusionsDiodePreferencesPane
-from pychron.lasers.tasks.laser_task import FusionsDiodeTask
-
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -64,6 +62,7 @@ class FusionsDiodePlugin(FusionsPlugin):
         return [FusionsDiodePreferencesPane]
 
     def _task_factory(self):
+        from pychron.lasers.tasks.laser_task import FusionsDiodeTask
         t = FusionsDiodeTask(manager=self._get_manager())
         return t
 

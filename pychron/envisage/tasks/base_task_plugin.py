@@ -20,6 +20,7 @@ from envisage.plugin import Plugin
 from envisage.service_offer import ServiceOffer
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.globals import globalv
 
 SERVICE_OFFERS = 'envisage.service_offers'
 TASK_EXTENSIONS = 'envisage.ui.tasks.task_extensions'
@@ -50,7 +51,8 @@ class BaseTaskPlugin(Plugin):
         return True
 
     def startup_test(self):
-        self.application.startup_tester.test_plugin(self)
+        if globalv.use_startup_tests:
+            self.application.startup_tester.test_plugin(self)
 
     def start(self):
         self.startup_test()

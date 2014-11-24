@@ -58,7 +58,9 @@ DEFAULT_PLUGINS = (('General', ('Experiment', 'PyScript',
                                  'FusionsCO2', 'FusionsDiode', 'FusionsUV',
                                  'ExternalPipette')),
                    ('Social', (),))
+
 DEFAULT_GLOBALS = (('Use IPC', 'use_ipc'),
+                   ('Use Startup Tests', 'use_startup_tests'),
                    ('Ignore Initialization Warnings', 'ignore_initialization_warnings'),
                    ('Ignore Initialization Questions', 'ignore_initialization_questions'),
                    ('Communication Simulation', 'communication_simulation'))
@@ -108,7 +110,6 @@ def get_initialization_model():
     gtree = load_global_tree()
     for gi in ip.get_plugin_groups():
         tree = get_tree(gi, rtree)
-        print '--------', gi, tree
         if tree:
             for pp in ip.get_plugins(gi, element=True):
                 plugin = get_plugin(pp.text.strip(), tree)
@@ -127,6 +128,6 @@ def get_initialization_model():
 
     return model
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
