@@ -460,11 +460,17 @@ class PychronLaserManager(BaseLaserManager):
     def _get_z(self):
         return self._z
 
-    #defaults
+    # defaults
     def _stage_manager_default(self):
+        name = self.name.lower()
+        if 'fusions' in name:
+            nn = name[7:]
+            name = 'fusions_{}'.format(nn)
+
         args = dict(name='stage',
                     configuration_name='stage',
-                    configuration_dir_name=self.name,
+                    # configuration_dir_name = self.configuration_dir_name,
+                    configuration_dir_name=name,
                     parent=self)
         return self._stage_manager_factory(args)
 

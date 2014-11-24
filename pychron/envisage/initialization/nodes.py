@@ -20,7 +20,7 @@ import hashlib
 from traits.api import HasTraits, Str, Bool, List, Instance
 
 # ============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from traitsui.tree_node import TreeNode
 from pychron.envisage.initialization.initialization_parser import InitializationParser
 from pychron.envisage.resources import icon
@@ -90,7 +90,6 @@ class InitializationModel(BaseNode):
     path_name = Str
     _hash = Str
 
-
     def init_hash(self):
         self._hash = self._current_hash()
 
@@ -110,16 +109,16 @@ class InitializationModel(BaseNode):
             if hasattr(ptree, 'plugins'):
                 for pt in ptree.plugins:
                     for plugin in pt.plugins:
+
                         if plugin.enabled:
-                            ip.enable_plugin(plugin.name, pt.name.lower(), save=False)
+                            ip.enable_plugin(plugin.name, save=False)
                         else:
                             ip.disable_plugin(plugin.name, save=False)
             else:
                 for vi in ptree.values:
                     ip.set_bool_tag(vi.tag, str(vi.enabled))
 
-
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

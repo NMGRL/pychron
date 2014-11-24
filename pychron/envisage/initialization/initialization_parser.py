@@ -186,6 +186,7 @@ class InitializationParser(XMLParser):
 
     def disable_plugin(self, name, category=None, save=True):
         plugin = self.get_plugin(name, category)
+
         if plugin is not None:
             plugin.set('enabled', 'false')
             if save:
@@ -290,6 +291,7 @@ class InitializationParser(XMLParser):
                 name = ''.join([a.capitalize() for a in name.split('_')])
         else:
             name = name[0].upper() + name[1:]
+
         if not category:
             category = self.get_categories()
 
@@ -311,7 +313,7 @@ class InitializationParser(XMLParser):
         return man
 
     def get_categories(self):
-        return ['General', 'Data', 'Hardware', 'Social']
+        return ['general', 'data', 'hardware', 'social']
         # root = self.get_root()
         # tree = root.find('plugins')
         # s = lambda x: x.tag
