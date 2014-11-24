@@ -212,7 +212,7 @@ class proc_BlanksSetValueTable(Base, BaseMixin):
     value = Column(Float(32))
     error = Column(Float(32))
     analysis_id = foreignkey('meas_AnalysisTable')
-    set_id = foreignkey('proc_BlanksSetTable')
+    # set_id = foreignkey('proc_BlanksSetTable')
 
 
 class proc_BlanksSetTable(Base, BaseMixin):

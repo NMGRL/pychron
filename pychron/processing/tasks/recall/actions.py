@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pyface.tasks.action.task_action import TaskAction
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.envisage.resources import icon
 from pychron.processing.tasks.actions.processing_actions import myTaskAction
 
@@ -77,4 +77,19 @@ class ContextViewAction(myTaskAction):
     method = 'new_context_editor'
     task_ids = ['pychron.recall']
     image = icon('window-new')
-#============= EOF =============================================
+
+
+class NextAction(myTaskAction):
+    name = 'Next'
+    method = 'next_analysis'
+    image = icon('arrow-right-2')
+    task_ids = ['pychron.recall']
+
+
+class PreviousAction(myTaskAction):
+    name = 'Previous'
+    method = 'previous_analysis'
+    image = icon('arrow-left-2')
+    task_ids = ['pychron.recall']
+
+# ============= EOF =============================================

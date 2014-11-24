@@ -19,7 +19,6 @@ from datetime import timedelta
 
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Tabbed, HSplitter
 from pyface.tasks.action.schema import SToolBar
-
 from traits.api import Instance
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -28,7 +27,8 @@ from pychron.globals import globalv
 from pychron.processing.tasks.actions.processing_actions import ConfigureRecallAction
 from pychron.processing.tasks.browser.util import browser_pane_item
 from pychron.processing.tasks.recall.actions import AddIsoEvoAction, AddDiffAction, EditDataAction, RatioEditorAction, \
-    SummaryLabnumberAction, CalculationViewAction, SummaryProjectAction, ContextViewAction, DatasetAction
+    SummaryLabnumberAction, CalculationViewAction, SummaryProjectAction, ContextViewAction, DatasetAction, NextAction, \
+    PreviousAction
 from pychron.processing.tasks.recall.context_editor import ContextEditor
 from pychron.processing.tasks.recall.dataset_recall_editor import DatasetRecallEditor
 from pychron.processing.tasks.recall.diff_editor import DiffEditor
@@ -55,10 +55,28 @@ class RecallTask(AnalysisEditTask):
                  SummaryProjectAction(),
                  SummaryLabnumberAction(),
                  ContextViewAction(),
+                 NextAction(),
+                 PreviousAction(),
                  image_size=(16, 16))]
     auto_select_analysis = False
     _append_replace_analyses_enabled = False
     recaller = Instance('pychron.processing.tasks.recall.mass_spec_recaller.MassSpecRecaller', ())
+
+    def next_analysis(self):
+        self.debug('next analysis')
+        self._adjacent_analysis(False)
+
+    def previous_analysis(self):
+        self.debug('previous analysis')
+        self._adjacent_analysis(True)
+
+    def _adjacent_analysis(self, previous):
+        editor = self.has_active_editor(klass=RecallEditor)
+        if editor:
+            ts = editor.model.analysis_timestamp
+            an = self.manager.get_adjacent_analysis(ts, previous,
+                                                    calculate_age=True, load_aux=True)
+            editor.set_items(an)
 
     def new_dataset(self):
         records = self._get_selected_analyses()

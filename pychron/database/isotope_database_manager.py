@@ -435,11 +435,12 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
     # ===============================================================================
     def _construct_analyses(self, no_db_ans, db_ans, progress, calculate_age, calculate_F,
                             unpack, use_cache, **kw):
+
         uuids = [ri.uuid for ri in no_db_ans]
         # for ui in uuids:
         #     self.debug('loading uuid={}'.format(ui))
 
-        #get all dbrecords with one call
+        # get all dbrecords with one call
         ms = self.db.get_analyses_uuid(uuids)
         # ms = timethis(self.db.get_analyses_uuid, args=(uuids,))
 
@@ -455,6 +456,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             a = construct(x, gi, prog, unpack=unpack,
                           calculate_age=calculate_age,
                           calculate_F=calculate_F, **kw)
+
             if use_cache:
                 add_to_cache(a)
             return a

@@ -94,6 +94,16 @@ def binfunc(ds, hours):
     yield p1 - td, di + td
 
 
+# class session(object):
+# def __call__(self, f):
+#         def wrapped_f(obj, *args, **kw):
+#             with obj.session_ctx() as sess:
+#                 kw['sess']=sess
+#                 return f(obj, *args, **kw)
+#
+#         return wrapped_f
+
+
 @provides(IBrowser)
 class IsotopeAdapter(DatabaseAdapter):
     """
@@ -108,6 +118,7 @@ class IsotopeAdapter(DatabaseAdapter):
     @property
     def selector_klass(self):
         from pychron.database.selectors.isotope_selector import IsotopeAnalysisSelector
+
         return IsotopeAnalysisSelector
 
     def set_analysis_sensitivity(self, analysis, v, e):
@@ -865,18 +876,6 @@ class IsotopeAdapter(DatabaseAdapter):
 
         return self._add_item(item)
 
-    #===========================================================================
-    # getters
-    #===========================================================================
-    def make_gains_hash(self, gains):
-        h = hashlib.md5()
-
-        for d, v in gains:
-            h.update(d)
-            h.update(str(v))
-
-        return h.hexdigest()
-
     def add_gain(self, d, v, hist):
         obj = meas_GainTable()
         detector = self.get_detector(d)
@@ -885,6 +884,30 @@ class IsotopeAdapter(DatabaseAdapter):
         obj.value = v
         obj.history = hist
         return self._add_item(obj)
+
+    # ===========================================================================
+    # getters
+    # ===========================================================================
+    def get_adjacent_analysis(self, timestamp, previous):
+        with self.session_ctx() as sess:
+            q = sess.query(meas_AnalysisTable)
+            if previous:
+                q = q.filter(meas_AnalysisTable.analysis_timestamp < timestamp)
+                q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
+            else:
+                q = q.filter(meas_AnalysisTable.analysis_timestamp > timestamp)
+                q = q.order_by(meas_AnalysisTable.analysis_timestamp.asc())
+
+            return self._query_first(q)
+
+    def make_gains_hash(self, gains):
+        h = hashlib.md5()
+
+        for d, v in gains:
+            h.update(d)
+            h.update(str(v))
+
+        return h.hexdigest()
 
     def get_gain_histories(self, lpost=None, hpost=None, **kw):
         if lpost:
