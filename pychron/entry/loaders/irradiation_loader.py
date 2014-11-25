@@ -261,8 +261,8 @@ class XLSIrradiationLoader(Loggable):
             for i, row in enumerate(igen):
                 irrad = row[nameidx].value
                 if i == 0:
-                    self._add_chronology(irrad)
-                    self._add_irradiation(irrad)
+                    chron = self._add_chronology(irrad)
+                    self._add_irradiation(irrad, chron)
                     if not dry_run:
                         self.db.commit()
 
@@ -295,14 +295,20 @@ class XLSIrradiationLoader(Loggable):
 
         gv = get_row_value(idx_d)
 
+        chronblob = []
         for row in dm.iterrows(sheet):
             if not gv(row, 'name') == irrad:
                 continue
 
-            sd, ed = gv(row, 'start'), gv(row, 'end')
+            sd, ed, power = gv(row, 'start'), gv(row, 'end'), gv(row, 'power')
             sd = dm.strftime(sd, '%Y-%m-%d %H:%M:%S')
             ed = dm.strftime(ed, '%Y-%m-%d %H:%M:%S')
-            self._added_chronologies.append((irrad, sd, ed, gv(row, 'power')))
+            dose = '{}|{}%{}'.format(power, sd, ed)
+            chronblob.append(dose)
+            self._added_chronologies.append((irrad, sd, ed, power))
+
+        if self.db:
+            return self.db.add_irradiation_chronology('$'.join(chronblob))
 
     def _add_position(self, pdict):
         irrad, level, pos = pdict['irradiation'], pdict['level'], pdict['position']
@@ -373,11 +379,11 @@ class XLSIrradiationLoader(Loggable):
         else:
             self._added_levels.append((irrad, name, pr, holder))
 
-    def _add_irradiation(self, name):
+    def _add_irradiation(self, name, chron):
         db = self.db
         if db:
             with db.session_ctx():
-                if db.add_irradiation(name):
+                if db.add_irradiation(name, chron):
                     self._added_irradiations.append(name)
         else:
             self._added_irradiations.append(name)

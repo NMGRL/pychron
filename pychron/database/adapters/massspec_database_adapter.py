@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,20 +12,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 
-#=============standard library imports ========================
-
-#=============local library imports  ==========================
+# =============standard library imports ========================
 import binascii
 import math
-# from sqlalchemy import INTEGER
 
 from sqlalchemy.sql.expression import func, distinct
 from uncertainties import std_dev, nominal_value
 
+# =============local library imports  ==========================
 from pychron.database.orms.massspec_orm import IsotopeResultsTable, \
     AnalysesChangeableItemsTable, BaselinesTable, DetectorTable, \
     IsotopeTable, AnalysesTable, \
@@ -52,13 +50,20 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
     def selector_klass(self):
         # lazy load selector klass.
         from pychron.database.selectors.massspec_selector import MassSpecSelector
+
         return MassSpecSelector
 
+    # ===============================================================================
+    # getters
+    # ===============================================================================
     def get_irradiation_positions(self, name, level):
         with self.session_ctx() as sess:
             q = sess.query(IrradiationPositionTable)
             q = q.filter(IrradiationPositionTable.IrradiationLevel == '{}{}'.format(name, level))
             return q.all()
+
+    def get_production_ratio_by_id(self, idn):
+        return self._retrieve_item(IrradiationProductionTable, idn, 'ProductionRatiosID')
 
     def get_production_ratio_by_level(self, irrad, name):
         with self.session_ctx() as sess:
@@ -94,6 +99,13 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
             q = q.order_by(IrradiationChronologyTable.EndTime.asc())
             return q.all()
 
+    def get_irradiation_exists(self, name):
+        with self.session_ctx() as sess:
+            q = sess.query(IrradiationLevelTable.IrradBaseID)
+            q = q.filter(IrradiationLevelTable.IrradBaseID == name)
+            r = self._query_one(q)
+            return r is not None
+
     def get_irradiation_names(self):
         with self.session_ctx() as sess:
             q = sess.query(distinct(IrradiationLevelTable.IrradBaseID))
@@ -108,9 +120,6 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
     def get_database_version(self, **kw):
         return self._retrieve_items(DatabaseVersionTable, **kw)
 
-    #===============================================================================
-    # getters
-    #===============================================================================
     def get_sample_loading(self, value):
         return self._retrieve_item(SampleLoadingTable, value,
                                    key='SampleLoadingID')
@@ -143,15 +152,15 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
                         except ValueError:
                             raise MissingAliquotPychronException()
             else:
-                #!!!!!
-                #this is an issue. mass spec stores the aliquot as an varchar instead of an integer
-                #sorts lexicographically instead of numerically
-                #so '100'<'001'
-                #http://stackoverflow.com/questions/4686849/sorting-varchar-field-numerically-in-mysql
-                #use option 2. this is a low use query and performance is not and issue
-                #switch to option 3. if performance increase is desired
-                #!!!!!
-                #q = q.order_by(cast(AnalysesTable.Aliquot, INTEGER).desc())
+                # !!!!!
+                # this is an issue. mass spec stores the aliquot as an varchar instead of an integer
+                # sorts lexicographically instead of numerically
+                # so '100'<'001'
+                # http://stackoverflow.com/questions/4686849/sorting-varchar-field-numerically-in-mysql
+                # use option 2. this is a low use query and performance is not and issue
+                # switch to option 3. if performance increase is desired
+                # !!!!!
+                # q = q.order_by(cast(AnalysesTable.Aliquot, INTEGER).desc())
 
                 sql = 'SELECT AnalysesTable.Aliquot_pychron, AnalysesTable.Increment ' \
                       'FROM AnalysesTable ' \
@@ -174,13 +183,11 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         key = 'IrradPosition'
         if aliquot:
             if step:
-                #                value = ('{}-{}{}'.format(value, aliquot, step), aliquot, step)
                 key = (key, 'Aliquot', 'Increment')
                 value = (value, aliquot, step)
             else:
                 key = (key, 'Aliquot')
                 value = (value, aliquot)
-                #                value = ('{}-{}'.format(value, aliquot), aliquot)
 
         return self._retrieve_item(AnalysesTable, value,
                                    key=key, )
@@ -192,7 +199,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
     def get_irradiation_level(self, name, level):
         return self._retrieve_item(IrradiationLevelTable,
                                    value=(name, level),
-                                   key=('IrradBaseID','Level'))
+                                   key=('IrradBaseID', 'Level'))
 
     def get_sample(self, value):
         return self._retrieve_item(SampleTable, value, key='Sample')
@@ -236,15 +243,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 
         return fit
 
-    def _get_fittype(self, value):
-        return self._retrieve_item(FittypeTable, value, key='Label', )
-
     def get_runscript(self, value):
-        return self._retrieve_item(RunScriptTable, value, key='RunScriptID', )
-
-        #===============================================================================
-        # adders
-        #===============================================================================
         return self._retrieve_item(RunScriptTable, value, key='RunScriptID', )
 
     def get_irradiation_level(self, irrad, name):
@@ -344,44 +343,24 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
                     except (ValueError, TypeError):
                         pass
 
-    def _add_analysis_position(self, analysis, pi, po):
-        a = AnalysisPositionTable(Hole=pi, PositionOrder=po)
-        analysis.positions.append(a)
+    def add_irradiation_chronology_entry(self, irradname, start, end):
+        obj = IrradiationChronologyTable(IrradBaseID=irradname,
+                                         StartTime=start, EndTime=end)
+        self._add_item(obj)
 
-    #    @add
-    def add_analysis(self, rid, aliquot, step, irradpos, runtype,
-                     sess=None,
-                     #                     refdetlabel,
-                     #                     overwrite=True,
-                     **kw):
-
-
-        #        if analysis is None:
-        #            rid, aliquot = rid.split('-')
-        #            r = int(args[0])
-        #            d = int(args[1]) if len(args) == 2 else None
-        #        rd = self.get_detector(refdetlabel)
-        #        refid, label = 0, ''
-        #        if rd:
-        #            refid = rd.DetectorID
-        #            label = rd.Label
-
+    def add_analysis(self, rid, aliquot, step, irradpos, runtype, **kw):
         if isinstance(aliquot, int):
             aliquot = '{:02n}'.format(aliquot)
 
         # query the IrradiationPositionTable
         irradpos = self.get_irradiation_position(irradpos, )
-        params = dict(RID=rid,  # make_runid(rid, aliquot, step),
-                      #                    '{}-{}{}'.format(rid, aliquot, step),
+        params = dict(RID=rid,
                       Aliquot=aliquot,
                       Aliquot_pychron=int(aliquot),
                       RunDateTime=func.current_timestamp(),
                       LoginSessionID=1,
                       SpecRunType=runtype,
-                      Increment=step,
-                      #                     RefDetID=refid,
-                      #                     ReferenceDetectorLabel=label
-        )
+                      Increment=step)
 
         # IrradPosition cannot be null
         if irradpos is not None:
@@ -478,7 +457,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         isotope = self.get_isotope(isotope, )
 
         # in mass spec intercept is baseline corrected
-        # mass spec does not propogate baseline error
+        # mass spec does not propagate baseline error
         # convert baseline to scalar
         baseline = baseline.nominal_value
 
@@ -568,11 +547,11 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         return item
 
     def add_runscript(self, label, text, **kw):
-        '''
+        """
             runscripttable does not autoincrement primary key
-            
+
             uses a crc-32 of text as the RunScriptID
-        '''
+        """
         crc = binascii.crc32(text)
         rs = self.get_runscript(crc)
         if rs is None:
@@ -581,14 +560,24 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 
         return rs
 
-    #===============================================================================
+    # ===============================================================================
     # deleters
-    #===============================================================================
+    # ===============================================================================
     @delete_one
     def delete_analysis(self, rid):
         return AnalysesTable, 'RID'
 
-#==================EOF======================================================
+    # ===============================================================================
+    # private
+    # ===============================================================================
+    def _get_fittype(self, value):
+        return self._retrieve_item(FittypeTable, value, key='Label', )
+
+    def _add_analysis_position(self, analysis, pi, po):
+        a = AnalysisPositionTable(Hole=pi, PositionOrder=po)
+        analysis.positions.append(a)
+
+# ==================EOF======================================================
 # #    def add_detector(self, detector_id, kw):
 # #        '''
 # #        '''

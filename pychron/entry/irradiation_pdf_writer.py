@@ -161,7 +161,7 @@ class LabbookPDFWriter(IrradiationPDFWriter):
             doses = chron.get_doses()
             for pwr, st, en in doses:
                 dur += (en - st).total_seconds()
-            _, _, date = chron.get_doses(tofloat=False)[-1]
+            _, _, date = chron.get_doses(todatetime=False)[-1]
 
         dur /= (60 * 60.)
         date = 'Irradiation Date: {}'.format(date)

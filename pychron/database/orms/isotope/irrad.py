@@ -107,10 +107,12 @@ class irrad_ChronologyTable(Base, BaseMixin):
             dose =(pwr, %Y-%m-%d %H:%M:%S, %Y-%m-%d %H:%M:%S)
 
         """
-        doses = self.get_doses(tofloat=False)
-        d = datetime.strptime(doses[0][1], '%Y-%m-%d %H:%M:%S')
+        # doses = self.get_doses(tofloat=False)
+        # d = datetime.strptime(doses[0][1], '%Y-%m-%d %H:%M:%S')
+        # return d.strftime('%m-%d-%Y')
+        # d = datetime.strptime(doses[0][1], '%Y-%m-%d %H:%M:%S')
+        d = self.get_doses()[0][1]
         return d.strftime('%m-%d-%Y')
-
 
     @property
     def duration(self):
@@ -121,7 +123,7 @@ class irrad_ChronologyTable(Base, BaseMixin):
         total_seconds = sum([(di[2] - di[1]).total_seconds() for di in doses])
         return total_seconds / 3600.
 
-    def get_doses(self, tofloat=True):
+    def get_doses(self, todatetime=True):
         doses = self.chronology.split('$')
         # doses = [di.strip().split('%') for di in doses]
         dd = []
@@ -134,7 +136,7 @@ class irrad_ChronologyTable(Base, BaseMixin):
             s, e = di.strip().split('%')
             dd.append((pwr, s, e))
 
-        if tofloat:
+        if todatetime:
             # def convert(x):
             #     pwr=1.0
             #     if ':' in x:
