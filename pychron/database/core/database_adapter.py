@@ -126,6 +126,7 @@ class DatabaseAdapter(Loggable):
     path = Str
     echo = False
     verbose_retrieve_query = False
+    verbose = True
 
     def __init__(self, *args, **kw):
         super(DatabaseAdapter, self).__init__(*args, **kw)
@@ -208,6 +209,13 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
 
     def initialize_database(self):
         pass
+
+    def flush(self):
+        if self.sess:
+            try:
+                self.sess.flush()
+            except:
+                self.sess.rollback()
 
     def commit(self):
         if self.sess:
@@ -537,10 +545,11 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
         except SQLAlchemyError, e:
             if reraise:
                 raise
-            print '_query exception', e
+            # if self.verbose:
+            #     self.debug('_query exception {}'.format(e))
             # import traceback
             # traceback.print_exc()
-            self.sess.rollback()
+            # self.sess.rollback()
 
     def _retrieve_item(self, table, value, key='name', last=None,
                        joins=None, filters=None, options=None, verbose=True,
@@ -611,7 +620,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
                         break
 
                 except NoResultFound:
-                    if verbose:
+                    if verbose and self.verbose:
                         self.debug('no row found for {} {} {}'.format(table.__tablename__, key, value))
                     break
 

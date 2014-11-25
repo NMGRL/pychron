@@ -150,7 +150,7 @@ class MassSpecExtractor(Extractor):
 
         name=dbirrad.name
         with db.session_ctx() as sess:
-            levels = db.get_levels_by_irradname(name,
+            levels = db.get_irradiation_levels(name,
                                                 levels=include_list)
             #if not include_list:
             #    include_list = [li.Level for li in levels]

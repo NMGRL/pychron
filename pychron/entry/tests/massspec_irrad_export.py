@@ -2,7 +2,7 @@ from pychron.entry.loaders.irradiation_loader import XLSIrradiationLoader
 
 __author__ = 'ross'
 
-from pychron.database.adapters.massspec_database_adapter import MassSpecDatabaseAdapter
+from pychron.database.adapters.massspec_database_adapter import MassSpecDatabaseAdapter, PR_KEYS
 from pychron.entry.export.mass_spec_irradiation_exporter import MassSpecIrradiationExporter, \
     generate_production_ratios_id
 
@@ -56,7 +56,7 @@ def source_factory():
     from pychron.database.orms.isotope.util import Base
 
     db = IsotopeAdapter()
-    db.verbose_retrieve_query = True
+    # db.verbose_retrieve_query = True
     db.trait_set(kind='sqlite', path=os.path.join(get_data_dir(), SRC_NAME))
     db.connect()
 
@@ -67,13 +67,23 @@ def source_factory():
     db.create_all(metadata)
 
     p = os.path.join(get_data_dir(), 'irradiation_import.xls')
+
+    # add a production ratio
+    with db.session_ctx():
+        db.add_irradiation_production(name='Triga PR')
+
     loader = XLSIrradiationLoader(db=db)
     loader.load_irradiation(p, dry_run=False)
-
+    db.verbose = False
     with db.session_ctx():
-        irrads = [i.name for i in db.get_irradiations()]
+        dbirrads = db.get_irradiations(order_func='asc')
+        irrads = [i.name for i in dbirrads]
 
-    return db, irrads
+        levels = {}
+        for di in dbirrads:
+            levels[di.name] = tuple([li.name for li in di.levels])
+
+    return db, irrads, levels
 
 
 class MassSpecIrradExportTestCase(unittest.TestCase):
@@ -84,9 +94,10 @@ class MassSpecIrradExportTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.exporter = MassSpecIrradiationExporter()
-        src, irradnames = source_factory()
+        src, irradnames, levels = source_factory()
         cls.source = src
         cls.irradnames = irradnames
+        cls.levels = levels
 
     def setUp(self):
         dest = dest_factory(DEST_NAME)
@@ -112,8 +123,29 @@ class MassSpecIrradExportTestCase(unittest.TestCase):
         with dest.session_ctx():
             names = tuple(dest.get_irradiation_names())
 
-        self.assertTrue(True)
-        # self.assertTupleEqual(names, ('NM-1000', 'NM-1001'))
+        self.assertTupleEqual(names, ('NM-1000', 'NM-1001'))
+
+    @unittest.skipIf(DEBUGGING, 'Debugging')
+    def test_levels1(self):
+        self.exporter.do_export(self.irradnames)
+
+        name = self.irradnames[0]
+        dest = self.exporter.destination
+        with dest.session_ctx():
+            names = tuple(dest.get_irradiation_level_names(name))
+
+        self.assertTupleEqual(names, self.levels[name])
+
+    @unittest.skipIf(DEBUGGING, 'Debugging')
+    def test_levels2(self):
+        self.exporter.do_export(self.irradnames)
+
+        name = self.irradnames[1]
+        dest = self.exporter.destination
+        with dest.session_ctx():
+            names = tuple(dest.get_irradiation_level_names(name))
+
+        self.assertTupleEqual(names, self.levels[name])
 
 
 class ProductionRatiosTestCase(unittest.TestCase):
@@ -121,20 +153,11 @@ class ProductionRatiosTestCase(unittest.TestCase):
         self.db = dest_factory('massspec_pr.db', remove=False)
 
     def test_production_id(self):
-        keys = ('Ca3637', 'Ca3637Er',
-                           'Ca3937', 'Ca3937Er',
-                           'K4039', 'K4039Er',
-                           'P36Cl38Cl', 'P36Cl38ClEr',
-                           'Ca3837', 'Ca3837Er',
-                           'K3839', 'K3839Er',
-                           'K3739', 'K3739Er',
-                           'ClOverKMultiplier', 'ClOverKMultiplierEr',
-                           'CaOverKMultiplier', 'CaOverKMultiplierEr')
 
         oidn = -1578996229
         with self.db.session_ctx():
             pr = self.db.get_production_ratio_by_id(oidn)
-            vs = [getattr(pr, k) for k in keys]
+            vs = [getattr(pr, k) for k in PR_KEYS]
             idn = generate_production_ratios_id(vs)
             self.assertEqual(idn, oidn)
 
@@ -144,8 +167,8 @@ if __name__ == '__main__':
     # generate_pr_db()
 # ============================== EOF =====================================
 # def generate_pr_db():
-#     def quick_mapper(table):
-#         from sqlalchemy.ext.declarative import declarative_base
+# def quick_mapper(table):
+# from sqlalchemy.ext.declarative import declarative_base
 #
 #         Base = declarative_base()
 #

@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,6 +23,7 @@ import math
 from sqlalchemy.sql.expression import func, distinct
 from uncertainties import std_dev, nominal_value
 
+
 # =============local library imports  ==========================
 from pychron.database.orms.massspec_orm import IsotopeResultsTable, \
     AnalysesChangeableItemsTable, BaselinesTable, DetectorTable, \
@@ -39,6 +40,17 @@ from pychron.database.core.functions import delete_one
 
 class MissingAliquotPychronException(BaseException):
     pass
+
+
+PR_KEYS = ('Ca3637', 'Ca3637Er',
+           'Ca3937', 'Ca3937Er',
+           'K4039', 'K4039Er',
+           'P36Cl38Cl', 'P36Cl38ClEr',
+           'Ca3837', 'Ca3837Er',
+           'K3839', 'K3839Er',
+           'K3739', 'K3739Er',
+           'ClOverKMultiplier', 'ClOverKMultiplierEr',
+           'CaOverKMultiplier', 'CaOverKMultiplierEr')
 
 
 class MassSpecDatabaseAdapter(DatabaseAdapter):
@@ -80,7 +92,15 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
             if irrad:
                 return irrad[-1].production
 
-    def get_levels_by_irradname(self, name, levels=None):
+    def get_irradiation_level_names(self, *args, **kw):
+        names = []
+        with self.session_ctx():
+            levels = self.get_irradiation_levels(*args, **kw)
+            if levels:
+                names = [li.Level for li in levels]
+        return names
+
+    def get_irradiation_levels(self, name, levels=None):
         with self.session_ctx() as sess:
             q = sess.query(IrradiationLevelTable)
             q = q.filter(IrradiationLevelTable.IrradBaseID == name)
@@ -106,10 +126,14 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
             r = self._query_one(q)
             return r is not None
 
+
     def get_irradiation_names(self):
         with self.session_ctx() as sess:
             q = sess.query(distinct(IrradiationLevelTable.IrradBaseID))
-            return q.all()
+            vs =q.all()
+            if vs:
+                vs = [vi[0] for vi in vs]
+            return vs
 
     def get_analyses(self, **kw):
         return self._get_items(AnalysesTable, globals(), **kw)
@@ -256,13 +280,28 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
     # ===============================================================================
     # adders
     # ===============================================================================
+    def add_production_ratios(self, prdict):
+        """
+            keys =
+
+
+        :param prdict:
+        :return:
+        """
+        obj = IrradiationProductionTable(**prdict)
+        return self._add_item(obj)
+
     def add_irradiation_level(self, irrad, name, holder, production, **kw):
         if not self.get_irradiation_level(irrad, name):
+            production = self.get_production_ratio_by_id(production)
+
             i = IrradiationLevelTable(IrradBaseID=irrad,
                                       Level=name,
                                       SampleHolder=holder,
-                                      ProductionRatiosID=production,
+                                      # ProductionRatiosID=production,
                                       **kw)
+            i.production = production
+
             return self._add_item(i)
 
     def add_irradiation_position(self, identifier, irrad_level, hole, material='', sample=6, j=1e-4, jerr=1e-7):

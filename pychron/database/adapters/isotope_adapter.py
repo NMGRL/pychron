@@ -2072,7 +2072,6 @@ class IsotopeAdapter(DatabaseAdapter):
 
         return self._retrieve_items(irrad_IrradiationTable,
                                     order=getattr(irrad_IrradiationTable.name, order_func)(),
-                                    verbose_query=True,
                                     **kw)
 
     def get_irradiation_productions(self, **kw):

@@ -229,8 +229,9 @@ class IrradiationPositionTable(Base):
 
 class IrradiationLevelTable(Base):
     __tablename__ = 'IrradiationLevelTable'
-    IrradBaseID = Column(String(80))
-    Level = Column(String(80), primary_key=True)
+    IrradBaseID = Column(String(80), index=True, unique=False, primary_key=True)
+    Level = Column(String(80), index=True, unique=False, primary_key=True)
+
     SampleHolder = Column(String(40))
     ProductionRatiosID = Column(Integer, ForeignKey('IrradiationProductionTable.ProductionRatiosID'))
     ExperimentType = Column(Integer, default=1)
