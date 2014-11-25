@@ -69,6 +69,14 @@ class StartupTester(Loggable):
             self.add_test_result(name=ti, plugin=pname, duration=time.time() - st,
                                  result=result)
 
+    def ok_close(self):
+        ok = True
+        specresult = next((ri for ri in self.results
+                           if 'spectrometer' in ri.plugin.lower() and ri.name == 'test_communication'), None)
+        if specresult:
+            ok = specresult.result == 'Passed'
+        return ok
+
     def add_test_result(self, **kw):
         """
             rdict is a dictionary with the follow key:value_type
@@ -96,14 +104,14 @@ class StartupTester(Loggable):
         a = all([ri.result == 'Passed' for ri in self.results])
         return a
 
-# ============= EOF =============================================
-# def do_test(self):
+    # ============= EOF =============================================
+    # def do_test(self):
     # yl = self._load()
     # ip = InitializationParser()
     #
     # self.results = []
     #
-    #     # test database connections
+    # # test database connections
     #     for i, ti in enumerate(yl):
     #         if self._verify_test(i, ti):
     #             if self._should_test(ti, ip):

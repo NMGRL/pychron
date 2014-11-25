@@ -65,13 +65,20 @@ class ResultsView(Controller):
         else:
             self.help_str = ''
 
-    def closed( self, info, is_ok ):
+    def closed(self, info, is_ok):
+        import sys
+
         if not is_ok:
-            if confirm(info.ui.control,  'Are you sure you want to Quit?')==YES:
+            if confirm(info.ui.control, 'Are you sure you want to Quit?') == YES:
                 self.model.info('User quit because of Startup fail')
 
-                import sys
                 sys.exit()
+        else:
+            if not self.model.ok_close():
+                if confirm(info.ui.control, 'Pychron is not communicating with a Spectrometer.\n'
+                                            'Are you sure you want to enter '
+                                            'Spectrometer Simulation mode?') != YES:
+                    sys.exit()
 
     def _do_auto_close(self):
         if not self._cancel_auto_close:
