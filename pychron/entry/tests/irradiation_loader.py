@@ -49,7 +49,7 @@ def db_factory():
     metadata = Base.metadata
     db.create_all(metadata)
     # with db.session_ctx() as sess:
-    #     metadata.create_all(sess.bind)
+    # metadata.create_all(sess.bind)
 
     return db
 
@@ -100,11 +100,11 @@ class XLSIrradiationLoaderLoadTestCase(unittest.TestCase):
                  'level': 'A',
                  'position': 1,
                  'material': 'sanidine',
-                 'project':'Test',
+                 'project': 'Test',
                  'sample': 'FC-2',
                  'is_monitor': True,
                  'weight': 100,
-                 'identifier':None,
+                 'identifier': None,
                  'note': 'this is a note'}
         pdict.update(**kw)
         return pdict
@@ -112,10 +112,11 @@ class XLSIrradiationLoaderLoadTestCase(unittest.TestCase):
     @unittest.skipIf(DEBUGGING, 'Debugging tests')
     def test_add_position_dry(self):
         self.loader.add_irradiation('NM-1000')
-        self.loader.add_irradiation_level('NM-1000', 'A', '8-Hole', 1)
+        self.loader.add_irradiation_level('NM-1000', 'A', '8-Hole', 1, add_positions=False)
         pdict = self._default_pdict()
 
         self.loader.add_position(pdict, dry=True)
+
         obj = self.loader.db.get_irradiation_position('NM-1000', 'A', 1)
         self.assertIsNone(obj)
 
@@ -155,7 +156,7 @@ class XLSIrradiationLoaderLoadTestCase(unittest.TestCase):
 
         self.assertEqual((gen.next(), gen.next()), (2000, 2001))
 
-    # @unittest.skipIf(DEBUGGING, 'Debugging tests')
+    @unittest.skipIf(DEBUGGING, 'Debugging tests')
     def test_generate_offsets2(self):
         # add a placeholder labnumber
         self.loader.db.add_labnumber(1000, 'FC-2')
@@ -176,11 +177,10 @@ class XLSIrradiationLoaderLoadTestCase(unittest.TestCase):
     def test_add_samples(self):
         self.loader.autogenerate_labnumber = True
         self.loader.add_irradiation('NM-1000')
-        self.loader.add_irradiation_level('NM-1000', 'A', '8-Hole', 1)
+        self.loader.add_irradiation_level('NM-1000', 'A', '8-Hole', 1, add_positions=False)
         gen = self.loader.identifier_generator()
         for i in range(3):
-            pdict=self._default_pdict(identifier=gen.next())
-
+            pdict = self._default_pdict(identifier=gen.next())
             self.loader.add_position(pdict)
 
         with self.loader.db.session_ctx():
@@ -267,6 +267,7 @@ class XLSIrradiationLoaderParseTestCase(unittest.TestCase):
                                                            ('NM-1000', 'B', 1),
                                                            ('NM-1000', 'B', 2),
                                                            ('NM-1000', 'B', 3)])
+
     def test_config_autogen(self):
         self.assertTrue(self.loader.autogenerate_labnumber)
 
@@ -278,6 +279,7 @@ class XLSIrradiationLoaderParseTestCase(unittest.TestCase):
 
     def test_config_quiet(self):
         self.assertTrue(self.loader.quiet)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -128,15 +128,15 @@ class XLSIrradiationLoader(Loggable):
         with db.session_ctx(commit=not dry):
             self._add_position(pdict)
 
-    def add_irradiation(self, name, dry=False):
+    def add_irradiation(self, name, chronology=None, dry=False):
         db = self.db
         with db.session_ctx(commit=not dry):
-            self._add_irradiation(name)
+            self._add_irradiation(name, chronology)
 
-    def add_irradiation_level(self, irrad, name, holder, pr, dry=False):
+    def add_irradiation_level(self, irrad, name, holder, pr, dry=False, add_positions=True):
         db = self.db
         with db.session_ctx(commit=not dry):
-            self._add_level(irrad, name, holder, pr)
+            self._add_level(irrad, name, holder, pr, add_positions=add_positions)
 
     def make_template(self, p):
         from pychron.entry.loaders.irradiation_template import IrradiationTemplate
@@ -325,8 +325,8 @@ class XLSIrradiationLoader(Loggable):
                             if dbsam:
                                 db.add_labnumber(labnumber, dbsam)
 
-                if db.add_irradiation_position(pos, labnumber, irrad, level):
-                    self._added_positions.append((irrad, level, pos))
+            if db.add_irradiation_position(pos, labnumber, irrad, level):
+                self._added_positions.append((irrad, level, pos))
 
         else:
             self._added_positions.append((irrad, level, pos))
@@ -369,13 +369,14 @@ class XLSIrradiationLoader(Loggable):
 
         return obj
 
-    def _add_level(self, irrad, name, pr, holder):
+    def _add_level(self, irrad, name, pr, holder, add_positions=True):
         db = self.db
         if db:
             with db.session_ctx():
                 if db.add_irradiation_level(name, irrad, holder, pr):
                     self._added_levels.append((irrad, name, pr, holder))
-                    self.add_positions(irrad, name)
+                    if add_positions:
+                        self.add_positions(irrad, name)
         else:
             self._added_levels.append((irrad, name, pr, holder))
 

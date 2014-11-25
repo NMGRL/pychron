@@ -71,7 +71,7 @@ class SessionCTX(object):
             if not self._parent.sess_stack:
                 self._parent.sess = None
 
-        # print 'exit',self._commit, self._close_at_exit, self._parent._sess_stack
+        # print 'exit',self._commit, self._close_at_exit#, self._parent._sess_stack
         # self._sess.flush()
         if self._close_at_exit:
             try:
