@@ -237,7 +237,7 @@ class XLSIrradiationLoader(Loggable):
                 # 'identifier': gen.next(), 'sample':sample, 'project':''}
                 self._add_position(d)
 
-    def add_irradiations(self, dry_run):
+    def add_irradiations(self, dry_run=False):
         """
             calls _add_irradiation
                   _add_chronology
@@ -263,7 +263,7 @@ class XLSIrradiationLoader(Loggable):
                 if i == 0:
                     chron = self._add_chronology(irrad)
                     self._add_irradiation(irrad, chron)
-                    if not dry_run:
+                    if not dry_run and self.db:
                         self.db.commit()
 
                 self._add_level(irrad, row[levelidx].value,
