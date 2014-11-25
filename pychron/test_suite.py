@@ -12,7 +12,9 @@ def suite():
 
     from pychron.core.xml.tests.xml_parser import XMLParserTestCase
     from pychron.entry.tests.analysis_loader import XLSAnalysisLoaderTestCase
-    from pychron.entry.tests.irradiation_loader import XLSIrradiationLoaderParseTestCase, XLSIrradiationLoaderLoadTestCase
+    from pychron.entry.tests.irradiation_loader import XLSIrradiationLoaderParseTestCase, \
+        XLSIrradiationLoaderLoadTestCase
+    from pychron.entry.tests.massspec_irrad_export import MassSpecIrradExportTestCase
     from pychron.core.regression.tests.regression import OLSRegressionTest, MeanRegressionTest, \
         FilterOLSRegressionTest, OLSRegressionTest2
     from pychron.experiment.tests.frequency_test import FrequencyTestCase, FrequencyTemplateTestCase
@@ -31,7 +33,8 @@ def suite():
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
 
-    tests = (XMLParserTestCase,
+    tests = (MassSpecIrradExportTestCase,
+             XMLParserTestCase,
              XLSIrradiationLoaderLoadTestCase,
              XLSIrradiationLoaderParseTestCase,
              XLSAnalysisLoaderTestCase,

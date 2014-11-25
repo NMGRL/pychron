@@ -43,7 +43,11 @@ def generate_production_ratios_id(vs):
 
 
 def generate_source_pr_id(dbpr):
-    vs = [getattr(dbpr, k) for k in SRC_PR_KEYS]
+    if dbpr:
+        vs = [getattr(dbpr, k) for k in SRC_PR_KEYS]
+    else:
+        vs = [0]
+
     return generate_production_ratios_id(vs)
 
 
@@ -91,10 +95,9 @@ class MassSpecIrradiationExporter(BaseIrradiationExporter):
             self.debug('adding dose power={} start={} end={}'.format(p, s, e))
             dest.add_irradiation_chronology_entry(src_irr.name, s, e)
 
-    def _export_level(self, source_irr, source_level):
+    def _export_level(self, irradname, source_level):
         action = 'Skipping'
         dest = self.destination
-        irradname = source_irr.name
         levelname = source_level.name
 
         dest_level = dest.get_irradiation_level(irradname, levelname)
@@ -110,22 +113,23 @@ class MassSpecIrradiationExporter(BaseIrradiationExporter):
     def _export_production_ratios(self, dest, source_pr):
         action = 'Skipping'
         pid = generate_source_pr_id(source_pr)
-        dest_pr = dest.get_production_ratios(pid)
-        if not dest_pr:
-            dest_pr = dest.add_production_ratios(source_pr)
-        else:
-            self.debug('Production Ratios="{}" already exists. {}'.format(source_pr.name, action))
-
-        return dest_pr
+        dest_pr = dest.get_production_ratio_by_id(pid)
+        # if not dest_pr:
+        #     dest_pr = dest.add_production_ratios(source_pr)
+        # else:
+        #     self.debug('Production Ratios="{}" already exists. {}'.format(source_pr.name, action))
+        #
+        # return dest_pr
 
     def _export_position(self, dest, dest_level, pos):
         action = 'Skipping'
-        idn = pos.labnumber.identifier
-        dest_pos = dest.get_irradiation_position(idn)
-        if not dest_pos:
-            dest.add_irradiation_position(idn, dest_level)
-        else:
-            self.debug('Irradiation Position="{}" already exists {}'.format(idn, action))
+
+        # idn = pos.labnumber.identifier
+        # dest_pos = dest.get_irradiation_position(idn)
+        # if not dest_pos:
+        #     dest.add_irradiation_position(idn, dest_level)
+        # else:
+        #     self.debug('Irradiation Position="{}" already exists {}'.format(idn, action))
 
 # ============= EOF =============================================
 
