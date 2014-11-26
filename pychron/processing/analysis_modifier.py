@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from apptools.preferences.preference_binding import bind_preference
 from traits.api import Instance
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -26,10 +25,27 @@ from pychron.loggable import Loggable
 
 
 class AnalysisModifier(Loggable):
+    use_main = True
+    use_secondary = False
+
     main_db = Instance(IsotopeAdapter)
     secondary_db = Instance(MassSpecDatabaseAdapter)
 
     def modify_analyses(self, ans, new_labnumber):
+        self.info('Set labnumber to {}'.format(new_labnumber))
+        for ai in ans:
+            self.debug('setting {} to {}'.format(ai.record_id,
+                                                 make_runid(new_labnumber,
+                                                            ai.aliquot, ai.step)))
+
+        if self.use_main:
+            self._modify_main(ans, new_labnumber)
+
+        if self.use_secondary:
+            self._modify_secondary(ans, new_labnumber)
+
+    def _modify_main(self, ans, new_labnumber):
+        self.info('modifying analyses in main db')
         db = self.main_db
         if not db.connect():
             self.debug('Not connected to main db')
@@ -39,9 +55,12 @@ class AnalysisModifier(Loggable):
             dbln = db.get_labnumber(new_labnumber)
 
             for ai in ans:
+                print ai.uuid
                 dban = db.get_analysis_uuid(ai.uuid)
                 dban.labnumber = dbln
 
+    def _modify_secondary(self, ans, new_labnumber):
+        self.info('modifying analyses in secondary db')
         db = self.secondary_db
         if not db.connect():
             self.debug('Not connected to secondary db')
@@ -58,6 +77,8 @@ class AnalysisModifier(Loggable):
                     self.warning('Analysis {} does not exist in Secondary DB'.format(rid))
 
     def _main_db_default(self):
+        from apptools.preferences.preference_binding import bind_preference
+
         db = IsotopeAdapter()
         prefid = 'pychron.database'
         bind_preference(db, 'kind', '{}.kind'.format(prefid))
@@ -70,6 +91,8 @@ class AnalysisModifier(Loggable):
         return db
 
     def _secondary_db_default(self):
+        from apptools.preferences.preference_binding import bind_preference
+
         db = MassSpecDatabaseAdapter()
         prefid = 'pychron.massspec.database'
         bind_preference(db, 'host', '{}.host'.format(prefid))
