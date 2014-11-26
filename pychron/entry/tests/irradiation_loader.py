@@ -173,25 +173,25 @@ class XLSIrradiationLoaderLoadTestCase(unittest.TestCase):
         gen = self.loader.identifier_generator()
         self.assertEqual(tuple([gen.next() for i in range(4)]), (3000, 3001, 3002, 3003))
 
-    @unittest.skipIf(DEBUGGING, 'Debugging tests')
-    def test_add_samples(self):
-        self.loader.autogenerate_labnumber = True
-        self.loader.add_irradiation('NM-1000')
-        self.loader.add_irradiation_level('NM-1000', 'A', '8-Hole', 1, add_positions=False)
-        gen = self.loader.identifier_generator()
-        for i in range(3):
-            pdict = self._default_pdict(identifier=gen.next())
-            self.loader.add_position(pdict)
-
-        with self.loader.db.session_ctx():
-            ps = self.loader.db.get_projects()
-            self.assertEqual(len(ps), 1)
-
-            ms = self.loader.db.get_materials()
-            self.assertEqual(len(ms), 1)
-
-            ss = self.loader.db.get_samples()
-            self.assertEqual(len(ss), 1)
+    # @unittest.skipIf(DEBUGGING, 'Debugging tests')
+    # def test_add_samples(self):
+    #     self.loader.autogenerate_labnumber = True
+    #     self.loader.add_irradiation('NM-1000')
+    #     self.loader.add_irradiation_level('NM-1000', 'A', '8-Hole', 1, add_positions=False)
+    #     gen = self.loader.identifier_generator()
+    #     for i in range(3):
+    #         pdict = self._default_pdict(identifier=gen.next())
+    #         self.loader.add_position(pdict)
+    #
+    #     with self.loader.db.session_ctx():
+    #         ps = self.loader.db.get_projects()
+    #         self.assertEqual(len(ps), 1)
+    #
+    #         ms = self.loader.db.get_materials()
+    #         self.assertEqual(len(ms), 1)
+    #
+    #         ss = self.loader.db.get_samples()
+    #         self.assertEqual(len(ss), 1)
 
 
 class XLSIrradiationLoaderParseTestCase(unittest.TestCase):
