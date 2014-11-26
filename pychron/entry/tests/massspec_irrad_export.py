@@ -1,13 +1,13 @@
-from pychron.entry.loaders.irradiation_loader import XLSIrradiationLoader
-
 __author__ = 'ross'
+import os
+import unittest
 
-from pychron.database.adapters.massspec_database_adapter import MassSpecDatabaseAdapter, PR_KEYS
+from pychron.core.test_helpers import isotope_db_factory, massspec_db_factory, get_data_dir as mget_data_dir
+from pychron.entry.loaders.irradiation_loader import XLSIrradiationLoader
+from pychron.database.adapters.massspec_database_adapter import PR_KEYS
 from pychron.entry.export.mass_spec_irradiation_exporter import MassSpecIrradiationExporter, \
     generate_production_ratios_id
 
-import os
-import unittest
 
 DEBUGGING = False
 
@@ -26,46 +26,19 @@ if DEBUGGING:
     logging_setup('irrad_loader')
 
 
+
 def get_data_dir():
-    op = 'pychron/entry/tests/data'
-    if not os.path.isdir(op):
-        op = os.path.join('.', 'data')
-    return op
+    return mget_data_dir('pychron/entry/tests/data')
 
 
 def dest_factory(name, remove=True):
-    from pychron.database.orms.massspec_orm import Base
-
     path = os.path.join(get_data_dir(), name)
-    if remove and os.path.isfile(path):
-        os.remove(path)
-
-    db = MassSpecDatabaseAdapter()
-    # db.verbose_retrieve_query = True
-    db.trait_set(kind='sqlite', path=path)
-    db.connect()
-
-    metadata = Base.metadata
-    db.create_all(metadata)
-
+    db = massspec_db_factory(path, remove)
     return db
 
 
 def source_factory():
-    from pychron.database.adapters.isotope_adapter import IsotopeAdapter
-    from pychron.database.orms.isotope.util import Base
-
-    db = IsotopeAdapter()
-    # db.verbose_retrieve_query = True
-    db.trait_set(kind='sqlite', path=os.path.join(get_data_dir(), SRC_NAME))
-    db.connect()
-
-    if os.path.isfile(db.path):
-        os.remove(db.path)
-
-    metadata = Base.metadata
-    db.create_all(metadata)
-
+    db = isotope_db_factory(os.path.join(get_data_dir(), SRC_NAME))
     p = os.path.join(get_data_dir(), 'irradiation_import.xls')
 
     # add a production ratio

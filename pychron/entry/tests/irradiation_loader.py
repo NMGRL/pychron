@@ -1,3 +1,5 @@
+from pychron.core.test_helpers import isotope_db_factory, get_data_dir as mget_data_dir
+
 __author__ = 'ross'
 
 import os
@@ -29,25 +31,28 @@ if DEBUGGING:
 
 def get_data_dir():
     op = 'pychron/entry/tests/data'
-    if not os.path.isdir(op):
-        op = os.path.join('.', 'data')
-    return op
+    return mget_data_dir(op)
+    # if not os.path.isdir(op):
+    #     op = os.path.join('.', 'data')
+    # return op
 
 
 def db_factory():
-    from pychron.database.adapters.isotope_adapter import IsotopeAdapter
-    from pychron.database.orms.isotope.util import Base
-
-    db = IsotopeAdapter()
-    db.verbose_retrieve_query = True
-    db.trait_set(kind='sqlite', path=os.path.join(get_data_dir(), DBNAME))
-    db.connect()
-
-    if os.path.isfile(db.path):
-        os.remove(db.path)
-
-    metadata = Base.metadata
-    db.create_all(metadata)
+    path = os.path.join(get_data_dir(), DBNAME)
+    db = isotope_db_factory(path)
+    # from pychron.database.adapters.isotope_adapter import IsotopeAdapter
+    # from pychron.database.orms.isotope.util import Base
+    #
+    # db = IsotopeAdapter()
+    # db.verbose_retrieve_query = True
+    # db.trait_set(kind='sqlite', path=os.path.join(get_data_dir(), DBNAME))
+    # db.connect()
+    #
+    # if os.path.isfile(db.path):
+    #     os.remove(db.path)
+    #
+    # metadata = Base.metadata
+    # db.create_all(metadata)
     # with db.session_ctx() as sess:
     # metadata.create_all(sess.bind)
 
