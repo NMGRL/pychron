@@ -21,7 +21,6 @@ setup(name='pychron',
                   'pychron.experiment.utilities.position_regex',
                   'pychron.experiment.utilities.frequency_generator',
                   'pychron.experiment.utilities.aliquot_numbering',
-                  'pychron.experiment.automated_run.conditional',
                   'pychron.entry.loaders.analysis_loader'],
       package_data={'pychron.pyscripts.tests': ['data/*.yaml', 'data/*.py'],
                     'pychron.entry.tests': ['data/*.xls', 'data/*.db'],
@@ -30,7 +29,7 @@ setup(name='pychron',
                 'pychron.core.stats',
                 'pychron.core.helpers',
                 'pychron.external_pipette',
-
+                'pychron.experiment.conditional',
                 'pychron.pyscripts',
 
                 # test packages

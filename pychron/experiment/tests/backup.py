@@ -11,7 +11,7 @@ import unittest
 
 
 def get_data_dir():
-    op = 'pychron/processing/tests/data'
+    op = 'pychron/experiment/tests/data'
     return mget_data_dir(op)
 
 
