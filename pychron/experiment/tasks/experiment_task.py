@@ -470,10 +470,10 @@ class ExperimentEditorTask(EditorTask):
             if group_positions:
                 rf.position = ','.join(ns)
 
-    @on_trait_change('manager.experiment_factory:extract_device')
+    @on_trait_change('manager:experiment_factory:extract_device')
     def _handle_extract_device(self, new):
-        app = self.window.application
-        if new:
+        if new and self.window:
+            app = self.window.application
             from pychron.experiment.utilities.identifier import convert_extract_device
 
             ed = convert_extract_device(new)
