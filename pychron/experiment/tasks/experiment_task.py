@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import on_trait_change, Bool, Instance, Event, Color
+from traits.api import on_trait_change, Bool, Instance, Event, Color, Int
 # from traitsui.api import View, Item
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
 from pyface.constant import CANCEL, NO
@@ -49,7 +49,7 @@ class ExperimentEditorTask(EditorTask):
 
     use_notifications = Bool
     use_syslogger = Bool
-    #notifications_port = Int
+    notifications_port = Int
 
     loading_manager = Instance('pychron.loading.loading_manager.LoadingManager')
     notifier = Instance(Notifier, ())
@@ -119,12 +119,12 @@ class ExperimentEditorTask(EditorTask):
 
         self._preference_binder('pychron.experiment',
                                 ('use_notifications',
-                                 'notifications_port',
+                                 # 'notifications_port',
                                  'automated_runs_editable'))
 
         #force notifier setup
         if self.use_notifications:
-            self.notifier.setup(self.notifier.port)
+            self.notifier.setup(self.notifications_port)
 
         #sys logger
         bind_preference(self, 'use_syslogger', 'pychron.use_syslogger')
