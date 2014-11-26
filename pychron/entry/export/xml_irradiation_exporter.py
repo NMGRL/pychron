@@ -15,10 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Button
-from traitsui.api import View, Item
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.entry.export.base_irradiation_exporter import BaseIrradiationExporter
 
 
@@ -26,7 +24,7 @@ class XMLIrradiationExporter(BaseIrradiationExporter):
     """
         export irradiations from pychron database to an XML file
     """
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

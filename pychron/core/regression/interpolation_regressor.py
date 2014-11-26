@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Str
 
 from pychron.core.regression.base_regressor import BaseRegressor
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import where, polyval, polyfit
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 
 class InterpolationRegressor(BaseRegressor):
@@ -171,4 +171,4 @@ class InterpolationRegressor(BaseRegressor):
 #
 #     pl.show()
 
-#============= EOF =============================================
+# ============= EOF =============================================

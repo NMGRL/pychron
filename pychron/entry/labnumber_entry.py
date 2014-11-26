@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
 from pyface.constant import YES, CANCEL
 from traits.api import Property, Str, cached_property, \
@@ -22,9 +22,9 @@ from traits.api import Property, Str, cached_property, \
 from traitsui.api import Image
 from pyface.image_resource import ImageResource
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.database.defaults import load_irradiation_map
@@ -83,15 +83,15 @@ class LabnumberEntry(IsotopeDatabaseManager):
 
     load_file_button = Button('Load File')
     generate_labnumbers_button = Button('Generate Labnumbers')
-    #===========================================================================
+    # ===========================================================================
     # irradiation positions table events
-    #===========================================================================
+    # ===========================================================================
     selected = Any
     refresh_table = Event
 
-    #===========================================================================
+    # ===========================================================================
     #
-    #===========================================================================
+    # ===========================================================================
     canvas = Instance(IrradiationCanvas, ())
     show_canvas = Bool(True)
 
@@ -398,7 +398,7 @@ class LabnumberEntry(IsotopeDatabaseManager):
 
     # ===============================================================================
     # handlers
-    #===============================================================================
+    # ===============================================================================
     @on_trait_change('irradiated_positions:sample')
     def _handle_entry(self, obj, name, old, new):
         if not self._no_update:
@@ -612,9 +612,9 @@ THIS CHANGE CANNOT BE UNDONE')
         ie.trait_set(**kw)
         return ie
 
-    #===============================================================================
+    # ===============================================================================
     # property get/set
-    #===============================================================================
+    # ===============================================================================
     @cached_property
     def _get_projects(self):
         order = gen_ProjectTable.name.asc()
@@ -695,7 +695,7 @@ if __name__ == '__main__':
     logging_setup('runid')
     m = LabnumberEntry()
     m.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================
 # _prev_tray = self.tray_name
 # irradiation = self.irradiation
 # level = Level(db=self.db,

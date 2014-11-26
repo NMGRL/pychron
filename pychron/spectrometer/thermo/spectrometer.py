@@ -20,7 +20,7 @@ from traits.api import Instance, Int, Property, List, \
 # ============= standard library imports ========================
 import os
 from numpy import array, argmin
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.globals import globalv
 from pychron.spectrometer.thermo.source import ArgusSource
 from pychron.spectrometer.thermo.magnet import ArgusMagnet
@@ -194,9 +194,9 @@ class Spectrometer(SpectrometerDevice):
                     mass = nmass - (i - index)
                     di.isotope = 'Ar{}'.format(mass)
 
-    #===============================================================================
+    # ===============================================================================
     # property get/set
-    #===============================================================================
+    # ===============================================================================
     def _get_detectors(self):
         ds = []
         for di in DETECTOR_ORDER:
@@ -210,9 +210,9 @@ class Spectrometer(SpectrometerDevice):
         self._sub_cup_configuration = v
         self.ask('SetSubCupConfiguration {}'.format(v))
 
-    #===============================================================================
+    # ===============================================================================
     # load
-    #===============================================================================
+    # ===============================================================================
     def load_configurations(self):
         self.sub_cup_configurations = ['A', 'B', 'C']
         self._sub_cup_configuration = 'B'

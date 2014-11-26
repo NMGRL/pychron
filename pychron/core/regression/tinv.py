@@ -1,8 +1,8 @@
 #!/usr/bin/python
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
+# Licensed under the Apache License, Version 2.0 (the "License")
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
@@ -13,7 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
@@ -40,7 +40,7 @@ EPS = 2.22e-16
 XMININ = 2.23e-308
 # Square root of 2 * pi
 SQRT2PI = 2.5066282746310005024157652848110452530069867406099
-LOGSQRT2PI = math.log(SQRT2PI);
+LOGSQRT2PI = math.log(SQRT2PI)
 # Rough estimate of the fourth root of logGamma_xBig
 lg_frtbig = 2.25e76
 pnt68 = 0.6796875
@@ -61,7 +61,7 @@ def betaFraction(x, p, q):
     sum_pq = p + q
     p_plus = p + 1.0
     p_minus = p - 1.0
-    h = 1.0 - sum_pq * x / p_plus;
+    h = 1.0 - sum_pq * x / p_plus
     if abs(h) < XMININ:
         h = XMININ
     h = 1.0 / h
@@ -78,16 +78,16 @@ def betaFraction(x, p, q):
         h = 1.0 + d * h
         if abs(h) < XMININ:
             h = XMININ
-        h = 1.0 / h;
-        c = 1.0 + d / c;
+        h = 1.0 / h
+        c = 1.0 + d / c
         if abs(c) < XMININ:
             c = XMININ
-        frac *= h * c;
+        frac *= h * c
 
         # odd index for d
         d = -(p + m) * (sum_pq + m) * x / ((p + m2) * (p_plus + m2))
         h = 1.0 + d * h
-        if abs(h) < XMININ: h = XMININ;
+        if abs(h) < XMININ: h = XMININ
         h = 1.0 / h
         c = 1.0 + d / c
         if abs(c) < XMININ: c = XMININ
@@ -100,9 +100,9 @@ def betaFraction(x, p, q):
 # The largest argument for which <code>logGamma(x)</code> is representable in the machine.
 LOG_GAMMA_X_MAX_VALUE = 2.55e305
 # Log Gamma related constants
-lg_d1 = -0.5772156649015328605195174;
-lg_d2 = 0.4227843350984671393993777;
-lg_d4 = 1.791759469228055000094023;
+lg_d1 = -0.5772156649015328605195174
+lg_d2 = 0.4227843350984671393993777
+lg_d4 = 1.791759469228055000094023
 lg_p1 = [4.945235359296727046734888,
     201.8112620856775083915565, 2290.838373831346393026739,
     11319.67205903380828685045, 28557.24635671635335736389,
@@ -179,52 +179,52 @@ The computation is believed to be free of underflow and overflow."""
             corr = -math.log(y)
             xm1 = y
         else:
-            corr = 0.0;
-            xm1 = y - 1.0;
+            corr = 0.0
+            xm1 = y - 1.0
 
         if y <= 0.5 or y >= pnt68:
-            xden = 1.0;
-            xnum = 0.0;
+            xden = 1.0
+            xnum = 0.0
             for i in xrange(8):
-                xnum = xnum * xm1 + lg_p1[i];
-                xden = xden * xm1 + lg_q1[i];
-            return corr + xm1 * (lg_d1 + xm1 * (xnum / xden));
+                xnum = xnum * xm1 + lg_p1[i]
+                xden = xden * xm1 + lg_q1[i]
+            return corr + xm1 * (lg_d1 + xm1 * (xnum / xden))
         else:
-            xm2 = y - 1.0;
-            xden = 1.0;
-            xnum = 0.0;
+            xm2 = y - 1.0
+            xden = 1.0
+            xnum = 0.0
             for i in xrange(8):
-                xnum = xnum * xm2 + lg_p2[i];
-                xden = xden * xm2 + lg_q2[i];
-            return corr + xm2 * (lg_d2 + xm2 * (xnum / xden));
+                xnum = xnum * xm2 + lg_p2[i]
+                xden = xden * xm2 + lg_q2[i]
+            return corr + xm2 * (lg_d2 + xm2 * (xnum / xden))
 
     if (y <= 4.0):
-        xm2 = y - 2.0;
-        xden = 1.0;
-        xnum = 0.0;
+        xm2 = y - 2.0
+        xden = 1.0
+        xnum = 0.0
         for i in xrange(8):
-            xnum = xnum * xm2 + lg_p2[i];
-            xden = xden * xm2 + lg_q2[i];
-        return xm2 * (lg_d2 + xm2 * (xnum / xden));
+            xnum = xnum * xm2 + lg_p2[i]
+            xden = xden * xm2 + lg_q2[i]
+        return xm2 * (lg_d2 + xm2 * (xnum / xden))
 
     if y <= 12.0:
-        xm4 = y - 4.0;
-        xden = -1.0;
-        xnum = 0.0;
+        xm4 = y - 4.0
+        xden = -1.0
+        xnum = 0.0
         for i in xrange(8):
-            xnum = xnum * xm4 + lg_p4[i];
-            xden = xden * xm4 + lg_q4[i];
-        return lg_d4 + xm4 * (xnum / xden);
+            xnum = xnum * xm4 + lg_p4[i]
+            xden = xden * xm4 + lg_q4[i]
+        return lg_d4 + xm4 * (xnum / xden)
 
     assert y <= lg_frtbig
-    res = lg_c[6];
-    ysq = y * y;
+    res = lg_c[6]
+    ysq = y * y
     for i in xrange(6):
-        res = res / ysq + lg_c[i];
-    res /= y;
-    corr = math.log(y);
-    res = res + LOGSQRT2PI - 0.5 * corr;
-    res += y * (corr - 1.0);
+        res = res / ysq + lg_c[i]
+    res /= y
+    corr = math.log(y)
+    res = res + LOGSQRT2PI - 0.5 * corr
+    res += y * (corr - 1.0)
     return res
 
 

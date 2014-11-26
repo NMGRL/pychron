@@ -18,10 +18,10 @@
 from traits.has_traits import HasTraits
 from traits.trait_types import Button, List, String, Any, Str, Dict
 from traits.traits import Property
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 import pickle
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.paths import paths
 
 
@@ -146,4 +146,4 @@ class BaseTemplater(HasTraits):
         self.label = new
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

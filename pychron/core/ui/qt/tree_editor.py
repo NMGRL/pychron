@@ -15,11 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from PySide.QtGui import QTreeWidgetItem, QIcon
-from traits.api import HasTraits, Button, Str, Int, Bool, Event
-from traitsui.api import View, Item, UItem, HGroup, VGroup, TreeEditor as _TreeEditor
+from PySide.QtGui import QIcon
+from traits.api import Str, Bool, Event
+from traitsui.api import TreeEditor as _TreeEditor
 # ============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 
 from traitsui.qt4.tree_editor import SimpleEditor as _SimpleEditor
@@ -69,7 +69,7 @@ class TreeEditor(_TreeEditor):
         """
         return SimpleEditor
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

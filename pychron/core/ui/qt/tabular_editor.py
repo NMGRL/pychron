@@ -14,10 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from PySide.QtCore import QRegExp, Qt
 from PySide.QtGui import QColor, QHeaderView, QWidget, QVBoxLayout, QLineEdit, QPushButton, QHBoxLayout, \
-    QSortFilterProxyModel, QStyleOptionButton, QSizePolicy, QCheckBox
+    QSortFilterProxyModel, QSizePolicy, QCheckBox
 
 from traits.api import Bool, Str, List, Any, Instance, Property, Int, HasTraits, Color
 from traits.trait_base import SequenceTypes
@@ -27,11 +27,11 @@ from traitsui.mimedata import PyMimeData
 from traitsui.qt4.tabular_editor import TabularEditor as qtTabularEditor, \
     _TableView, HeaderEventFilter
 from traitsui.qt4.tabular_model import TabularModel, alignment_map
-#============= standard library imports ========================
+# ============= standard library imports ========================
 # from PySide.QtGui import QKeySequence, QDrag, QAbstractItemView, QTableView, QApplication
 # from PySide.QtGui import QFont, QFontMetrics
 from PySide import QtCore, QtGui
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.consumer_mixin import ConsumerMixin
 from pychron.envisage.resources import icon
@@ -823,4 +823,4 @@ class TabularEditorHandler(UnselectTabularEditorHandler):
     def move_to_row(self, info, obj):
         obj.move_selected_to_row()
 
-#============= EOF =============================================
+# ============= EOF =============================================

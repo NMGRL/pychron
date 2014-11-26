@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,18 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-from traits.api import HasTraits, Bool
-from traitsui.api import View, Item, TableEditor
-#============= standard library imports ========================
-from numpy import zeros_like, invert, percentile, ones_like, asarray
+# ============= enthought library imports =======================
+from traits.api import Bool
+# ============= standard library imports ========================
+from numpy import zeros_like, invert
 from skimage.filter import sobel, threshold_adaptive
 from skimage.morphology import watershed
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.mv.segment.base import BaseSegmenter
-from scipy import ndimage
 # from skimage.exposure.exposure import rescale_intensity
 # from scipy.ndimage.morphology import binary_closing
 
@@ -60,4 +58,4 @@ class RegionSegmenter(BaseSegmenter):
 
 #         wsrc = wsrc.astype('uint8')
         return invert(wsrc)
-#============= EOF =============================================
+# ============= EOF =============================================

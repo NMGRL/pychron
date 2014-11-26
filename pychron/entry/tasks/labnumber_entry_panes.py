@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from enable.component_editor import ComponentEditor
 from traits.api import Instance
 from traitsui.api import View, Item, TabularEditor, VGroup, spring, HGroup, \
     EnumEditor, UItem, Label, VSplit
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from pyface.tasks.traits_dock_pane import TraitsDockPane
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.qt.tabular_editor import FilterTabularEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
@@ -148,4 +148,4 @@ class IrradiationPane(TraitsDockPane):
         v = View(VGroup(conn, irrad, level))
         return v
 
-#============= EOF =============================================
+# ============= EOF =============================================

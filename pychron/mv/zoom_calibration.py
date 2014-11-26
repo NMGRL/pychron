@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 from traits.etsconfig.etsconfig import ETSConfig
 ETSConfig.toolkit = 'qt4'
 
@@ -26,7 +26,7 @@ import os
 from pychron.core.ui.thread import Thread
 from pychron.core.ui.gui import invoke_in_main_thread
 
-from skimage.transform.hough_transform import probabilistic_hough, hough_line, \
+from skimage.transform.hough_transform import hough_line, \
     hough_peaks
 
 from pychron.graph.graph import Graph
@@ -36,13 +36,13 @@ from pychron.image.cv_wrapper import load_image, grayspace, crop
 from skimage.draw import line
 # from skimage.segmentation._clear_border import clear_border
 # from skimage.feature.corner import corner_harris, corner_peaks, corner_subpix
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Instance, Button, Range
 from traitsui.api import View, Item, UItem
 from pychron.mv.test_image import TestImage
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class ZoomCalibration(HasTraits):
     test_image = Instance(TestImage, ())
@@ -223,4 +223,4 @@ class ZoomCalibration(HasTraits):
 if __name__ == '__main__':
     z = ZoomCalibration()
     z.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================

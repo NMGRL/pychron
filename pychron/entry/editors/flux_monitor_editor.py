@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from sqlalchemy.exc import DBAPIError
 from traits.api import HasTraits, Float, Str, List, Instance, Property, Button, Bool, Event
 from traitsui.api import View, Item, HGroup, VGroup, UItem, ListStrEditor, VSplit
+
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.pychron_constants import PLUSMINUS, SIGMA
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
 class FluxMonitor(HasTraits):
@@ -156,4 +160,4 @@ class FluxMonitorEditor(IsotopeDatabaseManager):
                  title='Edit Flux Monitor')
         return v
 
-        #============= EOF =============================================
+        # ============= EOF =============================================

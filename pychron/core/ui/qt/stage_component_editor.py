@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Event, Str
 from enable.component_editor import ComponentEditor, _ComponentEditor
 from enable.window import Window as EWindow
 from PySide.QtCore import Qt
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 
 class Window(EWindow):
@@ -83,4 +83,4 @@ class LaserComponentEditor(ComponentEditor):
     klass = _LaserComponentEditor
     keyboard_focus = Str
 
-#============= EOF =============================================
+# ============= EOF =============================================

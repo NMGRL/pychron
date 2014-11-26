@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance, Event, Bool, Any, Property, Str, Float, provides
-# from traits.has_traits import provides
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.ui.gui import wake_screen
-
 from pychron.lasers.stage_managers.stage_manager import StageManager
 from pychron.lasers.pattern.pattern_executor import PatternExecutor
 from pychron.managers.manager import Manager
@@ -26,8 +26,7 @@ from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.core.ui.led_editor import LED
 from pychron.core.helpers.filetools import list_directory
 from pychron.paths import paths
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
 
 @provides(ILaserManager)
 class BaseLaserManager(Manager):
@@ -179,12 +178,12 @@ class BaseLaserManager(Manager):
     def get_achieved_output(self):
         pass
 
-#===============================================================================
-# getter/setters
-#===============================================================================
+    # ===============================================================================
+    # getter/setters
+    # ===============================================================================
     def _get_enable_label(self):
-        '''
-        '''
+        """
+        """
         return 'DISABLE' if self.enabled else 'ENABLE'
 
     def _get_calibrated_power(self, power, use_calibration=True, verbose=True):
@@ -198,9 +197,10 @@ class BaseLaserManager(Manager):
 
     def _get_units(self):
         return '(W)' if self.use_calibrated_power else '(%)'
-#===============================================================================
-# handlers
-#===============================================================================
+
+    # ===============================================================================
+    # handlers
+    # ===============================================================================
     def _enabled_changed(self):
         if self.enabled:
             self.enabled_led.state = 'green'
@@ -240,4 +240,4 @@ class BaseLaserManager(Manager):
         args['parent'] = self
         sm = klass(**args)
         return sm
-#============= EOF =============================================
+# ============= EOF =============================================

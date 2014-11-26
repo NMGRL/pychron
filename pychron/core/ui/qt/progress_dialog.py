@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 # from pyface.api import ProgressDialog
 
 from traits.api import Property, Bool, Int
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from PySide.QtCore import Qt
 from PySide.QtGui import QLabel, QDialogButtonBox
 from pyface.ui.qt4.progress_dialog import ProgressDialog
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 class myProgressDialog(ProgressDialog):
     show_percent = True
@@ -116,4 +116,4 @@ class myProgressDialog(ProgressDialog):
 # #        self.dialog_size = QRect(QPoint(0, 0), QSize(w, h))
 #         self.size = (w, h)
 #         print self.size
-#============= EOF =============================================
+# ============= EOF =============================================

@@ -15,15 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Button, Str, Int, Bool
-from traitsui.api import View, Item, UItem, HGroup, VGroup
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 from factory import toolkit_factory
 KeyBindingEditor = toolkit_factory('keybinding_editor', 'KeyBindingEditor')
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

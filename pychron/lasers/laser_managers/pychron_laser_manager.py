@@ -12,18 +12,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import CInt, Str, String, on_trait_change, Button, Float, \
     Property, Bool, Instance, Event, Enum, Int, Either, Range, cached_property
 import apptools.sweet_pickle as pickle
 from apptools.preferences.preference_binding import bind_preference
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import time
 import os
 from threading import Thread
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.globals import globalv
 from pychron.hardware.core.communicators.ethernet_communicator import EthernetCommunicator
 from pychron.lasers.laser_managers.client import UVLaserOpticsClient, UVLaserControlsClient, \
@@ -109,9 +109,9 @@ class PychronLaserManager(BaseLaserManager):
     def get_tray(self):
         return self.ask('GetSampleHolder')
 
-    #===============================================================================
+    # ===============================================================================
     # patterning
-    #===============================================================================
+    # ===============================================================================
     def execute_pattern(self, name=None, block=False):
         """
             name is either a name of a file
@@ -263,7 +263,7 @@ class PychronLaserManager(BaseLaserManager):
         if self.communicator.simulation:
             return 0, 0, 0
 
-    #handlers
+    # handlers
     @on_trait_change('pattern_executor:pattern:canceled')
     def pattern_canceled(self):
         """
@@ -318,9 +318,9 @@ class PychronLaserManager(BaseLaserManager):
             cmd = 'AbortPattern'
             self._ask(cmd)
 
-    #===============================================================================
+    # ===============================================================================
     # pyscript private
-    #===============================================================================
+    # ===============================================================================
     def _view_snapshot(self, local_path, remote_path, image):
         from pychron.lasers.laser_managers.snapshot_view import SnapshotView
 
@@ -498,7 +498,7 @@ class PychronUVLaserManager(PychronLaserManager):
 
     masks = Property
     attenuator = String(enter_set=True, auto_set=False)
-    #attenuators = Property
+    # attenuators = Property
     zoom = Range(0.0, 100.0)
 
     def set_reprate(self, v):
@@ -534,9 +534,9 @@ class PychronUVLaserManager(PychronLaserManager):
     def drill_point(self, value, name):
         cmd = 'DrillPoint'
 
-    #===============================================================================
+    # ===============================================================================
     #
-    #===============================================================================
+    # ===============================================================================
     def _fire_fired(self):
 
         if self.fire_mode == 'Continuous':
@@ -557,9 +557,9 @@ class PychronUVLaserManager(PychronLaserManager):
             t = Thread(target=self.set_motor, args=(name, new))
             t.start()
 
-    #===============================================================================
+    # ===============================================================================
     #
-    #===============================================================================
+    # ===============================================================================
     def _opened_hook(self):
         nb = self._ask('GetNBurst')
         self._nburst = self._get_int(nb)
@@ -594,9 +594,9 @@ class PychronUVLaserManager(PychronLaserManager):
             self.update_position()
             return r
 
-    #===============================================================================
+    # ===============================================================================
     # property get/set
-    #===============================================================================
+    # ===============================================================================
     def _get_int(self, resp):
         r = 0
         if resp is not None:
@@ -663,4 +663,4 @@ class PychronUVLaserManager(PychronLaserManager):
     def _optics_client_default(self):
         return UVLaserOpticsClient(model=self)
 
-#============= EOF =============================================
+# ============= EOF =============================================

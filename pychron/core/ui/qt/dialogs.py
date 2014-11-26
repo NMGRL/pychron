@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 # from traits.api import HasTraits
 import time
 from threading import Event, currentThread, _MainThread, Thread
@@ -27,11 +27,14 @@ from pychron.core.ui.gui import invoke_in_main_thread
 
 
 
+
+
+
 #from pyface.confirmation_dialog import ConfirmationDialog
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 class myMessageMixin(object):
     """
         makes  message dialogs thread save.
@@ -130,4 +133,4 @@ class myConfirmationDialog(myMessageMixin, _ConfirmationDialog):
     pass
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 # from traits.api import HasTraits
 # from traitsui.api import View, Item, TableEditor
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import math
 
 import numpy as np
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.geometry.geometry import sort_clockwise
 from pychron.core.geometry.convex_hull import convex_hull
 from pychron.core.geometry.polygon_offset import polygon_offset
@@ -373,7 +373,7 @@ if __name__ == '__main__':
 
     g.configure_traits()
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 # def d():

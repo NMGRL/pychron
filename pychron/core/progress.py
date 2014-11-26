@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.ui.progress_dialog import myProgressDialog
 
 
@@ -109,7 +109,7 @@ def progress_iterator(xs, func, threshold=50, progress=None, reraise_cancel=Fals
         if reraise_cancel:
             raise CancelLoadingError
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

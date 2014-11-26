@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from datetime import datetime
 import os
 
@@ -29,8 +29,11 @@ from traitsui.api import View, Item, TabularEditor, HGroup, UItem, VSplit, Group
 
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
 from pychron.canvas.utils import load_holder_canvas, iter_geom
@@ -348,5 +351,5 @@ class LevelEditor(Loggable):
                                              os.path.basename(dlg.path), overwrite_geometry=True)
 
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

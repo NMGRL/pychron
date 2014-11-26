@@ -269,6 +269,7 @@ class XLSIrradiationLoader(Loggable):
                 self._add_level(irrad, row[levelidx].value,
                                 row[pridx].value, row[holderidx].value)
 
+    # private
     def _load_irradiation_from_file(self, p, dry_run):
         """
 
@@ -278,8 +279,18 @@ class XLSIrradiationLoader(Loggable):
 
         self.dm = self._dm_factory(p)
         self.add_irradiations(dry_run)
+
+        if self.autogenerate_labnumber:
+            self._add_labnumbers()
+
         # self.add_positions()
         # self.set_identifiers()
+
+    def _add_labnumbers(self):
+        for irrad in self.position_iterator():
+            for level in irrad:
+                for pos in level:
+                    pass
 
     def _add_chronology(self, irrad):
         dm = self.dm
@@ -314,16 +325,17 @@ class XLSIrradiationLoader(Loggable):
         irrad, level, pos = pdict['irradiation'], pdict['level'], pdict['position']
         db = self.db
         if db:
-            with db.session_ctx():
-                labnumber = pdict['identifier']
-                if labnumber is not None:
-                    dbprj = self._add_project(db, pdict['project'])
-                    if dbprj:
-                        dbmat = self._add_material(db, pdict['material'])
-                        if dbmat:
-                            dbsam = self._add_sample(db, pdict['sample'], dbprj, dbmat)
-                            if dbsam:
-                                db.add_labnumber(labnumber, dbsam)
+            labnumber = pdict['identifier']
+            # with db.session_ctx():
+            #     labnumber = pdict['identifier']
+            #     if labnumber is not None:
+            #         dbprj = self._add_project(db, pdict['project'])
+            #         if dbprj:
+            #             dbmat = self._add_material(db, pdict['material'])
+            #             if dbmat:
+            #                 dbsam = self._add_sample(db, pdict['sample'], dbprj, dbmat)
+            #                 if dbsam:
+            #                     db.add_labnumber(labnumber, dbsam)
 
             if db.add_irradiation_position(pos, labnumber, irrad, level):
                 self._added_positions.append((irrad, level, pos))

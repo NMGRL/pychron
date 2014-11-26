@@ -12,20 +12,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import logging
 
 from traits.api import Str, Password, Property
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 import ftplib as ftp
 from zipfile import ZipFile, ZIP_DEFLATED
 import shutil
 import paramiko
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.loggable import Loggable
 from pychron.core.helpers.filetools import unique_path
 
@@ -289,4 +289,4 @@ if __name__ == '__main__':
     p = '/Users/ross/Sandbox/download.h5'
     c.add_file(p)
 
-#============= EOF =============================================
+# ============= EOF =============================================

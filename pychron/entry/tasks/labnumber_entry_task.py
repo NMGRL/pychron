@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 
 from pyface.tasks.action.schema import SToolBar
 from traits.api import Instance, on_trait_change, Button
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, Tabbed
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 from pychron.entry.graphic_generator import GraphicModel, GraphicGeneratorController
 from pychron.experiment.importer.import_manager import ImportManager
@@ -210,9 +210,9 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
                        self.selected_projects,
                        sam.material)
 
-    #===========================================================================
+    # ===========================================================================
     # GenericActon Handlers
-    #===========================================================================
+    # ===========================================================================
     def save_as(self):
         self.save()
 
@@ -227,4 +227,4 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
             self.manager.set_selected_sample(new)
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

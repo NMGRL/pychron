@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Str, Color, Button, Float, Bool
 from traitsui.api import View, Item, VGroup, HGroup, \
     Spring, UItem, spring, RangeEditor
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from threading import Event
 import time
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.loggable import Loggable
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.helpers.timer import Timer
@@ -104,9 +104,9 @@ class WaitControl(Loggable):
     def reset(self):
         self.high = self.wtime
         self.current_time = self.wtime
-#===============================================================================
+# ===============================================================================
 # private
-#===============================================================================
+# ===============================================================================
 
     def _continue(self):
         self._continued = True
@@ -129,9 +129,9 @@ class WaitControl(Loggable):
         if self.current_time <= 0:
             self._end()
             self._canceled = False
-#===============================================================================
+# ===============================================================================
 # handlers
-#===============================================================================
+# ===============================================================================
     def _continue_button_fired(self):
         self._continue()
 
@@ -159,4 +159,4 @@ class WaitControl(Loggable):
                                                            high_name='wtime',
                                     )))))
         return v
-#============= EOF =============================================
+# ============= EOF =============================================
