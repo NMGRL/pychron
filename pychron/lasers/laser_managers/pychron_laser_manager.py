@@ -287,9 +287,12 @@ class PychronLaserManager(BaseLaserManager):
             self._position_thread = t
 
     def _test_connection(self):
-        self.connected = self.communicator.open()
-        self.debug('test connection. connected= {}'.format(self.connected))
-        return self.connected
+        if self.simulation:
+            return globalv.communication_simulation
+        else:
+            self.connected = self.communicator.open()
+            self.debug('test connection. connected= {}'.format(self.connected))
+            return self.connected
 
     def _opened_hook(self):
         pass

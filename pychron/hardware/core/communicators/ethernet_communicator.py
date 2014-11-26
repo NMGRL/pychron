@@ -229,21 +229,21 @@ class EthernetCommunicator(Communicator):
 
         """
 
-        def _ask():
-            handler = self.get_handler()
-            if handler.send_packet(cmd):
-                return handler.get_packet(cmd)
-
         if self.simulation:
             if verbose:
                 self.info('no handle    {}'.format(cmd.strip()))
             return
 
+        def _ask():
+            handler = self.get_handler()
+            if handler.send_packet(cmd):
+                return handler.get_packet(cmd)
+
         r = None
         with self._lock:
             re = 'ERROR: Connection refused {}:{}'.format(self.host, self.port)
-            if self.simulation:
-                return 'simulation'
+            # if self.simulation:
+            #     return 'simulation'
 
             for _ in range(retries):
                 r = _ask()

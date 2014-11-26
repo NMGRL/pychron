@@ -21,6 +21,7 @@ from traits.api import Instance, Int, Property, List, \
 import os
 from numpy import array, argmin
 #============= local library imports  ==========================
+from pychron.globals import globalv
 from pychron.spectrometer.thermo.source import ArgusSource
 from pychron.spectrometer.thermo.magnet import ArgusMagnet
 from pychron.spectrometer.thermo.detector import Detector
@@ -85,7 +86,19 @@ class Spectrometer(SpectrometerDevice):
     send_config_on_startup = Bool
 
     def test_connection(self):
-        return self.ask('GetIntegrationTime') is not None
+        """
+            if not in simulation mode send a GetIntegrationTime to the spectrometer
+            if in simulation mode and the globalv.communication_simulation is disabled
+            then return False
+
+        :return: bool
+        """
+        ret = False
+        if not self.simulation:
+            ret = self.ask('GetIntegrationTime', verbose=True) is not None
+        elif globalv.communication_simulation:
+            ret = True
+        return ret
 
     def set_gains(self, history=None):
         if history:

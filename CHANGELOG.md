@@ -4,6 +4,9 @@ CHANGELOG
 ------------------
 * added StartupTester. use setupfiles/startup_tests.yaml to configure
 * added Next and Previous buttons to Recall
+.. * fully implemented import irradiation from XLS file
+.. * added ability to export irradiations from Pychron to MassSpec
+
 
 2.0.5
 ------------------

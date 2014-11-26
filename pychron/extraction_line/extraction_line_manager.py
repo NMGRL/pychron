@@ -27,6 +27,7 @@ from pychron.envisage.consoleable import Consoleable
 from pychron.extraction_line.explanation.extraction_line_explanation import ExtractionLineExplanation
 from pychron.extraction_line.extraction_line_canvas import ExtractionLineCanvas
 from pychron.extraction_line.sample_changer import SampleChanger
+from pychron.globals import globalv
 from pychron.paths import paths
 from pychron.managers.manager import Manager
 from pychron.monitors.system_monitor import SystemMonitor
@@ -165,7 +166,10 @@ class ExtractionLineManager(Manager, Consoleable):
         return v
 
     def test_connection(self):
-        return bool(self.get_valve_states())
+        if self.simulation:
+            return globalv.communication_simulation
+        else:
+            return bool(self.get_valve_states())
 
     def refresh_canvas(self):
         for ci in self._canvases:
