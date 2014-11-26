@@ -15,6 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from pyface.timer.do_later import do_later
 from traits.api import Instance, Button, Bool, Property, \
     on_trait_change, String, Any, DelegatesTo, List, Str
 #============= standard library imports ========================
@@ -194,7 +195,9 @@ extract_device, delay_+, tray, username, load_name, email, queue_conditionals_na
             self.run_factory.set_mass_spectrometer(new)
 
         elif name == 'extract_device':
-            self._set_extract_device(new)
+            # self._set_extract_device(new)
+            do_later(self._set_extract_device,new)
+
         elif name == 'username':
             self._username = new
             # elif name=='email':

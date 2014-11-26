@@ -67,6 +67,8 @@ class BaseTasksApplication(TasksApplication, Loggable):
                 win.open()
 
         if win:
+            win.active_task.window = win
+
             return win.active_task
 
     def open_task(self, tid):

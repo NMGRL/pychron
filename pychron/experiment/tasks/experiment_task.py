@@ -440,14 +440,15 @@ class ExperimentEditorTask(EditorTask):
             if group_positions:
                 rf.position = ','.join(ns)
 
-    @on_trait_change('manager.experiment_factory:extract_device')
+    @on_trait_change('manager:experiment_factory:extract_device')
     def _handle_extract_device(self, new):
-        app = self.window.application
         if new:
-            ed = convert_extract_device(new)
-            man = app.get_service(ILaserManager, 'name=="{}"'.format(ed))
-            if man:
-                self.laser_control_client_pane.model = man
+            if self.window:
+                app = self.window.application
+                ed = convert_extract_device(new)
+                man = app.get_service(ILaserManager, 'name=="{}"'.format(ed))
+                if man:
+                    self.laser_control_client_pane.model = man
 
         if new == 'Fusions UV':
             if self.active_editor and not isinstance(self.active_editor, UVExperimentEditor):
