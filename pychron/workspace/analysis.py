@@ -22,6 +22,7 @@ from traits.api import Str, List
 
 
 
+
 # ============= standard library imports ========================
 import yaml
 #============= local library imports  ==========================
@@ -80,7 +81,7 @@ class WorkspaceAnalysis(FileAnalysis):
             return yaml.load(fp)[runid]
 
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

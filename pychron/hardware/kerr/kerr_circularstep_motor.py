@@ -152,7 +152,7 @@ class KerrCircularStepMotor(KerrStepMotor):
 
 
 
-#============= EOF =============================================
+# ============= EOF =============================================
 #
 #    def _load_trajectory_controlbyte(self):
 #        '''

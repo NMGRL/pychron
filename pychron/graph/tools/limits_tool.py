@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import Float, Instance, Str, Tuple
@@ -201,4 +201,4 @@ class LimitOverlay(AbstractOverlay):
             self.label.text = '{}: {}'.format(tool.orientation.upper(), v)
             self.label.overlay(other_component, gc, view_bounds=None, mode="normal")
 
-#============= EOF =============================================
+# ============= EOF =============================================

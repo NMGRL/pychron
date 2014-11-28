@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 # from traits.api import HasTraits
@@ -22,6 +22,7 @@ from pyface.tasks.action.task_action import TaskAction
 
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.lasers.laser_managers.pychron_laser_manager import PychronLaserManager
+
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -211,4 +212,4 @@ class PIDTuningAction(LaserCalibrationAction):
         task = self._get_task(event)
         task.new_pid_tuner()
 
-#============= EOF =============================================
+# ============= EOF =============================================

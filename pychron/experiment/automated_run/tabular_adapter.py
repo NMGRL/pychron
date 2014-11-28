@@ -394,4 +394,4 @@ class ExecutedUVAutomatedRunSpecAdapter(ExecutedAutomatedRunSpecAdapter):
 class UVAutomatedRunSpecAdapter(AutomatedRunMixin, ExecutedUVAutomatedRunSpecAdapter):
     pass
 
-#============= EOF =============================================
+# ============= EOF =============================================

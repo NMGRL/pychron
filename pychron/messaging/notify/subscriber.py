@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from threading import Thread, Event
@@ -22,6 +22,7 @@ from traits.api import Str, Int, List, Float
 import zmq
 
 from pychron.loggable import Loggable
+
 
 
 #============= standard library imports ========================
@@ -154,4 +155,4 @@ class Subscriber(Loggable):
 
         self.debug('no longer listening {}'.format(self._stop_signal.is_set()))
 
-#============= EOF =============================================
+# ============= EOF =============================================

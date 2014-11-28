@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #=============enthought library imports=======================
 from traits.api import  Any, Bool, Float, List, Str, Int
@@ -23,7 +23,6 @@ import os
 import shutil
 from numpy import asarray
 #=============local library imports ===========================
-from pychron.core.helpers.logger_setup import new_logger
 from pychron.image.image import Image
 # from pychron.image.pyopencv_image_helper import swapRB
 from cv_wrapper import get_capture_device

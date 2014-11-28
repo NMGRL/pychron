@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, List, Any, Str, Enum, Bool, Button, \
@@ -113,7 +113,7 @@ class AnalysisTable(HasTraits):
 
     def _analysis_filter_parameter_default(self):
         return 'record_id'
-        #============= EOF =============================================
+        # ============= EOF =============================================
         #def filter_invalid(self, ans):
         #    if self.omit_invalid:
         #        ans = filter(self._omit_invalid_filter, ans)

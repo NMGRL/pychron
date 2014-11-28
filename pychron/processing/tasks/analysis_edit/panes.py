@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import Button, List, Instance, Property, Any, Event, Int, \
@@ -109,9 +109,9 @@ class HistoryTablePane(TablePane, ColumnSorterMixin):
     def dump(self):
         self.dump_selection()
 
-    #===============================================================================
+    # ===============================================================================
     # previous selections
-    #===============================================================================
+    # ===============================================================================
     def load_previous_selections(self):
         try:
             self._load()
@@ -420,4 +420,4 @@ class ControlsPane(TraitsDockPane):
         return v
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

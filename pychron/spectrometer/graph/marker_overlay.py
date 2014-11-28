@@ -78,4 +78,4 @@ class MarkerOverlay(AbstractOverlay):
             if ci.visible:
                 with gc:
                     ci.draw(gc, self.component.height)
-#============= EOF =============================================
+# ============= EOF =============================================

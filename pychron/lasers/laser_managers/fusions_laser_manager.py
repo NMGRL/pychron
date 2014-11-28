@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #=============enthought library imports=======================
 from traits.api import DelegatesTo, Property, Instance, Str, List, Dict, \
@@ -117,9 +117,9 @@ class FusionsLaserManager(LaserManager):
         if self.stage_manager:
             self.stage_manager.canvas.request_redraw()
 
-            #===============================================================================
+            # ===============================================================================
             #   IExtractionDevice interface
-            #===============================================================================
+            # ===============================================================================
 
     def extract(self, power, **kw):
         self.enable_laser()
@@ -275,9 +275,9 @@ class FusionsLaserManager(LaserManager):
     def is_degassing(self):
         if self._degas_thread:
             return self._degas_thread.isRunning()
-            #===============================================================================
+            # ===============================================================================
             # pyscript interface
-            #===============================================================================
+            # ===============================================================================
 
     def _move_to_position(self, position, autocenter):
 

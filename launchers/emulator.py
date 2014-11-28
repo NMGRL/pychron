@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 version_id = '_test'
 from helpers import build_version
@@ -387,11 +387,11 @@ if __name__ == '__main__':
 #    ls.start_server('129.138.12.138', 1070)
 
 #    s.start_server('localhost', portn)
-#============= EOF =============================================
+# ============= EOF =============================================
 
-#===============================================================================
+# ===============================================================================
 # link
-#===============================================================================
+# ===============================================================================
 # class LinkServer(Loggable):
 #    def start_server(self, host, port):
 #        self.info('Link Starting server {} {}'.format(host, port))

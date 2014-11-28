@@ -25,6 +25,7 @@ from pyface.action.action import Action
 from pyface.tasks.action.task_action import TaskAction
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -32,9 +33,9 @@ import webbrowser
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
 
-#===============================================================================
+# ===============================================================================
 # help
-#===============================================================================
+# ===============================================================================
 from pychron.envisage.resources import icon
 # from pychron.processing.tasks.actions.processing_actions import myTaskAction
 
@@ -392,4 +393,4 @@ class EditInitializationAction(Action):
         if edit_initialization():
             restart()
 
-#============= EOF =============================================
+# ============= EOF =============================================

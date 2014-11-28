@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
@@ -297,9 +297,9 @@ class ATLLaserControlUnit(CoreDevice):
         r = self._send_query(11, 1, verbose=verbose)
         return self._parse_response(r, 1)[0]
 
-    #===============================================================================
+    # ===============================================================================
     # gas handling
-    #===============================================================================
+    # ===============================================================================
     def do_auto_vac(self):
     #        self.start_auto_vac()
         # wait until idle

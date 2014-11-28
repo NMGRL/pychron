@@ -25,6 +25,7 @@ from pychron.lasers.tasks.laser_actions import PowerMapAction, \
     PowerCalibrationAction, TestDegasAction
 
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -57,4 +58,4 @@ class FusionsCO2Plugin(FusionsPlugin):
 
         return exts + [ext1]
 
-#============= EOF =============================================
+# ============= EOF =============================================

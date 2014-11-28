@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,12 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 import unittest
+
 from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
 from pychron.pyscripts.measurement_pyscript import MeasurementPyScript
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 class PyscriptDurationTest(unittest.TestCase):
@@ -71,4 +73,4 @@ class RampTest(unittest.TestCase):
         self.assertGreater(r, 10)
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

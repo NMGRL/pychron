@@ -29,7 +29,7 @@ class MapSpectrometerManager(BaseSpectrometerManager):
     def finish_loading(self):
         self.spectrometer.finish_loading()
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

@@ -581,7 +581,7 @@ class IsotopeEvolutionEditor(GraphEditor):
         self.info('========================================')
         self.component.invalidate_and_redraw()
 
-        #============= EOF =============================================
+        # ============= EOF =============================================
         #
         # fitted=[]
         # for fi in self.tool.fits:

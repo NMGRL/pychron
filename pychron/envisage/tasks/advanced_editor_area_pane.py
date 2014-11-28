@@ -15,17 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import sys
+
 from PySide import QtCore
 from PySide.QtGui import QAction, QCursor
 from pyface.qt import QtGui
-import sys
 from pyface.ui.qt4.tasks.advanced_editor_area_pane import EditorAreaWidget
 from pyface.ui.qt4.tasks.editor_area_pane import EditorAreaDropFilter
-from traits.api import HasTraits, Button, Str, Int, Bool
-from traitsui.api import View, Item, UItem, HGroup, VGroup
 from pyface import confirmation_dialog
 from pyface.constant import NO
 from pyface.tasks.advanced_editor_area_pane import AdvancedEditorAreaPane
+
 # ============= standard library imports ========================
 #============= local library imports  ==========================
 class myEditorAreaWidget(EditorAreaWidget):
@@ -113,5 +113,5 @@ class myAdvancedEditorAreaPane(AdvancedEditorAreaPane):
         if not self.editors:
             self.active_editor = None
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

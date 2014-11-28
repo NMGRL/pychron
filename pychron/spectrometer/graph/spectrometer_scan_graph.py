@@ -143,7 +143,7 @@ class SpectrometerScanGraph(TimeSeriesStreamGraph):
 
             self.invalidate_markers()
             self.redraw()
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

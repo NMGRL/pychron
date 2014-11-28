@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 import cPickle as pickle
@@ -57,9 +57,9 @@ class PipetteTracker(Loggable):
         self.debug('increment shot count {}'.format(self.counts))
         self.dump()
 
-    #===============================================================================
+    # ===============================================================================
     # persistence
-    #===============================================================================
+    # ===============================================================================
     def load(self):
         p = self._get_path_id()
         if os.path.isfile(p):
@@ -103,4 +103,4 @@ class PipetteTracker(Loggable):
 
         return p
 
-#============= EOF =============================================
+# ============= EOF =============================================

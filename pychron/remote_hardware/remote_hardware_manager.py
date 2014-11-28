@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,10 +12,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Dict, Bool, on_trait_change, List, Instance
+from traits.api import Dict, Bool, on_trait_change, List
 from apptools.preferences.preference_binding import bind_preference
 from traitsui.api import View, Item, Group, HGroup, VGroup, \
     ListEditor, TableEditor
@@ -149,9 +149,9 @@ class RemoteHardwareManager(Manager):
             p.close()
 
 #        self.directory_server.stop()
-#===============================================================================
+# ===============================================================================
 # private
-#===============================================================================
+# ===============================================================================
     def _load_servers(self):
         '''
         '''
@@ -177,9 +177,9 @@ class RemoteHardwareManager(Manager):
 #        t = Thread(target=self.directory_server.start)
 #        t.start()
 
-#===============================================================================
+# ===============================================================================
 # handlers
-#===============================================================================
+# ===============================================================================
     @on_trait_change('enable_hardware_server')
     def enabled_changed(self):
         if self.enable_hardware_server:
@@ -241,9 +241,9 @@ class RemoteHardwareManager(Manager):
 
         return v
 
-#===============================================================================
+# ===============================================================================
 # defaults
-#===============================================================================
+# ===============================================================================
     def _processors_default(self):
         ps = dict()
         ip = InitializationParser()

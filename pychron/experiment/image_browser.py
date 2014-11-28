@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, Instance, List, Str, Bool, on_trait_change, String, \
@@ -73,9 +73,9 @@ class ImageEditor(HasTraits):
     image_specs = Dict
 
     db = Any
-#===============================================================================
+# ===============================================================================
 # handlers
-#===============================================================================
+# ===============================================================================
     def _selected_changed(self):
         if self.selected in self.image_specs:
             spec = self.image_specs[self.selected]
@@ -230,9 +230,9 @@ class ImageBrowser(IsotopeDatabaseManager):
         img_plot.overlays.append(zoom)
 
 
-#===============================================================================
+# ===============================================================================
 # handlers
-#===============================================================================
+# ===============================================================================
     @on_trait_change('image_editor:selected')
     def _selected_changed(self):
         sel = self.image_editor.selected
@@ -278,4 +278,4 @@ if __name__ == '__main__':
 #    im.load_from_remote_source('foo')
 #    im.load_image_from_file('/Users/ross/Sandbox/diodefailsnapshot.jpg')
     im.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================

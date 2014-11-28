@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import Property, List, Event, Instance, Button, cached_property, Str, \
@@ -97,9 +97,9 @@ class PlotterOptionsManager(HasTraits):
         self.plotter_options = next((pi for pi in self.plotter_options_list
                                      if pi.name == name), None)
 
-    #===============================================================================
+    # ===============================================================================
     # handlers
-    #===============================================================================
+    # ===============================================================================
     def _save_options_fired(self):
         self.save()
 
@@ -222,4 +222,4 @@ class XYScatterOptionsManager(PlotterOptionsManager):
     plotter_options_klass = XYScatterOptions
     persistence_name = 'xy_scatter'
 
-#============= EOF =============================================
+# ============= EOF =============================================

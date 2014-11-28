@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from sqlalchemy.schema import MetaData, Table, Column
@@ -20,6 +20,7 @@ from sqlalchemy.types import Integer, DateTime, String
 
 from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.database.orms.local_lab_orm import LabTable
+
 
 #============= standard library imports ========================
 import os
@@ -51,4 +52,4 @@ class LocalLabAdapter(DatabaseAdapter):
 if __name__ == '__main__':
     lb = LocalLabAdapter(name='/Users/ross/Sandbox/foo.db')
     lb.build_database()
-#============= EOF =============================================
+# ============= EOF =============================================

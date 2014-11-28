@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,10 +12,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Event, Instance, on_trait_change
+from traits.api import Event, Instance
 from chaco.abstract_overlay import AbstractOverlay
 from enable.base_tool import BaseTool
 from kiva.fonttools import Font
@@ -143,4 +143,4 @@ class InfoOverlay(AbstractOverlay):
         if new:
             new.on_trait_change(self._update_, 'metadata_changed')
 
-#============= EOF =============================================
+# ============= EOF =============================================

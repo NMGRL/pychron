@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from pyface.action.menu_manager import MenuManager
@@ -21,7 +21,7 @@ from traits.api import List, Property, Int, HasTraits
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
-#============= EOF =============================================
+# ============= EOF =============================================
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 

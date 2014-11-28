@@ -15,9 +15,8 @@
 # ===============================================================================
 
 #============= enthought library imports =======================
-from collections import Counter
 from traits.api import Any, on_trait_change, Int, List, Bool, \
-    Instance, Property, Str, HasTraits, Event, Dict
+    Instance, Property, Str, HasTraits, Event
 from traits.trait_types import Date
 from traitsui.api import View, Item
 from pyface.timer.do_later import do_later
@@ -283,7 +282,7 @@ class ExperimentQueue(BaseExperimentQueue):
         tc = len(self.cleaned_automated_runs) + ex
         return '{}/{}'.format(ex, tc)
 
-#============= EOF =============================================
+# ============= EOF =============================================
 #        rgen = (r for r in newruns)
 #        runs = self.executed_runs+self.cleaned_automated_runs
 #

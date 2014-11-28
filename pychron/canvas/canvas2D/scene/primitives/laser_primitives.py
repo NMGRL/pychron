@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import Float, on_trait_change, Bool, Property, List
 from traitsui.api import  Item, VGroup, HGroup
+
 from pychron.canvas.canvas2D.scene.primitives.primitives import Polygon, \
     PolyLine, PointIndicator
 from pychron.core.geometry.geometry import calc_point_along_line
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 class VelocityPolyLine(PolyLine):
@@ -164,4 +166,4 @@ class Transect(PolyLine):
         for si in self.step_points:
             si.render(gc)
 
-#============= EOF =============================================
+# ============= EOF =============================================

@@ -15,8 +15,7 @@
 # ===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Property, Instance, Any, on_trait_change, Str
-from traits.trait_types import DelegatesTo
+from traits.api import Instance, Any, on_trait_change, Str
 from traitsui.api import View, UItem, InstanceEditor
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -116,4 +115,4 @@ class RecallEditor(BaseTraitsEditor):
         return v
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

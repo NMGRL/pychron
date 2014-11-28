@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from pychron.experiment.automated_run.automated_run import AutomatedRun
@@ -105,9 +105,9 @@ class UVAutomatedRun(AutomatedRun):
 #            b.client = c
 #
 #        return b
-##===============================================================================
+## ===============================================================================
 # # handlers
-##===============================================================================
+## ===============================================================================
 #    def _browser_button_fired(self):
 #        browser = self._image_browser_factory()
 # #        browser.root='images/fusions_uv'
@@ -135,4 +135,4 @@ class UVAutomatedRun(AutomatedRun):
 #        self._extraction_script = self._load_script('extraction')
 #        return self._extraction_script
 
-#============= EOF =============================================
+# ============= EOF =============================================

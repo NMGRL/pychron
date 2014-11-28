@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import Float, Bool
@@ -58,4 +58,4 @@ class IsoEvoFitSelector(FilterFitSelector):
         cols = super(IsoEvoFitSelector, self)._get_columns()
         cols.append(CheckboxColumn(name='use_sniff', label='EQ'))
         return cols
-#============= EOF =============================================
+# ============= EOF =============================================

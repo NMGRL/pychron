@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,11 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import on_trait_change
+
 from pychron.processing.tasks.analysis_edit.interpolation_editor import InterpolationEditor
+
 #============= standard library imports ========================
 from pychron.core.helpers.isotope_utils import sort_isotopes
 #============= local library imports  ==========================
@@ -74,4 +76,4 @@ class DiscriminationEditor(InterpolationEditor):
 #            g.refresh()
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 from pychron.core.ui import set_qt
 
 set_qt()
@@ -94,5 +94,5 @@ class RawExporter(IsotopeDatabaseManager):
         return gen()
 
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

@@ -40,7 +40,7 @@ class MapSpectrometer(HasTraits):
 
     def _magnet_default(self):
         return MapMagnet()
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

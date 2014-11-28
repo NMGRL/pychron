@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from pyface.tasks.action.schema import SToolBar
 from traits.api import String, List, Instance, Any, \
-    on_trait_change, Bool, Int, Dict
+    on_trait_change, Bool, Int
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
 # ============= standard library imports ========================
 import os
@@ -431,4 +431,4 @@ class PyScriptTask(EditorTask, ExecuteMixin):
         return TaskLayout(id='pychron.pyscript',
                           left=left,
                           right=right)
-        #============= EOF =============================================
+        # ============= EOF =============================================

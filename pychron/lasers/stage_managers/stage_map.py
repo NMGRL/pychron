@@ -606,7 +606,7 @@ class UVStageMap(StageMap):
 
         return pos
 
-        #============= EOF =============================================
+        # ============= EOF =============================================
         #        cspacing = spacing
         #        for i, e in enumerate(self.sample_holes[1:]):
         #            s = self.sample_holes[i - 1]

@@ -12,12 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 import stat
+
 from traits.api import List, on_trait_change
 from envisage.plugin import Plugin
+
 
 #============= standard library imports ========================
 import os
@@ -230,5 +232,5 @@ class UpdatePlugin(Plugin):
     def _preferences_panes_default(self):
         return [UpdatePreferencesPane]
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

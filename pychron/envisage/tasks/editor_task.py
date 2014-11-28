@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import Property, Instance
@@ -118,9 +118,9 @@ class BaseEditorTask(BaseManagerTask):
             self.editor_area.add_editor(editor)
             self.editor_area.activate_editor(editor)
 
-            #===============================================================================
+            # ===============================================================================
             # property get/set
-            #===============================================================================
+            # ===============================================================================
 
     def _get_active_editor(self):
         if self.editor_area is not None:
@@ -159,4 +159,4 @@ class BaseEditorTask(BaseManagerTask):
 class EditorTask(BaseExtractionLineTask, BaseEditorTask):
     pass
 
-#============= EOF =============================================
+# ============= EOF =============================================

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 
@@ -330,9 +330,9 @@ class MassCalibratorScan(MagnetScan):
     def _end(self):
         self._fine_scanning = False
 
-    #===================================================================================================================
+    # ===================================================================================================================
     # handlers
-    #===================================================================================================================
+    # ===================================================================================================================
     @on_trait_change('min_peak_height, min_peak_separation, delta')
     def _handle_peak_detection_change(self):
         self._find_peaks()
@@ -410,5 +410,5 @@ class MassCalibratorScan(MagnetScan):
     def _get_fexecute_label(self):
         return 'Stop' if self.isAlive() else 'Start'
 
-        #============= EOF =============================================
+        # ============= EOF =============================================
 

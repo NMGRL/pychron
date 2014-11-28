@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 from pyface.tasks.action.task_action import TaskAction
+
 from pychron.envisage.resources import icon
+
 
 #============= enthought library imports =======================
 #============= standard library imports ========================
@@ -85,4 +87,4 @@ class AppendTableAction(TaskAction):
 #                         search_path=paths.icon_search_path
 #                         )
 #    tooltip = 'Append to current step heat table'
-#============= EOF =============================================
+# ============= EOF =============================================

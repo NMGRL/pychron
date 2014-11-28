@@ -78,7 +78,7 @@ class SummaryProjectEditor(BaseSummaryEditor):
         v = View(Tabbed(stats_grp, ideogram_grp))
         return v
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

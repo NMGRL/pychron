@@ -82,7 +82,7 @@ class BaseSummaryEditor(BaseTraitsEditor):
     def _ideogram_options_update(self, new):
         self.ideogram_model.plot_options = new
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

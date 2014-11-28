@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Str, Float, on_trait_change, Instance, List, Enum, \
+from traits.api import HasTraits, Str, Float, on_trait_change, Instance, Enum, \
     String
-from traitsui.api import View, Item, HGroup, VGroup, spring, \
-    Group, ListEditor, InstanceEditor, EnumEditor
+from traitsui.api import View, Item, HGroup, VGroup, EnumEditor
 #============= standard library imports ========================
 import numpy as np
 import math
@@ -263,4 +262,4 @@ class SignalCalculator(HasTraits):
 if __name__ == '__main__':
     sc = SignalCalculator()
     sc.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================

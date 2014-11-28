@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from _socket import gethostname, gethostbyname
@@ -20,7 +20,9 @@ import os
 import pickle
 from threading import Thread
 import time
+
 from traits.api import Instance, on_trait_change, List, Str
+
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -189,4 +191,4 @@ class DashboardServer(Loggable):
         print obj, name, old, new
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

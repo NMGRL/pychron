@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 
@@ -196,7 +196,7 @@ class Analysis(ArArAge):
 
 if __name__ == '__main__':
     pass
-    #============= EOF =============================================
+    # ============= EOF =============================================
     #def _sync_irradiation(self, meas_analysis):
     #    ln = meas_analysis.labnumber
     #    self.irradiation_info = self._get_irradiation_info(ln)

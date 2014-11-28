@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import Button, Event, Property, \
@@ -39,9 +39,9 @@ maker_dict = dict(polygon=PolygonMaker,
 class PointsProgrammer(Manager):
     maker = Property(Instance(BaseMaker), depends_on='mode')
 
-    #===============================================================================
+    # ===============================================================================
     #
-    #===============================================================================
+    # ===============================================================================
 
     stage_manager = Any
     canvas = Any
@@ -120,9 +120,9 @@ class PointsProgrammer(Manager):
             except ValueError, e:
                 print e
 
-                #===============================================================================
+                # ===============================================================================
                 # handlers
-                #===============================================================================
+                # ===============================================================================
 
     def _position_entry_changed(self):
         self._set_entry(self.position_entry)
@@ -157,9 +157,9 @@ class PointsProgrammer(Manager):
     def _save_points_fired(self):
         self._dump()
 
-    #===============================================================================
+    # ===============================================================================
     # persistence
-    #===============================================================================
+    # ===============================================================================
     def _load(self, p=None):
         if p is None:
             p = self.open_file_dialog(default_directory=paths.user_points_dir)
@@ -188,9 +188,9 @@ class PointsProgrammer(Manager):
 
             self.stage_manager.set_stage_map(head)
 
-            #===============================================================================
+            # ===============================================================================
             # property get/set
-            #===============================================================================
+            # ===============================================================================
 
     @cached_property
     def _get_maker(self):
@@ -314,7 +314,7 @@ class PointsProgrammer(Manager):
                         Item('save_points', show_label=False)))
         return v
 
-#============= EOF =============================================
+# ============= EOF =============================================
 #    def _show_scene_viewer_fired(self):
 # #        from pychron.canvas.canvas2D.video_laser_tray_canvas import VideoLaserTrayCanvas
 #

@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import Any, List, on_trait_change, Property, Event, File
@@ -355,7 +355,7 @@ class GraphEditor(BaseUnknownsEditor):
         t = self.tool_klass()
         self.load_tool(t)
         return t
-        #============= EOF =============================================
+        # ============= EOF =============================================
         # def _gather_unknowns(self, refresh_data,
         #                      exclude='invalid',
         #                      compress_groups=True):

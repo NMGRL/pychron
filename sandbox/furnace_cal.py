@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
@@ -26,11 +26,7 @@ from traitsui.api import View, Item, HGroup
 import os
 from pychron.paths import paths
 from pychron.graph.time_series_graph import TimeSeriesGraph
-from pychron.graph.graph import Graph
 from numpy import loadtxt
-from dateutil import parser as dparser
-import time
-from pyface.timer.do_later import do_later
 
 
 class Grapher(HasTraits):

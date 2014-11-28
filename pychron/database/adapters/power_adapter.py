@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 #============= standard library imports ========================
@@ -54,7 +54,7 @@ if __name__ == '__main__':
 #    print db.get_bakeouts(join_table='ControllerTable',
 #                    filter_str='ControllerTable.script="---"'
 #                    )
-#============= EOF =============================================
+# ============= EOF =============================================
 #    def get_analyses_path(self):
 # #        sess = self.get_session()
 # #        q = sess.query(Paths)

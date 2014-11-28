@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 from traits.etsconfig.etsconfig import ETSConfig
 ETSConfig.toolkit = 'qt4'
 
@@ -420,9 +420,9 @@ class PowerCalibrationManager(Manager):
             g.set_data(x, series=2)
             g.set_data(y, series=2, axis=1)
         g.redraw()
-#===============================================================================
+# ===============================================================================
 # handlers
-#===============================================================================
+# ===============================================================================
     @on_trait_change('parameters:[fit_degree, ifit_degree]')
     def update_graph(self):
         if self.graph:
@@ -574,9 +574,9 @@ class PowerCalibrationManager(Manager):
             cp = os.path.join(paths.hidden_dir, '{}_power_calibration'.format(self.parent.name))
         return cp
 
-#===============================================================================
+# ===============================================================================
 # persistence
-#===============================================================================
+# ===============================================================================
     def dump_power_calibration(self, coefficients, calibration_path=None):
 
 #        calibration_path = self._get_calibration_path(calibration_path)
@@ -790,4 +790,4 @@ if __name__ == '__main__':
     logging_setup('pcm')
     pac = FusionsCO2PowerCalibrationManager()
     pac.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================

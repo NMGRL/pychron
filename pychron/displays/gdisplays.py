@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 from pychron.utils import get_display_size
 from pychron.displays.display import ErrorDisplay, DisplayController
 
@@ -63,7 +63,7 @@ gTraceDisplay = ErrorDisplay(
     default_color='black'
 )
 
-#============= EOF =============================================
+# ============= EOF =============================================
 # from traits.api import HasTraits, List, Str, Property, Enum
 # from traitsui.api import View, Item, TabularEditor
 # from traitsui.tabular_adapter import TabularAdapter

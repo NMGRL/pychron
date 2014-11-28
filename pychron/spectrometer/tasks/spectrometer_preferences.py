@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import Bool, Int
@@ -67,4 +67,4 @@ class SpectrometerPreferencesPane(PreferencesPane):
 
         return View(VGroup(gen_grp, mf_grp, scan_grp, magnet_grp))
 
-#============= EOF =============================================
+# ============= EOF =============================================

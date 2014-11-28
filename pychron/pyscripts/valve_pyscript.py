@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import Any
@@ -106,4 +106,4 @@ class ValvePyScript(PyScript):
         return self._manager_action([('get_valve_state', (name,), dict(
             description=description))], protocol=ELPROTOCOL)
 
-#============= EOF =============================================
+# ============= EOF =============================================

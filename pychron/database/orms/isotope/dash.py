@@ -36,5 +36,5 @@ class dash_DeviceTable(Base, NameMixin):
     scan_fmt = Column(String(32))
     scan_meta = Column(BLOB)
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

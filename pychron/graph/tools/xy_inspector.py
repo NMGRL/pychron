@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 '''
     modified from chaco.image_inspector
 '''
 #============= enthought library imports =======================
-from traits.api import HasTraits
-from traitsui.api import View, Item, TableEditor
 from enable.api import BaseTool, KeySpec
 from traits.api import Any, Bool, Enum, Event, Tuple
 #============= standard library imports ========================
@@ -155,4 +153,4 @@ class XYInspectorOverlay(TextBoxOverlay):
             self.visible = self.visibility
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

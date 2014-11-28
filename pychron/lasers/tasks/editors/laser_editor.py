@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,11 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import Any, Bool
+
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 class LaserEditor(BaseTraitsEditor):
@@ -42,4 +44,4 @@ class LaserEditor(BaseTraitsEditor):
             self._execute_thread.join()
             self.completed=True
 
-#============= EOF =============================================
+# ============= EOF =============================================

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, List, Str, Int, Float, \
@@ -122,9 +122,9 @@ class SensitivityEntry(IsotopeDatabaseManager):
         return obj.clone_traits(traits=['mass_spectrometer',
                                         'sensitivity'])
 
-#===============================================================================
+# ===============================================================================
 # handlers
-#===============================================================================
+# ===============================================================================
 #     def _add_button_fired(self):
 #         s = SensitivityRecord()
 #         self._records.append(s)
@@ -147,18 +147,18 @@ class SensitivityEntry(IsotopeDatabaseManager):
 #
 #
 #         db.commit()
-#===============================================================================
+# ===============================================================================
 # property get/set
-#===============================================================================
+# ===============================================================================
 #     def _get_records(self):
 #         if not self._records:
 #             recs = self.db.get_sensitivities()
 #             self._records = [SensitivityRecord(dbrecord=ri) for ri in recs]
 #         return self._records
 
-#===============================================================================
+# ===============================================================================
 # views
-#===============================================================================
+# ===============================================================================
 #     def traits_view(self):
 #         v = View(Item('records', show_label=False,
 #                       editor=TabularEditor(adapter=SensitivityAdapter(),
@@ -188,4 +188,4 @@ if __name__ == '__main__':
     logging_setup('runid')
     m = SensitivityEntry()
     m.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================

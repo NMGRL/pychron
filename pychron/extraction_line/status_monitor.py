@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 
@@ -84,4 +84,4 @@ class StatusMonitor(Loggable):
         if not self._stop_evt.isSet():
             do_after(self.update_period * 1000, self._iter, i + 1, vm)
 
-            #============= EOF =============================================
+            # ============= EOF =============================================

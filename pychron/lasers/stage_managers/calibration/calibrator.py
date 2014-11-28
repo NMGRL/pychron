@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Str
-from pychron.loggable import Loggable
-import apptools.sweet_pickle as pickle
 import os
+
+from traits.api import Str
+import apptools.sweet_pickle as pickle
+
+from pychron.loggable import Loggable
 from pychron.paths import paths
+
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -73,4 +76,4 @@ class TrayCalibrator(Loggable):
     def _get_path(cls, name):
         return os.path.join(paths.hidden_dir, '{}_stage_calibration'.format(name))
 
-#============= EOF =============================================
+# ============= EOF =============================================

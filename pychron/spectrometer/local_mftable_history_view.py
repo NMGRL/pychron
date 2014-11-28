@@ -110,7 +110,7 @@ class LocalMFTableHistoryView(GitArchiveHistoryView):
 #     gh._diff_button_fired()
 #     # ghv = LocalMFTableHistoryView(model=gh)
 #     # ghv.configure_traits(kind='livemodal')
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

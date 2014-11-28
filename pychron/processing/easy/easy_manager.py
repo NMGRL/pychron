@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,10 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 # from threading import Thread
 import time
+
 from pychron.core.ui import set_toolkit
+
 # from pychron.core.ui.thread import Thread
 from pychron.core.ui.thread import Thread
 from pychron.easy_parser import EasyParser
@@ -143,5 +145,5 @@ class EasyManager(Loggable):
 if __name__ == '__main__':
     e = EasyManager()
     e.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================
 

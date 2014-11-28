@@ -1832,9 +1832,9 @@ class IsotopeAdapter(DatabaseAdapter):
     def get_interpreted_age_history(self, sid):
         return self._retrieve_item(proc_InterpretedAgeHistoryTable, sid, key='id')
 
-    #===============================================================================
+    # ===============================================================================
     # ##getters multiple
-    #===============================================================================
+    # ===============================================================================
     #     def get_analyses(self, **kw):
     #         return self._get_items(meas_AnalysisTable, globals(), **kw)
 
@@ -2152,9 +2152,9 @@ class IsotopeAdapter(DatabaseAdapter):
             if g:
                 self._delete_item(g)
 
-    #===============================================================================
+    # ===============================================================================
     # deleters
-    #===============================================================================
+    # ===============================================================================
     @delete_one
     def delete_user(self, name):
         return gen_UserTable
@@ -2175,9 +2175,9 @@ class IsotopeAdapter(DatabaseAdapter):
     def delete_labnumber(self, name):
         return gen_LabTable, 'labnumber'
 
-    #===============================================================================
+    # ===============================================================================
     # private
-    #===============================================================================
+    # ===============================================================================
     def _get_post_filter(self, post, comp, cast=True):
         t = meas_AnalysisTable.analysis_timestamp
         if cast and not isinstance(post, datetime):

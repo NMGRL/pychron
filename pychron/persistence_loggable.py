@@ -92,5 +92,5 @@ class PersistenceMixin(object):
 class PersistenceLoggable(Loggable, PersistenceMixin):
     pass
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

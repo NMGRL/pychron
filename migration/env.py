@@ -115,7 +115,7 @@ def update_pychron_version(nver):
 __version__ = '{}'
 __commit__ = '{}'
 __alembic__ = '{}'
-#============= EOF =============================================
+# ============= EOF =============================================
 '''.format(version.__version__,
            version.__commit__, nver)
 

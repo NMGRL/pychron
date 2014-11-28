@@ -79,7 +79,7 @@ class WorkspacePlugin(BaseTaskPlugin):
     def _preferences_panes_default(self):
         return []
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

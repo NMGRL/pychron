@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 # from pychron.core.ui import set_toolkit
 # set_toolkit('qt4')
 #============= enthought library imports =======================
 import os
+
 from sqlalchemy import Table
 from sqlalchemy.ext.declarative import declarative_base
 from traits.api import Any
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from sqlalchemy.orm.exc import NoResultFound
@@ -277,5 +279,5 @@ class OfflineBridge(IsotopeAdapter):
 # if __name__=='__main__':
 #     o=OfflineBridge()
 #     o.init('/Users/ross/Sandbox/data.db')
-#============= EOF =============================================
+# ============= EOF =============================================
 

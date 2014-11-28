@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import List, Float, Bool
@@ -33,9 +33,9 @@ class ArgusMagnet(BaseMagnet, SpectrometerDevice):
     detector_protection_threshold=Float(0.1) #DAC units
     beam_blank_threshold=Float(0.1) #DAC units
 
-    #===============================================================================
+    # ===============================================================================
     # ##positioning
-    #===============================================================================
+    # ===============================================================================
     def set_dac(self, v, verbose=False):
         self.debug('setting dac {}'.format(v))
         micro = self.microcontroller
@@ -85,4 +85,4 @@ class ArgusMagnet(BaseMagnet, SpectrometerDevice):
             r = self.microcontroller.ask('GetMagnetDAC')
         return r
 
-#============= EOF =============================================
+# ============= EOF =============================================

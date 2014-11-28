@@ -28,6 +28,7 @@ from traitsui.view import View
 from pyface.tasks.task_layout import PaneItem
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.paths import paths
@@ -119,7 +120,7 @@ class PadEntry(HasTraits):
                buttons=['OK','Cancel'])
         return v
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #=============enthought library imports=======================
 from traits.api import Str, Float, Any, Button, Int, List, Bool
@@ -267,9 +267,9 @@ class Manager(Viewable, RPCable):
 
         return class_factory
 
-    #===============================================================================
+    # ===============================================================================
     #  flags
-    #===============================================================================
+    # ===============================================================================
     def add_flag(self, f):
         from pychron.hardware.flag import Flag
 
@@ -347,9 +347,9 @@ class Manager(Viewable, RPCable):
             #            getattr(f, func)()
             #        else:
             #            self.warning('Invalid flag {}'.format(name))
-            #===============================================================================
+            # ===============================================================================
             #
-            #===============================================================================
+            # ===============================================================================
 
     def create_manager(self, manager, **kw):
 

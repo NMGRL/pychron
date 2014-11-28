@@ -56,7 +56,7 @@ class PolynomialMapper(HasTraits):
         c=self._coefficients[:]
         c[-1] -= v
         return optimize.brentq(poly1d(c), self.output_low, self.output_high)
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

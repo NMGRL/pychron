@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 import os
 import re
 
@@ -374,5 +374,5 @@ if __name__ == '__main__':
     ew.set_default_states()
     e = ExtractionLineScriptWriterView(model=ew)
     e.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================
 

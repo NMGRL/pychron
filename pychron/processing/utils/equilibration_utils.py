@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits
-from traitsui.api import View, Item
 #============= standard library imports ========================
-from numpy import asarray, convolve, exp, linspace, where, ones_like
+from numpy import asarray, convolve, exp, linspace, where
 from pylab import plot, show, axvline, legend, \
     xlabel, ylabel, polyval, axhline, ylim, xlim, array
 #============= local library imports  ==========================
@@ -172,4 +170,4 @@ if __name__ == '__main__':
     show()
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

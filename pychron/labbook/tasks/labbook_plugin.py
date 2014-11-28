@@ -38,7 +38,7 @@ class LabBookPlugin(BaseTaskPlugin):
     def _preferences_panes_default(self):
         return [LabBookPreferencesPane]
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

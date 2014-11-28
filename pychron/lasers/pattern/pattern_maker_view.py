@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 # from traits.etsconfig.etsconfig import ETSConfig
 # ETSConfig.toolkit = 'qt4'
@@ -98,9 +98,9 @@ class PatternMakerView(Saveable, Patternable):
             resizable=True)
         return v
 
-    #===============================================================================
+    # ===============================================================================
     # property get/set
-    #===============================================================================
+    # ===============================================================================
     def _get_kind(self):
         return self._kind
 
@@ -108,9 +108,9 @@ class PatternMakerView(Saveable, Patternable):
         self._kind = v
         self.pattern = self.pattern_factory(v)
 
-    #===============================================================================
+    # ===============================================================================
     # factories
-    #===============================================================================
+    # ===============================================================================
     def pattern_factory(self, kind):
         name = '{}Pattern'.format(kind)
         try:
@@ -122,9 +122,9 @@ class PatternMakerView(Saveable, Patternable):
             return pattern
         except ImportError, e:
             print e
-            #===============================================================================
+            # ===============================================================================
             # defaults
-            #===============================================================================
+            # ===============================================================================
 
     def _pattern_default(self):
         p = self.pattern_factory(self.kind)
@@ -135,4 +135,4 @@ if __name__ == '__main__':
     pm = PatternMakerView()
     # pm.load_pattern()
     pm.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================

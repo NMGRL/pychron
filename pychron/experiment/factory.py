@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import Instance, Button, Bool, Property, \
@@ -153,9 +153,9 @@ class ExperimentFactory(Loggable, ConsumerMixin):
 
             q.changed = True
 
-    #===============================================================================
+    # ===============================================================================
     # handlers
-    #===============================================================================
+    # ===============================================================================
     def _clear_button_fired(self):
         self.queue.clear_frequency_runs()
 
@@ -207,9 +207,9 @@ extract_device, delay_+, tray, username, load_name, email, queue_conditionals_na
 
         self.queue.changed = True
 
-    #===============================================================================
+    # ===============================================================================
     # private
-    #===============================================================================
+    # ===============================================================================
     def _set_extract_device(self, ed):
         self.debug('setting extract dev="{}" mass spec="{}"'.format(ed, self._mass_spectrometer))
         self.extract_device = ed
@@ -239,9 +239,9 @@ extract_device, delay_+, tray, username, load_name, email, queue_conditionals_na
 
         return ps
 
-    #===============================================================================
+    # ===============================================================================
     # property get/set
-    #===============================================================================
+    # ===============================================================================
     def _get_ok_add(self):
         """
         """
@@ -252,9 +252,9 @@ extract_device, delay_+, tray, username, load_name, email, queue_conditionals_na
             ret = ret and self._labnumber
         return ret
 
-    #===============================================================================
+    # ===============================================================================
     #
-    #===============================================================================
+    # ===============================================================================
     def _run_factory_factory(self):
         if self.extract_device == 'Fusions UV':
             klass = UVAutomatedRunFactory
@@ -275,9 +275,9 @@ extract_device, delay_+, tray, username, load_name, email, queue_conditionals_na
     #    def _can_edit_scripts_changed(self):
     #        self.run_factory.can_edit = self.can_edit_scripts
 
-    #===============================================================================
+    # ===============================================================================
     # defaults
-    #===============================================================================
+    # ===============================================================================
     def _undoer_default(self):
         return ExperimentUndoer(run_factory=self.run_factory,
                                 queue=self.queue)
@@ -303,4 +303,4 @@ extract_device, delay_+, tray, username, load_name, email, queue_conditionals_na
         self.queue_factory.mass_spectrometer = self.default_mass_spectrometer
         self._mass_spectrometer = self.default_mass_spectrometer
 
-        #============= EOF =============================================
+        # ============= EOF =============================================

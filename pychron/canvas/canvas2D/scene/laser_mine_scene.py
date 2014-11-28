@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits
-from traitsui.api import View, Item, TableEditor
-from pychron.canvas.canvas2D.scene.scene import Scene
 import yaml
+
+from pychron.canvas.canvas2D.scene.scene import Scene
+
 # from pychron.canvas.canvas2D.scene.primitives.primitives import Polygon, RasterPolygon
 from pychron.canvas.canvas2D.scene.primitives.laser_primitives import RasterPolygon
 
@@ -53,4 +53,4 @@ class LaserMineScene(Scene):
 
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits
-from traitsui.api import View, Item
-from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from envisage.ui.tasks.task_factory import TaskFactory
+
+from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.media_server.tasks.media_server_task import MediaServerTask
 from pychron.media_server.browser import MediaBrowser
 from pychron.media_server.client import MediaClient
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -51,4 +51,4 @@ class MediaServerPlugin(BaseTaskPlugin):
         browser = MediaBrowser(client=client)
         browser.load_remote_directory('images')
         return MediaServerTask(browser=browser)
-#============= EOF =============================================
+# ============= EOF =============================================

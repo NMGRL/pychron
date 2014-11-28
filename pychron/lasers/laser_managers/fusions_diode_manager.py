@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #=============enthought library imports=======================
 
@@ -132,9 +132,9 @@ class FusionsDiodeManager(FusionsLaserManager):
     def get_output_blob(self):
         return self.response_recorder.get_output_blob() if self.response_recorder else ''
 
-    #===============================================================================
+    # ===============================================================================
     # private
-    #===============================================================================
+    # ===============================================================================
     def _set_laser_power_hook(self, power, mode='open', set_pid=True, **kw):
         tc = self.temperature_controller
         if tc.control_mode != mode:
@@ -188,9 +188,9 @@ class FusionsDiodeManager(FusionsLaserManager):
         except AttributeError:
             pass
 
-    #===============================================================================
+    # ===============================================================================
     # views
-    #===============================================================================
+    # ===============================================================================
     def get_additional_controls(self):
     #        v = Group(
         gs = [VGroup(Item('temperature_controller', style='custom',
@@ -205,9 +205,9 @@ class FusionsDiodeManager(FusionsLaserManager):
                      label='FiberLight')]
         return gs
 
-    #===============================================================================
+    # ===============================================================================
     # defaults
-    #===============================================================================
+    # ===============================================================================
 
     def _response_recorder_default(self):
         r = ResponseRecorder(response_device=self.temperature_controller,

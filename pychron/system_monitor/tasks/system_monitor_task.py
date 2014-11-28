@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from PySide.QtCore import Qt
@@ -244,4 +244,4 @@ class SystemMonitorTask(FigureTask):
         if self.dashboard_editor:
             self.dashboard_editor.update_measurements(obj.name, new)
 
-#============= EOF =============================================
+# ============= EOF =============================================

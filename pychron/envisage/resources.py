@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 import os
+
 from pyface.image_resource import ImageResource
+
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.core.codetools.inspection import pcaller
 from pychron.core.helpers.filetools import add_extension
 from pychron.paths import paths
 
@@ -40,5 +41,5 @@ class Icon(ImageResource):
     def _search_path_default(self):
         return paths.icon_search_path
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

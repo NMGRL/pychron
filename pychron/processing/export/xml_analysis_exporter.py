@@ -22,6 +22,7 @@ from traits.api import Instance
 
 
 
+
 # ============= standard library imports ========================
 import os
 #============= local library imports  ==========================
@@ -134,7 +135,7 @@ class XMLAnalysisExporter(Exporter):
                                                           baseline.ys)), datatag)
 
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

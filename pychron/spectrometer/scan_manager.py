@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from pyface.timer.do_later import do_later
@@ -388,9 +388,9 @@ class ScanManager(Manager):
             self.info('set position {} on {}'.format(self.isotope, self.detector))
             self.ion_optics_manager.position(self.isotope, self.detector.name)
 
-    #===============================================================================
+    # ===============================================================================
     # handlers
-    #===============================================================================
+    # ===============================================================================
     def _clear_button_fired(self):
         self._reset_graph()
 
@@ -506,9 +506,9 @@ class ScanManager(Manager):
 
                 dm.write_to_frame((x,) + tuple(signals))
 
-    #===============================================================================
+    # ===============================================================================
     # factories
-    #===============================================================================
+    # ===============================================================================
     def _timer_factory(self, func=None):
 
         if func is None:
@@ -568,9 +568,9 @@ class ScanManager(Manager):
 
         return g
 
-    #===============================================================================
+    # ===============================================================================
     # property get/set
-    #===============================================================================
+    # ===============================================================================
     @cached_property
     def _get_isotopes(self):
         # molweights = self.spectrometer.molecular_weights
@@ -623,9 +623,9 @@ class ScanManager(Manager):
                 'graph_y_auto',
                 'graph_scan_width']
 
-    #===============================================================================
+    # ===============================================================================
     # defaults
-    #===============================================================================
+    # ===============================================================================
     def _graph_default(self):
         g = self._graph_factory()
         self.graphs.append(g)
@@ -703,7 +703,7 @@ if __name__ == '__main__':
         spectrometer=DummySpectrometer(detectors=detectors))
     #    sm.load_detectors()
     sm.configure_traits()
-    #============= EOF =============================================
+    # ============= EOF =============================================
     # def _check_detector_protection1(self, prev):
     #     """
     #         used when detector changes

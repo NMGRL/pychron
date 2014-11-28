@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 import os
 from threading import Thread
 import time
-from traits.api import HasTraits, Str, Any, Bool, Dict, List
+
+from traits.api import Str, Any, Bool, Dict, List
 from traitsui.api import View, Item, EnumEditor
+
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -199,4 +201,4 @@ class SampleChanger(Loggable):
                  buttons=['OK', 'Cancel']
         )
         return v
-        #============= EOF =============================================
+        # ============= EOF =============================================

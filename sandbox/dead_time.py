@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
-from traits.api import Instance
-from traitsui.api import View, Item
-from pychron.graph.graph import Graph
-from uncertainties import ufloat
 import csv
+
+from uncertainties import ufloat
+
+from pychron.graph.graph import Graph
 from pychron.core.stats import calculate_mswd, calculate_weighted_mean
+
 # KEYS36 = ['one36', 'two36', 'three36', 'four36', 'five36', 'six36']
 # KEYS40 = ['one40', 'two40', 'three40', 'four40', 'five40', 'six40']
 KEYS = ['one', 'two', 'three', 'four', 'five']

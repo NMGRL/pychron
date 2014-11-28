@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,10 +12,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Str, List, Instance, Any
+from traits.api import HasTraits, Instance, Any
 from traitsui.api import View, Item
 from traitsui.tree_node import TreeNode
 from traitsui.editors.tree_editor import TreeEditor
@@ -133,4 +133,4 @@ if __name__ == '__main__':
 #                            children=fs + hs
                             )
     f.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================

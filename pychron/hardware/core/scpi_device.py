@@ -57,7 +57,7 @@ class SCPIDevice(CoreDevice):
         v = self._parse_response(v)
         self.debug('get_measurment. value = {}'.format(v))
         return v
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

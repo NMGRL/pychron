@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import Float, Event, String, Any, Enum, Property, cached_property
@@ -124,9 +124,9 @@ class TrayCalibrationManager(Manager):
                 )
         return v
 
-#===============================================================================
+# ===============================================================================
 # handlers
-#===============================================================================
+# ===============================================================================
     def _style_changed(self):
         if self.style in HELP_DICT:
             self.calibration_help = HELP_DICT[self.style]
@@ -148,9 +148,9 @@ class TrayCalibrationManager(Manager):
                     if a == 'rotation':
                         self.save_calibration()
 
-#===============================================================================
+# ===============================================================================
 # property get/set
-#===============================================================================
+# ===============================================================================
 
     @cached_property
     def _get_calibrator(self):
@@ -166,4 +166,4 @@ class TrayCalibrationManager(Manager):
             kw['stage_map'] = self.parent._stage_map
 
         return klass(**kw)
-#============= EOF =============================================
+# ============= EOF =============================================

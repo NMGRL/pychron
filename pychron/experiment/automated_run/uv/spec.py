@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import Str, Button, List, CStr, Property
@@ -72,9 +72,9 @@ class UVAutomatedRunSpec(AutomatedRunSpec):
         nattrs = ('reprate', 'mask', 'attenuator', 'image')
         return list(attrs).extend(nattrs)
 
-    #===============================================================================
+    # ===============================================================================
     # handlers
-    #===============================================================================
+    # ===============================================================================
     def _browser_button_fired(self):
         browser = self._image_browser_factory()
         #        browser.root='images/fusions_uv'
@@ -83,4 +83,4 @@ class UVAutomatedRunSpec(AutomatedRunSpec):
         if info.result:
             self.image = browser.get_selected_image_name()
 
-#============= EOF =============================================
+# ============= EOF =============================================

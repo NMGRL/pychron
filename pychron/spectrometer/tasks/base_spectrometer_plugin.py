@@ -110,7 +110,7 @@ class BaseSpectrometerPlugin(BaseTaskPlugin):
                          ion_optics_manager=self.ion_optics_manager)
         return sm
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

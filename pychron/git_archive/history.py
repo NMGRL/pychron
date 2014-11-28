@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, List, Str, Date, Int, Button, Property, Instance,\
@@ -25,7 +25,6 @@ from datetime import datetime
 #============= local library imports  ==========================
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.git_archive.diff_view import DiffView
-from pychron.git_archive.git_archive import GitArchive
 
 
 class CommitAdapter(TabularAdapter):
@@ -187,5 +186,5 @@ class GitArchiveHistoryView(Controller):
 #     gh.load_history('ga_test.txt')
 #     ghv = GitArchiveHistoryView(model=gh)
 #     ghv.configure_traits(kind='livemodal')
-#============= EOF =============================================
+# ============= EOF =============================================
 

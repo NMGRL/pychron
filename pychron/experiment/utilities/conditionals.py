@@ -22,4 +22,4 @@ from pychron.pychron_constants import LINE_STR, NULL_STR
 
 def test_queue_conditionals_name(name):
     return bool(name and not name in ('Queue Conditionals', NULL_STR, LINE_STR))
-#============= EOF =============================================
+# ============= EOF =============================================

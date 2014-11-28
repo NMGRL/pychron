@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 from apptools.preferences.preference_binding import bind_preference
 
 #============= enthought library imports =======================
@@ -326,5 +326,5 @@ if __name__ == '__main__':
     m = MagnetFieldTable(molweights=molweights)
     mv = MagnetFieldTableView(model=m)
     mv.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================
 

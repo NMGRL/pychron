@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from chaco.tools.broadcaster import BroadcasterTool
@@ -25,6 +25,7 @@ from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
 from pychron.graph.tools.point_inspector import PointInspectorOverlay
 from pychron.graph.tools.rect_selection_tool import RectSelectionTool, RectSelectionOverlay
 from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
+
 
 
 
@@ -567,6 +568,6 @@ class InterpolationEditor(GraphEditor):
     def _clean_references(self):
         return [ri for ri in self.references if ri.temp_status == 0]
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 

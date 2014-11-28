@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 import datetime
@@ -24,6 +24,7 @@ from traitsui.api import View, Item, VGroup, UItem
 from pychron.core.helpers.timer import Timer
 from pychron.core.ui.pie_clock import PieClockModel
 from pychron.loggable import Loggable
+
 
 
 
@@ -219,4 +220,4 @@ class StatsGroup(ExperimentStats):
         self.time_at = self.format_duration(tt)
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

@@ -16,8 +16,7 @@
 
 # ============= enthought library imports =======================
 from pyface.tasks.traits_task_pane import TraitsTaskPane
-from traits.api import HasTraits, Button, Str, Int, Bool
-from traitsui.api import View, Item, UItem, HGroup, VGroup
+from traitsui.api import View, UItem
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from traitsui.editors import TextEditor
@@ -34,7 +33,7 @@ class FoobotPane(TraitsTaskPane):
                  resizable=True)
         return v
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

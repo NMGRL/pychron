@@ -249,4 +249,4 @@ if __name__ == '__main__':
     # p.fits_permutation()
     v = PermutatorView(permutator=p)
     v.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================

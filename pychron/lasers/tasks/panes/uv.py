@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traitsui.api import View, Item, VGroup, \
@@ -22,6 +22,7 @@ from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pychron.lasers.tasks.laser_panes import BaseLaserPane, ClientPane, \
     StageControlPane, AxesPane, SupplementalPane
 from pychron.core.ui.led_editor import LEDEditor
+
 
 
 #============= standard library imports ========================
@@ -87,4 +88,4 @@ class FusionsUVControlPane(TraitsDockPane):
         v = View(grp)
         return v
 
-#============= EOF =============================================
+# ============= EOF =============================================

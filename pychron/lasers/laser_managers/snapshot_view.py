@@ -56,7 +56,7 @@ if __name__ == '__main__':
     with open('/Users/ross/Pychrondata_dev/data/snapshots/snapshot-001.jpg', 'rb') as fp:
         sv.set_image('a','b', fp.read())
     sv.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

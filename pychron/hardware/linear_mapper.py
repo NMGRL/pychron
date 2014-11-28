@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,11 +12,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, Int, Float
-from traitsui.api import View, Item
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -39,4 +38,4 @@ class LinearMapper(HasTraits):
         data_range = self.high_data - self.low_data
         step_range = self.high_step - self.low_step
         self._scale = step_range / data_range
-#============= EOF =============================================
+# ============= EOF =============================================

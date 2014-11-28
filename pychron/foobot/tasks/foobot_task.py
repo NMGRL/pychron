@@ -36,7 +36,7 @@ class FoobotTask(BaseTask):
 
     def _default_layout_default(self):
         return TaskLayout()
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

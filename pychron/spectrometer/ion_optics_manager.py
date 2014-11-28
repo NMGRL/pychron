@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import Range, Instance, Bool, \
@@ -333,9 +333,9 @@ class IonOpticsManager(Manager):
         self.peak_center.stop()
         self.info('peak center canceled')
 
-    #===============================================================================
+    # ===============================================================================
     # handler
-    #===============================================================================
+    # ===============================================================================
     def _peak_center_config_default(self):
         config = None
         p = os.path.join(paths.hidden_dir, 'peak_center_config')
@@ -364,7 +364,7 @@ if __name__ == '__main__':
     io = IonOpticsManager()
     io.configure_traits()
 
-#============= EOF =============================================
+# ============= EOF =============================================
 #    def _graph_factory(self):
 #        g = Graph(
 #                  container_dict=dict(padding=5, bgcolor='gray'))

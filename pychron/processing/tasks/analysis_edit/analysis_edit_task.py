@@ -707,9 +707,9 @@ class AnalysisEditTask(BaseBrowserTask):
         if self.active_editor:
             self.active_editor.set_items(ans, is_append)
 
-    #===============================================================================
+    # ===============================================================================
     # handlers
-    #===============================================================================
+    # ===============================================================================
     def _dclicked_analysis_group_changed(self):
         if self.active_editor:
             if self.selected_analysis_groups:
@@ -873,4 +873,4 @@ class AnalysisEditTask(BaseBrowserTask):
         return rc
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

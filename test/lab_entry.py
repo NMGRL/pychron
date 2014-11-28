@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 
 import unittest
+
 from pychron.processing.entry.labnumber_entry import LabnumberEntry
 from test.database import isotope_manager_factory
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -64,4 +66,4 @@ class LabEntryTest(unittest.TestCase):
 #         lns = [li for li in ge]
 #         self.assertListEqual(lns, [300000, 300001, 300100, 300101, 300200, 300201])
 #         self.assertListEqual(lns, [200001, 200002, 200100, 200101, 200200, 200201])
-#============= EOF =============================================
+# ============= EOF =============================================

@@ -12,11 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 import math
+
 from traits.api import HasTraits, List, Property, cached_property, Str, Bool, Int, Event
+
 #============= standard library imports ========================
 from numpy import array, nan
 #============= local library imports  ==========================
@@ -406,7 +408,7 @@ class InterpretedAge(StepHeatAnalysisGroup):
 
         return ps
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 #class AnalysisRatioMean(AnalysisGroup):
 #    Ar40_39 = Property

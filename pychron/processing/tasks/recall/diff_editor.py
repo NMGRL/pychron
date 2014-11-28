@@ -206,4 +206,4 @@ class DiffEditor(BaseTraitsEditor):
                                                       selected_row='selected_row'))))
         return v
 
-#============= EOF =============================================
+# ============= EOF =============================================

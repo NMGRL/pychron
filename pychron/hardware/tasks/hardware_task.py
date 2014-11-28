@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 # from pyface.tasks.task import Task
-from pychron.hardware.tasks.hardware_pane import CurrentDevicePane, DevicesPane, InfoPane
 from pyface.tasks.task_layout import PaneItem, TaskLayout, VSplitter
+
+from pychron.hardware.tasks.hardware_pane import CurrentDevicePane, DevicesPane, InfoPane
 from pychron.envisage.tasks.base_task import BaseHardwareTask
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -43,4 +45,4 @@ class HardwareTask(BaseHardwareTask):
                 InfoPane(model=self.manager)
         ]
 
-    #============= EOF =============================================
+    # ============= EOF =============================================

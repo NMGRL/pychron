@@ -16,9 +16,6 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.task_factory import TaskFactory
-from pyface.tasks.action.schema import SMenu
-from traits.api import HasTraits, Button, Str, Int, Bool
-from traitsui.api import View, Item, UItem, HGroup, VGroup
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -44,4 +41,4 @@ class FoobotPlugin(BaseTaskPlugin):
 
     def _foobot_factory(self):
         return FoobotTask()
-#============= EOF =============================================
+# ============= EOF =============================================

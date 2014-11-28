@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #=============enthought library imports=======================
 from traits.api import Any, Dict, List, Bool
@@ -749,9 +749,9 @@ class ValveManager(Manager):
         #        v.evalve = weakref.ref(ev)()
         self.explanable_items.append(ev)
 
-        #===============================================================================
+        # ===============================================================================
         # deprecated
-        #===============================================================================
+        # ===============================================================================
         #     def claim_section(self, section, addr=None, name=None):
 
 #         try:

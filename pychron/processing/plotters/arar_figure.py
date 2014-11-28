@@ -301,9 +301,9 @@ class BaseArArFigure(HasTraits):
         vs = self._unpack_attr(k)
         return [nominal_value(vi) for vi in vs], [std_dev(vi) for vi in vs]
 
-    #===============================================================================
+    # ===============================================================================
     #
-    #===============================================================================
+    # ===============================================================================
     def _add_point_labels(self, scatter):
         labels = []
 
@@ -372,9 +372,9 @@ class BaseArArFigure(HasTraits):
 
             # u = lambda a, b, c, d: self.update_graph_metadata(a, b, c, d)
             scatter.index.on_trait_change(self.update_graph_metadata, 'metadata_changed')
-            #===============================================================================
+            # ===============================================================================
             # labels
-            #===============================================================================
+            # ===============================================================================
 
 
     def _add_data_label(self, s, text, point, bgcolor='transparent',
@@ -512,9 +512,9 @@ class BaseArArFigure(HasTraits):
                             break
                     break
 
-    #===============================================================================
+    # ===============================================================================
     # property get/set
-    #===============================================================================
+    # ===============================================================================
     @cached_property
     def _get_sorted_analyses(self):
         return sorted(self.analyses,
@@ -524,4 +524,4 @@ class BaseArArFigure(HasTraits):
     @cached_property
     def _get_analysis_group(self):
         return self._analysis_group_klass(analyses=self.sorted_analyses)
-        #============= EOF =============================================
+        # ============= EOF =============================================

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
+import os
+
 from traits.api import HasTraits, Instance, on_trait_change, Str, List, Property
 from traitsui.api import View, Item, HGroup
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.tools.scatter_inspector import ScatterInspector
 from kiva.constants import FILL_STROKE
 from enable.markers import CircleMarker
-import os
 import numpy as np
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.lasers.stage_managers.stage_map import StageMap
@@ -187,4 +189,4 @@ if __name__ == '__main__':
         mv.set_hole_state(i, r)
 
     mv.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================

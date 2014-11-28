@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,10 +12,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Enum, Float, Bool, String, Button, Property, Int, on_trait_change, List
+from traits.api import Enum, Float, Bool, Button, Property, Int, on_trait_change, List
 from traitsui.api import Item, HGroup, Group, VGroup, UItem, EnumEditor, InstanceEditor, spring
 
 #============= standard library imports ========================
@@ -320,4 +320,4 @@ class IdeogramOptions(AgeOptions):
             # 'use_filled_line', 'fill_color', 'fill_alpha'
         ]
 
-#============= EOF =============================================
+# ============= EOF =============================================

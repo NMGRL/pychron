@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import Instance, Property, List, on_trait_change, Bool, \
@@ -222,9 +222,9 @@ class PlotPanel(Loggable):
                                       bind_index=False,
                                       use_data_tool=False,
                                       padding_bottom=35)
-    #===============================================================================
+    # ===============================================================================
     # handlers
-    #===============================================================================
+    # ===============================================================================
     @on_trait_change('isotope_graph, peak_center_graph')
     def _update_graphs(self):
         if self.isotope_graph and self.peak_center_graph:
@@ -243,9 +243,9 @@ class PlotPanel(Loggable):
             self.analysis_view.load_computed(self.arar_age, new_list=False)
             self.analysis_view.refresh_needed = True
 
-    #===============================================================================
+    # ===============================================================================
     # defaults
-    #===============================================================================
+    # ===============================================================================
     def _isotope_graph_default(self):
         return self._graph_factory()
 
@@ -258,4 +258,4 @@ class PlotPanel(Loggable):
     def _graphs_default(self):
         return [self.isotope_graph, self.peak_center_graph]
 
-#============= EOF =============================================
+# ============= EOF =============================================

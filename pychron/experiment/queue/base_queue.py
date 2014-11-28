@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import Instance, Str, Property, Event, Bool, String, List, CInt
@@ -88,9 +88,9 @@ class BaseExperimentQueue(RunBlock):
     _no_update = False
     _frequency_group_counter = 0
 
-    #===============================================================================
+    # ===============================================================================
     # persistence
-    #===============================================================================
+    # ===============================================================================
     def load(self, txt):
         self.initialized = False
         self.stats.delay_between_analyses = self.delay_between_analyses
@@ -355,9 +355,9 @@ class BaseExperimentQueue(RunBlock):
         else:
             return s
 
-    #===============================================================================
+    # ===============================================================================
     # handlers
-    #===============================================================================
+    # ===============================================================================
     def _delay_between_analyses_changed(self, new):
         self.stats.delay_between_analyses = new
 
@@ -369,9 +369,9 @@ class BaseExperimentQueue(RunBlock):
         for ai in self.automated_runs:
             ai.mass_spectrometer = ms
 
-    #===============================================================================
+    # ===============================================================================
     # property get/set
-    #===============================================================================
+    # ===============================================================================
     def _get_cleaned_automated_runs(self):
         return [ci for ci in self.automated_runs
                 if not ci.skip and ci.state == 'not run']
@@ -383,4 +383,4 @@ class BaseExperimentQueue(RunBlock):
             return ''
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

@@ -24,6 +24,7 @@ from sqlalchemy import Column, Integer, String, \
 from sqlalchemy.orm import relationship, deferred
 from sqlalchemy.sql.expression import func
 
+
 # ============= local library imports  ==========================
 from pychron.database.orms.isotope.util import foreignkey, stringcolumn
 from pychron.database.core.base_orm import BaseMixin, NameMixin, UserMixin
@@ -262,4 +263,4 @@ class meas_MonitorTable(Base, NameMixin):
 #     extraction_id = foreignkey('meas_ExtractionTable')
 #     is_degas = Column(Boolean)
 #     position = Column(Integer)
-#============= EOF =============================================
+# ============= EOF =============================================

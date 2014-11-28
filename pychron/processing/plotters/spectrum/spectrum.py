@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from math import isnan
@@ -68,9 +68,9 @@ class Spectrum(BaseArArFigure):
     def mean_x(self, *args):
         return 50
 
-    #===============================================================================
+    # ===============================================================================
     # plotters
-    #===============================================================================
+    # ===============================================================================
     def _plot_aux(self, title, vk, ys, po, plot, pid, es=None, **kw):
         graph = self.graph
         graph.set_y_title(title,
@@ -243,9 +243,9 @@ class Spectrum(BaseArArFigure):
             p.value_axis.tick_generator = SparseTicks()
         return ds
 
-    #===============================================================================
+    # ===============================================================================
     # overlays
-    #===============================================================================
+    # ===============================================================================
     def _add_plateau_overlay(self, lp, bounds, plateau_age, ages, age_errors, info_txt):
         ov = PlateauOverlay(component=lp, plateau_bounds=bounds,
                             cumulative39s=hstack(([0], self.xs)),
@@ -281,9 +281,9 @@ class Spectrum(BaseArArFigure):
     def update_graph_metadata(self, group_id, obj, name, old, new):
         pass
 
-    #===============================================================================
+    # ===============================================================================
     # utils
-    #===============================================================================
+    # ===============================================================================
     def _get_age_errors(self, ans):
         ages, errors = zip(*[(ai.uage.nominal_value,
                               ai.uage.std_dev)
@@ -352,9 +352,9 @@ class Spectrum(BaseArArFigure):
                 a = mswd ** 0.5
         return we * a * n
 
-    #===============================================================================
+    # ===============================================================================
     # labels
-    #===============================================================================
+    # ===============================================================================
     def _build_integrated_age_label(self, tga, *args):
         txt='NaN'
         if not isnan(nominal_value(tga)):
@@ -363,7 +363,7 @@ class Spectrum(BaseArArFigure):
             txt = self._build_label_text(age, error, *args, sig_figs=2)
 
         return 'Integrated Age= {}'.format(txt)
-        #============= EOF =============================================
+        # ============= EOF =============================================
         # def _get_plateau(self, analyses, exclude=None):
         # if exclude is None:
         #     exclude = []

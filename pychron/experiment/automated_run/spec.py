@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 
@@ -24,7 +24,6 @@ from datetime import datetime
 import uuid
 import weakref
 #============= local library imports  ==========================
-from pychron.core.helpers.logger_setup import new_logger
 from pychron.experiment.automated_run.automated_run import AutomatedRun
 from pychron.experiment.utilities.identifier import get_analysis_type, make_rid, \
     make_runid, is_special, convert_extract_device
@@ -336,9 +335,9 @@ class AutomatedRunSpec(Loggable):
     #             'analysis_type',
     #             'sample', 'irradiation', 'username', 'comment', 'skip', 'end_after')
 
-    #===============================================================================
+    # ===============================================================================
     # handlers
-    #===============================================================================
+    # ===============================================================================
     #     @on_trait_change('automated_run:state')
     #     def _update_state(self, new):
     #         self.state = new
@@ -360,9 +359,9 @@ class AutomatedRunSpec(Loggable):
     def _extract_changed(self):
         self._changed = True
 
-    #===============================================================================
+    # ===============================================================================
     # property get/set
-    #===============================================================================
+    # ===============================================================================
     #    def _get_state(self):
     #        return self._state
     #

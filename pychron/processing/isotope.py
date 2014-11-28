@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, Str, Float, Property, Instance, \
@@ -359,9 +359,9 @@ class IsotopicMeasurement(BaseMeasurement):
     def _error_type_changed(self):
         self.regressor.error_calc_type = self.error_type
 
-    #===============================================================================
+    # ===============================================================================
     # arthmetic
-    #===============================================================================
+    # ===============================================================================
     def __add__(self, a):
         return self.uvalue + a
 
@@ -542,4 +542,4 @@ class Isotope(BaseIsotope):
         except (OverflowError, ValueError, AttributeError, TypeError), e:
             return '{} {}'.format(self.name, e)
 
-#============= EOF =============================================
+# ============= EOF =============================================

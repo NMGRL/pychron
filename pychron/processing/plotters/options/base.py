@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, List, Str, TraitError, \
@@ -177,7 +177,7 @@ class FigurePlotterOptions(BasePlotterOptions):
 
     # ==============================================================================
     # persistence
-    #===============================================================================
+    # ===============================================================================
     def _get_dump_attrs(self):
         return ['auto_refresh', 'aux_plots',
                 'bgcolor', 'plot_bgcolor',
@@ -199,4 +199,4 @@ class FigurePlotterOptions(BasePlotterOptions):
         self.initialize()
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

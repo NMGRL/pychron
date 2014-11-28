@@ -12,12 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from itertools import groupby
-from pyface.tasks.task_layout import TaskLayout
 
+from pyface.tasks.task_layout import TaskLayout
 from traits.api import Any, on_trait_change, List, Unicode, DelegatesTo, Instance
 from pyface.directory_dialog import DirectoryDialog
 from pyface.tasks.action.dock_pane_toggle_group import DockPaneToggleGroup
@@ -29,6 +29,7 @@ from envisage.ui.tasks.action.task_window_launch_group import TaskWindowLaunchAc
 from pyface.file_dialog import FileDialog
 from pyface.constant import OK, CANCEL, YES
 from pyface.confirmation_dialog import ConfirmationDialog
+
 
 
 #============= standard library imports ========================
@@ -555,4 +556,4 @@ class BaseExtractionLineTask(BaseManagerTask):
 class BaseHardwareTask(BaseManagerTask):
     pass
 
-#============= EOF =============================================
+# ============= EOF =============================================

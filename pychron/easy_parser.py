@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 import os
@@ -93,5 +93,5 @@ class EasyParser(Loggable):
         except IndexError:
             self.warning_dialog('Invalid Document index {}. ndocs={}'.format(idx, self._ndocs))
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

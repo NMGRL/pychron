@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import Instance, Str, on_trait_change, \
@@ -184,9 +184,9 @@ class StageVisualizer(Manager):
         return c
 
 
-#===============================================================================
+# ===============================================================================
 # testing
-#===============================================================================
+# ===============================================================================
     def test_view(self):
         v = View(Item('test'),
                  Item('use_calibration'),
@@ -343,4 +343,4 @@ if __name__ == '__main__':
     sv = StageVisualizer()
 #    sv.load_visualization()
     sv.configure_traits(view='test_view')
-#============= EOF =============================================
+# ============= EOF =============================================

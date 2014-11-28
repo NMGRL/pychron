@@ -15,15 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import re
-from apptools.preferences.preferences_helper import PreferencesHelper
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import HasTraits, Button, Str, String, Int, Bool, Property
-from traitsui.api import View, Item, UItem, HGroup, VGroup
+from traitsui.api import View, Item, HGroup, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
-from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_preferences_helper import GitRepoPreferencesHelper, test_connection_item
 
 
@@ -43,7 +39,7 @@ class LabBookPreferencesPane(PreferencesPane):
                         show_border=True))
         return v
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,12 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 import pickle
 import time
+
 from traits.api import HasTraits, List, Float, Property, Str, Bool
+
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -186,4 +188,4 @@ class DashboardClient(Subscriber):
             self.values = vs
             self.subscribe(di.tag, pv.handle_update, verbose=True)
 
-#============= EOF =============================================
+# ============= EOF =============================================

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import on_trait_change, Any, List, Str
@@ -151,7 +151,7 @@ class LoadingTask(BaseManagerTask):
     #         else:
     #             self._save()
 
-#============= EOF =============================================
+# ============= EOF =============================================
 #     def save_loading2(self):
 # #         path = self.save_file_dialog()
 #         path = '/Users/ross/Sandbox/load_001.pdf'

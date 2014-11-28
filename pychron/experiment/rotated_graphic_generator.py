@@ -17,7 +17,7 @@ from chaco.plot import Plot
 from chaco.array_plot_data import ArrayPlotData
 
 #============= standard library imports ========================
-from numpy import linspace, cos, sin, pi
+from numpy import linspace, cos, pi
 import math
 
 #============= local library imports  ==========================
@@ -70,4 +70,4 @@ if __name__ == '__main__':
 
     gcc.configure_traits()
 
-#============= EOF =============================================
+# ============= EOF =============================================

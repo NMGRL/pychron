@@ -444,9 +444,9 @@ class AutomatedRunFactory(PersistenceLoggable):
         self.changed = True
         self.refresh_table_needed = True
 
-    #===============================================================================
+    # ===============================================================================
     # private
-    #===============================================================================
+    # ===============================================================================
     # def _new_runs(self, positions, extract_group_cnt=0):
     def _new_run_block(self):
         p = os.path.join(paths.run_block_dir, add_extension(self.run_block, '.txt'))
@@ -732,9 +732,9 @@ class AutomatedRunFactory(PersistenceLoggable):
             #         dbln.selected_flux_history = dbhist
             #         self.information_dialog(u'Flux for {} {} \u00b1{} saved to database'.format(self.labnumber, v, e))
 
-    #===============================================================================
+    # ===============================================================================
     #
-    #===============================================================================
+    # ===============================================================================
     def _load_extraction_defaults(self, ln):
         defaults = self._load_default_file()
         if defaults:
@@ -825,9 +825,9 @@ class AutomatedRunFactory(PersistenceLoggable):
         defaults = dict([(k.lower(), v) for k, v in defaults.iteritems()])
         return defaults
 
-    #===============================================================================
+    # ===============================================================================
     # property get/set
-    #===============================================================================
+    # ===============================================================================
     def _get_default_fits_enabled(self):
         return self.measurement_script.name not in ('None', '')
 
@@ -1080,9 +1080,9 @@ class AutomatedRunFactory(PersistenceLoggable):
         self.changed = True
         self.refresh_table_needed = True
 
-    #===============================================================================
+    # ===============================================================================
     # handlers
-    #===============================================================================
+    # ===============================================================================
     def _edit_run_blocks(self):
         from pychron.experiment.queue.run_block import RunBlockEditView
 
@@ -1409,9 +1409,9 @@ post_equilibration_script:name''')
             script = getattr(self, si)
             setattr(script, name, new)
 
-    #===============================================================================
+    # ===============================================================================
     # defaults
-    #================================================================================
+    # ================================================================================
     def _script_factory(self, label, name, kind='ExtractionLine'):
         return Script(label=label,
                       mass_spectrometer=self.mass_spectrometer,
@@ -1467,7 +1467,7 @@ post_equilibration_script:name''')
     def persistence_path(self):
         return os.path.join(paths.hidden_dir, 'run_factory')
 
-#============= EOF =============================================
+# ============= EOF =============================================
 #
 #def _generate_positions(pos):
 #        s = None

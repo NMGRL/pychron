@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 
@@ -157,9 +157,9 @@ class ExtractionPyScript(ValvePyScript):
                            beam_diameter=None,
                            run_identifier='default_runid')
 
-    #===============================================================================
+    # ===============================================================================
     # commands
-    #===============================================================================
+    # ===============================================================================
     @verbose_skip
     @command_register
     def wake(self):
@@ -590,9 +590,9 @@ class ExtractionPyScript(ValvePyScript):
     @command_register
     def prepare(self):
         return self._extraction_action([('prepare', (), {})])
-    #===============================================================================
+    # ===============================================================================
     # properties
-    #===============================================================================
+    # ===============================================================================
     def _get_property(self, key, default=None):
         ctx = self.get_context()
         return ctx.get(key, default)
@@ -657,9 +657,9 @@ class ExtractionPyScript(ValvePyScript):
     @property
     def run_identifier(self):
         return self._get_property('run_identifier')
-    #===============================================================================
+    # ===============================================================================
     # private
-    #===============================================================================
+    # ===============================================================================
     def _get_device(self, name):
         app = self._get_application()
         if app is not None:

@@ -244,7 +244,7 @@ class ContextEditor(BaseTraitsEditor):
                                UItem('graph', style='custom'))))
         return v
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

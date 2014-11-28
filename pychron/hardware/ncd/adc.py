@@ -21,7 +21,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 import math
 import struct
 
@@ -152,4 +152,4 @@ if __name__ == '__main__':
     #a.read_device_info()
     #print 'read channel 0',a.read_channel(0, nbits=8)
     #print 'read channel 0 12bit',a.read_channel(0, nbits=12)
-#============= EOF =============================================
+# ============= EOF =============================================

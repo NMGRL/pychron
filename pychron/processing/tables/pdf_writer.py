@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 import os
@@ -374,4 +374,4 @@ class IsotopePDFTableWriter(BasePDFTableWriter):
                 ydf[k] = v * 1e-16 * 1.0e18
             ydf['sens_exp'] = 18
             return ydc, ydf
-            #============= EOF =============================================
+            # ============= EOF =============================================

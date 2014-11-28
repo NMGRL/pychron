@@ -65,7 +65,7 @@ if __name__ == '__main__':
     db = LabelAdapter(path='/Users/ross/Sandbox/label.db')
     db.build_database()
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

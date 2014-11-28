@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 #============= standard library imports ========================
@@ -135,4 +135,4 @@ DEFAULT_INTEGRATION_TIME = 1.048576
 # ('NM-220', ['L', 'M', 'N', 'O']),
 # ('NM-222', ['A', 'B', 'C', 'D']),
 # ('NM-256', ['E', 'F'])]
-#============= EOF =============================================
+# ============= EOF =============================================

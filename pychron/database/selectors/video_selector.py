@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,10 +12,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import String, Instance, Button, Int, Bool
+from traits.api import Instance, Button, Int, Bool
 from traitsui.api import Item, VGroup, HGroup, RangeEditor
 from pyface.timer.do_later import do_after
 #============= standard library imports ========================
@@ -29,7 +29,6 @@ from pychron.image.image_editor import ImageEditor
 from pychron.image.image import Image
 from pychron.image.video import Video
 from pychron.database.core.base_db_result import RIDDBResult
-from pychron.database.core.base_results_adapter import RIDResultsAdapter
 from pychron.database.core.query import VideoQuery
 
 
@@ -201,4 +200,4 @@ class VideoSelector(DatabaseSelector):
 
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

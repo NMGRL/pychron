@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 
@@ -264,9 +264,9 @@ class ExtractionlineHandler(BaseRemoteHardwareHandler):
 
         return str(p)
 
-#===============================================================================
+# ===============================================================================
 # not current used
-#===============================================================================
+# ===============================================================================
 #     def ClaimGroup(self, manager, grp, sender_addr, *args):
 #         rhm = self.application.get_service(RHM_PROTOCOL)
 #         if rhm.validate_address(sender_addr):

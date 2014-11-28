@@ -15,11 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Button, Str, Int, Bool
-from traitsui.api import View, Item, UItem, HGroup, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from uncertainties import ufloat
+
 from pychron.experiment.conditional.regexes import COMP_REGEX, ARGS_REGEX, DEFLECTION_REGEX, BASELINECOR_REGEX, \
     BASELINE_REGEX, MIN_REGEX, MAX_REGEX, CP_REGEX, PARENTHESES_REGEX, KEY_REGEX, ACTIVE_REGEX, SLOPE_REGEX, AVG_REGEX, \
     RATIO_REGEX, BETWEEN_REGEX
@@ -221,7 +220,7 @@ def extract_attr(key):
 
     return key
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

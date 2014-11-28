@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from chaco.label import Label
@@ -378,4 +378,4 @@ class PlateauOverlay(BasePlateauOverlay):
 
         return p
 
-#============= EOF =============================================
+# ============= EOF =============================================

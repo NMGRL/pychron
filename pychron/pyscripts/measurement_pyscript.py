@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 #============= standard library imports ========================
@@ -22,6 +22,7 @@ import os
 from ConfigParser import ConfigParser
 
 import yaml
+
 
 
 
@@ -89,9 +90,9 @@ class MeasurementPyScript(ValvePyScript):
     def get_variables(self):
         return ['truncated', 'eqtime', 'use_cdd_warming']
 
-    #===============================================================================
+    # ===============================================================================
     # commands
-    #===============================================================================
+    # ===============================================================================
     @verbose_skip
     @command_register
     def extraction_gosub(self, *args, **kw):
@@ -338,13 +339,13 @@ class MeasurementPyScript(ValvePyScript):
     def coincidence(self):
         self._automated_run_call('py_coincidence_scan')
 
-    #===============================================================================
+    # ===============================================================================
     #
-    #===============================================================================
+    # ===============================================================================
 
     # ===============================================================================
     # set commands
-    #===============================================================================
+    # ===============================================================================
 
     @verbose_skip
     @command_register
@@ -636,4 +637,4 @@ class MeasurementPyScript(ValvePyScript):
         return self._automated_run_call(lambda: self.automated_run.spec.use_cdd_warming)
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

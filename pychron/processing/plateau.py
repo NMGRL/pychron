@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, List, Array
@@ -160,5 +160,5 @@ class Plateau(HasTraits):
     def check_nsteps(self, start, end):
         return end - start >= self.nsteps
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

@@ -376,5 +376,4 @@ Install to enable MS Excel export''')
             BrowsingPreferencesPane,
             # VCSPreferencesPane,
             OfflinePreferencesPane, EasyPreferencesPane]
-
-        #============= EOF =============================================
+# ============= EOF =============================================

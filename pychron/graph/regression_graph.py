@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 #============= enthought library imports =======================
 from traits.api import List, Any, Event, Callable
 #============= standard library imports ========================
@@ -64,9 +64,9 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
     #     super(RegressionGraph, self).__init__(*args, **kw)
     #     self._regression_lock = Lock()
 
-    #===============================================================================
+    # ===============================================================================
     # context menu handlers
-    #===============================================================================
+    # ===============================================================================
     def cm_linear(self):
         self.set_fit('linear')
         self._update_graph()
@@ -87,9 +87,9 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         self.set_fit('average_sem')
         self._update_graph()
 
-    #===============================================================================
+    # ===============================================================================
     #
-    #===============================================================================
+    # ===============================================================================
     def set_filter_outliers(self, fi, plotid=0, series=0):
         plot = self.plots[plotid]
         scatter = plot.plots['data{}'.format(series)][0]
@@ -509,7 +509,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         # def _bind_index(self, *args, **kw):
         #     pass
 
-    #============= EOF =============================================
+    # ============= EOF =============================================
     # @classmethod
     #     def _apply_block_filter(cls, xs, ys):
     #         '''

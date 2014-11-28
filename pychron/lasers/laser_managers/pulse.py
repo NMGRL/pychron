@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, Any, Instance, Float, Event, \
      Property, Bool, on_trait_change
-from traitsui.api import View, Item, Handler, HGroup, ButtonEditor, spring, Label, \
-    VGroup
+from traitsui.api import View, Item, Handler, HGroup, ButtonEditor, spring, VGroup
 # import apptools.sweet_pickle as pickle
 #============= standard library imports ========================
 # import os

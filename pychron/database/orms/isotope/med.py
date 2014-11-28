@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 #============= standard library imports ========================
@@ -41,4 +41,4 @@ class med_SnapshotTable(Base, BaseMixin):
     image = Column(BLOB)
     extraction_id = foreignkey('meas_ExtractionTable')
 
-#============= EOF =============================================
+# ============= EOF =============================================

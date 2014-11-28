@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.trait_types import Str, Float, Either, Date, Any, Dict, List, Long
@@ -776,4 +776,4 @@ class DBAnalysis(Analysis):
         msg = '{} {}'.format(self.record_id, msg)
         return msg
 
-#============= EOF =============================================
+# ============= EOF =============================================

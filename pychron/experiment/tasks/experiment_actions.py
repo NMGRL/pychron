@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 #============= enthought library imports =======================
@@ -21,6 +21,7 @@ from pyface.message_dialog import warning
 from pyface.tasks.task_window_layout import TaskWindowLayout
 
 from pychron.envisage.tasks.actions import PAction as Action, PTaskAction as TaskAction
+
 
 #============= standard library imports ========================
 import os
@@ -200,9 +201,9 @@ class OpenExperimentQueueAction(QueueAction):
         self._open_experiment(event, path)
 
 
-#===============================================================================
+# ===============================================================================
 # Utilities
-#===============================================================================
+# ===============================================================================
 class SignalCalculatorAction(ExperimentAction):
     name = 'Signal Calculator'
 

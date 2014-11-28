@@ -105,5 +105,5 @@ class FitChange(Change):
         self.fits = [FitRecord(isotope=fi.isotope_label, fit=fi.fit) for fi in dbrecord.fits]
 
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

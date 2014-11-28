@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,12 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import Bool, Instance, Enum, Range, on_trait_change, Any
-from traitsui.api import View, HGroup, Group, Item, spring , VGroup
+from traitsui.api import HGroup, Group, Item, spring , VGroup
+
 from pychron.database.records.sqlite_record import SQLiteRecord
+
 #============= standard library imports ========================
 # import os
 import csv
@@ -171,4 +173,4 @@ class PowerMapRecord(SQLiteRecord):
 #        v = View()
 #        return v
 
-#============= EOF =============================================
+# ============= EOF =============================================

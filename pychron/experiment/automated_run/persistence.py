@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 import binascii
@@ -120,9 +120,9 @@ class AutomatedRunPersister(Loggable):
         # bind_preference(self, 'fo_iterations', '{}.fo_iterations'.format(prefid))
         # bind_preference(self, 'fo_std_dev', '{}.fo_std_dev'.format(prefid))
 
-    #===============================================================================
+    # ===============================================================================
     # data writing
-    #===============================================================================
+    # ===============================================================================
     def save_peak_center_to_file(self, pc):
         dm = self.data_manager
         with dm.open_file(self._current_data_frame):
@@ -818,5 +818,5 @@ class AutomatedRunPersister(Loggable):
         #     return dict(filter_outliers=self.filter_outliers, iterations=self.fo_iterations,
         #                 std_dev=self.fo_std_dev)
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

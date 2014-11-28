@@ -30,7 +30,7 @@ class PaneModelView(Controller):
         return { 'object': self.model, 'controller': self,
                  'handler': self, 'pane':self.pane}
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

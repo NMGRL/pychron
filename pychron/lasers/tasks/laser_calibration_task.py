@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from pyface.tasks.action.schema import SToolBar
@@ -131,9 +131,9 @@ class LaserCalibrationTask(BaseLaserTask):
     def new_pid_tuner(self):
         editor=PIDTuningEditor(name='PID Tuning')
         self._open_editor(editor)
-    #===============================================================================
+    # ===============================================================================
     # handlers
-    #===============================================================================
+    # ===============================================================================
     def execute_active_editor(self, block=False):
         if self.active_editor.do_execute(self.manager):
             self.executing = True
@@ -177,9 +177,9 @@ class LaserCalibrationTask(BaseLaserTask):
             self.active_editor.was_executed = True
 
 
-#===============================================================================
+# ===============================================================================
 # action handlers
-#===============================================================================
+# ===============================================================================
 
 
 
@@ -196,4 +196,4 @@ class LaserCalibrationTask(BaseLaserTask):
 #
 #     def create_dock_panes(self):
 #         return []
-#============= EOF =============================================
+# ============= EOF =============================================

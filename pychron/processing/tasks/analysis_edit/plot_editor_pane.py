@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import Any, Event, Instance, List
@@ -24,6 +24,7 @@ from pyface.tasks.traits_dock_pane import TraitsDockPane
 from chaco.plot import Plot
 
 from pychron.processing.tasks.plot_editor import PlotEditor, AnnotationEditor
+
 
 
 
@@ -165,4 +166,4 @@ class PlotEditorPane(TraitsDockPane):
         v = View(VGroup(plot_grp, annotation_grp))
         return v
 
-#============= EOF =============================================
+# ============= EOF =============================================

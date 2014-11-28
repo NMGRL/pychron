@@ -12,11 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, Str, Password
-from traitsui.api import View, Item, VGroup, VFold
+from traitsui.api import View, Item, VGroup
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -56,4 +56,4 @@ class DBConnectionSpec(HasTraits):
         )
         )
 
-#============= EOF =============================================
+# ============= EOF =============================================

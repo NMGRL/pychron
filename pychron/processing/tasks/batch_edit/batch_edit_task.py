@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 import os
@@ -28,6 +28,7 @@ from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEd
 from pychron.processing.tasks.batch_edit.batch_editor import BatchEditor
 from pychron.processing.tasks.batch_edit.panes import BatchEditPane
 from pychron.paths import paths
+
 
 
 
@@ -220,11 +221,11 @@ class BatchEditTask(AnalysisEditTask):
                 #
                 #self.unknowns_pane.items = self.unknowns
 
-                #===============================================================================
+                # ===============================================================================
 
                 # handlers
 
-    #===============================================================================
+    # ===============================================================================
     #     @on_trait_change('unknowns_pane:items')
     #     def _update_unknowns_runs(self, obj, name, old, new):
     #         if not obj._no_update:
@@ -249,9 +250,9 @@ class BatchEditTask(AnalysisEditTask):
             if s is not None:
                 self.batch_editor.sens_value = s.sensitivity
 
-    #===============================================================================
+    # ===============================================================================
     # defaults
-    #===============================================================================
+    # ===============================================================================
     def _default_layout_default(self):
         #c=PaneItem('pychron.smart_selection.configure')
         search = Tabbed(browser_pane_item())
@@ -267,4 +268,4 @@ class BatchEditTask(AnalysisEditTask):
             id='pychron.processing.batch',
             left=left)
 
-#============= EOF =============================================
+# ============= EOF =============================================

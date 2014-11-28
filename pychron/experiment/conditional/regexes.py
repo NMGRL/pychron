@@ -65,7 +65,7 @@ DEFLECTION_REGEX = re.compile(r'[\w\d]+\.deflection')
 RATIO_REGEX = re.compile(r'[A-Za-z]{1,2}\d{1,2}/[A-Za-z]{1,2}\d{1,2}')
 
 ARGS_REGEX = re.compile(r'\(.+\)')
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 import unittest
 from itertools import groupby
+
 from pychron.processing.selection.data_selector import FileSelector
 from pychron.processing.processor import Processor
 from test.database import isotope_manager_factory
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -120,4 +122,4 @@ class FileSelectorTest(unittest.TestCase):
                              v)
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

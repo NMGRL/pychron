@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, Float, Enum, List, Int, \
@@ -141,9 +141,9 @@ class IncrementalHeatTemplate(Viewable):
     def _get_name(self):
         return os.path.basename(self.path)
 
-    #===============================================================================
+    # ===============================================================================
     # persistence
-    #===============================================================================
+    # ===============================================================================
     def load(self, path):
 
         self.path = path
@@ -172,9 +172,9 @@ class IncrementalHeatTemplate(Viewable):
             writer.writerow(header)
             for step in self.steps:
                 writer.writerow(step.make_row())
-                #===============================================================================
+                # ===============================================================================
                 # handlers
-                #===============================================================================
+                # ===============================================================================
 
     @on_trait_change('steps[]')
     def _steps_updated(self):
@@ -255,4 +255,4 @@ if __name__ == '__main__':
     #    for i in range(10):
     #        im.steps.append(IncrementalHeatStep(step_id=i + 1))
     im.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================

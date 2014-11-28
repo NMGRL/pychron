@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from chaco.base_plot_container import BasePlotContainer
@@ -357,7 +357,7 @@ class FigureEditor(GraphEditor):
                                            graph=ai.graph_id,
                                            group=ai.group_id)
 
-#============= EOF =============================================
+# ============= EOF =============================================
 # dbans = fig.analyses
 # uuids = [ai.uuid for ai in self.analyses]
 

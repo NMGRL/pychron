@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, Bool, Str, Float, Int, Enum
 from traitsui.api import View, HGroup, UItem, EnumEditor
 
 from pychron.pychron_constants import NULL_STR, FIT_TYPES
+
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -155,4 +156,4 @@ class Hop(HasTraits):
         )
         return v
 
-        #============= EOF =============================================
+        # ============= EOF =============================================

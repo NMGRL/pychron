@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import on_trait_change, List, HasTraits
@@ -378,4 +378,4 @@ class FluxTask(InterpolationTask):
                         PaneItem('pychron.processing.references'),
                         PaneItem('pychron.processing.analyses')),
                     PaneItem('pychron.processing.controls'))))
-#============= EOF =============================================
+# ============= EOF =============================================

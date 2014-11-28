@@ -183,6 +183,6 @@ class WorkspaceTask(BaseBrowserTask):
     def _workspace_default(self):
         w = ArArWorkspaceManager(application=self.application)
         return w
-#============= EOF =============================================
+# ============= EOF =============================================
 
 

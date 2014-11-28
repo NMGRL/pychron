@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from chaco.abstract_overlay import AbstractOverlay
@@ -102,9 +102,9 @@ class InverseIsochron(Isochron):
         if omit:
             self._rebuild_iso(omit)
 
-    #===============================================================================
+    # ===============================================================================
     # plotters
-    #===============================================================================
+    # ===============================================================================
     def _plot_aux(self, title, vk, ys, po, plot, pid, es=None):
         scatter = self._add_aux_plot(ys, title, vk, pid)
 
@@ -207,9 +207,9 @@ class InverseIsochron(Isochron):
 
         self._add_scatter_inspector(scatter, additional_info=ad)
 
-    #===============================================================================
+    # ===============================================================================
     # overlays
-    #===============================================================================
+    # ===============================================================================
 
     def _add_atm_overlay(self, plot):
         v = self.options.nominal_intercept_value
@@ -321,9 +321,9 @@ class InverseIsochron(Isochron):
         if new is True:
             self.update_graph_metadata(None, name, old, new)
 
-    #===============================================================================
+    # ===============================================================================
     # utils
-    #===============================================================================
+    # ===============================================================================
     def max_x(self, *args):
         xx, yy = extract_isochron_xy(self.analyses)
         try:
@@ -415,13 +415,13 @@ class InverseIsochron(Isochron):
         #return zip(*[func(aa) for aa in self.analyses])
 
 
-#===============================================================================
+# ===============================================================================
 # labels
-#===============================================================================
+# ===============================================================================
 #     def _build_integrated_age_label(self, tga, *args):
 #         age, error = tga.nominal_value, tga.std_dev
 #         error *= self.options.nsigma
 #         txt = self._build_label_text(age, error, *args)
 #         return 'Integrated Age= {}'.format(txt)
 
-#============= EOF =============================================
+# ============= EOF =============================================

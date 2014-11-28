@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #=============enthought library imports=======================
 from traits.api import HasTraits, Str, List, Float, Property, Tuple, Bool, Instance
@@ -188,7 +188,7 @@ class AgilentMultiplexer(AgilentUnit):
 
         return '(@{})'.format(','.join([ci.address for ci in channels]))
 
-    #===============================================================================
+    # ===============================================================================
     # view
     # ===============================================================================
     def traits_view(self):
@@ -198,7 +198,7 @@ class AgilentMultiplexer(AgilentUnit):
                                         editor=InstanceEditor(), style='custom')))
         return v
 
-    #===============================================================================
+    # ===============================================================================
     # private
     # ===============================================================================
     def _get_dc_channels(self):

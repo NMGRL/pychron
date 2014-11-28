@@ -29,4 +29,4 @@ class RegressionTimeSeriesGraph(RegressionGraph, TimeSeriesGraph):
 class StackedRegressionTimeSeriesGraph(StackedRegressionGraph, TimeSeriesGraph):
     pass
 
-#============= EOF =============================================
+# ============= EOF =============================================

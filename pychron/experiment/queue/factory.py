@@ -108,9 +108,9 @@ class ExperimentQueueFactory(PersistenceLoggable):
     def persistence_path(self):
         return os.path.join(paths.hidden_dir, 'queue_factory')
 
-    #===============================================================================
+    # ===============================================================================
     # property get/set
-    #===============================================================================
+    # ===============================================================================
     def _get_email(self):
         email = ''
         if self.use_email_notifier:
@@ -222,4 +222,4 @@ class ExperimentQueueFactory(PersistenceLoggable):
 if __name__ == '__main__':
     g = ExperimentQueueFactory()
     g.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================

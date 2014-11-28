@@ -366,4 +366,4 @@ class InitializationParser(XMLParser):
 #            pi = cat.findall('processor')
 #
 #        return [pii.text.strip() for pii in (pi if pi else [])]
-#============= EOF =============================================
+# ============= EOF =============================================

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import Enum, Instance, Str, Button, List, Any, Bool, Property, Event, cached_property, Int
@@ -229,4 +229,4 @@ class ImportManager(IsotopeDatabaseManager):
 if __name__ == '__main__':
     im = ImportManager()
     im.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================

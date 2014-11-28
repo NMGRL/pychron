@@ -1,5 +1,5 @@
 #!/Library/Frameworks/Python.framework/Versions/Current/bin/python
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,11 +13,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, Int, Enum, File, Instance, Button, Float, Str, on_trait_change, Bool, Color, List
-from traitsui.api import View, Item, VGroup, HGroup, RangeEditor, EnumEditor, spring, ListEditor, InstanceEditor
+from traitsui.api import View, Item, VGroup, HGroup, ListEditor, InstanceEditor
 from chaco.api import HPlotContainer, ArrayPlotData, Plot
 from chaco.tools.api import ZoomTool
 from chaco.default_colormaps import color_map_name_dict
@@ -26,14 +26,13 @@ from pyface.file_dialog import FileDialog
 from pyface.constant import OK
 #============= standard library imports ========================
 from PIL import Image
-from numpy import sum, zeros_like, where, array, percentile, hsplit
+from numpy import sum, zeros_like, where, array
 #============= local library imports  ==========================
 from chaco.tools.image_inspector_tool import ImageInspectorTool, \
     ImageInspectorOverlay
 from enable.component_editor import ComponentEditor
 import os
 import sys
-from skimage.exposure.exposure import rescale_intensity, equalize
 from chaco.tools.pan_tool import PanTool
 class Band(HasTraits):
     center = Int(enter_set=True, auto_set=False)
@@ -417,4 +416,4 @@ if __name__ == '__main__':
 
     d.path = '/Users/argonlab2/Sandbox/R2-03 closeup_1_BSE_1 zoomed2.png'
     d.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================

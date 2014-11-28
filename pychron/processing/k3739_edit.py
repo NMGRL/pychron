@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 import os
@@ -20,6 +20,7 @@ import pickle
 
 from traits.api import HasTraits, Bool, List, Any, Float
 from traitsui.api import View, Item,UItem, Controller, VGroup, HGroup, TabularEditor
+
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -113,5 +114,5 @@ class K3739EditView(Controller):
             kind='livemodal')
         return v
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 
@@ -293,5 +293,5 @@ execfile(os.path.join(os.path.split(__file__)[0], "{}.py"))
 if __name__ == '__main__':
     install('pyexperiment')
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

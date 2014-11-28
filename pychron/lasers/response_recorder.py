@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, Array, Any, Instance
@@ -101,4 +101,4 @@ class ResponseRecorder(HasTraits):
         if len(self.output_data):
             return ''.join([struct.pack('<ff', x, y) for x, y in self.output_data])
 
-#============= EOF =============================================
+# ============= EOF =============================================

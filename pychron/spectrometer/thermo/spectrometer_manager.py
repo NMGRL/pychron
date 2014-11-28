@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import Any, Property
@@ -20,7 +20,6 @@ from traits.api import Any, Property
 import os
 #============= local library imports  ==========================
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
-from pychron.managers.manager import Manager
 from pychron.spectrometer.base_spectrometer_manager import BaseSpectrometerManager
 from pychron.spectrometer.thermo.spectrometer import Spectrometer
 from pychron.paths import paths
@@ -201,7 +200,7 @@ if __name__ == '__main__':
 #    ini.run()
 # #    s.magnet_field_calibration()
 #    s.configure_traits()#kind = 'live')
-#============= EOF =============================================
+# ============= EOF =============================================
 #    def _update_hover(self, obj, name, old, new):
 #        if new is not None:
 #            g = Graph(container_dict=dict(padding=[30, 0, 0, 30]))

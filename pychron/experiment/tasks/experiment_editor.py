@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import Instance, Unicode, Property, DelegatesTo, Color, Bool
@@ -147,9 +147,9 @@ class ExperimentEditor(BaseTraitsEditor):
             return {'object': self.queue}
         return super(ExperimentEditor, self).trait_context()
 
-    #===============================================================================
+    # ===============================================================================
     # handlers
-    #===============================================================================
+    # ===============================================================================
     def _dirty_changed(self):
         self.debug('dirty changed {}'.format(self.dirty))
 
@@ -209,9 +209,9 @@ class ExperimentEditor(BaseTraitsEditor):
 
         return p
 
-    #===============================================================================
+    # ===============================================================================
     # property get/set
-    #===============================================================================
+    # ===============================================================================
     def _get_tooltip(self):
         return self.path
 
@@ -228,4 +228,4 @@ class UVExperimentEditor(ExperimentEditor):
     tabular_adapter_klass = UVAutomatedRunSpecAdapter
     executed_tabular_adapter_klass = ExecutedUVAutomatedRunSpecAdapter
 
-#============= EOF =============================================
+# ============= EOF =============================================

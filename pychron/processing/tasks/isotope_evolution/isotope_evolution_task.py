@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from itertools import groupby
@@ -22,6 +22,7 @@ from datetime import timedelta
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Tabbed, HSplitter, \
     VSplitter
+
 
 
 
@@ -203,19 +204,19 @@ class IsotopeEvolutionTask(AnalysisEditTask):
                             for ai in li.analyses])
         return ans
 
-    #===============================================================================
+    # ===============================================================================
     # equilibration tools
-    #===============================================================================
+    # ===============================================================================
     def calculate_optimal_eqtime(self):
         if self.active_editor:
             self.active_editor.calculate_optimal_eqtime()
 
-    #===============================================================================
+    # ===============================================================================
     # handlers
-    #===============================================================================
-    #===============================================================================
+    # ===============================================================================
+    # ===============================================================================
     # easy
-    #===============================================================================
+    # ===============================================================================
     def do_easy_fit(self):
         self._do_easy(self._do_easy_fit)
 
@@ -320,7 +321,7 @@ class IsotopeEvolutionTask(AnalysisEditTask):
                 #                 ans = man.make_analyses(ans)
                 #self.unknowns_pane.items = ans
 
-#============= EOF =============================================
+# ============= EOF =============================================
 #_refit_thread = None
 
 #def refit_isotopes(self, dry_run=False):

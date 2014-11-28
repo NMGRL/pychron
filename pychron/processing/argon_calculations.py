@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #=============enthought library imports=======================
 
@@ -26,6 +26,7 @@ from numpy import array
 
 from pychron.processing.arar_constants import ArArConstants
 from pychron.core.stats.core import calculate_weighted_mean
+
 
 
 
@@ -425,9 +426,9 @@ def age_equation(j, f,
         return ufloat(0, 0)
 
 
-#===============================================================================
+# ===============================================================================
 # non-recursive
-#===============================================================================
+# ===============================================================================
 
 def calculate_error_F(signals, F, k4039, ca3937, ca3637):
     """
@@ -557,11 +558,11 @@ def calculate_error_t(F, ssF, j, ssJ):
 #     return True
 #
 #
-# #===============================================================================
+# # ===============================================================================
 # # recursive
 # # from timeit testing recursive method is not any faster
 # #  use non recursive method instead purely for readablity
-# #===============================================================================
+# # ===============================================================================
 #
 # def find_plateaus_r(ages, errors, start=0, end=1, plats=None, platids=None):
 #     if plats is None:
@@ -770,9 +771,9 @@ def calculate_error_t(F, ssF, j, ssJ):
 #    erJ = square(R / G) * square(jer)
 #    JRer = (er40 + er39 + er38 + er37 + er36 + erD + er4039 + er3937 + er3637 + erJ) ** 0.5
 #    age_err = (1e-6 / constants.lambdak) * JRer / (1 + ar40rad / k39 * j)
-##===============================================================================
+## ===============================================================================
 # # error pychron port
-##===============================================================================
+## ===============================================================================
 # #    s = ca3937 * s37
 # #    T = ca3637 * s37
 # #    G = s39 - s

@@ -33,7 +33,7 @@ class BaseSpectrometerManager(Manager):
         if self.spectrometer:
             self.spectrometer.send_configuration()
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

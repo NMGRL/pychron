@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 
@@ -21,4 +21,4 @@
 from helpers import entry_point
 
 entry_point('pyco2', 'PyCO2', '_co2', debug=True)
-#============= EOF =============================================
+# ============= EOF =============================================

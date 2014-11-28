@@ -15,7 +15,7 @@
 # ===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Instance, List, Any
+from traits.api import Instance
 from traitsui.api import View, Item, UItem, VGroup, HGroup
 from traitsui.editors import TableEditor, TabularEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
@@ -28,7 +28,7 @@ from traitsui.tabular_adapter import TabularAdapter
 
 #============= local library imports  ==========================
 
-#============= EOF =============================================
+# ============= EOF =============================================
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.tagging.analysis_tags import AnalysisTagModel
 from pychron.processing.tagging.data_reduction_tags import DataReductionTagModel, SelectDataReductionTagModel

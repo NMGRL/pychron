@@ -30,4 +30,4 @@ class PyValve(PychronApplication):
     default_layout = [TaskWindowLayout('tasks.hardware'),
                       TaskWindowLayout('pychron.extraction_line')]
 
-#============= EOF =============================================
+# ============= EOF =============================================

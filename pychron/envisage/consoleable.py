@@ -87,4 +87,4 @@ class Consoleable(Loggable):
             default_color=self.console_default_color,
             max_blocks=100)
 
-#============= EOF =============================================
+# ============= EOF =============================================

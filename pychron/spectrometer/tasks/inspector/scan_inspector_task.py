@@ -36,7 +36,7 @@ class ScanInspectorTask(BaseManagerTask):
         return ScanInspector()
 
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

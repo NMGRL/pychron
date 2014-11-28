@@ -733,5 +733,5 @@ class SQLiteDatabaseAdapter(DatabaseAdapter):
     def _build_database(self, sess, meta):
         raise NotImplementedError
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

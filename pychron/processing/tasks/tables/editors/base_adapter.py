@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, Int, Str, Property, Any
 from traitsui.tabular_adapter import TabularAdapter
 from uncertainties import std_dev, nominal_value
+
 from pychron.core.helpers.formatting import floatfmt
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 class TableBlank(HasTraits):
@@ -263,7 +265,7 @@ class BaseGroupAdapter(BaseAdapter):
         #def _get_age_sd_text(self):
         #    return self._get_error('arith_age')
 
-#============= EOF =============================================
+# ============= EOF =============================================
 # class LaserTableBlankAdapter(LaserTableAdapter):
 #     columns = [
 #                ('N', 'aliquot_step_str'),

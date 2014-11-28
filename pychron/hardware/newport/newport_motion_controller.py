@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #=============enthought library imports=======================
 from traits.api import Enum, Instance
@@ -148,9 +148,9 @@ ABLE TO USE THE HARDWARE JOYSTICK
         if self.axes.has_key('x'):
             return self.axes['x'].id == 2
 
-#===============================================================================
+# ===============================================================================
 # RPCable
-#===============================================================================
+# ===============================================================================
     def get_current_position(self, aid):
         ''' 
         '''

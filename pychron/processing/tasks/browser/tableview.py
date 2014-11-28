@@ -153,7 +153,7 @@ class TableTools(PaneModelView):
         v = View(HGroup(sample_tools, analysis_tools))
         return v
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

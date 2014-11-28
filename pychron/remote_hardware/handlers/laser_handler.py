@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 #============= standard library imports ========================
@@ -63,9 +63,9 @@ class LaserHandler(BaseRemoteHardwareHandler):
         if mrm is None:
             self.info('multrun report manager unavailable')
         return mrm
-#===============================================================================
+# ===============================================================================
 # Commands
-#===============================================================================
+# ===============================================================================
     def MachineVisionDegas(self, manager, lumens, duration, *args):
         manager.do_machine_vision_degas(lumens, duration, new_thread=True)
 
@@ -406,11 +406,11 @@ class LaserHandler(BaseRemoteHardwareHandler):
         result = manager.get_output_blob()
         return str(result)
 
-        #===============================================================================
+        # ===============================================================================
 
         # Positioning
 
-    #===============================================================================
+    # ===============================================================================
     def GoToNamedPosition(self, manager, pos, *args):
         result = manager.goto_named_position(pos)
         return result
@@ -458,9 +458,9 @@ class LaserHandler(BaseRemoteHardwareHandler):
         err = manager.stage_manager.define_home(**kw)
         return self.error_response(err)
 
-#===============================================================================
+# ===============================================================================
 #
-#===============================================================================
+# ===============================================================================
 #     def DoJog(self, manager, name, *args):
 #         if name is None:
 #             err = InvalidArgumentsErrorCode('DoJog', name)

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #=============enthought library imports=======================
 
@@ -135,7 +135,7 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
     def set_simulation(self, tf):
         if self._communicator:
             self._communicator.simulation=tf
-    #==============================================================================================================
+    # ==============================================================================================================
     def _communicate_hook(self, cmd, r):
         self.last_command = cmd
         self.last_response = r if r else ''
@@ -335,9 +335,9 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
 
         return resp
 
-    #===============================================================================
+    # ===============================================================================
     # scanable interface
-    #===============================================================================
+    # ===============================================================================
     def _scan_hook(self, v):
         for a in self.alarms:
             if a.test_condition(v):

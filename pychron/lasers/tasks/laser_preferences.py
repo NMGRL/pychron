@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,12 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Bool, Str, Enum, File, Int, Directory, \
+from traits.api import Bool, Str, Enum, File, Int, Directory, \
     Color, Range
-from traitsui.api import View, UItem, Item, VGroup, HGroup, Group
+from traitsui.api import View, Item, VGroup, HGroup, Group
 # from apptools.preferences.api import PreferencesHelper
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
@@ -118,9 +118,9 @@ class FusionsUVPreferences(FusionsLaserPreferences):
 
 
 
-#===============================================================================
+# ===============================================================================
 # Panes
-#===============================================================================
+# ===============================================================================
 class FusionsLaserPreferencesPane(PreferencesPane):
 
 
@@ -227,4 +227,4 @@ class FusionsUVPreferencesPane(FusionsLaserPreferencesPane):
     category = 'Fusions UV'
     model_factory = FusionsUVPreferences
 
-#============= EOF =============================================
+# ============= EOF =============================================
