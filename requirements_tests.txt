@@ -6,6 +6,9 @@ traitsui==4.4.0
 enable==4.4.1
 chaco==4.5.0
 xlrd
+xlwt
+lxml
+sqlalchemy==0.9.8
 
 #GitPython>=0.3.2.RC1
 #paramiko
