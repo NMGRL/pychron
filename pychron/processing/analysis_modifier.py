@@ -55,7 +55,6 @@ class AnalysisModifier(Loggable):
             dbln = db.get_labnumber(new_labnumber)
 
             for ai in ans:
-                print ai.uuid
                 dban = db.get_analysis_uuid(ai.uuid)
                 dban.labnumber = dbln
 
@@ -71,8 +70,13 @@ class AnalysisModifier(Loggable):
                 rid = ai.record_id
                 dban = db.get_analysis_rid(rid)
                 if dban:
-                    dban.RID = make_runid(new_labnumber, dban.Aliquot, dban.Step)
-                    dban.IrradPosition = new_labnumber
+                    dbirradpos = db.get_irradiation_position(new_labnumber)
+                    if dbirradpos:
+                        dban.RID = make_runid(new_labnumber, dban.Aliquot, dban.Increment)
+                        dban.IrradPosition = new_labnumber
+                        dban.RedundantSampleID = dbirradpos.SampleID
+                    else:
+                        self.warning('Labnumber {} does not exist in Secondary DB'.format(rid))
                 else:
                     self.warning('Analysis {} does not exist in Secondary DB'.format(rid))
 

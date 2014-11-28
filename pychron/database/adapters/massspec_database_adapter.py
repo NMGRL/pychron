@@ -24,6 +24,8 @@ from sqlalchemy.sql.expression import func, distinct
 from uncertainties import std_dev, nominal_value
 
 
+
+
 # =============local library imports  ==========================
 from pychron.database.orms.massspec_orm import IsotopeResultsTable, \
     AnalysesChangeableItemsTable, BaselinesTable, DetectorTable, \
@@ -202,7 +204,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
     def get_analysis_rid(self, rid):
         return self._retrieve_item(AnalysesTable, rid, key='RID')
 
-    def get_analysis(self, value, aliquot=None, step=None):
+    def get_analysis(self, value, aliquot=None, step=None, **kw):
         #        key = 'RID'
         key = 'IrradPosition'
         if aliquot:
@@ -214,7 +216,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
                 value = (value, aliquot)
 
         return self._retrieve_item(AnalysesTable, value,
-                                   key=key, )
+                                   key=key, **kw)
 
     def get_irradiation_position(self, value):
         return self._retrieve_item(IrradiationPositionTable, value,
@@ -280,6 +282,11 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
     # ===============================================================================
     # adders
     # ===============================================================================
+    def add_sample(self, name):
+        with self.session_ctx():
+            obj = SampleTable(Sample=name, ProjectID=1)
+            return self._add_item(obj)
+
     def add_production_ratios(self, prdict):
         """
             keys =
@@ -309,6 +316,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
             q = sess.query(IrradiationPositionTable)
             q = q.filter(IrradiationPositionTable.IrradPosition == identifier)
             if not self._query_one(q):
+
                 i = IrradiationPositionTable(IrradPosition=identifier,
                                              IrradiationLevel=irrad_level,
                                              HoleNumber=hole,

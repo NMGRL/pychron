@@ -220,7 +220,7 @@ class IrradiationPositionTable(Base):
     Size = Column(String(40), default='NULL')
     Weight = Column(Float, default=0)
     Note = Column(String(40), nullable=True)
-    LabActivation = Column(Date, default='NULL')
+    LabActivation = Column(Date, default=func.now())
     J = Column(Float, nullable=True)
     JEr = Column(Float, nullable=True)
 
@@ -427,7 +427,7 @@ class SampleTable(Base):
     ProjectID = Column(Integer, ForeignKey('projecttable.ProjectID'))
     Note = Column(String(40), default='NULL')
     AlternateUserID = Column(String(40), default='NULL')
-    CollectionDateTime = Column(DateTime, default='')
+    CollectionDateTime = Column(DateTime, default=func.now())
     Coordinates = Column(BLOB, default='NULL')
     Latitude = Column(String(40), default='NULL')
     Longitude = Column(String(40), default='NULL')
