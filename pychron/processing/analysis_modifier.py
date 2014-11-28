@@ -15,7 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance
+from traits.api import Instance, HasTraits, List, Str
+from traitsui.api import View, VGroup, Item, EnumEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.database.adapters.isotope_adapter import IsotopeAdapter
@@ -24,12 +25,68 @@ from pychron.experiment.utilities.identifier import make_runid
 from pychron.loggable import Loggable
 
 
+class LabnumberSelector(HasTraits):
+    irradiations = List
+    irradiation = Str
+    levels = List
+    level = Str
+    idenifiers = List
+    identifier = Str
+
+    def __init__(self, db, *args, **kw):
+        super(LabnumberSelector, self).__init__(*args, **kw)
+        self.db = db
+        with db.session_ctx():
+            self.irradiations = [i.name for i in db.get_irradiations()]
+            if self.irradiations:
+                self.irradiation = self.irradiations[0]
+
+    def _irradiation_changed(self, new):
+        if new:
+            db = self.db
+            with db.session_ctx():
+                self.levels = [li.name for li in db.get_irradiaiton_levels(new)]
+                if self.levels:
+                    self.level[0]
+        else:
+            self.levels = []
+            self.level = ''
+
+    def _level_changed(self, new):
+        if new:
+            db = self.db
+            with db.session_ctx():
+                level = db.get_irradiation_level(self.irradiation, new)
+                self.identifiers = [li.name for li in level.positions.labnumbers]
+        else:
+            self.identifiers = []
+            self.identifier = ''
+
+    def traits_view(self):
+        v = View(VGroup(Item('irradiation', editor=EnumEditor(name='irradiations')),
+                        Item('level', editor=EnumEditor(name='levels')),
+                        Item('identifier', editor=EnumEditor(name='identifiers'))),
+                 kind='livemodal')
+        return v
+
+
 class AnalysisModifier(Loggable):
     use_main = True
     use_secondary = False
 
     main_db = Instance(IsotopeAdapter)
     secondary_db = Instance(MassSpecDatabaseAdapter)
+
+    def do_modification(self, ans):
+        identifier = self.select_new_labnumber()
+        if identifier:
+            self.modify_analyses(ans, identifier)
+
+    def select_new_labnumber(self):
+        v = LabnumberSelector(self.main_db)
+        info = v.edit_traits()
+        if info.result:
+            return v.identifier
 
     def modify_analyses(self, ans, new_labnumber):
         self.info('Set labnumber to {}'.format(new_labnumber))
@@ -104,6 +161,7 @@ class AnalysisModifier(Loggable):
         bind_preference(db, 'name', '{}.name'.format(prefid))
         bind_preference(db, 'password', '{}.password'.format(prefid))
         return db
+
 # ============= EOF =============================================
 
 

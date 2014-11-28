@@ -12,35 +12,35 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Str, List
 # from pyface.action.action import Action
 # from pyface.tasks.action.task_action import TaskAction
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import myTaskAction
 from pychron.envisage.tasks.actions import PAction as Action
 
 
 class ActivateBlankAction(myTaskAction):
-    name= 'Activate Blanks'
+    name = 'Activate Blanks'
     task_ids = ['pychron.processing.figures', 'pychron.recall']
     method = 'activate_blank_task'
 
 
 class ActivateRecallAction(myTaskAction):
-    name= 'Activate Recall'
+    name = 'Activate Recall'
     task_ids = ['pychron.processing.figures', 'pychron.processing.blanks']
     method = 'activate_recall_task'
 
 
 class ActivateIdeogramAction(myTaskAction):
-    name= 'Activate Ideogram'
-    task_ids = ['pychron.processing.blanks','pychron.recall']
+    name = 'Activate Ideogram'
+    task_ids = ['pychron.processing.blanks', 'pychron.recall']
     method = 'activate_ideogram_task'
 
 
@@ -67,7 +67,8 @@ class GroupSelectedAction(GroupAction):
     method = 'group_selected'
     # image = icon('placeholder')
 
-#     def perform(self, event):
+
+# def perform(self, event):
 #         task = event.task
 #         if task.id == 'pychron.processing.figures':
 #             task.group_selected()
@@ -118,9 +119,9 @@ class DeleteAnalysisGroupAction(AnalysisAction):
     image = icon('database_delete')
 
 
-#===============================================================================
+# ===============================================================================
 #
-#===============================================================================
+# ===============================================================================
 class EquilibrationInspectorAction(Action):
     name = 'Equilibration Inspector...'
 
@@ -133,9 +134,9 @@ class EquilibrationInspectorAction(Action):
         app.open_view(eq)
 
 
-#===============================================================================
+# ===============================================================================
 # figures
-#===============================================================================
+# ===============================================================================
 class FigureAction(Action):
     method = Str
 
@@ -156,19 +157,19 @@ class IdeogramAction(FigureAction):
     name = 'Ideogram'
     method = 'new_ideogram'
     image = icon('histogram')
-    id ='pychron.ideogram'
+    id = 'pychron.ideogram'
 
 
 class SpectrumAction(FigureAction):
     name = 'Spectrum'
     method = 'new_spectrum'
-    id='pychron.spectrum'
+    id = 'pychron.spectrum'
 
 
 class SeriesAction(FigureAction):
     name = 'Series'
     method = 'new_series'
-    id='pychron.series'
+    id = 'pychron.series'
 
 
 class InverseIsochronAction(FigureAction):
@@ -204,11 +205,11 @@ class ConfigureRecallAction(myTaskAction):
     name = 'Configure Recall'
     method = 'configure_recall'
     image = icon('cog.png')
-    task_ids = List(['pychron.recall', 'pychron.processing.figures',
-                     'pychron.processing.blanks',
-                     'pychron.processing.isotope_evolution',
-                     'pychron.processing.ic_factor',
-                     'pychron.processing.discrimination'])
+    task_ids = ('pychron.recall', 'pychron.processing.figures',
+                'pychron.processing.blanks',
+                'pychron.processing.isotope_evolution',
+                'pychron.processing.ic_factor',
+                'pychron.processing.discrimination')
 
 
 class OpenInterpretedAgeAction(Action):
@@ -268,18 +269,24 @@ class ExportAnalysesAction(Action):
 class ModifyK3739Action(myTaskAction):
     name = 'Modify (37/39)K...'
     method = 'modify_k3739'
-    task_ids = List(['pychron.processing.figures', 'pychron.recall', 'pychron.processing.isotope_evolution'])
+    task_ids = ('pychron.processing.figures', 'pychron.recall', 'pychron.processing.isotope_evolution')
+
+
+class ModifyIdentifierAction(myTaskAction):
+    name = 'Modify Labnumber...'
+    method = 'modify_analysis_identifier'
+    task_ids = ('pychron.recall',)
 
 
 class SplitEditorActionHor(myTaskAction):
     name = 'Split Editor Horizontal'
-    task_ids = List(['pychron.processing.figures', 'pychron.recall'])
+    task_ids = ('pychron.processing.figures', 'pychron.recall')
     method = 'split_editor_area_hor'
 
 
 class SplitEditorActionVert(myTaskAction):
     name = 'Split Editor Vertical'
-    task_ids = List(['pychron.processing.figures', 'pychron.recall'])
+    task_ids = ('pychron.processing.figures', 'pychron.recall')
     method = 'split_editor_area_vert'
     image = icon('split_vertical')
 
