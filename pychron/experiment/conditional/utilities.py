@@ -21,11 +21,12 @@ from uncertainties import ufloat
 
 from pychron.experiment.conditional.regexes import COMP_REGEX, ARGS_REGEX, DEFLECTION_REGEX, BASELINECOR_REGEX, \
     BASELINE_REGEX, MIN_REGEX, MAX_REGEX, CP_REGEX, PARENTHESES_REGEX, KEY_REGEX, ACTIVE_REGEX, SLOPE_REGEX, AVG_REGEX, \
-    RATIO_REGEX, BETWEEN_REGEX
+    RATIO_REGEX, BETWEEN_REGEX, PRESSURE_REGEX
 
 
 def get_teststr_attr_func(token):
     for args in (
+                (PRESSURE_REGEX, 'obj.get_pressure(attr)', wrapper, pressure_teststr),
                 (DEFLECTION_REGEX, 'obj.get_deflection(attr, current=True)'),
                 (ACTIVE_REGEX, 'not attr in data[0]'),
                 (CP_REGEX, 'aa.get_current_intensity(attr)'),
@@ -46,10 +47,10 @@ def get_teststr_attr_func(token):
             reg, fstr, wfunc, tfunc = args
 
         found = reg.match(token)
-        # print token, fstr, found
+        print token, fstr, found
         if found:
             attr, key, teststr = tfunc(token)
-            func = wfunc(fstr, token, key)
+            func = wfunc(fstr, token, attr)
             break
     else:
         teststr = token
@@ -67,7 +68,7 @@ def get_teststr_attr_func(token):
         if not teststr.startswith('not'):
             teststr = 'not {}'.format(teststr)
 
-    return teststr, attr, func
+    return teststr, key, func
 
 #wrappers
 def wrapper(fstr, token, ai):
@@ -113,6 +114,16 @@ def teststr_func(token):
     ts = '{}{}'.format(a, c)
     return a, a, ts
 
+
+def pressure_teststr(token):
+    c = remove_attr(token)
+    # k = extract_attr(token)
+    tt = remove_comp(token)
+    k = tt.replace('.','_')
+    a = '.'.join(tt.split('.')[:-1])
+
+    ts = '{}{}'.format(k, c)
+    return a, k, ts
 
 def between_teststr(token):
     args = ARGS_REGEX.search(token).group(0)[1:-1].split(',')

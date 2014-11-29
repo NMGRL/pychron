@@ -651,6 +651,10 @@ class AutomatedRun(Loggable):
 
             self.experiment_executor.info(msg, color=color, log=False)
 
+    def get_pressure(self, attr):
+        controller, name = attr.split('.')
+        return self.extraction_line_manager.get_pressure(controller, name)
+
     def get_deflection(self, det, current=False):
         return self.spectrometer_manager.spectrometer.get_deflection(det, current)
 
