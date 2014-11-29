@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pychron.core.helpers.logger_setup import logging_setup
 from pychron.core.ui import set_qt
 
@@ -23,8 +23,8 @@ logging_setup('sys_log')
 from traits.api import Instance
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.experiment.sys_log.sys_logger_database_adapter import SysLoggerDatabaseAdapter
 from pychron.loggable import Loggable
 

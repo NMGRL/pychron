@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import unittest
 
 from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
 from pychron.pyscripts.measurement_pyscript import MeasurementPyScript
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 class PyscriptDurationTest(unittest.TestCase):
     def setUp(self):
         self._script = MeasurementPyScript()

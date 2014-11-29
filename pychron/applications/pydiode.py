@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pyface.tasks.task_window_layout import TaskWindowLayout
 
 from pychron.applications.pychron_application import PychronApplication
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class PyDiode(PychronApplication):
     id = 'pychron.diode.application'

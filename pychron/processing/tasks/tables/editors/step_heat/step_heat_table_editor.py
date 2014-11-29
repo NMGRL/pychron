@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.processing.analyses.analysis_group import StepHeatAnalysisGroup
 from pychron.processing.tables.step_heat.csv_writer import StepHeatTableCSVWriter
 from pychron.processing.tables.step_heat.pdf_writer import StepHeatPDFTableWriter

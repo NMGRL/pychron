@@ -23,7 +23,7 @@ import apptools.sweet_pickle as pickle
 # ============= standard library imports ========================
 from datetime import datetime
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.paths import paths
 
 SIZES = (6, 8, 9, 10, 11, 12, 14, 15, 18, 24, 36)

@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Float, Str
 from traitsui.api import View, Item, VGroup, EnumEditor
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.pyscripts.commands.core import Command
 from traitsui.menu import OKCancelButtons
 

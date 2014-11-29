@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import Int
 from traitsui.api import View, Item
-#=============standard library imports ========================
+# =============standard library imports ========================
 
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 from adc.adc_device import ADCDevice
 
 class AnalogPowerMeter(ADCDevice):

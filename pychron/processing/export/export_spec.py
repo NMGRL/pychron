@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from numpy import std, mean, where, delete
 from traits.api import CStr, Str, CInt, Float, \
     TraitError, Property, Any, Either, Dict, Bool, List
@@ -28,8 +28,8 @@ from pychron.loggable import Loggable
 
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
 class ExportSpec(Loggable):

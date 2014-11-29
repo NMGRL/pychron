@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from envisage.ui.tasks.task_factory import TaskFactory
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.social.emailer import Emailer
 from pychron.social.tasks.email_preferences import EmailPreferencesPane

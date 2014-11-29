@@ -15,7 +15,7 @@
 # ===============================================================================
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
 from pyface.message_dialog import warning
 from pyface.tasks.task_window_layout import TaskWindowLayout
@@ -23,9 +23,9 @@ from pyface.tasks.task_window_layout import TaskWindowLayout
 from pychron.envisage.tasks.actions import PAction as Action, PTaskAction as TaskAction
 
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.envisage.resources import icon
 from pychron.paths import paths
 
@@ -218,4 +218,4 @@ class ResetQueuesAction(TaskAction):
     name = 'Reset Queues'
 
 
-#============= EOF ====================================
+# ============= EOF ====================================

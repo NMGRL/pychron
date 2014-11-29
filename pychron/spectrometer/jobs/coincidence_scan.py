@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 from ConfigParser import ConfigParser
 import os
 
 import numpy as np
 
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.stats.peak_detection import PeakCenterError
 from pychron.spectrometer.jobs.peak_center import calculate_peak_center
 from pychron.paths import paths

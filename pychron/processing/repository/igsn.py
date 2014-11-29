@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Str, Button, Property, Event
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.processing.repository.http_repository import HTTPRepository
 from traits.has_traits import on_trait_change
 

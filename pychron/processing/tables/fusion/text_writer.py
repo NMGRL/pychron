@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Bool, Instance, Enum
 from uncertainties import nominal_value, std_dev
 
@@ -25,8 +25,8 @@ from pychron.loggable import Loggable
 
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 def iso_value(attr, ve='value'):
     def f(x, k):

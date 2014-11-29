@@ -16,11 +16,11 @@
 
 
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 
 # from numpy import array
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 # from image_helper import erode, dilate, draw_squares, draw_rectangle, \
 #    new_dst, new_size, new_point, new_mask, new_rect, grayspace, colorspace, threshold, contour, draw_contour_list, \
 #    clone, new_seq, avg, rotate, get_polygons, draw_polygons, subsample, \
@@ -153,4 +153,4 @@ class CalibrationImage(Image):
 
 
 
-#============= EOF ====================================
+# ============= EOF ====================================

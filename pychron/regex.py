@@ -14,10 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 import re
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 
 

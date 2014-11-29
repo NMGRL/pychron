@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from math import isnan
 
 from traits.api import Array
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import hstack, array
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from uncertainties import nominal_value
 from pychron.processing.analyses.analysis_group import StepHeatAnalysisGroup
 from pychron.processing.plotters.arar_figure import BaseArArFigure

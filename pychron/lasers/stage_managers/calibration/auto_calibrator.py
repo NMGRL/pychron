@@ -14,9 +14,9 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 import time
 
 from pychron.lasers.stage_managers.calibration.calibrator import TrayCalibrator

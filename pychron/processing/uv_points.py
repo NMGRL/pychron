@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Button, String
 from traitsui.api import View, Item, ButtonEditor
 from enable.component_editor import ComponentEditor
@@ -23,13 +23,13 @@ from chaco.abstract_overlay import AbstractOverlay
 from pychron.media_server.image_viewer import ImageViewer
 
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import loadtxt
 import os
 from pychron.core.geometry.reference_point import ReferencePoint
 from pychron.media_server.browser import ReferencePointsTool, ReferencePointsOverlay
 from pychron.core.geometry.affine import calculate_rigid_transform, AffineTransform
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 '''
     open a bse image
     

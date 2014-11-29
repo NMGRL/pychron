@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Range, Instance, Bool, \
     Button, Any, Str, Float, Enum, HasTraits, List
 from traitsui.api import View, Item, EnumEditor, Handler, HGroup
 import apptools.sweet_pickle as pickle
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.managers.manager import Manager
 from pychron.graph.graph import Graph
 from pychron.spectrometer.jobs.peak_center import PeakCenter

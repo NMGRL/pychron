@@ -15,12 +15,12 @@
 # ===============================================================================
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import Float, Property
 import apptools.sweet_pickle as pickle
-#=============standard library imports ========================
+# =============standard library imports ========================
 import os
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 from fusions_logic_board import FusionsLogicBoard
 from pychron.paths import paths
 from pychron.hardware.meter_calibration import MeterCalibration
@@ -178,5 +178,5 @@ class FusionsCO2LogicBoard(FusionsLogicBoard):
         '''
         self._set_laser_power_(v)
 
-#====================== EOF ===========================================
+# ====================== EOF ===========================================
 

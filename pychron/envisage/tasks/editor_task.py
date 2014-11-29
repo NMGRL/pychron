@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Property, Instance
 from pyface.tasks.api import IEditor, IEditorAreaPane
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.envisage.tasks.advanced_editor_area_pane import myAdvancedEditorAreaPane
 from pychron.envisage.tasks.base_task import BaseManagerTask, BaseExtractionLineTask
 

@@ -14,9 +14,9 @@
 # limitations under the License.
 # ===============================================================================
 
-#=============enthought library imports=======================
-#=============standard library imports ========================
-#=============local library imports  ==========================
+# =============enthought library imports=======================
+# =============standard library imports ========================
+# =============local library imports  ==========================
 from kerr_motor import KerrMotor
 class KerrSnapMotor(KerrMotor):
     '''

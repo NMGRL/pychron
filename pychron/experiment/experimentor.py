@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance, List, on_trait_change, Bool, Event
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from itertools import groupby
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.experiment.queue.experiment_queue import ExperimentQueue
 from pychron.experiment.factory import ExperimentFactory
 from pychron.experiment.utilities.aliquot_numbering import renumber_aliquots
@@ -40,17 +40,17 @@ class Experimentor(IsotopeDatabaseManager):
 
     save_enabled = Bool
 
-    #===========================================================================
+    # ===========================================================================
     # permissions
-    #===========================================================================
+    # ===========================================================================
     #    max_allowable_runs = 10000
     #    can_edit_scripts = True
     #    _last_ver_time = None
     #    _ver_timeout = 10
 
-    #===========================================================================
+    # ===========================================================================
     # task events
-    #===========================================================================
+    # ===========================================================================
     execute_event = Event
 
     activate_editor_event = Event

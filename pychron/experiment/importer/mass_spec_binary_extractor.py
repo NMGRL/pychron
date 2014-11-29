@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 #from pychron.processing.extractor.extractor import Extractor
 import os
 import struct
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from datetime import datetime
 from pychron.experiment.importer.extractor import Extractor
 

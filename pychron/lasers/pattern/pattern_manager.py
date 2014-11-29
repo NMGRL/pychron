@@ -14,15 +14,15 @@
 # # limitations under the License.
 # # ===============================================================================
 #
-# #============= enthought library imports =======================
+# # ============= enthought library imports =======================
 # from traits.api import Enum, Instance, Button, Str, Property, Event, Bool
 # from traitsui.api import View, Item, HGroup, VGroup, InstanceEditor
 # import apptools.sweet_pickle as pickle
 #
-# #============= standard library imports ========================
+# # ============= standard library imports ========================
 # import os
 # import time
-# #============= local library imports  ==========================
+# # ============= local library imports  ==========================
 # from pychron.lasers.pattern.patterns import Pattern
 # from pychron.managers.manager import Manager
 # from pychron.paths import paths
@@ -88,10 +88,10 @@
 #                 self.warning(err)
 #                 return err
 #
-#         #===================================================================
+#         # ===================================================================
 #         # for testing
 #         # path = os.path.join(pattern_dir, 'testpattern.lp')
-#         #===================================================================
+#         # ===================================================================
 #
 #         self.load_pattern(path=path)
 #
@@ -360,4 +360,4 @@
 #     pm = PatternManager()
 #     pm.configure_traits(view='pattern_maker_view')
 # #    pm.configure_traits(view='execute_view')
-# #============= EOF ====================================
+# # ============= EOF ====================================

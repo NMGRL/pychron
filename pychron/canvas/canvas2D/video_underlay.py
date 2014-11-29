@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Any
 from chaco.api import AbstractOverlay
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 # from pychron.image.video import Video
 
 class VideoUnderlay(AbstractOverlay):
@@ -50,4 +50,4 @@ class VideoUnderlay(AbstractOverlay):
                 if img is not None:
                     gc.draw_image(img)
 
-#============= EOF ====================================
+# ============= EOF ====================================

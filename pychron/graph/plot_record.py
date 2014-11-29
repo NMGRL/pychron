@@ -17,9 +17,9 @@
 
 
 
-#=============enthought library imports=======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# =============enthought library imports=======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
 class PlotRecord(object):
@@ -51,4 +51,4 @@ class PlotRecord(object):
     def __iter__(self):
         return iter(self.data)
 
-#============= EOF =====================================
+# ============= EOF =====================================

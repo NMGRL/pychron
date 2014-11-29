@@ -14,9 +14,9 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.database.core.database_selector import DatabaseSelector
 from pychron.database.orms.hardware_orm import ScanTable
 from pychron.database.core.query import compile_query, DeviceScanQuery

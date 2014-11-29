@@ -14,10 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import List, Callable
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.graph.tools.point_inspector import PointInspector
 
 from traitsui.menu import Action, Menu as MenuManager

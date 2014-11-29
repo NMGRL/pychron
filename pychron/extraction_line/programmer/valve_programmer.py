@@ -17,14 +17,14 @@ from pychron.core.ui import set_qt
 
 set_qt()
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traitsui.menu import ToolBar, Action
 from enable.component_editor import ComponentEditor
 from traits.api import HasTraits, Instance, Dict, List
 from traitsui.api import View, UItem
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.loggable import Loggable
 from pychron.canvas.canvas2D.extraction_line_canvas2D import ExtractionLineCanvas2D
 

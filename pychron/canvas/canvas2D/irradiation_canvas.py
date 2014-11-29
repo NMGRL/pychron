@@ -14,10 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.canvas.canvas2D.loading_canvas import LoadingCanvas
 from pychron.canvas.canvas2D.scene.irradiation_scene import IrradiationScene
 

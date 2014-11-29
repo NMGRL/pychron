@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Instance
 from traitsui.api import View, Item
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.modeling.model_data_directory import ModelDataDirectory
 
-#============= views ===================================
+# ============= views ===================================
 class InfoView(HasTraits):
     data_directory = Instance(ModelDataDirectory)
 

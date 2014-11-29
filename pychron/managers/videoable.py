@@ -16,14 +16,14 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Instance
 
 from pychron.image.video import Video
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 
 class Videoable(HasTraits):

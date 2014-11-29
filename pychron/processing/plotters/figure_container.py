@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Any, Int
 from chaco.plot_containers import GridPlotContainer
 
@@ -24,8 +24,8 @@ from pychron.processing.plotters.graph_panel_info import GraphPanelInfo
 
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class FigureContainer(HasTraits):
     component = Any

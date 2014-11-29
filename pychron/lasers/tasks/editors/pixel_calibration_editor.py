@@ -14,9 +14,9 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.lasers.tasks.editors.laser_editor import LaserEditor
 
 class PixelCalibrationEditor(LaserEditor):

@@ -18,10 +18,10 @@ set_qt()
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Any, Str
 from traitsui.api import View, VGroup, Readonly, UItem
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import Image
 import cStringIO
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.ui.image_editor import ImageEditor
 
 

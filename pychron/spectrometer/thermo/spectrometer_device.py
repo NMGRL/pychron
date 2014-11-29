@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Any, Property
 # from traitsui.api import View, Item, Group, HGroup, VGroup
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.config_loadable import ConfigMixin
 
 

@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_category import PreferencesCategory
 from envisage.ui.tasks.preferences_dialog import PreferencesDialog, PreferencesTab
 from pyface.tasks.topological_sort import before_after_sort
 from traitsui.api import View, ListStrEditor, \
     UItem, HSplit
 from traits.api import on_trait_change, List, Str
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
 class myPreferencesDialog(PreferencesDialog):

@@ -14,17 +14,17 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
 from traits.api import on_trait_change, Instance, List, Event, Any, Enum, Button
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Tabbed, \
     HSplitter
 from pyface.tasks.action.schema import SToolBar
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from itertools import groupby
 import os
 import weakref
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.envisage.tasks.actions import ToggleFullWindowAction
 from pychron.paths import paths
 from pychron.processing.plotters.xy.xy_scatter import XYScatterEditor
@@ -740,9 +740,9 @@ class FigureTask(AnalysisEditTask):
     def _handle_invalid(self):
         self.set_tag(Tag(name='invalid'))
 
-    #===========================================================================
+    # ===========================================================================
     # browser protocol
-    #===========================================================================
+    # ===========================================================================
 
     # ===============================================================================
     # defaults

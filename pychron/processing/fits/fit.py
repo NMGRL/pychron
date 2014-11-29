@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Bool, Property, List
 from traitsui.api import View, HGroup, UItem, EnumEditor
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.pychron_constants import FIT_TYPES, FIT_ERROR_TYPES
 
 

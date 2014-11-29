@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import math
 
 from traits.api import HasTraits, List, Property, cached_property, Str, Bool, Int, Event
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import array, nan
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from uncertainties import ufloat
 # from pychron.processing.analysis import Marker
 from pychron.processing.argon_calculations import calculate_plateau_age, age_equation, calculate_isochron

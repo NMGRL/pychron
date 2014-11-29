@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import unique_path
 from pychron.core.helpers.formatting import calc_percent_error
 from pychron.core.helpers.iterfuncs import partition

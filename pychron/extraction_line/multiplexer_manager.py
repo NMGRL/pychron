@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance, Str, Button
 from traitsui.api import Item, HGroup, spring
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.managers.manager import Manager
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.core.ui.custom_label_editor import CustomLabel

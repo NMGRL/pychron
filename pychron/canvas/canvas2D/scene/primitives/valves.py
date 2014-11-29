@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
 from pychron.canvas.canvas2D.scene.primitives.primitives import rounded_rect, \
     RoundedRectangle, Bordered, Connectable
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
 class BaseValve(Connectable):

@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Bool, Property, Float, CInt, List, Str, Any
 from traitsui.api import View, Item, HGroup, spring
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from threading import Timer as OneShotTimer
 from time import time
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.timer import Timer as PTimer
 from pychron.loggable import Loggable
 

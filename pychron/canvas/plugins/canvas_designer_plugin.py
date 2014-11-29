@@ -16,11 +16,11 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.canvas.designer.canvas_manager import CanvasManager
 from pychron.envisage.core.core_plugin import CorePlugin
 
@@ -44,4 +44,4 @@ class CanvasDesignerPlugin(CorePlugin):
         '''
         return CanvasManager()
 
-#============= EOF ====================================
+# ============= EOF ====================================

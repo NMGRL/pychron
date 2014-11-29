@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Property, List, Event, Instance, Button, cached_property, Str, \
     HasTraits
 from traitsui.api import View, Item, EnumEditor, HGroup
 import apptools.sweet_pickle as pickle
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.globals import globalv
 from pychron.processing.plotters.options.base import BasePlotterOptions

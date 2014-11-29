@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Instance
 from traitsui.api import View, Item, VGroup, Spring, HGroup, ButtonEditor, EnumEditor
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 POSITION_TOOLTIP = '''Set the position for this analysis or group of analyses.
 Examples:

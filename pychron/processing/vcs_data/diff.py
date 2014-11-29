@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
 from traits.api import HasTraits, Str, Bool, Either, Float, List, Int
 from traitsui.api import View, UItem, VSplit, TabularEditor
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 import yaml
 from pychron.core.ui.patch_editor import PatchEditor

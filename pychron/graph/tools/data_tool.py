@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Event, Any, Enum, Tuple, Bool, Int
 from chaco.text_box_overlay import TextBoxOverlay
 from enable.base_tool import BaseTool, KeySpec
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from datetime import datetime
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 class DataTool(BaseTool):
     new_value = Event

@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import  on_trait_change
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.envisage.core.core_ui_plugin import CoreUIPlugin
 
 class MDDModelerUIPlugin(CoreUIPlugin):
@@ -52,7 +52,7 @@ class MDDModelerUIPlugin(CoreUIPlugin):
         modeler_manager = self.application.get_service('pychron.modeling.modeler_manager.ModelerManager')
         return modeler_manager
 
-#============= views ===================================
+# ============= views ===================================
     def _views_default(self):
         '''
         '''
@@ -147,4 +147,4 @@ class MDDModelerUIPlugin(CoreUIPlugin):
             manager.window = window
             manager.open_default()
 
-#============= EOF ====================================
+# ============= EOF ====================================

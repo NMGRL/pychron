@@ -16,10 +16,10 @@
 
 
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from graph import Graph
 
 from pychron.graph.graph import name_generator
@@ -363,7 +363,7 @@ class DiffusionGraph(Graph):
                 plots.append(a)
             return plots
 
-#============= EOF ====================================
+# ============= EOF ====================================
 
 #    def set_group_color(self, gid=0, series=None):
 #        '''

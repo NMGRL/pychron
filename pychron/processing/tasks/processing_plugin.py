@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from envisage.ui.tasks.task_factory import TaskFactory
 from envisage.ui.tasks.task_extension import TaskExtension
 from pyface.action.menu_manager import MenuManager
 from pyface.tasks.action.schema_addition import SchemaAddition
 from pyface.action.group import Group
 from pyface.tasks.action.schema import SMenu
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import to_bool
 
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin

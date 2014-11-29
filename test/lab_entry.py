@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
 import unittest
 
 from pychron.processing.entry.labnumber_entry import LabnumberEntry
 from test.database import isotope_manager_factory
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class LabEntryTest(unittest.TestCase):
     def setUp(self):

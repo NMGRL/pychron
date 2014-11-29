@@ -16,14 +16,14 @@
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import Float, Int, Bool, Enum, Any
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.ticks import auto_ticks
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 
 class MinorTicksOverlay(AbstractOverlay):
@@ -89,4 +89,4 @@ class MinorTicksOverlay(AbstractOverlay):
         finally:
             gc.restore_state()
 
-#============= EOF =====================================
+# ============= EOF =====================================

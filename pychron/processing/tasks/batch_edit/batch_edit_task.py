@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 import shelve
 
@@ -39,8 +39,8 @@ from pychron.paths import paths
 #from pychron.processing.tasks.entry.sensitivity_entry_panes import SensitivityPane
 from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
 #from pychron.processing.tasks.figures.panes import MultiSelectAnalysisBrowser
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 # from pychron.processing.tasks.smart_selection.panes import SmartSelection
 from pychron.processing.tasks.browser.util import browser_pane_item
 

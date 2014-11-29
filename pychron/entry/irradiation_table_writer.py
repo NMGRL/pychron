@@ -16,15 +16,15 @@
 from pychron.core.ui import set_qt
 
 set_qt()
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 
 from reportlab.lib import colors
 from traits.api import HasTraits, Str, Float
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 import yaml
 from pychron.core.helpers.filetools import view_file
 from pychron.core.pdf.base_table_pdf_writer import BasePDFTableWriter

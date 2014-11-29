@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 from threading import Thread
 import time
@@ -23,8 +23,8 @@ import uuid
 from traits.api import HasTraits, Instance, Str, Dict, Property, Bool, Float
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 import yaml
 from pychron.core.helpers.filetools import add_extension
 from pychron.experiment.utilities.identifier import make_runid

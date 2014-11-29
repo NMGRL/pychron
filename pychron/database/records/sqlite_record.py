@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Property, cached_property
 
 from pychron.database.records.database_record import DatabaseRecord
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 class SQLiteRecord(DatabaseRecord):
     path = Property

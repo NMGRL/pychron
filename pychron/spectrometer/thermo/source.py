@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Float, Range, Property
 from traitsui.api import View, Item, RangeEditor
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
 
 

@@ -14,19 +14,19 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import binascii
 
 from traits.api import Instance, Bool, Int, Float, Str, \
     Dict, List, Time, Date, Any, Long
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 import struct
 import time
 import math
 from uncertainties import nominal_value, std_dev
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.codetools.file_log import file_log
 from pychron.core.codetools.memory_usage import mem_log
 from pychron.core.helpers.datetime_tools import get_datetime

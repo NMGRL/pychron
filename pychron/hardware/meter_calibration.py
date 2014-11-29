@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Property, List, String
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import poly1d
 from scipy import optimize
 from pychron.core.helpers.formatting import floatfmt
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 class MeterCalibration(HasTraits):
     coeff_string = Property(String(enter_set=True, auto_set=False))

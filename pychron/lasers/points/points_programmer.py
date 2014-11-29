@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Button, Event, Property, \
     Any, Bool, Enum, Instance, cached_property, String
 from traitsui.api import View, Item, ButtonEditor, HGroup, VGroup
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import yaml
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.experiment.utilities.position_regex import TRANSECT_REGEX
 from pychron.paths import paths
 from pychron.managers.manager import Manager

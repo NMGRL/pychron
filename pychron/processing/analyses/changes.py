@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Date, Str, List, Long, Any, Float, Bool, Event
 # ============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 
 class Change(HasTraits):

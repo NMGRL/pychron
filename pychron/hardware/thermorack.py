@@ -16,10 +16,10 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.core.data_helper import make_bitarray
 
@@ -46,9 +46,9 @@ class ThermoRack(CoreDevice):
 
     scan_func = 'get_coolant_out_temperature'
 
-    #===========================================================================
+    # ===========================================================================
     # icore device interface
-    #===========================================================================
+    # ===========================================================================
     def set(self, v):
         pass
 
@@ -167,4 +167,4 @@ class ThermoRack(CoreDevice):
 
         return resp
 
-#============= EOF ====================================
+# ============= EOF ====================================

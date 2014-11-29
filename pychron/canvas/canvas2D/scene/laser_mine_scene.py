@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import yaml
 
 from pychron.canvas.canvas2D.scene.scene import Scene
@@ -22,8 +22,8 @@ from pychron.canvas.canvas2D.scene.scene import Scene
 # from pychron.canvas.canvas2D.scene.primitives.primitives import Polygon, RasterPolygon
 from pychron.canvas.canvas2D.scene.primitives.laser_primitives import RasterPolygon
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class LaserMineScene(Scene):
     def load(self, path):

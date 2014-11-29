@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 import math
 from unittest import TestCase
 from ConfigParser import ConfigParser
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.processing.argon_calculations import calculate_arar_age
 from pychron.processing import constants
 

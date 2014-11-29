@@ -17,17 +17,17 @@ from pychron.core.ui import set_qt
 
 set_qt()
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Any, List
 from traitsui.api import View, UItem, HGroup
 
 from traitsui.editors import TableEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 import yaml
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 
 class Option(HasTraits):

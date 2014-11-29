@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import unittest
 from itertools import groupby
 
@@ -22,8 +22,8 @@ from pychron.processing.selection.data_selector import FileSelector
 from pychron.processing.processor import Processor
 from test.database import isotope_manager_factory
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class AutoFigureTest(unittest.TestCase):
     def setUp(self):

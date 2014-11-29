@@ -16,12 +16,12 @@
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from chaco.tools.api import ScatterInspector
 
-#=============standard library imports ========================
+# =============standard library imports ========================
 
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 
 
 class ScatterTool(ScatterInspector):

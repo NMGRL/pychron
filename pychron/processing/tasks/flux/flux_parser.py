@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from collections import namedtuple
 import csv
 
 from traits.api import Str
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 import xlrd
 from pychron.loggable import Loggable
 
@@ -117,4 +117,4 @@ class CSVFluxParser(FluxParser):
                                    line[jidx], line[jeidx])
 
 
-#=============EOF =============================================
+# =============EOF =============================================

@@ -16,8 +16,8 @@
 
 # ============= enthought library imports =======================
 from traits.api import Any
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from traitsui.handler import Controller
 
 

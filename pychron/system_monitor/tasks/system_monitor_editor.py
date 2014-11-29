@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from datetime import datetime, timedelta
 from threading import Thread, Lock
 import time
@@ -22,8 +22,8 @@ import time
 from pyface.timer.do_later import do_later
 from traits.api import Instance, Property, Int, Bool, on_trait_change, Any
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.displays.display import DisplayController
 from pychron.messaging.notify.subscriber import Subscriber
 from pychron.processing.plotter_options_manager import SystemMonitorOptionsManager

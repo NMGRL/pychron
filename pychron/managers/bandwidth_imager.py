@@ -15,7 +15,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Int, Enum, File, Instance, Button, Float, Str, on_trait_change, Bool, Color, List
 from traitsui.api import View, Item, VGroup, HGroup, ListEditor, InstanceEditor
 from chaco.api import HPlotContainer, ArrayPlotData, Plot
@@ -24,10 +24,10 @@ from chaco.default_colormaps import color_map_name_dict
 from enable.component import Component
 from pyface.file_dialog import FileDialog
 from pyface.constant import OK
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from PIL import Image
 from numpy import sum, zeros_like, where, array
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from chaco.tools.image_inspector_tool import ImageInspectorTool, \
     ImageInspectorOverlay
 from enable.component_editor import ComponentEditor

@@ -14,10 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 import unittest
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from test.database import isotope_manager_factory
 from pychron.core.codetools.simple_timeit import timethis
 

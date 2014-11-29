@@ -17,12 +17,12 @@ from pychron.core.ui import set_toolkit
 set_toolkit('qt4')
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 from traits.api import HasTraits, Instance
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 import yaml
 from pychron.experiment.utilities.identifier import strip_runid
 from pychron.database.offline_bridge import DatabaseBridge

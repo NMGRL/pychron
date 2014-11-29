@@ -16,11 +16,11 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from laser_handler import LaserHandler
 
 
@@ -28,4 +28,4 @@ class SynradHandler(LaserHandler):
     manager_name = 'Synrad'
 
 
-#============= EOF ====================================
+# ============= EOF ====================================

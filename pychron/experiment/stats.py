@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import datetime
 import time
 
@@ -31,8 +31,8 @@ from pychron.loggable import Loggable
 
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.pychron_constants import MEASUREMENT_COLOR, EXTRACTION_COLOR
 
 FUDGE_COEFFS = (0, 0, 0)  # x**n+x**n-1....+c

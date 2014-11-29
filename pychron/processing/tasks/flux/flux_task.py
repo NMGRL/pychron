@@ -14,17 +14,17 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import on_trait_change, List, HasTraits
 from traitsui.tabular_adapter import TabularAdapter
 from pyface.tasks.task_layout import TaskLayout, HSplitter, VSplitter, PaneItem, Tabbed
 from pyface.tasks.action.schema import SToolBar
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from collections import namedtuple
 import os
 import struct
 from uncertainties import ufloat, nominal_value, std_dev
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.paths import paths
 from pychron.core.stats import calculate_weighted_mean, calculate_mswd
 from pychron.processing.argon_calculations import calculate_flux

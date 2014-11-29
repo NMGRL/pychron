@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
 from traits.api import HasTraits, Property, Bool, Event, \
     Unicode, List, String, Int, on_trait_change, Instance
 from pyface.tasks.api import Editor
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 import time
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.pyscripts.context_editors.measurement_context_editor import MeasurementContextEditor
 from pychron.pyscripts.tasks.widgets import myAdvancedCodeWidget

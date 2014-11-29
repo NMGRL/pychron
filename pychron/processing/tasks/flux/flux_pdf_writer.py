@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from reportlab.platypus.flowables import PageBreak
 
 from pychron.loading.component_flowable import ComponentFlowable
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from itertools import groupby
 from pychron.core.pdf.base_table_pdf_writer import BasePDFTableWriter
 from pychron.core.pdf.items import Row, Superscript, Subscript

@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from chaco.array_data_source import ArrayDataSource
 from chaco.axis import PlotAxis
 from chaco.data_range_1d import DataRange1D
@@ -22,8 +22,8 @@ from chaco.linear_mapper import LinearMapper
 from chaco.lineplot import LinePlot
 from traits.api import Str
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 GOLDEN_RATIO = 1.618
 
 

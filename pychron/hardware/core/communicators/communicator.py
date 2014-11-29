@@ -16,14 +16,14 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Bool
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import time
 from threading import Lock
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.config_loadable import ConfigLoadable
 
 
@@ -136,4 +136,4 @@ class Communicator(ConfigLoadable):
 
         if re is not None:
             return str(re).rstrip()
-#============= EOF ====================================
+# ============= EOF ====================================

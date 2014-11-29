@@ -15,12 +15,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Float, Bool, List
 # from traitsui.api import View, Item
 from pychron.monitors.monitor import Monitor
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class VacuumSection(HasTraits):
     gauge_controller = Str
@@ -97,18 +97,18 @@ class SystemMonitor(Monitor):
 # @copyright: 2009
 # @license: Educational Community License 1.0
 # '''
-##=============enthought library imports=======================
+## =============enthought library imports=======================
 # from traits.api import HasTraits, Instance, on_trait_change, Any, Str, Int, Float, Button, List, Bool
 # from traitsui.api import View, Item, Group, HGroup, VGroup, ListStrEditor
 # from pyface.api import warning, information, confirm
 # from pyface.api import ProgressDialog
-##=============standard library imports ========================
+## =============standard library imports ========================
 # import time
 # import datetime
 # #from thread import *
 # from threading import Thread
 # import logging
-##=============local library imports  ==========================
+## =============local library imports  ==========================
 # #from globals import ghome, gpressuredelay
 # #from filetools import parse_setupfile
 # #from logger_setup import add_console

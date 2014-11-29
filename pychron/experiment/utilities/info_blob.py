@@ -14,10 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 import struct
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 class MemoryBlock(object):
     def __init__(self, blob=''):

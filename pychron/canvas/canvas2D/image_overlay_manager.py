@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, List, on_trait_change, Any
 from traitsui.api import View, TableEditor, UItem
 from traitsui.extras.checkbox_column import CheckboxColumn
@@ -22,8 +22,8 @@ from traitsui.table_column import ObjectColumn
 
 from pychron.canvas.canvas2D.laser_tray_canvas import ImageOverlay
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class ImageOverlayManager(HasTraits):
     canvas = Any

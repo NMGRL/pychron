@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.database.adapters.massspec_database_adapter import MassSpecDatabaseAdapter
 from pychron.database.database_connection_spec import DBConnectionSpec
 from pychron.loggable import Loggable

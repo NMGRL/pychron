@@ -14,16 +14,16 @@
 # # limitations under the License.
 ## ===============================================================================
 #
-##============= enthought library imports =======================
+## ============= enthought library imports =======================
 # from traits.api import HasTraits, Float, Any, Dict, Bool, Str, Property, List, Int, \
 #    Array, Color, on_trait_change
 # from traitsui.api import View, VGroup, HGroup, Item, Group
 # from chaco.default_colormaps import color_map_name_dict
 # from chaco.data_range_1d import DataRange1D
-##============= standard library imports ========================
+## ============= standard library imports ========================
 # import math
 # from numpy import array
-##============= local library imports  ==========================
+## ============= local library imports  ==========================
 # from pychron.core.geometry.convex_hull import convex_hull
 #
 #
@@ -857,4 +857,4 @@
 #                    gc.line_to(pts[0][0], pts[0][1])
 #
 #            gc.stroke_path()
-##============= EOF ====================================
+## ============= EOF ====================================

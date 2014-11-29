@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
 from traits.api import Any, List, Str, Button, Instance, on_trait_change, Int, Event
 from traitsui.api import View, EnumEditor, HGroup, spring, \
     UItem, VGroup, TabularEditor, InstanceEditor
 from traitsui.tabular_adapter import TabularAdapter
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.helpers.filetools import view_file, unique_path
 from pychron.core.helpers.iterfuncs import partition

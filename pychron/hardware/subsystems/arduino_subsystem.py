@@ -16,12 +16,12 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 # from traitsui.api import View,Item,Group,HGroup,VGroup
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 from subsystem import Subsystem
 
@@ -48,4 +48,4 @@ class ArduinoSubsystem(Subsystem):
                     self.modules[m] = module
         return True
 
-#============= EOF ====================================
+# ============= EOF ====================================

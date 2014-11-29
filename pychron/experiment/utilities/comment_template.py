@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from traits.api import List, Dict
 # ============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.templater.base_templater import BaseTemplater
 from pychron.core.templater.templater_view import BaseTemplateView
 

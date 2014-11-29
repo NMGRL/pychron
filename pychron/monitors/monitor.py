@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Float
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from threading import Thread, Event
 import time
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 # from pychron.config_loadable import ConfigLoadable
 # from pychron.managers.manager import Manager
 from pychron.config_loadable import ConfigLoadable
@@ -121,7 +121,7 @@ class Monitor(ConfigLoadable):
             # sleep before running monitor again
             time.sleep(self.sample_delay)
 
-#============= EOF ====================================
+# ============= EOF ====================================
 #    def _monitor_(self, stop_signal):
 #        '''
 #        '''

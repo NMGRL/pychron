@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance, Str, Property, Event, Bool, String, List, CInt
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import yaml
 import os
 import datetime
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.experiment.queue.run_block import RunBlock
 from pychron.experiment.utilities.frequency_generator import frequency_index_gen
 from pychron.pychron_constants import NULL_STR, LINE_STR

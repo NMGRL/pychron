@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from threading import Thread, Event
 import time
 
@@ -25,8 +25,8 @@ from pychron.loggable import Loggable
 
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class Subscriber(Loggable):
     host = Str

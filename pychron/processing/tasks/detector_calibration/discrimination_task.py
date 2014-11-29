@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import csv
 from datetime import datetime
 
 from pychron.processing.tasks.analysis_edit.adapters import ReferencesAdapter
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.processing.tasks.analysis_edit.interpolation_task import InterpolationTask
 
 

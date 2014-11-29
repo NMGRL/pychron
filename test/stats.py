@@ -14,10 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 from numpy import array
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from unittest import TestCase
 
 from pychron.core.regression.regressors.polynomial import PolynomialRegressor

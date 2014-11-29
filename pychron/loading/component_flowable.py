@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from chaco.pdf_graphics_context import PdfPlotGraphicsContext
 from reportlab.platypus.flowables import Flowable
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class ComponentFlowable(Flowable):
     component = None

@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Any, Bool
 
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 class LaserEditor(BaseTraitsEditor):
     component = Any
     _execute_thread = None

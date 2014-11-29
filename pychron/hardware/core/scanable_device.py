@@ -13,13 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Event, Property, Any, Bool, Float, Str, Instance
 from traitsui.api import HGroup, VGroup, Item, spring, ButtonEditor
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from threading import Lock
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.hardware.core.viewable_device import ViewableDevice
 from pychron.graph.plot_record import PlotRecord
 from pychron.paths import paths

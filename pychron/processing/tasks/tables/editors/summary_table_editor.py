@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 import cPickle as pickle
 
@@ -22,8 +22,8 @@ from traits.api import Str
 from traitsui.api import View, UItem
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.paths import paths
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.ui.tabular_editor import myTabularEditor

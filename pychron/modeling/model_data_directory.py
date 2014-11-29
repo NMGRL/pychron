@@ -16,15 +16,15 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Bool, List, \
  Property, Str, Any, Color
 from traitsui.api import View, Item
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
-#============= views ===================================
+# ============= views ===================================
 
 class ModelDataDirectory(HasTraits):
     '''
@@ -154,4 +154,4 @@ class ModelDataDirectory(HasTraits):
 #
 #        except Exception, err:
 #            print err
-#============= EOF ====================================
+# ============= EOF ====================================

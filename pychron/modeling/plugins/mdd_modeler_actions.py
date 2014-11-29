@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pyface.action.api import Action
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 MDD_PROTOCOL = 'pychron.modeling.modeler_manager.ModelerManager'
 class AutoarrAction(Action):
     '''
@@ -139,4 +139,4 @@ class NewModelAction(Action):
 
 
 
-#============= EOF ====================================
+# ============= EOF ====================================

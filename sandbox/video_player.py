@@ -16,14 +16,14 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import DelegatesTo, Instance
 from traitsui.api import View, Item, HGroup, spring
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import sys
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 # add pychron to the path
 root = os.path.basename(os.path.dirname(__file__))
 if 'pychron_beta' not in root:
@@ -77,4 +77,4 @@ class VideoPlayer(Videoable):
 if __name__ == '__main__':
     v = VideoPlayer()
     v.configure_traits()
-#============= EOF ====================================
+# ============= EOF ====================================

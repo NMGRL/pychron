@@ -18,11 +18,11 @@
 from traits.api import HasTraits, Str, Property, CFloat, Float, List, Enum, Button, on_trait_change
 from traitsui.api import View, Item, TabularEditor, HGroup
 from traitsui.tabular_adapter import TabularAdapter
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 from numpy import array
 import pickle
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import parse_file
 from pychron.paths import paths
 from pychron.loggable import Loggable
@@ -513,7 +513,7 @@ class StageMap(Loggable):
                                                     shape=shape,
                                                     dimension=float(dimension)))
                 hi += 1
-                #============= views ===========================================
+                # ============= views ===========================================
 
     def traits_view(self):
         #        cols = [ObjectColumn(name = 'id'),

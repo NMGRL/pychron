@@ -25,12 +25,12 @@ set_qt()
 from pychron.core.helpers.logger_setup import logging_setup
 
 logging_setup('dcreator')
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Str
 from traitsui.api import View, Item
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
 class DeviceModel(HasTraits):

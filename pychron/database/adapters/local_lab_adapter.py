@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from sqlalchemy.schema import MetaData, Table, Column
 from sqlalchemy.types import Integer, DateTime, String
 
@@ -22,9 +22,9 @@ from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.database.orms.local_lab_orm import LabTable
 
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 class LocalLabAdapter(DatabaseAdapter):
     kind = 'sqlite'

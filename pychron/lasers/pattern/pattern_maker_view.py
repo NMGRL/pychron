@@ -22,12 +22,12 @@ from pychron.core.ui import set_qt
 set_qt()
 
 import os
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Property, Enum, Str, on_trait_change
 from traitsui.api import View, Item, InstanceEditor
 import apptools.sweet_pickle as pickle
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.lasers.pattern.patternable import Patternable
 from pychron.saveable import Saveable, SaveableButtons
 from pychron.paths import paths

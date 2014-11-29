@@ -14,9 +14,9 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 '''
     http://code.activestate.com/recipes/391367-deprecated/
 '''

@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Int
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import time
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.hardware.core.core_device import CoreDevice
 
 

@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pychron.loggable import Loggable
 from pychron.experiment.utilities.identifier import get_analysis_type
 from pychron.pychron_constants import LINE_STR
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class HumanErrorChecker(Loggable):
     _extraction_line_required = False

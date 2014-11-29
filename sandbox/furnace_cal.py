@@ -16,12 +16,12 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Instance, Int, Bool
 from traitsui.api import View, Item, HGroup
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 import os
 from pychron.paths import paths
@@ -155,4 +155,4 @@ if __name__ == '__main__':
 #
 #    plot_data(data1, data2)
 
-#============= EOF ====================================
+# ============= EOF ====================================

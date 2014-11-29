@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Any, Instance
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import shlex
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from dummies import DummyDevice, DummyLM
 from error_handler import ErrorHandler
 from pychron.loggable import Loggable
@@ -173,4 +173,4 @@ class BaseRemoteHardwareHandler(Loggable):
         eh.logger = self
         return eh
 
-#============= EOF ====================================
+# ============= EOF ====================================

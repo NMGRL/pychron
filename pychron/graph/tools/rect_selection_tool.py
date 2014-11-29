@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import Any, Str
 from chaco.api import AbstractOverlay, BaseTool
-#=============standard library imports ========================
+# =============standard library imports ========================
 from numpy import vstack
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 
 class RectSelectionOverlay(AbstractOverlay):
     tool = Any
@@ -205,4 +205,4 @@ class RectSelectionTool(BaseTool):
         self.event_state = 'select'
         event.window.set_pointer('cross')
 
-#============= EOF =====================================
+# ============= EOF =====================================

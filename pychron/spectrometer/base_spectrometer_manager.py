@@ -16,8 +16,8 @@
 
 # ============= enthought library imports =======================
 from traits.api import Any, DelegatesTo
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.managers.manager import Manager
 
 

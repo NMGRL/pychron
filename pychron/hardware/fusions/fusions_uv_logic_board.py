@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 # from traits.api import Instance, DelegatesTo
 from traits.api import Any, Int, Instance, Property, Event, \
     Enum, String
 from traitsui.api import View, Item, VGroup, ButtonEditor, HGroup, Spring
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from fusions_logic_board import FusionsLogicBoard
 from threading import Timer, Event as TEvent
 from pychron.hardware.kerr.kerr_device import KerrDevice
@@ -279,6 +279,6 @@ class FusionsUVLogicBoard(FusionsLogicBoard):
                   )
         return ng
 
-#============= views ===================================
+# ============= views ===================================
 
-#============= EOF ====================================
+# ============= EOF ====================================

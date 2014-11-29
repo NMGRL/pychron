@@ -16,11 +16,11 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from apptools.preferences.preference_binding import bind_preference
 
 from pychron.modeling.modeler_manager import ModelerManager
@@ -52,4 +52,4 @@ class MDDModelerPlugin(CorePlugin):
 
 
 
-#============= EOF ====================================
+# ============= EOF ====================================

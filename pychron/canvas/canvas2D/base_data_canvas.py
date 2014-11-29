@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import Tuple, Bool, on_trait_change
 from enable.api import Pointer
 from chaco.api import LinePlot, LinearMapper, DataView, ArrayDataSource
 from chaco.tools.api import ZoomTool, PanTool
-#=============standard library imports ========================
+# =============standard library imports ========================
 from numpy import hstack
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 
 
 class BaseDataCanvas(DataView):
@@ -267,4 +267,4 @@ class BaseDataCanvas(DataView):
                     # super(BaseDataCanvas, self).draw(gc, *args, **kw)
 
 
-#====================EOF==================
+# ====================EOF==================

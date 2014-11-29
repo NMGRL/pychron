@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import List, Float, Bool
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import time
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import to_bool
 from pychron.spectrometer.base_magnet import BaseMagnet, get_float
 from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice

@@ -14,10 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.canvas.canvas2D.scene.scene_canvas import SceneCanvas
 from pychron.canvas.canvas2D.scene.strat_scene import StratScene
 

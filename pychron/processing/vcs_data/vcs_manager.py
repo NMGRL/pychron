@@ -14,15 +14,15 @@
 # # limitations under the License.
 # # ===============================================================================
 #
-# #============= enthought library imports =======================
+# # ============= enthought library imports =======================
 # from itertools import groupby
 # import os
 # import subprocess
 # from git.exc import GitCommandError
 # import paramiko
 # from traits.api import Instance, Str
-# #============= standard library imports ========================
-# #============= local library imports  ==========================
+# # ============= standard library imports ========================
+# # ============= local library imports  ==========================
 # from uncertainties import std_dev, nominal_value
 # import yaml
 #

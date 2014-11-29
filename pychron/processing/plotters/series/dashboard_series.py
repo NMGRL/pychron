@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from chaco.scales.time_scale import CalendarScaleSystem
 from chaco.scales_tick_generator import ScalesTickGenerator
 from traits.api import Array, Dict
 from numpy import Inf
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.processing.plotters.arar_figure import BaseArArFigure
 
 N = 500

@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from itertools import groupby
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 # def group_analyses_by_key(editor, items, key):
 def group_analyses_by_key(items, key):
     if isinstance(key,str):

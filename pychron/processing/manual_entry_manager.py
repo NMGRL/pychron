@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Float, List, Bool, on_trait_change, Int, \
      Property, Instance, Event, Button
 from traitsui.api import View, Item, TabularEditor, HGroup, VGroup, spring
@@ -26,8 +26,8 @@ from pychron.processing.plotters.ideogram import Ideogram
 from pychron.processing.analysis import NonDBAnalysis
 from pychron.processing.plotter_options_manager import IdeogramOptionsManager
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class DatumAdapter(TabularAdapter):
     columns = [('', 'spacer'),

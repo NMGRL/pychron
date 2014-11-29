@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from envisage.ui.tasks.task_factory import TaskFactory
 
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
@@ -22,8 +22,8 @@ from pychron.media_server.tasks.media_server_task import MediaServerTask
 from pychron.media_server.browser import MediaBrowser
 from pychron.media_server.client import MediaClient
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class MediaServerPlugin(BaseTaskPlugin):
     def _service_offers_default(self):

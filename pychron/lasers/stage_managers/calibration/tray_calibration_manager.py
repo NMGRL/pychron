@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Float, Event, String, Any, Enum, Property, cached_property
 from traitsui.api import View, Item, VGroup, HGroup
 import apptools.sweet_pickle as pickle
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.managers.manager import Manager
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.lasers.stage_managers.calibration.free_calibrator import FreeCalibrator

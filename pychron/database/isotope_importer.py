@@ -14,14 +14,14 @@
 # # limitations under the License.
 ## ===============================================================================
 #
-##============= enthought library imports =======================
+## ============= enthought library imports =======================
 # from traits.api import HasTraits
 # from traitsui.api import View, Item, TableEditor
 # import os
 # from pychron.database.adapters.isotope_adapter import IsotopeAdapter
 # from pychron.paths import paths
-##============= standard library imports ========================
-##============= local library imports  ==========================
+## ============= standard library imports ========================
+## ============= local library imports  ==========================
 # def getter(header):
 #    ind = lambda x:next((header.index(xi) for xi in [x.lower(), x.upper(), x.capitalize()]
 #                         if xi in header

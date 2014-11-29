@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traitsui.api import View, UItem, HGroup
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.envisage.icon_button_editor import icon_button_editor

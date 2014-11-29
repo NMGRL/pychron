@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Str, Property, Int, List, Button, \
     cached_property, on_trait_change, Instance
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.experiment.automated_run.factory import AutomatedRunFactory
 from pychron.experiment.utilities.uv_human_error_checker import UVHumanErrorChecker
 from pychron.pychron_constants import NULL_STR

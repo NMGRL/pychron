@@ -14,17 +14,17 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import stat
 
 from traits.api import List, on_trait_change
 from envisage.plugin import Plugin
 
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 from git import Repo
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron import version
 from pychron.applications.util.installer import Builder
 from pychron.core.helpers.filetools import to_bool
@@ -129,9 +129,9 @@ class UpdatePlugin(Plugin):
                     if self._out_of_date():
 
                         #for debug dont pull changes
-                        #===========================
+                        # ===========================
                         # origin.pull('master')
-                        #===========================
+                        # ===========================
 
                         if confirmation_dialog('Restarted required for changes to take affect. Restart now?'):
                             self._build_required = True

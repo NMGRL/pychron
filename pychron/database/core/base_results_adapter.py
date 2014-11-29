@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import  Int
 from traitsui.tabular_adapter import TabularAdapter
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 class BaseResultsAdapter(TabularAdapter):
     columns = [('ID', 'rid'),
                ('Date', 'rundate'),

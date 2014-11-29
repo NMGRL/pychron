@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from itertools import groupby
 
 from traits.api import Instance
@@ -25,8 +25,8 @@ from pyface.tasks.action.schema import SToolBar, SGroup
 # from pyface.tasks.task_layout import TaskLayout, PaneItem
 # from pyface.timer.do_later import do_later
 # from pyface.tasks.action.schema import SToolBar
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
 from pychron.processing.tasks.tables.editors.base_adapter import TableSeparator
 from pychron.processing.tasks.tables.editors.step_heat.step_heat_table_editor import StepHeatTableEditor
@@ -140,9 +140,9 @@ class TableTask(BaseBrowserTask):
     # ===============================================================================
     # task actions
     # ===============================================================================
-    #===========================================================================
+    # ===========================================================================
     # output actions
-    #===========================================================================
+    # ===========================================================================
     def make_pdf_table(self):
         ae = self.active_editor
         ae.use_alternating_background = self.editor.use_alternating_background
@@ -173,9 +173,9 @@ class TableTask(BaseBrowserTask):
         p = ae.make_csv_table(title)
         self.view_csv(p)
 
-    #===========================================================================
+    # ===========================================================================
     #
-    #===========================================================================
+    # ===========================================================================
     def toggle_status(self):
         ae = self.active_editor
         if ae and ae.selected:

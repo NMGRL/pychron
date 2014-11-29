@@ -14,10 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from chaco.abstract_overlay import AbstractOverlay
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class CrosshairsOverlay(AbstractOverlay):
     def overlay(self, component, gc, *args, **kw):

@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 import unittest
 
 from uncertainties import ufloat
 
 from pychron.experiment.queue.experiment_queue import ExperimentQueue
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 class MockRun(object):
     analysis_type = 'blank_unknown'

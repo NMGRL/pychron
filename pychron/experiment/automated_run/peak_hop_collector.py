@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import time
 
 from traits.api import List, Int, Instance
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.experiment.automated_run.data_collector import DataCollector
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.experiment.automated_run.hop_util import generate_hops

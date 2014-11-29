@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 from pychron.processing.plotters.spectrum.spectrum import Spectrum
 from pychron.processing.plotters.figure_panel import FigurePanel
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 class SpectrumPanel(FigurePanel):
     _figure_klass = Spectrum
 

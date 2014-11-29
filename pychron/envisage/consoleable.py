@@ -16,8 +16,8 @@
 
 # ============= enthought library imports =======================
 from traits.trait_types import Bool, Instance, Event, Int
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from traits.traits import Color
 from pychron.core.ui.preference_binding import color_bind_preference, bind_preference
 from pychron.displays.display import DisplayController

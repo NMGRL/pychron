@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance, Button, Bool, Property, \
     on_trait_change, String, Any, DelegatesTo, List, Str
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.experiment.automated_run.uv.factory import UVAutomatedRunFactory
 from pychron.experiment.automated_run.factory import AutomatedRunFactory
 from pychron.experiment.queue.factory import ExperimentQueueFactory
@@ -59,9 +59,9 @@ class ExperimentFactory(Loggable, ConsumerMixin):
     default_mass_spectrometer = Str
 
     _load_persistence_flag = False
-    #===========================================================================
+    # ===========================================================================
     # permisions
-    #===========================================================================
+    # ===========================================================================
     #    max_allowable_runs = Int(10000)
     #    can_edit_scripts = Bool(True)
 

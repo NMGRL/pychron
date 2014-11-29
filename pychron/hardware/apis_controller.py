@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import time
 
 from traits.api import Property, provides
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.hardware.actuators.iactuator import IActuator
 from pychron.hardware.core.core_device import CoreDevice
 

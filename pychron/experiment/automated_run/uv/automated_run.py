@@ -14,10 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pychron.experiment.automated_run.automated_run import AutomatedRun
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.pyscripts.uv_extraction_line_pyscript import UVExtractionPyScript
 
 

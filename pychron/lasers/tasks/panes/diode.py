@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traitsui.api import View, Item, VGroup, InstanceEditor
 
 from pychron.lasers.tasks.laser_panes import ClientPane, BaseLaserPane, \
     StageControlPane, ControlPane, AxesPane, SupplementalPane
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 class FusionsDiodeClientPane(ClientPane):
     pass
 

@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 from threading import Thread
 import time
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 class FileListener(object):
     _path = None

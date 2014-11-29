@@ -16,11 +16,11 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from graph import Graph
 
 
@@ -28,4 +28,4 @@ class BarGraph(Graph):
     pass
     # def new_series(self,*args,**kw):
 
-#============= EOF ====================================
+# ============= EOF ====================================

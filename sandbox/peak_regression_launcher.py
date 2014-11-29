@@ -16,10 +16,10 @@
 
 
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 from pychron.managers.peak_regression_manager import main
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 if __name__ == '__main__':
     main()
-#============= EOF ====================================
+# ============= EOF ====================================

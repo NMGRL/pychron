@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from chaco.ticks import AbstractTickGenerator
 from numpy import array
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.experiment.utilities.identifier import ANALYSIS_MAPPING_INTS, SPECIAL_MAPPING
 
 TICKS = array(sorted(ANALYSIS_MAPPING_INTS.values()))

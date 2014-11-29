@@ -14,16 +14,16 @@
 # # limitations under the License.
 # # ===============================================================================
 #
-# #=============enthought library imports=======================
+# # =============enthought library imports=======================
 # from traits.api import DelegatesTo, \
 #     HasTraits, Any, Color, Property, Int, on_trait_change, \
 #     Enum
 # from traitsui.api import View, Item, \
 #     TextEditor, ColorEditor, Handler, Group, VGroup, HGroup
-# #=============standard library imports ========================
+# # =============standard library imports ========================
 # from wx import Colour
 # import sys
-# #=============local library imports  ==========================
+# # =============local library imports  ==========================
 # from pychron.graph.graph import VALID_FONTS
 #
 # class GraphEditorHandler(Handler):
@@ -295,4 +295,4 @@
 #                  y=0.1,
 #                )
 #         return v
-# #============= EOF =====================================
+# # ============= EOF =====================================

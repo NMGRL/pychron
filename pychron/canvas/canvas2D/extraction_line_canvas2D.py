@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Any, Str, on_trait_change, Bool
 from pyface.action.menu_manager import MenuManager
 from traitsui.menu import Action
 from pyface.qt.QtGui import QToolTip
 
-#============= standard library imports ========================`
+# ============= standard library imports ========================`
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.canvas.canvas2D.overlays.extraction_line_overlay import ExtractionLineInfoTool, ExtractionLineInfoOverlay
 from pychron.canvas.canvas2D.scene.primitives.primitives import BorderLine
 from pychron.canvas.scene_viewer import SceneCanvas
@@ -272,4 +272,4 @@ class ExtractionLineCanvas2D(SceneCanvas):
         return s
 
 
-#============= EOF ====================================
+# ============= EOF ====================================

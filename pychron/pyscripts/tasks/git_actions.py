@@ -16,8 +16,8 @@
 
 # ============= enthought library imports =======================
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pyface.tasks.action.task_action import TaskAction
 
 

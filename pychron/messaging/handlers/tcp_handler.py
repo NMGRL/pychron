@@ -14,9 +14,9 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from messaging_handler import MessagingHandler
 
 class TCPHandler(MessagingHandler):
@@ -46,4 +46,4 @@ class TCPHandler(MessagingHandler):
     #         totalsent += sent
 
 
-#============= EOF ====================================
+# ============= EOF ====================================

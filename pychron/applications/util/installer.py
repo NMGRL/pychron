@@ -14,10 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 import buildtools
 import os
 import plistlib
@@ -153,7 +153,7 @@ def build_app(filename):
                        progress=verbose, destroot=destroot)
 
 
-#===========================================================
+# ===========================================================
 class Builder(object):
     root = None  #path to working directory
     dest = None  #path to pychron.app/Contents

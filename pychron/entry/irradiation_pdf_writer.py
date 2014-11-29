@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Bool
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.units import inch
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
 # from pychron.entry.level import load_holder_canvas
 from pychron.entry.editors.level_editor import load_holder_canvas

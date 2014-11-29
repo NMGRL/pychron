@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 # from traits.api import HasTraits
 # from traitsui.api import View, Item
 from pyface.tasks.task_window_layout import TaskWindowLayout
 
 from pychron.applications.pychron_application import PychronApplication
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class PyValve(PychronApplication):
     id = 'pychron.valve.application'

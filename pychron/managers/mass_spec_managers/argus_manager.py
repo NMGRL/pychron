@@ -16,17 +16,17 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Property, \
     Str, Float, Button, Color, Int, Instance, Bool, List
 from traitsui.api import View, Item, HGroup, VGroup, spring
 # from pyface.timer.timer import Timer
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
-#============= views ===================================
+# ============= views ===================================
 
 from pychron.managers.manager import Manager
 import random
@@ -264,4 +264,4 @@ class ArgusManager(Manager):
         except ValueError:
             nv = self._magnet_position
         return nv
-#============= EOF ====================================
+# ============= EOF ====================================

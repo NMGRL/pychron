@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Instance, Any
 from chaco.api import HPlotContainer, ArrayPlotData, Plot
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.graph.image_underlay import ImageUnderlay
 from pychron.graph.tools.xy_inspector import XYInspector, XYInspectorOverlay
 

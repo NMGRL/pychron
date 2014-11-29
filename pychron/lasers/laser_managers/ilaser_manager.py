@@ -14,10 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pychron.lasers.laser_managers.extraction_device import IExtractionDevice
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class ILaserManager(IExtractionDevice):
     def trace_path(self, *args, **kw):

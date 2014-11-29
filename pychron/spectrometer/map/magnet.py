@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Any
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import time
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.spectrometer.base_magnet import BaseMagnet, get_float
 
 

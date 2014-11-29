@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
 from datetime import datetime
 
@@ -25,8 +25,8 @@ from reportlab.platypus.flowables import PageBreak
 from pychron.core.pdf.base_pdf_writer import BasePDFWriter
 from pychron.loading.component_flowable import ComponentFlowable
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class InterpolationPDFWriter(BasePDFWriter):
 

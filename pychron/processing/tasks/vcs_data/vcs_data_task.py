@@ -14,14 +14,14 @@
 # # limitations under the License.
 # # ===============================================================================
 #
-# #============= enthought library imports =======================
+# # ============= enthought library imports =======================
 # import os
 # from pyface.tasks.action.schema import SToolBar
 # import apptools.sweet_pickle as pickle
 # from traits.api import List, Str, Instance, Any
 #
-# #============= standard library imports ========================
-# #============= local library imports  ==========================
+# # ============= standard library imports ========================
+# # ============= local library imports  ==========================
 # from pychron.experiment.utilities.identifier import make_runid
 # from pychron.paths import paths
 # from pychron.envisage.tasks.base_task import BaseManagerTask

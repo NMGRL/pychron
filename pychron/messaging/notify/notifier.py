@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from threading import Thread, Lock
 
 from traits.api import Int, Dict
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import zmq
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.loggable import Loggable
 
 

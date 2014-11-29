@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#=============enthought library imports========================
+# =============enthought library imports========================
 import os
 
 from traits.api import Enum, Float, Event, Property, Int, Button, Bool, Str, Any, on_trait_change, String
@@ -22,9 +22,9 @@ from traitsui.api import View, HGroup, Item, Group, VGroup, EnumEditor, RangeEdi
 
 # from pyface.timer.api import Timer
 
-#=============standard library imports ========================
+# =============standard library imports ========================
 # import sys, os
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 # sys.path.insert(0, os.path.join(os.path.expanduser('~'),
 #                               'Programming', 'mercurial', 'pychron_beta'))
 
@@ -1364,7 +1364,7 @@ if __name__ == '__main__':
                      configuration_dir_name='diode')
     w.bootstrap()
     w.configure_traits(view='configure_view')
-#============================== EOF ==========================
+# ============================== EOF ==========================
 #        #read pid parameters
 #        ph = self.read_heat_proportional_band()
 #        if ph is not None:

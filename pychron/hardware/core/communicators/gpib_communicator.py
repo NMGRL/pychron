@@ -16,12 +16,12 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 # from traits.api import HasTraits, on_trait_change, Str, Int, Float, Button
 # from traitsui.api import View, Item, Group, HGroup, VGroup
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.hardware.core.communicators.communicator import Communicator
 
 # NI_PATH = '/Library/Frameworks/NI488.framework/NI488'
@@ -115,4 +115,4 @@ class GpibCommunicator(Communicator):
 #     print g.tell('1HX')
 # #    print g.ask('2TP?')
 
-#============= EOF ====================================
+# ============= EOF ====================================

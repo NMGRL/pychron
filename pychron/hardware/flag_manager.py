@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, List
 from traitsui.api import View, Item, ListEditor, InstanceEditor, \
     Group, VGroup
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.hardware.flag import Flag, TimedFlag
 from pychron.viewable import Viewable
 

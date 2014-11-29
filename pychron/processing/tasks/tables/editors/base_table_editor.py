@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import List, Any, Event, Bool
 from pyface.file_dialog import FileDialog
 
@@ -25,8 +25,8 @@ from pychron.core.helpers.filetools import add_extension
 from pychron.paths import paths
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class BaseTableEditor(BaseUnknownsEditor):
     items = List

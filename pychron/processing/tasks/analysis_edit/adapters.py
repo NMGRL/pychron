@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pyface.action.menu_manager import MenuManager
 from traits.api import Int, Property
 from traitsui.menu import Action
@@ -29,8 +29,8 @@ from pychron.database.records.isotope_record import IsotopeRecordView
 
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class UnknownsAdapter(TabularAdapter):
     columns = [('Run ID', 'record_id'),

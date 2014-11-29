@@ -25,12 +25,12 @@ from uncertainties import ufloat, nominal_value, std_dev
 from pychron.core.stats import calculate_weighted_mean, calculate_mswd
 from pychron.graph.graph import Graph
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Instance
 from traitsui.api import View, UItem
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.csv.csv_parser import CSVColumnParser
 
 

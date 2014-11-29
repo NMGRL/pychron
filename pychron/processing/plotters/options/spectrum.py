@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Str, Int, Property, Bool, Enum, Float, Color, Range
 from traitsui.api import Item, Group, HGroup, UItem, EnumEditor, spring, VGroup
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import re
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 from pychron.processing.plotters.options.age import AgeOptions
 from pychron.processing.plotters.options.option import SpectrumPlotOptions

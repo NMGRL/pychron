@@ -15,12 +15,12 @@
 # ===============================================================================
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pyface.action.api import Action
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 
 class EasyImportAction(Action):
@@ -33,4 +33,4 @@ class EasyImportAction(Action):
         em.do_import()
 
 
-#============= EOF ====================================
+# ============= EOF ====================================

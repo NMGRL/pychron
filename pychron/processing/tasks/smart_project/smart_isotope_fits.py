@@ -14,10 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pychron.processing.tasks.smart_project.base_smarter import BaseSmarter
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class SmartIsotopeFits(BaseSmarter):
     def fit_date_range(self, start, end, atypes, dry_run):

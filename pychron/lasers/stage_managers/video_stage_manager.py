@@ -14,17 +14,17 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance, String, Property, Button, \
     Bool, Event, on_trait_change, Str, Int
 from apptools.preferences.preference_binding import bind_preference
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import time
 from threading import Thread, Timer
 
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import unique_path, unique_path2
 from pychron.paths import paths
 from pychron.image.video import Video
@@ -660,7 +660,7 @@ class VideoStageManager(StageManager):
 #     # s.update_axes()
 #
 #     s.configure_traits()
-#============= EOF ====================================
+# ============= EOF ====================================
 #    def _mapcenters_button_fired(self):
 #        self.info('Mapping all holes for {}'.format(self.stage_map))
 #        mv = self.machine_vision_manager

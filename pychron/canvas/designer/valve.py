@@ -16,13 +16,13 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Bool, String, Float, Property
 from traitsui.api import View, Item, HGroup
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 class Valve(HasTraits):
     '''
     '''
@@ -53,5 +53,5 @@ class Valve(HasTraits):
                      HGroup(Item('_x', format_str='%0.2f'), Item('_y', format_str='%0.2f')),
                     buttons=['OK', 'Cancel']
                                  )
-#============= views ===================================
-#============= EOF ====================================
+# ============= views ===================================
+# ============= EOF ====================================

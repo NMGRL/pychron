@@ -16,13 +16,13 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Range, Event, Bool, on_trait_change, Property, Float
 from traitsui.api import View, Item, ButtonEditor, HGroup, Group
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.hardware.core.abstract_device import AbstractDevice
 
 
@@ -127,4 +127,4 @@ class FiberLight(AbstractDevice):
     def traits_view(self):
         return View(self.get_control_group())
 
-#============= EOF ====================================
+# ============= EOF ====================================

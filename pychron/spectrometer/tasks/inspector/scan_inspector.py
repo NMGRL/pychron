@@ -21,7 +21,7 @@ from numpy import array
 from traits.api import HasTraits, Instance
 
 # ============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import fileiter
 from pychron.graph.graph import Graph
 from pychron.graph.time_series_graph import TimeSeriesStackedGraph

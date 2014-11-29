@@ -16,13 +16,13 @@
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from chaco.api import PlotGrid, BarPlot, ArrayDataSource, \
     DataRange1D, LinearMapper, add_default_axes
 
-#=============standard library imports ========================
+# =============standard library imports ========================
 
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 from regression_graph import RegressionGraph
 from pychron.graph.guide_overlay import GuideOverlay
 
@@ -168,4 +168,4 @@ class ResidualsGraph(RegressionGraph):
 
         self.residual_plots = [bar, bar2]
         self.plotcontainer.add(container)
-#============= EOF =====================================
+# ============= EOF =====================================

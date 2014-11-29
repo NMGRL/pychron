@@ -84,9 +84,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             quick     1= the current measure_iteration is truncated and a quick baseline is collected, peak center?
             next_int. 2= same as setting ncounts to < current step. measure_iteration is truncated but script continues
     '''
-    #===========================================================================
+    # ===========================================================================
     #
-    #===========================================================================
+    # ===========================================================================
 
     wait_group = Instance(WaitGroup, ())
     stats = Instance(StatsGroup)
@@ -103,9 +103,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     datahub = Instance(Datahub)
     labspy = Instance(LabspyUpdater, ())
-    #===========================================================================
+    # ===========================================================================
     #
-    #===========================================================================
+    # ===========================================================================
     queue_modified = False
 
     executable = Bool
@@ -113,9 +113,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     extracting = Bool(False)
 
     mode = 'normal'
-    #===========================================================================
+    # ===========================================================================
     # preferences
-    #===========================================================================
+    # ===========================================================================
     auto_save_delay = Int(30)
     use_auto_save = Bool(True)
     use_labspy = Bool

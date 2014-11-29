@@ -16,12 +16,12 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from chaco.api import AbstractOverlay
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 
 class BorderOverlay(AbstractOverlay):
@@ -36,5 +36,5 @@ class BorderOverlay(AbstractOverlay):
         gc.rect(x - 3, y - 3, w + 6, h + 6)
 
         gc.stroke_path()
-#============= views ===================================
-#============= EOF ====================================
+# ============= views ===================================
+# ============= EOF ====================================

@@ -16,11 +16,11 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from chaco.tools.api import PanTool
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 
 class MyPanTool(PanTool):
@@ -88,4 +88,4 @@ class MyPanTool(PanTool):
 #        PanTool.panning_left_up(self, event)
 #        event.handled = False
 #        self.normal_left_up(event)
-#============= EOF ====================================
+# ============= EOF ====================================

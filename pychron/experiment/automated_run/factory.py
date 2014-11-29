@@ -21,7 +21,7 @@ from traits.api import String, Str, Property, Any, Float, Instance, Int, List, \
 from traits.trait_errors import TraitError
 import yaml
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.experiment.conditional.conditionals_edit_view import edit_conditionals
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.queue.run_block import RunBlock
@@ -118,7 +118,7 @@ class AutomatedRunFactory(PersistenceLoggable):
     undoer = Any
     edit_event = Event
 
-    #============== scripts =============
+    # ============== scripts =============
     extraction_script = Instance(Script)
     measurement_script = Instance(Script)
     post_measurement_script = Instance(Script)
@@ -129,7 +129,7 @@ class AutomatedRunFactory(PersistenceLoggable):
 
     default_fits_button = Button
     default_fits_enabled = Property(depends_on='measurement_script.name')
-    #===================================
+    # ===================================
 
     human_error_checker = Instance(HumanErrorChecker, ())
     factory_view = Instance(FactoryView)
@@ -178,15 +178,15 @@ class AutomatedRunFactory(PersistenceLoggable):
     position = Property(depends_on='_position')
     _position = String
 
-    #===========================================================================
+    # ===========================================================================
     # measurement
-    #===========================================================================
+    # ===========================================================================
     use_cdd_warming = Bool
     collection_time_zero_offset = Float(0)
 
-    #===========================================================================
+    # ===========================================================================
     # extract
-    #===========================================================================
+    # ===========================================================================
     # extract_value = Property(
     #     EKlass(Float),
     #     depends_on='_extract_value')
@@ -210,18 +210,18 @@ class AutomatedRunFactory(PersistenceLoggable):
 
     edit_pattern = Event
     edit_pattern_label = Property(depends_on='pattern')
-    #===========================================================================
+    # ===========================================================================
     # templates
-    #===========================================================================
+    # ===========================================================================
     template = String('Step Heat Template')
     templates = List
 
     edit_template = Event
     edit_template_label = Property(depends_on='template')
 
-    #===========================================================================
+    # ===========================================================================
     # conditionals
-    #===========================================================================
+    # ===========================================================================
     trunc_attr = String('age')
     trunc_attrs = List(['age',
                         'kca',
@@ -243,34 +243,34 @@ class AutomatedRunFactory(PersistenceLoggable):
     edit_conditionals_button = Button
     new_conditionals_button = Button
 
-    #===========================================================================
+    # ===========================================================================
     # blocks
-    #===========================================================================
+    # ===========================================================================
     run_block = Str('RunBlock')
     run_blocks = List
     edit_run_blocks = Button
 
-    #===========================================================================
+    # ===========================================================================
     # frequency
-    #===========================================================================
+    # ===========================================================================
     # frequency = Int
     # freq_before = Bool(True)
     # freq_after = Bool(False)
     # freq_template = Str
     frequency_model = Instance(FrequencyModel, ())
     edit_frequency_button = Button
-    #===========================================================================
+    # ===========================================================================
     # readonly
-    #===========================================================================
+    # ===========================================================================
     sample = Str
     irradiation = Str
     irrad_level = Str
     irrad_hole = Str
 
     info_label = Property(depends_on='labnumber')
-    #===========================================================================
+    # ===========================================================================
     # private
-    #===========================================================================
+    # ===========================================================================
     _selected_runs = List
     _spec_klass = AutomatedRunSpec
 

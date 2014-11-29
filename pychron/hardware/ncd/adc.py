@@ -31,9 +31,9 @@ import struct
 #logging_setup('prox')
 
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.hardware.ncd.ncd_device import NCDDevice
 
 

@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pygments.lexers.agile import PythonLexer
 from pygments.token import Name
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 class PyScriptLexer(PythonLexer):
     def __init__(self, commands, **kw):
         self._extra_commands=commands.script_commands

@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 
 from reportlab.lib import colors
 from traits.api import Str
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 import yaml
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.pdf.base_table_pdf_writer import BasePDFTableWriter

@@ -14,9 +14,9 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.canvas.canvas2D.markup.markup_canvas import MarkupCanvas
 from pychron.canvas.canvas2D.scene.primitives.primitives import Circle, Indicator, Line
 # from pychron.canvas.canvas2D.markup.markup_items import Circle, Line, PointIndicator, \

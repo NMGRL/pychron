@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance, Unicode, Property, DelegatesTo, Color, Bool
 from traitsui.api import View, UItem
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.ui.qt.tabular_editor import TabularEditorHandler
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.experiment.automated_run.tabular_adapter import AutomatedRunSpecAdapter, UVAutomatedRunSpecAdapter, \

@@ -16,13 +16,13 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Int, Enum, CFloat
 from traitsui.api import View, Item, Group
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 # import math
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.hardware.axis import Axis
 
 yes_no = Enum('yes', 'no')
@@ -250,4 +250,4 @@ class AerotechAxis(Axis):
 #                    planes,
 #                    traps,
 #                    )
-#============= EOF ====================================
+# ============= EOF ====================================

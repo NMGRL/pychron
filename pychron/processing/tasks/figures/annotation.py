@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import string
 
 from chaco.tools.data_label_tool import DataLabelTool
@@ -23,8 +23,8 @@ from enable.colors import transparent_color
 from traits.api import Str, List
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 VK = string.ascii_letters
 
 KEY_MAP = {'Enter': '\n', ' ': ' '}

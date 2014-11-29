@@ -14,19 +14,19 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Bool, Instance, Enum, Range, on_trait_change, Any
 from traitsui.api import HGroup, Group, Item, spring , VGroup
 
 from pychron.database.records.sqlite_record import SQLiteRecord
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 # import os
 import csv
 from pychron.managers.data_managers.h5_data_manager import H5DataManager
 
 from pychron.graph.contour_graph import ContourGraph
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 #    def load_graph(self, graph=None, xoffset=0):
 #
 #        if graph is None:

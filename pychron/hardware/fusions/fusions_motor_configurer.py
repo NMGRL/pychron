@@ -21,13 +21,13 @@
 @copyright: 2009
 @license: Educational Community License 1.0
 '''
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import HasTraits, List
 from traitsui.api import View, Item, Group
 
-#=============standard library imports ========================
+# =============standard library imports ========================
 
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 class FusionsMotorConfigurer(HasTraits):
     '''
         G{classtree}

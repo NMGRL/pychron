@@ -16,15 +16,15 @@
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 
-#=============standard library imports ========================
+# =============standard library imports ========================
 from sqlalchemy import Column, Integer, String, \
      ForeignKey, Time, Date
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 Base = declarative_base()
 
 

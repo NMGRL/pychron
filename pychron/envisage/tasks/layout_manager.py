@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import shelve
 import os
 
@@ -27,8 +27,8 @@ from pychron.paths import paths
 from pychron.loggable import Loggable
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class LayoutAdapter(TabularAdapter):
     columns = [('Name', 'name')

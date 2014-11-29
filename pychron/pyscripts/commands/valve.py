@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Str, Property, cached_property
 from traitsui.api import Item, EnumEditor, VGroup
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 import re
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.pyscripts.commands.core import Command
 from pychron.paths import paths
 from pychron.extraction_line.valve_parser import ValveParser

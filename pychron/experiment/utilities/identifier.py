@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 import os
 
 import yaml
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.pychron_constants import LINE_STR, ALPHAS
 from pychron.paths import paths
 

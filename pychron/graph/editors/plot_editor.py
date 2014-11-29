@@ -17,13 +17,13 @@
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import HasTraits, Property, Any, Str, Int, Float, List
 from traitsui.api import View, Item, VGroup, Group, \
     TextEditor, TableEditor, Handler, InstanceEditor
 from chaco.polygon_plot import PolygonPlot
-#=============standard library imports ========================
-#=============local library imports  ==========================
+# =============standard library imports ========================
+# =============local library imports  ==========================
 from series_editor import SeriesEditor, PolygonPlotEditor
 from traitsui.table_column import ObjectColumn
 from traitsui.extras.checkbox_column import CheckboxColumn
@@ -262,7 +262,7 @@ class PlotEditor(HasTraits):
                 )
         return v
 
-#=============================Property Methods============================
+# =============================Property Methods============================
 #    def _set_color(self, name, v):
 #        if sys.platform == 'win32':
 #            v = [vi / 255. for vi in v ]
@@ -371,4 +371,4 @@ class PlotEditor(HasTraits):
         v = self._validate_float(v, test=lambda x: None if x <= self.ymin else x)
         return v
 
-#============= EOF ====================================
+# ============= EOF ====================================

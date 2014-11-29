@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 # from traits.api import HasTraits, Bool, Any
 # from traitsui.api import View, Item
-# #============= standard library imports ========================
-# #============= local library imports  ==========================
+# # ============= standard library imports ========================
+# # ============= local library imports  ==========================
 #
 # class BaseSelection(HasTraits):
 #     searchable = Bool(True)

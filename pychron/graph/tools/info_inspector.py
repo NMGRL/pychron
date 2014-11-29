@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Event, Instance
 from chaco.abstract_overlay import AbstractOverlay
 from enable.base_tool import BaseTool
 from kiva.fonttools import Font
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 def intersperse(m, delim):
     """

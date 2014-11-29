@@ -15,11 +15,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Any, String
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.globals import globalv
 from pychron.core.helpers.color_generators import colorname_generator
 from pychron.core.helpers.logger_setup import new_logger

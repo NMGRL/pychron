@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import time
 
 from chaco.legend import Legend
 from traits.api import Str
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import where
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from uncertainties import std_dev, nominal_value
 from pychron.core.regression.interpolation_regressor import InterpolationRegressor
 from pychron.core.regression.mean_regressor import WeightedMeanRegressor

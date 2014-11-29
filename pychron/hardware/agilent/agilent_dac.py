@@ -16,12 +16,12 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Float, Str, Int
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.hardware.core.core_device import CoreDevice
 
 
@@ -39,9 +39,9 @@ class AgilentDAC(CoreDevice):
         self._communicator.terminator = chr(10)
         return True
 
-    #===========================================================================
+    # ===========================================================================
     # configloadable interface
-    #===========================================================================
+    # ===========================================================================
     def load_additional_args(self, config):
 
         self.min_value = self.config_get(config, 'General', 'min', cast='float', default=0.0, optional=True)
@@ -95,4 +95,4 @@ class AgilentDAC(CoreDevice):
 
     def _parse_response(self, resp, *args, **kw):
         return resp
-#============= EOF =====================================
+# ============= EOF =====================================

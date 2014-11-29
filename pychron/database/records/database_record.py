@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Int, Any, Str, Property, cached_property
 from traitsui.api import View
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import time
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.graph.graph import Graph
 from pychron.saveable import Saveable
 

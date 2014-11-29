@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Float
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from threading import Lock
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.loggable import Loggable
 
 # SINGLE_ITEM_BUF = True
@@ -106,4 +106,4 @@ class CommunicationScheduler(Loggable):
 # #            time.sleep(max(0.0001, self.cd / 1000. - (time.time() - st) - 0.001))
 
 
-#============= EOF ====================================
+# ============= EOF ====================================

@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pychron.pychron_constants import IC_ANALYSIS_TYPE_MAP
 from pychron.processing.tasks.analysis_edit.interpolation_editor import InterpolationEditor
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import array
 from pychron.core.helpers.isotope_utils import sort_detectors
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.processing.tasks.detector_calibration.detector_calibration_tool import DetectorCalibrationTool
 
 

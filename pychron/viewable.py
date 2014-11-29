@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Either, Int, Float, Str, List, Event, \
     Bool
 from traitsui.api import View
 from traitsui.api import Handler
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 # from pychron.utils import IsQt
 from pychron.loggable import Loggable
 

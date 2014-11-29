@@ -25,12 +25,12 @@ from pychron.envisage.icon_button_editor import icon_button_editor
 
 set_toolkit('qt4')
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Int, Button, Instance, Callable, Bool
 from traitsui.api import View, UItem, VGroup, HGroup
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.ui.qt.progress_editor import ProgressEditor
 from pychron.loggable import Loggable
 

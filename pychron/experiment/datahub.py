@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import Instance
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from datetime import datetime
 import time
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.database.adapters.massspec_database_adapter import MissingAliquotPychronException
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.experiment.utilities.identifier import make_aliquot_step, make_step, get_analysis_type

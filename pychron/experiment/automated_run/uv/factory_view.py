@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance
 from traitsui.api import Item, VGroup, Spring, HGroup, EnumEditor, UItem
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.experiment.automated_run.factory_view import FactoryView, POSITION_TOOLTIP
 
 

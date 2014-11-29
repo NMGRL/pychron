@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 
 from chaco.scales.time_scale import CalendarScaleSystem
 from chaco.scales_tick_generator import ScalesTickGenerator
@@ -32,13 +32,13 @@ from pyface.api import FileDialog, OK
 from pyface.timer.api import do_after as do_after_timer
 
 
-#=============standard library imports ========================
+# =============standard library imports ========================
 import os
 # import numpy as np
 from numpy import array, hstack, Inf
 import csv
 import math
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 from pychron.core.helpers.color_generators import colorname_generator as color_generator
 from pychron.core.helpers.filetools import add_extension
 from pychron.graph.minor_tick_overlay import MinorTicksOverlay
@@ -1710,4 +1710,4 @@ class Graph(Viewable, ContextMenuMixin):
             v.id = self.view_identifier
         return v
 
-        #============= EOF ====================================
+        # ============= EOF ====================================

@@ -16,13 +16,13 @@
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import HasTraits, Any, Property, List
 from traitsui.api import View, Item, Group, VGroup
 
-#=============standard library imports ========================
+# =============standard library imports ========================
 
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 def validate(v):
     '''
     '''

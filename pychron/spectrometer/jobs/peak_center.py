@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import time
 
 from traits.api import Float
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import max, argmax
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from magnet_scan import MagnetScan
 from pychron.graph.graph import Graph
 from pychron.core.stats.peak_detection import calculate_peak_center, PeakCenterError

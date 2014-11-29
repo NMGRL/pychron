@@ -16,13 +16,13 @@
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import HasTraits, Property, Int, Float, Bool, Any
 from traitsui.api import View, Item
 
-#=============standard library imports ========================
+# =============standard library imports ========================
 
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 class Setpoint(HasTraits):
     '''
         G{classtree}

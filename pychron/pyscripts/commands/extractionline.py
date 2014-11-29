@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Str, Float, Int
 from traitsui.api import Item
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.pyscripts.commands.core import Command
 from pychron.pyscripts.commands.valve import ValveCommand
 

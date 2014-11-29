@@ -24,7 +24,7 @@ from pyface.qt.QtGui import QTabBar
 
 # ============= standard library imports ========================
 import binascii
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.iterfuncs import partition
 from pychron.core.progress import progress_iterator
 from pychron.easy_parser import EasyParser

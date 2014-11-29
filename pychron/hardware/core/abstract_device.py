@@ -14,10 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import Property, DelegatesTo, Instance, provides
-#=============standard library imports ========================
-#=============local library imports  ==========================
+# =============standard library imports ========================
+# =============local library imports  ==========================
 # from pychron.config_loadable import ConfigLoadable
 # from traits.has_traits import provides
 from pychron.hardware.core.i_core_device import ICoreDevice
@@ -90,4 +90,4 @@ class AbstractDevice(ScanableDevice, RPCable, HasCommunicator):
     def _get_dev_klass(self):
         return self._cdevice.__class__.__name__
 
-#============= EOF =====================================
+# ============= EOF =====================================

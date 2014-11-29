@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from SocketServer import ThreadingUnixStreamServer
 import socket
 # from threading import Thread
 # import select
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from messaging_server import MessagingServer
 from pychron.messaging.handlers.ipc_handler import IPCHandler
 
@@ -51,4 +51,4 @@ class IPCServer(ThreadingUnixStreamServer, MessagingServer):
 
 
 
-#============= EOF ====================================
+# ============= EOF ====================================

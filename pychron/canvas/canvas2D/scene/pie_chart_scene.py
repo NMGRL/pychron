@@ -19,8 +19,8 @@ import math
 
 from enable.base import str_to_font
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.canvas.canvas2D.scene.primitives.primitives import QPrimitive
 from pychron.canvas.canvas2D.scene.scene import Scene
 from matplotlib.cm import get_cmap

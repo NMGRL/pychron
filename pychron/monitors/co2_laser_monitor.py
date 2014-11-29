@@ -16,18 +16,18 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 # from traits.api import HasTraits, on_trait_change, Str, Int, Float, Button
 # from traitsui.api import View, Item, Group, HGroup, VGroup
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.monitors.laser_monitor import LaserMonitor
 class CO2LaserMonitor(LaserMonitor):
     '''
     '''
     pass
-#============= views ===================================
+# ============= views ===================================
 
-#============= EOF ====================================
+# ============= EOF ====================================

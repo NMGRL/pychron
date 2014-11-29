@@ -17,9 +17,9 @@
 
 
 
-#=============enthought library imports=======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# =============enthought library imports=======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from protocol import Protocol
 
 
@@ -35,4 +35,4 @@ class SystemProtocol(Protocol):
               }
 
 
-#============= EOF =====================================
+# ============= EOF =====================================

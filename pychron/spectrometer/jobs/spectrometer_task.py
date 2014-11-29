@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Any, Event, Property, Bool
 # from traitsui.api import View, Item, spring, ButtonEditor, HGroup
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import linspace
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.loggable import Loggable
 from threading import Thread
 # from pychron.spectrometer.spectrometer import Spectrometer

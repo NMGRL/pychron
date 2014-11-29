@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pychron.experiment.utilities.human_error_checker import HumanErrorChecker
 from pychron.experiment.utilities.identifier import get_analysis_type
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class UVHumanErrorChecker(HumanErrorChecker):
     _extraction_line_required = False

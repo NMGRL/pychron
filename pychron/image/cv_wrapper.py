@@ -14,8 +14,8 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 from collections import namedtuple
 
 from numpy import array, asarray, ndarray
@@ -40,7 +40,7 @@ except ImportError, e:
     print 'OpenCV required'
 
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.geometry.centroid import calculate_centroid
 
 

@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, List, Str, Date, Int, Button, Property, Instance,\
     Event
 from traitsui.api import View, Item, Controller, TextEditor, \
     TabularEditor, UItem, spring, HGroup, VSplit, VGroup, InstanceEditor
 from traitsui.tabular_adapter import TabularAdapter
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from datetime import datetime
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.git_archive.diff_view import DiffView
 

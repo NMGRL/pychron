@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import Str, Bool
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.graph.editors.series_editor import SeriesEditor, PolygonPlotEditor, \
     ContourPolyPlotEditor
 
@@ -103,4 +103,4 @@ class UnchistSeriesEditor(ContourPolyPlotEditor, DiffusionSeriesEditor):
     pass
 # class ContourPolyDiffusionSeriesEditor(ContourPolyPlotEditor, DiffusionSeriesEditor):
 #    pass
-#============= EOF =====================================
+# ============= EOF =====================================

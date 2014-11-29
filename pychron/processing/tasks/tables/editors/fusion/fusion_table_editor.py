@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.processing.tables.fusion.csv_writer import FusionTableCSVWriter
 from pychron.processing.tables.fusion.pdf_writer import FusionPDFTableWriter
 from pychron.processing.tables.fusion.xls_writer import FusionTableXLSWriter

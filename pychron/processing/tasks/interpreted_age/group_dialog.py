@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, List, Any, Str, Int, Date
 from traitsui.api import View, Item, TabularEditor, UItem, HGroup, VGroup
 from pyface.timer.do_later import do_later
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.envisage.browser.adapters import ProjectAdapter
 from pychron.envisage.browser.browser_mixin import filter_func

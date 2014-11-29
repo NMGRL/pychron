@@ -15,9 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import re
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 # match .current_point
 CP_REGEX = re.compile(r'[\w\d]+\.(current|cur)')
 # match .std_dev

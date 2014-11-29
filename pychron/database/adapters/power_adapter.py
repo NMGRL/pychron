@@ -14,9 +14,9 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.database.core.database_adapter import PathDatabaseAdapter
 from pychron.database.orms.power_orm import PowerTable, PowerPathTable
 from pychron.database.selectors.power_selector import PowerSelector
@@ -26,15 +26,15 @@ class PowerAdapter(PathDatabaseAdapter):
     test_func = None
     selector_klass = PowerSelector
     path_table = PowerPathTable
-#==============================================================================
+# ==============================================================================
 #    getters
-#==============================================================================
+# ==============================================================================
 
     def get_power_records(self, **kw):
         return self._get_items(PowerTable, globals(), **kw)
-#=============================================================================
+# =============================================================================
 #   adder
-#=============================================================================
+# =============================================================================
     def add_power_record(self, **kw):
         b = self._add_timestamped_item(PowerTable, **kw)
         return b

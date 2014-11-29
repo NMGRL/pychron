@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import time
 from datetime import timedelta
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import unique_path
 from pychron.processing.tasks.smart_project.blanks_pdf_writer import BlanksPDFWrtier
 from pychron.processing.tasks.smart_project.base_smarter import BaseSmarter

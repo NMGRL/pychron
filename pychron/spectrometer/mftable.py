@@ -15,18 +15,18 @@
 # ===============================================================================
 from apptools.preferences.preference_binding import bind_preference
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import shutil
 from traits.api import HasTraits, List, Str, Dict, Float, Bool
 from traitsui.api import View, Controller, TableEditor, UItem
 from traitsui.table_column import ObjectColumn
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import csv
 import os
 import hashlib
 from numpy import asarray, array, nonzero
 from scipy.optimize import leastsq
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.loggable import Loggable
 from pychron.paths import paths
 

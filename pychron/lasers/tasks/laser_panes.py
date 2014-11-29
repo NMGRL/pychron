@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Property
 from traitsui.api import View, UItem, Group, InstanceEditor, HGroup, \
     EnumEditor, Item, spring, Spring, ButtonEditor, VGroup, RangeEditor
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from pyface.tasks.traits_dock_pane import TraitsDockPane
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.experiment.utilities.identifier import pretty_extract_device
@@ -54,9 +54,9 @@ class StageControlPane(TraitsDockPane):
     name = 'Stage'
 
     def traits_view(self):
-        #=======================================================================
+        # =======================================================================
         # convienience functions
-        #=======================================================================
+        # =======================================================================
         def make_sm_name(name):
             return 'object.stage_manager.{}'.format(name)
 

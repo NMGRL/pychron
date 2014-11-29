@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Bool, Instance, List, Dict
 # from traitsui.api import View, Item
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
@@ -32,8 +32,8 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 from pychron.hardware.tasks.hardware_preferences import HardwarePreferencesPane
 from pychron.remote_hardware.remote_hardware_manager import RemoteHardwareManager
 from apptools.preferences.preference_binding import bind_preference
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 class Preference(HasTraits):
     pass
 

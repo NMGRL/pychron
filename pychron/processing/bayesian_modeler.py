@@ -14,10 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import  vstack, histogram, array
 from numpy.random import normal
 from multiprocessing import Pool
@@ -31,7 +31,7 @@ from numpy.core.fromnumeric import argmax
 from pychron.core.time_series.time_series import smooth
 
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 '''
     Bayesian stratigraphic modeler

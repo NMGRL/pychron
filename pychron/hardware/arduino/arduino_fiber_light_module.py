@@ -16,11 +16,11 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 from pychron.hardware.core.arduino_core_device import ArduinoCoreDevice
 '''
@@ -91,4 +91,4 @@ class ArduinoFiberLightModule(ArduinoCoreDevice):
         else:
             return '{};'.format(cmd)
 
-#============= EOF ====================================
+# ============= EOF ====================================

@@ -14,10 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 from pychron.database.selectors.power_map_selector import PowerMapSelector
 from pychron.database.orms.power_map_orm import PowerMapTable, PowerMapPathTable
@@ -34,17 +34,17 @@ class PowerMapAdapter(PathDatabaseAdapter):
     def manage_database(self):
         manage_database(self.url, 'powermapdb')
 
-#==============================================================================
+# ==============================================================================
 #    getters
-#==============================================================================
+# ==============================================================================
 
     def get_powermaps(self, **kw):
         return self._retrieve_items(PowerMapTable)
 #        return self._get_items(PowerMapTable, globals(), **kw)
 
-#=============================================================================
+# =============================================================================
 #   adder
-#=============================================================================
+# =============================================================================
     def add_powermap(self, **kw):
         b = PowerMapTable(**kw)
         self._add_item(b)

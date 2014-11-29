@@ -16,14 +16,14 @@
 #
 #
 #
-##=============enthought library imports=======================
+## =============enthought library imports=======================
 # from traits.api import HasTraits, Instance, Str, List
 # from traitsui.api import View, Item, Group, VGroup
 #
-##=============standard library imports ========================
+## =============standard library imports ========================
 #
 #
-##=============local library imports  ==========================
+## =============local library imports  ==========================
 # from manager import Manager
 # from pychron.led.led import LED
 # from pychron.led.led_editor import LEDEditor
@@ -128,7 +128,7 @@
 #    do_later(pm.start_scan)
 #    pm.configure_traits()
 #
-##============= EOF ====================================
+## ============= EOF ====================================
 # #        if self.prev_relay is None:
 # #            self.prev_relay=self.relay1
 # #        else:

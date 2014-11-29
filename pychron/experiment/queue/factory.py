@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Str, Property, cached_property, Int, \
     Any, String, Event, Bool, Dict, List, Button
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 from ConfigParser import ConfigParser
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_directory2
 from pychron.entry.user_entry import UserEntry
 from pychron.persistence_loggable import PersistenceLoggable

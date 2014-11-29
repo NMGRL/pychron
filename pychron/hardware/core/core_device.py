@@ -14,19 +14,19 @@
 # limitations under the License.
 # ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 
 from traits.api import HasTraits, Str, Any, List, \
     Bool, Enum, provides
 
 # from pyface.timer.api import Timer
-#=============standard library imports ========================
+# =============standard library imports ========================
 import random
 # from threading import Lock
 from datetime import datetime
 import inspect
 import time
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 # from traits.has_traits import provides
 from i_core_device import ICoreDevice
 # from pychron.core.helpers.timer import Timer
@@ -349,4 +349,4 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
                 break
 
 
-#========================= EOF ============================================
+# ========================= EOF ============================================

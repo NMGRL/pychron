@@ -14,9 +14,9 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.hardware.agilent.agilent_multiplexer import AgilentSingleADC, \
     AgilentMultiplexer
 from pychron.rpc.query import rpc_query

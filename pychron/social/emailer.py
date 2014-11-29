@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import HasTraits, Str, List, Enum, Bool
 from traitsui.api import View
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 import smtplib
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.config_loadable import ConfigMixin
 from pychron.paths import paths
 

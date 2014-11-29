@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem
 from traits.api import Instance
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.envisage.tasks.actions import GenericSaveAction, GenericSaveAsAction
 from pychron.envisage.tasks.base_task import BaseTask
 from pychron.pyscripts.extraction_line_script_writer import ExtractionLineScriptWriter

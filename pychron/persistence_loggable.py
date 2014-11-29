@@ -18,7 +18,7 @@
 import os
 # ============= standard library imports ========================
 import pickle
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 

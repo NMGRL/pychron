@@ -14,16 +14,16 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Instance, DelegatesTo, Button, List, Any, \
     Float
 from traitsui.api import View, Item, VGroup, HGroup, Group, spring, \
     TabularEditor
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import pickle
 import os
 from numpy import polyval
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.managers.manager import Manager
 from pychron.database.selectors.power_calibration_selector import PowerCalibrationSelector
 from pychron.database.adapters.power_calibration_adapter import PowerCalibrationAdapter

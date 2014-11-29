@@ -18,7 +18,7 @@
 from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
 # ============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pyface.tasks.action.schema import SMenu
 from pyface.tasks.action.schema_addition import SchemaAddition
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin

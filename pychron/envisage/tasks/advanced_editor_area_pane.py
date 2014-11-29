@@ -27,7 +27,7 @@ from pyface.constant import NO
 from pyface.tasks.advanced_editor_area_pane import AdvancedEditorAreaPane
 
 # ============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 class myEditorAreaWidget(EditorAreaWidget):
     def contextMenuEvent(self, event):
         menu = QtGui.QMenu(self)

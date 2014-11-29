@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Str, Password
 from traitsui.api import View, Item, Group
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 

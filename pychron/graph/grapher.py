@@ -16,11 +16,11 @@
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import HasTraits, Instance
 from traitsui.api import View, Item
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import argparse
 import sys
 import os
@@ -29,7 +29,7 @@ from pyface.timer.do_later import do_later
 p = os.path.join(os.path.expanduser('~'), 'Programming', 'mercurial', 'pychron_beta1')
 
 sys.path.append(p)
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 
 class Grapher(HasTraits):
@@ -154,4 +154,4 @@ if __name__ == '__main__':
 
     do_grapher(args)
 
-#============= EOF =====================================
+# ============= EOF =====================================

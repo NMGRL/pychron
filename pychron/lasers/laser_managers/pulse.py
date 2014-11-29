@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Any, Instance, Float, Event, \
      Property, Bool, on_trait_change
 from traitsui.api import View, Item, Handler, HGroup, ButtonEditor, spring, VGroup
 # import apptools.sweet_pickle as pickle
-#============= standard library imports ========================
+# ============= standard library imports ========================
 # import os
 from threading import Thread
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 # from pychron.paths import paths
 # from pychron.pyscripts.wait_dialog import WaitDialog
 # import time
@@ -171,4 +171,4 @@ class Pulse(HasTraits):
 # if __name__ == '__main__':
 #    lp = LaserPulseManager()
 #    lp.configure_traits()
-#============= EOF ====================================
+# ============= EOF ====================================

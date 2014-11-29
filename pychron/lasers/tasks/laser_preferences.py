@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Bool, Str, Enum, File, Int, Directory, \
     Color, Range
 from traitsui.api import View, Item, VGroup, HGroup, Group
@@ -22,8 +22,8 @@ from traitsui.api import View, Item, VGroup, HGroup, Group
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 # def qt_color_convert(value):
 #    value = value.split('(')[1]
 #    value = value[:-1]

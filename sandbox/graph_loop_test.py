@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.etsconfig.etsconfig import ETSConfig
 
 ETSConfig.toolkit = 'qt4'
@@ -32,8 +32,8 @@ from traitsui.api import View, UItem
 # from pychron.graph.regression_graph import RegressionGraph, StackedRegressionGraph
 import time
 from pychron.core.codetools.memory_usage import mem_log, get_current_mem
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class PlotPanel(HasTraits):
     graph = Instance(Graph, ())

@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 from sqlalchemy import Column, Integer, BLOB, Float, DateTime
 from sqlalchemy.orm import relationship
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 from pychron.database.core.base_orm import BaseMixin
 # from pychron.database.core.base_orm import PathMixin, ResultsMixin, ScriptTable

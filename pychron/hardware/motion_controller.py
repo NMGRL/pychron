@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Property, Dict, Float, Any, Instance
 from traitsui.api import View, VGroup, Item, RangeEditor
 # from pyface.timer.api import Timer
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 import time
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.timer import Timer
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.core.motion.motion_profiler import MotionProfiler
@@ -394,4 +394,4 @@ class MotionController(CoreDevice):
             p = os.path.join(self.configuration_dir_path, 'motion_profiler.cfg')
             mp.load(p)
         return mp
-#============= EOF ====================================
+# ============= EOF ====================================

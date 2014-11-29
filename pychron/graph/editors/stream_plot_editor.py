@@ -16,12 +16,12 @@
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import Property, Float, Bool
 from traitsui.api import Item, VGroup, TextEditor, HGroup, spring, Label
-#=============standard library imports ========================
+# =============standard library imports ========================
 
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 from pychron.graph.editors.plot_editor import PlotEditor
 
 
@@ -153,4 +153,4 @@ class StreamPlotEditor(PlotEditor):
             return float(v)
         except ValueError:
             pass
-#============= EOF ====================================
+# ============= EOF ====================================

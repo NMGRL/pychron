@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import urllib
 import urllib2
 
 from traits.api import Str, Password, Button, on_trait_change, Bool
 
 from pychron.loggable import Loggable
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 class HTTPRepository(Loggable):
     username = Str
     password = Password

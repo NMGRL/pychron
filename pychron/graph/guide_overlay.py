@@ -16,15 +16,15 @@
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from enable.colors import ColorTrait
 from enable.enable_traits import LineStyle
 from traits.api import Enum, Float
 from chaco.api import AbstractOverlay
 
-#=============standard library imports ========================
+# =============standard library imports ========================
 
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 
 
 class GuideOverlay(AbstractOverlay):
@@ -64,4 +64,4 @@ class GuideOverlay(AbstractOverlay):
         gc.stroke_path()
         gc.restore_state()
 
-#============= EOF =====================================
+# ============= EOF =====================================

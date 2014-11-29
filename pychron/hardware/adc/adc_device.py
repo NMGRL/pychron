@@ -14,10 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import Str
-#=============standard library imports ========================
-#=============local library imports  ==========================
+# =============standard library imports ========================
+# =============local library imports  ==========================
 from pychron.core import Q_
 
 from pychron.hardware.core.abstract_device import AbstractDevice
@@ -113,4 +113,4 @@ class ADCDevice(AbstractDevice):
         return self.poly_mapper.map_measured(v)
 
 
-#============= EOF =====================================
+# ============= EOF =====================================

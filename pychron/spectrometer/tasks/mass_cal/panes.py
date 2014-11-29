@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traitsui.api import View, UItem, EnumEditor, TableEditor
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from traitsui.table_column import ObjectColumn
 
 

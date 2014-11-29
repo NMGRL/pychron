@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Str, Bool
 
 from pychron.core.xml.xml_parser import XMLParser
 from pychron.processing.repository.http_repository import HTTPRepository
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
 class GeochronRepository(HTTPRepository):

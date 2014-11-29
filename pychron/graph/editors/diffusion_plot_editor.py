@@ -16,12 +16,12 @@
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import  List
 from traitsui.table_column import ObjectColumn
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.graph.editors.plot_editor import PlotEditor
 from pychron.graph.editors.diffusion_series_editor import  \
     SpectrumSeriesEditor, ChistSeriesEditor, UnchistSeriesEditor, \
@@ -168,4 +168,4 @@ class DiffusionPlotEditor(PlotEditor):
 # #                    i+=1
 # #                    plot=plots['plot{}'.format(i)][0]
 #
-#============= EOF =====================================
+# ============= EOF =====================================

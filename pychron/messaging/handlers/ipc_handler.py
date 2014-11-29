@@ -14,10 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from messaging_handler import MessagingHandler
 
 class IPCHandler(MessagingHandler):
@@ -34,4 +34,4 @@ class IPCHandler(MessagingHandler):
         sock = self.request
         sock.sendall(response + '\n')
 
-#============= EOF ====================================
+# ============= EOF ====================================

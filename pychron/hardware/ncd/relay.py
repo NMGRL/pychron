@@ -30,9 +30,9 @@ from pychron.core.helpers.logger_setup import logging_setup
 logging_setup('prox')
 paths.build('_prox')
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.hardware.ncd import ON_MAP, OFF_MAP, STATE_MAP
 from pychron.hardware.ncd.ncd_device import NCDDevice
 
@@ -101,7 +101,7 @@ class ProXR(NCDDevice):
         return self.ask(cmdstr, nchars=1) == 'U'
 
 
-#=====================================    ==========================================
+# =====================================    ==========================================
 # configuration
 # ===============================================================================
 

@@ -16,7 +16,7 @@
 from pychron.core.ui import set_qt
 
 set_qt()
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, \
     Instance, Float, Int, Bool, DelegatesTo, Range
 from traitsui.api import View, Item, UItem, VGroup, \
@@ -33,8 +33,8 @@ from pychron.managers.data_managers.h5_data_manager import H5DataManager
 # from pychron.graph.contour_graph import ContourGraph
 # from chaco.plot_containers import HPlotContainer
 from pychron.lasers.tasks.editors.laser_editor import LaserEditor
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
 class PowerMapControls(HasTraits):

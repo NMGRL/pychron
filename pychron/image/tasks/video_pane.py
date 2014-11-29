@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Any, File, String, Int, Enum, Instance, Dict, \
     on_trait_change, Bool, Range
 from traitsui.api import View, Item, UItem, EnumEditor
@@ -25,8 +25,8 @@ from pychron.canvas.canvas2D.video_canvas import VideoCanvas
 from pychron.core.ui.stage_component_editor import VideoComponentEditor
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 class Source(HasTraits):
     def url(self):
         return

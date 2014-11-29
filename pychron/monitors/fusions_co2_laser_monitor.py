@@ -14,10 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import  List
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.monitors.co2_laser_monitor import CO2LaserMonitor
 from pychron.monitors.fusions_laser_monitor import FusionsLaserMonitor
 from pychron.remote_hardware.errors.laser_errors import SetpointErrorCode

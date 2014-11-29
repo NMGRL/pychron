@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import unittest
 
 from pychron.loading.load_task import LoadingTask
 from test.database import isotope_manager_factory
 from pychron.loading.loading_manager import LoadingManager
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class LoadingTest(unittest.TestCase):
     def setUp(self):

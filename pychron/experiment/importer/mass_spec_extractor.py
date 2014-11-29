@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Bool, Instance, Button, Any
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import struct
 import datetime
 from sqlalchemy.sql.expression import and_, not_
 from sqlalchemy.orm.exc import NoResultFound
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.database.orms.massspec_orm import AnalysesTable, MachineTable, \
     LoginSessionTable, RunScriptTable
 from pychron.core.helpers.filetools import unique_path
@@ -469,9 +469,9 @@ class MassSpecExtractor(Extractor):
     def _add_analysis(self, dest, dest_labnumber, dbanalysis,
                       analysis_type='unknown', _ed_cache=[], _an_cache=[]):
 
-        #=======================================================================
+        # =======================================================================
         # add analysis
-        #=======================================================================
+        # =======================================================================
         aliquot = dbanalysis.Aliquot
         step = dbanalysis.Increment
         changeable = dbanalysis.changeable
@@ -509,9 +509,9 @@ class MassSpecExtractor(Extractor):
 
         self.info('Adding analysis {}'.format(identifier))
 
-        #=======================================================================
+        # =======================================================================
         # add measurement
-        #=======================================================================
+        # =======================================================================
         ms = dbanalysis.login_session.machine
         if ms:
             ms = ms.Label.lower()
@@ -522,9 +522,9 @@ class MassSpecExtractor(Extractor):
             dest.add_measurement(dest_an,
                                  analysis_type, ms)
 
-        #=======================================================================
+        # =======================================================================
         # add extraction
-        #=======================================================================
+        # =======================================================================
 
         ed = dbanalysis.HeatingItemName
         if ed not in _ed_cache:
@@ -544,9 +544,9 @@ class MassSpecExtractor(Extractor):
         for pi in pos:
             dest.add_analysis_position(ext, pi.Hole, x=pi.X, y=pi.Y)
 
-        #=======================================================================
+        # =======================================================================
         # add isotopes
-        #=======================================================================
+        # =======================================================================
         fit_hist = None
         if len(dbanalysis.isotopes) < 4 or len(dbanalysis.isotopes) > 7:
             self.import_err_file.write('{}\n'.format(identifier))
@@ -625,9 +625,9 @@ class MassSpecExtractor(Extractor):
                 #                    fit_hist = dest.add_fit_history(dest_an)
                 #                dest.add_fit(fit_hist, dbiso, fit=fit)
 
-        #==============================================================
+        # ==============================================================
         # add selected history
-        #==============================================================
+        # ==============================================================
         dest.add_selected_histories(dest_an)
 
         dest_an.import_id = self.dbimport.id

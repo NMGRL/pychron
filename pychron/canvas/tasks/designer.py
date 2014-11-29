@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 
 from traits.api import HasTraits, Instance
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.canvas.canvas2D.designer_extraction_line_canvas2D import DesignerExtractionLineCanvas2D
 from pychron.canvas.canvas2D.extraction_line_canvas2D import ExtractionLineCanvas2D
 from pychron.canvas.canvas2D.scene.canvas_parser import CanvasParser

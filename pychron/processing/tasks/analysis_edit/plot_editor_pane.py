@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Any, Event, Instance, List
 from traitsui.api import View, UItem, Group, VGroup
 from enable.base_tool import BaseTool
@@ -28,8 +28,8 @@ from pychron.processing.tasks.plot_editor import PlotEditor, AnnotationEditor
 
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 class SelectorTool(BaseTool):
     editor = Any
     editor_event = Event

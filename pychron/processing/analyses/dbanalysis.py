@@ -14,16 +14,16 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.trait_types import Str, Float, Either, Date, Any, Dict, List, Long
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 from datetime import datetime
 from itertools import izip
 import struct
 import time
 from uncertainties import ufloat
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import remove_extension
 from pychron.database.orms.isotope.meas import meas_AnalysisTable
 from pychron.processing.analyses.analysis import Analysis, Fit

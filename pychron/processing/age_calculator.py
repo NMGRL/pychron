@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Property, List, Button, Str, File, Any
 from traitsui.api import View, Item, HGroup, TabularEditor
 from traitsui.tabular_adapter import TabularAdapter
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from uncertainties import ufloat
 import xlrd
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.processing.argon_calculations import calculate_arar_age
 
 

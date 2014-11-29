@@ -24,12 +24,12 @@ http://eurotherm.com/document-library/?ignoreeveryonegroup=0&assetdetesctl139041
 
 '''
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Float, Property
 from traitsui.api import View, Item
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.paths import paths
 
@@ -250,7 +250,7 @@ class Eurotherm(CoreDevice):
         return View(Item('process_setpoint'),
                     Item('process_value', style='readonly')
                     )
-#============= EOF ====================================
+# ============= EOF ====================================
 # def __init__(self, *args, **kw):
 #        super(Eurotherm, self).__init__(*args, **kw)
 #

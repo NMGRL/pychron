@@ -16,13 +16,13 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 import time
 import subprocess
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 def write_stats(stats):
     '''
@@ -114,7 +114,7 @@ if __name__ == '__main__':
     root = os.getcwd()
     scan(root)
     # plot_stats(root)
-#============= EOF ====================================
+# ============= EOF ====================================
 # def get_num_lines(file):
 #    '''
 #    '''

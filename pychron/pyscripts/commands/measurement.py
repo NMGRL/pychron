@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Int, Str, Bool, List, Event, Property, Enum, Float
 from traitsui.api import Item, CheckListEditor, VGroup, HGroup, ButtonEditor, EnumEditor
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.pyscripts.commands.core import Command
 
 from pychron.paths import paths

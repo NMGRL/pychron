@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from itertools import groupby
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 #from pychron.experiment.easy_parser import EasyParser
 from pychron.core.helpers.filetools import unique_path
 from pychron.core.helpers.iterfuncs import partition

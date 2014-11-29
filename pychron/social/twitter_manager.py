@@ -14,14 +14,14 @@
 ## limitations under the License.
 ## ===============================================================================
 #
-##=============enthought library imports=======================
+## =============enthought library imports=======================
 #from traits.api import HasTraits, Instance, Str, Password
 #from traitsui.api import View, Item
 #from pychron.managers.manager import Manager
 #from threading import Thread
 #
-##============= standard library imports ========================
-##============= local library imports  ==========================
+## ============= standard library imports ========================
+## ============= local library imports  ==========================
 ## def sudo(command, password=None, prompt="Enter password "):
 ##
 ##    import pexpect

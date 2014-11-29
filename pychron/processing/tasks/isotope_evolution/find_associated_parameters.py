@@ -20,14 +20,14 @@ from pychron.core.ui import set_qt
 
 set_qt()
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Instance, Date, Float, List, Property, Either, Time
 from traitsui.api import View, Item, UItem, CheckListEditor, HGroup, VGroup
 from traitsui.handler import Controller
 import apptools.sweet_pickle as pickle
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.paths import paths
 
 

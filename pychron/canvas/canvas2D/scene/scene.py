@@ -14,10 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, List, on_trait_change, Any, Event
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.canvas.canvas2D.scene.primitives.primitives import Primitive
 from pychron.canvas.canvas2D.scene.layer import Layer
 from canvas_parser import CanvasParser

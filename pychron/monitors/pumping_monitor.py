@@ -16,17 +16,17 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 # from traits.api import HasTraits
 # from traitsui.api import View,Item,Group,HGroup,VGroup
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import time
 
 from monitor import Monitor
 
 # from threading import Thread
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 cnt = 0
 class PumpingMonitor(Monitor):
@@ -86,4 +86,4 @@ class PumpingMonitor(Monitor):
 
         cnt += 1
         return state
-#============= EOF ====================================
+# ============= EOF ====================================

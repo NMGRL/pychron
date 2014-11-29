@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 # from traits.api import HasTraits
 # from traitsui.api import View, Item
 from pyface.action.action import Action
@@ -24,8 +24,8 @@ from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.lasers.laser_managers.pychron_laser_manager import PychronLaserManager
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
 
 

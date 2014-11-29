@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 
 class DummyPM(object):
@@ -144,4 +144,4 @@ class DummyELM(object):
 
     def get_software_lock(self, n):
         return False
-#============= EOF =====================================
+# ============= EOF =====================================

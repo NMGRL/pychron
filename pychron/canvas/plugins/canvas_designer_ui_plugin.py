@@ -16,11 +16,11 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import  on_trait_change
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.envisage.core.core_ui_plugin import CoreUIPlugin
 
 class CanvasDesignerUIPlugin(CoreUIPlugin):
@@ -65,7 +65,7 @@ class CanvasDesignerUIPlugin(CoreUIPlugin):
             debug = False
             if debug:
                 manager.open_default()
-#============= views ===================================
+# ============= views ===================================
     def _views_default(self):
         '''
         '''
@@ -96,4 +96,4 @@ class CanvasDesignerUIPlugin(CoreUIPlugin):
 #                         )
 #        return v
 
-#============= EOF ====================================
+# ============= EOF ====================================

@@ -14,16 +14,16 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Any, on_trait_change, Int, List, Bool, \
     Instance, Property, Str, HasTraits, Event
 from traits.trait_types import Date
 from traitsui.api import View, Item
 from pyface.timer.do_later import do_later
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from itertools import groupby
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.ui.qt.tabular_editor import MoveToRow
 from pychron.experiment.queue.base_queue import BaseExperimentQueue

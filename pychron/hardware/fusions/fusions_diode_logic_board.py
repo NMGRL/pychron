@@ -16,11 +16,11 @@
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 
-#=============standard library imports ========================
+# =============standard library imports ========================
 
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 from fusions_logic_board import FusionsLogicBoard
 
 class FusionsDiodeLogicBoard(FusionsLogicBoard):
@@ -56,4 +56,4 @@ class FusionsDiodeLogicBoard(FusionsLogicBoard):
 #        '''
 #        '''
 #        return KerrThorMotor(name='beam', parent=self)
-#====================== EOF ===========================================
+# ====================== EOF ===========================================

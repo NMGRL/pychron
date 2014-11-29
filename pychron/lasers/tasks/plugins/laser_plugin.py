@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import List, Str
 from envisage.ui.tasks.task_factory import TaskFactory
 from pyface.tasks.action.schema_addition import SchemaAddition
 from envisage.ui.tasks.task_extension import TaskExtension
 from pyface.tasks.action.schema import SMenu
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.envisage.initialization.initialization_parser import InitializationParser

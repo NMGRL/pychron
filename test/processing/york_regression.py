@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 # from traits.api import HasTraits
 from pychron.core.ui import set_toolkit
 set_toolkit('qt4')
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import unittest
 import numpy as np
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.regression.new_york_regressor import NewYorkRegressor, ReedYorkRegressor
 
 

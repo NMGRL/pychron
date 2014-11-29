@@ -18,20 +18,20 @@ ETSConfig.toolkit = 'qt4'
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Float, Button, Instance, Int, \
      Event, Property, Bool, Any, Enum, on_trait_change, List
 from traitsui.api import View, Item, VGroup, Group
 import apptools.sweet_pickle as pickle
 from pyface.timer.do_later import do_later
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import polyfit, linspace, polyval
 from threading import Event as TEvent
 from threading import Thread
 import os
 import time
 import random
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.managers.manager import Manager
 from pychron.paths import paths
 from pychron.graph.graph import Graph

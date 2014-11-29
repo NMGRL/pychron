@@ -21,7 +21,7 @@ from traits.api import String, List, Instance, Any, \
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
 # ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.envisage.tasks.editor_task import EditorTask
 from pychron.core.helpers.filetools import add_extension
 from pychron.pyscripts.tasks.git_actions import CommitChangesAction

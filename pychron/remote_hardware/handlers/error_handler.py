@@ -16,10 +16,10 @@
 
 
 
-#=============enthought library imports========================
+# =============enthought library imports========================
 
-#============= standard library imports =======================
-#============= local library imports  =========================
+# ============= standard library imports =======================
+# ============= local library imports  =========================
 from pychron.remote_hardware.errors import ManagerUnavaliableErrorCode, \
     InvalidCommandErrorCode, NoResponseErrorCode, FuncCallErrorCode
 from pychron.remote_hardware.errors.error import ErrorCode
@@ -66,4 +66,4 @@ class ErrorHandler:
 if __name__ == '__main__':
     ec = ErrorHandler()
 
-#============= EOF ============================================
+# ============= EOF ============================================

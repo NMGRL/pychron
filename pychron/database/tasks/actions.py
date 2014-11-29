@@ -14,11 +14,11 @@
 ## limitations under the License.
 ## ===============================================================================
 #
-##============= enthought library imports =======================
+## ============= enthought library imports =======================
 #from pyface.action.action import Action
 #
-##============= standard library imports ========================
-##============= local library imports  ==========================
+## ============= standard library imports ========================
+## ============= local library imports  ==========================
 ##from pychron.database.migrate import manage_database
 #from pychron.database.adapters.isotope_adapter import IsotopeAdapter
 #from pychron.database.manage_database import build_db, update_db

@@ -15,8 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.spectrometer.map.spectrometer_manager import MapSpectrometerManager
 from pychron.spectrometer.tasks.base_spectrometer_plugin import BaseSpectrometerPlugin
 

@@ -16,15 +16,15 @@
 from pychron.core.ui import set_qt
 
 set_qt()
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Str, Property, Button, cached_property, \
     String, HasTraits, Event, List
 from traitsui.api import View, HGroup, Label, spring, EnumEditor, UItem
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 import yaml
 import ast
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_directory, add_extension
 from pychron.experiment.script.options_editor import OptionsEditor
 from pychron.paths import paths

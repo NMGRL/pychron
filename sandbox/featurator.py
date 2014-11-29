@@ -24,9 +24,9 @@ test features of pychron using unittest
 
 
 '''
-#=============enthought library imports=======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# =============enthought library imports=======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 import subprocess
 import time
 
@@ -157,5 +157,5 @@ if __name__ == '__main__':
     main(launch=args.launch,
          simulator=args.simulator)
 
-#============= EOF =====================================
+# ============= EOF =====================================
 

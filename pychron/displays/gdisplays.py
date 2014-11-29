@@ -16,10 +16,10 @@
 from pychron.utils import get_display_size
 from pychron.displays.display import ErrorDisplay, DisplayController
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 ds = get_display_size()
 
@@ -122,7 +122,7 @@ gTraceDisplay = ErrorDisplay(
 #                  )
 #        self.messages.insert(0, m)
 #
-#    #============================================================
+#    # ============================================================
 #
 #
 #    def traits_view(self):

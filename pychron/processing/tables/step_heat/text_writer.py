@@ -14,12 +14,12 @@
 # # limitations under the License.
 # # ===============================================================================
 #
-# #============= enthought library imports =======================
+# # ============= enthought library imports =======================
 # from traits.api import HasTraits, Bool, Instance
 # from pychron.loggable import Loggable
-# #============= standard library imports ========================
+# # ============= standard library imports ========================
 # from itertools import groupby
-# #============= local library imports  ==========================
+# # ============= local library imports  ==========================
 # class StepHeatTableTextOptions(HasTraits):
 #     use_sample_sheets = Bool(True)
 #

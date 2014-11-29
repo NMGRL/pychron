@@ -16,15 +16,15 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Dict
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
-#============= views ===================================
-#============= EOF ====================================
+# ============= views ===================================
+# ============= EOF ====================================
 from pychron.hardware.core.core_device import CoreDevice
 class Subsystem(CoreDevice):
     '''

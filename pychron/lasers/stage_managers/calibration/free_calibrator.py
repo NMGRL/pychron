@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Button, Bool, Any, List
 from traitsui.api import Item, HGroup
 # from pychron.core.ui.custom_label_editor import CustomLabel
@@ -22,8 +22,8 @@ from traitsui.api import Item, HGroup
 from pychron.lasers.stage_managers.calibration.calibrator import TrayCalibrator
 from pychron.core.geometry.reference_point import ReferencePoint
 from pychron.core.geometry.affine import calculate_rigid_transform
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
 class FreeCalibrator(TrayCalibrator):

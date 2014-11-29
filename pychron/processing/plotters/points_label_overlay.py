@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from chaco.abstract_overlay import AbstractOverlay
 from kiva.fonttools import str_to_font
 from traits.api import cached_property, Property, Str, Bool
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 class PointsLabelOverlay(AbstractOverlay):
     font = Str('modern 10')
     gfont = Property(depends_on='font')

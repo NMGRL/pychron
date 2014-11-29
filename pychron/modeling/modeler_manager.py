@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance, DelegatesTo, List, Property
 from traitsui.api import View, Item
-#============= standard library imports ========================
+# ============= standard library imports ========================
 # import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from modeler import Modeler
 from pychron.envisage.core.envisage_manager import EnvisageManager
 from pychron.envisage.core.envisage_editor import EnvisageEditor
@@ -119,5 +119,5 @@ class ModelerManager(EnvisageManager):
 
     def data_select_view(self):
         return View(Item('_modeler', style='custom', show_label=False))
-#============= views ===================================
-#============= EOF ====================================
+# ============= views ===================================
+# ============= EOF ====================================

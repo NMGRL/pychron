@@ -24,15 +24,15 @@ from pychron.paths import paths
 set_qt()
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 from pyface.file_dialog import FileDialog
 from traits.api import HasTraits, List, Enum, Float, Int, Button, Any, Property, Str
 from traitsui.api import View, Item, Controller, UItem, HGroup, VGroup
 from traitsui.editors import ListEditor
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
 class ActionItem(HasTraits):

@@ -14,13 +14,13 @@
 # # limitations under the License.
 # # ===============================================================================
 #
-# #============= enthought library imports =======================
+# # ============= enthought library imports =======================
 # from traits.api import HasTraits, Any, String, Str, Instance, Bool, \
 #     on_trait_change
 # # from traitsui.api import View, Item, TableEditor
-# #============= standard library imports ========================
+# # ============= standard library imports ========================
 # import os
-# #============= local library imports  ==========================
+# # ============= local library imports  ==========================
 # from pychron.paths import paths
 # from pychron.pychron_constants import NULL_STR, SCRIPT_KEYS, SCRIPT_NAMES
 # from pychron.experiment.script.script import Script

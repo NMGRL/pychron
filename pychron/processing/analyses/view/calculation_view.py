@@ -26,7 +26,7 @@ set_qt()
 from traits.api import HasTraits, Str
 from traitsui.api import View, UItem
 # ============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.ui.text_editor import myTextEditor
 
 

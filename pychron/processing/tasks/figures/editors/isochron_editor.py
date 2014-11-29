@@ -14,10 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance, on_trait_change
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.processing.tasks.figures.figure_editor import FigureEditor
 from pychron.processing.plotters.figure_container import FigureContainer
 from pychron.processing.plotter_options_manager import InverseIsochronOptionsManager

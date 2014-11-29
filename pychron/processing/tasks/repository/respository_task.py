@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Any, on_trait_change, DelegatesTo, List
 from pyface.tasks.task_layout import TaskLayout, HSplitter
 
@@ -28,8 +28,8 @@ from pychron.processing.repository.igsn import IGSN
 
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class RepositoryTask(AnalysisEditTask):
     name = 'Repository'

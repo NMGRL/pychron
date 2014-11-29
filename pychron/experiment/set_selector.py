@@ -14,11 +14,11 @@
 # # limitations under the License.
 ## ===============================================================================
 #
-##============= enthought library imports =======================
+## ============= enthought library imports =======================
 # from traits.api import HasTraits, Any, Button, Property, Int, Str, List, Bool
 # from traitsui.api import View, Item, ListStrEditor, HGroup
-##============= standard library imports ========================
-##============= local library imports  ==========================
+## ============= standard library imports ========================
+## ============= local library imports  ==========================
 #
 #
 # class SetSelector(HasTraits):

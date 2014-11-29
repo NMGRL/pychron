@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Int
 from chaco.ticks import DefaultTickGenerator
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import log10
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 
 class SparseTicks(DefaultTickGenerator):

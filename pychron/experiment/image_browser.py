@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Instance, List, Str, Bool, on_trait_change, String, \
     Button, Dict, Any
 from traitsui.api import View, Item, ListStrEditor, HGroup, VGroup, \
@@ -25,12 +25,12 @@ from chaco.tools.image_inspector_tool import ImageInspectorOverlay, \
 from chaco.tools.api import ZoomTool, PanTool
 from enable.component_editor import ComponentEditor
 from enable.component import Component
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import Image
 from numpy import array
 import os
 import httplib
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.paths import paths

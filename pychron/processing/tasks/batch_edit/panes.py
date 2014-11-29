@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traitsui.api import View, VGroup, UItem, \
     HGroup, TableEditor, ButtonEditor, Item
@@ -26,8 +26,8 @@ from pychron.paths import paths
 
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
 class BatchEditPane(TraitsTaskPane):

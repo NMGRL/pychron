@@ -14,19 +14,19 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance, Str, on_trait_change, \
     Bool, Tuple, Float
 from traitsui.api import View, Item
 from enable.component_editor import ComponentEditor
 import apptools.sweet_pickle as pickle
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 import random
 
 from threading import Thread
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.managers.manager import Manager
 from pychron.canvas.canvas2D.stage_visualization_canvas import StageVisualizationCanvas, \
     SampleHole

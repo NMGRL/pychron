@@ -17,16 +17,16 @@
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import HasTraits, Any, Int, List, Enum, String, Float, Str
 from traitsui.api import View, Item, VGroup, TableEditor
 from traitsui.list_str_adapter import ListStrAdapter
 
 from traitsui.table_column import ObjectColumn
-#=============standard library imports ========================
+# =============standard library imports ========================
 
 import re
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 
 func_regex = re.compile(r'p\[[0-9]\]')
 
@@ -245,7 +245,7 @@ class RegressionEditor(HasTraits):
                            Item('stats', editor=editor, show_label=False)
                            )
                     )
-#========================= EOF =========================
+# ========================= EOF =========================
 # class RegressionGroupEditor(HasTraits):
 #    '''
 #        G{classtree}

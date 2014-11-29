@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance, Button, Int, Bool
 from traitsui.api import Item, VGroup, HGroup, RangeEditor
 from pyface.timer.do_later import do_after
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 import time
 from threading import Thread, Event
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.database.core.database_selector import DatabaseSelector
 from pychron.database.orms.video_orm import VideoTable
 from pychron.image.image_editor import ImageEditor

@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, List, Any, Str
 from traitsui.api import View, Item, TabularEditor, UItem, HGroup, VGroup
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.envisage.browser.adapters import ProjectAdapter, SampleAdapter
 
 

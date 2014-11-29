@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from enable.component_editor import ComponentEditor
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traitsui.api import View, UItem, TreeEditor, TreeNode, HSplit
 from traits.api import List
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.canvas.canvas2D.scene.layer import Layer
 from pychron.canvas.canvas2D.scene.primitives.primitives import Primitive
 from pychron.canvas.canvas2D.scene.scene import Scene

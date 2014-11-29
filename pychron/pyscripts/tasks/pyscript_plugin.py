@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from envisage.ui.tasks.task_factory import TaskFactory
 from envisage.ui.tasks.task_extension import TaskExtension
 from pyface.tasks.action.schema_addition import SchemaAddition
 from pyface.tasks.action.task_action import TaskAction
 from pyface.tasks.action.schema import SMenu
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.pyscripts.tasks.pyscript_actions import OpenPyScriptAction, \
     NewPyScriptAction, OpenHopsEditorAction, NewHopsEditorAction

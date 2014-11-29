@@ -13,14 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import List, Str, HasTraits, Float, Int
 from traitsui.api import View, HGroup, Item, ListEditor, InstanceEditor, Group
-#=============standard library imports ========================
+# =============standard library imports ========================
 from numpy import random, char
 import time
 
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.core.ui.color_map_bar_editor import BarGaugeEditor
 
@@ -245,4 +245,4 @@ class MicroIonController(CoreDevice):
         return r
 
 
-#============= EOF ====================================
+# ============= EOF ====================================

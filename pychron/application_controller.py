@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import weakref
 
 from traits.api import Any
@@ -23,8 +23,8 @@ from traitsui.handler import Controller
 from pychron.core.ui.gui import invoke_in_main_thread
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class ApplicationController(Controller):
     application = Any

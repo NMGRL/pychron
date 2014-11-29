@@ -14,9 +14,9 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.managers.multruns_report_manager import MultrunsReportManager
 from pychron.has_communicator import HasCommunicator
 from pychron.rpc.query import rpc_query

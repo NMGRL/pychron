@@ -16,16 +16,16 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Float
 from traitsui.api import View, Item
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
-#============= views ===================================
-#============= EOF ====================================
+# ============= views ===================================
+# ============= EOF ====================================
 
 class Macro(HasTraits):
     '''

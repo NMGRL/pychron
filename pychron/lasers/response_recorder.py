@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Array, Any, Instance
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import struct
 import time
 from threading import Thread
 from numpy import array, vstack
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
 from pychron.managers.data_managers.csv_data_manager import CSVDataManager
 

@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits
 from traitsui.menu import Action, Menu as MenuManager
 
@@ -25,8 +25,8 @@ from pychron.pychron_constants import PLUSMINUS
 # from pyface.action.group import Group
 # from pyface.action.api import Group, MenuManager
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class ContextMenuMixin(HasTraits):
     use_context_menu = True

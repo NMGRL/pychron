@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
 from traits.api import List
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import time
 import inspect
 import re
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.external_pipette.apis_manager import InvalidPipetteError
 from pychron.external_pipette.protocol import IPipetteManager
 from pychron.hardware.core.exceptions import TimeoutError
@@ -727,4 +727,4 @@ class ExtractionPyScript(ValvePyScript):
     def _stop_pattern(self, protocol=None):
         self._extraction_action([('stop_pattern', (), {})], protocol=protocol)
 
-#============= EOF ====================================
+# ============= EOF ====================================

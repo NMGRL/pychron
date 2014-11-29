@@ -14,10 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import String, Str, Int
 # from traitsui.api import View, Item, TableEditor
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from cStringIO import StringIO
 import cgi
@@ -29,7 +29,7 @@ import sys
 import shutil
 import mimetypes
 from threading import Thread
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 # ===============================================================================
 # for debugging
 # ===============================================================================

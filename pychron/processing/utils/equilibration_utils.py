@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 from numpy import asarray, convolve, exp, linspace, where
 from pylab import plot, show, axvline, legend, \
     xlabel, ylabel, polyval, axhline, ylim, xlim, array
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 def calc_optimal_eqtime(xs, ys):
 
     xs, ys = asarray(xs), asarray(ys)

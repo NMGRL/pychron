@@ -16,9 +16,9 @@
 
 
 
-#=============enthought library imports=======================
-#=============standard library imports ========================
-#=============local library imports  ==========================
+# =============enthought library imports=======================
+# =============standard library imports ========================
+# =============local library imports  ==========================
 from kerr_motor import KerrMotor
 class KerrThorMotor(KerrMotor):
     '''
@@ -37,4 +37,4 @@ class KerrThorMotor(KerrMotor):
 #                   (addr, '00', 100, 'reset position'),
                   ]
         self._initialize_motor(commands, *args, **kw)
-#=============EOF-==============================================
+# =============EOF-==============================================

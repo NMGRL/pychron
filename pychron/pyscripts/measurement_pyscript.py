@@ -14,8 +14,8 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 import ast
 import time
 import os
@@ -30,7 +30,7 @@ import yaml
 
 
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import fileiter
 from pychron.paths import paths
 from pychron.pychron_constants import MEASUREMENT_COLOR

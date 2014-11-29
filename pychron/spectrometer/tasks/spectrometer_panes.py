@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Str
 from traitsui.api import View, Item, VGroup, HGroup, EnumEditor, spring, \
     Label, Spring, ListEditor, Group, InstanceEditor, UItem, TableEditor
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from pyface.tasks.traits_dock_pane import TraitsDockPane
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn, TableColumn
 from pychron.envisage.icon_button_editor import icon_button_editor

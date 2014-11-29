@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.etsconfig.etsconfig import ETSConfig
 
 ETSConfig.toolkit = 'qt4'
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 import unittest
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 

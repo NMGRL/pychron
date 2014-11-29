@@ -20,9 +20,9 @@ from traits.api import Property
 from pyface.action.api import Action
 from pyface.timer.do_later import do_later
 from pyface.tasks.action.task_action import TaskAction
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.paths import paths
 
 from pychron.pychron_constants import SPECTROMETER_PROTOCOL,SCAN_PROTOCOL,EL_PROTOCOL, ION_OPTICS_PROTOCOL
@@ -213,4 +213,4 @@ class DBMagnetFieldTableHistoryAction(Action):
             mv = MFTableHistoryView(model=mfh)
             mv.edit_traits()
 
-#============= EOF ====================================
+# ============= EOF ====================================

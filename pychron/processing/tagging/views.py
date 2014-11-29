@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance
 from traitsui.api import View, Item, UItem, VGroup, HGroup
 from traitsui.editors import TableEditor, TabularEditor
@@ -24,9 +24,9 @@ from traitsui.handler import Controller
 from traitsui.table_column import ObjectColumn
 from traitsui.tabular_adapter import TabularAdapter
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 # ============= EOF =============================================
 from pychron.envisage.icon_button_editor import icon_button_editor

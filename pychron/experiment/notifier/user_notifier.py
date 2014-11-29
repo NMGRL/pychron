@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Int, Instance, Bool
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import smtplib
 import socket
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.version import __version__
 from pychron.experiment.notifier.templates import email_template
 from pychron.loggable import Loggable

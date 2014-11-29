@@ -14,11 +14,11 @@
 # # limitations under the License.
 # # ===============================================================================
 #
-# #============= enthought library imports =======================
+# # ============= enthought library imports =======================
 # from traits.api import HasTraits, Str, Int
 # from traitsui.api import View, HGroup, UItem
-# #============= standard library imports ========================
-# #============= local library imports  ==========================
+# # ============= standard library imports ========================
+# # ============= local library imports  ==========================
 #
 # DETORDER = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
 # class Hop(HasTraits):

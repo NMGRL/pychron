@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from threading import Thread
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.remote_hardware.errors import InvalidArgumentsErrorCode, InvalidValveErrorCode, \
     InvalidIPAddressErrorCode, ValveSoftwareLockErrorCode, ValveActuationErrorCode
 from base_remote_hardware_handler import BaseRemoteHardwareHandler
@@ -291,4 +291,4 @@ class ExtractionlineHandler(BaseRemoteHardwareHandler):
 #
 #
 
-#============= EOF ====================================
+# ============= EOF ====================================

@@ -17,12 +17,12 @@ from pychron.core.helpers.color_generators import colornames
 from pychron.core.ui import set_qt
 
 set_qt()
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, List, Bool, Int, Color, Range
 from traitsui.api import View, Item, HGroup, VGroup, UItem, ListEditor, InstanceEditor
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 class Fill(HasTraits):
     use_filled_line = Bool
     color = Color

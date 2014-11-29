@@ -14,18 +14,18 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
 from chaco.array_data_source import ArrayDataSource
 from traits.api import HasTraits, Any, Int, Str, Tuple, Property, \
     Event, Bool, cached_property, on_trait_change
 from chaco.tools.data_label_tool import DataLabelTool
 from chaco.tools.broadcaster import BroadcasterTool
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import Inf, inf
 import re
 from uncertainties import std_dev, nominal_value, ufloat
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.graph.error_bar_overlay import ErrorBarOverlay
 from pychron.graph.tools.limits_tool import LimitsTool, LimitOverlay
 from pychron.processing.analyses.analysis_group import AnalysisGroup
@@ -262,9 +262,9 @@ class BaseArArFigure(HasTraits):
         ap.ylimits = self.graph.get_y_limits(pid)
         ap.xlimits = self.graph.get_x_limits(pid)
 
-    #===========================================================================
+    # ===========================================================================
     # aux plots
-    #===========================================================================
+    # ===========================================================================
     def _get_aux_plot_omits(self, po, ys):
         omits = []
         fs = po.filter_str

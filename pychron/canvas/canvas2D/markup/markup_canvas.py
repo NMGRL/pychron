@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Enum, Any
-#=============standard library imports ========================
+# =============standard library imports ========================
 from numpy import abs
 import collections
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 from pychron.canvas.canvas2D.base_data_canvas import BaseDataCanvas
 from pychron.canvas.canvas2D.scene.primitives.primitives import PointIndicator
 # from pychron.canvas.canvas2D.markup.markup_items import PointIndicator
@@ -758,7 +758,7 @@ class InteractionMarkupCanvas(MarkupCanvas):
         yadj = -ys + event.y
         return xadj, yadj
 
-#============= EOF ====================================
+# ============= EOF ====================================
 #    def mldraw_mouse_move(self,event):
 #        self.ldraw_mouse_move(event)
 #

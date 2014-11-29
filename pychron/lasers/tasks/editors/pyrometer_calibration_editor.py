@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 import time
 
@@ -23,9 +23,9 @@ from traits.api import Instance
 from traitsui.api import View, UItem
 
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import array
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.lasers.scanner import Scanner
 from pychron.lasers.tasks.editors.laser_editor import LaserEditor
 from pychron.managers.data_managers.csv_data_manager import CSVDataManager

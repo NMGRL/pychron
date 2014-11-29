@@ -14,16 +14,16 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Float, Str, Bool, Property, Color, \
     Int, Array
 from traitsui.api import View, Item, HGroup, \
     spring
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 from numpy import loadtxt, polyfit, polyval, hstack, poly1d
 from scipy import optimize
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
 from pychron.paths import paths
 from pychron.core.ui.qt.color_square_editor import ColorSquareEditor

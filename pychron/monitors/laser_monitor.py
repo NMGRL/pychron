@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Float, Int
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import time
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from monitor import Monitor
 
 # NFAILURES = 3
@@ -71,4 +71,4 @@ class LaserMonitor(Monitor):
             manager.emergency_shutoff(reason=msg)
 
 
-#============= EOF ====================================
+# ============= EOF ====================================

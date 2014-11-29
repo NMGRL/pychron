@@ -14,9 +14,9 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.canvas.canvas2D.video_canvas import VideoCanvas
 # from pychron.canvas.canvas2D.markup.markup_items import Rectangle
 from laser_tray_canvas import LaserTrayCanvas
@@ -112,4 +112,4 @@ class VideoLaserTrayCanvas(LaserTrayCanvas, VideoCanvas):
 # #            self.parent.canvas.set_stage_position(x, y)
 #
 # #        super(LaserTrayCanvas, self).normal_key_pressed(event)
-#============= EOF ====================================
+# ============= EOF ====================================

@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from pychron.core.xml.xml_parser import XMLParser
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 def get_volume(elem, tag='volume', default=0):
     """
@@ -70,4 +70,4 @@ class CanvasParser(XMLParser):
 
 
 
-#============= EOF ====================================
+# ============= EOF ====================================

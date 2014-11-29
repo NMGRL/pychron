@@ -14,18 +14,18 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
 from traits.api import HasTraits, Float, Int, List, Str, Any, Event, Property, on_trait_change, Range
 from traitsui.api import View, Item, HGroup, spring, EnumEditor, ButtonEditor, Group, TextEditor
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import array, hstack, Inf, savetxt
 import csv
 import os
 from threading import Thread
 import struct
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import unique_path
 from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.paths import paths

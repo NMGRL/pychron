@@ -16,15 +16,15 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from chaco.api import AbstractOverlay
 from traits.api import Bool
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import linspace, hstack, sqrt, corrcoef, column_stack, array, delete
 from numpy.linalg import eig
 import math
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 # http://www.earth-time.org/projects/upb/public_docs/ErrorEllipses.pdf
 # 5) To create a 95% confidence ellipse from the 1s error ellipse, we must enlarge it by a factor of 2.4477.

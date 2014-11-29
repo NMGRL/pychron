@@ -16,11 +16,11 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from actuator import Actuator
 
 
@@ -43,4 +43,4 @@ class ValveController(Actuator):
 #        '''
 #        if self._cdevice is not None:
 #            return self._cdevice.get_hard_lock_indicator_state(*args, **kw)
-#============= EOF ====================================
+# ============= EOF ====================================

@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 # import xmlrpclib
 # import hmac
 # import Pyro4 as pyro
 # pyro.configuration.HMAC_KEY = bytes(hmac.new('pychronjjj.rpc.hmac').digest())
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.hardware.core.communicators.communicator import Communicator
 
 # return to xml-rpc ?

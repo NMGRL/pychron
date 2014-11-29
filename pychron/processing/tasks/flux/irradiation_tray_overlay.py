@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from chaco.abstract_overlay import AbstractOverlay
 from traits.api import Bool
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from kiva.fonttools import str_to_font
 from numpy import linspace, hstack, vstack, array
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 class IrradiationTrayOverlay(AbstractOverlay):
     _cached_pts = None

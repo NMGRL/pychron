@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from itertools import groupby
 
 from pyface.tasks.task_layout import TaskLayout
@@ -32,8 +32,8 @@ from pyface.confirmation_dialog import ConfirmationDialog
 
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import add_extension, view_file
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.preference_mixin import PreferenceMixin

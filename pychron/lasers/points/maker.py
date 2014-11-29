@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import math
 
 from enable.abstract_overlay import AbstractOverlay
@@ -28,8 +28,8 @@ from pychron.loggable import Loggable
 
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class BaseMaker(Loggable):
     canvas = Any

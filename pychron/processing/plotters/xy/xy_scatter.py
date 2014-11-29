@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from chaco.array_data_source import ArrayDataSource
 from chaco.tools.broadcaster import BroadcasterTool
 from traits.api import Instance
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import array
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from uncertainties import nominal_value, std_dev
 from pychron.core.helpers.formatting import floatfmt, format_percent_error
 from pychron.graph.error_bar_overlay import ErrorBarOverlay

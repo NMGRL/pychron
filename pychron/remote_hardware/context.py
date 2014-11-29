@@ -16,7 +16,7 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 # from traits.api import HasTraits, on_trait_change, Str, Int, Float, Button
 # from traitsui.api import View, Item, Group, HGroup, VGroup
 from threading import Thread
@@ -24,9 +24,9 @@ import time
 # from collections import Counter
 import random
 from pychron.loggable import Loggable
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 
 class Message(object):

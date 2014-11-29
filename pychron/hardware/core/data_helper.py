@@ -16,11 +16,11 @@
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 
 def make_bitarray(data, width=8):
@@ -28,4 +28,4 @@ def make_bitarray(data, width=8):
     ba = '{{:0{}b}}'.format(width).format(data)
     return ba
 
-#============= EOF =====================================
+# ============= EOF =====================================

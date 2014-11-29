@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Bool, Enum, String, Property
 from traitsui.api import VGroup, UItem
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.processing.plotters.options.plotter import PlotterOptions, FONTS, SIZES
 from pychron.pychron_constants import ERROR_TYPES
 

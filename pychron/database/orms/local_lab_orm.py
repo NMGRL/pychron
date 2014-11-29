@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, DateTime, String
 from sqlalchemy.sql.expression import func
@@ -22,8 +22,8 @@ from sqlalchemy.sql.expression import func
 from pychron.database.core.base_orm import BaseMixin
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 Base = declarative_base()
 class LabTable(Base, BaseMixin):

@@ -14,10 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Str, Any, Bool, Property, Int, Dict
 from pyface.confirmation_dialog import confirm
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from threading import Event, Thread, Lock
 from Queue import Empty, LifoQueue
 import hashlib
@@ -28,7 +28,7 @@ import traceback
 import yaml
 import sys
 import weakref
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.paths import paths
 from pychron.loggable import Loggable
 from pychron.globals import globalv
@@ -482,9 +482,9 @@ class PyScript(Loggable):
         ctx = self._get_interpolation_context()
         return ctx.keys()
 
-    #==============================================================================
+    # ==============================================================================
     # commands
-    #==============================================================================
+    # ==============================================================================
     @command_register
     def gosub(self, name=None, root=None, klass=None, argv=None, **kw):
 
@@ -736,9 +736,9 @@ class PyScript(Loggable):
             self.warning('could not find manager name="{}" func="{}"'.format(name,
                                                                              ','.join([f for f, _, _ in func])))
 
-    #==============================================================================
+    # ==============================================================================
     # Sleep/ Wait
-    #==============================================================================
+    # ==============================================================================
     def _sleep(self, v, message=None):
         v = float(v)
 

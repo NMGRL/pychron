@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from datetime import datetime
 
 from pyface.tasks.traits_dock_pane import TraitsDockPane
@@ -22,8 +22,8 @@ from traits.api import Instance, Property, Int, Color, Str
 from traitsui.api import View, UItem, TabularEditor, VGroup
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.processing.tasks.analysis_edit.panes import TablePane
 from pychron.pychron_constants import LIGHT_RED

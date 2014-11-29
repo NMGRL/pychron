@@ -14,7 +14,7 @@
 # # limitations under the License.
 ## ===============================================================================
 #
-##============= enthought library imports =======================
+## ============= enthought library imports =======================
 # from traits.api import HasTraits, Button, Str, List, Property, \
 #    cached_property, Instance, Dict
 # from traitsui.api import View, Item, TableEditor, EnumEditor, \
@@ -22,8 +22,8 @@
 # from pychron.database.adapters.isotope_adapter import IsotopeAdapter
 # from pychron.paths import paths
 # import itertools
-##============= standard library imports ========================
-##============= local library imports  ==========================
+## ============= standard library imports ========================
+## ============= local library imports  ==========================
 #
 # class Entry(HasTraits):
 #    apply = Button

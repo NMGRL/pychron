@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Float
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.database.core.database_selector import DatabaseSelector
 from pychron.database.orms.power_orm import PowerTable
 from pychron.managers.data_managers.h5_data_manager import H5DataManager

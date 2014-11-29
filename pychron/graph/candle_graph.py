@@ -16,11 +16,11 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from graph import Graph
 
 
@@ -74,4 +74,4 @@ if __name__ == '__main__':
 
     c.new_series(x=x, y=y, ymin=ymin, ymax=ymax, ybarmin=ybarmin, ybarmax=ybarmax)
     c.configure_traits()
-#============= EOF ====================================
+# ============= EOF ====================================

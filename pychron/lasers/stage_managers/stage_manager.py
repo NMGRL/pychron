@@ -14,18 +14,18 @@
 # limitations under the License.
 # ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import DelegatesTo, Property, Instance, \
     Button, List, String, Event, Bool
 from traitsui.api import View, Item, HGroup, VGroup, spring, \
     EnumEditor
 # from apptools.preferences.preference_binding import bind_preference
-#=============standard library imports =======================
+# =============standard library imports =======================
 import os
 # from threading import Thread
 import time
 from numpy import array, asarray
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 from pychron.experiment.utilities.position_regex import POINT_REGEX, XY_REGEX, TRANSECT_REGEX
 from pychron.managers.manager import Manager
 from pychron.canvas.canvas2D.laser_tray_canvas import LaserTrayCanvas
@@ -71,9 +71,9 @@ class StageManager(Manager):
     stage_maps = Property(depends_on='_stage_maps')
 
     _stage_maps = List
-    #===========================================================================
+    # ===========================================================================
     # buttons
-    #===========================================================================
+    # ===========================================================================
     home = Button('home')
     home_option = String('Home All')
     home_options = List
@@ -1194,7 +1194,7 @@ if __name__ == '__main__':
     s.load()
     s.stage_controller.bootstrap()
     s.configure_traits()
-#========================EOF============================
+# ========================EOF============================
 
 # view groups
     # ===============================================================================

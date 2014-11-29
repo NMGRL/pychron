@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.plot_label import PlotLabel
 from traits.api import List, Bool, Int, on_trait_change
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class IntegratedPlotLabel(PlotLabel):
     relative_position=Int

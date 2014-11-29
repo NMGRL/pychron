@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Str, List, Int, Bool
 
 from pychron.core.helpers.filetools import list_directory
 from pychron.paths import paths
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 # class UValue(HasTraits):
 #     name = Str

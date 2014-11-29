@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pyface.action.menu_manager import MenuManager
 from traits.api import List, Property, Int, HasTraits
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 # ============= EOF =============================================
 from traitsui.menu import Action

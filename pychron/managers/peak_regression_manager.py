@@ -16,7 +16,7 @@
 #
 #
 #
-##=============enthought library imports=======================
+## =============enthought library imports=======================
 # from traits.api import HasTraits, File, Str, Bool, Event, Enum, Button, \
 #    String, Property, List, Int, Any, Directory
 # from traitsui.api import View, Item, HGroup, spring, TableEditor, ButtonEditor
@@ -25,12 +25,12 @@
 # from pyface.message_dialog import information
 #
 #
-##=============standard library imports ========================
+## =============standard library imports ========================
 # import os
 # import csv
 # import numpy as np
 # from threading import Thread
-##=============local library imports  ==========================
+## =============local library imports  ==========================
 # from manager import Manager
 # from pychron.data_processing.import_filters.qtegra_filter import QtegraFilter
 # from pychron.paths import paths
@@ -407,6 +407,6 @@
 #    test()
 #
 #
-##============= EOF ====================================
+## ============= EOF ====================================
 #
 #

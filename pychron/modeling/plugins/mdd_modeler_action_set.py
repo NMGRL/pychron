@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from envisage.ui.action.api import Action  # , Group, Menu, ToolBar
 from envisage.ui.workbench.api import WorkbenchActionSet
 
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 action_path = 'pychron.modeling.plugins.mdd_modeler_actions:'
 mdd_path = 'MenuBar/MDD'
@@ -71,4 +71,4 @@ class MDDModelerActionSet(WorkbenchActionSet):
 
 
              ]
-#============= EOF ====================================
+# ============= EOF ====================================

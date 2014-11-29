@@ -14,10 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 # from traits.api import HasTraits, List
 # from traitsui.api import View, Item
-#============= standard library imports ========================
+# ============= standard library imports ========================
 # from reportlab.platypus.flowables import PageBreak, Flowable
 from reportlab.platypus.doctemplate import FrameBreak
 # from reportlab.lib.pagesizes import letter
@@ -26,7 +26,7 @@ from reportlab.lib import colors
 from reportlab.platypus.frames import Frame
 
 # from chaco.pdf_graphics_context import PdfPlotGraphicsContext
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.loading.component_flowable import ComponentFlowable
 from pychron.canvas.canvas2D.scene.primitives.primitives import LoadIndicator
 from reportlab.platypus.flowables import Spacer

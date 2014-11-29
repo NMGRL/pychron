@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 import ConfigParser
 
@@ -24,8 +24,8 @@ from traitsui.api import View, Item, ButtonEditor
 from pychron.spectrometer.jobs.spectrometer_task import SpectrometerTask
 from pychron.paths import paths
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
 class RelativeDetectorPositions(SpectrometerTask):

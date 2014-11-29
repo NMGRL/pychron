@@ -14,18 +14,18 @@
 # limitations under the License.
 # ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import Color, Property, Tuple, Float, Any, Bool, Range, on_trait_change, \
     Enum, List, Int, File, Instance
 # from traitsui.api import View, Item, VGroup, HGroup, ColorEditor
 from chaco.api import AbstractOverlay
 from kiva import constants
 from kiva.agg.agg import GraphicsContextArray
-#=============standard library imports ========================
+# =============standard library imports ========================
 from numpy import array
 from PIL import Image
 # import math
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 from pychron.canvas.canvas2D.map_canvas import MapCanvas
 
 from pychron.canvas.canvas2D.scene.primitives.laser_primitives import Transect, \
@@ -621,7 +621,7 @@ class LaserTrayCanvas(MapCanvas):
                 #for o in self.crosshairs_overlays:
                 #if o.visible:
                 #o.overlay(self, gc, *args, **kw)
-                #========================EOF====================================================
+                # ========================EOF====================================================
                 #    def _set_transect_points(self, tran, step, line_color=(1, 0, 0), point_color=(1, 0, 0), **ptargs):
                 #        for pi in tran.step_points:
                 #            self.remove_point(pi)
@@ -825,7 +825,7 @@ class LaserTrayCanvas(MapCanvas):
                 #        gc.restore_state()
 
 
-                #========================EOF============================
+                # ========================EOF============================
                 #    def clear_points(self):
                 #        popkeys = []
                 #        self.point_counter = 0

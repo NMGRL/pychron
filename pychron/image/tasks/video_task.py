@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance, on_trait_change, List
 
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task import BaseManagerTask
 from pychron.image.tasks.video_pane import VideoPane, SourcePane, ControlsPane
 from pychron.image.video_source import VideoSource, parse_url

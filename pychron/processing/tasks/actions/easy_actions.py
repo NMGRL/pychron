@@ -15,13 +15,13 @@
 # ===============================================================================
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pyface.action.api import Action
 from pyface.tasks.action.task_action import TaskAction
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 
 
@@ -111,6 +111,6 @@ class EasyAverageBlanksAction(Action):
         e.make()
 
 
-#============= EOF ====================================
+# ============= EOF ====================================
 
 

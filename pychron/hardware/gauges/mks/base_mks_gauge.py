@@ -16,13 +16,13 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
-#============= views ===================================
+# ============= views ===================================
 from pychron.hardware.gauges.base_gauge import BaseGauge
 
 class BaseMKSGauge(BaseGauge):
@@ -164,4 +164,4 @@ class BaseMKSGauge(BaseGauge):
         elif type_ in ['filament', 'setpoint_enable']:
             return True if value[si:] == 'ON' else False
 
-#============= EOF ====================================
+# ============= EOF ====================================

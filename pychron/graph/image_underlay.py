@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from chaco.abstract_overlay import AbstractOverlay
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import Image
 from numpy import array
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 class ImageUnderlay(AbstractOverlay):
     _cached_img = None

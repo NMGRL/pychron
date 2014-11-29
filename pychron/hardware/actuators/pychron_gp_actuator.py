@@ -100,4 +100,4 @@ class PychronGPActuator(GPActuator):
                 time.sleep(0.05)
                 resp = self.get_channel_state(obj) == state
         return resp
-#============= EOF =====================================
+# ============= EOF =====================================

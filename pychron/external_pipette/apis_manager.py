@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance, Button, Bool, Str, List, provides, Property
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.external_pipette.protocol import IPipetteManager
 from pychron.hardware.apis_controller import ApisController
 from pychron.managers.manager import Manager

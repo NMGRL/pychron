@@ -13,12 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import List, Property, \
     Str, Dict
 from traitsui.api import UItem, HGroup, Item, EnumEditor
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.templater.base_templater import BaseTemplater
 from pychron.core.templater.templater_view import BaseTemplateView
 

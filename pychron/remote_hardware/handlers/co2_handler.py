@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from laser_handler import LaserHandler
 
 
@@ -34,4 +34,4 @@ class Co2Handler(LaserHandler):
 #        manager.set_laser_power(p)
 #        return result
 
-#============= EOF ====================================
+# ============= EOF ====================================

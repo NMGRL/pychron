@@ -19,7 +19,7 @@ from enable.component_editor import ComponentEditor
 from traits.api import HasTraits, Button, Instance, List, Property
 from traitsui.api import View, VGroup, UItem, TabularEditor, Tabbed
 # ============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 from uncertainties import nominal_value, std_dev
 from pychron.core.helpers.formatting import floatfmt

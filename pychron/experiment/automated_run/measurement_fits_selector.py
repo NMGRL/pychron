@@ -21,7 +21,7 @@ from pychron.core.ui import set_qt
 
 set_qt()
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 
@@ -29,10 +29,10 @@ from traits.api import Str
 from traitsui.api import View, HGroup, UItem, VGroup, EnumEditor
 from traitsui.handler import Controller
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 import yaml
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.paths import paths, build_directories
 from pychron.core.ui.table_editor import myTableEditor
 from pychron.processing.fits.filter_fit_selector import FilterFitSelector, FilterFit

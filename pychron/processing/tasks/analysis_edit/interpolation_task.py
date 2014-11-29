@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from datetime import timedelta
 
 from pyface.tasks.action.schema import SToolBar
@@ -29,8 +29,8 @@ from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEd
 from pychron.processing.tasks.analysis_edit.panes import ReferencesPane
 from pychron.processing.tasks.analysis_edit.adapters import ReferencesAdapter
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.processing.tasks.browser.browser_task import DEFAULT_AT
 from pychron.processing.tasks.browser.panes import AnalysisAdapter
 from pychron.processing.tasks.recall.recall_editor import RecallEditor

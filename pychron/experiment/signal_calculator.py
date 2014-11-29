@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Float, on_trait_change, Instance, Enum, \
     String
 from traitsui.api import View, Item, HGroup, VGroup, EnumEditor
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import numpy as np
 import math
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.processing.arar_constants import ArArConstants
 from pychron.graph.graph import Graph
 # from chaco.axis import PlotAxis

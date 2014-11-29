@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 # from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy import Column, BLOB, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import func
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.database.orms.isotope.util import foreignkey, stringcolumn
 from pychron.database.core.base_orm import BaseMixin, NameMixin
 

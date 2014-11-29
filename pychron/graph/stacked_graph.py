@@ -16,12 +16,12 @@
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import Bool, on_trait_change, Event
 from chaco.scatterplot import ScatterPlot
-#=============standard library imports ========================
+# =============standard library imports ========================
 
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 from graph import Graph
 
 
@@ -242,4 +242,4 @@ class StackedGraph(Graph):
             #
             #    super(StackedGraph,self).clear()
 
-#============= EOF ====================================
+# ============= EOF ====================================

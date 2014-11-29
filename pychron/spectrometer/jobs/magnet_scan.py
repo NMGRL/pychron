@@ -14,16 +14,16 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Any, Float, DelegatesTo, List, Bool
 from traitsui.api import View, Item, EnumEditor, Group, HGroup, spring, ButtonEditor
 from pyface.timer.do_later import do_after
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import linspace, exp, hstack, array, Inf
 import random
 import time
 from threading import Event
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from spectrometer_task import SpectrometerTask
 from pychron.core.ui.gui import invoke_in_main_thread
 

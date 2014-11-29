@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits
 # from traitsui.api import View, Item, TableEditor
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 import time
 import numpy as np
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.graph.regression_graph import RegressionGraph
 from pychron.paths import paths
 from pychron.core.helpers.filetools import unique_dir

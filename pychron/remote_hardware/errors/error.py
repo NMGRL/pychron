@@ -16,9 +16,9 @@
 
 
 
-#=============enthought library imports=======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# =============enthought library imports=======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 # def code_generator(grp, start=0, step=1):
 #    i = start
@@ -60,4 +60,4 @@ class ErrorCode(object):
 #        else:
 #            self.msg = self.msg2.format(name)
 
-#============= EOF =====================================
+# ============= EOF =====================================

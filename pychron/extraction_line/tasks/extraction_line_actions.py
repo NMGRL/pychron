@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pyface.action.api import Action
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 # from pychron.envisage.core.action_helper import open_manager
 
 #sample change actions
@@ -176,4 +176,4 @@ class OpenMultiplexerAction(ExtractionLineAction):
             app = event.window.application
             app.open_view(manager.multiplexer_manager)
 
-#============= EOF ====================================
+# ============= EOF ====================================

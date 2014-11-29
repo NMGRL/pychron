@@ -17,9 +17,9 @@
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Property, Float, Event, Any, Instance, Int
 from traitsui.api import View, Item, VGroup, HGroup, Spring, RangeEditor
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from scipy import optimize
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.spectrometer.mftable import MagnetFieldTable, get_detector_name, mass_cal_func
 
 

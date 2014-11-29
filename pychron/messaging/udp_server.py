@@ -16,13 +16,13 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from SocketServer import ThreadingUDPServer
 import socket
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from messaging_server import MessagingServer
 from pychron.messaging.handlers.udp_handler import UDPHandler
 
@@ -49,4 +49,4 @@ class UDPServer(ThreadingUDPServer, MessagingServer):
             self.connected = False
 
 
-#============= EOF ====================================
+# ============= EOF ====================================

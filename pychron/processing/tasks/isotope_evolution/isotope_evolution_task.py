@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from itertools import groupby
 import traceback
 from datetime import timedelta
@@ -29,8 +29,8 @@ from pyface.tasks.task_layout import PaneItem, TaskLayout, Tabbed, HSplitter, \
 
 
 #from pychron.pychron_constants import MINNA_BLUFF_IRRADIATIONS
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.datetime_tools import get_datetime
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPane

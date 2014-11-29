@@ -28,9 +28,9 @@ ETSConfig.toolkit = 'qt4'
 from pychron.experiment.queue.experiment_queue import ExperimentQueue
 from pychron.experiment.automated_run.spec import AutomatedRunSpec
 from pychron.paths import paths
-#============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from guppy import hpy
 from pychron.experiment.experiment_executor import ExperimentExecutor
 def run():

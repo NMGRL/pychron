@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from datetime import datetime
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.database.adapters.dashboard_adapter import DashboardAdapter
 from pychron.database.isotope_database_manager import BaseIsotopeDatabaseManager
 

@@ -14,16 +14,16 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import List, Button, Any, Int, Str, Enum, Color
 from traits.trait_types import String
 from traits.traits import Property
 from traitsui.api import View, VGroup, UItem, HGroup
 from apptools.preferences.api import PreferencesHelper
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import re
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from traitsui.list_str_adapter import ListStrAdapter
 
 

@@ -17,13 +17,13 @@ from pychron.core.ui import set_qt
 
 set_qt()
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Int, Date, List, Str, Instance, Button
 from traitsui.api import View, Item, TabularEditor, Controller, UItem, \
     VSplit, VGroup, spring, EnumEditor, HGroup
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 

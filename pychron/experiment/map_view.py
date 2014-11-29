@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 
 from traits.api import HasTraits, Instance, on_trait_change, Str, List, Property
@@ -25,8 +25,8 @@ from kiva.constants import FILL_STROKE
 from enable.markers import CircleMarker
 import numpy as np
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.lasers.stage_managers.stage_map import StageMap
 from pychron.graph.graph import Graph
 from pychron.paths import paths

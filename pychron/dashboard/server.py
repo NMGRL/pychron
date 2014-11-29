@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from _socket import gethostname, gethostbyname
 import os
 import pickle
@@ -24,8 +24,8 @@ import time
 from traits.api import Instance, on_trait_change, List, Str
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.dashboard.db_manager import DashboardDBManager
 from pychron.dashboard.device import DashboardDevice
 from pychron.hardware.core.i_core_device import ICoreDevice

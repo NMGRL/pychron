@@ -16,14 +16,14 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Str
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 import csv
 from numpy import array, loadtxt
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.loggable import Loggable
 
 TAB = chr(9)
@@ -407,4 +407,4 @@ if __name__ == '__main__':
     d = DataLoader()
     path = '/Users/Ross/Pychrondata_beta/data/modeling/ShapFurnace.txt'
     d.load_autoupdate(path, 0, 0)
-#============= EOF ====================================
+# ============= EOF ====================================

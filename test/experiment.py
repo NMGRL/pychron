@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import unittest
 import os
 
@@ -25,8 +25,8 @@ from pychron.experiment.tasks.experiment_task import ExperimentEditorTask
 from pychron.database.records.isotope_record import IsotopeRecord
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
 class BaseExperimentTest(unittest.TestCase):

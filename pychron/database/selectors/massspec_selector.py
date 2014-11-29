@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Str, Event
 from traitsui.tabular_adapter import TabularAdapter
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 from pychron.database.core.database_selector import DatabaseSelector
 from pychron.database.core.base_db_result import RIDDBResult

@@ -16,11 +16,11 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pyface.workbench.api import Perspective, PerspectiveItem
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 
 class MDDModelerPerspective(Perspective):
@@ -70,5 +70,5 @@ class MDDModelerPerspective(Perspective):
 #                              width = 0.35
 #                              ),
 #              ]
-#============= views ===================================
-#============= EOF ====================================
+# ============= views ===================================
+# ============= EOF ====================================

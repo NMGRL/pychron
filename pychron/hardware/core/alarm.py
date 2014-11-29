@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Str
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from datetime import datetime
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 
 class Alarm(HasTraits):

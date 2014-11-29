@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, List, Array
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import argmax, array
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 # from pychron.core.helpers.logger_setup import logging_setup, new_logger
 # logging_setup('plateau', use_archiver=False)
 # log = new_logger('foo')

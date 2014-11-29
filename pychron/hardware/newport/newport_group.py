@@ -16,10 +16,10 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Float, Tuple
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 # from pychron.config_loadable import ConfigLoadable
 from pychron.hardware.axis import Axis
 class NewportGroup(Axis):

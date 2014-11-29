@@ -14,9 +14,9 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.processing.tasks.smart_project.interpolation_pdf_writer import InterpolationPDFWriter
 
 class BlanksPDFWrtier(InterpolationPDFWriter):

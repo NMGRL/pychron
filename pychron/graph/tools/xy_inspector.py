@@ -17,11 +17,11 @@
 '''
     modified from chaco.image_inspector
 '''
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from enable.api import BaseTool, KeySpec
 from traits.api import Any, Bool, Enum, Event, Tuple
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 # Enthought library imports
 

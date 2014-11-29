@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, List, on_trait_change, Bool, Event, Float, Str
 from traitsui.api import View, UItem, TableEditor, HGroup, spring, Handler, VGroup, Group
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from traitsui.table_column import ObjectColumn
 from uncertainties import std_dev, nominal_value, ufloat
 from pychron.envisage.icon_button_editor import icon_button_editor

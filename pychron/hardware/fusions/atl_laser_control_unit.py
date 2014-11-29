@@ -16,13 +16,13 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Float, Int, Str, Bool, Property, Array
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import array, hstack
 import time
 from threading import Lock
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.core.checksum_helper import computeBCC
 from pychron.hardware.core.data_helper import make_bitarray
@@ -552,4 +552,4 @@ if __name__ == '__main__':
                             configuration_dir_name='fusions_uv')
     a.bootstrap()
     a.laser_off()
-#============= EOF ====================================
+# ============= EOF ====================================

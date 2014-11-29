@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.plot_label import PlotLabel
 from chaco.scatterplot import render_markers
 from kiva.trait_defs.kiva_font_trait import KivaFont
 from traits.api import Color, Instance, Str, Float, Int, HasTraits, Any
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.processing.plotters.point_move_tool import LabelMoveTool
 
 

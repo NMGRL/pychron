@@ -78,4 +78,4 @@ class ArgusGPActuator(GPActuator):
         r = self.ask(cmd)
         if r is not None and r.strip() == 'OK':
             return self.get_channel_state(obj) == True
-#============= EOF =====================================
+# ============= EOF =====================================

@@ -15,11 +15,11 @@
 # ===============================================================================
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traitsui.api import View, Item, ListEditor, InstanceEditor
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import time
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.managers.manager import Manager
 
 
@@ -74,4 +74,4 @@ class GaugeManager(Manager):
 if __name__ == '__main__':
     g = GaugeManager()
     g.configure_traits()
-#============= EOF =====================================
+# ============= EOF =====================================

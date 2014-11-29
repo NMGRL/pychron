@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from PySide.QtCore import Qt
 from traits.api import Instance, List, on_trait_change
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, Splitter, PaneItem, Tabbed, VSplitter
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.dashboard.tasks.client.client import DashboardClient
 from pychron.envisage.tasks.pane_helpers import ConsolePane
 from pychron.processing.tasks.analysis_edit.panes import ControlsPane

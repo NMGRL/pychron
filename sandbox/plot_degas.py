@@ -16,7 +16,7 @@
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 import os
 
 from traits.api import Button
@@ -26,8 +26,8 @@ from pychron.paths import paths
 from pychron.graph.time_series_graph import TimeSeriesStackedGraph
 from pychron.managers.manager import Manager
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 DEGAS = os.path.join(paths.data_dir, 'degas')
 
@@ -111,5 +111,5 @@ def main():
 
 if __name__ == '__main__':
     main()
-#============= EOF =====================================
+# ============= EOF =====================================
 

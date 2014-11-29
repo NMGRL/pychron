@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Instance
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import time
 import os
 from numpy import linspace, polyfit
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.core.helpers.parsers.learner_parser import LearnerParser

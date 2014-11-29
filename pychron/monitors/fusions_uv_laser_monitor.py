@@ -16,13 +16,13 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Bool, Float, Str
 
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.monitors.laser_monitor import LaserMonitor
 
 class MonitorSeries(HasTraits):
@@ -39,4 +39,4 @@ class FusionsUVLaserMonitor(LaserMonitor):
         man = self.manager
         man.update_parameters()
 
-#============= EOF ====================================
+# ============= EOF ====================================

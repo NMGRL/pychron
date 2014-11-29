@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from envisage.extension_point import ExtensionPoint
 from envisage.plugin import Plugin
 from envisage.ui.tasks.task_extension import TaskExtension
@@ -22,8 +22,8 @@ from envisage.ui.tasks.tasks_plugin import TasksPlugin
 from pyface.tasks.action.dock_pane_toggle_group import DockPaneToggleGroup
 from pyface.tasks.action.schema_addition import SchemaAddition
 from traits.api import List
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.envisage.tasks.actions import ToggleFullWindowAction, EditInitializationAction
 from pychron.envisage.tasks.panes import GeneralPreferencesPane
 

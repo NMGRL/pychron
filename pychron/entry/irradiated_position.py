@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Float, Bool, Int, Property
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.pychron_constants import PLUSMINUS
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 class BaseIrradiatedPosition(HasTraits):
     labnumber = Str
     material = Str

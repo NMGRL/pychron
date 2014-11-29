@@ -16,13 +16,13 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance, Enum, Button, Str, DelegatesTo, Event, Property
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import time
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from fusions_laser_manager import FusionsLaserManager
 from pychron.hardware.fusions.fusions_uv_logic_board import FusionsUVLogicBoard
 from pychron.hardware.fusions.atl_laser_control_unit import ATLLaserControlUnit
@@ -373,7 +373,7 @@ class FusionsUVManager(FusionsLaserManager):
 #        '''
 #        '''
 #        return LaserShotHistory(view_mode='simple')
-#============= EOF ====================================
+# ============= EOF ====================================
 #    def _auto_fired(self):
 #        '''
 #        '''
@@ -467,7 +467,7 @@ class FusionsUVManager(FusionsLaserManager):
 #        g = self._update_slider_group_factory(s)
 #        return self.laser_controller.control_view()
 
-#============= views ===================================
+# ============= views ===================================
 
 #    def _get_gas_contents(self):
 #        '''

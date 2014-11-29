@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 
 from numpy import Inf
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.canvas.canvas2D.scene.scene import Scene
 from pychron.canvas.canvas2D.scene.primitives.primitives import LoadIndicator, Span
 

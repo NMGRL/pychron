@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Property, Int, Str
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.core.helpers.formatting import floatfmt
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 class SummaryTabularAdapter(TabularAdapter):
     columns = [
                ('Sample', 'sample'),

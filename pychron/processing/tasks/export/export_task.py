@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.action.task_action import TaskAction
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Tabbed
 from traits.api import List, Button, Instance
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.envisage.resources import icon
 from pychron.processing.export.export_manager import ExportManager
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask

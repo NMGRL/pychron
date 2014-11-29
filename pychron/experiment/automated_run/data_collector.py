@@ -21,7 +21,7 @@ from traits.api import Any, List, CInt, Int, Bool, Enum, Str
 # ============= standard library imports ========================
 import time
 from threading import Event, Timer
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.envisage.consoleable import Consoleable
 # from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.experiment.utilities.conditionals_results import check_conditional_results

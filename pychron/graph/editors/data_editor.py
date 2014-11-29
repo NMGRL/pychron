@@ -16,14 +16,14 @@
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import HasTraits, Any, Float, List, Instance, Bool
 from traitsui.api import View, Item, Group, TabularEditor
 from traitsui.tabular_adapter import TabularAdapter
 
-#=============standard library imports ========================
+# =============standard library imports ========================
 from numpy import vstack
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 
 
 class DataItem(HasTraits):
@@ -169,4 +169,4 @@ class RegressionDataEditor(DataEditor):
         name = 'table%i' % i
         data = self._load_table(i)
         return name, data
-#============= EOF =====================================
+# ============= EOF =====================================

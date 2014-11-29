@@ -18,7 +18,7 @@
 from envisage.ui.tasks.task_factory import TaskFactory
 from traits.api import Any
 # ============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.spectrometer.base_spectrometer_manager import BaseSpectrometerManager
 from pychron.spectrometer.ion_optics_manager import IonOpticsManager

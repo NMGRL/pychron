@@ -16,16 +16,16 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
 from pychron.managers.motion_controller_managers.motion_controller_manager import MotionControllerManager
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 class NewportMotionControllerManager(MotionControllerManager):
     '''
         G{classtree}
     '''
     pass
-#============= views ===================================
-#============= EOF ====================================
+# ============= views ===================================
+# ============= EOF ====================================

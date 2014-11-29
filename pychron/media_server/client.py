@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Str, Int, Bool
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import httplib
 import os
 from cStringIO import StringIO
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.loggable import Loggable
 from apptools.preferences.preference_binding import bind_preference
 from pychron.paths import paths

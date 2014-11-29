@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
 from traits.api import Instance, Int, Str, Bool, \
     Event, Property, Float, Date
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from collections import namedtuple
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.formatting import format_percent_error, floatfmt
 from pychron.core.helpers.logger_setup import new_logger
 from pychron.processing.analyses.analysis_view import AnalysisView

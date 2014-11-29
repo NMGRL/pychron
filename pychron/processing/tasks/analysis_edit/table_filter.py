@@ -20,14 +20,14 @@ from pychron.envisage.icon_button_editor import icon_button_editor
 set_toolkit('qt4')
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Button, List, Str, Float, \
     Either, Bool, on_trait_change, Int, Property, Event
 from traitsui.api import View, Item, UItem, EnumEditor, HGroup, \
     ListEditor, InstanceEditor, VGroup, spring, VSplit, Handler
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.processing.tasks.analysis_edit.adapters import UnknownsAdapter
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.core.ui.custom_label_editor import CustomLabel

@@ -24,13 +24,13 @@ from pychron.core.ui import set_qt
 set_qt()
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Instance, List, Button, Float, \
     on_trait_change, Str, Event, Bool
 from pyface.file_dialog import FileDialog
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import add_extension, fileiter
 from pychron.loggable import Loggable
 from pychron.paths import paths

@@ -14,9 +14,9 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from base_remote_hardware_handler import BaseRemoteHardwareHandler
 from pychron.remote_hardware.errors import InvalidArgumentsErrorCode
 # from dummies import DummyLM
@@ -507,4 +507,4 @@ class LaserHandler(BaseRemoteHardwareHandler):
 #
 #        return result
 
-#============= EOF ====================================
+# ============= EOF ====================================

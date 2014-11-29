@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Callable
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import where, vstack, zeros_like
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
 from pychron.graph.tools.info_inspector import InfoInspector, InfoOverlay, intersperse
 

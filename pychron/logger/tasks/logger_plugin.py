@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from envisage.ui.tasks.task_factory import TaskFactory
 
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.logger.tasks.logger_task import LoggerTask
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class LoggerPlugin(BaseTaskPlugin):
     id = 'pychron.logger'

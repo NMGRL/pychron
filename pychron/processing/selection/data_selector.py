@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Any, List, \
      Enum, Property, Int, Str, Tuple, Instance, Bool
 from pyface.api import FileDialog
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.loggable import Loggable
 # from pychron.processing.analysis import NonDBAnalysis
 from pychron.processing.analyses.analysis import Analysis

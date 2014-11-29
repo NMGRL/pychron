@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance
 
 from pychron.canvas.canvas2D.base_data_canvas import BaseDataCanvas
 from pychron.canvas.canvas2D.scene.scene import Scene
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 class SceneCanvas(BaseDataCanvas):
     scene = Instance(Scene)
 

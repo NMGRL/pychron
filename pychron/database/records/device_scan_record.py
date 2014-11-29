@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traitsui.api import View
 
 from pychron.database.records.sqlite_record import SQLiteRecord
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 #    def load_graph(self, graph=None, xoffset=0):
 #
 #        if graph is None:

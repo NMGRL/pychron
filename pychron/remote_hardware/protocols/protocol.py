@@ -16,9 +16,9 @@
 
 
 
-#=============enthought library imports=======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# =============enthought library imports=======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
 def command_generator(cmds, vals):
@@ -34,4 +34,4 @@ class Protocol:
     def test_command_factory(self):
         return command_generator(self.commands.keys(), self.commands.values())
 
-#============= EOF =====================================
+# ============= EOF =====================================

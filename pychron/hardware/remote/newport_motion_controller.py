@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pychron.hardware.newport.newport_motion_controller import NewportMotionController
 from pychron.rpc.query import rpc_query
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class RemoteNewportMotionController(NewportMotionController):
     @rpc_query

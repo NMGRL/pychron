@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Any, Bool
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 import cStringIO
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.paths import paths
 from pychron.lasers.pattern.patternable import Patternable
 import time
@@ -213,9 +213,9 @@ class PatternExecutor(Patternable):
 
     def _execute_seek(self, controller, pattern):
 
-        #=======================================================================
+        # =======================================================================
         # monitor input
-        #=======================================================================
+        # =======================================================================
         def _monitor_input(pevt, fevt, threshold=1, deadband=0.5, period=0.25):
             """
                 periodically get input value
@@ -234,9 +234,9 @@ class PatternExecutor(Patternable):
                     flag = False
                 time.sleep(period)
 
-        #=======================================================================
+        # =======================================================================
         # control motion
-        #=======================================================================
+        # =======================================================================
         """
             if paused and not already stopped, stop motion
             if not paused not but was paused move to newt_point

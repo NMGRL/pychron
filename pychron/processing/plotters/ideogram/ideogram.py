@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Float, Array
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import linspace, pi, exp, zeros, ones, array, arange, \
     Inf
 from numpy import max as np_max
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 from pychron.processing.plotters.arar_figure import BaseArArFigure
 from pychron.processing.plotters.flow_label import FlowPlotLabel

@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import  Bool, Any, Float, Tuple, Int, Str
 # from traitsui.api import View, Item  # , TableEditor
 # import apptools.sweet_pickle as pickle
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import polyval
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.config_loadable import ConfigLoadable
 
 
@@ -239,7 +239,7 @@ class Camera(ConfigLoadable):
 #     c = CalibrationData(xcoeff_str='1.1, 5')
 #     c.configure_traits()
 
-#============= EOF ====================================
+# ============= EOF ====================================
 #    def reset_calibration_data(self):
 #
 #        self.calibration_data = np.array([[], []])

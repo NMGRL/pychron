@@ -20,7 +20,7 @@ from traits.api import Str, Int, \
 from traitsui.api import View, Item, Group, VGroup, HGroup, UItem
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 # ============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper, BaseConsolePreferences, \
     BaseConsolePreferencesPane

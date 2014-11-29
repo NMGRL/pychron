@@ -16,8 +16,8 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.task_factory import TaskFactory
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.labbook.tasks.preferences import LabBookPreferencesPane
 

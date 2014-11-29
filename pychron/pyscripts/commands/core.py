@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Float, File, Property
 from traitsui.api import View, Item, FileEditor, VGroup, Group
 from traitsui.menu import OKCancelButtons
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 import re
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.paths import paths
 
 

@@ -17,12 +17,12 @@
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import Property, Str, Float, Int, Button
 from traitsui.api import View, Item, Group, EnumEditor, HGroup, VGroup, spring
 
-#=============standard library imports ========================
-#=============local library imports  ==========================
+# =============standard library imports ========================
+# =============local library imports  ==========================
 from pychron.hardware.axis import Axis
 from pychron.core.helpers.filetools import parse_file
 

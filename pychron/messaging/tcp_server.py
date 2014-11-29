@@ -16,14 +16,14 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from SocketServer import ThreadingTCPServer
 import socket
 from threading import Thread
 import select
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from messaging_server import MessagingServer
 from pychron.messaging.handlers.tcp_handler import TCPHandler
 
@@ -112,4 +112,4 @@ class TCPServer(ThreadingTCPServer, MessagingServer):
         t = Thread(target=listen)
         t.start()
 
-#============= EOF ====================================
+# ============= EOF ====================================

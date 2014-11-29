@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, String, Property, Str, List, Any, \
     Bool, cached_property, Event, Enum
 from traitsui.api import View, Item, EnumEditor
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from datetime import datetime, timedelta
 from sqlalchemy import cast, Date
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 now = datetime.now()
 one_year = timedelta(days=365)
 

@@ -19,8 +19,8 @@ from chaco.label import Label
 from kiva import FILL
 from traits.trait_types import Bool, Float, Str
 from traits.traits import Property
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
 class MarkerLabel(Label):

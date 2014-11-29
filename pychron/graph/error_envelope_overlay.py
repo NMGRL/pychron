@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Array
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.lineplot import LinePlot
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import array, zeros
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 class ErrorEnvelopeOverlay(AbstractOverlay):
     _cache_valid = False

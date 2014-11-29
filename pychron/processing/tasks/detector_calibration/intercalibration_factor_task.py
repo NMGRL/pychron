@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 
 from traits.api import on_trait_change
 from pyface.tasks.task_layout import TaskLayout, VSplitter, PaneItem, \
     HSplitter, Tabbed
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import add_extension
 from pychron.paths import r_mkdir
 from pychron.processing.tasks.analysis_edit.interpolation_editor import bin_analyses

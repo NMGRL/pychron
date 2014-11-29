@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from envisage.ui.tasks.task_factory import TaskFactory
 from traits.api import Instance
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.dashboard.server import DashboardServer
 from pychron.dashboard.tasks.server.task import DashboardServerTask
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin

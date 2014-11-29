@@ -25,7 +25,7 @@ from traitsui.api import View, Item, UItem, VGroup, HGroup
 from numpy import linspace
 from numpy.random.mtrand import normal
 from numpy import random
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.processing.isotope import Isotope
 from pychron.processing.ratios.ratio_editor import RatioEditor
 

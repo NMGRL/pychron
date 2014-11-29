@@ -16,14 +16,14 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Bool, HasTraits, Instance
 # from traitsui.api import View, Item, Group, HGroup, VGroup, HSplit, VSplit
-#============= standard library imports ========================
+# ============= standard library imports ========================
 # from tables import openFile
 from numpy import transpose, array, shape, max, linspace, rot90, \
     min
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.graph.contour_graph import ContourGraph
 from pychron.managers.data_managers.h5_data_manager import H5DataManager
 
@@ -362,7 +362,7 @@ class PowerMapProcessor(HasTraits):
 #    pa=os.path.join(paths.data_dir,'powermap',pa)
 #    if os.path.isfile(pa):
 #        p.open_power_map(pa)
-#============= EOF ====================================
+# ============= EOF ====================================
 #     def _plot_properties(self, z, metadata, cg):
 # #         for prop in props:
 # #         for pp in (25, 50, 75, 95):

@@ -15,10 +15,10 @@
 # ===============================================================================
 # from traits.etsconfig.api import ETSConfig
 # ETSConfig.toolkit = "qt4"
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.database.core.database_adapter import PathDatabaseAdapter
 from pychron.database.selectors.device_scan_selector import DeviceScanSelector
 from pychron.database.orms.hardware_orm import ScanTable, DeviceTable, \
@@ -29,9 +29,9 @@ class DeviceScanAdapter(PathDatabaseAdapter):
     test_func = None
     selector_klass = DeviceScanSelector
     path_table = ScanPathTable
-#==============================================================================
+# ==============================================================================
 #    getters
-#==============================================================================
+# ==============================================================================
 
     def get_device(self, value):
         return self._retrieve_item(DeviceTable, value)
@@ -44,9 +44,9 @@ class DeviceScanAdapter(PathDatabaseAdapter):
 
     def get_scans(self, **kw):
         return self._retrieve_items(ScanTable, **kw)
-#=============================================================================
+# =============================================================================
 #   adder
-#=============================================================================
+# =============================================================================
     def add_scan(self, device, **kw):
         b = ScanTable(**kw)
         device = self.get_device(device)

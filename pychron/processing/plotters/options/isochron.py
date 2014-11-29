@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Bool, Float, Property, String, Enum
 from traitsui.api import VGroup, HGroup, Item, Group
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.processing.plotters.options.age import AgeOptions
 from pychron.processing.plotters.options.option import InverseIsochronPlotOptions
 from pychron.pychron_constants import FIT_ERROR_TYPES

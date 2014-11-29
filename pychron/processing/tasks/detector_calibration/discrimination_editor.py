@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import on_trait_change
 
 from pychron.processing.tasks.analysis_edit.interpolation_editor import InterpolationEditor
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from pychron.core.helpers.isotope_utils import sort_isotopes
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 class DiscriminationEditor(InterpolationEditor):
 

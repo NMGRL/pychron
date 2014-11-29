@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, List, Any, Str, Enum, Bool, Button, \
     Event, Property, cached_property, Instance, DelegatesTo, CStr
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.envisage.browser.browser_mixin import filter_func
 from pychron.envisage.browser.table_configurer import AnalysisTableConfigurer
 

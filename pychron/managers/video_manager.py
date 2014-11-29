@@ -16,13 +16,13 @@
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import Instance, Float, Button, Int, Property, Event, Bool
 from traitsui.api import View, Item, HGroup
 
-#=============standard library imports ========================
+# =============standard library imports ========================
 from threading import Thread
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 from pychron.core.ui.stage_component_editor import VideoComponentEditor
 from pychron.image.video import Video
 from pychron.image.image import Image
@@ -290,7 +290,7 @@ if __name__ == '__main__':
 
 
 
-#================== EOF ========================
+# ================== EOF ========================
 # def process_image_dir(self, root):
 #        '''
 #            @type root: C{str}

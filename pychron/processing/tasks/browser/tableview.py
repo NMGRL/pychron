@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from traitsui.api import View, Item, HGroup, UItem, VGroup, EnumEditor, HSplit, TabularEditor, spring, Group, Heading
 # ============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 # from pychron.core.ui.qt.tabular_editor import UnselectTabularEditorHandler
 # from pychron.core.ui.qt.tabular_editor import UnselectTabularEditorHandler
 from pychron.core.ui.combobox_editor import ComboboxEditor

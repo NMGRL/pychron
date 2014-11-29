@@ -14,16 +14,16 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from chaco.abstract_overlay import AbstractOverlay
 from enable.enable_traits import LineStyle
 from kiva.trait_defs.kiva_font_trait import KivaFont
 from traits.api import Array, Float, Str
 from chaco.plot_label import PlotLabel
 from chaco.array_data_source import ArrayDataSource
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import linspace
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 from pychron.core.helpers.formatting import floatfmt, calc_percent_error, format_percent_error
 from pychron.graph.error_envelope_overlay import ErrorEnvelopeOverlay

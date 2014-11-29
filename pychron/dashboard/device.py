@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import struct
 
 from traits.api import HasTraits, Str, Either, Float, Property, Bool, List, Instance, \
@@ -22,9 +22,9 @@ from traits.api import HasTraits, Str, Either, Float, Property, Bool, List, Inst
 from traitsui.api import View, Item, ListEditor, InstanceEditor, UItem, VGroup, HGroup
 
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import time
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 import yaml
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.core.helpers.datetime_tools import convert_timestamp

@@ -14,10 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Str, Button, List, CStr, Property
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.experiment.automated_run.spec import AutomatedRunSpec
 from pychron.experiment.automated_run.uv.automated_run import UVAutomatedRun
 from pychron.pychron_constants import NULL_STR

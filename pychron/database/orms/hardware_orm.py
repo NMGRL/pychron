@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 
-#=============standard library imports ========================
+# =============standard library imports ========================
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, \
      ForeignKey, DateTime, func
 from sqlalchemy.orm import relationship
 
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 from pychron.database.core.base_orm import BaseMixin, ResultsMixin, PathMixin
 
 Base = declarative_base()

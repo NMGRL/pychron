@@ -16,16 +16,16 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import List, Instance, on_trait_change
 from traitsui.api import View, Item, Group, HGroup, VGroup, \
     ListEditor, TableEditor, InstanceEditor
 from traitsui.table_column import ObjectColumn
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 import ConfigParser
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.messaging.command_repeater import CommandRepeater
 from pychron.messaging.remote_command_server import RemoteCommandServer
 from pychron.messaging.directory_server import DirectoryServer
@@ -166,4 +166,4 @@ class RemoteHardwareServerManager(Manager):
 
         return v
 
-#============= EOF ====================================
+# ============= EOF ====================================

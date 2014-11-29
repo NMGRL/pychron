@@ -130,7 +130,7 @@ def main():
 
     info('finished measure script')
 
-#========================EOF==============================================================
+# ========================EOF==============================================================
     # peak_hop(detector='CDD', isotopes=['Ar40','Ar39','Ar36'], cycles=2, integrations=3)
     # baselines(counts=50,mass=0.5, detector='CDD')s
 

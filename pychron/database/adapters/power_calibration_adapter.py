@@ -14,9 +14,9 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.database.core.database_adapter import PathDatabaseAdapter
 from pychron.database.orms.power_calibration_orm import PowerCalibrationTable, \
     PowerCalibrationPathTable
@@ -27,15 +27,15 @@ class PowerCalibrationAdapter(PathDatabaseAdapter):
     test_func = None
     selector_klass = PowerCalibrationSelector
     path_table = PowerCalibrationPathTable
-#==============================================================================
+# ==============================================================================
 #    getters
-#==============================================================================
+# ==============================================================================
 
     def get_calibration_records(self, **kw):
         return self._get_items(PowerCalibrationTable, globals(), **kw)
-#=============================================================================
+# =============================================================================
 #   adder
-#=============================================================================
+# =============================================================================
     def add_calibration_record(self, **kw):
         b = self._add_timestamped_item(PowerCalibrationTable, **kw)
         return b

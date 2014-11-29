@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Array, Event
 from traitsui.api import View, UItem
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import asarray, array, ndarray
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.viewable import Viewable
 from pychron.core.ui.image_editor import ImageEditor
 

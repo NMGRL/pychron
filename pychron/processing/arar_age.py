@@ -15,15 +15,15 @@
 # ===============================================================================
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Dict, Property, Instance, Float, Str, List, Either, cached_property
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
 from numpy import hstack
 from ConfigParser import ConfigParser
 from copy import copy
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.processing.argon_calculations import calculate_F, abundance_sensitivity_correction, age_equation, \
     calculate_decay_factor
 from pychron.processing.arar_constants import ArArConstants

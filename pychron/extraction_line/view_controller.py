@@ -16,19 +16,19 @@
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import HasTraits, \
     Str, Float, List, Any, Color, Property
 from traitsui.api import View, Item, Group, HGroup, \
     TableEditor, Handler, RangeEditor
 from traitsui.table_column import ObjectColumn
 
-#=============standard library imports ========================
+# =============standard library imports ========================
 import os
 import glob
 import apptools.sweet_pickle as pickle
 import copy
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 
 from pychron.paths import paths
 

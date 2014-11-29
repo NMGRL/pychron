@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import time
 
 from chaco.array_data_source import ArrayDataSource
@@ -22,9 +22,9 @@ from chaco.scales.time_scale import CalendarScaleSystem
 from chaco.scales_tick_generator import ScalesTickGenerator
 from traits.api import Array
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import array, Inf
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.experiment.utilities.identifier import ANALYSIS_MAPPING_INTS
 from pychron.processing.plotters.arar_figure import BaseArArFigure
 from pychron.processing.plotters.series.ticks import tick_formatter, StaticTickGenerator, analysis_type_formatter

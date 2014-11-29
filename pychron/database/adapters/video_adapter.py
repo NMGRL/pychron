@@ -14,9 +14,9 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.database.core.database_adapter import  PathDatabaseAdapter
 from pychron.database.orms.video_orm import VideoTable, VideoPathTable
 from pychron.database.selectors.video_selector import VideoSelector
@@ -27,15 +27,15 @@ class VideoAdapter(PathDatabaseAdapter):
     test_func = None
     selector_klass = VideoSelector
     path_table = VideoPathTable
-#==============================================================================
+# ==============================================================================
 #    getters
-#==============================================================================
+# ==============================================================================
 
     def get_video_records(self, **kw):
         return self._get_items(VideoTable, globals(), **kw)
-#=============================================================================
+# =============================================================================
 #   adder
-#=============================================================================
+# =============================================================================
     def add_video_record(self, **kw):
         b = self._add_timestamped_item(VideoTable, **kw)
         return b

@@ -13,13 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 
 from envisage.core_plugin import CorePlugin
 from envisage.api import Plugin
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.displays.gdisplays import gTraceDisplay
 from pychron.envisage.key_bindings import update_key_bindings
 from pychron.envisage.tasks.tasks_plugin import PychronTasksPlugin, myTasksPlugin
@@ -253,4 +253,4 @@ def launch(klass, user):
     return
 
 
-#============= EOF ====================================
+# ============= EOF ====================================

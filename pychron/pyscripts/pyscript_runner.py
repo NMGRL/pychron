@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Any, Dict, List
 from traitsui.api import View, Item, TableEditor
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from threading import Event, Lock
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.logger_setup import logging_setup
 from traitsui.table_column import ObjectColumn
 from traitsui.extras.checkbox_column import CheckboxColumn
@@ -128,4 +128,4 @@ if __name__ == '__main__':
     p = PyScriptRunner()
 
     p.configure_traits()
-#============= EOF ====================================
+# ============= EOF ====================================

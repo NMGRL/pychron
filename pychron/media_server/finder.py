@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Instance, Any
 from traitsui.api import View, Item
 from traitsui.tree_node import TreeNode
 from traitsui.editors.tree_editor import TreeEditor
 # from xml.etree.ElementTree import XMLParser
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.hierarchy import Hierarchy, FilePath
 from pychron.regex import make_image_regex
 # from pychron.core.xml.xml_parser import XMLParser

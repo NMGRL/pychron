@@ -14,17 +14,17 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Any, List, Instance, String, on_trait_change, \
     Button, Tuple
 from traitsui.api import View, Item, VGroup
 from enable.component_editor import ComponentEditor
 from enable.base_tool import BaseTool
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 # import Image
 # from numpy import array
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.loggable import Loggable
 # from pychron.core.helpers.parsers.xml_parser import XMLParser
 # #from pychron.core.ui.custom_label_editor import CustomLabelEditor

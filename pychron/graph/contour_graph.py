@@ -16,13 +16,13 @@
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from chaco.api import ColorBar, LinearMapper
 from chaco.data_range_1d import DataRange1D
 from chaco.default_colormaps import color_map_name_dict, gray
-#=============standard library imports ========================
+# =============standard library imports ========================
 from numpy import array
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 from graph import Graph
 from graph import name_generator
 

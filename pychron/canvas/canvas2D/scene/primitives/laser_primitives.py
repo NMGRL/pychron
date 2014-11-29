@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Float, on_trait_change, Bool, Property, List
 from traitsui.api import  Item, VGroup, HGroup
 
@@ -22,8 +22,8 @@ from pychron.canvas.canvas2D.scene.primitives.primitives import Polygon, \
     PolyLine, PointIndicator
 from pychron.core.geometry.geometry import calc_point_along_line
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 class VelocityPolyLine(PolyLine):
     velocity_segments = List
 

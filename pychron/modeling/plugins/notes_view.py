@@ -14,17 +14,17 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Button, String
 from traitsui.api import View, Item, HGroup, spring
 
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 from pychron.modeling.model_data_directory import ModelDataDirectory
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
-#============= views ===================================
+# ============= views ===================================
 class NotesView(HasTraits):
     notes = String('')
     save = Button()

@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Int, Float
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 # import time
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 # from monitor import Monitor
 from pychron.monitors.laser_monitor import LaserMonitor
 
@@ -136,7 +136,7 @@ class FusionsLaserMonitor(LaserMonitor):
     setpoint = property(fget=_get_setpoint, fset=_set_setpoint)
 
 
-#============= EOF ====================================
+# ============= EOF ====================================
 #    def _doublecheck_setpoint(self):
 #        if self.setpoint:
 #            manager = self.manager

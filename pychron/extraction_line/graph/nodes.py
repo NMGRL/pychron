@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, List, Str, Instance, Float, Property
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import weakref
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 
 def flatten(nested):

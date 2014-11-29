@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from threading import Thread
 
 from traits.api import HasTraits, Event, Property, Bool
 
 # from pychron.core.ui.thread import Thread
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class ExecuteMixin(HasTraits):
     execute = Event

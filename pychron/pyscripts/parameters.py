@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Bool, Str, Float, Int, Enum
 from traitsui.api import View, HGroup, UItem, EnumEditor
 
 from pychron.pychron_constants import NULL_STR, FIT_TYPES
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class Detector(HasTraits):
     fit = Str

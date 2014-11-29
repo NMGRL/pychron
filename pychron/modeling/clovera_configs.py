@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import  Str, Int, Float, Bool, Array, Property
 from traitsui.api import View, Item, ModalButtons, Handler, \
      EnumEditor, HGroup, Label, Spring
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 from numpy import ones, save, load
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.loggable import Loggable
 class BaseConfigHandler(Handler):
     def closed(self, info, is_ok):
@@ -77,9 +77,9 @@ class AutoUpdateParseConfig(BaseConfig):
 
 class FilesConfig(BaseConfig):
     klass_name = 'files'
-    #===========================================================================
+    # ===========================================================================
     # config params
-    #===========================================================================
+    # ===========================================================================
 
     STOP = 'stop'
     n = 'n'
@@ -87,9 +87,9 @@ class FilesConfig(BaseConfig):
 
 class AutoarrConfig(BaseConfig):
     klass_name = 'autoarr'
-    #===========================================================================
+    # ===========================================================================
     # config params
-    #===========================================================================
+    # ===========================================================================
     automate_arrhenius_parameters = Bool(False)
     max_domains = Int
     min_domains = Int
@@ -135,9 +135,9 @@ class AutoarrConfig(BaseConfig):
 
 class AutoagemonConfig(BaseConfig):
     klass_name = 'autoagemon'
-    #===========================================================================
+    # ===========================================================================
     # config params
-    #===========================================================================
+    # ===========================================================================
     nruns = Property()
     _nruns = Int(21)
     max_plateau_age = Float(1000)
@@ -170,9 +170,9 @@ class AutoagemonConfig(BaseConfig):
 
 class AutoagefreeConfig(BaseConfig):
     klass_name = 'autoagefree'
-    #===========================================================================
+    # ===========================================================================
     # config params
-    #===========================================================================
+    # ===========================================================================
     nruns = Int(200)
     max_plateau_age = Float
     use_contour = Bool(True)
@@ -195,9 +195,9 @@ class AutoagefreeConfig(BaseConfig):
 
 class CorrelationConfig(BaseConfig):
     klass_name = 'corrfft'
-    #===========================================================================
+    # ===========================================================================
     # config params
-    #===========================================================================
+    # ===========================================================================
     f_min = Float
     f_max = Float
 
@@ -303,9 +303,9 @@ class AgesmeConfig(BaseConfig):
 
 # class ConfidenceIntervalConfig(BaseConfig):
 #    klass_name = 'confint'
-#    #===========================================================================
+#    # ===========================================================================
 #    # config params
-#    #===========================================================================
+#    # ===========================================================================
 #    max_age = Float(500)
 #    min_age = Float(0)
 #    nsteps = Int(100)
@@ -334,5 +334,5 @@ if __name__ == '__main__':
 #    if info:
 #        print 'foo'
 
-#============= EOF =====================================
+# ============= EOF =====================================
 

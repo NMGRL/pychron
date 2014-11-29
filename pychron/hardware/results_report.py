@@ -16,16 +16,16 @@
 
 
 
-#============= enthought library imports ======================
+# ============= enthought library imports ======================
 from traits.api import HasTraits, List, CStr, Button
 from traitsui.api import View, Item, HGroup, spring, TabularEditor
 from traitsui.tabular_adapter import TabularAdapter
 from pyface.file_dialog import FileDialog
 from pyface.constant import OK
 
-#============= standard library imports =======================
+# ============= standard library imports =======================
 
-#============= local library imports  =========================
+# ============= local library imports  =========================
 from pychron.paths import paths
 from pychron.hardware.axis import Axis
 from pychron.loggable import Loggable
@@ -100,4 +100,4 @@ class ResultsReport(Loggable):
                  title='Results'
                  )
         return v
-#============= EOF ===================================
+# ============= EOF ===================================

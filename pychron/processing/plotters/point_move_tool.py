@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from enable.enable_traits import Pointer
 from traits.api import Enum, CArray
 from chaco.tools.api import DragTool
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 normal_pointer = Pointer('normal')
 hand_pointer = Pointer('hand')
 

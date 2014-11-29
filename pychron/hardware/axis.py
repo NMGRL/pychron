@@ -16,14 +16,14 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import  Any, Str, Int, Float, \
     Bool, Property, on_trait_change, CInt
 from traitsui.api import View, Item
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.config_loadable import ConfigLoadable
 
 
@@ -148,4 +148,4 @@ class Axis(ConfigLoadable):
             return v
         except ValueError:
             pass
-#============= EOF ====================================
+# ============= EOF ====================================

@@ -14,10 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.database.orms.isotope.dash import dash_TimeTable, dash_DeviceTable
 

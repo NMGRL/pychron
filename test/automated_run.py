@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pychron.core.ui import set_toolkit
 set_toolkit('qt4')
 import unittest
 from pychron.processing.isotope import Isotope
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class FitBlockTest(unittest.TestCase):
     @classmethod

@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 
 from enable.colors import ColorTrait
@@ -23,8 +23,8 @@ from traits.api import Str, Range, on_trait_change, Bool, Dict, Enum, Property, 
 from traitsui.api import View, Item, EnumEditor, HGroup, VGroup, UItem
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.csv.csv_parser import CSVColumnParser
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.plotters.options.base import BasePlotterOptions

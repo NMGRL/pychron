@@ -14,10 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Int, Str
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.pdf.base_table_pdf_writer import BasePDFTableWriter
 from pychron.core.pdf.items import Row, FootNoteRow, FooterRow

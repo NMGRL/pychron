@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 
-#=============standard library imports ========================
+# =============standard library imports ========================
 from sqlalchemy import Column, Integer, Float, String, \
      ForeignKey, Time, Date
 from sqlalchemy.ext.declarative import declarative_base
 
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 Base = declarative_base()
 
 class Analyses(Base):

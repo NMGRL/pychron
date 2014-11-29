@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Float, Enum, Str
 from traitsui.api import Item, HGroup, VGroup
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 from numpy import linspace, polyval, polyfit, array
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.database.core.database_selector import DatabaseSelector
 from pychron.managers.data_managers.h5_data_manager import H5DataManager
 from pychron.database.orms.power_calibration_orm import PowerCalibrationTable

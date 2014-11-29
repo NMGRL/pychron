@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 # from traits.api import HasTraits
 # from traitsui.api import View, Item
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import average, array
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.processing.tasks.smart_project.base_smarter import BaseSmarter
 from pychron.processing.argon_calculations import calculate_flux
 from itertools import groupby

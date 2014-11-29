@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import on_trait_change, Any, List, Str
 # from traitsui.api import View, Item
 from pyface.tasks.task_layout import PaneItem, TaskLayout
 from pyface.tasks.action.schema import SToolBar
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 from pychron.envisage.tasks.base_task import BaseManagerTask
 from pychron.loading.panes import LoadPane, LoadControlPane, LoadTablePane

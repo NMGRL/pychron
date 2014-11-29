@@ -15,12 +15,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 import subprocess
 import os
 from os import path
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 def ifort_build(name, out):
     # subprocess.call(['touch', out])

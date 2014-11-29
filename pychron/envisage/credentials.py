@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Password, Any, \
     Button
 from traitsui.api import View, Item, spring, HGroup
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import hashlib
 import uuid
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.loggable import Loggable
 class NewAccount(HasTraits):

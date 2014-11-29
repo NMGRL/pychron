@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import  Any, Bool, Float, List, Str, Int
-#=============standard library imports ========================
+# =============standard library imports ========================
 from threading import Thread, Lock, Event
 import time
 import os
 import shutil
 from numpy import asarray
-#=============local library imports ===========================
+# =============local library imports ===========================
 from pychron.image.image import Image
 # from pychron.image.pyopencv_image_helper import swapRB
 from cv_wrapper import get_capture_device
@@ -339,4 +339,4 @@ class Video(Image):
             write_frame(writer, f)
             dur = ctime() - st
             sleep(max(0.001, 1 / fps - dur))
-#=================== EOF =================================================
+# =================== EOF =================================================

@@ -19,20 +19,20 @@
 #========== future imports ====================
 from __future__ import with_statement
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, List, Property, Str, Int, Float, Button, Enum
 from traitsui.api import View, Item, Group, TableEditor
 from traitsui.table_column import ObjectColumn
 import apptools.sweet_pickle as pickle
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 import shutil
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.paths import paths
 from pychron.core.helpers.filetools import unique_path
 from pychron.core.helpers.datetime_tools import generate_datetimestamp
 
-#============= views ===================================
+# ============= views ===================================
 class LaserShot(HasTraits):
     '''
     '''
@@ -137,4 +137,4 @@ class LaserShotHistory(HasTraits):
 
 
         return v
-#============= EOF ====================================
+# ============= EOF ====================================

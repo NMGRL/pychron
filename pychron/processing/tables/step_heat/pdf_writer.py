@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import re
 
 from reportlab.pdfbase.pdfmetrics import stringWidth
 from traits.api import Int
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.pdf.items import Row, FootNoteRow, FooterRow
 from reportlab.lib import colors
 from pychron.processing.tables.pdf_writer import IsotopePDFTableWriter
@@ -145,9 +145,9 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
             ('extract_value', '{}'),
             ('moles_Ar40', value(scale=1e-16, n=1)),
 
-            #==============================================================
+            # ==============================================================
             # signals
-            #==============================================================
+            # ==============================================================
             ('Ar40', value(scale=scales['Ar40'])),
             ('Ar40', error(scale=scales['Ar40err'])),
             ('Ar39', value(scale=scales['Ar39'])),
@@ -159,9 +159,9 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
             ('Ar36', value(scale=scales['Ar36'])),
             ('Ar36', error(scale=scales['Ar36err'])),
 
-            #==============================================================
+            # ==============================================================
             # computed
-            #==============================================================
+            # ==============================================================
 
 
             # ('F', value(n=5)),
@@ -176,9 +176,9 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
         row = self._new_row(analysis, attrs, default_fontsize)
 
         # battrs = (
-        #     #==============================================================
+        #     # ==============================================================
         #     # blanks
-        #     #==============================================================
+        #     # ==============================================================
         #     #                     ('', '{}'),
         #     #                     ('', '{}'),
         #     ('', '{}'),

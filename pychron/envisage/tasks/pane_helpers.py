@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traits.api import Instance
 from traitsui.api import Spring, View, UItem
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.displays.display import DisplayController
 
 

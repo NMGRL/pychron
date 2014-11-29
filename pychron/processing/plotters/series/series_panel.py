@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Dict, on_trait_change
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from pychron.processing.analysis_graph import AnalysisStackedRegressionGraph
 from pychron.processing.plotters.series.dashboard_series import DashboardSeries
 from pychron.processing.plotters.series.series import Series
 from pychron.processing.plotters.figure_panel import FigurePanel
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 
 class SeriesPanel(FigurePanel):

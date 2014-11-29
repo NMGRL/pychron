@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance, Bool, Str
 import apptools.sweet_pickle as pickle
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.monitors.laser_monitor import LaserMonitor
 from pychron.lasers.laser_managers.pulse import Pulse
 from pychron.paths import paths
@@ -510,4 +510,4 @@ if __name__ == '__main__':
 #    pm._dump_calibration(pc)
 
 #    lm.set_laser_power(10)
-#============= EOF ====================================
+# ============= EOF ====================================

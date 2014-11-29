@@ -16,11 +16,11 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.managers.motion_controller_managers.motion_controller_manager import MotionControllerManager
 from pychron.hardware.aerotech.aerotech_motion_controller import AerotechMotionController
 from pychron.paths import paths
@@ -45,7 +45,7 @@ class AerotechMotionControllerManager(MotionControllerManager):
 #        value = ' '.join([a for a in ['X', 'Y', 'Z', 'U'] if getattr(self, '_auto_enable_%s' % a.lower())])
 #        self.motion_controller.set_parameter(600, value)
 #
-##============= views ===================================
+## ============= views ===================================
 #    def traits_view(self):
 #        '''
 #        '''
@@ -77,4 +77,4 @@ if __name__ == '__main__':
     amc.bootstrap()
 
     amc.configure_traits()
-#============= EOF ====================================
+# ============= EOF ====================================

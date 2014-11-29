@@ -14,10 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 import socket
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from communicator import Communicator
 from pychron.globals import globalv
 from pychron.loggable import Loggable
@@ -274,4 +274,4 @@ class EthernetCommunicator(Communicator):
                 self.log_tell(cmd, info)
         self._lock.release()
 
-#============= EOF ====================================
+# ============= EOF ====================================

@@ -16,14 +16,14 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Property, Instance, DelegatesTo
 # from traitsui.api import View, Item, Group, HGroup, VGroup
 from traitsui.api import VGroup, Item, HGroup
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.hardware.agilent_dac import AgilentDAC
 from pychron.led.led_editor import LEDEditor
 from pychron.hardware.actuators.agilent_gp_actuator import AgilentGPActuator
@@ -119,5 +119,5 @@ class SynradCO2Manager(LaserManager):
         stm = self._stage_manager_factory(args)
 
         return stm
-#============= views ===================================
-#============= EOF ====================================
+# ============= views ===================================
+# ============= EOF ====================================

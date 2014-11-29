@@ -14,10 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.regression.mean_regressor import WeightedMeanRegressor
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.processing.easy.base_easy import BaseEasy

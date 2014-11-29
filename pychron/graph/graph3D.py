@@ -14,16 +14,16 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Instance
 from traitsui.api import View, Item
 from tvtk.pyface.scene_editor import SceneEditor
 from tvtk.pyface.api import Scene
 from mayavi.core.ui.mayavi_scene import MayaviScene
 from mayavi.tools.mlab_scene_model import MlabSceneModel
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 
 def point_generator(padding, cx, cy):
@@ -181,7 +181,7 @@ class Graph3D(HasTraits):
                                            )))
         return v
 
-#============= EOF ====================================
+# ============= EOF ====================================
 # if __name__ == '__main__':
 #    g = FastScan()
 #    g.configure_traits()

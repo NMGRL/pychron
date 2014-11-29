@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import Button, DelegatesTo
 # import apptools.sweet_pickle as pickle
-#=============standard library imports ========================
+# =============standard library imports ========================
 # import os
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 from pychron.hardware.fusions.fusions_co2_logic_board import FusionsCO2LogicBoard
 from pychron.paths import paths
 from pychron.monitors.fusions_co2_laser_monitor import FusionsCO2LaserMonitor
@@ -139,5 +139,5 @@ if __name__ == '__main__':
 #
 #                ]
 #        return m
-#============= EOF ====================================
+# ============= EOF ====================================
 

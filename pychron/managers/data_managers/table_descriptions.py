@@ -18,11 +18,11 @@
 
 # @PydevCodeAnalysisIgnore
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from tables import Float32Col, StringCol, IsDescription
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 class TimeSeriesTableDescription(IsDescription):
     time = Float32Col()
@@ -92,4 +92,4 @@ def table_description_factory(table_name):
     n = '{}TableDescription'.format(table_name)
     return globals()[n]
 
-#============= EOF ====================================
+# ============= EOF ====================================

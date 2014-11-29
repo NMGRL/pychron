@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Property, Instance, Button
 from traitsui.api import View, Item, EnumEditor, HGroup, VGroup, Group
 
 from pychron.graph.graph import Graph
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class DatabasePlotter(HasTraits):
     x = Str

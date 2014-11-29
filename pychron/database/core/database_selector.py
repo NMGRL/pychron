@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from datetime import datetime, timedelta
 
 from sqlalchemy import and_, or_
@@ -25,8 +25,8 @@ from traitsui.api import View, Item, \
 
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.progress import progress_loader
 from pychron.database.core.database_adapter import DatabaseAdapter
 

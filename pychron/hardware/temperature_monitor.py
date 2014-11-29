@@ -16,12 +16,12 @@
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import Float, Property, Str
 from traitsui.api import Item, EnumEditor, VGroup
-#=============standard library imports ========================
+# =============standard library imports ========================
 # import time
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 from core.core_device import CoreDevice
 from pychron.hardware.core.data_helper import make_bitarray
 # from modbus.modbus_device import ModbusDevice
@@ -234,4 +234,4 @@ class DPi32TemperatureMonitor(ISeriesDevice):
 #                                        )
 #                                 )
 #        return v
-#============= EOF ============================================
+# ============= EOF ============================================

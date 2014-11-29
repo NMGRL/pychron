@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
 import unittest
 
@@ -22,8 +22,8 @@ from pychron.mv.focus.autofocus_manager import AutoFocusManager
 from pychron.image.video import Video
 from pychron.globals import globalv
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class FocusTest(unittest.TestCase):
     def setUp(self):

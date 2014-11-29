@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 
 from pychron.processing.plotters.ideogram.ideogram import Ideogram
 from pychron.processing.plotters.figure_panel import FigurePanel
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 class IdeogramPanel(FigurePanel):
     _figure_klass = Ideogram
     # _index_attr = 'uage'

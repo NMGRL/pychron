@@ -15,13 +15,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pychron.paths import paths
 from loggable import Loggable
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 import ConfigParser
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 class ConfigMixin(Loggable):
     configuration_dir_name = None

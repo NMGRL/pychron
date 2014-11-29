@@ -14,10 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 import socket
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from SocketServer import BaseRequestHandler
 
 
@@ -92,4 +92,4 @@ class MessagingHandler(BaseRequestHandler):
             except socket.error, e:
                 print e
                 continue
-#============= EOF ====================================
+# ============= EOF ====================================

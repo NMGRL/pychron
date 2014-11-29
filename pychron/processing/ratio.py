@@ -18,7 +18,7 @@
 
 # ============= standard library imports ========================
 from uncertainties import ufloat
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 
 class RatioElement(object):

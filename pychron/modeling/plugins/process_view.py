@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, List, Button
 from traitsui.api import View, Item, TabularEditor, HGroup, spring
 from traitsui.tabular_adapter import TabularAdapter
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class ProcessAdapter(TabularAdapter):
     columns = [('Name', 'name'), ('RunID', 'rid'),

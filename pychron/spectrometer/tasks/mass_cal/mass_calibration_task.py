@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pyface.tasks.task_layout import TaskLayout, PaneItem, VSplitter
 from traits.api import Any, Instance
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.envisage.tasks.editor_task import BaseEditorTask
 from pychron.spectrometer.mass_cal.mass_calibrator import MassCalibratorScan

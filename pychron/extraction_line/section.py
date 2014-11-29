@@ -16,11 +16,11 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 # from canvas.canvas3D.elements.components import Valve, Shaft
 class Section(object):
     '''
@@ -324,4 +324,4 @@ class Section(object):
 #
 #
 
-#============= EOF ====================================
+# ============= EOF ====================================

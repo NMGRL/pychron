@@ -16,14 +16,14 @@
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import Enum, Bool, Float
 from chaco.api import AbstractOverlay
 from enable.colors import color_table
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
 from numpy import column_stack
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 
 class ErrorBarOverlay(AbstractOverlay):
@@ -88,4 +88,4 @@ class ErrorBarOverlay(AbstractOverlay):
             gc.draw_path()
 
 
-#============= EOF =====================================
+# ============= EOF =====================================

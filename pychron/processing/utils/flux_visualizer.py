@@ -17,7 +17,7 @@
 from traits.etsconfig.etsconfig import ETSConfig
 
 ETSConfig.toolkit = 'qt4'
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import csv
 from pylab import show, meshgrid, zeros, \
     contourf, array, linspace, scatter, cm, xlabel, ylabel, \
@@ -28,8 +28,8 @@ import matplotlib.pyplot as plt
 from pychron.core.regression.ols_regressor import MultipleLinearRegressor
 from pychron.core.regression.flux_regressor import PlaneFluxRegressor
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 def load_holder(holder):
     holes = []
     with open(holder, 'r') as fp:

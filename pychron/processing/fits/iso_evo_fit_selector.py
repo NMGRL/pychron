@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Float, Bool
 from traitsui.api import View, VGroup, HGroup, Item
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.processing.fits.filter_fit_selector import FilterFitSelector, FilterFit
 from pychron.processing.fits.fit_selector import CheckboxColumn
 

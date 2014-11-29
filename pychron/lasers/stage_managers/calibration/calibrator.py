@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 
 from traits.api import Str
@@ -24,8 +24,8 @@ from pychron.loggable import Loggable
 from pychron.paths import paths
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 SIMPLE_HELP = '''1. Locate center hole
 2. Locate right hole
 '''

@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 from threading import Thread
 import time
@@ -23,8 +23,8 @@ from traits.api import Str, Any, Bool, Dict, List
 from traitsui.api import View, Item, EnumEditor
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 import yaml
 from pychron.loggable import Loggable
 from pychron.paths import paths

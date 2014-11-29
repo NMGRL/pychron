@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pychron.core.helpers.formatting import floatfmt, format_percent_error
 from pychron.graph.tools.info_inspector import InfoInspector, InfoOverlay
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
 class RegressionInspectorTool(InfoInspector):

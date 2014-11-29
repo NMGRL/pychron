@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import HasTraits, List, Dict
 # from traitsui.api import View, Item
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import csv
 from pychron.loggable import Loggable
 from pychron.pychron_constants import IRRADIATION_KEYS, DECAY_KEYS
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 # from pychron.core.stats import calculate_mswd, calculate_weighted_mean
 # from pychron.data_processing.argon_calculations import calculate_arar_age, find_plateaus
 
@@ -181,7 +181,7 @@ if __name__ == '__main__':
 
 
 
-#============= EOF =====================================
+# ============= EOF =====================================
 #    def finish(self):
 #        self._calculate_cumulative39()
 #        self.find_plateau_steps()

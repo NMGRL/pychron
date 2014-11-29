@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traitsui.api import View, Item, VGroup, \
     HGroup, spring, UItem, ButtonEditor, Group
 from pyface.tasks.traits_dock_pane import TraitsDockPane
@@ -25,8 +25,8 @@ from pychron.core.ui.led_editor import LEDEditor
 
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 class FusionsUVClientPane(ClientPane):
     pass
 

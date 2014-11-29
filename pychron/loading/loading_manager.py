@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, cached_property, List, Str, \
     Property, Int, Event, Any, Bool, Button, Float, on_trait_change
 from traitsui.api import View, Item, EnumEditor, UItem, ListStrEditor
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
 from itertools import groupby
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.canvas.utils import load_holder_canvas
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.canvas.canvas2D.loading_canvas import LoadingCanvas, group_position

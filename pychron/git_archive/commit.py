@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Property, Bool
 # ============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 
 class Commit(HasTraits):

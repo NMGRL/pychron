@@ -14,10 +14,10 @@
 # # limitations under the License.
 # # ===============================================================================
 #
-# #============= enthought library imports =======================
+# # ============= enthought library imports =======================
 # from traits.api import Str, Int
-# #============= standard library imports ========================
-# #============= local library imports  ==========================
+# # ============= standard library imports ========================
+# # ============= local library imports  ==========================
 # from pychron.experiment.conditional.conditional import BaseConditional
 #
 #

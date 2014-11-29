@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import unittest
 
 from pychron.hardware.linear_mapper import LinearMapper
 from pychron.hardware.core.motion.motion_profiler import MotionProfiler
 from pychron.hardware.core.motion.motion_profiler_old import MotionProfiler as MotionProfilerOld
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
 class MotionProfilerTest(unittest.TestCase):

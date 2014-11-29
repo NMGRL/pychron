@@ -16,17 +16,17 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from data_manager import DataManager
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import csv
 from numpy import loadtxt
 
 # import time
 # from matplotlib.dates import num2date
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 class CSVDataManager(DataManager):
     '''
     '''
@@ -119,4 +119,4 @@ class CSVDataManager(DataManager):
 #    for xi in x:
 #        print num2date(xi).second
 
-#============= EOF ====================================
+# ============= EOF ====================================

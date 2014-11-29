@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Enum, Float, Bool, Button, Property, Int, on_trait_change, List
 from traitsui.api import Item, HGroup, Group, VGroup, UItem, EnumEditor, InstanceEditor, spring
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.color_generators import colornames
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.plotters.options.age import AgeOptions

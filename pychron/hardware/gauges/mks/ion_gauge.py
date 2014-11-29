@@ -16,13 +16,13 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Bool, Property
 # from traitsui.api import View, Item, Group, HGroup, VGroup
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import time
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from base_mks_gauge import BaseMKSGauge
 
 class IonGauge(BaseMKSGauge):
@@ -138,6 +138,6 @@ class IonGauge(BaseMKSGauge):
         '''
 
         self.set_filament_state(self.state)
-#============= views ===================================
+# ============= views ===================================
 
-#============= EOF ====================================
+# ============= EOF ====================================

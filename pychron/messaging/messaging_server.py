@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pychron.globals import globalv
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 class MessagingServer(object):
     '''
     '''
@@ -61,6 +61,6 @@ class MessagingServer(object):
         '''
         '''
         self.parent.warning(*args, **kw)
-#============= views ===================================
+# ============= views ===================================
 
-#============= EOF ====================================
+# ============= EOF ====================================

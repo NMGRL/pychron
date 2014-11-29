@@ -23,10 +23,10 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pychron.hardware.core.core_device import CoreDevice
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class NCDDevice(CoreDevice):
     def initialize(self, *args, **kw):

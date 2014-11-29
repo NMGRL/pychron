@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Bool, Int, Str, Button
 from traits.has_traits import on_trait_change
 from traitsui.api import EnumEditor, ButtonEditor
 from traitsui.api import HGroup, UItem
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 from pychron.processing.fits.fit import Fit
 from pychron.processing.fits.fit_selector import FitSelector, ObjectColumn, CheckboxColumn

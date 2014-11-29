@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pychron.lasers.tasks.laser_panes import BaseLaserPane, ClientPane, \
     StageControlPane, ControlPane, AxesPane
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 class FusionsCO2Pane(BaseLaserPane):
     pass
 

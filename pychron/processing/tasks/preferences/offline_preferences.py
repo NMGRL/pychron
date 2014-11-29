@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Bool, File
 from traitsui.api import View, Item, Group, FileEditor
 from envisage.ui.tasks.preferences_pane import PreferencesPane
@@ -23,8 +23,8 @@ from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
 class OfflinePreferences(BasePreferencesHelper):

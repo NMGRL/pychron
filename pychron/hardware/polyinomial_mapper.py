@@ -18,8 +18,8 @@
 from numpy import poly1d
 from scipy import optimize
 from traits.api import HasTraits, List, Float
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class PolynomialMapper(HasTraits):
     """

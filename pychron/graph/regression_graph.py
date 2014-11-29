@@ -13,11 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import List, Any, Event, Callable
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import linspace
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.graph.graph import Graph
 from pychron.graph.tools.rect_selection_tool import RectSelectionTool, \
     RectSelectionOverlay

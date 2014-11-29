@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Float, Instance, Str, Tuple
 from chaco.abstract_overlay import AbstractOverlay
 from enable.base_tool import BaseTool
 from enable.colors import ColorTrait
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import string
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
 from pychron.processing.plotters.ideogram.mean_indicator_overlay import XYPlotLabel
 

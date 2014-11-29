@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 # from traits.api import HasTraits
 # from traitsui.api import View, Item
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 # from pychron.core.pdf.base_pdf_writer import BasePDFWriter
 # from pychron.loading.component_flowable import ComponentFlowable
 # from reportlab.platypus.flowables import PageBreak

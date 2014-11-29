@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 import shutil
 import sys
@@ -26,8 +26,8 @@ from pyface.tasks.action.task_action import TaskAction
 
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 import webbrowser
 from pyface.confirmation_dialog import confirm

@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance, Any, on_trait_change, Str
 from traitsui.api import View, UItem, InstanceEditor
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.processing.analyses.changes import AnalysisRecord
 

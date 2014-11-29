@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from chaco.text_box_overlay import TextBoxOverlay
 from traits.api import Enum, Any, Bool
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class CursorToolOverlay(TextBoxOverlay):
     border_visible = True

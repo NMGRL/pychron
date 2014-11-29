@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Instance, Button, Bool, List, Str, Property, Any, \
     Enum, File, Int
 from traitsui.api import View, Item, EnumEditor, HGroup, ListEditor, InstanceEditor, Label, Spring, \
@@ -22,11 +22,11 @@ from traitsui.api import View, Item, EnumEditor, HGroup, ListEditor, InstanceEdi
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
 from pyface.timer.do_later import do_later
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import numpy as np
 import csv
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 from pychron.graph.graph import Graph
 from pychron.graph.regression_graph import RegressionGraph

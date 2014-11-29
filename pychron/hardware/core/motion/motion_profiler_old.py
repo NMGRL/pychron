@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Float, Bool, on_trait_change
 from traitsui.api import View, Item, Group, HGroup, spring
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import math
 from pychron.config_loadable import ConfigLoadable
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 ATTRS = ['max_velocity', 'max_transit_time',
 'min_acceleration_time', 'velocity_tol',
@@ -30,9 +30,9 @@ ATTRS = ['max_velocity', 'max_transit_time',
 
 
 class MotionProfiler(ConfigLoadable):
-#===========================================================================
+# ===========================================================================
 # configable parameters
-#===========================================================================
+# ===========================================================================
     velocity_tol = Float(0.5, enter_set=True, auto_set=False)
     acceleration_tol = Float(0.5, enter_set=True, auto_set=False)
     deceleration_tol = Float(0.05, enter_set=True, auto_set=False)
@@ -287,4 +287,4 @@ if __name__ == '__main__':
     disp = 0.01
     print 'calc parameters', m.calculate_corrected_parameters(disp, v, a, d)
 
-#============= EOF ====================================
+# ============= EOF ====================================

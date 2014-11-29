@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Instance, Str, List, Property, DelegatesTo, Float, \
     on_trait_change, String, Event
 from traitsui.api import View, Item, UItem, EnumEditor, VGroup, HGroup
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.fits.fit import Fit
 from pychron.processing.fits.interpolation_fit_selector import InterpolationFitSelector

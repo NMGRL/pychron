@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pyface.timer.do_later import do_later
 from traits.api import Instance, Enum, Any, DelegatesTo, List, Property, \
     Bool, Button, String, cached_property, \
     HasTraits, Range, Float, Event
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import random
 import os
 import pickle
@@ -28,7 +28,7 @@ from numpy import Inf
 from threading import Thread
 from Queue import Queue
 import yaml
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.ui.preference_binding import bind_preference
 from pychron.core.ui.toggle_button import ToggleButton
 from pychron.envisage.resources import icon

@@ -18,10 +18,10 @@ import sqlalchemy
 from pychron.deprecate import  deprecated_message
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 @deprecated_message('use DatabaseAdapter._add_item instead')
 def add(func):

@@ -16,14 +16,14 @@
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import HasTraits, Any, List, Int, Bool
-#=============standard library imports ========================
+# =============standard library imports ========================
 # import wx
 from numpy import asarray, flipud, ndarray
 from pychron.globals import globalv
 # from pychron.image.pyopencv_image_helper import colorspace
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 from cv_wrapper import load_image, asMat, get_size, grayspace, resize, \
     save_image, draw_lines
 from cv_wrapper import swap_rb as cv_swap_rb

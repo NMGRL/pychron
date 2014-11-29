@@ -16,8 +16,8 @@
 
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Instance
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.spectrometer.map.channel_select import ChannelSelect
 from pychron.spectrometer.map.magnet import MapMagnet
 

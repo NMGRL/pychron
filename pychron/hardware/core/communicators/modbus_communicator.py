@@ -16,11 +16,11 @@
 
 
 
-#=============enthought library imports=======================
-#=============standard library imports =======================
+# =============enthought library imports=======================
+# =============standard library imports =======================
 import struct
 import binascii
-#=============local library imports  =========================
+# =============local library imports  =========================
 from pychron.hardware.core.exceptions import CRCError
 from serial_communicator import SerialCommunicator
 from pychron.hardware.core.checksum_helper import computeCRC
@@ -230,4 +230,4 @@ class ModbusCommunicator(SerialCommunicator):
 #        data_address = '{:04X}'.format(inputid - 10001)
 #        n = '{04x}'.format(ninputs)
 #        return self._execute_request([func_code, data_address, n])
-#============= EOF =====================================
+# ============= EOF =====================================

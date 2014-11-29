@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Any, Str, List, Callable, Either
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import csv
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 
 class CSVCell(HasTraits):

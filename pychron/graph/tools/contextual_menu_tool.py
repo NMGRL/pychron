@@ -15,15 +15,15 @@
 # ===============================================================================
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Any
 from enable.api import Interactor
 # from chaco.base_plot_container import BasePlotContainer
 from chaco.plot import Plot
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 
 class ContextualMenuTool(Interactor):
@@ -97,4 +97,4 @@ class ContextualMenuTool(Interactor):
         menu_manager.destroy()
         event.handled = True
 
-#============= EOF ====================================
+# ============= EOF ====================================

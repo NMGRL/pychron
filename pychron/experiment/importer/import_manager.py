@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Enum, Instance, Str, Button, List, Any, Bool, Property, Event, cached_property, Int
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from collections import namedtuple
 import time
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.experiment.importer.mass_spec_extractor import Extractor, \
     MassSpecExtractor
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager

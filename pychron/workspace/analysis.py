@@ -25,7 +25,7 @@ from traits.api import Str, List
 
 # ============= standard library imports ========================
 import yaml
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.processing.analyses.file_analysis import FileAnalysis
 from pychron.processing.export.yaml_analysis_exporter import ANALYSIS_ATTRS

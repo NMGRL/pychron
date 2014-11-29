@@ -14,18 +14,18 @@
 # # limitations under the License.
 # # ===============================================================================
 #
-# #============= enthought library imports =======================
+# # ============= enthought library imports =======================
 # from traits.api import HasTraits, Int, List, String, Float, Bool, \
 # on_trait_change, Str, Any, Instance
 # from traitsui.api import View, Item, VGroup, Group, HGroup, Label, Spring, \
 #     UItem, ListEditor, InstanceEditor, spring, EnumEditor, TableEditor
 # from traitsui.table_column import ObjectColumn
 # from traitsui.extras.checkbox_column import CheckboxColumn
-# #============= standard library imports ========================
+# # ============= standard library imports ========================
 # import re
 # import os
 # from ConfigParser import ConfigParser
-# #============= local library imports  ==========================
+# # ============= local library imports  ==========================
 # from pychron.core.helpers.filetools import to_bool
 # from pychron.loggable import Loggable
 # from pychron.pychron_constants import NULL_STR, FIT_TYPES
@@ -165,15 +165,15 @@
 #
 #
 # class MeasurementParameterEditor(ParameterEditor):
-#     #===========================================================================
+#     # ===========================================================================
 #     # counts
-#     #===========================================================================
+#     # ===========================================================================
 #     multicollect_counts = Int(100)
 #     active_detectors = List
 #
-#     #===========================================================================
+#     # ===========================================================================
 #     # baselines
-#     #===========================================================================
+#     # ===========================================================================
 #     baseline_counts = Int(100)
 #     baseline_detector = String
 #     baseline_mass = Float
@@ -181,33 +181,33 @@
 #     baseline_after = Bool
 #     baseline_settling_time = Int(3)
 #
-#     #===========================================================================
+#     # ===========================================================================
 #     # peak center
-#     #===========================================================================
+#     # ===========================================================================
 #     peak_center_before = Bool
 #     peak_center_after = Bool
 #     peak_center_isotope = String
 #     peak_center_detector = String
 #
-#     #===========================================================================
+#     # ===========================================================================
 #     # equilibration
-#     #===========================================================================
+#     # ===========================================================================
 #     eq_time = Float
 #     eq_outlet = String
 #     eq_inlet = String
 #     eq_delay = Float
 #
-#     #===========================================================================
+#     # ===========================================================================
 #     # peak hop
-#     #===========================================================================
+#     # ===========================================================================
 #     ncycles = Int
 #     use_peak_hop = Bool
 #     baseline_ncycles = Int
 #     hops = List
 #
-#     #===========================================================================
+#     # ===========================================================================
 #     # conditionals
-#     #===========================================================================
+#     # ===========================================================================
 #     actions = List
 #     truncations = List
 #     terminations = List

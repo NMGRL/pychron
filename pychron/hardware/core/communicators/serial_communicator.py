@@ -16,9 +16,9 @@
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 
-#=============standard library imports ========================
+# =============standard library imports ========================
 import time
 import glob
 import os
@@ -28,7 +28,7 @@ import serial
 
 
 
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 from communicator import Communicator
 from pychron.globals import globalv
 
@@ -245,11 +245,11 @@ class SerialCommunicator(Communicator):
                 self.warning('Port not set')
                 return False
 
-        #=======================================================================
+        # =======================================================================
         # #on windows device handles probably handled differently
         if sys.platform == 'darwin':
             port = '/dev/tty.{}'.format(port)
-            #=======================================================================
+            # =======================================================================
 
         args['port'] = port
 
@@ -678,4 +678,4 @@ if __name__ == '__main__':
         time.sleep(1)
 #    s.tell('ddd', verbose=False)
 #    print s.ask('ddd', verbose=False)
-#===================== EOF ==========================================
+# ===================== EOF ==========================================

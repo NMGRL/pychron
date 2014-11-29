@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 
 from pyface.action.menu_manager import MenuManager
@@ -33,8 +33,8 @@ from pychron.core.ui.tabular_editor import myTabularEditor
 
 
 # from pychron.pyscripts.commands.core import ICommand
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
 class CommitAdapter(TabularAdapter):

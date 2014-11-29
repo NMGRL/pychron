@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Str, Any, List, Float, Int, Property, Bool
 from traitsui.api import View, Item, VGroup
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.hardware.switch import Switch
 
 
@@ -120,7 +120,7 @@ class HardwareValve(Switch):
             #                    buttons=['OK', 'Cancel'],
             title='{} Properties'.format(self.name))
 
-#============= EOF ====================================
+# ============= EOF ====================================
 #    def open(self, mode='normal'):
 #        '''
 #

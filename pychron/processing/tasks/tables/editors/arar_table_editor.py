@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from itertools import groupby
 
 from traits.api import Property, List, cached_property, Str
 from traitsui.api import View, UItem
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.processing.analyses.analysis_group import AnalysisGroup
 from pychron.processing.tasks.tables.editors.base_table_editor import BaseTableEditor

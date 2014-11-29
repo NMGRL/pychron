@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Any
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, Tabbed
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 from pychron.envisage.tasks.base_task import BaseExtractionLineTask
 from pychron.spectrometer.tasks.spectrometer_panes import ScanPane, ControlsPane, \

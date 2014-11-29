@@ -18,9 +18,9 @@ ETSConfig.toolkit = 'qt4'
 
 from pychron.database.records.isotope_record import IsotopeRecord
 from test.database import isotope_manager_factory
-#============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 @profile
 def main(db):
     labn = db.get_labnumber('61311',

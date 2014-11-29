@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import provides, Property, Str, cached_property
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from sqlalchemy import Column, String, Integer, Float, distinct, DateTime
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.database.i_browser import IBrowser
 from pychron.experiment.utilities.identifier import make_step

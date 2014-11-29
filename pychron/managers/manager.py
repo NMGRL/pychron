@@ -14,17 +14,17 @@
 # limitations under the License.
 # ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import Str, Float, Any, Button, Int, List, Bool
 from traitsui.api import Item, HGroup, VGroup, \
     RangeEditor, ButtonEditor, ScrubberEditor, spring
 from traitsui.menu import Action, Menu, MenuBar
 from pyface.api import FileDialog, OK, DirectoryDialog
-#=============standard library imports ========================
+# =============standard library imports ========================
 import os
 from threading import Thread
 import time
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 from pychron.viewable import Viewable, ViewableHandler
 from pychron.rpc.rpcable import RPCable
 # from pychron.envisage.core.action_helper import MANAGERS
@@ -613,4 +613,4 @@ class Manager(Viewable, RPCable):
         menus = self.menus_factory()
         return MenuBar(*menus)
 
-#=================== EOF =================================================
+# =================== EOF =================================================

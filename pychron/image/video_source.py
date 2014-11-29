@@ -14,16 +14,16 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, File, Str, Int
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import zmq
 from cStringIO import StringIO
 import Image as PILImage
 import os
 from numpy import asarray, array
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.image.image import Image
 from pychron.image.cv_wrapper import resize
 

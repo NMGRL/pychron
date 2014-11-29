@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from chaco.plot_label import PlotLabel
 from traits.api import Bool, Str
 from chaco.data_label import DataLabel
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import max
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 class FlowPlotLabel(PlotLabel):
     def overlay(self, component, gc, *args, **kw):

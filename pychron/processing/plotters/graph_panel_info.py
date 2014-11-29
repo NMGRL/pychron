@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Int, Str, Property
 from traitsui.api import View, Item, HGroup, VGroup, EnumEditor
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 EInt = lambda x: Int(x, enter_set=True, auto_set=False)
 
 class GraphPanelInfo(HasTraits):

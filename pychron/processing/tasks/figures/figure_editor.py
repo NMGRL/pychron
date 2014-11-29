@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from chaco.base_plot_container import BasePlotContainer
 from chaco.plot_label import PlotLabel
 from numpy import isnan
@@ -22,10 +22,10 @@ from traits.api import Any, on_trait_change, \
     List, Event, Int
 from traitsui.api import View, UItem
 from enable.component_editor import ComponentEditor as EnableComponentEditor
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from itertools import groupby
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from uncertainties import nominal_value, std_dev
 from pychron.core.csv.csv_parser import CSVColumnParser
 from pychron.processing.analyses.analysis_group import InterpretedAge

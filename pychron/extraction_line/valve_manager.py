@@ -14,9 +14,9 @@
 # limitations under the License.
 # ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import Any, Dict, List, Bool
-#=============standard library imports ========================
+# =============standard library imports ========================
 import os
 import pickle
 from pickle import PickleError
@@ -26,7 +26,7 @@ import time
 import random
 from itertools import groupby
 from socket import gethostname, gethostbyname
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 from pychron.core.helpers.filetools import to_bool
 from pychron.globals import globalv
 from pychron.hardware.core.i_core_device import ICoreDevice
@@ -868,7 +868,7 @@ if __name__ == '__main__':
         time.sleep(2)
         # print r, len(r)
 
-#==================== EOF ==================================
+# ==================== EOF ==================================
 #     def _get_system_address(self, name):
 #         return next((h for k, h in self.systems.iteritems() if k == name), None)
 #

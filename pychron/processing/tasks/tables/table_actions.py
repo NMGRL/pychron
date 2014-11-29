@@ -18,9 +18,9 @@ from pyface.tasks.action.task_action import TaskAction
 from pychron.envisage.resources import icon
 
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 class MakePDFTableAction(TaskAction):
     name = 'Make PDF'
     method = 'make_pdf_table'

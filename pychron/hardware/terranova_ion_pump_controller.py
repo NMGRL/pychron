@@ -16,13 +16,13 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Float
 from traitsui.api import View, VGroup
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.hardware.core.core_device import CoreDevice
 
 CR = chr(13)
@@ -56,7 +56,7 @@ class TerraNovaIonPumpController(CoreDevice):
         if r is not None:
             setattr(self, attr, r)
 
-#============= views ===================================
+# ============= views ===================================
     def traits_view(self):
         v = View(VGroup('pressure',
                       'current',
@@ -100,4 +100,4 @@ class TerraNovaIonPumpController(CoreDevice):
 if __name__ == '__main__':
     t = TerraNovaIonPumpController()
     t.configure_traits()
-#============= EOF ====================================
+# ============= EOF ====================================

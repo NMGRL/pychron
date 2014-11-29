@@ -19,13 +19,13 @@ from pyface.action.menu_manager import MenuManager
 from traits.api import Property, Int
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from pychron.core.helpers.filetools import to_bool
 from pychron.experiment.utilities.identifier import make_aliquot_step
 from pychron.pychron_constants import EXTRACTION_COLOR, MEASUREMENT_COLOR, SUCCESS_COLOR, \
     SKIP_COLOR, NOT_EXECUTABLE_COLOR, CANCELED_COLOR, TRUNCATED_COLOR, \
     FAILED_COLOR, END_AFTER_COLOR
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 COLORS = {'success': SUCCESS_COLOR,
           'extraction': EXTRACTION_COLOR,
           'measurement': MEASUREMENT_COLOR,
@@ -38,9 +38,9 @@ COLORS = {'success': SUCCESS_COLOR,
 
 class ExecutedAutomatedRunSpecAdapter(TabularAdapter):
     font = 'arial 10'
-    #===========================================================================
+    # ===========================================================================
     # widths
-    #===========================================================================
+    # ===========================================================================
 
     labnumber_width = Int(80)
     aliquot_width = Int(40)
@@ -67,9 +67,9 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter):
 
     position_text = Property
     comment_width = Int(125)
-    #===========================================================================
+    # ===========================================================================
     # number values
-    #===========================================================================
+    # ===========================================================================
     ramp_duration_text = Property
     extract_value_text = Property
     beam_diameter_text = Property
@@ -166,7 +166,7 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter):
 
     def _set_position_text(self,v):
         pass
-    #============================================
+    # ============================================
 
     def _get_overlap_text(self):
         o, m = self.item.overlap

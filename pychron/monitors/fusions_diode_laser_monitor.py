@@ -16,13 +16,13 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Bool, Float, Int, Str
 
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.monitors.fusions_laser_monitor import FusionsLaserMonitor
 
 class MonitorSeries(HasTraits):
@@ -144,7 +144,7 @@ class FusionsDiodeLaserMonitor(FusionsLaserMonitor):
             manager.emergency_shutoff(reason='Over temp {}'.format(lt))
 
 
-#============= views ===================================
+# ============= views ===================================
 #    def traits_view(self):
 #        '''
 #        '''
@@ -171,4 +171,4 @@ class FusionsDiodeLaserMonitor(FusionsLaserMonitor):
 #                   )
 #             )
 #        return v
-#============= EOF ====================================
+# ============= EOF ====================================

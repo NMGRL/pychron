@@ -16,11 +16,11 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.hardware.core.core_device import CoreDevice
 
 
@@ -52,4 +52,4 @@ class GPActuator(CoreDevice):
         '''
             '''
         raise NotImplementedError
-#============= EOF ====================================
+# ============= EOF ====================================

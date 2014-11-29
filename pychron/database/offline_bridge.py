@@ -15,15 +15,15 @@
 # ===============================================================================
 # from pychron.core.ui import set_toolkit
 # set_toolkit('qt4')
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 
 from sqlalchemy import Table
 from sqlalchemy.ext.declarative import declarative_base
 from traits.api import Any
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from sqlalchemy.orm.exc import NoResultFound
 from pychron.core.helpers.logger_setup import wrap
 from pychron.database.adapters.isotope_adapter import IsotopeAdapter

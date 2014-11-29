@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 
 from traits.api import Instance, Any, Button, DelegatesTo
@@ -27,8 +27,8 @@ from pychron.paths import paths
 # from pychron.managers.manager import Manager
 from pychron.extraction_line.valve_manager import ValveManager
 from pyface.timer.timer import Timer
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class UVGasHandlerManager(ValveManager):
     canvas = Instance(ExtractionLineCanvas2D)

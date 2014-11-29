@@ -16,11 +16,11 @@
 
 
 
-##=============enthought library imports=======================
+## =============enthought library imports=======================
 #
-##=============standard library imports ========================
+## =============standard library imports ========================
 # from pylab import *
-##=============local library imports  ==========================
+## =============local library imports  ==========================
 # from pychron.core.helpers.logger_setup import setup
 # from ctypes_opencv import cvCreateImage, cvGetSize, cvAcc, cvRunningAvg, \
 #    cvLoadImage, cvCreateCameraCapture, cvQueryFrame, cvSaveImage

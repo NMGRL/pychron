@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Button, List, Instance, Property, Any, Event, Int, \
     Str, on_trait_change, Bool
 from traitsui.api import View, Item, UItem, HGroup, VGroup, spring, EnumEditor
@@ -23,8 +23,8 @@ from pyface.tasks.traits_dock_pane import TraitsDockPane
 import os
 import shelve
 import hashlib
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.ui.qt.tabular_editor import UnselectTabularEditorHandler
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.tasks.analysis_edit.table_filter import TableFilter

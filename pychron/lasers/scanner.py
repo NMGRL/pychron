@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance, List, Bool, Event, \
     Property, Float, Tuple, File, Int
 from traitsui.api import View, Item, UItem, ButtonEditor
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import time
 import os
 import yaml
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.managers.data_managers.csv_data_manager import CSVDataManager
 from pychron.graph.stream_graph import StreamStackedGraph
 from pychron.core.helpers.timer import Timer

@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 
 from traits.api import Instance, Button, Bool, Float
 from traitsui.api import VGroup, Item, InstanceEditor
 
-#=============standard library imports ========================
+# =============standard library imports ========================
 from threading import Timer
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 
 from pychron.hardware.fusions.fusions_diode_logic_board import FusionsDiodeLogicBoard
 # from pychron.hardware.fusions.vue_diode_control_module import VueDiodeControlModule
@@ -275,7 +275,7 @@ if __name__ == '__main__':
     #    f.bootstrap()
     f.configure_traits()
 
-#======================= EOF ============================
+# ======================= EOF ============================
 #    def finish_loading(self):
 #        super(FusionsDiodeManager, self).finish_loading()
 #

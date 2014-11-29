@@ -13,12 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.git_archive.repo_manager import GitRepoManager
 
 

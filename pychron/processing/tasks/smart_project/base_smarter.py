@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance
 # from traitsui.api import View, Item
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from sqlalchemy.sql.expression import and_
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.loggable import Loggable
 # from pychron.database.orms.isotope_orm import meas_AnalysisTable, \
 #     meas_MeasurementTable, gen_AnalysisTypeTable

@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import time
 
 from traits.api import Any, Int, Instance, Event
 
 from pychron.loggable import Loggable
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from numpy import exp, mgrid, linspace, hstack, array, rot90
 from pychron.core.helpers.datetime_tools import generate_datestamp
 from pychron.managers.data_managers.h5_data_manager import H5DataManager

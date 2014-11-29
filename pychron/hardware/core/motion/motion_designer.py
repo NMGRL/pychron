@@ -16,14 +16,14 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Range, Instance, Property
 from traitsui.api import View, Item, Group
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import linspace
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 from pychron.graph.graph import Graph
 from pychron.hardware.core.motion.motion_profiler import MotionProfiler
@@ -175,7 +175,7 @@ class MotionDesigner(HasTraits):
 
         return atime, dtime, vtime
 
-#============= views ===================================
+# ============= views ===================================
     def traits_view(self):
         cgrp = Group(
                    Item('acceleration'),
@@ -207,4 +207,4 @@ if __name__ == '__main__':
     m = MotionDesigner()
     m.replot()
     m.configure_traits()
-#============= EOF ====================================
+# ============= EOF ====================================

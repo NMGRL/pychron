@@ -15,9 +15,9 @@
 # ===============================================================================
 
 
-#=============enthought library imports=======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# =============enthought library imports=======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from error import ErrorCode  # , code_generator, get_code_decorator
 
 # code_gen = code_generator(0, start=1)
@@ -179,4 +179,4 @@ class InvalidGaugeErrorCode(ErrorCode):
 #    def __init__(self, addr, *args, **kw):
 #        self.msg = self.msg.format(addr)
 #        super(HMACSecurityErrorCode, self).__init__(*args, **kw)
-#============= EOF =====================================
+# ============= EOF =====================================

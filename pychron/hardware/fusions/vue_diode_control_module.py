@@ -20,12 +20,12 @@
 Vue Metrix Vue-TEC controller 
 see http://www.vuemetrix.com/support/tech/tec_commands.html
 '''
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import Float
 from traitsui.api import VGroup, Item
-#=============standard library imports ========================
+# =============standard library imports ========================
 # import os
-#=============local library imports  =========================
+# =============local library imports  =========================
 from pychron.hardware.core.core_device import CoreDevice
 
 
@@ -216,4 +216,4 @@ class VueDiodeControlModule(CoreDevice):
             Item('laser_voltage', format_str='%0.2f', style='readonly'))
         return g
 
-#============= EOF ====================================
+# ============= EOF ====================================

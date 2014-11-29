@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance, Button, Property, Bool, Int
 from traitsui.api import View, Item, ButtonEditor
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from threading import Thread, Event
 import time
 from numpy import array
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.image.video import Video
 from pychron.loggable import Loggable
 import zmq

@@ -16,11 +16,11 @@
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 
-#=============standard library imports ========================
+# =============standard library imports ========================
 
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 from kerr_device import KerrDevice
 class KerrMicrocontroller(KerrDevice):
     '''

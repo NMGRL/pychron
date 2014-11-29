@@ -14,10 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.processing.fits.fit import Fit
 from pychron.processing.fits.fit_selector import FitSelector
 from pychron.pychron_constants import FIT_TYPES_INTERPOLATE

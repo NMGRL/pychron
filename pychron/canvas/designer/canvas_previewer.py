@@ -16,14 +16,14 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Instance
 from traitsui.api import View, Item
 from enable.component_editor import ComponentEditor
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.canvas.canvas2D.extraction_line_canvas2D import ExtractionLineCanvas2D
 class CanvasPreviewer(HasTraits):
     '''
@@ -45,5 +45,5 @@ if __name__ == '__main__':
     c = CanvasPreviewer()
     c.canvas.bootstrap('/Users/Ross/Desktop/canvas.elc')
     c.configure_traits()
-#============= views ===================================
-#============= EOF ====================================
+# ============= views ===================================
+# ============= EOF ====================================

@@ -130,7 +130,7 @@ class ArduinoGPActuator(GPActuator):
         if state is not None:
             return bool(state)
 
-#============= EOF ====================================
+# ============= EOF ====================================
 
 #    def get_channel_state(self, obj):
 #        '''
@@ -195,4 +195,4 @@ class ArduinoGPActuator(GPActuator):
 #        if self.simulation:
 #            r = True
 #        return r
-#============= EOF =====================================
+# ============= EOF =====================================

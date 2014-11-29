@@ -17,8 +17,8 @@
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Instance
 from traitsui.api import View, UItem, VGroup
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.git_archive.diff_editor import DiffEditor
 
 

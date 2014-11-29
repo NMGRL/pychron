@@ -16,12 +16,12 @@
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from pyface.timer.api import do_after as do_after_timer
 
-#=============standard library imports ========================
+# =============standard library imports ========================
 from numpy import hstack, Inf
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 # from pychron.graph.editors.stream_plot_editor import StreamPlotEditor
 from pychron.core.helpers.datetime_tools import current_time_generator as time_generator
 from stacked_graph import StackedGraph
@@ -301,7 +301,7 @@ class StreamGraph(Graph):
 class StreamStackedGraph(StreamGraph, StackedGraph):
     pass
 
-#============= EOF ====================================
+# ============= EOF ====================================
 #    def set_x_limits(self, *args, **kw):
 #        '''
 #            @type *args: C{str}

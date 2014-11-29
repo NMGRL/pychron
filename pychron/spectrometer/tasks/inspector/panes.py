@@ -17,8 +17,8 @@
 # ============= enthought library imports =======================
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traitsui.api import View, UItem
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class ScanInspectorCentralPane(TraitsTaskPane):
     def traits_view(self):

@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Float
 
 from pychron.config_loadable import ConfigLoadable
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import math
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 class MotionProfiler(ConfigLoadable):
     velocity_tol = Float(0.5)

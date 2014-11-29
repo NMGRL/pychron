@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from chaco.tools.cursor_tool import CursorTool
 from traits.api import HasTraits, Instance
 from traitsui.api import View, UItem
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.graph.graph import Graph
 from pychron.graph.tools.cursor_tool_overlay import CursorToolOverlay
 

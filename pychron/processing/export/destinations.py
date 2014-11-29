@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
 from traits.api import HasTraits, Property, Instance, Str, Button
 from traitsui.api import View, Item, HGroup, UItem
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.database.database_connection_spec import DBConnectionSpec
 
 

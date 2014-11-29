@@ -14,13 +14,13 @@
 # # limitations under the License.
 # # ===============================================================================
 #
-# #============= enthought library imports =======================
+# # ============= enthought library imports =======================
 # from traits.api import List, Any, Event
 # from chaco.tools.broadcaster import BroadcasterTool
-# #============= standard library imports ========================
+# # ============= standard library imports ========================
 # from numpy import linspace, random, \
 #     delete, bitwise_and, invert, average
-# #============= local library imports  ==========================
+# # ============= local library imports  ==========================
 # from pychron.graph.graph import Graph
 # from pychron.graph.tools.rect_selection_tool import RectSelectionTool, \
 #     RectSelectionOverlay

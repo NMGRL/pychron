@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from enable.component_editor import ComponentEditor
 from traits.api import HasTraits, List, Str, Float, Instance, Bool
 from traitsui.api import View, UItem, VGroup, Item, VSplit, HGroup
 from traitsui.editors import TableEditor
 from traitsui.table_column import ObjectColumn
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.canvas.canvas2D.piechart_canvas import PieChartCanvas
 from pychron.core.helpers.formatting import floatfmt
 from pychron.processing.analyses.view.magnitude_editor import MagnitudeColumn

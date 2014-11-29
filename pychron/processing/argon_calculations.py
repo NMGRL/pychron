@@ -14,9 +14,9 @@
 # limitations under the License.
 # ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import math
 from copy import deepcopy
 
@@ -37,7 +37,7 @@ from pychron.core.stats.core import calculate_weighted_mean
 
 
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 
 def calculate_F_ratio(m4039, m3739, m3639, pr):
@@ -469,8 +469,8 @@ def calculate_error_t(F, ssF, j, ssJ):
     sst = (JJ * ssF + FF * ssJ) / (ll * (1 + F * j) ** 2)
     return sst ** 0.5
 
-#============= EOF =====================================
-##============= EOF ====================================
+# ============= EOF =====================================
+## ============= EOF ====================================
 # # plateau definition
 # plateau_criteria = {'number_steps': 3}
 #
@@ -699,9 +699,9 @@ def calculate_error_t(F, ssF, j, ssJ):
 # #    age = (1 / constants.lambdak) * math.log(1 + JR)
 #    age = (1 / constants.lambdak) * log(1 + JR)
 #
-#    #==========================================================================
+#    # ==========================================================================
 #    # errors mass spec copy
-#    #==========================================================================
+#    # ==========================================================================
 #
 #    square = lambda x: x * x
 #

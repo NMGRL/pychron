@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from datetime import datetime
 
 from apptools.preferences.preference_binding import bind_preference
@@ -23,9 +23,9 @@ from pyface.api import SplashScreen
 from pyface.image_resource import ImageResource
 
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.globals import globalv
 
 from pychron.paths import paths
@@ -134,5 +134,5 @@ class PychronApplication(BaseTasksApplication):
     def get_service_by_name(self, protocol, name):
         return self.get_service(protocol, 'name=="{}"'.format(name))
 
-#============= views ===================================
-#============= EOF ====================================
+# ============= views ===================================
+# ============= EOF ====================================

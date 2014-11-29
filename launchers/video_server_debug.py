@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.etsconfig.api import ETSConfig
 ETSConfig.toolkit = "qt4"
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 version_id = '_experiment-2.0.0'
 from helpers import build_version

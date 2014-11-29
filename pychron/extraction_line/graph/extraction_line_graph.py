@@ -14,10 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Dict, Bool
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 from pychron.extraction_line.graph.nodes import ValveNode, RootNode, \
     PumpNode, Edge, SpectrometerNode, LaserNode, TankNode, PipetteNode, \
@@ -66,9 +66,9 @@ class ExtractionLineGraph(HasTraits):
 
         nodes = dict()
 
-        #=======================================================================
+        # =======================================================================
         # load nodes
-        #=======================================================================
+        # =======================================================================
         # load roots
         for t, klass in (('stage', RootNode),
                          ('spectrometer', SpectrometerNode),
@@ -92,9 +92,9 @@ class ExtractionLineGraph(HasTraits):
                 node = klass(name=n, volume=vol)
                 nodes[n] = node
 
-        #=======================================================================
+        # =======================================================================
         # load edges
-        #=======================================================================
+        # =======================================================================
         for ei in cp.get_elements('connection'):
             sa = ei.find('start')
             ea = ei.find('end')

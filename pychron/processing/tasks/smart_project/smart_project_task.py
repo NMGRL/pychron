@@ -14,9 +14,9 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 # from traits.api import HasTraits
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 from datetime import datetime
 import time
@@ -24,7 +24,7 @@ import time
 import yaml
 
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
 from pychron.paths import paths, rec_make
 from pychron.experiment.importer.import_manager import ImportManager

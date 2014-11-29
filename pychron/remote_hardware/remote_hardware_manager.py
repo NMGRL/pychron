@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Dict, Bool, on_trait_change, List
 from apptools.preferences.preference_binding import bind_preference
 from traitsui.api import View, Item, Group, HGroup, VGroup, \
     ListEditor, TableEditor
 from traitsui.table_column import ObjectColumn
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.managers.manager import Manager
 from pychron.envisage.initialization.initialization_parser import InitializationParser
 from pychron.remote_hardware.command_processor import CommandProcessor
@@ -34,12 +34,12 @@ from pychron.paths import paths
 # from threading import Thread
 
 '''
-#===================================
+# ===================================
 @todo
     add get_error_status
     add get list of files
     
-#===================================
+# ===================================
 '''
 
 
@@ -262,7 +262,7 @@ class RemoteHardwareManager(Manager):
             ps[cp.name] = cp
 
         return ps
-#============= EOF ====================================
+# ============= EOF ====================================
 #    def process_server_request(self, request_type, data):
 #        '''
 #

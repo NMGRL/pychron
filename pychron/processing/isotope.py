@@ -14,17 +14,17 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Float, Property, Instance, \
     Array, String, Either, Dict, cached_property, Event, List, Bool, Int
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
 from numpy import array, Inf, polyfit
 from binascii import hexlify
 from itertools import izip
 import struct
 import re
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.fits import natural_name_fit
 
 

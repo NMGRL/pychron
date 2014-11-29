@@ -16,10 +16,10 @@
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from messaging_handler import MessagingHandler
 
 class UDPHandler(MessagingHandler):
@@ -41,4 +41,4 @@ class UDPHandler(MessagingHandler):
 
 
 
-#============= EOF ====================================
+# ============= EOF ====================================

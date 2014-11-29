@@ -14,10 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import HasTraits, List
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.managers.manager import Manager
 from datetime import datetime
 class Run(object):
@@ -118,4 +118,4 @@ class MultrunsReportManager(Manager):
                     text = self.current_report.generate_report()
                     em.broadcast(text, subject='MultRuns Report')
 
-#============= EOF =====================================
+# ============= EOF =====================================

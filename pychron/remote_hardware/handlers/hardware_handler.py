@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
 from pychron.remote_hardware.handlers.base_remote_hardware_handler import BaseRemoteHardwareHandler
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 class HardwareHandler(BaseRemoteHardwareHandler):
     pass
 # ============= EOF =============================================

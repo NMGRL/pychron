@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 # from pyface.tasks.task import Task
 from pyface.tasks.task_layout import PaneItem, TaskLayout, VSplitter
 
 from pychron.hardware.tasks.hardware_pane import CurrentDevicePane, DevicesPane, InfoPane
 from pychron.envisage.tasks.base_task import BaseHardwareTask
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class HardwareTask(BaseHardwareTask):
     id = 'pychron.hardware'

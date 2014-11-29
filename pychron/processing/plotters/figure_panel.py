@@ -14,16 +14,16 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from math import isinf
 
 from numpy import Inf, inf
 from traits.api import HasTraits, Any, on_trait_change, List, Int, Str
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from itertools import groupby
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.processing.analysis_graph import AnalysisStackedGraph
 
 

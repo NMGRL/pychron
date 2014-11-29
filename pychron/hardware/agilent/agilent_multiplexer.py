@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import HasTraits, Str, List, Float, Property, Tuple, Bool, Instance
 from traitsui.api import View, Item, HGroup, ListEditor, InstanceEditor
-#=============standard library imports ========================
+# =============standard library imports ========================
 from numpy import polyval
 from pychron.hardware.agilent.agilent_unit import AgilentUnit
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 # from pychron.hardware.adc.analog_digital_converter import AnalogDigitalConverter
 
 
@@ -299,4 +299,4 @@ class AgilentSingleADC(AgilentUnit):
 
 
 
-#============= EOF =====================================
+# ============= EOF =====================================

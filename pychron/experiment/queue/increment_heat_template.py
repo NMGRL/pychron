@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Float, Enum, List, Int, \
     File, Property, Button, on_trait_change, Any, Event, cached_property
 from traits.trait_errors import TraitError
@@ -22,10 +22,10 @@ from traitsui.api import View, UItem, HGroup, Item, spring
 from pyface.file_dialog import FileDialog
 from pyface.constant import OK
 from traitsui.tabular_adapter import TabularAdapter
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import csv
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.paths import paths
 from pychron.viewable import Viewable

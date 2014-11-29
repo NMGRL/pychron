@@ -18,15 +18,15 @@ version_id = '_test'
 from helpers import build_version
 build_version(version_id)
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Int, Bool, Event, Property
 from traitsui.api import View, Item, ButtonEditor
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import SocketServer
 import shlex
 import socket
 from threading import Thread
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 cnt = 0
 gErrorSet = False
@@ -117,9 +117,9 @@ def verbose_all(cls):
 #
 @verbose_all
 class QtegraEmulator(Loggable):
-    #===========================================================================
+    # ===========================================================================
     # Qtegra Protocol
-    #===========================================================================
+    # ===========================================================================
     def handleSetMass(self, mass):
         mass = float(mass)
 #        print 'setting mass %f' % mass
@@ -298,9 +298,9 @@ class ExtractionLineEmulator(Loggable):
 
 class EmulatorHandler(SocketServer.BaseRequestHandler):
 
-    #===========================================================================
+    # ===========================================================================
     # BaseRequestHandler protocol
-    #===========================================================================
+    # ===========================================================================
 #    def __init__(self, *args, **kw):
 #        super(EmulatorHandler, self).__init__(*args, **kw)
 #        QtegraEmulator.__init__(self, **kw)

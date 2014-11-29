@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from pyface.tasks.action.task_action import TaskAction
 # ============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.envisage.resources import icon
 
 

@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pyface.action.menu_manager import MenuManager
 from traits.trait_types import Int, Str
 from traits.traits import Property
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
 
@@ -230,7 +230,7 @@ class IntermediateTabularAdapter(BaseTabularAdapter, ConfigurableAdapterMixin):
         v = self.item.get_baseline_corrected_value()
         return format_percent_error(v.nominal_value, v.std_dev)
 
-    #============================================================
+    # ============================================================
     def _get_bs_bk_corrected_text(self):
         v = self.item.get_non_detector_corrected_value()
         return floatfmt(nominal_value(v), n=7)
@@ -243,7 +243,7 @@ class IntermediateTabularAdapter(BaseTabularAdapter, ConfigurableAdapterMixin):
         v = self.item.get_non_detector_corrected_value()
         return format_percent_error(v.nominal_value, v.std_dev)
 
-    #============================================================
+    # ============================================================
     def _get_disc_corrected_text(self):
         v = self.item.get_disc_corrected_value()
         return floatfmt(nominal_value(v), n=7)
@@ -256,7 +256,7 @@ class IntermediateTabularAdapter(BaseTabularAdapter, ConfigurableAdapterMixin):
         v = self.item.get_disc_corrected_value()
         return format_percent_error(v.nominal_value, v.std_dev)
 
-    #============================================================
+    # ============================================================
     def _get_interference_corrected_text(self):
         v = self.item.get_interference_corrected_value()
         return floatfmt(nominal_value(v), n=7)

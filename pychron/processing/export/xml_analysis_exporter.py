@@ -25,7 +25,7 @@ from traits.api import Instance
 
 # ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from uncertainties import nominal_value, std_dev
 from pychron.processing.export.destinations import XMLDestination
 from pychron.processing.export.export_spec import ExportSpec

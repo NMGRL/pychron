@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Any
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from tables import openFile, Filters
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from data_manager import DataManager
 from table_descriptions import table_description_factory
 import os
@@ -244,4 +244,4 @@ if __name__ == '__main__':
     d = H5DataManager()
     print d
 
-#============= EOF ====================================
+# ============= EOF ====================================

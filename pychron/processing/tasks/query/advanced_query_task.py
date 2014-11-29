@@ -14,10 +14,10 @@
 # # limitations under the License.
 # # ===============================================================================
 #
-# #============= enthought library imports =======================
+# # ============= enthought library imports =======================
 # from traits.api import Instance, on_trait_change
-# #============= standard library imports ========================
-# #============= local library imports  ==========================
+# # ============= standard library imports ========================
+# # ============= local library imports  ==========================
 # from pychron.envisage.tasks.base_task import BaseManagerTask
 # from pychron.processing.selection.data_selector import DataSelector
 # from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
