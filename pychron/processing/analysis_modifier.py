@@ -15,7 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance, HasTraits, List, Str
+import os
+from traits.api import Instance, HasTraits, List, Str, Bool
 from traitsui.api import View, VGroup, Item, EnumEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -23,17 +24,25 @@ from pychron.database.adapters.isotope_adapter import IsotopeAdapter
 from pychron.database.adapters.massspec_database_adapter import MassSpecDatabaseAdapter
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.loggable import Loggable
+from pychron.paths import paths
+from pychron.persistence_loggable import PersistenceMixin
 
 
-class LabnumberSelector(HasTraits):
+class LabnumberSelector(HasTraits, PersistenceMixin):
     irradiations = List
     irradiation = Str
     levels = List
     level = Str
-    idenifiers = List
+    identifiers = List
     identifier = Str
+    use_secondary = Bool
+    use_secondary = Bool(True)
+    persistence_path = os.path.join(paths.hidden_dir, 'labnumber_selector')
+
+    pattributes = ('irradiation', 'level', 'identifier', 'use_secondary', 'use_main')
 
     def __init__(self, db, *args, **kw):
+
         super(LabnumberSelector, self).__init__(*args, **kw)
         self.db = db
         with db.session_ctx():
@@ -41,13 +50,17 @@ class LabnumberSelector(HasTraits):
             if self.irradiations:
                 self.irradiation = self.irradiations[0]
 
+        self.load()
+
     def _irradiation_changed(self, new):
         if new:
             db = self.db
             with db.session_ctx():
-                self.levels = [li.name for li in db.get_irradiaiton_levels(new)]
+                dbirrad = db.get_irradiation(new)
+                self.levels = [li.name for li in dbirrad.levels]
                 if self.levels:
-                    self.level[0]
+                    self.level = ''
+                    self.level = self.levels[0]
         else:
             self.levels = []
             self.level = ''
@@ -57,7 +70,9 @@ class LabnumberSelector(HasTraits):
             db = self.db
             with db.session_ctx():
                 level = db.get_irradiation_level(self.irradiation, new)
-                self.identifiers = [li.name for li in level.positions.labnumbers]
+                self.identifiers = [li.labnumber.identifier for li in level.positions]
+                if self.identifiers:
+                    self.identifier = self.identifiers[0]
         else:
             self.identifiers = []
             self.identifier = ''
@@ -65,8 +80,12 @@ class LabnumberSelector(HasTraits):
     def traits_view(self):
         v = View(VGroup(Item('irradiation', editor=EnumEditor(name='irradiations')),
                         Item('level', editor=EnumEditor(name='levels')),
-                        Item('identifier', editor=EnumEditor(name='identifiers'))),
-                 kind='livemodal')
+                        Item('identifier', editor=EnumEditor(name='identifiers')),
+                        Item('use_secondary', label='Use Secondary DB',
+                             tooltip='Also modify the secondary db, e.g. a Mass Spec db.')),
+                 kind='livemodal',
+                 title='Select New Labnumber',
+                 buttons=['OK', 'Cancel'])
         return v
 
 
@@ -78,6 +97,9 @@ class AnalysisModifier(Loggable):
     secondary_db = Instance(MassSpecDatabaseAdapter)
 
     def do_modification(self, ans):
+        if not self.main_db.connect():
+            self.debug('not connected main db')
+
         identifier = self.select_new_labnumber()
         if identifier:
             self.modify_analyses(ans, identifier)
@@ -86,6 +108,9 @@ class AnalysisModifier(Loggable):
         v = LabnumberSelector(self.main_db)
         info = v.edit_traits()
         if info.result:
+            v.dump()
+            self.use_main = v.use_main
+            self.use_secondary = v.use_secondary
             return v.identifier
 
     def modify_analyses(self, ans, new_labnumber):
@@ -99,7 +124,10 @@ class AnalysisModifier(Loggable):
             self._modify_main(ans, new_labnumber)
 
         if self.use_secondary:
-            self._modify_secondary(ans, new_labnumber)
+            if self.secondary_db.connect():
+                self._modify_secondary(ans, new_labnumber)
+            else:
+                self.debug('not connected to secondary db')
 
     def _modify_main(self, ans, new_labnumber):
         self.info('modifying analyses in main db')

@@ -56,6 +56,8 @@ class ResultsView(Controller):
 
     help_str = Str('Select any row to cancel auto close')
 
+    _auto_closed = False
+
     def _selected_changed(self, new):
         self._cancel_auto_close = bool(new)
 
@@ -68,7 +70,7 @@ class ResultsView(Controller):
     def closed(self, info, is_ok):
         import sys
 
-        if not is_ok:
+        if not self._auto_closed and not is_ok:
             if confirm(info.ui.control, 'Are you sure you want to Quit?') == YES:
                 self.model.info('User quit because of Startup fail')
 
@@ -82,7 +84,11 @@ class ResultsView(Controller):
 
     def _do_auto_close(self):
         if not self._cancel_auto_close:
-            self.info.ui.dispose()
+            self._auto_closed = True
+            try:
+                self.info.ui.dispose()
+            except AttributeError:
+                pass
 
     def traits_view(self):
         v = View(VGroup(UItem('results', editor=TabularEditor(adapter=ResultsAdapter(),
