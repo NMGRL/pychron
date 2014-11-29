@@ -37,17 +37,22 @@ DEFAULT_INITIALIZATION = '''<root>
 </root>
 '''
 
-DEFAULT_STARTUP_TESTS = '''- plugin: Database
+DEFAULT_STARTUP_TESTS = '''
+- plugin: Database
   tests:
-      - test_pychron
-      - test_massspec
+    - test_pychron
+    - test_massspec
 - plugin: LabBook
   tests:
 - plugin: ArArConstants
   tests:
 - plugin: ArgusSpectrometer
   tests:
-      - test_communication
+    - test_communication
+- plugin: ExtractionLine
+  tests:
+    - test_valve_communication
+    - test_gauge_communication
 '''
 
 

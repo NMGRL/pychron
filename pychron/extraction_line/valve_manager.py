@@ -749,6 +749,9 @@ class ValveManager(Manager):
         #        v.evalve = weakref.ref(ev)()
         self.explanable_items.append(ev)
 
+    def _get_simulation(self):
+        return any([act.simulation for act in self.actuators])
+
         # ===============================================================================
         # deprecated
         # ===============================================================================

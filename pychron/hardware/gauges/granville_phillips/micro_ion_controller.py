@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -139,16 +139,21 @@ class MicroIonController(CoreDevice):
             except (TypeError, ValueError):
                 pass
 
+    def get_pressure(self, name):
+        gauge = self.get_gauge(name)
+        if gauge is not None:
+            return gauge.pressure
+
     def get_pressures(self, verbose=False):
-        #        self.debug('getting pressure')
-        b = self.get_convectron_b_pressure(verbose=verbose, force=True)
+        kw = {'verbose': verbose, 'force': True}
+        b = self.get_convectron_b_pressure(**kw)
         self._set_gauge_pressure('CG2', b)
         time.sleep(0.05)
-        a = self.get_convectron_a_pressure(verbose=verbose, force=True)
+        a = self.get_convectron_a_pressure(**kw)
         self._set_gauge_pressure('CG1', a)
         time.sleep(0.05)
 
-        ig = self.get_ion_pressure(verbose=verbose, force=True)
+        ig = self.get_ion_pressure(**kw)
         self._set_gauge_pressure('IG', ig)
 
         return ig, a, b

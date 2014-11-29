@@ -25,7 +25,7 @@ import os
 from threading import Thread
 # ============= local library imports  ==========================
 from pychron.globals import globalv
-from pychron.hardware.core.communicators.ethernet_communicator import EthernetCommunicator
+from pychron.hardware.pychron_device import PychronDevice
 from pychron.lasers.laser_managers.client import UVLaserOpticsClient, UVLaserControlsClient, \
     LaserOpticsClient, LaserControlsClient
 from pychron.lasers.laser_managers.laser_manager import BaseLaserManager
@@ -33,7 +33,7 @@ from pychron.core.helpers.filetools import to_bool
 from pychron.paths import paths
 
 
-class PychronLaserManager(BaseLaserManager):
+class PychronLaserManager(PychronDevice, BaseLaserManager):
     """
     A PychronLaserManager is used to control an instance of
     pychron remotely.
@@ -77,26 +77,26 @@ class PychronLaserManager(BaseLaserManager):
     optics_client = Instance(LaserOpticsClient)
     controls_client = Instance(LaserControlsClient)
 
-    def shutdown(self):
-        if self.communicator:
-            self.communicator.close()
+    # def shutdown(self):
+    #     if self.communicator:
+    #         self.communicator.close()
 
     def bind_preferences(self, pref_id):
         bind_preference(self, 'use_video', '{}.use_video'.format(pref_id))
         self.stage_manager.bind_preferences(pref_id)
 
-    def open(self):
-        host = self.host
-        port = self.port
-
-        self.communicator = ec = EthernetCommunicator(host=host,
-                                                      port=port)
-        r = ec.open()
-        if r:
-            self.connected = True
-            self.opened()
-
-        return r
+    # def open(self):
+    #     host = self.host
+    #     port = self.port
+    #
+    #     self.communicator = ec = EthernetCommunicator(host=host,
+    #                                                   port=port)
+    #     r = ec.open()
+    #     if r:
+    #         self.connected = True
+    #         self.opened()
+    #
+    #     return r
 
     def opened(self):
         self.update_position()
@@ -107,7 +107,7 @@ class PychronLaserManager(BaseLaserManager):
                                   self.get_position())))
 
     def get_tray(self):
-        return self.ask('GetSampleHolder')
+        return self._ask('GetSampleHolder')
 
     # ===============================================================================
     # patterning

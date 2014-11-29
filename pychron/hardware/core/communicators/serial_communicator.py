@@ -13,9 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
-
-
 # =============enthought library imports=======================
 
 # =============standard library imports ========================
@@ -25,8 +22,6 @@ import os
 import sys
 
 import serial
-
-
 
 # =============local library imports  ==========================
 from communicator import Communicator
@@ -40,7 +35,7 @@ def get_ports():
 
 
 class SerialCommunicator(Communicator):
-    '''
+    """
         Base Class for devices that communicate using a rs232 serial port.
         Using Keyspan serial converter is the best option for a Mac
         class is built on top of pyserial. Pyserial is used to create a handle and
@@ -49,7 +44,7 @@ class SerialCommunicator(Communicator):
         setup args are loaded using load(). this method should be overwritten to
         load specific items.
 
-    '''
+    """
 
     # char_write = False
 
@@ -69,6 +64,8 @@ class SerialCommunicator(Communicator):
     read_terminator = None
     clear_output = False
 
+    def test_connection(self):
+        return self.handle is not None
 
     def reset(self):
         handle = self.handle
@@ -96,9 +93,6 @@ class SerialCommunicator(Communicator):
             self.handle.close()
 
     def load(self, config, path):
-        '''
-
-        '''
 
         self.config_path = path
         self.config = config
@@ -127,16 +121,15 @@ class SerialCommunicator(Communicator):
             self.stopbits = getattr(serial, 'STOPBITS_%s' % stopbits.upper())
 
         self.set_attribute(config, 'read_delay', 'Communications', 'read_delay',
-                           cast='float', optional=True, default=25
-        )
+                           cast='float', optional=True, default=25)
 
         self.set_attribute(config, 'read_terminator', 'Communications', 'terminator',
                            optional=True, default=None)
 
     def tell(self, cmd, is_hex=False, info=None, verbose=True, **kw):
-        '''
+        """
 
-        '''
+        """
         if self.handle is None:
             if verbose:
                 info = 'no handle'
@@ -161,8 +154,8 @@ class SerialCommunicator(Communicator):
             #        self._lock.release()
 
     def read(self, nchars=None, *args, **kw):
-        '''
-        '''
+        """
+        """
         with self._lock:
             if nchars is not None:
             # self._lock.acquire()
@@ -177,11 +170,10 @@ class SerialCommunicator(Communicator):
             handshake_only=False,
             handshake=None,
             read_terminator=None,
-            nchars=None
-    ):
-        '''
+            nchars=None):
+        """
 
-        '''
+        """
 
 
         if self.handle is None:
@@ -225,7 +217,7 @@ class SerialCommunicator(Communicator):
         return re
 
     def open(self, **kw):
-        '''
+        """
             Use pyserial to create a handle connected to port wth baudrate
             default handle parameters
             baudrate=9600
@@ -233,7 +225,7 @@ class SerialCommunicator(Communicator):
             parity= PARITY_NONE
             stopbits= STOPBITS_ONE
             timeout=None
-        '''
+        """
         args = dict()
 
         ldict = locals()['kw']
@@ -330,11 +322,11 @@ class SerialCommunicator(Communicator):
             self.simulation = True
 
     def _validate_address(self, port):
-        '''
+        """
             use glob to check the avaibable serial ports
             valid ports start with /dev/tty.U or /dev/tty.usbmodem
 
-        '''
+        """
         valid = get_ports()
         if port in valid:
             return True
@@ -361,10 +353,10 @@ class SerialCommunicator(Communicator):
 
 
     def _write(self, cmd, is_hex=False):
-        '''
+        """
             use the serial handle to write the cmd to the serial buffer
 
-        '''
+        """
 
         def write(cmd_str):
             try:
@@ -456,9 +448,9 @@ class SerialCommunicator(Communicator):
     #        return r
 
     def _get_nbytes(self, nchars, r):
-        '''
+        """
             1 byte == 2 chars
-        '''
+        """
         handle = self.handle
         #        inw = 0
         #        timeout = 1

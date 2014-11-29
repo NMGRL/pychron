@@ -165,11 +165,22 @@ class ExtractionLineManager(Manager, Consoleable):
 
         return v
 
-    def test_connection(self):
-        if self.simulation:
-            return globalv.communication_simulation
-        else:
-            return bool(self.get_valve_states())
+    def test_gauge_communication(self):
+        if self.gauge_manager:
+            if self.gauge_manager.simulation:
+                return globalv.communication_simulation
+            else:
+                return self.gauge_manager.test_connection()
+
+    def test_valve_communication(self):
+        # if self.simulation:
+        #     return globalv.communication_simulation
+        # else:
+        if self.valve_manager:
+            if self.valve_manager.simulation:
+                return globalv.communication_simulation
+            else:
+                return bool(self.get_valve_states())
 
     def refresh_canvas(self):
         for ci in self._canvases:
@@ -493,10 +504,10 @@ class ExtractionLineManager(Manager, Consoleable):
 
     def _create_manager(self, klass, manager, params, **kw):
         # try a lazy load of the required module
-        if 'fusions' in manager:
-            package = 'pychron.managers.laser_managers.{}'.format(manager)
-            self.laser_manager_id = manager
-        elif 'rpc' in manager:
+        # if 'fusions' in manager:
+        #     package = 'pychron.managers.laser_managers.{}'.format(manager)
+        #     self.laser_manager_id = manager
+        if 'rpc' in manager:
             package = 'pychron.rpc.manager'
         else:
             package = 'pychron.managers.{}'.format(manager)

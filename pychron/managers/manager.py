@@ -15,10 +15,9 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-from traits.api import Str, Float, Any, Button, Int, List, Bool
+from traits.api import Str, Float, Any, Button, Int, List, Bool, Property
 from traitsui.api import Item, HGroup, VGroup, \
-    RangeEditor, ButtonEditor, ScrubberEditor, spring
-from traitsui.menu import Action, Menu, MenuBar
+    ButtonEditor, spring
 from pyface.api import FileDialog, OK, DirectoryDialog
 # =============standard library imports ========================
 import os
@@ -27,7 +26,6 @@ import time
 # =============local library imports  ==========================
 from pychron.viewable import Viewable, ViewableHandler
 from pychron.rpc.rpcable import RPCable
-# from pychron.envisage.core.action_helper import MANAGERS
 from pychron.saveable import SaveableHandler
 
 
@@ -74,7 +72,11 @@ class ManagerHandler(ViewableHandler):
 class AppHandler(ManagerHandler):
     def closed(self, info, isok):
         info.object.kill()
-        info.object.close_displays()
+        from pychron.displays.gdisplays import gLoggerDisplay, gWarningDisplay, gMessageDisplay
+        gLoggerDisplay.close_ui()
+        gWarningDisplay.close_ui()
+        gMessageDisplay.close_ui()
+
         return True
 
 
@@ -96,7 +98,7 @@ class Manager(Viewable, RPCable):
     window_y = Float(0.1)
     window_width = Float(0.75)
     window_height = Float(0.75)
-    simulation = False
+    simulation = Property
 
     _killed = False
     enable_close_after = Bool
@@ -150,23 +152,12 @@ class Manager(Viewable, RPCable):
             pass
 
     def open_view(self, obj, **kw):
-        def _open_():
+        def _open():
             ui = obj.edit_traits(**kw)
             self.add_window(ui)
 
         from pychron.core.ui.gui import invoke_in_main_thread
-
-        invoke_in_main_thread(_open_)
-
-    def close_displays(self):
-        from pychron.displays.gdisplays import gLoggerDisplay, gWarningDisplay, gMessageDisplay
-
-        gLoggerDisplay.close_ui()
-        gWarningDisplay.close_ui()
-        gMessageDisplay.close_ui()
-
-    def _kill_hook(self):
-        pass
+        invoke_in_main_thread(_open)
 
     def kill(self, **kw):
         """
@@ -184,33 +175,21 @@ class Manager(Viewable, RPCable):
                     if hasattr(man, 'kill'):
                         man.kill()
 
-                        #        return not self._killed
-
-                        #    def warning_dialog(self, msg):
-                        #        '''
-                        #        '''
-                        #        warning(None, msg)
-
     def open_file_dialog(self, **kw):
         """
         """
-        return self._file_dialog_('open', **kw)
+        return self._file_dialog('open', **kw)
 
     def save_file_dialog(self, **kw):
         """
         """
-        return self._file_dialog_('save as', **kw)
+        return self._file_dialog('save as', **kw)
 
     def open_directory_dialog(self, **kw):
         return self._directory_dialog(False, **kw)
 
     def save_directory_dialog(self, **kw):
         return self._directory_dialog(True)
-
-    def _directory_dialog(self, new_directory, **kw):
-        dlg = DirectoryDialog(new_directory=new_directory, **kw)
-        if dlg.open() == OK:
-            return dlg.path
 
     def get_error(self):
         e = self.error_code
@@ -327,34 +306,9 @@ class Manager(Viewable, RPCable):
     def clear_flag(self, name):
         return self._set_flag(name, False)
 
-    def _set_flag(self, name, val):
-        flag = self.get_flag(name)
-        if flag is not None:
-            flag.set(val)
-            return True
-            #    def get_flag_state(self, name):
-            #        return self._flag(name, 'get')
-            #
-            #    def set_flag(self, name):
-            #        self._flag(name, 'set')
-            #
-            #    def clear_flag(self, name):
-            #        self._flag(name, 'clear')
-
-            #    def _flag(self, name, func):
-            #        f = next(([f for f in self.flags if f == name]), None)
-            #        if f is not None:
-            #            getattr(f, func)()
-            #        else:
-            #            self.warning('Invalid flag {}'.format(name))
-            # ===============================================================================
-            #
-            # ===============================================================================
-
     def create_manager(self, manager, **kw):
-
-        '''
-        '''
+        """
+        """
         klass = self.convert_config_name(manager)
         params = dict(name=manager)
         params['parent'] = self
@@ -362,32 +316,10 @@ class Manager(Viewable, RPCable):
 
         return self._create_manager(klass, manager, params, **kw)
 
-    def _create_manager(self, klass, manager, params,
-                        port=None, host=None, remote=False):
-        from pychron.managers import manager_package_dict
-
-        if remote:
-            klass = 'Remote{}'.format(klass)
-            params['rpc_port'] = port
-            params['rpc_host'] = host
-
-        try:
-            package = manager_package_dict[klass]
-            class_factory = self.get_manager_factory(package, klass)
-            if class_factory:
-                m = class_factory(**params)
-
-                self.add_trait(manager, m)
-                return m
-
-        except KeyError, e:
-            print 'create manager', e
-            pass
-
     def create_device(self, device_name, gdict=None, dev_class=None,
                       prefix=None, obj=None):
-        '''
-        '''
+        """
+        """
         device = None
 
         if dev_class is not None:
@@ -415,8 +347,7 @@ class Manager(Viewable, RPCable):
 
         device = class_factory(name=device_name)
         if obj is not None:
-            device.copy_traits(obj, traits=['configuration_dir_name',
-            ])
+            device.copy_traits(obj, traits=['configuration_dir_name'])
 
         if device is not None:
             if prefix:
@@ -429,29 +360,96 @@ class Manager(Viewable, RPCable):
 
         return device
 
-    #     def get_file_list(self, p, extension=None):
-    #         if os.path.isdir(p):
-    #             ps = os.listdir(p)
-    #             if extension is not None:
-    #                 ps = [pi for pi in ps if pi.endswith(extension)]
-    #
-    #             return ps
+    # private
+    def _set_flag(self, name, val):
+        flag = self.get_flag(name)
+        if flag is not None:
+            flag.set(val)
+            return True
 
-    def _file_dialog_(self, action, **kw):
-        '''
-        '''
+    def _kill_hook(self):
+        pass
+
+    def _create_manager(self, klass, manager, params,
+                        port=None, host=None, remote=False):
+        from pychron.managers import manager_package_dict
+
+        if remote:
+            klass = 'Remote{}'.format(klass)
+            params['rpc_port'] = port
+            params['rpc_host'] = host
+
+        try:
+            package = manager_package_dict[klass]
+            class_factory = self.get_manager_factory(package, klass)
+            if class_factory:
+                m = class_factory(**params)
+
+                self.add_trait(manager, m)
+                return m
+
+        except KeyError, e:
+            print 'create manager', e
+            pass
+
+    def _directory_dialog(self, new_directory, **kw):
+        dlg = DirectoryDialog(new_directory=new_directory, **kw)
+        if dlg.open() == OK:
+            return dlg.path
+
+    def _file_dialog(self, action, **kw):
+        """
+        """
         #         print 'file_dialog', kw
         dlg = FileDialog(action=action, **kw)
         if dlg.open() == OK:
             return dlg.path
 
+    def _get_simulation(self):
+        return False
 
-    def _led_factory(self, name, color='green'):
+    # view factories
+    def _button_factory(self, name, label=None, enabled=None, align=None, **kw):
         """
 
         """
-        i = Item(name, show_label=False)
-        return i
+        b = Item(name, show_label=False, **kw)
+
+        if label is None:
+            label = '{}_label'.format(name)
+
+        if label is not None:
+            b.editor = ButtonEditor(label_value=label)
+
+        if enabled is not None:
+            b.enabled_when = enabled
+
+        if align is not None:
+            if align == 'right':
+                b = HGroup(spring, b)
+            elif align == 'center':
+                b = HGroup(spring, b, spring)
+            else:
+                b = HGroup(b, spring)
+
+        return b
+
+    def _button_group_factory(self, buttons, orientation='v'):
+        """
+        """
+        vg = VGroup() if orientation == 'v' else HGroup()
+
+        for name, label, enabled in buttons:
+            vg.content.append(HGroup(self._button_factory(name, label, enabled), springy=False))
+        return vg
+# =================== EOF =================================================
+
+    # def _led_factory(self, name, color='green'):
+    #     """
+    #
+    #     """
+    #     i = Item(name, show_label=False)
+    #     return i
 
     # def _switch_factory(self, name, label=False, enabled=None):
     #     '''
@@ -478,139 +476,104 @@ class Manager(Viewable, RPCable):
     #         sw = self._switch_factory(s, label=label, enabled=enabled)
     #         g.content.append(sw)
     #     return g
+    #
+    # def _scrubber_factory(self, name, range_dict):
+    #     '''
+    #
+    #     '''
+    #     return Item(name, editor=ScrubberEditor(**range_dict))
+    #
+    # def _scrubber_group_factory(self, scrubbers, **kw):
+    #     '''
+    #
+    #
+    #     '''
+    #     vg = VGroup(**kw)
+    #     for name, prefix in scrubbers:
+    #         range_dict = dict(low=getattr(self, '%smin' % prefix), high=getattr(self, '%smax' % prefix))
+    #         vg.content.append(self._scrubber_factory(name, range_dict))
+    #     return vg
+    #
+    # def _readonly_slider_factory(self, *args, **kw):
+    #     '''
+    #
+    #     '''
+    #     return self._slider_factory(
+    #         enabled_when='0',
+    #         *args, **kw)
+    #
+    # def _slider_factory(self, name, prefix, mode='slider', **kw):
+    #     '''
+    #     '''
+    #     return Item(name, editor=RangeEditor(mode=mode,
+    #                                          low_name='%smin' % prefix,
+    #                                          high_name='%smax' % prefix,
+    #
+    #                                          format='%0.2f'
+    #     ),
+    #
+    #                 **kw)
+    #
+    # def _update_slider_factory(self, name, prefix, **kw):
+    #     '''
+    #
+    #     '''
+    #     vg = VGroup()
+    #
+    #     r = self._slider_factory(name, prefix, **kw)
+    #     vg.content.append(r)
+    #
+    #     ur = self._slider_factory('update_%s' % name, name, show_label=False, enabled_when='0')
+    #
+    #     vg.content.append(ur)
+    #
+    #     return vg
+    #
+    # def _update_slider_group_factory(self, sliders, **kw):
+    #     '''
+    #
+    #     '''
+    #     vg = VGroup(**kw)
+    #
+    #     for si, prefix, options in sliders:
+    #         if not options:
+    #             options = {}
+    #         vg.content.append(self._update_slider_factory(si, prefix, **options))
+    #     return vg
+    #
+    # def _slider_group_factory(self, sliders, **kw):
+    #     '''
+    #
+    #     '''
+    #     vg = VGroup(**kw)
+    #     for si, prefix, options in sliders:
+    #         if not options:
+    #             options = {}
+    #         vg.content.append(self._slider_factory(si, prefix, **options))
+    #     return vg
+    # def get_menus(self):
+    #     '''
+    #     '''
+    #     pass
+    #
+    # def _menu_factory(self, name, actions):
+    #     '''
+    #     '''
+    #     a = [Action(**a) for a in actions]
+    #     return Menu(name=name, *a)
+    #
+    # def menus_factory(self):
+    #     '''
+    #     '''
+    #     menus = self.get_menus()
+    #     if menus:
+    #         return [self._menu_factory(m, actions) for m, actions in menus]
+    #
+    # def _menubar_factory(self):
+    #     '''
+    #     '''
+    #
+    #     menus = self.menus_factory()
+    #     return MenuBar(*menus)
 
-    def _scrubber_factory(self, name, range_dict):
-        '''
-        
-        '''
-        return Item(name, editor=ScrubberEditor(**range_dict))
 
-    def _scrubber_group_factory(self, scrubbers, **kw):
-        '''
-        
-            
-        '''
-        vg = VGroup(**kw)
-        for name, prefix in scrubbers:
-            range_dict = dict(low=getattr(self, '%smin' % prefix), high=getattr(self, '%smax' % prefix))
-            vg.content.append(self._scrubber_factory(name, range_dict))
-        return vg
-
-    def _readonly_slider_factory(self, *args, **kw):
-        '''
-        
-        '''
-        return self._slider_factory(
-            enabled_when='0',
-            *args, **kw)
-
-    def _slider_factory(self, name, prefix, mode='slider', **kw):
-        '''
-        '''
-        return Item(name, editor=RangeEditor(mode=mode,
-                                             low_name='%smin' % prefix,
-                                             high_name='%smax' % prefix,
-
-                                             format='%0.2f'
-        ),
-
-                    **kw)
-
-    def _update_slider_factory(self, name, prefix, **kw):
-        '''
-    
-        '''
-        vg = VGroup()
-
-        r = self._slider_factory(name, prefix, **kw)
-        vg.content.append(r)
-
-        ur = self._slider_factory('update_%s' % name, name, show_label=False, enabled_when='0')
-
-        vg.content.append(ur)
-
-        return vg
-
-    def _update_slider_group_factory(self, sliders, **kw):
-        '''
-            
-        '''
-        vg = VGroup(**kw)
-
-        for si, prefix, options in sliders:
-            if not options:
-                options = {}
-            vg.content.append(self._update_slider_factory(si, prefix, **options))
-        return vg
-
-    def _slider_group_factory(self, sliders, **kw):
-        '''
-      
-        '''
-        vg = VGroup(**kw)
-        for si, prefix, options in sliders:
-            if not options:
-                options = {}
-            vg.content.append(self._slider_factory(si, prefix, **options))
-        return vg
-
-    def _button_factory(self, name, label=None, enabled=None, align=None, **kw):
-        '''
-            
-        '''
-        b = Item(name, show_label=False, **kw)
-
-        if label is None:
-            label = '{}_label'.format(name)
-
-        if label is not None:
-            b.editor = ButtonEditor(label_value=label)
-
-        if enabled is not None:
-            b.enabled_when = enabled
-
-        if align is not None:
-            if align == 'right':
-                b = HGroup(spring, b)
-            elif align == 'center':
-                b = HGroup(spring, b, spring)
-            else:
-                b = HGroup(b, spring)
-
-        return b
-
-    def _button_group_factory(self, buttons, orientation='v'):
-        '''
-        '''
-        vg = VGroup() if orientation == 'v' else HGroup()
-
-        for name, label, enabled in buttons:
-            vg.content.append(HGroup(self._button_factory(name, label, enabled), springy=False))
-        return vg
-
-    def get_menus(self):
-        '''
-        '''
-        pass
-
-    def _menu_factory(self, name, actions):
-        '''
-        '''
-        a = [Action(**a) for a in actions]
-        return Menu(name=name, *a)
-
-    def menus_factory(self):
-        '''
-        '''
-        menus = self.get_menus()
-        if menus:
-            return [self._menu_factory(m, actions) for m, actions in menus]
-
-    def _menubar_factory(self):
-        '''
-        '''
-
-        menus = self.menus_factory()
-        return MenuBar(*menus)
-
-# =================== EOF =================================================

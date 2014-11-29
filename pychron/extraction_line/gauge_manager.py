@@ -38,9 +38,19 @@ class GaugeManager(Manager):
     def get_pressure(self, controller, name):
         dev = next((di for di in self.devices if di.name == controller), None)
         if dev is not None:
-            gauge = dev.get_gauge(name)
-            if gauge is not None:
-                return gauge.pressure
+            return dev.get_pressure(name)
+
+    def test_connection(self):
+        for di in self.devices:
+            if not di.test_connection():
+                self.debug('Failed connection to "{}" (display_name={})'.format(di.name, di.display_name))
+                return
+            else:
+                self.debug('Get pressures name={}, display_name={}, {}'.format(di.name,
+                                                                               di.display_name,
+                                                                               di.get_pressures(verbose=True)))
+        else:
+            return True
 
     def stop_scans(self):
         for k in self.devices:
@@ -70,6 +80,8 @@ class GaugeManager(Manager):
                  height=-100)
         return v
 
+    def _get_simulation(self):
+        return any([dev.simulation for dev in self.devices])
 
 if __name__ == '__main__':
     g = GaugeManager()

@@ -92,9 +92,15 @@ class ExtractionLinePlugin(BaseTaskPlugin):
     id = 'pychron.extraction_line'
     name = 'ExtractionLine'
 
-    def test_communication(self):
+    def test_gauge_communication(self):
+        return self._test('test_gauge_communication')
+
+    def test_valve_communication(self):
+        return self._test('test_valve_communication')
+
+    def _test(self, func):
         man = self.application.get_service(ExtractionLineManager)
-        c = man.test_connection()
+        c = getattr(man, func)()
         return 'Passed' if c else 'Failed'
 
     def _factory(self):
