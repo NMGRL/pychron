@@ -47,14 +47,14 @@ def get_teststr_attr_func(token):
             reg, fstr, wfunc, tfunc = args
 
         found = reg.match(token)
-        print token, fstr, found
+        # print token, fstr, found
         if found:
             attr, key, teststr = tfunc(token)
             func = wfunc(fstr, token, attr)
             break
     else:
         teststr = token
-        attr = extract_attr(teststr)
+        attr = key = extract_attr(teststr)
 
         def func(obj, data, window):
             if window:
@@ -147,9 +147,9 @@ def between_teststr(token):
 
 def ratio_teststr(token):
     c = remove_attr(token)
-    key = token.replace(c, '')
-    attr = 'ratio{}'.format(key.replace('/', ''))
-    teststr = '{}{}'.format(attr, c)
+    attr = token.replace(c, '')
+    key = 'ratio{}'.format(attr.replace('/', ''))
+    teststr = '{}{}'.format(key, c)
     return attr, key, teststr
 
 

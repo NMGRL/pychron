@@ -6,7 +6,7 @@ from pychron.experiment.conditional.conditional import conditional_from_dict, to
 from pychron.processing.arar_age import ArArAge
 from pychron.processing.isotope import Isotope
 
-DEBUGGING = True
+DEBUGGING = False
 
 import sys
 
@@ -14,6 +14,8 @@ if sys.platform == 'darwin':
     from pychron.core.helpers.logger_setup import logging_setup
 
     logging_setup('conditionals')
+else:
+    DEBUGGING = False
 
 
 class MSpec(object):
@@ -29,7 +31,6 @@ class Arun(object):
         return 2000
 
     def get_pressure(self, attr):
-        print 'get pressure {}'.format(attr)
         return 1e-9
 
 
@@ -40,7 +41,7 @@ class ParseConditionalsTestCase(unittest.TestCase):
     def test_pressure(self):
         t = 'bone.ig.pressure<1e-7'
         tokens = tokenize(t)
-        self.assertListEqual(tokens, [('bone.ig<1e-7', None)])
+        self.assertListEqual(tokens, [('bone.ig.pressure<1e-7', None)])
 
     def test_single(self):
         t = 'Ar40>50'
@@ -61,7 +62,6 @@ class ParseConditionalsTestCase(unittest.TestCase):
         t = 'Ar40>50 and age>10 or age<0'
         tokens = tokenize(t)
         self.assertListEqual(tokens, [('Ar40>50', 'and'), ('age>10', 'or',), ('age<0', None)])
-
 
     def test_parse_deflection(self):
         t = 'CDD.deflection==2000'
@@ -94,7 +94,7 @@ class ConditionalsTestCase(unittest.TestCase):
         # print 'bs', ar40.get_baseline_corrected_value()
         # print 'int', ar40.uvalue, ar40.baseline.uvalue
 
-    # @unittest.skipIf(DEBUGGING, 'Debugging')
+    @unittest.skipIf(DEBUGGING, 'Debugging')
     def test_Pressure(self):
         d = {'check': 'bone.ig.pressure<1e-7'}
         self._test(d)
