@@ -75,7 +75,7 @@ class BaseRemoteHardwareHandler(Loggable):
             pass
 
     def get_device(self, name, protocol=None, owner=None):
-
+        dev  = None
         if self.application is not None:
             if protocol is None:
                 protocol = 'pychron.hardware.core.i_core_device.ICoreDevice'
@@ -90,20 +90,21 @@ class BaseRemoteHardwareHandler(Loggable):
                     else:
                         dev.set_owner(owner)
 
-                else:
-                    dev = DummyDevice()
-        else:
-            dev = DummyDevice()
+        #         else:
+        #             dev = DummyDevice()
+        # else:
+        #     dev = DummyDevice()
         return dev
 
     def get_laser_manager(self, name=None):
+        lm = None
         if name is None:
             name = self.manager_name
 
         if self.application is not None:
             lm = self.application.get_service(ILaserManager, 'name=="{}"'.format(name))
-        else:
-            lm = DummyLM()
+        # else:
+        #     lm = DummyLM()
 
         return lm
 
@@ -124,7 +125,7 @@ class BaseRemoteHardwareHandler(Loggable):
     def Read(self, manager, dname, sender, *args):
         d = self.get_device(dname, owner=sender)
         if d is not None:
-            result = d.get()
+            result = d.get(current=True)
             self.debug('Read owner={}'.format(sender))
             self.info('Get {} = {}'.format(d.name, result))
         else:

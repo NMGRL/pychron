@@ -52,15 +52,11 @@ class ThermoRack(CoreDevice):
     def set(self, v):
         pass
 
-    def get(self):
-        v = super(ThermoRack, self).get()
-#        v = CoreDevice.get(self)
-        if v is None:
-            if self._scanning:
-                v = self.current_scan_value
-            else:
-                v = self.get_coolant_out_temperature()
-
+    def get(self, current=False, *args, **kw):
+        if current:
+            v = self.get_coolant_out_temperature()
+        else:
+            v = super(ThermoRack, self).get(*args, **kw)
         return v
 
     def write(self, *args, **kw):

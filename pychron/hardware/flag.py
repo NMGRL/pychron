@@ -54,7 +54,7 @@ class Flag(Loggable):
         self.name = name
         super(Flag, self).__init__(*args, **kw)
 
-    def get(self):
+    def get(self, *args, **kw):
         return int(self._set)
 
     def set(self, value):
@@ -130,7 +130,7 @@ class TimedFlag(Flag):
     def isStarted(self):
         return self._start_time is not None
 
-    def get(self):
+    def get(self, *args, **kw):
         t = 0
         if self.isSet() and self.isStarted():
             t = max(0, self.duration - (time() - self._start_time))

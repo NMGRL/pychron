@@ -651,6 +651,9 @@ class AutomatedRun(Loggable):
 
             self.experiment_executor.info(msg, color=color, log=False)
 
+    def get_device_value(self, dev_name):
+        return self.extraction_line_manager.get_device_value(dev_name)
+
     def get_pressure(self, attr):
         controller, name = attr.split('.')
         return self.extraction_line_manager.get_pressure(controller, name)

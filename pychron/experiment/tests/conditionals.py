@@ -33,10 +33,18 @@ class Arun(object):
     def get_pressure(self, attr):
         return 1e-9
 
+    def get_device_value(self, dev_name):
+        return 60
+
 
 class ParseConditionalsTestCase(unittest.TestCase):
     def setUp(self):
         pass
+
+    def test_device(self):
+        t = 'device.pneumatics<80'
+        tokens = tokenize(t)
+        self.assertListEqual(tokens, [('device.pneumatics<80', None)])
 
     def test_pressure(self):
         t = 'bone.ig.pressure<1e-7'
@@ -93,6 +101,11 @@ class ConditionalsTestCase(unittest.TestCase):
         # print ar40
         # print 'bs', ar40.get_baseline_corrected_value()
         # print 'int', ar40.uvalue, ar40.baseline.uvalue
+
+    @unittest.skipIf(DEBUGGING, 'Debugging')
+    def test_device(self):
+        d = {'check': 'device.pneumatics<80'}
+        self._test(d)
 
     @unittest.skipIf(DEBUGGING, 'Debugging')
     def test_Pressure(self):

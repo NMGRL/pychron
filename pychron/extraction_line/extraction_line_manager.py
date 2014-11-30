@@ -327,6 +327,13 @@ class ExtractionLineManager(Manager, Consoleable):
         if self.gauge_manager:
             return self.gauge_manager.get_pressure(controller, name)
 
+    def get_device_value(self, dev_name):
+        dev = self.get_device(dev_name)
+        if dev is None:
+            self.unique_warning('No device named {}'.format(dev_name))
+        else:
+            return dev.get()
+
     def disable_valve(self, description):
         self._enable_valve(description, False)
 

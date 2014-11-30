@@ -63,12 +63,12 @@ class AgilentDAC(CoreDevice):
     def set(self, v):
         self.set_dac_value(v)
 
-    def get(self):
-        v = CoreDevice.get(self)
-        if v is None:
-            v = self.value
-
-        return v
+    def get(self, *args, **kw):
+        return super(AgilentDAC, self).get(*args, **kw) or self.value
+        # v = CoreDevice.get(self)
+        # if v is None:
+        #     v = self.value
+        # return v
 
     # ===============================================================================
     # AgilentDAC interface

@@ -118,7 +118,7 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
         if self._communicator:
             self._communicator.close()
 
-    def get(self):
+    def get(self, *args, **kw):
         return self.current_scan_value
 
     def set(self, v):

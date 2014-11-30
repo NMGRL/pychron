@@ -23,7 +23,7 @@ class QtegraDevice(CoreDevice):
     scan_func = 'read_temperature'
     get_func = 'check_cdd'
 
-    def get(self):
+    def get(self, *args, **kw):
         try:
             func = getattr(self, self.get_func)
             return func()

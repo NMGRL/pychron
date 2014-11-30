@@ -21,23 +21,24 @@ from uncertainties import ufloat
 
 from pychron.experiment.conditional.regexes import COMP_REGEX, ARGS_REGEX, DEFLECTION_REGEX, BASELINECOR_REGEX, \
     BASELINE_REGEX, MIN_REGEX, MAX_REGEX, CP_REGEX, PARENTHESES_REGEX, KEY_REGEX, ACTIVE_REGEX, SLOPE_REGEX, AVG_REGEX, \
-    RATIO_REGEX, BETWEEN_REGEX, PRESSURE_REGEX
+    RATIO_REGEX, BETWEEN_REGEX, PRESSURE_REGEX, DEVICE_REGEX
 
 
 def get_teststr_attr_func(token):
     for args in (
-                (PRESSURE_REGEX, 'obj.get_pressure(attr)', wrapper, pressure_teststr),
-                (DEFLECTION_REGEX, 'obj.get_deflection(attr, current=True)'),
-                (ACTIVE_REGEX, 'not attr in data[0]'),
-                (CP_REGEX, 'aa.get_current_intensity(attr)'),
-                (BASELINECOR_REGEX, 'aa.get_baseline_corrected_value(attr)'),
-                (BASELINE_REGEX, 'aa.get_baseline_value(attr)'),
-                (SLOPE_REGEX, 'aa.get_slope(attr, window or -1)'),
-                (AVG_REGEX, 'aa.get_values(attr, window or -1).mean()'),
-                (MAX_REGEX, 'aa.get_values(attr, window or -1).max()'),
-                (MIN_REGEX, 'aa.get_values(attr, window or -1).min()'),
-                (RATIO_REGEX, 'aa.get_value(attr)', wrapper, ratio_teststr),
-                (BETWEEN_REGEX, 'aa.get_value(attr)', between_wrapper, between_teststr)):
+            (DEVICE_REGEX, 'obj.get_device_value(attr)', wrapper, device_teststr),
+            (PRESSURE_REGEX, 'obj.get_pressure(attr)', wrapper, pressure_teststr),
+            (DEFLECTION_REGEX, 'obj.get_deflection(attr, current=True)'),
+            (ACTIVE_REGEX, 'not attr in data[0]'),
+            (CP_REGEX, 'aa.get_current_intensity(attr)'),
+            (BASELINECOR_REGEX, 'aa.get_baseline_corrected_value(attr)'),
+            (BASELINE_REGEX, 'aa.get_baseline_value(attr)'),
+            (SLOPE_REGEX, 'aa.get_slope(attr, window or -1)'),
+            (AVG_REGEX, 'aa.get_values(attr, window or -1).mean()'),
+            (MAX_REGEX, 'aa.get_values(attr, window or -1).max()'),
+            (MIN_REGEX, 'aa.get_values(attr, window or -1).min()'),
+            (RATIO_REGEX, 'aa.get_value(attr)', wrapper, ratio_teststr),
+            (BETWEEN_REGEX, 'aa.get_value(attr)', between_wrapper, between_teststr)):
 
         wfunc = wrapper
         if len(args) == 2:
@@ -70,7 +71,8 @@ def get_teststr_attr_func(token):
 
     return teststr, key, func
 
-#wrappers
+
+# wrappers
 def wrapper(fstr, token, ai):
     return lambda obj, data, window: eval(fstr, {'attr': ai,
                                                  'aa': obj.arar_age,
@@ -115,15 +117,24 @@ def teststr_func(token):
     return a, a, ts
 
 
+def device_teststr(token):
+    c = remove_attr(token)
+    tt = remove_comp(token)
+    a = k = tt.split('.')[-1]
+    ts = '{}{}'.format(k, c)
+    return a, k, ts
+
+
 def pressure_teststr(token):
     c = remove_attr(token)
     # k = extract_attr(token)
     tt = remove_comp(token)
-    k = tt.replace('.','_')
+    k = tt.replace('.', '_')
     a = '.'.join(tt.split('.')[:-1])
 
     ts = '{}{}'.format(k, c)
     return a, k, ts
+
 
 def between_teststr(token):
     args = ARGS_REGEX.search(token).group(0)[1:-1].split(',')

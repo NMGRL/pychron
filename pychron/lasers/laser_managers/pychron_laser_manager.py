@@ -55,9 +55,9 @@ class PychronLaserManager(PychronDevice, BaseLaserManager):
         </communications>
     </plugin>
     """
-    communicator = None
-    port = CInt
-    host = Str
+    # communicator = None
+    # port = CInt
+    # host = Str
 
     _cancel_blocking = False
 

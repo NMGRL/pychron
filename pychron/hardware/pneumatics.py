@@ -1,11 +1,11 @@
 # ===============================================================================
-# Copyright 2011 Jake Ross
+# Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,27 +14,24 @@
 # limitations under the License.
 # ===============================================================================
 
-
-
 # ============= enthought library imports =======================
-from traits.api import Interface
-
+from traits.api import HasTraits, Button, CStr
+from traitsui.api import View, Item
 # ============= standard library imports ========================
-
 # ============= local library imports  ==========================
+from pychron.hardware.core.abstract_device import AddressableAbstractDevice
+from pychron.hardware.core.core_device import CoreDevice
 
 
-class ICoreDevice(Interface):
+class Pneumatics(AddressableAbstractDevice):
+    pass
+
+
+class PychronPneumatics(CoreDevice):
     def get(self, *args, **kw):
-        """
-        """
+        return self.ask('Read {}'.format(self.name))
 
-    def set(self, v):
-        """
-        """
+# ============= EOF =============================================
 
-    def close(self):
-        """
-        """
-# ============= views ===================================
-# ============= EOF ====================================
+
+

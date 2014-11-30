@@ -109,7 +109,7 @@ class DummyLM(object):
         pass
 
 class DummyDevice(object):
-    def get(self):
+    def get(self, *args, **kw):
         return 0.1
 
     def set(self, v):
