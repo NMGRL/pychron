@@ -151,7 +151,12 @@ class ScanableDevice(ViewableDevice):
         with self.scan_lock:
             self._scan_(*args, **kw)
 
-    def start_scan(self):
+    def start_scan(self, period=None):
+        """
+
+        :param period: delapy between triggers in milliseconds
+        :return:
+        """
         if self.timer is not None:
             self.timer.Stop()
             self.timer.wait_for_completion()
@@ -184,11 +189,12 @@ class ScanableDevice(ViewableDevice):
             if self.auto_start:
                 self.save_scan_to_db()
 
-        sp = self.scan_period * self.time_dict[self.scan_units]
+        if period is None:
+            period = self.scan_period * self.time_dict[self.scan_units]
 
         from pychron.core.helpers.timer import Timer
 
-        self.timer = Timer(sp, self.scan)
+        self.timer = Timer(period, self.scan)
         self.info('Scan started')
 
     def save_scan_to_db(self):

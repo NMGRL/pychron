@@ -3,6 +3,8 @@ RoadMap
 
  - Implement ratio calculation of ages
  - Implement offline workspace
+ - Deprecate RPC? move to one communication mechanism. 
+ - use zeromq for all sockets
 
 v2.0.6
 ----------------

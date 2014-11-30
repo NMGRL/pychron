@@ -24,8 +24,8 @@ import os
 from threading import Thread
 import time
 # =============local library imports  ==========================
+from pychron.config_loadable import ConfigLoadable
 from pychron.viewable import Viewable, ViewableHandler
-from pychron.rpc.rpcable import RPCable
 from pychron.saveable import SaveableHandler
 
 
@@ -84,7 +84,7 @@ class SaveableManagerHandler(SaveableHandler, ManagerHandler):
     pass
 
 
-class Manager(Viewable, RPCable):
+class Manager(Viewable, ConfigLoadable):
     """
     """
 

@@ -15,15 +15,18 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from threading import Thread
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
-from traits.api import Instance, Int, Property, Any, Str
+import time
+from traits.api import Instance, Int, Property, Any, Str, String
 from traitsui.api import View, Controller, UItem, TabularEditor, VGroup, UReadonly
 from pyface.timer.do_later import do_after
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.helpers.formatting import floatfmt
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.pychron_constants import LIGHT_GREEN, LIGHT_RED, LIGHT_YELLOW
 
 
@@ -54,16 +57,34 @@ class ResultsView(Controller):
     auto_close = 5
     selected = Any
 
-    help_str = Str('Select any row to cancel auto close')
-
+    base_help_str = 'Select any row to cancel auto close. Auto close in {}'
+    help_str = String
     _auto_closed = False
+    _cancel_auto_close = False
 
     def _selected_changed(self, new):
         self._cancel_auto_close = bool(new)
 
+    def _timer_func(self):
+        delay = self.auto_close
+        st = time.time()
+        while 1:
+            time.sleep(0.25)
+            ct = time.time() - st
+            if ct > delay or self._cancel_auto_close:
+                break
+            self.help_str = self.base_help_str.format(delay - int(ct))
+
+        if self._cancel_auto_close:
+            self.help_str = 'Auto close canceled'
+        else:
+            invoke_in_main_thread(self._do_auto_close)
+
     def init(self, info):
         if self.auto_close and self.model.all_passed:
-            do_after(self.auto_close * 1000, self._do_auto_close)
+            t = Thread(target=self._timer_func)
+            t.start()
+            # do_after(self.auto_close * 1000, self._do_auto_close)
         else:
             self.help_str = ''
 

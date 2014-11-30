@@ -27,14 +27,14 @@ class PychronMicroIonController(MicroIonController):
     def get_pressure(self, name, **kw):
         return self.ask('Get Pressure {} {}'.format(self.name, name), **kw)
 
-    # def get_ion_pressure(self, **kw):
-    #     return self.ask('Get Pressure {} IG'.format(self.name))
-    #
-    # def get_convectron_a_pressure(self, **kw):
-    #     return self.ask('GetPressure {} CG1'.format(self.name))
-    #
-    # def get_convectron_b_pressure(self, **kw):
-    #     return self.ask('GetPressure {} CG2'.format(self.name))
+    def get_ion_pressure(self, **kw):
+        return self.ask('Get Pressure {} IG'.format(self.name))
+
+    def get_convectron_a_pressure(self, **kw):
+        return self.ask('GetPressure {} CG1'.format(self.name))
+
+    def get_convectron_b_pressure(self, **kw):
+        return self.ask('GetPressure {} CG2'.format(self.name))
 
 # ============= EOF =============================================
 

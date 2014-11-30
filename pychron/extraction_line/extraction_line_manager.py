@@ -104,6 +104,11 @@ class ExtractionLineManager(Manager, Consoleable):
                         'pychron.extraction_line.use_network')
         bind_preference(self.network, 'inherit_state',
                         'pychron.extraction_line.inherit_state')
+        if self.gauge_manager:
+            bind_preference(self.gauge_manager, 'update_period',
+                            'pychron.extraction_line.gauge_update_period')
+            bind_preference(self.gauge_manager, 'use_update',
+                            'pychron.extraction_line.use_gauge_update')
 
     def link_valve_actuation(self, name, func, remove=False):
         if remove:

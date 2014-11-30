@@ -16,6 +16,7 @@
 
 
 # =============enthought library imports=======================
+from traits.api import Int, Bool
 from traitsui.api import View, Item, ListEditor, InstanceEditor
 # ============= standard library imports ========================
 import time
@@ -24,6 +25,9 @@ from pychron.managers.manager import Manager
 
 
 class GaugeManager(Manager):
+    use_update = Bool
+    update_period = Int
+
     def finish_loading(self, *args, **kw):
         width = int(250 / float(len(self.devices)))
         for k in self.devices:
@@ -37,7 +41,10 @@ class GaugeManager(Manager):
 
     def get_pressure(self, controller, name):
         dev = next((di for di in self.devices if di.name == controller), None)
-        if dev is not None:
+        if dev is None:
+            self.warning('Failed getting pressure for {} {}. '
+                         'Not a valid controller'.format(controller, name))
+        else:
             return dev.get_pressure(name)
 
     def test_connection(self):
@@ -63,9 +70,15 @@ class GaugeManager(Manager):
         # stop scans first
         self.stop_scans()
 
+        # sp = self.scan_period*1000
+        if self.use_update:
+            sp = self.update_period
+
+        sp = sp or None
         for k in self.devices:
             if k.is_scanable:
-                k.start_scan()
+
+                k.start_scan(sp)
                 # stagger starts to reduce collisions
                 time.sleep(0.25)
 

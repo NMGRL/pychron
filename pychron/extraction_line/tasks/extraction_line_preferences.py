@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,6 +21,7 @@ from envisage.ui.tasks.preferences_pane import PreferencesPane
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from traitsui.group import Tabbed
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 
@@ -39,6 +40,8 @@ class ExtractionLinePreferences(BasePreferencesHelper):
     valve_lock_frequency = Int
     valve_owner_frequency = Int
     update_period = Int
+    gauge_update_period = Int
+    use_gauge_update = Bool
 
 
 class ExtractionLinePreferencesPane(PreferencesPane):
@@ -86,7 +89,16 @@ Hover over section and hit the defined volume key (default="v")'),
             s_grp,
             show_border=True,
             label='Valves')
+        g_grp = VGroup(Item('use_gauge_update',
+                            label='Use Gauge Update',
+                            tooltip='Start a timer to periodically update the gauge pressures'),
+                       Item('gauge_update_period',
+                            label='Period',
+                            tooltip='Delay between updates in seconds. '
+                                    'Set to 0 to use the gauge controllers configured value.',
+                            enabled_when='use_gauge_update'),
+                       label='Gauges')
 
-        return View(v_grp)
+        return View(Tabbed(v_grp, g_grp))
 
 # ============= EOF =============================================
