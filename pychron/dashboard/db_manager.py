@@ -36,7 +36,8 @@ class DashboardDBManager(BaseIsotopeDatabaseManager):
         db = self.db
         with db.session_ctx():
             tt = db.get_last_time_table()
-            tt.end = datetime.now()
+            if tt:
+                tt.end = datetime.now()
 
     def publish_device(self, new):
         db = self.db

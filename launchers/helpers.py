@@ -24,21 +24,35 @@ import logging
 
 logger = logging.getLogger()
 
+
 def entry_point(modname, klass, setup_version_id='', debug=False):
     """
         entry point
     """
+
     from traits.etsconfig.api import ETSConfig
 
     ETSConfig.toolkit = "qt4"
 
     user = initialize_version(modname, debug)
+    set_commandline_args()
 
     # import app klass and pass to launch function
     mod = __import__('pychron.applications.{}'.format(modname), fromlist=[klass])
     from pychron.envisage.pychron_run import launch
 
     launch(getattr(mod, klass), user)
+
+
+def set_commandline_args():
+    from pychron.globals import globalv
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Generate a password')
+    parser.add_argument('-t', '--testbot',
+                        action='store')
+    args = parser.parse_args()
+    globalv.use_testbot = args.testbot
 
 
 def initialize_version(appname, debug):
@@ -61,6 +75,7 @@ def initialize_version(appname, debug):
         appname = appname[2:]
 
     from pychron.paths import paths
+
     pref_path = os.path.join(paths.base, '.enthought',
                              'pychron.{}.application.{}'.format(appname, user),
                              'preferences.ini')
@@ -74,7 +89,7 @@ def initialize_version(appname, debug):
         proot = cp.get('pychron.general', 'root_dir')
     except BaseException, e:
         print 'root_dir exception={}'.format(e)
-        proot = os.path.join(os.path.expanduser('~'),'Pychron')
+        proot = os.path.join(os.path.expanduser('~'), 'Pychron')
 
     paths.build(proot)
 

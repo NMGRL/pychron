@@ -111,9 +111,9 @@ class InitializationModel(BaseNode):
                     for plugin in pt.plugins:
 
                         if plugin.enabled:
-                            ip.enable_plugin(plugin.name, save=False)
+                            ip.enable_plugin(plugin.name, pt.name.lower(), save=False)
                         else:
-                            ip.disable_plugin(plugin.name, save=False)
+                            ip.disable_plugin(plugin.name, pt.name.lower(), save=False)
             else:
                 for vi in ptree.values:
                     ip.set_bool_tag(vi.tag, str(vi.enabled))

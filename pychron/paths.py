@@ -28,6 +28,19 @@ DEFAULT_INITIALIZATION = '''<root>
     </globals>
     <plugins>
         <general>
+            <plugin enabled="false">Processing</plugin>
+            <plugin enabled="false">MediaServer</plugin>
+            <plugin enabled="false">PyScript</plugin>
+            <plugin enabled="false">Video</plugin>
+            <plugin enabled="false">Database</plugin>
+            <plugin enabled="false">Entry</plugin>
+            <plugin enabled="false">SystemMonitor</plugin>
+            <plugin enabled="false">ArArConstants</plugin>
+            <plugin enabled="false">Loading</plugin>
+            <plugin enabled="false">Workspace</plugin>
+            <plugin enabled="false">LabBook</plugin>
+            <plugin enabled="false">DashboardServer</plugin>
+            <plugin enabled="false">DashboardClient</plugin>
         </general>
         <hardware>
         </hardware>

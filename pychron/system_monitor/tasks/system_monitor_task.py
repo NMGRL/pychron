@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,7 +21,7 @@ from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, Splitter, PaneItem, Tabbed, VSplitter
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.dashboard.tasks.client.client import DashboardClient
+from pychron.dashboard.client import DashboardClient
 from pychron.envisage.tasks.pane_helpers import ConsolePane
 from pychron.processing.tasks.analysis_edit.panes import ControlsPane
 from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPane
@@ -54,16 +54,41 @@ class SystemMonitorTask(FigureTask):
     connections = List
     connection = Instance(ConnectionSpec)
 
-    dashboard_client = Instance(DashboardClient, ())
+    dashboard_client = Instance(DashboardClient)
     dashboard_editor = Instance(DashboardEditor)
     dashboard_pane = Instance(DashboardPane)
+
+    def setup_dashboard(self):
+        self.dashboard_client = client = self.application.get_service('pychron.dashboard.client.DashboardClient')
+        if client:
+            client.on_trait_change(self._handle_dashboard, 'values:value')
+            bind_preference(client, 'host', 'pychron.dashboard.client.host')
+            bind_preference(client, 'port', 'pychron.dashboard.client.port')
+
+            client.connect()
+            client.load_configuration()
+            client.listen()
+
+    def activated(self):
+        self._setup_dashboard()
+        self._make_connections()
+        # editor = self.add_system_monitor()
+        # self._setup_dashboard_client()
+
+        # if editor:
+        #    ideo = self.new_ideogram(add_table=False, add_iso=False)
+        #    editor._ideogram_editor = ideo
+        #    #self.active_editor.unknowns=[]
+        #    self.activate_editor(self.editor_area.editors[0])
 
     def prepare_destroy(self):
         for e in self.editor_area.editors:
             if isinstance(e, SystemMonitorEditor):
                 e.stop()
+        if self.dashboard_client:
+            self.dashboard_client.on_trait_change(self._handle_dashboard, 'values:value', remove=True)
 
-        super(FigureTask,self).prepare_destroy()
+        super(FigureTask, self).prepare_destroy()
 
     def add_system_monitor(self):
         return self._editor_factory()
@@ -108,7 +133,7 @@ class SystemMonitorTask(FigureTask):
 
     def _editor_factory(self):
         # self.connection = self.connections[0]
-        #ask user for system
+        # ask user for system
         info = self.edit_traits(view='get_connection_view')
         # if 1:
         if info.result and self.connection:
@@ -128,7 +153,7 @@ class SystemMonitorTask(FigureTask):
         editor.set_measurements(names)
         self._open_editor(editor)
         self.dashboard_editor = editor
-        #self.tab_editors(0,1)
+        # self.tab_editors(0,1)
         #do_after(1000, self.tab_editors,1,2)
         return editor
 
@@ -137,7 +162,7 @@ class SystemMonitorTask(FigureTask):
             if self.controls_pane:
                 tool = None
                 # if hasattr(new, 'tool'):
-                #     tool = new.tool
+                # tool = new.tool
 
                 if hasattr(new, 'search_tool'):
                     tool = new.search_tool
@@ -152,7 +177,7 @@ class SystemMonitorTask(FigureTask):
 
             if self.unknowns_pane:
                 if hasattr(new, 'analyses'):
-                    #print new, len(new.unknowns)
+                    # print new, len(new.unknowns)
                     #self.unknowns_pane._no_update=True
                     self.unknowns_pane.items = new.analyses
                     #self.unknowns_pane._no_update=False
@@ -174,28 +199,44 @@ class SystemMonitorTask(FigureTask):
             cs.append(cc)
         self.connections = cs
 
-    def activated(self):
-        self._make_connections()
-        # editor = self.add_system_monitor()
-        # self._setup_dashboard_client()
+    def create_dock_panes(self):
+        self.connection_pane = ConnectionPane()
+        self.controls_pane = ControlsPane()
+        self.unknowns_pane = AnalysisPane()
+        self.plotter_options_pane = PlotterOptionsPane()
+        self.plot_editor_pane = PlotEditorPane()
 
-        #if editor:
-        #    ideo = self.new_ideogram(add_table=False, add_iso=False)
-        #    editor._ideogram_editor = ideo
-        #    #self.active_editor.unknowns=[]
-        #    self.activate_editor(self.editor_area.editors[0])
+        self.console_pane = ConsolePane()
+
+        panes = [self.connection_pane,
+                 self.controls_pane,
+                 self.unknowns_pane,
+                 self.plotter_options_pane,
+                 self.console_pane,
+                 self.plot_editor_pane]
+
+        if self.dashboard_client:
+            self.dashboard_pane = DashboardPane(model=self.dashboard_client)
+            panes.append(self.dashboard_pane)
+
+        return panes
 
     @on_trait_change('window:opened')
     def _opened(self):
         editor = self.add_system_monitor()
         # self.add_dashboard_editor()
 
-        #if editor:
+        # if editor:
         #    ideo = self.new_ideogram(add_table=False, add_iso=False)
         #    editor._ideogram_editor = ideo
         #self.active_editor.unknowns=[]
         #self.split_editors(0, 1, orientation='v')
         #self.activate_editor(self.editor_area.editors[0])
+
+    def _handle_dashboard(self, obj, name, old, new):
+        self.debug('dashboard_client value change {} {}'.format(obj.name, new))
+        if self.dashboard_editor:
+            self.dashboard_editor.update_measurements(obj.name, new)
 
     def _default_layout_default(self):
         return TaskLayout(
@@ -209,39 +250,5 @@ class SystemMonitorTask(FigureTask):
             right=VSplitter(Tabbed(PaneItem('pychron.console'),
                                    PaneItem('pychron.plot_editor')),
                             PaneItem('pychron.dashboard.client')))
-
-    def create_dock_panes(self):
-        self.connection_pane = ConnectionPane()
-        self.controls_pane = ControlsPane()
-        self.unknowns_pane = AnalysisPane()
-        self.plotter_options_pane = PlotterOptionsPane()
-        self.plot_editor_pane = PlotEditorPane()
-
-        self.console_pane = ConsolePane()
-
-        self.dashboard_pane = DashboardPane(model=self.dashboard_client)
-
-        return [self.connection_pane,
-                self.controls_pane,
-                self.unknowns_pane,
-                self.plotter_options_pane,
-                self.console_pane,
-                self.plot_editor_pane,
-                self.dashboard_pane]
-
-    def _setup_dashboard_client(self):
-        client = self.dashboard_client
-        bind_preference(client, 'host', 'pychron.dashboard.host')
-        bind_preference(client, 'port', 'pychron.dashboard.port')
-
-        client.connect()
-        client.load_configuration()
-        client.listen()
-
-    @on_trait_change('dashboard_client:values:value')
-    def _value_changed(self, obj, name, old, new):
-        self.debug('dashboard_client value change {} {}'.format(obj.name, new))
-        if self.dashboard_editor:
-            self.dashboard_editor.update_measurements(obj.name, new)
 
 # ============= EOF =============================================

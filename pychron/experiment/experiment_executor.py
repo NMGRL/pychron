@@ -103,6 +103,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     datahub = Instance(Datahub)
     labspy = Instance(LabspyUpdater, ())
+    dashboard_client = Instance('pychron.dashboard.client.DashboardClient')
     # ===========================================================================
     #
     # ===========================================================================
@@ -119,6 +120,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     auto_save_delay = Int(30)
     use_auto_save = Bool(True)
     use_labspy = Bool
+    use_dashboard_client = Bool
     min_ms_pumptime = Int(30)
     use_automated_run_monitor = Bool(False)
     set_integration_time_on_start = Bool(False)
@@ -189,6 +191,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         #console
         self.console_bind_preferences(prefid)
         self._preference_binder(prefid, ('use_message_colormapping',))
+
+        #dashboard
+        self._preference_binder('pychron.dashboard.client', ('use_dashboard_client',))
+        if self.use_dashboard_client:
+            self.dashboard_client = self.application.get_service('pychron.dashboard.client.DashboardClient')
 
     def _reset(self):
         self.alive = True
@@ -1064,6 +1071,18 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     # ===============================================================================
     # checks
     # ===============================================================================
+    def _check_dashboard(self):
+        """
+        return True if dashboard has an error
+        :return: boolean
+        """
+        if self.use_dashboard_client:
+            if self.dashboard_client:
+                ef = self.dashboard_client.error_flag
+                if ef:
+                    self.warning('Canceling experiment. Dashboard client reports an error\n {}'.format(ef))
+                    return ef
+
     def _check_memory(self, threshold=None):
         """
             if avaliable memory is less than threshold  (MB)
@@ -1141,6 +1160,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         """
 
         self.heading('Pre Run Check')
+        ef = self._check_dashboard()
+        if ef:
+            self._err_message = 'Dashboard error. {}'.format(ef)
+
         if self._check_memory():
             self._err_message = 'Not enough memory'
             return True
@@ -1179,6 +1202,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if globalv.experiment_debug:
             self.debug('********************** NOT DOING PRE EXECUTE CHECK ')
             return True
+
+        if self._check_dashboard():
+            return
 
         if self._check_memory():
             return

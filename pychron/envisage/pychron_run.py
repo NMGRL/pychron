@@ -41,6 +41,7 @@ PACKAGE_DICT = dict(
     CanvasDesignerPlugin='pychron.canvas.tasks.canvas_plugin',
     ArArConstantsPlugin='pychron.constants.tasks.arar_constants_plugin',
     DashboardServerPlugin='pychron.dashboard.tasks.server.plugin',
+    DashboardClientPlugin='pychron.dashboard.tasks.client.plugin',
     DatabasePlugin='pychron.database.tasks.database_plugin',
     EntryPlugin='pychron.entry.tasks.entry_plugin',
     ExperimentPlugin='pychron.experiment.tasks.experiment_plugin',

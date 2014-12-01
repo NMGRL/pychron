@@ -167,12 +167,16 @@ class DashboardValue(HasTraits):
 
 class DashboardClient(Subscriber):
     values = List
+    error_flag = Str
 
     def load_configuration(self):
         config=self.request('config')
         #config = CONFIG
         if config:
             self._load_configuration(config)
+
+    def set_error_flag(self, new):
+        self.error_flag = new
 
     def _load_configuration(self, config):
         try:
@@ -185,7 +189,8 @@ class DashboardClient(Subscriber):
         for di in d:
             pv = DashboardValue(name=di.name)
             vs.append(pv)
-            self.values = vs
             self.subscribe(di.tag, pv.handle_update, verbose=True)
 
+        self.subscribe('error', self.set_error_flag, verbose=True)
+        self.values = vs
 # ============= EOF =============================================

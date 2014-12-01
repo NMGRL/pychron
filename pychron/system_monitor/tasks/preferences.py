@@ -74,8 +74,7 @@ class SystemMonitorPreferencesPane(PreferencesPane):
                               editor=ListStrEditor(
                                   editable=False,
                                   adapter=FavoritesAdapter(),
-                                  selected='object.selected',
-                              )),
+                                  selected='object.selected')),
                          HGroup(
                              icon_button_editor('add_favorite', 'add',
                                                 tooltip='Add saved connection'),
@@ -83,11 +82,9 @@ class SystemMonitorPreferencesPane(PreferencesPane):
                                                 tooltip='Delete saved connection')))
         conn_grp = VGroup(Item('system_name'),
                           Item('host'),
-                          Item('port'),
-        )
+                          Item('port'))
         v = View(VGroup(HGroup(fav_grp, conn_grp),
-                        label='Connections',
-        ))
+                        label='Connections'))
         return v
 
 
@@ -98,22 +95,5 @@ class ConsolePreferences(BaseConsolePreferences):
 class ConsolePreferencesPane(BaseConsolePreferencesPane):
     model_factory = ConsolePreferences
     label = 'System Monitor'
-
-
-class DashboardPreferences(BasePreferencesHelper):
-    preferences_path = 'pychron.dashboard'
-    host = Str
-    port = Int
-
-
-class DashboardPreferencesPane(PreferencesPane):
-    model_factory = DashboardPreferences
-    category = 'SystemMonitor'
-
-    def traits_view(self):
-        v = View(VGroup(Item('host'),
-                        Item('port'),
-                        label='Dashboard'))
-        return v
 
 # ============= EOF =============================================

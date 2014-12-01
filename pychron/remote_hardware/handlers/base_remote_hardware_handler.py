@@ -19,7 +19,7 @@ from traits.api import Any, Instance
 # ============= standard library imports ========================
 import shlex
 # ============= local library imports  ==========================
-from dummies import DummyDevice, DummyLM
+# from dummies import DummyDevice, DummyLM
 from error_handler import ErrorHandler
 from pychron.loggable import Loggable
 from pychron.remote_hardware.errors import DeviceConnectionErrorCode

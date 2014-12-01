@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -39,7 +39,7 @@ from pychron.core.xml.xml_parser import XMLParser
 class DashboardServer(Loggable):
     devices = List
     selected_device = Instance(DashboardDevice)
-    db_manager=Instance(DashboardDBManager, ())
+    db_manager = Instance(DashboardDBManager, ())
     notifier = Instance(Notifier, ())
 
     url = Str
@@ -102,7 +102,7 @@ class DashboardServer(Loggable):
                 continue
 
             dev_name = dname.text.strip()
-            device=None
+            device = None
             if app:
                 device = app.get_service(ICoreDevice,
                                          query='name=="{}"'.format(dev_name))
@@ -178,10 +178,19 @@ class DashboardServer(Loggable):
         parser = XMLParser(p)
         return parser
 
+    def _set_error_flag(self, obj, evt):
+        pass
+
+    # handlers
     @on_trait_change('devices:publish_event')
     def _handle_publish(self, obj, name, old, new):
         self.notifier.send_message(new)
         self.db_manager.publish_device(obj)
+
+    @on_trait_change('devices:error_event')
+    def _handle_error(self, obj, name, old, new):
+        self._set_error_flag(obj, new)
+        self.notifier.send_message(new)
 
     @on_trait_change('devices:values:+')
     def _value_changed(self, obj, name, old, new):
