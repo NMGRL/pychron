@@ -31,7 +31,10 @@ class DashboardServerTask(BaseTask):
     #devices = DelegatesTo('server')
     #selected_device = Instance(DashboardDevice)
 
-    #def activated(self):
+    def activated(self):
+        emailer = self.application.get_service('pychron.social.emailer.Emailer')
+        self.server.emailer = emailer
+
     #load devices
     #self._load_devices()
     #

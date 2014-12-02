@@ -15,25 +15,37 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pyface.tasks.traits_task_pane import TraitsTaskPane
-from traitsui.api import View, UItem, TableEditor
+from envisage.ui.tasks.preferences_pane import PreferencesPane
+from traits.api import Str, Password, Int
+from traitsui.api import View, Item, Group
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from traitsui.extras.checkbox_column import CheckboxColumn
-from traitsui.table_column import ObjectColumn
+from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 
-class EmailPane(TraitsTaskPane):
+class EmailPreferences(BasePreferencesHelper):
+    server_username = Str
+    server_password = Password
+
+    server_host = Str
+    server_port = Int
+
+    preferences_path = 'pychron.email'
+
+
+class EmailPreferencesPane(PreferencesPane):
+    model_factory = EmailPreferences
+    category = 'Social'
+
     def traits_view(self):
-        cols = [CheckboxColumn(name='enabled'),
-                ObjectColumn(name='name', editable=False),
-                ObjectColumn(name='email', editable=False),
-                ObjectColumn(name='level')]
-
-        v = View(UItem('object.users',
-                       editor=TableEditor(columns=cols,
-                                          sortable=False)))
+        grp = Group(Item('server_host', label='Host'),
+                    Item('server_username', label='User'),
+                    Item('server_password', label='Password'),
+                    Item('server_port', label='Port'),
+                    show_border=True,
+                    label='Email')
+        v = View(grp)
         return v
 
-        # ============= EOF =============================================
+# ============= EOF =============================================

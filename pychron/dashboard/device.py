@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,49 +15,20 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import struct
 
-from traits.api import HasTraits, Str, Either, Float, Property, Bool, List, Instance, \
-    Event
-from traitsui.api import View, Item, ListEditor, InstanceEditor, UItem, VGroup, HGroup
-
-
+from traits.api import Str, Bool, List, Instance, Event
+from traitsui.api import View, ListEditor, InstanceEditor, UItem, VGroup, HGroup, VSplit
 # ============= standard library imports ========================
+import struct
 import time
-# ============= local library imports  ==========================
 import yaml
+# ============= local library imports  ==========================
+from pychron.dashboard.conditional import DashboardConditional
+from pychron.dashboard.constants import PUBLISH
+from pychron.dashboard.process_value import ProcessValue
+from pychron.graph.stream_graph import StreamStackedGraph
 from pychron.hardware.core.i_core_device import ICoreDevice
-from pychron.core.helpers.datetime_tools import convert_timestamp
 from pychron.loggable import Loggable
-
-
-class ProcessValue(HasTraits):
-    name = Str
-    tag = Str
-    func_name = Str
-
-    period = Either(Float, Str) #"on_change" or number of seconds
-    last_time = Float
-    last_time_str = Property(depends_on='last_time')
-    enabled = Bool
-    last_value = Float
-    timeout = Float
-
-    def traits_view(self):
-        v = View(VGroup(HGroup(UItem('enabled'), Item('name')),
-                        VGroup(Item('tag'),
-                               Item('period'),
-                               Item('last_time_str', style='readonly'),
-                               Item('last_value', style='readonly'),
-                               enabled_when='enabled')))
-        return v
-
-    def _get_last_time_str(self):
-        r = ''
-        if self.last_time:
-            r = convert_timestamp(self.last_time)
-
-        return r
 
 
 class DashboardDevice(Loggable):
@@ -68,6 +39,16 @@ class DashboardDevice(Loggable):
     _device = Instance(ICoreDevice)
 
     publish_event = Event
+
+    graph = Instance(StreamStackedGraph)
+
+    def setup_graph(self):
+        self.graph = g = StreamStackedGraph()
+        for i, vi in enumerate(self.values):
+            vi.plotid = i
+            g.new_plot()
+            g.new_series(plotid=i)
+            g.set_y_title(vi.name, plotid=i)
 
     def trigger(self):
         """
@@ -108,9 +89,14 @@ class DashboardDevice(Loggable):
             self.debug('bind to {}'.format(n))
             if self._device:
                 self._device.on_trait_change(lambda a, b, c, d: self._handle_change(pv, a, b, c, d), n)
-            #self._device.on_trait_change(lambda new: self._push_value(pv, new), n)
+                # self._device.on_trait_change(lambda new: self._push_value(pv, new), n)
 
         self.values.append(pv)
+        return pv
+
+    def add_conditional(self, pv, severity, **kw):
+        cond = DashboardConditional(severity=severity, **kw)
+        pv.conditionals.append(cond)
 
     def _handle_change(self, pv, obj, name, old, new):
         self.debug('handle change {} {}'.format(name, new))
@@ -119,21 +105,36 @@ class DashboardDevice(Loggable):
     def _push_value(self, pv, new):
         if pv.enabled:
             tag = pv.tag
-            self.publish_event = '{} {}'.format(tag, new)
-            pv.last_value = float(new)
+
+            self.publish_event = '{}||{} {}'.format(PUBLISH, tag, new)
+            pv.last_value = v = float(new)
             pv.last_time = time.time()
 
+            self.graph.record(v, plotid=pv.plotid)
+
+            self._check_conditional(pv, new)
+
+    def _check_conditional(self, pv, new):
+        conds = pv.conditionals
+        if conds:
+            for cond in conds:
+                self.debug('checking conditional {}.{}.{}, value={}'.format(self.name, pv.name, cond.teststr, new))
+                if cond.check(new):
+                    self.debug('conditional triggered. severity={}'.format(cond.severity))
+                    msg = '{}.{}.{} is True. value={}'.format(self.name, pv.name, cond.teststr, new)
+                    self.publish_event = '{}|{}|{}'.format(cond.severity, cond.emails, msg)
+
     def dump_meta(self):
-        d=[]
+        d = []
 
         for pv in self.values:
-            dd=dict(((a,getattr(pv, a))
-                        for a in ('name', 'tag', 'enabled', 'func_name', 'period', 'timeout')))
+            dd = dict(((a, getattr(pv, a))
+                       for a in ('name', 'tag', 'enabled', 'func_name', 'period', 'timeout')))
             d.append(dd)
         return yaml.dump(d)
 
     def get_scan_fmt(self):
-        n=len(self.values) *2
+        n = len(self.values) * 2
         fmt = '>{}'.format('f' * n)
         return fmt
 
@@ -144,9 +145,9 @@ class DashboardDevice(Loggable):
         if blob:
             step = 4 * fmt.count('f')
             args = zip(*[struct.unpack(fmt, blob[i:i + step]) for i in xrange(0, len(blob), step)])
-            ns=[]
+            ns = []
             for blobv, lastv in zip(args, new_args):
-                blobv=list(blobv)
+                blobv = list(blobv)
                 blobv.append(lastv)
                 ns.append(blobv)
             blob = ''.join([struct.pack(fmt, *v) for v in zip(*ns)])
@@ -164,8 +165,10 @@ class DashboardDevice(Loggable):
                                               mutable=False), ),
                       show_border=True,
                       enabled_when='use')
+        ggrp = UItem('graph', style='custom')
         v = View(VGroup(hgrp,
-                        dgrp))
+                        VSplit(dgrp,
+                               ggrp)))
         return v
 
 # ============= EOF =============================================

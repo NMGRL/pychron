@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from _socket import gethostname, gethostbyname
 from threading import Thread, Lock
 
 from traits.api import Int, Dict
@@ -31,6 +32,12 @@ class Notifier(Loggable):
     _req_sock = None
 
     _handlers = Dict
+
+    @property
+    def url(self):
+        host = gethostbyname(gethostname())
+        return '{}:{}'.format(host, self.port)
+
     def __init__(self, *args, **kw):
         self._lock=Lock()
         super(Notifier, self).__init__(*args, **kw)

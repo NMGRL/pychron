@@ -29,7 +29,7 @@ from pychron.core.ui.custom_label_editor import CustomLabel
 
 class DashboardCentralPane(TraitsTaskPane):
     def traits_view(self):
-        url = CustomLabel('url', label='URL')
+        url = CustomLabel('object.notifier.url', label='URL')
         v = View(
             VGroup(url,
                    UItem('selected_device',

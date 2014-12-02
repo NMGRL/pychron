@@ -181,8 +181,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._preference_binder(prefid, attrs, mod='color')
 
         #user_notifier
-        attrs = ('server_username', 'server_password', 'server_host', 'server_post', 'include_log')
-        self._preference_binder(prefid, attrs, obj=self.user_notifier.emailer)
+        attrs = ('include_log', )
+        self._preference_binder(prefid, attrs, obj=self.user_notifier)
+
+        emailer = self.application.get_service('pychron.social.emailer.Emailer')
+        self.user_notifier.emailer = emailer
 
         #memory
         attrs = ('use_memory_check', 'memory_threshold')
@@ -211,6 +214,13 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.stats.start_timer()
 
     def execute(self):
+        if self.user_notifier.emailer is None:
+            if any((eq.email or eq.use_group_email for eq in self.experiment_queues)):
+                if not self.confirmation_dialog('Email Plugin not initialized. '
+                                                'Required for sending email notifications. '
+                                                'Are you sure you want to continue?'):
+                    return
+
         self.set_managers()
 
         if self.use_automated_run_monitor:

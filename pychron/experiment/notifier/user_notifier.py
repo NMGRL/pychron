@@ -15,69 +15,68 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Int, Instance, Bool
+from traits.api import Instance, Bool
 # ============= standard library imports ========================
 from datetime import datetime
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-import smtplib
 import socket
 # ============= local library imports  ==========================
+from pychron.social.email.emailer import Emailer
 from pychron.version import __version__
 from pychron.experiment.notifier.templates import email_template
 from pychron.loggable import Loggable
 
 
-class Emailer(HasTraits):
-    _server = None
-
-    server_username = Str
-    server_password = Str
-    server_host = Str
-    server_port = Int
-    include_log = Bool
-    sender = Str('pychron@gmail.com')
-
-    def send(self, addr, sub, msg):
-        server = self.connect()
-        if server:
-            msg = self._message_factory(addr, sub, msg)
-            try:
-                server.sendmail(self.sender, [addr], msg.as_string())
-                server.close()
-                return True
-            except BaseException:
-                pass
-
-    def _message_factory(self, addr, sub, txt):
-        msg = MIMEMultipart()
-        msg['From'] = self.sender  # 'nmgrl@gmail.com'
-        msg['To'] = addr
-        msg['Subject'] = sub
-
-        msg.attach(MIMEText(txt))
-        return msg
-
-    def connect(self):
-        if self._server is None:
-            try:
-                server = smtplib.SMTP(self.server_host, self.server_port)
-                server.ehlo()
-                server.starttls()
-                server.ehlo()
-
-                server.login(self.server_username, self.server_password)
-                self._server = server
-            except smtplib.SMTPServerDisconnected:
-                return
-        else:
-            self._server.connect(self.server_host, self.server_port)
-
-        return self._server
+# class Emailer(HasTraits):
+#     _server = None
+#
+#     server_username = Str
+#     server_password = Str
+#     server_host = Str
+#     server_port = Int
+#     include_log = Bool
+#     sender = Str('pychron@gmail.com')
+#
+#     def send(self, addr, sub, msg):
+#         server = self.connect()
+#         if server:
+#             msg = self._message_factory(addr, sub, msg)
+#             try:
+#                 server.sendmail(self.sender, [addr], msg.as_string())
+#                 server.close()
+#                 return True
+#             except BaseException:
+#                 pass
+#
+#     def _message_factory(self, addr, sub, txt):
+#         msg = MIMEMultipart()
+#         msg['From'] = self.sender  # 'nmgrl@gmail.com'
+#         msg['To'] = addr
+#         msg['Subject'] = sub
+#
+#         msg.attach(MIMEText(txt))
+#         return msg
+#
+#     def connect(self):
+#         if self._server is None:
+#             try:
+#                 server = smtplib.SMTP(self.server_host, self.server_port)
+#                 server.ehlo()
+#                 server.starttls()
+#                 server.ehlo()
+#
+#                 server.login(self.server_username, self.server_password)
+#                 self._server = server
+#             except smtplib.SMTPServerDisconnected:
+#                 return
+#         else:
+#             self._server.connect(self.server_host, self.server_port)
+#
+#         return self._server
 
 
 class UserNotifier(Loggable):
-    emailer = Instance(Emailer, ())
+    emailer = Instance(Emailer)
+    include_log = Bool
 
     def notify(self, exp, last_runid, err):
         address = exp.email
@@ -88,8 +87,12 @@ class UserNotifier(Loggable):
     def _notify(self, address, subject, msg):
         # self.debug('Subject= {}'.format(subject))
         # self.debug('Body= {}'.format(msg))
-        if not self.emailer.send(address, subject, msg):
-            self.warning('email server not available')
+        if self.emailer:
+            if not self.emailer.send(address, subject, msg):
+                self.warning('email server not available')
+                return True
+        else:
+            self.unique_warning('email plugin not enabled')
             return True
 
     def notify_group(self, exp, last_runid, err, addrs):
@@ -116,7 +119,7 @@ class UserNotifier(Loggable):
 
     def _assemble_ctx(self, exp, last_runid, err):
         log = ''
-        if self.emailer.include_log:
+        if self.include_log:
             log = self._get_log(100)
 
         shorthost = socket.gethostname()

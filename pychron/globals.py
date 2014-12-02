@@ -79,6 +79,7 @@ class Globals(object):
     username = 'root'
     communication_simulation = False
     use_startup_tests = True
+    dashboard_simulation = False
 
     def build(self, ip):
 
@@ -97,6 +98,7 @@ class Globals(object):
                            ('experiment_savedb', to_bool),
                            ('recall_debug', to_bool),
                            ('communication_simulation', to_bool),
+                           ('dashboard_simulation', to_bool),
                            ('use_startup_tests', to_bool),
                            ('test_experiment_set', str)]:
             a = ip.get_global(attr)

@@ -171,7 +171,6 @@ class DashboardClient(Subscriber):
 
     def load_configuration(self):
         config=self.request('config')
-        #config = CONFIG
         if config:
             self._load_configuration(config)
 

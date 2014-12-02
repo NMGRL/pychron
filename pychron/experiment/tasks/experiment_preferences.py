@@ -223,13 +223,7 @@ class UserNotifierPreferencesPane(PreferencesPane):
     category = 'Experiment'
 
     def traits_view(self):
-        auth_grp = VGroup(
-
-                          Item('server_host', label='Host'),
-                          Item('server_username', label='User'),
-                          Item('server_password', label='Password'),
-                          # Item('server_port', label='Port'),
-                          Item('include_log'),
+        auth_grp = VGroup(Item('include_log'),
                           show_border=True,
                           label='User Notifier')
 

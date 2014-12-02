@@ -45,27 +45,31 @@ DESCRIPTION_MAP = {'Experiment': 'Execute sets of automated runs',
                    'FusionsUV': "NMGRL's custom Fusions UV",
                    'ExternalPipette': 'Interface with the APIS pipette system',
 
+                   'Email': 'Allows pychron to send emails',
+
                    'Use IPC': 'use Inter Process Communication e.g. use RemotHardwareServer',
                    'Ignore Initialization Warnings': 'Ignore initialization warnings',
                    'Ignore Initialization Questions': 'Ignore initialization questions',
-                   'Communication Simulation': 'Simulation communication.\nSet Ethernet timeout to 0'}
+                   'Communication Simulation': 'Simulate communication.\nSet Ethernet timeout to 0',
+                   'Dashboard Simulation': 'Use a dummy device if none available'}
 
 DEFAULT_PLUGINS = (('General', ('Experiment', 'PyScript',
                                 'ArArConstants', 'Loading',
                                 'Processing', 'Database',
                                 'Entry', 'SystemMonitor',
-                                'DashboardServer','DashboardClient',
+                                'DashboardServer', 'DashboardClient',
                                 'Workspace', 'LabBook', 'MediaServer', 'Video')),
                    ('Hardware', ('ArgusSpectrometer', 'ExtractionLine',
                                  'FusionsCO2', 'FusionsDiode', 'FusionsUV',
                                  'ExternalPipette')),
-                   ('Social', (),))
+                   ('Social', ('Email',)))
 
 DEFAULT_GLOBALS = (('Use IPC', 'use_ipc'),
                    ('Use Startup Tests', 'use_startup_tests'),
                    ('Ignore Initialization Warnings', 'ignore_initialization_warnings'),
                    ('Ignore Initialization Questions', 'ignore_initialization_questions'),
-                   ('Communication Simulation', 'communication_simulation'))
+                   ('Communication Simulation', 'communication_simulation'),
+                   ('Dashboard Simulation', 'dashboard_simulation'),)
 
 
 def load_plugin_tree():

@@ -15,17 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from envisage.ui.tasks.task_factory import TaskFactory
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
-from pychron.social.emailer import Emailer
-from pychron.social.tasks.email_preferences import EmailPreferencesPane
-from pychron.social.tasks.email_task import EmailTask
+from pychron.social.email.emailer import Emailer
+from pychron.social.email.tasks.preferences import EmailPreferencesPane
 
 
 class EmailPlugin(BaseTaskPlugin):
+    id = 'pychron.email.plugin'
+
     def _service_offers_default(self):
         so = self.service_offer_factory(factory=self._email_factory,
                                         protocol=Emailer)
@@ -34,14 +34,14 @@ class EmailPlugin(BaseTaskPlugin):
     def _email_factory(self):
         return Emailer()
 
-    def _tasks_default(self):
-        t = [TaskFactory(id=self.id,
-                         factory=self._task_factory,
-                         name='Email', image='email-go'), ]
-        return t
-
-    def _task_factory(self):
-        return EmailTask(manager=self.application.get_service(Emailer))
+    # def _tasks_default(self):
+    #     t = [TaskFactory(id=self.id,
+    #                      factory=self._task_factory,
+    #                      name='Email', image='email-go'), ]
+    #     return t
+    #
+    # def _task_factory(self):
+    #     return EmailTask(manager=self.application.get_service(Emailer))
 
     def _preferences_panes_default(self):
         return [EmailPreferencesPane]
