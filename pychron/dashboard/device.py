@@ -106,7 +106,7 @@ class DashboardDevice(Loggable):
         if pv.enabled:
             tag = pv.tag
 
-            self.publish_event = '{}||{} {}'.format(PUBLISH, tag, new)
+            self.publish_event = '{}|||{} {}'.format(PUBLISH, tag, new)
             pv.last_value = v = float(new)
             pv.last_time = time.time()
 
@@ -122,7 +122,9 @@ class DashboardDevice(Loggable):
                 if cond.check(new):
                     self.debug('conditional triggered. severity={}'.format(cond.severity))
                     msg = '{}.{}.{} is True. value={}'.format(self.name, pv.name, cond.teststr, new)
-                    self.publish_event = '{}|{}|{}'.format(cond.severity, cond.emails, msg)
+                    self.publish_event = '{}|{}|{}|{}'.format(cond.severity,
+                                                              cond.script,
+                                                              cond.emails, msg)
 
     def dump_meta(self):
         d = []

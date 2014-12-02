@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Button, Str, Either, Property, Float, Int, Bool, List
-from traitsui.api import View, Item, VGroup, HGroup, UItem, ListEditor, InstanceEditor
+from traitsui.api import View, Item, VGroup, HGroup, UItem, ListEditor, InstanceEditor, Readonly
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.datetime_tools import convert_timestamp
@@ -38,14 +38,16 @@ class ProcessValue(HasTraits):
     conditionals = List(DashboardConditional)
 
     def traits_view(self):
-        v = View(VGroup(HGroup(UItem('enabled'), Item('name')),
-                        VGroup(HGroup(Item('tag'),
-                                      Item('period')),
-                               HGroup(Item('last_time_str', style='readonly'),
-                                      Item('last_value', style='readonly')),
-                               UItem('conditionals', editor=ListEditor(editor=InstanceEditor(),
-                                                                       style='custom',
-                                                                       mutable=False)),
+        v = View(VGroup(HGroup(UItem('enabled'), Readonly('name')),
+                        VGroup(HGroup(Readonly('tag'),
+                                      Readonly('period')),
+                               HGroup(Readonly('last_time_str'),
+                                      Readonly('last_value')),
+                               VGroup(UItem('conditionals', editor=ListEditor(editor=InstanceEditor(),
+                                                                              style='custom',
+                                                                              mutable=False)),
+                                      show_border=True,
+                                      label='Conditionals'),
                                enabled_when='enabled')))
         return v
 
@@ -55,6 +57,7 @@ class ProcessValue(HasTraits):
             r = convert_timestamp(self.last_time)
 
         return r
+
 # ============= EOF =============================================
 
 

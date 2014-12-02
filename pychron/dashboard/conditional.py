@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Button, Float, Str, Int, List, String
-from traitsui.api import View, Item, HGroup, spring
+from traitsui.api import View, Item, HGroup, spring, Readonly
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
@@ -36,6 +36,7 @@ class DashboardConditional(HasTraits):
     state = String
     current_value = Str
     emails = Str
+    script = Str
 
     def check(self, v):
         self.current_value = floatfmt(v)
@@ -57,8 +58,8 @@ class DashboardConditional(HasTraits):
         return ret
 
     def traits_view(self):
-        v = View(HGroup(Item('teststr', width=-200),
-                        Item('state', style='readonly'),
+        v = View(HGroup(Readonly('teststr', width=-200),
+                        Readonly('state'),
                         spring))
         return v
 

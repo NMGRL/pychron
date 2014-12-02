@@ -28,18 +28,37 @@ from pychron.dashboard.db_manager import DashboardDBManager
 from pychron.dashboard.device import DashboardDevice
 from pychron.globals import globalv
 from pychron.hardware.core.i_core_device import ICoreDevice
-from pychron.core.helpers.filetools import to_bool
+from pychron.core.helpers.filetools import to_bool, add_extension
 from pychron.hardware.dummy_device import DummyDevice
 from pychron.loggable import Loggable
 from pychron.messaging.notify.notifier import Notifier
 from pychron.paths import paths
 from pychron.core.xml.xml_parser import XMLParser
+from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
+
+
+def get_parser():
+    p = os.path.join(paths.setup_dir, 'dashboard.xml')
+    parser = XMLParser(p)
+    return parser
+
+
+def get_xml_value(elem, tag, default):
+    ret = default
+
+    tt = elem.find(tag)
+    if tt is not None:
+        ret = tt.text.strip()
+
+    return ret
 
 
 class DashboardServer(Loggable):
     devices = List
     selected_device = Instance(DashboardDevice)
     db_manager = Instance(DashboardDBManager, ())
+    extraction_line_manager = Instance('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
+
     notifier = Instance(Notifier, ())
     emailer = Instance('pychron.social.emailer.Emailer')
 
@@ -48,6 +67,9 @@ class DashboardServer(Loggable):
     _alive = False
 
     def activate(self):
+        if not self.extraction_line_manager:
+            self.warning_dialog('Extraction Line Plugin not initialized. Will not be able to take valve actions')
+
         self.setup_notifier()
 
         self._load_devices()
@@ -65,7 +87,7 @@ class DashboardServer(Loggable):
             self.db_manager.start()
 
     def setup_notifier(self):
-        parser = self._get_parser()
+        parser = get_parser()
 
         port = 8100
         elem = parser.get_elements('port')
@@ -94,7 +116,7 @@ class DashboardServer(Loggable):
         # read devices from config
         app = self.application
 
-        parser = self._get_parser()
+        parser = get_parser()
         ds = []
         for dev in parser.get_elements('device'):
             name = dev.text.strip()
@@ -129,8 +151,8 @@ class DashboardServer(Loggable):
                 n = v.text.strip()
                 tag = '<{},{}>'.format(name, n)
 
-                func_name = self._get_xml_value(v, 'func', 'get')
-                period = self._get_xml_value(v, 'period', 60)
+                func_name = get_xml_value(v, 'func', 'get')
+                period = get_xml_value(v, 'period', 60)
 
                 if not period == 'on_change':
                     try:
@@ -138,15 +160,15 @@ class DashboardServer(Loggable):
                     except ValueError:
                         period = 60
 
-                enabled = to_bool(self._get_xml_value(v, 'enabled', False))
-                timeout = self._get_xml_value(v, 'timeout', 0)
+                enabled = to_bool(get_xml_value(v, 'enabled', False))
+                timeout = get_xml_value(v, 'timeout', 0)
                 pv = d.add_value(n, tag, func_name, period, enabled, timeout)
 
                 def set_nfail(elem, kw):
                     nfail = elem.find('nfail')
                     if nfail is not None:
                         try:
-                            kw['nfail']=int(nfail.text.strip())
+                            kw['nfail'] = int(nfail.text.strip())
                         except ValueError:
                             pass
 
@@ -166,7 +188,13 @@ class DashboardServer(Loggable):
 
                         script = critical.find('script')
                         if script is not None:
-                            kw['script'] = script.text.strip()
+                            sname = script.text.strip()
+                            if self._validate_script(sname):
+                                kw['script'] = sname
+                            else:
+                                self.warning('Failed to add condition "{}". '
+                                             'Invalid script "scripts/extraction/{}"'.format(teststr, sname))
+                                continue
 
                         d.add_conditional(pv, CRITICAL, **kw)
 
@@ -174,15 +202,6 @@ class DashboardServer(Loggable):
             ds.append(d)
 
         self.devices = ds
-
-    def _get_xml_value(self, elem, tag, default):
-        ret = default
-
-        tt = elem.find(tag)
-        if tt is not None:
-            ret = tt.text.strip()
-
-        return ret
 
     def _handle_config(self):
         """
@@ -209,18 +228,32 @@ class DashboardServer(Loggable):
                 dev.trigger()
             time.sleep(mperiod)
 
-    def _get_parser(self):
-        p = os.path.join(paths.setup_dir, 'dashboard.xml')
-        parser = XMLParser(p)
-        return parser
-
     def _set_error_flag(self, obj, msg):
         self.notifier.send_message('error {}'.format(msg))
+
+    def _validate_script(self, script_name):
+        script = self._script_factory(script_name)
+        if script:
+            return script.syntax_ok()
+
+    def _script_factory(self, script_name):
+        if os.path.isfile(os.path.join(paths.extraction_dir, add_extension(script_name,'.py'))):
+            script = ExtractionPyScript(root=paths.extraction_dir,
+                                        name=script_name,
+                                        manager=self.extraction_line_manager,
+                                        allow_lock=True)
+            return script
+
+    def _do_script(self, script_name):
+        self.info('doing script "{}"'.format(script_name))
+        script = self._script_factory(script_name)
+        if script:
+            script.execute()
 
     # handlers
     @on_trait_change('devices:publish_event')
     def _handle_publish(self, obj, name, old, new):
-        action, emails, message = new.split('|')
+        action, script, emails, message = new.split('|')
         self.notifier.send_message(message)
         if action == WARN:
             if self.emailer and emails:
@@ -228,6 +261,9 @@ class DashboardServer(Loggable):
                 self.emailer.send_message(emails, message)
         elif action == CRITICAL:
             self._set_error_flag(obj, message)
+
+            self._do_script(script)
+
             if self.emailer and emails:
                 emails = emails.split(',')
                 self.emailier.send_message(emails, message)

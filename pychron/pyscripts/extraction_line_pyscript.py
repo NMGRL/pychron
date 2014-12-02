@@ -94,6 +94,7 @@ class ExtractionPyScript(ValvePyScript):
     _resource_flag = None
     info_color = EXTRACTION_COLOR
     snapshots = List
+    allow_lock = False
 
     _extraction_positions = List
 

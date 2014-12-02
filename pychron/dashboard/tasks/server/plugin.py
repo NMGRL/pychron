@@ -16,7 +16,8 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.task_factory import TaskFactory
-from traits.api import Instance
+from pyface.timer.do_later import do_after
+from traits.api import Instance, on_trait_change
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -39,11 +40,15 @@ class DashboardServerPlugin(BaseTaskPlugin):
         return f
 
     def start(self):
-        self.dashboard_server = DashboardServer(application=self.application)
-        s = self.dashboard_server
-        s.activate()
+        elm = self.application.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
+        self.dashboard_server = DashboardServer(application=self.application,
+                                                extraction_line_manager=elm)
 
     def stop(self):
         self.dashboard_server.deactivate()
+
+    @on_trait_change('application:started')
+    def start_server(self):
+        self.dashboard_server.activate()
 
 # ============= EOF =============================================
