@@ -15,25 +15,23 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str
+from traits.api import Str, Any
 from traitsui.api import View, Item
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.database.isotope_database_manager import IsotopeDatabaseManager
+from pychron.entry.entry import BaseEntry
 
 
-class ProjectEntry(IsotopeDatabaseManager):
+class ProjectEntry(BaseEntry):
     project = Str
-
-    def edit_project(self, proj):
-        self.information_dialog('Editing project not currently implemented')
+    # def edit_project(self, proj):
+    #     self.information_dialog('Editing project not currently implemented')
         #db=self.db
         #with db.session_ctx():
         #    dbproj=db.get_project(proj)
 
-
-    def add_project(self):
+    def _do(self):
         self.info('adding project')
         while 1:
             info = self.edit_traits()
@@ -42,19 +40,19 @@ class ProjectEntry(IsotopeDatabaseManager):
                 name = self.project
                 with db.session_ctx():
                     if not db.get_project(name):
+                        self.info('added project={}'.format(name))
                         db.add_project(name)
+                        return True
                     else:
                         self.warning_dialog('{} already exists'.format(name))
             else:
                 break
 
-
     def traits_view(self):
         v = View(Item('project'),
                  kind='modal',
                  resizable=True, title='Edit Project',
-                 buttons=['OK', 'Cancel']
-        )
+                 buttons=['OK', 'Cancel'])
         return v
 
 # ============= EOF =============================================

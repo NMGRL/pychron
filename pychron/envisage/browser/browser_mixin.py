@@ -183,7 +183,7 @@ class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
     # def dump_browser_options(self):
     # d = {
     # # 'include_monitors': self.include_monitors,
-    #         # 'include_unknowns': self.include_unknowns,
+    # # 'include_unknowns': self.include_unknowns,
     #         'project_enabled': self.project_enabled,
     #         'sample_view_active': self.sample_view_active}
     #     self._browser_options_hook(d)
@@ -278,11 +278,14 @@ class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
 
             pss = [ProjectRecordView(p) for p in ps]
 
-            # move references project to after Recent
-            p = next((p for p in pss if p.name.lower() == 'references'), None)
-            if p is not None:
-                rp = pss.pop(pss.index(p))
-                pss.insert(0, rp)
+            if include_recent:
+                # move references project to after Recent
+                p = next((p for p in pss if p.name.lower() == 'references'), None)
+                if p is not None:
+                    rp = pss.pop(pss.index(p))
+                    pss.insert(0, rp)
+            else:
+                pss = [p for p in pss if p.name.lower() != 'references']
 
             if include_recent_first:
                 return recents + pss

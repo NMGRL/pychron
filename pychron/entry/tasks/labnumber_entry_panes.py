@@ -38,13 +38,22 @@ class IrradiationEditorPane(TraitsDockPane):
     labnumber_tabular_adapter = Instance(SampleAdapter, ())
 
     def traits_view(self):
+        tgrp = HGroup(icon_button_editor('add_project_button', 'database_add',
+                                         tooltip='Add project'),
+                      icon_button_editor('add_material_button', 'database_add',
+                                         tooltip='Add material'),
+                      icon_button_editor('add_sample_button', 'database_add',
+                                         tooltip='Add sample'))
+
         project_grp = VGroup(
             UItem('projects',
                   editor=FilterTabularEditor(editable=False,
                                              selected='selected_projects',
                                              adapter=ProjectAdapter(),
                                              multi_select=True),
-                  width=175))
+                  width=175),
+            show_border=True,
+            label='Projects')
 
         sample_grp = VGroup(
             HGroup(
@@ -55,9 +64,9 @@ class IrradiationEditorPane(TraitsDockPane):
                 UItem('sample_filter',
                       editor=EnumEditor(name='sample_filter_values'),
                       width=-25),
-                icon_button_editor('configure_sample_table',
-                                   'cog',
-                                   tooltip='Configure Sample Table'),
+                # icon_button_editor('configure_sample_table',
+                #                    'cog',
+                #                    tooltip='Configure Sample Table'),
                 icon_button_editor('edit_sample_button', 'database_edit',
                                    tooltip='Edit sample in database'),
                 icon_button_editor('add_sample_button', 'database_add',
@@ -72,18 +81,20 @@ class IrradiationEditorPane(TraitsDockPane):
                       column_clicked='column_clicked',
                       stretch_last_section=False),
                   width=75))
-
         jgrp = HGroup(UItem('j'), Label(PLUSMINUS_SIGMA), UItem('j_err'),
                       icon_button_editor('estimate_j_button', 'cog'),
                       show_border=True, label='J')
-        ngrp = HGroup(UItem('note'), show_border=True, label='Note')
-        wgrp = HGroup(UItem('weight'), show_border=True, label='Weight')
-
-        sgrp = HGroup(Item('selection_freq', label='Frequency'),
-                      Item('invert_flag', label='Invert'))
-        v = View(VSplit(VGroup(sgrp,
-                               jgrp,
-                               wgrp,
+        ngrp = HGroup(UItem('note'),
+                      UItem('weight'),
+                      show_border=True, label='Note')
+        # wgrp = HGroup(UItem('weight'), show_border=True, label='Weight')
+        sgrp = HGroup(UItem('invert_flag'),
+                      Item('selection_freq', label='Freq'),
+                      show_border=True,
+                      label='Selection')
+        v = View(VSplit(VGroup(tgrp,
+                               HGroup(sgrp, jgrp),
+                               # wgrp,
                                ngrp,
                                project_grp),
                         sample_grp))

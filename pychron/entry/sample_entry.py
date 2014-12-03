@@ -20,14 +20,16 @@ from traitsui.api import View, Item
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.database.isotope_database_manager import IsotopeDatabaseManager
+# from pychron.database.isotope_database_manager import IsotopeDatabaseManager
+from pychron.entry.entry import BaseEntry
+from pychron.loggable import Loggable
 
 
-class SampleEntry(IsotopeDatabaseManager):
+class SampleEntry(BaseEntry):
     sample = Str
     material = Str
     materials = List
-
+    project = Str
     def edit_sample(self, sample, project, material):
         db = self.db
         with db.session_ctx():
@@ -35,8 +37,8 @@ class SampleEntry(IsotopeDatabaseManager):
             if dbsam:
                 print dbsam
 
-
-    def add_sample(self, project):
+    def _do(self):
+        project=self.project
         while 1:
             info = self.edit_traits()
             if info.result:
@@ -47,6 +49,7 @@ class SampleEntry(IsotopeDatabaseManager):
                         db.add_sample(self.sample,
                                       project=project,
                                       material=self.material)
+                        return True
                     else:
                         self.warning('{}, Project={}, Material={} already exists'.format(self.sample,
                                                                                          project,

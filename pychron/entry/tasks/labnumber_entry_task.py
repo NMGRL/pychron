@@ -224,17 +224,22 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
     def _update_irradiations(self):
         self.manager.updated = True
 
-    # def _add_project_button_fired(self):
-    #     pr = ProjectEntry(db=self.manager.db)
-    #     pr.add_project()
-    #
-    # def _add_sample_button_fired(self):
-    #     sam = SampleEntry(db=self.manager.db)
-    #     sam.add_sample(self.selected_projects)
-    #
+    def _add_project_button_fired(self):
+        pr = ProjectEntry(db=self.manager.db)
+        if pr.do():
+            self.load_projects(include_recent=False)
+
+    def _add_sample_button_fired(self):
+        sam = SampleEntry(db=self.manager.db,
+                          project=self.selected_projects[0].name)
+        if sam.do():
+            self._load_associated_samples([si.name for si in self.selected_projects])
+
     # def _add_material_button_fired(self):
-    #     self.manager.add_material()
-    #
+    #     mat = MaterialEntry(db=self.manager.db)
+    #     if mat.do():
+    #         self._load_materials()
+
     # def _edit_project_button_fired(self):
     #     pr = ProjectEntry(db=self.manager.db)
     #     pr.edit_project(self.selected_projects)
