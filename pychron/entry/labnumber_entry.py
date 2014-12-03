@@ -33,7 +33,7 @@ from pychron.entry.editors.level_editor import LevelEditor, load_holder_canvas, 
 from pychron.entry.loaders.irradiation_loader import XLSIrradiationLoader
 from pychron.entry.irradiation_pdf_writer import IrradiationPDFWriter, LabbookPDFWriter
 from pychron.entry.irradiation_table_view import IrradiationTableView
-from pychron.entry.labnumber_generator import LabnumberGenerator
+from pychron.entry.identifier_generator import IdentifierGenerator
 from pychron.paths import paths
 # from pychron.entry.irradiation import Irradiation
 # from pychron.entry.level import Level, load_holder_canvas, iter_geom
@@ -51,7 +51,7 @@ from pychron.database.orms.isotope.gen import gen_ProjectTable, gen_SampleTable
 # pass
 #
 # def __exit__(self, exc_type, exc_val, exc_tb):
-#         self._p.information_dialog('Changes saved to database')
+# self._p.information_dialog('Changes saved to database')
 
 
 class dirty_ctx(object):
@@ -206,7 +206,13 @@ class LabnumberEntry(IsotopeDatabaseManager):
             self._inform_save()
             return True
 
-    def generate_labnumbers(self):
+    def generate_identifiers(self):
+        self.warning('GENERATE LABNUMBERS DISABLED')
+        return
+
+        if self.check_monitor_name():
+            return
+
         ok = True
         ok = self.confirmation_dialog('Are you sure you want to generate the labnumbers for this irradiation?')
         if ok:
@@ -214,11 +220,30 @@ class LabnumberEntry(IsotopeDatabaseManager):
             ret = self.confirmation_dialog('Overwrite existing labnumbers?', return_retval=True, cancel=True)
             if ret != CANCEL:
                 overwrite = ret == YES
-                lg = LabnumberGenerator(monitor_name=self.monitor_name,
-                                        db=self.db)
+                lg = IdentifierGenerator(monitor_name=self.monitor_name,
+                                         irradiation=self.irradiation,
+                                         overwrite=overwrite,
+                                         db=self.db)
                 prog = self.open_progress()
-                lg.generate_labnumbers(self.irradiation, prog, overwrite)
+                lg.generate_identifiers(prog, overwrite)
                 self._update_level()
+
+    def preview_generate_identifiers(self):
+        if self.check_monitor_name():
+            return
+
+        lg = IdentifierGenerator(monitor_name=self.monitor_name,
+                                 overwrite=True,
+                                 db=self.db)
+        prog = self.open_progress()
+        lg.preview(prog, self.irradiated_positions, self.irradiation, self.level)
+        self.refresh_table = True
+
+    def check_monitor_name(self):
+        if not self.monitor_name.strip():
+            self.warning_dialog('No monitor name set in Preferences.'
+                                ' Set before trying to generate identifiers. e.g "FC-2"')
+            return True
 
     def make_irradiation_load_template(self, p):
         loader = XLSIrradiationLoader()
@@ -387,7 +412,7 @@ class LabnumberEntry(IsotopeDatabaseManager):
                                                                         irs.hole,
                                                                         dbln.identifier))
         self.dirty = False
-        self._level_changed()
+        self._level_changed(self.level)
 
         # self.info('Changes saved to database')
 

@@ -31,7 +31,8 @@ from pychron.envisage.browser.browser_mixin import BrowserMixin
 from pychron.entry.entry_views.project_entry import ProjectEntry
 from pychron.entry.entry_views.sample_entry import SampleEntry
 from pychron.entry.labnumber_entry import LabnumberEntry
-from pychron.entry.tasks.actions import SavePDFAction, GenerateLabnumbersAction, ImportIrradiationLevelAction
+from pychron.entry.tasks.actions import SavePDFAction, GenerateLabnumbersAction, ImportIrradiationLevelAction, \
+    PreviewGenerateLabnumbersAction
 from pychron.entry.tasks.importer_panes import ImporterPane
 from pychron.entry.tasks.labnumber_entry_panes import LabnumbersPane, \
     IrradiationPane, IrradiationEditorPane, IrradiationCanvasPane
@@ -50,12 +51,16 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
     edit_project_button = Button
     edit_sample_button = Button
 
+    generate_identifiers_button = Button
+    preview_generate_identifiers_button = Button
+
     tool_bars = [SToolBar(SavePDFAction(),
                           DatabaseSaveAction(),
-                          image_size=(16, 16)),
-                 SToolBar(GenerateLabnumbersAction(),
-                          ImportIrradiationLevelAction(),
                           image_size=(16, 16))]
+                 # SToolBar(GenerateLabnumbersAction(),
+                 #          PreviewGenerateLabnumbersAction(),
+                 #          ImportIrradiationLevelAction(),
+                 #          image_size=(16, 16))]
 
     invert_flag = Bool
     selection_freq = Int
@@ -112,8 +117,11 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
         self.manager.make_labbook(p)
         self.view_pdf(p)
 
-    def generate_labnumbers(self):
-        self.manager.generate_labnumbers()
+    def generate_identifiers(self):
+        self.manager.generate_identifiers()
+
+    def preview_generate_identifiers(self):
+        self.manager.preview_generate_identifiers()
 
     def import_irradiation_load_xls(self):
         path = self.open_file_dialog()
@@ -223,6 +231,12 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
     @on_trait_change('extractor:update_irradiations_needed')
     def _update_irradiations(self):
         self.manager.updated = True
+
+    def _generate_identifiers_button_fired(self):
+        self.generate_identifiers()
+
+    def _preview_generate_identifiers_button_fired(self):
+        self.preview_generate_identifiers()
 
     def _add_project_button_fired(self):
         pr = ProjectEntry(db=self.manager.db)

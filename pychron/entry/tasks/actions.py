@@ -91,9 +91,16 @@ class SaveLabbookPDFAction(TaskAction):
 
 class GenerateLabnumbersAction(TaskAction):
     name = 'Generate Labnumbers'
-    image = icon('table_lightning.png')
+    image = icon('table_lightning')
 
     method = 'generate_labnumbers'
+
+class PreviewGenerateLabnumbersAction(TaskAction):
+    name = 'Preview Generate Labnumbers'
+    image = icon('table_lightning')
+
+    method = 'preview_generate_labnumbers'
+
 
 class GenerateTrayAction(TaskAction):
     name = 'Generate Tray'

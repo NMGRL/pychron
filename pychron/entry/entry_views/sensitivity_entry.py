@@ -104,7 +104,7 @@ class SensitivityEntry(BaseEntry):
     def activate(self):
         self._load_records()
 
-    @database_enabled
+    @database_enabled()
     def _load_records(self):
         db = self.db
         with db.session_ctx():
@@ -112,7 +112,7 @@ class SensitivityEntry(BaseEntry):
             self.records = [SensitivityRecord(ri)
                             for ri in recs]
 
-    @database_enabled
+    @database_enabled()
     def save(self):
         db = self.db
         with db.session_ctx():

@@ -7,6 +7,7 @@ CHANGELOG
 * added Select Same/Select Same Attribute... to Experiment Editor
 * updated Dashboard and Labspy
 * updated Email plugin
+* updated Labnumber Entry
 
 .. * fully implemented import irradiation from XLS file
 .. * added ability to export irradiations from Pychron to MassSpec

@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,27 +15,40 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Any, Float, Str
+from traits.api import Any, Float, Str, List, Bool
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
 
 
-class LabnumberGenerator(Loggable):
+class IdentifierGenerator(Loggable):
     db = Any
     default_j = Float(1e-4)
     default_j_err = Float(1e-7)
 
     monitor_name = Str
 
-    def generate_labnumbers(self, irradiation, prog, overwrite):
+    irradiation_positions = List
+    irradiation = Str
+    level = Str
+    is_preview = Bool
+    overwrite = Bool
+
+    def preview(self, prog, positions, irradiation, level):
+        self.irradiation_positions = positions
+        self.irradiation = irradiation
+        self.level = level
+        self.is_preview = True
+
+        self.generate_identifiers(prog)
+
+    def generate_identifiers(self, *args, **kw):
         db = self.db
         with db.session_ctx(commit=True):
-            self._generate_labnumbers(irradiation, overwrite, prog)
+            self._generate_labnumbers(*args)
 
-
-    def _generate_labnumbers(self, ir, overwrite=False, prog=None, offset=1, level_offset=10000):
+    def _generate_labnumbers(self, prog, offset=1, level_offset=10000):
         """
             get last labnumber
 
@@ -43,27 +56,38 @@ class LabnumberGenerator(Loggable):
 
             add level_offset between each level
         """
+        irradiation = self.irradiation
 
-        mongen, unkgen = self._labnumber_generator(ir,
-                                                   overwrite,
-                                                   offset,
-                                                   level_offset)
-        mongen = list(mongen)
-        unkgen = list(unkgen)
-        n = len(mongen) + len(unkgen)
+        mongen, unkgen, n = self._position_generator(offset, level_offset)
+
         if n:
             prog.max = n - 1
             for gen in (mongen, unkgen):
-                for pos, ln in gen:
-                    pos.labnumber.identifier = ln
-
+                for pos, ident in gen:
+                    po = pos.position
                     le = pos.level.name
-                    pi = pos.position
+                    if self.is_preview:
+                        self._set_position_identifier(pos, ident)
+                    else:
+                        pos.labnumber.identifier = ident
+
                     self._add_default_flux(pos)
-                    msg = 'setting irrad. pos. {} {}-{} labnumber={}'.format(ir, le, pi, ln)
+                    msg = 'setting irrad. pos. {} {}-{} labnumber={}'.format(irradiation, le, po, ident)
                     self.info(msg)
                     if prog:
                         prog.change_message(msg)
+
+    def _set_position_identifier(self, dbpos, ident):
+        if self.is_preview:
+            ipos =self._get_irradiated_position(dbpos)
+            if ipos:
+                ipos.labnumber = str(ident)
+
+    def _get_irradiated_position(self, dbpos):
+        if dbpos.level.name == self.level:
+            ipos = next((po for po in self.irradiation_positions
+                         if po.hole ==dbpos.position), None)
+            return ipos
 
     def _add_default_flux(self, pos):
         db = self.db
@@ -84,12 +108,13 @@ class LabnumberGenerator(Loggable):
         else:
             add_flux()
 
-    def _labnumber_generator(self, irradiation, overwrite, offset, level_offset):
+    def _position_generator(self, offset, level_offset):
         """
             return 2 generators
             monitors, unknowns
         """
         db = self.db
+        irradiation = self.irradiation
         last_mon_ln = db.get_last_labnumber(self.monitor_name)
         if last_mon_ln:
             last_mon_ln = int(last_mon_ln.identifier)
@@ -104,14 +129,36 @@ class LabnumberGenerator(Loggable):
 
         irrad = db.get_irradiation(irradiation)
         levels = irrad.levels
+        overwrite = self.overwrite
+        args = (irradiation, levels, overwrite, offset, level_offset)
+        mons = self._identifier_generator(last_mon_ln, True, *args)
+        unks = self._identifier_generator(last_unk_ln, False, *args)
+        n = sum([len([p for p in li.positions
+                      if overwrite or not p.labnumber.identifier]) for li in levels])
+
+        return mons, unks, n
+
+    def _get_position_is_monitor(self, dbpos):
+        ipos = self._get_irradiated_position(dbpos)
+        if ipos:
+            return ipos.sample == self.monitor_name
+
+    def _identifier_generator(self, start, is_monitor, irrad, levels, overwrite, offset, level_offset):
+        offset = max(1, offset)
+        level_offset = max(1, level_offset)
+        sln = start + offset
 
         def monkey(invert=False):
             def _monkey(x):
                 r = None
-                try:
-                    r = x.labnumber.sample.name == self.monitor_name
-                except AttributeError, e:
-                    pass
+                if self.is_preview:
+                    r = self._get_position_is_monitor(x)
+
+                if not r:
+                    try:
+                        r = x.labnumber.sample.name == self.monitor_name
+                    except AttributeError, e:
+                        pass
 
                 if invert:
                     r = not r
@@ -119,17 +166,11 @@ class LabnumberGenerator(Loggable):
 
             return _monkey
 
-        return self._ln_gen(irradiation, levels, last_mon_ln, monkey(), overwrite, offset, level_offset), \
-               self._ln_gen(irradiation, levels, last_unk_ln, monkey(True), overwrite, offset, level_offset)
-
-    def _ln_gen(self, irrad, levels, start, key, overwrite, offset, level_offset):
-        offset = max(1, offset)
-        level_offset = max(1, level_offset)
-        sln = start + offset
+        test = monkey(not is_monitor)
         for level in levels:
             i = 0
             for position in level.positions:
-                if not key(position):
+                if not test(position):
                     continue
 
                 if position.labnumber.identifier and not overwrite:
@@ -143,6 +184,5 @@ class LabnumberGenerator(Loggable):
 
             sln = sln + i + level_offset - 1
 
-
-            # ============= EOF =============================================
+# ============= EOF =============================================
 

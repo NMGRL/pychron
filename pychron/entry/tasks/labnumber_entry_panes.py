@@ -38,12 +38,24 @@ class IrradiationEditorPane(TraitsDockPane):
     labnumber_tabular_adapter = Instance(SampleAdapter, ())
 
     def traits_view(self):
-        tgrp = HGroup(icon_button_editor('add_project_button', 'database_add',
+        tgrp = HGroup(VGroup(icon_button_editor('add_project_button', 'database_add',
                                          tooltip='Add project'),
-                      icon_button_editor('add_material_button', 'database_add',
+                             show_border=True,
+                             label='Project'),
+                      VGroup(icon_button_editor('add_material_button', 'database_add',
                                          tooltip='Add material'),
-                      icon_button_editor('add_sample_button', 'database_add',
-                                         tooltip='Add sample'))
+                             show_border=True,
+                             label='Material'),
+                      VGroup(icon_button_editor('add_sample_button', 'database_add',
+                                         tooltip='Add sample'),
+                             show_border=True,
+                             label='Sample'),
+                      icon_button_editor('generate_identifiers_button',
+                                         'table_lightning',
+                                         tooltip='Generate Identifiers for this irradiation'),
+                      icon_button_editor('preview_generate_identifiers_button',
+                                         'document-preview',
+                                         tooltip='Preview identifiers generated for this irradiation level'))
 
         project_grp = VGroup(
             UItem('projects',
