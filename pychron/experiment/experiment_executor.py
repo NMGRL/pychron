@@ -636,7 +636,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         self.wait_group.pop()
         if self.labspy_enabled:
-            self.labspy_client.add_run(run)
+            self.labspy_client.add_run(run, self.experiment_queue)
 
         mem_log('end run')
 
