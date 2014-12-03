@@ -136,9 +136,7 @@ class ExperimentQueue(BaseExperimentQueue):
         self._select_same(lambda si: si.identifier == ident)
 
     def select_same_attr(self):
-        s = self.selected[0]
 
-        self.selected = []
         hs, attrs = self._get_dump_attrs()
         hs = list(attrs)
 
@@ -146,6 +144,8 @@ class ExperimentQueue(BaseExperimentQueue):
         info = ev.edit_traits()
         if info.result:
             if ev.attributes:
+
+                s = self.selected[0]
                 def test(v):
                     return all([getattr(v, k) == getattr(s, k) for k in ev.attributes])
 

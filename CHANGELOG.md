@@ -4,6 +4,10 @@ CHANGELOG
 ------------------
 * added StartupTester. use setupfiles/startup_tests.yaml to configure
 * added Next and Previous buttons to Recall
+* added Select Same/Select Same Attribute... to Experiment Editor
+* updated Dashboard and Labspy
+* updated Email plugin
+
 .. * fully implemented import irradiation from XLS file
 .. * added ability to export irradiations from Pychron to MassSpec
 
