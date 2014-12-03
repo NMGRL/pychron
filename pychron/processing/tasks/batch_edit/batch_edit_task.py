@@ -22,12 +22,13 @@ from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import Instance, on_trait_change
 from pyface.tasks.task_layout import TaskLayout, Splitter, PaneItem, Tabbed
 
-from pychron.entry.sensitivity_entry import SensitivityEntry
+from pychron.entry.entry_views.sensitivity_entry import SensitivityEntry
 from pychron.entry.tasks.sensitivity_entry_panes import SensitivityPane
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
 from pychron.processing.tasks.batch_edit.batch_editor import BatchEditor
 from pychron.processing.tasks.batch_edit.panes import BatchEditPane
 from pychron.paths import paths
+
 
 
 

@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,13 +16,12 @@
 
 # ============= enthought library imports =======================
 from traits.api import List, Str
-from traitsui.api import View, Item
+from traitsui.api import Item, EnumEditor
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 # from pychron.database.isotope_database_manager import IsotopeDatabaseManager
-from pychron.entry.entry import BaseEntry
-from pychron.loggable import Loggable
+from pychron.entry.entry_views.entry import BaseEntry
 
 
 class SampleEntry(BaseEntry):
@@ -30,6 +29,8 @@ class SampleEntry(BaseEntry):
     material = Str
     materials = List
     project = Str
+    projects = List
+
     def edit_sample(self, sample, project, material):
         db = self.db
         with db.session_ctx():
@@ -37,31 +38,29 @@ class SampleEntry(BaseEntry):
             if dbsam:
                 print dbsam
 
-    def _do(self):
-        project=self.project
-        while 1:
-            info = self.edit_traits()
-            if info.result:
-                db = self.db
-                with db.session_ctx():
-                    dbsam = db.get_sample(self.sample, project, self.material)
-                    if dbsam is None:
-                        db.add_sample(self.sample,
-                                      project=project,
-                                      material=self.material)
-                        return True
-                    else:
-                        self.warning('{}, Project={}, Material={} already exists'.format(self.sample,
-                                                                                         project,
-                                                                                         self.material))
-            else:
-                break
+    def _add_item(self, db):
+        project = self.project
+        sample = self.sample
+        material = self.material
+        self.info('Attempting to add Sample="{}", '
+                  'Project="{}", Material="{}"'.format(sample, project, material))
 
+        dbsam = db.get_sample(sample, project, material)
+        if dbsam is None:
+            db.add_sample(sample,
+                          project=project,
+                          material=material)
+            return True
+        else:
+            self.warning('{}, Project={}, Material={} already exists'.format(sample,
+                                                                             project,
+                                                                             material))
 
     def traits_view(self):
-        v = View(Item('sample'),
-                 kind='modal',
-                 resizable=True, title='New Sample')
+        v = self._new_view(Item('sample'),
+                           Item('project', editor=EnumEditor(name='projects')),
+                           Item('material', editor=EnumEditor(name='materials')),
+                           title='New Sample')
         return v
 
-        # ============= EOF =============================================
+# ============= EOF =============================================

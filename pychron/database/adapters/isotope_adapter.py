@@ -1902,6 +1902,10 @@ class IsotopeAdapter(DatabaseAdapter):
     def get_materials(self, **kw):
         return self._retrieve_items(gen_MaterialTable, **kw)
 
+    def get_material_names(self, **kw):
+        ms = self._retrieve_items(gen_MaterialTable.name, **kw)
+        return [mi[0] for mi in ms]
+
     def get_years_active(self):
         with self.session_ctx() as sess:
             q = sess.query(distinct(func.year(meas_AnalysisTable.analysis_timestamp)))

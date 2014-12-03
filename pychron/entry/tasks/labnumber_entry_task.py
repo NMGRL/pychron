@@ -28,8 +28,8 @@ from pychron.entry.graphic_generator import GraphicModel, GraphicGeneratorContro
 from pychron.envisage.browser.record_views import SampleRecordView
 from pychron.experiment.importer.import_manager import ImportManager
 from pychron.envisage.browser.browser_mixin import BrowserMixin
-from pychron.entry.project_entry import ProjectEntry
-from pychron.entry.sample_entry import SampleEntry
+from pychron.entry.entry_views.project_entry import ProjectEntry
+from pychron.entry.entry_views.sample_entry import SampleEntry
 from pychron.entry.labnumber_entry import LabnumberEntry
 from pychron.entry.tasks.actions import SavePDFAction, GenerateLabnumbersAction, ImportIrradiationLevelAction
 from pychron.entry.tasks.importer_panes import ImporterPane
@@ -230,8 +230,15 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
             self.load_projects(include_recent=False)
 
     def _add_sample_button_fired(self):
+        project = ''
+        if self.selected_projects:
+            project = self.selected_projects[0].name
+
+        mats = self.db.get_material_names()
         sam = SampleEntry(db=self.manager.db,
-                          project=self.selected_projects[0].name)
+                          project=project,
+                          projects = [p.name for p in self.projects],
+                          materials = mats)
         if sam.do():
             self._load_associated_samples([si.name for si in self.selected_projects])
 

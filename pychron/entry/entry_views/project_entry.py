@@ -15,44 +15,28 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str, Any
-from traitsui.api import View, Item
+from traits.api import Str
+from traitsui.api import Item
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.entry.entry import BaseEntry
+from pychron.entry.entry_views.entry import BaseEntry
 
 
 class ProjectEntry(BaseEntry):
     project = Str
-    # def edit_project(self, proj):
-    #     self.information_dialog('Editing project not currently implemented')
-        #db=self.db
-        #with db.session_ctx():
-        #    dbproj=db.get_project(proj)
 
-    def _do(self):
-        self.info('adding project')
-        while 1:
-            info = self.edit_traits()
-            if info.result:
-                db = self.db
-                name = self.project
-                with db.session_ctx():
-                    if not db.get_project(name):
-                        self.info('added project={}'.format(name))
-                        db.add_project(name)
-                        return True
-                    else:
-                        self.warning_dialog('{} already exists'.format(name))
-            else:
-                break
+    def _add_item(self, db):
+        name = self.project
+        self.info('Attempting to add Project="{}"'.format(name))
+        if not db.get_project(name):
+            self.info('added project={}'.format(name))
+            db.add_project(name)
+            return True
+        else:
+            self.warning_dialog('{} already exists'.format(name))
 
     def traits_view(self):
-        v = View(Item('project'),
-                 kind='modal',
-                 resizable=True, title='Edit Project',
-                 buttons=['OK', 'Cancel'])
-        return v
+        return self._new_view(Item('project'), title='Edit Project')
 
 # ============= EOF =============================================

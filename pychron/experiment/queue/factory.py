@@ -22,7 +22,7 @@ import os
 from ConfigParser import ConfigParser
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_directory2
-from pychron.entry.user_entry import UserEntry
+from pychron.entry.entry_views.user_entry import UserEntry
 from pychron.persistence_loggable import PersistenceLoggable
 from pychron.globals import globalv
 from pychron.pychron_constants import NULL_STR, LINE_STR
@@ -97,8 +97,8 @@ class ExperimentQueueFactory(PersistenceLoggable):
         self.available_conditionals = [NULL_STR] + cs
 
     def _edit_user_fired(self):
-        a = UserEntry()
-        nuser = a.add_user(self.username)
+        a = UserEntry(db=self.db)
+        nuser = a.edit(self.username)
         if nuser:
             self.users_dirty = True
             self.username = nuser

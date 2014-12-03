@@ -15,21 +15,29 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Button, Any, Instance
-from traitsui.api import View, Item
+from traits.api import Str
+from traitsui.api import Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.loggable import Loggable
+from pychron.entry.entry_views.entry import BaseEntry
 
 
-class BaseEntry(Loggable):
-    db = Instance('pychron.database.adapters.isotope_adapter.IsotopeAdapter')
+class MaterialEntry(BaseEntry):
+    material = Str
 
-    def do(self):
-        return self._do()
+    def _add_item(self, db):
+        name = self.material
+        self.info('Attempting to add Material="{}"'.format(name))
 
-    def _do(self):
-        raise NotImplementedError
+        mat = db.get_material(name)
+        if mat is None:
+            db.add_material(name)
+            return True
+        else:
+            self.warning_dialog('"{}" already exists'.format(name))
+
+    def traits_view(self):
+        return self._new_view(Item('material'), title='New Material')
 
 # ============= EOF =============================================
 

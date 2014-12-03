@@ -22,7 +22,7 @@ from pyface.action.group import Group
 from traits.api import Instance
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.entry.sensitivity_entry import SensitivitySelector
+from pychron.entry.entry_views.sensitivity_entry import SensitivitySelector
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 # from pychron.experiment.experiment_executor import ExperimentExecutor
 from pychron.experiment.experimentor import Experimentor

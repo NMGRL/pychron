@@ -20,7 +20,7 @@ from pychron.envisage.tasks.base_task import BaseManagerTask
 # ============= local library imports  ==========================
 
 from pychron.entry.tasks.sensitivity_entry_panes import SensitivityPane
-from pychron.entry.sensitivity_entry import SensitivityEntry
+from pychron.entry.entry_views.sensitivity_entry import SensitivityEntry
 from pyface.tasks.action.schema import SToolBar
 from pychron.entry.tasks.actions import SaveSensitivityAction, \
     AddSensitivityAction
@@ -73,7 +73,8 @@ class SensitivityEntryTask(BaseManagerTask):
     # defaults
     # ===============================================================================
     def _manager_default(self):
-        return SensitivityEntry()
+        man = self.application.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManage')
+        return SensitivityEntry(db=man.db)
 
         #
         #     def _default_layout_default(self):
