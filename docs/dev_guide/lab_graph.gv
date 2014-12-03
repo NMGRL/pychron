@@ -1,0 +1,74 @@
+digraph G {
+   node [shape="square"];
+   graph [rankdir="LR", splines="ortho"];
+   edge [];
+    subgraph cluster_db_server {
+        style="filled";
+        color="lightgrey";
+        node [shape="square"];
+        label="DB Server";
+        labeljust="l";
+        pychrondb [label="PychronDB"];
+    }
+    subgraph cluster_master1 {
+        labeljust="l";
+        style="filled";
+        color="lightgrey";
+        node [shape="square"];
+        label="Master 1";
+        exp [label="Experiment"];
+        db [label="Database"];
+        dc [label="DashClient"];
+        lcm [label="LabspyClient"];
+        {rank=same exp dc};
+    }
+    subgraph cluster_webserver{
+        labeljust="l";
+        style="filled";
+        color="lightgrey";
+        node [shape="square"];
+        label="Webserver";
+        lsjs [label="Labspy.js"];
+        mdb [label="MongoDB"];
+        mdb ->lsjs;
+    }
+    subgraph cluster_worker1{
+        labeljust="l";
+        style="filled";
+        color="lightgrey";
+        node [shape="square"];
+        label="Worker 1";
+        el [label="Extraction Line"];
+        ds [label="DashServer"];
+        lcw [label="LabspyClient"];
+        {rank=same ds lcw};
+    }
+    subgraph cluster_clientA{
+        labeljust="l";
+        style="filled";
+        color="lightgrey";
+        node [shape="rectangle"];
+        label="Client A";
+        clienta [label="Browser"];
+    }
+    subgraph cluster_clientB{
+        labeljust="l";
+        style="filled";
+        color="lightgrey";
+        node [shape="rectangle"];
+        label="Client B";
+        clientb [label="Browser"];
+    }
+
+    db -> pychrondb;
+    exp -> db;
+    dc -> exp;
+    exp -> lcm;
+    lsjs -> clienta;
+    lsjs -> clientb;
+    ds -> dc;
+    ds -> lcw;
+    lcw -> mdb;
+    lcm -> mdb;
+    el -> ds;
+}

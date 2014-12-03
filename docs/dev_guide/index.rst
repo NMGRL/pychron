@@ -23,3 +23,4 @@ Pychron Develop Guide
   automated_analysis
   experiment_construction
   communications
+  notification_network
