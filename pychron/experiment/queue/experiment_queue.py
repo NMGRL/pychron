@@ -27,6 +27,7 @@ import os
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.ui.qt.tabular_editor import MoveToRow
 from pychron.experiment.queue.base_queue import BaseExperimentQueue
+from pychron.experiment.queue.select_attr_view import SelectAttrView
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.experiment.utilities.human_error_checker import HumanErrorChecker
 # from pychron.experiment.conditional.experiment_queue_action import ExperimentQueueAction
@@ -79,20 +80,20 @@ class ExperimentQueue(BaseExperimentQueue):
 
     def toggle_skip(self):
         for si in self.selected:
-            si.skip=not si.skip
-        self.selected=[]
-        self.refresh_table_needed =True
+            si.skip = not si.skip
+        self.selected = []
+        self.refresh_table_needed = True
 
     def end_after(self):
-        sel=self.selected
+        sel = self.selected
         for ai in self.automated_runs:
             if ai not in sel:
                 ai.end_after = False
 
-        si =sel[-1]
+        si = sel[-1]
         si.end_after = not si.end_after
-        self.selected=[]
-        self.refresh_table_needed =True
+        self.selected = []
+        self.refresh_table_needed = True
 
     def repeat_block(self):
         rbv = RepeatRunBlockView()
@@ -125,18 +126,33 @@ class ExperimentQueue(BaseExperimentQueue):
             self.automated_runs.extend(self.selected)
 
     def jump_to_end(self):
-        self.automated_runs_scroll_to_row=len(self.automated_runs)-1
+        self.automated_runs_scroll_to_row = len(self.automated_runs) - 1
 
     def jump_to_start(self):
-        self.automated_runs_scroll_to_row=0
+        self.automated_runs_scroll_to_row = 0
 
-    def _move_selected(self, idx):
-        with no_update(self):
-            for si in self.selected:
-                self.automated_runs.remove(si)
+    def select_same(self):
+        ident = self.selected[0].identifier
+        self._select_same(lambda si: si.identifier == ident)
 
-            for si in reversed(self.selected):
-                self.automated_runs.insert(idx, si)
+    def select_same_attr(self):
+        s = self.selected[0]
+
+        self.selected = []
+        hs, attrs = self._get_dump_attrs()
+        hs = list(attrs)
+
+        ev = SelectAttrView(available_attributes=hs)
+        info = ev.edit_traits()
+        if info.result:
+            if ev.attributes:
+                def test(v):
+                    return all([getattr(v, k) == getattr(s, k) for k in ev.attributes])
+
+                self._select_same(test)
+
+    def _select_same(self, test):
+        self.selected = [si for si in self.cleaned_automated_runs if test(si)]
 
     def count_labnumber(self, ln):
         ans = [ai for ai in self.automated_runs if ai.labnumber == ln]
@@ -147,10 +163,10 @@ class ExperimentQueue(BaseExperimentQueue):
 
     # def count_labnumber(self, ln):
     # ans = [ai for ai in self.automated_runs if ai.labnumber == ln]
-    #     i = 0
-    #     for args in groupby(ans, key=lambda x: x.user_defined_aliquot):
-    #         i += 1
-    #     return i
+    # i = 0
+    # for args in groupby(ans, key=lambda x: x.user_defined_aliquot):
+    # i += 1
+    # return i
 
     def select_run_idx(self, idx):
         if self.automated_runs:
@@ -204,10 +220,6 @@ class ExperimentQueue(BaseExperimentQueue):
 
         self._no_update = False
 
-    def _find_run(self, aid):
-        return next((a for a in self.automated_runs
-                     if make_runid(a.labnumber, a.aliquot, a.step) == aid), None)
-
     def executed_paste_function(self, obj):
         ci = self.paste_function(obj)
         return ci
@@ -225,18 +237,6 @@ class ExperimentQueue(BaseExperimentQueue):
 
         return ci
 
-    @on_trait_change('automated_runs[]')
-    def _refresh_info(self, new):
-        if new and not self._no_update:
-            idx = self.automated_runs.index(new[-1])
-            self.debug('SSSSSSSSSSSSSS set AR scroll to {}'.format(idx))
-            self.refresh_info_needed = True
-            invoke_in_main_thread(do_later, lambda: self.trait_set(automated_runs_scroll_to_row=idx))
-
-    @on_trait_change('automated_runs:state')
-    def _refresh_table1(self):
-        self.refresh_table_needed = True
-
     # def _load_meta(self, meta):
     #     super(ExperimentQueue, self)._load_meta(meta)
     #     if 'actions' in meta:
@@ -244,9 +244,6 @@ class ExperimentQueue(BaseExperimentQueue):
     #                               for astr in meta['actions']]
     #     else:
     #         self.debug('no actions provided for this queue')
-
-    def _load_actions(self):
-        pass
 
     def is_executable(self):
         if self.check_runs():
@@ -268,6 +265,14 @@ class ExperimentQueue(BaseExperimentQueue):
         rgen = (r for r in runs)
         return rgen, len(runs)
 
+    # private
+    def _find_run(self, aid):
+        return next((a for a in self.automated_runs
+                     if make_runid(a.labnumber, a.aliquot, a.step) == aid), None)
+
+    def _load_actions(self):
+        pass
+
     def _extract_device_changed(self):
         self.debug('extract device changed {}'.format(self.extract_device))
         if 'uv' in self.extract_device.lower():
@@ -282,13 +287,33 @@ class ExperimentQueue(BaseExperimentQueue):
         tc = len(self.cleaned_automated_runs) + ex
         return '{}/{}'.format(ex, tc)
 
+    def _move_selected(self, idx):
+        with no_update(self):
+            for si in self.selected:
+                self.automated_runs.remove(si)
+
+            for si in reversed(self.selected):
+                self.automated_runs.insert(idx, si)
+
+    @on_trait_change('automated_runs[]')
+    def _refresh_info(self, new):
+        if new and not self._no_update:
+            idx = self.automated_runs.index(new[-1])
+            self.debug('SSSSSSSSSSSSSS set AR scroll to {}'.format(idx))
+            self.refresh_info_needed = True
+            invoke_in_main_thread(do_later, lambda: self.trait_set(automated_runs_scroll_to_row=idx))
+
+    @on_trait_change('automated_runs:state')
+    def _refresh_table1(self):
+        self.refresh_table_needed = True
+
 # ============= EOF =============================================
-#        rgen = (r for r in newruns)
-#        runs = self.executed_runs+self.cleaned_automated_runs
+# rgen = (r for r in newruns)
+# runs = self.executed_runs+self.cleaned_automated_runs
 #
-#        runs = [ri for ri in runs if ri.executable]
+# runs = [ri for ri in runs if ri.executable]
 #
-#        n = len(runs)
+# n = len(runs)
 #        rgen = (r for r in runs)
 #        if last_ran is not None:
 #            # get index of last run in self.automated_runs

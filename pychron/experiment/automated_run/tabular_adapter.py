@@ -322,7 +322,11 @@ class AutomatedRunMixin(object):
         blocks = MenuManager(Action(name='Make Block', action='make_block'),
                              Action(name='Repeat Block', action='repeat_block'),
                              name='Blocks')
-        return MenuManager(move, jump, blocks,
+        selects = MenuManager(Action(name='Select Same', action='select_same'),
+                              Action(name='Select Same Attributes...', action='select_same_attr'),
+                              name='Select')
+
+        return MenuManager(move, jump, blocks,selects,
                            Action(name='Unselect', action='unselect'),
                            Action(name='Toggle End After', action='toggle_end_after'),
                            Action(name='Toggle Skip', action='toggle_skip'))

@@ -196,7 +196,7 @@ class OpenExperimentQueueAction(QueueAction):
     id = 'pychron.open_experiment'
 
     def perform(self, event):
-        path = '/Users/ross/Pychrondata_dev/experiments/Current Experiment.txt'
+        path = '/Users/ross/Pychron_dev/experiments/Current Experiment.txt'
         # path = '/Users/ross/Pychrondata_dev/experiments/test.txt'
         self._open_experiment(event, path)
 

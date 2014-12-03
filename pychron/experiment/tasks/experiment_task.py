@@ -506,7 +506,7 @@ class ExperimentEditorTask(EditorTask):
                 if not self.manager.executor.is_alive():
                     self.manager.executor.executable = False
 
-    @on_trait_change('manager.experiment_factory:queue_factory:load_name')
+    @on_trait_change('manager:experiment_factory:queue_factory:load_name')
     def _update_load(self, new):
         lm = self.loading_manager
         if lm is not None:
