@@ -15,16 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import os
 
 from pyface.tasks.action.schema import SToolBar
-from traits.api import Instance, on_trait_change, Button
+from traits.api import Instance, on_trait_change, Button, Float, Str, Int, Bool
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, Tabbed
 
 # ============= standard library imports ========================
+import os
 # ============= local library imports  ==========================
 
 from pychron.entry.graphic_generator import GraphicModel, GraphicGeneratorController
+from pychron.envisage.browser.record_views import SampleRecordView
 from pychron.experiment.importer.import_manager import ImportManager
 from pychron.envisage.browser.browser_mixin import BrowserMixin
 from pychron.entry.project_entry import ProjectEntry
@@ -56,17 +57,17 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
                           ImportIrradiationLevelAction(),
                           image_size=(16, 16))]
 
-    def _prompt_for_save(self):
-        if self.manager.dirty:
-            message = 'You have unsaved changes. Save changes to Database?'
-            ret = self._handle_prompt_for_save(message)
-            if ret == 'save':
-                return self.manager.save()
-            return ret
-        return True
+    invert_flag = Bool
+    selection_freq = Int
+
+    estimate_j_button = Button
+    j = Float
+    j_err = Float
+    note = Str
+    weight = Float
 
     def activated(self):
-        self.load_projects()
+        self.load_projects(include_recent=False)
 
     def generate_tray(self):
         # p='/Users/ross/Sandbox/entry_tray'
@@ -94,7 +95,6 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
                 if self.confirmation_dialog(
                         'Do you want to save this tray to the database. Saving tray as "{}"'.format(gm.name)):
                     self.manager.save_tray_to_db(gm.srcpath, gm.name)
-
 
     def save_pdf(self):
         p = '/Users/ross/Sandbox/irradiation.pdf'
@@ -174,42 +174,13 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
 
     def create_dock_panes(self):
         iep = IrradiationEditorPane(model=self)
-        self.sample_tabular_adapter = iep.sample_tabular_adapter
+        self.labnumber_tabular_adapter = iep.labnumber_tabular_adapter
 
         return [
             IrradiationPane(model=self.manager),
             ImporterPane(model=self.importer),
             iep,
-            IrradiationCanvasPane(model=self.manager)
-        ]
-
-    @on_trait_change('extractor:update_irradiations_needed')
-    def _update_irradiations(self):
-        self.manager.updated = True
-
-    def _add_project_button_fired(self):
-        pr = ProjectEntry(db=self.manager.db)
-        pr.add_project()
-
-    def _add_sample_button_fired(self):
-        sam = SampleEntry(db=self.manager.db)
-        sam.add_sample(self.selected_projects)
-
-    def _add_material_button_fired(self):
-        self.manager.add_material()
-
-    def _edit_project_button_fired(self):
-        pr = ProjectEntry(db=self.manager.db)
-        pr.edit_project(self.selected_projects)
-
-    def _edit_sample_button_fired(self):
-        se = SampleEntry(db=self.manager.db)
-        sam = self.selected_samples
-
-        se.edit_sample(sam.name,
-                       self.selected_projects,
-                       sam.material)
-
+            IrradiationCanvasPane(model=self.manager)]
     # ===========================================================================
     # GenericActon Handlers
     # ===========================================================================
@@ -222,9 +193,77 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
     def save_to_db(self):
         self.manager.save()
 
-    def _selected_sample_changed(self, new):
-        if new:
-            self.manager.set_selected_sample(new)
+    def _estimate_j_button_fired(self):
+        self.manager.estimate_j()
 
+    @on_trait_change('selection_freq, invert_flag')
+    def _handle_selection(self):
+        self.manager.select_positions(self.selection_freq, self.invert_flag)
+
+    @on_trait_change('j,j_err, note, weight')
+    def _handle_j(self, obj, name, old, new):
+        if new:
+            self.manager.set_selected_attr(new, name)
+
+    def _selected_samples_changed(self, new):
+        if new:
+            self.manager.set_selected_attr(new.name, 'sample')
+
+    def _load_associated_samples(self, names):
+        db = self.db
+        with db.session_ctx():
+            # load associated samples
+            sams = db.get_samples(project=names)
+            sams = [SampleRecordView(si) for si in sams]
+
+        self.samples = sams
+        self.osamples = sams
+
+    # handlers
+    @on_trait_change('extractor:update_irradiations_needed')
+    def _update_irradiations(self):
+        self.manager.updated = True
+
+    # def _add_project_button_fired(self):
+    #     pr = ProjectEntry(db=self.manager.db)
+    #     pr.add_project()
+    #
+    # def _add_sample_button_fired(self):
+    #     sam = SampleEntry(db=self.manager.db)
+    #     sam.add_sample(self.selected_projects)
+    #
+    # def _add_material_button_fired(self):
+    #     self.manager.add_material()
+    #
+    # def _edit_project_button_fired(self):
+    #     pr = ProjectEntry(db=self.manager.db)
+    #     pr.edit_project(self.selected_projects)
+    #
+    # def _edit_sample_button_fired(self):
+    #     se = SampleEntry(db=self.manager.db)
+    #     sam = self.selected_samples
+    #
+    #     se.edit_sample(sam.name,
+    #                    self.selected_projects,
+    #                    sam.material)
+
+    def _selected_projects_changed(self, old, new):
+        if new and self.project_enabled:
+
+            names = [ni.name for ni in new]
+            self.debug('selected projects={}'.format(names))
+
+            self._load_associated_samples(names)
+            self._selected_projects_change_hook(names)
+            # self.dump_browser_selection()
+
+    def _prompt_for_save(self):
+        if self.manager.dirty:
+            message = 'You have unsaved changes. Save changes to Database?'
+            ret = self._handle_prompt_for_save(message)
+            if ret == 'save':
+                return self.manager.save()
+            return ret
+        return True
 
 # ============= EOF =============================================

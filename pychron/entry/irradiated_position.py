@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Float, Bool, Int, Property
+from traits.api import HasTraits, Str, Float, Bool, Int, Property, CStr
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.pychron_constants import PLUSMINUS
@@ -58,7 +58,7 @@ class BaseIrradiatedPosition(HasTraits):
 
 class IrradiatedPosition(BaseIrradiatedPosition):
     size = Str
-    weight = Str
+    weight = CStr
     note = Str
     analyzed = Bool
 

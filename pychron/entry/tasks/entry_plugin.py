@@ -23,6 +23,7 @@ from pyface.action.group import Group
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.entry.editors.flux_monitor_editor import FluxMonitorEditor
+from pychron.entry.preferences import LabnumberEntryPreferencesPane
 from pychron.entry.tasks.actions import SaveLabbookPDFAction, MakeIrradiationTemplateAction, LabnumberEntryAction, \
     SensitivityEntryAction, AddMolecularWeightAction, ImportSampleMetadataAction, AddFluxMonitorAction, \
     GenerateTrayAction, \
@@ -105,4 +106,6 @@ class EntryPlugin(BaseTaskPlugin):
 
         return SensitivityEntryTask()
 
+    def _preferences_panes_default(self):
+        return [LabnumberEntryPreferencesPane]
 # ============= EOF =============================================

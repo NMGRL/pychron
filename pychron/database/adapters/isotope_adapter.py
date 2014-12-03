@@ -1940,7 +1940,10 @@ class IsotopeAdapter(DatabaseAdapter):
 
     def get_samples(self, project=None, **kw):
         if project:
-            kw = self._append_filters(gen_ProjectTable.name == project, kw)
+            if hasattr(project, '__iter__'):
+                kw = self._append_filters(gen_ProjectTable.name.in_(project), kw)
+            else:
+                kw = self._append_filters(gen_ProjectTable.name == project, kw)
             kw = self._append_joins(gen_ProjectTable, kw)
         return self._retrieve_items(gen_SampleTable, **kw)
 
@@ -1972,7 +1975,8 @@ class IsotopeAdapter(DatabaseAdapter):
 
     def get_labnumbers(self, identifiers=None, low_post=None, high_post=None,
                        mass_spectrometers=None,
-                       filter_non_run=False, **kw):
+                       filter_non_run=False,
+                       projects = None, **kw):
 
         if identifiers is not None:
             f = gen_LabTable.identifier.in_(identifiers)
@@ -2005,6 +2009,10 @@ class IsotopeAdapter(DatabaseAdapter):
                     return q
 
                 kw['query_hook'] = func
+
+        if projects:
+            kw = self._append_joins((gen_SampleTable,gen_ProjectTable), kw)
+            kw = self._append_filters(gen_ProjectTable.name.in_(projects), kw)
 
         return self._retrieve_items(gen_LabTable, verbose_query=True, **kw)
 

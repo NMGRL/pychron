@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from PySide.QtCore import QRegExp, Qt
 from PySide.QtGui import QColor, QHeaderView, QWidget, QVBoxLayout, QLineEdit, QPushButton, QHBoxLayout, \
-    QSortFilterProxyModel, QSizePolicy, QCheckBox
+    QSortFilterProxyModel, QSizePolicy, QCheckBox, QItemSelectionModel
 
 from traits.api import Bool, Str, List, Any, Instance, Property, Int, HasTraits, Color
 from traits.trait_base import SequenceTypes
@@ -90,7 +90,7 @@ class _myTableView(_TableView, ConsumerMixin):
         self.setup_consumer()
         editor = self._editor
 
-        #        # reimplement row height
+        # # reimplement row height
         vheader = self.verticalHeader()
 
         # size = vheader.minimumSectionSize()
@@ -213,7 +213,7 @@ class _myTableView(_TableView, ConsumerMixin):
 
     # alt move when used in experiment editor conflicting with database so disabling
     # def mousePressEvent(self, event):
-    #     self._alt_move(event)
+    # self._alt_move(event)
     #     super(_myTableView, self).mousePressEvent(event)
     #
     # def _alt_move(self, event):
@@ -378,7 +378,7 @@ class _myTableView(_TableView, ConsumerMixin):
 class _myFilterTableView(_myTableView):
     pass
     # def sizeHint(self):
-    #     sh = QtGui.QTableView.sizeHint(self)
+    # sh = QtGui.QTableView.sizeHint(self)
     #     print sh, sh.width(), sh.height()
     #
     #     width = 0
@@ -396,11 +396,11 @@ class _FilterTableView(QWidget):
         layout.setSpacing(2)
         self.table = table = _myFilterTableView(parent)
 
-        table.setSizePolicy(QSizePolicy.Fixed,
-                             QSizePolicy.Fixed)
+        # table.setSizePolicy(QSizePolicy.Fixed,
+        # QSizePolicy.Fixed)
         # table.setMinimumHeight(100)
         # table.setMaximumHeight(50)
-        table.setFixedHeight(50)
+        # table.setFixedHeight(50)
         # table.setFixedWidth(50)
 
         hl = QHBoxLayout()
@@ -419,7 +419,7 @@ class _FilterTableView(QWidget):
         layout.addWidget(table)
         self.setLayout(layout)
 
-    # def setSizePolicy(self, *args, **kwargs):
+        # def setSizePolicy(self, *args, **kwargs):
         # super(_FilterTableView, self).setSizePolicy(*args, **kwargs)
         # print args, kwargs
 
@@ -452,12 +452,11 @@ class _EnableFilterTableView(_FilterTableView):
         self.text = text = QLineEdit()
         self.cb = cb = QCheckBox()
 
-
         text.setEnabled(False)
         button.setEnabled(False)
         table.setEnabled(False)
         # cb.setSizePolicy(QSizePolicy.Fixed,
-                         # QSizePolicy.Fixed)
+        # QSizePolicy.Fixed)
         # cb.setFixedWidth(20)
         # cb.setFixedHeight(20)
 
@@ -734,9 +733,14 @@ class _FilterTabularEditor(_TabularEditor):
         """
         self._no_update = True
         try:
+            index = None
             indexes = self.control.selectionModel()
-            if len(indexes):
-                index=self.proxyModel.mapToSource(indexes[0])
+            if isinstance(indexes, QItemSelectionModel):
+                index = self.proxyModel.mapFromSource(indexes.currentIndex())
+            elif len(indexes):
+                index = self.proxyModel.mapToSource(indexes[0])
+
+            if index:
                 self.selected_row = index.row()
                 self.selected = self.adapter.get_item(self.object, self.name,
                                                       self.selected_row)
@@ -755,7 +759,7 @@ class _FilterTabularEditor(_TabularEditor):
             selected_rows = []
             selected = []
             for index in indexes:
-                index=self.proxyModel.mapToSource(index)
+                index = self.proxyModel.mapToSource(index)
                 row = index.row()
                 selected_rows.append(row)
                 selected.append(self.adapter.get_item(self.object, self.name,
@@ -764,6 +768,7 @@ class _FilterTabularEditor(_TabularEditor):
             self.multi_selected = selected
         finally:
             self._no_update = False
+
 
 class _EnableFilterTabularEditor(_FilterTabularEditor):
     widget_factory = _EnableFilterTableView

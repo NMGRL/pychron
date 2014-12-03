@@ -160,51 +160,51 @@ if __name__ == '__main__':
     b = Dev('environment',
             ('temperature', 'humidity'), ('C', '%'))
 
-    # c.add_device_post([a, b])
+    c.add_device_post([a, b])
 
-    class Exp():
-        def __init__(self, name, user, spec, status):
-            self.name = name
-            self.user = user
-            self.spectrometer = spec
-            self.status = status
-            self.starttime = datetime(2014, 11, 1, 12, 10, 10)
-
-    class Spec():
-        def __init__(self, record_id):
-            self.runid = record_id
-            self.mass_spectrometer='jan'
-            self.extract_device='LF'
-            self.analysis_timestamp = datetime.now()
-            self.state = choice(['Finished', 'Canceled', 'Failed'])
-            self.analysis_type = "unknown"
-            self.sample = "FC-2"
-            self.extract_value = random()*2
-            self.duration = randint(100,200)
-            self.cleanup = randint(100,200)
-            self.position = 1
-            self.comment = "Test comment"
-            self.material = "sanidine"
-            self.project = "Monitor"
-            self.measurement_script = 'm'
-            self.extraction_script = 'e'
-            self.post_measurement_script = 'pm'
-            self.post_equilibration_script = 'pq'
-
-    class Run():
-        def __init__(self, *args, **kw):
-            self.spec = Spec(*args, **kw)
-
-
-    e = Exp('Current Experiment', 'foobar', 'Jan', 'Running')
-    # c.add_experiment(e)
-    # print e.hash_id
-    # hid='076441e14fe0e09086626f25f216ca04'
-    # e.hash_id=hid
-    # c.update_experiment(e)
-
-    for i in range(6):
-        c.add_run(Run('12346-{:02n}'.format(i + 1)), e)
+    # class Exp():
+    #     def __init__(self, name, user, spec, status):
+    #         self.name = name
+    #         self.user = user
+    #         self.spectrometer = spec
+    #         self.status = status
+    #         self.starttime = datetime(2014, 11, 1, 12, 10, 10)
+    #
+    # class Spec():
+    #     def __init__(self, record_id):
+    #         self.runid = record_id
+    #         self.mass_spectrometer='jan'
+    #         self.extract_device='LF'
+    #         self.analysis_timestamp = datetime.now()
+    #         self.state = choice(['Finished', 'Canceled', 'Failed'])
+    #         self.analysis_type = "unknown"
+    #         self.sample = "FC-2"
+    #         self.extract_value = random()*2
+    #         self.duration = randint(100,200)
+    #         self.cleanup = randint(100,200)
+    #         self.position = 1
+    #         self.comment = "Test comment"
+    #         self.material = "sanidine"
+    #         self.project = "Monitor"
+    #         self.measurement_script = 'm'
+    #         self.extraction_script = 'e'
+    #         self.post_measurement_script = 'pm'
+    #         self.post_equilibration_script = 'pq'
+    #
+    # class Run():
+    #     def __init__(self, *args, **kw):
+    #         self.spec = Spec(*args, **kw)
+    #
+    #
+    # e = Exp('Current Experiment', 'foobar', 'Jan', 'Running')
+    # # c.add_experiment(e)
+    # # print e.hash_id
+    # # hid='076441e14fe0e09086626f25f216ca04'
+    # # e.hash_id=hid
+    # # c.update_experiment(e)
+    #
+    # for i in range(6):
+    #     c.add_run(Run('20016-{:02n}'.format(i + 1)), e)
 
 # ============= EOF =============================================
 

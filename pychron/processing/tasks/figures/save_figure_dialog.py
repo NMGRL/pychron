@@ -20,7 +20,7 @@ from traitsui.api import View, Item, TabularEditor, UItem, HGroup, VGroup
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.envisage.browser.adapters import ProjectAdapter, SampleAdapter
+from pychron.envisage.browser.adapters import ProjectAdapter, LabnumberAdapter
 
 
 class SaveFigureDialog(HasTraits):
@@ -37,7 +37,7 @@ class SaveFigureDialog(HasTraits):
                                                    selected='selected_project',
                                                    editable=False)),
                         UItem('samples',
-                              editor=TabularEditor(adapter=SampleAdapter(),
+                              editor=TabularEditor(adapter=LabnumberAdapter(),
                                                    selected='selected_samples',
                                                    multi_select=True,
                                                    editable=False))),

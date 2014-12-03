@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,7 +18,7 @@
 from apptools.preferences.preference_binding import bind_preference
 from pyface.constant import YES, CANCEL
 from traits.api import Property, Str, cached_property, \
-    List, Event, Any, Button, Instance, Bool, on_trait_change
+    List, Event, Any, Button, Instance, Bool, on_trait_change, Float
 from traitsui.api import Image
 from pyface.image_resource import ImageResource
 
@@ -45,12 +45,12 @@ from pychron.database.orms.isotope.gen import gen_ProjectTable, gen_SampleTable
 
 # class save_ctx(object):
 # def __init__(self, p):
-#         self._p = p
+# self._p = p
 #
-#     def __enter__(self):
-#         pass
+# def __enter__(self):
+# pass
 #
-#     def __exit__(self, exc_type, exc_val, exc_tb):
+# def __exit__(self, exc_type, exc_val, exc_tb):
 #         self._p.information_dialog('Changes saved to database')
 
 
@@ -108,25 +108,55 @@ class LabnumberEntry(IsotopeDatabaseManager):
     _level_editor = None
     _irradiation_editor = None
 
+    j_multiplier = Float(1e-4)  # j units per hour
+
     def __init__(self, *args, **kw):
         super(LabnumberEntry, self).__init__(*args, **kw)
 
         #self.labnumber_generator = LabnumberGenerator(db=self.db)
 
         bind_preference(self, 'irradiation_prefix',
-                        'pychron.experiment.irradiation_prefix')
+                        'pychron.entry.irradiation_prefix')
         bind_preference(self, 'monitor_name',
-                        'pychron.experiment.monitor_name')
+                        'pychron.entry.monitor_name')
+        bind_preference(self, 'j_multiplier',
+                        'pychron.entry.j_multiplier')
 
-    #    self.populate_default_tables()
     def save_tray_to_db(self, p, name):
         with self.db.session_ctx():
             load_irradiation_map(self.db, p, name, overwrite_geometry=True)
         self._inform_save()
 
-    def set_selected_sample(self, new):
-        self.selected_sample = new
-        #self.canvas.selected_samples=new
+    def estimate_j(self):
+        j, je = self._estimate_j()
+        for ip in self.irradiated_positions:
+            ip.trait_set(j=j, j_err=je)
+        self.refresh_table = True
+
+    def _estimate_j(self):
+        self.debug('estimate J. irradiation={}'.format(self.irradiation))
+        db = self.db
+        with db.session_ctx():
+            dbirrad = db.get_irradiation(self.irradiation)
+            j = dbirrad.chronology.duration
+            j *= self.j_multiplier
+            return j, j * 0.001
+
+    # def set_selected_sample(self, new):
+    #     self.selected_sample = new
+    #     self.set_selected_attr(new.name, 'sample')
+    #     #self.canvas.selected_samples=new
+
+    def select_positions(self, freq, eoflag):
+        positions = self.irradiated_positions
+        ss = [irrad for i, irrad in enumerate(positions) if (i % freq != 0 if eoflag else i % freq == 0)]
+        self.selected = ss
+
+    def set_selected_attr(self, v, attr):
+        if self.selected:
+            for si in self.selected:
+                setattr(si, attr, v)
+            self.refresh_table = True
 
     def import_sample_metadata(self, p):
         try:
@@ -551,6 +581,7 @@ THIS CHANGE CANNOT BE UNDONE')
             except:
                 self.warning_dialog('Failed loading Irradiation level="{}"'.format(name))
                 sess.rollback()
+
     # @simple_timer()
     def _make_positions(self, n, positions):
         with no_update(self):

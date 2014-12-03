@@ -51,9 +51,6 @@ class ExperimentPreferences(BasePreferencesHelper):
     use_auto_save = Bool
     auto_save_delay = Int
 
-    irradiation_prefix = Str
-    monitor_name = Str
-
     baseline_color = Color
     sniff_color = Color
     signal_color = Color
@@ -148,11 +145,6 @@ class ExperimentPreferencesPane(PreferencesPane):
             Item('even_bg_color', label='Even Row'),
             label='Editor')
 
-        irradiation_grp = Group(Item('irradiation_prefix',
-                                     label='Irradiation Prefix'),
-                                Item('monitor_name'),
-                                label='Irradiations')
-
         color_group = Group(Item('sniff_color', label='Equilibration'),
                             Item('baseline_color', label='Baseline'),
                             Item('signal_color', label='Signal'),
@@ -203,7 +195,7 @@ class ExperimentPreferencesPane(PreferencesPane):
 
         return View(color_group,
                     automated_grp, notification_grp,
-                    editor_grp, irradiation_grp,
+                    editor_grp,
                     analysis_grouping_grp, memory_grp)
 
 

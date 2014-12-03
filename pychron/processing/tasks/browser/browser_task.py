@@ -190,7 +190,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
     def refresh_samples(self):
         self.debug('refresh samples')
-        self.set_samples(self._retrieve_samples())
+        self.set_samples(self._retrieve_labnumbers())
 
     def load_time_view(self):
         self.debug('load time view')
@@ -402,7 +402,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     def _create_browser_pane(self, **kw):
         self.browser_pane = BrowserPane(model=self, **kw)
         self.analysis_table.tabular_adapter = self.browser_pane.analysis_tabular_adapter
-        self.sample_tabular_adapter = self.browser_pane.sample_tabular_adapter
+        self.labnumber_tabular_adapter = self.browser_pane.labnumber_tabular_adapter
         return self.browser_pane
 
     def _ok_ed(self):
@@ -427,7 +427,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
                     irrads = db.get_irradiations(project_names=names)
                     self.irradiations = [i.name for i in irrads]
 
-    def _retrieve_samples_hook(self, db):
+    def _retrieve_labnumbers_hook(self, db):
         low_post = self.low_post
         high_post = self.high_post
         ms = None
@@ -457,7 +457,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
         if self.project_enabled:
             if not self.irradiation_enabled:
-                ls = super(BaseBrowserTask, self)._retrieve_samples_hook(db)
+                ls = super(BaseBrowserTask, self)._retrieve_labnumbers_hook(db)
             else:
                 if self.selected_projects and self.irradiation_enabled and self.irradiation:
                     ls = db.get_project_irradiation_labnumbers([si.name for si in self.selected_projects],
@@ -622,7 +622,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         if name == 'irradiation':
             self.levels = obj.levels
         elif name == 'level':
-            self.set_samples(self._retrieve_samples())
+            self.set_samples(self._retrieve_labnumbers())
 
     def _use_analysis_type_filtering_changed(self):
         self.refresh_samples()

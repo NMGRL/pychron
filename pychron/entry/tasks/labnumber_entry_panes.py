@@ -18,7 +18,7 @@
 from enable.component_editor import ComponentEditor
 from traits.api import Instance
 from traitsui.api import View, Item, TabularEditor, VGroup, spring, HGroup, \
-    EnumEditor, UItem, Label, VSplit
+    EnumEditor, UItem, Label, VSplit, InstanceEditor
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 # ============= standard library imports ========================
@@ -28,38 +28,26 @@ from pychron.core.ui.qt.tabular_editor import FilterTabularEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.pane_helpers import spacer
 from pychron.entry.irradiated_position import IrradiatedPositionAdapter
-from pychron.envisage.browser.adapters import ProjectAdapter, SampleAdapter
+from pychron.envisage.browser.adapters import ProjectAdapter, LabnumberAdapter, SampleAdapter
+from pychron.pychron_constants import PLUSMINUS_SIGMA
 
 
 class IrradiationEditorPane(TraitsDockPane):
     id = 'pychron.labnumber.editor'
     name = 'Editor'
-    sample_tabular_adapter = Instance(SampleAdapter, ())
+    labnumber_tabular_adapter = Instance(SampleAdapter, ())
 
     def traits_view(self):
         project_grp = VGroup(
-            # HGroup(spacer(),
-            #        Label('Filter'),
-            #        UItem('project_filter',
-            #              width=75),
-            #        icon_button_editor('clear_selection_button',
-            #                           'cross',
-            #                           tooltip='Clear selected'),
-            #        icon_button_editor('edit_project_button', 'database_edit',
-            #                           tooltip='Edit selected project in database'),
-            #        icon_button_editor('add_project_button', 'database_add',
-            #                           tooltip='Add project to database')
-            # ),
             UItem('projects',
                   editor=FilterTabularEditor(editable=False,
                                              selected='selected_projects',
                                              adapter=ProjectAdapter(),
-                                             multi_select=False),
-                  width=75))
+                                             multi_select=True),
+                  width=175))
 
         sample_grp = VGroup(
             HGroup(
-                #Label('Filter'),
                 UItem('sample_filter_parameter',
                       editor=EnumEditor(name='sample_filter_parameters')),
                 UItem('sample_filter',
@@ -67,8 +55,6 @@ class IrradiationEditorPane(TraitsDockPane):
                 UItem('sample_filter',
                       editor=EnumEditor(name='sample_filter_values'),
                       width=-25),
-                #UItem('filter_non_run_samples',
-                #      tooltip='Omit non-analyzed samples'),
                 icon_button_editor('configure_sample_table',
                                    'cog',
                                    tooltip='Configure Sample Table'),
@@ -79,17 +65,27 @@ class IrradiationEditorPane(TraitsDockPane):
 
             UItem('samples',
                   editor=TabularEditor(
-                      adapter=self.sample_tabular_adapter,
+                      adapter=self.labnumber_tabular_adapter,
                       editable=False,
-                      selected='selected_sample',
+                      selected='selected_samples',
                       multi_select=False,
                       column_clicked='column_clicked',
-                      stretch_last_section=False
-                  ),
-                  width=75
-            )
-        )
-        v = View(VSplit(project_grp,
+                      stretch_last_section=False),
+                  width=75))
+
+        jgrp = HGroup(UItem('j'), Label(PLUSMINUS_SIGMA), UItem('j_err'),
+                      icon_button_editor('estimate_j_button', 'cog'),
+                      show_border=True, label='J')
+        ngrp = HGroup(UItem('note'), show_border=True, label='Note')
+        wgrp = HGroup(UItem('weight'), show_border=True, label='Weight')
+
+        sgrp = HGroup(Item('selection_freq', label='Frequency'),
+                      Item('invert_flag', label='Invert'))
+        v = View(VSplit(VGroup(sgrp,
+                               jgrp,
+                               wgrp,
+                               ngrp,
+                               project_grp),
                         sample_grp))
         return v
 

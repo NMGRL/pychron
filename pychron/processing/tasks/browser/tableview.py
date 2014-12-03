@@ -46,7 +46,7 @@ class TableView(PaneModelView):
                              label='Samples',
                              width=0.6,
                              editor=TabularEditor(
-                                 adapter=self.pane.sample_tabular_adapter,
+                                 adapter=self.pane.labnumber_tabular_adapter,
                                  editable=False,
                                  selected='selected_samples',
                                  multi_select=True,
