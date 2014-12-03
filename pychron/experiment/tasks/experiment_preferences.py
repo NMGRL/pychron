@@ -38,10 +38,6 @@ class PositiveInteger(Int):
 class LabspyPreferences(BasePreferencesHelper):
     preferences_path = 'pychron.experiment'
     use_labspy = Bool
-    root = Str
-    username = Str
-    password = Password
-    host = Str
 
 
 class ExperimentPreferences(BasePreferencesHelper):
@@ -119,16 +115,9 @@ class SysLoggerPreferences(BasePreferencesHelper):
 class LabspyPreferencesPane(PreferencesPane):
     model_factory = LabspyPreferences
     category = 'Experiment'
-
+#
     def traits_view(self):
-        grp = VGroup(Item('host'),
-                     Item('username'),
-                     Item('password'),
-                     Item('root'),
-                     enabled_when='use_labspy')
-
         v = View(VGroup(Item('use_labspy', label='Use Labspy'),
-                        grp,
                         label='Labspy', show_border=True))
         return v
 

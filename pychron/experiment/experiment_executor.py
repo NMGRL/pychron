@@ -43,7 +43,6 @@ from pychron.experiment.utilities.conditionals import test_queue_conditionals_na
 from pychron.experiment.utilities.conditionals_results import reset_conditional_results
 from pychron.experiment.utilities.identifier import convert_extract_device
 from pychron.globals import globalv
-from pychron.labspy.labspy import LabspyUpdater
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR, DEFAULT_INTEGRATION_TIME
 from pychron.pyscripts.pyscript_runner import RemotePyScriptRunner, PyScriptRunner
@@ -102,7 +101,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     extracting_run = Instance('pychron.experiment.automated_run.automated_run.AutomatedRun')
 
     datahub = Instance(Datahub)
-    labspy = Instance(LabspyUpdater, ())
+    labspy_client = Instance('pychron.labspy.client.LabspyClient')
     dashboard_client = Instance('pychron.dashboard.client.DashboardClient')
     # ===========================================================================
     #
@@ -174,7 +173,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                  'default_integration_time')
         self._preference_binder(prefid, attrs)
         if self.use_labspy:
-            self._preference_binder(prefid, ('root', 'username', 'host', 'password'), obj=self.labspy.repo)
+            client = self.application.get_service('pychron.labspy.client.LabspyClient')
+            self.labspy_client = client
+            # self._preference_binder(prefid, ('root', 'username', 'host', 'password'), obj=self.labspy.repo)
 
         #colors
         attrs = ('signal_color', 'sniff_color', 'baseline_color')
@@ -199,19 +200,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._preference_binder('pychron.dashboard.client', ('use_dashboard_client',))
         if self.use_dashboard_client:
             self.dashboard_client = self.application.get_service('pychron.dashboard.client.DashboardClient')
-
-    def _reset(self):
-        self.alive = True
-        self._canceled = False
-
-        self._err_message = ''
-        self.end_at_run_completion = False
-        self.extraction_state_label = ''
-        self.experiment_queue.executed = True
-
-        if self.stats:
-            self.stats.reset()
-            self.stats.start_timer()
 
     def execute(self):
         if self.user_notifier.emailer is None:
@@ -309,6 +297,19 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     # ===============================================================================
     # private
     # ===============================================================================
+    def _reset(self):
+        self.alive = True
+        self._canceled = False
+
+        self._err_message = ''
+        self.end_at_run_completion = False
+        self.extraction_state_label = ''
+        self.experiment_queue.executed = True
+
+        if self.stats:
+            self.stats.reset()
+            self.stats.start_timer()
+
     def _wait_for_save(self):
         """
             wait for experiment queue to be saved.
@@ -383,12 +384,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         # save experiment to database
         self.info('saving experiment "{}" to database'.format(exp.name))
         exp.start_timestamp = datetime.now()#.strftime('%m-%d-%Y %H:%M:%S')
-        if self.use_labspy:
-            self.labspy.add_experiment(exp)
+        if self.labspy_enabled:
+            self.labspy_client.add_experiment(exp)
 
         self.datahub.add_experiment(exp)
 
-        #reset conditionals result file
+        # reset conditionals result file
         reset_conditional_results()
 
         exp.executed = True
@@ -511,8 +512,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if names:
                 self.info('Notifying user group names={}'.format(','.join(names)))
                 self.user_notifier.notify_group(exp, last_runid, self._err_message, addrs)
-        if self.use_labspy:
-            self.labspy.update_experiment(exp, self._err_message)
+
+        if self.labspy_enabled:
+            self.labspy_client.update_experiment(exp, self._err_message)
 
     def _get_group_emails(self, email):
         names, addrs = None, None
@@ -633,8 +635,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         run.finish()
 
         self.wait_group.pop()
-        if self.use_labspy:
-            self.labspy.add_run(run)
+        if self.labspy_enabled:
+            self.labspy_client.add_run(run)
 
         mem_log('end run')
 
@@ -1685,4 +1687,8 @@ Use Last "blank_{}"= {}
                 self.warning('no automated run monitor avaliable. '
                              'Make sure config file is located at setupfiles/monitors/automated_run_monitor.cfg')
 
+    @property
+    def labspy_enabled(self):
+        if self.use_labspy:
+            return self.labspy_client is not None
 # ============= EOF =============================================
