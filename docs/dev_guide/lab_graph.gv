@@ -1,16 +1,26 @@
 digraph G {
-   node [shape="square"];
-   graph [rankdir="LR", splines="ortho"];
-   edge [];
+   node [shape="square",fontname="Arial";];
+   graph [rankdir="LR", splines="ortho", nodesep=0.5,fontname="Arial";];
+   edge [fontname="Arial";];
+
+   {rank=same;
+    0 [style=invis];
+    1 [style=invis];
+    2 [style=invis];
+    0 -> 1->2 [style=invis];
+   }
     subgraph cluster_db_server {
+        fontname="Arial";
         style="filled";
         color="lightgrey";
-        node [shape="square"];
+        node [shape="diamond"];
         label="DB Server";
         labeljust="l";
-        pychrondb [label="PychronDB"];
+        pychrondb [label="PychronDB" shape="folder"];
     }
     subgraph cluster_master1 {
+        fontname="Arial";
+        rankdir="TB";
         labeljust="l";
         style="filled";
         color="lightgrey";
@@ -20,19 +30,20 @@ digraph G {
         db [label="Database"];
         dc [label="DashClient"];
         lcm [label="LabspyClient"];
-        {rank=same exp dc};
     }
     subgraph cluster_webserver{
         labeljust="l";
+        fontname="Arial";
         style="filled";
         color="lightgrey";
         node [shape="square"];
         label="Webserver";
-        lsjs [label="Labspy.js"];
-        mdb [label="MongoDB"];
+        lsjs [label="Labspy.js", shape="square"];
+        mdb [label="MongoDB", shape="folder"];
         mdb ->lsjs;
     }
     subgraph cluster_worker1{
+        fontname="Arial";
         labeljust="l";
         style="filled";
         color="lightgrey";
@@ -41,10 +52,10 @@ digraph G {
         el [label="Extraction Line"];
         ds [label="DashServer"];
         lcw [label="LabspyClient"];
-        {rank=same ds lcw};
     }
     subgraph cluster_clientA{
         labeljust="l";
+        fontname="Arial";
         style="filled";
         color="lightgrey";
         node [shape="rectangle"];
@@ -53,6 +64,7 @@ digraph G {
     }
     subgraph cluster_clientB{
         labeljust="l";
+        fontname="Arial";
         style="filled";
         color="lightgrey";
         node [shape="rectangle"];
@@ -60,15 +72,21 @@ digraph G {
         clientb [label="Browser"];
     }
 
-    db -> pychrondb;
-    exp -> db;
-    dc -> exp;
-    exp -> lcm;
+    exp -> db [label="M.1"];
+    db -> pychrondb [label="M.2"];
+    exp -> lcm [label="M.3"];
+    dc -> exp [label="M.4"];
+
     lsjs -> clienta;
     lsjs -> clientb;
-    ds -> dc;
-    ds -> lcw;
-    lcw -> mdb;
-    lcm -> mdb;
-    el -> ds;
+    el -> ds [label="W.1"];
+    ds -> dc [label="W.2"];
+    ds -> lcw [label="W.3"];
+
+    lcw -> mdb [label="L.1"];
+    lcm -> mdb [label="L.2"];
+
+    0->pychrondb [style=invis];
+    1->exp [style=invis];
+    2->el [style=invis];
 }
