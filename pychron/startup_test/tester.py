@@ -101,7 +101,7 @@ class StartupTester(Loggable):
 
     @property
     def all_passed(self):
-        a = all([ri.result == 'Passed' for ri in self.results])
+        a = all([ri.result in ('Passed','Skipped') for ri in self.results])
         return a
 
     # ============= EOF =============================================

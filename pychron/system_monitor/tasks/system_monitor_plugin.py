@@ -20,9 +20,9 @@ from envisage.ui.tasks.task_factory import TaskFactory
 # ============= local library imports  ==========================
 
 #from pychron.processing.tasks.browser.browser_task import BrowserTask
+from pychron.dashboard.tasks.client.preferences import DashboardClientPreferencesPane
 from pychron.processing.tasks.processing_plugin import ProcessingPlugin
-from pychron.system_monitor.tasks.preferences import SystemMonitorPreferencesPane, ConsolePreferencesPane,\
-    DashboardPreferencesPane
+from pychron.system_monitor.tasks.preferences import SystemMonitorPreferencesPane, ConsolePreferencesPane
 from pychron.system_monitor.tasks.system_monitor_task import SystemMonitorTask
 
 
@@ -45,6 +45,6 @@ class SystemMonitorPlugin(ProcessingPlugin):
     def _preferences_panes_default(self):
         return [SystemMonitorPreferencesPane,
                 ConsolePreferencesPane,
-                DashboardPreferencesPane,]
+                DashboardClientPreferencesPane,]
 
         # ============= EOF =============================================

@@ -163,7 +163,7 @@ class Template(object):
             ins.copy_resource(os.path.join(iroot, di))
 
         # copy helper mod
-        for a in ('helpers', 'version'):
+        for a in ('helpers', ):
             m = os.path.join(self.root, 'launchers', '{}.py'.format(a))
             ins.copy_resource(m)
 
