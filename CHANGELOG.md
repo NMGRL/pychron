@@ -8,6 +8,7 @@ CHANGELOG
 * updated Dashboard and Labspy
 * updated Email plugin
 * updated Labnumber Entry
+* refactored irradiation import. moved to standalone dialog
 
 .. * fully implemented import irradiation from XLS file
 .. * added ability to export irradiations from Pychron to MassSpec

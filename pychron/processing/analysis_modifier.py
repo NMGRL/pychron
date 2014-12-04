@@ -57,10 +57,11 @@ class LabnumberSelector(HasTraits, PersistenceMixin):
             db = self.db
             with db.session_ctx():
                 dbirrad = db.get_irradiation(new)
-                self.levels = [li.name for li in dbirrad.levels]
-                if self.levels:
-                    self.level = ''
-                    self.level = self.levels[0]
+                if dbirrad:
+                    self.levels = [li.name for li in dbirrad.levels]
+                    if self.levels:
+                        self.level = ''
+                        self.level = self.levels[0]
         else:
             self.levels = []
             self.level = ''
@@ -70,9 +71,10 @@ class LabnumberSelector(HasTraits, PersistenceMixin):
             db = self.db
             with db.session_ctx():
                 level = db.get_irradiation_level(self.irradiation, new)
-                self.identifiers = [li.labnumber.identifier for li in level.positions]
-                if self.identifiers:
-                    self.identifier = self.identifiers[0]
+                if level:
+                    self.identifiers = [li.labnumber.identifier for li in level.positions]
+                    if self.identifiers:
+                        self.identifier = self.identifiers[0]
         else:
             self.identifiers = []
             self.identifier = ''
