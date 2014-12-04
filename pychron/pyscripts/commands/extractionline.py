@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -94,6 +94,20 @@ class Close(ValveCommand):
     description = 'Close a valve'
     example = '''1. open("V")
 2. close(description="Bone to Turbo")
+'''
+
+
+class Unlock(ValveCommand):
+    description = 'Unlock a valve'
+    example = '''1. unlock("V")
+2. unlock(description="Bone to Turbo")
+'''
+
+
+class Lock(ValveCommand):
+    description = 'Lock a valve'
+    example = '''1. lock("V")
+2. lock(description="Bone to Turbo")
 '''
 
 

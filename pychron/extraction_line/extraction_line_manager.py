@@ -340,6 +340,12 @@ class ExtractionLineManager(Manager, Consoleable):
     def enable_valve(self, description):
         self._enable_valve(description, True)
 
+    def lock_valve(self, name, **kw):
+        return self._lock_valve(name, True, **kw)
+
+    def unlock_valve(self, name, **kw):
+        return self._lock_valve(name, False, **kw)
+
     def open_valve(self, name, **kw):
         return self._open_close_valve(name, 'open', **kw)
 
@@ -422,6 +428,38 @@ class ExtractionLineManager(Manager, Consoleable):
                     self.close_valve(valve.name)
 
                 valve.enabled = state
+
+    def _lock_valve(self, name, action, description=None, address=None, **kw):
+        """
+
+        :param name:
+        :param action: bool True ==lock false ==unlock
+        :param description:
+        :param kw:
+        :return:
+        """
+        vm = self.valve_manager
+        if vm is not None:
+            oname = name
+            if address:
+                name = vm.get_name_by_address(address)
+
+            if description and description != '---':
+                name = vm.get_name_by_description(description)
+
+            if not name:
+                self.warning('Invalid valve name={}, description={}'.format(oname, description))
+                return False
+
+            v = vm.get_valve_by_name(name)
+            if action:
+                v.lock()
+            else:
+                v.unlock()
+
+            self.update_valve_lock_state(name, action)
+            self.refresh_canvas()
+            return True
 
     def _open_close_valve(self, name, action,
                           description=None, address=None, mode='remote', **kw):

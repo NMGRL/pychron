@@ -31,6 +31,7 @@ named_register = makeNamedRegistry(command_register)
 
 class ValvePyScript(PyScript):
     runner = Any
+    allow_lock = False
 
     def get_command_register(self):
         return command_register.commands.items()
@@ -38,6 +39,34 @@ class ValvePyScript(PyScript):
     def gosub(self, *args, **kw):
         kw['runner'] = self.runner
         super(ValvePyScript, self).gosub(*args, **kw)
+
+    @verbose_skip
+    @command_register
+    def lock(self, name=None, description=''):
+        if description is None:
+            description = '---'
+
+        self.info('locking {} ({})'.format(name, description))
+        if self.allow_lock:
+            return self._manager_action([('lock_valve', (name,), dict(
+                mode='script',
+                description=description))], protocol=ELPROTOCOL)
+        else:
+            self.warning('Valve locking not enabled for this script')
+
+    @verbose_skip
+    @command_register
+    def unlock(self, name=None, description=''):
+        if description is None:
+            description = '---'
+
+        self.info('unlocking {} ({})'.format(name, description))
+        if self.allow_lock:
+            return self._manager_action([('unlock_valve', (name,), dict(
+                mode='script',
+                description=description))], protocol=ELPROTOCOL)
+        else:
+            self.warning('Valve locking not enabled for this script')
 
     @verbose_skip
     @named_register('open')
@@ -68,22 +97,6 @@ class ValvePyScript(PyScript):
         if result is not None:
             self._finish_valve_change('close', result, name, description)
 
-    def _finish_valve_change(self, action, result, name, description):
-        ok, changed = result[0]
-        if changed:
-            time.sleep(0.25)
-
-        locked = self._manager_action([('get_software_lock', (name,), dict(
-            mode='script',
-            description=description))], protocol=ELPROTOCOL)
-        if not ok and not locked:
-            self.info('Failed to {} valve {} {}'.format(action, name, description))
-
-            if not globalv.experiment_debug:
-                self.cancel()
-            else:
-                self.debug('Experiment debug mode. not canceling')
-
     @verbose_skip
     @command_register
     def is_open(self, name=None, description=''):
@@ -101,6 +114,23 @@ class ValvePyScript(PyScript):
             r = result[0] is False
             self.debug('is closed {}'.format(r))
             return r
+
+    # private
+    def _finish_valve_change(self, action, result, name, description):
+        ok, changed = result[0]
+        if changed:
+            time.sleep(0.25)
+
+        locked = self._manager_action([('get_software_lock', (name,), dict(
+            mode='script',
+            description=description))], protocol=ELPROTOCOL)
+        if not ok and not locked:
+            self.info('Failed to {} valve {} {}'.format(action, name, description))
+
+            if not globalv.experiment_debug:
+                self.cancel()
+            else:
+                self.debug('Experiment debug mode. not canceling')
 
     def _get_valve_state(self, name, description):
         return self._manager_action([('get_valve_state', (name,), dict(
