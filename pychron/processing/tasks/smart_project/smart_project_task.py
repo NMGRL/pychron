@@ -24,10 +24,12 @@ import time
 import yaml
 
 
+
+
 # ============= local library imports  ==========================
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
 from pychron.paths import paths, rec_make
-from pychron.experiment.importer.import_manager import ImportManager
+from pychron.entry.tasks.importer import ImporterModel
 
 # from pychron.database.orms.isotope_orm import meas_AnalysisTable, \
 #     meas_MeasurementTable, gen_AnalysisTypeTable, irrad_IrradiationTable, \
@@ -93,7 +95,7 @@ class SmartProjectTask(AnalysisEditTask):
             self.warning('failed to set destination')
             return
 
-        im = ImportManager(db=self.manager.db)
+        im = ImporterModel(db=self.manager.db)
         self._set_source(meta, im)
 
         self._set_importer(meta, im)

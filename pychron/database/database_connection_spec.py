@@ -20,11 +20,12 @@ from traitsui.api import View, Item, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+
 class DBConnectionSpec(HasTraits):
     # database = Str('massspecdata_import')
     _database = Str
-    username = Str('root')
-    password = Password('Argon')
+    username = Str
+    password = Password
     #    host = Str('129.138.12.131')
     host = Str('localhost')
 

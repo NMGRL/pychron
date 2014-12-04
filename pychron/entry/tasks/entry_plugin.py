@@ -27,7 +27,7 @@ from pychron.entry.preferences import LabnumberEntryPreferencesPane
 from pychron.entry.tasks.actions import SaveLabbookPDFAction, MakeIrradiationTemplateAction, LabnumberEntryAction, \
     SensitivityEntryAction, AddMolecularWeightAction, ImportSampleMetadataAction, AddFluxMonitorAction, \
     GenerateTrayAction, \
-    GenerateIrradiationTableAction, ImportIrradiationHolderAction, ExportIrradiationAction
+    GenerateIrradiationTableAction, ImportIrradiationHolderAction, ExportIrradiationAction, ImportIrradiationAction
 from pychron.entry.editors.molecular_weight_editor import MolecularWeightEditor
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 
@@ -50,6 +50,9 @@ class EntryPlugin(BaseTaskPlugin):
         return [
             TaskExtension(task_id='pychron.entry.labnumber',
                           actions=[
+                              SchemaAddition(id='import_irradiation',
+                                             factory=ImportIrradiationAction,
+                                             path='MenuBar/tools.menu'),
                               SchemaAddition(id='export_irradiation',
                                              factory=ExportIrradiationAction,
                                              path='MenuBar/tools.menu'),

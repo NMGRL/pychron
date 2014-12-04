@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from apptools.preferences.preference_binding import bind_preference
 from traits.api import HasTraits, Str, Bool, Instance, Button, Any
 # ============= standard library imports ========================
 import struct
@@ -55,21 +56,29 @@ class MassSpecExtractor(Extractor):
     db = Instance(MassSpecDatabaseAdapter, ())
     mapper = Any
 
-    def _dbconn_spec_default(self):
-    #        return DBConnectionSpec(database='massspecdata_minnabluff',
-    #                                username='root',
-    #                                password='Argon',
-    #                                host='localhost'
-    #                                )
-        return DBConnectionSpec(database='massspecdata',
-                                username='root',
-                                password='DBArgon',
-                                host='129.138.12.160')
+    # def _dbconn_spec_default(self):
+    # #        return DBConnectionSpec(database='massspecdata_minnabluff',
+    # #                                username='root',
+    # #                                password='Argon',
+    # #                                host='localhost'
+    # #                                )
+    #     return DBConnectionSpec(database='massspecdata',
+    #                             username='root',
+    #                             password='DBArgon',
+    #                             host='129.138.12.160')
+    #
+    #     return DBConnectionSpec(database='massspecdata_minnabluff',
+    #                             username='root',
+    #                             password='Argon',
+    #                             host='localhost')
+    def __init__(self, *args, **kw):
+        super(MassSpecExtractor, self).__init__(*args, **kw)
 
-        return DBConnectionSpec(database='massspecdata_minnabluff',
-                                username='root',
-                                password='Argon',
-                                host='localhost')
+        self.db.kind = 'mysql'
+        bind_preference(self.dbconn_spec, 'username', 'pychron.massspec.database.username')
+        bind_preference(self.dbconn_spec, 'host', 'pychron.massspec.database.host')
+        bind_preference(self.dbconn_spec, 'password', 'pychron.massspec.database.password')
+        bind_preference(self.dbconn_spec, 'name', 'pychron.massspec.database.name')
 
     def _connect_button_fired(self):
         self.connect()
@@ -79,7 +88,6 @@ class MassSpecExtractor(Extractor):
         self.db.username = self.dbconn_spec.username
         self.db.password = self.dbconn_spec.password
         self.db.host = self.dbconn_spec.host
-        self.db.kind = 'mysql'
         self.db.connect()
 
     def import_irradiation(self, dest, name,
@@ -332,14 +340,13 @@ class MassSpecExtractor(Extractor):
             return ln
 
         return self._add_associated(dest, dba, make_labnumber, atype=5,
-                                    analysis_type='blank_cocktail',
-        )
+                                    analysis_type='blank_cocktail')
 
     def _add_associated_unknown_blanks(self, dest, dba):
-        '''
+        """
             get blanks +/- Nhrs from dba run date
-        
-        '''
+
+        """
         self.info('============ Adding Associated Blanks ============')
 
         def make_labnumber(bi):
@@ -705,8 +712,7 @@ class MassSpecExtractor(Extractor):
 
     def get_irradiations(self):
         self.connect()
-        irs = [ImportName(name='{}'.format(i[0]))
-               for i in self.db.get_irradiation_names()]
+        irs = [ImportName(name=i) for i in self.db.get_irradiation_names()]
         return irs
 
 # ============= EOF =============================================

@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 
 from pyface.tasks.action.schema import SToolBar
-from traits.api import Instance, on_trait_change, Button, Float, Str, Int, Bool
+from traits.api import on_trait_change, Button, Float, Str, Int, Bool
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, Tabbed
 
 # ============= standard library imports ========================
@@ -25,15 +25,15 @@ import os
 # ============= local library imports  ==========================
 
 from pychron.entry.graphic_generator import GraphicModel, GraphicGeneratorController
+from pychron.entry.tasks.importer_view import ImporterView
 from pychron.envisage.browser.record_views import SampleRecordView
-from pychron.experiment.importer.import_manager import ImportManager
+from pychron.entry.tasks.importer import ImporterModel
 from pychron.envisage.browser.browser_mixin import BrowserMixin
 from pychron.entry.entry_views.project_entry import ProjectEntry
 from pychron.entry.entry_views.sample_entry import SampleEntry
 from pychron.entry.labnumber_entry import LabnumberEntry
-from pychron.entry.tasks.actions import SavePDFAction, GenerateLabnumbersAction, ImportIrradiationLevelAction, \
-    PreviewGenerateLabnumbersAction
-from pychron.entry.tasks.importer_panes import ImporterPane
+from pychron.entry.tasks.actions import SavePDFAction
+# from pychron.entry.tasks.importer_panes import ImporterPane
 from pychron.entry.tasks.labnumber_entry_panes import LabnumbersPane, \
     IrradiationPane, IrradiationEditorPane, IrradiationCanvasPane
 from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction
@@ -42,7 +42,7 @@ from pychron.envisage.tasks.base_task import BaseManagerTask
 
 class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
     name = 'Labnumber'
-    importer = Instance(ImportManager)
+    # importer = Instance(ImportManager)
 
     add_sample_button = Button
     add_material_button = Button
@@ -73,6 +73,11 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
 
     def activated(self):
         self.load_projects(include_recent=False)
+
+    def import_irradiation(self):
+        mod = ImporterModel(db=self.manager.db)
+        ev = ImporterView(model=mod)
+        ev.edit_traits()
 
     def generate_tray(self):
         # p='/Users/ross/Sandbox/entry_tray'
@@ -163,16 +168,16 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
     def _manager_default(self):
         return LabnumberEntry(application=self.application)
 
-    def _importer_default(self):
-        return ImportManager(db=self.manager.db,
-                             connect=False)
+    # def _importer_default(self):
+    #     return ImportManager(db=self.manager.db,
+    #                          connect=False)
 
     def _default_layout_default(self):
         return TaskLayout(
             left=Splitter(
                 PaneItem('pychron.labnumber.irradiation'),
                 Tabbed(
-                    PaneItem('pychron.labnumber.extractor'),
+                    # PaneItem('pychron.labnumber.extractor'),
                     PaneItem('pychron.labnumber.editor')),
                 orientation='vertical'),
             right=PaneItem('pychron.entry.irradiation_canvas'))
@@ -183,10 +188,9 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
     def create_dock_panes(self):
         iep = IrradiationEditorPane(model=self)
         self.labnumber_tabular_adapter = iep.labnumber_tabular_adapter
-
         return [
             IrradiationPane(model=self.manager),
-            ImporterPane(model=self.importer),
+            # ImporterPane(model=self.importer),
             iep,
             IrradiationCanvasPane(model=self.manager)]
     # ===========================================================================

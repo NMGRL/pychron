@@ -23,7 +23,7 @@ import time
 # ============= local library imports  ==========================
 from pychron.experiment.importer.mass_spec_extractor import Extractor, \
     MassSpecExtractor
-from pychron.database.isotope_database_manager import IsotopeDatabaseManager
+from pychron.loggable import Loggable
 from pychron.pychron_constants import NULL_STR
 from pychron.core.ui.qt.thread import Thread
 from pychron.core.ui.gui import invoke_in_main_thread
@@ -32,7 +32,8 @@ from pychron.core.ui.gui import invoke_in_main_thread
 records = namedtuple('Record', 'name')
 
 
-class ImportManager(IsotopeDatabaseManager):
+class ImporterModel(Loggable):
+    db = Instance('pychron.database.adapters.isotope_adapter.IsotopeAdapter')
     data_source = Enum('MassSpec', 'File')
     extractor = Instance(Extractor)
     import_kind = Enum('---', 'irradiation', 'rid_list')
@@ -132,7 +133,6 @@ class ImportManager(IsotopeDatabaseManager):
             self.selected = sel
             self.scroll_to_row = self.names.index(sel[0])
 
-
     def _filter_str_changed(self):
         func = getattr(self.extractor, 'get_{}s'.format(self.import_kind))
         self.names = func(filter_str=self.filter_str)
@@ -150,7 +150,6 @@ class ImportManager(IsotopeDatabaseManager):
         self.do_import()
 
     def do_import(self, new_thread=True):
-    #        self.import_kind = 'irradiation'
         if self.import_kind != NULL_STR:
             selected = self.selected
             #             if selected:
@@ -201,32 +200,8 @@ class ImportManager(IsotopeDatabaseManager):
     def _data_source_default(self):
         return 'MassSpec'
 
-#    def traits_view(self):
-#        v = View(
-#                 Item('data_source'),
-#                 Item('extractor', style='custom', show_label=False),
-#                 Item('import_kind', show_label=False),
-#                 Item('names', show_label=False, editor=TabularEditor(adapter=ImportNameAdapter(),
-#                                                    editable=False,
-#                                                    selected='selected',
-#                                                    multi_select=True
-#                                                    )),
-#                 CustomLabel('custom_label1',
-#                             color='blue',
-#                             size=10),
-#                 Item('imported_names', show_label=False, editor=TabularEditor(adapter=ImportedNameAdapter(),
-#                                                    editable=False,
-#                                                    )),
-#
-#                 HGroup(spring, Item('import_button', show_label=False)),
-#                 width=500,
-#                 height=700,
-#                 title='Importer',
-#                 resizable=True
-#                 )
-#        return v
 
 if __name__ == '__main__':
-    im = ImportManager()
+    im = ImporterModel()
     im.configure_traits()
 # ============= EOF =============================================

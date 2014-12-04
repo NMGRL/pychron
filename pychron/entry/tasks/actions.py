@@ -95,12 +95,17 @@ class GenerateLabnumbersAction(TaskAction):
 
     method = 'generate_labnumbers'
 
+
 class PreviewGenerateLabnumbersAction(TaskAction):
     name = 'Preview Generate Labnumbers'
     image = icon('table_lightning')
 
     method = 'preview_generate_labnumbers'
 
+
+class ImportIrradiationAction(TaskAction):
+    name = 'Import Irradiation...'
+    method = 'import_irradiation'
 
 class GenerateTrayAction(TaskAction):
     name = 'Generate Tray'

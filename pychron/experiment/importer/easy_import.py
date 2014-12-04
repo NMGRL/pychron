@@ -20,7 +20,7 @@
 # ============= local library imports  ==========================
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.experiment.easy_parser import EasyParser
-from pychron.experiment.importer.import_manager import ImportManager
+from pychron.entry.tasks.importer import ImporterModel
 from pychron.experiment.importer.import_mapper import MinnaBluffMapper
 
 
@@ -32,7 +32,7 @@ class EasyImporter(IsotopeDatabaseManager):
 
 
     def _import_irradiations(self, meta):
-        im = ImportManager(db=self.db)
+        im = ImporterModel(db=self.db)
         if self._set_source(meta, im):
             if self._set_destination(meta):
                 self._set_importer(meta, im)
