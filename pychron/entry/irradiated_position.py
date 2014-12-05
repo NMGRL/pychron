@@ -80,7 +80,7 @@ class BaseIrradiatedPositionAdapter(TabularAdapter):
 class IrradiatedPositionAdapter(TabularAdapter):
     columns = [
         ('Hole', 'hole'),
-        ('Labnumber', 'labnumber'),
+        ('Identifier', 'labnumber'),
         ('Sample', 'sample'),
         ('Project', 'project'),
         ('Material', 'material'),

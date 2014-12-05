@@ -24,8 +24,8 @@ from pychron.loggable import Loggable
 
 class IdentifierGenerator(Loggable):
     db = Any
-    default_j = Float(1e-4)
-    default_j_err = Float(1e-7)
+    # default_j = Float(1e-4)
+    # default_j_err = Float(1e-7)
 
     monitor_name = Str
 
@@ -71,11 +71,12 @@ class IdentifierGenerator(Loggable):
                     else:
                         pos.labnumber.identifier = ident
 
-                    self._add_default_flux(pos)
+                    # self._add_default_flux(pos)
                     msg = 'setting irrad. pos. {} {}-{} labnumber={}'.format(irradiation, le, po, ident)
                     self.info(msg)
                     if prog:
                         prog.change_message(msg)
+            prog.close()
 
     def _set_position_identifier(self, dbpos, ident):
         if self.is_preview:
@@ -89,24 +90,24 @@ class IdentifierGenerator(Loggable):
                          if po.hole ==dbpos.position), None)
             return ipos
 
-    def _add_default_flux(self, pos):
-        db = self.db
-        j, j_err = self.default_j, self.default_j_err
-        dbln = pos.labnumber
-
-        def add_flux():
-            hist = db.add_flux_history(pos)
-            dbln.selected_flux_history = hist
-            f = db.add_flux(j, j_err)
-            f.history = hist
-
-        if dbln.selected_flux_history:
-            tol = 1e-10
-            flux = dbln.selected_flux_history.flux
-            if abs(flux.j - j) > tol or abs(flux.j_err - j_err) > tol:
-                add_flux()
-        else:
-            add_flux()
+    # def _add_default_flux(self, pos):
+    #     db = self.db
+    #     j, j_err = self.default_j, self.default_j_err
+    #     dbln = pos.labnumber
+    #
+    #     def add_flux():
+    #         hist = db.add_flux_history(pos)
+    #         dbln.selected_flux_history = hist
+    #         f = db.add_flux(j, j_err)
+    #         f.history = hist
+    #
+    #     if dbln.selected_flux_history:
+    #         tol = 1e-10
+    #         flux = dbln.selected_flux_history.flux
+    #         if abs(flux.j - j) > tol or abs(flux.j_err - j_err) > tol:
+    #             add_flux()
+    #     else:
+    #         add_flux()
 
     def _position_generator(self, offset, level_offset):
         """
@@ -134,7 +135,7 @@ class IdentifierGenerator(Loggable):
         mons = self._identifier_generator(last_mon_ln, True, *args)
         unks = self._identifier_generator(last_unk_ln, False, *args)
         n = sum([len([p for p in li.positions
-                      if overwrite or not p.labnumber.identifier]) for li in levels])
+                      if overwrite or (p.labnumber.sample and not p.labnumber.identifier)]) for li in levels])
 
         return mons, unks, n
 
@@ -142,6 +143,11 @@ class IdentifierGenerator(Loggable):
         ipos = self._get_irradiated_position(dbpos)
         if ipos:
             return ipos.sample == self.monitor_name
+
+    def _get_position_sample(self, dbpos):
+        ipos = self._get_irradiated_position(dbpos)
+        if ipos:
+            return ipos.sample
 
     def _identifier_generator(self, start, is_monitor, irrad, levels, overwrite, offset, level_offset):
         offset = max(1, offset)
@@ -166,10 +172,25 @@ class IdentifierGenerator(Loggable):
 
             return _monkey
 
+        def has_sample(x):
+            r = None
+            if self.is_preview:
+                r = self._get_position_sample(x)
+
+            try:
+                r = x.labnumber.sample.name == self.monitor_name
+            except AttributeError, e:
+                pass
+
+            return r
+
         test = monkey(not is_monitor)
         for level in levels:
             i = 0
             for position in level.positions:
+                if not has_sample(position):
+                    continue
+
                 if not test(position):
                     continue
 
