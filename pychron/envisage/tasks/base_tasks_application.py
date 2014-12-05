@@ -40,6 +40,11 @@ class BaseTasksApplication(TasksApplication, Loggable):
             v = ResultsView(model=st)
             self.open_view(v)
 
+        if globalv.use_testbot:
+            from pychron.testbot.testbot import TestBot
+            testbot = TestBot(application=self)
+            testbot.run()
+
     def about(self):
         self.about_dialog.open()
 

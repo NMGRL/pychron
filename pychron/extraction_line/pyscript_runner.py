@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Any, Dict, List
+from traits.api import Any, Dict, List, provides
 from traitsui.api import View, Item, TableEditor
 # ============= standard library imports ========================
 from threading import Event, Lock
@@ -23,19 +23,18 @@ from threading import Event, Lock
 from pychron.core.helpers.logger_setup import logging_setup
 from traitsui.table_column import ObjectColumn
 from traitsui.extras.checkbox_column import CheckboxColumn
+from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
+from pychron.loggable import Loggable
 from pychron.viewable import Viewable
 from pychron.hardware.core.communicators.ethernet_communicator import EthernetCommunicator
 
 
-class PyScriptRunner(Viewable):
+@provides(IPyScriptRunner)
+class PyScriptRunner(Loggable):
     resources = Dict
     _resource_lock = Any
     scripts = List
 
-#    @on_trait_change('scripts[]')
-#    def _scripts_changed(self, obj, name, old, new):
-#        if not len(self.scripts):
-#            self.close_ui()
     def connect(self):
         return True
 
@@ -53,26 +52,24 @@ class PyScriptRunner(Viewable):
     def _get_resource(self, name):
         return Event()
 
-    def traits_view(self):
-
-        cols = [ObjectColumn(name='logger_name', label='Name',
-                              editable=False, width=150),
-                CheckboxColumn(name='cancel_flag', label='Cancel',
-                               width=50),
-              ]
-        v = View(Item('scripts', editor=TableEditor(columns=cols,
-                                                    auto_size=False),
-                      show_label=False
-                      ),
-                 width=500,
-                 height=500,
-                 resizable=True,
-                 handler=self.handler_klass(),
-                 title='ScriptRunner'
-                 )
-        return v
-
-
+    # def traits_view(self):
+    #
+    #     cols = [ObjectColumn(name='logger_name', label='Name',
+    #                           editable=False, width=150),
+    #             CheckboxColumn(name='cancel_flag', label='Cancel',
+    #                            width=50),
+    #           ]
+    #     v = View(Item('scripts', editor=TableEditor(columns=cols,
+    #                                                 auto_size=False),
+    #                   show_label=False
+    #                   ),
+    #              width=500,
+    #              height=500,
+    #              resizable=True,
+    #              # handler=self.handler_klass(),
+    #              title='ScriptRunner'
+    #              )
+    #     return v
 
 class RemoteResource(object):
     handle = None
@@ -104,8 +101,11 @@ class RemoteResource(object):
     def _set(self, v):
         self.handle.ask('Set {} {}'.format(self.name, v))
 
+
+@provides(IPyScriptRunner)
 class RemotePyScriptRunner(PyScriptRunner):
     handle = None
+
     def __init__(self, host, port, kind, *args, **kw):
         super(RemotePyScriptRunner, self).__init__(*args, **kw)
         self.handle = EthernetCommunicator()

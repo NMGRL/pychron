@@ -234,7 +234,6 @@ def launch(klass, user):
         logger.info('check dependencies failed')
         os._exit(0)
 
-
     app = app_factory(klass, user)
 
     try:

@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str
+from traits.api import Str, Instance
 from traitsui.menu import Action
 from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
@@ -26,8 +26,11 @@ import os
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_directory2
 from pychron.core.helpers.logger_setup import new_logger
+from pychron.envisage.initialization.initialization_parser import InitializationParser
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.extraction_line.extraction_line_manager import ExtractionLineManager
+from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
+from pychron.extraction_line.pyscript_runner import RemotePyScriptRunner, PyScriptRunner
 from pychron.extraction_line.tasks.extraction_line_task import ExtractionLineTask
 from pychron.extraction_line.tasks.extraction_line_actions import RefreshCanvasAction
 from pychron.extraction_line.tasks.extraction_line_preferences import ExtractionLinePreferencesPane
@@ -91,6 +94,7 @@ logger = new_logger('ExtractionLinePlugin')
 class ExtractionLinePlugin(BaseTaskPlugin):
     id = 'pychron.extraction_line'
     name = 'ExtractionLine'
+    _extraction_line_manager = Instance(ExtractionLineManager)
 
     def test_gauge_communication(self):
         return self._test('test_gauge_communication')
@@ -104,20 +108,53 @@ class ExtractionLinePlugin(BaseTaskPlugin):
         return 'Passed' if c else 'Failed'
 
     def _factory(self):
-        from pychron.envisage.initialization.initialization_parser import InitializationParser
+        elm = self._extraction_line_manager
+        if elm is None:
 
-        ip = InitializationParser()
-        try:
-            plugin = ip.get_plugin('ExtractionLine', category='hardware')
-            mode = ip.get_parameter(plugin, 'mode')
-        #            mode = plugin.get('mode')
-        except AttributeError:
-            # no epxeriment plugin defined
-            mode = 'normal'
+            ip = InitializationParser()
+            try:
+                plugin = ip.get_plugin('ExtractionLine', category='hardware')
+                mode = ip.get_parameter(plugin, 'mode')
+            #            mode = plugin.get('mode')
+            except AttributeError:
+                # no epxeriment plugin defined
+                mode = 'normal'
 
-        elm = ExtractionLineManager(mode=mode)
-        elm.bind_preferences()
+            elm = ExtractionLineManager(mode=mode)
+            elm.bind_preferences()
+            self._extraction_line_manager = elm
+
         return elm
+
+    def _runner_factory(self):
+        man = self.application.get_service(ExtractionLineManager)
+        if man.mode == 'client':
+
+            ip = InitializationParser()
+            elm = ip.get_plugin('Extraction', category='general')
+            runner = elm.find('runner')
+            if runner is None:
+                self.warning_dialog('Script Runner is not configured in the Initialization file. See documentation')
+                return
+
+            host, port, kind = None, None, None
+
+            if runner is not None:
+                comms = runner.find('communications')
+                host = comms.find('host')
+                port = comms.find('port')
+                kind = comms.find('kind')
+
+            if host is not None:
+                host = host.text  # if host else 'localhost'
+            if port is not None:
+                port = int(port.text)  # if port else 1061
+                kind = kind.text  # if kind else 'udp'
+
+            runner = RemotePyScriptRunner(host, port, kind)
+        else:
+            runner = PyScriptRunner()
+        return runner
 
     # defaults
     def _my_task_extensions_default(self):
@@ -150,8 +187,11 @@ class ExtractionLinePlugin(BaseTaskPlugin):
         so = self.service_offer_factory(
             protocol=ExtractionLineManager,
             factory=self._factory)
+        so1 = self.service_offer_factory(
+            protocol =IPyScriptRunner,
+            factory=self._runner_factory)
 
-        return [so]
+        return [so, so1]
 
     def _managers_default(self):
         """
@@ -175,7 +215,6 @@ class ExtractionLinePlugin(BaseTaskPlugin):
         return t
 
     def _preferences_panes_default(self):
-        return [
-            ExtractionLinePreferencesPane]
+        return [ExtractionLinePreferencesPane]
 
 # ============= EOF =============================================

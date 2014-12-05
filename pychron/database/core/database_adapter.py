@@ -147,7 +147,7 @@ class DatabaseAdapter(Loggable):
 
     @property
     def enabled(self):
-        return self.kind in ['mysql', 'sqlite']
+        return self.kind in ['mysql', 'sqlite', 'postgresql']
 
     @property
     def save_username(self):
@@ -270,16 +270,19 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
         user = self.username
         host = self.host
         name = self.name
-        if kind == 'mysql':
-            # add support for different mysql drivers
-            driver = self._import_mysql_driver()
-            if driver is None:
-                return
-
-            if password is not None:
-                url = 'mysql+{}://{}:{}@{}/{}?connect_timeout=5'.format(driver, user, password, host, name)
+        if kind in ('mysql', 'postgresql'):
+            if kind =='mysql':
+                # add support for different mysql drivers
+                driver = self._import_mysql_driver()
+                if driver is None:
+                    return
             else:
-                url = 'mysql+{}://{}@{}/{}?connect_timeout=5'.format(driver, user, host, name)
+                driver = 'pg8000'
+
+            if password:
+                url = '{}+{}://{}:{}@{}/{}?connect_timeout=5'.format(kind, driver, user, password, host, name)
+            else:
+                url = '{}+{}://{}@{}/{}?connect_timeout=5'.format(kind, driver, user, host, name)
         else:
             url = 'sqlite:///{}'.format(self.path)
 

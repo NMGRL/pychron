@@ -56,8 +56,8 @@ class LabspyClient(Loggable):
         doc = {ai: getattr(exp, ai) for ai in attrs}
 
         hid = self._generate_hid(exp)
-        doc.update(**{'starttime': exp.starttime,
-                      'timestamp': now,
+        doc.update(**{'starttime': time.mktime(exp.starttime.timetuple()),
+                      'timestamp': time.mktime(now.timetuple()),
                       'hash_id': hid})
 
         db.experiments.insert(doc)
@@ -70,7 +70,7 @@ class LabspyClient(Loggable):
         if doc:
             db.experiments.update({'_id': doc['_id']},
                                   {'$set': {'status': err_msg or 'Finished',
-                                            'timestamp': datetime.now()}})
+                                            'timestampf': time.mktime(datetime.now().timetuple())}})
 
     def _generate_hid(self, exp):
         md5 = hashlib.md5()
@@ -91,9 +91,10 @@ class LabspyClient(Loggable):
         clt = self._client
         db = clt[self.database_name]
         now = datetime.now()
-        doc = {'timestamp': now,
-               'timestampt': now.strftime('%H:%M:%S'),
-               'timestampf': time.mktime(now.timetuple())}
+        # print now.isoformat(), now.strftime('%H:%M:%S')
+        doc = {#'timestamp': now,
+               #'timestampt': now.strftime('%H:%M:%S'),
+               'timestamp': time.mktime(now.timetuple())}
 
         values = []
         for di in devs:
@@ -128,9 +129,9 @@ class LabspyClient(Loggable):
 
         d['experiment_name'] = exp.name
         if spec.analysis_timestamp:
-            d['date'] = spec.analysis_timestamp.strftime('%m/%d/%Y %I:%M:%S %p')
             d['timestamp'] = time.mktime(spec.analysis_timestamp.timetuple())
-            d['runtime'] = spec.analysis_timestamp.strftime('%I:%M:%S %p')
+            # d['date'] = spec.analysis_timestamp.strftime('%m/%d/%Y %I:%M:%S %p')
+            # d['runtime'] = spec.analysis_timestamp.strftime('%I:%M:%S %p')
         else:
             d['date'] = ''
             d['timestamp'] = ''
@@ -162,14 +163,16 @@ if __name__ == '__main__':
 
     c.add_device_post([a, b])
 
-    # class Exp():
-    #     def __init__(self, name, user, spec, status):
-    #         self.name = name
-    #         self.user = user
-    #         self.spectrometer = spec
-    #         self.status = status
-    #         self.starttime = datetime(2014, 11, 1, 12, 10, 10)
-    #
+    class Exp():
+        def __init__(self, name, user, spec, status):
+            self.name = name
+            self.username = user
+            self.spectrometer = spec
+            self.mass_spectrometer = spec
+            self.extract_device = choice(('Fusions CO2','Fusions Diode'))
+            self.status = status
+            self.starttime = datetime(2014, 11, 1, 12, 10, 10)
+
     # class Spec():
     #     def __init__(self, record_id):
     #         self.runid = record_id
@@ -196,8 +199,9 @@ if __name__ == '__main__':
     #         self.spec = Spec(*args, **kw)
     #
     #
-    # e = Exp('Current Experiment', 'foobar', 'Jan', 'Running')
-    # # c.add_experiment(e)
+    e = Exp('Current Experiment', 'foobar', 'Jan', 'Running')
+    c.add_experiment(e)
+
     # # print e.hash_id
     # # hid='076441e14fe0e09086626f25f216ca04'
     # # e.hash_id=hid

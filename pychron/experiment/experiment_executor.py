@@ -42,10 +42,11 @@ from pychron.experiment.stats import StatsGroup
 from pychron.experiment.utilities.conditionals import test_queue_conditionals_name
 from pychron.experiment.utilities.conditionals_results import reset_conditional_results
 from pychron.experiment.utilities.identifier import convert_extract_device
+from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
 from pychron.globals import globalv
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR, DEFAULT_INTEGRATION_TIME
-from pychron.pyscripts.pyscript_runner import RemotePyScriptRunner, PyScriptRunner
+from pychron.extraction_line.pyscript_runner import RemotePyScriptRunner, PyScriptRunner
 from pychron.wait.wait_group import WaitGroup
 
 
@@ -94,7 +95,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     extraction_line_manager = Any
     ion_optics_manager = Any
 
-    pyscript_runner = Instance(PyScriptRunner)
+    pyscript_runner = Instance(IPyScriptRunner)
     monitor = Instance('pychron.monitors.automated_run_monitor.AutomatedRunMonitor')
 
     measuring_run = Instance('pychron.experiment.automated_run.automated_run.AutomatedRun')
@@ -1641,30 +1642,7 @@ Use Last "blank_{}"= {}
         return dh
 
     def _pyscript_runner_default(self):
-        if self.mode == 'client':
-            from pychron.envisage.initialization.initialization_parser import InitializationParser
-
-            ip = InitializationParser()
-            elm = ip.get_plugin('Experiment', category='general')
-            runner = elm.find('runner')
-            host, port, kind = None, None, None
-
-            if runner is not None:
-                comms = runner.find('communications')
-                host = comms.find('host')
-                port = comms.find('port')
-                kind = comms.find('kind')
-
-            if host is not None:
-                host = host.text  # if host else 'localhost'
-            if port is not None:
-                port = int(port.text)  # if port else 1061
-                kind = kind.text  # if kind else 'udp'
-
-            runner = RemotePyScriptRunner(host, port, kind)
-        else:
-            runner = PyScriptRunner()
-
+        runner = self.application.get_service('pychron.extraction_line.ipyscript_runner.IPyScriptRunner')
         return runner
 
     def _monitor_factory(self):

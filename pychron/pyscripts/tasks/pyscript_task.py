@@ -369,44 +369,46 @@ class PyScriptTask(EditorTask, ExecuteMixin):
             self.commands_pane.set_command(new)
 
     def _runner_factory(self):
+        runner = self.application.get_service('pychron.extraction_line.ipyscript_runner.IPyScriptRunner')
         # get the extraction line manager's mode
-        man = self._get_el_manager()
-
-        if man is None:
-            self.warning_dialog('No Extraction line manager available')
-            mode = 'normal'
-        else:
-            mode = man.mode
-
-        if mode == 'client':
-            #            em = self.extraction_line_manager
-            from pychron.envisage.initialization.initialization_parser import InitializationParser
-
-            ip = InitializationParser()
-            elm = ip.get_plugin('Experiment', category='general')
-            runner = elm.find('runner')
-            host, port, kind = None, None, None
-
-            if runner is not None:
-                comms = runner.find('communications')
-                host = comms.find('host')
-                port = comms.find('port')
-                kind = comms.find('kind')
-
-            if host is not None:
-                host = host.text  # if host else 'localhost'
-            if port is not None:
-                port = int(port.text)  # if port else 1061
-            if kind is not None:
-                kind = kind.text  # if kind else 'udp'
-
-            from pychron.pyscripts.pyscript_runner import RemotePyScriptRunner
-
-            runner = RemotePyScriptRunner(host, port, kind)
-        else:
-            from pychron.pyscripts.pyscript_runner import PyScriptRunner
-
-            runner = PyScriptRunner()
+        # man = self._get_el_manager()
+        #
+        # if man is None:
+        #     self.warning_dialog('No Extraction line manager available')
+        #     mode = 'normal'
+        # else:
+        #     mode = man.mode
+        #
+        # if mode == 'client':
+        #     #            em = self.extraction_line_manager
+        #     from pychron.envisage.initialization.initialization_parser import InitializationParser
+        #
+        #     ip = InitializationParser()
+        #     # elm = ip.get_plugin('Experiment', category='general')
+        #     elm = ip.get_plugin('ExtractionLine', category='hardware')
+        #     runner = elm.find('runner')
+        #     host, port, kind = None, None, None
+        #
+        #     if runner is not None:
+        #         comms = runner.find('communications')
+        #         host = comms.find('host')
+        #         port = comms.find('port')
+        #         kind = comms.find('kind')
+        #
+        #     if host is not None:
+        #         host = host.text  # if host else 'localhost'
+        #     if port is not None:
+        #         port = int(port.text)  # if port else 1061
+        #     if kind is not None:
+        #         kind = kind.text  # if kind else 'udp'
+        #
+        #     from pychron.extraction_line.pyscript_runner import RemotePyScriptRunner
+        #
+        #     runner = RemotePyScriptRunner(host, port, kind)
+        # else:
+        #     from pychron.extraction_line.pyscript_runner import PyScriptRunner
+        #
+        #     runner = PyScriptRunner()
 
         return runner
 
