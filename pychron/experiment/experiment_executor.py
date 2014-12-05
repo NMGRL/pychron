@@ -1136,7 +1136,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.debug('Pre Extraction Termination data. keys={}, signals={}'.format(ks, ss))
 
             if conditionals:
-                self.debug('testing user defined conditionals')
+                self.info('testing user defined conditionals')
                 if self._test_conditionals(run, conditionals,
                                            'Checking user defined pre extraction terminations',
                                            'Pre Extraction Termination',
@@ -1144,6 +1144,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     return True
 
             if default_conditionals:
+                self.info('testing system defined conditionals')
                 if self._test_conditionals(run, default_conditionals,
                                            'Checking default pre extraction terminations',
                                            'Pre Extraction Termination',
@@ -1270,25 +1271,25 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             return
         self.heading('Post Run Check')
 
-        #check user defined terminations
+        # check user defined terminations
         conditionals = self._load_conditionals('post_run_terminations')
         if self._test_conditionals(run, conditionals, 'Checking user defined post run terminations',
                                    'Post Run Termination'):
             return True
 
-        #check default terminations
+        # check default terminations
         conditionals = self._load_default_conditionals('post_run_terminations')
         if self._test_conditionals(run, conditionals, 'Checking default post run terminations',
                                    'Post Run Termination'):
             return True
 
-        #check user defined post run actions
+        # check user defined post run actions
         conditionals = self._load_conditionals('post_run_actions', klass='ActionConditional')
         if self._action_conditionals(run, conditionals, 'Checking user defined post run actions',
                                      'Post Run Action'):
             return True
 
-        #check default post run actions
+        # check default post run actions
         conditionals = self._load_default_conditionals('post_run_actions', klass='ActionConditional')
         if self._action_conditionals(run, conditionals, 'Checking default post run actions',
                                      'Post Run Action'):
@@ -1335,7 +1336,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.debug('{} n={}'.format(message1, len(conditionals)))
             for ci in conditionals:
                 if ci.check(run, None, True):
-                    self.info('{}. {}'.format(message2, ci.to_string()))
+                    self.info('{}. {}'.format(message2, ci.to_string()), color='yellow')
                     self._do_action(ci)
                     return True
 
@@ -1348,8 +1349,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.debug('{} n={}'.format(message1, len(conditionals)))
             for ci in conditionals:
                 if ci.check(run, data, cnt):
-                    self.info('{}. {}'.format(message2, ci.to_string()),
-                              color='red')
+                    self.warning('!!!!!!!!!! Conditional Tripped !!!!!!!!!!')
+                    self.warning('{}. {}'.format(message2, ci.to_string()))
                     self.cancel(confirm=False)
                     return True
 

@@ -56,7 +56,7 @@ class Consoleable(Loggable):
         self.info(msg)
 
     def info(self, msg, log=True, color=None, *args, **kw):
-        if color is None or not self.use_message_colormapping:
+        if color is None: #or not self.use_message_colormapping:
             color = self.console_default_color
 
         if self.console_display:
