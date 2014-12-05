@@ -15,12 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.message_dialog import warning
 from pyface.timer.do_later import do_later
+import re
 from traits.api import Str, Password, Enum, Button, Bool, \
-    on_trait_change, Color, String
+    on_trait_change, Color, String, List
 from traits.has_traits import HasTraits
 from traitsui.api import View, Item, Group, VGroup, HGroup, ListStrEditor, spring, Label, Spring
 from envisage.ui.tasks.preferences_pane import PreferencesPane
+from traitsui.editors import TextEditor
+from pychron.core.ui.combobox_editor import ComboboxEditor
 
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper, \
@@ -31,6 +35,27 @@ from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 # ============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
 
+IPREGEX = re.compile(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$')
+
+
+def show_databases(host, user, password):
+    import pymysql
+
+    names = []
+    try:
+        conn = pymysql.connect(host=host, port=3306, user=user,
+                               connect_timeout=0.25,
+                               passwd=password, db='mysql')
+        cur = conn.cursor()
+        cur.execute("SHOW DATABASES")
+        names = [di[0] for di in cur if di[0] not in ('information_schema',
+                                                      'performance_schema', 'mysql')]
+
+    except BaseException:
+        pass
+
+    return names
+
 
 class ConnectionMixin(HasTraits):
     test_connection = Button
@@ -38,6 +63,11 @@ class ConnectionMixin(HasTraits):
     connected_label = String('Not Tested')
     connected_color = Color('orange')
     adapter_klass = 'pychron.database.core.database_adapter.DatabaseAdapter'
+    names = List
+    # def __init__(self, *args, **kw):
+    # super(ConnectionMixin, self).__init__(*args, **kw)
+    #
+    # self.names = show_databases()
 
     def _reset_connection_label(self, d):
         def func():
@@ -76,10 +106,22 @@ class ConnectionPreferences(FavoritesPreferencesHelper, ConnectionMixin):
     preferences_path = 'pychron.database'
 
     db_name = Str
+
     username = Str
     password = Password
     host = Str
     kind = Enum('---', 'mysql', 'sqlite')
+
+    def __init__(self, *args, **kw):
+        super(ConnectionPreferences, self).__init__(*args, **kw)
+        self._load_names()
+
+    def _load_names(self):
+        if self.username and self.password:
+            if self.host == 'localhost' or IPREGEX.match(self.host):
+                self.names = show_databases(self.host, self.username, self.password)
+            else:
+                warning(None, 'Invalid IP address format. e.g 129.255.12.255')
 
     def _get_connection_dict(self):
         return dict(username=self.username,
@@ -93,6 +135,8 @@ class ConnectionPreferences(FavoritesPreferencesHelper, ConnectionMixin):
 
     @on_trait_change('db_name, kind, username, host, password')
     def db_attribute_changed(self, obj, name, old, new):
+        if name in ('username', 'host', 'password'):
+            self._load_names()
 
         if self.favorites:
             idx = ['', 'kind',
@@ -130,9 +174,13 @@ class ConnectionPreferencesPane(PreferencesPane):
 
     def traits_view(self):
         db_auth_grp = Group(
-            Item('host', width=125, label='Host'),
-            Item('username', label='User'),
-            Item('password', label='Password'),
+            Item('host',
+                 editor=TextEditor(enter_set=True, auto_set=False),
+                 width=125, label='Host'),
+            Item('username', label='User',
+                 editor=TextEditor(enter_set=True, auto_set=False)),
+            Item('password', label='Password',
+                 editor=TextEditor(enter_set=True, auto_set=False)),
             enabled_when='kind=="mysql"',
             show_border=True,
             label='Authentication')
@@ -163,7 +211,8 @@ class ConnectionPreferencesPane(PreferencesPane):
                              show_labels=False))
 
         db_grp = Group(HGroup(Item('kind', show_label=False),
-                              Item('db_name', label='Name')),
+                              # Item('db_name', label='Name')
+                              Item('db_name', editor=ComboboxEditor(name='names'))),
                        # Item('save_username', label='User'),
                        HGroup(fav_grp, db_auth_grp),
                        label='Pychron DB')
@@ -223,4 +272,5 @@ class MassSpecConnectionPane(PreferencesPane):
                               label='MassSpec DB')
 
         return View(massspec_grp)
+
 # ============= EOF =============================================

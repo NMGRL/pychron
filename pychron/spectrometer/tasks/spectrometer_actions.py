@@ -25,7 +25,8 @@ from pyface.tasks.action.task_action import TaskAction
 # ============= local library imports  ==========================
 from pychron.paths import paths
 
-from pychron.pychron_constants import SPECTROMETER_PROTOCOL,SCAN_PROTOCOL,EL_PROTOCOL, ION_OPTICS_PROTOCOL
+from pychron.pychron_constants import SPECTROMETER_PROTOCOL, SCAN_PROTOCOL, EL_PROTOCOL, ION_OPTICS_PROTOCOL
+
 
 def get_manager(event, protocol):
     app = event.task.window.application
@@ -34,7 +35,7 @@ def get_manager(event, protocol):
 
 
 # class OpenIonOpticsAction(Action):
-#     def perform(self, event):
+# def perform(self, event):
 #         man = get_manager(event, ION_OPTICS_PROTOCOL)
 #         open_manager(event.window.application, man)
 
@@ -54,6 +55,7 @@ def get_manager(event, protocol):
 
 class AutoMFTableAction(Action):
     name = 'Auto MFTable'
+
     def perform(self, event):
         app = event.task.window.application
 
@@ -76,6 +78,11 @@ class AutoMFTableAction(Action):
         a = AutoMFTable(pyscript_task=pyscript_task, **kw)
 
         do_later(a.do_auto_mftable)
+
+
+class SendConfigAction(TaskAction):
+    name = 'Send Configuration'
+    method = 'send_configuration'
 
 
 class EditGainsAction(Action):

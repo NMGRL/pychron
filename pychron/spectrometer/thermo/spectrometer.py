@@ -159,10 +159,6 @@ class Spectrometer(SpectrometerDevice):
             d.microcontroller = m
             d.load()
 
-    @property
-    def detector_names(self):
-        return [di.name for di in self.detectors]
-
     def get_deflection(self, name, current=False):
         deflection = 0
         det = self.get_detector(name)
@@ -193,22 +189,6 @@ class Spectrometer(SpectrometerDevice):
                 for i, di in enumerate(self.detectors):
                     mass = nmass - (i - index)
                     di.isotope = 'Ar{}'.format(mass)
-
-    # ===============================================================================
-    # property get/set
-    # ===============================================================================
-    def _get_detectors(self):
-        ds = []
-        for di in DETECTOR_ORDER:
-            ds.append(self._detectors[di])
-        return ds
-
-    def _get_sub_cup_configuration(self):
-        return self._sub_cup_configuration
-
-    def _set_sub_cup_configuration(self, v):
-        self._sub_cup_configuration = v
-        self.ask('SetSubCupConfiguration {}'.format(v))
 
     # ===============================================================================
     # load
@@ -300,12 +280,6 @@ class Spectrometer(SpectrometerDevice):
     # ===============================================================================
     # signals
     # ===============================================================================
-    def _get_simulation_data(self):
-        from numpy.random import random
-
-        signals = [1, 100, 3, 0.01, 0.01, 0.01] + random(6)
-        keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
-        return keys, signals
 
     def get_intensities(self, tagged=True):
 
@@ -416,14 +390,15 @@ class Spectrometer(SpectrometerDevice):
         dac -= det.get_deflection_correction(current=current)
         return dac
 
-    def send_configuration(self):
-        self._send_configuration()
     # ===============================================================================
     # private
     # ===============================================================================
-    @cached_property
-    def _get_isotopes(self):
-        return sorted(self.molecular_weights.keys(), key=lambda x: int(x[2:]))
+    def _get_simulation_data(self):
+        from numpy.random import random
+
+        signals = [1, 100, 3, 0.01, 0.01, 0.01] + random(6)
+        keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
+        return keys, signals
 
     def _send_configuration(self):
         command_map = dict(ionrepeller='IonRepeller',
@@ -471,5 +446,29 @@ class Spectrometer(SpectrometerDevice):
 
     def _integration_time_default(self):
         return DEFAULT_INTEGRATION_TIME
+
+    # ===============================================================================
+    # property get/set
+    # ===============================================================================
+    def _get_detectors(self):
+        ds = []
+        for di in DETECTOR_ORDER:
+            ds.append(self._detectors[di])
+        return ds
+
+    def _get_sub_cup_configuration(self):
+        return self._sub_cup_configuration
+
+    def _set_sub_cup_configuration(self, v):
+        self._sub_cup_configuration = v
+        self.ask('SetSubCupConfiguration {}'.format(v))
+
+    @cached_property
+    def _get_isotopes(self):
+        return sorted(self.molecular_weights.keys(), key=lambda x: int(x[2:]))
+
+    @property
+    def detector_names(self):
+        return [di.name for di in self.detectors]
 
 # ============= EOF =============================================

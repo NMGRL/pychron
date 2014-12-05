@@ -30,6 +30,9 @@ class SpectrometerTask(BaseExtractionLineTask):
     name = 'Scan'
     id = 'pychron.spectrometer'
 
+    def send_configuration(self):
+        self.scan_manager.spectrometer.send_configuration()
+
     def prepare_destroy(self):
         self.scan_manager.prepare_destroy()
         super(SpectrometerTask, self).prepare_destroy()

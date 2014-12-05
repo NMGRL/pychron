@@ -23,7 +23,7 @@ from logging.handlers import RotatingFileHandler
 import shutil
 # =============local library imports  =========================
 from pychron.paths import paths
-from pychron.core.helpers.filetools import list_directory
+from pychron.core.helpers.filetools import list_directory, add_extension
 from filetools import unique_path2
 
 NAME_WIDTH = 40
@@ -101,17 +101,30 @@ def set_exception_handler(func=None):
     sys.excepthook = func
 
 
+# def anomaly_setup(name):
+#     ld = logging.Logger.manager.loggerDict
+#     print 'anomaly setup ld={}'.format(ld)
+#     if name not in ld:
+#         bdir = paths.log_dir
+#         name = add_extension(name, '.anomaly')
+#         apath, _cnt = unique_path2(bdir, name, delimiter='-', extension='.log')
+#         logger = logging.getLogger('anomalizer')
+#         h = logging.FileHandler(apath)
+#         logger.addHandler(h)
+
+
 def logging_setup(name, use_archiver=True, **kw):
     """
     """
     # set up deprecation warnings
-    #     import warnings
+    # import warnings
     #     warnings.simplefilter('default')
 
-    # make sure we have a log directory
     bdir = paths.log_dir
-    if not os.path.isdir(bdir):
-        os.mkdir(bdir)
+
+    # make sure we have a log directory
+    # if not os.path.isdir(bdir):
+    #     os.mkdir(bdir)
 
     if use_archiver:
         # archive logs older than 1 month

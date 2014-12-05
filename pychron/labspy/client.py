@@ -76,7 +76,8 @@ class LabspyClient(Loggable):
         db = self.db
         doc = db.state.find_one({})
         if not doc:
-            doc = kw
+            doc\
+                = kw
             db.state.insert(doc)
         else:
             db.state.update({'_id': doc['_id']}, {'$set': kw})
