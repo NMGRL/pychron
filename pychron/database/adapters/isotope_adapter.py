@@ -1520,7 +1520,7 @@ class IsotopeAdapter(DatabaseAdapter):
             except NoResultFound:
                 return
 
-    def get_analyses_uuid(self, uuids, attr=None, analysis_only=False):
+    def get_analyses_uuid(self, uuids, attr=None, record_only=False, analysis_only=False):
         with self.session_ctx() as sess:
 
             if analysis_only or attr:
@@ -1530,6 +1530,8 @@ class IsotopeAdapter(DatabaseAdapter):
                     attr = getattr(meas_AnalysisTable, attr)
 
                 q = sess.query(attr)
+            elif record_only:
+                q = sess.query(meas_AnalysisTable)
             else:
                 q = sess.query(meas_AnalysisTable,
                                gen_LabTable,

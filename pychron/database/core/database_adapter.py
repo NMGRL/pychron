@@ -560,7 +560,6 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
         #         sess = self.get_session()
         #         if sess is None:
         #             return
-
         if not isinstance(value, (str, int, unicode, long, float, list, tuple)):
             return value
 
@@ -629,8 +628,8 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
 
         # no longer true: __retrieve is recursively called if a StatementError is raised
         # use retry loop instead
-        with self.session_ctx() as s:
-            return __retrieve(s)
+        with self.session_ctx() as sess:
+            return __retrieve(sess)
 
 
     # @deprecated

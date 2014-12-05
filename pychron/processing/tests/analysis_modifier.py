@@ -1,6 +1,8 @@
 import os
 import sys
 import shutil
+import copy
+from traits.has_traits import HasTraits
 
 from pychron.core.test_helpers import isotope_db_factory, get_data_dir as mget_data_dir, massspec_db_factory
 from pychron.experiment.utilities.identifier import make_runid
@@ -53,8 +55,11 @@ class MAnalysis(object):
         self.aliquot = dbrecord.aliquot
         self.step = dbrecord.step
         self.uuid = dbrecord.uuid
+        self.increment = dbrecord.increment
 
-        self.record_id = make_runid(self.identifier, self.aliquot, self.step)
+    @property
+    def record_id(self):
+        return make_runid(self.identifier, self.aliquot, self.step)
 
 
 class AnalysisModifierTestCase(unittest.TestCase):
@@ -79,7 +84,10 @@ class AnalysisModifierTestCase(unittest.TestCase):
         self.modifier.use_secondary = False
 
         an = self.analyses[0]
-        self.modifier.modify_analyses([an], self.new_identifier)
+        can = copy.copy(an)
+        can.identifier = self.new_identifier
+
+        self.modifier.modify_analyses([an], [can])
 
         db = self.modifier.main_db
         with db.session_ctx():
@@ -91,7 +99,9 @@ class AnalysisModifierTestCase(unittest.TestCase):
         self.modifier.use_secondary = True
 
         an = self.analyses[0]
-        self.modifier.modify_analyses([an], self.new_identifier)
+        can = copy.copy(an)
+        can.identifier = self.new_identifier
+        self.modifier.modify_analyses([an], [can])
 
         db = self.modifier.secondary_db
         with db.session_ctx():
