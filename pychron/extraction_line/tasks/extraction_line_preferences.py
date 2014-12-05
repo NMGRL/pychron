@@ -22,7 +22,32 @@ from envisage.ui.tasks.preferences_pane import PreferencesPane
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.group import Tabbed
-from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
+from traitsui.item import UItem
+from pychron.core.ui.custom_label_editor import CustomLabel
+from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper, BaseConsolePreferences, \
+    BaseConsolePreferencesPane
+
+
+class ConsolePreferences(BaseConsolePreferences):
+    preferences_path = 'pychron.extraction_line.console'
+
+
+class ConsolePreferencesPane(BaseConsolePreferencesPane):
+    model_factory = ConsolePreferences
+    label='Extraction Line'
+
+    def traits_view(self):
+        preview = CustomLabel('preview',
+                              size_name='fontsize',
+                              color_name='textcolor',
+                              bgcolor_name='bgcolor')
+
+        v = View(VGroup(HGroup(UItem('fontsize'),
+                               UItem('textcolor'),
+                               UItem('bgcolor')),
+                        preview,
+                        label=self.label))
+        return v
 
 
 class ExtractionLinePreferences(BasePreferencesHelper):
@@ -100,5 +125,6 @@ Hover over section and hit the defined volume key (default="v")'),
                        label='Gauges')
 
         return View(Tabbed(v_grp, g_grp))
+
 
 # ============= EOF =============================================

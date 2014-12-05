@@ -104,6 +104,9 @@ class ExtractionLineManager(Manager, Consoleable):
                         'pychron.extraction_line.use_network')
         bind_preference(self.network, 'inherit_state',
                         'pychron.extraction_line.inherit_state')
+
+        self.console_bind_preferences('pychron.extraction_line.console')
+
         if self.gauge_manager:
             bind_preference(self.gauge_manager, 'update_period',
                             'pychron.extraction_line.gauge_update_period')

@@ -33,7 +33,8 @@ from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
 from pychron.extraction_line.pyscript_runner import RemotePyScriptRunner, PyScriptRunner
 from pychron.extraction_line.tasks.extraction_line_task import ExtractionLineTask
 from pychron.extraction_line.tasks.extraction_line_actions import RefreshCanvasAction
-from pychron.extraction_line.tasks.extraction_line_preferences import ExtractionLinePreferencesPane
+from pychron.extraction_line.tasks.extraction_line_preferences import ExtractionLinePreferencesPane, \
+    ConsolePreferencesPane
 from pychron.paths import paths
 
 
@@ -215,6 +216,6 @@ class ExtractionLinePlugin(BaseTaskPlugin):
         return t
 
     def _preferences_panes_default(self):
-        return [ExtractionLinePreferencesPane]
+        return [ExtractionLinePreferencesPane, ConsolePreferencesPane]
 
 # ============= EOF =============================================
