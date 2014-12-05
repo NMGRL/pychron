@@ -72,6 +72,15 @@ class LabspyClient(Loggable):
                                   {'$set': {'status': err_msg or 'Finished',
                                             'timestampf': time.mktime(datetime.now().timetuple())}})
 
+    def update_state(self, **kw):
+        db = self.db
+        doc = db.state.find_one({})
+        if not doc:
+            doc = kw
+            db.state.insert(doc)
+        else:
+            db.state.update({'_id': doc['_id']}, {'$set': kw})
+
     def _generate_hid(self, exp):
         md5 = hashlib.md5()
         md5.update(exp.name)
@@ -92,9 +101,9 @@ class LabspyClient(Loggable):
         db = clt[self.database_name]
         now = datetime.now()
         # print now.isoformat(), now.strftime('%H:%M:%S')
-        doc = {#'timestamp': now,
-               #'timestampt': now.strftime('%H:%M:%S'),
-               'timestamp': time.mktime(now.timetuple())}
+        doc = {  # 'timestamp': now,
+                 #'timestampt': now.strftime('%H:%M:%S'),
+                 'timestamp': time.mktime(now.timetuple())}
 
         values = []
         for di in devs:
@@ -169,12 +178,12 @@ if __name__ == '__main__':
             self.username = user
             self.spectrometer = spec
             self.mass_spectrometer = spec
-            self.extract_device = choice(('Fusions CO2','Fusions Diode'))
+            self.extract_device = choice(('Fusions CO2', 'Fusions Diode'))
             self.status = status
             self.starttime = datetime(2014, 11, 1, 12, 10, 10)
 
     # class Spec():
-    #     def __init__(self, record_id):
+    # def __init__(self, record_id):
     #         self.runid = record_id
     #         self.mass_spectrometer='jan'
     #         self.extract_device='LF'

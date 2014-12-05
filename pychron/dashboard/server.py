@@ -56,7 +56,7 @@ def get_xml_value(elem, tag, default):
 class DashboardServer(Loggable):
     devices = List
     selected_device = Instance(DashboardDevice)
-    db_manager = Instance(DashboardDBManager, ())
+    # db_manager = Instance(DashboardDBManager, ())
     extraction_line_manager = Instance('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
 
     notifier = Instance(Notifier, ())
@@ -74,17 +74,17 @@ class DashboardServer(Loggable):
 
         self._load_devices()
         if self.devices:
-            if self.use_db:
-                self.setup_database()
+            # if self.use_db:
+            #     self.setup_database()
             self.start_poll()
 
-    def deactivate(self):
-        if self.use_db:
-            self.db_manager.stop()
+    # def deactivate(self):
+    #     if self.use_db:
+    #         self.db_manager.stop()
 
-    def setup_database(self):
-        if self.use_db:
-            self.db_manager.start()
+    # def setup_database(self):
+    #     if self.use_db:
+    #         self.db_manager.start()
 
     def setup_notifier(self):
         parser = get_parser()
@@ -228,8 +228,8 @@ class DashboardServer(Loggable):
                 dev.trigger()
             time.sleep(mperiod)
 
-    def _set_error_flag(self, obj, msg):
-        self.notifier.send_message('error {}'.format(msg))
+    # def _set_error_flag(self, obj, msg):
+    #     self.notifier.send_message('error {}'.format(msg))
 
     def _validate_script(self, script_name):
         script = self._script_factory(script_name)
@@ -238,10 +238,12 @@ class DashboardServer(Loggable):
 
     def _script_factory(self, script_name):
         if os.path.isfile(os.path.join(paths.extraction_dir, add_extension(script_name,'.py'))):
+            runner = self.application.get_service('pychron.extraction_line.ipyscript_runner.IPyScriptRunner')
             script = ExtractionPyScript(root=paths.extraction_dir,
                                         name=script_name,
                                         manager=self.extraction_line_manager,
-                                        allow_lock=True)
+                                        allow_lock=True,
+                                        runner=runner)
             return script
 
     def _do_script(self, script_name):
@@ -250,38 +252,51 @@ class DashboardServer(Loggable):
         if script:
             script.execute()
 
+    def _send_email(self, emails, message):
+        if self.emailer and emails:
+            emails = emails.split(',')
+            self.emailer.send_message(emails, message)
+
+    def _update_labspy_devices(self):
+        if self.labspy_client:
+            pass
+
+    def _update_labspy_error(self, error):
+        if self.labspy_client:
+            self.labspy_client.update_state(error=error)
+
     # handlers
-    @on_trait_change('devices:publish_event')
-    def _handle_publish(self, obj, name, old, new):
+    @on_trait_change('devices:conditional_event')
+    def _handle_conditional(self, obj, name, old, new):
         action, script, emails, message = new.split('|')
+
         self.notifier.send_message(message)
         if action == WARN:
-            if self.emailer and emails:
-                emails = emails.split(',')
-                self.emailer.send_message(emails, message)
+            self._send_email(emails, message)
         elif action == CRITICAL:
-            self._set_error_flag(obj, message)
-
+            self.notifier.send_message('error {}'.format(message))
             self._do_script(script)
+            self._send_email(emails, message)
 
-            if self.emailer and emails:
-                emails = emails.split(',')
-                self.emailier.send_message(emails, message)
 
-        if self.use_db:
-            self.db_manager.publish_device(obj)
+    @on_trait_change('devices:update_value_event')
+    def _handle_publish(self, obj, name, old, new):
+        self.notifier.send_message(new)
+        self._update_labspy()
+        # if self.use_db:
+        #     self.db_manager.publish_device(obj)
 
     # @on_trait_change('devices:error_event')
     # def _handle_error(self, obj, name, old, new):
     # self._set_error_flag(obj, new)
     # self.notifier.send_message(new)
 
-    @on_trait_change('devices:values:+')
-    def _value_changed(self, obj, name, old, new):
-        if name.startswith('last_'):
-            return
-
-        print obj, name, old, new
+    # @on_trait_change('devices:values:+')
+    # def _value_changed(self, obj, name, old, new):
+    #     if name.startswith('last_'):
+    #         return
+    #
+    #     print obj, name, old, new
 
 
 # ============= EOF =============================================

@@ -38,7 +38,8 @@ class DashboardDevice(Loggable):
     values = List
     _device = Instance(ICoreDevice)
 
-    publish_event = Event
+    update_value_event = Event
+    conditional_event = Event
 
     graph = Instance(StreamStackedGraph)
 
@@ -104,12 +105,17 @@ class DashboardDevice(Loggable):
 
     def _push_value(self, pv, new):
         if pv.enabled:
-            tag = pv.tag
+            v = float(new)
+            ct = time.time()
+            tt = 60 * 60  # max time (s) allowed without a measurement taken
+            # even if the current value is the same as the last value
 
-            self.publish_event = '{}|||{} {}'.format(PUBLISH, tag, new)
-            pv.last_value = v = float(new)
+            if abs(pv.last_value - new) > 1e-10 or (pv.last_time and ct - pv.last_time > tt):
+                tag = pv.tag
+                self.update_value_event = '{} {}'.format(tag, new)
+
+            pv.last_value = v
             pv.last_time = time.time()
-
             self.graph.record(v, plotid=pv.plotid)
 
             self._check_conditional(pv, new)
@@ -122,9 +128,9 @@ class DashboardDevice(Loggable):
                 if cond.check(new):
                     self.debug('conditional triggered. severity={}'.format(cond.severity))
                     msg = '{}.{}.{} is True. value={}'.format(self.name, pv.name, cond.teststr, new)
-                    self.publish_event = '{}|{}|{}|{}'.format(cond.severity,
-                                                              cond.script,
-                                                              cond.emails, msg)
+                    self.conditional_event = '{}|{}|{}|{}'.format(cond.severity,
+                                                                  cond.script,
+                                                                  cond.emails, msg)
 
     def dump_meta(self):
         d = []
