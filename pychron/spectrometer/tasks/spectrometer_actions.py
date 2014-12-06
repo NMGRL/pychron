@@ -23,6 +23,7 @@ from pyface.tasks.action.task_action import TaskAction
 # ============= standard library imports ========================
 
 # ============= local library imports  ==========================
+from pychron.envisage.tasks.actions import myTaskAction
 from pychron.paths import paths
 
 from pychron.pychron_constants import SPECTROMETER_PROTOCOL, SCAN_PROTOCOL, EL_PROTOCOL, ION_OPTICS_PROTOCOL
@@ -80,9 +81,10 @@ class AutoMFTableAction(Action):
         do_later(a.do_auto_mftable)
 
 
-class SendConfigAction(TaskAction):
+class SendConfigAction(myTaskAction):
     name = 'Send Configuration'
     method = 'send_configuration'
+    task_ids = ['pychron.spectrometer']
 
 
 class EditGainsAction(Action):
