@@ -1,4 +1,4 @@
-statsmodels==0.6.0
+statsmodels>=0.5.0
 PyYAML==3.11
 traits==4.5.0
 pyface==4.4.0
@@ -8,7 +8,7 @@ chaco==4.5.0
 xlrd
 xlwt
 lxml
-sqlalchemy==0.9.8
+sqlalchemy>=0.9.7
 
 #GitPython>=0.3.2.RC1
 #paramiko
