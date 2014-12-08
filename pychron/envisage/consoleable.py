@@ -50,7 +50,7 @@ class Consoleable(Loggable):
 
         self.console_updated = '{}|{}'.format(color, msg)
 
-    def heading(self,msg, decorate_chr='=', *args, **kw):
+    def heading(self,msg, decorate_chr='*', *args, **kw):
         d = decorate_chr*7
         msg = '{} {} {}'.format(d, msg, d)
         self.info(msg)

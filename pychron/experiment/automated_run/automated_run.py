@@ -536,7 +536,7 @@ class AutomatedRun(Loggable):
             don't save run
 
         """
-        #self.multi_collector.canceled = True
+        # self.multi_collector.canceled = True
         self.collector.canceled = True
 
         #        self.aliquot='##'
@@ -575,7 +575,7 @@ class AutomatedRun(Loggable):
             elif style == 'quick':
                 self.measurement_script.truncate('quick')
 
-            #             self._truncate_signal = True
+            # self._truncate_signal = True
             #self.multi_collector.set_truncated()
             self.collector.set_truncated()
             self.truncated = True
@@ -780,7 +780,7 @@ class AutomatedRun(Loggable):
     def setup_persister(self):
         sens = self._get_extraction_parameter('sensitivity_multiplier', default=1)
 
-        #setup persister. mirror a few of AutomatedRunsAttributes
+        # setup persister. mirror a few of AutomatedRunsAttributes
         script_name, script_blob = self._assemble_script_blob()
         eqn, eqb = '', ''
         pb = {}
@@ -871,7 +871,7 @@ class AutomatedRun(Loggable):
             if syn_extractor:
                 syn_extractor.stop()
 
-            #report the extraction results
+            # report the extraction results
             r = self.extraction_script.output_achieved()
             for ri in r:
                 self.info(ri)
@@ -962,7 +962,7 @@ class AutomatedRun(Loggable):
 
         msg = 'Post Measurement Started {}'.format(script.name)
         self.heading('{}'.format(msg))
-        #        self.state = 'extraction'
+        # self.state = 'extraction'
         script.runner = self.runner
         script.manager = self.experiment_executor
 
@@ -1100,7 +1100,7 @@ anaylsis_type={}
 
         if self.measurement_script:
             self.measurement_script.reset(weakref.ref(self)())
-            #set the interpolation path
+            # set the interpolation path
             self.measurement_script.interpolation_path = ip
 
         for si in ('extraction', 'post_measurement', 'post_equilibration'):
@@ -1109,7 +1109,7 @@ anaylsis_type={}
                 self._setup_context(script)
                 script.interpolation_path = ip
 
-        #load extraction metadata
+        # load extraction metadata
         self.eqtime = self._get_extraction_parameter('eqtime', 15)
         self.time_zero_offset = self.spec.collection_time_zero_offset
 
@@ -1171,7 +1171,7 @@ anaylsis_type={}
                 if conds:
                     var.extend(conds)
                     # for ti in yl:
-                    #     cx =
+                    # cx =
                     # var.append(cx)
 
     def _conditional_appender(self, name, cd, klass):
@@ -1184,7 +1184,7 @@ anaylsis_type={}
             self.debug('not attr for this {} cd={}'.format(name, cd))
             return
 
-        #for 2.0.4 backwards compatiblity
+        # for 2.0.4 backwards compatiblity
         # comp = dictgetter(cd, ('teststr','check','comp'))
         # if not comp:
         #     self.debug('not teststr for this conditional "{}" cd={}'.format(name, cd))
@@ -1323,7 +1323,7 @@ anaylsis_type={}
         if create:
             p.create(self._active_detectors)
         else:
-            #             p.clear_displays()
+            # p.clear_displays()
             p.isotope_graph.clear_plots()
 
         p.show_isotope_graph()
@@ -1373,7 +1373,7 @@ anaylsis_type={}
                             klass = klass_dict[kind]
                             for i in items:
                                 try:
-                                    #trim off s
+                                    # trim off s
                                     if kind.endswith('s'):
                                         kind = kind[:-1]
 
@@ -1384,7 +1384,7 @@ anaylsis_type={}
                         except KeyError:
                             self.debug('Invalid conditional kind="{}"'.format(kind))
                             #
-                            #     for c in doc:
+                            # for c in doc:
                             #         try:
                             #             attr = c['attr']
                             #             comp = c['check']
@@ -1477,7 +1477,7 @@ anaylsis_type={}
                 for i in inlet:
                     elm.open_valve(i, mode='script')
 
-        #set the passed in event
+        # set the passed in event
         evt.set()
         # delay for eq time
         self.info('equilibrating for {}sec'.format(eqtime))
@@ -1524,7 +1524,7 @@ anaylsis_type={}
         if update_detectors:
             self._update_detectors()
         if remove_non_active:
-            #remove non active isotopes
+            # remove non active isotopes
             for iso in self.arar_age.isotopes.keys():
                 det = next((di for di in self._active_detectors if di.isotope == iso), None)
                 if det is None:
@@ -1538,9 +1538,26 @@ anaylsis_type={}
 
     def _get_data_generator(self):
         def gen():
+            cnt = 0
+            fcnt = 3
             spec = self.spectrometer_manager.spectrometer
             while 1:
-                yield spec.get_intensities(tagged=True)
+                k, s = spec.get_intensities(tagged=True)
+                if not k:
+                    cnt += 1
+                    self.info('Failed getting intensity from mass spectrometer {}/{}'.format(cnt,fcnt), color='red')
+                    if cnt >= fcnt:
+                        self.info('Canceling Run. Failed getting intensity from mass spectrometer',
+                                  color='red')
+
+                        # do we need to cancel the experiment or will the subsequent pre run
+                        # checks sufficient to catch spectrometer communication errors.
+                        self.cancel_run(state='failed')
+                else:
+                    # reset the counter
+                    cnt = 0
+
+                    yield k, s
 
         return gen()
 
@@ -1747,7 +1764,7 @@ anaylsis_type={}
             self.debug('using default min ms pumptime={}'.format(self.min_ms_pumptime))
             mp = self.min_ms_pumptime
 
-        #ensure mim mass spectrometer pump time
+        # ensure mim mass spectrometer pump time
         #wait until pumping started
         self.debug('wait for mass spec pump out to start')
         self._wait_for(lambda x: not self.experiment_executor.ms_pumptime_start is None,

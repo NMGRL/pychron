@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
-from traitsui.api import View, UItem, VGroup
+from traitsui.api import View, UItem, VGroup, HGroup, Item
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -31,7 +31,7 @@ class DashboardCentralPane(TraitsTaskPane):
     def traits_view(self):
         url = CustomLabel('object.notifier.url', label='URL')
         v = View(
-            VGroup(url,
+            VGroup(HGroup(url, UItem('clear_button', tooltip='Clear current errors')),
                    UItem('selected_device',
                          style='custom')))
 

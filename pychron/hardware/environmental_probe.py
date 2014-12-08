@@ -13,15 +13,39 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from pychron.core.ui import set_qt
 
+set_qt()
 # ============= enthought library imports =======================
+from traits.api import HasTraits, Button
+from traitsui.api import View, Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-PUBLISH = 'pub'
+from pychron.core.helpers.logger_setup import logging_setup
+from pychron.hardware.core.core_device import CoreDevice
 
-NOERROR = 0
-WARNING = 10
-CRITICAL = 20
+
+class TempHumMicroServer(CoreDevice):
+    def read_temperature(self, **kw):
+        v = self.ask('*SRTF', **kw)
+        return self._parse_response(v)
+
+    def read_humidity(self, **kw):
+        v = self.ask('*SRH', **kw)
+        return self._parse_response(v)
+
+    def _parse_response(self, v):
+        try:
+            return float(v)
+        except (AttributeError, ValueError):
+            return 0
+
+if __name__ == '__main__':
+    logging_setup('eprobe')
+    dev = TempHumMicroServer(name='microserver')
+    dev.bootstrap()
+    dev.get_temperature()
+
 # ============= EOF =============================================
 
 

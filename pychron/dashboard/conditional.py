@@ -20,7 +20,7 @@ from traitsui.api import View, Item, HGroup, spring, Readonly
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
-from pychron.dashboard.constants import WARN
+from pychron.dashboard.constants import WARNING
 
 
 class DashboardConditional(HasTraits):
@@ -30,7 +30,7 @@ class DashboardConditional(HasTraits):
     nfail = Int
     _fail_count = 0
 
-    severity = WARN
+    severity = WARNING
     users = List
     usergroups = List
     state = String

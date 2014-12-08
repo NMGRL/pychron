@@ -15,19 +15,21 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Button, Str, Either, Property, Float, Int, Bool, List
+import time
+from traits.api import HasTraits, Button, Str, Either, Property, Float, Int, Bool, List, Enum
 from traitsui.api import View, Item, VGroup, HGroup, UItem, ListEditor, InstanceEditor, Readonly
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.datetime_tools import convert_timestamp
 from pychron.dashboard.conditional import DashboardConditional
+from pychron.dashboard.constants import NOERROR, CRITICAL, WARNING
 
 
 class ProcessValue(HasTraits):
     name = Str
     tag = Str
     func_name = Str
-
+    change_threshold = Float(1e-10)
     period = Either(Float, Str)  # "on_change" or number of seconds
     last_time = Float
     last_time_str = Property(depends_on='last_time')
@@ -36,6 +38,24 @@ class ProcessValue(HasTraits):
     timeout = Float
     plotid = Int
     conditionals = List(DashboardConditional)
+    flag = Enum(NOERROR, WARNING, CRITICAL)
+
+    def is_different(self, v):
+        ret = None
+        ct = time.time()
+        tt = 60 * 60  # max time (s) allowed without a measurement taken
+        # even if the current value is the same as the last value
+
+        threshold = self.change_threshold
+        if abs(self.last_value - v) > threshold or (self.last_time and ct - self.last_time > tt):
+            # a = abs(self.last_value - v) > threshold
+            # b = (self.last_time and ct - self.last_time > tt)
+            # self.debug('a={} {}-{}>{}, b={}'.format(a, self.last_value, v,threshold, b))
+            ret = True
+
+        self.last_value = v
+        self.last_time = time.time()
+        return ret
 
     def traits_view(self):
         v = View(VGroup(HGroup(UItem('enabled'), Readonly('name')),

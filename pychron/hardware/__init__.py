@@ -47,6 +47,6 @@ HW_PACKAGE_MAP = {
     'RemoteThermoRack': 'pychron.hardware.remote.thermorack',
     'RemoteNewportMotionController': 'pychron.hardware.remote.newport_motion_controller',
 
-
+    'TempHumMicroServer':'pychron.hardware.environmental_probe'
     # 'ControlModule': 'pychron.hardware.fusions.vue_diode_control_module'
 }

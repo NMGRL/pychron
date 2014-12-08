@@ -93,7 +93,7 @@ class TCPHandler(Handler):
             #
             # #trim off header
             # return data[4:]
-            return self._recvall(self._sock.recv)
+            return self._recvall(self.sock.recv)
         except socket.timeout:
             return
 
@@ -187,16 +187,17 @@ class EthernetCommunicator(Communicator):
         handler = self.get_handler()
         # send a test command so see if wer have connection
         cmd = self.test_cmd
-        self.debug('sending test command {}'.format(cmd))
-        if handler:
-            if handler.send_packet(cmd):
-                r = handler.get_packet(cmd)
-                if r is None:
+        if cmd:
+            self.debug('sending test command {}'.format(cmd))
+            if handler:
+                if handler.send_packet(cmd):
+                    r = handler.get_packet(cmd)
+                    if r is None:
+                        self.simulation = True
+                else:
                     self.simulation = True
             else:
                 self.simulation = True
-        else:
-            self.simulation = True
 
         return not self.simulation
 
@@ -224,6 +225,10 @@ class EthernetCommunicator(Communicator):
     def _reset_connection(self):
         self.handler = None
 
+    def read(self, *args, **kw):
+        handler = self.get_handler()
+        return handler.get_packet('')
+
     def ask(self, cmd, retries=3, verbose=True, quiet=False, info=None, *args, **kw):
         """
 
@@ -234,6 +239,7 @@ class EthernetCommunicator(Communicator):
                 self.info('no handle    {}'.format(cmd.strip()))
             return
 
+        cmd = '{}{}'.format(cmd, self.write_terminator)
         def _ask():
             handler = self.get_handler()
             if handler.send_packet(cmd):

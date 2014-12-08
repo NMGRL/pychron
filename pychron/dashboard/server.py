@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance, on_trait_change, List, Str
+from traits.api import Instance, on_trait_change, List, Str, Button
 # ============= standard library imports ========================
 from _socket import gethostname, gethostbyname
 from threading import Thread
@@ -23,7 +23,7 @@ import os
 import pickle
 import time
 # ============= local library imports  ==========================
-from pychron.dashboard.constants import PUBLISH, WARN, CRITICAL
+from pychron.dashboard.constants import CRITICAL, NOERROR, WARNING
 from pychron.dashboard.db_manager import DashboardDBManager
 from pychron.dashboard.device import DashboardDevice
 from pychron.globals import globalv
@@ -58,11 +58,13 @@ class DashboardServer(Loggable):
     selected_device = Instance(DashboardDevice)
     # db_manager = Instance(DashboardDBManager, ())
     extraction_line_manager = Instance('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
+    clear_button = Button('Clear')
 
     notifier = Instance(Notifier, ())
     emailer = Instance('pychron.social.emailer.Emailer')
+    labspy_client = None
 
-    url = Str
+    # url = Str
     use_db = False
     _alive = False
 
@@ -75,12 +77,15 @@ class DashboardServer(Loggable):
         self._load_devices()
         if self.devices:
             # if self.use_db:
-            #     self.setup_database()
+            # self.setup_database()
             self.start_poll()
 
+    def deactivate(self):
+        pass
+
     # def deactivate(self):
-    #     if self.use_db:
-    #         self.db_manager.stop()
+    # if self.use_db:
+    # self.db_manager.stop()
 
     # def setup_database(self):
     #     if self.use_db:
@@ -99,7 +104,7 @@ class DashboardServer(Loggable):
 
         self.notifier.port = port
         host = gethostbyname(gethostname())
-        self.url = '{}:{}'.format(host, port)
+        # self.url = '{}:{}'.format(host, port)
         # add a config request handler
         self.notifier.add_request_handler('config', self._handle_config)
 
@@ -162,7 +167,8 @@ class DashboardServer(Loggable):
 
                 enabled = to_bool(get_xml_value(v, 'enabled', False))
                 timeout = get_xml_value(v, 'timeout', 0)
-                pv = d.add_value(n, tag, func_name, period, enabled, timeout)
+                threshold = float(get_xml_value(v, 'change_threshold', 1e-10))
+                pv = d.add_value(n, tag, func_name, period, enabled, threshold, timeout)
 
                 def set_nfail(elem, kw):
                     nfail = elem.find('nfail')
@@ -178,7 +184,7 @@ class DashboardServer(Loggable):
                         teststr = warn.text.strip()
                         kw = {'teststr': teststr}
                         set_nfail(warn, kw)
-                        d.add_conditional(pv, WARN, **kw)
+                        d.add_conditional(pv, WARNING, **kw)
 
                     for critical in conds.findall('critical'):
                         teststr = critical.text.strip()
@@ -237,7 +243,7 @@ class DashboardServer(Loggable):
             return script.syntax_ok()
 
     def _script_factory(self, script_name):
-        if os.path.isfile(os.path.join(paths.extraction_dir, add_extension(script_name,'.py'))):
+        if os.path.isfile(os.path.join(paths.extraction_dir, add_extension(script_name, '.py'))):
             runner = self.application.get_service('pychron.extraction_line.ipyscript_runner.IPyScriptRunner')
             script = ExtractionPyScript(root=paths.extraction_dir,
                                         name=script_name,
@@ -266,12 +272,21 @@ class DashboardServer(Loggable):
             self.labspy_client.update_state(error=error)
 
     # handlers
+    def _clear_button_fired(self):
+        self.info('Clear Dashboard errors')
+        fname = lambda x: 'Warning' if x == WARNING else 'Critical'
+        for d in self.devices:
+            for pv in d.values:
+                if pv.flag:
+                    self.info('clearing {} flag for {}'.format(fname(pv.flag), pv.name))
+                pv.flag = NOERROR
+
     @on_trait_change('devices:conditional_event')
     def _handle_conditional(self, obj, name, old, new):
         action, script, emails, message = new.split('|')
 
         self.notifier.send_message(message)
-        if action == WARN:
+        if action == WARNING:
             self._send_email(emails, message)
         elif action == CRITICAL:
             self.notifier.send_message('error {}'.format(message))
@@ -282,21 +297,21 @@ class DashboardServer(Loggable):
     @on_trait_change('devices:update_value_event')
     def _handle_publish(self, obj, name, old, new):
         self.notifier.send_message(new)
-        self._update_labspy()
+        self._update_labspy_devices()
         # if self.use_db:
         #     self.db_manager.publish_device(obj)
 
-    # @on_trait_change('devices:error_event')
-    # def _handle_error(self, obj, name, old, new):
-    # self._set_error_flag(obj, new)
-    # self.notifier.send_message(new)
+        # @on_trait_change('devices:error_event')
+        # def _handle_error(self, obj, name, old, new):
+        # self._set_error_flag(obj, new)
+        # self.notifier.send_message(new)
 
-    # @on_trait_change('devices:values:+')
-    # def _value_changed(self, obj, name, old, new):
-    #     if name.startswith('last_'):
-    #         return
-    #
-    #     print obj, name, old, new
+        # @on_trait_change('devices:values:+')
+        # def _value_changed(self, obj, name, old, new):
+        #     if name.startswith('last_'):
+        #         return
+        #
+        #     print obj, name, old, new
 
 
 # ============= EOF =============================================

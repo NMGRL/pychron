@@ -65,26 +65,24 @@ class DashboardDevice(Loggable):
             if value.period == 'on_change':
                 if value.timeout and dt > value.timeout:
                     self._push_value(value, 'timeout')
-
-                continue
-
-            if dt > value.period:
+            elif dt > value.period:
                 try:
                     nv = getattr(self._device, value.func_name)()
                     self._push_value(value, nv)
                 except Exception:
                     import traceback
-
+                    print self._device, self._device.name, value.func_name
                     self.debug(traceback.format_exc(limit=2))
                     value.use_pv = False
 
-    def add_value(self, n, tag, func_name, period, use, timeout):
+    def add_value(self, n, tag, func_name, period, use, threshold, timeout):
         pv = ProcessValue(name=n,
                           tag=tag,
                           func_name=func_name,
                           period=period,
                           enabled=use,
-                          timeout=timeout)
+                          timeout=timeout,
+                          change_threshold=threshold)
 
         if period == 'on_change':
             self.debug('bind to {}'.format(n))
@@ -106,31 +104,28 @@ class DashboardDevice(Loggable):
     def _push_value(self, pv, new):
         if pv.enabled:
             v = float(new)
-            ct = time.time()
-            tt = 60 * 60  # max time (s) allowed without a measurement taken
-            # even if the current value is the same as the last value
+            tripped = pv.is_different(v)
+            if tripped:
+                self.update_value_event = '{} {}'.format(pv.tag, new)
 
-            if abs(pv.last_value - new) > 1e-10 or (pv.last_time and ct - pv.last_time > tt):
-                tag = pv.tag
-                self.update_value_event = '{} {}'.format(tag, new)
-
-            pv.last_value = v
-            pv.last_time = time.time()
             self.graph.record(v, plotid=pv.plotid)
-
             self._check_conditional(pv, new)
 
     def _check_conditional(self, pv, new):
         conds = pv.conditionals
         if conds:
-            for cond in conds:
-                self.debug('checking conditional {}.{}.{}, value={}'.format(self.name, pv.name, cond.teststr, new))
-                if cond.check(new):
-                    self.debug('conditional triggered. severity={}'.format(cond.severity))
-                    msg = '{}.{}.{} is True. value={}'.format(self.name, pv.name, cond.teststr, new)
-                    self.conditional_event = '{}|{}|{}|{}'.format(cond.severity,
-                                                                  cond.script,
-                                                                  cond.emails, msg)
+            if pv.flag:
+                self.debug('not checking conditionals. already tripped')
+            else:
+                for cond in conds:
+                    self.debug('checking conditional {}.{}.{}, value={}'.format(self.name, pv.name, cond.teststr, new))
+                    if cond.check(new):
+                        pv.flag = cond.severity
+                        self.debug('conditional triggered. severity={}'.format(cond.severity))
+                        msg = '{}.{}.{} is True. value={}'.format(self.name, pv.name, cond.teststr, new)
+                        self.conditional_event = '{}|{}|{}|{}'.format(cond.severity,
+                                                                      cond.script,
+                                                                      cond.emails, msg)
 
     def dump_meta(self):
         d = []

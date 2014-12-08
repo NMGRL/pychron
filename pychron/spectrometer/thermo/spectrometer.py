@@ -282,31 +282,31 @@ class Spectrometer(SpectrometerDevice):
     # ===============================================================================
 
     def get_intensities(self, tagged=True):
+        keys = []
+        signals = []
+        if self.microcontroller and not self.microcontroller.simulation:
+            # if self.microcontroller.simulation and globalv.communication_simulation:
+            #     keys, signals = self._get_simulation_data()
+            # else:
+            datastr = self.ask('GetData', verbose=False, quiet=True)
+            if datastr:
+                if not 'ERROR' in datastr:
+                    data = datastr.split(',')
+                    if tagged:
+                        keys = data[::2]
+                        signals = data[1::2]
+                    else:
+                        keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
+                        signals = data
 
-        if self.microcontroller:
-            if self.microcontroller.simulation:
-                keys, signals = self._get_simulation_data()
-            else:
-                datastr = self.ask('GetData', verbose=False, quiet=True)
-                keys = []
-                signals = []
-                if datastr:
-                    if not 'ERROR' in datastr:
-                        data = datastr.split(',')
-                        if tagged:
-                            keys = data[::2]
-                            signals = data[1::2]
-                        else:
-                            keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
-                            signals = data
+                signals = map(float, signals)
 
-                    signals = map(float, signals)
-
-            for k, v in zip(keys, signals):
-                det = self.get_detector(k)
-                det.set_intensity(v)
-        else:
+        if not keys and globalv.communication_simulation:
             keys, signals = self._get_simulation_data()
+
+        for k, v in zip(keys, signals):
+            det = self.get_detector(k)
+            det.set_intensity(v)
 
         return keys, signals
 
