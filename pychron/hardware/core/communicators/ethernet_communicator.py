@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,9 +25,10 @@ from pychron.loggable import Loggable
 
 class Handler(Loggable):
     sock = None
-    datasize=2**12
+    datasize = 2 ** 12
 
-    use_message_len_checking =False
+    use_message_len_checking = False
+
     def get_packet(self):
         pass
 
@@ -38,31 +39,31 @@ class Handler(Loggable):
         pass
 
     def _recvall(self, recv):
-        ss=[]
+        ss = []
         sum = 0
 
         #disable message len checking
-        msg_len=1
+        msg_len = 1
         if self.use_message_len_checking:
-            msg_len=0
+            msg_len = 0
 
         while 1:
-            s = recv(self.datasize)#self._sock.recv(2048)
+            s = recv(self.datasize)  #self._sock.recv(2048)
             if not s:
                 break
 
             if not msg_len:
-                msg_len = int(s[:4],16)
+                msg_len = int(s[:4], 16)
 
-            sum+=len(s)
+            sum += len(s)
             ss.append(s)
-            if sum>=msg_len:
+            if sum >= msg_len:
                 break
         data = ''.join(ss)
 
         if self.use_message_len_checking:
             #trim off header
-            data=data[4:]
+            data = data[4:]
         return data
 
 
@@ -113,15 +114,16 @@ class UDPHandler(Handler):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         # self.sock.connect(addr)
         if globalv.communication_simulation:
-            timeout=0.01
+            timeout = 0.01
         self.sock.settimeout(timeout)
 
     def get_packet(self, cmd):
         r = None
         #        cnt = 3
         cnt = 1
+
         def recv(ds):
-            r, _ =self.sock.recvfrom(ds)
+            r, _ = self.sock.recvfrom(ds)
             return r
 
         for _ in range(cnt):
@@ -240,8 +242,13 @@ class EthernetCommunicator(Communicator):
             return
 
         cmd = '{}{}'.format(cmd, self.write_terminator)
+
         def _ask():
             handler = self.get_handler()
+            if not handler:
+                self.simulation = True
+                return
+
             if handler.send_packet(cmd):
                 return handler.get_packet(cmd)
 

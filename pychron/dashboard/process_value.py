@@ -27,6 +27,7 @@ from pychron.dashboard.constants import NOERROR, CRITICAL, WARNING
 
 class ProcessValue(HasTraits):
     name = Str
+    units = Str
     tag = Str
     func_name = Str
     change_threshold = Float(1e-10)

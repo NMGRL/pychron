@@ -88,7 +88,7 @@ class ProXRADC(NCDDevice):
             self.debug('bank={} nbits={} values={}'.format(bank, nbits, ','.join(map(str, vs))))
         return vs
 
-    def read_channel(self, channel, nbits=8, verbose=False):
+    def read_channel(self, channel, nbits=8, verbose=True):
         """
             return voltage (V) measured on "channel"
             nbits= 8 or 12. resolution of measurement
@@ -108,7 +108,17 @@ class ProXRADC(NCDDevice):
 
         cmdstr = self._make_cmdstr(254, bank_idx, channel_idx)
         resp = self.ask(cmdstr, nchars=nbytes, remove_eol=False, verbose=verbose)
-        return self._map_to_voltage(resp, nbits, nbytes)[0]
+        if resp:
+            volts = self._map_to_voltage(resp, nbits, nbytes)[0]
+        else:
+            volts = self.get_random_value()
+        return volts
+
+
+    def _parse_response(self, v):
+        if not v:
+            v = self.get_random_value()
+        return v
 
     def _check_nbits(self, nbits):
         if not nbits in (8, 12):

@@ -32,6 +32,7 @@ from i_core_device import ICoreDevice
 # from pychron.core.helpers.timer import Timer
 # from pychron.managers.data_managers.csv_data_manager import CSVDataManager
 # from pychron.core.helpers.datetime_tools import generate_datetimestamp
+from pychron.globals import globalv
 from pychron.hardware.core.exceptions import TimeoutError, CRCError
 from pychron.hardware.core.scanable_device import ScanableDevice
 from pychron.rpc.rpcable import RPCable
@@ -274,7 +275,7 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
                 max=10
 
         """
-        return random.randint(mi, ma)
+        return random.randint(mi, ma) if globalv.communication_simulation else 0
 
     def setup_scheduler(self, name=None):
 

@@ -66,6 +66,8 @@ MOD_DICT = {'Current': '{}.cur', 'StdDev': '{}.std', 'Baseline': '{}.bs',
             'BaselineCorrected': '{}.bs_corrected',
             'Between': '{}.between'}
 
+TAGS = 'start_count,frequency,attr,window,mapper,ntrips'
+
 
 class ConditionalGroup(HasTraits):
     editable = True
@@ -88,6 +90,7 @@ class ConditionalGroup(HasTraits):
     value = Float
     start_count = Int
     frequency = Int
+    ntrips = Int
     _no_update = False
 
     add_button = Button
@@ -95,8 +98,10 @@ class ConditionalGroup(HasTraits):
 
     dump_attrs = [('attr', ''), ('frequency', ''),
                   ('window', ''), ('mapper', ''),
-                  ('start', 'start_count'),
-                  ('teststr', 'teststr')]
+                  ('start_count', ''),
+                  ('teststr', ''),
+                  ('ntrips', '')]
+
     tabular_adapter_klass = ConditionalsAdapter
 
     _conditional_klass = None
@@ -133,7 +138,7 @@ class ConditionalGroup(HasTraits):
         if self.conditionals:
             self.selected = self.conditionals[0]
         else:
-            self.selected = klass('', '')
+            self.selected = klass('', 0)
             self.conditionals = [self.selected]
 
         self._conditional_klass = klass
@@ -192,7 +197,8 @@ class ConditionalGroup(HasTraits):
 
             self.selected.teststr = comp
 
-    @on_trait_change('start_count, frequency, attr, window, mapper')
+
+    @on_trait_change(TAGS)
     def _update_selected(self, name, new):
         setattr(self.selected, name, new)
 
@@ -200,10 +206,10 @@ class ConditionalGroup(HasTraits):
         if new:
             teststr = new.teststr
             with no_update(self):
-                for a in ('start_count', 'frequency', 'attr', 'window', 'mapper'):
+                for a in TAGS.split(','):
                     setattr(self, a, getattr(new, a))
 
-                self.function=''
+                self.function = ''
                 self.secondary_value = 0
                 self.value = 0
                 self.modifier = ''
@@ -281,6 +287,10 @@ class ConditionalGroup(HasTraits):
                                       label='Start'),
                                  Item('frequency',
                                       tooltip='Number of counts between each check'),
+                                 Item('ntrips',
+                                      label='N Trips',
+                                      tooltip='Number of trips (conditional evaluates True) '
+                                              'before action is taken. Default=1'),
                                  enabled_when='attr'))
         return edit_grp
 
@@ -302,17 +312,21 @@ class PostRunGroup(ConditionalGroup):
     tabular_adapter_klass = PRConditionalsAdapter
 
     def _get_edit_group(self):
-        edit_grp = VGroup(HGroup(spring, UItem('object.selected.teststr', style='readonly'), spring),
-                          HGroup(UItem('attr',
-                                       editor=EnumEditor(name='available_attrs')),
-                                 Item('function',
+        edit_grp = VGroup(Item('attr',
+                               label='Attribute',
+                               editor=EnumEditor(name='available_attrs')),
+                          VGroup(Item('function',
                                       editor=EnumEditor(values=FUNCTIONS)),
                                  Item('modifier',
                                       enabled_when='modifier_enabled',
                                       editor=EnumEditor(values=['', 'StdDev', 'Current', 'Inactive',
-                                                                'Baseline', 'BaselineCorrected']))),
-                          HGroup(UItem('comparator', enabled_when='attr'),
-                                 Item('value', enabled_when='attr and comparator')))
+                                                                'Baseline', 'BaselineCorrected'])),
+                                 Item('comparator', label='Operation',
+                                      enabled_when='not function=="Between"'),
+                                 Item('value'),
+                                 Item('secondary_value', enabled_when='function=="Between"'),
+                                 Item('use_invert', label='Invert'),
+                                 enabled_when='attr'))
         return edit_grp
 
 
@@ -321,12 +335,11 @@ class PreRunGroup(ConditionalGroup):
     tabular_adapter_klass = PRConditionalsAdapter
 
     def _get_edit_group(self):
-        edit_grp = VGroup(HGroup(spring, UItem('object.selected.teststr', style='readonly'), spring),
-                          HGroup(UItem('attr',
-                                       editor=EnumEditor(name='available_attrs')),
-                                 Item('modifier',
-                                      enabled_when='modifier_enabled',
-                                      editor=EnumEditor(values=['', 'Inactive']))))
+        edit_grp = VGroup(UItem('attr',
+                                editor=EnumEditor(name='available_attrs')),
+                          Item('modifier',
+                               enabled_when='modifier_enabled',
+                               editor=EnumEditor(values=['', 'Inactive'])))
         return edit_grp
 
 
@@ -479,6 +492,7 @@ def edit_conditionals(name, detectors=None, app=None, root=None, save_as=False,
         path = ''
 
     cev = ConditionalsEditView(detectors, root=root, title=title)
+    print path
     cev.open(path, save_as)
     if kinds:
         cev.group_names = kinds

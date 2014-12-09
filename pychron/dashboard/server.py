@@ -62,7 +62,7 @@ class DashboardServer(Loggable):
 
     notifier = Instance(Notifier, ())
     emailer = Instance('pychron.social.emailer.Emailer')
-    labspy_client = None
+    labspy_client = Instance('pychron.labspy.client.LabspyClient')
 
     # url = Str
     use_db = False
@@ -88,7 +88,7 @@ class DashboardServer(Loggable):
     # self.db_manager.stop()
 
     # def setup_database(self):
-    #     if self.use_db:
+    # if self.use_db:
     #         self.db_manager.start()
 
     def setup_notifier(self):
@@ -168,7 +168,10 @@ class DashboardServer(Loggable):
                 enabled = to_bool(get_xml_value(v, 'enabled', False))
                 timeout = get_xml_value(v, 'timeout', 0)
                 threshold = float(get_xml_value(v, 'change_threshold', 1e-10))
-                pv = d.add_value(n, tag, func_name, period, enabled, threshold, timeout)
+                units = get_xml_value(v, 'units', '')
+
+                pv = d.add_value(n, tag, func_name, period, enabled, threshold,
+                                 units, timeout)
 
                 def set_nfail(elem, kw):
                     nfail = elem.find('nfail')
@@ -263,9 +266,20 @@ class DashboardServer(Loggable):
             emails = emails.split(',')
             self.emailer.send_message(emails, message)
 
+    def _get_device(self, name):
+        return next((di for di in self.devices if di.name == name), None)
+
     def _update_labspy_devices(self):
         if self.labspy_client:
-            pass
+            # a = Dev('pneumatic', ('pressure',), ('torr',))
+            # b = Dev('environment',
+            #         ('temperature', 'humidity'), ('C', '%'))
+            # c = Dev('gauge', ('bone_ig',), ('torr',))
+            # d = Dev('gauge', ('microbone_ig',), ('torr',))
+            devs = [self._get_device('AirPressure'),
+                    self._get_device('EnvironmentalMonitor')]
+
+            self.labspy_client.add_device_post(devs)
 
     def _update_labspy_error(self, error):
         if self.labspy_client:

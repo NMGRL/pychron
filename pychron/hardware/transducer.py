@@ -27,6 +27,13 @@ class Transducer(ADCDevice):
     pass
 
 
+class AirTransducer(ADCDevice):
+    def get_pressure(self, force=True):
+        v=self.get_output(force=force)
+        print 'gsdgfsdf', v
+        return v
+
+
 class ThermocoupleTransducer(Transducer):
     """
         ADCThermocouple is a simple device that reads a voltage

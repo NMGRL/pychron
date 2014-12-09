@@ -46,7 +46,7 @@ class ADCDevice(AbstractDevice):
         adc = 'ADC'
         if config.has_section(adc):
             klass = self.config_get(config, adc, 'klass')
-            name = self.config_get(config, adc, default=klass)
+            name = self.config_get(config, adc, 'name', default=klass)
 
             pkgs = ('pychron.hardware.adc.analog_digital_converter',
                     'pychron.hardware.agilent.agilent_multiplexer',
@@ -87,10 +87,10 @@ class ADCDevice(AbstractDevice):
             else:
                 v = self._cdevice.read_device(**kw)
 
-            if not isinstance(v, Q_):
-                v = Q_(v, 'V')
-            else:
-                v = v.to('V')
+            # if not isinstance(v, Q_):
+            #     v = Q_(v, 'V')
+            # else:
+            #     v = v.to('V')
 
             self._rvoltage = v
             return v

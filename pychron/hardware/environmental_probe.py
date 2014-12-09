@@ -37,8 +37,8 @@ class TempHumMicroServer(CoreDevice):
     def _parse_response(self, v):
         try:
             return float(v)
-        except (AttributeError, ValueError):
-            return 0
+        except (AttributeError, ValueError, TypeError):
+            return self.get_random_value()
 
 if __name__ == '__main__':
     logging_setup('eprobe')

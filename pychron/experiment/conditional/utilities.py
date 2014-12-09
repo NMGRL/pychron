@@ -228,6 +228,13 @@ def remove_comp(s):
 def extract_attr(key):
     """
     """
+    try:
+        aa = ARGS_REGEX.search(key).group(0)[1:-1].split(',')
+        key = aa[0]
+        if '.' in key:
+            key = key.split('.')[0].strip()
+    except AttributeError:
+        pass
 
     m = PARENTHESES_REGEX.findall(key)
     if m:

@@ -43,6 +43,18 @@ class DashboardDevice(Loggable):
 
     graph = Instance(StreamStackedGraph)
 
+    @property
+    def value_keys(self):
+        return [pv.tag for pv in self.values]
+
+    @property
+    def units(self):
+        return [pv.units for pv in self.values]
+
+    @property
+    def current_values(self):
+        return [pv.last_value for pv in self.values]
+
     def setup_graph(self):
         self.graph = g = StreamStackedGraph()
         for i, vi in enumerate(self.values):
@@ -72,16 +84,17 @@ class DashboardDevice(Loggable):
                 except Exception:
                     import traceback
                     print self._device, self._device.name, value.func_name
-                    self.debug(traceback.format_exc(limit=2))
+                    self.debug(traceback.format_exc())
                     value.use_pv = False
 
-    def add_value(self, n, tag, func_name, period, use, threshold, timeout):
+    def add_value(self, n, tag, func_name, period, use, threshold, units, timeout):
         pv = ProcessValue(name=n,
                           tag=tag,
                           func_name=func_name,
                           period=period,
                           enabled=use,
                           timeout=timeout,
+                          units=units,
                           change_threshold=threshold)
 
         if period == 'on_change':

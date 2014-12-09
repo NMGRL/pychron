@@ -76,7 +76,7 @@ class LabspyClient(Loggable):
         db = self.db
         doc = db.state.find_one({})
         if not doc:
-            doc\
+            doc \
                 = kw
             db.state.insert(doc)
         else:
@@ -97,13 +97,15 @@ class LabspyClient(Loggable):
         db.runs.insert(doc)
 
     def add_device_post(self, devs):
-
         clt = self._client
+        if not clt:
+            return
+
         db = clt[self.database_name]
         now = datetime.now()
         # print now.isoformat(), now.strftime('%H:%M:%S')
         doc = {  # 'timestamp': now,
-                 #'timestampt': now.strftime('%H:%M:%S'),
+                 # 'timestampt': now.strftime('%H:%M:%S'),
                  'timestamp': time.mktime(now.timetuple())}
 
         values = []
@@ -116,7 +118,7 @@ class LabspyClient(Loggable):
 
         doc['values'] = values
 
-        pprint(doc, width=4)
+        # pprint(doc, width=4)
         db.devices.insert(doc)
 
     # private
@@ -153,12 +155,7 @@ class LabspyClient(Loggable):
         return d
 
 
-if __name__ == '__main__':
-    from random import random, choice, randint
-
-    # c = LabspyClient(bind=False, host='129.138.12.138', port=27017)
-    c = LabspyClient(bind=False, host='localhost', port=3001)
-
+def add_device(clt):
     class Dev():
         def __init__(self, name, values, units):
             self.name = name
@@ -170,55 +167,77 @@ if __name__ == '__main__':
     a = Dev('pneumatic', ('pressure',), ('torr',))
     b = Dev('environment',
             ('temperature', 'humidity'), ('C', '%'))
+    c = Dev('gauge', ('bone_ig',), ('torr',))
+    d = Dev('gauge', ('microbone_ig',), ('torr',))
+    clt.add_device_post([a, b, c, d])
 
-    c.add_device_post([a, b])
 
-    class Exp():
-        def __init__(self, name, user, spec, status):
-            self.name = name
-            self.username = user
-            self.spectrometer = spec
-            self.mass_spectrometer = spec
-            self.extract_device = choice(('Fusions CO2', 'Fusions Diode'))
-            self.status = status
-            self.starttime = datetime(2014, 11, 1, 12, 10, 10)
+def add_experiment(c):
+    pass
+    # class Exp():
+    # def __init__(self, name, user, spec, status):
+    #         self.name = name
+    #         self.username = user
+    #         self.spectrometer = spec
+    #         self.mass_spectrometer = spec
+    #         self.extract_device = choice(('Fusions CO2', 'Fusions Diode'))
+    #         self.status = status
+    #         self.starttime = datetime(2014, 11, 1, 12, 10, 10)
+    #
+    # # class Spec():
+    # # def __init__(self, record_id):
+    # #         self.runid = record_id
+    # #         self.mass_spectrometer='jan'
+    # #         self.extract_device='LF'
+    # #         self.analysis_timestamp = datetime.now()
+    # #         self.state = choice(['Finished', 'Canceled', 'Failed'])
+    # #         self.analysis_type = "unknown"
+    # #         self.sample = "FC-2"
+    # #         self.extract_value = random()*2
+    # #         self.duration = randint(100,200)
+    # #         self.cleanup = randint(100,200)
+    # #         self.position = 1
+    # #         self.comment = "Test comment"
+    # #         self.material = "sanidine"
+    # #         self.project = "Monitor"
+    # #         self.measurement_script = 'm'
+    # #         self.extraction_script = 'e'
+    # #         self.post_measurement_script = 'pm'
+    # #         self.post_equilibration_script = 'pq'
+    # #
+    # # class Run():
+    # #     def __init__(self, *args, **kw):
+    # #         self.spec = Spec(*args, **kw)
+    # #
+    # #
+    # e = Exp('Current Experiment', 'foobar', 'Jan', 'Running')
+    # c.add_experiment(e)
+    #
+    # # # print e.hash_id
+    # # # hid='076441e14fe0e09086626f25f216ca04'
+    # # # e.hash_id=hid
+    # # # c.update_experiment(e)
+    # #
+    # # for i in range(6):
+    # #     c.add_run(Run('20016-{:02n}'.format(i + 1)), e)
 
-    # class Spec():
-    # def __init__(self, record_id):
-    #         self.runid = record_id
-    #         self.mass_spectrometer='jan'
-    #         self.extract_device='LF'
-    #         self.analysis_timestamp = datetime.now()
-    #         self.state = choice(['Finished', 'Canceled', 'Failed'])
-    #         self.analysis_type = "unknown"
-    #         self.sample = "FC-2"
-    #         self.extract_value = random()*2
-    #         self.duration = randint(100,200)
-    #         self.cleanup = randint(100,200)
-    #         self.position = 1
-    #         self.comment = "Test comment"
-    #         self.material = "sanidine"
-    #         self.project = "Monitor"
-    #         self.measurement_script = 'm'
-    #         self.extraction_script = 'e'
-    #         self.post_measurement_script = 'pm'
-    #         self.post_equilibration_script = 'pq'
-    #
-    # class Run():
-    #     def __init__(self, *args, **kw):
-    #         self.spec = Spec(*args, **kw)
-    #
-    #
-    e = Exp('Current Experiment', 'foobar', 'Jan', 'Running')
-    c.add_experiment(e)
 
-    # # print e.hash_id
-    # # hid='076441e14fe0e09086626f25f216ca04'
-    # # e.hash_id=hid
-    # # c.update_experiment(e)
-    #
-    # for i in range(6):
-    #     c.add_run(Run('20016-{:02n}'.format(i + 1)), e)
+def update_state(c):
+    c.update_state(error='Error big time')
+
+
+if __name__ == '__main__':
+    from random import random, choice, randint
+
+    # c = LabspyClient(bind=False, host='129.138.12.138', port=27017)
+    c = LabspyClient(bind=False, host='localhost', port=3001)
+
+
+    # update_state(c)
+    for i in range(10):
+        add_device(c)
+        time.sleep(1)
+
 
 # ============= EOF =============================================
 

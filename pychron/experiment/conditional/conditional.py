@@ -22,7 +22,7 @@ import pprint
 # ============= local library imports  ==========================
 from pychron.experiment.conditional.regexes import MAPPER_KEY_REGEX, \
     STD_REGEX
-from pychron.experiment.conditional.utilities import tokenize, get_teststr_attr_func
+from pychron.experiment.conditional.utilities import tokenize, get_teststr_attr_func, extract_attr
 from pychron.loggable import Loggable
 
 
@@ -53,7 +53,7 @@ def conditional_from_dict(cd, klass):
 
     # attr = cd.get('attr')
     # if not attr:
-    #     return
+    # return
 
     teststr = dictgetter(cd, ('teststr', 'comp', 'check'))
     if not teststr:
@@ -64,7 +64,12 @@ def conditional_from_dict(cd, klass):
     win = cd.get('window', 0)
     mapper = cd.get('mapper', '')
     action = cd.get('action', '')
-    cx = klass(teststr, start_count=start, frequency=freq, window=win, mapper=mapper, action=action)
+    ntrips = cd.get('ntrips', 1)
+
+    attr = extract_attr(teststr)
+    cx = klass(teststr, start_count=start, frequency=freq,
+               attr=attr,
+               window=win, mapper=mapper, action=action, ntrips=ntrips)
     return cx
 
 
@@ -113,11 +118,12 @@ class AutomatedRunConditional(BaseConditional):
 
     active = True
     value = Float
-
+    ntrips = Int(1)
+    trips = 0
     # def __init__(self, attr, teststr,
     # start_count=0,
     # frequency=1,
-    #              *args, **kw):
+    # *args, **kw):
     def __init__(self, teststr,
                  start_count=0,
                  frequency=1,
@@ -160,9 +166,14 @@ class AutomatedRunConditional(BaseConditional):
                                                          pprint.pformat(ctx, width=1))
         self.debug(msg)
         if eval(teststr, ctx):
-            self.debug('condition {} is true'.format(teststr))
-            self.message = 'condition {} is True'.format(teststr)
-            return True
+            self.trips += 1
+            self.debug('condition {} is true trips={}/{}'.format(teststr, self.trips,
+                                                                 self.ntrips))
+            if self.trips >= self.ntrips:
+                self.message = 'condition {} is True'.format(teststr)
+                return True
+        else:
+            self.trips = 0
 
     def _make_context(self, obj, data):
         teststr = self.teststr
@@ -197,7 +208,7 @@ class TruncationConditional(AutomatedRunConditional):
 
 
 class TerminationConditional(AutomatedRunConditional):
-    nfails = Int
+    pass
 
 
 class CancelationConditional(AutomatedRunConditional):
@@ -230,7 +241,7 @@ class ActionConditional(AutomatedRunConditional):
             # v = None
             # args = ARGS_REGEX.search(between).group(0)[1:-1].split(',')
             # key = args[0]
-            #     if '.' in key:
+            # if '.' in key:
             #         key = key.split('.')[0].strip()
             #         v = 0
             #         # v = self.get_modified_value(arun, key, key)
