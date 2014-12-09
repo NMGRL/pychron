@@ -1378,6 +1378,27 @@ class IsotopeAdapter(DatabaseAdapter):
     def get_arar(self, k):
         return self._retrieve_item(proc_ArArTable, k, key='hash')
 
+    def get_last_labnumbers(self, sample=None, limit=1000, excludes=None):
+        with self.session_ctx() as s:
+            #         sess = self.get_session()
+            q = s.query(gen_LabTable.identifier)
+            if sample:
+                q = q.join(gen_SampleTable)
+                q = q.filter(gen_SampleTable.name == sample)
+                if excludes:
+                    q = q.filter(not_(gen_SampleTable.name.in_(excludes)))
+            elif excludes:
+                q = q.join(gen_SampleTable)
+                q = q.filter(not_(gen_SampleTable.name.in_(excludes)))
+
+            q = q.order_by(func.abs(gen_LabTable.identifier).desc())
+            q = q.limit(limit)
+            return self._query_all(q)
+            # try:
+            #     ()
+            # except NoResultFound, e:
+            #     self.debug('get last labnumber {}'.format(e))
+            #     return
     def get_last_labnumber(self, sample=None):
         with self.session_ctx() as s:
             #         sess = self.get_session()

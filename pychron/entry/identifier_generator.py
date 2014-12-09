@@ -15,14 +15,34 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Any, Float, Str, List, Bool
-
+from traits.api import Any, Float, Str, List, Bool, Int, CInt
+from traitsui.api import View, Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from traitsui.item import Item
+from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.loggable import Loggable
+from pychron.persistence_loggable import PersistenceMixin
 
 
-class IdentifierGenerator(Loggable):
+def get_maxs(lns):
+    lns = [int(li[0]) for li in lns]
+    return map(int, map(max, group_runs(lns)))
+
+
+def group_runs(li, tolerance=1000):
+    out = []
+    last = li[0]
+    for x in li:
+        if abs(x - last) > tolerance:
+            yield out
+            out = []
+        out.append(x)
+        last = x
+    yield out
+
+
+class IdentifierGenerator(Loggable, PersistenceMixin):
     db = Any
     # default_j = Float(1e-4)
     # default_j_err = Float(1e-7)
@@ -34,6 +54,36 @@ class IdentifierGenerator(Loggable):
     level = Str
     is_preview = Bool
     overwrite = Bool
+
+    level_offset = Int(0)
+    offset = Int(5)
+    mon_start = CInt
+    unk_start = CInt
+
+    pattributes = ('level_offset', 'offset')
+    persistence_path = 'identifier_generator'
+    mon_maxs = List
+    unk_maxs = List
+
+    def setup(self):
+        self.load()
+        monlns = self.db.get_last_labnumbers(self.monitor_name)
+        unklns = self.db.get_last_labnumbers(excludes=(self.monitor_name,))
+
+        self.mon_maxs = get_maxs(monlns)
+        self.unk_maxs = get_maxs(unklns)
+
+        info = self.edit_traits(view=View(Item('offset'), Item('level_offset'),
+                                          Item('mon_start', label='Starting Monitor L#',
+                                               editor=ComboboxEditor(name='mon_maxs')),
+                                          Item('unk_start', label='Starting Unknown L#',
+                                               editor=ComboboxEditor(name='unk_maxs')),
+                                          kind='livemodal',
+                                          title='Configure Identifier Generation',
+                                          buttons=['OK', 'Cancel']), )
+        if info.result:
+            self.dump()
+            return True
 
     def preview(self, prog, positions, irradiation, level):
         self.irradiation_positions = positions
@@ -48,7 +98,7 @@ class IdentifierGenerator(Loggable):
         with db.session_ctx(commit=True):
             self._generate_labnumbers(*args)
 
-    def _generate_labnumbers(self, prog, offset=1, level_offset=10000):
+    def _generate_labnumbers(self, prog, offset=None, level_offset=None):
         """
             get last labnumber
 
@@ -56,6 +106,11 @@ class IdentifierGenerator(Loggable):
 
             add level_offset between each level
         """
+        if offset is None:
+            offset = self.offset
+        if level_offset is None:
+            level_offset = self.level_offset
+
         irradiation = self.irradiation
 
         mongen, unkgen, n = self._position_generator(offset, level_offset)
@@ -80,20 +135,20 @@ class IdentifierGenerator(Loggable):
 
     def _set_position_identifier(self, dbpos, ident):
         if self.is_preview:
-            ipos =self._get_irradiated_position(dbpos)
+            ipos = self._get_irradiated_position(dbpos)
             if ipos:
                 ipos.labnumber = str(ident)
 
     def _get_irradiated_position(self, dbpos):
         if dbpos.level.name == self.level:
             ipos = next((po for po in self.irradiation_positions
-                         if po.hole ==dbpos.position), None)
+                         if po.hole == dbpos.position), None)
             return ipos
 
     # def _add_default_flux(self, pos):
-    #     db = self.db
-    #     j, j_err = self.default_j, self.default_j_err
-    #     dbln = pos.labnumber
+    # db = self.db
+    # j, j_err = self.default_j, self.default_j_err
+    # dbln = pos.labnumber
     #
     #     def add_flux():
     #         hist = db.add_flux_history(pos)
@@ -116,17 +171,23 @@ class IdentifierGenerator(Loggable):
         """
         db = self.db
         irradiation = self.irradiation
-        last_mon_ln = db.get_last_labnumber(self.monitor_name)
-        if last_mon_ln:
-            last_mon_ln = int(last_mon_ln.identifier)
+        if not self.mon_start:
+            last_mon_ln = db.get_last_labnumber(self.monitor_name)
+            if last_mon_ln:
+                last_mon_ln = int(last_mon_ln.identifier)
+            else:
+                last_mon_ln = 0
         else:
-            last_mon_ln = 0
+            last_mon_ln = self.mon_start
 
-        last_unk_ln = db.get_last_labnumber()
-        if last_unk_ln:
-            last_unk_ln = int(last_unk_ln.identifier)
+        if not self.unk_start:
+            last_unk_ln = db.get_last_labnumber()
+            if last_unk_ln:
+                last_unk_ln = int(last_unk_ln.identifier)
+            else:
+                last_unk_ln = 0
         else:
-            last_unk_ln = 0
+            last_unk_ln = self.unk_start
 
         irrad = db.get_irradiation(irradiation)
         levels = irrad.levels
@@ -204,6 +265,117 @@ class IdentifierGenerator(Loggable):
                 i += 1
 
             sln = sln + i + level_offset - 1
+
+
+if __name__ == '__main__':
+    lns = [22923126,
+           22923083,
+           22923066,
+           22923051,
+           22923045,
+           22923034,
+           22923016,
+           22923001,
+           22922001,
+           22921003,
+           22921002,
+           22921001,
+           22191022,
+           22191021,
+           22191020,
+           22191019,
+           22191018,
+           22191017,
+           22191016,
+           22191015,
+           22191014,
+           22191013,
+           22191012,
+           22191011,
+           22191010,
+           22191009,
+           22191008,
+           22191007,
+           22191006,
+           22191005,
+           22191004,
+           623410,
+           623409,
+           623408,
+           623407,
+           623406,
+           623404,
+           623403,
+           623402,
+           623401,
+           92596,
+           92595,
+           69156,
+           63249,
+           63248,
+           63247,
+           63246,
+           63245,
+           63244,
+           63243,
+           63242,
+           63241,
+           63240,
+           63239,
+           63238,
+           63237,
+           63236,
+           63235,
+           63234,
+           63233,
+           63232,
+           63231,
+           63230,
+           63229,
+           63228,
+           63227,
+           63225,
+           63224,
+           63223,
+           63222,
+           63221,
+           63220,
+           63219,
+           63218,
+           63217,
+           63216,
+           63215,
+           63214,
+           63213,
+           63212,
+           63211,
+           63210,
+           63209,
+           63208,
+           63207,
+           63206,
+           63205,
+           63204,
+           63203,
+           63202,
+           63201,
+           63200,
+           63199,
+           63198,
+           63197,
+           63196,
+           63195,
+           63194,
+           63193,
+           63192,
+           63191,
+           63190,
+           63189,
+           63188,
+           63187,
+           63186]
+    print get_maxs(lns)
+
 
 # ============= EOF =============================================
 

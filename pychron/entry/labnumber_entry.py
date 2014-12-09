@@ -208,7 +208,7 @@ class LabnumberEntry(IsotopeDatabaseManager):
 
     def generate_identifiers(self):
         self.warning('GENERATE LABNUMBERS DISABLED')
-        return
+        # return
 
         if self.check_monitor_name():
             return
@@ -224,9 +224,10 @@ class LabnumberEntry(IsotopeDatabaseManager):
                                          irradiation=self.irradiation,
                                          overwrite=overwrite,
                                          db=self.db)
-                prog = self.open_progress()
-                lg.generate_identifiers(prog, overwrite)
-                self._update_level()
+                if lg.setup():
+                    prog = self.open_progress()
+                    lg.generate_identifiers(prog, overwrite)
+                    self._update_level()
 
     def preview_generate_identifiers(self):
         if self.check_monitor_name():
@@ -235,9 +236,10 @@ class LabnumberEntry(IsotopeDatabaseManager):
         lg = IdentifierGenerator(monitor_name=self.monitor_name,
                                  overwrite=True,
                                  db=self.db)
-        prog = self.open_progress()
-        lg.preview(prog, self.irradiated_positions, self.irradiation, self.level)
-        self.refresh_table = True
+        if lg.setup():
+            prog = self.open_progress()
+            lg.preview(prog, self.irradiated_positions, self.irradiation, self.level)
+            self.refresh_table = True
 
     def check_monitor_name(self):
         if not self.monitor_name.strip():
@@ -537,7 +539,7 @@ THIS CHANGE CANNOT BE UNDONE')
             self.level = new_level
 
         self.updated = True
-        self._level_changed()
+        self._level_changed(self.level)
 
     def _add_level_button_fired(self):
         editor = self._get_level_editor(irradiation=self.irradiation)

@@ -210,7 +210,8 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
 
     @on_trait_change('selection_freq, invert_flag')
     def _handle_selection(self):
-        self.manager.select_positions(self.selection_freq, self.invert_flag)
+        if self.selection_freq:
+            self.manager.select_positions(self.selection_freq, self.invert_flag)
 
     @on_trait_change('j,j_err, note, weight')
     def _handle_j(self, obj, name, old, new):
