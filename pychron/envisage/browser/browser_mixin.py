@@ -356,9 +356,7 @@ class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
                                             '"Recent Hours" is located in the "Processing" category')
                         warned = True
                 else:
-                    print name, sams
                     sams.extend(self._retrieve_recent_labnumbers(name))
-                    print 'b', name, sams
 
             if list(onames):
                 sams.extend(self._retrieve_labnumbers())
