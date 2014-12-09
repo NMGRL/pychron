@@ -25,6 +25,7 @@ import re
 # ============= local library imports  ==========================
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.codetools.inspection import caller
+from pychron.core.helpers.iterfuncs import partition
 from pychron.core.progress import progress_loader
 from pychron.database.orms.isotope.gen import gen_ProjectTable
 from pychron.database.records.isotope_record import IsotopeRecordView
@@ -346,18 +347,21 @@ class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
             self._recent_mass_spectrometers = []
             warned = False
 
-            for name in names:
+            rnames, onames = partition(names, lambda x: x.startswith('RECENT'))
+            for name in rnames:
                 # load associated samples
-                if name.startswith('RECENT'):
-                    if not self.search_criteria.recent_hours:
-                        if not warned:
-                            self.warning_dialog('Set "Recent Hours" in Preferences.\n'
-                                                '"Recent Hours" is located in the "Processing" category')
-                            warned = True
-                    else:
-                        sams.extend(self._retrieve_recent_labnumbers(name))
+                if not self.search_criteria.recent_hours:
+                    if not warned:
+                        self.warning_dialog('Set "Recent Hours" in Preferences.\n'
+                                            '"Recent Hours" is located in the "Processing" category')
+                        warned = True
+                else:
+                    print name, sams
+                    sams.extend(self._retrieve_recent_labnumbers(name))
+                    print 'b', name, sams
 
-            sams.extend(self._retrieve_labnumbers())
+            if list(onames):
+                sams.extend(self._retrieve_labnumbers())
 
         self.samples = sams
         self.osamples = sams
@@ -381,9 +385,10 @@ class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
 
             self._recent_mass_spectrometers.append(ms)
 
-            if not self.use_named_date_range:
-                self.use_high_post = True
-                self._high_post = hpost.date()
+            self.use_high_post=False
+            # if not self.use_named_date_range:
+            #     self.use_high_post = True
+            #     self._high_post = hpost.date()
 
             sams = self._retrieve_labnumbers()
 

@@ -1960,7 +1960,7 @@ class IsotopeAdapter(DatabaseAdapter):
                 q = q.join(gen_MassSpectrometerTable)
                 q = q.filter(gen_MassSpectrometerTable.name == spectrometer.lower())
 
-            q = q.filter(meas_AnalysisTable.analysis_timestamp >= lpost)
+            q = q.filter(self._get_post_filter(meas_AnalysisTable.analysis_timestamp, '__ge__', lpost))
             q = q.order_by(meas_AnalysisTable.analysis_timestamp.asc())
 
             return self._query_all(q)

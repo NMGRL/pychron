@@ -329,9 +329,9 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
                 selector.add_query('Analysis Type', '=', at, chain_rule='Or')
 
         if self.use_low_post:
-            selector.add_query('Run Date/Time', '>', self.low_post)
+            selector.add_query('Run Date/Time', '>', self.low_post.strftime('%m/%d/%Y %H:%M:%S'))
         if self.use_high_post:
-            selector.add_query('Run Date/Time', '<', self.high_post)
+            selector.add_query('Run Date/Time', '<', self.high_post.strftime('%m/%d/%Y %H:%M:%S'))
 
         if not selector.queries:
             if not psel.active:
