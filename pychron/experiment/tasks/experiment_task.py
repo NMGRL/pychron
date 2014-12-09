@@ -560,9 +560,14 @@ class ExperimentEditorTask(EditorTask):
         """
             ask user if ok to close open spectrometer and extraction line windows
         """
+
+        if not self.application:
+            return
+
         # ask user if ok to close windows
         windows = []
         names = []
+
         for wi in self.application.windows:
             wid = wi.active_task.id
             if wid == 'pychron.spectrometer':
