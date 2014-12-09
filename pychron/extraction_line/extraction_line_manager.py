@@ -180,6 +180,9 @@ class ExtractionLineManager(Manager, Consoleable):
             else:
                 return self.gauge_manager.test_connection()
 
+    def test_connection(self):
+        return self.test_valve_communication()
+
     def test_valve_communication(self):
         # if self.simulation:
         #     return globalv.communication_simulation

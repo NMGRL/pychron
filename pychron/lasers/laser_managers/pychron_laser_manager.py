@@ -33,7 +33,7 @@ from pychron.core.helpers.filetools import to_bool
 from pychron.paths import paths
 
 
-class PychronLaserManager(PychronDevice, BaseLaserManager):
+class PychronLaserManager(BaseLaserManager, PychronDevice):
     """
     A PychronLaserManager is used to control an instance of
     pychron remotely.

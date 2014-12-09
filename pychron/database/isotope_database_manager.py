@@ -65,7 +65,7 @@ class BaseIsotopeDatabaseManager(Loggable):
         ret = 0
         if self.db:
             ret = self.db.get_greatest_aliquot(identifier)
-        return ret
+        return ret or 0
 
     def get_greatest_step(self, identifier, aliquot):
         ret = 0

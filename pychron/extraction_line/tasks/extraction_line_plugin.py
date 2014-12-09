@@ -132,10 +132,10 @@ class ExtractionLinePlugin(BaseTaskPlugin):
         if man.mode == 'client':
 
             ip = InitializationParser()
-            elm = ip.get_plugin('Extraction', category='general')
+            elm = ip.get_plugin('ExtractionLine', category='hardware')
             runner = elm.find('runner')
             if runner is None:
-                self.warning_dialog('Script Runner is not configured in the Initialization file. See documentation')
+                man.warning_dialog('Script Runner is not configured in the Initialization file. See documentation')
                 return
 
             host, port, kind = None, None, None

@@ -125,6 +125,11 @@ class ExperimentPlugin(BaseTaskPlugin):
 
         return exp
 
+    def start(self):
+        super(ExperimentPlugin, self).start()
+
+        self.experimentor.executor.bind_preferences()
+
     def _signal_calculator_factory(self, *args, **kw):
         return SignalCalculator()
 

@@ -28,6 +28,7 @@ from threading import Lock
 from Queue import Queue
 # ============= local library imports  ==========================
 # from pychron.viewable import Viewable
+from pychron.core.ui.gui import invoke_in_main_thread
 
 
 class DisplayModel(HasTraits):
@@ -49,8 +50,8 @@ class DisplayModel(HasTraits):
 
     def add_text(self, txt, color, force=False, is_marker=False, **kw):
         self.qmessage.put((txt, color, force, is_marker))
-        self.refresh = True
-        # invoke_in_main_thread(self.trait_set, refresh=True)
+        # self.refresh = True
+        invoke_in_main_thread(self.trait_set, refresh=True)
 
 
 class DisplayController(ApplicationController):

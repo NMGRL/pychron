@@ -145,7 +145,7 @@ class UDPHandler(Handler):
             self.sock.sendto(p, self.address)
             ok = True
         except socket.error, e:
-            self.warning('send packet {}'.format(e))
+            self.warning('send packet {} {}'.format(e, self.address))
 
         return ok
 

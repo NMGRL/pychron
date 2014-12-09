@@ -186,7 +186,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         attrs = ('include_log', )
         self._preference_binder(prefid, attrs, obj=self.user_notifier)
 
-        emailer = self.application.get_service('pychron.social.emailer.Emailer')
+        emailer = self.application.get_service('pychron.social.email.emailer.Emailer')
         self.user_notifier.emailer = emailer
 
         #memory

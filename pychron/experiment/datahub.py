@@ -100,7 +100,7 @@ class Datahub(Loggable):
             try:
                 ps, ns, vs = self._get_greatest_aliquots(spec.identifier)
 
-                # print 'b', ps, ns, vs, spec.identifier
+                print 'b', ps, ns, vs, spec.identifier
                 mv = max(vs)
                 self._new_runid = make_aliquot_step(mv + 1, '')
                 self._new_aliquot = mv + 1
