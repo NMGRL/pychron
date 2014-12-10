@@ -211,7 +211,7 @@ class MeasurementPyScript(ValvePyScript):
 
     @count_verbose_skip
     @command_register
-    def peak_hop(self, ncycles=5, hops=None, calc_time=False):
+    def peak_hop(self, ncycles=5, hops=None, mftable='mftable', calc_time=False):
         if not hops:
             return
 
@@ -228,6 +228,7 @@ class MeasurementPyScript(ValvePyScript):
         if not self._automated_run_call('py_peak_hop', ncycles,
                                         counts,
                                         hops,
+                                        mftable,
                                         self._time_zero,
                                         self._time_zero_offset,
                                         self._series_count,

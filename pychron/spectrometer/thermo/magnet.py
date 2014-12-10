@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,13 +25,13 @@ from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
 
 
 class ArgusMagnet(BaseMagnet, SpectrometerDevice):
-    protected_detectors=List
+    protected_detectors = List
 
-    use_detector_protection=Bool
-    use_beam_blank=Bool
+    use_detector_protection = Bool
+    use_beam_blank = Bool
 
-    detector_protection_threshold=Float(0.1) #DAC units
-    beam_blank_threshold=Float(0.1) #DAC units
+    detector_protection_threshold = Float(0.1)  #DAC units
+    beam_blank_threshold = Float(0.1)  #DAC units
 
     # ===============================================================================
     # ##positioning
@@ -40,18 +40,18 @@ class ArgusMagnet(BaseMagnet, SpectrometerDevice):
         self.debug('setting dac {}'.format(v))
         micro = self.microcontroller
         unprotect = False
-        unblank=False
+        unblank = False
         if micro:
             if self.use_detector_protection:
-                if abs(self._dac - v) >self.detector_protection_threshold:
+                if abs(self._dac - v) > self.detector_protection_threshold:
                     for pd in self.protected_detectors:
                         micro.ask('ProtectDetector {},On'.format(pd), verbose=verbose)
                     unprotect = True
 
             elif self.use_beam_blank:
-                if abs(self._dac - v) >self.beam_blank_threshold:
+                if abs(self._dac - v) > self.beam_blank_threshold:
                     micro.ask('BlankBeam True', verbose=verbose)
-                    unblank=True
+                    unblank = True
 
             micro.ask('SetMagnetDAC {}'.format(v), verbose=verbose)
             time.sleep(self.settling_time)

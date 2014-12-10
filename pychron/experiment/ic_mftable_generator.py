@@ -25,15 +25,11 @@ from pychron.paths import paths
 
 
 class ICMFTableGenerator(Loggable):
-    spectrometer = Any
-    ion_optics_manager = Instance('pychron.spectrometer.ion_optics_manager.IonOpticsManager')
-
-    def make_mftable(self, detectors, refiso):
+    def make_mftable(self, ion, detectors, refiso):
         """
             peak center `refiso` for each detector in detectors
         :return:
         """
-        ion = self.ion_optics_manager
         self.info('Making IC MFTable')
         results = []
         for di in detectors:
@@ -42,7 +38,7 @@ class ICMFTableGenerator(Loggable):
             ion.do_peak_center(new_thread=False, save=False, warn=False)
             pc = ion.peak_center_result
             if pc:
-                self.debug('Peak Center {}@{}={:0.6f}'.format(di, refiso, pc))
+                self.info('Peak Center {}@{}={:0.6f}'.format(di, refiso, pc))
                 results.append(pc)
             else:
                 return False

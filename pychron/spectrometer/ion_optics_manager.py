@@ -75,8 +75,7 @@ class PeakCenterConfig(HasTraits):
                  buttons=['OK', 'Cancel'],
                  kind='livemodal',
                  title='Peak Center',
-                 handler=PeakCenterConfigHandler
-        )
+                 handler=PeakCenterConfigHandler)
         return v
 
 
@@ -101,6 +100,14 @@ class IonOpticsManager(Manager):
         spec = self.spectrometer
         molweights = spec.molecular_weights
         return molweights[isotope_key]
+
+    def set_mftable(self, mt=None):
+        """
+            if mt is None set to the default mftable located at setupfiles/spectrometer/mftable.csv
+        :param mt:
+        :return:
+        """
+        self.spectrometer.magnet.set_mftable(mt)
 
     def position(self, pos, detector, use_dac=False, update_isotopes=True):
         """

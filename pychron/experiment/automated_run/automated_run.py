@@ -144,8 +144,8 @@ class AutomatedRun(Loggable):
     # ===============================================================================
     # pyscript interface
     # ===============================================================================
-    def py_generate_ic_mftable(self):
-        return self._generate_ic_mftable()
+    def py_generate_ic_mftable(self, detectors, refiso):
+        return self._generate_ic_mftable(detectors, refiso)
 
     def py_whiff(self, ncounts, conditionals, starttime, starttime_offset, series=0, fit_series=0):
         return self._whiff(ncounts, conditionals, starttime, starttime_offset, series, fit_series)
@@ -411,11 +411,13 @@ class AutomatedRun(Loggable):
 
         self.plot_panel.analysis_view.load(self)
 
-    def py_peak_hop(self, cycles, counts, hops, starttime, starttime_offset,
+    def py_peak_hop(self, cycles, counts, hops, mftable, starttime, starttime_offset,
                     series=0, fit_series=0, group='signal'):
 
         if not self._alive:
             return
+
+        self.ion_optics_manager.set_mftable(mftable)
 
         is_baseline = False
         self.peak_hop_collector.is_baseline = is_baseline
@@ -440,6 +442,8 @@ class AutomatedRun(Loggable):
                              check_conditionals)
 
         self.is_peak_hop = False
+        self.ion_optics_manager.set_mftable()
+
         return ret
 
     def py_peak_center(self, detector=None, save=True, **kw):
@@ -542,7 +546,7 @@ class AutomatedRun(Loggable):
         # self.multi_collector.canceled = True
         self.collector.canceled = True
 
-        #        self.aliquot='##'
+        # self.aliquot='##'
         self.persister.save_enabled = False
         for s in ('extraction', 'measurement'):
             script = getattr(self, '{}_script'.format(s))
@@ -579,7 +583,7 @@ class AutomatedRun(Loggable):
                 self.measurement_script.truncate('quick')
 
             # self._truncate_signal = True
-            #self.multi_collector.set_truncated()
+            # self.multi_collector.set_truncated()
             self.collector.set_truncated()
             self.truncated = True
             self.state = 'truncated'
@@ -887,7 +891,7 @@ class AutomatedRun(Loggable):
             self.heading('Extraction Finished')
             self.info_color = None
 
-            #if overlapping need to wait for previous runs min mass spec pump time
+            # if overlapping need to wait for previous runs min mass spec pump time
             self._wait_for_min_ms_pumptime()
 
             return True
@@ -1132,12 +1136,12 @@ anaylsis_type={}
 
         return True
 
-    def _generate_ic_mftable(self):
+    def _generate_ic_mftable(self, detectors, refiso):
         ret = True
         from pychron.experiment.ic_mftable_generator import ICMFTableGenerator
+
         e = ICMFTableGenerator()
-        if not e.make_mftable():
-            self.cancel_run()
+        if not e.make_mftable(self.ion_optics_manager, detectors, refiso):
             ret = False
         return ret
 
@@ -1199,7 +1203,7 @@ anaylsis_type={}
         # for 2.0.4 backwards compatiblity
         # comp = dictgetter(cd, ('teststr','check','comp'))
         # if not comp:
-        #     self.debug('not teststr for this conditional "{}" cd={}'.format(name, cd))
+        # self.debug('not teststr for this conditional "{}" cd={}'.format(name, cd))
         #     return
         #
         # #for 2.0.4 backwards compatiblity
@@ -1397,7 +1401,7 @@ anaylsis_type={}
                             self.debug('Invalid conditional kind="{}"'.format(kind))
                             #
                             # for c in doc:
-                            #         try:
+                            # try:
                             #             attr = c['attr']
                             #             comp = c['check']
                             #             start = c['start']
@@ -1557,7 +1561,7 @@ anaylsis_type={}
                 k, s = spec.get_intensities(tagged=True)
                 if not k:
                     cnt += 1
-                    self.info('Failed getting intensity from mass spectrometer {}/{}'.format(cnt,fcnt), color='red')
+                    self.info('Failed getting intensity from mass spectrometer {}/{}'.format(cnt, fcnt), color='red')
                     if cnt >= fcnt:
                         self.info('Canceling Run. Failed getting intensity from mass spectrometer',
                                   color='red')
@@ -1777,7 +1781,7 @@ anaylsis_type={}
             mp = self.min_ms_pumptime
 
         # ensure mim mass spectrometer pump time
-        #wait until pumping started
+        # wait until pumping started
         self.debug('wait for mass spec pump out to start')
         self._wait_for(lambda x: not self.experiment_executor.ms_pumptime_start is None,
                        msg=lambda x: 'waiting for mass spec pumptime to start {:0.2f}'.format(x))

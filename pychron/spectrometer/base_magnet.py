@@ -15,11 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
 from traits.api import HasTraits, Property, Float, Event, Any, Instance, Int
 from traitsui.api import View, Item, VGroup, HGroup, Spring, RangeEditor
 # ============= standard library imports ========================
 from scipy import optimize
 # ============= local library imports  ==========================
+from pychron.core.helpers.filetools import add_extension
+from pychron.paths import paths
 from pychron.spectrometer.mftable import MagnetFieldTable, get_detector_name, mass_cal_func
 
 
@@ -55,6 +58,12 @@ class BaseMagnet(HasTraits):
     confirmation_threshold_mass = Int
 
     _suppress_mass_update = False
+
+    def set_dac(self, *args, **kw):
+        raise NotImplementedError
+
+    def set_mftable(self, name):
+        self.mftable.set_path_name(name)
 
     def update_field_table(self, *args):
         """
