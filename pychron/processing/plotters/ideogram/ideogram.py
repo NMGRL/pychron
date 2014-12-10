@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.message_dialog import warning
 from traits.api import Float, Array
 # ============= standard library imports ========================
 from numpy import linspace, pi, exp, zeros, ones, array, arange, \
@@ -53,11 +54,13 @@ class Ideogram(BaseArArFigure):
             plot data on plots
         """
         opt = self.options
-        # index_attr = 'uage'
         if opt.index_attr:
             index_attr = opt.index_attr
             if not opt.include_j_error:
                 index_attr = 'uage_wo_j_err'
+        else:
+            warning(None, 'X Value not set. Defaulting to Age')
+            index_attr = 'uage'
 
         graph = self.graph
 

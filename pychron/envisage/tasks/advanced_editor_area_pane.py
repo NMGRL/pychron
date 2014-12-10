@@ -15,21 +15,25 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import sys
-
-from PySide import QtCore
-from PySide.QtGui import QAction, QCursor
 from pyface.qt import QtGui
 from pyface.ui.qt4.tasks.advanced_editor_area_pane import EditorAreaWidget
 from pyface.ui.qt4.tasks.editor_area_pane import EditorAreaDropFilter
 from pyface import confirmation_dialog
 from pyface.constant import NO
 from pyface.tasks.advanced_editor_area_pane import AdvancedEditorAreaPane
-
 # ============= standard library imports ========================
+import sys
+from PySide import QtCore
+from PySide.QtGui import QAction, QCursor
 # ============= local library imports  ==========================
+
 class myEditorAreaWidget(EditorAreaWidget):
     def contextMenuEvent(self, event):
+        epos = event.pos()
+
+        if epos.y()>25:
+            return
+
         menu = QtGui.QMenu(self)
 
         for name, func in (('Close', 'close_action'),
