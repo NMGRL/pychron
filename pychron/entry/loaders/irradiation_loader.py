@@ -204,13 +204,12 @@ class XLSIrradiationLoader(Loggable):
         pass
 
     def add_positions(self, irradiation=None, level=None):
-
+        self.debug('Adding positions')
         dm = self.dm
         sheet = dm.get_sheet(('Positions', 2))
         idxdict = self._get_idx_dict(sheet, ('position', 'sample', 'material', 'weight',
                                              'irradiation',
                                              'project', 'level', 'note'))
-
         if self.autogenerate_labnumber:
             gen = self.identifier_generator()
         else:
@@ -288,7 +287,7 @@ class XLSIrradiationLoader(Loggable):
 
         # def _add_labnumbers(self):
         # for irrad in self.position_iterator():
-        #     for level in irrad:
+        # for level in irrad:
         #         for pos in level:
         #             pass
 
@@ -325,7 +324,7 @@ class XLSIrradiationLoader(Loggable):
         irrad, level, pos = pdict['irradiation'], pdict['level'], pdict['position']
         db = self.db
         if db:
-            dbip=db.add_irradiation_position(pos, None, irrad, level)
+            dbip = db.add_irradiation_position(pos, None, irrad, level)
             if dbip:
                 self._added_positions.append((irrad, level, pos))
                 labnumber = pdict['identifier']
@@ -384,11 +383,11 @@ class XLSIrradiationLoader(Loggable):
         db = self.db
         if db:
             with db.session_ctx():
-                dblevel=db.add_irradiation_level(name, irrad, holder, pr)
+                dblevel = db.add_irradiation_level(name, irrad, holder, pr)
                 if dblevel:
                     self._added_levels.append((irrad, name, pr, holder))
                     if add_positions:
-                        self.add_positions(dblevel)
+                        self.add_positions()
         else:
             self._added_levels.append((irrad, name, pr, holder))
 
@@ -436,7 +435,7 @@ class XLSIrradiationLoader(Loggable):
         # ps = parse_level_str(level_str.value)
         # return len(ps) if ps else 0
         # def iterate_irradiations2(self):
-        #         dm = self.dm
+        # dm = self.dm
         #         sheet = dm.get_sheet(('Irradiations', 0))
         #
         #         irrads=[]

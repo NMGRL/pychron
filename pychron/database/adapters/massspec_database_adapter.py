@@ -312,6 +312,17 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
             return self._add_item(i)
 
     def add_irradiation_position(self, identifier, irrad_level, hole, material='', sample=6, j=1e-4, jerr=1e-7):
+        """
+
+        :param identifier:
+        :param irrad_level: str e.g NM-176A
+        :param hole:
+        :param material:
+        :param sample:
+        :param j:
+        :param jerr:
+        :return:
+        """
         with self.session_ctx() as sess:
             q = sess.query(IrradiationPositionTable)
             q = q.filter(IrradiationPositionTable.IrradPosition == identifier)

@@ -606,22 +606,23 @@ class IsotopeAdapter(DatabaseAdapter):
         if labnumber:
             labnumber = self.get_labnumber(labnumber)
 
-        irrad = self.get_irradiation(irrad, )
-        if isinstance(level, (str, unicode)):
-            level = next((li for li in irrad.levels if li.name == level), None)
+        dbirrad = self.get_irradiation(irrad)
+        if dbirrad:
+            if isinstance(level, (str, unicode)):
+                level = next((li for li in dbirrad.levels if li.name == level), None)
 
-        if level:
-            dbpos = next((di for di in level.positions if di.position == pos), None)
-            if not dbpos:
-                dbpos = irrad_PositionTable(position=pos, **kw)
+            if level:
+                dbpos = next((di for di in level.positions if di.position == pos), None)
+                if not dbpos:
+                    dbpos = irrad_PositionTable(position=pos, **kw)
 
-                dbpos.level = level
-                self._add_item(dbpos)
+                    dbpos.level = level
+                    self._add_item(dbpos)
 
-            if labnumber:
-                labnumber.irradiation_position = dbpos
+                if labnumber:
+                    labnumber.irradiation_position = dbpos
 
-            return dbpos
+                return dbpos
 
     def add_irradiation_chronology(self, chronblob):
         '''

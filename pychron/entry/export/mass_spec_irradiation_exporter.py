@@ -124,13 +124,13 @@ class MassSpecIrradiationExporter(BaseIrradiationExporter):
             except AttributeError:
                 holder = ''
 
-            dest_level = dest.add_irradiation_level(irradname, src_level.name,
+            dest.add_irradiation_level(irradname, src_level.name,
                                                     holder, dest_pr)
         else:
             self.debug('Irradiation="{}", Level="{}" already exists. {}'.format(irradname, levelname, action))
 
         for pos in src_level.positions:
-            self._export_position(dest, dest_level, pos)
+            self._export_position(dest, '{}{}'.format(irradname, src_level.name), pos)
 
     def _export_production_ratios(self, source_pr):
         dest = self.destination
@@ -147,13 +147,15 @@ class MassSpecIrradiationExporter(BaseIrradiationExporter):
 
         return dest_pr
 
-    def _export_position(self, dest, dest_level, pos):
+    def _export_position(self, dest, irradiation_level, pos):
         action = 'Skipping'
 
         idn = pos.labnumber.identifier
         dest_pos = dest.get_irradiation_position(idn)
         if not dest_pos:
-            dest.add_irradiation_position(idn, dest_level)
+            self.debug('Exporting position {} {}'.format(idn, irradiation_level))
+            dest.add_irradiation_position(idn, irradiation_level, pos.position)
+
         else:
             self.debug('Irradiation Position="{}" already exists {}'.format(idn, action))
 
