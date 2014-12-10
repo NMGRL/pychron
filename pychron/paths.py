@@ -167,6 +167,7 @@ class Paths(object):
     loading_dir = None
     power_map_dir = None
     labbook_dir = None
+    data_det_ic_dir = None
     # vcs_dir = None
     # initialization_dir = None
     # device_creator_dir = None
@@ -287,7 +288,7 @@ class Paths(object):
         self.snapshot_dir = join(data_dir, 'snapshots')
         self.video_dir = join(data_dir, 'videos')
         self.stage_visualizer_dir = join(data_dir, 'stage_visualizer')
-
+        self.data_det_ic_dir = join(data_dir, 'det_ic')
         # self.arar_dir = join(data_dir, 'arar')
 
         self.isotope_dir = join(self.data_dir, 'isotopes')

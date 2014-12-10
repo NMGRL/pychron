@@ -15,13 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, List, Float, Str
-from traitsui.api import View, UItem, TabularEditor, VGroup
+import csv
+import os
+from traits.api import HasTraits, List, Float, Str, Button
+from traitsui.api import View, UItem, TabularEditor, VGroup, HGroup, spring
 from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from uncertainties import std_dev, nominal_value, ufloat
+from pychron.core.helpers.filetools import unique_path2, add_extension
 from pychron.core.helpers.formatting import floatfmt
+from pychron.paths import paths
 from pychron.pychron_constants import PLUSMINUS_SIGMA, DETECTOR_ORDER
 
 
@@ -30,26 +34,39 @@ class DetectorICTabularAdapter(TabularAdapter):
 
 
 class RatioItem(HasTraits):
+    name = Str
     refvalue = 1.0
     intensity = Str
     intensity_err = Str
+
     def add_ratio(self, x):
         v = x.get_non_detector_corrected_value() / self.refvalue
 
         self.add_trait(x.detector, Float(round(nominal_value(v), 5)))
         self.add_trait('{}_err'.format(x.detector), Float(round(std_dev(v), 5)))
 
+    def to_row(self):
+        vs = [self.name, self.intensity, self.intensity_err]
+        for det in DETECTOR_ORDER:
+            try:
+                v = getattr(self, det)
+                vs.append(v)
+            except AttributeError:
+                vs.append(0)
+        return vs
+        # return [for det in DETECTOR_ORDER if hasattr(self, det)]
+
 
 class DetectorICView(HasTraits):
     name = 'DetectorIC'
     items = List
     helpstr = """Values are COL/ROW ratios"""
-
+    export_button = Button
     _isotope_key = 'Ar40'
 
     def __init__(self, an):
         self.tabular_adapter = DetectorICTabularAdapter()
-
+        self.record_id = an.record_id
         isotopes = [an.isotopes[k] for k in an.isotope_keys if k.startswith(self._isotope_key)]
 
         detcols = list(self._get_columns(isotopes))
@@ -60,7 +77,7 @@ class DetectorICView(HasTraits):
 
         items = []
         for det in DETECTOR_ORDER:
-            ai = next((ai for ai in isotopes if ai.detector.upper()==det), None)
+            ai = next((ai for ai in isotopes if ai.detector.upper() == det), None)
             if ai:
                 rv = ai.get_non_detector_corrected_value()
                 r = RatioItem(name=ai.detector,
@@ -78,16 +95,27 @@ class DetectorICView(HasTraits):
     def _get_columns(self, isos):
 
         for det in DETECTOR_ORDER:
-            iso = next((iso for iso in isos if iso.detector.upper()==det), None)
+            iso = next((iso for iso in isos if iso.detector.upper() == det), None)
             if iso:
                 yield det, iso.detector
-        # for iso in isos:
-        #     det=iso.detector.upper()
-        #     yield det, iso.detector
-            # yield PLUSMINUS_SIGMA, '{}_err'.format(iso.detector)
+                # for iso in isos:
+                # det=iso.detector.upper()
+                # yield det, iso.detector
+                # yield PLUSMINUS_SIGMA, '{}_err'.format(iso.detector)
+
+    def _export_button_fired(self):
+        path = os.path.join(paths.data_det_ic_dir, add_extension(self.record_id,'.csv'))
+        # path, _ = unique_path2(paths.data_dir, 'det_ic')
+        with open(path, 'w') as fp:
+            wrt = csv.writer(fp, delimiter='\t')
+            wrt.writerow(['#det','intensity','err']+DETECTOR_ORDER)
+            for i in self.items:
+                wrt.writerow(i.to_row())
+
 
     def traits_view(self):
-        v = View(VGroup(UItem('items', editor=TabularEditor(adapter=self.tabular_adapter)),
+        v = View(VGroup(HGroup(spring,UItem('export_button')),
+                        UItem('items', editor=TabularEditor(adapter=self.tabular_adapter)),
                         VGroup(
                             UItem('helpstr', style='readonly'), show_border=True, label='Info.')),
                  width=700)
@@ -105,8 +133,9 @@ if __name__ == '__main__':
             return ufloat(self.value, 0.1)
 
     class MockAnalysis():
-        isotopes = {k:MockIsotope(k, d, i + 1.0) for i, (k, d) in
-                    enumerate([('Ar40H1', 'H1'), ('Ar40AX', 'AX'), ('Ar40L1', 'L1'), ('Ar39','CDD')])}
+        isotopes = {k: MockIsotope(k, d, i + 1.0) for i, (k, d) in
+                    enumerate([('Ar40H1', 'H1'), ('Ar40AX', 'AX'), ('Ar40L1', 'L1'), ('Ar39', 'CDD')])}
+
         @property
         def isotope_keys(self):
             return [i for i in self.isotopes]
