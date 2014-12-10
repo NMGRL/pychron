@@ -23,6 +23,7 @@ from traits.api import Instance
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.entry.sensitivity_entry import SensitivitySelector
+from pychron.envisage.initialization.initialization_parser import InitializationParser
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 # from pychron.experiment.experiment_executor import ExperimentExecutor
 from pychron.experiment.experimentor import Experimentor
@@ -108,7 +109,7 @@ class ExperimentPlugin(BaseTaskPlugin):
 
     def _experimentor_default(self):
         # from pychron.experiment.experimentor import Experimentor
-        from pychron.initialization_parser import InitializationParser
+
 
         ip = InitializationParser()
         plugin = ip.get_plugin('Experiment', category='general')
