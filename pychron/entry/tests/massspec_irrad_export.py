@@ -9,18 +9,19 @@ from pychron.entry.export.mass_spec_irradiation_exporter import MassSpecIrradiat
     generate_production_ratios_id
 
 
-DEBUGGING = False
-
+DEBUGGING = True
+LOGGING =True
 # automatically disable debugging if running on a travis ci linux box.
 import sys
 
 if sys.platform != 'darwin':
     DEBUGGING = False
+    LOGGING = False
 
 DEST_NAME = 'massspecdata.db'
 SRC_NAME = 'pychrondata.db'
 
-if DEBUGGING:
+if LOGGING:
     from pychron.core.helpers.logger_setup import logging_setup
 
     logging_setup('irrad_loader')
@@ -46,6 +47,7 @@ def source_factory():
         db.add_irradiation_production(name='Triga PR')
 
     loader = XLSIrradiationLoader(db=db)
+    loader.open(p)
     loader.load_irradiation(p, dry_run=False)
     db.verbose = False
     with db.session_ctx():
@@ -119,6 +121,15 @@ class MassSpecIrradExportTestCase(unittest.TestCase):
             names = tuple(dest.get_irradiation_level_names(name))
 
         self.assertTupleEqual(names, self.levels[name])
+
+    # @unittest.skipIf(DEBUGGING, 'Debugging')
+    def test_positions(self):
+        self.exporter.do_export(self.irradnames)
+        dest = self.exporter.destination
+        with dest.session_ctx():
+            iname = self.irradnames[0]
+            pos = dest.get_irradiation_positions(iname, self.levels[iname][0])
+            self.assertEqual(len(pos), 3)
 
 
 class ProductionRatiosTestCase(unittest.TestCase):
