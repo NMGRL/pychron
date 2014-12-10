@@ -47,6 +47,7 @@ class AgeOptions(PlotterOptions):
     error_info_fontsize = Enum(*SIZES)
 
     label_fontsize = Enum(*SIZES)
+    use_centered_range = Bool
 
     def _include_j_error_changed(self, new):
         if new:

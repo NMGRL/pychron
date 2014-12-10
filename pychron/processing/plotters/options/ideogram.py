@@ -34,7 +34,7 @@ class IdeogramOptions(AgeOptions):
     use_static_limits = Bool
     xlow = Float
     xhigh = Float
-    use_centered_range = Bool
+
     _use_centered_range = Bool
     centered_range = Float(0.5)
 
