@@ -744,7 +744,6 @@ class IsotopeAdapter(DatabaseAdapter):
             try:
                 sample = q.one()
             except Exception, e:
-                print e, name, project, material
                 sample = None
 
             if sample is None:
@@ -759,7 +758,6 @@ class IsotopeAdapter(DatabaseAdapter):
                 if sample_material_name != materialname and \
                                 sample_project_name != projectname:
                     sample = self._add_sample(name, project, material)
-
             return sample
 
     def add_script(self, name, blob):
@@ -1742,6 +1740,7 @@ class IsotopeAdapter(DatabaseAdapter):
 
     def get_irradiation_position(self, irrad, level, pos):
         with self.session_ctx() as sess:
+            print irrad, level, pos
             q = sess.query(irrad_PositionTable)
             q = self._irrad_level(q, irrad, level)
 
@@ -1753,7 +1752,7 @@ class IsotopeAdapter(DatabaseAdapter):
                 func = 'one'
             try:
                 return getattr(q, func)()
-            except Exception, _:
+            except Exception, e:
                 pass
 
     def get_irradiation_labnumbers(self, irrad, level, low_post=None,

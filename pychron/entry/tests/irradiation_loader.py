@@ -274,7 +274,7 @@ class XLSIrradiationLoaderParseTestCase(unittest.TestCase):
                                                            ('NM-1000', 'B', 3)])
 
     def test_config_autogen(self):
-        self.assertTrue(self.loader.autogenerate_labnumber)
+        self.assertFalse(self.loader.autogenerate_labnumber)
 
     def test_config_ioffset(self):
         self.assertEqual(self.loader.base_irradiation_offset, 1000)

@@ -150,12 +150,12 @@ class MassSpecIrradiationExporter(BaseIrradiationExporter):
     def _export_position(self, dest, dest_level, pos):
         action = 'Skipping'
 
-        # idn = pos.labnumber.identifier
-        # dest_pos = dest.get_irradiation_position(idn)
-        # if not dest_pos:
-        # dest.add_irradiation_position(idn, dest_level)
-        # else:
-        #     self.debug('Irradiation Position="{}" already exists {}'.format(idn, action))
+        idn = pos.labnumber.identifier
+        dest_pos = dest.get_irradiation_position(idn)
+        if not dest_pos:
+            dest.add_irradiation_position(idn, dest_level)
+        else:
+            self.debug('Irradiation Position="{}" already exists {}'.format(idn, action))
 
 # ============= EOF =============================================
 
