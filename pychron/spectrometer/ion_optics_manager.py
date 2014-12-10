@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -53,7 +53,7 @@ class PeakCenterConfig(HasTraits):
     directions = Enum('Increase', 'Decrease', 'Oscillate')
 
     def _integration_time_default(self):
-        return QTEGRA_INTEGRATION_TIMES[4] #1.048576
+        return QTEGRA_INTEGRATION_TIMES[4]  #1.048576
 
     def dump(self):
         p = os.path.join(paths.hidden_dir, 'peak_center_config')
@@ -170,6 +170,7 @@ class IonOpticsManager(Manager):
 
         self.canceled = False
         self.alive = True
+        self.peak_center_result = None
 
         args = (save, confirm_save, warn, message, on_end)
         if new_thread:
@@ -191,7 +192,7 @@ class IonOpticsManager(Manager):
 
         if detector is None or isotope is None:
             pcc = self.peak_center_config
-            pcc.dac=self.spectrometer.magnet.dac
+            pcc.dac = self.spectrometer.magnet.dac
 
             info = pcc.edit_traits()
             if not info.result:
@@ -201,7 +202,7 @@ class IonOpticsManager(Manager):
                 detector = pcc.detector.name
                 isotope = pcc.isotope
                 directions = pcc.directions
-                integration_time=pcc.integration_time
+                integration_time = pcc.integration_time
 
                 if not pcc.use_current_dac:
                     center_dac = pcc.dac

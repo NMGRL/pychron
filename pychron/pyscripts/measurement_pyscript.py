@@ -95,6 +95,16 @@ class MeasurementPyScript(ValvePyScript):
     # ===============================================================================
     @verbose_skip
     @command_register
+    def generate_ic_mftable(self, detectors, refiso='Ar40', calc_time=False):
+        if calc_time:
+            self._estimated_duration += len(detectors) * 30
+            return
+
+        if not self._automated_run_call('py_generate_ic_mftable', detectors, refiso):
+            self.cancel()
+
+    @verbose_skip
+    @command_register
     def extraction_gosub(self, *args, **kw):
         kw['klass'] = 'ExtractionPyScript'
         super(MeasurementPyScript, self).gosub(*args, **kw)

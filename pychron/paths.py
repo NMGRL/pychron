@@ -184,6 +184,7 @@ class Paths(object):
     mftable = None
     deflection = None
     startup_tests = None
+    ic_mftable = None
 
     def set_search_paths(self, app_rec=None):
         self.app_resources = app_rec
@@ -311,9 +312,10 @@ class Paths(object):
         self.backup_recovery_file = join(self.hidden_dir, 'backup_recovery')
         self.last_experiment = join(self.hidden_dir, 'last_experiment')
         self.mftable = join(self.spectrometer_dir, 'mftable.csv')
+        self.ic_mftable = join(self.spectrometer_dir, 'ic_mftable.csv')
+
         self.deflection = join(self.spectrometer_dir, 'deflection.yaml')
         self.startup_tests = join(self.setup_dir, 'startup_tests.yaml')
-
         self.set_search_paths()
 
         self._write_default_files()

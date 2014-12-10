@@ -144,6 +144,9 @@ class AutomatedRun(Loggable):
     # ===============================================================================
     # pyscript interface
     # ===============================================================================
+    def py_generate_ic_mftable(self):
+        return self._generate_ic_mftable()
+
     def py_whiff(self, ncounts, conditionals, starttime, starttime_offset, series=0, fit_series=0):
         return self._whiff(ncounts, conditionals, starttime, starttime_offset, series, fit_series)
 
@@ -1113,21 +1116,30 @@ anaylsis_type={}
         self.eqtime = self._get_extraction_parameter('eqtime', 15)
         self.time_zero_offset = self.spec.collection_time_zero_offset
 
-        #setup persister. mirror a few of AutomatedRunsAttributes
+        # setup persister. mirror a few of AutomatedRunsAttributes
         self.setup_persister()
 
-        #setup default/queue conditionals
+        # setup default/queue conditionals
         # clear the conditionals for good measure.
         # conditionals should be cleared during teardown.
         self.py_clear_conditionals()
 
-        #add default conditionals
+        # add default conditionals
         self._add_default_conditionals()
 
-        #add queue conditionals
+        # add queue conditionals
         self._add_queue_conditionals()
 
         return True
+
+    def _generate_ic_mftable(self):
+        ret = True
+        from pychron.experiment.ic_mftable_generator import ICMFTableGenerator
+        e = ICMFTableGenerator()
+        if not e.make_mftable():
+            self.cancel_run()
+            ret = False
+        return ret
 
     def _add_default_conditionals(self):
         self.debug('add default conditionals')
