@@ -89,7 +89,7 @@ class DashboardServer(Loggable):
 
     # def setup_database(self):
     # if self.use_db:
-    #         self.db_manager.start()
+    # self.db_manager.start()
 
     def setup_notifier(self):
         parser = get_parser()
@@ -158,7 +158,6 @@ class DashboardServer(Loggable):
 
                 func_name = get_xml_value(v, 'func', 'get')
                 period = get_xml_value(v, 'period', 60)
-
                 if not period == 'on_change':
                     try:
                         period = int(period)
@@ -166,7 +165,7 @@ class DashboardServer(Loggable):
                         period = 60
 
                 enabled = to_bool(get_xml_value(v, 'enabled', False))
-                timeout = get_xml_value(v, 'timeout', 0)
+                timeout = get_xml_value(v, 'timeout', 120)
                 threshold = float(get_xml_value(v, 'change_threshold', 1e-10))
                 units = get_xml_value(v, 'units', '')
 
@@ -230,15 +229,25 @@ class DashboardServer(Loggable):
 
         self.debug('min period {}'.format(mperiod))
         while self._alive:
+            sst = time.time()
+            self.debug('============= poll iteration start ============')
             for dev in self.devices:
                 if not dev.use:
                     continue
 
                 dev.trigger()
-            time.sleep(mperiod)
+
+            self.debug('sleeping for {}'.format(mperiod))
+            st = time.time()
+            while self._alive:
+                if time.time() - st > mperiod:
+                    break
+                time.sleep(0.25)
+            dur = time.time() - sst
+            self.debug('============= poll iteration finished dur={:0.2f}============'.format(dur))
 
     # def _set_error_flag(self, obj, msg):
-    #     self.notifier.send_message('error {}'.format(msg))
+    # self.notifier.send_message('error {}'.format(msg))
 
     def _validate_script(self, script_name):
         script = self._script_factory(script_name)

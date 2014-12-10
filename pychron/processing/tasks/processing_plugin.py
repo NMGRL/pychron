@@ -58,6 +58,8 @@ from pyface.message_dialog import warning
 
 
 class ProcessingPlugin(BaseTaskPlugin):
+    id = 'pychron.processing.plugin'
+    name = 'Processing'
     def _actions_default(self):
         return [('pychron.ideogram', 'Ctrl+J', 'Open Ideogram'),
                 ('pychron.spectrum', 'Ctrl+D', 'Open Spectrum'),

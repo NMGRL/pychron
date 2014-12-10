@@ -28,6 +28,9 @@ class DatabasePlugin(BaseTaskPlugin):
     _connectable = False
     _db = None
 
+    test_pychron_description = 'Test the connection to the Pychron Database'
+    test_massspec_description = 'Test the connection to the MassSpec Database'
+
     def test_pychron(self):
         iso = IsotopeDatabaseManager(application=self.application,
                                      version_warn=True, attribute_warn=True)

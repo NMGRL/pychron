@@ -20,6 +20,7 @@ import hashlib
 from pprint import pprint
 import time
 from apptools.preferences.preference_binding import bind_preference
+from pymongo.errors import ConnectionFailure
 from traits.api import HasTraits, Button, Str, Int
 from traitsui.api import View, Item
 # ============= standard library imports ========================
@@ -41,46 +42,56 @@ class LabspyClient(Loggable):
             bind_preference(self, 'host', 'pychron.labspy.host')
             bind_preference(self, 'port', 'pychron.labspy.port')
 
+    def test_connection(self, warn=True):
         if self.host and self.port:
-            self._client = MongoClient('mongodb://{}:{}/'.format(self.host, self.port))
-            # self._client = MongoClient('mongodb://{}/'.format(self.host))
-
+            url = 'mongodb://{}:{}/'.format(self.host, self.port)
+            try:
+                self._client = MongoClient(url)
+                return True
+            except ConnectionFailure:
+                if warn:
+                    self.warning_dialog('failed connecting to database at {}'.format(url))
+        return False
     @property
     def db(self):
-        return self._client[self.database_name]
+        if self._client:
+            return self._client[self.database_name]
 
     def add_experiment(self, exp):
         db = self.db
-        now = datetime.now()
-        attrs = ('username', 'extract_device', 'mass_spectrometer', 'name', 'status')
-        doc = {ai: getattr(exp, ai) for ai in attrs}
+        if db:
+            now = datetime.now()
+            attrs = ('username', 'extract_device', 'mass_spectrometer', 'name', 'status')
+            doc = {ai: getattr(exp, ai) for ai in attrs}
 
-        hid = self._generate_hid(exp)
-        doc.update(**{'starttime': time.mktime(exp.starttime.timetuple()),
-                      'timestamp': time.mktime(now.timetuple()),
-                      'hash_id': hid})
+            hid = self._generate_hid(exp)
+            doc.update(**{'starttime': time.mktime(exp.starttime.timetuple()),
+                          'timestamp': time.mktime(now.timetuple()),
+                          'hash_id': hid})
 
-        db.experiments.insert(doc)
-        # exp.hash_id = hid
+            db.experiments.insert(doc)
+            # exp.hash_id = hid
 
     def update_experiment(self, exp, err_msg):
-        db = self.db
-        hid = self._generate_hid(exp)
-        doc = db.experiments.find_one({'hash_id': hid})
-        if doc:
-            db.experiments.update({'_id': doc['_id']},
-                                  {'$set': {'status': err_msg or 'Finished',
-                                            'timestampf': time.mktime(datetime.now().timetuple())}})
+        if self.db:
+            db = self.db
+            hid = self._generate_hid(exp)
+            doc = db.experiments.find_one({'hash_id': hid})
+            if doc:
+                db.experiments.update({'_id': doc['_id']},
+                                      {'$set': {'status': err_msg or 'Finished',
+                                                'timestampf': time.mktime(datetime.now().timetuple())}})
 
     def update_state(self, **kw):
         db = self.db
-        doc = db.state.find_one({})
-        if not doc:
-            doc \
-                = kw
-            db.state.insert(doc)
-        else:
-            db.state.update({'_id': doc['_id']}, {'$set': kw})
+        if db:
+            doc = db.state.find_one({})
+            if not doc:
+                doc \
+                    = kw
+                db.state.insert(doc)
+            else:
+                db.state.update({'_id': doc['_id']}, {'$set': kw})
 
     def _generate_hid(self, exp):
         md5 = hashlib.md5()
@@ -91,35 +102,39 @@ class LabspyClient(Loggable):
 
     def add_run(self, run, exp):
         db = self.db
-        # attrs = ('record_id', 'timestamp', 'experiment_name', 'state')
-        # doc = {k: getattr(run, k) for k in attrs}
-        doc = self._make_run_doc(run, exp)
-        db.runs.insert(doc)
+        if db:
+            # attrs = ('record_id', 'timestamp', 'experiment_name', 'state')
+            # doc = {k: getattr(run, k) for k in attrs}
+            doc = self._make_run_doc(run, exp)
+            db.runs.insert(doc)
 
     def add_device_post(self, devs):
-        clt = self._client
-        if not clt:
-            return
+        # clt = self._client
+        # if not clt:
+        # return
+        #
+        # db = clt[self.database_name]
 
-        db = clt[self.database_name]
-        now = datetime.now()
-        # print now.isoformat(), now.strftime('%H:%M:%S')
-        doc = {  # 'timestamp': now,
-                 # 'timestampt': now.strftime('%H:%M:%S'),
-                 'timestamp': time.mktime(now.timetuple())}
+        db = self.db
+        if db:
+            now = datetime.now()
+            # print now.isoformat(), now.strftime('%H:%M:%S')
+            doc = {  # 'timestamp': now,
+                     # 'timestampt': now.strftime('%H:%M:%S'),
+                     'timestamp': time.mktime(now.timetuple())}
 
-        values = []
-        for di in devs:
-            for vk, cv, ui in zip(di.value_keys, di.current_values, di.units):
-                values.append({'device': di.name,
-                               'name': vk,
-                               'value': cv,
-                               'units': ui})
+            values = []
+            for di in devs:
+                for vk, cv, ui in zip(di.value_keys, di.current_values, di.units):
+                    values.append({'device': di.name,
+                                   'name': vk,
+                                   'value': cv,
+                                   'units': ui})
 
-        doc['values'] = values
+            doc['values'] = values
 
-        # pprint(doc, width=4)
-        db.devices.insert(doc)
+            # pprint(doc, width=4)
+            db.devices.insert(doc)
 
     # private
     def _make_run_doc(self, run, exp):
@@ -176,7 +191,7 @@ def add_experiment(c):
     pass
     # class Exp():
     # def __init__(self, name, user, spec, status):
-    #         self.name = name
+    # self.name = name
     #         self.username = user
     #         self.spectrometer = spec
     #         self.mass_spectrometer = spec

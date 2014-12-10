@@ -24,8 +24,8 @@ from pychron.labspy.client import LabspyClient
 from pychron.labspy.tasks.preferences import LabspyPreferencesPane
 
 
-class LabspyPlugin(BaseTaskPlugin):
-    name = 'Labspy Client'
+class LabspyClientPlugin(BaseTaskPlugin):
+    name = 'LabspyClient'
     id = 'pychron.labspy_client.plugin'
 
     def _service_offers_default(self):
@@ -35,6 +35,10 @@ class LabspyPlugin(BaseTaskPlugin):
 
     def _preferences_panes_default(self):
         return [LabspyPreferencesPane]
+
+    def test_communication(self):
+        lc = LabspyClient()
+        return lc.test_connection(warn=False)
 # ============= EOF =============================================
 
 

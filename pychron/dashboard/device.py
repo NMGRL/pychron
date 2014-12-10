@@ -67,7 +67,7 @@ class DashboardDevice(Loggable):
         """
             trigger a new value if appropriate
         """
-
+        self.debug('*********** Triggering values **********')
         for value in self.values:
             if not value.enabled:
                 continue
@@ -76,16 +76,23 @@ class DashboardDevice(Loggable):
             dt = st - value.last_time
             if value.period == 'on_change':
                 if value.timeout and dt > value.timeout:
-                    self._push_value(value, 'timeout')
+                    self._trigger(value, force=True)
+                    # self._push_value(value, 'timeout')
             elif dt > value.period:
-                try:
-                    nv = getattr(self._device, value.func_name)()
-                    self._push_value(value, nv)
-                except Exception:
-                    import traceback
-                    print self._device, self._device.name, value.func_name
-                    self.debug(traceback.format_exc())
-                    value.use_pv = False
+                self._trigger(value)
+
+    def _trigger(self, value, **kw):
+        try:
+            nv = getattr(self._device, value.func_name)(**kw)
+            self.debug('triggering value device={} value={} func={}'.format(self._device.name,
+                                                                 value.name,
+                                                                 value.func_name))
+            self._push_value(value, nv)
+        except BaseException:
+            import traceback
+            print self._device, self._device.name, value.func_name
+            self.debug(traceback.format_exc())
+            value.use_pv = False
 
     def add_value(self, n, tag, func_name, period, use, threshold, units, timeout):
         pv = ProcessValue(name=n,
@@ -93,7 +100,7 @@ class DashboardDevice(Loggable):
                           func_name=func_name,
                           period=period,
                           enabled=use,
-                          timeout=timeout,
+                          timeout=float(timeout),
                           units=units,
                           change_threshold=threshold)
 

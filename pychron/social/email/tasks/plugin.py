@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,7 +25,8 @@ from pychron.social.email.tasks.preferences import EmailPreferencesPane
 
 class EmailPlugin(BaseTaskPlugin):
     id = 'pychron.email.plugin'
-
+    name = 'Email'
+    test_email_server_description = 'Test connection to the SMTP Email Server'
     def _email_factory(self):
         return Emailer()
 
@@ -36,4 +37,9 @@ class EmailPlugin(BaseTaskPlugin):
         so = self.service_offer_factory(factory=self._email_factory,
                                         protocol='pychron.social.email.emailer.Emailer')
         return [so]
+
+    def test_email_server(self):
+        e = self._email_factory()
+        return e.test_email_server()
+
         # ============= EOF =============================================

@@ -30,7 +30,7 @@ class TestResult(HasTraits):
     plugin = Str
     duration = Float
     result = Enum('Passed', 'Failed', 'Skipped', 'Invalid')
-
+    description = Str
 
 class StartupTester(Loggable):
     results = List
@@ -58,6 +58,11 @@ class StartupTester(Loggable):
                 self.add_test_result(plugin=pname, name=ti, result='Invalid')
                 continue
 
+            try:
+                description = getattr(plugin, '{}_description'.format(ti))
+            except AttributeError:
+                description=''
+
             self.info('Testing "{} - {}"'.format(pname, ti))
             st = time.time()
             result = func()
@@ -66,7 +71,9 @@ class StartupTester(Loggable):
             elif result is None:
                 result = 'Invalid'
 
-            self.add_test_result(name=ti, plugin=pname, duration=time.time() - st,
+            self.add_test_result(name=ti, plugin=pname,
+                                 description=description,
+                                 duration=time.time() - st,
                                  result=result)
 
     def ok_close(self):

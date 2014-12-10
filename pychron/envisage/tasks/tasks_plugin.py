@@ -29,6 +29,8 @@ from pychron.envisage.tasks.panes import GeneralPreferencesPane
 
 
 class PychronTasksPlugin(Plugin):
+    id = 'pychron.tasks.plugin'
+    name = 'Tasks'
     preferences_panes = List(
         contributes_to='envisage.ui.tasks.preferences_panes')
     task_extensions = List(contributes_to='envisage.ui.tasks.task_extensions')

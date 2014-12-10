@@ -178,7 +178,8 @@ class SerialCommunicator(Communicator):
 
         if self.handle is None:
             if verbose:
-                self.info('no handle    {}'.format(cmd.strip()))
+                x = self._prep_str(cmd.strip())
+                self.info('no handle    {}'.format(x))
             return
 
         if not self.handle.isOpen():

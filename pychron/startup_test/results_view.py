@@ -28,6 +28,7 @@ from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.pychron_constants import LIGHT_GREEN, LIGHT_RED, LIGHT_YELLOW
+from pychron.startup_test.tester import TestResult
 
 
 COLOR_MAP = {'Passed': LIGHT_GREEN,
@@ -55,7 +56,7 @@ class ResultsAdapter(TabularAdapter):
 class ResultsView(Controller):
     model = Instance('pychron.startup_test.tester.StartupTester')
     auto_close = 5
-    selected = Any
+    selected = Instance(TestResult, ())
 
     base_help_str = 'Select any row to cancel auto close. Auto close in {}'
     help_str = String
@@ -115,6 +116,10 @@ class ResultsView(Controller):
         v = View(VGroup(UItem('results', editor=TabularEditor(adapter=ResultsAdapter(),
                                                               editable=False,
                                                               selected='controller.selected')),
+                        VGroup(UReadonly('controller.selected.description'),
+                               show_border=True,
+                               label='Description'),
+
                         VGroup(UReadonly('controller.help_str'),
                                show_border=True,
                                visible_when='controller.help_str')),

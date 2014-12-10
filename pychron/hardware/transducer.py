@@ -30,7 +30,6 @@ class Transducer(ADCDevice):
 class AirTransducer(ADCDevice):
     def get_pressure(self, force=True):
         v=self.get_output(force=force)
-        print 'gsdgfsdf', v
         return v
 
 

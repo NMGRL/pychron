@@ -63,7 +63,7 @@ PACKAGE_DICT = dict(
     SystemMonitorPlugin='pychron.system_monitor.tasks.system_monitor_plugin',
     WorkspacePlugin='pychron.workspace.tasks.workspace_plugin',
     LabBookPlugin='pychron.labbook.tasks.labbook_plugin',
-    LabspyPlugin='pychron.labspy.tasks.plugin')
+    LabspyClientPlugin='pychron.labspy.tasks.plugin')
 
 
 def get_module_name(klass):
