@@ -16,10 +16,8 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import List, Button, Any, Int, Str, Enum, Color
-from traits.trait_types import String
-from traits.traits import Property
-from traitsui.api import View, VGroup, UItem, HGroup
+from traits.api import List, Button, Any, Int, Str, Enum, Color, String, Property
+from traitsui.api import View, VGroup, UItem, HGroup, Item, spring
 from apptools.preferences.api import PreferencesHelper
 # ============= standard library imports ========================
 import re
@@ -27,7 +25,7 @@ import re
 from traitsui.list_str_adapter import ListStrAdapter
 
 
-#def button_editor(trait, name, editor_kw=None, **kw):
+# def button_editor(trait, name, editor_kw=None, **kw):
 #    if editor_kw is None:
 #        editor_kw = {}
 #
@@ -73,12 +71,22 @@ def test_connection_item():
                               tooltip='Test connection to Github Repo')
 
 
+def remote_status_item(label):
+    return HGroup(Item('remote', label='Name'),
+                  test_connection_item(),
+                  CustomLabel('_remote_status',
+                              width=50,
+                              color_name='_remote_status_color'),
+                  label=label,
+                  show_border=True)
+
+
 class GitRepoPreferencesHelper(BasePreferencesHelper):
     remote = Property(String, depends_on='_remote')
     _remote = String
     test_connection = Button
-    remote_status = Str
-    remote_status_color = Color
+    _remote_status = Str
+    _remote_status_color = Color
 
     def _test_connection_fired(self):
         import urllib2
@@ -86,14 +94,14 @@ class GitRepoPreferencesHelper(BasePreferencesHelper):
         if self.remote.strip():
             try:
                 urllib2.urlopen('https://github.com/{}'.format(self.remote))
-                self.remote_status = 'Valid'
-                self.remote_status_color = 'green'
+                self._remote_status = 'Valid'
+                self._remote_status_color = 'green'
                 return
             except:
                 pass
 
-        self.remote_status_color = 'red'
-        self.remote_status = 'Invalid'
+        self._remote_status_color = 'red'
+        self._remote_status = 'Invalid'
 
     def _set_remote(self, v):
         self._remote = v

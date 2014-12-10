@@ -47,12 +47,13 @@ class ExperimentEditorTask(EditorTask):
     wildcard = '*.txt'
 
     use_notifications = Bool
-    use_syslogger = Bool
+    notifier = Instance(Notifier, ())
     # notifications_port = Int
 
     loading_manager = Instance('pychron.loading.loading_manager.LoadingManager')
-    notifier = Instance(Notifier, ())
-    syslogger = Instance('pychron.experiment.sys_log.SysLogger')
+
+    # use_syslogger = Bool
+    # syslogger = Instance('pychron.experiment.sys_log.SysLogger')
 
     # analysis_health = Instance(AnalysisHealth)
     last_experiment_changed = Event
@@ -169,9 +170,9 @@ class ExperimentEditorTask(EditorTask):
             self.notifier.setup(self.notifier.port)
 
         # sys logger
-        bind_preference(self, 'use_syslogger', 'pychron.use_syslogger')
-        if self.use_syslogger:
-            self._use_syslogger_changed()
+        # bind_preference(self, 'use_syslogger', 'pychron.use_syslogger')
+        # if self.use_syslogger:
+        #     self._use_syslogger_changed()
 
         color_bind_preference(self, 'bgcolor', 'pychron.experiment.bg_color')
         color_bind_preference(self, 'even_bgcolor', 'pychron.experiment.even_bg_color')
@@ -409,14 +410,14 @@ class ExperimentEditorTask(EditorTask):
             self.manager.experiment_queue = self.active_editor.queue
             self._show_pane(self.experiment_factory_pane)
 
-    def _use_syslogger_changed(self):
-        if self.use_syslogger:
-            from pychron.experiment.sys_log import SysLogger
-
-            prefid = 'pychron.syslogger'
-            self.syslogger = SysLogger()
-            for attr in ('username', 'password', 'host'):
-                bind_preference(self.syslogger, attr, '{}.{}'.format(prefid, attr))
+    # def _use_syslogger_changed(self):
+    #     if self.use_syslogger:
+    #         from pychron.experiment.sys_log import SysLogger
+    #
+    #         prefid = 'pychron.syslogger'
+    #         self.syslogger = SysLogger()
+    #         for attr in ('username', 'password', 'host'):
+    #             bind_preference(self.syslogger, attr, '{}.{}'.format(prefid, attr))
 
     @on_trait_change('manager:executor:auto_save_event')
     def _auto_save(self):
@@ -543,9 +544,9 @@ class ExperimentEditorTask(EditorTask):
         if self.use_notifications:
             self.notifier.send_console_message(new)
 
-        if self.use_syslogger:
-            self.syslogger.executor = self.manager.executor
-            self.syslogger.trigger(new)
+        # if self.use_syslogger:
+        #     self.syslogger.executor = self.manager.executor
+        #     self.syslogger.trigger(new)
 
     @on_trait_change('manager:executor:run_completed')
     def _update_run_completed(self, new):

@@ -40,6 +40,7 @@ class LabnumberEntryPreferencesPane(PreferencesPane):
                                 Item('monitor_name'),
                                 Item('j_multiplier', label='J Multiplier',
                                      tooltip='J units per hour'),
+                                show_border=True,
                                 label='Irradiations')
         v = View(irradiation_grp)
         return v

@@ -97,13 +97,13 @@ class ConsolePreferences(BaseConsolePreferences):
     use_message_colormapping = Bool
 
 
-class SysLoggerPreferences(BasePreferencesHelper):
-    use_syslogger = Bool
-    preferences_path = 'pychron.syslogger'
-    username = Str
-    password = Password
-
-    host = Str
+# class SysLoggerPreferences(BasePreferencesHelper):
+#     use_syslogger = Bool
+#     preferences_path = 'pychron.syslogger'
+#     username = Str
+#     password = Password
+#
+#     host = Str
 
 
 # ======================================================================================================
@@ -231,20 +231,20 @@ class ConsolePreferencesPane(BaseConsolePreferencesPane):
         return v
 
 
-class SysLoggerPreferencesPane(PreferencesPane):
-    model_factory = SysLoggerPreferences
-    category = 'Experiment'
-
-    def traits_view(self):
-        auth_grp = VGroup(Item('host'),
-                          Item('username'),
-                          Item('password'),
-                          enabled_when='use_syslogger')
-
-        v = View(VGroup(Item('use_syslogger', label='Use SysLogger'),
-                        auth_grp,
-                        show_border=True,
-                        label='SysLogger'))
-        return v
+# class SysLoggerPreferencesPane(PreferencesPane):
+#     model_factory = SysLoggerPreferences
+#     category = 'Experiment'
+#
+#     def traits_view(self):
+#         auth_grp = VGroup(Item('host'),
+#                           Item('username'),
+#                           Item('password'),
+#                           enabled_when='use_syslogger')
+#
+#         v = View(VGroup(Item('use_syslogger', label='Use SysLogger'),
+#                         auth_grp,
+#                         show_border=True,
+#                         label='SysLogger'))
+#         return v
 
 # ============= EOF =============================================

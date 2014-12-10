@@ -35,25 +35,28 @@ class EmailPreferences(BasePreferencesHelper):
     server_port = Int
 
     preferences_path = 'pychron.email'
-    test_connection_button = Button
-    status = Str('Not Tested')
-    status_color = Color('orange')
+    _test_connection_button = Button
+    _status = Str('Not Tested')
+    _status_color = Color('orange')
 
     @on_trait_change('server+')
     def _server_trait_changed(self):
-        self.status = 'Not Tested'
-        self.status_color = 'orange'
+        self._status = 'Not Tested'
+        self._status_color = 'orange'
 
-    def _test_connection_button_fired(self):
+    def __test_connection_button_fired(self):
         from pychron.social.email.emailer import Emailer
 
         em = Emailer()
+        em.trait_set(server_host=self.server_host, server_port=self.server_port,
+                     server_username=self.server_username, server_password=self.server_password)
+
         if em.connect(warn=False):
-            self.status = 'Connected'
-            self.status_color = 'green'
+            self._status = 'Connected'
+            self._status_color = 'green'
         else:
-            self.status = 'Failed'
-            self.status_color = 'red'
+            self._status = 'Failed'
+            self._status_color = 'red'
 
 
 class EmailPreferencesPane(PreferencesPane):
@@ -65,8 +68,8 @@ class EmailPreferencesPane(PreferencesPane):
                     Item('server_username', label='User'),
                     Item('server_password', label='Password'),
                     Item('server_port', label='Port'),
-                    HGroup(icon_button_editor('test_connection_button', 'server-connect'),
-                           CustomLabel('status', color_name='status_color')),
+                    HGroup(icon_button_editor('_test_connection_button', 'server-connect'),
+                           CustomLabel('_status', color_name='_status_color')),
                     show_border=True,
                     label='Email')
         v = View(grp)

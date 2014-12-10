@@ -16,12 +16,11 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traitsui.api import View, Item, HGroup, VGroup
+from traitsui.api import View, Item, VGroup
 from traits.api import Directory, Bool
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.core.ui.custom_label_editor import CustomLabel
-from pychron.envisage.tasks.base_preferences_helper import GitRepoPreferencesHelper, test_connection_item
+from pychron.envisage.tasks.base_preferences_helper import GitRepoPreferencesHelper, remote_status_item
 
 
 class GeneralPreferences(GitRepoPreferencesHelper):
@@ -42,11 +41,7 @@ class GeneralPreferencesPane(PreferencesPane):
                            label='Login', show_border=True)
         v = View(VGroup(root_grp,
                         login_grp,
-                        HGroup(Item('remote', label='Laboratory Repo'),
-                               test_connection_item()),
-                        CustomLabel('remote_status',
-                                    color_name='remote_status_color'),
-
+                        remote_status_item('Laboratory Repo'),
                         show_border=True))
         return v
 

@@ -25,7 +25,7 @@ from traits.api import List
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.actions import ToggleFullWindowAction, EditInitializationAction
-from pychron.envisage.tasks.panes import GeneralPreferencesPane
+from pychron.envisage.tasks.preferences import GeneralPreferencesPane
 
 
 class PychronTasksPlugin(Plugin):

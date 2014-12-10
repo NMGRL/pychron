@@ -61,9 +61,9 @@ class Emailer(Loggable):
             self.server_port = 587
 
     def test_email_server(self):
-        return bool(self.connect(warn=False))
+        return bool(self.connect(warn=False, test=True))
 
-    def connect(self, warn=True):
+    def connect(self, warn=True, test=False):
         if self._server is None:
             try:
                 server = smtplib.SMTP(self.server_host, self.server_port, timeout=1)
@@ -71,15 +71,14 @@ class Emailer(Loggable):
                 server.starttls()
                 server.ehlo()
                 server.login(self.server_username, self.server_password)
+                if test:
+                    server.quit()
+                    return True
             except (smtplib.SMTPServerDisconnected, BaseException), e:
-                import traceback
-
-                self.debug('host: {} port: {}'.format(self.server_host, self.server_port))
-                traceback.print_exc()
-                self.debug(e)
                 if warn:
                     self.warning('SMTPServer not properly configured')
                 server = None
+
             self._server = server
 
         return self._server
