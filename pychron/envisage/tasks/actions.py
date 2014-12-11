@@ -26,6 +26,7 @@ from pyface.tasks.action.task_action import TaskAction
 
 
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -380,7 +381,7 @@ class NewAction(PAction):
 class ToggleFullWindowAction(myTaskAction):
     name = 'Toggle Full Window'
     method = 'toggle_full_window'
-    task_ids = ['pychron.recall', 'pychron.labbook']
+    task_ids = ['pychron.recall', 'pychron.labbook', 'pychron.processing.figures']
 
 
 class EditInitializationAction(Action):
