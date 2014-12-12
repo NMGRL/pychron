@@ -15,8 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Button, Instance, Bool
-from traitsui.api import View, Item, UItem, HGroup, VGroup, Controller
+from traits.api import HasTraits, Button, Instance, Bool, Str
+from traitsui.api import View, Item, UItem, HGroup, VGroup, Controller, Readonly
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.database.database_connection_spec import DBConnectionSpec
@@ -25,17 +25,15 @@ from pychron.loggable import Loggable
 
 class TransferConfigModel(HasTraits):
     forward_transfer = Bool(True)
-    conn_spec = Instance(DBConnectionSpec, ())
+    massspecname = Str
 
 
 class TransferConfigView(Controller):
     model = Instance(TransferConfigModel)
 
     def traits_view(self):
-        v = View(VGroup(
-            VGroup(UItem('conn_spec', style='custom'),
-                   show_border=True,
-                   label='Connection')),
+        v = View(VGroup(Readonly('massspecname', label='Mass Spec DB Name'),
+                        Item('forward_transfer')),
                  buttons=['OK', 'Cancel'],
                  kind='livemodal',
                  title='Configure J Transfer',
@@ -59,6 +57,8 @@ class JTransferer(Loggable):
 
     def _configure_transfer(self):
         config = TransferConfigModel()
+        config.massspecname = self.massspecdb.name
+
         v = TransferConfigView(model=config)
         info = v.edit_traits()
         if info.result:
@@ -84,21 +84,25 @@ class JTransferer(Loggable):
         :param position:
         :return:
         """
+
         posstr = '{}{} {}'.format(irrad, level, position.hole)
-        pdb = self.pychrondb
-        # get the massspec irradiation_position
-        ms_ip = self.massspecdb.get_irradiation_position(irrad, level, position.hole)
-        if ms_ip:
-            # get j for this position
-            j, j_err = ms_ip.J, ms_ip.JEr
-            # get the pychron irradiation_position
-            pos = pdb.get_irradiation_position(irrad, level, position.hole)
-            if pos.labnumber.identifier:
+        if position.labnumber:
+            pdb = self.pychrondb
+            # get the massspec irradiation_position
+            ms_ip = self.massspecdb.get_irradiation_position(position.labnumber)
+            if ms_ip:
+                # get j for this position
+                j, j_err = ms_ip.J, ms_ip.JEr
+                # get the pychron irradiation_position
+                pos = pdb.get_irradiation_position(irrad, level, position.hole)
+
                 def add_flux():
-                    hist = pdb.add_flux_history(pos)
-                    pos.labnumber.selected_flux_history = hist
-                    f = pdb.add_flux(j, j_err)
-                    f.history = hist
+                    print 'change {} {} to {}'.format(pos.labnumber.identifier,
+                                                      flux.j, j)
+                    # hist = pdb.add_flux_history(pos, source=self.massspecdb.url)
+                    # pos.labnumber.selected_flux_history = hist
+                    # f = pdb.add_flux(j, j_err)
+                    # f.history = hist
 
                 if pos.labnumber.selected_flux_history:
                     tol = 1e-10
@@ -110,10 +114,9 @@ class JTransferer(Loggable):
                 else:
                     add_flux()
             else:
-                self.warning('No Labnumber for {}'.format(posstr))
-
+                self.warning('Irradiation Position {} not in MassSpecDatabase'.format(posstr))
         else:
-            self.warning('Irradiation Position {} not in MassSpecDatabase'.format(posstr))
+            self.warning('No Labnumber for {}'.format(posstr))
 
     def _backward_transfer_func(self, irrad, level, position):
         pass

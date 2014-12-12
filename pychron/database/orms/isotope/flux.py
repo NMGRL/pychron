@@ -21,7 +21,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import func
 # ============= local library imports  ==========================
 from pychron.database.core.base_orm import BaseMixin, NameMixin
-from pychron.database.orms.isotope.util import foreignkey
+from pychron.database.orms.isotope.util import foreignkey, stringcolumn
 
 from util import Base
 
@@ -42,12 +42,14 @@ class flux_MonitorTable(Base, NameMixin):
 
 class flux_HistoryTable(Base, BaseMixin):
     irradiation_position_id = foreignkey('irrad_PositionTable')
+    create_date = Column(DateTime, default=func.now())
+    source = stringcolumn(140)
+
     selected = relationship('gen_LabTable',
                             backref='selected_flux_history',
                             uselist=False)
     flux = relationship('flux_FluxTable',
                         backref='history',
                         uselist=False)
-    create_date = Column(DateTime, default=func.now())
 
 # ============= EOF =============================================

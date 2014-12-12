@@ -1741,7 +1741,6 @@ class IsotopeAdapter(DatabaseAdapter):
 
     def get_irradiation_position(self, irrad, level, pos):
         with self.session_ctx() as sess:
-            print irrad, level, pos
             q = sess.query(irrad_PositionTable)
             q = self._irrad_level(q, irrad, level)
 

@@ -27,16 +27,19 @@ logger=logging.getLogger('Inspection')
 
 def caller(func):
     def dec(*args, **kw):
-        stack = inspect.stack()
+        try:
+            stack = inspect.stack()
 
-        cstack = stack[0]
-        rstack = stack[1]
+            cstack = stack[0]
+            rstack = stack[1]
 
-        msg = '{} called by {}. parent call={} {}'.format(func.func_name, rstack[3],
-                                                          cstack[0].f_back.f_locals['self'],
-                                                          ''.join(map(str.strip, rstack[4])))
+            msg = '{} called by {}. parent call={} {}'.format(func.func_name, rstack[3],
+                                                              cstack[0].f_back.f_locals['self'],
+                                                              ''.join(map(str.strip, rstack[4])))
 
-        logger.debug(msg)
+            logger.debug(msg)
+        except BaseException:
+            pass
         return func(*args, **kw)
 
     return dec

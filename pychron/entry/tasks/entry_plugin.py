@@ -27,7 +27,8 @@ from pychron.entry.preferences import LabnumberEntryPreferencesPane
 from pychron.entry.tasks.actions import SaveLabbookPDFAction, MakeIrradiationTemplateAction, LabnumberEntryAction, \
     SensitivityEntryAction, AddMolecularWeightAction, ImportSampleMetadataAction, AddFluxMonitorAction, \
     GenerateTrayAction, \
-    GenerateIrradiationTableAction, ImportIrradiationHolderAction, ExportIrradiationAction, ImportIrradiationAction
+    GenerateIrradiationTableAction, ImportIrradiationHolderAction, ExportIrradiationAction, ImportIrradiationAction, \
+    TransferJAction
 from pychron.entry.editors.molecular_weight_editor import MolecularWeightEditor
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 

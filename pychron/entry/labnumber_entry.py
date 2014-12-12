@@ -133,9 +133,11 @@ class LabnumberEntry(IsotopeDatabaseManager):
 
         ms = self.application.get_service('pychron.database.adapters.massspec_database_adapter.MassSpecDatabaseAdapter')
         if ms:
-            jt = JTransferer(pychrondb=self.db,
-                             massspecdb=ms)
-            jt.do_transfer(self.irradiation, self.level, items)
+            ms.bind_preferences()
+            if ms.connect():
+                jt = JTransferer(pychrondb=self.db,
+                                 massspecdb=ms)
+                jt.do_transfer(self.irradiation, self.level, items)
         else:
             self.warning_dialog('Unable to Transfer Js. Mass Spec database not configured properly. '
                                 'Check Preferences>Database')
