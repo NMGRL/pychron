@@ -26,8 +26,8 @@ from pychron.processing.analyses.mass_spec_analysis import MassSpecAnalysis
 
 
 class MassSpecRecaller(Loggable):
-    dbconn_spec = Instance(DBConnectionSpec, ())
-    db = Instance(MassSpecDatabaseAdapter, ())
+    # dbconn_spec = Instance(DBConnectionSpec, ())
+    db = Instance(MassSpecDatabaseAdapter)
     # connect_button = Button('Connect')
     # def _dbconn_spec_default(self):
     #        return DBConnectionSpec(database='massspecdata_minnabluff',
@@ -49,11 +49,11 @@ class MassSpecRecaller(Loggable):
         return self.db.connected
 
     def connect(self):
-        self.db.name = self.dbconn_spec.name
-        self.db.username = self.dbconn_spec.username
-        self.db.password = self.dbconn_spec.password
-        self.db.host = self.dbconn_spec.host
-        self.db.kind = 'mysql'
+        # self.db.name = self.dbconn_spec.name
+        # self.db.username = self.dbconn_spec.username
+        # self.db.password = self.dbconn_spec.password
+        # self.db.host = self.dbconn_spec.host
+        # self.db.kind = 'mysql'
         return self.db.connect()
 
     def find_analysis(self, labnumber, aliquot, step):

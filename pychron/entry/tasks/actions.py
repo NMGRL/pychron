@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -107,11 +107,13 @@ class ImportIrradiationAction(TaskAction):
     name = 'Import Irradiation...'
     method = 'import_irradiation'
 
+
 class GenerateTrayAction(TaskAction):
     name = 'Generate Tray'
     image = icon('table_lightning.png')
 
     method = 'generate_tray'
+
 
 class ImportIrradiationLevelAction(TaskAction):
     name = 'Import Level'
@@ -134,7 +136,7 @@ class ImportSampleMetadataAction(TaskAction):
 
 class ExportIrradiationAction(TaskAction):
     name = 'Export Irradiation...'
-    method ='export_irradiation'
+    method = 'export_irradiation'
 
 
 class GenerateIrradiationTableAction(Action):
@@ -154,10 +156,15 @@ class ImportIrradiationHolderAction(Action):
     def perform(self, event):
         from pychron.entry.loaders.irradiation_holder_loader import IrradiationHolderLoader
         from pychron.database.isotope_database_manager import IsotopeDatabaseManager
-        man=IsotopeDatabaseManager()
-        db=man.db
+
+        man = IsotopeDatabaseManager()
+        db = man.db
         if db.connect():
             a = IrradiationHolderLoader()
             a.do_import(db)
 
+
+class TransferJAction(TaskAction):
+    name = 'Transfer J Data'
+    method = 'transfer_j'
 # ============= EOF =============================================

@@ -50,6 +50,9 @@ class EntryPlugin(BaseTaskPlugin):
         return [
             TaskExtension(task_id='pychron.entry.labnumber',
                           actions=[
+                              SchemaAddition(id='transfer_j',
+                                             factory=TransferJAction,
+                                             path='MenuBar/tools.menu'),
                               SchemaAddition(id='import_irradiation',
                                              factory=ImportIrradiationAction,
                                              path='MenuBar/tools.menu'),

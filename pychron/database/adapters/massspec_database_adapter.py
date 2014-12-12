@@ -60,6 +60,19 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
     test_func = 'get_database_version'
     kind = 'mysql'
 
+    def __init__(self, bind=False, *args, **kw):
+        super(MassSpecDatabaseAdapter, self).__init__(*args, **kw)
+        if bind:
+            self.bind_preferences()
+
+    def bind_preferences(self):
+        from apptools.preferences.preference_binding import bind_preference
+        prefid = 'pychron.massspec.database'
+        bind_preference(self, 'host', '{}.host'.format(prefid))
+        bind_preference(self, 'username', '{}.username'.format(prefid))
+        bind_preference(self, 'password', '{}.password'.format(prefid))
+        bind_preference(self, 'name', '{}.name'.format(prefid))
+
     @property
     def selector_klass(self):
         # lazy load selector klass.

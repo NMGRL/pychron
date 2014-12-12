@@ -74,6 +74,10 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
     def activated(self):
         self.load_projects(include_recent=False)
 
+    def transfer_j(self):
+        self.info('Transferring J Data')
+        self.manager.transfer_j()
+
     def import_irradiation(self):
         mod = ImporterModel(db=self.manager.db)
         ev = ImporterView(model=mod)

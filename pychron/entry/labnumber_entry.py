@@ -102,7 +102,7 @@ class LabnumberEntry(IsotopeDatabaseManager):
     suppress_dirty = Bool
     _no_update = Bool
 
-    #labnumber_generator = Instance(LabnumberGenerator)
+    # labnumber_generator = Instance(LabnumberGenerator)
     monitor_name = Str
 
     _level_editor = None
@@ -113,7 +113,7 @@ class LabnumberEntry(IsotopeDatabaseManager):
     def __init__(self, *args, **kw):
         super(LabnumberEntry, self).__init__(*args, **kw)
 
-        #self.labnumber_generator = LabnumberGenerator(db=self.db)
+        # self.labnumber_generator = LabnumberGenerator(db=self.db)
 
         bind_preference(self, 'irradiation_prefix',
                         'pychron.entry.irradiation_prefix')
@@ -121,6 +121,25 @@ class LabnumberEntry(IsotopeDatabaseManager):
                         'pychron.entry.monitor_name')
         bind_preference(self, 'j_multiplier',
                         'pychron.entry.j_multiplier')
+
+    def transfer_j(self):
+        items = self.selected
+        if not items:
+            items = self.irradiated_positions
+
+        self.info('Transferring Js for Irradiation={}, Level={}'.format(self.irradiation,
+                                                                        self.level))
+        from pychron.entry.j_transfer import JTransferer
+
+        ms = self.application.get_service('pychron.database.adapters.massspec_database_adapter.MassSpecDatabaseAdapter')
+        if ms:
+            jt = JTransferer(pychrondb=self.db,
+                             massspecdb=ms)
+            jt.do_transfer(self.irradiation, self.level, items)
+        else:
+            self.warning_dialog('Unable to Transfer Js. Mass Spec database not configured properly. '
+                                'Check Preferences>Database')
+
 
     def save_tray_to_db(self, p, name):
         with self.db.session_ctx():
@@ -757,7 +776,7 @@ if __name__ == '__main__':
 # _prev_tray = self.tray_name
 # irradiation = self.irradiation
 # level = Level(db=self.db,
-#               name=self.level,
+# name=self.level,
 #               trays=self.trays)
 # level.load(irradiation)
 # info = level.edit_traits(kind='livemodal')

@@ -38,27 +38,30 @@ class DatabasePlugin(BaseTaskPlugin):
         self._connectable = c = iso.is_connected()
         return 'Passed' if c else 'Failed'
 
+    def _get_pref(self, name):
+        prefs = self.application.preferences
+        return prefs.get('pychron.massspec.database.{}'.format(name))
+
     def test_massspec(self):
         ret = 'Skipped'
-
-        prefs = self.application.preferences
-
-        def get_pref(v):
-            return prefs.get('pychron.massspec.database.{}'.format(v))
-
-        use_massspec = get_pref('enabled')
-        if use_massspec:
-            from pychron.database.adapters.massspec_database_adapter import MassSpecDatabaseAdapter
-
-            name = get_pref('name')
-            host = get_pref('host')
-            password = get_pref('password')
-            username = get_pref('username')
-            db = MassSpecDatabaseAdapter(name=name,
-                                         host=host,
-                                         password=password,
-                                         username=username)
+        # use_massspec = self._get_pref('enabled')
+        # if use_massspec:
+        #     from pychron.database.adapters.massspec_database_adapter import MassSpecDatabaseAdapter
+        #
+        #     name = self._get_pref('name')
+        #     host = self._get_pref('host')
+        #     password = self._get_pref('password')
+        #     username = self._get_pref('username')
+        #     db = MassSpecDatabaseAdapter(name=name,
+        #                                  host=host,
+        #                                  password=password,
+        #                                  username=username)
+        #     ret = 'Passed' if db.connect() else 'Failed'
+        db = self.application.get_service('pychron.database.adapters.massspec_database_adapter.MassSpecDatabaseAdapter')
+        if db:
+            db.bind_preferences()
             ret = 'Passed' if db.connect() else 'Failed'
+
         return ret
 
     def _preferences_panes_default(self):
@@ -66,10 +69,26 @@ class DatabasePlugin(BaseTaskPlugin):
                 MassSpecConnectionPane]
 
     def _service_offers_default(self):
-        so = self.service_offer_factory(
+        sos = [self.service_offer_factory(
             protocol=IsotopeDatabaseManager,
-            factory=IsotopeDatabaseManager)
-        return [so, ]
+            factory=IsotopeDatabaseManager)]
+
+        if self._get_pref('enabled'):
+            from pychron.database.adapters.massspec_database_adapter import MassSpecDatabaseAdapter
+            sos.append(self.service_offer_factory(
+                protocol=MassSpecDatabaseAdapter,
+                factory=MassSpecDatabaseAdapter))
+            # name = self._get_pref('name')
+            # host = self._get_pref('host')
+            # password = self._get_pref('password')
+            # username = self._get_pref('username')
+            # db = MassSpecDatabaseAdapter(name=name,
+            #                              host=host,
+            #                              password=password,
+            #                              username=username)
+            #
+
+        return sos
 
     def start(self):
         self.startup_test()

@@ -35,6 +35,7 @@ from pychron.processing.tasks.recall.diff_editor import DiffEditor
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
 from pychron.processing.tasks.analysis_edit.panes import ControlsPane
 from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPane
+from pychron.processing.tasks.recall.mass_spec_recaller import MassSpecRecaller
 from pychron.processing.tasks.recall.recall_editor import RecallEditor
 from pychron.processing.utils.grouping import group_analyses_by_key
 
@@ -60,7 +61,13 @@ class RecallTask(AnalysisEditTask):
                  image_size=(16, 16))]
     auto_select_analysis = False
     _append_replace_analyses_enabled = False
-    recaller = Instance('pychron.processing.tasks.recall.mass_spec_recaller.MassSpecRecaller', ())
+    recaller = Instance(MassSpecRecaller)
+
+    def _recaller_default(self):
+        db = self.application.get_service('pychron.database.adapters.massspec_database_adapter.MassSpecDatabaseAdapter')
+        recaller=MassSpecRecaller(db=db)
+
+        return recaller
 
     def modify_analysis_identifier(self):
         from pychron.processing.analysis_modifier import AnalysisModifier
@@ -238,9 +245,9 @@ class RecallTask(AnalysisEditTask):
     def activated(self):
         super(RecallTask, self).activated()
 
-        self._preference_binder('pychron.massspec.database',
-                                ('username','name','password','host'),
-                                obj=self.recaller.dbconn_spec)
+        # self._preference_binder('pychron.massspec.database',
+        #                         ('username','name','password','host'),
+        #                         obj=self.recaller.dbconn_spec)
 
         if globalv.recall_debug:
             try:
