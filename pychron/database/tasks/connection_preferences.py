@@ -183,7 +183,7 @@ class ConnectionPreferencesPane(PreferencesPane):
             Item('username', label='User',
                  editor=TextEditor(enter_set=True, auto_set=False)),
             Item('password', label='Password',
-                 editor=TextEditor(enter_set=True, auto_set=False)),
+                 editor=TextEditor(enter_set=True, auto_set=False, password=True)),
             enabled_when='kind=="mysql"',
             show_border=True,
             label='Authentication')

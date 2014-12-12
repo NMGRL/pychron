@@ -659,6 +659,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         with db.session_ctx():
             for pp in self.selected_projects:
                 bins = db.get_project_date_bins(identifier, pp.name, hours)
+                print bins
                 if bins:
                     for li, hi in bins:
                         yield li, hi
@@ -673,28 +674,36 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
             ss = self.selected_samples
             xx = ss[:]
-            reftypes = ('blank_unknown',)
-            if any((si.analysis_type in reftypes
-                    for si in ss)):
-                with self.db.session_ctx():
-                    ans = []
-                    for si in ss:
-                        if si.analysis_type in reftypes:
-                            xx.remove(si)
-                            dates = list(self._project_date_bins(si.identifier))
-                            progress = open_progress(len(dates))
-                            for lp, hp in dates:
-                                progress.change_message('Loading Date Range '
-                                                        '{} to {}'.format(lp.strftime('%m-%d-%Y %H:%M:%S'),
-                                                                          hp.strftime('%m-%d-%Y %H:%M:%S')))
-                                ais = self._retrieve_sample_analyses([si],
-                                                                     make_records=False,
-                                                                     low_post=lp,
-                                                                     high_post=hp, **kw)
-                                ans.extend(ais)
-                            progress.close()
+            # if not any(['RECENT' in p for p in self.selected_projects]):
+            # sp=self.selected_projects
+            # if not hasattr(sp, '__iter__'):
+            #     sp = (sp, )
 
-                    ans = self._make_records(ans)
+            if not any(['RECENT' in p.name for p in self.selected_projects]):
+                reftypes = ('blank_unknown',)
+                if any((si.analysis_type in reftypes
+                        for si in ss)):
+                    with self.db.session_ctx():
+                        ans = []
+                        for si in ss:
+                            if si.analysis_type in reftypes:
+                                xx.remove(si)
+                                dates = list(self._project_date_bins(si.identifier))
+                                print dates
+                                progress = open_progress(len(dates))
+                                for lp, hp in dates:
+
+                                    progress.change_message('Loading Date Range '
+                                                            '{} to {}'.format(lp.strftime('%m-%d-%Y %H:%M:%S'),
+                                                                              hp.strftime('%m-%d-%Y %H:%M:%S')))
+                                    ais = self._retrieve_sample_analyses([si],
+                                                                         make_records=False,
+                                                                         low_post=lp,
+                                                                         high_post=hp, **kw)
+                                    ans.extend(ais)
+                                progress.close()
+
+                        ans = self._make_records(ans)
                     # print len(ans), len(set([si.record_id for si in ans]))
             if xx:
                 lp, hp = self.low_post, self.high_post
