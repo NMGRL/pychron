@@ -71,11 +71,12 @@ class JTransferer(Loggable):
         self._transfer(self._backward_transfer_func, positions)
 
     def _transfer(self, func, irrad, level, positions):
-        for pp in positions:
-            self.debug('Transferring position {}. labnumber={} current_j={}'.format(pp.hole,
-                                                                                    pp.labnumber,
-                                                                                    pp.j))
-            func(irrad, level, pp)
+        with self.massspecdb.session_ctx(), self.pychrondb.session_ctx():
+            for pp in positions:
+                self.debug('Transferring position {}. labnumber={} current_j={}'.format(pp.hole,
+                                                                                        pp.labnumber,
+                                                                                        pp.j))
+                func(irrad, level, pp)
 
     def _forward_transfer_func(self, irrad, level, position):
         """
@@ -83,13 +84,36 @@ class JTransferer(Loggable):
         :param position:
         :return:
         """
+        posstr = '{}{} {}'.format(irrad, level, position.hole)
+        pdb = self.pychrondb
+        # get the massspec irradiation_position
+        ms_ip = self.massspecdb.get_irradiation_position(irrad, level, position.hole)
+        if ms_ip:
+            # get j for this position
+            j, j_err = ms_ip.J, ms_ip.JEr
+            # get the pychron irradiation_position
+            pos = pdb.get_irradiation_position(irrad, level, position.hole)
+            if pos.labnumber.identifier:
+                def add_flux():
+                    hist = pdb.add_flux_history(pos)
+                    pos.labnumber.selected_flux_history = hist
+                    f = pdb.add_flux(j, j_err)
+                    f.history = hist
 
-        # get the src irradiation_position
-        ip = self.massspecdb.get_irradiation_position(irrad, level, position.hole)
-        if ip:
-            pass
+                if pos.labnumber.selected_flux_history:
+                    tol = 1e-10
+                    flux = pos.labnumber.selected_flux_history.flux
+                    if abs(flux.j - j) > tol or abs(flux.j_err - j_err) > tol:
+                        add_flux()
+                    else:
+                        self.info('No difference in J for {}'.format(posstr))
+                else:
+                    add_flux()
+            else:
+                self.warning('No Labnumber for {}'.format(posstr))
+
         else:
-            self.warning('Irradiation Position {}{} {} not in MassSpecDatabase'.format(irrad, level, position.hole))
+            self.warning('Irradiation Position {} not in MassSpecDatabase'.format(posstr))
 
     def _backward_transfer_func(self, irrad, level, position):
         pass
