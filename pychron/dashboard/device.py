@@ -126,7 +126,8 @@ class DashboardDevice(Loggable):
             v = float(new)
             tripped = pv.is_different(v)
             if tripped:
-                self.update_value_event = '{} {}'.format(pv.tag, new)
+                self.update_value_event = (pv.tag, new, pv.units)
+                # self.update_value_event = '{} {}'.format(pv.tag, new)
 
             self.graph.record(v, plotid=pv.plotid)
             self._check_conditional(pv, new)

@@ -20,7 +20,7 @@ from traitsui.api import View, Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
-from pychron.labspy.client import LabspyClient
+from pychron.labspy.client import MeteorLabspyClient
 from pychron.labspy.tasks.preferences import LabspyPreferencesPane
 
 
@@ -29,15 +29,15 @@ class LabspyClientPlugin(BaseTaskPlugin):
     id = 'pychron.labspy_client.plugin'
 
     def _service_offers_default(self):
-        so = self.service_offer_factory(protocol=LabspyClient,
-                                        factory=LabspyClient)
+        so = self.service_offer_factory(protocol=MeteorLabspyClient,
+                                        factory=MeteorLabspyClient)
         return [so]
 
     def _preferences_panes_default(self):
         return [LabspyPreferencesPane]
 
     def test_communication(self):
-        lc = LabspyClient()
+        lc = MeteorLabspyClient()
         return lc.test_connection(warn=False)
 # ============= EOF =============================================
 

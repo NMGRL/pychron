@@ -15,35 +15,128 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from datetime import datetime
-import hashlib
-from pprint import pprint
-import time
+from traits.api import HasTraits, Button, Str, Int, Property, cached_property
 from apptools.preferences.preference_binding import bind_preference
-from pymongo.errors import ConnectionFailure
-from traits.api import HasTraits, Button, Str, Int
-from traitsui.api import View, Item
+# from traitsui.api import View, Item
 # ============= standard library imports ========================
-from pymongo import MongoClient
+from datetime import datetime
+# from pprint import pprint
+import hashlib
+import time
+
 # ============= local library imports  ==========================
+from pychron.core.helpers.logger_setup import logging_setup
+from pychron.labspy.database_adapter import LabspyDatabaseAdapter
 from pychron.loggable import Loggable
 from pychron.pychron_constants import SCRIPT_NAMES
 
 
 class LabspyClient(Loggable):
-    host = Str
-    port = Int
-    database_name = Str('meteor')
-    _client = None
+    db = Property
 
     def __init__(self, bind=True, *args, **kw):
         super(LabspyClient, self).__init__(*args, **kw)
         if bind:
-            bind_preference(self, 'host', 'pychron.labspy.host')
-            bind_preference(self, 'port', 'pychron.labspy.port')
+            self.bind_preferences()
+
+    def bind_preferences(self):
+        self.db.bind_preferences()
+
+    def test_connection(self):
+        return self.db.connect()
+
+    def add_experiment(self, exp):
+        with self.db.session_ctx():
+            hid = self._generate_hid(exp)
+            self.db.add_experiment(Name=exp.name,
+                                   StartTime=exp.starttime,
+                                   Spectrometer=exp.mass_spectrometer,
+                                   ExtractionDevice=exp.extract_device,
+                                   HashID=hid)
+
+    def update_experiment(self, exp, err_msg):
+        with self.db.session_ctx():
+            hid = self._generate_hid(exp)
+            exp = self.db.get_experiment(hid)
+            exp.EndTime = exp.endtime
+            exp.State = err_msg
+
+    def update_status(self, **kw):
+        with self.db.session_ctx():
+            status = self.db.get_status()
+            if not status:
+                status = self.db.add_status()
+
+            for k, v in kw.items():
+                setattr(status, k, v)
+
+    def add_run(self, run, exp):
+        with self.db.session_ctx():
+            self.db.add_analysis()
+
+    def add_measurement(self, dev, tag, val, unit):
+        with self.db.session_ctx():
+            self.db.add_measurement(dev, tag, val, unit)
+
+    @cached_property
+    def _get_db(self):
+        return LabspyDatabaseAdapter()
+
+    def _run_dict(self, run, exp):
+        spec = run.spec
+
+        d = {dbk: getattr(spec, k) for k, dbk in (('runid', 'Runid'),
+                                                  # ('analysis_type',''),
+                                                  ('sample', 'Sample'),
+                                                  ('extract_value', 'ExtractValue'),
+                                                  ('extract_units', 'ExtractUnits'),
+                                                  ('duration', 'Duration'),
+                                                  ('cleanup', 'Cleanup'),
+                                                  ('position', 'Position'),
+                                                  # ('comment',),
+                                                  # ('material','Material'),
+                                                  ('project', 'Project'),
+                                                  ('state', 'State'))}
+        if spec.analysis_timestamp:
+            d['TimeStamp'] = time.mktime(spec.analysis_timestamp.timetuple())
+        else:
+            d['TimeStamp'] = ''
+
+        for si in SCRIPT_NAMES:
+            k = ''.join(map(str.capitalize, si.split('_')))
+            d[k] = getattr(spec, si)
+
+        return d
+
+    def _generate_hid(self, exp):
+        md5 = hashlib.md5()
+        md5.update(exp.name)
+        md5.update(exp.spectrometer)
+        md5.update(exp.starttime.isoformat())
+        return md5.hexdigest()
+
+
+class MeteorLabspyClient(LabspyClient):
+    host = Str
+    port = Int
+    database_name = Str
+
+    _client = None
+
+    def __init__(self, *args, **kw):
+        super(MeteorLabspyClient, self).__init__(*args, **kw)
+        self.database_name = 'meteor'
+
+    def bind_preferences(self):
+        bind_preference(self, 'host', 'pychron.labspy.host')
+        bind_preference(self, 'port', 'pychron.labspy.port')
+        bind_preference(self, 'database_name', 'pychron.labspy.database_name')
 
     def test_connection(self, warn=True):
         if self.host and self.port:
+            from pymongo import MongoClient
+            from pymongo.errors import ConnectionFailure
+
             url = 'mongodb://{}:{}/'.format(self.host, self.port)
             try:
                 self._client = MongoClient(url)
@@ -52,10 +145,6 @@ class LabspyClient(Loggable):
                 if warn:
                     self.warning_dialog('failed connecting to database at {}'.format(url))
         return False
-    @property
-    def db(self):
-        if self._client:
-            return self._client[self.database_name]
 
     def add_experiment(self, exp):
         db = self.db
@@ -82,7 +171,7 @@ class LabspyClient(Loggable):
                                       {'$set': {'status': err_msg or 'Finished',
                                                 'timestampf': time.mktime(datetime.now().timetuple())}})
 
-    def update_state(self, **kw):
+    def update_status(self, **kw):
         db = self.db
         if db:
             doc = db.state.find_one({})
@@ -169,6 +258,10 @@ class LabspyClient(Loggable):
 
         return d
 
+    def _get_property(self):
+        if self._client:
+            return self._client[self.database_name]
+
 
 def add_device(clt):
     class Dev():
@@ -192,11 +285,11 @@ def add_experiment(c):
     # class Exp():
     # def __init__(self, name, user, spec, status):
     # self.name = name
-    #         self.username = user
-    #         self.spectrometer = spec
-    #         self.mass_spectrometer = spec
-    #         self.extract_device = choice(('Fusions CO2', 'Fusions Diode'))
-    #         self.status = status
+    # self.username = user
+    # self.spectrometer = spec
+    # self.mass_spectrometer = spec
+    # self.extract_device = choice(('Fusions CO2', 'Fusions Diode'))
+    # self.status = status
     #         self.starttime = datetime(2014, 11, 1, 12, 10, 10)
     #
     # # class Spec():
@@ -237,22 +330,37 @@ def add_experiment(c):
     # #     c.add_run(Run('20016-{:02n}'.format(i + 1)), e)
 
 
-def update_state(c):
-    c.update_state(error='Error big time')
+def update_status(c):
+    c.update_status(error='Error big time')
+
+
+def add_measurements(c):
+    for i in range(10):
+        c.add_measurement('AirPressure', 'pneumatics', random(), 'PSI')
+        c.add_measurement('Environmental', 'temperature', random() * 100, 'C')
+        c.add_measurement('Environmental', 'humidity', random() * 100, '%')
+
+        time.sleep(0.25)
 
 
 if __name__ == '__main__':
     from random import random, choice, randint
 
+    logging_setup('labspyclient')
     # c = LabspyClient(bind=False, host='129.138.12.138', port=27017)
-    c = LabspyClient(bind=False, host='localhost', port=3001)
+    # c = MeteorLabspyClient(bind=False, host='localhost', port=3001)
+    # # update_state(c)
+    # for i in range(10):
+    # add_device(c)
+    # time.sleep(1)
 
-
-    # update_state(c)
-    for i in range(10):
-        add_device(c)
-        time.sleep(1)
-
+    c = LabspyClient(bind=False)
+    c.db.host = 'localhost'
+    c.db.username = 'root'
+    c.db.password = 'Argon'
+    c.db.name = 'argonlab'
+    c.test_connection()
+    add_measurements(c)
 
 # ============= EOF =============================================
 

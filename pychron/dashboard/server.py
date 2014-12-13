@@ -278,21 +278,27 @@ class DashboardServer(Loggable):
     def _get_device(self, name):
         return next((di for di in self.devices if di.name == name), None)
 
-    def _update_labspy_devices(self):
+    # def _update_labspy_devices(self):
+    #     if self.labspy_client:
+    #         # a = Dev('pneumatic', ('pressure',), ('torr',))
+    #         # b = Dev('environment',
+    #         #         ('temperature', 'humidity'), ('C', '%'))
+    #         # c = Dev('gauge', ('bone_ig',), ('torr',))
+    #         # d = Dev('gauge', ('microbone_ig',), ('torr',))
+    #         # devs = [self._get_device('AirPressure'),
+    #         #         self._get_device('EnvironmentalMonitor')]
+    #         #
+    #         # self.labspy_client.add_device_post(devs)
+    #         for dev in ('AirPressure',):
+    #             cdev = self._get_device(dev)
+    #             self.labspy_client.add_measurement(cdev)
+    def _update_labspy_device(self, dev, tag, val, units):
         if self.labspy_client:
-            # a = Dev('pneumatic', ('pressure',), ('torr',))
-            # b = Dev('environment',
-            #         ('temperature', 'humidity'), ('C', '%'))
-            # c = Dev('gauge', ('bone_ig',), ('torr',))
-            # d = Dev('gauge', ('microbone_ig',), ('torr',))
-            devs = [self._get_device('AirPressure'),
-                    self._get_device('EnvironmentalMonitor')]
-
-            self.labspy_client.add_device_post(devs)
+            self.labspy_client.add_measurement(dev, tag, val, units)
 
     def _update_labspy_error(self, error):
         if self.labspy_client:
-            self.labspy_client.update_state(error=error)
+            self.labspy_client.update_status(error=error)
 
     # handlers
     def _clear_button_fired(self):
@@ -316,11 +322,11 @@ class DashboardServer(Loggable):
             self._do_script(script)
             self._send_email(emails, message)
 
-
     @on_trait_change('devices:update_value_event')
     def _handle_publish(self, obj, name, old, new):
-        self.notifier.send_message(new)
-        self._update_labspy_devices()
+        self.notifier.send_message('{} {}'.format(*new))
+        self._update_labspy_device(obj.name, *new)
+        # self._update_labspy_devices()
         # if self.use_db:
         #     self.db_manager.publish_device(obj)
 

@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import HasTraits, Button, Int, Str
+from traits.api import HasTraits, Button, Int, Str, Password
 from traitsui.api import View, Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -27,6 +27,8 @@ class LabspyPreferences(BasePreferencesHelper):
     preferences_path = 'pychron.labspy'
     host = Str
     port = Int
+    password = Password
+    name = Str
 
 
 class LabspyPreferencesPane(PreferencesPane):
