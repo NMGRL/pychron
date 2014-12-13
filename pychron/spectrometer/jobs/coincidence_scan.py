@@ -18,10 +18,7 @@
 # ============= standard library imports ========================
 from ConfigParser import ConfigParser
 import os
-
 import numpy as np
-
-
 # ============= local library imports  ==========================
 from pychron.core.stats.peak_detection import PeakCenterError
 from pychron.spectrometer.jobs.peak_center import calculate_peak_center
@@ -39,12 +36,12 @@ class CoincidenceScan(MagnetScan):
     inform = True
 
     def _post_execute(self):
-        '''
+        """
             calculate all peak centers
-            
+
             calculate relative shifts to a reference detector. not necessarily the same
             as the reference detector used for setting the magnet
-        '''
+        """
         graph = self.graph
         plot = graph.plots[0]
         def get_peak_center(i, di):
@@ -73,6 +70,7 @@ class CoincidenceScan(MagnetScan):
         config = ConfigParser()
         p = os.path.join(paths.spectrometer_dir, 'config.cfg')
         config.read(open(p, 'r'))
+
         ref = 'AX'
         post = centers[ref]
         if post is None:
@@ -80,11 +78,11 @@ class CoincidenceScan(MagnetScan):
 
         no_change = True
         for di in spec.detectors:
-            newcen = centers[di.name]
-            if newcen is None:
+            cen = centers[di.name]
+            if cen is None:
                 continue
 
-            dac_dev = post - centers[di.name]
+            dac_dev = post - cen
             if abs(dac_dev) < 0.001:
                 self.info('no offset detected between {} and {}'.format(ref, di.name))
                 no_change = True

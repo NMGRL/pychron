@@ -24,3 +24,4 @@ Pychron Develop Guide
   experiment_construction
   communications
   notification_network
+  figure
