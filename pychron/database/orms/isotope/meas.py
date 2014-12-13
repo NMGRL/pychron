@@ -120,20 +120,26 @@ class meas_ExperimentTable(Base, NameMixin):
 
 
 class meas_ExtractionTable(Base, BaseMixin):
-    extract_value = deferred(Column(Float))
-    extract_duration = deferred(Column(Float))
-    cleanup_duration = deferred(Column(Float))
+    # extract_value = deferred(Column(Float))
+    # extract_duration = deferred(Column(Float))
+    # cleanup_duration = deferred(Column(Float))
 
-    extract_units = deferred(stringcolumn(5))
+    # extract_units = deferred(stringcolumn(5))
+
+    extract_value = Column(Float)
+    extract_duration = Column(Float)
+    cleanup_duration = Column(Float)
+
+    extract_units = stringcolumn(5)
 
     weight = deferred(Column(Float))
     sensitivity_multiplier = deferred(Column(Float))
     is_degas = deferred(Column(Boolean))
 
     beam_diameter = Column(Float)
-    pattern = deferred(stringcolumn(100))
-    ramp_rate = deferred(Column(Float))
-    ramp_duration = deferred(Column(Float))
+    pattern = stringcolumn(100)
+    ramp_rate = Column(Float)
+    ramp_duration = Column(Float)
 
     mask_position = deferred(Column(Float))
     mask_name = deferred(stringcolumn(100))
