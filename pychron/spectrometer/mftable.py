@@ -204,7 +204,10 @@ class MagnetFieldTable(Loggable):
         """
         # p = paths.mftable
         p = self.path
-        molweights = self.molweights
+
+        self.debug('Using mftable located at {}'.format(p))
+
+        mws = self.molweights
 
         self._set_mftable_hash(p)
         items = []
@@ -215,13 +218,12 @@ class MagnetFieldTable(Loggable):
             for line in reader:
                 iso = line[0]
                 try:
-                    mw = molweights[iso]
+                    mw = mws[iso]
                 except KeyError, e:
-                    self.warning('"{}" not in molweights {}'.format(iso, molweights))
+                    self.warning('"{}" not in molweights {}'.formamolweights(iso, mw))
                     continue
 
                 dacs = map(float, line[1:])
-                row = [iso, mw] + dacs
                 if load_items:
                     fi = FieldItem(isotope=iso)
                     for di, v in zip(detectors, dacs):
@@ -229,6 +231,7 @@ class MagnetFieldTable(Loggable):
 
                     items.append(fi)
 
+                row = [iso, mw] + dacs
                 table.append(row)
 
             self._report_mftable(detectors, items)
@@ -260,7 +263,7 @@ class MagnetFieldTable(Loggable):
         if not self._mftable or not self._check_mftable_hash():
             self.load_mftable()
 
-        self.debug('Using mftable located at {}'.format(self.path))
+
 
         return self._mftable
 

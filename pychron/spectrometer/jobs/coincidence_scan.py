@@ -15,22 +15,18 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import List, HasTraits, Str, Bool, Float, Property
+from traits.api import List, HasTraits, Str, Bool, Float, Property, Int
 from traitsui.api import View, UItem, TableEditor
 # ============= standard library imports ========================
-from ConfigParser import ConfigParser
 import os
+from ConfigParser import ConfigParser
 from random import random
-import numpy as np
 # ============= local library imports  ==========================
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 from pychron.core.stats.peak_detection import PeakCenterError
 from pychron.spectrometer.jobs.peak_center import calculate_peak_center, BasePeakCenter
 from pychron.paths import paths
-from pychron.spectrometer.jobs.magnet_scan import MagnetScan
-from pychron.graph.graph import Graph
-from pychron.globals import globalv
 
 
 class ResultsView(HasTraits):
@@ -85,8 +81,8 @@ class CoincidenceScan(BasePeakCenter):
         graph = self.graph
         plot = graph.plots[0]
 
-        def get_peak_center(i, di):
-            # print i, di.name, plot.plots.keys()
+        # def get_peak_center(i, di):
+        def get_peak_center(di):
             try:
                 lp = plot.plots[di.name][0]
             except KeyError:
@@ -95,7 +91,6 @@ class CoincidenceScan(BasePeakCenter):
             xs = lp.index.get_data()
             ys = lp.value.get_data()
 
-            # result = None
             cx = None
             if len(xs) and len(ys):
                 try:
@@ -103,17 +98,13 @@ class CoincidenceScan(BasePeakCenter):
                     cx = result[0][1]
                 except PeakCenterError:
                     self.warning('no peak center for {} {}'.format(di.name, di.isotope))
-            # if result is None or isinstance(result, str):
-            # self.warning('no peak center for {} {}'.format(di.name, di.isotope))
-            # else:
+
             return cx
 
         spec = self.spectrometer
-        centers = dict([(di.name, get_peak_center(i, di))
-                        for i, di in enumerate(spec.detectors)])
-
-        # calculate relative to AX
-
+        # centers = dict([(di.name, get_peak_center(i, di))
+        #                 for i, di in enumerate(spec.detectors)])
+        centers = {d.name: get_peak_center(d) for d in spec.detectors}
         ref = self.reference_detector
         post = centers[ref]
         if post is None:
@@ -142,18 +133,14 @@ class CoincidenceScan(BasePeakCenter):
 
             curdefl = di.deflection
             newdefl = int(curdefl + defl)
+            newdefl = max(0, min(newdefl, self.spectrometer.max_deflection))
+
             if newdefl > 0:
-                # msg = 'Apply new deflection. {} Current {}. New {}'.format(di.name, curdefl, newdefl)
-                # if self.confirmation_dialog(msg):
                 results.append(DeflectionResult(di.name, curdefl, newdefl))
-                # update the config.cfg deflections
-                # config.set('Deflections', di.name, newdefl)
-                # di.deflection = newdefl
 
         if no_change and self.inform:
             self.information_dialog('no deflection changes needed')
         else:
-
             rv = ResultsView(results=results)
             info = rv.edit_traits()
             if info.result:
@@ -162,10 +149,13 @@ class CoincidenceScan(BasePeakCenter):
                 config.read(p)
                 for v in rv.clean_results:
                     config.set('Deflections', v.name, v.new_deflection)
-                    di.deflection = v.new_deflection
+                    det = next((d for d in self.detectors if d.name.lower()==v.name.lower()))
+                    det.deflection = v.new_deflection
 
                 with open(p, 'w') as fp:
                     config.write(fp)
+
+# ============= EOF =============================================
 
 # class CoincidenceScan(MagnetScan):
 # start_mass = 39
@@ -298,4 +288,3 @@ class CoincidenceScan(BasePeakCenter):
 #         self.additional_detectors = self.detectors[1:]
 #         return self.detectors[0]
 
-# ============= EOF =============================================
