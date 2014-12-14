@@ -23,6 +23,7 @@ import apptools.sweet_pickle as pickle
 # ============= local library imports  ==========================
 from pychron.managers.manager import Manager
 from pychron.graph.graph import Graph
+from pychron.spectrometer.jobs.coincidence_scan import CoincidenceScan
 from pychron.spectrometer.jobs.peak_center import PeakCenter
 # from threading import Thread
 from pychron.spectrometer.thermo.detector import Detector
@@ -154,6 +155,20 @@ class IonOpticsManager(Manager):
 
             self.info('positioning {} ({}) on {}'.format(pos, dac, detector))
             return mag.set_dac(dac)
+
+    def do_coincidence_scan(self, new_thread=True):
+
+        if new_thread:
+            t = Thread(name='ion_optics.coincidence', target=self._coincidence)
+            t.start()
+            self._thread = t
+
+    def _coincidence(self):
+        cs = CoincidenceScan(spectrometer=self.spectrometer,
+                             ion_optics_manager=self)
+        self.open_view(cs.graph)
+        print cs.get_peak_center()
+
 
     def get_center_dac(self, det, iso):
         spec = self.spectrometer

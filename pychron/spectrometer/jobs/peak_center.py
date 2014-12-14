@@ -28,7 +28,8 @@ from pychron.core.stats.peak_detection import calculate_peak_center, PeakCenterE
 from pychron.core.ui.gui import invoke_in_main_thread
 
 
-class PeakCenter(MagnetScan):
+class BasePeakCenter(MagnetScan):
+    title= 'Base Peak Center'
     center_dac = Float
 
     window = Float(0.015)
@@ -69,6 +70,7 @@ class PeakCenter(MagnetScan):
 
             center, success = self.iteration(i, pdac)
             if success:
+                invoke_in_main_thread(self._post_execute)
                 return center
             else:
                 pdac = center
@@ -103,7 +105,7 @@ class PeakCenter(MagnetScan):
         except AttributeError:
             width = 0.001
 
-        #move to start position
+        # move to start position
         delay = 1
         self.info('moving to starting dac {}. delay {} before continuing'.format(start, delay))
         self.spectrometer.magnet.set_dac(start)
@@ -167,12 +169,13 @@ class PeakCenter(MagnetScan):
     def _graph_factory(self, graph=None):
         if graph is None:
             graph = Graph(
+                window_title = self.title,
                 container_dict=dict(padding=5,
-                                    bgcolor='lightgray'))
+                                    bgcolor='lightgray'),
+                )
 
         graph.new_plot(
             padding=[50, 5, 5, 50],
-            #                       title='{}'.format(self.title),
             xtitle='DAC (V)',
             ytitle='Intensity (fA)',
             show_legend='ul',
@@ -199,14 +202,11 @@ class PeakCenter(MagnetScan):
                          marker_size=4,
                          color='green')
 
-        #graph.plots[0].value_range.tight_bounds = False
         return graph
 
-#    def _peak_center_graph_factory(self, graph, start, end, title=''):
-#        graph.container_dict = dict(padding=[10, 0, 30, 10])
-#        graph.clear()
 
-
+class PeakCenter(BasePeakCenter):
+    title = 'Peak Center'
 
 # ============= EOF =============================================
 #        '''

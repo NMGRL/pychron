@@ -24,9 +24,12 @@ from pychron.labbook.tasks.preferences import LabBookPreferencesPane
 
 class LabBookPlugin(BaseTaskPlugin):
     name = 'LabBook'
+    id = 'pychron.labbook.plugin'
+
     def _labbook_factory(self):
         from pychron.labbook.tasks.labbook_task import LabBookTask
-        t=LabBookTask()
+
+        t = LabBookTask()
         return t
 
     def _tasks_default(self):

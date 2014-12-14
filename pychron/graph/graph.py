@@ -1692,9 +1692,7 @@ class Graph(Viewable, ContextMenuMixin):
                     show_label=False,
                     editor=ComponentEditor(
                         size=(self.width,
-                              self.height)
-                    ),
-        )
+                              self.height)))
 
         v = View(plot,
                  resizable=self.resizable,
@@ -1703,8 +1701,7 @@ class Graph(Viewable, ContextMenuMixin):
                  height=self.window_height,
                  x=self.window_x,
                  y=self.window_y,
-                 handler=self.handler_klass
-        )
+                 handler=self.handler_klass)
 
         if self.view_identifier:
             v.id = self.view_identifier

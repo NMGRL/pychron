@@ -472,10 +472,11 @@ class AutomatedRun(Loggable):
                 self.persister.save_peak_center_to_file(pc)
 
     def py_coincidence_scan(self):
-        sm = self.spectrometer_manager
-        obj, t = sm.do_coincidence_scan()
-        self.coincidence_scan = obj
-        t.join()
+        pass
+        # sm = self.spectrometer_manager
+        # obj, t = sm.do_coincidence_scan()
+        # self.coincidence_scan = obj
+        # t.join()
 
     # ===============================================================================
     # conditionals

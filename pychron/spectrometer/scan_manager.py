@@ -113,7 +113,7 @@ class ScanManager(Manager):
 
     def prepare_destroy(self):
         self.stop_scan()
-        self._log_events_enabled=False
+        self._log_events_enabled = False
         self._bind_listeners(remove=True)
 
         plot = self.graph.plots[0]
@@ -242,15 +242,16 @@ class ScanManager(Manager):
     def peak_center(self):
 
         man = self.ion_optics_manager
-        if len(self.graphs)>1:
-            i=int(self.graphs[-1].split(' ')[2])+1
+        if len(self.graphs) > 1:
+            i = int(self.graphs[-1].split(' ')[2]) + 1
         else:
-            i=1
+            i = 1
 
-        self._log_events_enabled=False
+        self._log_events_enabled = False
         if man.setup_peak_center(new=True, standalone_graph=False,
                                  name='Peak Center {:02n}'.format(i)):
             self.graphs.append(man.peak_center.graph)
+
             def func():
                 setattr(self, '_log_events_enabled', True)
 
@@ -258,7 +259,7 @@ class ScanManager(Manager):
                                message='manual peakcenter',
                                on_end=func)
 
-    #private
+    # private
     def _reset_graph(self):
         self.graph = self._graph_factory()
         if len(self.graphs):
@@ -292,7 +293,7 @@ class ScanManager(Manager):
                     self.add_spec_event_marker('DAC={:0.5f}'.format(self.magnet.dac), bgcolor='red')
                 else:
                     self.add_spec_event_marker('{}:{} ({:0.5f})'.format(self.detector,
-                                                                              iso, self.magnet.dac))
+                                                                        iso, self.magnet.dac))
 
             self.trait_setq(isotope=iso)
 
@@ -524,10 +525,14 @@ class ScanManager(Manager):
     def _graph_factory(self):
         # g = TimeSeriesStreamGraph(container_dict=dict(bgcolor='lightgray',
         #                                               padding=5))
+
+        name = 'Stream'
+        if self.spectrometer.simulation:
+            name = '{} (Simulation)'.format(name)
         g = SpectrometerScanGraph(container_dict=dict(bgcolor='lightgray',
                                                       padding=5),
-                                  use_vertical_markers = self.use_vertical_markers,
-                                  name = 'Stream')
+                                  use_vertical_markers=self.use_vertical_markers,
+                                  name=name)
 
         n = self.graph_scan_width * 60
         bottom_pad = 50
@@ -574,7 +579,7 @@ class ScanManager(Manager):
     @cached_property
     def _get_isotopes(self):
         # molweights = self.spectrometer.molecular_weights
-        return [NULL_STR] + self.spectrometer.isotopes#sorted(molweights.keys(), key=lambda x: int(x[2:]))
+        return [NULL_STR] + self.spectrometer.isotopes  #sorted(molweights.keys(), key=lambda x: int(x[2:]))
 
     def _validate_graph_ymin(self, v):
         try:
@@ -699,9 +704,9 @@ if __name__ == '__main__':
 
     ]
     sm = ScanManager(
-        #                     detectors=detectors,
+        # detectors=detectors,
         spectrometer=DummySpectrometer(detectors=detectors))
-    #    sm.load_detectors()
+    # sm.load_detectors()
     sm.configure_traits()
     # ============= EOF =============================================
     # def _check_detector_protection1(self, prev):

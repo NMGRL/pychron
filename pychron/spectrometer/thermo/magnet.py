@@ -54,7 +54,8 @@ class ArgusMagnet(BaseMagnet, SpectrometerDevice):
                     unblank = True
 
             micro.ask('SetMagnetDAC {}'.format(v), verbose=verbose)
-            time.sleep(self.settling_time)
+            if not micro.simulation:
+                time.sleep(self.settling_time)
 
             #only block if move is large and was made slowly.
             #this should be more explicit. get MAGNET_MOVE_THRESHOLD from RCS

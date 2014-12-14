@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,16 +16,12 @@
 
 # ============= enthought library imports =======================
 from traits.api import Any, Dict, List, provides
-from traitsui.api import View, Item, TableEditor
 # ============= standard library imports ========================
 from threading import Event, Lock
 # ============= local library imports  ==========================
 from pychron.core.helpers.logger_setup import logging_setup
-from traitsui.table_column import ObjectColumn
-from traitsui.extras.checkbox_column import CheckboxColumn
 from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
 from pychron.loggable import Loggable
-from pychron.viewable import Viewable
 from pychron.hardware.core.communicators.ethernet_communicator import EthernetCommunicator
 
 
@@ -41,43 +37,44 @@ class PyScriptRunner(Loggable):
     def __resource_lock_default(self):
         return Lock()
 
-    def get_resource(self, resource):
+    def get_resource(self, name):
         with self._resource_lock:
-            if not resource in self.resources:
-                self.resources[resource] = self._get_resource(resource)
+            if name not in self.resources:
+                self.resources[name] = self._get_resource(name)
 
-            r = self.resources[resource]
+            r = self.resources[name]
             return r
 
     def _get_resource(self, name):
         return Event()
 
-    # def traits_view(self):
-    #
-    #     cols = [ObjectColumn(name='logger_name', label='Name',
-    #                           editable=False, width=150),
-    #             CheckboxColumn(name='cancel_flag', label='Cancel',
-    #                            width=50),
-    #           ]
-    #     v = View(Item('scripts', editor=TableEditor(columns=cols,
-    #                                                 auto_size=False),
-    #                   show_label=False
-    #                   ),
-    #              width=500,
-    #              height=500,
-    #              resizable=True,
-    #              # handler=self.handler_klass(),
-    #              title='ScriptRunner'
-    #              )
-    #     return v
+        # def traits_view(self):
+        #
+        # cols = [ObjectColumn(name='logger_name', label='Name',
+        #                           editable=False, width=150),
+        #             CheckboxColumn(name='cancel_flag', label='Cancel',
+        #                            width=50),
+        #           ]
+        #     v = View(Item('scripts', editor=TableEditor(columns=cols,
+        #                                                 auto_size=False),
+        #                   show_label=False
+        #                   ),
+        #              width=500,
+        #              height=500,
+        #              resizable=True,
+        #              # handler=self.handler_klass(),
+        #              title='ScriptRunner'
+        #              )
+        #     return v
+
 
 class RemoteResource(object):
     handle = None
     name = None
 
-# ===============================================================================
-# threading.Event interface
-# ===============================================================================
+    # ===============================================================================
+    # threading.Event interface
+    # ===============================================================================
     def read(self, verbose=True):
         resp = self.handle.ask('Read {}'.format(self.name), verbose=verbose)
         if resp is not None:
@@ -112,7 +109,8 @@ class RemotePyScriptRunner(PyScriptRunner):
         self.handle.host = host
         self.handle.port = port
         self.handle.kind = kind
-#        self.handle.open()
+
+    # self.handle.open()
 
     def _get_resource(self, name):
         r = RemoteResource()
@@ -122,6 +120,7 @@ class RemotePyScriptRunner(PyScriptRunner):
 
     def connect(self):
         return self.handle.open()
+
 
 if __name__ == '__main__':
     logging_setup('py_runner')

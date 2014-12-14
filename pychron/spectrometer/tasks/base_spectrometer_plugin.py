@@ -61,6 +61,7 @@ class BaseSpectrometerPlugin(BaseTaskPlugin):
         ts = [TaskFactory(id='pychron.spectrometer',
                           task_group='hardware',
                           factory=self._task_factory,
+                          accelerator="Ctrl+'",
                           name='Spectrometer',
                           image='prism'),
               TaskFactory(id='pychron.mass_calibration',

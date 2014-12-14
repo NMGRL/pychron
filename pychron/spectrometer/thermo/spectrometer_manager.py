@@ -152,20 +152,19 @@ class ArgusSpectrometerManager(BaseSpectrometerManager):
     def relative_detector_positions_task_factory(self):
         return self._factory(RelativeDetectorPositions)
 
-    def do_coincidence_scan(self):
-        obj = self._factory(CoincidenceScan)
-        obj.inform = False
-        self.open_view(obj.graph)
-        t = obj.execute()
-        return obj, t
-
-    def coincidence_scan_task_factory(self):
-        obj = self._factory(CoincidenceScan)
-        info = obj.edit_traits(view='edit_view',
-                               kind='livemodal')
-        if info.result:
-            self.open_view(obj.graph)
-            obj.execute()
+    # def do_coincidence_scan(self):
+    #     obj = self._factory(CoincidenceScan)
+    #     obj.inform = False
+    #     self.open_view(obj.graph)
+    #     t = obj.execute()
+    #     return obj, t
+    # def coincidence_scan_task_factory(self):
+        # obj = self._factory(CoincidenceScan)
+        # info = obj.edit_traits(view='edit_view',
+        #                        kind='livemodal')
+        # if info.result:
+        #     self.open_view(obj.graph)
+        #     obj.execute()
 
     def cdd_operate_voltage_scan_task_factory(self):
         obj = CDDOperatingVoltageScan(spectrometer=self.spectrometer)

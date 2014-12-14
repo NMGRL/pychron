@@ -156,8 +156,9 @@ class CoincidenceScanAction(Action):
     name = 'Coincidence...'
 
     def perform(self, event):
-        man = get_manager(event, SPECTROMETER_PROTOCOL)
-        man.coincidence_scan_task_factory()
+        man = get_manager(event, ION_OPTICS_PROTOCOL)
+        man.do_coincidence_scan()
+        # man.coincidence_scan_task_factory()
 
 
 class RelativePositionsAction(Action):
