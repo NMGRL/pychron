@@ -21,11 +21,12 @@ from traitsui.api import View, Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.database.core.database_adapter import DatabaseAdapter
-from pychron.labspy.orm import Measurement, ProcessInfo, Device, Version, Status, Experiment
+from pychron.labspy.orm import Measurement, ProcessInfo, Device, Version, Status, Experiment, Analysis
 
 
 class LabspyDatabaseAdapter(DatabaseAdapter):
     kind = 'mysql'
+
     def bind_preferences(self):
         bind_preference(self, 'host', 'pychron.labspy.host')
         bind_preference(self, 'port', 'pychron.labspy.port')
@@ -36,8 +37,10 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
         exp = Experiment(**kw)
         return self._add_item(exp)
 
-    def add_analysis(self, an):
-        pass
+    def add_analysis(self, dbexp, **kw):
+        an = Analysis(**kw)
+        an.experiment = dbexp
+        return an
 
     def update_experiment(self, hashid, **kw):
         exp = self.get_experiment(hashid)
@@ -93,8 +96,7 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
     def get_process_info(self, dev, name):
         dev = self.get_device(dev)
         if dev:
-            return next((p for p in dev.processes if p.Name==name), None)
-
+            return next((p for p in dev.processes if p.Name == name), None)
 
 # ============= EOF =============================================
 

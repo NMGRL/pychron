@@ -72,7 +72,9 @@ class LabspyClient(Loggable):
 
     def add_run(self, run, exp):
         with self.db.session_ctx():
-            self.db.add_analysis()
+            exp = self.db.get_experiment(self._generate_hid(exp))
+
+            self.db.add_analysis(exp, self._run_dict())
 
     def add_measurement(self, dev, tag, val, unit):
         with self.db.session_ctx():
