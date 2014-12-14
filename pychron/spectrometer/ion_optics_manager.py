@@ -54,7 +54,7 @@ class PeakCenterConfig(HasTraits):
     directions = Enum('Increase', 'Decrease', 'Oscillate')
 
     def _integration_time_default(self):
-        return QTEGRA_INTEGRATION_TIMES[4]  #1.048576
+        return QTEGRA_INTEGRATION_TIMES[4]  # 1.048576
 
     def dump(self):
         p = os.path.join(paths.hidden_dir, 'peak_center_config')
@@ -90,6 +90,7 @@ class IonOpticsManager(Manager):
     spectrometer = Any
 
     peak_center = Instance(PeakCenter)
+    coincidence = Instance(CoincidenceScan)
     peak_center_config = Instance(PeakCenterConfig)
     canceled = False
 
@@ -143,7 +144,7 @@ class IonOpticsManager(Manager):
                 mag.mass_change(pos)
 
             # else:
-            #     #get nearst isotope
+            # #get nearst isotope
             #     self.debug('rounding mass {} to {}'.format(pos, '  {:n}'.format(round(pos))))
             #     spec.update_isotopes('  {:n}'.format(round(pos)), detector)
 
@@ -164,11 +165,17 @@ class IonOpticsManager(Manager):
             self._thread = t
 
     def _coincidence(self):
+        print self.coincidence.get_peak_center()
+
+    # cs = CoincidenceScan(spectrometer=self.spectrometer,
+    #                          ion_optics_manager=self)
+    #     self.open_view(cs.graph)
+
+    def setup_coincidence(self):
         cs = CoincidenceScan(spectrometer=self.spectrometer,
                              ion_optics_manager=self)
-        self.open_view(cs.graph)
-        print cs.get_peak_center()
-
+        self.coincidence = cs
+        return cs
 
     def get_center_dac(self, det, iso):
         spec = self.spectrometer
@@ -388,7 +395,7 @@ if __name__ == '__main__':
     io.configure_traits()
 
 # ============= EOF =============================================
-#    def _graph_factory(self):
+# def _graph_factory(self):
 #        g = Graph(
 #                  container_dict=dict(padding=5, bgcolor='gray'))
 #        g.new_plot()

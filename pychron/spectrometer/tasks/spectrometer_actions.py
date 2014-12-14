@@ -143,21 +143,21 @@ class SpectrometerParametersAction(Action):
 class PeakCenterAction(TaskAction):
     description = 'Calculate peak center'
     name = 'Peak Center...'
-
-    def perform(self, event):
-        man = get_manager(event, SCAN_PROTOCOL)
-        man.peak_center()
+    method = 'do_peak_center'
+    # def perform(self, event):
+        # man = get_manager(event, SCAN_PROTOCOL)
+        # man.peak_center()
 
         # if man.setup_peak_center(new=True):
         #     man.do_peak_center(confirm_save=True, warn=True, message='manual peakcenter')
 
 
-class CoincidenceScanAction(Action):
+class CoincidenceScanAction(TaskAction):
     name = 'Coincidence...'
-
-    def perform(self, event):
-        man = get_manager(event, ION_OPTICS_PROTOCOL)
-        man.do_coincidence_scan()
+    method = 'do_coincidence'
+    # def perform(self, event):
+    #     man = get_manager(event, ION_OPTICS_PROTOCOL)
+    #     man.do_coincidence_scan()
         # man.coincidence_scan_task_factory()
 
 

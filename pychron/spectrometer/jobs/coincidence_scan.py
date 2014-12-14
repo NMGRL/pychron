@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import List, HasTraits, Str, Bool, Float
+from traits.api import List, HasTraits, Str, Bool, Float, Property
 from traitsui.api import View, UItem, TableEditor
 # ============= standard library imports ========================
 from ConfigParser import ConfigParser
@@ -35,6 +35,10 @@ from pychron.globals import globalv
 
 class ResultsView(HasTraits):
     results = List
+    clean_results = Property(depends_on='results')
+
+    def _get_clean_results(self):
+        return [c for c in self.results if c.enabled]
 
     def traits_view(self):
         cols = [CheckboxColumn(name='enabled'),
@@ -42,7 +46,9 @@ class ResultsView(HasTraits):
                 ObjectColumn(name='old_deflection'),
                 ObjectColumn(name='new_deflection')]
 
-        v = View(UItem('results', editor=TableEditor(columns=cols)),
+        v = View(UItem('results', editor=TableEditor(columns=cols,
+                                                     sortable=False)),
+                 title='Deflection Results',
                  buttons=['OK', 'Cancel'],
                  kind='livemodal')
         return v
@@ -50,7 +56,7 @@ class ResultsView(HasTraits):
 
 class DeflectionResult(HasTraits):
     name = Str
-    enabled = Bool
+    enabled = Bool(True)
     new_deflection = Float
     old_deflection = Float
 
@@ -140,9 +146,9 @@ class CoincidenceScan(BasePeakCenter):
                 # msg = 'Apply new deflection. {} Current {}. New {}'.format(di.name, curdefl, newdefl)
                 # if self.confirmation_dialog(msg):
                 results.append(DeflectionResult(di.name, curdefl, newdefl))
-                    # update the config.cfg deflections
-                    # config.set('Deflections', di.name, newdefl)
-                    # di.deflection = newdefl
+                # update the config.cfg deflections
+                # config.set('Deflections', di.name, newdefl)
+                # di.deflection = newdefl
 
         if no_change and self.inform:
             self.information_dialog('no deflection changes needed')
@@ -165,7 +171,7 @@ class CoincidenceScan(BasePeakCenter):
 # start_mass = 39
 # stop_mass = 40
 # step_mass = 0.005
-#     title = 'Coincidence Scan'
+# title = 'Coincidence Scan'
 #     inform = True
 #
 #     def _reference_detector_changed(self, new):

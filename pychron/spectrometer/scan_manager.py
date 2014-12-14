@@ -51,7 +51,7 @@ class ScanManager(Manager):
     ion_optics_manager = Instance('pychron.spectrometer.ion_optics_manager.IonOpticsManager')
 
     graph = Instance(TimeSeriesStreamGraph)
-    graphs = List
+    # graphs = List
 
     readout_view = Instance(ReadoutView)
 
@@ -104,7 +104,7 @@ class ScanManager(Manager):
     timer = None
 
     use_log_events = Bool
-    _log_events_enabled = False
+    log_events_enabled = False
     _valve_event_list = List
 
     def _bind_listeners(self, remove=False):
@@ -113,7 +113,7 @@ class ScanManager(Manager):
 
     def prepare_destroy(self):
         self.stop_scan()
-        self._log_events_enabled = False
+        self.log_events_enabled = False
         self._bind_listeners(remove=True)
 
         plot = self.graph.plots[0]
@@ -173,7 +173,7 @@ class ScanManager(Manager):
 
         # force position update
         self._set_position()
-        self._log_events_enabled = True
+        self.log_events_enabled = True
 
     def load_settings(self):
         self.info('load scan settings')
@@ -230,7 +230,7 @@ class ScanManager(Manager):
         self.timer = self._timer_factory()
 
     def add_spec_event_marker(self, msg, mode=None, extra=None, bgcolor='white'):
-        if self.use_log_events and self._log_events_enabled:
+        if self.use_log_events and self.log_events_enabled:
             if mode == 'valve' and self._valve_event_list:
                 # check valve name is configured to be displayed
                 if not extra in self._valve_event_list:
@@ -239,32 +239,33 @@ class ScanManager(Manager):
             self.debug('add spec event marker. {}'.format(msg))
             self.graph.add_visual_marker(msg, bgcolor)
 
-    def peak_center(self):
-
-        man = self.ion_optics_manager
-        if len(self.graphs) > 1:
-            i = int(self.graphs[-1].split(' ')[2]) + 1
-        else:
-            i = 1
-
-        self._log_events_enabled = False
-        if man.setup_peak_center(new=True, standalone_graph=False,
-                                 name='Peak Center {:02n}'.format(i)):
-            self.graphs.append(man.peak_center.graph)
-
-            def func():
-                setattr(self, '_log_events_enabled', True)
-
-            man.do_peak_center(confirm_save=True, warn=True,
-                               message='manual peakcenter',
-                               on_end=func)
+    # def peak_center(self):
+    #
+    #     man = self.ion_optics_manager
+    #     # if len(self.graphs) > 1:
+    #     #     i = int(self.graphs[-1].split(' ')[2]) + 1
+    #     # else:
+    #     #     i = 1
+    #
+    #     i = 1
+    #     self._log_events_enabled = False
+    #     if man.setup_peak_center(new=True, standalone_graph=False,
+    #                              name='Peak Center {:02n}'.format(i)):
+    #         # self.graphs.append(man.peak_center.graph)
+    #
+    #         def func():
+    #             setattr(self, '_log_events_enabled', True)
+    #
+    #         man.do_peak_center(confirm_save=True, warn=True,
+    #                            message='manual peakcenter',
+    #                            on_end=func)
 
     # private
     def _reset_graph(self):
         self.graph = self._graph_factory()
-        if len(self.graphs):
-            self.graphs.pop(0)
-        self.graphs.insert(0, self.graph)
+        # if len(self.graphs):
+        #     self.graphs.pop(0)
+        # self.graphs.insert(0, self.graph)
 
         #trigger a timer reset. set to 0 then default
         self.reset_scan_timer()
@@ -633,7 +634,7 @@ class ScanManager(Manager):
     # ===============================================================================
     def _graph_default(self):
         g = self._graph_factory()
-        self.graphs.append(g)
+        # self.graphs.append(g)
         return g
 
     def _rise_rate_default(self):
