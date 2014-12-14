@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,7 +19,7 @@ from chaco.label import Label
 from chaco.plot_label import PlotLabel
 from enable.colors import color_table, convert_from_pyqt_color
 from enable.font_metrics_provider import font_metrics_provider
-from traits.api import Array, Int, Float, Str, Color, Event, Bool
+from traits.api import Array, Int, Float, Str, Color, Event, Bool, List
 from chaco.abstract_overlay import AbstractOverlay
 # ============= standard library imports ========================
 from numpy import where, array
@@ -65,7 +65,7 @@ class SpectrumTool(BaseTool, BasePlateauOverlay):
                 return ndx
 
     # def normal_mouse_move(self, event):
-    #     xy=event.x, event.y
+    # xy=event.x, event.y
     #     pos=self.hittest(xy)
     #     if pos is not None:
     #     # if isinstance(pos, tuple):
@@ -85,7 +85,7 @@ class SpectrumTool(BaseTool, BasePlateauOverlay):
         ndx = self.hittest(pt)
         if ndx is not None:
             sels = self.component.index.metadata['selections']
-            self.component.index.metadata['selections'] = list(set(sels) ^ set([ndx]))
+            self.component.index.metadata['selections'] = mm = list(set(sels) ^ set([ndx]))
             self.component.request_redraw()
 
         event.handled = True
@@ -129,7 +129,7 @@ class SpectrumInspectorOverlay(InfoOverlay):
     pass
     # @on_trait_change('tool:metadata_changed')
     # def _update_(self, new):
-    #     print 'asdf', new
+    # print 'asdf', new
     # tool =Any
     # @on_trait_change('tool:current_section')
     # def handle(self, new):
@@ -201,7 +201,7 @@ class SpectrumErrorOverlay(AbstractOverlay):
 
 class PlateauTool(DragTool):
     # def normal_mouse_move(self, event):
-    #     if self.is_draggable(event.x, event.y):
+    # if self.is_draggable(event.x, event.y):
     #         event.handled = True
     #
     # def normal_left_down(self, event):
@@ -246,6 +246,7 @@ class PlateauOverlay(BasePlateauOverlay):
     nsigma = Int(2)
     line_color = Color('red')
     line_width = Float(1.0)
+    selections = List
 
     def hittest(self, pt, threshold=7):
         x, y = pt
@@ -266,7 +267,16 @@ class PlateauOverlay(BasePlateauOverlay):
             return
 
         sidx = ps[0]
-        eidx = ps[1] + 1
+        eidx = ps[1]
+        sels = self.component.index.metadata['selections']
+        while sidx in sels:
+            sidx += 1
+
+        while eidx in sels:
+            eidx -= 1
+
+        eidx += 1
+
         cstart = cs[sidx]
         cend = cs[eidx]
 
@@ -306,7 +316,7 @@ class PlateauOverlay(BasePlateauOverlay):
             gc.lines([(x2, y + 10), (x2, y2 + 5)])
 
             # if y1 < y and y2<y:
-            #     gc.lines([(x1, y1+5), (x1, y + 10)])
+            # gc.lines([(x1, y1+5), (x1, y + 10)])
             #     gc.lines([(x2, y2+5), (x2, y + 10)])
             # elif y1> y and y2>y:
             #     gc.lines([(x1, y - 10),(x1, y1 + 5)])

@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from math import isnan
 
-from traits.api import Array
+from traits.api import Array, List, Instance
 
 # ============= standard library imports ========================
 from numpy import hstack, array
@@ -37,6 +37,8 @@ class Spectrum(BaseArArFigure):
     _omit_key = 'omit_spec'
 
     _analysis_group_klass = StepHeatAnalysisGroup
+    spectrum_overlays = List
+    plateau_overlay = Instance(PlateauOverlay)
 
     def plot(self, plots):
         """
@@ -201,15 +203,14 @@ class Spectrum(BaseArArFigure):
         graph = self.graph
 
         ds, p = graph.new_series(xs, ys, plotid=plotid)
-
-        #         u = lambda a, b, c, d: self.update_graph_metadata(ds, group_id, a, b, c, d)
-        #         ds.index.on_trait_change(u, 'metadata_changed')
+        ds.index.on_trait_change(self.update_graph_metadata, 'metadata_changed')
 
         ds.index.sort_order = 'ascending'
         #         ds.index.on_trait_change(self._update_graph, 'metadata_changed')
 
         #        sp = SpectrumTool(ds, spectrum=self, group_id=group_id)
         sp = SpectrumTool(component=ds, cumulative39s=self.xs)
+        # sp.on_trait_change('selection_changed')
         ov = SpectrumInspectorOverlay(tool=sp, component=ds)
         ds.tools.append(sp)
         ds.overlays.append(ov)
@@ -226,6 +227,7 @@ class Spectrum(BaseArArFigure):
                                   use_fill=self.options.use_error_envelope_fill,
                                   nsigma=ns)
         ds.underlays.append(sp)
+        self.spectrum_overlays.append(sp)
 
         if po.show_labels:
             lo = SpectrumLabelOverlay(component=ds,
@@ -268,7 +270,7 @@ class Spectrum(BaseArArFigure):
         lp.tools.append(tool)
         #plateau_label:[x, y
         ov.on_trait_change(self._handle_plateau_overlay_move, 'position[]')
-
+        self.plateau_overlay = ov
         return ov
 
     def _handle_plateau_overlay_move(self, obj, name, old, new):
@@ -278,8 +280,13 @@ class Spectrum(BaseArArFigure):
         if new is True:
             self.update_graph_metadata(gid, None, name, old, new)
 
-    def update_graph_metadata(self, group_id, obj, name, old, new):
-        pass
+    def update_graph_metadata(self, obj, name, old, new):
+        # sel = obj.metadata['selections']
+        # for sp in self.spectrum_overlays:
+        #     sp.selections = sel
+
+        # self.plateau_overlay.selections = sel
+        self.graph.plotcontainer.invalidate_and_redraw()
 
     # ===============================================================================
     # utils
