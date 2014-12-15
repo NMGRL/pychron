@@ -25,3 +25,6 @@ Pychron Develop Guide
   communications
   notification_network
   figure
+  remote_hardware
+  errors/el_errors
+  errors/laser_errors
