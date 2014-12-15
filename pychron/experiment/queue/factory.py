@@ -73,7 +73,7 @@ class ExperimentQueueFactory(PersistenceLoggable):
                    'delay_before_analyses',
                    'queue_conditionals_name')
     # def _add_user_fired(self):
-    #     a=UserEntry()
+    # a=UserEntry()
     #     a.edit_user(self.username)
     #     self.users_dirty=True
     def activate(self, load_persistence):
@@ -83,7 +83,7 @@ class ExperimentQueueFactory(PersistenceLoggable):
         self._load_queue_conditionals()
         if load_persistence:
             self.load()
-            self.username=globalv.username
+            self.username = globalv.username
 
     def deactivate(self):
         """
@@ -126,7 +126,7 @@ class ExperimentQueueFactory(PersistenceLoggable):
 
     # @cached_property
     def _get_load_names(self):
-        db=self.db
+        db = self.db
         if not db.connected:
             return []
 
@@ -165,7 +165,7 @@ class ExperimentQueueFactory(PersistenceLoggable):
             then look for a config file
             then use hardcorded defaults
         """
-        db=self.db
+        db = self.db
         cp = os.path.join(paths.setup_dir, 'names')
         if db:
             if not db.connected:
@@ -185,7 +185,7 @@ class ExperimentQueueFactory(PersistenceLoggable):
             then look for a config file
             then use hardcorded defaults
         """
-        db=self.db
+        db = self.db
         cp = os.path.join(paths.setup_dir, 'names')
         if db:
             if not db.connected:
@@ -209,14 +209,21 @@ class ExperimentQueueFactory(PersistenceLoggable):
         self.debug('mass spectrometer ="{}"'.format(new))
 
     def _edit_emails_fired(self):
-        from pychron.experiment.utilities.email_selection_view import EmailSelectionView, boiler_plate
-        path = os.path.join(paths.setup_dir, 'users.yaml')
-        if not os.path.isfile(path):
-            boiler_plate(path)
-
-        esv = EmailSelectionView(path=path,
-                                 emails=self._emails)
-        esv.edit_traits(kind='livemodal')
+        # todo: use user task instead
+        task = self.application.open_task('pychron.users')
+        task.auto_save = True
+        #
+        # from pychron.experiment.utilities.email_selection_view import EmailSelectionView, boiler_plate
+        # path = os.path.join(paths.setup_dir, 'users.yaml')
+        # if not os.path.isfile(path):
+        #     boiler_plate(path)
+        #
+        # esv = EmailSelectionView(path=path,
+        #                          emails=self._emails)
+        # from pychron.user.tasks.panes import UsersPane
+        # esv = UsersPane()
+        # esv.edit_traits(kind='livemodal')
+        # task.edit_traits(kind='livemodal')
 
 
 if __name__ == '__main__':

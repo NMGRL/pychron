@@ -28,6 +28,7 @@ from pychron.logger.tasks.logger_plugin import LoggerPlugin
 from pychron.envisage.initialization.initialization_parser import InitializationParser
 
 import logging
+from pychron.user.tasks.plugin import UsersPlugin
 
 logger = logging.getLogger()
 
@@ -168,12 +169,14 @@ def app_factory(klass, user):
         return a Pychron TaskApplication
     """
     pychron_plugin = PychronTasksPlugin()
+
     plugins = [
         CorePlugin(),
         myTasksPlugin(),
         pychron_plugin,
         # FoobotPlugin(),
-        LoggerPlugin()]
+        LoggerPlugin(),
+        UsersPlugin()]
 
     # if UpdatePlugin is not None:
     #     plugins.append(UpdatePlugin())

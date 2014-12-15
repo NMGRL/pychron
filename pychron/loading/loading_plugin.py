@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -39,42 +39,30 @@ from pychron.loading.loading_preferences import LoadingPreferencesPane
 from pychron.loading.panes import LoadDockPane, LoadTablePane
 from pychron.loading.loading_manager import LoadingManager
 
+
 class LoadingPlugin(BaseTaskPlugin):
     id = 'pychron.loading'
+
     def _my_task_extensions_default(self):
-        return [
-                TaskExtension(task_id='pychron.loading',
-                               actions=[SchemaAddition(id='save_loading_figure',
-                                                       factory=SaveLoadingAction,
-                                                       path='MenuBar/file.menu')
-                                        ],
-                              ),
-                ]
+        return [TaskExtension(task_id='pychron.loading',
+                              actions=[SchemaAddition(id='save_loading_figure',
+                                                      factory=SaveLoadingAction,
+                                                      path='MenuBar/file.menu')])]
 
     def _tasks_default(self):
-        return [
-                TaskFactory(id='pychron.loading',
+        return [TaskFactory(id='pychron.loading',
                             factory=self._load_task_factory,
                             name='Loading',
                             accelerator='Ctrl+Y',
-                            task_group='experiment'
-                            )
-                ]
+                            task_group='experiment')]
 
     def _service_offers_default(self):
-        load = self.service_offer_factory(
-                                        protocol=LoadDockPane,
-                                        factory=LoadDockPane
-                                        )
-        table = self.service_offer_factory(
-                                        protocol=LoadTablePane,
-                                        factory=LoadTablePane
-                                        )
-        man = self.service_offer_factory(
-                                        protocol=LoadingManager,
-                                        factory=self._loading_manager_factory
-                                        )
-
+        load = self.service_offer_factory(protocol=LoadDockPane,
+                                          factory=LoadDockPane)
+        table = self.service_offer_factory(protocol=LoadTablePane,
+                                           factory=LoadTablePane)
+        man = self.service_offer_factory(protocol=LoadingManager,
+                                         factory=self._loading_manager_factory)
         return [load, table, man]
 
     def _loading_manager_factory(self):
@@ -86,7 +74,6 @@ class LoadingPlugin(BaseTaskPlugin):
         return LoadingTask(manager=lm)
 
     def _preferences_panes_default(self):
-        return [
-                LoadingPreferencesPane
-                ]
+        return [LoadingPreferencesPane]
+
 # ============= EOF =============================================

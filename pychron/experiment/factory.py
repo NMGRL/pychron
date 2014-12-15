@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -286,7 +286,8 @@ extract_device, delay_+, tray, username, load_name, email, queue_conditionals_na
         return self._run_factory_factory()
 
     def _queue_factory_default(self):
-        eq = ExperimentQueueFactory(db=self.db)
+        eq = ExperimentQueueFactory(db=self.db,
+                                    application=self.application)
         # eq.activate()
         return eq
 
@@ -296,6 +297,7 @@ extract_device, delay_+, tray, username, load_name, email, queue_conditionals_na
 
     def _application_changed(self):
         self.run_factory.application = self.application
+        self.queue_factory.application = self.application
 
     def _default_mass_spectrometer_changed(self):
         self.debug('default mass spec changed "{}"'.format(self.default_mass_spectrometer))

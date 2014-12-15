@@ -423,15 +423,6 @@ class BaseTask(Task, Loggable, PreferenceMixin):
                                     default=CANCEL, title='Save Changes?')
         return dialog.open()
 
-
-class BaseManagerTask(BaseTask):
-    default_directory = Unicode
-    default_open_action = 'open'
-
-    _default_extension = ''
-    wildcard = None
-    manager = Any
-
     @on_trait_change('window:closing')
     def _on_close(self, event):
         """ Prompt the user to save when exiting.
@@ -451,6 +442,14 @@ class BaseManagerTask(BaseTask):
 
     def _prompt_for_save(self):
         return True
+
+class BaseManagerTask(BaseTask):
+    default_directory = Unicode
+    default_open_action = 'open'
+
+    _default_extension = ''
+    wildcard = None
+    manager = Any
 
     def view_pdf(self, p):
         # self.view_file(p, application='Adobe Reader')

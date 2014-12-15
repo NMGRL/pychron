@@ -9,6 +9,12 @@ CHANGELOG
 * updated Email plugin
 * updated Labnumber Entry
 * refactored irradiation import. moved to standalone dialog
+* changed spectrometer task to an EditorTask. 
+* updated coincidence
+* added transfer j from mass spec to pychron
+* added toggle full window
+* added detector intercalibration
+* added UsersPlugin
 
 .. * fully implemented import irradiation from XLS file
 .. * added ability to export irradiations from Pychron to MassSpec
