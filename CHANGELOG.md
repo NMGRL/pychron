@@ -15,7 +15,7 @@ CHANGELOG
 * added toggle full window
 * added detector intercalibration
 * added UsersPlugin
-
+* added extraction defaults to defaults.yaml
 .. * fully implemented import irradiation from XLS file
 .. * added ability to export irradiations from Pychron to MassSpec
 

@@ -21,7 +21,7 @@ from traitsui.api import View, Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.database.core.database_adapter import DatabaseAdapter
-from pychron.labspy.orm import Measurement, ProcessInfo, Device, Version, Status, Experiment, Analysis
+from pychron.labspy.orm import Measurement, ProcessInfo, Device, Version, Status, Experiment, Analysis, AnalysisType
 
 
 class LabspyDatabaseAdapter(DatabaseAdapter):
@@ -37,10 +37,19 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
         exp = Experiment(**kw)
         return self._add_item(exp)
 
-    def add_analysis(self, dbexp, **kw):
-        an = Analysis(**kw)
+    def add_analysis(self, dbexp, rd):
+        at = None
+        if 'analysis_type' in rd:
+            analysis_type = rd.pop('analysis_type')
+            at = self.get_analysis_type(analysis_type)
+            if not at:
+                at = self.add_analysis_type(analysis_type)
+        an = Analysis(**rd)
+        if at:
+            an.analysis_type = at
+
         an.experiment = dbexp
-        return an
+        return self._add_item(an)
 
     def update_experiment(self, hashid, **kw):
         exp = self.get_experiment(hashid)
@@ -75,7 +84,14 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
         p = Status()
         return self._add_item(p)
 
+    def add_analysis_type(self, name):
+        obj = AnalysisType(Name=name)
+        return self._add_item(obj)
+
     # getters
+    def get_analysis_type(self, name):
+        return self._retrieve_item(AnalysisType, name, key='Name')
+
     def get_experiment(self, hid):
         return self._retrieve_item(Experiment, hid, key='HashID')
 

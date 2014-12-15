@@ -25,7 +25,7 @@ from traitsui.api import View, Item
 
 Base = declarative_base()
 
-stringcolumn = lambda w=80: Column(String(w))
+stringcolumn = lambda w=80, **kw: Column(String(w), **kw)
 
 
 class BaseMixin(object):
@@ -65,10 +65,17 @@ class Experiment(Base, BaseMixin):
     ExtractionDevice = stringcolumn()
     StartTime = Column(DateTime)
     EndTime = Column(DateTime)
-    State = stringcolumn()
+    State = stringcolumn(default='Running')
     LastUpdate = Column(DateTime)
 
-    analyses = relationship('Analysis')
+    HashID = stringcolumn()
+    analyses = relationship('Analysis', backref='experiment')
+
+
+class AnalysisType(Base,BaseMixin):
+    AnalysisTypeID = Column(Integer, primary_key=True)
+    Name = stringcolumn(45)
+    analyses = relationship('Analysis', backref='analysis_type')
 
 
 class Analysis(Base, BaseMixin):
@@ -76,8 +83,10 @@ class Analysis(Base, BaseMixin):
     Runid = stringcolumn(20)
     Project = stringcolumn()
     Sample = stringcolumn()
-    Timestamp = DateTime
+    TimeStamp = Column(DateTime)
     State = stringcolumn(20)
+    Comment = Column(BLOB)
+    Material = stringcolumn()
 
     Position = stringcolumn()
     Cleanup = Column(Float)
@@ -90,6 +99,7 @@ class Analysis(Base, BaseMixin):
     Extraction = stringcolumn(100)
 
     ExpID = Column(Integer, ForeignKey('Experiment.ExpID'))
+    AnalysisTypeID = Column(Integer, ForeignKey('AnalysisType.AnalysisTypeID'))
 
 
 class Status(Base, BaseMixin):
