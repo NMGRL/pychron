@@ -50,6 +50,7 @@ class SpectrumTool(BaseTool, BasePlateauOverlay):
     metadata_changed = Event
     current_position = None
     current_screen = None
+    analyses = List
 
     def hittest(self, screen_pt, threshold=20):
         comp = self.component
@@ -100,10 +101,12 @@ class SpectrumTool(BaseTool, BasePlateauOverlay):
 
         low_c = 0 if idx == 0 else self.cumulative39s[idx - 1]
 
+        an = self.analyses[idx]
         return ['Step={}'.format(ALPHAS[idx]),
+                'Tag={}'.format(an.tag),
+                'Status={}'.format(an.status_text),
                 '{}={} +/- {} (1s)'.format(comp.container.y_axis.title, floatfmt(v),
-                                           floatfmt(e)
-                ),
+                                           floatfmt(e)),
                 'Cumulative. Ar39={}-{}'.format(floatfmt(low_c),
                                                 floatfmt(self.cumulative39s[idx]))]
 
@@ -147,6 +150,7 @@ class SpectrumErrorOverlay(AbstractOverlay):
     nsigma = Int(1)
     alpha = Float
     use_fill = Bool(False)
+    selections = List
 
     def overlay(self, component, gc, *args, **kw):
         comp = self.component
@@ -156,8 +160,8 @@ class SpectrumErrorOverlay(AbstractOverlay):
             xs = comp.index.get_data()
             ys = comp.value.get_data()
             es = comp.errors
-            sels = comp.index.metadata['selections']
-
+            # sels = comp.index.metadata['selections']
+            sels = self.selections
             n = len(xs)
             xs = xs.reshape(n / 2, 2)
             ys = ys.reshape(n / 2, 2)
@@ -268,7 +272,8 @@ class PlateauOverlay(BasePlateauOverlay):
 
         sidx = ps[0]
         eidx = ps[1]
-        sels = self.component.index.metadata['selections']
+        sels = self.selections
+        # sels = self.component.index.metadata['selections']
         while sidx in sels:
             sidx += 1
 

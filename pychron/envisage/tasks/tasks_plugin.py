@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from envisage.extension_point import ExtensionPoint
 from envisage.plugin import Plugin
+from envisage.ui.tasks.action.preferences_action import PreferencesAction
 from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.tasks_plugin import TasksPlugin
 from pyface.tasks.action.dock_pane_toggle_group import DockPaneToggleGroup
@@ -24,6 +25,7 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 from traits.api import List
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import ToggleFullWindowAction, EditInitializationAction
 from pychron.envisage.tasks.preferences import GeneralPreferencesPane
 
@@ -53,16 +55,41 @@ class PychronTasksPlugin(Plugin):
         return [TaskExtension(actions=actions)]
 
 
-class myTasksPlugin(TasksPlugin):
-    pass
+class mPreferencesAction(PreferencesAction):
+    image = icon('cog')
 
-    #def _create_preferences_dialog_service(self):
-    #    from preferences_dialog import myPreferencesDialog
-    #
-    #    dialog = myPreferencesDialog(application=self.application)
-    #    dialog.trait_set(categories=self.preferences_categories,
-    #                     panes=[factory(dialog=dialog)
-    #                            for factory in self.preferences_panes])
-    #    return dialog
+
+class myTasksPlugin(TasksPlugin):
+    def _my_task_extensions_default(self):
+
+        from pyface.tasks.action.api import SchemaAddition
+        from envisage.ui.tasks.action.exit_action import ExitAction
+
+        actions = [SchemaAddition(id='Exit',
+                                  factory=ExitAction,
+                                  path='MenuBar/file.menu'),
+                   SchemaAddition(id='preferences',
+                                  factory=mPreferencesAction,
+                                  path='MenuBar/file.menu'),
+                   # SchemaAddition(id='Preferences',
+                   # factory=PreferencesGroup,
+                   #                path='MenuBar/edit.menu'
+                   #                # path='MenuBar/edit.menu'
+                   # ),
+                   # SchemaAddition(id='DockPaneToggleGroup',
+                   #                factory=DockPaneToggleGroup,
+                   #                path='view.menu')
+                   ]
+
+        return [TaskExtension(actions=actions)]
+
+        # def _create_preferences_dialog_service(self):
+        #    from preferences_dialog import myPreferencesDialog
+        #
+        #    dialog = myPreferencesDialog(application=self.application)
+        #    dialog.trait_set(categories=self.preferences_categories,
+        #                     panes=[factory(dialog=dialog)
+        #                            for factory in self.preferences_panes])
+        #    return dialog
 
 # ============= EOF =============================================

@@ -101,7 +101,6 @@ class BaseTasksApplication(TasksApplication, Loggable):
         return info
 
     def exit(self, **kw):
-
         self._cleanup_services()
 
         uis = self.uis
@@ -112,7 +111,7 @@ class BaseTasksApplication(TasksApplication, Loggable):
             except AttributeError:
                 pass
 
-        super(BaseTasksApplication, self).exit(**kw)
+        super(BaseTasksApplication, self).exit(force=True)
 
     def _cleanup_services(self):
         for si in self.get_services(ICoreDevice):

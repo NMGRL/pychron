@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -224,6 +224,7 @@ class BaseTask(Task, Loggable, PreferenceMixin):
     application = DelegatesTo('window')
 
     _full_window = False
+
     def toggle_full_window(self):
         if self._full_window:
             self.window.set_layout(self.default_layout)
@@ -235,22 +236,22 @@ class BaseTask(Task, Loggable, PreferenceMixin):
         self._full_window = not self._full_window
 
     def show_pane(self, p):
-        op=p
+        op = p
         if isinstance(p, str):
             if '.' in p:
                 for k in self.trait_names():
-                    v=getattr(self, k)
+                    v = getattr(self, k)
                     try:
-                        if v.id==p:
-                            p=v
+                        if v.id == p:
+                            p = v
                             break
                     except AttributeError:
                         continue
 
             else:
-                p=getattr(self, p)
+                p = getattr(self, p)
 
-        self.debug('showing pane {} ==> {}'.format(op,p))
+        self.debug('showing pane {} ==> {}'.format(op, p))
         self._show_pane(p)
 
     def _show_pane(self, p):
@@ -274,11 +275,11 @@ class BaseTask(Task, Loggable, PreferenceMixin):
         mb = SMenuBar(
             self._file_menu(),
             self._edit_menu(),
+            self._entry_menu(),
             self._view_menu(),
             self._tools_menu(),
             self._window_menu(),
-            self._help_menu(),
-        )
+            self._help_menu())
         if menus:
             for mi in reversed(menus):
                 mb.items.insert(4, mi)
@@ -333,7 +334,7 @@ class BaseTask(Task, Loggable, PreferenceMixin):
 
             groups.append(TaskGroup(items=items))
 
-        groups.append(DockPaneToggleGroup())
+        # groups.append(DockPaneToggleGroup())
         return groups
 
     def _view_menu(self):
@@ -344,10 +345,14 @@ class BaseTask(Task, Loggable, PreferenceMixin):
         return view_menu
 
     def _edit_menu(self):
+        m = SMenu(GenericFindAction(),
+                  id='Edit', name='&Edit')
+        return m
+
+    def _entry_menu(self):
         edit_menu = SMenu(
-            GenericFindAction(),
-            id='Edit',
-            name='&Edit')
+            id='entry.menu',
+            name='&Entry')
         return edit_menu
 
     def _file_menu(self):
@@ -357,8 +362,7 @@ class BaseTask(Task, Loggable, PreferenceMixin):
             SGroup(
                 GenericSaveAsAction(),
                 GenericSaveAction(),
-                id='Save'
-            ),
+                id='Save'),
             SGroup(),
             #                         SMenu(id='Open', name='Open',),
             #                         SMenu(id='New', name='New'),
@@ -501,7 +505,7 @@ class BaseManagerTask(BaseTask):
                 kw['wildcard'] = self.wildcard
 
         if action is None:
-            action=self.default_open_action
+            action = self.default_open_action
 
         dialog = FileDialog(action=action, **kw)
         if dialog.open() == OK:
@@ -541,6 +545,7 @@ class BaseExtractionLineTask(BaseManagerTask):
         man = app.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
         if man:
             from pychron.extraction_line.tasks.extraction_line_pane import CanvasDockPane
+
             self.canvas_pane = CanvasDockPane(canvas=man.new_canvas(name='alt_config'))
             panes.append(self.canvas_pane)
 
