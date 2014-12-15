@@ -78,6 +78,7 @@ class ExperimentFactory(Loggable, ConsumerMixin):
         eq = self.queue
         qf = self.queue_factory
         for a in ('username', 'mass_spectrometer', 'extract_device',
+                  'email','use_email',
                   'use_group_email',
                   'load_name',
                   'delay_before_analyses', 'delay_between_analyses',
@@ -186,7 +187,9 @@ class ExperimentFactory(Loggable, ConsumerMixin):
         self.undoer.queue = new
 
     @on_trait_change('''queue_factory:[mass_spectrometer,
-extract_device, delay_+, tray, username, load_name, email, queue_conditionals_name]''')
+extract_device, delay_+, tray, username, load_name,
+email, use_email, use_group_email,
+queue_conditionals_name]''')
     def _update_queue(self, name, new):
         self.debug('update queue {}={}'.format(name, new))
         if name == 'mass_spectrometer':

@@ -42,8 +42,9 @@ def extract_meta(line_gen):
 
 __METASTR__ = '''
 username: {}
+use_email: {}
 email: {}
-uss_group_email: {}
+use_group_email: {}
 date: {}
 queue_conditionals_name: {}
 mass_spectrometer: {}
@@ -64,6 +65,7 @@ class BaseExperimentQueue(RunBlock):
     username = String
     email = String
     use_group_email = Bool
+    use_email = Bool
 
     tray = Str
     delay_before_analyses = CInt(5)
@@ -266,6 +268,7 @@ class BaseExperimentQueue(RunBlock):
         self._set_meta_param('delay_between_analyses', meta, default_int)
         self._set_meta_param('delay_before_analyses', meta, default_int)
         self._set_meta_param('username', meta, default)
+        self._set_meta_param('use_email', meta, bool_default)
         self._set_meta_param('email', meta, default)
         self._set_meta_param('use_group_email', meta, bool_default)
         self._set_meta_param('load_name', meta, default, metaname='load')
@@ -339,6 +342,7 @@ class BaseExperimentQueue(RunBlock):
 
         s = __METASTR__.format(
             self.username,
+            self.use_email,
             self.email,
             self.use_group_email,
             datetime.datetime.today(),

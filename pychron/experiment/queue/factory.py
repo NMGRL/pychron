@@ -34,12 +34,13 @@ class ExperimentQueueFactory(PersistenceLoggable):
     application = Any
 
     username = String
-    email = Property(depends_on='username, use_email_notifier, _email')
+    email = Property(depends_on='username, use_email, _email')
     _email = Str
     _emails = Dict
 
     use_group_email = Bool
-    use_email_notifier = Bool(True)
+    use_email = Bool
+    # use_email_notifier = Bool
     edit_emails = Button
 
     usernames = Property(depends_on='users_dirty, db_refresh_needed')
@@ -74,7 +75,7 @@ class ExperimentQueueFactory(PersistenceLoggable):
                    'queue_conditionals_name')
     # def _add_user_fired(self):
     # a=UserEntry()
-    #     a.edit_user(self.username)
+    # a.    edit_user(self.username)
     #     self.users_dirty=True
     def activate(self, load_persistence):
         """
@@ -113,7 +114,7 @@ class ExperimentQueueFactory(PersistenceLoggable):
     # ===============================================================================
     def _get_email(self):
         email = ''
-        if self.use_email_notifier:
+        if self.use_email:
             if self._email:
                 email = self._email
             else:
@@ -127,7 +128,7 @@ class ExperimentQueueFactory(PersistenceLoggable):
     # @cached_property
     def _get_load_names(self):
         db = self.db
-        if not db.connected:
+        if not self.db.connected:
             return []
 
         with db.session_ctx():
@@ -154,7 +155,8 @@ class ExperimentQueueFactory(PersistenceLoggable):
         with db.session_ctx():
             dbus = db.get_users()
             us = [ui.name for ui in dbus]
-            self._emails = dict([(ui.name, ui.email or '') for ui in dbus])
+            # self._emails = dict([(ui.name, ui.email or '') for ui in dbus])
+            self._emails = {ui.name: ui.email or '' for ui in dbus}
 
             return [''] + us
 
@@ -209,11 +211,10 @@ class ExperimentQueueFactory(PersistenceLoggable):
         self.debug('mass spectrometer ="{}"'.format(new))
 
     def _edit_emails_fired(self):
-        # todo: use user task instead
+        # todo: use user task insted
         task = self.application.open_task('pychron.users')
         task.auto_save = True
-        #
-        # from pychron.experiment.utilities.email_selection_view import EmailSelectionView, boiler_plate
+        # pychron.experiment.utilities.email_selection_view import EmailSelectionView, boiler_plate
         # path = os.path.join(paths.setup_dir, 'users.yaml')
         # if not os.path.isfile(path):
         #     boiler_plate(path)

@@ -85,7 +85,7 @@ class ExperimentFactoryPane(TraitsDockPane):
                          editor=ComboboxEditor(name=queue_factory_name('usernames'))),
                    icon_button_editor(queue_factory_name('edit_user'), 'database_edit'),
                    # Spring(width=-5, springy=False),
-                   queue_factory_item('use_email_notifier',
+                   queue_factory_item('use_email',
                                       tooltip='Send email notifications',
                                       show_label=False),
                    Item(queue_factory_name('email')),

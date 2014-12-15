@@ -204,7 +204,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     def execute(self):
         if self.user_notifier.emailer is None:
-            if any((eq.email or eq.use_group_email for eq in self.experiment_queues)):
+            if any((eq.use_email or eq.use_group_email for eq in self.experiment_queues)):
                 if not self.confirmation_dialog('Email Plugin not initialized. '
                                                 'Required for sending email notifications. '
                                                 'Are you sure you want to continue?'):
@@ -504,7 +504,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if not self._err_message and self.end_at_run_completion:
             self._err_message = 'User terminated'
 
-        if exp.email:
+        if exp.use_email:
             self.info('Notifying user={} email={}'.format(exp.username, exp.email))
             self.user_notifier.notify(exp, last_runid, self._err_message)
 
