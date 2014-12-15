@@ -195,7 +195,6 @@ class Spectrum(BaseArArFigure):
         graph = self.graph
         if not self.broadcaster:
             self.broadcaster = BroadcasterTool()
-            # graph.plotcontainer.tools.append(self.broadcaster)
 
         ds, p = graph.new_series(xs, ys, plotid=plotid)
 
