@@ -16,14 +16,10 @@
 
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Button, Str, Int, Property, cached_property
-from apptools.preferences.preference_binding import bind_preference
-# from traitsui.api import View, Item
 # ============= standard library imports ========================
 from datetime import datetime
-# from pprint import pprint
 import hashlib
 import time
-
 # ============= local library imports  ==========================
 from pychron.core.helpers.logger_setup import logging_setup
 from pychron.labspy.database_adapter import LabspyDatabaseAdapter
@@ -87,16 +83,16 @@ class LabspyClient(Loggable):
         spec = run.spec
 
         d = {dbk: getattr(spec, k) for k, dbk in (('runid', 'Runid'),
-                                                  ('analysis_type','analysis_type'),
-                                                  ('analysis_timestamp','TimeStamp'),
+                                                  ('analysis_type', 'analysis_type'),
+                                                  ('analysis_timestamp', 'TimeStamp'),
                                                   ('sample', 'Sample'),
                                                   ('extract_value', 'ExtractValue'),
                                                   ('extract_units', 'ExtractUnits'),
                                                   ('duration', 'Duration'),
                                                   ('cleanup', 'Cleanup'),
                                                   ('position', 'Position'),
-                                                  ('comment','Comment'),
-                                                  ('material','Material'),
+                                                  ('comment', 'Comment'),
+                                                  ('material', 'Material'),
                                                   ('project', 'Project'),
                                                   ('state', 'State'))}
 
@@ -115,8 +111,6 @@ class LabspyClient(Loggable):
 
 # ================= testing =========================
 
-
-
 if __name__ == '__main__':
     from random import random, choice, randint
 
@@ -124,16 +118,16 @@ if __name__ == '__main__':
         class Spec():
             def __init__(self, record_id):
                 self.runid = record_id
-                self.mass_spectrometer='jan'
-                self.extract_device='LF'
+                self.mass_spectrometer = 'jan'
+                self.extract_device = 'LF'
                 self.analysis_timestamp = datetime.now()
                 self.state = choice(['Finished', 'Canceled', 'Failed'])
                 self.analysis_type = "unknown"
                 self.sample = "FC-2"
-                self.extract_value = random()*2
+                self.extract_value = random() * 2
                 self.extract_units = 'watts'
-                self.duration = randint(100,200)
-                self.cleanup = randint(100,200)
+                self.duration = randint(100, 200)
+                self.cleanup = randint(100, 200)
                 self.position = 1
                 self.comment = "Test comment"
                 self.material = "sanidine"
@@ -160,6 +154,7 @@ if __name__ == '__main__':
                 self.extract_device = choice(('Fusions CO2', 'Fusions Diode'))
                 self.status = status
                 self.starttime = datetime.now()
+
         e = Exp('Current Experiment', 'foobar', 'Jan', 'Running')
         c.add_experiment(e)
         return e
@@ -171,8 +166,8 @@ if __name__ == '__main__':
     def add_measurements(c):
         for i in range(10):
             c.add_measurement('AirPressure', 'pneumatics', random(), 'PSI')
-            c.add_measurement('Environmental', 'temperature', random() * 100, 'C')
-            c.add_measurement('Environmental', 'humidity', random() * 100, '%')
+            c.add_measurement('Environmental', 'temperature', random() * 2 + 70, 'C')
+            c.add_measurement('Environmental', 'humidity', random() * 5 + 50, '%')
 
             time.sleep(0.25)
 
@@ -202,7 +197,7 @@ if __name__ == '__main__':
     # add_runs(clt, exp)
 # ============= EOF =============================================
 # class MeteorLabspyClient(LabspyClient):
-#     host = Str
+# host = Str
 #     port = Int
 #     database_name = Str
 #

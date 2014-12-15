@@ -88,8 +88,7 @@ class SpectrumTool(BaseTool, BasePlateauOverlay):
             sels = self.component.index.metadata['selections']
             self.component.index.metadata['selections'] = mm = list(set(sels) ^ set([ndx]))
             self.component.request_redraw()
-
-        event.handled = True
+            event.handled = True
 
     def assemble_lines(self):
         idx = self.current_position
@@ -102,7 +101,7 @@ class SpectrumTool(BaseTool, BasePlateauOverlay):
         low_c = 0 if idx == 0 else self.cumulative39s[idx - 1]
 
         an = self.analyses[idx]
-        return ['Step={}'.format(ALPHAS[idx]),
+        return ['RunID={}'.format(an.record_id),
                 'Tag={}'.format(an.tag),
                 'Status={}'.format(an.status_text),
                 '{}={} +/- {} (1s)'.format(comp.container.y_axis.title, floatfmt(v),

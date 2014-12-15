@@ -32,7 +32,7 @@ from pychron.processing.plotters.options.base import FigurePlotterOptions
 from pychron.pychron_constants import ALPHAS
 
 FONTS = ['modern', 'arial']
-SIZES = [6, 8, 9, 10, 11, 12, 14, 15, 18, 24, 36]
+SIZES = [10, 6, 8, 9, 10, 11, 12, 14, 15, 18, 24, 36]
 
 
 def _table_column(klass, *args, **kw):

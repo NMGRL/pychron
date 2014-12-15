@@ -3,6 +3,23 @@ import gc
 import pstats
 import time
 
+def get_profile_stats(fn, *args, **kw):
+    import cProfile, pstats
+    prof = cProfile.Profile()
+
+    # out = 'analysis_opt.prof'
+    # prof = cProfile(out)
+    prof.runcall(fn, *args, **kw)
+    # prof.close()
+    # stats = hotshot.stats.load(out)
+    # stats.strip_dirs()
+
+    stats = pstats.Stats(prof)
+    return stats
+    # stats.sort_stats('tottime')
+    # stats.sort_stats('time', 'calls')
+    # stats.print_stats(20)
+
 
 def profile2(fn):
 #     import cProfile, pstats, io

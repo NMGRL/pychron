@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from math import isnan
+from chaco.tools.broadcaster import BroadcasterTool
 
 from traits.api import Array, List, Instance
 
@@ -40,27 +41,19 @@ class Spectrum(BaseArArFigure):
     spectrum_overlays = List
     plateau_overlay = Instance(PlateauOverlay)
     integrated_label = None
+    broadcaster = None
 
     def plot(self, plots):
         """
             plot data on plots
         """
+
         graph = self.graph
 
         for pid, (plotobj, po) in enumerate(zip(graph.plots, plots)):
-            # #     plotobj.value_mapper.low_setting = po.ylimits[0]
-            # #     plotobj.value_mapper.high_setting = po.ylimits[1]
-            # plotobj.value_mapper.low_setting = 0
-            # plotobj.value_mapper.high_setting = 33
-
             getattr(self, '_plot_{}'.format(po.plot_name))(po, plotobj, pid)
-            # self.update_options_limits(pid)
 
-        try:
-            self.graph.set_x_title('Cumulative %39ArK', plotid=0)
-            # self.graph.set_x_limits(0, 100, plotid=0)
-        except IndexError:
-            pass
+        self.graph.set_x_title('Cumulative %39ArK', plotid=0)
 
     def max_x(self, attr):
         return max([ai.nominal_value for ai in self._unpack_attr(attr)])
@@ -114,7 +107,7 @@ class Spectrum(BaseArArFigure):
             #
             # e = plateau_age.std_dev * self.options.nsigma
             # info_txt = self._build_label_text(plateau_age.nominal_value, e,
-            #                                   plateau_mswd, valid_mswd, nsteps,
+            # plateau_mswd, valid_mswd, nsteps,
             #                                   sig_figs=self.options.plateau_sig_figs)
             txt = self._make_plateau_text()
             overlay = self._add_plateau_overlay(spec, platbounds, plateau_age,
@@ -162,7 +155,7 @@ class Spectrum(BaseArArFigure):
 
             # label.id='integrated'
             # if label.id in po.overlay_positions:
-            #     label.label_position=po.overlay_positions[label.id]
+            # label.label_position=po.overlay_positions[label.id]
 
         self._add_info(graph, plot)
 
@@ -200,8 +193,14 @@ class Spectrum(BaseArArFigure):
 
     def _add_plot(self, xs, ys, es, plotid, po, value_scale='linear'):
         graph = self.graph
+        if not self.broadcaster:
+            self.broadcaster = BroadcasterTool()
+            # graph.plotcontainer.tools.append(self.broadcaster)
 
         ds, p = graph.new_series(xs, ys, plotid=plotid)
+
+        ds.tools.append(self.broadcaster)
+
         ds.index.on_trait_change(self._update_graph_metadata, 'metadata_changed')
 
         ds.index.sort_order = 'ascending'
@@ -211,6 +210,8 @@ class Spectrum(BaseArArFigure):
         sp = SpectrumTool(component=ds,
                           cumulative39s=self.xs,
                           analyses=self.analyses)
+
+        self.broadcaster.tools.append(sp)
         # sp.on_trait_change('selection_changed')
         ov = SpectrumInspectorOverlay(tool=sp, component=ds)
         ds.tools.append(sp)
@@ -278,7 +279,7 @@ class Spectrum(BaseArArFigure):
         self._handle_overlay_move(obj, name, old, float(new[0]))
 
     # def update_index_mapper(self, gid, obj, name, old, new):
-    #     if new is True:
+    # if new is True:
     #         self._update_graph_metadata(gid, None, name, old, new)
 
     def _update_graph_metadata(self, obj, name, old, new):
@@ -303,7 +304,8 @@ class Spectrum(BaseArArFigure):
             self.plateau_overlay.info_txt = text
 
         self.graph.plotcontainer.invalidate_and_redraw()
-        self.refresh_unknowns_table=True
+        self.refresh_unknowns_table = True
+
     # ===============================================================================
     # utils
     # ===============================================================================
