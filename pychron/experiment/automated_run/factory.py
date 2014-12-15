@@ -188,8 +188,8 @@ class AutomatedRunFactory(PersistenceLoggable):
     # extract
     # ===========================================================================
     # extract_value = Property(
-    #     EKlass(Float),
-    #     depends_on='_extract_value')
+    # EKlass(Float),
+    # depends_on='_extract_value')
     # _extract_value = Float
     extract_value = EKlass(Float)
     extract_units = Str(NULL_STR)
@@ -268,13 +268,8 @@ class AutomatedRunFactory(PersistenceLoggable):
     irrad_hole = Str
 
     info_label = Property(depends_on='labnumber')
-    # ===========================================================================
-    # private
-    # ===========================================================================
-    _selected_runs = List
-    _spec_klass = AutomatedRunSpec
-
     extractable = Property(depends_on='labnumber')
+
     update_info_needed = Event
     refresh_table_needed = Event
     changed = Event
@@ -294,7 +289,12 @@ class AutomatedRunFactory(PersistenceLoggable):
                    'pattern', 'labnumber', 'position',
                    'weight', 'comment', 'template',
                    'use_simple_truncation', 'conditionals_path')
-
+    # ===========================================================================
+    # private
+    # ===========================================================================
+    _selected_runs = List
+    _spec_klass = AutomatedRunSpec
+    _set_defaults = True
     _no_clear_labnumber = False
 
     def setup_files(self):
@@ -337,7 +337,7 @@ class AutomatedRunFactory(PersistenceLoggable):
         return True
 
     # def load_comment_templates(self):
-    #     self.comment_templates = self._get_comment_templates()
+    # self.comment_templates = self._get_comment_templates()
 
     def load_run_blocks(self):
         self.run_blocks = self._get_run_blocks()
@@ -389,8 +389,10 @@ class AutomatedRunFactory(PersistenceLoggable):
         self.debug('len selected runs {}'.format(len(runs)))
         if runs:
             run = runs[0]
+            self._set_defaults = False
             self._clone_run(run, set_labnumber=self.set_labnumber,
                             set_position=self.set_position)
+            self._set_defaults = True
 
         self._selected_runs = runs
         self.suppress_update = False
@@ -431,7 +433,8 @@ class AutomatedRunFactory(PersistenceLoggable):
 
         if auto_increment_id:
             v = increment_value(self.labnumber)
-            invoke_in_main_thread(self.trait_set, _labnumber=v)
+            # invoke_in_main_thread(self.trait_set, _labnumber=v)
+            invoke_in_main_thread(self.trait_set, labnumber=v)
 
         if auto_increment_position:
             pos = self.position
@@ -495,8 +498,8 @@ class AutomatedRunFactory(PersistenceLoggable):
             self.irrad_level = str(level.name)
 
             self._no_clear_labnumber = True
-            self.selected_level = self.irrad_level
             self.selected_irradiation = irrad.name
+            self.selected_level = self.irrad_level
             self._no_clear_labnumber = False
 
             # self.trait_setq(selected_level=self.irrad_level, selected_irradiation=irrad.name)
@@ -677,7 +680,6 @@ class AutomatedRunFactory(PersistenceLoggable):
     def _clear_labnumber(self):
         if not self._no_clear_labnumber:
             self.labnumber = ''
-            self._labnumber = NULL_STR
 
     def _template_closed(self):
         invoke_in_main_thread(self.load_templates)
@@ -735,15 +737,28 @@ class AutomatedRunFactory(PersistenceLoggable):
     # ===============================================================================
     #
     # ===============================================================================
-    def _load_extraction_defaults(self, ln):
+    def _load_defaults(self, ln, attrs=None):
+        if attrs is None:
+            attrs = ('extract_value', 'extract_units',
+                     'cleanup', 'duration', 'beam_diameter')
+
+        self.debug('loading defaults for {}. ed={} attrs={}'.format(ln, self.extract_device, attrs))
         defaults = self._load_default_file()
         if defaults:
             if ln in defaults:
                 grp = defaults[ln]
-                for attr in ('extract_value', 'extract_units'):
+                ed = self.extract_device.replace(' ', '')
+                if ed in grp:
+                    grp = grp[ed]
+
+                for attr in attrs:
                     v = grp.get(attr)
                     if v is not None:
                         setattr(self, attr, v)
+            else:
+                self.unique_warning('L# {} not in defaults.yaml'.format(ln))
+        else:
+            self.unique_warning('No defaults.yaml')
 
     def _load_scripts(self, old, new):
         """
@@ -824,6 +839,47 @@ class AutomatedRunFactory(PersistenceLoggable):
         # convert keys to lowercase
         defaults = dict([(k.lower(), v) for k, v in defaults.iteritems()])
         return defaults
+
+    def _load_labnumber_meta(self, labnumber):
+        db = self.db
+        self._aliquot = 0
+        with db.session_ctx():
+            # convert labnumber (a, bg, or 10034 etc)
+            ln = db.get_labnumber(labnumber)
+            if ln:
+                # set sample and irrad info
+                try:
+                    self.sample = ln.sample.name
+                except AttributeError:
+                    pass
+
+                try:
+                    a = int(ln.analyses[-1].aliquot + 1)
+                except IndexError, e:
+                    a = 1
+
+                self._aliquot = a
+
+                self.irradiation = self._make_irrad_level(ln)
+
+                if self.auto_fill_comment:
+                    self._set_auto_comment()
+                return True
+            else:
+                self.warning_dialog(
+                    '{} does not exist. Add using "Labnumber Entry" or "Utilities>>Import"'.format(labnumber))
+
+    def _load_labnumber_defaults(self, old, labnumber, special):
+
+        if special:
+            ln = labnumber[:2]
+            if ln == 'dg':
+                # self._load_extraction_defaults(ln)
+                self._load_defaults(ln, attrs=('extract_value', 'extract_units'))
+        else:
+            self._load_defaults(labnumber if special else 'u')
+
+        self._load_scripts(old, labnumber)
 
     # ===============================================================================
     # property get/set
@@ -1238,13 +1294,17 @@ post_equilibration_script:name''')
     def _skip_changed(self):
         self.update_info_needed = True
 
-    def __labnumber_changed(self):
-        if self._labnumber != NULL_STR:
-            self.labnumber = self._labnumber
+    def _labnumber_changed(self, old, new):
+        if new:
+            special = False
+            try:
+                _ = int(new)
+            except ValueError:
+                special = True
 
-            #do go into edit mode if a run is selected
-            if not self._selected_runs:
-                self.edit_mode = True
+            if self._load_labnumber_meta(new):
+                if self._set_defaults:
+                    self._load_labnumber_defaults(old, new, special)
 
     def _project_changed(self):
         self._clear_labnumber()
@@ -1281,85 +1341,12 @@ post_equilibration_script:name''')
                 self.labnumber = ln
                 self._load_extraction_info()
 
-                # self._labnumber = NULL_STR
             self._frequency_enabled = True
 
             if not self._selected_runs:
                 self.edit_mode = True
         else:
             self._frequency_enabled = False
-
-    def _labnumber_changed(self, old, labnumber):
-        self.debug('old={}, new={}. {}'.format(old, labnumber, not labnumber or labnumber == NULL_STR))
-        if not labnumber or labnumber == NULL_STR:
-            return
-
-        db = self.db
-        if not db:
-            return
-        # self.update_labnumber = labnumber
-
-        special = False
-        try:
-            _ = int(labnumber)
-        except ValueError:
-            special = True
-
-        # if labnumber has a place holder load default script and return
-        if '##' in labnumber:
-            self._load_scripts(old, labnumber)
-            return
-
-        self.irradiation = ''
-        self.sample = ''
-
-        self._aliquot = 0
-        if labnumber:
-            with db.session_ctx():
-                # convert labnumber (a, bg, or 10034 etc)
-                ln = db.get_labnumber(labnumber)
-                if ln:
-                    # set sample and irrad info
-                    try:
-                        self.sample = ln.sample.name
-                    except AttributeError:
-                        pass
-
-                    try:
-                        a = int(ln.analyses[-1].aliquot + 1)
-                    except IndexError, e:
-                        a = 1
-
-                    self._aliquot = a
-
-                    self.irradiation = self._make_irrad_level(ln)
-
-                    if self.auto_fill_comment:
-                        self._set_auto_comment()
-
-                    self._load_scripts(old, labnumber)
-
-                elif special:
-                    ln = labnumber[:2]
-                    if ln == 'dg':
-                        self._load_extraction_defaults(ln)
-
-                    if not (ln in ('pa', 'dg')):
-                        '''
-                            don't add pause or degas to database
-                        '''
-                        if self.confirmation_dialog(
-                                'Lab Identifer {} does not exist. Would you like to add it?'.format(labnumber)):
-                            db.add_labnumber(labnumber)
-                            self._aliquot = 1
-                            self._load_scripts(old, labnumber)
-                        else:
-                            self.labnumber = ''
-                    else:
-                        self._load_scripts(old, labnumber)
-                else:
-                    self.warning_dialog(
-                        '{} does not exist. Add using "Labnumber Entry" or "Utilities>>Import"'.format(labnumber))
 
     def _auto_fill_comment_changed(self):
         if self.auto_fill_comment:
@@ -1467,11 +1454,86 @@ post_equilibration_script:name''')
     def persistence_path(self):
         return os.path.join(paths.hidden_dir, 'run_factory')
 
-# ============= EOF =============================================
+    # ============= EOF =============================================
+    # def _labnumber_changed(self, old, labnumber):
+    # def _load_labnumber_defaults(self, old, labnumber):
+    #     # self.debug('old={}, new={}. {}'.format(old, labnumber, not labnumber or labnumber == NULL_STR))
+    #     self.debug('load labnumber defaults L#={}'.format(labnumber))
+    #     if not labnumber or labnumber == NULL_STR:
+    #         return
+    #
+    #     db = self.db
+    #     if not db:
+    #         return
+    #     # self.update_labnumber = labnumber
+    #
+    #     special = False
+    #     try:
+    #         _ = int(labnumber)
+    #     except ValueError:
+    #         special = True
+    #
+    #     # if labnumber has a place holder load default script and return
+    #     if '##' in labnumber:
+    #         self._load_scripts(old, labnumber)
+    #         return
+    #
+    #     self.irradiation = ''
+    #     self.sample = ''
+    #
+    #     self._aliquot = 0
+    #     if labnumber:
+    #         with db.session_ctx():
+    #             # convert labnumber (a, bg, or 10034 etc)
+    #             ln = db.get_labnumber(labnumber)
+    #             if ln:
+    #                 # set sample and irrad info
+    #                 try:
+    #                     self.sample = ln.sample.name
+    #                 except AttributeError:
+    #                     pass
+    #
+    #                 try:
+    #                     a = int(ln.analyses[-1].aliquot + 1)
+    #                 except IndexError, e:
+    #                     a = 1
+    #
+    #                 self._aliquot = a
+    #
+    #                 self.irradiation = self._make_irrad_level(ln)
+    #
+    #                 if self.auto_fill_comment:
+    #                     self._set_auto_comment()
+    #
+    #                 self._load_scripts(old, labnumber)
+    #                 self._load_defaults(labnumber if special else 'u')
+    #             elif special:
+    #                 ln = labnumber[:2]
+    #                 if ln == 'dg':
+    #                     # self._load_extraction_defaults(ln)
+    #                     self._load_defaults(ln, attrs=('extract_value', 'extract_units'))
+    #
+    #                 if not (ln in ('pa', 'dg')):
+    #                     '''
+    #                         don't add pause or degas to database
+    #                     '''
+    #                     if self.confirmation_dialog(
+    #                             'Lab Identifer {} does not exist. Would you like to add it?'.format(labnumber)):
+    #                         db.add_labnumber(labnumber)
+    #                         self._aliquot = 1
+    #                         self._load_scripts(old, labnumber)
+    #                     else:
+    #                         self.labnumber = ''
+    #                 else:
+    #                     self._load_scripts(old, labnumber)
+    #             else:
+    #                 self.warning_dialog(
+    #                     '{} does not exist. Add using "Labnumber Entry" or "Utilities>>Import"'.format(labnumber))
+
 #
-#def _generate_positions(pos):
-#        s = None
-#        e = None
+# def _generate_positions(pos):
+# s = None
+# e = None
 #        #(SLICE_REGEX, SSLICE_REGEX, PSLICE_REGEX,
 #        #          TRANSECT_REGEX, POSITION_REGEX)
 #
