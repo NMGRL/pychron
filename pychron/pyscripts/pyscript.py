@@ -633,7 +633,7 @@ class PyScript(Loggable):
     @named_register('info')
     def _m_info(self, message=None):
         message = str(message)
-        self.console_info(message)
+        self.info(message)
 
         try:
             if self.manager:

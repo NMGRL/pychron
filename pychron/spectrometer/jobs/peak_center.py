@@ -172,8 +172,7 @@ class BasePeakCenter(MagnetScan):
             graph = Graph(
                 window_title = self.title,
                 container_dict=dict(padding=5,
-                                    bgcolor='lightgray'),
-                )
+                                    bgcolor='lightgray'))
 
         graph.new_plot(
             padding=[50, 5, 5, 50],
@@ -189,6 +188,7 @@ class BasePeakCenter(MagnetScan):
         graph.set_series_label('*{}'.format(self.reference_detector))
         self._markup_idx = 1
         spec = self.spectrometer
+        print self.additional_detectors
         for di in self.additional_detectors:
             det = spec.get_detector(di)
             c = det.color

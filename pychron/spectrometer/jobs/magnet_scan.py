@@ -65,7 +65,7 @@ class MagnetScan(SpectrometerTask):
     stop_mass = Float(40)
     step_mass = Float(1)
     normalize = Bool(True)
-
+    _peak_generator = None
     verbose = False
 
     def _scan_dac(self, values):
@@ -164,8 +164,8 @@ class MagnetScan(SpectrometerTask):
     def _magnet_step_hook(self):
         spec = self.spectrometer
         ds = [str(self.reference_detector)] + self.additional_detectors
-        intensity = spec.get_intensities(ds)
-        intensity = intensity[1]
+        intensity = spec.get_intensity(ds)
+        # intensity = intensity[1]
         if self._peak_generator:
             # print 'asdfas', intensity
             v = self._peak_generator.next()
