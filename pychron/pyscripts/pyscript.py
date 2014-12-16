@@ -297,7 +297,7 @@ class PyScript(Loggable):
 
             r = self._execute(argv=argv)
             if r is not None:
-                self.info('invalid syntax')
+                self.console_info('invalid syntax')
                 ee = PyscriptError(self.filename, r)
                 raise ee
 
@@ -305,7 +305,7 @@ class PyScript(Loggable):
                 raise IntervalError()
 
             else:
-                self.info('syntax checking passed')
+                self.console_info('syntax checking passed')
                 self._syntax_error = False
 
             self.testing_syntax = False
@@ -537,17 +537,17 @@ class PyScript(Loggable):
 
         else:
             if not self._cancel:
-                self.info('doing GOSUB')
+                self.console_info('doing GOSUB')
                 self._gosub_script = s
                 s.execute(argv=argv)
                 self._gosub_script = None
                 if not self._cancel:
-                    self.info('gosub finished')
+                    self.console_info('gosub finished')
 
     @verbose_skip
     @command_register
     def exit(self):
-        self.info('doing EXIT')
+        self.console_info('doing EXIT')
         self.cancel()
 
     @command_register
@@ -567,7 +567,7 @@ class PyScript(Loggable):
         if self._cancel:
             return
 
-        self.info('COMPLETE INTERVAL waiting for {} to complete'.format(n))
+        self.console_info('COMPLETE INTERVAL waiting for {} to complete'.format(n))
         # wait until flag is set
         while not f.isSet():
             if self._cancel:
@@ -588,7 +588,7 @@ class PyScript(Loggable):
         def wait(dur, flag, n):
             self._sleep(dur)
             if not self._cancel:
-                self.info('{} finished'.format(n))
+                self.console_info('{} finished'.format(n))
                 flag.set()
 
         duration = float(duration)
@@ -599,7 +599,7 @@ class PyScript(Loggable):
 
         if not self.testing_syntax:
             f = Event()
-            self.info('BEGIN INTERVAL {} waiting for {}'.format(name, duration))
+            self.console_info('BEGIN INTERVAL {} waiting for {}'.format(name, duration))
             t = Thread(name=name,
                        target=wait, args=(duration, f, name))
             t.start()
@@ -623,7 +623,7 @@ class PyScript(Loggable):
 
         duration = round(duration, 1)
 
-        self.info('SLEEP {}'.format(duration))
+        self.console_info('SLEEP {}'.format(duration))
         if globalv.experiment_debug:
             self.debug('using debug sleep {}'.format(duration))
 
@@ -633,7 +633,7 @@ class PyScript(Loggable):
     @named_register('info')
     def _m_info(self, message=None):
         message = str(message)
-        self.info(message)
+        self.console_info(message)
 
         try:
             if self.manager:
@@ -697,9 +697,9 @@ class PyScript(Loggable):
             return
 
         if self._cancel:
-            self.info('{} canceled'.format(self.name))
+            self.console_info('{} canceled'.format(self.name))
         else:
-            self.info('{} completed successfully'.format(self.name))
+            self.console_info('{} completed successfully'.format(self.name))
             self._completed = True
 
     def _get_application(self):
@@ -792,7 +792,7 @@ class PyScript(Loggable):
             if wd.is_canceled():
                 self.cancel()
             elif wd.is_continued():
-                self.info('continuing script after {:0.3f} s'.format(time.time() - st))
+                self.console_info('continuing script after {:0.3f} s'.format(time.time() - st))
                 if self.manager:
                     self.manager.continued()
 

@@ -46,7 +46,7 @@ class ValvePyScript(PyScript):
         if description is None:
             description = '---'
 
-        self.info('locking {} ({})'.format(name, description))
+        self.console_info('locking {} ({})'.format(name, description))
         if self.allow_lock:
             return self._manager_action([('lock_valve', (name,), dict(
                 mode='script',
@@ -60,7 +60,7 @@ class ValvePyScript(PyScript):
         if description is None:
             description = '---'
 
-        self.info('unlocking {} ({})'.format(name, description))
+        self.console_info('unlocking {} ({})'.format(name, description))
         if self.allow_lock:
             return self._manager_action([('unlock_valve', (name,), dict(
                 mode='script',
@@ -75,7 +75,7 @@ class ValvePyScript(PyScript):
         if description is None:
             description = '---'
 
-        self.info('opening {} ({})'.format(name, description))
+        self.console_info('opening {} ({})'.format(name, description))
 
         result = self._manager_action([('open_valve', (name,), dict(
             mode='script',
@@ -90,7 +90,7 @@ class ValvePyScript(PyScript):
         if description is None:
             description = '---'
 
-        self.info('closing {} ({})'.format(name, description))
+        self.console_info('closing {} ({})'.format(name, description))
         result = self._manager_action([('close_valve', (name,), dict(
             mode='script',
             description=description))], protocol=ELPROTOCOL)
@@ -100,7 +100,7 @@ class ValvePyScript(PyScript):
     @verbose_skip
     @command_register
     def is_open(self, name=None, description=''):
-        self.info('is {} ({}) open?'.format(name, description))
+        self.console_info('is {} ({}) open?'.format(name, description))
         result = self._get_valve_state(name, description)
         if result:
             return result[0] is True
@@ -108,7 +108,7 @@ class ValvePyScript(PyScript):
     @verbose_skip
     @command_register
     def is_closed(self, name=None, description=''):
-        self.info('is {} ({}) closed?'.format(name, description))
+        self.console_info('is {} ({}) closed?'.format(name, description))
         result = self._get_valve_state(name, description)
         if result:
             r = result[0] is False
@@ -125,7 +125,7 @@ class ValvePyScript(PyScript):
             mode='script',
             description=description))], protocol=ELPROTOCOL)
         if not ok and not locked:
-            self.info('Failed to {} valve {} {}'.format(action, name, description))
+            self.console_info('Failed to {} valve {} {}'.format(action, name, description))
 
             if not globalv.experiment_debug:
                 self.cancel()
