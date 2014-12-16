@@ -16,8 +16,10 @@
 
 # ============= enthought library imports =======================
 import time
-from traits.api import HasTraits, Button, Str, Either, Property, Float, Int, Bool, List, Enum
-from traitsui.api import View, Item, VGroup, HGroup, UItem, ListEditor, InstanceEditor, Readonly
+
+from traits.api import HasTraits, Str, Either, Property, Float, Int, Bool, List, Enum
+from traitsui.api import View, VGroup, HGroup, UItem, ListEditor, InstanceEditor, Readonly
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.datetime_tools import convert_timestamp
@@ -52,9 +54,10 @@ class ProcessValue(HasTraits):
             # a = abs(self.last_value - v) > threshold
             # b = (self.last_time and ct - self.last_time > tt)
             # self.debug('a={} {}-{}>{}, b={}'.format(a, self.last_value, v,threshold, b))
+
+            self.last_value = v
             ret = True
 
-        self.last_value = v
         self.last_time = time.time()
         return ret
 
