@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -106,7 +106,7 @@ class Detector(SpectrometerDevice):
 
     @property
     def gain_outdated(self):
-        return abs(self.get_gain()-self.gain)<1e-7
+        return abs(self.get_gain() - self.gain) < 1e-7
 
     def get_gain(self):
         v = self.ask('GetGain {}'.format(self.name))
@@ -114,7 +114,7 @@ class Detector(SpectrometerDevice):
             v = float(v)
         except (TypeError, ValueError):
             v = 0
-        self.gain=v
+        self.gain = v
         return v
 
     def set_gain(self):
@@ -163,4 +163,5 @@ class Detector(SpectrometerDevice):
 
     def __repr__(self):
         return self.name
-        # ============= EOF =============================================
+
+# ============= EOF =============================================
