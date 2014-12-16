@@ -24,7 +24,6 @@ import time
 import yaml
 # ============= local library imports  ==========================
 from pychron.dashboard.conditional import DashboardConditional
-from pychron.dashboard.constants import PUBLISH
 from pychron.dashboard.process_value import ProcessValue
 from pychron.graph.stream_graph import StreamStackedGraph
 from pychron.hardware.core.i_core_device import ICoreDevice
@@ -126,7 +125,7 @@ class DashboardDevice(Loggable):
             v = float(new)
             tripped = pv.is_different(v)
             if tripped:
-                self.update_value_event = (pv.tag, new, pv.units)
+                self.update_value_event = (pv.name, new, pv.units)
                 # self.update_value_event = '{} {}'.format(pv.tag, new)
 
             self.graph.record(v, plotid=pv.plotid)

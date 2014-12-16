@@ -15,12 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Button
-from traitsui.api import View, Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
-from pychron.labspy.client import MeteorLabspyClient
+# from pychron.labspy.client import MeteorLabspyClient
+from pychron.labspy.client import LabspyClient
 from pychron.labspy.tasks.preferences import LabspyPreferencesPane
 
 
@@ -28,16 +27,19 @@ class LabspyClientPlugin(BaseTaskPlugin):
     name = 'LabspyClient'
     id = 'pychron.labspy_client.plugin'
 
+    def _labspy_client_factory(self, *args, **kw):
+        return LabspyClient()
+
     def _service_offers_default(self):
-        so = self.service_offer_factory(protocol=MeteorLabspyClient,
-                                        factory=MeteorLabspyClient)
+        so = self.service_offer_factory(protocol=LabspyClient,
+                                        factory=self._labspy_client_factory)
         return [so]
 
     def _preferences_panes_default(self):
         return [LabspyPreferencesPane]
 
     def test_communication(self):
-        lc = MeteorLabspyClient()
+        lc=self.application.get_service(LabspyClient)
         return lc.test_connection(warn=False)
 # ============= EOF =============================================
 

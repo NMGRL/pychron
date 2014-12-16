@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Button, Str, Int, Property, cached_property
+from traits.api import Instance
 # ============= standard library imports ========================
 from datetime import datetime
 import hashlib
@@ -28,7 +28,8 @@ from pychron.pychron_constants import SCRIPT_NAMES
 
 
 class LabspyClient(Loggable):
-    db = Property
+    # db = Property
+    db = Instance(LabspyDatabaseAdapter)
 
     def __init__(self, bind=True, *args, **kw):
         super(LabspyClient, self).__init__(*args, **kw)
@@ -38,46 +39,56 @@ class LabspyClient(Loggable):
     def bind_preferences(self):
         self.db.bind_preferences()
 
-    def test_connection(self):
-        return self.db.connect()
+    def test_connection(self, **kw):
+        return self.db.connect(**kw)
 
     def add_experiment(self, exp):
-        with self.db.session_ctx():
-            hid = self._generate_hid(exp)
-            self.db.add_experiment(Name=exp.name,
-                                   StartTime=exp.starttime,
-                                   Spectrometer=exp.mass_spectrometer,
-                                   ExtractionDevice=exp.extract_device,
-                                   User=exp.username,
-                                   HashID=hid)
+        if self.db.connected:
+            with self.db.session_ctx():
+                hid = self._generate_hid(exp)
+                self.db.add_experiment(Name=exp.name,
+                                       StartTime=exp.starttime,
+                                       Spectrometer=exp.mass_spectrometer,
+                                       ExtractionDevice=exp.extract_device,
+                                       User=exp.username,
+                                       HashID=hid)
 
     def update_experiment(self, exp, err_msg):
-        with self.db.session_ctx():
-            hid = self._generate_hid(exp)
-            exp = self.db.get_experiment(hid)
-            exp.EndTime = exp.endtime
-            exp.State = err_msg
+        if self.db.connected:
+            with self.db.session_ctx():
+                hid = self._generate_hid(exp)
+                exp = self.db.get_experiment(hid)
+                exp.EndTime = exp.endtime
+                exp.State = err_msg
 
     def update_status(self, **kw):
-        with self.db.session_ctx():
-            status = self.db.get_status()
-            if not status:
-                status = self.db.add_status()
+        if self.db.connected:
+            with self.db.session_ctx():
+                status = self.db.get_status()
+                if not status:
+                    status = self.db.add_status()
 
-            for k, v in kw.items():
-                setattr(status, k, v)
+                for k, v in kw.items():
+                    setattr(status, k, v)
 
     def add_run(self, run, exp):
-        with self.db.session_ctx():
-            exp = self.db.get_experiment(self._generate_hid(exp))
-            self.db.add_analysis(exp, self._run_dict(run))
+        if self.db.connected:
+            with self.db.session_ctx():
+                exp = self.db.get_experiment(self._generate_hid(exp))
+                self.db.add_analysis(exp, self._run_dict(run))
 
     def add_measurement(self, dev, tag, val, unit):
-        with self.db.session_ctx():
-            self.db.add_measurement(dev, tag, val, unit)
+        self.debug('adding measurement dev={} process={} value={} ({})'.format(dev, tag, val, unit))
+        if self.db.connected:
+            with self.db.session_ctx():
+                self.db.add_measurement(dev, tag, val, unit)
+        else:
+            print id(self)
+            self.warning('not connected to db {}'.format(self.db.url))
 
-    @cached_property
-    def _get_db(self):
+    # @cached_property
+    # def _get_db(self):
+    def _db_default(self):
         return LabspyDatabaseAdapter()
 
     def _run_dict(self, run):

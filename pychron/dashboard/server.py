@@ -15,16 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance, on_trait_change, List, Str, Button
+from traits.api import Instance, on_trait_change, List, Button
 # ============= standard library imports ========================
-from _socket import gethostname, gethostbyname
 from threading import Thread
 import os
 import pickle
 import time
 # ============= local library imports  ==========================
 from pychron.dashboard.constants import CRITICAL, NOERROR, WARNING
-from pychron.dashboard.db_manager import DashboardDBManager
 from pychron.dashboard.device import DashboardDevice
 from pychron.globals import globalv
 from pychron.hardware.core.i_core_device import ICoreDevice
@@ -99,11 +97,11 @@ class DashboardServer(Loggable):
         if elem is not None:
             try:
                 port = int(elem[0].text.strip())
-            except ValueError:
+            except (IndexError,ValueError):
                 pass
 
         self.notifier.port = port
-        host = gethostbyname(gethostname())
+        # host = gethostbyname(gethostname())
         # self.url = '{}:{}'.format(host, port)
         # add a config request handler
         self.notifier.add_request_handler('config', self._handle_config)

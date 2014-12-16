@@ -197,7 +197,7 @@ class DatabaseAdapter(Loggable):
                         self.connected = True
 
                     if self.connected:
-                        self.info('connected to db')
+                        self.info('connected to db {}. {}'.format(self.url, id(self)))
                         self.initialize_database()
                     elif warn:
 

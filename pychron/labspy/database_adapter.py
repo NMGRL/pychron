@@ -16,8 +16,6 @@
 
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
-from traits.api import HasTraits, Button
-from traitsui.api import View, Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.database.core.database_adapter import DatabaseAdapter
@@ -29,7 +27,8 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
 
     def bind_preferences(self):
         bind_preference(self, 'host', 'pychron.labspy.host')
-        bind_preference(self, 'port', 'pychron.labspy.port')
+        # bind_preference(self, 'port', 'pychron.labspy.port')
+        bind_preference(self, 'username', 'pychron.labspy.username')
         bind_preference(self, 'password', 'pychron.labspy.password')
         bind_preference(self, 'name', 'pychron.labspy.name')
 
