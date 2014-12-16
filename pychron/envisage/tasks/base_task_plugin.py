@@ -54,8 +54,12 @@ class BaseTaskPlugin(Plugin):
         if globalv.use_startup_tests:
             self.application.startup_tester.test_plugin(self)
 
+    def set_preference_defaults(self):
+        pass
+
     def start(self):
         self.startup_test()
+        self.set_preference_defaults()
 
     # private
     def _get_task_extensions(self):

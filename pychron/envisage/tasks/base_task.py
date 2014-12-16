@@ -545,7 +545,7 @@ class BaseExtractionLineTask(BaseManagerTask):
         if man:
             from pychron.extraction_line.tasks.extraction_line_pane import CanvasDockPane
 
-            self.canvas_pane = CanvasDockPane(canvas=man.new_canvas(name='alt_config'))
+            self.canvas_pane = CanvasDockPane(canvas=man.new_canvas())
             panes.append(self.canvas_pane)
 
         return panes

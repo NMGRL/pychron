@@ -294,7 +294,7 @@ def main():
     def _canvas_default(self):
         elc = ExtractionLineCanvas2D(manager=self,
                                      confirm_open=False)
-        elc.load_canvas_file('canvas_config.xml')
+        elc.load_canvas_file()
         return elc
 
     def _network_default(self):

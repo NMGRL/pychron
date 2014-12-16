@@ -45,8 +45,9 @@ class ProcedureAction(Action):
         super(ProcedureAction, self).__init__(*args, **kw)
 
         ex = self.application.get_plugin('pychron.experiment')
-        ex = ex.experimentor.executor
-        ex.on_trait_change(self._update_alive, 'alive')
+        if ex:
+            ex = ex.experimentor.executor
+            ex.on_trait_change(self._update_alive, 'alive')
 
     def _update_alive(self, new):
         self.enabled = not new
@@ -54,7 +55,7 @@ class ProcedureAction(Action):
     def perform(self, event):
         app = event.task.application
 
-        for tid in ('pychron.experiment.task','pychron.spectrometer'):
+        for tid in ('pychron.experiment.task', 'pychron.spectrometer'):
             task = app.task_is_open(tid)
             if task:
                 # make sure extraction line canvas is visible
@@ -69,7 +70,7 @@ class ProcedureAction(Action):
         root = os.path.dirname(self.script_path)
         name = os.path.basename(self.script_path)
 
-        info=lambda x: '======= {} ======='.format(x)
+        info = lambda x: '======= {} ======='.format(x)
 
         manager.info(info('Started Procedure "{}"'.format(name)))
 
@@ -97,6 +98,17 @@ class ExtractionLinePlugin(BaseTaskPlugin):
     name = 'ExtractionLine'
     _extraction_line_manager = Instance(ExtractionLineManager)
 
+    def set_preference_defaults(self):
+        prefs = self.application.preferences
+        prefid = 'pychron.extraction_line'
+        for k, d in (('canvas_path', os.path.join(paths.canvas2D_dir, 'canvas.xml')),
+                     ('canvas_config_path', os.path.join(paths.canvas2D_dir, 'canvas_config.xml')),
+                     ('valves_path', os.path.join(paths.extraction_line_dir, 'valves.xml'))):
+            if k not in prefs.keys(prefid):
+                logger.debug('Setting default preference {}={}'.format(k, d))
+                prefs.set('{}.{}'.format(prefid, k), d)
+        prefs.flush()
+
     def test_gauge_communication(self):
         return self._test('test_gauge_communication')
 
@@ -116,7 +128,7 @@ class ExtractionLinePlugin(BaseTaskPlugin):
             try:
                 plugin = ip.get_plugin('ExtractionLine', category='hardware')
                 mode = ip.get_parameter(plugin, 'mode')
-            #            mode = plugin.get('mode')
+            # mode = plugin.get('mode')
             except AttributeError:
                 # no epxeriment plugin defined
                 mode = 'normal'
@@ -189,7 +201,7 @@ class ExtractionLinePlugin(BaseTaskPlugin):
             protocol=ExtractionLineManager,
             factory=self._factory)
         so1 = self.service_offer_factory(
-            protocol =IPyScriptRunner,
+            protocol=IPyScriptRunner,
             factory=self._runner_factory)
 
         return [so, so1]

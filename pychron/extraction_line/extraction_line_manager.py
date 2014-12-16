@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-from traits.api import Instance, List, Any, Bool, on_trait_change, Str, Int, Dict
+from traits.api import Instance, List, Any, Bool, on_trait_change, Str, Int, Dict, File
 from apptools.preferences.preference_binding import bind_preference
 # =============standard library imports ========================
 import os
@@ -73,6 +73,10 @@ class ExtractionLineManager(Manager, Consoleable):
     sample_changer = Instance(SampleChanger)
     link_valve_actuation_dict = Dict
 
+    canvas_path = File
+    canvas_config_path = File
+    valves_path = File
+
     def activate(self):
         if self.mode == 'client':
             self.start_status_monitor()
@@ -98,20 +102,25 @@ class ExtractionLineManager(Manager, Consoleable):
 
     def bind_preferences(self):
 
-        bind_preference(self, 'check_master_owner',
-                        'pychron.extraction_line.check_master_owner')
-        bind_preference(self, 'use_network',
-                        'pychron.extraction_line.use_network')
-        bind_preference(self.network, 'inherit_state',
-                        'pychron.extraction_line.inherit_state')
+        prefid = 'pychron.extraction_line'
+        bind_preference(self, 'canvas_path', '{}.canvas_path'.format(prefid))
+        bind_preference(self, 'canvas_config_path', '{}.canvas_config_path'.format(prefid))
+        bind_preference(self, 'valves_path', '{}.valves_path'.format(prefid))
 
-        self.console_bind_preferences('pychron.extraction_line.console')
+        bind_preference(self, 'check_master_owner',
+                        '{}.check_master_owner'.format(prefid))
+        bind_preference(self, 'use_network',
+                        '{}.use_network'.format(prefid))
+        bind_preference(self.network, 'inherit_state',
+                        '{}.inherit_state'.format(prefid))
+
+        self.console_bind_preferences('{}.console'.format(prefid))
 
         if self.gauge_manager:
             bind_preference(self.gauge_manager, 'update_period',
-                            'pychron.extraction_line.gauge_update_period')
+                            '{}.gauge_update_period'.format(prefid))
             bind_preference(self.gauge_manager, 'use_update',
-                            'pychron.extraction_line.use_gauge_update')
+                            '{}.use_gauge_update'.format(prefid))
 
     def link_valve_actuation(self, name, func, remove=False):
         if remove:
@@ -204,8 +213,8 @@ class ExtractionLineManager(Manager, Consoleable):
             self.monitor.monitor()
 
         if self.use_network:
-            p = os.path.join(paths.canvas2D_dir, 'canvas.xml')
-            self.network.load(p)
+            # p = os.path.join(paths.canvas2D_dir, 'canvas.xml')
+            self.network.load(self.canvas_path)
 
     def stop_status_monitor(self):
         self.info('stopping status monitor')
@@ -216,8 +225,8 @@ class ExtractionLineManager(Manager, Consoleable):
         net = self.network
         vm = self.valve_manager
         if net:
-            p = os.path.join(paths.canvas2D_dir, 'canvas.xml')
-            net.load(p)
+            # p = os.path.join(paths.canvas2D_dir, 'canvas.xml')
+            net.load(self.canvas_path)
 
         if net:
             net.suppress_changes = True
@@ -246,7 +255,8 @@ class ExtractionLineManager(Manager, Consoleable):
 
         for c in self._canvases:
             if c is not None:
-                c.load_canvas_file(c.config_name)
+                c.load_canvas_file(self.canvas_path, self.canvas_config_path, self.valves_path)
+                # c.load_canvas_file(c.config_name)
 
                 if self.valve_manager:
                     for k, v in self.valve_manager.valves.iteritems():
@@ -402,9 +412,8 @@ class ExtractionLineManager(Manager, Consoleable):
 
             self.explanation.selected = selected
 
-    def new_canvas(self, name='canvas_config'):
-        c = ExtractionLineCanvas(manager=self,
-                                 config_name='{}.xml'.format(name))
+    def new_canvas(self):
+        c = ExtractionLineCanvas(manager=self)
         self._canvases.append(c)
         c.canvas2D.trait_set(display_volume=self.display_volume,
                              volume_key=self.volume_key)

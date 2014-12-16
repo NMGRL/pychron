@@ -15,17 +15,20 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str, Bool, Int
+import os
+from traits.api import Str, Bool, Int, File
 from traitsui.api import View, Item, VGroup, HGroup, spring
 from envisage.ui.tasks.preferences_pane import PreferencesPane
+from traitsui.editors import FileEditor
+from traitsui.group import Tabbed
+from traitsui.item import UItem
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from traitsui.group import Tabbed
-from traitsui.item import UItem
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper, BaseConsolePreferences, \
     BaseConsolePreferencesPane
+from pychron.paths import paths
 
 
 class ConsolePreferences(BaseConsolePreferences):
@@ -34,7 +37,7 @@ class ConsolePreferences(BaseConsolePreferences):
 
 class ConsolePreferencesPane(BaseConsolePreferencesPane):
     model_factory = ConsolePreferences
-    label='Extraction Line'
+    label = 'Extraction Line'
 
     def traits_view(self):
         preview = CustomLabel('preview',
@@ -67,6 +70,10 @@ class ExtractionLinePreferences(BasePreferencesHelper):
     update_period = Int
     gauge_update_period = Int
     use_gauge_update = Bool
+
+    canvas_path = Str
+    canvas_config_path = Str
+    valves_path = Str
 
 
 class ExtractionLinePreferencesPane(PreferencesPane):
@@ -124,7 +131,13 @@ Hover over section and hit the defined volume key (default="v")'),
                             enabled_when='use_gauge_update'),
                        label='Gauges')
 
-        return View(Tabbed(v_grp, g_grp))
+        p_grp = VGroup(Item('canvas_path', editor=FileEditor(root_path=os.path.join(paths.canvas2D_dir, 'canvas.xml'))),
+                       Item('canvas_config_path', editor=FileEditor()),
+                       Item('valves_path', editor=FileEditor(root_path=os.path.join(paths.extraction_line_dir,
+                                                                                    'valves.xml'))),
+                       label='Paths')
+
+        return View(Tabbed(p_grp, v_grp, g_grp))
 
 
 # ============= EOF =============================================
