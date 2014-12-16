@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, BLOB
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, BLOB, func
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import relationship
 from traits.api import HasTraits, Button
@@ -66,7 +66,8 @@ class Experiment(Base, BaseMixin):
     StartTime = Column(DateTime)
     EndTime = Column(DateTime)
     State = stringcolumn(default='Running')
-    LastUpdate = Column(DateTime)
+    LastUpdate = Column(DateTime, default=func.now())
+    User = stringcolumn()
 
     HashID = stringcolumn()
     analyses = relationship('Analysis', backref='experiment')
@@ -107,7 +108,7 @@ class Status(Base, BaseMixin):
     ShortMessage = stringcolumn(140)
     Error = stringcolumn(140)
     Message = Column(BLOB)
-    LastUpdate = Column(DateTime)
+    LastUpdate = Column(DateTime, default=func.now())
 
 # ============= EOF =============================================
 

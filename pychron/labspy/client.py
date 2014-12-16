@@ -48,6 +48,7 @@ class LabspyClient(Loggable):
                                    StartTime=exp.starttime,
                                    Spectrometer=exp.mass_spectrometer,
                                    ExtractionDevice=exp.extract_device,
+                                   User=exp.username,
                                    HashID=hid)
 
     def update_experiment(self, exp, err_msg):
@@ -118,8 +119,8 @@ if __name__ == '__main__':
         class Spec():
             def __init__(self, record_id):
                 self.runid = record_id
-                self.mass_spectrometer = 'jan'
-                self.extract_device = 'LF'
+                # self.mass_spectrometer = 'jan'
+                # self.extract_device = 'LF'
                 self.analysis_timestamp = datetime.now()
                 self.state = choice(['Finished', 'Canceled', 'Failed'])
                 self.analysis_type = "unknown"
@@ -128,14 +129,14 @@ if __name__ == '__main__':
                 self.extract_units = 'watts'
                 self.duration = randint(100, 200)
                 self.cleanup = randint(100, 200)
-                self.position = 1
+                self.position = randint(0, 100)
                 self.comment = "Test comment"
                 self.material = "sanidine"
                 self.project = "Monitor"
-                self.measurement_script = 'm'
-                self.extraction_script = 'e'
-                self.post_measurement_script = 'pm'
-                self.post_equilibration_script = 'pq'
+                self.measurement_script = 'unknown400_180'
+                self.extraction_script = 'sniffair_x1'
+                self.post_measurement_script = 'pump_spectrometer'
+                self.post_equilibration_script = 'pump_extraction_line'
 
         class Run():
             def __init__(self, *args, **kw):
@@ -146,16 +147,17 @@ if __name__ == '__main__':
 
     def add_experiment(c):
         class Exp():
-            def __init__(self, name, user, spec, status):
+            def __init__(self, name, user, status):
                 self.name = name
                 self.username = user
+                spec = choice(('Jan','Obama'))
                 self.spectrometer = spec
                 self.mass_spectrometer = spec
                 self.extract_device = choice(('Fusions CO2', 'Fusions Diode'))
                 self.status = status
                 self.starttime = datetime.now()
 
-        e = Exp('Current Experiment', 'foobar', 'Jan', 'Running')
+        e = Exp('Current Experiment', 'foobar', 'Running')
         c.add_experiment(e)
         return e
 
@@ -180,10 +182,14 @@ if __name__ == '__main__':
     # time.sleep(1)
 
     clt = LabspyClient(bind=False)
-    clt.db.host = 'localhost'
+    clt.db.host = '129.138.12.160'
     clt.db.username = 'root'
-    clt.db.password = 'Argon'
-    clt.db.name = 'argonlab'
+    clt.db.password = 'DBArgon'
+    clt.db.name = 'labspy'
+    # clt.db.host = 'localhost'
+    # clt.db.username = 'root'
+    # clt.db.password = 'Argon'
+    # clt.db.name = 'argonlab'
     clt.test_connection()
 
     # set status
@@ -192,7 +198,7 @@ if __name__ == '__main__':
     # measurements
     # add_measurements(clt)
 
-    # # experiments/runs
+    # experiments/runs
     # exp = add_experiment(clt)
     # add_runs(clt, exp)
 # ============= EOF =============================================
