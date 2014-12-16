@@ -76,7 +76,7 @@ class MagnetFieldTable(Loggable):
         # if not os.path.isfile(p):
         # self.warning_dialog('No Magnet Field Table. Create {}'.format(p))
         # else:
-        #     self.load_mftable()
+        # self.load_mftable()
         self.bind_preferences()
 
     def initialize(self, molweights):
@@ -127,7 +127,7 @@ class MagnetFieldTable(Loggable):
                 d[k] = iso, xx, ny, p
 
             self.dump(isos, d, message)
-            #self._mftable = isos, xs, ys
+            # self._mftable = isos, xs, ys
 
         except ValueError:
             import traceback
@@ -243,12 +243,16 @@ class MagnetFieldTable(Loggable):
             d = {}
             for i, k in enumerate(detectors):
                 ys = table[2 + i]
-                c = least_squares(mass_cal_func, mws, ys, [ys[0], mws[0], 0])
+                try:
+                    c = least_squares(mass_cal_func, mws, ys, [ys[0], mws[0], 0])
+                except TypeError:
+                    c = (0, 1, ys[0])
+
                 d[k] = (isos, mws, ys, c)
 
             self._mftable = d
             # self._mftable={k: (isos, mws, table[2 + i], )
-            #                for i, k in enumerate(detectors)}
+            # for i, k in enumerate(detectors)}
             self._detectors = detectors
 
     def _report_mftable(self, detectors, items):
@@ -321,6 +325,7 @@ class MagnetFieldTable(Loggable):
         else:
             p = paths.mftable
         return p
+
 
 class MagnetFieldTableView(Controller):
     model = MagnetFieldTable

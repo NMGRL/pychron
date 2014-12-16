@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 import time
 
-from traits.api import Float
+from traits.api import Float, Str
 
 # ============= standard library imports ========================
 from numpy import max, argmax
@@ -31,7 +31,7 @@ from pychron.core.ui.gui import invoke_in_main_thread
 class BasePeakCenter(MagnetScan):
     title= 'Base Peak Center'
     center_dac = Float
-
+    reference_isotope = Str
     window = Float(0.015)
     step_width = Float(0.0005)
     min_peak_height = Float(1.0)
@@ -41,6 +41,7 @@ class BasePeakCenter(MagnetScan):
     result = None
     directions = None
     _markup_idx = 1
+    show_label=False
 
     def close_graph(self):
         self.graph.close_ui()
@@ -202,6 +203,9 @@ class BasePeakCenter(MagnetScan):
                          marker_size=4,
                          color='green')
 
+        if self.show_label:
+            graph.add_plot_label('{}@{}'.format(self.reference_isotope,
+                                                self.reference_detector), hjustify='center')
         return graph
 
 

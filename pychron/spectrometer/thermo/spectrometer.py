@@ -84,6 +84,7 @@ class Spectrometer(SpectrometerDevice):
     dc_npeak_centers = Int(3)
 
     send_config_on_startup = Bool
+    use_deflection_correction = Bool(True)
     max_deflection = Int(500)
 
     def test_connection(self):
@@ -378,14 +379,15 @@ class Spectrometer(SpectrometerDevice):
 
     def correct_dac(self, det, dac, current=True):
         """
-                correct for deflection
-                correct for hv
-            """
+            correct for deflection
+            correct for hv
+        """
         # correct for deflection
-        dev = det.get_deflection_correction(current=current)
-        dac += dev
+        if self.use_deflection_correction:
+            dev = det.get_deflection_correction(current=current)
+            dac += dev
 
-        #correct for hv
+        # correct for hv
         # dac *= self.get_hv_correction(current=current)
         dac = self.get_hv_correction(dac, current=current)
         return dac
@@ -394,9 +396,10 @@ class Spectrometer(SpectrometerDevice):
     def uncorrect_dac(self, det, dac, current=True):
         """
                 inverse of correct_dac
-            """
+        """
         dac = self.get_hv_correction(dac, uncorrect=True, current=current)
-        dac -= det.get_deflection_correction(current=current)
+        if self.use_deflection_correction:
+            dac -= det.get_deflection_correction(current=current)
         return dac
 
 

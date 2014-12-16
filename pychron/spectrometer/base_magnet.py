@@ -56,6 +56,7 @@ class BaseMagnet(HasTraits):
 
     mftable = Instance(MagnetFieldTable, ())
     confirmation_threshold_mass = Int
+    use_deflection_correction = True
 
     _suppress_mass_update = False
 
@@ -84,6 +85,7 @@ class BaseMagnet(HasTraits):
             name = self.spectrometer.name
         else:
             from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS as molweights
+
             name = ''
         # self.mftable.molweights = molweights
         self.mftable.initialize(molweights)
@@ -242,6 +244,7 @@ class BaseMagnet(HasTraits):
                     label='Control')))
 
         return v
+
 # ============= EOF =============================================
 
 

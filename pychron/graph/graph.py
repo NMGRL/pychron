@@ -734,22 +734,18 @@ class Graph(Viewable, ContextMenuMixin):
         """
         self._set_title('y_axis', title, plotid, **font)
 
-    def add_plot_label(self, txt, plotid=0, **kw):
+    def add_plot_label(self, txt, plotid=0, overlay_position='inside top', hjustify='left', **kw):
         """
         """
 
-        #        print x, y
-        # #        x, y = .map_screen([(x, y)])[0]
-        #        x, y = self.plots[plotid].map_screen([(x, y)])[0]
-        #        print x, y
         c = self.plots[plotid]
 
-        pl = PlotLabel(txt, overlay_position='inside top', hjustify='left',
+        pl = PlotLabel(txt,
                        component=c,
+                       overlay_position=overlay_position, hjustify=hjustify,
                        **kw)
         c.overlays.append(pl)
         return pl
-
 
     def add_data_label(self, x, y, plotid=0):
         """

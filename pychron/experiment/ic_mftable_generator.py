@@ -16,33 +16,50 @@
 
 # ============= enthought library imports =======================
 import csv
+import re
 from traits.api import HasTraits, Button, Any, Instance
 from traitsui.api import View, Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+import time
+from pychron.core.helpers.isotope_utils import extract_mass
 from pychron.loggable import Loggable
 from pychron.paths import paths
 
 
 class ICMFTableGenerator(Loggable):
-    def make_mftable(self, ion, detectors, refiso):
+    def make_mftable(self, arun, detectors, refiso):
         """
             peak center `refiso` for each detector in detectors
         :return:
         """
+        ion = arun.ion_optics_manager
+        plot_panel = arun.plot_panel
+
+        def func(x):
+            if not x:
+                ion.cancel_peak_center()
+
+        arun.on_trait_change(func, '_alive')
         self.info('Making IC MFTable')
         results = []
         for di in detectors:
+            if not arun.is_alive():
+                return False
+
             self.info('Peak centering {}@{}'.format(di, refiso))
-            ion.setup_peak_center(detector=[di], isotope=refiso)
+            ion.setup_peak_center(detector=[di], isotope=refiso, plot_panel=plot_panel, show_label=True)
+            arun.peak_center = ion.peak_center
             ion.do_peak_center(new_thread=False, save=False, warn=False)
             pc = ion.peak_center_result
             if pc:
                 self.info('Peak Center {}@{}={:0.6f}'.format(di, refiso, pc))
                 results.append(pc)
+                time.sleep(0.25)
             else:
                 return False
 
+        arun.on_trait_change(func, '_alive', remove=True)
         self._write_table(detectors, refiso, results)
         return True
 
@@ -51,10 +68,14 @@ class ICMFTableGenerator(Loggable):
         self.info('Writing new IC MFTable to {}'.format(p))
         with open(p, 'w') as fp:
             w = csv.writer(fp)
-            header = ['iso'] + detectors
+            header = ['iso'] + list(detectors)
             w.writerow(header)
-
             w.writerow([refiso] + results)
+            # m = int(extract_mass(refiso))
+            # iso = refiso.replace(m, '')
+
+            # w.writerow(['{}{}'.format(iso, m - 1)] + results)
+            # w.writerow(['{}{}'.format(iso, m - 1)] + results)
 
 
 # ============= EOF =============================================

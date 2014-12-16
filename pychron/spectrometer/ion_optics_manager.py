@@ -103,13 +103,18 @@ class IonOpticsManager(Manager):
         molweights = spec.molecular_weights
         return molweights[isotope_key]
 
-    def set_mftable(self, mt=None):
+    def set_mftable(self, name=None):
         """
             if mt is None set to the default mftable located at setupfiles/spectrometer/mftable.csv
         :param mt:
         :return:
         """
-        self.spectrometer.magnet.set_mftable(mt)
+        if name and name != os.path.splitext(os.path.basename(paths.mftable))[0]:
+            self.spectrometer.use_deflection_correction = False
+        else:
+            self.spectrometer.use_deflection_correction = True
+
+        self.spectrometer.magnet.set_mftable(name)
 
     def position(self, pos, detector, use_dac=False, update_isotopes=True):
         """
@@ -215,7 +220,7 @@ class IonOpticsManager(Manager):
                           integration_time=1.04,
                           directions='Increase',
                           center_dac=None, plot_panel=None, new=False,
-                          standalone_graph=True, name=''):
+                          standalone_graph=True, name='', show_label=False):
 
         self._ointegration_time = self.spectrometer.integration_time
 
@@ -251,12 +256,12 @@ class IonOpticsManager(Manager):
 
         self._setup_peak_center(detectors, isotope, period,
                                 center_dac, directions, plot_panel, new,
-                                standalone_graph, name)
+                                standalone_graph, name, show_label)
         return self.peak_center
 
     def _setup_peak_center(self, detectors, isotope, period,
                            center_dac, directions, plot_panel, new,
-                           standalone_graph, name):
+                           standalone_graph, name, show_label):
 
 
         spec = self.spectrometer
@@ -280,7 +285,8 @@ class IonOpticsManager(Manager):
                      reference_detector=ref,
                      additional_detectors=ad,
                      reference_isotope=isotope,
-                     spectrometer=spec)
+                     spectrometer=spec,
+                     show_label=show_label)
 
         self.peak_center = pc
         graph = pc.graph

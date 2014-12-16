@@ -133,7 +133,7 @@ class AutomatedRun(Loggable):
     _peak_center_detectors = List
     _loaded = False
     _measured = False
-    _alive = False
+    _alive = Bool(False)
     _truncate_signal = Bool
     _equilibration_done = False
     _integration_seconds = Float(1.0)
@@ -1142,7 +1142,7 @@ anaylsis_type={}
         from pychron.experiment.ic_mftable_generator import ICMFTableGenerator
 
         e = ICMFTableGenerator()
-        if not e.make_mftable(self.ion_optics_manager, detectors, refiso):
+        if not e.make_mftable(self, detectors, refiso):
             ret = False
         return ret
 
