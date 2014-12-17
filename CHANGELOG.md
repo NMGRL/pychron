@@ -16,6 +16,9 @@ CHANGELOG
 * added detector intercalibration
 * added UsersPlugin
 * added extraction defaults to defaults.yaml
+* added NotificationManager. a simple class for managing NotificationWidgets, modeless, always on top, 
+ rounded message windows pinned to the upper right hand corner of a parent window
+  
 .. * fully implemented import irradiation from XLS file
 .. * added ability to export irradiations from Pychron to MassSpec
 

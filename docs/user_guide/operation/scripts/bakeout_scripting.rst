@@ -52,10 +52,10 @@ To activate a script for a given controller use the drop down menu located above
 
 To execute the bakeout hit ``Execute``. ``Stop`` to Stop. 
 
-.. image:: /images/bakeout_manager.*
+.. image:: images/bakeout_manager.*
 	:scale: 50 %
 	
-.. image:: /images/bakeout_editor.*
+.. image:: images/bakeout_editor.*
 
 --------------------------
 bakeout functions

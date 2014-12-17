@@ -8,15 +8,15 @@ Writing Experiment Queues
 
 #.  Make a New experiment...
     
-    .. image:: ../images/tutorial/new_exp_queue_menu.png
+    .. image:: images/new_exp_queue_menu.png
         :scale: 100%    
     
 #.  Or Open an existing experiment queue.
     
-    .. image:: ../images/tutorial/open_exp_queue_menu.png
+    .. image:: images/open_exp_queue_menu.png
         :scale: 100%
 
-    .. image:: ../images/tutorial/exp_editor.png
+    .. image:: images/exp_editor.png
         :scale: 100%
    
 #.  Set the ``Mass Spectrometer``.
@@ -50,10 +50,10 @@ Executing Experiments
 #.  Write a new experiment. See :ref:`writing-exp-queues-label`
 #.  Or execute an existing experiment.
 
-    .. image:: ../images/tutorial/exc_exp_queue_menu.png
+    .. image:: images/exc_exp_queue_menu.png
         :scale: 100%
         
-    .. image:: ../images/tutorial/exp_executor.png
+    .. image:: images/exp_executor.png
         :scale: 100%
         
 #.  Hit Start (#4)
