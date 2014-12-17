@@ -90,24 +90,16 @@ def procedure_action(name, application):
     return lambda: a
 
 
-logger = new_logger('ExtractionLinePlugin')
-
-
 class ExtractionLinePlugin(BaseTaskPlugin):
     id = 'pychron.extraction_line'
     name = 'ExtractionLine'
     _extraction_line_manager = Instance(ExtractionLineManager)
 
     def set_preference_defaults(self):
-        prefs = self.application.preferences
-        prefid = 'pychron.extraction_line'
-        for k, d in (('canvas_path', os.path.join(paths.canvas2D_dir, 'canvas.xml')),
-                     ('canvas_config_path', os.path.join(paths.canvas2D_dir, 'canvas_config.xml')),
-                     ('valves_path', os.path.join(paths.extraction_line_dir, 'valves.xml'))):
-            if k not in prefs.keys(prefid):
-                logger.debug('Setting default preference {}={}'.format(k, d))
-                prefs.set('{}.{}'.format(prefid, k), d)
-        prefs.flush()
+        self._set_preference_defaults((('canvas_path', os.path.join(paths.canvas2D_dir, 'canvas.xml')),
+                                       ('canvas_config_path', os.path.join(paths.canvas2D_dir, 'canvas_config.xml')),
+                                       ('valves_path', os.path.join(paths.extraction_line_dir, 'valves.xml'))),
+                                      'pychron.extraction_line')
 
     def test_gauge_communication(self):
         return self._test('test_gauge_communication')

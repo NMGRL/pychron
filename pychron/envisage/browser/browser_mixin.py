@@ -134,8 +134,8 @@ class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
     use_low_post = Bool
     use_high_post = Bool
     use_named_date_range = Bool
-    _low_post = Date
-    _high_post = Date
+    _low_post = None
+    _high_post = None
     _recent_low_post = None
     _recent_mass_spectrometers = None
     _previous_recent_name = ''
@@ -185,7 +185,7 @@ class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
     # d = {
     # # 'include_monitors': self.include_monitors,
     # # 'include_unknowns': self.include_unknowns,
-    #         'project_enabled': self.project_enabled,
+    # 'project_enabled': self.project_enabled,
     #         'sample_view_active': self.sample_view_active}
     #     self._browser_options_hook(d)
     #
@@ -369,25 +369,14 @@ class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
 
         db = self.db
         with db.session_ctx():
+            self.use_high_post = False
+            self.use_low_post = True
+
             hpost = datetime.now()
             lpost = hpost - timedelta(hours=self.search_criteria.recent_hours)
-            self.use_low_post = True
-            self._low_post = lpost.date()
-
-            # #use users low_post if set
-            # if not self.use_low_post and not self.use_named_date_range:
-            #     lpost = hpost - timedelta(hours=self.search_criteria.recent_hours)
-            #     self.use_low_post = True
-            #     self._low_post = lpost.date()
-            #     self._recent_low_post = lpost
+            self._low_post = lpost
 
             self._recent_mass_spectrometers.append(ms)
-
-            self.use_high_post=False
-            # if not self.use_named_date_range:
-            #     self.use_high_post = True
-            #     self._high_post = hpost.date()
-
             sams = self._retrieve_labnumbers()
 
         return sams
@@ -432,6 +421,7 @@ class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
             if not hp:
                 hp = thp
 
+        print lp, hp, self.low_post
         ls = db.get_project_labnumbers(projects,
                                        self.filter_non_run_samples,
                                        lp, hp,

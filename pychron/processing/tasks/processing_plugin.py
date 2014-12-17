@@ -60,6 +60,11 @@ from pyface.message_dialog import warning
 class ProcessingPlugin(BaseTaskPlugin):
     id = 'pychron.processing.plugin'
     name = 'Processing'
+
+    def set_preference_defaults(self):
+        ds = (('recent_hours',12),)
+        self._set_preference_defaults(ds, 'pychron.browsing')
+
     def _actions_default(self):
         return [('pychron.ideogram', 'Ctrl+J', 'Open Ideogram'),
                 ('pychron.spectrum', 'Ctrl+D', 'Open Spectrum'),
@@ -80,13 +85,14 @@ class ProcessingPlugin(BaseTaskPlugin):
 
         return [process_so]
 
-    def start(self):
-        try:
-            import xlwt
-        except ImportError:
-            warning(None, '''"xlwt" package not installed. 
-            
-Install to enable MS Excel export''')
+    # def start(self):
+#         try:
+#             import xlwt
+#         except ImportError:
+#             warning(None, '''"xlwt" package not installed.
+#
+# Install to enable MS Excel export''')
+#         super
 
     def _make_task_extension(self, actions, **kw):
         def make_schema(args):
@@ -292,8 +298,7 @@ Install to enable MS Excel export''')
              self._repository_task_factory, 'Repository', '', 'Ctrl+Shift+R', '', 'irc-server'),
             # ('pychron.processing.vcs',
             #  self._vcs_data_task_factory, 'VCS', '', ''),
-            ('pychron.export',
-             self._export_task_factory, 'Export', '', '')]
+            ]
 
         return [self._meta_task_factory(*args) for args in tasks]
 
@@ -367,11 +372,6 @@ Install to enable MS Excel export''')
     # def _vcs_data_task_factory(self):
     #     from pychron.processing.tasks.vcs_data.vcs_data_task import VCSDataTask
     #     return VCSDataTask(manager=self._processor_factory())
-
-    def _export_task_factory(self):
-        from pychron.processing.tasks.export.export_task import ExportTask
-
-        return ExportTask(manager=self._processor_factory())
 
     def _preferences_panes_default(self):
         return [

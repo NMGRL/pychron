@@ -2215,6 +2215,7 @@ class IsotopeAdapter(DatabaseAdapter):
     def _get_post_filter(self, post, comp, cast=True):
         t = meas_AnalysisTable.analysis_timestamp
         if cast and not isinstance(post, datetime):
+            print 'casting to date'
             t = sql_cast(t, Date)
 
         return getattr(t, comp)(post)
@@ -2271,7 +2272,7 @@ class IsotopeAdapter(DatabaseAdapter):
         return q
 
     def _labnumber_filter(self, q, project_names, mass_spectrometers,
-                          analysis_types, filter_non_run, low_post, high_post, cast_date=True):
+                          analysis_types, filter_non_run, low_post, high_post, cast_date):
         if low_post:
             # q = q.filter(cast(meas_AnalysisTable.analysis_timestamp, Date) >= low_post)
             q = q.filter(self._get_post_filter(low_post, '__ge__', cast=cast_date))

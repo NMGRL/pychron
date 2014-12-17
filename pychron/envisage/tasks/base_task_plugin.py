@@ -21,13 +21,14 @@ from envisage.service_offer import ServiceOffer
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.globals import globalv
+from pychron.loggable import Loggable
 
 SERVICE_OFFERS = 'envisage.service_offers'
 TASK_EXTENSIONS = 'envisage.ui.tasks.task_extensions'
 TASKS = 'envisage.ui.tasks.tasks'
 
 
-class BaseTaskPlugin(Plugin):
+class BaseTaskPlugin(Plugin, Loggable):
     actions = List(contributes_to='pychron.actions')
 
     tasks = List(contributes_to=TASKS)
@@ -57,9 +58,22 @@ class BaseTaskPlugin(Plugin):
     def set_preference_defaults(self):
         pass
 
+    def _set_preference_defaults(self, defaults, prefid):
+        print defaults, prefid
+        prefs = self.application.preferences
+
+        for k, d in defaults:
+            if k not in prefs.keys(prefid):
+                self.debug('Setting default preference {}={}'.format(k, d))
+                prefs.set('{}.{}'.format(prefid, k), d)
+        prefs.flush()
+
     def start(self):
         self.startup_test()
-        self.set_preference_defaults()
+        try:
+            self.set_preference_defaults()
+        except AttributeError,e:
+            print e
 
     # private
     def _get_task_extensions(self):

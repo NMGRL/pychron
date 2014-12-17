@@ -25,8 +25,8 @@ from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 
 class BrowsingPreferences(BasePreferencesHelper):
-    recent_hours = Property(Int, depends_on='_recent_hours')
     preferences_path = 'pychron.browsing'
+    recent_hours = Property(Int, depends_on='_recent_hours')
     _recent_hours = Int
 
     reference_hours_padding = Int
