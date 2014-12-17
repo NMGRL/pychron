@@ -25,7 +25,7 @@ import os
 import xlrd
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import add_extension, unique_date_path
-from pychron.core.ui.preference_binding import bind_preference, color_bind_preference
+from pychron.core.ui.preference_binding import color_bind_preference
 from pychron.envisage.tasks.editor_task import EditorTask
 from pychron.envisage.tasks.pane_helpers import ConsolePane
 from pychron.experiment.queue.base_queue import extract_meta
@@ -153,6 +153,7 @@ class ExperimentEditorTask(EditorTask):
         super(ExperimentEditorTask, self).prepare_destroy()
 
         self.manager.experiment_factory.destroy()
+        self.manager.executor.notification_manager.parent = None
 
         if self.use_notifications:
             self.notifier.close()
@@ -580,6 +581,8 @@ class ExperimentEditorTask(EditorTask):
         if self.editor_area.editors:
             self._close_external_windows()
 
+            # bind the window control to the notification manager
+            self.manager.executor.notification_manager.parent = self.window.control
             for ei in self.editor_area.editors:
                 self._backup_editor(ei)
 

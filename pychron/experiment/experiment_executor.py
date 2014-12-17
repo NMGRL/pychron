@@ -33,6 +33,7 @@ import yaml
 from pychron.consumer_mixin import consumable
 from pychron.core.codetools.memory_usage import mem_available, mem_log
 from pychron.core.helpers.filetools import add_extension, get_path
+from pychron.core.notification_manager import NotificationManager
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.consoleable import Consoleable
 from pychron.envisage.preference_mixin import PreferenceMixin
@@ -46,7 +47,6 @@ from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
 from pychron.globals import globalv
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR, DEFAULT_INTEGRATION_TIME
-from pychron.extraction_line.pyscript_runner import RemotePyScriptRunner, PyScriptRunner
 from pychron.wait.wait_group import WaitGroup
 
 
@@ -150,6 +150,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         super(ExperimentExecutor, self).__init__(*args, **kw)
         self.wait_control_lock = Lock()
         self.set_managers()
+        self.notification_manager=NotificationManager()
 
     def set_managers(self):
         p1 = 'pychron.extraction_line.extraction_line_manager.ExtractionLineManager'
@@ -178,7 +179,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.labspy_client = client
             # self._preference_binder(prefid, ('root', 'username', 'host', 'password'), obj=self.labspy.repo)
 
-        #colors
+        # colors
         attrs = ('signal_color', 'sniff_color', 'baseline_color')
         self._preference_binder(prefid, attrs, mod='color')
 
@@ -216,7 +217,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.monitor = self._monitor_factory()
 
         if self._pre_execute_check():
-            #reset executor
+            # reset executor
             self._reset()
 
             name = self.experiment_queue.name
@@ -276,7 +277,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.alive = False
             self.stats.stop_timer()
             self.wait_group.stop()
-            #            self.wait_group.active_control.stop
+            # self.wait_group.active_control.stop
             #            self.active_wait_control.stop()
             #             self.wait_dialog.stop()
 
@@ -384,7 +385,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         # save experiment to database
         self.info('saving experiment "{}" to database'.format(exp.name))
-        exp.start_timestamp = datetime.now()#.strftime('%m-%d-%Y %H:%M:%S')
+        exp.start_timestamp = datetime.now()  # .strftime('%m-%d-%Y %H:%M:%S')
         if self.labspy_enabled:
             self.labspy_client.add_experiment(exp)
 
@@ -477,7 +478,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     break
 
             if self.end_at_run_completion:
-                #if overlapping run is a special labnumber cancel it and finish experiment
+                # if overlapping run is a special labnumber cancel it and finish experiment
                 if self.extracting_run:
                     if not self.extracting_run.spec.is_special():
                         self._wait_for(lambda x: self.extracting_run)
@@ -488,7 +489,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 self._wait_for(lambda x: self.measuring_run)
 
             else:
-                #wait for overlapped runs to finish.
+                # wait for overlapped runs to finish.
                 self._wait_for(lambda x: self.extracting_run or self.measuring_run)
 
         if self._err_message:
@@ -551,7 +552,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             time.sleep(period)
 
     def _join_run(self, spec, run):
-        #    def _join_run(self, spec, t, run):
+        # def _join_run(self, spec, t, run):
         #        t.join()
         self.debug('Changing Thread name to {}'.format(run.runid))
         ct = currentThread()
@@ -585,7 +586,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         run.state = 'not run'
 
         q = self.experiment_queue
-        #is this the last run in the queue. queue is not empty until _start runs so n==1 means last run
+        # is this the last run in the queue. queue is not empty until _start runs so n==1 means last run
         run.is_last = len(q.cleaned_automated_runs) == 1
 
         self.extracting_run = run
@@ -644,7 +645,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     def _overlapped_run(self, v):
         self._overlapping = True
         t, run = v
-        #         while t.is_alive():
+        # while t.is_alive():
         #             time.sleep(1)
         self.debug('OVERLAPPING. waiting for run to finish')
         t.join()
@@ -662,7 +663,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         # arun = self.current_run
         aruns = (self.measuring_run, self.extracting_run)
 
-        #        arun = self.experiment_queue.current_run
+        # arun = self.experiment_queue.current_run
         if style == 'queue':
             name = os.path.basename(self.experiment_queue.path)
             name, _ = os.path.splitext(name)
@@ -710,7 +711,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 # self.current_run = None
 
     def _end_runs(self):
-        #         self._last_ran = None
+        # self._last_ran = None
         if self.stats:
             self.stats.stop_timer()
 
@@ -832,7 +833,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if not self._set_run_aliquot(spec):
             return
 
-        #reuse run if not overlap
+        # reuse run if not overlap
         # run = self.current_run if not spec.overlap[0] else None
         run = None
         arun = spec.make_run(run=run)
@@ -888,7 +889,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if spec.conflicts_checked:
             return True
 
-        #if a run in executed runs is in extraction or measurement state
+        # if a run in executed runs is in extraction or measurement state
         # we are in overlap mode
         dh = self.datahub
 
@@ -942,7 +943,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.message(self._err_message)
             # self.info('No response from user. Canceling run')
             # do_later(self.information_dialog,
-            #          'Databases are in conflict. No response from user. Canceling experiment')
+            # 'Databases are in conflict. No response from user. Canceling experiment')
 
         if self._canceled:
             self.cancel()
@@ -956,7 +957,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
             sleep for ``delay`` seconds
         """
-        #        self.delaying_between_runs = True
+        # self.delaying_between_runs = True
         msg = 'Delay {} runs {} sec'.format(message, delay)
         self.info(msg)
         self._wait(delay, msg)
@@ -977,7 +978,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         wg.pop(wc)
 
         # if wc.is_continued():
-        #     self.stats.continue_clock()
+        # self.stats.continue_clock()
 
     def _set_extract_state(self, state, *args):
         """
@@ -1298,7 +1299,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             # #check queue actions
             # exp = self.experiment_queue
             # if self._action_conditionals(run, exp.queue_actions, 'Checking queue actions',
-            #                              'Queue Action'):
+            # 'Queue Action'):
             #     return True
 
     def _load_default_conditionals(self, term_name, **kw):
@@ -1351,6 +1352,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 if ci.check(run, data, cnt):
                     self.warning('!!!!!!!!!! Conditional Tripped !!!!!!!!!!')
                     self.warning('{}. {}'.format(message2, ci.to_string()))
+                    self.notification_manager.add_notification('Conditional Tripped. {}. {}'.format(message2,
+                                                                                                    ci.to_string()))
+
                     self.cancel(confirm=False)
                     return True
 
@@ -1394,7 +1398,7 @@ Use Last "blank_{}"= {}
         if an:
             anidx = aruns.index(an)
 
-            #find first blank_
+            # find first blank_
             #if idx > than an idx need a blank
             nopreceding = True
             ban = next((a for a in aruns if a.analysis_type == 'blank_{}'.format(an.analysis_type)), None)
@@ -1670,4 +1674,5 @@ Use Last "blank_{}"= {}
     def labspy_enabled(self):
         if self.use_labspy:
             return self.labspy_client is not None
+
 # ============= EOF =============================================

@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Button, List
-from traitsui.api import View, Item
 # ============= standard library imports ========================
 import weakref
 # ============= local library imports  ==========================
@@ -24,25 +22,51 @@ from pychron.core.ui.notification_widget import NotificationWidget
 
 
 class NotificationManager(object):
+    _rect_tuple = None
+    parent = None
     def __init__(self, *args, **kw):
         self.messages = []
 
-    def add_notification(self, parent, message, color='orange', fontsize=18):
-        prect = parent.geometry()
+    def add_notification(self, message, color='orange', fontsize=18):
+        parent = self.parent
+        if parent:
+            parent.moveEvent = self._move
+            parent.resizeEvent = self._resize
 
-        dw = NotificationWidget(message,
-                                fontsize=fontsize,
-                                color=color)
+            prect = parent.geometry()
 
-        x, y, w, h = prect.x(), prect.y(), prect.width(), prect.height()
-        dw.set_position(x, y, w, h)
+            dw = NotificationWidget(message,
+                                    fontsize=fontsize,
+                                    color=color)
 
-        # bump messages down
+            dw.on_close = self._update_positions
+            x, y, w, h = prect.x(), prect.y(), prect.width(), prect.height()
+            self._rect_tuple = x, y, w, h
+            dw.set_position(x, y, w, h)
+
+            # bump messages down
+            self._set_positons(x, y, w, h, offset=1)
+            self.messages.append(weakref.ref(dw)())
+
+    def _update_positions(self, widget):
+        self.messages.remove(widget)
+        x, y, w, h = self._rect_tuple
+        self._set_positons(x, y, w, h)
+
+    def _move(self, event):
+        p = event.pos()
+        x, y, w, h = (p.x(), p.y() + 22, self._rect_tuple[2], self._rect_tuple[3])
+        self._set_positons(x, y, w, h)
+
+    def _resize(self, event):
+        size = event.size()
+        x, y, w, h = (self._rect_tuple[0], self._rect_tuple[1], size.width(), size.height())
+        self._set_positons(x, y, w, h)
+
+    def _set_positons(self, x, y, w, h, offset=0):
+        self._rect_tuple = x, y, w, h
         for i, mi in enumerate(reversed(self.messages)):
-            mi.set_position(x, y + mi.height() * (i + 1), w, h)
-
-        dw.show()
-        self.messages.append(weakref.ref(dw)())
+            mi.set_position(x, y + mi.height() * (i + offset), w, h)
 
 # ============= EOF =============================================
 

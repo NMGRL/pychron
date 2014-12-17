@@ -97,7 +97,7 @@ class DashboardServer(Loggable):
         if elem is not None:
             try:
                 port = int(elem[0].text.strip())
-            except (IndexError,ValueError):
+            except (IndexError, ValueError):
                 pass
 
         self.notifier.port = port
@@ -235,14 +235,15 @@ class DashboardServer(Loggable):
 
                 dev.trigger()
 
-            self.debug('sleeping for {}'.format(mperiod))
             st = time.time()
+            pp = mperiod - (st - sst)
+            self.debug('sleeping for {}'.format(pp))
             while self._alive:
-                if time.time() - st > mperiod:
+                if time.time() - st >= pp:
                     break
-                time.sleep(0.25)
+                time.sleep(0.1)
             dur = time.time() - sst
-            self.debug('============= poll iteration finished dur={:0.2f}============'.format(dur))
+            self.debug('============= poll iteration finished dur={:0.1f}============'.format(dur))
 
     # def _set_error_flag(self, obj, msg):
     # self.notifier.send_message('error {}'.format(msg))
@@ -277,7 +278,7 @@ class DashboardServer(Loggable):
         return next((di for di in self.devices if di.name == name), None)
 
     # def _update_labspy_devices(self):
-    #     if self.labspy_client:
+    # if self.labspy_client:
     #         # a = Dev('pneumatic', ('pressure',), ('torr',))
     #         # b = Dev('environment',
     #         #         ('temperature', 'humidity'), ('C', '%'))

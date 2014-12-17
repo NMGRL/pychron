@@ -15,12 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Button, List
 from pyface.qt import QtCore
 from PySide.QtCore import QRect, QSize
 from PySide.QtGui import QRegion, QWidget, QVBoxLayout, QLabel, QFont, QFontMetrics, QSizePolicy, QHBoxLayout
 # ============= standard library imports ========================
-import weakref
 # ============= local library imports  ==========================
 
 
@@ -49,6 +47,8 @@ def mask(rect, r):
 
 
 class NotificationWidget(QWidget):
+    on_close = None
+
     def __init__(self, txt, color='black',
                  font='arial', fontsize=18,
                  opacity=0.95, window_bgcolor='red', *args, **kw):
@@ -81,7 +81,6 @@ class NotificationWidget(QWidget):
         hlabel.setStyleSheet('QLabel {font-size: 10px}')
 
         hlayout = QHBoxLayout()
-        # hlayout.setContentsMargins(wm, hm, wm, hm)
 
         hlayout.addStretch()
         hlayout.addWidget(hlabel)
@@ -94,10 +93,10 @@ class NotificationWidget(QWidget):
         font = QFont(self.font, self.fontsize)
         fm = QFontMetrics(font)
 
-        pixelsWide = fm.width(txt)
-        pixelsHigh = fm.height()
-        w = pixelsWide + wm * 2  # self._width
-        h = pixelsHigh + (hm+spacing+1) * 2  # self._height
+        pw = fm.width(txt)
+        ph = fm.height()
+        w = pw + wm * 2
+        h = ph + (hm+spacing+1) * 2
 
         self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.setFixedWidth(w)
@@ -105,12 +104,15 @@ class NotificationWidget(QWidget):
         self.setWindowOpacity(self.opacity)
 
         self.setMask(mask(self.rect(), 10))
+        self.show()
 
     def set_position(self, x, y, w, h):
         self.setGeometry(x + w - self.width(), y, self.width(), self.height())
 
     def mouseDoubleClickEvent(self, *args, **kwargs):
         self.close()
+        if self.on_close:
+            self.on_close(self)
 
 
 # ============= EOF =============================================
