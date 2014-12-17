@@ -34,6 +34,7 @@ from PySide import QtCore, QtGui
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.consumer_mixin import ConsumerMixin
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.resources import icon
 
 
@@ -87,7 +88,7 @@ class _myTableView(_TableView, ConsumerMixin):
     def __init__(self, *args, **kw):
         super(_myTableView, self).__init__(*args, **kw)
 
-        self.setup_consumer()
+        # self.setup_consumer(main=True)
         editor = self._editor
 
         # # reimplement row height
@@ -103,7 +104,7 @@ class _myTableView(_TableView, ConsumerMixin):
             vheader.setDefaultSectionSize(size.height() + 6)
             vheader.ResizeMode(QHeaderView.ResizeToContents)
             hheader = self.horizontalHeader()
-            #hheader.setStretchLastSection(editor.factory.stretch_last_section)
+            # hheader.setStretchLastSection(editor.factory.stretch_last_section)
             vheader.setFont(fnt)
             hheader.setFont(fnt)
 
@@ -193,28 +194,29 @@ class _myTableView(_TableView, ConsumerMixin):
         else:
             QtGui.QTableView.keyPressEvent(self, event)
 
-    def _add(self, items, insert_mode='after', idx=None):
-        if idx is None:
-            selection = self.selectedIndexes()
-            if len(selection):
-                offset = 1 if insert_mode == 'after' else 0
-                idx = selection[-1].row() + offset
-            else:
-                idx = len(self._editor.value)
-
-        paste_func = self.paste_func
-        if paste_func is None:
-            paste_func = lambda x: x.clone_traits()
-
-        editor = self._editor
-        with no_update(editor.object):
-            for ci in reversed(items):
-                editor.model.insertRow(idx, obj=paste_func(ci))
+            # def _add(self, items, insert_mode='after', idx=None):
+            # if idx is None:
+            # selection = self.selectedIndexes()
+            #     if len(selection):
+            #         offset = 1 if insert_mode == 'after' else 0
+            #         idx = selection[-1].row() + offset
+            #     else:
+            #         idx = len(self._editor.value)
+            #
+            # paste_func = self.paste_func
+            # if paste_func is None:
+            #     paste_func = lambda x: x.clone_traits()
+            #
+            # editor = self._editor
+            # with no_update(editor.object):
+            #     model = editor.model
+            #     for ci in reversed(items):
+            #         model.insertRow(idx, obj=paste_func(ci))
 
     # alt move when used in experiment editor conflicting with database so disabling
     # def mousePressEvent(self, event):
     # self._alt_move(event)
-    #     super(_myTableView, self).mousePressEvent(event)
+    # super(_myTableView, self).mousePressEvent(event)
     #
     # def _alt_move(self, event):
     #     mods = event.modifiers()
@@ -274,8 +276,9 @@ class _myTableView(_TableView, ConsumerMixin):
                     if not any((ci <= idx for ci in self._cut_indices)):
                         idx += len(self._cut_indices)
 
+                    model = self._editor.model
                     for ci in self._cut_indices:
-                        self._editor.model.removeRow(ci)
+                        model.removeRow(ci)
 
                 self._cut_indices = None
 
@@ -287,11 +290,30 @@ class _myTableView(_TableView, ConsumerMixin):
                     items = self._copy_cache
 
                 if items:
-                    # self._add(items, idx=idx)
-                    func = lambda a: self._add(a, idx=idx)
-                    self.add_consumable((func, items))
+                    insert_mode = 'after'
+                    if idx is None:
+                        selection = self.selectedIndexes()
+                        if len(selection):
+                            offset = 1 if insert_mode == 'after' else 0
+                            idx = selection[-1].row() + offset
+                        else:
+                            idx = len(self._editor.value)
 
-                    # self.add_consumable((self._add, items))
+                    paste_func = self.paste_func
+                    if paste_func is None:
+                        paste_func = lambda x: x.clone_traits()
+
+                    editor = self._editor
+                    # with no_update(editor.object):
+                    model = editor.model
+                    for ci in reversed(items):
+                        model.insertRow(idx, obj=paste_func(ci))
+
+                # self._add(items, idx=idx)
+                # func = lambda a: self._add(a, idx=idx)
+                # self.add_consumable((self._add, (items,), {'idx':idx}))
+                # self.add_consumable((self._add, items))
+                # invoke_in_main_thread(self._add, items, idx=idx)
 
         else:
             self._editor.key_pressed = TabularKeyEvent(event)
@@ -379,7 +401,7 @@ class _myFilterTableView(_myTableView):
     pass
     # def sizeHint(self):
     # sh = QtGui.QTableView.sizeHint(self)
-    #     print sh, sh.width(), sh.height()
+    # print sh, sh.width(), sh.height()
     #
     #     width = 0
     #     for column in xrange(len(self._editor.adapter.columns)):

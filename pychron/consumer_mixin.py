@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -59,7 +59,7 @@ class ConsumerMixin(object):
             return self._consumer_queue.empty()
 
     def start(self):
-        self._should_consume=True
+        self._should_consume = True
         if not self._consumer:
             self._consumer = Thread(target=self._consume,
                                     args=(self._timeout, ),
@@ -125,13 +125,20 @@ class ConsumerMixin(object):
                         else:
                             cfunc(v)
                     elif isinstance(v, tuple):
-                        func, a = v
+                        if len(v) == 3:
+                            func, args, kw = v
+                        else:
+                            func, args = v
+
+                        if not isinstance(args, tuple):
+                            args = (args, )
+
                         if self._main:
                             from pychron.core.ui.gui import invoke_in_main_thread
 
-                            invoke_in_main_thread(func, a)
+                            invoke_in_main_thread(func, *args, **kw)
                         else:
-                            func(a)
+                            func(*args)
             except Exception, e:
                 import traceback
 
