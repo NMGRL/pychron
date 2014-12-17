@@ -24,6 +24,7 @@ from pychron.core.ui.notification_widget import NotificationWidget
 class NotificationManager(object):
     _rect_tuple = None
     parent = None
+
     def __init__(self, *args, **kw):
         self.messages = []
 
@@ -47,6 +48,10 @@ class NotificationManager(object):
             # bump messages down
             self._set_positons(x, y, w, h, offset=1)
             self.messages.append(weakref.ref(dw)())
+
+            if len(self.messages) > 10:
+                m = self.messages.pop(0)
+                m.destroy()
 
     def _update_positions(self, widget):
         self.messages.remove(widget)
