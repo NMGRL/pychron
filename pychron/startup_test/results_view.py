@@ -27,6 +27,7 @@ from pyface.timer.do_later import do_after
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.ui.gui import invoke_in_main_thread
+from pychron.envisage.resources import icon
 from pychron.pychron_constants import LIGHT_GREEN, LIGHT_RED, LIGHT_YELLOW
 from pychron.startup_test.tester import TestResult
 
@@ -35,16 +36,29 @@ COLOR_MAP = {'Passed': LIGHT_GREEN,
              'Skipped': 'lightblue',
              'Failed': LIGHT_RED,
              'Invalid': LIGHT_YELLOW}
+ICON_MAP = {'Passed': 'green_ball',
+            'Skipped': 'gray_ball',
+            'Failed': 'red_ball',
+            'Invalid': 'yellow_ball'}
 
 
 class ResultsAdapter(TabularAdapter):
-    columns = [('Plugin', 'plugin'),
+    columns = [('', 'result_image'),
+               ('Plugin', 'plugin'),
                ('Name', 'name'),
                ('Duration (s)', 'duration'),
                ('Result', 'result')]
     plugin_width = Int(200)
     name_width = Int(200)
     duration_text = Property
+    result_image_image = Property
+    result_image_text = Property
+
+    def _get_result_image_text(self):
+        return ''
+
+    def _get_result_image_image(self):
+        return icon(ICON_MAP[self.item.result])
 
     def get_bg_color(self, obj, trait, row, column=0):
         return COLOR_MAP[self.item.result]

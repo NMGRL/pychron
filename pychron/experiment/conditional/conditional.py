@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str, Either, Int, Callable, Bool, Float
+from traits.api import Str, Either, Int, Callable, Bool, Float, Enum
 # ============= standard library imports ========================
 from uncertainties import nominal_value, std_dev
 import pprint
@@ -23,6 +23,7 @@ import pprint
 from pychron.experiment.conditional.regexes import MAPPER_KEY_REGEX, \
     STD_REGEX
 from pychron.experiment.conditional.utilities import tokenize, get_teststr_attr_func, extract_attr
+from pychron.experiment.utilities.conditionals import RUN, QUEUE, SYSTEM
 from pychron.loggable import Loggable
 
 
@@ -39,7 +40,7 @@ def dictgetter(d, attrs, default=None):
         return default
 
 
-def conditional_from_dict(cd, klass):
+def conditional_from_dict(cd, klass, level=None, location=None):
     if isinstance(klass, str):
         klass = globals()[klass]
 
@@ -70,6 +71,11 @@ def conditional_from_dict(cd, klass):
     cx = klass(teststr, start_count=start, frequency=freq,
                attr=attr,
                window=win, mapper=mapper, action=action, ntrips=ntrips)
+    if level:
+        cx.level = level
+    if location:
+        cx.location = location
+
     return cx
 
 
@@ -77,6 +83,9 @@ class BaseConditional(Loggable):
     attr = Str
     teststr = Str
     start_count = Int
+    level = Enum(SYSTEM, QUEUE, RUN)
+    tripped = Bool
+    location = Str
 
     def to_string(self):
         raise NotImplementedError
@@ -170,6 +179,7 @@ class AutomatedRunConditional(BaseConditional):
             self.debug('condition {} is true trips={}/{}'.format(teststr, self.trips,
                                                                  self.ntrips))
             if self.trips >= self.ntrips:
+                self.tripped = True
                 self.message = 'condition {} is True'.format(teststr)
                 return True
         else:
@@ -242,9 +252,9 @@ class ActionConditional(AutomatedRunConditional):
             # args = ARGS_REGEX.search(between).group(0)[1:-1].split(',')
             # key = args[0]
             # if '.' in key:
-            #         key = key.split('.')[0].strip()
-            #         v = 0
-            #         # v = self.get_modified_value(arun, key, key)
+            # key = key.split('.')[0].strip()
+            # v = 0
+            # # v = self.get_modified_value(arun, key, key)
             #
             #     v1, v2 = args[1:]
             #     nc = '{}<={}<={}'.format(v1, key, v2)

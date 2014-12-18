@@ -37,10 +37,11 @@ from pychron.core.notification_manager import NotificationManager
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.consoleable import Consoleable
 from pychron.envisage.preference_mixin import PreferenceMixin
+from pychron.experiment.conditional.conditionals_edit_view import TAGS
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.notifier.user_notifier import UserNotifier
 from pychron.experiment.stats import StatsGroup
-from pychron.experiment.utilities.conditionals import test_queue_conditionals_name
+from pychron.experiment.utilities.conditionals import test_queue_conditionals_name, SYSTEM, QUEUE, RUN
 from pychron.experiment.utilities.conditionals_results import reset_conditional_results
 from pychron.experiment.utilities.identifier import convert_extract_device
 from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
@@ -145,12 +146,13 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     _prev_baselines = Dict
     _err_message = String
     _prev_blank_id = Long
+    _cv_info = None
 
     def __init__(self, *args, **kw):
         super(ExperimentExecutor, self).__init__(*args, **kw)
         self.wait_control_lock = Lock()
         self.set_managers()
-        self.notification_manager=NotificationManager()
+        self.notification_manager = NotificationManager()
 
     def set_managers(self):
         p1 = 'pychron.extraction_line.extraction_line_manager.ExtractionLineManager'
@@ -183,7 +185,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         attrs = ('signal_color', 'sniff_color', 'baseline_color')
         self._preference_binder(prefid, attrs, mod='color')
 
-        #user_notifier
+        # user_notifier
         attrs = ('include_log', )
         self._preference_binder(prefid, attrs, obj=self.user_notifier)
 
@@ -278,7 +280,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.stats.stop_timer()
             self.wait_group.stop()
             # self.wait_group.active_control.stop
-            #            self.active_wait_control.stop()
+            # self.active_wait_control.stop()
             #             self.wait_dialog.stop()
 
             msg = '{} Stopped'.format(self.experiment_queue.name)
@@ -485,7 +487,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     else:
                         self.extracting_run.cancel_run()
 
-                #wait for the measurement run to finish
+                # wait for the measurement run to finish
                 self._wait_for(lambda x: self.measuring_run)
 
             else:
@@ -553,7 +555,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     def _join_run(self, spec, run):
         # def _join_run(self, spec, t, run):
-        #        t.join()
+        # t.join()
         self.debug('Changing Thread name to {}'.format(run.runid))
         ct = currentThread()
         ct.name = run.runid
@@ -646,7 +648,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._overlapping = True
         t, run = v
         # while t.is_alive():
-        #             time.sleep(1)
+        # time.sleep(1)
         self.debug('OVERLAPPING. waiting for run to finish')
         t.join()
 
@@ -702,7 +704,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
                         arun.cancel_run(state=state)
                         # if self.extracting_run:
-                        #     self.extracting_run.cancel_run(state=state)
+                        # self.extracting_run.cancel_run(state=state)
 
                         # self.non_clear_update_needed = True
                 self.measuring_run = None
@@ -715,7 +717,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if self.stats:
             self.stats.stop_timer()
 
-        #         self.db.close()
+        # self.db.close()
         self.set_extract_state(False)
         #        self.extraction_state = False
         #        def _set_extraction_state():
@@ -1125,7 +1127,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if not self.alive:
             return
 
-        conditionals = self._load_conditionals('pre_run_terminations')
+        conditionals = self._load_queue_conditionals('pre_run_terminations')
         default_conditionals = self._load_default_conditionals('pre_run_terminations')
         if default_conditionals or conditionals:
             self.heading('Pre Extraction Check')
@@ -1273,7 +1275,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.heading('Post Run Check')
 
         # check user defined terminations
-        conditionals = self._load_conditionals('post_run_terminations')
+        conditionals = self._load_queue_conditionals('post_run_terminations')
         if self._test_conditionals(run, conditionals, 'Checking user defined post run terminations',
                                    'Post Run Termination'):
             return True
@@ -1285,7 +1287,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             return True
 
         # check user defined post run actions
-        conditionals = self._load_conditionals('post_run_actions', klass='ActionConditional')
+        conditionals = self._load_queue_conditionals('post_run_actions', klass='ActionConditional')
         if self._action_conditionals(run, conditionals, 'Checking user defined post run actions',
                                      'Post Run Action'):
             return True
@@ -1300,24 +1302,27 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             # exp = self.experiment_queue
             # if self._action_conditionals(run, exp.queue_actions, 'Checking queue actions',
             # 'Queue Action'):
-            #     return True
+            # return True
 
     def _load_default_conditionals(self, term_name, **kw):
+        self.debug('loading default (system) conditionals {}'.format(term_name))
         p = get_path(paths.spectrometer_dir, 'default_conditionals', ['.yaml', '.yml'])
         if p:
-            return self._extract_conditionals(p, term_name, **kw)
+            return self._extract_conditionals(p, term_name, level=SYSTEM, **kw)
         else:
             pp = os.path.join(paths.spectrometer_dir, 'default_conditionals.yaml')
             self.warning('no default conditionals file located at {}'.format(pp))
 
-    def _load_conditionals(self, term_name, **kw):
+    def _load_queue_conditionals(self, term_name, **kw):
+        self.debug('loading queue conditionals {}'.format(term_name))
         exp = self.experiment_queue
         name = exp.queue_conditionals_name
         if test_queue_conditionals_name(name):
             p = get_path(paths.queue_conditionals_dir, name, ['.yaml', '.yml'])
-            return self._extract_conditionals(p, term_name, **kw)
+            self.debug('queue conditionals path {}'.format(p))
+            return self._extract_conditionals(p, term_name, level=QUEUE, **kw)
 
-    def _extract_conditionals(self, p, term_name, klass='TerminationConditional'):
+    def _extract_conditionals(self, p, term_name, level=RUN, klass='TerminationConditional'):
         from pychron.experiment.conditional.conditional import conditional_from_dict
 
         if p and os.path.isfile(p):
@@ -1329,7 +1334,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     self.debug('no {}'.format(term_name))
                     return
                 else:
-                    conds = [conditional_from_dict(cd, klass) for cd in yl]
+                    conds = [conditional_from_dict(cd, klass, level) for cd in yl]
                     return [c for c in conds if c is not None]
 
     def _action_conditionals(self, run, conditionals, message1, message2):
@@ -1356,6 +1361,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                                                                                                     ci.to_string()))
 
                     self.cancel(confirm=False)
+
+                    self._show_conditionals()
                     return True
 
     def _do_action(self, action):
@@ -1399,7 +1406,7 @@ Use Last "blank_{}"= {}
             anidx = aruns.index(an)
 
             # find first blank_
-            #if idx > than an idx need a blank
+            # if idx > than an idx need a blank
             nopreceding = True
             ban = next((a for a in aruns if a.analysis_type == 'blank_{}'.format(an.analysis_type)), None)
 
@@ -1611,22 +1618,31 @@ Use Last "blank_{}"= {}
             self.measuring_run.truncate_run(self.truncate_style)
 
     def _show_conditionals_button_fired(self):
-        from pychron.experiment.conditional.conditionals_view import ConditionalsView
+        self._show_conditionals()
 
+    def _show_conditionals(self):
         try:
-            if self.measuring_run:
-                postt, pret = [], []
-                for name, l in (('post_run_terminations', postt),
-                                ('pre_run_terminations', pret)):
-                    c1 = self._load_conditionals(name)
-                    if c1:
-                        l.extend(c1)
-                    c2 = self._load_default_conditionals(name)
-                    if c2:
-                        l.extend(c2)
+            if self._cv_info:
+                if self._cv_info.control:
+                    self._cv_info.control.raise_()
+                    return
 
-                v = ConditionalsView(self.measuring_run, postt, pret)
-                self.application.open_view(v)
+            from pychron.experiment.conditional.conditionals_view import ConditionalsView
+            v = ConditionalsView()
+            v.add_post_run_terminations(self._load_default_conditionals('post_run_terminations'))
+            v.add_post_run_terminations(self._load_queue_conditionals('post_run_terminations'))
+
+            v.add_pre_run_terminations(self._load_default_conditionals('pre_run_terminations'))
+            v.add_pre_run_terminations(self._load_queue_conditionals('pre_run_terminations'))
+
+            v.add_system_conditionals({tag: self._load_default_conditionals('{}s'.format(tag)) for tag in TAGS})
+            v.add_queue_conditionals({tag: self._load_queue_conditionals('{}s'.format(tag)) for tag in TAGS})
+
+            if self.measuring_run:
+                v.add_run_conditionals(self.measuring_run)
+
+            self._cv_info = self.application.open_view(v)
+
         except BaseException:
             import traceback
 

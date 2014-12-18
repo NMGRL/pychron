@@ -13,11 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from traitsui.view import View
+from pychron.core.ui import set_qt
+from pychron.experiment.utilities.conditionals import TAGS
+
+set_qt()
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.experiment.conditional.conditional import ActionConditional, TruncationConditional, TerminationConditional
+from pychron.experiment.conditional.conditional import ActionConditional, TruncationConditional, TerminationConditional, \
+    CancelationConditional
 from pychron.experiment.conditional.conditionals_edit_view import ConditionalsViewable, ConditionalGroup, PostRunGroup, \
     PreRunGroup
 
@@ -25,31 +31,46 @@ from pychron.experiment.conditional.conditionals_edit_view import ConditionalsVi
 class ConditionalsView(ConditionalsViewable):
     title = 'Active Conditionals'
 
-    def __init__(self, run, pret, postt, *args, **kw):
-        super(ConditionalsView, self).__init__(*args, **kw)
-        self._load(run, pret, postt)
+    def add_post_run_terminations(self, items):
+        if not self.post_run_terminations_group:
+            self.post_run_terminations_group = self._group_factory(items, PostRunGroup, auto_select=False)
+        else:
+            self.post_run_terminations_group.conditionals.extend(items)
 
-    def _load(self, run, pret, postt):
-        for name, items, klass, cklass in (('action', ConditionalGroup, ActionConditional),
-                                           ('truncation', ConditionalGroup, TruncationConditional),
-                                           ('termination', ConditionalGroup, TerminationConditional)):
-            items = getattr(run, '{}_conditionals'.format(name))
-            grp = self._group_factory(items, klass, cklass)
+    def add_pre_run_terminations(self, items):
+        if not self.pre_run_terminations_group:
+            self.pre_run_terminations_group = self._group_factory(items, PreRunGroup, auto_select=False)
+        else:
+            self.pre_run_terminations_group.conditionals.extend(items)
+
+    def add_system_conditionals(self, ditems):
+        for name, klass, cklass in (('action', ConditionalGroup, ActionConditional),
+                                    ('truncation', ConditionalGroup, TruncationConditional),
+                                    ('cancelation', ConditionalGroup, CancelationConditional),
+                                    ('termination', ConditionalGroup, TerminationConditional)):
+            items = ditems[name]
+            grp = self._group_factory(items, klass, conditional_klass=cklass, auto_select=False)
             setattr(self, '{}s_group'.format(name), grp)
 
-            grp = self._group_factory(pret, 'pre_run_terminations', PreRunGroup)
-            self.pre_run_terminations_group = grp
+    def add_queue_conditionals(self, ditems):
+        for tag in TAGS:
+            grp = getattr(self, '{}s_group'.format(tag))
+            items = ditems[tag]
+            if items:
+                grp.conditionals.extend(items)
 
-            grp = self._group_factory(postt, 'post_run_terminations', PostRunGroup)
-            self.post_run_terminations_group = grp
+    def add_run_conditionals(self, run):
+        for tag in TAGS:
+            grp = getattr(self, '{}s_group'.format(tag))
+            items = getattr(run, '{}_conditionals'.format(tag))
+            grp.conditionals.extend(items)
 
-    def _group_factory(self, items, klass, conditional_klass=None):
-        if conditional_klass is None:
-            conditional_klass = TerminationConditional
-
-        group = klass(items, conditional_klass,
-                      editable=False)
-        return group
+    def traits_view(self):
+        v = View(self._view_tabs(),
+                 buttons=['OK'],
+                 title=self.title,
+                 width=800)
+        return v
 
 # ============= EOF =============================================
 

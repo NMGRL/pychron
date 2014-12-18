@@ -80,7 +80,8 @@ class Paths(object):
     bundle_root = None
     # pychron_src_root = None
     # doc_html_root = None
-    icons = None
+    icons = ''
+    images = ''
     splashes = None
     abouts = None
     sounds = None
@@ -91,6 +92,7 @@ class Paths(object):
     labspy_templates = None
     labspy_template_search_path = None
     icon_search_path = None
+    image_search_path = None
     sound_search_path = None
     resources = None
 
@@ -190,8 +192,13 @@ class Paths(object):
     def set_search_paths(self, app_rec=None):
         self.app_resources = app_rec
         self.set_icon_search_path()
+        self.set_image_search_path()
         self.set_sound_search_path()
         self.set_labspy_template_search_path()
+
+    def set_image_search_path(self):
+        self.image_search_path = [self.images,
+                                  self.app_resources]
 
     def set_icon_search_path(self):
         self.icon_search_path = [self.icons,
@@ -223,6 +230,7 @@ class Paths(object):
 
         self.resources = join(path.dirname(path.dirname(__file__)), 'resources')
         self.icons = join(self.resources, 'icons')
+        self.images = join(self.resources, 'images')
         self.splashes = join(self.resources, 'splashes')
         self.labspy_templates = join(self.resources, 'labspy_templates')
         self.abouts = join(self.resources, 'abouts')
@@ -306,7 +314,7 @@ class Paths(object):
         # ==============================================================================
         # lovera exectuables
         # ==============================================================================
-        #        self.clovera_root = join(pychron_src_root, 'pychron', 'modeling', 'lovera', 'bin')
+        # self.clovera_root = join(pychron_src_root, 'pychron', 'modeling', 'lovera', 'bin')
         # =======================================================================
         # files
         # =======================================================================
@@ -346,47 +354,47 @@ def r_mkdir(p):
 
 
 def build_directories():
-    #    global paths
+    # global paths
     # verify paths
     #    import copy
     for l in dir(paths):
         if l.endswith('_dir'):
             r_mkdir(getattr(paths, l))
 
-# ============= EOF ==============================================
-# ==============================================================================
-# # #database
-# # ==============================================================================
-# device_scan_root = device_scan_root = None
-# device_scan_db = None
-#
-# co2laser_db_root = None
-# co2laser_db = None
-#
-# diodelaser_db_root = None
-# diodelaser_db = None
-#
-# isotope_db_root = None
-# isotope_db = None
-# ==============================================================================
-# #database
-# ==============================================================================
-#        db_path = '/usr/local/pychron
-# db_path = stable_root
-# self.device_scan_root = device_scan_root = join(db_path, 'device_scans')
-# self.device_scan_db = join(device_scan_root, 'device_scans.sqlite')
+            # ============= EOF ==============================================
+            # ==============================================================================
+            # # #database
+            # # ==============================================================================
+            # device_scan_root = device_scan_root = None
+            # device_scan_db = None
+            #
+            # co2laser_db_root = None
+            # co2laser_db = None
+            #
+            # diodelaser_db_root = None
+            # diodelaser_db = None
+            #
+            # isotope_db_root = None
+            # isotope_db = None
+            # ==============================================================================
+            # #database
+            # ==============================================================================
+            #        db_path = '/usr/local/pychron
+            # db_path = stable_root
+            # self.device_scan_root = device_scan_root = join(db_path, 'device_scans')
+            # self.device_scan_db = join(device_scan_root, 'device_scans.sqlite')
 
-# self.co2laser_db_root = join(db_path, 'co2laserdb')
-# self.co2laser_db = join(db_path, 'co2.sqlite')
-# self.uvlaser_db_root = join(db_path, 'uvlaserdb')
-# self.uvlaser_db = join(db_path, 'uv.sqlite')
-#
-# self.powermap_db_root = join(db_path, 'powermap')
-# self.powermap_db = join(db_path, 'powermap.sqlite')
-#
-# self.diodelaser_db_root = join(db_path, 'diodelaserdb')
-# self.diodelaser_db = join(db_path, 'diode.sqlite')
-# self.isotope_db_root = join(db_path, 'isotopedb')
+            # self.co2laser_db_root = join(db_path, 'co2laserdb')
+            # self.co2laser_db = join(db_path, 'co2.sqlite')
+            # self.uvlaser_db_root = join(db_path, 'uvlaserdb')
+            # self.uvlaser_db = join(db_path, 'uv.sqlite')
+            #
+            # self.powermap_db_root = join(db_path, 'powermap')
+            # self.powermap_db = join(db_path, 'powermap.sqlite')
+            #
+            # self.diodelaser_db_root = join(db_path, 'diodelaserdb')
+            # self.diodelaser_db = join(db_path, 'diode.sqlite')
+            # self.isotope_db_root = join(db_path, 'isotopedb')
 
-# ROOT = '/Users/ross/Sandbox/pychron_test_data/data'
-# self.isotope_db = join(ROOT, 'isotopedb.sqlite')
+            # ROOT = '/Users/ross/Sandbox/pychron_test_data/data'
+            # self.isotope_db = join(ROOT, 'isotopedb.sqlite')

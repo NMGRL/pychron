@@ -17,9 +17,27 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.pychron_constants import LINE_STR, NULL_STR
+from pychron.pychron_constants import LINE_STR, NULL_STR, LIGHT_RED, LIGHT_YELLOW
+
+SYSTEM = 10
+QUEUE = 20
+RUN = 30
+
+LEVEL_TXT_MAP = {SYSTEM: 'system', QUEUE: 'queue', RUN: 'run'}
+LEVEL_COLOR_MAP = {SYSTEM: LIGHT_RED, QUEUE: 'lightblue', RUN: LIGHT_YELLOW}
+
+TAGS = ('action', 'cancelation', 'truncation', 'termination')
+
+
+def level_text(l):
+    return LEVEL_TXT_MAP.get(l, '')
+
+
+def level_color(l):
+    return LEVEL_COLOR_MAP.get(l, 'white')
 
 
 def test_queue_conditionals_name(name):
     return bool(name and not name in ('Queue Conditionals', NULL_STR, LINE_STR))
+
 # ============= EOF =============================================

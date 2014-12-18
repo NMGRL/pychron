@@ -32,6 +32,7 @@ class TestResult(HasTraits):
     result = Enum('Passed', 'Failed', 'Skipped', 'Invalid')
     description = Str
 
+
 class StartupTester(Loggable):
     results = List
 
