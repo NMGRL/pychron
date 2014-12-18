@@ -275,7 +275,7 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
                 max=10
 
         """
-        return random.randint(mi, ma) if globalv.communication_simulation else 0
+        return random.randint(mi, ma) if globalv.communication_simulation else None
 
     def setup_scheduler(self, name=None):
 

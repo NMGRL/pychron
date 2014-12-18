@@ -142,7 +142,8 @@ class Detector(SpectrometerDevice):
         self.debug('active changed {}'.format(new))
         if self.name == 'CDD':
             self.debug('{} Ion Counter'.format('Activate' if new else 'Deactivate'))
-            self.ask('ActivateIonCounter' if new else 'DeactivateIonCounter')
+            self.info('De/Activating CDD disabled')
+            # self.ask('ActivateIonCounter' if new else 'DeactivateIonCounter')
 
     #def intensity_view(self):
     #    v = View(HGroup(

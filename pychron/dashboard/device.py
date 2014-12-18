@@ -82,13 +82,14 @@ class DashboardDevice(Loggable):
 
     def _trigger(self, value, **kw):
         try:
-            nv = getattr(self._device, value.func_name)(**kw)
             self.debug('triggering value device={} value={} func={}'.format(self._device.name,
-                                                                 value.name,
-                                                                 value.func_name))
+                                                                            value.name,
+                                                                            value.func_name))
+            nv = getattr(self._device, value.func_name)(**kw)
             self._push_value(value, nv)
         except BaseException:
             import traceback
+
             print self._device, self._device.name, value.func_name
             self.debug(traceback.format_exc())
             value.use_pv = False

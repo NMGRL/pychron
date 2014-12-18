@@ -83,7 +83,6 @@ class LabspyClient(Loggable):
             with self.db.session_ctx():
                 self.db.add_measurement(dev, tag, val, unit)
         else:
-            print id(self)
             self.warning('not connected to db {}'.format(self.db.url))
 
     # @cached_property
