@@ -32,18 +32,22 @@ class ConditionalsView(ConditionalsViewable):
     title = 'Active Conditionals'
 
     def add_post_run_terminations(self, items):
-        self._add_pre_post('post_run_terminations_group', items, PostRunGroup)
+        self._add_pre_post('post_run_terminations_group', 'PostRunTerminations', items, PostRunGroup)
 
     def add_pre_run_terminations(self, items):
-        self._add_pre_post('pre_run_terminations_group', items, PreRunGroup)
+        self._add_pre_post('pre_run_terminations_group', 'PreRunTerminations', items, PreRunGroup)
 
-    def _add_pre_post(self, name, items, klass):
+    def _add_pre_post(self, name, label, items, klass):
         if not items:
-            items=[]
+            items = []
 
-        grp = getattr(self, name)
+        # grp = getattr(self, name)
+        grp = next((gi for gi in self.groups if gi.label == label), None)
+
+        print name, label, grp, [gi.label for gi in self.groups]
         if not grp:
-            setattr(self, name, self._group_factory(items, klass, auto_select=False))
+            self._group_factory(items, klass, auto_select=False, label=label)
+            # setattr(self, name, self._group_factory(items, klass, auto_select=False))
         else:
             grp.conditionals.extend(items)
 
@@ -53,19 +57,22 @@ class ConditionalsView(ConditionalsViewable):
                                     ('cancelations', ConditionalGroup, CancelationConditional),
                                     ('terminations', ConditionalGroup, TerminationConditional)):
             items = ditems.get(name, [])
-            grp = self._group_factory(items, klass, conditional_klass=cklass, auto_select=False)
-            setattr(self, '{}_group'.format(name), grp)
+            self._group_factory(items, klass, conditional_klass=cklass,
+                                auto_select=False, label=name.capitalize())
+
+            # setattr(self, '{}_group'.format(name), grp)
 
     def add_conditionals(self, ditems):
         for tag in CONDITIONAL_GROUP_TAGS:
-            grp = getattr(self, '{}s_group'.format(tag))
-            items = ditems.get('{}s'.format(tag))
-
+            tag = '{}s'.format(tag)
+            # grp = getattr(self, '{}s_group'.format(tag))
+            grp = next((gi for gi in self.groups if gi.label == tag.capitalize()), None)
+            items = ditems.get(tag)
             if items:
                 grp.conditionals.extend(items)
 
     # def add_run_conditionals(self, ditems):
-    #     for tag in TAGS:
+    # for tag in TAGS:
     #         # grp = getattr(self, '{}s_group'.format(tag))
     #         # items = getattr(run, '{}_conditionals'.format(tag))
     #         # grp.conditionals.extend(items)

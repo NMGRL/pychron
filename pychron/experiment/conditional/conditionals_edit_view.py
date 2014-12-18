@@ -30,7 +30,7 @@ from traits.api import HasTraits, List, Instance, Any, \
 
 from pyface.file_dialog import FileDialog
 from traitsui.api import View, Tabbed, Group, UItem, \
-    TabularEditor, VGroup, EnumEditor, Item, HGroup, spring, Label, Handler, HSplit
+    TabularEditor, VGroup, EnumEditor, Item, HGroup, spring, Label, Handler, HSplit, ListEditor
 from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 import os
@@ -112,7 +112,7 @@ TAGS = 'start_count,frequency,attr,window,mapper,ntrips'
 
 class ConditionalGroup(HasTraits):
     editable = False
-
+    label = Str
     conditionals = List
     selected = Any
 
@@ -407,35 +407,47 @@ class CEHandler(Handler):
 
 
 class ConditionalsViewable(HasTraits):
-    actions_group = Instance(ConditionalGroup)
-    cancelations_group = Instance(ConditionalGroup)
-    terminations_group = Instance(ConditionalGroup)
-    truncations_group = Instance(ConditionalGroup)
-    post_run_terminations_group = Instance(ConditionalGroup)
-    pre_run_terminations_group = Instance(ConditionalGroup)
+    # actions_group = Instance(ConditionalGroup)
+    # cancelations_group = Instance(ConditionalGroup)
+    # terminations_group = Instance(ConditionalGroup)
+    # truncations_group = Instance(ConditionalGroup)
+    # post_run_terminations_group = Instance(ConditionalGroup)
+    # pre_run_terminations_group = Instance(ConditionalGroup)
 
     group_names = ('actions', 'truncations', 'cancelations', 'terminations',
                    'post_run_terminations', 'pre_run_terminations')
     title = Str
     available_attrs = List
-
+    groups = List
     def _view_tabs(self):
-        vs = []
-        for name in self.group_names:
-            gname = '{}_group'.format(name)
-            uname = ' '.join([ni.capitalize() for ni in name.split('_')])
-            grp = Group(UItem(gname, style='custom'), label=uname)
-            vs.append(grp)
-        return Tabbed(*vs)
+        return UItem('groups', style='custom',
+                     editor=ListEditor(use_notebook=True,
+                                                 style='custom',
+                                                 page_name='.label'))
 
-    def _group_factory(self, items, klass, name=None, conditional_klass=None, **kw):
+
+    # def _view_tabs2(self):
+    #     vs = []
+    #     for name in self.group_names:
+    #         gname = '{}_group'.format(name)
+    #         uname = ' '.join([ni.capitalize() for ni in name.split('_')])
+    #         grp = Group(UItem(gname, style='custom'), label=uname)
+    #         vs.append(grp)
+    #     return Tabbed(*vs)
+
+    def _group_factory(self, items, klass, name=None, conditional_klass=None, label='', **kw):
         if conditional_klass is None:
             conditional_klass = TerminationConditional
 
         if name:
             items = items.get(name, []) if items else []
 
-        group = klass(items, conditional_klass, available_attrs=self.available_attrs, **kw)
+        group = klass(items, conditional_klass,
+                      label=label,
+                      available_attrs=self.available_attrs,
+                      **kw)
+
+        self.groups.append(group)
         return group
 
 class ConditionalsEditView(ConditionalsViewable):
@@ -549,7 +561,6 @@ def edit_conditionals(name, detectors=None, app=None, root=None, save_as=False,
         path = ''
 
     cev = ConditionalsEditView(detectors, root=root, title=title)
-    print path
     cev.open(path, save_as)
     if kinds:
         cev.group_names = kinds
@@ -563,18 +574,18 @@ def edit_conditionals(name, detectors=None, app=None, root=None, save_as=False,
         cev.dump()
 
 
-if __name__ == '__main__':
-    # c = ConditionalsEditView(detectors=['H2', 'H1', 'AX', 'L1', 'L2', 'CDD'])
-    # c.open('normal', False)
-    # c.configure_traits()
-    # c.dump()
-    class D(HasTraits):
-        test = Button
-
-        def _test_fired(self):
-            edit_conditionals('foo', save_as=False)
-
-    D().configure_traits(view=View('test'))
+# if __name__ == '__main__':
+#     # c = ConditionalsEditView(detectors=['H2', 'H1', 'AX', 'L1', 'L2', 'CDD'])
+#     # c.open('normal', False)
+#     # c.configure_traits()
+#     # c.dump()
+#     class D(HasTraits):
+#         test = Button
+#
+#         def _test_fired(self):
+#             edit_conditionals('foo', save_as=False)
+#
+#     D().configure_traits(view=View('test'))
 # ============= EOF =============================================
 
 

@@ -750,14 +750,16 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             from pychron.experiment.conditional.conditionals_view import ConditionalsView
 
             v = ConditionalsView()
-            v.add_post_run_terminations(self._load_default_conditionals('post_run_terminations'))
-            v.add_post_run_terminations(self._load_queue_conditionals('post_run_terminations'))
 
             v.add_pre_run_terminations(self._load_default_conditionals('pre_run_terminations'))
             v.add_pre_run_terminations(self._load_queue_conditionals('pre_run_terminations'))
 
             v.add_system_conditionals(self._load_default_conditionals(None))
             v.add_conditionals(self._load_queue_conditionals(None))
+
+            v.add_post_run_terminations(self._load_default_conditionals('post_run_terminations'))
+            v.add_post_run_terminations(self._load_queue_conditionals('post_run_terminations'))
+
             run = self.selected_run
             if run and not show_measuring:
                 # in this case run is an instance of AutomatedRunSpec
