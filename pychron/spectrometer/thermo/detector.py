@@ -44,7 +44,7 @@ class Detector(SpectrometerDevice):
     deflection_correction_sign = Int(1)
 
     _deflection_correction_factors = None
-    #    intensity = Property(depends_on='spectrometer:intensity_dirty')
+    # intensity = Property(depends_on='spectrometer:intensity_dirty')
     #    intensity = Float
     #    std = Float
     intensity = Str
@@ -138,6 +138,12 @@ class Detector(SpectrometerDevice):
             self.std = '{:0.5f}'.format(self.intensities.std())
             self.intensity = '{:0.5f}'.format(v)
 
+    def _active_changed(self, new):
+        self.debug('active changed {}'.format(new))
+        if self.name == 'CDD':
+            self.debug('{} Ion Counter'.format('Activate' if new else 'Deactivate'))
+            self.ask('ActivateIonCounter' if new else 'DeactivateIonCounter')
+
     #def intensity_view(self):
     #    v = View(HGroup(
     #        Item('color',
@@ -164,4 +170,4 @@ class Detector(SpectrometerDevice):
     def __repr__(self):
         return self.name
 
-# ============= EOF =============================================
+        # ============= EOF =============================================

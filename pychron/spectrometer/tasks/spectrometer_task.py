@@ -26,7 +26,7 @@ from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, Tabbed
 from pychron.envisage.tasks.base_task import BaseExtractionLineTask
 from pychron.envisage.tasks.editor_task import EditorTask
 from pychron.spectrometer.tasks.editor import PeakCenterEditor, ScanEditor, CoincidenceEditor
-from pychron.spectrometer.tasks.spectrometer_panes import ScanPane, ControlsPane, \
+from pychron.spectrometer.tasks.spectrometer_panes import ControlsPane, \
     ReadoutPane, IntensitiesPane
 
 
