@@ -17,7 +17,8 @@
 # ============= enthought library imports =======================
 from pyface.qt import QtCore
 from PySide.QtCore import QRect, QSize
-from PySide.QtGui import QRegion, QWidget, QVBoxLayout, QLabel, QFont, QFontMetrics, QSizePolicy, QHBoxLayout
+from PySide.QtGui import QRegion, QWidget, QVBoxLayout, QLabel, QFont, QFontMetrics, QSizePolicy, QHBoxLayout, QPalette, \
+    QColor, QFrame, QPainter, QPen
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -46,34 +47,85 @@ def mask(rect, r):
     return region
 
 
+# class BorderWidget(QWidget):
+# def __init__(self, *args, **kw):
+# super(BorderWidget, self).__init__(*args, **kw)
+#
+#         pal = QPalette()
+#         color = QColor()
+#         color.setNamedColor('black')
+#
+#         pal.setColor(QPalette.Background, color)
+
+
+
 class NotificationWidget(QWidget):
     on_close = None
 
-    def __init__(self, txt, color='black',
+    def __init__(self, txt,
+                 parent=None, color='black',
                  font='arial', fontsize=18,
-                 opacity=0.95, window_bgcolor='red', *args, **kw):
+                 opacity=0.75, window_bgcolor='red', *args, **kw):
         super(NotificationWidget, self).__init__(*args, **kw)
-        self.font = font
-        self.window_bgcolor = window_bgcolor
-        self.opacity = opacity
-        self.color = color
-        self.fontsize = fontsize
+
+        self._font = font
+        self._window_bgcolor = window_bgcolor
+        self._opacity = opacity
+        self._color = color
+        self._fontsize = fontsize
+
         self._init_ui(txt)
+        if parent:
+            w = parent.width()
+            self.setParent(parent)
+            self.move(w - self.width(), 0)
+            self.show()
+
+    def paintEvent(self, event):
+        qp = QPainter()
+        qp.begin(self)
+        c = QColor()
+        c.setNamedColor(self._window_bgcolor)
+
+        h, s, l, a = c.getHsl()
+        c.setHsl(h, s, 100, a)
+
+        pen = QPen(c, 8, QtCore.Qt.SolidLine)
+        qp.setPen(pen)
+
+        qp.drawRoundedRect(event.rect(), 12, 12)
+        qp.end()
+
+    def mouseDoubleClickEvent(self, *args, **kwargs):
+        self.close()
+        if self.on_close:
+            self.on_close(self)
 
     def _init_ui(self, txt):
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint | QtCore.Qt.FramelessWindowHint)
-        self.setStyleSheet('NotificationWidget {{background-color: {}}}'.format(self.window_bgcolor))
+
+        pal = QPalette()
+        color = QColor()
+        color.setNamedColor(self._window_bgcolor)
+        color.setAlpha(255 * self._opacity)
+        pal.setColor(QPalette.Background, color)
+
+        self.setAutoFillBackground(True)
+        self.setPalette(pal)
 
         wm, hm = 5, 5
         spacing = 8
         layout = QVBoxLayout()
         layout.setSpacing(spacing)
         layout.setContentsMargins(wm, hm, wm, hm)
-        self.label = qlabel = QLabel(txt)
 
-        ss = 'QLabel {{color: {}; font-family:{}, sans-serif; font-size: {}px}}'.format(self.color,
-                                                                                        self.font,
-                                                                                        self.fontsize)
+        nlines, ts = self._generate_text(txt)
+
+        qlabel = QLabel('\n'.join(ts))
+
+        ss = 'QLabel {{color: {}; font-family:{}, sans-serif; font-size: {}px}}'.format(self._color,
+                                                                                        self._font,
+                                                                                        self._fontsize)
         qlabel.setStyleSheet(ss)
         layout.addWidget(qlabel)
 
@@ -90,29 +142,44 @@ class NotificationWidget(QWidget):
 
         self.setLayout(layout)
 
-        font = QFont(self.font, self.fontsize)
+        font = QFont(self._font, self._fontsize)
         fm = QFontMetrics(font)
 
-        pw = fm.width(txt)
-        ph = fm.height()
+        pw = max([fm.width(ti) for ti in ts])
+        ph = (fm.height() + 2) * nlines
+
         w = pw + wm * 2
-        h = ph + (hm+spacing+1) * 2
+        h = ph + (hm + spacing + 1) * 2
 
         self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.setFixedWidth(w)
         self.setFixedHeight(h)
-        self.setWindowOpacity(self.opacity)
 
         self.setMask(mask(self.rect(), 10))
-        self.show()
 
-    def set_position(self, x, y, w, h):
-        self.setGeometry(x + w - self.width(), y, self.width(), self.height())
+    def _generate_text(self, txt, n=20):
+        if len(txt) > n:
+            def tokenize(t):
+                return t.split(' ')
 
-    def mouseDoubleClickEvent(self, *args, **kwargs):
-        self.close()
-        if self.on_close:
-            self.on_close(self)
+            def linize(ts):
+                s = 0
+                tt = []
+                for ti in ts:
+                    s += len(ti)
+                    tt.append(ti)
+                    if s > n:
+                        yield ' '.join(tt)
+                        tt = []
+                        s = 0
+                if tt:
+                    yield ' '.join(tt)
+
+            lines = list(linize(tokenize(txt)))
+            ret = len(lines), lines
+        else:
+            ret = 1, (txt,)
+        return ret
 
 
 # ============= EOF =============================================

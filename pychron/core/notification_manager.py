@@ -18,60 +18,89 @@
 # ============= standard library imports ========================
 import weakref
 # ============= local library imports  ==========================
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.ui.notification_widget import NotificationWidget
 
 
 class NotificationManager(object):
     _rect_tuple = None
     parent = None
+    spacing = 5
 
     def __init__(self, *args, **kw):
         self.messages = []
 
-    def add_notification(self, message, color='orange', fontsize=18):
+    def add_notification(self, *args, **kw):
+        invoke_in_main_thread(self._add_notification, *args, **kw)
+
+    def _add_notification(self, message, color='orange', fontsize=18):
         parent = self.parent
         if parent:
-            parent.moveEvent = self._move
             parent.resizeEvent = self._resize
-
             prect = parent.geometry()
+            x, y, w, h = prect.x(), prect.y(), prect.width(), prect.height()
+            self._rect_tuple = x, y, w, h
 
             dw = NotificationWidget(message,
+                                    parent=parent,
                                     fontsize=fontsize,
                                     color=color)
 
             dw.on_close = self._update_positions
-            x, y, w, h = prect.x(), prect.y(), prect.width(), prect.height()
-            self._rect_tuple = x, y, w, h
-            dw.set_position(x, y, w, h)
+            self.messages.insert(0, weakref.ref(dw)())
 
             # bump messages down
-            self._set_positons(x, y, w, h, offset=1)
-            self.messages.append(weakref.ref(dw)())
+            self._message_inserted()
 
-            if len(self.messages) > 10:
-                m = self.messages.pop(0)
+            if len(self.messages) > 5:
+                m = self.messages.pop()
                 m.destroy()
+                m.close()
+
 
     def _update_positions(self, widget):
         self.messages.remove(widget)
-        x, y, w, h = self._rect_tuple
-        self._set_positons(x, y, w, h)
-
-    def _move(self, event):
-        p = event.pos()
-        x, y, w, h = (p.x(), p.y() + 22, self._rect_tuple[2], self._rect_tuple[3])
-        self._set_positons(x, y, w, h)
+        if self.messages:
+            self._compress_messages()
 
     def _resize(self, event):
         size = event.size()
-        x, y, w, h = (self._rect_tuple[0], self._rect_tuple[1], size.width(), size.height())
-        self._set_positons(x, y, w, h)
+        self._rect_tuple = (self._rect_tuple[0], self._rect_tuple[1], size.width(), size.height())
+        if self.messages:
+            self._reposition()
 
-    def _set_positons(self, x, y, w, h, offset=0):
-        self._rect_tuple = x, y, w, h
-        for i, mi in enumerate(reversed(self.messages)):
-            mi.set_position(x, y + mi.height() * (i + offset), w, h)
+    def _reposition(self):
+
+        x, y, w, h = self._rect_tuple
+        mo = self.messages[0]
+
+        mo.move(w - mo.width(), 0)
+        if len(self.messages) > 1:
+            for mi in self.messages[1:]:
+                mi.move(w - mi.width(), mi.y())
+
+    def _compress_messages(self):
+        mo = self.messages[0]
+        x, y, w, h = self._rect_tuple
+        spacing=self.spacing
+        mo.move(w - mo.width(), 0)
+        if len(self.messages) > 1:
+            hh = 0
+            for i, mi in enumerate(self.messages[1:]):
+                mo = self.messages[i]
+
+                hh += mo.height() + spacing
+                mi.move(w - mi.width(), hh)
+
+    def _message_inserted(self):
+        x, y, w, h = self._rect_tuple
+        if len(self.messages) > 1:
+            mo = self.messages[0]
+            spacing = self.spacing
+            for i, mi in enumerate(self.messages[1:]):
+                y2 = mi.y() + mo.height() + spacing
+                mi.move(w-mi.width(), y2)
+                # mi.set_position(0, y2, w, h)
 
 # ============= EOF =============================================
 
