@@ -183,7 +183,7 @@ class ExtractionLinePlugin(BaseTaskPlugin):
 
                 ex.append(TaskExtension(actions=actions))
             else:
-                logger.warning('no procedure scripts located in "{}"'.format(paths.procedures_dir))
+                self.warning('no procedure scripts located in "{}"'.format(paths.procedures_dir))
         return ex
 
     def _service_offers_default(self):
