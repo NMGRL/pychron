@@ -26,7 +26,7 @@ RUN = 30
 LEVEL_TXT_MAP = {SYSTEM: 'system', QUEUE: 'queue', RUN: 'run'}
 LEVEL_COLOR_MAP = {SYSTEM: LIGHT_RED, QUEUE: 'lightblue', RUN: LIGHT_YELLOW}
 
-TAGS = ('action', 'cancelation', 'truncation', 'termination')
+CONDITIONAL_GROUP_TAGS = ('action', 'cancelation', 'truncation', 'termination')
 
 
 def level_text(l):

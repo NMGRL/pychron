@@ -412,6 +412,7 @@ class ExperimentEditorTask(EditorTask):
     def _active_editor_changed(self):
         if self.active_editor:
             self.manager.experiment_queue = self.active_editor.queue
+            self.manager.executor.active_editor = self.active_editor
             self._show_pane(self.experiment_factory_pane)
 
     # def _use_syslogger_changed(self):

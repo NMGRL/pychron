@@ -48,7 +48,7 @@ from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR, MEASUREMENT_COLOR, \
     EXTRACTION_COLOR, SCRIPT_KEYS
 from pychron.experiment.conditional.conditional import TruncationConditional, \
-    ActionConditional, TerminationConditional, conditional_from_dict, CancelationConditional
+    ActionConditional, TerminationConditional, conditional_from_dict, CancelationConditional, conditionals_from_file
 from pychron.processing.arar_age import ArArAge
 from pychron.processing.export.export_spec import assemble_script_blob
 from pychron.core.ui.gui import invoke_in_main_thread
@@ -1171,25 +1171,30 @@ anaylsis_type={}
                 self.warning('Invalid Conditionals file. {}'.format(p))
 
     def _add_conditionals_from_file(self, p):
-        with open(p, 'r') as fp:
-            yd = yaml.load(fp)
-            cs = (('TruncationConditional', 'truncation', 'truncations'),
-                  ('ActionConditional', 'action', 'actions'),
-                  ('TerminationConditional', 'termination', 'terminations'),
-                  ('CancelationConditional', 'cancelation', 'cancelations'))
-            for klass, var, tag in cs:
-                yl = yd.get(tag)
-                if not yl:
-                    continue
+        d = conditionals_from_file(p)
+        for k, v in d:
+            var = getattr(self, '{}_conditionals'.format(k))
+            var.extend(v)
 
-                var = getattr(self, '{}_conditionals'.format(var))
-                conds = [conditional_from_dict(ti, klass) for ti in yl]
-                conds = [c for c in conds if c is not None]
-                if conds:
-                    var.extend(conds)
-                    # for ti in yl:
-                    # cx =
-                    # var.append(cx)
+            # with open(p, 'r') as fp:
+            # yd = yaml.load(fp)
+            #     cs = (('TruncationConditional', 'truncation', 'truncations'),
+            #           ('ActionConditional', 'action', 'actions'),
+            #           ('TerminationConditional', 'termination', 'terminations'),
+            #           ('CancelationConditional', 'cancelation', 'cancelations'))
+            #     for klass, var, tag in cs:
+            #         yl = yd.get(tag)
+            #         if not yl:
+            #             continue
+            #
+            #         var = getattr(self, '{}_conditionals'.format(var))
+            #         conds = [conditional_from_dict(ti, klass) for ti in yl]
+            #         conds = [c for c in conds if c is not None]
+            #         if conds:
+            #             var.extend(conds)
+            #             # for ti in yl:
+            #             # cx =
+            #             # var.append(cx)
 
     def _conditional_appender(self, name, cd, klass):
         if not self.arar_age:
@@ -1205,7 +1210,7 @@ anaylsis_type={}
         # comp = dictgetter(cd, ('teststr','check','comp'))
         # if not comp:
         # self.debug('not teststr for this conditional "{}" cd={}'.format(name, cd))
-        #     return
+        # return
         #
         # #for 2.0.4 backwards compatiblity
         # start_count = dictgetter(cd, ('start','start_count'))
@@ -1403,7 +1408,7 @@ anaylsis_type={}
                             #
                             # for c in doc:
                             # try:
-                            #             attr = c['attr']
+                            # attr = c['attr']
                             #             comp = c['check']
                             #             start = c['start']
                             #             freq = c.get('frequency', 1)
@@ -1788,7 +1793,7 @@ anaylsis_type={}
                        msg=lambda x: 'waiting for mass spec pumptime to start {:0.2f}'.format(x))
         self.debug('mass spec pump out to started')
 
-        #wait for min pump time
+        # wait for min pump time
         pred = lambda x: self.elapsed_ms_pumptime > mp
         msg = lambda x: 'waiting for min mass spec pumptime {}, elapse={:0.2f}'.format(mp, x)
         self._wait_for(pred, msg)
@@ -1913,9 +1918,10 @@ anaylsis_type={}
         return default
 
     def _get_runid(self):
-        return make_runid(self.spec.labnumber,
-                          self.spec.aliquot,
-                          self.spec.step)
+        return self.spec.runid
+        # return make_runid(self.spec.labnumber,
+        #                   self.spec.aliquot,
+        #                   self.spec.step)
 
     def _get_collector(self):
         c = self.peak_hop_collector if self.is_peak_hop else self.multi_collector

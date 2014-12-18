@@ -66,7 +66,7 @@ class Emailer(Loggable):
     def connect(self, warn=True, test=False):
         if self._server is None:
             try:
-                server = smtplib.SMTP(self.server_host, self.server_port, timeout=1)
+                server = smtplib.SMTP(self.server_host, self.server_port, timeout=5)
                 server.ehlo()
                 server.starttls()
                 server.ehlo()

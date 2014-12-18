@@ -348,7 +348,9 @@ Quick=   measure_iteration stopped at current step
                 UItem('truncate_style',
                       enabled_when='measuring',
                       tooltip=truncate_style_tt),
-                UItem('show_conditionals_button', enabled_when='measuring'),
+                UItem('show_conditionals_button',
+                      # enabled_when='measuring'
+                ),
                 spacer(-75),
                 CustomLabel('extraction_state_label',
                             color_name='extraction_state_color',

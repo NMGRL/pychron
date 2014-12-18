@@ -15,7 +15,7 @@
 # ===============================================================================
 from traitsui.view import View
 from pychron.core.ui import set_qt
-from pychron.experiment.utilities.conditionals import TAGS
+from pychron.experiment.utilities.conditionals import CONDITIONAL_GROUP_TAGS
 
 set_qt()
 
@@ -32,38 +32,43 @@ class ConditionalsView(ConditionalsViewable):
     title = 'Active Conditionals'
 
     def add_post_run_terminations(self, items):
-        if not self.post_run_terminations_group:
-            self.post_run_terminations_group = self._group_factory(items, PostRunGroup, auto_select=False)
-        else:
-            self.post_run_terminations_group.conditionals.extend(items)
+        self._add_pre_post('post_run_terminations_group', items, PostRunGroup)
 
     def add_pre_run_terminations(self, items):
-        if not self.pre_run_terminations_group:
-            self.pre_run_terminations_group = self._group_factory(items, PreRunGroup, auto_select=False)
+        self._add_pre_post('pre_run_terminations_group', items, PreRunGroup)
+
+    def _add_pre_post(self, name, items, klass):
+        if not items:
+            items=[]
+
+        grp = getattr(self, name)
+        if not grp:
+            setattr(self, name, self._group_factory(items, klass, auto_select=False))
         else:
-            self.pre_run_terminations_group.conditionals.extend(items)
+            grp.conditionals.extend(items)
 
     def add_system_conditionals(self, ditems):
-        for name, klass, cklass in (('action', ConditionalGroup, ActionConditional),
-                                    ('truncation', ConditionalGroup, TruncationConditional),
-                                    ('cancelation', ConditionalGroup, CancelationConditional),
-                                    ('termination', ConditionalGroup, TerminationConditional)):
-            items = ditems[name]
+        for name, klass, cklass in (('actions', ConditionalGroup, ActionConditional),
+                                    ('truncations', ConditionalGroup, TruncationConditional),
+                                    ('cancelations', ConditionalGroup, CancelationConditional),
+                                    ('terminations', ConditionalGroup, TerminationConditional)):
+            items = ditems.get(name, [])
             grp = self._group_factory(items, klass, conditional_klass=cklass, auto_select=False)
-            setattr(self, '{}s_group'.format(name), grp)
+            setattr(self, '{}_group'.format(name), grp)
 
-    def add_queue_conditionals(self, ditems):
-        for tag in TAGS:
+    def add_conditionals(self, ditems):
+        for tag in CONDITIONAL_GROUP_TAGS:
             grp = getattr(self, '{}s_group'.format(tag))
-            items = ditems[tag]
+            items = ditems.get('{}s'.format(tag))
+
             if items:
                 grp.conditionals.extend(items)
 
-    def add_run_conditionals(self, run):
-        for tag in TAGS:
-            grp = getattr(self, '{}s_group'.format(tag))
-            items = getattr(run, '{}_conditionals'.format(tag))
-            grp.conditionals.extend(items)
+    # def add_run_conditionals(self, ditems):
+    #     for tag in TAGS:
+    #         # grp = getattr(self, '{}s_group'.format(tag))
+    #         # items = getattr(run, '{}_conditionals'.format(tag))
+    #         # grp.conditionals.extend(items)
 
     def traits_view(self):
         v = View(self._view_tabs(),

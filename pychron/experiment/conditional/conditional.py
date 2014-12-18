@@ -15,16 +15,19 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
 from traits.api import Str, Either, Int, Callable, Bool, Float, Enum
 # ============= standard library imports ========================
 from uncertainties import nominal_value, std_dev
 import pprint
 # ============= local library imports  ==========================
+import yaml
 from pychron.experiment.conditional.regexes import MAPPER_KEY_REGEX, \
     STD_REGEX
 from pychron.experiment.conditional.utilities import tokenize, get_teststr_attr_func, extract_attr
 from pychron.experiment.utilities.conditionals import RUN, QUEUE, SYSTEM
 from pychron.loggable import Loggable
+from pychron.paths import paths
 
 
 def dictgetter(d, attrs, default=None):
@@ -38,6 +41,44 @@ def dictgetter(d, attrs, default=None):
             pass
     else:
         return default
+
+
+def conditionals_from_file(p, name=None, level=SYSTEM):
+    with open(p, 'r') as fp:
+        yd = yaml.load(fp)
+        cs = (('TruncationConditional', 'truncation', 'truncations'),
+              ('ActionConditional', 'action', 'actions'),
+              ('TerminationConditional', 'termination', 'terminations'),
+              ('TerminationConditional', 'pre_run_termination', 'pre_run_terminations'),
+              ('TerminationConditional', 'post_run_termination', 'post_run_terminations'),
+              ('CancelationConditional', 'cancelation', 'cancelations'))
+
+        conddict = {}
+        for klass, var, tag in cs:
+            if name and tag != name:
+                continue
+
+            yl = yd.get(tag)
+            if not yl:
+                continue
+
+            # print 'yyyy', yl
+            # var = getattr(self, '{}_conditionals'.format(var))
+            conds = [conditional_from_dict(ti, klass, level=level, location=p) for ti in yl]
+            # print 'ffff', conds
+            conds = [c for c in conds if c is not None]
+            if conds:
+                conddict[tag] = conds
+
+                # var.extend(conds)
+
+        if name:
+            try:
+                conddict = conddict[name]
+            except KeyError:
+                conddict = None
+
+        return conddict
 
 
 def conditional_from_dict(cd, klass, level=None, location=None):
@@ -55,7 +96,6 @@ def conditional_from_dict(cd, klass, level=None, location=None):
     # attr = cd.get('attr')
     # if not attr:
     # return
-
     teststr = dictgetter(cd, ('teststr', 'comp', 'check'))
     if not teststr:
         return
@@ -74,6 +114,7 @@ def conditional_from_dict(cd, klass, level=None, location=None):
     if level:
         cx.level = level
     if location:
+        location = os.path.relpath(location, paths.root_dir)
         cx.location = location
 
     return cx
@@ -256,8 +297,8 @@ class ActionConditional(AutomatedRunConditional):
             # v = 0
             # # v = self.get_modified_value(arun, key, key)
             #
-            #     v1, v2 = args[1:]
-            #     nc = '{}<={}<={}'.format(v1, key, v2)
+            # v1, v2 = args[1:]
+            # nc = '{}<={}<={}'.format(v1, key, v2)
             #
             #     teststr = teststr.replace(between, nc)
             #     if between.startswith('not '):

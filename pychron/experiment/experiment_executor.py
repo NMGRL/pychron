@@ -37,11 +37,13 @@ from pychron.core.notification_manager import NotificationManager
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.consoleable import Consoleable
 from pychron.envisage.preference_mixin import PreferenceMixin
-from pychron.experiment.conditional.conditionals_edit_view import TAGS
+# from pychron.experiment.conditional.conditionals_edit_view import TAGS
+from pychron.experiment.conditional.conditional import conditionals_from_file
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.notifier.user_notifier import UserNotifier
 from pychron.experiment.stats import StatsGroup
-from pychron.experiment.utilities.conditionals import test_queue_conditionals_name, SYSTEM, QUEUE, RUN
+from pychron.experiment.utilities.conditionals import test_queue_conditionals_name, SYSTEM, QUEUE, RUN, \
+    CONDITIONAL_GROUP_TAGS
 from pychron.experiment.utilities.conditionals_results import reset_conditional_results
 from pychron.experiment.utilities.identifier import convert_extract_device
 from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
@@ -56,8 +58,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     experiment_queue = Any
     user_notifier = Instance(UserNotifier, ())
     connectables = List
-
+    active_editor = Any
     console_bgcolor = 'black'
+    selected_run = Instance('pychron.experiment.automated_run.spec.AutomatedRunSpec', )
+
     # ===========================================================================
     # control
     # ===========================================================================
@@ -192,15 +196,15 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         emailer = self.application.get_service('pychron.social.email.emailer.Emailer')
         self.user_notifier.emailer = emailer
 
-        #memory
+        # memory
         attrs = ('use_memory_check', 'memory_threshold')
         self._preference_binder(prefid, attrs)
 
-        #console
+        # console
         self.console_bind_preferences(prefid)
         self._preference_binder(prefid, ('use_message_colormapping',))
 
-        #dashboard
+        # dashboard
         self._preference_binder('pychron.dashboard.client', ('use_dashboard_client',))
         if self.use_dashboard_client:
             self.dashboard_client = self.application.get_service('pychron.dashboard.client.DashboardClient')
@@ -281,7 +285,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.wait_group.stop()
             # self.wait_group.active_control.stop
             # self.active_wait_control.stop()
-            #             self.wait_dialog.stop()
+            # self.wait_dialog.stop()
 
             msg = '{} Stopped'.format(self.experiment_queue.name)
             self._set_message(msg, color='orange')
@@ -719,8 +723,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         # self.db.close()
         self.set_extract_state(False)
-        #        self.extraction_state = False
-        #        def _set_extraction_state():
+        # self.extraction_state = False
+        # def _set_extraction_state():
         if self.end_at_run_completion:
             c = 'orange'
             msg = 'Stopped'
@@ -735,6 +739,58 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         n = self.experiment_queue.name
         msg = '{} {}'.format(n, msg)
         self._set_message(msg, c)
+
+    def _show_conditionals(self, show_measuring=False, kind='livemodal'):
+        try:
+            if self._cv_info:
+                if self._cv_info.control:
+                    self._cv_info.control.raise_()
+                    return
+
+            from pychron.experiment.conditional.conditionals_view import ConditionalsView
+
+            v = ConditionalsView()
+            v.add_post_run_terminations(self._load_default_conditionals('post_run_terminations'))
+            v.add_post_run_terminations(self._load_queue_conditionals('post_run_terminations'))
+
+            v.add_pre_run_terminations(self._load_default_conditionals('pre_run_terminations'))
+            v.add_pre_run_terminations(self._load_queue_conditionals('pre_run_terminations'))
+
+            v.add_system_conditionals(self._load_default_conditionals(None))
+            v.add_conditionals(self._load_queue_conditionals(None))
+            run = self.selected_run
+            if run and not show_measuring:
+                # in this case run is an instance of AutomatedRunSpec
+                p = get_path(paths.conditionals_dir, self.selected_run.conditionals, ['.yaml', '.yml'])
+                if p:
+                    v.add_conditionals(conditionals_from_file(p, level=RUN))
+
+                if run.aliquot:
+                    runid = run.runid
+                else:
+                    runid = run.identifier
+
+                if run.position:
+                    id2 = 'position={}'.format(run.position)
+                else:
+                    idx = self.active_editor.queue.automated_runs.index(run)+1
+                    id2 = 'RowIdx={}'.format(idx)
+
+                v.title = '{} ({}, {})'.format(v.title, runid, id2)
+            else:
+                if self.measuring_run:
+                    run = self.measuring_run
+                    v.add_conditionals({tag: getattr(run, '{}_conditionals'.format(tag))
+                                        for tag in CONDITIONAL_GROUP_TAGS})
+                    v.title = '{} ({})'.format(v.title, run.spec.runid)
+
+            self._cv_info = self.application.open_view(v, kind=kind)
+
+        except BaseException:
+            import traceback
+
+            self.warning('******** Exception trying to open conditionals. Notify developer ********')
+            self.debug(traceback.format_exc())
 
     # ===============================================================================
     # execution steps
@@ -1316,26 +1372,20 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     def _load_queue_conditionals(self, term_name, **kw):
         self.debug('loading queue conditionals {}'.format(term_name))
         exp = self.experiment_queue
-        name = exp.queue_conditionals_name
-        if test_queue_conditionals_name(name):
-            p = get_path(paths.queue_conditionals_dir, name, ['.yaml', '.yml'])
-            self.debug('queue conditionals path {}'.format(p))
-            return self._extract_conditionals(p, term_name, level=QUEUE, **kw)
+        if not exp and self.active_editor:
+            exp = self.active_editor.queue
 
-    def _extract_conditionals(self, p, term_name, level=RUN, klass='TerminationConditional'):
-        from pychron.experiment.conditional.conditional import conditional_from_dict
+        if exp:
+            name = exp.queue_conditionals_name
+            if test_queue_conditionals_name(name):
+                p = get_path(paths.queue_conditionals_dir, name, ['.yaml', '.yml'])
+                self.debug('queue conditionals path {}'.format(p))
+                return self._extract_conditionals(p, term_name, level=QUEUE, **kw)
 
+    def _extract_conditionals(self, p, term_name, level=RUN):
         if p and os.path.isfile(p):
             self.debug('loading condiitonals from {}'.format(p))
-            with open(p, 'r') as fp:
-                yd = yaml.load(fp)
-                yl = yd.get(term_name)
-                if not yl:
-                    self.debug('no {}'.format(term_name))
-                    return
-                else:
-                    conds = [conditional_from_dict(cd, klass, level) for cd in yl]
-                    return [c for c in conds if c is not None]
+            return conditionals_from_file(p, name=term_name, level=level)
 
     def _action_conditionals(self, run, conditionals, message1, message2):
         if conditionals:
@@ -1362,7 +1412,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
                     self.cancel(confirm=False)
 
-                    self._show_conditionals()
+                    self._show_conditionals(show_measuring=True, kind='livemodal')
                     return True
 
     def _do_action(self, action):
@@ -1620,34 +1670,12 @@ Use Last "blank_{}"= {}
     def _show_conditionals_button_fired(self):
         self._show_conditionals()
 
-    def _show_conditionals(self):
-        try:
-            if self._cv_info:
-                if self._cv_info.control:
-                    self._cv_info.control.raise_()
-                    return
-
-            from pychron.experiment.conditional.conditionals_view import ConditionalsView
-            v = ConditionalsView()
-            v.add_post_run_terminations(self._load_default_conditionals('post_run_terminations'))
-            v.add_post_run_terminations(self._load_queue_conditionals('post_run_terminations'))
-
-            v.add_pre_run_terminations(self._load_default_conditionals('pre_run_terminations'))
-            v.add_pre_run_terminations(self._load_queue_conditionals('pre_run_terminations'))
-
-            v.add_system_conditionals({tag: self._load_default_conditionals('{}s'.format(tag)) for tag in TAGS})
-            v.add_queue_conditionals({tag: self._load_queue_conditionals('{}s'.format(tag)) for tag in TAGS})
-
-            if self.measuring_run:
-                v.add_run_conditionals(self.measuring_run)
-
-            self._cv_info = self.application.open_view(v)
-
-        except BaseException:
-            import traceback
-
-            self.warning('******** Exception trying to open conditionals. Notify developer ********')
-            self.debug(traceback.format_exc())
+    @on_trait_change('experiment_queue:selected, active_editor:queue:selected')
+    def _handle_selection(self, new):
+        if new:
+            self.selected_run = new[0]
+        else:
+            self.selected_run = None
 
     # ===============================================================================
     # property get/set

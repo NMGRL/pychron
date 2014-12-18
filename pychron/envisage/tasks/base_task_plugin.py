@@ -59,7 +59,6 @@ class BaseTaskPlugin(Plugin, Loggable):
         pass
 
     def _set_preference_defaults(self, defaults, prefid):
-        print defaults, prefid
         prefs = self.application.preferences
 
         for k, d in defaults:
