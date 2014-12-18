@@ -20,7 +20,7 @@ from datetime import datetime
 from traits.api import Event, Button, String, Bool, Enum, Property, Instance, Int, List, Any, Color, Dict, \
     on_trait_change, Long, Float
 from pyface.constant import CANCEL, YES, NO
-from pyface.timer.do_later import do_after
+from pyface.timer.do_later import do_after, do_later
 from traits.trait_errors import TraitError
 
 # ============= standard library imports ========================
@@ -740,7 +740,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         msg = '{} {}'.format(n, msg)
         self._set_message(msg, c)
 
-    def _show_conditionals(self, show_measuring=False, kind='livemodal'):
+    def _show_conditionals(self, show_measuring=False, tripped=None, kind='livemodal'):
         try:
             if self._cv_info:
                 if self._cv_info.control:
@@ -775,7 +775,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 if run.position:
                     id2 = 'position={}'.format(run.position)
                 else:
-                    idx = self.active_editor.queue.automated_runs.index(run)+1
+                    idx = self.active_editor.queue.automated_runs.index(run) + 1
                     id2 = 'RowIdx={}'.format(idx)
 
                 v.title = '{} ({}, {})'.format(v.title, runid, id2)
@@ -785,6 +785,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     v.add_conditionals({tag: getattr(run, '{}_conditionals'.format(tag))
                                         for tag in CONDITIONAL_GROUP_TAGS})
                     v.title = '{} ({})'.format(v.title, run.spec.runid)
+
+            if tripped:
+                v.select_conditional(tripped)
 
             self._cv_info = self.application.open_view(v, kind=kind)
 
@@ -1395,7 +1398,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             for ci in conditionals:
                 if ci.check(run, None, True):
                     self.info('{}. {}'.format(message2, ci.to_string()), color='yellow')
+                    self._show_conditionals(show_measuring=True, tripped=ci, kind='live')
                     self._do_action(ci)
+
+                    if self._cv_info:
+                        do_after(2000, self._cv_info.control.close)
+
                     return True
 
     def _test_conditionals(self, run, conditionals, message1, message2,
@@ -1409,12 +1417,13 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 if ci.check(run, data, cnt):
                     self.warning('!!!!!!!!!! Conditional Tripped !!!!!!!!!!')
                     self.warning('{}. {}'.format(message2, ci.to_string()))
-                    self.notification_manager.add_notification('Conditional Tripped. {}. {}'.format(message2,
-                                                                                                    ci.to_string()))
+
+                    # self.notification_manager.add_notification('Conditional Tripped. {}. {}'.format(message2,
+                    # ci.to_string()))
 
                     self.cancel(confirm=False)
 
-                    self._show_conditionals(show_measuring=True, kind='livemodal')
+                    self._show_conditionals(show_measuring=True, tripped=ci)
                     return True
 
     def _do_action(self, action):

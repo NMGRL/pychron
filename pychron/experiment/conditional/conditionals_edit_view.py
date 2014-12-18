@@ -66,7 +66,7 @@ class PRConditionalsAdapter(BaseConditionalsAdapter):
                ('Attribute', 'attr'),
                ('Check', 'teststr'),
                ('Value', 'value'),
-               ('Location','location')]
+               ('Location', 'location')]
 
     attr_width = Int(100)
     teststr_width = Int(200)
@@ -80,7 +80,7 @@ class ConditionalsAdapter(BaseConditionalsAdapter):
                ('Frequency', 'frequency'),
                ('Check', 'teststr'),
                ('Value', 'value'),
-               ('Location','location')]
+               ('Location', 'location')]
 
     attr_width = Int(100)
     teststr_width = Int(200)
@@ -419,15 +419,25 @@ class ConditionalsViewable(HasTraits):
     title = Str
     available_attrs = List
     groups = List
+    selected_group = Instance(ConditionalGroup)
+
+    def select_conditional(self, cond):
+        for gi in self.groups:
+            for ci in gi.conditionals:
+                if ci == cond:
+                    self.selected_group = gi
+                    return
+
     def _view_tabs(self):
         return UItem('groups', style='custom',
                      editor=ListEditor(use_notebook=True,
-                                                 style='custom',
-                                                 page_name='.label'))
+                                       style='custom',
+                                       selected='selected_group',
+                                       page_name='.label'))
 
 
     # def _view_tabs2(self):
-    #     vs = []
+    # vs = []
     #     for name in self.group_names:
     #         gname = '{}_group'.format(name)
     #         uname = ' '.join([ni.capitalize() for ni in name.split('_')])
@@ -449,6 +459,7 @@ class ConditionalsViewable(HasTraits):
 
         self.groups.append(group)
         return group
+
 
 class ConditionalsEditView(ConditionalsViewable):
     path = Str
@@ -575,7 +586,7 @@ def edit_conditionals(name, detectors=None, app=None, root=None, save_as=False,
 
 
 # if __name__ == '__main__':
-#     # c = ConditionalsEditView(detectors=['H2', 'H1', 'AX', 'L1', 'L2', 'CDD'])
+# # c = ConditionalsEditView(detectors=['H2', 'H1', 'AX', 'L1', 'L2', 'CDD'])
 #     # c.open('normal', False)
 #     # c.configure_traits()
 #     # c.dump()

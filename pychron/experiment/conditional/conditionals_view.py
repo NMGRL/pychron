@@ -32,22 +32,19 @@ class ConditionalsView(ConditionalsViewable):
     title = 'Active Conditionals'
 
     def add_post_run_terminations(self, items):
-        self._add_pre_post('post_run_terminations_group', 'PostRunTerminations', items, PostRunGroup)
+        self._add_pre_post('PostRunTerminations', items, PostRunGroup)
 
     def add_pre_run_terminations(self, items):
-        self._add_pre_post('pre_run_terminations_group', 'PreRunTerminations', items, PreRunGroup)
+        self._add_pre_post( 'PreRunTerminations', items, PreRunGroup)
 
-    def _add_pre_post(self, name, label, items, klass):
+    def _add_pre_post(self, label, items, klass):
         if not items:
             items = []
 
-        # grp = getattr(self, name)
         grp = next((gi for gi in self.groups if gi.label == label), None)
 
-        print name, label, grp, [gi.label for gi in self.groups]
         if not grp:
             self._group_factory(items, klass, auto_select=False, label=label)
-            # setattr(self, name, self._group_factory(items, klass, auto_select=False))
         else:
             grp.conditionals.extend(items)
 
@@ -60,8 +57,6 @@ class ConditionalsView(ConditionalsViewable):
             self._group_factory(items, klass, conditional_klass=cklass,
                                 auto_select=False, label=name.capitalize())
 
-            # setattr(self, '{}_group'.format(name), grp)
-
     def add_conditionals(self, ditems):
         for tag in CONDITIONAL_GROUP_TAGS:
             tag = '{}s'.format(tag)
@@ -70,12 +65,6 @@ class ConditionalsView(ConditionalsViewable):
             items = ditems.get(tag)
             if items:
                 grp.conditionals.extend(items)
-
-    # def add_run_conditionals(self, ditems):
-    # for tag in TAGS:
-    #         # grp = getattr(self, '{}s_group'.format(tag))
-    #         # items = getattr(run, '{}_conditionals'.format(tag))
-    #         # grp.conditionals.extend(items)
 
     def traits_view(self):
         v = View(self._view_tabs(),
