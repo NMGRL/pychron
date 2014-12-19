@@ -48,6 +48,7 @@ def conditionals_from_file(p, name=None, level=SYSTEM):
         yd = yaml.load(fp)
         cs = (('TruncationConditional', 'truncation', 'truncations'),
               ('ActionConditional', 'action', 'actions'),
+              ('ActionConditional', 'action', 'post_run_actions'),
               ('TerminationConditional', 'termination', 'terminations'),
               ('TerminationConditional', 'pre_run_termination', 'pre_run_terminations'),
               ('TerminationConditional', 'post_run_termination', 'post_run_terminations'),

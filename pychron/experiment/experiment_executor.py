@@ -1348,13 +1348,15 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             return True
 
         # check user defined post run actions
-        conditionals = self._load_queue_conditionals('post_run_actions', klass='ActionConditional')
+        # conditionals = self._load_queue_conditionals('post_run_actions', klass='ActionConditional')
+        conditionals = self._load_queue_conditionals('post_run_actions')
         if self._action_conditionals(run, conditionals, 'Checking user defined post run actions',
                                      'Post Run Action'):
             return True
 
         # check default post run actions
-        conditionals = self._load_default_conditionals('post_run_actions', klass='ActionConditional')
+        # conditionals = self._load_default_conditionals('post_run_actions', klass='ActionConditional')
+        conditionals = self._load_default_conditionals('post_run_actions')
         if self._action_conditionals(run, conditionals, 'Checking default post run actions',
                                      'Post Run Action'):
             return True
