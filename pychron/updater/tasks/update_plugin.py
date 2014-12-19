@@ -135,7 +135,9 @@ class UpdatePlugin(Plugin):
         # build egg and move into destination
         make_egg(self._repo.working_dir, dest, 'pychron', version)
 
+        logger.debug('------------- egg complete ----------------')
         copy_resources()
+        logger.debug('------------- copy resources complete -----------')
 
     def _extract_version(self):
         import imp

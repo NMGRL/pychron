@@ -19,6 +19,7 @@ CHANGELOG
 * added NotificationManager. a simple class for managing NotificationWidgets, modeless, always on top, 
  rounded message windows pinned to the upper right hand corner of a parent window
 * improved ConditionalsView. Display active conditionals in a modal window if condition trips
+* updated UpdatePlugin
 
 .. * fully implemented import irradiation from XLS file
 .. * added ability to export irradiations from Pychron to MassSpec
