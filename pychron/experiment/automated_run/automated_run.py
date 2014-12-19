@@ -373,7 +373,7 @@ class AutomatedRun(Loggable):
                              not self.spec.analysis_type.startswith('background'))
         for iso, dets in groupby(hops, key=key):
             dets = list(dets)
-            print iso, dets, dets[0][2]
+            # print iso, dets, dets[0][2]
             if dets[0][2]:
                 continue
 
@@ -400,7 +400,7 @@ class AutomatedRun(Loggable):
                 if plot is None:
                     plot = self.plot_panel.new_plot()
                     pid = g.plots.index(plot)
-                    print 'adding', pid
+                    # print 'adding', pid
                     g.new_series(type='scatter', fit='linear', plotid=pid)
 
                 if add_detector:

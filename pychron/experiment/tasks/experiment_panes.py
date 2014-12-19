@@ -326,7 +326,7 @@ Quick=   measure_iteration stopped at current step
                 spacer(-20),
                 icon_button_editor('start_button',
                                    'start',
-                                   # enabled_when='can_start',
+                                   enabled_when='can_start',
                                    tooltip=start_tt),
                 icon_button_editor('stop_button', 'stop',
                                    enabled_when='not can_start',

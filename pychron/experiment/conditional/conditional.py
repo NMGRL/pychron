@@ -62,7 +62,6 @@ def conditionals_from_file(p, name=None, level=SYSTEM):
             if not yl:
                 continue
 
-            print klass, tag, yl
             # print 'yyyy', yl
             # var = getattr(self, '{}_conditionals'.format(var))
             conds = [conditional_from_dict(ti, klass, level=level, location=p) for ti in yl]
