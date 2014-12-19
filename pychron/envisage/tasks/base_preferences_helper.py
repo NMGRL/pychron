@@ -26,7 +26,7 @@ from traitsui.list_str_adapter import ListStrAdapter
 
 
 # def button_editor(trait, name, editor_kw=None, **kw):
-#    if editor_kw is None:
+# if editor_kw is None:
 #        editor_kw = {}
 #
 #    image = ImageResource(name=name,
@@ -71,14 +71,17 @@ def test_connection_item():
                               tooltip='Test connection to Github Repo')
 
 
-def remote_status_item(label):
-    return HGroup(Item('remote', label='Name'),
-                  test_connection_item(),
-                  CustomLabel('_remote_status',
-                              width=50,
-                              color_name='_remote_status_color'),
-                  label=label,
-                  show_border=True)
+def remote_status_item(label=None):
+    grp = HGroup(Item('remote',
+                      label='Name'),
+                 test_connection_item(),
+                 CustomLabel('_remote_status',
+                             width=50,
+                             color_name='_remote_status_color'))
+    if label:
+        grp.label = label
+        grp.show_border = True
+    return grp
 
 
 class GitRepoPreferencesHelper(BasePreferencesHelper):
@@ -93,15 +96,21 @@ class GitRepoPreferencesHelper(BasePreferencesHelper):
 
         if self.remote.strip():
             try:
-                urllib2.urlopen('https://github.com/{}'.format(self.remote))
+                cmd = 'https://github.com/{}'.format(self.remote)
+                urllib2.urlopen(cmd)
                 self._remote_status = 'Valid'
                 self._remote_status_color = 'green'
+                self._connection_hook()
                 return
-            except:
-                pass
+            except BaseException, e:
+                print e, cmd
 
         self._remote_status_color = 'red'
         self._remote_status = 'Invalid'
+
+
+    def _connection_hook(self):
+        pass
 
     def _set_remote(self, v):
         self._remote = v

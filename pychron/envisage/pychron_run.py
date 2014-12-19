@@ -18,6 +18,7 @@ import os
 
 from envisage.core_plugin import CorePlugin
 from envisage.api import Plugin
+from pyface.message_dialog import warning
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.displays.gdisplays import gTraceDisplay
@@ -32,11 +33,11 @@ from pychron.user.tasks.plugin import UsersPlugin
 
 logger = logging.getLogger()
 
-try:
-    from pychron.updater.tasks.update_plugin import UpdatePlugin
-except ImportError:
-    logger.warning('Git is required to use UpdatePlugin')
-    UpdatePlugin = None
+# try:
+#     from pychron.updater.tasks.update_plugin import UpdatePlugin
+# except ImportError:
+#     logger.warning('Git is required to use UpdatePlugin')
+#     UpdatePlugin = None
 
 PACKAGE_DICT = dict(
     CanvasDesignerPlugin='pychron.canvas.tasks.canvas_plugin',
@@ -64,7 +65,8 @@ PACKAGE_DICT = dict(
     SystemMonitorPlugin='pychron.system_monitor.tasks.system_monitor_plugin',
     WorkspacePlugin='pychron.workspace.tasks.workspace_plugin',
     LabBookPlugin='pychron.labbook.tasks.labbook_plugin',
-    LabspyClientPlugin='pychron.labspy.tasks.plugin')
+    LabspyClientPlugin='pychron.labspy.tasks.plugin',
+    UpdatePlugin='pychron.updater.tasks.update_plugin')
 
 
 def get_module_name(klass):
@@ -117,8 +119,8 @@ def get_plugin(pname):
     if pname in PACKAGE_DICT:
         package = PACKAGE_DICT[pname]
         klass = get_klass(package, pname)
-    elif pname == 'Update':
-        klass = UpdatePlugin
+    # elif pname == 'Update':
+    #     klass = UpdatePlugin
 
     else:
         logger.warning('****** {} not a valid plugin name******'.format(pname),
@@ -133,6 +135,8 @@ def get_plugin(pname):
             else:
                 logger.warning('****** {} not available {}******'.format(klass, check),
                                extra={'threadName_': 'Launcher'})
+                warning(None, 'Failed loading plugin.\n    {}'.format(plugin.name))
+
         else:
             logger.warning('***** Invalid {} needs to be a subclass of Plugin ******'.format(klass),
                            extra={'threadName_': 'Launcher'})
@@ -196,8 +200,6 @@ def check_dependencies():
     """
         check the dependencies and
     """
-    from pyface.api import warning
-
     for mod, req in (('uncertainties', '2.1'),
                      ('pint', '0.5')):
         try:
