@@ -379,7 +379,7 @@ class ExperimentEditorTask(EditorTask):
         """
             ask user if ok to close open spectrometer and extraction line windows
         """
-        if not self.application:
+        if not self.window:
             return
 
         # ask user if ok to close windows

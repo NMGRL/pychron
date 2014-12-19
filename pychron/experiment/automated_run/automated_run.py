@@ -1172,9 +1172,10 @@ anaylsis_type={}
 
     def _add_conditionals_from_file(self, p):
         d = conditionals_from_file(p)
-        for k, v in d:
-            var = getattr(self, '{}_conditionals'.format(k))
-            var.extend(v)
+        for k, v in d.items():
+            if k in ('actions','truncations','terminations','cancelations'):
+                var = getattr(self, '{}_conditionals'.format(k))
+                var.extend(v)
 
             # with open(p, 'r') as fp:
             # yd = yaml.load(fp)

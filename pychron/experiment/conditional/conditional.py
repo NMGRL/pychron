@@ -54,7 +54,7 @@ def conditionals_from_file(p, name=None, level=SYSTEM):
               ('CancelationConditional', 'cancelation', 'cancelations'))
 
         conddict = {}
-        for klass, var, tag in cs:
+        for klass, _, tag in cs:
             if name and tag != name:
                 continue
 
@@ -62,6 +62,7 @@ def conditionals_from_file(p, name=None, level=SYSTEM):
             if not yl:
                 continue
 
+            print klass, tag, yl
             # print 'yyyy', yl
             # var = getattr(self, '{}_conditionals'.format(var))
             conds = [conditional_from_dict(ti, klass, level=level, location=p) for ti in yl]
