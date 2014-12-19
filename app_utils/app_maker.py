@@ -46,6 +46,9 @@ def make():
         default='.',
         help='set the root directory')
 
+    parser.add_argument('-e', '--egg', action='store_true',
+                        help='Do not make a python egg')
+
     args = parser.parse_args()
     apps = args.applications
     for name in apps:
@@ -55,6 +58,8 @@ def make():
             template.root = args.root[0]
             template.version = args.version[0]
             template.name = name
+            template.use_egg = not args.egg
+
             if name in ('bakedpy',):
                 template.root = args.root[0]
                 #                template.version = args.version[0]
@@ -107,6 +112,8 @@ class Template(object):
     version = None
     packages = None
     modules = None
+    use_egg = True
+
     def build(self):
         root = os.path.realpath(self.root)
 
@@ -127,7 +134,10 @@ class Template(object):
         # build
         # =======================================================================
         ins.build_app(op)
-        ins.make_egg(self.packages, self.modules)
+        if self.use_egg:
+            ins.make_egg(self.packages, self.modules)
+        else:
+            ins.copy_source()
         # ins.make_migrate_repos()
         ins.make_argv()
 
@@ -148,19 +158,33 @@ class Template(object):
             shutil.copyfile(icon_file,
                             os.path.join(dest, 'Resources', icon_name))
 
-        for ni, nd in (('splash', 'splashes'), ('about', 'abouts')):
-            sname = '{}_{}.png'.format(ni, self.name)
-            ins.copy_resource(os.path.join(root, 'resources', nd, sname), name='{}.png'.format(ni))
 
         #        for pn in ('start', 'stop'):
         #            ins.copy_resource(os.path.join(root,
         #                                           'resources', 'icons',
         #                                           '{}.png'.format(pn)))
         #copy entire icons dir
+        # iroot = os.path.join(root, 'resources', 'icons')
+        # for di in os.listdir(iroot):
+        #     #            print di
+        #     ins.copy_resource(os.path.join(iroot, di))
+
+        # copy entire icons dir
         iroot = os.path.join(root, 'resources', 'icons')
+
+        # make resource dirs
+        for d in ('icons',):
+            idest = os.path.join(dest, 'Resources', d)
+            if not os.path.isdir(idest):
+                os.mkdir(idest)
+
         for di in os.listdir(iroot):
-            #            print di
-            ins.copy_resource(os.path.join(iroot, di))
+            ins.copy_resource(os.path.join(iroot, di), name='icons/{}'.format(di))
+
+        # copy splashes and abouts
+        for ni, nd in (('splash', 'splashes'), ('about', 'abouts')):
+            sname = '{}_{}.png'.format(ni, self.name)
+            ins.copy_resource(os.path.join(root, 'resources', nd, sname), name='{}.png'.format(ni))
 
         # copy helper mod
         for a in ('helpers', ):
@@ -218,6 +242,9 @@ class Maker(object):
         p = os.path.join(root, 'pychron', 'database', 'migrate')
         shutil.copytree(p, self._resource_path('migrate_repositories'))
 
+    def copy_source(self):
+        shutil.copytree(os.path.join(self.root, 'pychron'), self._resource_path('pychron'))
+
     def make_egg(self, pkgs=None, modules=None):
 
         from setuptools import setup, find_packages
@@ -252,10 +279,11 @@ class Maker(object):
         shutil.copyfile(egg_root,
                         self._resource_path(eggname))
 
-        # remove build dir
-        p = os.path.join(self.root, 'build')
-        print 'removing entire build dir ', p
-        shutil.rmtree(p)
+        # remove build dir/dist
+        for di in ('build', 'dist'):
+            p = os.path.join(self.root, di)
+            print 'removing entire {} dir {}'.format(di, p)
+            shutil.rmtree(p)
 
     def make_argv(self):
         argv = '''

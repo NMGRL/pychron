@@ -21,6 +21,7 @@ add a path verification function
 make sure directory exists and build if not
 """
 from os import path, mkdir
+import os
 
 
 DEFAULT_INITIALIZATION = '''<root>
@@ -94,6 +95,8 @@ class Paths(object):
     icon_search_path = None
     image_search_path = None
     sound_search_path = None
+    splash_search_path = None
+    about_search_path = None
     resources = None
 
     # ==============================================================================
@@ -192,6 +195,8 @@ class Paths(object):
     def set_search_paths(self, app_rec=None):
         self.app_resources = app_rec
         self.set_icon_search_path()
+        self.set_splash_search_path()
+        self.set_about_search_path()
         self.set_image_search_path()
         self.set_sound_search_path()
         self.set_labspy_template_search_path()
@@ -201,8 +206,17 @@ class Paths(object):
                                   self.app_resources]
 
     def set_icon_search_path(self):
-        self.icon_search_path = [self.icons,
-                                 self.app_resources]
+        ps = [self.icons, self.app_resources]
+        if self.app_resources:
+            ps.append(os.path.join(self.app_resources, 'icons'))
+
+        self.icon_search_path = ps
+
+    def set_splash_search_path(self):
+        self.splash_search_path = [self.splashes, self.app_resources]
+
+    def set_about_search_path(self):
+        self.about_search_path = [self.abouts, self.app_resources]
 
     def set_sound_search_path(self):
         self.sound_search_path = [self.sounds,
@@ -356,7 +370,7 @@ def r_mkdir(p):
 def build_directories():
     # global paths
     # verify paths
-    #    import copy
+    # import copy
     for l in dir(paths):
         if l.endswith('_dir'):
             r_mkdir(getattr(paths, l))
@@ -379,7 +393,7 @@ def build_directories():
             # ==============================================================================
             # #database
             # ==============================================================================
-            #        db_path = '/usr/local/pychron
+            # db_path = '/usr/local/pychron
             # db_path = stable_root
             # self.device_scan_root = device_scan_root = join(db_path, 'device_scans')
             # self.device_scan_db = join(device_scan_root, 'device_scans.sqlite')
