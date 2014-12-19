@@ -73,47 +73,48 @@ class UpdatePlugin(BaseTaskPlugin):
     preferences = List(contributes_to='envisage.preferences')
     preferences_panes = List(contributes_to='envisage.ui.tasks.preferences_panes')
 
-    _build_required = False
+    # plugin interface
 
-    def _my_task_extensions_default(self):
-        ex = [TaskExtension(actions=[SchemaAddition(id='check_for_updates',
-                                                    factory=CheckForUpdatesAction,
-                                                    path='MenuBar/help.menu')])]
-        return ex
-    def check(self):
-        try:
-            from git import Repo
-
-            return True
-        except ImportError:
-            return False
-
-    def stop(self):
-        self.debug('stopping update plugin')
-        if self._build_required:
-            self.debug('building new version')
-            dest = self._build_update()
-            if dest:
-                # get executable
-                mos = os.path.join(dest, 'MacOS')
-                for p in os.listdir(mos):
-                    if p != 'python':
-                        pp = os.path.join(mos, p)
-                        if stat.S_IXUSR & os.stat(pp)[stat.ST_MODE]:
-                            os.execl(pp)
+    # def stop(self):
+    #     self.debug('stopping update plugin')
+    #     if self._build_required:
+    #         self.debug('building new version')
+    #         dest = self._build_update()
+    #         if dest:
+    #             # get executable
+    #             mos = os.path.join(dest, 'MacOS')
+    #             for p in os.listdir(mos):
+    #                 if p != 'python':
+    #                     pp = os.path.join(mos, p)
+    #                     if stat.S_IXUSR & os.stat(pp)[stat.ST_MODE]:
+    #                         os.execl(pp)
 
     def start(self):
-        self.debug('starting update plugin')
+        super(UpdatePlugin, self).start()
 
         updater = self.application.get_service('pychron.updater.updater.Updater')
         if updater.check_on_startup:
             updater.check_for_updates()
 
+    # BaseTaskPlugin interface
+    def check(self):
+        try:
+            from git import Repo
+            return True
+        except ImportError:
+            return False
+
+    def set_preference_defaults(self):
+        defaults = (('remote', 'NMGRL/pychron'),('branch','master'))
+        self._set_preference_defaults(defaults, 'pychron.update')
+
+    # private
     def _updater_factory(self):
         u = Updater(application=self.application)
         u.bind_preferences()
         return u
 
+    # defaults
     def _service_offers_default(self):
         so = self.service_offer_factory(protocol='pychron.updater.updater.Updater',
                                         factory=self._updater_factory)
@@ -121,6 +122,12 @@ class UpdatePlugin(BaseTaskPlugin):
 
     def _preferences_panes_default(self):
         return [UpdatePreferencesPane]
+
+    def _my_task_extensions_default(self):
+        ex = [TaskExtension(actions=[SchemaAddition(id='check_for_updates',
+                                                    factory=CheckForUpdatesAction,
+                                                    path='MenuBar/help.menu')])]
+        return ex
 
 # ============= EOF =============================================
 # pref = self.application.preferences

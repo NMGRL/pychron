@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -56,22 +56,39 @@ class BaseTaskPlugin(Plugin, Loggable):
             self.application.startup_tester.test_plugin(self)
 
     def set_preference_defaults(self):
+        """
+            children should use _set_preference_defaults(defaults, prefid)
+            to set preferences
+        :return:
+        """
         pass
 
     def _set_preference_defaults(self, defaults, prefid):
-        prefs = self.application.preferences
+        """
 
+        :param defaults: list(tuple) [(str, object),]
+        :param prefid: str preference_path e.g pychron.update
+        :return:
+        """
+        change = False
+        prefs = self.application.preferences
+        self.debug('setting default preferences for {} {}'.format(self.name, self.id))
         for k, d in defaults:
             if k not in prefs.keys(prefid):
                 self.debug('Setting default preference {}={}'.format(k, d))
                 prefs.set('{}.{}'.format(prefid, k), d)
-        prefs.flush()
+                change = True
+
+        if change:
+            prefs.flush()
+        else:
+            self.debug('defaults already set')
 
     def start(self):
         self.startup_test()
         try:
             self.set_preference_defaults()
-        except AttributeError,e:
+        except AttributeError, e:
             print e
 
     # private
@@ -84,7 +101,6 @@ class BaseTaskPlugin(Plugin, Loggable):
 
     def _preferences_default(self):
         return []
-
 
 
 # ============= EOF =============================================
