@@ -28,7 +28,7 @@ from pychron.workspace.workspace_manager import WorkspaceManager
 
 class WorkspacePlugin(BaseTaskPlugin):
 
-    def _my_task_extensions_default(self):
+    def _task_extensions_default(self):
 
         def make_actions(args):
             if len(args) == 3:

@@ -48,7 +48,7 @@ class ExperimentPlugin(BaseTaskPlugin):
                 ('pychron.deselect', 'Ctrl+Shift+D', 'Deselect'),
                 ('pychron.open_last_experiment', 'Alt+Ctrl+O', 'Open Last Experiment')]
 
-    def _my_task_extensions_default(self):
+    def _task_extensions_default(self):
         factory = lambda: Group(DeselectAction(),
                                 ResetQueuesAction(),
                                 UndoAction())

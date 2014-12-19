@@ -28,7 +28,7 @@ class CanvasDesignerPlugin(BaseTaskPlugin):
     id = 'pychron.canvas_designer.plugin'
 
 
-    def _my_task_extensions_default(self):
+    def _task_extensions_default(self):
         return [TaskExtension(actions=[])]
 
     def _tasks_default(self):

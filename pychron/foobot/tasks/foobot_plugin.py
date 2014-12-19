@@ -29,7 +29,7 @@ from pychron.foobot.tasks.foobot_task import FoobotTask
 
 
 class FoobotPlugin(BaseTaskPlugin):
-    def _my_task_extensions_default(self):
+    def _task_extensions_default(self):
         return [TaskExtension(
                 actions=[
                     SchemaAddition(id='foobot',

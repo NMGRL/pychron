@@ -97,7 +97,7 @@ class DatabasePlugin(BaseTaskPlugin):
             del self._db
 
             # ============= EOF =============================================
-            #def _my_task_extensions_default(self):
+            #def _task_extensions_default(self):
             #    return [TaskExtension(actions=[SchemaAddition(id='update_database',
             #                                                  factory=UpdateDatabaseAction,
             #                                                  path='MenuBar/Tools')])]

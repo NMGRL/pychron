@@ -74,20 +74,9 @@ class UpdatePlugin(BaseTaskPlugin):
     preferences_panes = List(contributes_to='envisage.ui.tasks.preferences_panes')
 
     # plugin interface
-
-    # def stop(self):
-    #     self.debug('stopping update plugin')
-    #     if self._build_required:
-    #         self.debug('building new version')
-    #         dest = self._build_update()
-    #         if dest:
-    #             # get executable
-    #             mos = os.path.join(dest, 'MacOS')
-    #             for p in os.listdir(mos):
-    #                 if p != 'python':
-    #                     pp = os.path.join(mos, p)
-    #                     if stat.S_IXUSR & os.stat(pp)[stat.ST_MODE]:
-    #                         os.execl(pp)
+    def test_repository(self):
+        updater = self.application.get_service('pychron.updater.updater.Updater')
+        return bool(updater.test_origin())
 
     def start(self):
         super(UpdatePlugin, self).start()
@@ -123,13 +112,26 @@ class UpdatePlugin(BaseTaskPlugin):
     def _preferences_panes_default(self):
         return [UpdatePreferencesPane]
 
-    def _my_task_extensions_default(self):
+    def _task_extensions_default(self):
         ex = [TaskExtension(actions=[SchemaAddition(id='check_for_updates',
                                                     factory=CheckForUpdatesAction,
                                                     path='MenuBar/help.menu')])]
         return ex
 
 # ============= EOF =============================================
+# def stop(self):
+    #     self.debug('stopping update plugin')
+    #     if self._build_required:
+    #         self.debug('building new version')
+    #         dest = self._build_update()
+    #         if dest:
+    #             # get executable
+    #             mos = os.path.join(dest, 'MacOS')
+    #             for p in os.listdir(mos):
+    #                 if p != 'python':
+    #                     pp = os.path.join(mos, p)
+    #                     if stat.S_IXUSR & os.stat(pp)[stat.ST_MODE]:
+    #                         os.execl(pp)
 # pref = self.application.preferences
 # if to_bool(pref.get('pychron.update.check_on_startup')):
 # url = pref.get('pychron.update.remote')

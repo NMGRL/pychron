@@ -72,7 +72,7 @@ class HardwarePlugin(BaseTaskPlugin):
     def _sources_default(self):
         return [('pvs://localhost:1081', 'Hardware')]
 
-    def _my_task_extensions_default(self):
+    def _task_extensions_default(self):
         return [TaskExtension(actions=[SchemaAddition(id='Flag Manager',
                                                       factory=OpenFlagManagerAction,
                                                       path='MenuBar/tools.menu'), ])]

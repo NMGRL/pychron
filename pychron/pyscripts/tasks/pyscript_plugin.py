@@ -36,7 +36,7 @@ class PyScriptPlugin(BaseTaskPlugin):
         return [('pychron.open_pyscript', 'Ctrl+Shift+O', 'Open PyScript'),
                 ('pychron.new_pyscript', 'Ctrl+Shift+N', 'New PyScript'),]
 
-    def _my_task_extensions_default(self):
+    def _task_extensions_default(self):
         def _replace_action():
             return TaskAction(name='Replace',
                               method='replace')

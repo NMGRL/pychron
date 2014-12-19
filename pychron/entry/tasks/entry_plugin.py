@@ -47,7 +47,7 @@ class EntryPlugin(BaseTaskPlugin):
                                          protocol=FluxMonitorEditor)
         return [so1,so2]
 
-    def _my_task_extensions_default(self):
+    def _task_extensions_default(self):
         return [
             TaskExtension(task_id='pychron.entry.labnumber',
                           actions=[

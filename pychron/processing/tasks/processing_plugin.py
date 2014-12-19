@@ -106,7 +106,7 @@ class ProcessingPlugin(BaseTaskPlugin):
         return TaskExtension(actions=[make_schema(args)
                                       for args in actions], **kw)
 
-    def _my_task_extensions_default(self):
+    def _task_extensions_default(self):
         def figure_group():
             return Group(
                 SpectrumAction(),

@@ -43,7 +43,7 @@ from pychron.loading.loading_manager import LoadingManager
 class LoadingPlugin(BaseTaskPlugin):
     id = 'pychron.loading'
 
-    def _my_task_extensions_default(self):
+    def _task_extensions_default(self):
         return [TaskExtension(task_id='pychron.loading',
                               actions=[SchemaAddition(id='save_loading_figure',
                                                       factory=SaveLoadingAction,

@@ -60,7 +60,7 @@ class mPreferencesAction(PreferencesAction):
 
 
 class myTasksPlugin(TasksPlugin):
-    def _my_task_extensions_default(self):
+    def _task_extensions_default(self):
 
         from pyface.tasks.action.api import SchemaAddition
         from envisage.ui.tasks.action.exit_action import ExitAction

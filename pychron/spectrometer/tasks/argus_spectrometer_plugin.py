@@ -46,7 +46,7 @@ class ArgusSpectrometerPlugin(BaseSpectrometerPlugin):
     def _preferences_panes_default(self):
         return [SpectrometerPreferencesPane]
 
-    def _my_task_extensions_default(self):
+    def _task_extensions_default(self):
         return [
             TaskExtension(
                 actions=[

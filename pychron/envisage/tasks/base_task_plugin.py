@@ -34,7 +34,8 @@ class BaseTaskPlugin(Plugin, Loggable):
     tasks = List(contributes_to=TASKS)
     service_offers = List(contributes_to=SERVICE_OFFERS)
 
-    my_task_extensions = List(contributes_to=TASK_EXTENSIONS)
+    task_extensions = List(contributes_to=TASK_EXTENSIONS)
+    # my_task_extensions = List(contributes_to=TASK_EXTENSIONS)
     # base_task_extensions = List(contributes_to=TASK_EXTENSIONS)
 
     preferences = List(contributes_to='envisage.preferences')
@@ -57,7 +58,7 @@ class BaseTaskPlugin(Plugin, Loggable):
 
     def set_preference_defaults(self):
         """
-            children should use _set_preference_defaults(defaults, prefid)
+            children should override and use self._set_preference_defaults(defaults, prefid)
             to set preferences
         :return:
         """
@@ -91,16 +92,12 @@ class BaseTaskPlugin(Plugin, Loggable):
         except AttributeError, e:
             print e
 
-    # private
-    def _get_task_extensions(self):
-        return []
-
-    # defaults
-    def _preferences_panes_default(self):
-        return []
-
-    def _preferences_default(self):
-        return []
+    # # defaults
+    # def _preferences_panes_default(self):
+    #     return []
+    #
+    # def _preferences_default(self):
+    #     return []
 
 
 # ============= EOF =============================================

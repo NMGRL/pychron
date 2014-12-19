@@ -33,7 +33,7 @@ class SystemMonitorPlugin(ProcessingPlugin):
     def _task_factory(self):
         return SystemMonitorTask(manager=self._processor_factory())
 
-    def _my_task_extensions_default(self):
+    def _task_extensions_default(self):
         return []
 
     def _tasks_default(self):

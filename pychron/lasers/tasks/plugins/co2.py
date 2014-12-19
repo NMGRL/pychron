@@ -45,8 +45,8 @@ class FusionsCO2Plugin(FusionsPlugin):
     def _preferences_panes_default(self):
         return [FusionsCO2PreferencesPane]
 
-    def _my_task_extensions_default(self):
-        exts = super(FusionsCO2Plugin, self)._my_task_extensions_default()
+    def _task_extensions_default(self):
+        exts = super(FusionsCO2Plugin, self)._task_extensions_default()
 
         ext1 = TaskExtension(task_id='pychron.fusions.co2',
                              actions=[SchemaAddition(id='calibration',

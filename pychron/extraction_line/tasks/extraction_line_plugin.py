@@ -162,7 +162,7 @@ class ExtractionLinePlugin(BaseTaskPlugin):
         return runner
 
     # defaults
-    def _my_task_extensions_default(self):
+    def _task_extensions_default(self):
         ex = [TaskExtension(actions=[SchemaAddition(id='refresh_canvas',
                                                     factory=RefreshCanvasAction,
                                                     path='MenuBar/tools.menu')])]

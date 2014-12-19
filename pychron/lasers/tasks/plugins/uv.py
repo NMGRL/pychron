@@ -29,8 +29,8 @@ class FusionsUVPlugin(FusionsPlugin):
     task_name = 'Fusions UV'
     accelerator = 'Ctrl+Shift+\\'
 
-    def _my_task_extensions_default(self):
-        exts = super(FusionsUVPlugin, self)._my_task_extensions_default()
+    def _task_extensions_default(self):
+        exts = super(FusionsUVPlugin, self)._task_extensions_default()
 
         ext1 = TaskExtension(task_id='pychron.fusions.uv')
 

@@ -38,6 +38,10 @@ class Updater(Loggable):
         for a in ('check_on_startup', 'branch', 'remote'):
             bind_preference(self, a, 'pychron.update.{}'.format(a))
 
+    def test_origin(self):
+        if self.remote:
+            return self._validate_origin(self.remote)
+
     def check_for_updates(self, inform=False):
         branch = self.branch
         remote = self.remote

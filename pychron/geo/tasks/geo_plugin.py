@@ -31,7 +31,7 @@ class GeoPlugin(BaseTaskPlugin):
     def _tasks_default(self):
         return [TaskFactory(id='pychron.geo', factory=self._geo_task_factory, name='Geo'), ]
 
-    def _my_task_extensions_default(self):
+    def _task_extensions_default(self):
         return [TaskExtension(actions=[SchemaAddition(id='export_strat_canvas',
                                                       factory=ExportStratCanvasAction,
                                                       absolute_position='last',

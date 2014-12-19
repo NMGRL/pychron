@@ -36,9 +36,9 @@ class FusionsDiodePlugin(FusionsPlugin):
     task_name = 'Fusions Diode'
     accelerator = 'Ctrl+Shift+['
 
-    def _my_task_extensions_default(self):
+    def _task_extensions_default(self):
 
-        exts = super(FusionsDiodePlugin, self)._my_task_extensions_default()
+        exts = super(FusionsDiodePlugin, self)._task_extensions_default()
 
         ext1 = TaskExtension(
             task_id='pychron.fusions.diode',

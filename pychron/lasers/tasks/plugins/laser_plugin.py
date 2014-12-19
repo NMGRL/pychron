@@ -32,7 +32,7 @@ from pychron.lasers.tasks.laser_calibration_task import LaserCalibrationTask
 
 
 class CoreLaserPlugin(BaseTaskPlugin):
-    def _my_task_extensions_default(self):
+    def _task_extensions_default(self):
         actions = [
             SchemaAddition(factory=OpenPowerMapAction,
                            path='MenuBar/file.menu/Open')]
@@ -169,7 +169,7 @@ class FusionsPlugin(BaseLaserPlugin):
             rs = [(source, self.task_name)]
         return rs
 
-    def _my_task_extensions_default(self):
+    def _task_extensions_default(self):
         def efactory():
             return SMenu(id='Laser', name='Laser')
 
