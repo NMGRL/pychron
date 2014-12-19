@@ -280,7 +280,7 @@ class Maker(object):
                         self._resource_path(eggname))
 
         # remove build dir/dist
-        for di in ('build', 'dist'):
+        for di in ('build', 'dist', 'pychron.egg-info'):
             p = os.path.join(self.root, di)
             print 'removing entire {} dir {}'.format(di, p)
             shutil.rmtree(p)

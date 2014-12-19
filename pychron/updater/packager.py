@@ -85,7 +85,7 @@ def make_egg(root, dest, pkg_name, version):
         copy_resource(dest, egg_root)
 
     # remove build dir
-    for di in ('build', 'dist'):
+    for di in ('build', 'dist','pychron.egg-info'):
         p = os.path.join(root, di)
         print 'removing entire {} dir {}'.format(di, p)
         shutil.rmtree(p)

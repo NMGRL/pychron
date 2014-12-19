@@ -23,6 +23,7 @@ from traits.api import HasTraits, Button, Bool, Str
 from traitsui.api import View, Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.datetime_tools import get_datetime
 from pychron.core.ui.progress_dialog import myProgressDialog
 from pychron.loggable import Loggable
 from pychron.paths import paths
@@ -48,13 +49,13 @@ class Updater(Loggable):
         if remote and branch:
             if self._validate_origin(remote):
                 lc, rc = self._check_for_updates(remote, branch)
-                if lc != rc:
-                    if self._out_of_date():
-                        origin = self._repo.remotes.origin
-                        self.debug('pulling changes from {} to {}'.format(origin.url, branch))
-                        origin.pull(branch)
-                        self._build(branch, rc)
-                        os.execl(sys.executable, *([sys.executable] + sys.argv))
+                # if lc != rc:
+                if self._out_of_date(lc, rc):
+                    origin = self._repo.remotes.origin
+                    self.debug('pulling changes from {} to {}'.format(origin.url, branch))
+                    origin.pull(branch)
+                    self._build(branch, rc)
+                    os.execl(sys.executable, *([sys.executable] + sys.argv))
                 else:
                     if inform:
                         self.information_dialog('Application is up-to-date')
@@ -123,27 +124,39 @@ class Updater(Loggable):
 
         repo = self._get_working_repo(url)
 
-        self.debug('checking for updates')
+        self.debug('checking for updates on {}'.format(branchname))
+        origin = repo.remotes.origin
+        oref = origin.refs[branchname]
+        origin.fetch()
 
-        branch = getattr(repo.heads, branchname)
+        remote_commit = oref.commit
+
+        try:
+            branch = getattr(repo.heads, branchname)
+        except AttributeError:
+            branch = repo.create_head(branchname, commit=oref.commit)
+
         branch.checkout()
 
         local_commit = branch.commit
 
-        origin = repo.remotes.origin
-        origin.fetch()
-
-        oref = origin.refs[branchname]
-        remote_commit = oref.commit
         self.debug('local  commit ={}'.format(local_commit))
         self.debug('remote commit ={}'.format(remote_commit))
         self.application.set_revisions(local_commit, remote_commit)
         return local_commit, remote_commit
 
-    def _out_of_date(self):
-        self.info('updates are available')
-        if self.confirmation_dialog('Updates are available. Install and Restart?'):
-            return True
+    def _out_of_date(self, lc, rc):
+        if lc != rc:
+            self.info('updates are available')
+            lha = lc.hexsha[:7]
+            rha = rc.hexsha[:7]
+            ld = get_datetime(float(lc.committed_date)).strftime('%m-%d-%Y')
+            rd = get_datetime(float(rc.committed_date)).strftime('%m-%d-%Y')
+
+            if self.confirmation_dialog('Updates are available. Install and Restart?\n'
+                                        'Your Version   : {} ({})\n'
+                                        'Current Version: {} ({})'.format(ld, lha, rd, rha)):
+                return True
 
     def _get_working_repo(self, url):
         from git import Repo
