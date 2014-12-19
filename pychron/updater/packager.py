@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from distutils.core import run_setup
 import os
 import shutil
 # ============= standard library imports ========================
@@ -60,23 +61,28 @@ def make_egg(root, dest, pkg_name, version):
 
     pkgs = find_packages(root,
                          exclude=('app_utils', 'docs', 'launchers',
-                                  'migration', 'test', 'qtegra',
+                                  'migration', 'test', 'test.*', 'qtegra',
                                   'sandbox', 'zobs'))
-
-    setup(name=pkg_name,
-          script_args=('bdist_egg',),
-          version=version,
-          packages=pkgs)
+    os.chdir(root)
+    try:
+        setup(name=pkg_name,
+              script_args=('bdist_egg',),
+              version=version,
+              packages=pkgs)
+    except BaseException, e:
+        import traceback
+        traceback.print_exc()
 
     eggname = '{}-{}-py2.7.egg'.format(pkg_name, version)
     # make the .pth file
-    with open(os.path.join(dest,
-                           'Resources',
-                           '{}.pth'.format(pkg_name)), 'w') as fp:
-        fp.write('{}\n'.format(eggname))
+    if dest.endswith('Contents'):
+        with open(os.path.join(dest,
+                               'Resources',
+                               '{}.pth'.format(pkg_name)), 'w') as fp:
+            fp.write('{}\n'.format(eggname))
 
-    egg_root = os.path.join(root, 'dist', eggname)
-    copy_resource(dest, egg_root)
+        egg_root = os.path.join(root, 'dist', eggname)
+        copy_resource(dest, egg_root)
 
     # remove build dir
     for di in ('build', 'dist'):

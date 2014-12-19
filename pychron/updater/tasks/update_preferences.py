@@ -30,10 +30,7 @@ from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 class UpdatePreferencesHelper(GitRepoPreferencesHelper):
     preferences_path = 'pychron.update'
     check_on_startup = Bool(False)
-    development_url = Str
-
     use_development = Bool(False)
-    branch = Str
     _branches = List
 
     def __init__(self, *args, **kw):
