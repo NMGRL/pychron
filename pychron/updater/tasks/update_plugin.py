@@ -108,7 +108,7 @@ class UpdatePlugin(Plugin):
 
                 # if url:
                 # else:
-                #     self._load_local_revision()
+                # self._load_local_revision()
                 # else:
                 #     self._load_local_revision()
 
@@ -122,7 +122,7 @@ class UpdatePlugin(Plugin):
         self.application.set_revisions(commit,
                                        'No info. available')
 
-    def _check_for_updates(self, name, branch):
+    def _check_for_updates(self, name, branchname):
         url = 'https://github.com/{}.git'.format(name)
         remote = 'origin'
         repo = self._setup_repo(url, remote=remote)
@@ -133,20 +133,37 @@ class UpdatePlugin(Plugin):
         print repo.remotes
         print repo.remotes.origin.url
 
-        origin =repo.remotes.origin
-        print origin.fetch()
+        branch = getattr(repo.heads, branchname)
+        branch.checkout()
 
-        # origin = repo.remote(remote)
-        # if not repo.heads:
+        local_commit = branch.commit
+        origin = repo.remotes.origin
+        oref = origin.refs[branchname]
+        remote_commit = oref.commit
+        logger.debug('local  commit ={}'.format(local_commit))
+        logger.debug('remote commit ={}'.format(remote_commit))
+        if local_commit != remote_commit:
+            # self._load_available_changes(repo)
+            if self._out_of_date():
+                logger.debug('pulling changes from {} to {}'.format(origin.url, branchname))
+                origin.pull(branchname)
+
+            # if finfo:
+            # finfo=finfo[0]
+            #     logger.debug('local  commit ={}'.format(branch.commit))
+            #     logger.debug('remote commit ={}'.format(finfo.commit))
+
+            # origin = repo.remote(remote)
+            # if not repo.heads:
             # repo = repo.clone(url)
             # if self._out_of_date():
             #     print repo
-                # repo.che
-                # origin.pull(branch)
-        # else:
-        #     print repo.heads
-        #     branch = getattr(repo.heads, branch)
-        #     branch.checkout()
+            # repo.che
+            # origin.pull(branch)
+            # else:
+            #     print repo.heads
+            #     branch = getattr(repo.heads, branch)
+            #     branch.checkout()
             # info = origin.fetch()
             # if info:
             #     info = info[0]
@@ -168,7 +185,7 @@ class UpdatePlugin(Plugin):
             #                 logger.debug('Restarting')
 
     # def _check_for_updates(self, url):
-    #     branch = 'master'
+    # branch = 'master'
     #     remote = 'origin'
     #     repo = self._setup_repo(url, remote=remote)
     #     logger.debug('pulling changes')
@@ -210,6 +227,7 @@ class UpdatePlugin(Plugin):
         self.application.set_changes(list(gen_commits(log)))
         # for line in log.split('\n'):
         #     if
+
     #
     # def _build_update(self):
     #     """
@@ -257,6 +275,7 @@ class UpdatePlugin(Plugin):
 
     def _get_local_repo(self, url):
         from git import Repo
+
         p = self._get_working_directory()
 
         if not os.path.isdir(p):
@@ -265,6 +284,7 @@ class UpdatePlugin(Plugin):
         else:
             repo = Repo(p)
         return repo
+
     #
     # def _get_destination(self):
     #     """
