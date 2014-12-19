@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, List, Str, Date, Int, Button, Property, Instance,\
+from traits.api import HasTraits, List, Str, Date, Int, Button, Property, Instance, \
     Event
 from traitsui.api import View, Item, Controller, TextEditor, \
     TabularEditor, UItem, spring, HGroup, VSplit, VGroup, InstanceEditor
@@ -46,26 +46,41 @@ class Commit(HasTraits):
                           editor=TextEditor(read_only=True)))
 
 
-class GitArchiveHistory(HasTraits):
+class BaseGitHistory(HasTraits):
     items = List
-    selected = List
-    selected_commit = Property(depends_on='selected')
+    selected = Instance(Commit)
+
+    def set_items(self, items):
+        def commit_factory(com):
+            return Commit(hexsha=com.hexsha,
+                          message=com.message, date=datetime.utcfromtimestamp(float(com.committed_date)))
+
+        self.items = [commit_factory(c) for c in items]
+        self.selected = self.items[0]
+
+
+class GitArchiveHistory(BaseGitHistory):
     checkout_button = Button('Checkout')
     diff_button = Button
     limit = Int(100, enter_set=True, auto_set=False)
-
-    repo_man = Instance('pychron.git_archive.repo_manager.GitRepoManager')
-    _path = Str
 
     diffable = Property(depends_on='selected')
     checkoutable = Property(depends_on='selected')
     checkout_event = Event
     diff_klass = DiffView
     auto_commit_checkouts = True
+
+    selected = List
+    selected_commit = Property(depends_on='selected')
+
+    repo_man = Instance('pychron.git_archive.repo_manager.GitRepoManager')
+    _path = Str
+
     def __init__(self, path=None, root=None, *args, **kw):
-        super(GitArchiveHistory, self).__init__(*args, **kw)
+        super(BaseGitHistory, self).__init__(*args, **kw)
         if root:
             from pychron.git_archive.repo_manager import GitRepoManager
+
             self.repo_man = GitRepoManager()
             self.repo_man.open_repo(root)
 
@@ -87,14 +102,18 @@ class GitArchiveHistory(HasTraits):
                                  date=datetime.utcfromtimestamp(c),
                                  name=p) for a, b, c in hx]
 
-    def _limit_changed(self):
-        self.load_history()
-
     def _selected_changed(self, new):
         if new:
             new = new[-1]
             if not new.blob:
                 new.blob = self.repo_man.unpack_blob(new.hexsha, new.name)
+
+    def _get_selected_commit(self):
+        if self.selected:
+            return self.selected[-1]
+
+    def _limit_changed(self):
+        self.load_history()
 
     def _checkout_button_fired(self):
         with open(self._path, 'w') as fp:
@@ -133,12 +152,8 @@ class GitArchiveHistory(HasTraits):
                              right=b.blob, right_date=b.date.strftime('%m-%d-%Y %H:%M:%S'), right_message=rm,
                              diff=ds)
 
-        # dd.edit_traits()
-        dd.configure_traits()
-
-    def _get_selected_commit(self):
-        if self.selected:
-            return self.selected[-1]
+        dd.edit_traits()
+        # dd.configure_traits()
 
     def _get_diffable(self):
         if self.selected:
@@ -180,8 +195,8 @@ class GitArchiveHistoryView(Controller):
 
 
 # if __name__ == '__main__':
-#     r = '/Users/ross/Sandbox/gitarchive'
-#     gh = GitArchiveHistory(r, '/Users/ross/Sandbox/ga_test.txt')
+# r = '/Users/ross/Sandbox/gitarchive'
+# gh = GitArchiveHistory(r, '/Users/ross/Sandbox/ga_test.txt')
 #
 #     gh.load_history('ga_test.txt')
 #     ghv = GitArchiveHistoryView(model=gh)

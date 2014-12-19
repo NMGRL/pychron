@@ -25,9 +25,11 @@ from traitsui.api import View, Item
 # ============= local library imports  ==========================
 from pychron.core.helpers.datetime_tools import get_datetime
 from pychron.core.ui.progress_dialog import myProgressDialog
+from pychron.git_archive.history import BaseGitHistory
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.paths import r_mkdir
+from pychron.updater.commit_view import CommitView, UpdateGitHistory
 
 
 class Updater(Loggable):
@@ -50,10 +52,12 @@ class Updater(Loggable):
             if self._validate_origin(remote):
                 lc, rc = self._check_for_updates(remote, branch)
                 # if lc != rc:
-                if self._out_of_date(lc, rc):
+                hexsha = self._out_of_date(lc, rc, branch)
+                if hexsha:
                     origin = self._repo.remotes.origin
                     self.debug('pulling changes from {} to {}'.format(origin.url, branch))
-                    origin.pull(branch)
+                    origin.pull(hexsha)
+
                     self._build(branch, rc)
                     os.execl(sys.executable, *([sys.executable] + sys.argv))
                 else:
@@ -126,8 +130,9 @@ class Updater(Loggable):
 
         self.debug('checking for updates on {}'.format(branchname))
         origin = repo.remotes.origin
+        origin.fetch(branchname)
+
         oref = origin.refs[branchname]
-        origin.fetch()
 
         remote_commit = oref.commit
 
@@ -145,7 +150,7 @@ class Updater(Loggable):
         self.application.set_revisions(local_commit, remote_commit)
         return local_commit, remote_commit
 
-    def _out_of_date(self, lc, rc):
+    def _out_of_date(self, lc, rc, branch):
         if lc != rc:
             self.info('updates are available')
             lha = lc.hexsha[:7]
@@ -153,10 +158,25 @@ class Updater(Loggable):
             ld = get_datetime(float(lc.committed_date)).strftime('%m-%d-%Y')
             rd = get_datetime(float(rc.committed_date)).strftime('%m-%d-%Y')
 
-            if self.confirmation_dialog('Updates are available. Install and Restart?\n'
-                                        'Your Version   : {} ({})\n'
-                                        'Current Version: {} ({})'.format(ld, lha, rd, rha)):
-                return True
+            txt = self._repo.git.rev_list('--left-right', '{}...{}'.format(lc, rc))
+            commits = txt.split('\n')
+            n = len(commits)
+            h = UpdateGitHistory(local_commit = '{} ({})'.format(ld, lha),
+                                 latest_remote_commit = '{} ({})'.format(rd, rha),
+                                 n=n,
+                                 branchname = branch)
+
+            commits = [self._repo.commit(i[1:]) for i in commits]
+            h.set_items(commits)
+            cv = CommitView(model=h)
+            info = cv.edit_traits()
+            if info.result:
+                return h.selected.hexsha
+                # if self.confirmation_dialog('Updates are available. Install and Restart?\n\n'
+                # 'Your version is {} commits behind\n'
+                #                             'Your Version     : {} ({})\n'
+                #                             'Current Version: {} ({})'.format(n, ld, lha, rd, rha)):
+                #     return True
 
     def _get_working_repo(self, url):
         from git import Repo
