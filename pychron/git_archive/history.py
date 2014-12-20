@@ -33,7 +33,7 @@ class CommitAdapter(TabularAdapter):
     message_width = Int(300)
 
 
-class Commit(HasTraits):
+class GitShaObject(HasTraits):
     message = Str
     date = Date
     blob = Str
@@ -49,19 +49,20 @@ class Commit(HasTraits):
 
 class BaseGitHistory(HasTraits):
     items = List
-    selected = Instance(Commit)
+    selected = Instance(GitShaObject)
     head_hexsha = Str
 
     def set_items(self, items, auto_select=True):
-        def commit_factory(com):
-            return Commit(hexsha=com.hexsha,
-                          message=com.message,
-                          active=com.hexsha == self.head_hexsha,
-                          date=datetime.fromtimestamp(float(com.committed_date)))
-
-        self.items = [commit_factory(c) for c in items]
+        factory = self.git_sha_object_factory
+        self.items = [factory(c) for c in items]
         if auto_select:
             self.selected = self.items[0]
+
+    def git_sha_object_factory(self, com):
+        return GitShaObject(hexsha=com.hexsha,
+                            message=com.message,
+                            active=com.hexsha == self.head_hexsha,
+                            date=datetime.fromtimestamp(float(com.committed_date)))
 
 
 class GitArchiveHistory(BaseGitHistory):
@@ -103,9 +104,9 @@ class GitArchiveHistory(BaseGitHistory):
             self._path = p
             hx = self.repo_man.commits_iter(p, keys=['message', 'committed_date'],
                                             limit=self.limit)
-            self.items = [Commit(hexsha=a, message=b,
-                                 date=datetime.utcfromtimestamp(c),
-                                 name=p) for a, b, c in hx]
+            self.items = [GitShaObject(hexsha=a, message=b,
+                                       date=datetime.utcfromtimestamp(c),
+                                       name=p) for a, b, c in hx]
 
     def _selected_changed(self, new):
         if new:
@@ -204,7 +205,7 @@ class GitArchiveHistoryView(Controller):
 # gh = GitArchiveHistory(r, '/Users/ross/Sandbox/ga_test.txt')
 #
 # gh.load_history('ga_test.txt')
-#     ghv = GitArchiveHistoryView(model=gh)
+# ghv = GitArchiveHistoryView(model=gh)
 #     ghv.configure_traits(kind='livemodal')
 # ============= EOF =============================================
 

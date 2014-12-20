@@ -29,7 +29,7 @@ from pychron.core.ui.progress_dialog import myProgressDialog
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.paths import r_mkdir
-from pychron.updater.commit_view import CommitView, UpdateGitHistory
+from pychron.updater.commit_view import CommitView, UpdateGitHistory, ManageCommitsView
 
 
 class Updater(Loggable):
@@ -58,13 +58,17 @@ class Updater(Loggable):
         txt = repo.git.rev_list('origin/{}'.format(self.branch),
                                 since=datetime.now() - timedelta(weeks=30),
                                 branches=self.branch)
-
         commits = txt.split('\n')
 
         local_commit, remote_commit = self._get_local_remote_commits()
+
         self._get_selected_hexsha(commits, local_commit, remote_commit,
-                                  show_behind=False,
-                                  auto_select=False)
+                                  view_klass=ManageCommitsView,
+                                  auto_select=False,
+                                  tags=repo.tags,
+
+                                  # pass to model
+                                  show_behind=False,)
 
     def check_for_updates(self, inform=False):
         branch = self.branch
@@ -183,7 +187,10 @@ class Updater(Loggable):
         local_commit = branch.commit
         return local_commit, remote_commit
 
-    def _get_selected_hexsha(self, commits, lc, rc, auto_select=True, **kw):
+    def _get_selected_hexsha(self, commits, lc, rc, view_klass=None, auto_select=True,
+                             tags=None, **kw):
+        if view_klass is None:
+            view_klass = CommitView
 
         lha = lc.hexsha[:7]
         rha = rc.hexsha[:7]
@@ -200,7 +207,10 @@ class Updater(Loggable):
         repo = self._repo
         commits = [repo.commit(i) for i in commits]
         h.set_items(commits, auto_select=auto_select)
-        cv = CommitView(model=h)
+        if tags:
+            h.set_tags(tags)
+
+        cv = view_klass(model=h)
         info = cv.edit_traits()
         if info.result:
             return h.selected.hexsha

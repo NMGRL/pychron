@@ -36,7 +36,7 @@ class CheckForUpdatesAction(Action):
 class ManageVersionAction(Action):
     name = 'Manage Version'
     image = icon('update-product')
-
+    accelerator = 'Ctrl+;'
     def perform(self, event):
         app = event.task.window.application
         up = app.get_service('pychron.updater.updater.Updater')
