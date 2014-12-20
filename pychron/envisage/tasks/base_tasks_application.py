@@ -111,7 +111,6 @@ class BaseTasksApplication(TasksApplication, Loggable):
             except AttributeError:
                 pass
 
-        print 'ffffff'
         super(BaseTasksApplication, self).exit(force=True)
 
     def _cleanup_services(self):

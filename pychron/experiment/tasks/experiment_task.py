@@ -24,7 +24,7 @@ import weakref
 import os
 import xlrd
 # ============= local library imports  ==========================
-from pychron.core.helpers.filetools import add_extension, unique_date_path
+from pychron.core.helpers.filetools import add_extension, unique_date_path, backup
 from pychron.core.ui.preference_binding import color_bind_preference
 from pychron.envisage.tasks.editor_task import EditorTask
 from pychron.envisage.tasks.pane_helpers import ConsolePane
@@ -173,7 +173,7 @@ class ExperimentEditorTask(EditorTask):
         # sys logger
         # bind_preference(self, 'use_syslogger', 'pychron.use_syslogger')
         # if self.use_syslogger:
-        #     self._use_syslogger_changed()
+        # self._use_syslogger_changed()
 
         color_bind_preference(self, 'bgcolor', 'pychron.experiment.bg_color')
         color_bind_preference(self, 'even_bgcolor', 'pychron.experiment.even_bg_color')
@@ -289,7 +289,7 @@ class ExperimentEditorTask(EditorTask):
         """
         wb = xlrd.open_workbook(path)
         sh = wb.sheet_by_index(0)
-        #write meta
+        # write meta
         meta_rows = 7
         rows = []
         is_uv = False
@@ -341,7 +341,7 @@ class ExperimentEditorTask(EditorTask):
 
     def _publish_notification(self, run):
         if self.use_notifications:
-            #msg = 'RunAdded {}'.format(run.uuid)
+            # msg = 'RunAdded {}'.format(run.uuid)
             #self.info('pushing notification {}'.format(msg))
             self.notifier.send_notification(run.uuid)
 
@@ -368,12 +368,15 @@ class ExperimentEditorTask(EditorTask):
 
         if os.path.isfile(p):
             # make a backup copy of the original experiment file
-            bp, _ = os.path.splitext(os.path.basename(p))
-
-            pp = unique_date_path(paths.backup_experiment_dir, bp)
-
+            bp, pp = backup(p, paths.backup_experiment_dir)
             self.info('{} - saving a backup copy to {}'.format(bp, pp))
-            shutil.copyfile(p, pp)
+
+            # bp, _ = os.path.splitext(os.path.basename(p))
+            #
+            # pp = unique_date_path(paths.backup_experiment_dir, bp)
+            #
+            # shutil.copyfile(p, pp)
+
 
     def _close_external_windows(self):
         """
@@ -416,7 +419,7 @@ class ExperimentEditorTask(EditorTask):
             self._show_pane(self.experiment_factory_pane)
 
     # def _use_syslogger_changed(self):
-    #     if self.use_syslogger:
+    # if self.use_syslogger:
     #         from pychron.experiment.sys_log import SysLogger
     #
     #         prefid = 'pychron.syslogger'
@@ -549,9 +552,9 @@ class ExperimentEditorTask(EditorTask):
         if self.use_notifications:
             self.notifier.send_console_message(new)
 
-        # if self.use_syslogger:
-        #     self.syslogger.executor = self.manager.executor
-        #     self.syslogger.trigger(new)
+            # if self.use_syslogger:
+            #     self.syslogger.executor = self.manager.executor
+            #     self.syslogger.trigger(new)
 
     @on_trait_change('manager:executor:run_completed')
     def _update_run_completed(self, new):
@@ -629,6 +632,7 @@ class ExperimentEditorTask(EditorTask):
     # ===============================================================================
     def _pattern_maker_view_factory(self):
         from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
+
         return PatternMakerView()
 
     # def _manager_default(self):
@@ -666,20 +670,20 @@ class ExperimentEditorTask(EditorTask):
                 orientation='vertical'),
             top=PaneItem('pychron.experiment.controls'))
 
-# ============= EOF =============================================
-            # self._testing()
-    #
-    # def _testing(self):
-    #     editor=self.active_editor
-    #     queue = editor.queue
-    #     editor.executed = True
-    #     queue.executed_runs = queue.automated_runs[:]
-    #     for i,ei in enumerate(queue.executed_runs):
-    #         ei.aliquot = i+1
-    #
-    #     queue.automated_runs = []#queue.automated_runs[2:]
+        # ============= EOF =============================================
+        # self._testing()
+        #
+        # def _testing(self):
+        #     editor=self.active_editor
+        #     queue = editor.queue
+        #     editor.executed = True
+        #     queue.executed_runs = queue.automated_runs[:]
+        #     for i,ei in enumerate(queue.executed_runs):
+        #         ei.aliquot = i+1
+        #
+        #     queue.automated_runs = []#queue.automated_runs[2:]
 
-# def open(self, path=None):
+        # def open(self, path=None):
         # self.manager.experiment_factory.activate(load_persistence=False)
         #
         # if not os.path.isfile(path):

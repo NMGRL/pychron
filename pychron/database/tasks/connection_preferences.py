@@ -24,6 +24,7 @@ from traits.has_traits import HasTraits
 from traitsui.api import View, Item, Group, VGroup, HGroup, ListStrEditor, spring, Label, Spring
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traitsui.editors import TextEditor
+from pychron.core.pychron_traits import IPAddress
 from pychron.core.ui.combobox_editor import ComboboxEditor
 
 from pychron.envisage.icon_button_editor import icon_button_editor
@@ -35,7 +36,7 @@ from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 # ============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
 
-IPREGEX = re.compile(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$')
+# IPREGEX = re.compile(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$')
 
 
 def show_databases(host, user, password):
@@ -112,7 +113,7 @@ class ConnectionPreferences(FavoritesPreferencesHelper, ConnectionMixin):
 
     username = Str
     password = Password
-    host = Str
+    host = IPAddress
     kind = Enum('---', 'mysql', 'sqlite')
 
     def __init__(self, *args, **kw):
@@ -120,11 +121,11 @@ class ConnectionPreferences(FavoritesPreferencesHelper, ConnectionMixin):
         self._load_names()
 
     def _load_names(self):
-        if self.host and self.username and self.password:
-            if self.host == 'localhost' or IPREGEX.match(self.host):
+        if self.username and self.password and self.host:
+            if self.host:
                 self._names = show_databases(self.host, self.username, self.password)
             else:
-                warning(None, 'Invalid IP address format. e.g 129.255.12.255')
+                warning(None, 'Invalid IP address format. "{}" e.g 129.255.12.255'.format(self.host))
 
     def _get_connection_dict(self):
         return dict(username=self.username,

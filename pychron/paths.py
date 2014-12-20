@@ -107,6 +107,7 @@ class Paths(object):
     run_block_dir = None
     generic_experiment_dir = None
     backup_experiment_dir = None
+    backup_device_dir = None
     plugins_dir = None
     hidden_dir = None
     labspy_dir = None
@@ -267,6 +268,7 @@ class Paths(object):
         self.run_block_dir = join(self.experiment_dir, 'blocks')
         self.generic_experiment_dir = join(self.experiment_dir, 'generic')
         self.backup_experiment_dir = join(self.experiment_dir, 'backup')
+
         self.hidden_dir = join(root, '.hidden')
         # self.users_file = join(self.hidden_dir, 'users')
         self.login_file = join(self.hidden_dir, 'login')
@@ -287,6 +289,7 @@ class Paths(object):
         self.spectrometer_dir = join(setup_dir, 'spectrometer')
         self.backup_deflection_dir = join(self.spectrometer_dir, 'deflection_backup')
         self.device_dir = join(setup_dir, 'devices')
+        self.backup_device_dir = join(self.device_dir, 'backup')
         self.canvas2D_dir = join(setup_dir, 'canvas2D')
         # self.canvas3D_dir = join(setup_dir, 'canvas3D')
         self.extraction_line_dir = join(setup_dir, 'extractionline')

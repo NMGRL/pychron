@@ -19,7 +19,21 @@ import glob
 import os
 import subprocess
 from datetime import datetime
+import shutil
 
+
+def backup(p, backupdir, **kw):
+    """
+
+    :param p: file to backup
+    :param backupdir: directory to add backed up file
+    :param kw: keyword args for unique_date_path
+    :return:
+    """
+    bp, _ = os.path.splitext(os.path.basename(p))
+    pp = unique_date_path(backupdir, bp, **kw)
+    shutil.copyfile(p, pp)
+    return bp, pp
 
 def modified_datetime(path, strformat='%m-%d-%Y %H:%M:%S'):
     dt = datetime.fromtimestamp(os.path.getmtime(path))

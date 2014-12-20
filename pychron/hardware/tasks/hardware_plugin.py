@@ -19,7 +19,7 @@ from traits.api import HasTraits, Bool, Instance, List, Dict
 # from traitsui.api import View, Item
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from envisage.extension_point import ExtensionPoint
-from pychron.managers.hardware_manager import HardwareManager
+# from pychron.managers.hardware_manager import HardwareManager
 # from pychron.remote_hardware.remote_hardware_manager import RemoteHardwareManager
 from pychron.hardware.flag_manager import FlagManager
 # from apptools.preferences.preference_binding import bind_preference
@@ -30,7 +30,6 @@ from envisage.ui.tasks.task_extension import TaskExtension
 from pyface.action.action import Action
 from pyface.tasks.action.schema_addition import SchemaAddition
 from pychron.hardware.tasks.hardware_preferences import HardwarePreferencesPane
-from pychron.remote_hardware.remote_hardware_manager import RemoteHardwareManager
 from apptools.preferences.preference_binding import bind_preference
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -65,63 +64,18 @@ class HardwarePlugin(BaseTaskPlugin):
     managers = ExtensionPoint(List(Dict),
                               id='pychron.hardware.managers')
 
-    my_managers = List(contributes_to='pychron.hardware.managers')
+    # my_managers = List(contributes_to='pychron.hardware.managers')
 
     sources = List(contributes_to='pychron.video.sources')
 
-    def _sources_default(self):
-        return [('pvs://localhost:1081', 'Hardware')]
-
-    def _task_extensions_default(self):
-        return [TaskExtension(actions=[SchemaAddition(id='Flag Manager',
-                                                      factory=OpenFlagManagerAction,
-                                                      path='MenuBar/tools.menu'), ])]
-
-    def _tasks_default(self):
-        return [TaskFactory(id='tasks.hardware',
-                            name='Hardware',
-                            factory=self._factory,
-                            image='configure-2',
-                            task_group='hardware')]
-
-    def _factory(self):
-        man = self.application.get_service(HardwareManager)
-        task = HardwareTask(manager=man)
-        return task
-
-    def _service_offers_default(self):
-
-        so_hm = self.service_offer_factory(
-            protocol=HardwareManager,
-            factory=self._hardware_manager_factory)
-
-        so_rhm = self.service_offer_factory(
-            protocol=RemoteHardwareManager,
-            factory=self._remote_hardware_manager_factory)
-
-        so_fm = self.service_offer_factory(
-            protocol=FlagManager,
-            factory=self._flag_manager_factory)
-        #        return [so, so1, so2]
-        return [so_hm, so_rhm, so_fm]
-
-    def _flag_manager_factory(self):
-        return FlagManager(application=self.application)
-
-    def _hardware_manager_factory(self):
-        return HardwareManager(application=self.application)
-
-    def _remote_hardware_manager_factory(self):
-        return RemoteHardwareManager(application=self.application)
-
-    def _preferences_panes_default(self):
-        return [HardwarePreferencesPane]
-
-    def _my_managers_default(self):
-        return [dict(name='hardware', manager=self._hardware_manager_factory())]
+    # def _my_managers_default(self):
+    #     return [dict(name='hardware', manager=self._hardware_manager_factory())]
 
     #    def _system_lock_manager_factory(self):
     #        return SystemLockManager(application=self.application)
+    enable_hardware_server = Bool
+    _remote_hardware_manager = Instance('pychron.remote_hardware.remote_hardware_manager.RemoteHardwareManager')
+    # _hardware_manager = Instance('pychron.managers.hardware_manager.HardwareManager')
 
     def start(self):
         # if self.managers:
@@ -145,23 +99,31 @@ class HardwarePlugin(BaseTaskPlugin):
             return
 
         # create the hardware server
-        rhm = self.application.get_service(RemoteHardwareManager)
-        bind_preference(rhm, 'enable_hardware_server', 'pychron.hardware.enable_hardware_server')
-        bind_preference(rhm, 'enable_directory_server', 'pychron.hardware.enable_directory_server')
+        # rhm = self.application.get_service(RemoteHardwareManager)
+        # bind_preference(rhm, 'enable_hardware_server', 'pychron.hardware.enable_hardware_server')
+        # bind_preference(rhm, 'enable_directory_server', 'pychron.hardware.enable_directory_server')
+        # rhm.bootstrap()
+        bind_preference(self, 'enable_hardware_server', 'pychron.hardware.enable_hardware_server')
 
-        rhm.bootstrap()
+        if self.enable_hardware_server:
+            from pychron.remote_hardware.remote_hardware_manager import RemoteHardwareManager
+            rhm = RemoteHardwareManager(application=self.application)
+            rhm.bootstrap()
+            self._remote_hardware_manager = rhm
 
     def stop(self):
+        if self._remote_hardware_manager:
+            self._remote_hardware_manager.kill()
 
-        #        rhm = self.application.get_service(RemoteHardwareManager)
-        #        rhm.stop()
+        # if self._hardware_manager:
+        #     self._hardware_manager.kill()
 
         if self.managers:
             for m in self.managers:
                 man = m['manager']
                 if man:
                     man.kill()
-                    man.close_ui()
+                    # man.close_ui()
 
         for s in self.application.get_services(ICoreDevice):
             if s.is_scanable:
@@ -169,4 +131,57 @@ class HardwarePlugin(BaseTaskPlugin):
                 #if s._scanning and not s._auto_started:
 
 #                s.save_to_db()
+
+    def _factory(self):
+        # man = self.application.get_service(HardwareManager)
+        # man = HardwareManager(application=self.application)
+        task = HardwareTask()
+        # self._hardware_manager = man
+        return task
+
+    def _flag_manager_factory(self):
+        return FlagManager(application=self.application)
+
+    # def _hardware_manager_factory(self):
+    #     return HardwareManager(application=self.application)
+
+    # def _remote_hardware_manager_factory(self):
+    #     return RemoteHardwareManager(application=self.application)
+
+    def _service_offers_default(self):
+
+        # so_hm = self.service_offer_factory(
+        #     protocol=HardwareManager,
+        #     factory=self._hardware_manager_factory)
+        #
+        # so_rhm = self.service_offer_factory(
+        #     protocol=RemoteHardwareManager,
+        #     factory=self._remote_hardware_manager_factory)
+
+        so_fm = self.service_offer_factory(
+            protocol=FlagManager,
+            factory=self._flag_manager_factory)
+        #        return [so, so1, so2]
+        # return [so_hm, so_rhm, so_fm]
+        # return [so_hm, so_fm]
+        return [so_fm]
+
+    def _preferences_panes_default(self):
+        return [HardwarePreferencesPane]
+
+    def _sources_default(self):
+        return [('pvs://localhost:1081', 'Hardware')]
+
+    def _task_extensions_default(self):
+        return [TaskExtension(actions=[SchemaAddition(id='Flag Manager',
+                                                      factory=OpenFlagManagerAction,
+                                                      path='MenuBar/tools.menu'), ])]
+
+    def _tasks_default(self):
+        return [TaskFactory(id='tasks.hardware',
+                            name='Hardware',
+                            factory=self._factory,
+                            image='configure-2',
+                            task_group='hardware')]
+
 # ============= EOF =============================================

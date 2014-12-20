@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -30,73 +30,17 @@ from pychron.messaging.remote_command_server import RemoteCommandServer
 from pychron.globals import globalv
 from pychron.paths import paths
 
-# from pychron.messaging.directory_server import DirectoryServer
-# from threading import Thread
-
-'''
-# ===================================
-@todo
-    add get_error_status
-    add get list of files
-    
-# ===================================
-'''
-
 
 class RemoteHardwareManager(Manager):
     processors = Dict
     servers = List(RemoteCommandServer)
 
-#    directory_server = Instance(DirectoryServer, ())
-    enable_hardware_server = Bool
-#    enable_directory_server = Bool
+    #    directory_server = Instance(DirectoryServer, ())
+    #     enable_hardware_server = Bool
+    #    enable_directory_server = Bool
     result = None
     system_lock = Bool(False)
 
-
-    def bind_preferences(self, cp):
-        try:
-            bind_preference(self, 'system_lock', 'pychron.hardware.enable_system_lock')
-
-            bind_preference(cp, 'system_lock', 'pychron.hardware.enable_system_lock')
-            bind_preference(cp, 'system_lock_address', 'pychron.hardware.system_lock_address')
-            bind_preference(cp, 'system_lock_name', 'pychron.hardware.system_lock_name')
-
-    #        ip = InitializationParser(os.path.join(setup_dir, 'initialization.xml'))
-            ip = InitializationParser()
-            names = []
-            hosts = dict()
-            for name, host in ip.get_systems():
-                names.append(name)
-                hosts[name] = host
-
-            pref = self.application.preferences
-            pref.set('pychron.hardware.system_lock_names', names)
-            pref.set('pychron.hardware.system_lock_addresses', hosts)
-
-            name = pref.get('pychron.hardware.system_lock_name')
-
-            try:
-                if name:
-                    pref.set('pychron.hardware.system_lock_address',
-                              hosts[name.strip("'").lower()])
-                else:
-                    pref.set('pychron.hardware.system_lock_address',
-                              hosts[names[0].lower()])
-            except Exception, err:
-                pass
-    #            import traceback
-    #            traceback.print_exc()
-    #            print 'system lock exception', err
-
-            pref.save()
-        except AttributeError:
-            pass
-
-#        ds = self.directory_server
-#        bind_preference(ds, 'host', 'pychron.hardware.directory_server_host')
-#        bind_preference(ds, 'port', 'pychron.hardware.directory_server_port')
-#        bind_preference(ds, 'root', 'pychron.hardware.directory_server_root')
 
 
     def validate_address(self, addr):
@@ -131,30 +75,76 @@ class RemoteHardwareManager(Manager):
         return self.result
 
     def bootstrap(self):
-        if self.enable_hardware_server:
+        # if self.enable_hardware_server:
 
-            if globalv.use_ipc:
-                for p in self.processors.itervalues():
-                    self.info('bootstrapping {}'.format(p.name))
-                    p.manager = self
-                    p.bootstrap()
-            else:
-                self._load_servers()
+        if globalv.use_ipc:
+            for p in self.processors.itervalues():
+                self.info('bootstrapping {}'.format(p.name))
+                p.manager = self
+                p.bootstrap()
+        else:
+            self._load_servers()
 
-#        if self.enable_directory_server:
-#            self._load_directory_server()
+        #        if self.enable_directory_server:
+        #            self._load_directory_server()
+    def _kill_hook(self):
+        self.stop()
 
     def stop(self):
         for p in self.processors.itervalues():
             p.close()
 
-#        self.directory_server.stop()
-# ===============================================================================
-# private
-# ===============================================================================
+        #        self.directory_server.stop()
+        # ===============================================================================
+        # private
+        # ===============================================================================
+    def _bind_processor_preferences(self, cp):
+        try:
+            bind_preference(self, 'system_lock', 'pychron.hardware.enable_system_lock')
+
+            bind_preference(cp, 'system_lock', 'pychron.hardware.enable_system_lock')
+            bind_preference(cp, 'system_lock_address', 'pychron.hardware.system_lock_address')
+            bind_preference(cp, 'system_lock_name', 'pychron.hardware.system_lock_name')
+
+            #        ip = InitializationParser(os.path.join(setup_dir, 'initialization.xml'))
+            ip = InitializationParser()
+            names = []
+            hosts = dict()
+            for name, host in ip.get_systems():
+                names.append(name)
+                hosts[name] = host
+
+            pref = self.application.preferences
+            pref.set('pychron.hardware.system_lock_names', names)
+            pref.set('pychron.hardware.system_lock_addresses', hosts)
+
+            name = pref.get('pychron.hardware.system_lock_name')
+
+            try:
+                if name:
+                    pref.set('pychron.hardware.system_lock_address',
+                             hosts[name.strip("'").lower()])
+                else:
+                    pref.set('pychron.hardware.system_lock_address',
+                             hosts[names[0].lower()])
+            except Exception, err:
+                pass
+                #            import traceback
+                #            traceback.print_exc()
+                #            print 'system lock exception', err
+
+            pref.save()
+        except AttributeError:
+            pass
+
+        #        ds = self.directory_server
+        #        bind_preference(ds, 'host', 'pychron.hardware.directory_server_host')
+        #        bind_preference(ds, 'port', 'pychron.hardware.directory_server_port')
+        #        bind_preference(ds, 'root', 'pychron.hardware.directory_server_root')
+
     def _load_servers(self):
-        '''
-        '''
+        """
+        """
         # get server names
         ip = InitializationParser()
         names = ip.get_servers()
@@ -167,25 +157,24 @@ class RemoteHardwareManager(Manager):
 
                 self.processors[pn] = cp
                 e = RemoteCommandServer(name=s,
-                       configuration_dir_name='servers',
-                       processor=cp
-                       )
+                                        configuration_dir_name='servers',
+                                        processor=cp)
                 e.bootstrap()
                 self.servers.append(e)
 
-#    def _load_directory_server(self):
-#        t = Thread(target=self.directory_server.start)
-#        t.start()
+            #    def _load_directory_server(self):
+            #        t = Thread(target=self.directory_server.start)
+            #        t.start()
 
-# ===============================================================================
-# handlers
-# ===============================================================================
-    @on_trait_change('enable_hardware_server')
-    def enabled_changed(self):
-        if self.enable_hardware_server:
-            self.bootstrap()
-        else:
-            self.stop()
+            # ===============================================================================
+            # handlers
+            # ===============================================================================
+            #     @on_trait_change('enable_hardware_server')
+            #     def enabled_changed(self):
+            #         if self.enable_hardware_server:
+            #             self.bootstrap()
+            #         else:
+            #             self.stop()
 
     def _command_processor_factory(self, path=None, name=None):
         if name is None:
@@ -196,54 +185,47 @@ class RemoteHardwareManager(Manager):
                               path=path,
                               name=name)
 
-        self.bind_preferences(cp)
+        self._bind_processor_preferences(cp)
 
         return cp
 
-
     def traits_view(self):
-        '''
-        '''
         cols = [ObjectColumn(name='name'),
                 ObjectColumn(name='klass', label='Class'),
                 ObjectColumn(name='processor_type', label='Type'),
-              ObjectColumn(name='host'),
-              ObjectColumn(name='port')]
+                ObjectColumn(name='host'),
+                ObjectColumn(name='port')]
         tservers = Group(Item('servers', style='custom',
-                      editor=TableEditor(columns=cols,
-                                           selected='selected',
-                                           editable=False),
-                      show_label=False,
-                      ),
-                      show_border=True,
-                      label='Servers'
-                      )
+                              editor=TableEditor(columns=cols,
+                                                 selected='selected',
+                                                 editable=False),
+                              show_label=False,),
+                         show_border=True,
+                         label='Servers')
         servers = Item('servers',
                        style='custom',
                        editor=ListEditor(use_notebook=True,
-                                           page_name='.name',
-                                           selected='selected'), show_label=False)
-#        repeater = Group(Item('repeater', style='custom',
-#                              show_label=False),
-#                            show_border=True,
-#
-#                         label='Repeater')
+                                         page_name='.name',
+                                         selected='selected'), show_label=False)
+        #        repeater = Group(Item('repeater', style='custom',
+        #                              show_label=False),
+        #                            show_border=True,
+        #
+        #                         label='Repeater')
         v = View(HGroup(
-                 VGroup(tservers),
-                 servers
-                 ),
+            VGroup(tservers),
+            servers),
                  title='Remote Hardware Server',
                  width=700,
                  height=360,
                  resizable=True,
-                 handler=self.handler_klass
-                 )
+                 handler=self.handler_klass)
 
         return v
 
-# ===============================================================================
-# defaults
-# ===============================================================================
+    # ===============================================================================
+    # defaults
+    # ===============================================================================
     def _processors_default(self):
         ps = dict()
         ip = InitializationParser()
@@ -262,6 +244,7 @@ class RemoteHardwareManager(Manager):
             ps[cp.name] = cp
 
         return ps
+
 # ============= EOF ====================================
 #    def process_server_request(self, request_type, data):
 #        '''
