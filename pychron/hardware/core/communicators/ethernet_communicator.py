@@ -160,6 +160,7 @@ class EthernetCommunicator(Communicator):
     test_cmd = '***'
     use_end = True
     verbose = False
+    error = None
 
     def load(self, config, path):
         """
@@ -218,6 +219,7 @@ class EthernetCommunicator(Communicator):
                 except socket.error, e:
                     self.debug(str(e))
                     h = None
+                    self.error = True
 
                 self.handler = h
             else:
@@ -226,6 +228,7 @@ class EthernetCommunicator(Communicator):
 
     def _reset_connection(self):
         self.handler = None
+        self.error = False
 
     def read(self, *args, **kw):
         handler = self.get_handler()
@@ -267,6 +270,8 @@ class EthernetCommunicator(Communicator):
 
         if r is not None:
             re = self.process_response(r)
+        else:
+            self.error = True
 
         if self.use_end:
             handler = self.get_handler()

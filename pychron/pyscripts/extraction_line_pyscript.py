@@ -478,6 +478,8 @@ class ExtractionPyScript(ValvePyScript):
             return
 
         self.console_info('acquire {}'.format(name))
+        self.runner.connect()
+
         r = self.runner.get_resource(name)
 
         if not clear:
@@ -492,7 +494,10 @@ class ExtractionPyScript(ValvePyScript):
                 if self._cancel:
                     break
                 self._sleep(1)
-            # s = r.isSet()
+
+                if not r.reset_connection():
+                    self.cancel()
+                    break
 
         if not self._cancel:
             self._resource_flag = r

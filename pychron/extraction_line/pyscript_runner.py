@@ -31,6 +31,9 @@ class PyScriptRunner(Loggable):
     _resource_lock = Any
     scripts = List
 
+    def reset_connection(self):
+        pass
+
     def connect(self):
         return True
 
@@ -105,12 +108,24 @@ class RemotePyScriptRunner(PyScriptRunner):
 
     def __init__(self, host, port, kind, *args, **kw):
         super(RemotePyScriptRunner, self).__init__(*args, **kw)
-        self.handle = EthernetCommunicator()
-        self.handle.host = host
-        self.handle.port = port
-        self.handle.kind = kind
+        self.kind = kind
+        self.port = port
+        self.host = host
+        self.handle = self._handle_factory()
 
-    # self.handle.open()
+    def reset_connection(self):
+        if self.handle.error:
+            self.handle = self._handle_factory()
+            return self.connect()
+        else:
+            return True
+
+    def _handle_factory(self):
+        handle = EthernetCommunicator()
+        handle.host = self.host
+        handle.port = self.port
+        handle.kind = self.kind
+        return handle
 
     def _get_resource(self, name):
         r = RemoteResource()

@@ -23,6 +23,10 @@ from traitsui.api import View, Item
 class IPyScriptRunner(Interface):
     def get_resource(self, name):
         pass
+
+    def reset_connection(self):
+        pass
+
 # ============= EOF =============================================
 
 
