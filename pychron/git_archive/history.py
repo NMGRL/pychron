@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import HasTraits, List, Str, Date, Int, Button, Property, Instance, \
-    Event
+    Event, Bool
 from traitsui.api import View, Item, Controller, TextEditor, \
     TabularEditor, UItem, spring, HGroup, VSplit, VGroup, InstanceEditor
 from traitsui.tabular_adapter import TabularAdapter
@@ -39,6 +39,7 @@ class Commit(HasTraits):
     blob = Str
     name = Str
     hexsha = Str
+    active = Bool
 
     def traits_view(self):
         return View(UItem('blob',
@@ -49,14 +50,18 @@ class Commit(HasTraits):
 class BaseGitHistory(HasTraits):
     items = List
     selected = Instance(Commit)
+    head_hexsha = Str
 
-    def set_items(self, items):
+    def set_items(self, items, auto_select=True):
         def commit_factory(com):
             return Commit(hexsha=com.hexsha,
-                          message=com.message, date=datetime.utcfromtimestamp(float(com.committed_date)))
+                          message=com.message,
+                          active=com.hexsha == self.head_hexsha,
+                          date=datetime.fromtimestamp(float(com.committed_date)))
 
         self.items = [commit_factory(c) for c in items]
-        self.selected = self.items[0]
+        if auto_select:
+            self.selected = self.items[0]
 
 
 class GitArchiveHistory(BaseGitHistory):
@@ -198,7 +203,7 @@ class GitArchiveHistoryView(Controller):
 # r = '/Users/ross/Sandbox/gitarchive'
 # gh = GitArchiveHistory(r, '/Users/ross/Sandbox/ga_test.txt')
 #
-#     gh.load_history('ga_test.txt')
+# gh.load_history('ga_test.txt')
 #     ghv = GitArchiveHistoryView(model=gh)
 #     ghv.configure_traits(kind='livemodal')
 # ============= EOF =============================================

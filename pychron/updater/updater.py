@@ -15,17 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from datetime import datetime, timedelta
 import os
 import urllib2
 from apptools.preferences.preference_binding import bind_preference
 import sys
-from traits.api import HasTraits, Button, Bool, Str
+from traits.api import HasTraits, Button, Bool, Str, Property
 from traitsui.api import View, Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.datetime_tools import get_datetime
 from pychron.core.ui.progress_dialog import myProgressDialog
-from pychron.git_archive.history import BaseGitHistory
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.paths import r_mkdir
@@ -36,6 +36,7 @@ class Updater(Loggable):
     check_on_startup = Bool
     branch = Str
     remote = Str
+    _repo = None
 
     def bind_preferences(self):
         for a in ('check_on_startup', 'branch', 'remote'):
@@ -45,14 +46,33 @@ class Updater(Loggable):
         if self.remote:
             return self._validate_origin(self.remote)
 
+    def manage_version(self):
+        repo = self._get_working_repo()
+
+        # b = repo.branches[self.branch]
+        # b = repo.heads[self.branch]
+        # origin
+        # oref = origin.refs[branchname]
+        # remote_commit = oref.commit
+
+        txt = repo.git.rev_list('origin/{}'.format(self.branch),
+                                since=datetime.now() - timedelta(weeks=30),
+                                branches=self.branch)
+
+        commits = txt.split('\n')
+
+        local_commit, remote_commit = self._get_local_remote_commits()
+        self._get_selected_hexsha(commits, local_commit, remote_commit,
+                                  show_behind=False,
+                                  auto_select=False)
+
     def check_for_updates(self, inform=False):
         branch = self.branch
         remote = self.remote
         if remote and branch:
             if self._validate_origin(remote):
-                lc, rc = self._check_for_updates(remote, branch)
-                # if lc != rc:
-                hexsha = self._out_of_date(lc, rc, branch)
+                lc, rc = self._check_for_updates()
+                hexsha = self._out_of_date(lc, rc)
                 if hexsha:
                     origin = self._repo.remotes.origin
                     self.debug('pulling changes from {} to {}'.format(origin.url, branch))
@@ -123,15 +143,32 @@ class Updater(Loggable):
         except BaseException:
             return
 
-    def _check_for_updates(self, name, branchname):
-        url = 'https://github.com/{}.git'.format(name)
-
-        repo = self._get_working_repo(url)
-
+    def _check_for_updates(self):
+        branchname = self.branch
         self.debug('checking for updates on {}'.format(branchname))
+        local_commit, remote_commit = self._get_local_remote_commits()
+
+        self.debug('local  commit ={}'.format(local_commit))
+        self.debug('remote commit ={}'.format(remote_commit))
+        self.application.set_revisions(local_commit, remote_commit)
+        return local_commit, remote_commit
+
+    def _out_of_date(self, lc, rc):
+        if lc != rc:
+            self.info('updates are available')
+            if not self.confirmation_dialog('Updates are available. Install and Restart?'):
+                return
+
+            txt = self._repo.git.rev_list('--left-right', '{}...{}'.format(lc, rc))
+            commits = [ci[1:] for ci in txt.split('\n')]
+            return self._get_selected_hexsha(commits, lc, rc)
+
+    def _get_local_remote_commits(self):
+
+        repo = self._get_working_repo()
+        branchname = self.branch
         origin = repo.remotes.origin
         origin.fetch(branchname)
-
         oref = origin.refs[branchname]
 
         remote_commit = oref.commit
@@ -144,51 +181,43 @@ class Updater(Loggable):
         branch.checkout()
 
         local_commit = branch.commit
-
-        self.debug('local  commit ={}'.format(local_commit))
-        self.debug('remote commit ={}'.format(remote_commit))
-        self.application.set_revisions(local_commit, remote_commit)
         return local_commit, remote_commit
 
-    def _out_of_date(self, lc, rc, branch):
-        if lc != rc:
-            self.info('updates are available')
-            lha = lc.hexsha[:7]
-            rha = rc.hexsha[:7]
-            ld = get_datetime(float(lc.committed_date)).strftime('%m-%d-%Y')
-            rd = get_datetime(float(rc.committed_date)).strftime('%m-%d-%Y')
+    def _get_selected_hexsha(self, commits, lc, rc, auto_select=True, **kw):
 
-            txt = self._repo.git.rev_list('--left-right', '{}...{}'.format(lc, rc))
-            commits = txt.split('\n')
-            n = len(commits)
-            h = UpdateGitHistory(local_commit = '{} ({})'.format(ld, lha),
-                                 latest_remote_commit = '{} ({})'.format(rd, rha),
-                                 n=n,
-                                 branchname = branch)
+        lha = lc.hexsha[:7]
+        rha = rc.hexsha[:7]
+        ld = get_datetime(float(lc.committed_date)).strftime('%m-%d-%Y')
+        rd = get_datetime(float(rc.committed_date)).strftime('%m-%d-%Y')
 
-            commits = [self._repo.commit(i[1:]) for i in commits]
-            h.set_items(commits)
-            cv = CommitView(model=h)
-            info = cv.edit_traits()
-            if info.result:
-                return h.selected.hexsha
-                # if self.confirmation_dialog('Updates are available. Install and Restart?\n\n'
-                # 'Your version is {} commits behind\n'
-                #                             'Your Version     : {} ({})\n'
-                #                             'Current Version: {} ({})'.format(n, ld, lha, rd, rha)):
-                #     return True
+        n = len(commits)
+        h = UpdateGitHistory(n=n, branchname=self.branch,
+                             local_commit='{} ({})'.format(ld, lha),
+                             head_hexsha=lc.hexsha,
+                             latest_remote_commit='{} ({})'.format(rd, rha),
+                             **kw)
 
-    def _get_working_repo(self, url):
-        from git import Repo
+        repo = self._repo
+        commits = [repo.commit(i) for i in commits]
+        h.set_items(commits, auto_select=auto_select)
+        cv = CommitView(model=h)
+        info = cv.edit_traits()
+        if info.result:
+            return h.selected.hexsha
 
-        p = os.path.join(paths.hidden_dir, 'updates', 'pychron')
-        if not os.path.isdir(p):
-            r_mkdir(p)
-            repo = Repo.clone_from(url, p)
-        else:
-            repo = Repo(p)
-        self._repo = repo
-        return repo
+    def _get_working_repo(self):
+        if not self._repo:
+            from git import Repo
+
+            p = os.path.join(paths.hidden_dir, 'updates', 'pychron')
+            if not os.path.isdir(p):
+                r_mkdir(p)
+                url = 'https://github.com/{}.git'.format(self.remote)
+                repo = Repo.clone_from(url, p)
+            else:
+                repo = Repo(p)
+            self._repo = repo
+        return self._repo
 
 # ============= EOF =============================================
 

@@ -24,6 +24,7 @@ from traitsui.handler import Controller
 from traitsui.item import Readonly
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.git_archive.history import CommitAdapter, BaseGitHistory
+from pychron.pychron_constants import LIGHT_YELLOW
 
 
 class UpdateGitHistory(BaseGitHistory):
@@ -38,9 +39,16 @@ class CommitAdapter(TabularAdapter):
                ('Date', 'date'),
                ('SHA','hexsha')]
     message_width = Int(500)
+    date_width = Int(185)
     hexsha_text = Property
+
     def _get_hexsha_text(self):
         return self.item.hexsha[:10]
+
+    def get_bg_color( self, obj, trait, row, column = 0):
+        item = getattr(obj, trait)[row]
+        return LIGHT_YELLOW if item.active else 'white'
+
 
 class CommitView(Controller):
     model = BaseGitHistory
@@ -50,12 +58,14 @@ class CommitView(Controller):
                  HGroup(
                      Readonly('local_commit',label='Your Version'),
                      Readonly('latest_remote_commit',label='Latest Version'),
-                     Readonly('n', label='Commits Behind')),
+                     Readonly('n', label='Commits Behind',
+                              visible_when='show_behind')),
                  UItem('items',
                        editor=TabularEditor(adapter=CommitAdapter(),
+                                            editable=False,
                                             selected='selected')),
                  kind='livemodal',
-                 width=800,
+                 width=900,
                  height=400,
                  buttons=['OK','Cancel'],
                  title='Available Updates- Branch= {}'.format(self.model.branchname),

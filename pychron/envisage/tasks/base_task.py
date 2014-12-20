@@ -275,7 +275,6 @@ class BaseTask(Task, Loggable, PreferenceMixin):
         mb = SMenuBar(
             self._file_menu(),
             self._edit_menu(),
-            self._entry_menu(),
             self._view_menu(),
             self._tools_menu(),
             self._window_menu(),

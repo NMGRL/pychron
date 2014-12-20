@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
+from pyface.tasks.action.schema import SMenu
 from pyface.tasks.action.schema_addition import SchemaAddition
 from pyface.action.group import Group
 
@@ -38,17 +39,22 @@ class EntryPlugin(BaseTaskPlugin):
 
     def _actions_default(self):
         return [('pychron.labnumber_entry', 'Ctrl+Shift+l', 'Open Labnumber Entry Window'),
-                ('pychron.sensitivity', 'Ctrl+Shift+\\', 'Open Sensistivity Window'),]
+                ('pychron.sensitivity', 'Ctrl+Shift+\\', 'Open Sensistivity Window'), ]
 
     def _service_offers_default(self):
-        so1=self.service_offer_factory(factory=MolecularWeightEditor,
-                                       protocol=MolecularWeightEditor)
+        so1 = self.service_offer_factory(factory=MolecularWeightEditor,
+                                         protocol=MolecularWeightEditor)
         so2 = self.service_offer_factory(factory=FluxMonitorEditor,
                                          protocol=FluxMonitorEditor)
-        return [so1,so2]
+        return [so1, so2]
 
     def _task_extensions_default(self):
         return [
+            TaskExtension(actions=[SchemaAddition(id='entry',
+                                                  factory=lambda: SMenu(id='.menu', name='Entry'),
+                                                  path='MenuBar',
+                                                  before='tools.menu',
+                                                  after='view.menu')]),
             TaskExtension(task_id='pychron.entry.labnumber',
                           actions=[
                               SchemaAddition(id='transfer_j',
@@ -62,7 +68,7 @@ class EntryPlugin(BaseTaskPlugin):
                                              path='MenuBar/tools.menu'),
                               SchemaAddition(id='import_sample_metadata',
                                              factory=ImportSampleMetadataAction,
-                                             path='MenuBar/tools.menu',),
+                                             path='MenuBar/tools.menu', ),
                               SchemaAddition(id='generate_tray',
                                              factory=GenerateTrayAction,
                                              path='MenuBar/tools.menu', ),
@@ -81,7 +87,7 @@ class EntryPlugin(BaseTaskPlugin):
                     SchemaAddition(id='labnumber_entry',
                                    factory=LabnumberEntryAction,
                                    path='MenuBar/entry.menu',
-                                   absolute_position='first',),
+                                   absolute_position='first', ),
                     SchemaAddition(id='sensitivity_entry',
                                    factory=SensitivityEntryAction,
                                    path='MenuBar/entry.menu',
@@ -115,4 +121,5 @@ class EntryPlugin(BaseTaskPlugin):
 
     def _preferences_panes_default(self):
         return [LabnumberEntryPreferencesPane]
+
 # ============= EOF =============================================

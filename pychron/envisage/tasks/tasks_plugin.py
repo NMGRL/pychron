@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from envisage.extension_point import ExtensionPoint
 from envisage.plugin import Plugin
+from envisage.ui.tasks.action.exit_action import ExitAction
 from envisage.ui.tasks.action.preferences_action import PreferencesAction
 from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.tasks_plugin import TasksPlugin
@@ -43,13 +44,7 @@ class PychronTasksPlugin(Plugin):
         return [GeneralPreferencesPane]
 
     def _task_extensions_default(self):
-        actions = [SchemaAddition(id='DockPaneToggleGroup',
-                                  factory=DockPaneToggleGroup,
-                                  path='MenuBar/view.menu'),
-                   SchemaAddition(factory=ToggleFullWindowAction,
-                                  id='toggle_full_window',
-                                  path='MenuBar/window.menu'),
-                   SchemaAddition(factory=EditInitializationAction,
+        actions = [SchemaAddition(factory=EditInitializationAction,
                                   id='edit_plugins',
                                   path='MenuBar/help.menu')]
         return [TaskExtension(actions=actions)]
@@ -59,27 +54,26 @@ class mPreferencesAction(PreferencesAction):
     image = icon('cog')
 
 
+class mExitAction(ExitAction):
+    def perform(self, event):
+        event.task.window.application.exit(force=True)
+
+
 class myTasksPlugin(TasksPlugin):
-    def _task_extensions_default(self):
-
+    def _my_task_extensions_default(self):
         from pyface.tasks.action.api import SchemaAddition
-        from envisage.ui.tasks.action.exit_action import ExitAction
-
         actions = [SchemaAddition(id='Exit',
-                                  factory=ExitAction,
+                                  factory=mExitAction,
                                   path='MenuBar/file.menu'),
                    SchemaAddition(id='preferences',
                                   factory=mPreferencesAction,
                                   path='MenuBar/file.menu'),
-                   # SchemaAddition(id='Preferences',
-                   # factory=PreferencesGroup,
-                   #                path='MenuBar/edit.menu'
-                   #                # path='MenuBar/edit.menu'
-                   # ),
-                   # SchemaAddition(id='DockPaneToggleGroup',
-                   #                factory=DockPaneToggleGroup,
-                   #                path='view.menu')
-                   ]
+                   SchemaAddition(id='DockPaneToggleGroup',
+                                  factory=DockPaneToggleGroup,
+                                  path='MenuBar/view.menu'),
+                   SchemaAddition(factory=ToggleFullWindowAction,
+                                  id='toggle_full_window',
+                                  path='MenuBar/window.menu')]
 
         return [TaskExtension(actions=actions)]
 
