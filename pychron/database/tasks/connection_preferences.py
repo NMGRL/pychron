@@ -16,15 +16,17 @@
 
 # ============= enthought library imports =======================
 from pyface.message_dialog import warning
-from pyface.timer.do_later import do_later
+from pyface.timer.do_later import do_later, do_after
 import re
 from traits.api import Str, Password, Enum, Button, Bool, \
-    on_trait_change, Color, String, List
+    on_trait_change, Color, String, List, Event
 from traits.has_traits import HasTraits
 from traitsui.api import View, Item, Group, VGroup, HGroup, ListStrEditor, spring, Label, Spring
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traitsui.editors import TextEditor
+from traitsui.item import UItem
 from pychron.core.pychron_traits import IPAddress
+from pychron.core.ui.animated_png_editor import AnimatedPNGEditor
 from pychron.core.ui.combobox_editor import ComboboxEditor
 
 from pychron.envisage.icon_button_editor import icon_button_editor
@@ -115,6 +117,8 @@ class ConnectionPreferences(FavoritesPreferencesHelper, ConnectionMixin):
     password = Password
     host = IPAddress
     kind = Enum('---', 'mysql', 'sqlite')
+    progress_icon = Str('process-working-2')
+    progress_state = Event
 
     def __init__(self, *args, **kw):
         super(ConnectionPreferences, self).__init__(*args, **kw)
@@ -123,7 +127,17 @@ class ConnectionPreferences(FavoritesPreferencesHelper, ConnectionMixin):
     def _load_names(self):
         if self.username and self.password and self.host:
             if self.host:
+                def func():
+                    self.progress_state = True
+                do_after(50, func)
+
                 self._names = show_databases(self.host, self.username, self.password)
+
+                def func():
+                    self.progress_state = True
+
+                do_after(50, func)
+
             else:
                 warning(None, 'Invalid IP address format. "{}" e.g 129.255.12.255'.format(self.host))
 
@@ -217,7 +231,8 @@ class ConnectionPreferencesPane(PreferencesPane):
         db_grp = Group(HGroup(Item('kind', show_label=False),
                               Item('db_name',
                                    label='Database Name',
-                                   editor=ComboboxEditor(name='_names'))),
+                                   editor=ComboboxEditor(name='_names')),
+                              UItem('progress_icon', editor=AnimatedPNGEditor(state='progress_state'))),
                        # Item('save_username', label='User'),
                        HGroup(fav_grp, db_auth_grp),
                        show_border=True,
