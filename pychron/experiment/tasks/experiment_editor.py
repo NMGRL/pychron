@@ -22,6 +22,7 @@ from traitsui.api import View, UItem
 import os
 # ============= local library imports  ==========================
 from pychron.core.ui.qt.tabular_editor import TabularEditorHandler
+from pychron.core.ui.table_configurer import TableConfigurer
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.experiment.automated_run.tabular_adapter import AutomatedRunSpecAdapter, UVAutomatedRunSpecAdapter, \
     ExecutedAutomatedRunSpecAdapter, ExecutedUVAutomatedRunSpecAdapter
@@ -32,6 +33,7 @@ from pychron.core.helpers.filetools import add_extension
 
 class ExperimentEditorHandler(TabularEditorHandler):
     refresh_name = 'refresh_table_needed'
+
     def select_same(self, info, obj):
         obj.select_same()
 
@@ -62,19 +64,36 @@ class ExperimentEditor(BaseTraitsEditor):
     tabular_adapter_klass = AutomatedRunSpecAdapter
     executed_tabular_adapter_klass = ExecutedAutomatedRunSpecAdapter
     bgcolor = Color
-
+    tabular_adapter = Instance(AutomatedRunSpecAdapter)
+    executed_tabular_adapter = Instance(ExecutedAutomatedRunSpecAdapter)
 
     automated_runs_editable = Bool
+    table_configurer = Instance(TableConfigurer)
+
+    def show_table_configurer(self):
+        t = self.table_configurer
+        t.edit_traits()
+
+    def refresh(self):
+        self.queue.refresh_table_needed = True
 
     def set_colors(self, c, ec):
-        self.bgcolor=c
+        self.bgcolor = c
         self.tabular_adapter = self.tabular_adapter_klass()
         self.executed_tabular_adapter = self.executed_tabular_adapter_klass()
 
-        self.tabular_adapter.odd_bg_color=c
-        self.executed_tabular_adapter.odd_bg_color=c
-        self.tabular_adapter.even_bg_color=ec
-        self.executed_tabular_adapter.even_bg_color=ec
+        self.tabular_adapter.odd_bg_color = c
+        self.executed_tabular_adapter.odd_bg_color = c
+        self.tabular_adapter.even_bg_color = ec
+        self.executed_tabular_adapter.even_bg_color = ec
+
+        v = TableConfigurer(adapter=self.tabular_adapter,
+                            children=[self.executed_tabular_adapter],
+                            auto_set=True,
+                            refresh_func=self.refresh,
+                            id='experiment.table')
+
+        self.table_configurer = v
 
     def new_queue(self, txt=None, **kw):
         queue = self.queue_factory(**kw)
@@ -104,7 +123,7 @@ class ExperimentEditor(BaseTraitsEditor):
     def traits_view(self):
         # show row titles is causing a layout issue when resetting queues
         # disabling show_row_titles for the moment.
-        operations = ['delete','move']
+        operations = ['delete', 'move']
         if self.automated_runs_editable:
             operations.append('edit')
 
@@ -186,7 +205,7 @@ class ExperimentEditor(BaseTraitsEditor):
                 qi.executable = False
                 qi.initialized = False
                 hec.report_errors(err)
-                #self.information_dialog(err)
+                # self.information_dialog(err)
                 break
 
             err = hec.check_queue(qi)

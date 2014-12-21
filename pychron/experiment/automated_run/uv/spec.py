@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,7 +19,6 @@ from traits.api import Str, Button, List, CStr, Property
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.experiment.automated_run.spec import AutomatedRunSpec
-from pychron.experiment.automated_run.uv.automated_run import UVAutomatedRun
 from pychron.pychron_constants import NULL_STR
 
 
@@ -33,9 +32,9 @@ class UVAutomatedRunSpec(AutomatedRunSpec):
     browser_button = Button('Browse')
     image = Str
 
-    mask_position=Property(depends_on='mask')
-    mask_name=Property(depends_on='mask')
-    run_klass = UVAutomatedRun
+    mask_position = Property(depends_on='mask')
+    mask_name = Property(depends_on='mask')
+    run_klass = 'pychron.experiment.automated_run.uv.automated_run.UVAutomatedRun'
 
     def _get_mask_position(self):
         try:
@@ -45,6 +44,7 @@ class UVAutomatedRunSpec(AutomatedRunSpec):
 
     def _get_mask_name(self):
         return self.mask
+
     #@cached_property
     #def _get_masks(self):
     #    p = os.path.join(paths.device_dir, 'fusions_uv', 'mask_names.txt')

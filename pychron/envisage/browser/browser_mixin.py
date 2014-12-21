@@ -31,7 +31,7 @@ from pychron.database.orms.isotope.gen import gen_ProjectTable
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.envisage.browser.date_selector import DateSelector
 from pychron.envisage.browser.record_views import ProjectRecordView, LabnumberRecordView, AnalysisGroupRecordView
-from pychron.envisage.browser.table_configurer import SampleTableConfigurer
+from pychron.core.ui.table_configurer import SampleTableConfigurer
 from pychron.persistence_loggable import PersistenceLoggable
 from pychron.paths import paths
 

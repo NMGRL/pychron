@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -35,7 +35,7 @@ from pychron.experiment.tasks.experiment_actions import NewExperimentQueueAction
     OpenExperimentQueueAction, SignalCalculatorAction, \
     DeselectAction, SendTestNotificationAction, \
     NewPatternAction, OpenPatternAction, ResetQueuesAction, OpenLastExperimentQueueAction, UndoAction, \
-    QueueConditionalsAction
+    QueueConditionalsAction, ConfigureEditorTableAction
 
 
 class ExperimentPlugin(BaseTaskPlugin):
@@ -51,12 +51,12 @@ class ExperimentPlugin(BaseTaskPlugin):
     def _task_extensions_default(self):
         factory = lambda: Group(DeselectAction(),
                                 ResetQueuesAction(),
-                                UndoAction())
+                                UndoAction(),
+                                ConfigureEditorTableAction())
 
         return [TaskExtension(task_id='pychron.experiment.task',
-                              actions=[SchemaAddition(
-                                  factory=factory,
-                                  path='MenuBar/Edit')]),
+                              actions=[SchemaAddition(factory=factory,
+                                                      path='MenuBar/Edit')]),
                 TaskExtension(actions=[
                     SchemaAddition(id='open_queue_conditionals',
                                    factory=QueueConditionalsAction,
@@ -101,7 +101,7 @@ class ExperimentPlugin(BaseTaskPlugin):
                 so_image_browser,
                 so_sens_selector,
                 # so_ex
-                ]
+        ]
 
     # def _experimentor_factory(self):
     #     return self.experimentor

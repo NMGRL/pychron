@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -45,6 +45,11 @@ class ExperimentAction(Action):
     def _open_editor(self, event):
         application = event.task.window.application
         application.open_task(self.task_id)
+
+
+class ConfigureEditorTableAction(TaskAction):
+    name = 'Configure Experiment Table'
+    method = 'configure_experiment_table'
 
 
 class BasePatternAction(TaskAction):
@@ -159,7 +164,7 @@ class NewExperimentQueueAction(QueueAction):
 class OpenLastExperimentQueueAction(QueueAction):
     description = 'Open last executed experiment'
     name = 'Open Last Experiment...'
-    id ='pychron.open_last_experiment'
+    id = 'pychron.open_last_experiment'
 
     def __init__(self, *args, **kw):
         super(OpenLastExperimentQueueAction, self).__init__(*args, **kw)

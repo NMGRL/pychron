@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import imp
 
 from traits.api import Str, Int, Bool, Float, Property, \
     Enum, on_trait_change, CStr, Long
@@ -24,7 +25,7 @@ from datetime import datetime
 import uuid
 import weakref
 # ============= local library imports  ==========================
-from pychron.experiment.automated_run.automated_run import AutomatedRun
+#
 from pychron.experiment.utilities.identifier import get_analysis_type, make_rid, \
     make_runid, is_special, convert_extract_device
 from pychron.experiment.utilities.position_regex import XY_REGEX
@@ -121,7 +122,7 @@ class AutomatedRunSpec(Loggable):
     data_reduction_tag = ''
 
     analysis_type = Property(depends_on='labnumber')
-    run_klass = AutomatedRun
+    run_klass = 'pychron.experiment.automated_run.automated_run.AutomatedRun'
 
     identifier_error = Bool(False)
     _executable = Bool(True)
@@ -257,7 +258,13 @@ class AutomatedRunSpec(Loggable):
 
     def make_run(self, new_uuid=True, run=None):
         if run is None:
-            run = self.run_klass()
+            args = self.run_klass.split('.')
+            md, klass = '.'.join(args[:-1]), args[-1]
+
+            md = imp.find_module(md)
+            run = md[klass]()
+
+            # run = self.run_klass()
 
         for si in SCRIPT_KEYS:
             setattr(run.script_info, '{}_script_name'.format(si),

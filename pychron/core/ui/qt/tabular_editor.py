@@ -15,27 +15,41 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from PySide.QtCore import QRegExp, Qt
-from PySide.QtGui import QColor, QHeaderView, QWidget, QVBoxLayout, QLineEdit, QPushButton, QHBoxLayout, \
-    QSortFilterProxyModel, QSizePolicy, QCheckBox, QItemSelectionModel
 
 from traits.api import Bool, Str, List, Any, Instance, Property, Int, HasTraits, Color
 from traits.trait_base import SequenceTypes
 from traitsui.api import View, Item, TabularEditor, Handler
 from traitsui.mimedata import PyMimeData
-
 from traitsui.qt4.tabular_editor import TabularEditor as qtTabularEditor, \
-    _TableView, HeaderEventFilter
+    _TableView as TableView, HeaderEventFilter
 from traitsui.qt4.tabular_model import TabularModel, alignment_map
 # ============= standard library imports ========================
-# from PySide.QtGui import QKeySequence, QDrag, QAbstractItemView, QTableView, QApplication
-# from PySide.QtGui import QFont, QFontMetrics
 from PySide import QtCore, QtGui
+from PySide.QtGui import QColor, QHeaderView
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.consumer_mixin import ConsumerMixin
-from pychron.core.ui.gui import invoke_in_main_thread
-from pychron.envisage.resources import icon
+
+
+class myTabularEditor(TabularEditor):
+    key_pressed = Str
+    rearranged = Str
+    pasted = Str
+    copy_cache = Str
+
+    link_copyable = Bool(True)
+    pastable = Bool(True)
+
+    paste_function = Str
+    drop_factory = Str
+    col_widths = Str
+    drag_external = Bool(False)
+    drag_enabled = Bool(True)
+
+    bgcolor = Color
+
+    def _get_klass(self):
+        return _TabularEditor
 
 
 class MoveToRow(HasTraits):
@@ -68,7 +82,33 @@ class TabularKeyEvent(object):
         self.shift = mods == QtCore.Qt.ShiftModifier
 
 
-class _myTableView(_TableView, ConsumerMixin):
+class UnselectTabularEditorHandler(Handler):
+    refresh_name = Str('refresh_needed')
+    selected_name = Str('selected')
+
+    def unselect(self, info, obj):
+        setattr(obj, self.selected_name, [])
+        setattr(obj, self.refresh_name, True)
+
+
+class TabularEditorHandler(UnselectTabularEditorHandler):
+    def jump_to_start(self, info, obj):
+        obj.jump_to_start()
+
+    def jump_to_end(self, info, obj):
+        obj.jump_to_end()
+
+    def move_to_start(self, info, obj):
+        obj.move_selected_first()
+
+    def move_to_end(self, info, obj):
+        obj.move_selected_last()
+
+    def move_to_row(self, info, obj):
+        obj.move_selected_to_row()
+
+
+class _TableView(TableView, ConsumerMixin):
     """
         for drag and drop reference see
         https://github.com/enthought/traitsui/blob/master/traitsui/qt4/tree_editor.py
@@ -86,7 +126,7 @@ class _myTableView(_TableView, ConsumerMixin):
     drag_enabled = True
 
     def __init__(self, *args, **kw):
-        super(_myTableView, self).__init__(*args, **kw)
+        super(_TableView, self).__init__(*args, **kw)
 
         # self.setup_consumer(main=True)
         editor = self._editor
@@ -197,7 +237,7 @@ class _myTableView(_TableView, ConsumerMixin):
             # def _add(self, items, insert_mode='after', idx=None):
             # if idx is None:
             # selection = self.selectedIndexes()
-            #     if len(selection):
+            # if len(selection):
             #         offset = 1 if insert_mode == 'after' else 0
             #         idx = selection[-1].row() + offset
             #     else:
@@ -219,7 +259,7 @@ class _myTableView(_TableView, ConsumerMixin):
     # super(_myTableView, self).mousePressEvent(event)
     #
     # def _alt_move(self, event):
-    #     mods = event.modifiers()
+    # mods = event.modifiers()
     #     control_alt = int(mods) == int(Qt.AltModifier) + int(Qt.MetaModifier)
     #     if mods == Qt.AltModifier or control_alt:
     #         if self.option_select:
@@ -309,11 +349,11 @@ class _myTableView(_TableView, ConsumerMixin):
                     for ci in reversed(items):
                         model.insertRow(idx, obj=paste_func(ci))
 
-                # self._add(items, idx=idx)
-                # func = lambda a: self._add(a, idx=idx)
-                # self.add_consumable((self._add, (items,), {'idx':idx}))
-                # self.add_consumable((self._add, items))
-                # invoke_in_main_thread(self._add, items, idx=idx)
+                        # self._add(items, idx=idx)
+                        # func = lambda a: self._add(a, idx=idx)
+                        # self.add_consumable((self._add, (items,), {'idx':idx}))
+                        # self.add_consumable((self._add, items))
+                        # invoke_in_main_thread(self._add, items, idx=idx)
 
         else:
             self._editor.key_pressed = TabularKeyEvent(event)
@@ -335,7 +375,7 @@ class _myTableView(_TableView, ConsumerMixin):
             drag.setMimeData(md)
             drag.exec_(actions)
         else:
-            super(_myTableView, self).startDrag(actions)
+            super(_TableView, self).startDrag(actions)
 
     def dragEnterEvent(self, e):
         if self.is_external():
@@ -354,13 +394,13 @@ class _myTableView(_TableView, ConsumerMixin):
             # target is).
             e.acceptProposedAction()
         else:
-            super(_myTableView, self).dragEnterEvent(e)
+            super(_TableView, self).dragEnterEvent(e)
 
     def dragMoveEvent(self, e):
         if self.is_external():
             e.acceptProposedAction()
         else:
-            super(_myTableView, self).dragMoveEvent(e)
+            super(_TableView, self).dragMoveEvent(e)
 
     def dropEvent(self, e):
         if self.is_external():
@@ -390,109 +430,14 @@ class _myTableView(_TableView, ConsumerMixin):
             self._dragging = None
 
         else:
-            super(_myTableView, self).dropEvent(e)
+            super(_TableView, self).dropEvent(e)
 
     def is_external(self):
         #        print 'is_external', self._editor.factory.drag_external and not self._dragging
         return self._editor.factory.drag_external  # and not self._dragging
 
 
-class _myFilterTableView(_myTableView):
-    pass
-    # def sizeHint(self):
-    # sh = QtGui.QTableView.sizeHint(self)
-    # print sh, sh.width(), sh.height()
-    #
-    #     width = 0
-    #     for column in xrange(len(self._editor.adapter.columns)):
-    #         width += self.sizeHintForColumn(column)
-    #     sh.setWidth(width)
-    #
-    #     return sh
-
-
-class _FilterTableView(QWidget):
-    def __init__(self, parent, *args, **kw):
-        super(_FilterTableView, self).__init__(*args, **kw)
-        layout = QVBoxLayout()
-        layout.setSpacing(2)
-        self.table = table = _myFilterTableView(parent)
-
-        # table.setSizePolicy(QSizePolicy.Fixed,
-        # QSizePolicy.Fixed)
-        # table.setMinimumHeight(100)
-        # table.setMaximumHeight(50)
-        # table.setFixedHeight(50)
-        # table.setFixedWidth(50)
-
-        hl = QHBoxLayout()
-        self.button = button = QPushButton()
-        button.setIcon(icon('delete').create_icon())
-        button.setEnabled(False)
-        button.setFlat(True)
-        button.setSizePolicy(QSizePolicy.Fixed,
-                             QSizePolicy.Fixed)
-        button.setFixedWidth(25)
-
-        self.text = text = QLineEdit()
-        hl.addWidget(text)
-        hl.addWidget(button)
-        layout.addLayout(hl)
-        layout.addWidget(table)
-        self.setLayout(layout)
-
-        # def setSizePolicy(self, *args, **kwargs):
-        # super(_FilterTableView, self).setSizePolicy(*args, **kwargs)
-        # print args, kwargs
-
-    def get_text(self):
-        return self.text.text()
-
-    def __getattr__(self, item):
-        # print item
-        return getattr(self.table, item)
-
-
-class _EnableFilterTableView(_FilterTableView):
-    def __init__(self, parent, *args, **kw):
-        super(_FilterTableView, self).__init__(*args, **kw)
-        layout = QVBoxLayout()
-        # layout.setSpacing(1)
-        self.table = table = _myTableView(parent)
-
-        hl = QHBoxLayout()
-        hl.setSpacing(10)
-
-        self.button = button = QPushButton()
-        button.setIcon(icon('delete').create_icon())
-        button.setEnabled(False)
-        button.setFlat(True)
-        button.setSizePolicy(QSizePolicy.Fixed,
-                             QSizePolicy.Fixed)
-        button.setFixedWidth(25)
-
-        self.text = text = QLineEdit()
-        self.cb = cb = QCheckBox()
-
-        text.setEnabled(False)
-        button.setEnabled(False)
-        table.setEnabled(False)
-        # cb.setSizePolicy(QSizePolicy.Fixed,
-        # QSizePolicy.Fixed)
-        # cb.setFixedWidth(20)
-        # cb.setFixedHeight(20)
-
-        hl.addWidget(cb)
-        hl.addWidget(text)
-        hl.addWidget(button)
-        # hl.addStretch()
-        layout.addLayout(hl)
-        layout.addWidget(table)
-        layout.setSpacing(1)
-        self.setLayout(layout)
-
-
-class myTabularModel(TabularModel):
+class _TabularModel(TabularModel):
     def data(self, mi, role=None):
         """ Reimplemented to return the data.
         """
@@ -549,11 +494,11 @@ class myTabularModel(TabularModel):
 
 
 class _TabularEditor(qtTabularEditor):
-    widget_factory = _myTableView
+    widget_factory = _TableView
     copy_cache = List
     col_widths = List
     key_pressed = Any
-    model = Instance(myTabularModel)
+    model = Instance(_TabularModel)
 
     def _update_changed(self):
         super(_TabularEditor, self)._update_changed()
@@ -561,7 +506,7 @@ class _TabularEditor(qtTabularEditor):
     def init(self, parent):
         factory = self.factory
         self.adapter = factory.adapter
-        self.model = myTabularModel(editor=self)
+        self.model = _TabularModel(editor=self)
 
         # Create the control
         control = self.control = self.widget_factory(self)
@@ -697,157 +642,5 @@ class _TabularEditor(qtTabularEditor):
         qtTabularEditor._scroll_to_row_changed(self, 0)
         qtTabularEditor._scroll_to_row_changed(self, row)
 
-
-class myTabularEditor(TabularEditor):
-    key_pressed = Str
-    rearranged = Str
-    pasted = Str
-    copy_cache = Str
-
-    link_copyable = Bool(True)
-    pastable = Bool(True)
-
-    paste_function = Str
-    drop_factory = Str
-    col_widths = Str
-    drag_external = Bool(False)
-    drag_enabled = Bool(True)
-
-    bgcolor = Color
-
-    def _get_klass(self):
-        return _TabularEditor
-
-
-class _FilterTabularEditor(_TabularEditor):
-    widget_factory = _FilterTableView
-    proxyModel = Any
-
-    def init(self, parent):
-        super(_FilterTabularEditor, self).init(parent)
-
-        self.control.text.textChanged.connect(self.on_text_change)
-        self.control.button.clicked.connect(self.on_action)
-        self.proxyModel = proxyModel = QSortFilterProxyModel()
-        proxyModel.setSourceModel(self.model)
-
-        self.control.setModel(proxyModel)
-
-        if self.factory.multi_select:
-            slot = self._on_rows_selection
-        else:
-            slot = self._on_row_selection
-        signal = 'selectionChanged(QItemSelection,QItemSelection)'
-        QtCore.QObject.connect(self.control.table.selectionModel(),
-                               QtCore.SIGNAL(signal), slot)
-
-    def on_action(self):
-        self.control.text.setText('')
-
-    def on_text_change(self):
-        ft = self.control.get_text()
-        reg = QRegExp('^{}'.format(ft), Qt.CaseInsensitive)
-        self.proxyModel.setFilterRegExp(reg)
-        self.control.button.setEnabled(bool(ft))
-
-    def _on_row_selection(self, added, removed):
-        """ Handle the row selection being changed.
-        """
-        self._no_update = True
-        try:
-            index = None
-            indexes = self.control.selectionModel()
-            if isinstance(indexes, QItemSelectionModel):
-                index = self.proxyModel.mapFromSource(indexes.currentIndex())
-            elif len(indexes):
-                index = self.proxyModel.mapToSource(indexes[0])
-
-            if index:
-                self.selected_row = index.row()
-                self.selected = self.adapter.get_item(self.object, self.name,
-                                                      self.selected_row)
-            else:
-                self.selected_row = -1
-                self.selected = None
-        finally:
-            self._no_update = False
-
-    def _on_rows_selection(self, added, removed):
-        """ Handle the rows selection being changed.
-        """
-        self._no_update = True
-        try:
-            indexes = self.control.selectionModel().selectedRows()
-            selected_rows = []
-            selected = []
-            for index in indexes:
-                index = self.proxyModel.mapToSource(index)
-                row = index.row()
-                selected_rows.append(row)
-                selected.append(self.adapter.get_item(self.object, self.name,
-                                                      row))
-            self.multi_selected_rows = selected_rows
-            self.multi_selected = selected
-        finally:
-            self._no_update = False
-
-
-class _EnableFilterTabularEditor(_FilterTabularEditor):
-    widget_factory = _EnableFilterTableView
-    enabled_cb = Bool
-
-    def init(self, parent):
-        super(_EnableFilterTabularEditor, self).init(parent)
-
-        self.control.cb.stateChanged.connect(self.on_cb)
-        if self.factory.enabled_cb:
-            self.sync_value(self.factory.enabled_cb, 'enabled_cb', 'both')
-
-    def _enabled_cb_changed(self, new):
-        self.control.text.setEnabled(new)
-        if self.control.get_text():
-            self.control.button.setEnabled(new)
-        self.control.table.setEnabled(new)
-        self.control.cb.setChecked(new)
-
-    def on_cb(self, v):
-        v = bool(v)
-        self.enabled_cb = v
-
-
-class FilterTabularEditor(myTabularEditor):
-    enabled_cb = Str
-
-    def _get_klass(self):
-        if self.enabled_cb:
-            return _EnableFilterTabularEditor
-        else:
-            return _FilterTabularEditor
-
-
-class UnselectTabularEditorHandler(Handler):
-    refresh_name = Str('refresh_needed')
-    selected_name = Str('selected')
-
-    def unselect(self, info, obj):
-        setattr(obj, self.selected_name, [])
-        setattr(obj, self.refresh_name, True)
-
-
-class TabularEditorHandler(UnselectTabularEditorHandler):
-    def jump_to_start(self, info, obj):
-        obj.jump_to_start()
-
-    def jump_to_end(self, info, obj):
-        obj.jump_to_end()
-
-    def move_to_start(self, info, obj):
-        obj.move_selected_first()
-
-    def move_to_end(self, info, obj):
-        obj.move_selected_last()
-
-    def move_to_row(self, info, obj):
-        obj.move_selected_to_row()
 
 # ============= EOF =============================================

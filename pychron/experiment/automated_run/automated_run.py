@@ -32,7 +32,7 @@ import weakref
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import add_extension, get_path
 from pychron.experiment.automated_run.peak_hop_collector import PeakHopCollector
-from pychron.experiment.automated_run.persistence import AutomatedRunPersister
+# from pychron.experiment.automated_run.persistence import AutomatedRunPersister
 from pychron.experiment.automated_run.syn_extraction import SynExtractionCollector
 from pychron.experiment.automated_run.hop_util import parse_hops
 from pychron.experiment.utilities.conditionals import test_queue_conditionals_name
@@ -86,7 +86,7 @@ class AutomatedRun(Loggable):
 
     multi_collector = Instance(MultiCollector)
     peak_hop_collector = Instance(PeakHopCollector)
-    persister = Instance(AutomatedRunPersister, ())
+    persister = Instance('pychron.experiment.automated_run.persistence.AutomatedRunPersister', ())
     collector = Property
 
     script_info = Instance(ScriptInfo, ())

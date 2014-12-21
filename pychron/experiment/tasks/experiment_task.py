@@ -19,12 +19,11 @@ from traits.api import on_trait_change, Bool, Instance, Event, Color
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
 from pyface.constant import CANCEL, NO
 # ============= standard library imports ========================
-import shutil
 import weakref
 import os
 import xlrd
 # ============= local library imports  ==========================
-from pychron.core.helpers.filetools import add_extension, unique_date_path, backup
+from pychron.core.helpers.filetools import add_extension, backup
 from pychron.core.ui.preference_binding import color_bind_preference
 from pychron.envisage.tasks.editor_task import EditorTask
 from pychron.envisage.tasks.pane_helpers import ConsolePane
@@ -69,6 +68,10 @@ class ExperimentEditorTask(EditorTask):
     load_pane = Instance('pychron.loading.panes.LoadDockPane')
     load_table_pane = Instance('pychron.loading.panes.LoadTablePane')
     laser_control_client_pane = None
+
+    def configure_experiment_table(self):
+        if self.has_active_editor():
+            self.active_editor.show_table_configurer()
 
     def new_pattern(self):
         pm = self._pattern_maker_view_factory()
@@ -342,7 +345,7 @@ class ExperimentEditorTask(EditorTask):
     def _publish_notification(self, run):
         if self.use_notifications:
             # msg = 'RunAdded {}'.format(run.uuid)
-            #self.info('pushing notification {}'.format(msg))
+            # self.info('pushing notification {}'.format(msg))
             self.notifier.send_notification(run.uuid)
 
     def _prompt_for_save(self):
@@ -420,7 +423,7 @@ class ExperimentEditorTask(EditorTask):
 
     # def _use_syslogger_changed(self):
     # if self.use_syslogger:
-    #         from pychron.experiment.sys_log import SysLogger
+    # from pychron.experiment.sys_log import SysLogger
     #
     #         prefid = 'pychron.syslogger'
     #         self.syslogger = SysLogger()

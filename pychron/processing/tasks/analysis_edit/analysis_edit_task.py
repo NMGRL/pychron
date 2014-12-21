@@ -28,7 +28,7 @@ import binascii
 from pychron.core.helpers.iterfuncs import partition
 from pychron.core.progress import progress_iterator
 from pychron.easy_parser import EasyParser
-from pychron.envisage.browser.table_configurer import RecallTableConfigurer
+from pychron.core.ui.table_configurer import RecallTableConfigurer
 from pychron.envisage.tasks.actions import ToggleFullWindowAction
 from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter, IntermediateTabularAdapter
 from pychron.processing.k3739_edit import K3739EditModel, K3739EditView

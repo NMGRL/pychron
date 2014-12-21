@@ -26,15 +26,16 @@ from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
 
-class ConfigurableAdapterMixin(HasTraits):
-    all_columns = List
-    all_columns_dict = Property
+# class ConfigurableAdapterMixin(HasTraits):
+#     all_columns = List
+#     all_columns_dict = Property
+#
+#     def _get_all_columns_dict(self):
+#         return dict(self.all_columns)
+from pychron.core.configurable_tabular_adapter import ConfigurableMixin
 
-    def _get_all_columns_dict(self):
-        return dict(self.all_columns)
 
-
-class BrowserAdapter(TabularAdapter, ConfigurableAdapterMixin):
+class BrowserAdapter(TabularAdapter, ConfigurableMixin):
     font = 'arial 10'
 
     def get_tooltip(self, obj, trait, row, column):
@@ -64,6 +65,7 @@ class SampleAdapter(BrowserAdapter):
     name_width = Int(125)
     labnumber_width = Int(60)
     material_width = Int(75)
+
 
 
 class LabnumberAdapter(BrowserAdapter):

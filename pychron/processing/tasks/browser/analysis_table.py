@@ -20,7 +20,7 @@ from traits.api import HasTraits, List, Any, Str, Enum, Bool, Button, \
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.browser.browser_mixin import filter_func
-from pychron.envisage.browser.table_configurer import AnalysisTableConfigurer
+from pychron.core.ui.table_configurer import AnalysisTableConfigurer
 
 
 class AnalysisTable(HasTraits):

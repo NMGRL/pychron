@@ -18,19 +18,15 @@
 from pyface.action.menu_manager import MenuManager
 from traits.trait_types import Int, Str
 from traits.traits import Property
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-
-
-
-# ============= EOF =============================================
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
+from pychron.core.configurable_tabular_adapter import ConfigurableMixin
 from pychron.core.helpers.formatting import format_percent_error
 from uncertainties import nominal_value, std_dev
 from pychron.core.helpers.formatting import floatfmt
-from pychron.envisage.browser.adapters import ConfigurableAdapterMixin
+
 
 SIGMA_1 = u'\u00b11\u03c3'
 TABLE_FONT = 'arial 11'
@@ -127,7 +123,8 @@ class ComputedValueTabularAdapter(BaseTabularAdapter):
         return format_percent_error(v, e)
 
 
-class IntermediateTabularAdapter(BaseTabularAdapter, ConfigurableAdapterMixin):
+
+class IntermediateTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
     all_columns = [('Iso.', 'name'),
                    ('I', 'intercept'),
                    (SIGMA_1, 'intercept_error'),
@@ -270,7 +267,7 @@ class IntermediateTabularAdapter(BaseTabularAdapter, ConfigurableAdapterMixin):
         return format_percent_error(v.nominal_value, v.std_dev)
 
 
-class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableAdapterMixin):
+class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
     all_columns = [('Iso.', 'name'),
                    ('Det.', 'detector'),
                    ('Fit', 'fit_abbreviation'),
@@ -403,3 +400,4 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableAdapterMixin):
     def _get_include_baseline_error_text(self):
         return 'Yes' if self.item.include_baseline_error else 'No'
 
+# ============= EOF =============================================

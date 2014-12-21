@@ -72,6 +72,7 @@ class PreferencesDialog(PD):
         a = UItem('_tabs', width=-125,
                   editor=TabularEditor(adapter=CatergoryAdapter(),
                                        editable=False,
+                                       horizontal_lines=False,
                                        selected='_selected'))
         b = UItem('_selected', style='custom')
         v = View(HGroup(a, b),
