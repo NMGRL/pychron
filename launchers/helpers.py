@@ -104,7 +104,9 @@ def initialize_version(appname, debug):
 
     # setup logging. set a basename for log files and logging level
     logging_setup('pychron', level='DEBUG')
-    set_exception_handler()
+    if not debug:
+        set_exception_handler()
+
     return user
 
 
