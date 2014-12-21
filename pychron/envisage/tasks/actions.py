@@ -207,7 +207,7 @@ class NoteAction(WebAction):
 
 class DocumentationAction(WebAction):
     name = 'View Documentation'
-    image = icon('document-properties')
+    image = icon('documentation')
 
     def perform(self, event):
         """

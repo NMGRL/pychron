@@ -227,6 +227,7 @@ class ConsolePreferencesPane(BaseConsolePreferencesPane):
                                UItem('bgcolor')),
                         preview,
                         Item('use_message_colormapping'),
+                        show_border=True,
                         label=self.label))
         return v
 

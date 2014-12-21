@@ -53,7 +53,7 @@ class PychronTasksPlugin(Plugin):
 
 
 class mPreferencesAction(PreferencesAction):
-    image = icon('cog')
+    image = icon('preferences-desktop')
 
 
 class mExitAction(ExitAction):

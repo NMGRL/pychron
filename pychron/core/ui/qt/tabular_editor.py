@@ -15,13 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from PySide.QtCore import QSize
+from pyface.image_resource import ImageResource
 
 from traits.api import Bool, Str, List, Any, Instance, Property, Int, HasTraits, Color
 from traits.trait_base import SequenceTypes
 from traitsui.api import View, Item, TabularEditor, Handler
 from traitsui.mimedata import PyMimeData
 from traitsui.qt4.tabular_editor import TabularEditor as qtTabularEditor, \
-    _TableView as TableView, HeaderEventFilter
+    _TableView as TableView, HeaderEventFilter, _ItemDelegate
 from traitsui.qt4.tabular_model import TabularModel, alignment_map
 # ============= standard library imports ========================
 from PySide import QtCore, QtGui
@@ -47,6 +49,7 @@ class myTabularEditor(TabularEditor):
     drag_enabled = Bool(True)
 
     bgcolor = Color
+    row_height = Int
 
     def _get_klass(self):
         return _TabularEditor
@@ -108,6 +111,12 @@ class TabularEditorHandler(UnselectTabularEditorHandler):
         obj.move_selected_to_row()
 
 
+class ItemDelegate(_ItemDelegate):
+    pass
+    # def drawDecoration(self, painter, option, rect, pixmap):
+    #     print 'asdf', painter, option, rect, pixmap
+
+
 class _TableView(TableView, ConsumerMixin):
     """
         for drag and drop reference see
@@ -127,6 +136,7 @@ class _TableView(TableView, ConsumerMixin):
 
     def __init__(self, *args, **kw):
         super(_TableView, self).__init__(*args, **kw)
+        self.setItemDelegate(ItemDelegate(self))
 
         # self.setup_consumer(main=True)
         editor = self._editor
@@ -135,18 +145,20 @@ class _TableView(TableView, ConsumerMixin):
         vheader = self.verticalHeader()
 
         # size = vheader.minimumSectionSize()
-
         font = editor.adapter.get_font(editor.object, editor.name, 0)
         if font is not None:
             fnt = QtGui.QFont(font)
             size = QtGui.QFontMetrics(fnt)
+            height = size.height()+6
+        if editor.factory.row_height:
+            height = editor.factory.row_height
 
-            vheader.setDefaultSectionSize(size.height() + 6)
-            vheader.ResizeMode(QHeaderView.ResizeToContents)
-            hheader = self.horizontalHeader()
+        vheader.setDefaultSectionSize(height)
+        vheader.ResizeMode(QHeaderView.ResizeToContents)
+        hheader = self.horizontalHeader()
             # hheader.setStretchLastSection(editor.factory.stretch_last_section)
-            vheader.setFont(fnt)
-            hheader.setFont(fnt)
+        vheader.setFont(fnt)
+        hheader.setFont(fnt)
 
     def set_bg_color(self, bgcolor):
         if isinstance(bgcolor, tuple):
@@ -238,7 +250,7 @@ class _TableView(TableView, ConsumerMixin):
             # if idx is None:
             # selection = self.selectedIndexes()
             # if len(selection):
-            #         offset = 1 if insert_mode == 'after' else 0
+            # offset = 1 if insert_mode == 'after' else 0
             #         idx = selection[-1].row() + offset
             #     else:
             #         idx = len(self._editor.value)
@@ -260,7 +272,7 @@ class _TableView(TableView, ConsumerMixin):
     #
     # def _alt_move(self, event):
     # mods = event.modifiers()
-    #     control_alt = int(mods) == int(Qt.AltModifier) + int(Qt.MetaModifier)
+    # control_alt = int(mods) == int(Qt.AltModifier) + int(Qt.MetaModifier)
     #     if mods == Qt.AltModifier or control_alt:
     #         if self.option_select:
     #             mode = 'before' if control_alt else 'after'
@@ -454,6 +466,7 @@ class _TabularModel(TabularModel):
 
         elif role == QtCore.Qt.DecorationRole:
             image = editor._get_image(adapter.get_image(obj, name, row, column))
+
             if image is not None:
                 return image
 
@@ -499,9 +512,7 @@ class _TabularEditor(qtTabularEditor):
     col_widths = List
     key_pressed = Any
     model = Instance(_TabularModel)
-
-    def _update_changed(self):
-        super(_TabularEditor, self)._update_changed()
+    image_size = (32, 32)
 
     def init(self, parent):
         factory = self.factory
@@ -620,16 +631,26 @@ class _TabularEditor(qtTabularEditor):
         self.control._should_consume = False
         super(_TabularEditor, self).dispose()
 
-    def _copy_cache_changed(self):
-        if self.control:
-            self.control._linked_copy_cache = self.copy_cache
-
     def refresh_editor(self):
         if self.control:
             self.control.set_vertical_header_font(self.adapter.font)
             self.control.set_horizontal_header_font(self.adapter.font)
 
             super(_TabularEditor, self).refresh_editor()
+
+    def _add_image(self, image_resource):
+        """ Adds a new image to the image map.
+
+            reimplement to display images instead of icons
+            images respect their original size
+            icons are scaled down to 16x16
+        """
+        image = image_resource.create_image()
+
+        self.image_resources[image_resource] = image
+        self.images[image_resource.name] = image
+
+        return image
 
     def _on_column_resize(self, idx, old, new):
         control = self.control
@@ -642,5 +663,11 @@ class _TabularEditor(qtTabularEditor):
         qtTabularEditor._scroll_to_row_changed(self, 0)
         qtTabularEditor._scroll_to_row_changed(self, row)
 
+    def _copy_cache_changed(self):
+        if self.control:
+            self.control._linked_copy_cache = self.copy_cache
+
+            # def _update_changed(self):
+            # super(_TabularEditor, self)._update_changed()
 
 # ============= EOF =============================================
