@@ -17,7 +17,8 @@
 # ============= enthought library imports =======================
 import ConfigParser
 import os
-from traits.api import HasTraits, Button, Instance, List, Str, Any, Enum, CStr, Int
+from traits.api import HasTraits, Button, Instance, List, Str, \
+    Any, Enum, CStr, Int, Float
 from traits.trait_types import Bool, String
 from traitsui.api import View, Item, VGroup
 # ============= standard library imports ========================
@@ -40,6 +41,15 @@ class ConfigGroup(HasTraits):
         if self.config_obj:
             if self.config_obj.has_option(self.tag, name):
                 self.config_obj.set(self.tag, name, new)
+
+
+class ScanGroup(ConfigGroup):
+    tag = 'Scan'
+    enabled = Bool
+    graph = Bool
+    record = Bool
+    auto_start = Bool
+    period = Float
 
 
 class CommunicationGroup(ConfigGroup):
@@ -67,8 +77,8 @@ class EthernetCommunicationGroup(CommunicationGroup):
 
     def load_from_config(self, cfg):
         self.port = cfg('port', cast='int')
-        self.host = cfg('host')
-        self.kind = cfg('kind')
+        self.host = cfg('host', default='localhost')
+        self.kind = cfg('kind', default='UDP')
 
     def traits_view(self):
         v = View(Item('host'),
@@ -89,7 +99,8 @@ class DeviceConfigurer(Loggable):
 
     kind = Enum('ethernet', 'serial')
     communication_grp = Instance(CommunicationGroup)
-    # comms_visible = Bool(False)
+    scan_grp = Instance(ScanGroup, ())
+    comms_visible = Bool(False)
 
     def set_device(self, device):
         p = device.config_path
@@ -109,12 +120,48 @@ class DeviceConfigurer(Loggable):
             if klass:
                 self.communication_grp = klass()
 
-                def func(option, cast=None, **kw):
+                def func(option, cast=None, default=None, **kw):
                     f = getattr(cfg, 'get{}'.format(cast if cast else ''))
-                    return f(section, option, **kw)
+                    try:
+                        v = f(section, option, **kw)
+                    except ConfigParser.NoOptionError:
+                        v = default
+                        if v is None:
+                            if cast == 'boolean':
+                                v = False
+                            elif cast in ('float', 'int'):
+                                v = 0
+                    return v
 
                 self.communication_grp.load_from_config(func)
                 self.communication_grp.config_obj = cfg
+                self.comms_visible = True
+        else:
+            self.comms_visible = False
+            self.communication_grp = CommunicationGroup()
+
+        section = 'Scan'
+        if cfg.has_section(section):
+            bfunc = lambda *args: cfg.getboolean(*args)
+            ffunc = lambda *args: cfg.getfloat(*args)
+        else:
+            bfunc = lambda *args: False
+            ffunc = lambda *args: 0
+
+        sgrp = self.scan_grp
+        for attr in ('enabled', 'graph', 'record', 'auto_start'):
+            try:
+                v = bfunc(section, attr)
+            except ConfigParser.NoOptionError:
+                v = False
+            setattr(sgrp, attr, v)
+
+        for attr in ('period',):
+            try:
+                v = ffunc(section, attr)
+            except ConfigParser.NoOptionError:
+                v = 0
+            setattr(sgrp, attr, v)
 
     def _save_button_fired(self):
         self._dump()

@@ -42,19 +42,29 @@ class ConfigurationPane(TraitsDockPane):
     def trait_context(self):
         if self.model:
             return {'object': self.model.device_configurer,
+                    'scan': self.model.device_configurer.scan_grp,
                     'pane': self}
         return super(TraitsDockPane, self).trait_context()
 
     def traits_view(self):
-        coms_grp = VGroup(UItem('communication_grp',
-                                style='custom',
-                                visible_when='communication_grp'),
-                          show_border=True, label='Communications')
+        comms_grp = VGroup(UItem('communication_grp',
+                                 style='custom'),
+                           visible_when='comms_visible',
+                           show_border=True, label='Communications')
+
+        scan_grp = VGroup(Item('scan.enabled'),
+                          VGroup(Item('scan.graph'),
+                                 Item('scan.record'),
+                                 Item('scan.auto_start'),
+                                 Item('scan.period'),
+                                 enabled_when='scan.enabled'),
+                          show_border=True, label='Scan')
 
         v = View(VGroup(HGroup(UReadonly('config_name'),
                                icon_button_editor('save_button', 'document-save',
                                                   enabled_when='config_path')),
-                        coms_grp),
+                        comms_grp,
+                        scan_grp),
                  height=500,
                  resizable=True)
         return v
