@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from apptools.preferences.preference_binding import bind_preference
 from envisage.extension_point import ExtensionPoint
 from envisage.plugin import Plugin
 from envisage.ui.tasks.action.exit_action import ExitAction
@@ -26,6 +27,7 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 from traits.api import List
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from traits.trait_types import Str
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import ToggleFullWindowAction, EditInitializationAction
 from pychron.envisage.tasks.preferences import GeneralPreferencesPane
@@ -77,13 +79,13 @@ class myTasksPlugin(TasksPlugin):
 
         return [TaskExtension(actions=actions)]
 
-        # def _create_preferences_dialog_service(self):
-        #    from preferences_dialog import myPreferencesDialog
-        #
-        #    dialog = myPreferencesDialog(application=self.application)
-        #    dialog.trait_set(categories=self.preferences_categories,
-        #                     panes=[factory(dialog=dialog)
-        #                            for factory in self.preferences_panes])
-        #    return dialog
+    def _create_preferences_dialog_service(self):
+       from preferences_dialog import PreferencesDialog
+
+       dialog = PreferencesDialog(application=self.application)
+       dialog.trait_set(categories=self.preferences_categories,
+                        panes=[factory(dialog=dialog)
+                               for factory in self.preferences_panes])
+       return dialog
 
 # ============= EOF =============================================

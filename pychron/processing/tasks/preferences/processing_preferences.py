@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Int, Bool, Property
-from traitsui.api import View, Item, Group
+from traitsui.api import View, Item, Group, VGroup
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -61,10 +61,12 @@ class BrowsingPreferencesPane(PreferencesPane):
                                      show_border=True,
                                      label='Graphical Filter')
 
-        v = View(Item('reference_hours_padding',
+        v = View(VGroup(Item('reference_hours_padding',
                       tooltip='Split analysis series when consecutive analyses are greater than X hours',
                       label='References Window (hrs)'),
-                 recent_grp, graphical_filter_grp)
+                 recent_grp, graphical_filter_grp,
+                 show_border=True,
+                 label='Processing'))
         return v
 
 

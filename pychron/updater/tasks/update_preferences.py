@@ -43,7 +43,7 @@ class UpdatePreferencesHelper(GitRepoPreferencesHelper):
             cmd = 'https://api.github.com/repos/{}/branches'.format(new)
             doc = urllib2.urlopen(cmd)
             bs = [branch['name'] for branch in json.load(doc)]
-            return [bi for bi in bs if bi.startswith('release') or bi in ('develop','master')]
+            return [bi for bi in bs if bi.startswith('release') or bi in ('develop', 'master')]
         except BaseException:
             return []
 
@@ -57,11 +57,15 @@ class UpdatePreferencesPane(PreferencesPane):
     category = 'Update'
 
     def traits_view(self):
-        v = View(Item('check_on_startup', label='Check for updates at startup'),
-                 VGroup(remote_status_item(),
-                        Item('branch', editor=EnumEditor(name='_branches'), label='Branch'),
-                        show_border=True,
-                        label='Update Repo'))
+        v = View(VGroup(Item('check_on_startup',
+                             label='Check for updates at startup'),
+                        VGroup(remote_status_item(),
+                               Item('branch', editor=EnumEditor(name='_branches'),
+                                    label='Branch'),
+                               show_border=True,
+                               label='Update Repo'),
+                        label='Update',
+                        show_border=True))
         return v
 
 # ============= EOF =============================================

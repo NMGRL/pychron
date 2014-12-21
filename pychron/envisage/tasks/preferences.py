@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
+from traits.trait_types import Str
 from traitsui.api import View, Item, VGroup
 from traits.api import Directory, Bool
 # ============= standard library imports ========================
@@ -42,6 +43,7 @@ class GeneralPreferencesPane(PreferencesPane):
         v = View(VGroup(root_grp,
                         login_grp,
                         remote_status_item('Laboratory Repo'),
+                        label='General',
                         show_border=True))
         return v
 
