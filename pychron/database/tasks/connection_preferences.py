@@ -13,11 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
 # ============= enthought library imports =======================
 from pyface.message_dialog import warning
 from pyface.timer.do_later import do_later, do_after
-import re
 from traits.api import Str, Password, Enum, Button, Bool, \
     on_trait_change, Color, String, List, Event
 from traits.has_traits import HasTraits
@@ -25,15 +23,13 @@ from traitsui.api import View, Item, Group, VGroup, HGroup, ListStrEditor, sprin
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traitsui.editors import TextEditor
 from traitsui.item import UItem
+
 from pychron.core.pychron_traits import IPAddress
 from pychron.core.ui.animated_png_editor import AnimatedPNGEditor
 from pychron.core.ui.combobox_editor import ComboboxEditor
-
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper, \
     FavoritesPreferencesHelper, FavoritesAdapter
-
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel

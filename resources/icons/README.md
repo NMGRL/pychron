@@ -1,8 +1,9 @@
 
-Most of these icon files come from the Open Icon Library or Silk Icon set
+Most of these icon files come from the Open Icon Library, Silk Icon set, or FatCow
 
 - http://sourceforge.net/projects/openiconlibrary/
 - http://www.famfamfam.com/lab/icons/silk/
+- http://www.fatcow.com/free-icons
 
 #Open Icon Library   
 

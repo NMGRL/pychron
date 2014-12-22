@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,8 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
-
 
 # =============enthought library imports=======================
 from Image import Image
@@ -26,12 +24,6 @@ from pyface.image_resource import ImageResource
 from traitsui.ui_traits import convert_bitmap as traitsui_convert_bitmap
 
 from pychron.core.ui.gui import invoke_in_main_thread
-
-
-
-
-
-
 
 # =============standard library imports ========================
 
@@ -53,9 +45,8 @@ def convert_bitmap(image, width=None, height=None):
     else:
         s = image.shape
         if len(s) >= 2:
-            im = QImage(image.tostring(),
-                        s[1], s[0],
-                        QImage.Format_RGB888)
+            # im = QImage(image.tostring(),s[1], s[0], QImage.Format_RGB888)
+            im = QImage(image, s[1], s[0], QImage.Format_RGB888)
             pix = QPixmap.fromImage(QImage.rgbSwapped(im))
         else:
             pix = QPixmap()
@@ -68,6 +59,7 @@ def convert_bitmap(image, width=None, height=None):
             pix = pix.scaledToHeight(height)
 
     return pix
+
 
 class myQLabel(QLabel):
     def paintEvent(self, event):
@@ -85,7 +77,6 @@ class _ImageEditor(Editor):
 
         image_ctrl = myQLabel()
 
-
         if image is not None:
             image_ctrl.setPixmap(convert_bitmap(image))
         self.image_ctrl = image_ctrl
@@ -96,8 +87,8 @@ class _ImageEditor(Editor):
             scroll_area.setWidget(image_ctrl)
 
             scroll_area.setWidgetResizable(True)
-            scroll_area.setMinimumWidth(max(0,self.item.width))
-            scroll_area.setMinimumHeight(max(0,self.item.height))
+            scroll_area.setMinimumWidth(max(0, self.item.width))
+            scroll_area.setMinimumHeight(max(0, self.item.height))
 
             self.control = scroll_area
         else:

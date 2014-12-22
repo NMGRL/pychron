@@ -381,6 +381,7 @@ class NewAction(PAction):
 class ToggleFullWindowAction(myTaskAction):
     name = 'Toggle Full Window'
     method = 'toggle_full_window'
+    image = icon('view-fullscreen-8')
     task_ids = ['pychron.recall', 'pychron.labbook', 'pychron.processing.figures']
 
 

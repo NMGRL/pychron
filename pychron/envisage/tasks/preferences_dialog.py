@@ -37,17 +37,16 @@ ICON_MAP = {'Database': icon('database'),
             'General': icon('go-home-5'),
             'Spectrometer': icon('prism'),
 
-            'Constants': icon('constants'),
+            'Constants': icon('applications-education-mathematics'),
             'Labspy': icon('labspy'),
             'Fusions Diode': icon('laser'),
             'Fusions UV': icon('laser'),
             'Fusions CO2': icon('laser'),
             'ExtractionLine': icon('extraction_line'),
-            'Loading': icon('loading'),
-            'Scripts': icon('scripts'),
+            'Loading': icon('bonecrusher-icon'),
+            'Scripts': icon('1419242249_List'),
             'Dashboard': icon('dashboard'),
-            'SystemMonitor': icon('sys_mon')
-            }
+            'SystemMonitor': icon('sys_mon')}
 
 
 class CatergoryAdapter(TabularAdapter):
@@ -106,100 +105,100 @@ class PreferencesDialog(PD):
                  buttons=['OK', 'Cancel'])
         return v
 
-        # ============= EOF =============================================
-        # cols = [ObjectColumn(name='name',
-        # width=104,
-        # label='Category'),
-        # ObjectColumn(name='image',
-        # label='image',
-        # width=20)]
-        # cat_grp = UItem('_tabs',
-        # width=-125,
-        # editor=TableEditor(columns=cols,
-        # editable=False,
-        # sortable=False,
-        # selected='_selected')
+# ============= EOF =============================================
+# cols = [ObjectColumn(name='name',
+# width=104,
+# label='Category'),
+# ObjectColumn(name='image',
+# label='image',
+# width=20)]
+# cat_grp = UItem('_tabs',
+# width=-125,
+# editor=TableEditor(columns=cols,
+# editable=False,
+# sortable=False,
+# selected='_selected')
 
-        # v = View(HGroup(,
-        # UItem('_selected',
-        # style='custom')),
-        #     height = 500,
-        #              width = 800,
-        #                      kind = 'livemodal',
-        #                             title = 'Preferences',
-        #                                     resizable = True,
-        #                                                 buttons = ['OK', 'Cancel'])
-        # class myPreferencesDialog(PreferencesDialog):
-        # names = List
-        # selected = Str
-        #
-        # def traits_view(self):
-        # buttons = ['OK', 'Cancel']
-        # if self.show_apply:
-        # buttons = ['Apply'] + buttons
-        #
-        # v = View(
-        # HSplit(
-        # UItem('names',
-        # editor=ListStrEditor(
-        # selected='selected',
-        #                           editable=False,
-        #                       ),
-        #                       width=0.25
-        #                 ),
-        #                 UItem('_selected',
-        #                       style='custom',
-        #                       width=0.75
-        #                 )
-        #             ),
-        #             width=600,
-        #             height=400,
-        #             resizable=True,
-        #             buttons=buttons,
-        #             title='Preferences',
-        #             kind='livemodal'
-        #         )
-        #         return v
-        #
-        #     def apply(self, info=None):
-        #         """ Handles the Apply button being clicked.
-        #         """
-        #         for tab in self._tabs:
-        #             for pane in tab.panes:
-        #                 try:
-        #                     pane.apply()
-        #                 except BaseException:
-        #                     print pane
-        #
-        #                     #self.names=[]
-        #                     #self._update_tabs()
-        #                     #info.dispose()
-        #
-        #
-        #     def _selected_changed(self):
-        #         name = self.selected
-        #         t = next((tab for tab in self._tabs if tab.name == name))
-        #         self._selected = t
-        #
-        #     @on_trait_change('categories, panes')
-        #     def _update_tabs(self):
-        #         # Build a { category id -> [ PreferencePane ] } map.
-        #         categories = self.categories[:]
-        #         category_map = dict((category.id, []) for category in categories)
-        #         for pane in self.panes:
-        #             if pane.category in category_map:
-        #                 category_map[pane.category].append(pane)
-        #             else:
-        #                 categories.append(PreferencesCategory(id=pane.category))
-        #                 category_map[pane.category] = [pane]
-        #
-        #         # Construct the appropriately sorted list of preference tabs.
-        #         tabs = []
-        #         names = []
-        #         for category in before_after_sort(categories):
-        #             panes = before_after_sort(category_map[category.id])
-        #             tabs.append(PreferencesTab(name=category.name, panes=panes))
-        #             names.append(category.name)
-        #
-        #         self._tabs = tabs
-        #         self.names = names
+# v = View(HGroup(,
+# UItem('_selected',
+# style='custom')),
+#     height = 500,
+#              width = 800,
+#                      kind = 'livemodal',
+#                             title = 'Preferences',
+#                                     resizable = True,
+#                                                 buttons = ['OK', 'Cancel'])
+# class myPreferencesDialog(PreferencesDialog):
+# names = List
+# selected = Str
+#
+# def traits_view(self):
+# buttons = ['OK', 'Cancel']
+# if self.show_apply:
+# buttons = ['Apply'] + buttons
+#
+# v = View(
+# HSplit(
+# UItem('names',
+# editor=ListStrEditor(
+# selected='selected',
+#                           editable=False,
+#                       ),
+#                       width=0.25
+#                 ),
+#                 UItem('_selected',
+#                       style='custom',
+#                       width=0.75
+#                 )
+#             ),
+#             width=600,
+#             height=400,
+#             resizable=True,
+#             buttons=buttons,
+#             title='Preferences',
+#             kind='livemodal'
+#         )
+#         return v
+#
+#     def apply(self, info=None):
+#         """ Handles the Apply button being clicked.
+#         """
+#         for tab in self._tabs:
+#             for pane in tab.panes:
+#                 try:
+#                     pane.apply()
+#                 except BaseException:
+#                     print pane
+#
+#                     #self.names=[]
+#                     #self._update_tabs()
+#                     #info.dispose()
+#
+#
+#     def _selected_changed(self):
+#         name = self.selected
+#         t = next((tab for tab in self._tabs if tab.name == name))
+#         self._selected = t
+#
+#     @on_trait_change('categories, panes')
+#     def _update_tabs(self):
+#         # Build a { category id -> [ PreferencePane ] } map.
+#         categories = self.categories[:]
+#         category_map = dict((category.id, []) for category in categories)
+#         for pane in self.panes:
+#             if pane.category in category_map:
+#                 category_map[pane.category].append(pane)
+#             else:
+#                 categories.append(PreferencesCategory(id=pane.category))
+#                 category_map[pane.category] = [pane]
+#
+#         # Construct the appropriately sorted list of preference tabs.
+#         tabs = []
+#         names = []
+#         for category in before_after_sort(categories):
+#             panes = before_after_sort(category_map[category.id])
+#             tabs.append(PreferencesTab(name=category.name, panes=panes))
+#             names.append(category.name)
+#
+#         self._tabs = tabs
+#         self.names = names
