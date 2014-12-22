@@ -54,6 +54,7 @@ class BaseTaskPlugin(Plugin, Loggable):
 
     def startup_test(self):
         if globalv.use_startup_tests:
+            self.debug('doing start up tests')
             self.application.startup_tester.test_plugin(self)
 
     def set_preference_defaults(self):

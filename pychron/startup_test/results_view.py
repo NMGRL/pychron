@@ -49,7 +49,8 @@ class ResultsAdapter(TabularAdapter):
                ('Duration (s)', 'duration'),
                ('Result', 'result')]
     plugin_width = Int(200)
-    name_width = Int(200)
+    name_width = Int(190)
+    duration_width = Int(70)
     duration_text = Property
     result_image_image = Property
     result_image_text = Property
@@ -140,7 +141,7 @@ class ResultsView(Controller):
                  title='Test Results',
 
                  buttons=['OK', 'Cancel'],
-                 width=600,
+                 width=650,
                  kind='livemodal',
                  resizable=True)
         return v

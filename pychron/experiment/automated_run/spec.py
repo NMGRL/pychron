@@ -261,8 +261,9 @@ class AutomatedRunSpec(Loggable):
             args = self.run_klass.split('.')
             md, klass = '.'.join(args[:-1]), args[-1]
 
-            md = imp.find_module(md)
-            run = md[klass]()
+            md = __import__(md, fromlist=[klass])
+            # md = imp.find_module(md)
+            run =getattr(md,klass)()
 
             # run = self.run_klass()
 

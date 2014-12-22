@@ -83,15 +83,15 @@ class BaseLaserPlugin(BaseTaskPlugin):
 
             pkg = 'pychron.lasers.laser_managers.pychron_laser_manager'
             params = dict()
-            # try:
-            #     tag = ip.get_parameter(plugin, 'communications', element=True)
-            #     for attr in ['host', 'port', 'kind']:
-            #         try:
-            #             params[attr] = tag.find(attr).text.strip()
-            #         except Exception, e:
-            #             print 'client comms fail a', attr, e
-            # except Exception, e:
-            #     print 'client comms fail b', e
+            try:
+                tag = ip.get_parameter(plugin, 'communications', element=True)
+                for attr in ['host', 'port', 'kind']:
+                    try:
+                        params[attr] = tag.find(attr).text.strip()
+                    except Exception, e:
+                        print 'client comms fail a', attr, e
+            except Exception, e:
+                print 'client comms fail b', e
 
             params['name'] = self.name
             factory = __import__(pkg, fromlist=[klass])

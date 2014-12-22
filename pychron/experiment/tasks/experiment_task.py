@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.timer.do_later import do_later, do_after
 from traits.api import on_trait_change, Bool, Instance, Event, Color
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
 from pyface.constant import CANCEL, NO
@@ -254,7 +255,8 @@ class ExperimentEditorTask(EditorTask):
                     self._open_experiment(p)
 
                 manager.path = path
-                manager.update_info()
+                # manager.update_info()
+                do_after(1000, manager.update_info)
                 return True
 
     def _open_experiment(self, path):
@@ -589,7 +591,9 @@ class ExperimentEditorTask(EditorTask):
             self._close_external_windows()
 
             # bind the window control to the notification manager
-            self.manager.executor.notification_manager.parent = self.window.control
+            if self.window:
+                self.manager.executor.notification_manager.parent = self.window.control
+
             for ei in self.editor_area.editors:
                 self._backup_editor(ei)
 

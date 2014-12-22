@@ -30,7 +30,7 @@ class PychronDevice(Loggable):
     port = CInt
     host = Str
 
-    def open(self):
+    def setup_communicator(self):
         host = self.host
         port = self.port
 
@@ -42,6 +42,20 @@ class PychronDevice(Loggable):
             self.opened()
 
         return r
+
+    def open(self):
+        return self.setup_communicator()
+        # host = self.host
+        # port = self.port
+        #
+        # self.communicator = ec = EthernetCommunicator(host=host,
+        #                                               port=port)
+        # r = ec.open()
+        # if r:
+        #     self.connected = True
+        #     self.opened()
+        #
+        # return r
 
     def opened(self):
         pass

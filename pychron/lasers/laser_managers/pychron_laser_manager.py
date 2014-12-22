@@ -290,8 +290,9 @@ class PychronLaserManager(BaseLaserManager, PychronDevice):
         if self.simulation:
             return globalv.communication_simulation
         else:
-            self.connected = self.communicator.open()
-            self.debug('test connection. connected= {}'.format(self.connected))
+            if self.setup_communicator():
+                self.connected = self.communicator.open()
+                self.debug('test connection. connected= {}'.format(self.connected))
             return self.connected
 
     def _opened_hook(self):

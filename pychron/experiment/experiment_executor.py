@@ -1589,11 +1589,13 @@ Use Last "blank_{}"= {}
                 elm_connectable.connected = True
 
         if exp.extract_device and exp.extract_device not in (NULL_STR, 'Extract Device'):
-            extract_device = convert_extract_device(exp.extract_device)
-            ed_connectable = Connectable(name=exp.extract_device)
+            # extract_device = convert_extract_device(exp.extract_device)
+            extract_device = exp.extract_device.replace(' ','')
+            ed_connectable = Connectable(name=extract_device)
             man = None
             if self.application:
                 protocol = 'pychron.lasers.laser_managers.ilaser_manager.ILaserManager'
+                self.debug('get service name={}'.format(extract_device))
                 man = self.application.get_service(protocol, 'name=="{}"'.format(extract_device))
 
                 if man is None:

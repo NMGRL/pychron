@@ -21,7 +21,7 @@ from pyface.tasks.task_layout import TaskLayout
 from traits.api import Any, on_trait_change, List, Unicode, DelegatesTo, Instance
 from pyface.directory_dialog import DirectoryDialog
 from pyface.tasks.action.dock_pane_toggle_group import DockPaneToggleGroup
-from pyface.timer.do_later import do_later
+from pyface.timer.do_later import do_later, do_after
 from pyface.tasks.task import Task
 from pyface.tasks.action.schema import SMenu, SMenuBar, SGroup
 from pyface.action.api import ActionItem, Group
@@ -553,7 +553,8 @@ class BaseExtractionLineTask(BaseManagerTask):
     def _window_opened(self):
         man = self._get_el_manager()
         if man:
-            man.activate()
+            do_after(1000, man.activate)
+            # man.activate()
 
 
 class BaseHardwareTask(BaseManagerTask):

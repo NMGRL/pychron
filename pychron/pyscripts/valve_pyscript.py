@@ -80,6 +80,8 @@ class ValvePyScript(PyScript):
         result = self._manager_action([('open_valve', (name,), dict(
             mode='script',
             description=description))], protocol=ELPROTOCOL)
+
+        self.debug('---------------------------------------- open {} ({}) result={}'.format(name, description, result))
         if result is not None:
             self._finish_valve_change('open', result, name, description)
 
@@ -94,6 +96,8 @@ class ValvePyScript(PyScript):
         result = self._manager_action([('close_valve', (name,), dict(
             mode='script',
             description=description))], protocol=ELPROTOCOL)
+
+        self.debug('---------------------------------------- close {} ({}) result={}'.format(name, description, result))
         if result is not None:
             self._finish_valve_change('close', result, name, description)
 
