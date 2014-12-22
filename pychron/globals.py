@@ -21,6 +21,7 @@ from pychron.core.helpers.filetools import to_bool
 
 
 class Globals(object):
+    dev_pwd = '3da541559918a808c2402bba5012f6c60b27661c'
     # use_shared_memory = False
 
     use_debug_logger = False
@@ -76,6 +77,7 @@ class Globals(object):
     use_warning_display = True
     recall_debug = False
 
+    dev_confirm_exit = True
     username = 'root'
     communication_simulation = False
     use_startup_tests = True
@@ -102,6 +104,7 @@ class Globals(object):
                            ('dashboard_simulation', to_bool),
                            ('use_startup_tests', to_bool),
                            ('use_testbot', to_bool),
+                           ('dev_confirm_exit', to_bool),
                            ('test_experiment_set', str)]:
             a = ip.get_global(attr)
 

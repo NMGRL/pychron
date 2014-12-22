@@ -13,6 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from traits.etsconfig.api import ETSConfig
+
+ETSConfig.toolkit = "qt4"
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
@@ -21,6 +24,7 @@ import sys
 import logging
 
 # ============= local library imports  ==========================
+from pyface.message_dialog import information
 
 logger = logging.getLogger()
 
@@ -29,10 +33,6 @@ def entry_point(modname, klass, setup_version_id='', debug=False):
     """
         entry point
     """
-
-    from traits.etsconfig.api import ETSConfig
-
-    ETSConfig.toolkit = "qt4"
 
     user = initialize_version(modname, debug)
     set_commandline_args()
@@ -89,6 +89,14 @@ def initialize_version(appname, debug):
         proot = cp.get('pychron.general', 'root_dir')
     except BaseException, e:
         print 'root_dir exception={}'.format(e)
+        proot = None
+        information(None, 'Pychron root directory not set in Preferences/General. Defaulting to "Pychron"')
+
+    if not os.path.isdir(proot):
+        information(None, 'Pychron root directory "{}" is not a valid location. Defaulting to "Pychron"'.format(proot))
+        proot = None
+
+    if proot is None:
         proot = os.path.join(os.path.expanduser('~'), 'Pychron')
 
     paths.build(proot)

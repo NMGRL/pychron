@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import hashlib
 from apptools.preferences.preference_binding import bind_preference
 from envisage.extension_point import ExtensionPoint
 from envisage.plugin import Plugin
@@ -22,15 +23,21 @@ from envisage.ui.tasks.action.exit_action import ExitAction
 from envisage.ui.tasks.action.preferences_action import PreferencesAction
 from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.tasks_plugin import TasksPlugin
+from pyface.confirmation_dialog import confirm
+from pyface.constant import NO
 from pyface.tasks.action.dock_pane_toggle_group import DockPaneToggleGroup
 from pyface.tasks.action.schema_addition import SchemaAddition
 from traits.api import List
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from traits.trait_types import Str
+from traits.has_traits import HasTraits
+from traits.trait_types import Str, Password
+from traitsui.item import Item
+from traitsui.view import View
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import ToggleFullWindowAction, EditInitializationAction
 from pychron.envisage.tasks.preferences import GeneralPreferencesPane
+from pychron.globals import globalv
 
 
 class PychronTasksPlugin(Plugin):
@@ -56,14 +63,41 @@ class mPreferencesAction(PreferencesAction):
     image = icon('preferences-desktop')
 
 
+class ConfirmApplicationExit(HasTraits):
+    pwd = Password
+
+    def validate(self):
+        return hashlib.sha1(self.pwd).hexdigest() == globalv.dev_pwd
+
+    def traits_view(self):
+        v = View(Item('pwd', label='Password'),
+                 buttons=['OK', 'Cancel'])
+        return v
+
+
 class mExitAction(ExitAction):
     def perform(self, event):
-        event.task.window.application.exit(force=True)
+        app = event.task.window.application
+        if globalv.username == 'dev' and globalv.dev_confirm_exit:
+            window = event.task.window
+            dialog = ConfirmApplicationExit()
+            ui = dialog.edit_traits(parent=window.control, kind='livemodal')
+            if not ui.result or not dialog.validate():
+                return
+        else:
+            prefs = app.preferences
+            if prefs.get('pychron.general.confirm_quit'):
+                ret = confirm(None, 'Are you sure you want to Quit?')
+                if ret == NO:
+                    return
+
+        app.exit(force=True)
 
 
 class myTasksPlugin(TasksPlugin):
     def _my_task_extensions_default(self):
         from pyface.tasks.action.api import SchemaAddition
+
         actions = [SchemaAddition(id='Exit',
                                   factory=mExitAction,
                                   path='MenuBar/file.menu'),
@@ -80,12 +114,12 @@ class myTasksPlugin(TasksPlugin):
         return [TaskExtension(actions=actions)]
 
     def _create_preferences_dialog_service(self):
-       from preferences_dialog import PreferencesDialog
+        from preferences_dialog import PreferencesDialog
 
-       dialog = PreferencesDialog(application=self.application)
-       dialog.trait_set(categories=self.preferences_categories,
-                        panes=[factory(dialog=dialog)
-                               for factory in self.preferences_panes])
-       return dialog
+        dialog = PreferencesDialog(application=self.application)
+        dialog.trait_set(categories=self.preferences_categories,
+                         panes=[factory(dialog=dialog)
+                                for factory in self.preferences_panes])
+        return dialog
 
 # ============= EOF =============================================
