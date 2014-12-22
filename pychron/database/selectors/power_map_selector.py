@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 # from traits.api import String, Instance, Enum, on_trait_change, Bool, \
 #    Range
 # from traitsui.api import Group, VGroup, Item, HGroup, spring
-#============= standard library imports ========================
+# ============= standard library imports ========================
 # import os
 # import csv
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.database.core.database_selector import DatabaseSelector
 from pychron.database.orms.power_map_orm import PowerMapTable
 # from pychron.database.core.base_db_result import DBResult
@@ -143,4 +143,4 @@ class PowerMapSelector(DatabaseSelector):
         records = q.all()
 
         return records, compile_query(q)
-#============= EOF =============================================
+# ============= EOF =============================================

@@ -12,16 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import Instance
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from datetime import datetime
 import time
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.database.adapters.massspec_database_adapter import MissingAliquotPychronException
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.experiment.utilities.identifier import make_aliquot_step, make_step, get_analysis_type
@@ -100,7 +100,7 @@ class Datahub(Loggable):
             try:
                 ps, ns, vs = self._get_greatest_aliquots(spec.identifier)
 
-                # print 'b', ps, ns, vs, spec.identifier
+                print 'b', ps, ns, vs, spec.identifier
                 mv = max(vs)
                 self._new_runid = make_aliquot_step(mv + 1, '')
                 self._new_aliquot = mv + 1
@@ -217,5 +217,5 @@ class Datahub(Loggable):
             self._sorted_stores = r
             return r
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

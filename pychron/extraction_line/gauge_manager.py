@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,18 +12,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
+from traits.api import Int, Bool
 from traitsui.api import View, Item, ListEditor, InstanceEditor
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import time
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.managers.manager import Manager
 
 
 class GaugeManager(Manager):
+    use_update = Bool
+    update_period = Int
+
     def finish_loading(self, *args, **kw):
         width = int(250 / float(len(self.devices)))
         for k in self.devices:
@@ -37,10 +41,23 @@ class GaugeManager(Manager):
 
     def get_pressure(self, controller, name):
         dev = next((di for di in self.devices if di.name == controller), None)
-        if dev is not None:
-            gauge = dev.get_gauge(name)
-            if gauge is not None:
-                return gauge.pressure
+        if dev is None:
+            self.warning('Failed getting pressure for {} {}. '
+                         'Not a valid controller'.format(controller, name))
+        else:
+            return dev.get_pressure(name)
+
+    def test_connection(self):
+        for di in self.devices:
+            if not di.test_connection():
+                self.debug('Failed connection to "{}" (display_name={})'.format(di.name, di.display_name))
+                return
+            else:
+                self.debug('Get pressures name={}, display_name={}, {}'.format(di.name,
+                                                                               di.display_name,
+                                                                               di.get_pressures(verbose=True)))
+        else:
+            return True
 
     def stop_scans(self):
         for k in self.devices:
@@ -53,9 +70,15 @@ class GaugeManager(Manager):
         # stop scans first
         self.stop_scans()
 
+        # sp = self.scan_period*1000
+        if self.use_update:
+            sp = self.update_period
+
+        sp = sp or None
         for k in self.devices:
             if k.is_scanable:
-                k.start_scan()
+
+                k.start_scan(sp)
                 # stagger starts to reduce collisions
                 time.sleep(0.25)
 
@@ -70,8 +93,10 @@ class GaugeManager(Manager):
                  height=-100)
         return v
 
+    def _get_simulation(self):
+        return any([dev.simulation for dev in self.devices])
 
 if __name__ == '__main__':
     g = GaugeManager()
     g.configure_traits()
-#============= EOF =====================================
+# ============= EOF =====================================

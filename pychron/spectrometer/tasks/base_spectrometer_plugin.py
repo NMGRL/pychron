@@ -18,7 +18,7 @@
 from envisage.ui.tasks.task_factory import TaskFactory
 from traits.api import Any
 # ============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.spectrometer.base_spectrometer_manager import BaseSpectrometerManager
 from pychron.spectrometer.ion_optics_manager import IonOpticsManager
@@ -61,6 +61,7 @@ class BaseSpectrometerPlugin(BaseTaskPlugin):
         ts = [TaskFactory(id='pychron.spectrometer',
                           task_group='hardware',
                           factory=self._task_factory,
+                          accelerator="Ctrl+'",
                           name='Spectrometer',
                           image='prism'),
               TaskFactory(id='pychron.mass_calibration',
@@ -110,7 +111,7 @@ class BaseSpectrometerPlugin(BaseTaskPlugin):
                          ion_optics_manager=self.ion_optics_manager)
         return sm
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

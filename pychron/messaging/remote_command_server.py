@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,22 +12,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import  Str, Int, Instance, Bool, Property, Event, Button, String
 from traitsui.api import View, Item, Group, HGroup, VGroup, \
     ButtonEditor, Handler
 from pyface.timer.api import Timer
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import threading
 import datetime
 import select
 import socket
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.config_loadable import ConfigLoadable
 from pychron.messaging.command_repeater import CommandRepeater
 from pychron.core.helpers.datetime_tools import diff_timestamp
@@ -360,7 +360,7 @@ class RemoteCommandServer(ConfigLoadable):
         '''
         return 'Start' if not self._running else 'Stop'
 
-#============= EOF ====================================
+# ============= EOF ====================================
 
 #            if self._server is not None:
 #                sa = self._server.server_address

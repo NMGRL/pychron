@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,11 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.managers.data_managers.h5_data_manager import H5DataManager
 from pychron.repo.repository import SFTPRepository
 
@@ -44,4 +44,4 @@ class FTPH5DataManager(H5DataManager):
     def isfile(self, path):
         return self.repository.isfile(path)
 
-#============= EOF =============================================
+# ============= EOF =============================================

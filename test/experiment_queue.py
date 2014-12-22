@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 import unittest
 
 from uncertainties import ufloat
 
 from pychron.experiment.queue.experiment_queue import ExperimentQueue
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 class MockRun(object):
     analysis_type = 'blank_unknown'
@@ -64,4 +64,4 @@ class QueueTest(unittest.TestCase):
         run.Ar40 = ufloat(10, 0)
         self.assertFalse(act.check_run(run))
 #         self.assertEqual(len(q.queue_actions), 2)
-#============= EOF =============================================
+# ============= EOF =============================================

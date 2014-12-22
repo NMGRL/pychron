@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
+from _socket import gethostname, gethostbyname
 from threading import Thread, Lock
+
 from traits.api import Int, Dict
-#============= standard library imports ========================
+
+# ============= standard library imports ========================
 import zmq
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.loggable import Loggable
 
 
@@ -29,6 +32,12 @@ class Notifier(Loggable):
     _req_sock = None
 
     _handlers = Dict
+
+    @property
+    def url(self):
+        host = gethostbyname(gethostname())
+        return '{}:{}'.format(host, self.port)
+
     def __init__(self, *args, **kw):
         self._lock=Lock()
         super(Notifier, self).__init__(*args, **kw)
@@ -113,4 +122,4 @@ class Notifier(Loggable):
             else:
                 self.debug('notifier not setup')
 
-#============= EOF =============================================
+# ============= EOF =============================================

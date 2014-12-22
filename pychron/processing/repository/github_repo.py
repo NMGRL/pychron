@@ -16,8 +16,8 @@
 #
 # # ============= enthought library imports =======================
 # import os
-# #============= standard library imports ========================
-# #============= local library imports  ==========================
+# # ============= standard library imports ========================
+# # ============= local library imports  ==========================
 # from pychron.loggable import Loggable
 # from pychron.processing.export.xml_analysis_exporter import XMLAnalysisExporter
 # from pychron.processing.vcs_data.repo_manager import RepoManager
@@ -51,7 +51,7 @@
 #
 #
 #
-# #============= EOF =============================================
+# # ============= EOF =============================================
 #
 #
 #

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pyface.constant import YES, NO
 from traits.api import Instance
 from traitsui.api import View, Item, UItem, Group, VGroup
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.entry.editors.base_editor import ModelView, BaseIrradiationEditor
 from pychron.entry.editors.chronology import IrradiationChronology
 
@@ -124,5 +124,5 @@ class IrradiationEditor(BaseIrradiationEditor):
             db.add_irradiation(self.name, dbchron)
 
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

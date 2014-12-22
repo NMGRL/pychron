@@ -5,20 +5,20 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance, Button, Bool, Property, \
     on_trait_change, String, Any, DelegatesTo, List, Str
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.experiment.automated_run.uv.factory import UVAutomatedRunFactory
 from pychron.experiment.automated_run.factory import AutomatedRunFactory
 from pychron.experiment.queue.factory import ExperimentQueueFactory
@@ -59,9 +59,9 @@ class ExperimentFactory(Loggable, ConsumerMixin):
     default_mass_spectrometer = Str
 
     _load_persistence_flag = False
-    #===========================================================================
+    # ===========================================================================
     # permisions
-    #===========================================================================
+    # ===========================================================================
     #    max_allowable_runs = Int(10000)
     #    can_edit_scripts = Bool(True)
 
@@ -78,6 +78,7 @@ class ExperimentFactory(Loggable, ConsumerMixin):
         eq = self.queue
         qf = self.queue_factory
         for a in ('username', 'mass_spectrometer', 'extract_device',
+                  'email','use_email',
                   'use_group_email',
                   'load_name',
                   'delay_before_analyses', 'delay_between_analyses',
@@ -153,9 +154,9 @@ class ExperimentFactory(Loggable, ConsumerMixin):
 
             q.changed = True
 
-    #===============================================================================
+    # ===============================================================================
     # handlers
-    #===============================================================================
+    # ===============================================================================
     def _clear_button_fired(self):
         self.queue.clear_frequency_runs()
 
@@ -186,7 +187,9 @@ class ExperimentFactory(Loggable, ConsumerMixin):
         self.undoer.queue = new
 
     @on_trait_change('''queue_factory:[mass_spectrometer,
-extract_device, delay_+, tray, username, load_name, email, queue_conditionals_name]''')
+extract_device, delay_+, tray, username, load_name,
+email, use_email, use_group_email,
+queue_conditionals_name]''')
     def _update_queue(self, name, new):
         self.debug('update queue {}={}'.format(name, new))
         if name == 'mass_spectrometer':
@@ -207,9 +210,9 @@ extract_device, delay_+, tray, username, load_name, email, queue_conditionals_na
 
         self.queue.changed = True
 
-    #===============================================================================
+    # ===============================================================================
     # private
-    #===============================================================================
+    # ===============================================================================
     def _set_extract_device(self, ed):
         self.debug('setting extract dev="{}" mass spec="{}"'.format(ed, self._mass_spectrometer))
         self.extract_device = ed
@@ -239,9 +242,9 @@ extract_device, delay_+, tray, username, load_name, email, queue_conditionals_na
 
         return ps
 
-    #===============================================================================
+    # ===============================================================================
     # property get/set
-    #===============================================================================
+    # ===============================================================================
     def _get_ok_add(self):
         """
         """
@@ -252,9 +255,9 @@ extract_device, delay_+, tray, username, load_name, email, queue_conditionals_na
             ret = ret and self._labnumber
         return ret
 
-    #===============================================================================
+    # ===============================================================================
     #
-    #===============================================================================
+    # ===============================================================================
     def _run_factory_factory(self):
         if self.extract_device == 'Fusions UV':
             klass = UVAutomatedRunFactory
@@ -275,9 +278,9 @@ extract_device, delay_+, tray, username, load_name, email, queue_conditionals_na
     #    def _can_edit_scripts_changed(self):
     #        self.run_factory.can_edit = self.can_edit_scripts
 
-    #===============================================================================
+    # ===============================================================================
     # defaults
-    #===============================================================================
+    # ===============================================================================
     def _undoer_default(self):
         return ExperimentUndoer(run_factory=self.run_factory,
                                 queue=self.queue)
@@ -286,7 +289,8 @@ extract_device, delay_+, tray, username, load_name, email, queue_conditionals_na
         return self._run_factory_factory()
 
     def _queue_factory_default(self):
-        eq = ExperimentQueueFactory(db=self.db)
+        eq = ExperimentQueueFactory(db=self.db,
+                                    application=self.application)
         # eq.activate()
         return eq
 
@@ -296,6 +300,7 @@ extract_device, delay_+, tray, username, load_name, email, queue_conditionals_na
 
     def _application_changed(self):
         self.run_factory.application = self.application
+        self.queue_factory.application = self.application
 
     def _default_mass_spectrometer_changed(self):
         self.debug('default mass spec changed "{}"'.format(self.default_mass_spectrometer))
@@ -303,4 +308,4 @@ extract_device, delay_+, tray, username, load_name, email, queue_conditionals_na
         self.queue_factory.mass_spectrometer = self.default_mass_spectrometer
         self._mass_spectrometer = self.default_mass_spectrometer
 
-        #============= EOF =============================================
+        # ============= EOF =============================================

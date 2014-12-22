@@ -8,3 +8,4 @@ Operation
   pychron_valves
   pychron_lasers
   experiment
+  scripting

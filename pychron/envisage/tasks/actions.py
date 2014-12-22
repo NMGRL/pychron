@@ -14,24 +14,29 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 import shutil
-from pyface.tasks.task_window_layout import TaskWindowLayout
 import sys
+
+from pyface.tasks.task_window_layout import TaskWindowLayout
 from traits.api import on_trait_change, Any, List
 from pyface.action.action import Action
 from pyface.tasks.action.task_action import TaskAction
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+
+
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 import webbrowser
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
 
-#===============================================================================
+# ===============================================================================
 # help
-#===============================================================================
+# ===============================================================================
 from pychron.envisage.resources import icon
 # from pychron.processing.tasks.actions.processing_actions import myTaskAction
 
@@ -202,7 +207,7 @@ class NoteAction(WebAction):
 
 class DocumentationAction(WebAction):
     name = 'View Documentation'
-    image = icon('document-properties')
+    image = icon('documentation')
 
     def perform(self, event):
         """
@@ -376,16 +381,18 @@ class NewAction(PAction):
 class ToggleFullWindowAction(myTaskAction):
     name = 'Toggle Full Window'
     method = 'toggle_full_window'
-    task_ids = ['pychron.recall', 'pychron.labbook']
+    image = icon('view-fullscreen-8')
+    task_ids = ['pychron.recall', 'pychron.labbook', 'pychron.processing.figures']
 
 
-class EditPluginsAction(Action):
-    name = 'Edit Plugins'
+class EditInitializationAction(Action):
+    name = 'Edit Initialization'
+    image = icon('brick-edit')
 
     def perform(self, event):
-        from pychron.plugin_edit_view import edit_plugins
+        from pychron.envisage.initialization.initialization_edit_view import edit_initialization
 
-        if edit_plugins():
+        if edit_initialization():
             restart()
 
-#============= EOF =============================================
+# ============= EOF =============================================

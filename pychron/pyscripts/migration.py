@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import ast
 import os
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 import shutil
 import yaml
 from pychron.core.helpers.filetools import unique_dir, list_directory
@@ -102,5 +102,5 @@ def migrate_file(p, srcroot, destroot, clean):
 if __name__ == '__main__':
     root = '/Users/ross/Pychrondata_dev/scripts/migration_test'
     migrate_directory(root, clean=True)
-#============= EOF =============================================
+# ============= EOF =============================================
 

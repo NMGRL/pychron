@@ -12,15 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import math
 from functools import partial
 from decimal import Decimal
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 def format_percent_error(v, e, n=2, include_percent_sign=False):
     p = calc_percent_error(v, e)
@@ -88,4 +88,4 @@ def floatfmt(f, n=4, s=4, max_width=None, default='NaN', use_scientific=False):
 def pfloatfmt(**kw):
     return partial(floatfmt, **kw)
 
-#============= EOF =============================================
+# ============= EOF =============================================

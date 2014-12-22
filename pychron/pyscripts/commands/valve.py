@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Str, Property, cached_property
 from traitsui.api import Item, EnumEditor, VGroup
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 import re
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.pyscripts.commands.core import Command
 from pychron.paths import paths
 from pychron.extraction_line.valve_parser import ValveParser
@@ -88,4 +88,4 @@ class ValveCommand(Command):
 #        return 'name{}, description={}'.format(self._quote(self.item),
 #                                           self._quote(self.items[self.item]))
 
-#============= EOF =============================================
+# ============= EOF =============================================

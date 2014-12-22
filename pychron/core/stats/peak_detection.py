@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 """
     https://gist.github.com/sixtenbe/1178136
 """
@@ -291,4 +291,4 @@ def calculate_peak_center(x, y, min_peak_height=1.0, percent=80):
 #         print i, v, xs[i]
 #         axvline(xs[i])
 #     show()
-#============= EOF =============================================
+# ============= EOF =============================================

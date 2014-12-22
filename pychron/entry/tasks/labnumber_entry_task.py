@@ -12,26 +12,28 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-import os
+# ============= enthought library imports =======================
 
 from pyface.tasks.action.schema import SToolBar
-from traits.api import Instance, on_trait_change, Button
+from traits.api import on_trait_change, Button, Float, Str, Int, Bool
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, Tabbed
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+import os
+# ============= local library imports  ==========================
 
 from pychron.entry.graphic_generator import GraphicModel, GraphicGeneratorController
-from pychron.experiment.importer.import_manager import ImportManager
+from pychron.entry.tasks.importer_view import ImporterView
+from pychron.envisage.browser.record_views import SampleRecordView
+from pychron.entry.tasks.importer import ImporterModel
 from pychron.envisage.browser.browser_mixin import BrowserMixin
-from pychron.entry.project_entry import ProjectEntry
-from pychron.entry.sample_entry import SampleEntry
+from pychron.entry.entry_views.project_entry import ProjectEntry
+from pychron.entry.entry_views.sample_entry import SampleEntry
 from pychron.entry.labnumber_entry import LabnumberEntry
-from pychron.entry.tasks.actions import SavePDFAction, GenerateLabnumbersAction, ImportIrradiationLevelAction
-from pychron.entry.tasks.importer_panes import ImporterPane
+from pychron.entry.tasks.actions import SavePDFAction
+# from pychron.entry.tasks.importer_panes import ImporterPane
 from pychron.entry.tasks.labnumber_entry_panes import LabnumbersPane, \
     IrradiationPane, IrradiationEditorPane, IrradiationCanvasPane
 from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction
@@ -40,7 +42,7 @@ from pychron.envisage.tasks.base_task import BaseManagerTask
 
 class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
     name = 'Labnumber'
-    importer = Instance(ImportManager)
+    # importer = Instance(ImportManager)
 
     add_sample_button = Button
     add_material_button = Button
@@ -49,24 +51,37 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
     edit_project_button = Button
     edit_sample_button = Button
 
+    generate_identifiers_button = Button
+    preview_generate_identifiers_button = Button
+
     tool_bars = [SToolBar(SavePDFAction(),
                           DatabaseSaveAction(),
-                          image_size=(16, 16)),
-                 SToolBar(GenerateLabnumbersAction(),
-                          ImportIrradiationLevelAction(),
                           image_size=(16, 16))]
+                 # SToolBar(GenerateLabnumbersAction(),
+                 #          PreviewGenerateLabnumbersAction(),
+                 #          ImportIrradiationLevelAction(),
+                 #          image_size=(16, 16))]
 
-    def _prompt_for_save(self):
-        if self.manager.dirty:
-            message = 'You have unsaved changes. Save changes to Database?'
-            ret = self._handle_prompt_for_save(message)
-            if ret == 'save':
-                return self.manager.save()
-            return ret
-        return True
+    invert_flag = Bool
+    selection_freq = Int
+
+    estimate_j_button = Button
+    j = Float
+    j_err = Float
+    note = Str
+    weight = Float
 
     def activated(self):
-        self.load_projects()
+        self.load_projects(include_recent=False)
+
+    def transfer_j(self):
+        self.info('Transferring J Data')
+        self.manager.transfer_j()
+
+    def import_irradiation(self):
+        mod = ImporterModel(db=self.manager.db)
+        ev = ImporterView(model=mod)
+        ev.edit_traits()
 
     def generate_tray(self):
         # p='/Users/ross/Sandbox/entry_tray'
@@ -95,7 +110,6 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
                         'Do you want to save this tray to the database. Saving tray as "{}"'.format(gm.name)):
                     self.manager.save_tray_to_db(gm.srcpath, gm.name)
 
-
     def save_pdf(self):
         p = '/Users/ross/Sandbox/irradiation.pdf'
         #p=self.save_file_dialog()
@@ -112,8 +126,11 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
         self.manager.make_labbook(p)
         self.view_pdf(p)
 
-    def generate_labnumbers(self):
-        self.manager.generate_labnumbers()
+    def generate_identifiers(self):
+        self.manager.generate_identifiers()
+
+    def preview_generate_identifiers(self):
+        self.manager.preview_generate_identifiers()
 
     def import_irradiation_load_xls(self):
         path = self.open_file_dialog()
@@ -155,16 +172,16 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
     def _manager_default(self):
         return LabnumberEntry(application=self.application)
 
-    def _importer_default(self):
-        return ImportManager(db=self.manager.db,
-                             connect=False)
+    # def _importer_default(self):
+    #     return ImportManager(db=self.manager.db,
+    #                          connect=False)
 
     def _default_layout_default(self):
         return TaskLayout(
             left=Splitter(
                 PaneItem('pychron.labnumber.irradiation'),
                 Tabbed(
-                    PaneItem('pychron.labnumber.extractor'),
+                    # PaneItem('pychron.labnumber.extractor'),
                     PaneItem('pychron.labnumber.editor')),
                 orientation='vertical'),
             right=PaneItem('pychron.entry.irradiation_canvas'))
@@ -174,45 +191,15 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
 
     def create_dock_panes(self):
         iep = IrradiationEditorPane(model=self)
-        self.sample_tabular_adapter = iep.sample_tabular_adapter
-
+        self.labnumber_tabular_adapter = iep.labnumber_tabular_adapter
         return [
             IrradiationPane(model=self.manager),
-            ImporterPane(model=self.importer),
+            # ImporterPane(model=self.importer),
             iep,
-            IrradiationCanvasPane(model=self.manager)
-        ]
-
-    @on_trait_change('extractor:update_irradiations_needed')
-    def _update_irradiations(self):
-        self.manager.updated = True
-
-    def _add_project_button_fired(self):
-        pr = ProjectEntry(db=self.manager.db)
-        pr.add_project()
-
-    def _add_sample_button_fired(self):
-        sam = SampleEntry(db=self.manager.db)
-        sam.add_sample(self.selected_projects)
-
-    def _add_material_button_fired(self):
-        self.manager.add_material()
-
-    def _edit_project_button_fired(self):
-        pr = ProjectEntry(db=self.manager.db)
-        pr.edit_project(self.selected_projects)
-
-    def _edit_sample_button_fired(self):
-        se = SampleEntry(db=self.manager.db)
-        sam = self.selected_samples
-
-        se.edit_sample(sam.name,
-                       self.selected_projects,
-                       sam.material)
-
-    #===========================================================================
+            IrradiationCanvasPane(model=self.manager)]
+    # ===========================================================================
     # GenericActon Handlers
-    #===========================================================================
+    # ===========================================================================
     def save_as(self):
         self.save()
 
@@ -222,9 +209,96 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
     def save_to_db(self):
         self.manager.save()
 
-    def _selected_sample_changed(self, new):
+    def _estimate_j_button_fired(self):
+        self.manager.estimate_j()
+
+    @on_trait_change('selection_freq, invert_flag')
+    def _handle_selection(self):
+        if self.selection_freq:
+            self.manager.select_positions(self.selection_freq, self.invert_flag)
+
+    @on_trait_change('j,j_err, note, weight')
+    def _handle_j(self, obj, name, old, new):
         if new:
-            self.manager.set_selected_sample(new)
+            self.manager.set_selected_attr(new, name)
 
+    def _selected_samples_changed(self, new):
+        if new:
+            self.manager.set_selected_attr(new.name, 'sample')
 
-#============= EOF =============================================
+    def _load_associated_samples(self, names):
+        db = self.db
+        with db.session_ctx():
+            # load associated samples
+            sams = db.get_samples(project=names)
+            sams = [SampleRecordView(si) for si in sams]
+
+        self.samples = sams
+        self.osamples = sams
+
+    # handlers
+    @on_trait_change('extractor:update_irradiations_needed')
+    def _update_irradiations(self):
+        self.manager.updated = True
+
+    def _generate_identifiers_button_fired(self):
+        self.generate_identifiers()
+
+    def _preview_generate_identifiers_button_fired(self):
+        self.preview_generate_identifiers()
+
+    def _add_project_button_fired(self):
+        pr = ProjectEntry(db=self.manager.db)
+        if pr.do():
+            self.load_projects(include_recent=False)
+
+    def _add_sample_button_fired(self):
+        project = ''
+        if self.selected_projects:
+            project = self.selected_projects[0].name
+
+        mats = self.db.get_material_names()
+        sam = SampleEntry(db=self.manager.db,
+                          project=project,
+                          projects = [p.name for p in self.projects],
+                          materials = mats)
+        if sam.do():
+            self._load_associated_samples([si.name for si in self.selected_projects])
+
+    # def _add_material_button_fired(self):
+    #     mat = MaterialEntry(db=self.manager.db)
+    #     if mat.do():
+    #         self._load_materials()
+
+    # def _edit_project_button_fired(self):
+    #     pr = ProjectEntry(db=self.manager.db)
+    #     pr.edit_project(self.selected_projects)
+    #
+    # def _edit_sample_button_fired(self):
+    #     se = SampleEntry(db=self.manager.db)
+    #     sam = self.selected_samples
+    #
+    #     se.edit_sample(sam.name,
+    #                    self.selected_projects,
+    #                    sam.material)
+
+    def _selected_projects_changed(self, old, new):
+        if new and self.project_enabled:
+
+            names = [ni.name for ni in new]
+            self.debug('selected projects={}'.format(names))
+
+            self._load_associated_samples(names)
+            self._selected_projects_change_hook(names)
+            # self.dump_browser_selection()
+
+    def _prompt_for_save(self):
+        if self.manager.dirty:
+            message = 'You have unsaved changes. Save changes to Database?'
+            ret = self._handle_prompt_for_save(message)
+            if ret == 'save':
+                return self.manager.save()
+            return ret
+        return True
+
+# ============= EOF =============================================

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import time
 from datetime import timedelta
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import unique_path
 from pychron.processing.tasks.smart_project.blanks_pdf_writer import BlanksPDFWrtier
 from pychron.processing.tasks.smart_project.base_smarter import BaseSmarter
@@ -102,4 +102,4 @@ class SmartBlanks(BaseSmarter):
                     writer.build(p, ae.component, gs, blanks)
                 else:
                     ae.graph.save_pdf(p)
-#============= EOF =============================================
+# ============= EOF =============================================

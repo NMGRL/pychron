@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-from traits.api import HasTraits, Float
+# ============= enthought library imports =======================
+from traits.api import Float
+
 from pychron.config_loadable import ConfigLoadable
-#============= standard library imports ========================
+
+# ============= standard library imports ========================
 import math
 import os
-from numpy.lib.polynomial import roots
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 class MotionProfiler(ConfigLoadable):
     velocity_tol = Float(0.5)
@@ -203,4 +204,4 @@ class MotionProfiler(ConfigLoadable):
 #
 #         cv = (-B + math.sqrt(B ** 2 - 4 * A * C)) / (2 * A)
 #         return cv
-#============= EOF =============================================
+# ============= EOF =============================================

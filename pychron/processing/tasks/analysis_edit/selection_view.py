@@ -16,8 +16,10 @@
 
 # ============= enthought library imports =======================
 import os
-from traits.api import HasTraits, Button, List, Any, Int
+
+from traits.api import HasTraits, List, Any, Int
 from traitsui.api import View, Item, UItem, CheckListEditor
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.editors import TabularEditor
@@ -78,7 +80,7 @@ class AnalysisSelectionView(HasTraits):
                  width=500)
         return v
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from datetime import datetime, timedelta
 
 from sqlalchemy import and_, or_
@@ -25,8 +25,8 @@ from traitsui.api import View, Item, \
 
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.progress import progress_loader
 from pychron.database.core.database_adapter import DatabaseAdapter
 
@@ -220,9 +220,9 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
         qe = self.query_factory(criterion=end, parameter=self.date_str, comparator='<=')
         return self._execute_query([qs, qe], **kw)
 
-    #===============================================================================
+    # ===============================================================================
     # private
-    #===============================================================================
+    # ===============================================================================
     def _add_query(self, add=True):
         pq = None
         if self.queries:
@@ -340,9 +340,9 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
         else:
             return self.record_klass(_dbrecord=dbrecord)
 
-            #===============================================================================
+            # ===============================================================================
             # open window
-            #===============================================================================
+            # ===============================================================================
 
     def _open_selected(self, records=None):
         self.debug('open selected')
@@ -435,9 +435,9 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
     def _get_num_records(self):
         return 'Number Results: {}'.format(len(self.records))
 
-    #===============================================================================
+    # ===============================================================================
     # handlers
-    #===============================================================================
+    # ===============================================================================
     def _load_recent_button_fired(self):
         criterion = 'this month'
         if self.recent_days:
@@ -494,9 +494,9 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
             #                sel = sel[0]
             #            self.selected_row = self.records.index(sel)
             #            self.update = True
-            #===============================================================================
+            # ===============================================================================
             # factories
-            #===============================================================================
+            # ===============================================================================
 
     def _query_factory(self, removable=True, **kw):
         q = self.query_klass(selector=self,
@@ -510,9 +510,9 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
         di.on_trait_change(self._record_closed, 'close_event')
         return di
 
-    #===============================================================================
+    # ===============================================================================
     # views
-    #===============================================================================
+    # ===============================================================================
     def _get_button_grp(self):
         return HGroup(spring, Item('search', show_label=False), defined_when='style=="normal"')
 
@@ -569,16 +569,16 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
             v.buttons = ['OK', 'Cancel']
         return v
 
-    #===============================================================================
+    # ===============================================================================
     # defaults
-    #===============================================================================
+    # ===============================================================================
     def _queries_default(self):
         return [self._query_factory(removable=False)]
 
     def _tabular_adapter_default(self):
         return self.tabular_adapter_klass()
 
-#============= EOF =============================================
+# ============= EOF =============================================
 #        if criteria is None:
 #            criteria = self.criteria
 #        self.criteria = criteria

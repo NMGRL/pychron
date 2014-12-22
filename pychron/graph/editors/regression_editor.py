@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,21 +12,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import HasTraits, Any, Int, List, Enum, String, Float, Str
 from traitsui.api import View, Item, VGroup, TableEditor
 from traitsui.list_str_adapter import ListStrAdapter
 
 from traitsui.table_column import ObjectColumn
-#=============standard library imports ========================
+# =============standard library imports ========================
 
 import re
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 
 func_regex = re.compile(r'p\[[0-9]\]')
 
@@ -245,7 +245,7 @@ class RegressionEditor(HasTraits):
                            Item('stats', editor=editor, show_label=False)
                            )
                     )
-#========================= EOF =========================
+# ========================= EOF =========================
 # class RegressionGroupEditor(HasTraits):
 #    '''
 #        G{classtree}

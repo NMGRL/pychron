@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,21 +12,24 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 # from traits.api import HasTraits
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 from datetime import datetime
 import time
 
 import yaml
 
-#============= local library imports  ==========================
+
+
+
+# ============= local library imports  ==========================
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
 from pychron.paths import paths, rec_make
-from pychron.experiment.importer.import_manager import ImportManager
+from pychron.entry.tasks.importer import ImporterModel
 
 # from pychron.database.orms.isotope_orm import meas_AnalysisTable, \
 #     meas_MeasurementTable, gen_AnalysisTypeTable, irrad_IrradiationTable, \
@@ -81,9 +84,9 @@ class SmartProjectTask(AnalysisEditTask):
             if setup['make_tables']:
                 self._make_tables(meta, project)
 
-                #===============================================================================
+                # ===============================================================================
                 # import
-                #===============================================================================
+                # ===============================================================================
 
     def _import_irradiations(self, meta):
         self.debug('importing analyses')
@@ -92,7 +95,7 @@ class SmartProjectTask(AnalysisEditTask):
             self.warning('failed to set destination')
             return
 
-        im = ImportManager(db=self.manager.db)
+        im = ImporterModel(db=self.manager.db)
         self._set_source(meta, im)
 
         self._set_importer(meta, im)
@@ -146,9 +149,9 @@ class SmartProjectTask(AnalysisEditTask):
         dbconn_spec.password = source['password']
         dbconn_spec.host = source['host']
 
-    #===============================================================================
+    # ===============================================================================
     # figures/tables
-    #===============================================================================
+    # ===============================================================================
     def _make_figures(self, meta, project):
         '''
             figs: dict 
@@ -181,9 +184,9 @@ class SmartProjectTask(AnalysisEditTask):
         pass
 
 
-    #===============================================================================
+    # ===============================================================================
     # fitting
-    #===============================================================================
+    # ===============================================================================
     def _fit_isotopes(self, meta):
         fitting = meta['fitting']
         dry_run = fitting['dry_run']
@@ -319,9 +322,9 @@ class SmartProjectTask(AnalysisEditTask):
                 self.view_pdf(p)
             else:
                 task.save(p)
-                #===============================================================================
+                # ===============================================================================
                 # utilities
-                #===============================================================================
+                # ===============================================================================
 
     def _finish_db_session(self, dry_run):
         if dry_run:
@@ -389,4 +392,4 @@ class SmartProjectTask(AnalysisEditTask):
         rec_make(path)
         return path
 
-#============= EOF =============================================
+# ============= EOF =============================================

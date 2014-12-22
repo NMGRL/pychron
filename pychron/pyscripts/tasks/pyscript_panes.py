@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 
 from pyface.action.menu_manager import MenuManager
@@ -25,16 +25,16 @@ from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traitsui.handler import Handler
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
-from pychron.envisage.icon_button_editor import icon_button_editor
 
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.tabular_editor import myTabularEditor
 
 
 
 # from pychron.pyscripts.commands.core import ICommand
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
 class CommitAdapter(TabularAdapter):
@@ -272,4 +272,4 @@ class ScriptBrowserPane(TraitsDockPane):
     def _get_selected_directory_name(self):
         return os.path.basename(self.root)
 
-#============= EOF =============================================
+# ============= EOF =============================================

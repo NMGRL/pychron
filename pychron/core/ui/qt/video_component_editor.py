@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Any, Int, Str, Event
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from PySide.QtCore import QTimer
 from stage_component_editor import _LaserComponentEditor, LaserComponentEditor
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 
 
@@ -82,4 +82,4 @@ class VideoComponentEditor(LaserComponentEditor):
     klass = _VideoComponentEditor
     stop_timer = Str
 
-#============= EOF ====================================
+# ============= EOF ====================================

@@ -28,8 +28,9 @@ from traitsui.view import View
 from pyface.tasks.task_layout import PaneItem
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.paths import paths
 
 
@@ -37,7 +38,7 @@ def browser_pane_item(width=300):
     return PaneItem('pychron.browser', width=width)
 
 
-#===============================================================
+# ===============================================================
 def get_pad(low, high):
     p=os.path.join(paths.hidden_dir, 'pad_entry')
     pe =None
@@ -119,7 +120,7 @@ class PadEntry(HasTraits):
                buttons=['OK','Cancel'])
         return v
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

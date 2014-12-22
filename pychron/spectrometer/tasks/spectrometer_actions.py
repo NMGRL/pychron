@@ -20,12 +20,14 @@ from traits.api import Property
 from pyface.action.api import Action
 from pyface.timer.do_later import do_later
 from pyface.tasks.action.task_action import TaskAction
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
+from pychron.envisage.tasks.actions import myTaskAction
 from pychron.paths import paths
 
-from pychron.pychron_constants import SPECTROMETER_PROTOCOL,SCAN_PROTOCOL,EL_PROTOCOL, ION_OPTICS_PROTOCOL
+from pychron.pychron_constants import SPECTROMETER_PROTOCOL, SCAN_PROTOCOL, EL_PROTOCOL, ION_OPTICS_PROTOCOL
+
 
 def get_manager(event, protocol):
     app = event.task.window.application
@@ -34,7 +36,7 @@ def get_manager(event, protocol):
 
 
 # class OpenIonOpticsAction(Action):
-#     def perform(self, event):
+# def perform(self, event):
 #         man = get_manager(event, ION_OPTICS_PROTOCOL)
 #         open_manager(event.window.application, man)
 
@@ -54,6 +56,7 @@ def get_manager(event, protocol):
 
 class AutoMFTableAction(Action):
     name = 'Auto MFTable'
+
     def perform(self, event):
         app = event.task.window.application
 
@@ -76,6 +79,12 @@ class AutoMFTableAction(Action):
         a = AutoMFTable(pyscript_task=pyscript_task, **kw)
 
         do_later(a.do_auto_mftable)
+
+
+class SendConfigAction(myTaskAction):
+    name = 'Send Configuration'
+    method = 'send_configuration'
+    task_ids = ['pychron.spectrometer']
 
 
 class EditGainsAction(Action):
@@ -134,21 +143,22 @@ class SpectrometerParametersAction(Action):
 class PeakCenterAction(TaskAction):
     description = 'Calculate peak center'
     name = 'Peak Center...'
-
-    def perform(self, event):
-        man = get_manager(event, SCAN_PROTOCOL)
-        man.peak_center()
+    method = 'do_peak_center'
+    # def perform(self, event):
+        # man = get_manager(event, SCAN_PROTOCOL)
+        # man.peak_center()
 
         # if man.setup_peak_center(new=True):
         #     man.do_peak_center(confirm_save=True, warn=True, message='manual peakcenter')
 
 
-class CoincidenceScanAction(Action):
+class CoincidenceScanAction(TaskAction):
     name = 'Coincidence...'
-
-    def perform(self, event):
-        man = get_manager(event, SPECTROMETER_PROTOCOL)
-        man.coincidence_scan_task_factory()
+    method = 'do_coincidence'
+    # def perform(self, event):
+    #     man = get_manager(event, ION_OPTICS_PROTOCOL)
+    #     man.do_coincidence_scan()
+        # man.coincidence_scan_task_factory()
 
 
 class RelativePositionsAction(Action):
@@ -213,4 +223,4 @@ class DBMagnetFieldTableHistoryAction(Action):
             mv = MFTableHistoryView(model=mfh)
             mv.edit_traits()
 
-#============= EOF ====================================
+# ============= EOF ====================================

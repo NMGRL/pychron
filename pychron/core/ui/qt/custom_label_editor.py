@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,20 +12,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 from traits.etsconfig.etsconfig import ETSConfig
 
 ETSConfig.toolkit = 'qt4'
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Int, Color, \
     Button, Any, Instance, on_trait_change
 from traitsui.api import View, UItem
 from traitsui.qt4.editor import Editor
 from traitsui.basic_editor_factory import BasicEditorFactory
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import random
 from PySide.QtGui import QLabel
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 
 class _CustomLabelEditor(Editor):
@@ -137,9 +137,9 @@ class CustomLabel(UItem):
     def _bgcolor_name_changed(self):
         self.editor.bgcolor = self.bgcolor_name
 
-#===============================================================================
+# ===============================================================================
 # demo
-#===============================================================================
+# ===============================================================================
 class Demo(HasTraits):
     a = Str('asdfsdf')
     foo = Button
@@ -181,7 +181,7 @@ class Demo(HasTraits):
 if __name__ == '__main__':
     d = Demo()
     d.configure_traits()
-    #============= EOF =============================================
+    # ============= EOF =============================================
     #        css = '''QLabel {{ color:{}; font-size:{}px; font-weight:{};}}
     # # '''.format(self.item.color.name(), self.item.size, self.item.weight)
     #        control.setStyleSheet(css)

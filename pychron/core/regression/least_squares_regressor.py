@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Callable, List
 
 from pychron.core.regression.base_regressor import BaseRegressor
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from scipy import optimize
 from numpy import asarray, sqrt, matrix, diagonal, array
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 import re
 from pychron.core.helpers.formatting import floatfmt
 class LeastSquaresRegressor(BaseRegressor):
@@ -143,4 +143,4 @@ class LeastSquaresRegressor(BaseRegressor):
 
         return fx
 
-#============= EOF =============================================
+# ============= EOF =============================================

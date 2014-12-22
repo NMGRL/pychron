@@ -19,7 +19,7 @@ from traits.api import HasTraits, Str, List, Event, Instance, Bool, Any, Propert
 from traitsui.api import View, UItem, HSplit, VSplit, Handler
 
 # ============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from uncertainties import std_dev, nominal_value, ufloat
 from pychron.core.helpers.formatting import floatfmt, format_percent_error
 from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter, ComputedValueTabularAdapter, \
@@ -439,4 +439,4 @@ class MainView(HasTraits):
         return v
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

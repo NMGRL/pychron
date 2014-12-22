@@ -24,11 +24,11 @@ from pyface.qt.QtGui import QTabBar
 
 # ============= standard library imports ========================
 import binascii
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.iterfuncs import partition
 from pychron.core.progress import progress_iterator
 from pychron.easy_parser import EasyParser
-from pychron.envisage.browser.table_configurer import RecallTableConfigurer
+from pychron.core.ui.table_configurer import RecallTableConfigurer
 from pychron.envisage.tasks.actions import ToggleFullWindowAction
 from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter, IntermediateTabularAdapter
 from pychron.processing.k3739_edit import K3739EditModel, K3739EditView
@@ -707,9 +707,9 @@ class AnalysisEditTask(BaseBrowserTask):
         if self.active_editor:
             self.active_editor.set_items(ans, is_append)
 
-    #===============================================================================
+    # ===============================================================================
     # handlers
-    #===============================================================================
+    # ===============================================================================
     def _dclicked_analysis_group_changed(self):
         if self.active_editor:
             if self.selected_analysis_groups:
@@ -873,4 +873,4 @@ class AnalysisEditTask(BaseBrowserTask):
         return rc
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

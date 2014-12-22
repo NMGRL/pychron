@@ -15,8 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Button, Str, Bool, List, Dict
-from traitsui.api import View, Item, UItem, TableEditor, Handler
+from traits.api import HasTraits, Str, Bool, List
+from traitsui.api import View, UItem, TableEditor, Handler
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.extras.checkbox_column import CheckboxColumn
@@ -88,7 +88,7 @@ if __name__ == '__main__':
     esv = EmailSelectionView(path='/Users/ross/Pychrondata_dev/setupfiles/users.yaml',
                              emails=emails)
     esv.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

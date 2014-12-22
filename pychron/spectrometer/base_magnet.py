@@ -15,11 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
 from traits.api import HasTraits, Property, Float, Event, Any, Instance, Int
 from traitsui.api import View, Item, VGroup, HGroup, Spring, RangeEditor
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from scipy import optimize
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
+from pychron.core.helpers.filetools import add_extension
+from pychron.paths import paths
 from pychron.spectrometer.mftable import MagnetFieldTable, get_detector_name, mass_cal_func
 
 
@@ -53,8 +56,15 @@ class BaseMagnet(HasTraits):
 
     mftable = Instance(MagnetFieldTable, ())
     confirmation_threshold_mass = Int
+    use_deflection_correction = True
 
     _suppress_mass_update = False
+
+    def set_dac(self, *args, **kw):
+        raise NotImplementedError
+
+    def set_mftable(self, name):
+        self.mftable.set_path_name(name)
 
     def update_field_table(self, *args):
         """
@@ -63,9 +73,9 @@ class BaseMagnet(HasTraits):
         """
         self.mftable.update_field_table(*args)
 
-    #===============================================================================
+    # ===============================================================================
     # persistence
-    #===============================================================================
+    # ===============================================================================
     def load(self):
         pass
 
@@ -75,6 +85,7 @@ class BaseMagnet(HasTraits):
             name = self.spectrometer.name
         else:
             from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS as molweights
+
             name = ''
         # self.mftable.molweights = molweights
         self.mftable.initialize(molweights)
@@ -84,9 +95,9 @@ class BaseMagnet(HasTraits):
         if d is not None:
             self._dac = d
 
-    #===============================================================================
+    # ===============================================================================
     # mapping
-    #===============================================================================
+    # ===============================================================================
     def map_dac_to_mass(self, dac, detname):
         detname = get_detector_name(detname)
 
@@ -161,9 +172,9 @@ class BaseMagnet(HasTraits):
             dac = self.spectrometer.correct_dac(self.detector, dac)
             self.dac = dac
 
-    #===============================================================================
+    # ===============================================================================
     # property get/set
-    #===============================================================================
+    # ===============================================================================
 
 
     def _validate_dac(self, d):
@@ -208,9 +219,9 @@ class BaseMagnet(HasTraits):
     def _set_massmax(self, v):
         self._massmax = v
 
-    #===============================================================================
+    # ===============================================================================
     # views
-    #===============================================================================
+    # ===============================================================================
     def traits_view(self):
         v = View(
             VGroup(
@@ -233,7 +244,8 @@ class BaseMagnet(HasTraits):
                     label='Control')))
 
         return v
-#============= EOF =============================================
+
+# ============= EOF =============================================
 
 
 

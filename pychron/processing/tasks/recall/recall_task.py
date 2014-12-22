@@ -12,29 +12,30 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from datetime import timedelta
 
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Tabbed, HSplitter
 from pyface.tasks.action.schema import SToolBar
-
 from traits.api import Instance
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.envisage.tasks.actions import ToggleFullWindowAction
 from pychron.globals import globalv
 from pychron.processing.tasks.actions.processing_actions import ConfigureRecallAction
 from pychron.processing.tasks.browser.util import browser_pane_item
 from pychron.processing.tasks.recall.actions import AddIsoEvoAction, AddDiffAction, EditDataAction, RatioEditorAction, \
-    SummaryLabnumberAction, CalculationViewAction, SummaryProjectAction, ContextViewAction, DatasetAction
+    SummaryLabnumberAction, CalculationViewAction, SummaryProjectAction, ContextViewAction, DatasetAction, NextAction, \
+    PreviousAction
 from pychron.processing.tasks.recall.context_editor import ContextEditor
 from pychron.processing.tasks.recall.dataset_recall_editor import DatasetRecallEditor
 from pychron.processing.tasks.recall.diff_editor import DiffEditor
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
 from pychron.processing.tasks.analysis_edit.panes import ControlsPane
 from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPane
+from pychron.processing.tasks.recall.mass_spec_recaller import MassSpecRecaller
 from pychron.processing.tasks.recall.recall_editor import RecallEditor
 from pychron.processing.utils.grouping import group_analyses_by_key
 
@@ -55,10 +56,39 @@ class RecallTask(AnalysisEditTask):
                  SummaryProjectAction(),
                  SummaryLabnumberAction(),
                  ContextViewAction(),
+                 NextAction(),
+                 PreviousAction(),
                  image_size=(16, 16))]
     auto_select_analysis = False
     _append_replace_analyses_enabled = False
-    recaller = Instance('pychron.processing.tasks.recall.mass_spec_recaller.MassSpecRecaller', ())
+    recaller = Instance(MassSpecRecaller)
+
+    def _recaller_default(self):
+        db = self.application.get_service('pychron.database.adapters.massspec_database_adapter.MassSpecDatabaseAdapter')
+        recaller=MassSpecRecaller(db=db)
+
+        return recaller
+
+    def modify_analysis_identifier(self):
+        from pychron.processing.analysis_modifier import AnalysisModifier
+
+        items = self.analysis_table.selected
+        if not items:
+            items = self.analysis_table.analyses
+
+        if not items:
+            self.information_dialog('No analyses selected to modify')
+
+        am = AnalysisModifier()
+        am.do_modification(items)
+
+    def next_analysis(self):
+        self.debug('next analysis')
+        self._adjacent_analysis(False)
+
+    def previous_analysis(self):
+        self.debug('previous analysis')
+        self._adjacent_analysis(True)
 
     def new_dataset(self):
         records = self._get_selected_analyses()
@@ -215,9 +245,9 @@ class RecallTask(AnalysisEditTask):
     def activated(self):
         super(RecallTask, self).activated()
 
-        self._preference_binder('pychron.massspec.database',
-                                ('username','name','password','host'),
-                                obj=self.recaller.dbconn_spec)
+        # self._preference_binder('pychron.massspec.database',
+        #                         ('username','name','password','host'),
+        #                         obj=self.recaller.dbconn_spec)
 
         if globalv.recall_debug:
             try:
@@ -227,9 +257,20 @@ class RecallTask(AnalysisEditTask):
             except IndexError:
                 pass
 
+    # private
+    def _adjacent_analysis(self, previous):
+        editor = self.has_active_editor(klass=RecallEditor)
+        if editor:
+            ts = editor.model.analysis_timestamp
+            an = self.manager.get_adjacent_analysis(ts, previous,
+                                                    calculate_age=True, load_aux=True)
+            editor.set_items(an)
+
+    # handlers
     def _dclicked_sample_changed(self):
         pass
 
+    # defaults
     def _default_layout_default(self):
         return TaskLayout(
             id='pychron.recall',
@@ -237,4 +278,5 @@ class RecallTask(AnalysisEditTask):
                 browser_pane_item()),
                            PaneItem('pychron.processing.controls')))
 
-#============= EOF =============================================
+
+# ============= EOF =============================================

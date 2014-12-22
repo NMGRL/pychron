@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-from traits.api import HasTraits, Array, Int, Float
-from chaco.abstract_overlay import AbstractOverlay
-#============= standard library imports ========================
-from numpy import where, array
-from enable.base_tool import BaseTool
-from enable.tools.drag_tool import DragTool
-from enable.colors import color_table
-#============= local library imports  ==========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

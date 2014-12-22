@@ -12,15 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy import Column, Integer, String, \
     BLOB, Float, Boolean, DateTime, TIMESTAMP, ForeignKey
 from sqlalchemy.orm import relationship
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 from pychron.database.core.base_orm import BaseMixin, NameMixin
 # from pychron.database.core.base_orm import PathMixin, ResultsMixin, ScriptTable
@@ -50,8 +50,8 @@ class proc_DataReductionTagTable(Base, BaseMixin):
     create_date = Column(TIMESTAMP, default=func.now())
     comment = Column(BLOB)
     user_id = foreignkey('gen_UserTable')
-    analyses = relationship('proc_DataReductionTagSetTable', backref='tag')
 
+    analyses = relationship('proc_DataReductionTagSetTable', backref='tag')
     analysis = relationship('meas_AnalysisTable', backref='data_reduction_tag')
 
 
@@ -216,7 +216,7 @@ class proc_BlanksSetValueTable(Base, BaseMixin):
 
 
 class proc_BlanksSetTable(Base, BaseMixin):
-    blanks_id = foreignkey('proc_BlanksTable')
+    # blanks_id = foreignkey('proc_BlanksTable')
     blank_analysis_id = foreignkey('meas_AnalysisTable')
     # set_id = Column(Integer)
     set_id = stringcolumn()
@@ -249,6 +249,7 @@ class proc_BlanksTable(Base, BaseMixin):
 
     analysis_set = relationship('proc_BlanksSetTable',
                                 primaryjoin='proc_BlanksTable.set_id==proc_BlanksSetTable.set_id',
+                                backref = 'blanks',
                                 uselist=True)
 
     # analysis_set = relationship('proc_BlanksSetTable')
@@ -275,7 +276,8 @@ class proc_BackgroundsSetTable(Base, BaseMixin):
     # backgrounds_id = foreignkey('proc_BackgroundsTable')
     background_analysis_id = foreignkey('meas_AnalysisTable')
     # set_id = Column(Integer)
-    set_id=stringcolumn()
+    set_id = stringcolumn()
+
 
 class proc_BackgroundsHistoryTable(Base, HistoryMixin):
     backgrounds = relationship('proc_BackgroundsTable',
@@ -295,6 +297,9 @@ class proc_BackgroundsTable(Base, BaseMixin):
     error_type = stringcolumn(default='SD')
     set_id = Column(String(40), ForeignKey('proc_BackgroundsSetTable.set_id'))
     # set_id = Column(Integer)
+    analysis_set = relationship('proc_BackgroundsSetTable',
+                                primaryjoin='proc_BackgroundsTable.set_id==proc_BackgroundsSetTable.set_id',
+                                uselist=True)
 
 
 class proc_DetectorIntercalibrationHistoryTable(Base, HistoryMixin):
@@ -307,6 +312,12 @@ class proc_DetectorIntercalibrationHistoryTable(Base, HistoryMixin):
                             backref='selected_detector_intercalibration',
                             uselist=False)
 
+class proc_DetectorIntercalibrationSetTable(Base, BaseMixin):
+    ## intercalibration_id = foreignkey('proc_DetectorIntercalibrationTable')
+    ic_analysis_id = foreignkey('meas_AnalysisTable')
+    # set_id = Column(Integer)
+    set_id = stringcolumn()
+
 
 class proc_DetectorIntercalibrationTable(Base, BaseMixin):
     history_id = foreignkey('proc_DetectorIntercalibrationHistoryTable')
@@ -318,11 +329,8 @@ class proc_DetectorIntercalibrationTable(Base, BaseMixin):
     # set_id = Column(Integer)
     set_id = Column(String(40), ForeignKey('proc_DetectorIntercalibrationSetTable.set_id'))
 
-class proc_DetectorIntercalibrationSetTable(Base, BaseMixin):
-    # intercalibration_id = foreignkey('proc_DetectorIntercalibrationTable')
-    ic_analysis_id = foreignkey('meas_AnalysisTable')
-    # set_id = Column(Integer)
-    set_id = stringcolumn()
+
+
 
 
 class proc_DetectorParamHistoryTable(Base, HistoryMixin):
@@ -459,4 +467,4 @@ class proc_WorkspaceSettings(Base, BaseMixin):
     '''
     settings = BLOB()
 
-#============= EOF =============================================
+# ============= EOF =============================================

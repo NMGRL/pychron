@@ -12,11 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class no_update(object):
     model = None
@@ -33,4 +33,4 @@ class no_update(object):
             self.model._no_update = False
             self.model.update_needed = True
 
-#============= EOF =============================================
+# ============= EOF =============================================

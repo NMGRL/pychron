@@ -5,24 +5,27 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
 from pyface.message_dialog import warning
 from pyface.tasks.task_window_layout import TaskWindowLayout
+
 from pychron.envisage.tasks.actions import PAction as Action, PTaskAction as TaskAction
-#============= standard library imports ========================
+
+
+# ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.envisage.resources import icon
 from pychron.paths import paths
 
@@ -32,8 +35,8 @@ EXP_ID = 'pychron.experiment.task'
 class ExperimentAction(Action):
     task_id = EXP_ID
 
-    def _get_experimentor(self, event):
-        return self._get_service(event, 'pychron.experiment.experimentor.Experimentor')
+    # def _get_experimentor(self, event):
+    #     return self._get_service(event, 'pychron.experiment.experimentor.Experimentor')
 
     def _get_service(self, event, name):
         app = event.task.window.application
@@ -42,6 +45,11 @@ class ExperimentAction(Action):
     def _open_editor(self, event):
         application = event.task.window.application
         application.open_task(self.task_id)
+
+
+class ConfigureEditorTableAction(TaskAction):
+    name = 'Configure Experiment Table'
+    method = 'configure_experiment_table'
 
 
 class BasePatternAction(TaskAction):
@@ -156,7 +164,7 @@ class NewExperimentQueueAction(QueueAction):
 class OpenLastExperimentQueueAction(QueueAction):
     description = 'Open last executed experiment'
     name = 'Open Last Experiment...'
-    id ='pychron.open_last_experiment'
+    id = 'pychron.open_last_experiment'
 
     def __init__(self, *args, **kw):
         super(OpenLastExperimentQueueAction, self).__init__(*args, **kw)
@@ -193,14 +201,14 @@ class OpenExperimentQueueAction(QueueAction):
     id = 'pychron.open_experiment'
 
     def perform(self, event):
-        path = '/Users/ross/Pychrondata_dev/experiments/Current Experiment.txt'
+        path = '/Users/ross/Pychron_dev/experiments/Current Experiment.txt'
         # path = '/Users/ross/Pychrondata_dev/experiments/test.txt'
         self._open_experiment(event, path)
 
 
-#===============================================================================
+# ===============================================================================
 # Utilities
-#===============================================================================
+# ===============================================================================
 class SignalCalculatorAction(ExperimentAction):
     name = 'Signal Calculator'
 
@@ -215,4 +223,4 @@ class ResetQueuesAction(TaskAction):
     name = 'Reset Queues'
 
 
-#============= EOF ====================================
+# ============= EOF ====================================

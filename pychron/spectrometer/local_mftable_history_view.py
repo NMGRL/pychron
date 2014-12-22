@@ -20,7 +20,7 @@ from traitsui.editors import TextEditor
 from traitsui.group import HGroup
 from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.git_archive.history import GitArchiveHistory, GitArchiveHistoryView, DiffView
 
 
@@ -110,7 +110,7 @@ class LocalMFTableHistoryView(GitArchiveHistoryView):
 #     gh._diff_button_fired()
 #     # ghv = LocalMFTableHistoryView(model=gh)
 #     # ghv.configure_traits(kind='livemodal')
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

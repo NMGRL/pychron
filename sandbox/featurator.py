@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,12 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
 from pychron.remote_hardware.protocols.laser_protocol import LaserProtocol
-from threading import Thread, Lock
 
 '''
 test features of pychron using unittest
@@ -25,15 +24,15 @@ test features of pychron using unittest
 
 
 '''
-#=============enthought library imports=======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# =============enthought library imports=======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 import subprocess
 import time
 
-#===============================================================================
+# ===============================================================================
 # ImportTest
-#===============================================================================
+# ===============================================================================
 # class ImportTest(unittest.TestCase):
 #
 #    def setUp(self):
@@ -63,9 +62,9 @@ import time
 #        e = VideoStageManager()
 #        self.assertEqual(e.__class__, VideoStageManager)
 
-#===============================================================================
+# ===============================================================================
 # RemoteHardwareTest
-#===============================================================================
+# ===============================================================================
 
 # from pychron.remote_hardware.tests.laser_test import LaserTest
 # from pychron.remote_hardware.tests.system_test import SystemTest
@@ -158,5 +157,5 @@ if __name__ == '__main__':
     main(launch=args.launch,
          simulator=args.simulator)
 
-#============= EOF =====================================
+# ============= EOF =====================================
 

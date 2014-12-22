@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 
 from datetime import datetime
 
 from sqlalchemy import Column, Integer, BLOB, Float, DateTime
 from sqlalchemy.orm import relationship
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.database.orms.isotope.util import foreignkey, stringcolumn
 from pychron.database.core.base_orm import BaseMixin, NameMixin
 from util import Base
@@ -107,10 +107,12 @@ class irrad_ChronologyTable(Base, BaseMixin):
             dose =(pwr, %Y-%m-%d %H:%M:%S, %Y-%m-%d %H:%M:%S)
 
         """
-        doses = self.get_doses(tofloat=False)
-        d = datetime.strptime(doses[0][1], '%Y-%m-%d %H:%M:%S')
+        # doses = self.get_doses(tofloat=False)
+        # d = datetime.strptime(doses[0][1], '%Y-%m-%d %H:%M:%S')
+        # return d.strftime('%m-%d-%Y')
+        # d = datetime.strptime(doses[0][1], '%Y-%m-%d %H:%M:%S')
+        d = self.get_doses()[0][1]
         return d.strftime('%m-%d-%Y')
-
 
     @property
     def duration(self):
@@ -121,7 +123,7 @@ class irrad_ChronologyTable(Base, BaseMixin):
         total_seconds = sum([(di[2] - di[1]).total_seconds() for di in doses])
         return total_seconds / 3600.
 
-    def get_doses(self, tofloat=True):
+    def get_doses(self, todatetime=True):
         doses = self.chronology.split('$')
         # doses = [di.strip().split('%') for di in doses]
         dd = []
@@ -134,7 +136,7 @@ class irrad_ChronologyTable(Base, BaseMixin):
             s, e = di.strip().split('%')
             dd.append((pwr, s, e))
 
-        if tofloat:
+        if todatetime:
             # def convert(x):
             #     pwr=1.0
             #     if ':' in x:
@@ -146,4 +148,4 @@ class irrad_ChronologyTable(Base, BaseMixin):
 
         return dd
 
-        #============= EOF =============================================
+# ============= EOF =============================================

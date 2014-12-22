@@ -16,11 +16,11 @@
 
 # ============= enthought library imports =======================
 import math
+
 from enable.base import str_to_font
-from traits.api import HasTraits, Button, Str, Int, Bool
-from traitsui.api import View, Item, UItem, HGroup, VGroup
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.canvas.canvas2D.scene.primitives.primitives import QPrimitive
 from pychron.canvas.canvas2D.scene.scene import Scene
 from matplotlib.cm import get_cmap
@@ -78,7 +78,7 @@ class PieChartScene(Scene):
         self.reset_layers()
         v=PieChart(error_components)
         self.add_item(v)
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

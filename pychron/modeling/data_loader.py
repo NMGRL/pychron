@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,18 +12,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Str
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 import csv
 from numpy import array, loadtxt
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.loggable import Loggable
 
 TAB = chr(9)
@@ -407,4 +407,4 @@ if __name__ == '__main__':
     d = DataLoader()
     path = '/Users/Ross/Pychrondata_beta/data/modeling/ShapFurnace.txt'
     d.load_autoupdate(path, 0, 0)
-#============= EOF ====================================
+# ============= EOF ====================================

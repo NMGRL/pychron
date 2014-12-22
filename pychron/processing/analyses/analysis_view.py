@@ -12,15 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, List, Property, Any, Instance, Event, Str
 from traitsui.api import View, UItem, InstanceEditor, TabularEditor
 from traitsui.tabular_adapter import TabularAdapter
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.processing.analyses.view.detector_ic_view import DetectorICView
 from pychron.processing.analyses.view.error_components_view import ErrorComponentsView
 from pychron.processing.analyses.view.snapshot_view import SnapshotView
@@ -153,4 +153,4 @@ class DBAnalysisView(AnalysisView):
     pass
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

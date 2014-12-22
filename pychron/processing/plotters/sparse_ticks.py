@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Int
 from chaco.ticks import DefaultTickGenerator
-#============= standard library imports ========================
-from numpy import hstack, log10
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+from numpy import log10
+# ============= local library imports  ==========================
 
 
 class SparseTicks(DefaultTickGenerator):
@@ -46,4 +46,4 @@ class SparseLogTicks(DefaultTickGenerator):
         ticks = ticks[log10(ticks) % 1 == 0]
         return ticks
 
-#============= EOF =============================================
+# ============= EOF =============================================

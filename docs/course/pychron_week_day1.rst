@@ -22,7 +22,7 @@ You can launch pychron in one of three ways
 
 Launch from the terminal
 
-.. code-block::
+.. code:: python
 
     >> cd /path/to/pychron/source
     >> python launchers/pyexperiment.py

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Array
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.lineplot import LinePlot
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import array, zeros
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 class ErrorEnvelopeOverlay(AbstractOverlay):
     _cache_valid = False
@@ -107,4 +107,4 @@ class ErrorEnvelopeOverlay(AbstractOverlay):
 
         return [self._cached_screen_pts_l], [self._cached_screen_pts_u]
 
-#============= EOF =============================================
+# ============= EOF =============================================

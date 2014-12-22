@@ -1,28 +1,29 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Range, Instance, Bool, \
     Button, Any, Str, Float, Enum, HasTraits, List
 from traitsui.api import View, Item, EnumEditor, Handler, HGroup
 import apptools.sweet_pickle as pickle
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.managers.manager import Manager
 from pychron.graph.graph import Graph
+from pychron.spectrometer.jobs.coincidence_scan import CoincidenceScan
 from pychron.spectrometer.jobs.peak_center import PeakCenter
 # from threading import Thread
 from pychron.spectrometer.thermo.detector import Detector
@@ -53,7 +54,7 @@ class PeakCenterConfig(HasTraits):
     directions = Enum('Increase', 'Decrease', 'Oscillate')
 
     def _integration_time_default(self):
-        return QTEGRA_INTEGRATION_TIMES[4] #1.048576
+        return QTEGRA_INTEGRATION_TIMES[4]  # 1.048576
 
     def dump(self):
         p = os.path.join(paths.hidden_dir, 'peak_center_config')
@@ -75,8 +76,7 @@ class PeakCenterConfig(HasTraits):
                  buttons=['OK', 'Cancel'],
                  kind='livemodal',
                  title='Peak Center',
-                 handler=PeakCenterConfigHandler
-        )
+                 handler=PeakCenterConfigHandler)
         return v
 
 
@@ -90,6 +90,7 @@ class IonOpticsManager(Manager):
     spectrometer = Any
 
     peak_center = Instance(PeakCenter)
+    coincidence = Instance(CoincidenceScan)
     peak_center_config = Instance(PeakCenterConfig)
     canceled = False
 
@@ -101,6 +102,19 @@ class IonOpticsManager(Manager):
         spec = self.spectrometer
         molweights = spec.molecular_weights
         return molweights[isotope_key]
+
+    def set_mftable(self, name=None):
+        """
+            if mt is None set to the default mftable located at setupfiles/spectrometer/mftable.csv
+        :param mt:
+        :return:
+        """
+        if name and name != os.path.splitext(os.path.basename(paths.mftable))[0]:
+            self.spectrometer.use_deflection_correction = False
+        else:
+            self.spectrometer.use_deflection_correction = True
+
+        self.spectrometer.magnet.set_mftable(name)
 
     def position(self, pos, detector, use_dac=False, update_isotopes=True):
         """
@@ -135,7 +149,7 @@ class IonOpticsManager(Manager):
                 mag.mass_change(pos)
 
             # else:
-            #     #get nearst isotope
+            # #get nearst isotope
             #     self.debug('rounding mass {} to {}'.format(pos, '  {:n}'.format(round(pos))))
             #     spec.update_isotopes('  {:n}'.format(round(pos)), detector)
 
@@ -147,6 +161,26 @@ class IonOpticsManager(Manager):
 
             self.info('positioning {} ({}) on {}'.format(pos, dac, detector))
             return mag.set_dac(dac)
+
+    def do_coincidence_scan(self, new_thread=True):
+
+        if new_thread:
+            t = Thread(name='ion_optics.coincidence', target=self._coincidence)
+            t.start()
+            self._thread = t
+
+    def _coincidence(self):
+        print self.coincidence.get_peak_center()
+
+    # cs = CoincidenceScan(spectrometer=self.spectrometer,
+    #                          ion_optics_manager=self)
+    #     self.open_view(cs.graph)
+
+    def setup_coincidence(self):
+        cs = CoincidenceScan(spectrometer=self.spectrometer,
+                             ion_optics_manager=self)
+        self.coincidence = cs
+        return cs
 
     def get_center_dac(self, det, iso):
         spec = self.spectrometer
@@ -170,6 +204,7 @@ class IonOpticsManager(Manager):
 
         self.canceled = False
         self.alive = True
+        self.peak_center_result = None
 
         args = (save, confirm_save, warn, message, on_end)
         if new_thread:
@@ -185,13 +220,13 @@ class IonOpticsManager(Manager):
                           integration_time=1.04,
                           directions='Increase',
                           center_dac=None, plot_panel=None, new=False,
-                          standalone_graph=True, name=''):
+                          standalone_graph=True, name='', show_label=False):
 
         self._ointegration_time = self.spectrometer.integration_time
 
         if detector is None or isotope is None:
             pcc = self.peak_center_config
-            pcc.dac=self.spectrometer.magnet.dac
+            pcc.dac = self.spectrometer.magnet.dac
 
             info = pcc.edit_traits()
             if not info.result:
@@ -201,7 +236,7 @@ class IonOpticsManager(Manager):
                 detector = pcc.detector.name
                 isotope = pcc.isotope
                 directions = pcc.directions
-                integration_time=pcc.integration_time
+                integration_time = pcc.integration_time
 
                 if not pcc.use_current_dac:
                     center_dac = pcc.dac
@@ -221,12 +256,12 @@ class IonOpticsManager(Manager):
 
         self._setup_peak_center(detectors, isotope, period,
                                 center_dac, directions, plot_panel, new,
-                                standalone_graph, name)
+                                standalone_graph, name, show_label)
         return self.peak_center
 
     def _setup_peak_center(self, detectors, isotope, period,
                            center_dac, directions, plot_panel, new,
-                           standalone_graph, name):
+                           standalone_graph, name, show_label):
 
 
         spec = self.spectrometer
@@ -250,7 +285,8 @@ class IonOpticsManager(Manager):
                      reference_detector=ref,
                      additional_detectors=ad,
                      reference_isotope=isotope,
-                     spectrometer=spec)
+                     spectrometer=spec,
+                     show_label=show_label)
 
         self.peak_center = pc
         graph = pc.graph
@@ -333,9 +369,9 @@ class IonOpticsManager(Manager):
         self.peak_center.stop()
         self.info('peak center canceled')
 
-    #===============================================================================
+    # ===============================================================================
     # handler
-    #===============================================================================
+    # ===============================================================================
     def _peak_center_config_default(self):
         config = None
         p = os.path.join(paths.hidden_dir, 'peak_center_config')
@@ -364,8 +400,8 @@ if __name__ == '__main__':
     io = IonOpticsManager()
     io.configure_traits()
 
-#============= EOF =============================================
-#    def _graph_factory(self):
+# ============= EOF =============================================
+# def _graph_factory(self):
 #        g = Graph(
 #                  container_dict=dict(padding=5, bgcolor='gray'))
 #        g.new_plot()

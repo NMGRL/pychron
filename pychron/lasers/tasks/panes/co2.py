@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-from traits.api import HasTraits
-from traitsui.api import View, Item
+# ============= enthought library imports =======================
 from pychron.lasers.tasks.laser_panes import BaseLaserPane, ClientPane, \
     StageControlPane, ControlPane, AxesPane
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 class FusionsCO2Pane(BaseLaserPane):
     pass
 
@@ -35,4 +33,4 @@ class FusionsCO2ControlPane(ControlPane):
 
 class FusionsCO2AxesPane(AxesPane):
     id = 'pychron.fusions.co2.axes'
-#============= EOF =============================================
+# ============= EOF =============================================

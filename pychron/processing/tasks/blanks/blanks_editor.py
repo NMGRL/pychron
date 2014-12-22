@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import time
 
 from chaco.legend import Legend
 from traits.api import Str
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import where
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from uncertainties import std_dev, nominal_value
 from pychron.core.regression.interpolation_regressor import InterpolationRegressor
 from pychron.core.regression.mean_regressor import WeightedMeanRegressor
@@ -231,7 +231,7 @@ class BlanksEditor(InterpolationEditor):
         return StackedRegressionGraph(container_dict=dict(stack_order='top_to_bottom'))
 
 
-        #============= EOF =============================================
+        # ============= EOF =============================================
         #     def _rebuild_graph(self):
         #         graph = self.graph
         #

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-from traits.api import HasTraits, Any
-from traitsui.api import View, Item, UItem
+# ============= enthought library imports =======================
+from traits.api import Any
+from pyface.tasks.task_layout import TaskLayout, PaneItem
+
 from pychron.envisage.tasks.base_task import BaseManagerTask
 from pychron.media_server.tasks.media_server_panes import ViewPane, TreePane
-from pyface.tasks.task_layout import TaskLayout, PaneItem
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class MediaServerTask(BaseManagerTask):
     browser = Any
@@ -37,4 +38,4 @@ class MediaServerTask(BaseManagerTask):
                          )
                 ]
 
-#============= EOF =============================================
+# ============= EOF =============================================

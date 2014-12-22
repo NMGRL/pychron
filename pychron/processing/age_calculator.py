@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Property, List, Button, Str, File, Any
 from traitsui.api import View, Item, HGroup, TabularEditor
 from traitsui.tabular_adapter import TabularAdapter
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from uncertainties import ufloat
 import xlrd
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.processing.argon_calculations import calculate_arar_age
 
 
@@ -240,4 +240,4 @@ if __name__ == '__main__':
     ag = AgeCalculator()
     ag.path = '/Users/argonlab2/Sandbox/age_calculator_template.xls'
     ag.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================

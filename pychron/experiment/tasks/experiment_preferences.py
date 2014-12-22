@@ -20,7 +20,7 @@ from traits.api import Str, Int, \
 from traitsui.api import View, Item, Group, VGroup, HGroup, UItem
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 # ============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper, BaseConsolePreferences, \
     BaseConsolePreferencesPane
@@ -38,10 +38,6 @@ class PositiveInteger(Int):
 class LabspyPreferences(BasePreferencesHelper):
     preferences_path = 'pychron.experiment'
     use_labspy = Bool
-    root = Str
-    username = Str
-    password = Password
-    host = Str
 
 
 class ExperimentPreferences(BasePreferencesHelper):
@@ -54,9 +50,6 @@ class ExperimentPreferences(BasePreferencesHelper):
     send_config_before_run = Bool
     use_auto_save = Bool
     auto_save_delay = Int
-
-    irradiation_prefix = Str
-    monitor_name = Str
 
     baseline_color = Color
     sniff_color = Color
@@ -104,31 +97,24 @@ class ConsolePreferences(BaseConsolePreferences):
     use_message_colormapping = Bool
 
 
-class SysLoggerPreferences(BasePreferencesHelper):
-    use_syslogger = Bool
-    preferences_path = 'pychron.syslogger'
-    username = Str
-    password = Password
+# class SysLoggerPreferences(BasePreferencesHelper):
+#     use_syslogger = Bool
+#     preferences_path = 'pychron.syslogger'
+#     username = Str
+#     password = Password
+#
+#     host = Str
 
-    host = Str
 
-
-#======================================================================================================
+# ======================================================================================================
 # panes
-#======================================================================================================
+# ======================================================================================================
 class LabspyPreferencesPane(PreferencesPane):
     model_factory = LabspyPreferences
     category = 'Experiment'
-
+#
     def traits_view(self):
-        grp = VGroup(Item('host'),
-                     Item('username'),
-                     Item('password'),
-                     Item('root'),
-                     enabled_when='use_labspy')
-
         v = View(VGroup(Item('use_labspy', label='Use Labspy'),
-                        grp,
                         label='Labspy', show_border=True))
         return v
 
@@ -158,11 +144,6 @@ class ExperimentPreferencesPane(PreferencesPane):
             Item('bg_color', label='Background'),
             Item('even_bg_color', label='Even Row'),
             label='Editor')
-
-        irradiation_grp = Group(Item('irradiation_prefix',
-                                     label='Irradiation Prefix'),
-                                Item('monitor_name'),
-                                label='Irradiations')
 
         color_group = Group(Item('sniff_color', label='Equilibration'),
                             Item('baseline_color', label='Baseline'),
@@ -214,7 +195,7 @@ class ExperimentPreferencesPane(PreferencesPane):
 
         return View(color_group,
                     automated_grp, notification_grp,
-                    editor_grp, irradiation_grp,
+                    editor_grp,
                     analysis_grouping_grp, memory_grp)
 
 
@@ -223,13 +204,7 @@ class UserNotifierPreferencesPane(PreferencesPane):
     category = 'Experiment'
 
     def traits_view(self):
-        auth_grp = VGroup(
-
-                          Item('server_host', label='Host'),
-                          Item('server_username', label='User'),
-                          Item('server_password', label='Password'),
-                          # Item('server_port', label='Port'),
-                          Item('include_log'),
+        auth_grp = VGroup(Item('include_log'),
                           show_border=True,
                           label='User Notifier')
 
@@ -252,24 +227,25 @@ class ConsolePreferencesPane(BaseConsolePreferencesPane):
                                UItem('bgcolor')),
                         preview,
                         Item('use_message_colormapping'),
+                        show_border=True,
                         label=self.label))
         return v
 
 
-class SysLoggerPreferencesPane(PreferencesPane):
-    model_factory = SysLoggerPreferences
-    category = 'Experiment'
+# class SysLoggerPreferencesPane(PreferencesPane):
+#     model_factory = SysLoggerPreferences
+#     category = 'Experiment'
+#
+#     def traits_view(self):
+#         auth_grp = VGroup(Item('host'),
+#                           Item('username'),
+#                           Item('password'),
+#                           enabled_when='use_syslogger')
+#
+#         v = View(VGroup(Item('use_syslogger', label='Use SysLogger'),
+#                         auth_grp,
+#                         show_border=True,
+#                         label='SysLogger'))
+#         return v
 
-    def traits_view(self):
-        auth_grp = VGroup(Item('host'),
-                          Item('username'),
-                          Item('password'),
-                          enabled_when='use_syslogger')
-
-        v = View(VGroup(Item('use_syslogger', label='Use SysLogger'),
-                        auth_grp,
-                        show_border=True,
-                        label='SysLogger'))
-        return v
-
-#============= EOF =============================================
+# ============= EOF =============================================

@@ -12,12 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import pyproj
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.loggable import Loggable
 from pychron.core.xls.xls_parser import XLSParser
 
@@ -246,5 +246,5 @@ class SampleLoader(Loggable):
         return pyproj.transform(self._ref_system, self._wgs84, e, n)
 
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

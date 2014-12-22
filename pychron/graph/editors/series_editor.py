@@ -1,4 +1,4 @@
-# #===============================================================================
+# # ===============================================================================
 # # Copyright 2011 Jake Ross
 # #
 # # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,23 +12,23 @@
 # # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # # See the License for the specific language governing permissions and
 # # limitations under the License.
-# #===============================================================================
+# # ===============================================================================
 #
 #
 #
-# #=============enthought library imports=======================
+# # =============enthought library imports=======================
 # from traits.api import HasTraits, on_trait_change, \
 #     Instance, Bool, Int, Any, Property, Str
 # from traitsui.api import View, Item, VGroup, ColorEditor, EnumEditor
 # from chaco.api import BaseXYPlot
-# #=============standard library imports ========================
+# # =============standard library imports ========================
 # from wx import Colour
 # from chaco.default_colormaps import color_map_name_dict, reverse
 # from chaco.base_2d_plot import Base2DPlot
 # # from chaco.contour_poly_plot import ContourPolyPlot
 # from chaco.data_range_1d import DataRange1D
 #
-# #=============local library imports  ==========================
+# # =============local library imports  ==========================
 #
 #
 # class SeriesEditor(HasTraits):
@@ -169,4 +169,4 @@
 #                       )
 #                 )
 #         return v
-# #================= EOF ==============================================
+# # ================= EOF ==============================================

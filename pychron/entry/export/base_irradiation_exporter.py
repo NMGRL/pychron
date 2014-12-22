@@ -15,22 +15,21 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Button, Instance
-from traitsui.api import View, Item
+from traits.api import Instance
 # ============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.loggable import Loggable
 
 
 class BaseIrradiationExporter(Loggable):
-    source = Instance('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
+    source = Instance('pychron.database.adapters.isotope_adapter.IsotopeAdapter')
 
     def do_export(self, irradiations):
         """
         irradiations: list of str
         """
         if self.setup():
-            db = self.source.db
+            db = self.source
             with db.session_ctx():
                 for irr in irradiations:
                     dbirr = db.get_irradiation(irr)
@@ -43,7 +42,7 @@ class BaseIrradiationExporter(Loggable):
     def _export(self, dbirr):
         raise NotImplementedError
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

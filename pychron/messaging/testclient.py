@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,19 +12,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, String, Button, Int, Str, Enum, \
     Float, Bool, Event, Property, List
 from traitsui.api import View, Item, HGroup, VGroup, ButtonEditor, EnumEditor
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
-#============= views ===================================
-#============= EOF ====================================
+# ============= views ===================================
+# ============= EOF ====================================
 
 import socket
 
@@ -398,10 +398,10 @@ if __name__ == '__main__':
 #    power_test()
 #    timed_flag_test()
 #    mass_spec_param_test()
-    #===========================================================================
+    # ===========================================================================
     # Check Remote launch snippet
-    #===========================================================================
-    #===========================================================================
+    # ===========================================================================
+    # ===========================================================================
     # def ready(client):
     #    r = client.ask('PychronReady')
     #    if r is not None:
@@ -426,10 +426,10 @@ if __name__ == '__main__':
     #        time.sleep(2)
     #    if not success:
     #        print 'Launch timed out after {}'.format(timeout)
-    #===========================================================================
+    # ===========================================================================
 
 
-#======================== EOF ===================================
+# ======================== EOF ===================================
 #    def _receive_data_stream_fired(self):
 #        sock = self.get_connection()
 #        nbytes = sock.recv(4)

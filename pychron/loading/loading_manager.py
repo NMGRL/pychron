@@ -12,21 +12,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, cached_property, List, Str, \
     Property, Int, Event, Any, Bool, Button, Float, on_trait_change
 from traitsui.api import View, Item, EnumEditor, UItem, ListStrEditor
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
 from itertools import groupby
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.canvas.utils import load_holder_canvas
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.canvas.canvas2D.loading_canvas import LoadingCanvas, group_position
 
-from pychron.database.orms.isotope.loading import loading_LoadTable
 from pychron.canvas.canvas2D.scene.primitives.primitives import LoadIndicator
 
 
@@ -547,9 +546,9 @@ class LoadingManager(IsotopeDatabaseManager):
             pos = p.positions
             canvas.add_span_indicator(pos, self.show_spans)
 
-    #===============================================================================
+    # ===============================================================================
     # handlers
-    #===============================================================================
+    # ===============================================================================
     def _archive_button_fired(self):
         ls = LoadSelection(loads=self.loads)
         info = ls.edit_traits()
@@ -671,4 +670,4 @@ class LoadingManager(IsotopeDatabaseManager):
         self.refresh_table = True
         self.dirty = True
 
-        #============= EOF =============================================
+        # ============= EOF =============================================

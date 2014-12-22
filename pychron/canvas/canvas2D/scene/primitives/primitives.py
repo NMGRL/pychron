@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Float, Any, Dict, Bool, Str, Property, List, Int, \
     Color, on_trait_change, String, cached_property, Either
 from traitsui.api import View, VGroup, HGroup, Item, Group
@@ -22,10 +22,10 @@ from chaco.default_colormaps import color_map_name_dict
 from chaco.data_range_1d import DataRange1D
 from kiva.fonttools import str_to_font
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import math
 from numpy import array
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.geometry.convex_hull import convex_hull
 from kiva.agg.agg import GraphicsContextArray
 import Image as PImage
@@ -1158,7 +1158,7 @@ class Image(QPrimitive):
         self._cached_image = GraphicsContextArray(data, pix_format=kiva_depth)
         self._image_cache_valid = True
 
-#============= EOF ====================================
+# ============= EOF ====================================
 # class CalibrationItem(QPrimitive, CalibrationObject):
 #    center = None
 #    right = None

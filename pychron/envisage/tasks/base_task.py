@@ -5,23 +5,23 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from itertools import groupby
-from pyface.tasks.task_layout import TaskLayout
 
+from pyface.tasks.task_layout import TaskLayout
 from traits.api import Any, on_trait_change, List, Unicode, DelegatesTo, Instance
 from pyface.directory_dialog import DirectoryDialog
 from pyface.tasks.action.dock_pane_toggle_group import DockPaneToggleGroup
-from pyface.timer.do_later import do_later
+from pyface.timer.do_later import do_later, do_after
 from pyface.tasks.task import Task
 from pyface.tasks.action.schema import SMenu, SMenuBar, SGroup
 from pyface.action.api import ActionItem, Group
@@ -31,8 +31,9 @@ from pyface.constant import OK, CANCEL, YES
 from pyface.confirmation_dialog import ConfirmationDialog
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import add_extension, view_file
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.preference_mixin import PreferenceMixin
@@ -223,6 +224,7 @@ class BaseTask(Task, Loggable, PreferenceMixin):
     application = DelegatesTo('window')
 
     _full_window = False
+
     def toggle_full_window(self):
         if self._full_window:
             self.window.set_layout(self.default_layout)
@@ -234,22 +236,22 @@ class BaseTask(Task, Loggable, PreferenceMixin):
         self._full_window = not self._full_window
 
     def show_pane(self, p):
-        op=p
+        op = p
         if isinstance(p, str):
             if '.' in p:
                 for k in self.trait_names():
-                    v=getattr(self, k)
+                    v = getattr(self, k)
                     try:
-                        if v.id==p:
-                            p=v
+                        if v.id == p:
+                            p = v
                             break
                     except AttributeError:
                         continue
 
             else:
-                p=getattr(self, p)
+                p = getattr(self, p)
 
-        self.debug('showing pane {} ==> {}'.format(op,p))
+        self.debug('showing pane {} ==> {}'.format(op, p))
         self._show_pane(p)
 
     def _show_pane(self, p):
@@ -276,8 +278,7 @@ class BaseTask(Task, Loggable, PreferenceMixin):
             self._view_menu(),
             self._tools_menu(),
             self._window_menu(),
-            self._help_menu(),
-        )
+            self._help_menu())
         if menus:
             for mi in reversed(menus):
                 mb.items.insert(4, mi)
@@ -332,7 +333,7 @@ class BaseTask(Task, Loggable, PreferenceMixin):
 
             groups.append(TaskGroup(items=items))
 
-        groups.append(DockPaneToggleGroup())
+        # groups.append(DockPaneToggleGroup())
         return groups
 
     def _view_menu(self):
@@ -343,10 +344,14 @@ class BaseTask(Task, Loggable, PreferenceMixin):
         return view_menu
 
     def _edit_menu(self):
+        m = SMenu(GenericFindAction(),
+                  id='Edit', name='&Edit')
+        return m
+
+    def _entry_menu(self):
         edit_menu = SMenu(
-            GenericFindAction(),
-            id='Edit',
-            name='&Edit')
+            id='entry.menu',
+            name='&Entry')
         return edit_menu
 
     def _file_menu(self):
@@ -356,8 +361,7 @@ class BaseTask(Task, Loggable, PreferenceMixin):
             SGroup(
                 GenericSaveAsAction(),
                 GenericSaveAction(),
-                id='Save'
-            ),
+                id='Save'),
             SGroup(),
             #                         SMenu(id='Open', name='Open',),
             #                         SMenu(id='New', name='New'),
@@ -418,15 +422,6 @@ class BaseTask(Task, Loggable, PreferenceMixin):
                                     default=CANCEL, title='Save Changes?')
         return dialog.open()
 
-
-class BaseManagerTask(BaseTask):
-    default_directory = Unicode
-    default_open_action = 'open'
-
-    _default_extension = ''
-    wildcard = None
-    manager = Any
-
     @on_trait_change('window:closing')
     def _on_close(self, event):
         """ Prompt the user to save when exiting.
@@ -446,6 +441,14 @@ class BaseManagerTask(BaseTask):
 
     def _prompt_for_save(self):
         return True
+
+class BaseManagerTask(BaseTask):
+    default_directory = Unicode
+    default_open_action = 'open'
+
+    _default_extension = ''
+    wildcard = None
+    manager = Any
 
     def view_pdf(self, p):
         # self.view_file(p, application='Adobe Reader')
@@ -500,7 +503,7 @@ class BaseManagerTask(BaseTask):
                 kw['wildcard'] = self.wildcard
 
         if action is None:
-            action=self.default_open_action
+            action = self.default_open_action
 
         dialog = FileDialog(action=action, **kw)
         if dialog.open() == OK:
@@ -540,7 +543,8 @@ class BaseExtractionLineTask(BaseManagerTask):
         man = app.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
         if man:
             from pychron.extraction_line.tasks.extraction_line_pane import CanvasDockPane
-            self.canvas_pane = CanvasDockPane(canvas=man.new_canvas(name='alt_config'))
+
+            self.canvas_pane = CanvasDockPane(canvas=man.new_canvas())
             panes.append(self.canvas_pane)
 
         return panes
@@ -549,10 +553,11 @@ class BaseExtractionLineTask(BaseManagerTask):
     def _window_opened(self):
         man = self._get_el_manager()
         if man:
-            man.activate()
+            do_after(1000, man.activate)
+            # man.activate()
 
 
 class BaseHardwareTask(BaseManagerTask):
     pass
 
-#============= EOF =============================================
+# ============= EOF =============================================

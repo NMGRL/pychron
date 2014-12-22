@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from envisage.ui.tasks.task_factory import TaskFactory
 from envisage.ui.tasks.task_extension import TaskExtension
 from pyface.action.menu_manager import MenuManager
 from pyface.tasks.action.schema_addition import SchemaAddition
 from pyface.action.group import Group
 from pyface.tasks.action.schema import SMenu
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import to_bool
 
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
@@ -39,7 +39,8 @@ from pychron.processing.tasks.actions.processing_actions import IdeogramAction, 
     ExportAnalysesAction, \
     GraphGroupSelectedAction, IdeogramFromFile, SpectrumFromFile, MakeAnalysisGroupAction, GraphGroupbySampleAction, \
     DeleteAnalysisGroupAction, XYScatterAction, ModifyK3739Action, GroupbySampleAction, \
-    SplitEditorActionVert, ConfigureRecallAction, ActivateBlankAction, ActivateRecallAction, ActivateIdeogramAction
+    SplitEditorActionVert, ConfigureRecallAction, ActivateBlankAction, ActivateRecallAction, ActivateIdeogramAction, \
+    ModifyIdentifierAction
 
 from pychron.processing.tasks.actions.edit_actions import BlankEditAction, \
     FluxAction, IsotopeEvolutionAction, ICFactorAction, \
@@ -57,6 +58,13 @@ from pyface.message_dialog import warning
 
 
 class ProcessingPlugin(BaseTaskPlugin):
+    id = 'pychron.processing.plugin'
+    name = 'Processing'
+
+    def set_preference_defaults(self):
+        ds = (('recent_hours',12),)
+        self._set_preference_defaults(ds, 'pychron.browsing')
+
     def _actions_default(self):
         return [('pychron.ideogram', 'Ctrl+J', 'Open Ideogram'),
                 ('pychron.spectrum', 'Ctrl+D', 'Open Spectrum'),
@@ -77,13 +85,14 @@ class ProcessingPlugin(BaseTaskPlugin):
 
         return [process_so]
 
-    def start(self):
-        try:
-            import xlwt
-        except ImportError:
-            warning(None, '''"xlwt" package not installed. 
-            
-Install to enable MS Excel export''')
+    # def start(self):
+#         try:
+#             import xlwt
+#         except ImportError:
+#             warning(None, '''"xlwt" package not installed.
+#
+# Install to enable MS Excel export''')
+#         super
 
     def _make_task_extension(self, actions, **kw):
         def make_schema(args):
@@ -97,7 +106,7 @@ Install to enable MS Excel export''')
         return TaskExtension(actions=[make_schema(args)
                                       for args in actions], **kw)
 
-    def _my_task_extensions_default(self):
+    def _task_extensions_default(self):
         def figure_group():
             return Group(
                 SpectrumAction(),
@@ -163,6 +172,7 @@ Install to enable MS Excel export''')
                          ModifyK3739Action(),
                          CalculationViewAction(),
                          SummaryLabnumberAction(),
+                         ModifyIdentifierAction(),
                          name='misc')
 
         def activate_group():
@@ -288,8 +298,7 @@ Install to enable MS Excel export''')
              self._repository_task_factory, 'Repository', '', 'Ctrl+Shift+R', '', 'irc-server'),
             # ('pychron.processing.vcs',
             #  self._vcs_data_task_factory, 'VCS', '', ''),
-            ('pychron.export',
-             self._export_task_factory, 'Export', '', '')]
+            ]
 
         return [self._meta_task_factory(*args) for args in tasks]
 
@@ -364,15 +373,9 @@ Install to enable MS Excel export''')
     #     from pychron.processing.tasks.vcs_data.vcs_data_task import VCSDataTask
     #     return VCSDataTask(manager=self._processor_factory())
 
-    def _export_task_factory(self):
-        from pychron.processing.tasks.export.export_task import ExportTask
-
-        return ExportTask(manager=self._processor_factory())
-
     def _preferences_panes_default(self):
         return [
             BrowsingPreferencesPane,
             # VCSPreferencesPane,
             OfflinePreferencesPane, EasyPreferencesPane]
-
-        #============= EOF =============================================
+# ============= EOF =============================================

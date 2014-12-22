@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import Instance, Bool, Enum, Float
-#=============standard library imports ========================
+# =============standard library imports ========================
 import math
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 from pychron.lasers.stage_managers.stage_map import StageMap
 from pychron.canvas.canvas2D.scene.scene_canvas import SceneCanvas
 from pychron.canvas.canvas2D.scene.primitives.primitives import CalibrationObject
@@ -246,4 +246,4 @@ class MapCanvas(SceneCanvas):
         gc.draw_path()
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

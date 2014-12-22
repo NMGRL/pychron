@@ -1,30 +1,31 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Str, Color, Button, Float, Bool
 from traitsui.api import View, Item, VGroup, HGroup, \
     Spring, UItem, spring, RangeEditor
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from threading import Event
 import time
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.loggable import Loggable
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.helpers.timer import Timer
+
 
 class WaitControl(Loggable):
     page_name = Str('Wait')
@@ -32,11 +33,9 @@ class WaitControl(Loggable):
     message_color = Color('black')
 
     high = Float
-    wtime = Float(10)
-    low_name = Float(1)
+    duration = Float(10)
 
     current_time = Float
-#     current_time = Property(depends_on='current_time')
 
     auto_start = Bool(False)
     timer = None
@@ -63,16 +62,18 @@ class WaitControl(Loggable):
     def is_continued(self):
         return self._continued
 
-    def join(self):
+    def join(self, evt=None):
+        if evt is None:
+            evt = self.end_evt
         time.sleep(0.25)
-        while not self.end_evt.is_set():
+        # while not self.end_evt.is_set():
+        while not evt.is_set():
             time.sleep(0.05)
         self.debug('Join finished')
 
-    def start(self, block=True, evt=None, wtime=None):
-        if self.timer:
-            self.timer.stop()
-            self.timer.wait_for_completion()
+    def start(self, block=True, evt=None, duration=None):
+        if self.end_evt:
+            self.end_evt.set()
 
         if evt is None:
             evt = Event()
@@ -81,17 +82,20 @@ class WaitControl(Loggable):
             evt.clear()
             self.end_evt = evt
 
-        if wtime:
-            self.wtime=wtime
+        if self.timer:
+            self.timer.stop()
+            self.timer.wait_for_completion()
+
+        if duration:
+            self.duration = duration
             self.reset()
 
         self.timer = Timer(1000, self._update_time,
-                           delay=1000
-                           )
+                           delay=1000)
         self._continued = False
 
         if block:
-            self.join()
+            self.join(evt=evt)
 
     def stop(self):
         self._end()
@@ -102,11 +106,12 @@ class WaitControl(Loggable):
         self.current_time = 0
 
     def reset(self):
-        self.high = self.wtime
-        self.current_time = self.wtime
-#===============================================================================
-# private
-#===============================================================================
+        self.high = self.duration
+        self.current_time = self.duration
+
+    # ===============================================================================
+    # private
+    # ===============================================================================
 
     def _continue(self):
         self._continued = True
@@ -124,39 +129,41 @@ class WaitControl(Loggable):
     def _update_time(self):
         if self.timer and self.timer.isActive():
             self.current_time -= 1
+            self.debug('Current Time={}/{}'.format(self.current_time, self.duration))
+            if self.current_time <= 0:
+                self._end()
+                self._canceled = False
 
-    def _current_time_changed(self):
-        if self.current_time <= 0:
-            self._end()
-            self._canceled = False
-#===============================================================================
-# handlers
-#===============================================================================
+                # def _current_time_changed(self):
+                # if self.current_time <= 0:
+                #         self._end()
+                #         self._canceled = False
+
+    # ===============================================================================
+    # handlers
+    # ===============================================================================
     def _continue_button_fired(self):
         self._continue()
 
     def _high_changed(self, v):
-        self.wtime = v
+        self.duration = v
         self.current_time = v
 
     def traits_view(self):
         v = View(VGroup(
-                        CustomLabel('message',
-                                    size=14,
-                                    weight='bold',
-                                    color_name='message_color'
-                                    ),
-                        HGroup(
-                               Spring(width=-5, springy=False),
-                               Item('high', label='Set Max. Seconds'),
-                               spring, UItem('continue_button')
-                               ),
-                        HGroup(
-                               Spring(width=-5, springy=False),
-                               Item('current_time', show_label=False,
-                                    editor=RangeEditor(mode='slider',
-                                                           low_name='low_name',
-                                                           high_name='wtime',
-                                    )))))
+            CustomLabel('message',
+                        size=14,
+                        weight='bold',
+                        color_name='message_color'),
+            HGroup(Spring(width=-5, springy=False),
+                   Item('high', label='Set Max. Seconds'),
+                   spring, UItem('continue_button')),
+            HGroup(Spring(width=-5, springy=False),
+                   Item('current_time', show_label=False,
+                        editor=RangeEditor(mode='slider',
+                                           low=1,
+                                           # low_name='low_name',
+                                           high_name='duration')))))
         return v
-#============= EOF =============================================
+
+# ============= EOF =============================================

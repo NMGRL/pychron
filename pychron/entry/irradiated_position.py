@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-from traits.api import HasTraits, Str, Float, Bool, Int, Property
+# ============= enthought library imports =======================
+from traits.api import HasTraits, Str, Float, Bool, Int, Property, CStr
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.pychron_constants import PLUSMINUS
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 class BaseIrradiatedPosition(HasTraits):
     labnumber = Str
     material = Str
@@ -57,7 +58,7 @@ class BaseIrradiatedPosition(HasTraits):
 
 class IrradiatedPosition(BaseIrradiatedPosition):
     size = Str
-    weight = Str
+    weight = CStr
     note = Str
     analyzed = Bool
 
@@ -79,7 +80,7 @@ class BaseIrradiatedPositionAdapter(TabularAdapter):
 class IrradiatedPositionAdapter(TabularAdapter):
     columns = [
         ('Hole', 'hole'),
-        ('Labnumber', 'labnumber'),
+        ('Identifier', 'labnumber'),
         ('Sample', 'sample'),
         ('Project', 'project'),
         ('Material', 'material'),
@@ -111,4 +112,4 @@ class IrradiatedPositionAdapter(TabularAdapter):
         if item.analyzed:
             return '#B0C4DE'
 
-#============= EOF =============================================
+# ============= EOF =============================================

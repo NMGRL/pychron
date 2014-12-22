@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 from pychron.hardware.kerr.kerr_manager import KerrManager
 from pychron.hardware.meter_calibration import MeterCalibration
 
@@ -21,13 +21,13 @@ Fusions Control board
 a combination of the logic board and the kerr microcontroller
 see Photon Machines Logic Board Command Set for additional information
 '''
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import Instance, Str, Float, List, Event
 # from traitsui.api import Item, VGroup, RangeEditor
 from traitsui.api import Item, ListEditor, Group
-#=============standard library imports ========================
+# =============standard library imports ========================
 import os
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 from pychron.globals import globalv
 # from fusions_motor_configurer import FusionsMotorConfigurer
 from pychron.hardware.core.core_device import CoreDevice
@@ -272,9 +272,9 @@ class FusionsLogicBoard(CoreDevice):
     #        fc = FusionsMotorConfigurer(motors=[self.zoom_motor, self.beam_motor])
     #        fc.edit_traits()
 
-    #==============================================================================
+    # ==============================================================================
     # laser methods
-    #==============================================================================
+    # ==============================================================================
     def check_interlocks(self, verbose=True):
         '''
         '''
@@ -380,9 +380,9 @@ class FusionsLogicBoard(CoreDevice):
     #        '''
     #        return KerrMotor(name='beameere', parent=self)
 
-    #==============================================================================
+    # ==============================================================================
     # motor methods
-    #==============================================================================
+    # ==============================================================================
     def set_motor(self, name, value, block=False,
                   relative=False):
 
@@ -478,4 +478,4 @@ class FusionsLogicBoard(CoreDevice):
 #                      Item('update_beam', editor=ube, show_label=False),
 #                      )
 
-#================== EOF ================================================
+# ================== EOF ================================================

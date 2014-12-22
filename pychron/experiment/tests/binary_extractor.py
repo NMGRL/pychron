@@ -198,7 +198,7 @@ class MassSpecBinaryExtractorTestCase(unittest.TestCase):
     def test_ncnts(self):
         self._test_spec_attr('ncnts')
 
-   #=================Ar40====================
+   # =================Ar40====================
     def test_ar40_intercept(self):
         self._test_intercept('Ar40')
 
@@ -214,7 +214,7 @@ class MassSpecBinaryExtractorTestCase(unittest.TestCase):
     def test_ar40_counts_per_cycle(self):
         self._test_counts_per_cycle('Ar40')
 
-    #=================Ar39====================
+    # =================Ar39====================
     def test_ar39_intercept(self):
         self._test_intercept('Ar39')
 
@@ -233,7 +233,7 @@ class MassSpecBinaryExtractorTestCase(unittest.TestCase):
     def test_ar39_counts_per_cycle(self):
         self._test_counts_per_cycle('Ar39')
 
-    #=================Ar36====================
+    # =================Ar36====================
     def test_ar36_background(self):
         self._test_background('Ar36')
 

@@ -19,8 +19,8 @@ from pychron.core.ui import set_qt
 
 set_qt()
 # ============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.logger_setup import logging_setup
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.core.scpi_device import SCPIDevice
@@ -47,7 +47,7 @@ if __name__ == '__main__':
 
         time.sleep(0.5)
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

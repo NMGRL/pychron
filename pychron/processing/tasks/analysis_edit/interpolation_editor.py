@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from chaco.tools.broadcaster import BroadcasterTool
 from traits.api import List, on_trait_change, Bool, \
     Property, cached_property, HasTraits, Tuple
@@ -28,13 +28,14 @@ from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 
 
 
-#============= standard library imports ========================
+
+# ============= standard library imports ========================
 from numpy import Inf, asarray, array
 from pychron.processing.fits.interpolation_fit_selector import InterpolationFitSelector
 from pychron.core.regression.interpolation_regressor import InterpolationRegressor
 from chaco.array_data_source import ArrayDataSource
 from pychron.core.helpers.datetime_tools import convert_timestamp
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 
 def bin_analyses(ans):
@@ -567,6 +568,6 @@ class InterpolationEditor(GraphEditor):
     def _clean_references(self):
         return [ri for ri in self.references if ri.temp_status == 0]
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 

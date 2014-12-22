@@ -15,10 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Color, Instance, DelegatesTo
+from traits.api import Color, Instance, DelegatesTo, List, Any
 from traitsui.api import View, Item, UItem, VGroup, HGroup, spring, \
     EnumEditor, Group, Spring, VFold, Label, InstanceEditor, \
-    VSplit, TabularEditor, UReadonly
+    VSplit, TabularEditor, UReadonly, ListEditor
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traitsui.editors import TableEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
@@ -38,7 +38,7 @@ from pychron.experiment.plot_panel import PlotPanel
 
 # ===============================================================================
 # editing
-#===============================================================================
+# ===============================================================================
 def spacer(w):
     return Spring(width=w, springy=False)
 
@@ -85,7 +85,7 @@ class ExperimentFactoryPane(TraitsDockPane):
                          editor=ComboboxEditor(name=queue_factory_name('usernames'))),
                    icon_button_editor(queue_factory_name('edit_user'), 'database_edit'),
                    # Spring(width=-5, springy=False),
-                   queue_factory_item('use_email_notifier',
+                   queue_factory_item('use_email',
                                       tooltip='Send email notifications',
                                       show_label=False),
                    Item(queue_factory_name('email')),
@@ -162,6 +162,7 @@ class ExperimentFactoryPane(TraitsDockPane):
                                     editor=EnumEditor(values=SPECIAL_NAMES)),
                    run_factory_item('run_block', show_label=False,
                                     editor=EnumEditor(name=run_factory_name('run_blocks'))),
+                   icon_button_editor(run_factory_name('edit_run_blocks'), 'cog'),
                    run_factory_item('frequency_model.frequency', width=50),
                    icon_button_editor(run_factory_name('edit_frequency_button'),'cog'),
                    # run_factory_item('freq_before', label='Before'),
@@ -261,9 +262,9 @@ class ExperimentFactoryPane(TraitsDockPane):
         return run_factory_item('factory_view', style='custom', show_label=False)
 
 
-#===============================================================================
+# ===============================================================================
 # execution
-#===============================================================================
+# ===============================================================================
 class WaitPane(TraitsDockPane):
     id = 'pychron.experiment.wait'
     name = 'Wait'
@@ -281,7 +282,7 @@ class ConnectionStatusPane(TraitsDockPane):
 
     def traits_view(self):
         cols = [ObjectColumn(name='name', editable=False),
-                CheckboxColumn(name='connected', editable=False)]
+                ObjectColumn(name='connected', editable=False)]
         v = View(UItem('connectables',
                        editor=TableEditor(editable=False,
                                           sortable=False,
@@ -347,7 +348,9 @@ Quick=   measure_iteration stopped at current step
                 UItem('truncate_style',
                       enabled_when='measuring',
                       tooltip=truncate_style_tt),
-                UItem('show_conditionals_button', enabled_when='measuring'),
+                UItem('show_conditionals_button',
+                      # enabled_when='measuring'
+                ),
                 spacer(-75),
                 CustomLabel('extraction_state_label',
                             color_name='extraction_state_color',
@@ -460,4 +463,24 @@ class AnalysisHealthPane(TraitsDockPane):
         return v
 
 
-#============= EOF =============================================
+class LoggerPane(TraitsDockPane):
+    loggers = List
+    selected = Any
+    name = 'Logger'
+    id = 'pychron.experiment.logger'
+
+    def __init__(self, *args, **kw):
+        super(LoggerPane, self).__init__(*args, **kw)
+        from pychron.displays.gdisplays import gWarningDisplay, gLoggerDisplay
+        self.loggers = [gLoggerDisplay, gWarningDisplay]
+
+    def traits_view(self):
+        v = View(UItem('loggers',
+                       editor=ListEditor(use_notebook=True,
+                                         page_name='.title',
+                                         selected='selected'),
+                       style='custom'))
+
+        return v
+
+# ============= EOF =============================================

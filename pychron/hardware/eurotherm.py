@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
@@ -24,12 +24,12 @@ http://eurotherm.com/document-library/?ignoreeveryonegroup=0&assetdetesctl139041
 
 '''
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Float, Property
 from traitsui.api import View, Item
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.paths import paths
 
@@ -250,7 +250,7 @@ class Eurotherm(CoreDevice):
         return View(Item('process_setpoint'),
                     Item('process_value', style='readonly')
                     )
-#============= EOF ====================================
+# ============= EOF ====================================
 # def __init__(self, *args, **kw):
 #        super(Eurotherm, self).__init__(*args, **kw)
 #

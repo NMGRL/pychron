@@ -12,15 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import HasTraits, Property, Float, Enum, Str, Bool
 from uncertainties import ufloat, nominal_value, std_dev
 
 from pychron.pychron_constants import AGE_SCALARS
 
-#=============local library imports  ==========================
+
+# =============local library imports  ==========================
 
 # class ICFactor(HasTraits):
 #     detector = Str

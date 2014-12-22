@@ -16,8 +16,8 @@
 
 # ============= enthought library imports =======================
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pyface.tasks.action.task_action import TaskAction
 
 
@@ -25,7 +25,7 @@ class CommitChangesAction(TaskAction):
     name = 'Commit'
     method = 'commit_changes'
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

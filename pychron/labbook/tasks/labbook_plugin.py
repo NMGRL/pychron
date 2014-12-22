@@ -16,18 +16,20 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.task_factory import TaskFactory
-from traits.api import HasTraits, Button, Str, Int, Bool
-from traitsui.api import View, Item, UItem, HGroup, VGroup
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.labbook.tasks.preferences import LabBookPreferencesPane
 
 
 class LabBookPlugin(BaseTaskPlugin):
+    name = 'LabBook'
+    id = 'pychron.labbook.plugin'
+
     def _labbook_factory(self):
         from pychron.labbook.tasks.labbook_task import LabBookTask
-        t=LabBookTask()
+
+        t = LabBookTask()
         return t
 
     def _tasks_default(self):
@@ -39,7 +41,7 @@ class LabBookPlugin(BaseTaskPlugin):
     def _preferences_panes_default(self):
         return [LabBookPreferencesPane]
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

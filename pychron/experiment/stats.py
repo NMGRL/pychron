@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import datetime
 import time
 
@@ -30,8 +30,9 @@ from pychron.loggable import Loggable
 
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.pychron_constants import MEASUREMENT_COLOR, EXTRACTION_COLOR
 
 FUDGE_COEFFS = (0, 0, 0)  # x**n+x**n-1....+c
@@ -219,4 +220,4 @@ class StatsGroup(ExperimentStats):
         self.time_at = self.format_duration(tt)
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

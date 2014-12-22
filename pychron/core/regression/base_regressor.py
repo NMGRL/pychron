@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
 from traits.api import Array, List, Event, Property, Any, \
     Dict, Str, Bool, cached_property, HasTraits
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import re
 import math
 from numpy import where, delete
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from tinv import tinv
 from pychron.core.stats.core import calculate_mswd, validate_mswd
 from pychron.pychron_constants import ALPHAS
@@ -373,4 +373,4 @@ class BaseRegressor(HasTraits):
         self._fit = v
         self.dirty = True
 
-#============= EOF =============================================
+# ============= EOF =============================================

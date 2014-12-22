@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import time
 
 from traits.api import Button, Instance
@@ -24,8 +24,8 @@ from pychron.mv.machine_vision_manager import MachineVisionManager
 from pychron.mv.test_image import TestImage
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class TestMVManager(MachineVisionManager):
     step = Button
@@ -61,9 +61,9 @@ class TestMVManager(MachineVisionManager):
         t.start()
         self._t = t
 
-#===============================================================================
+# ===============================================================================
 # tests
-#===============================================================================
+# ===============================================================================
     def _test(self, im):
 
         paths = (
@@ -190,4 +190,4 @@ if __name__ == '__main__':
     from pychron.core.helpers.logger_setup import logging_setup
     logging_setup('mv')
     test()
-#============= EOF =============================================
+# ============= EOF =============================================

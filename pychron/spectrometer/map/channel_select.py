@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.hardware.core.core_device import CoreDevice
 
 
@@ -35,7 +35,7 @@ class ChannelSelect(CoreDevice):
         self.tell(cmd)
 
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

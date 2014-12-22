@@ -15,8 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.hardware.core.scpi_device import SCPIDevice
 
 
@@ -44,7 +44,7 @@ class AgilentDMM(SCPIDevice):
     # def _parse_response(self, v):
     #     pass
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

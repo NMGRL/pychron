@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,12 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 # from traits.api import HasTraits, List
 # from traitsui.api import View, Item
-#============= standard library imports ========================
+# ============= standard library imports ========================
 # from reportlab.platypus.flowables import PageBreak, Flowable
 from reportlab.platypus.doctemplate import FrameBreak
 # from reportlab.lib.pagesizes import letter
@@ -26,7 +26,7 @@ from reportlab.lib import colors
 from reportlab.platypus.frames import Frame
 
 # from chaco.pdf_graphics_context import PdfPlotGraphicsContext
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.loading.component_flowable import ComponentFlowable
 from pychron.canvas.canvas2D.scene.primitives.primitives import LoadIndicator
 from reportlab.platypus.flowables import Spacer
@@ -165,4 +165,4 @@ class LoadingPDFWriter(BasePDFTableWriter):
 
         t = self._new_table(ts, data, colWidths=cw, rowHeights=rh)
         return t
-#============= EOF =============================================
+# ============= EOF =============================================

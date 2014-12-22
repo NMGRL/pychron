@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,20 +12,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Float, List, Bool, on_trait_change, Int, \
      Property, Instance, Event, Button
 from traitsui.api import View, Item, TabularEditor, HGroup, VGroup, spring
-from chaco.api import VPlotContainer, BasePlotContainer
+from chaco.api import BasePlotContainer
 from traitsui.tabular_adapter import TabularAdapter
 from enable.component_editor import ComponentEditor
+
 from pychron.processing.plotters.ideogram import Ideogram
 from pychron.processing.analysis import NonDBAnalysis
 from pychron.processing.plotter_options_manager import IdeogramOptionsManager
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class DatumAdapter(TabularAdapter):
     columns = [('', 'spacer'),
@@ -184,4 +186,4 @@ if __name__ == '__main__':
     mem = ManualEntryManager()
     mem.manual_entry.data[0].age = 1.04
     mem.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================

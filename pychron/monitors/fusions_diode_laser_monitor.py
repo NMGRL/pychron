@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Bool, Float, Int, Str
 
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.monitors.fusions_laser_monitor import FusionsLaserMonitor
 
 class MonitorSeries(HasTraits):
@@ -144,7 +144,7 @@ class FusionsDiodeLaserMonitor(FusionsLaserMonitor):
             manager.emergency_shutoff(reason='Over temp {}'.format(lt))
 
 
-#============= views ===================================
+# ============= views ===================================
 #    def traits_view(self):
 #        '''
 #        '''
@@ -171,4 +171,4 @@ class FusionsDiodeLaserMonitor(FusionsLaserMonitor):
 #                   )
 #             )
 #        return v
-#============= EOF ====================================
+# ============= EOF ====================================

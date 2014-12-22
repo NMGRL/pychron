@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 from datetime import timedelta, datetime
 
 from pychron.core.ui import set_qt
@@ -20,14 +20,14 @@ from pychron.core.ui import set_qt
 
 set_qt()
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Instance, Date, Float, List, Property, Either, Time
 from traitsui.api import View, Item, UItem, CheckListEditor, HGroup, VGroup
 from traitsui.handler import Controller
 import apptools.sweet_pickle as pickle
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.paths import paths
 
 
@@ -192,5 +192,5 @@ if __name__ == '__main__':
     print msg
     print f.model.get_posts()
     print f.model.get_mass_spectrometers()
-#============= EOF =============================================
+# ============= EOF =============================================
 

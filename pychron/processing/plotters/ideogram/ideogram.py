@@ -5,22 +5,23 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
+from pyface.message_dialog import warning
 from traits.api import Float, Array
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import linspace, pi, exp, zeros, ones, array, arange, \
     Inf
 from numpy import max as np_max
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 from pychron.processing.plotters.arar_figure import BaseArArFigure
 from pychron.processing.plotters.flow_label import FlowPlotLabel
@@ -53,11 +54,13 @@ class Ideogram(BaseArArFigure):
             plot data on plots
         """
         opt = self.options
-        index_attr = 'uage'
         if opt.index_attr:
             index_attr = opt.index_attr
             if not opt.include_j_error:
                 index_attr = 'uage_wo_j_err'
+        else:
+            warning(None, 'X Value not set. Defaulting to Age')
+            index_attr = 'uage'
 
         graph = self.graph
 
@@ -160,9 +163,9 @@ class Ideogram(BaseArArFigure):
             print 'min', e
             return 0
 
-    #===============================================================================
+    # ===============================================================================
     # plotters
-    #===============================================================================
+    # ===============================================================================
     def _plot_aux(self, title, vk, ys, po, plot, pid,
                   es=None):
 
@@ -306,9 +309,9 @@ class Ideogram(BaseArArFigure):
                                                    location=self.options.inset_location))
 
 
-                #===============================================================================
+                # ===============================================================================
                 # overlays
-                #===============================================================================
+                # ===============================================================================
                 #def _add_limits_tool(self, plot):
 
                 #t = LimitsTool(component=plot)
@@ -485,9 +488,9 @@ class Ideogram(BaseArArFigure):
             else:
                 dp.visible = False
         graph.redraw()
-        #===============================================================================
+        # ===============================================================================
         # utils
-        #===============================================================================
+        # ===============================================================================
 
     def _get_xs(self, key='age'):
         xs = array([ai for ai in self._unpack_attr(key)])
@@ -666,7 +669,7 @@ class Ideogram(BaseArArFigure):
         #     return we * a * n
 
 
-        #============= EOF =============================================
+        # ============= EOF =============================================
         #def _add_mean_indicator2(self, g, scatter, bins, probs, pid):
         #        offset = 0
         #        percentH = 1 - 0.954  # 2sigma

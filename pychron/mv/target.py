@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, cached_property, Property, Tuple, Any, Float
-#============= standard library imports ========================
+# ============= standard library imports ========================
 # from numpy import array
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 # from pychron.core.geometry.convex_hull import convex_hull_area
 # from pychron.core.geometry.centroid import calculate_centroid
 # from pychron.core.codetools.simple_timeit import timethis
@@ -73,4 +73,4 @@ class Target(HasTraits):
 #        return 1
 #        return self.bounding_rect[2] * self.bounding_rect[3]
 
-#============= EOF =============================================
+# ============= EOF =============================================

@@ -17,10 +17,12 @@ Welcome to Pychron's documentation!
   :maxdepth: 1
 
   intro
+  python
   build
   user_guide/index
   dev_guide/index
   course/index
+  tutorials/index
 
 Indices and tables
 ==================

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Int, Enum, Directory
 from traitsui.api import View, Item, VGroup, Group, Label
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 # from pychron.managers.plugins.manager_preferences_page import ManagerPreferencesPage
 from apptools.preferences.ui.preferences_page import PreferencesPage
 
@@ -85,6 +85,6 @@ class MDDPreferencesPage(PreferencesPage):
 #
 #                ]
 
-#============= views ===================================
-#============= EOF =====================================
+# ============= views ===================================
+# ============= EOF =====================================
 

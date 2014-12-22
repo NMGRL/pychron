@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Dict, on_trait_change
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from pychron.processing.analysis_graph import AnalysisStackedRegressionGraph
 from pychron.processing.plotters.series.dashboard_series import DashboardSeries
 from pychron.processing.plotters.series.series import Series
 from pychron.processing.plotters.figure_panel import FigurePanel
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 
 class SeriesPanel(FigurePanel):
@@ -45,4 +45,4 @@ class DashboardSeriesPanel(SeriesPanel):
         gs = [self._figure_klass(measurements=self.measurements), ]
         return gs
 
-    #============= EOF =============================================
+    # ============= EOF =============================================

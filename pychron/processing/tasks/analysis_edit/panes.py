@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Button, List, Instance, Property, Any, Event, Int, \
     Str, on_trait_change, Bool
 from traitsui.api import View, Item, UItem, HGroup, VGroup, spring, EnumEditor
@@ -23,8 +23,8 @@ from pyface.tasks.traits_dock_pane import TraitsDockPane
 import os
 import shelve
 import hashlib
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.ui.qt.tabular_editor import UnselectTabularEditorHandler
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.tasks.analysis_edit.table_filter import TableFilter
@@ -109,9 +109,9 @@ class HistoryTablePane(TablePane, ColumnSorterMixin):
     def dump(self):
         self.dump_selection()
 
-    #===============================================================================
+    # ===============================================================================
     # previous selections
-    #===============================================================================
+    # ===============================================================================
     def load_previous_selections(self):
         try:
             self._load()
@@ -420,4 +420,4 @@ class ControlsPane(TraitsDockPane):
         return v
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from chaco.array_data_source import ArrayDataSource
 from chaco.tools.broadcaster import BroadcasterTool
 from traits.api import Instance
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import array
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from uncertainties import nominal_value, std_dev
 from pychron.core.helpers.formatting import floatfmt, format_percent_error
 from pychron.graph.error_bar_overlay import ErrorBarOverlay
@@ -222,5 +222,5 @@ class XYScatterEditor(GraphEditor):
         setattr(scatter, '{}error'.format(axis), ArrayDataSource(errors))
         return ebo
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

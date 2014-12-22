@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
 import unittest
+
 from pychron.mv.focus.autofocus_manager import AutoFocusManager
 from pychron.image.video import Video
 from pychron.globals import globalv
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class FocusTest(unittest.TestCase):
     def setUp(self):
@@ -40,4 +42,4 @@ class FocusTest(unittest.TestCase):
         a = af._calculate_focus_measure(src, operator, roi)
         self.assertEqual(a, 782)
 
-#============= EOF =============================================
+# ============= EOF =============================================

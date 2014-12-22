@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,12 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 import struct
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 class MemoryBlock(object):
     def __init__(self, blob=''):
@@ -103,4 +103,4 @@ def encode_infoblob(rpts, pos_segments, bs_segments, bs_seg_params, bs_seg_errs)
             mb.add_double(bs_seg_params[i][k])
         mb.add_float(bs_seg_errs[i])
     return mb.tostring()
-#============= EOF =============================================
+# ============= EOF =============================================

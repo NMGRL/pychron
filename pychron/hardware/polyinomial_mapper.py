@@ -18,8 +18,8 @@
 from numpy import poly1d
 from scipy import optimize
 from traits.api import HasTraits, List, Float
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class PolynomialMapper(HasTraits):
     """
@@ -56,7 +56,7 @@ class PolynomialMapper(HasTraits):
         c=self._coefficients[:]
         c[-1] -= v
         return optimize.brentq(poly1d(c), self.output_low, self.output_high)
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

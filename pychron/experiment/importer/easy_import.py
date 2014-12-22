@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.experiment.easy_parser import EasyParser
-from pychron.experiment.importer.import_manager import ImportManager
+from pychron.entry.tasks.importer import ImporterModel
 from pychron.experiment.importer.import_mapper import MinnaBluffMapper
 
 
@@ -32,7 +32,7 @@ class EasyImporter(IsotopeDatabaseManager):
 
 
     def _import_irradiations(self, meta):
-        im = ImportManager(db=self.db)
+        im = ImporterModel(db=self.db)
         if self._set_source(meta, im):
             if self._set_destination(meta):
                 self._set_importer(meta, im)
@@ -84,4 +84,4 @@ class EasyImporter(IsotopeDatabaseManager):
              for irrad in meta['irradiations']]
         return s
 
-#============= EOF =============================================
+# ============= EOF =============================================

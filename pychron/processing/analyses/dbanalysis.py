@@ -5,25 +5,25 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.trait_types import Str, Float, Either, Date, Any, Dict, List, Long
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 from datetime import datetime
 from itertools import izip
 import struct
 import time
 from uncertainties import ufloat
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import remove_extension
 from pychron.database.orms.isotope.meas import meas_AnalysisTable
 from pychron.processing.analyses.analysis import Analysis, Fit
@@ -55,6 +55,7 @@ def get_position(extraction):
             pii = pi.position
             if pii:
                 yield str(pii)
+
     return ','.join(list(g()))
 
 
@@ -70,7 +71,6 @@ class DBAnalysis(Analysis):
 
     xyz_position = Str
     snapshots = List
-
 
     beam_diameter = Either(Float, Str)
     pattern = Str
@@ -103,7 +103,7 @@ class DBAnalysis(Analysis):
 
     def set_ic_factor(self, det, v, e):
         for iso in self.get_isotopes(det):
-            iso.ic_factor=ufloat(v,e)
+            iso.ic_factor = ufloat(v, e)
 
     def set_temporary_ic_factor(self, k, v, e):
         iso = self.get_isotope(detector=k)
@@ -204,7 +204,7 @@ class DBAnalysis(Analysis):
     #         self.arar_result.update(d)
     def sync_aux(self, dbrecord_tuple, load_changes=True):
         if isinstance(dbrecord_tuple, meas_AnalysisTable):
-            meas_analysis=dbrecord_tuple
+            meas_analysis = dbrecord_tuple
         else:
             args = izip(*dbrecord_tuple)
             meas_analysis = args.next()[0]
@@ -260,7 +260,7 @@ class DBAnalysis(Analysis):
             self.data_reduction_tag = tag.name
 
             #get the data_reduction_tag_set entry associated with this analysis
-            drentry = next((ai for ai in tag.analyses if ai.analysis_id==meas_analysis.id),None)
+            drentry = next((ai for ai in tag.analyses if ai.analysis_id == meas_analysis.id), None)
             print drentry.selected_histories
             return drentry.selected_histories
 
@@ -311,18 +311,19 @@ class DBAnalysis(Analysis):
                 setattr(self, attr, v)
 
             #uv
-            for attr in ('reprate', 'mask_position', 'mask_name', 'attenuator'):
-                v = getattr(extraction, attr)
-                if v is None:
-                    v = ''
-                setattr(self, attr, v)
+            if 'uv' in self.extract_device:
+                for attr in ('reprate', 'mask_position', 'mask_name', 'attenuator'):
+                    v = getattr(extraction, attr)
+                    if v is None:
+                        v = ''
+                    setattr(self, attr, v)
 
             snapshots = extraction.snapshots
             if snapshots:
-                self.snapshots=[Snapshot(path=si.path,
-                                         name=os.path.basename(si.path),
-                                         remote_path=si.remote_path,
-                                         image=si.image) for si in snapshots]
+                self.snapshots = [Snapshot(path=si.path,
+                                           name=os.path.basename(si.path),
+                                           remote_path=si.remote_path,
+                                           image=si.image) for si in snapshots]
 
     def _sync_measurement(self, meas_analysis):
         if meas_analysis:
@@ -360,11 +361,11 @@ class DBAnalysis(Analysis):
             self.set_tag(tag)
 
     def _sync_changes(self, meas_analysis):
-        bid=None
+        bid = None
         if meas_analysis.selected_histories:
-            bid=meas_analysis.selected_histories.selected_blanks_id
+            bid = meas_analysis.selected_histories.selected_blanks_id
 
-        self.blank_changes = [BlankChange(bi, active=bi.id==bid) for bi in meas_analysis.blanks_histories]
+        self.blank_changes = [BlankChange(bi, active=bi.id == bid) for bi in meas_analysis.blanks_histories]
         self.fit_changes = [FitChange(fi) for fi in meas_analysis.fit_histories]
 
         if bid is not None:
@@ -410,7 +411,7 @@ class DBAnalysis(Analysis):
     def _sync_production_ratios(self, level):
         pr = level.production
         if pr:
-            cak, clk = (pr.Ca_K,pr.Ca_K_err), (pr.Cl_K,pr.Cl_K_err)
+            cak, clk = (pr.Ca_K, pr.Ca_K_err), (pr.Cl_K, pr.Cl_K_err)
             self.production_ratios = dict(Ca_K=ufloat(*cak),
                                           Cl_K=ufloat(*clk))
         else:
@@ -449,13 +450,13 @@ class DBAnalysis(Analysis):
 
         self.interference_corrections = prs
 
-    # def _sync_view(self, av=None):
-    #     if av is None:
-    #         av = self.analysis_view
-    #     try:
-    #         av.load(self)
-    #     except BaseException, e:
-    #         print 'sync view {}'.format(e)
+        # def _sync_view(self, av=None):
+        #     if av is None:
+        #         av = self.analysis_view
+        #     try:
+        #         av.load(self)
+        #     except BaseException, e:
+        #         print 'sync view {}'.format(e)
 
         # av.load(weakref.ref(self)())
 
@@ -534,7 +535,7 @@ class DBAnalysis(Analysis):
 
     def _make_isotopes(self, meas_analysis, dbisos, unpack, selected_histories):
         # isotopes = dict()
-        self.isotopes=dict()
+        self.isotopes = dict()
         # timethis(self._get_signals, args=(isotopes, meas_analysis, dbisos, unpack))
         # timethis(self._get_baselines, args=(isotopes, meas_analysis, dbisos, unpack))
         # timethis(self._get_blanks, args=(isotopes, meas_analysis))
@@ -555,11 +556,11 @@ class DBAnalysis(Analysis):
 
             det = iso.detector.name
             isoname = mw.name
-            key=isoname
+            key = isoname
             if isoname in d:
-                key='{}{}'.format(isoname, det)
+                key = '{}{}'.format(isoname, det)
 
-
+            result = None
             # todo: this needs to be fixed to handle data_reduction_tag
             # if analysis has a dr tag then get its associated select_histories entry
             # the get the select_fits then the associated results
@@ -568,7 +569,6 @@ class DBAnalysis(Analysis):
                     result = iso.results[-1]
                 except IndexError:
                     result = None
-
             r = Isotope(mass=mw.mass,
                         dbrecord=iso,
                         dbresult=result,
@@ -607,6 +607,7 @@ class DBAnalysis(Analysis):
 
             kind = dbiso.kind
             if kind == 'baseline':
+                result = None
                 if selected_histories is None:
                     # todo: this needs to be fixed to handle data_reduction_tag
                     try:
@@ -641,27 +642,27 @@ class DBAnalysis(Analysis):
     def sync_blanks(self, meas_analysis):
         self.debug('syncing blanks age={}'.format(self.uage))
         av = self.analysis_view
-        hv=av.history_view
-        mv=av.main_view
+        hv = av.history_view
+        mv = av.main_view
 
         bid = meas_analysis.selected_histories.selected_blanks_id
         self.selected_blanks_id = bid
 
         for bi in self.blank_changes:
-            bi.active = bi.id==bid
+            bi.active = bi.id == bid
 
         if hv:
             hv.selected_blanks_id = bid
 
-            hv.blank_changes=self.blank_changes
-            hv.refresh_needed=True
+            hv.blank_changes = self.blank_changes
+            hv.refresh_needed = True
 
         self._get_blanks(meas_analysis)
         self.calculate_age(force=True)
         self.debug('post sync blanks age={}'.format(self.uage))
         if mv:
             mv.load_computed(self, new_list=False)
-            mv.refresh_needed=True
+            mv.refresh_needed = True
 
     # def _get_blanks(self, selected_histories):
     def _get_blanks(self, meas_analysis, selected_histories=None):
@@ -776,4 +777,4 @@ class DBAnalysis(Analysis):
         msg = '{} {}'.format(self.record_id, msg)
         return msg
 
-#============= EOF =============================================
+# ============= EOF =============================================

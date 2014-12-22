@@ -26,7 +26,7 @@ import os
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.helpers.formatting import floatfmt
 from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.pychron_constants import LIGHT_RED_COLOR
+from pychron.pychron_constants import LIGHT_RED
 
 
 class NewBranchView(HasTraits):
@@ -108,7 +108,7 @@ class DiffAdapter(TabularAdapter):
     def get_bg_color(self, object, trait, row, column=0):
         color = 'white'
         if not object.show_diffs_only and self.item.diff:
-            color = LIGHT_RED_COLOR
+            color = LIGHT_RED
 
         return color
 

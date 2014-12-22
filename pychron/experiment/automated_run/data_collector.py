@@ -21,7 +21,7 @@ from traits.api import Any, List, CInt, Int, Bool, Enum, Str
 # ============= standard library imports ========================
 import time
 from threading import Event, Timer
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.envisage.consoleable import Consoleable
 # from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.experiment.utilities.conditionals_results import check_conditional_results
@@ -303,13 +303,13 @@ class DataCollector(Consoleable):
         graph = self.plot_panel.isotope_graph
         graph.refresh()
 
-    #===============================================================================
+    # ===============================================================================
     #
-    #===============================================================================
+    # ===============================================================================
 
-    #===============================================================================
+    # ===============================================================================
     # checks
-    #===============================================================================
+    # ===============================================================================
     def _check_conditionals(self, conditionals, cnt):
         for ti in conditionals:
             if ti.check(self.automated_run, self._data, cnt):
@@ -418,4 +418,4 @@ class DataCollector(Consoleable):
     def cancelation_conditionals(self):
         return self.automated_run.cancelation_conditionals
 
-#============= EOF =============================================
+# ============= EOF =============================================

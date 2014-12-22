@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,19 +12,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import Instance
 from traitsui.api import View, Item, VGroup, HGroup, Label, TabularEditor, UItem, EnumEditor, VSplit
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.tabular_editor import myTabularEditor
-from pychron.envisage.browser.adapters import ProjectAdapter, SampleAdapter
+from pychron.envisage.browser.adapters import ProjectAdapter, LabnumberAdapter
 from pychron.envisage.icon_button_editor import icon_button_editor
 
 
@@ -57,7 +57,7 @@ class GeoPane(TraitsTaskPane):
 
 class BrowserPane(TraitsDockPane):
     id = 'pychron.geo.browser'
-    sample_tabular_adapter = Instance(SampleAdapter, ())
+    labnumber_tabular_adapter = Instance(LabnumberAdapter, ())
 
     def traits_view(self):
         project_grp = VGroup(
@@ -91,7 +91,7 @@ class BrowserPane(TraitsDockPane):
                                    tooltip='Configure Sample Table')),
             UItem('samples',
                   editor=TabularEditor(
-                      adapter=self.sample_tabular_adapter,
+                      adapter=self.labnumber_tabular_adapter,
                       editable=False,
                       selected='selected_samples',
                       multi_select=True,
@@ -111,5 +111,5 @@ class BrowserPane(TraitsDockPane):
         v = View(VGroup(database_label, grp))
         return v
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

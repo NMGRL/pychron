@@ -12,14 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import math
+
 from traits.api import HasTraits, List, Property, cached_property, Str, Bool, Int, Event
-#============= standard library imports ========================
+
+# ============= standard library imports ========================
 from numpy import array, nan
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from uncertainties import ufloat
 # from pychron.processing.analysis import Marker
 from pychron.processing.argon_calculations import calculate_plateau_age, age_equation, calculate_isochron
@@ -232,12 +234,12 @@ class StepHeatAnalysisGroup(AnalysisGroup):
     plateau_age_error_kind = Str
     nsteps = Int
 
-    def _get_nanalyses(self):
-        if self.plateau_steps:
-            n = self.nsteps
-        else:
-            n = super(StepHeatAnalysisGroup, self)._get_nanalyses()
-        return n
+    # def _get_nanalyses(self):
+    #     if self.plateau_steps:
+    #         n = self.nsteps
+    #     else:
+    #         n = super(StepHeatAnalysisGroup, self)._get_nanalyses()
+    #     return n
 
     def get_plateau_mswd_tuple(self):
         return self.plateau_mswd, self.plateau_mswd_valid, self.nsteps
@@ -248,7 +250,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
     @cached_property
     def _get_integrated_age(self):
         rad40, k39 = zip(*[(a.get_computed_value('rad40'),
-                            a.get_computed_value('k39')) for a in self.analyses])
+                            a.get_computed_value('k39')) for a in self.clean_analyses()])
         rad40 = sum(rad40)
         k39 = sum(k39)
 
@@ -266,7 +268,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
               ai.uage_wo_j_err.std_dev if ai.uage_wo_j_err else 0,
               ai.get_computed_value('k39').nominal_value)
              # ai.get_interference_corrected_value('Ar39').nominal_value)
-             for ai in self.analyses]
+             for ai in self.clean_analyses()]
 
         return zip(*d)
 
@@ -281,6 +283,8 @@ class StepHeatAnalysisGroup(AnalysisGroup):
             self.plateau_steps = pidx
             self.plateau_steps_str = '{}-{}'.format(ALPHAS[pidx[0]],
                                                     ALPHAS[pidx[1]])
+
+
             self.nsteps = (pidx[1] - pidx[0]) + 1
 
             pages, perrs = zip(*[(ages[i], errors[i]) for i in range(pidx[0], pidx[1])])
@@ -406,7 +410,7 @@ class InterpretedAge(StepHeatAnalysisGroup):
 
         return ps
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 #class AnalysisRatioMean(AnalysisGroup):
 #    Ar40_39 = Property

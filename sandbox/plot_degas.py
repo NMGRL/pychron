@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,20 +12,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
-#=============enthought library imports=======================
-from traits.api import HasTraits, Button
-from traitsui.api import View, Item
-from pychron.graph.graph import Graph
-from pychron.paths import paths
+# =============enthought library imports=======================
 import os
+
+from traits.api import Button
+from traitsui.api import View, Item
+
+from pychron.paths import paths
 from pychron.graph.time_series_graph import TimeSeriesStackedGraph
 from pychron.managers.manager import Manager
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 DEGAS = os.path.join(paths.data_dir, 'degas')
 
@@ -109,5 +111,5 @@ def main():
 
 if __name__ == '__main__':
     main()
-#============= EOF =====================================
+# ============= EOF =====================================
 

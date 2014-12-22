@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Str, Property, Int, List, Button, \
     cached_property, on_trait_change, Instance
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.experiment.automated_run.factory import AutomatedRunFactory
 from pychron.experiment.utilities.uv_human_error_checker import UVHumanErrorChecker
 from pychron.pychron_constants import NULL_STR
@@ -73,4 +73,4 @@ class UVAutomatedRunFactory(AutomatedRunFactory):
     def _uv_edit_handler(self, name, new):
         self._update_run_values(name, new)
 
-        #============= EOF =============================================
+        # ============= EOF =============================================

@@ -99,7 +99,7 @@ class GitRepoManager(Loggable):
         tree = repo.commit(hexsha).tree
         # blob = next((bi for ti in tree.trees
         # for bi in ti.blobs
-        #              if bi.abspath == p), None)
+        # if bi.abspath == p), None)
         blob = None
         for ts in ((tree,), tree.trees):
             for ti in ts:
@@ -167,7 +167,8 @@ class GitRepoManager(Loggable):
         diff_str = StringIO(diff_str)
         diff_str.seek(0)
         diff = Diff._index_from_patch_format(repo, diff_str)
-        return [di.a_blob.path for di in diff.iter_change_type('M')]
+        root = self.path
+        return [os.path.relpath(di.a_blob.abspath, root) for di in diff.iter_change_type('M')]
 
         # patches = map(str.strip, diff_str.split('diff --git'))
         # patches = ['\n'.join(p.split('\n')[2:]) for p in patches[1:]]
@@ -205,7 +206,7 @@ class GitRepoManager(Loggable):
             pass
             # try:
             # ps = [diff.a_blob.path for diff in index.diff(None)]
-            #     func(ps, extension)
+            # func(ps, extension)
             # except IOError,e:
             #     print e
         else:
@@ -256,13 +257,15 @@ class GitRepoManager(Loggable):
             branch.commit = repo.head.commit
             self.checkout_branch(name)
 
-    def create_remote(self, url, name='origin'):
+    def create_remote(self, url, name='origin', force=False):
         repo = self._repo
         if repo:
             # only create remote if doesnt exist
             if not hasattr(repo.remotes, name):
                 repo.create_remote(name, url)
-                pass
+            elif force:
+                repo.delete_remote(name)
+                repo.create_remote(name, url)
 
     def delete_remote(self, name='origin'):
         repo = self._repo
@@ -330,7 +333,7 @@ class GitRepoManager(Loggable):
                 self.application.open_view(dv)
 
     def revert_to_selected(self):
-        #check for uncommitted changes
+        # check for uncommitted changes
         #warn user the uncommitted changes will be lost if revert now
 
         commit = self.selected_commits[-1]
@@ -352,7 +355,7 @@ class GitRepoManager(Loggable):
         except GitCommandError:
             self.selected_path_commits = []
 
-    #private
+    # private
     def _validate_diff(self):
         return True
 
@@ -443,7 +446,7 @@ if __name__ == '__main__':
     rp.commit_dialog()
 
     # ============= EOF =============================================
-    #repo manager protocol
+    # repo manager protocol
     # def get_local_changes(self, repo=None):
     #     repo = self._get_repo(repo)
     #     diff_str = repo.git.diff('--full-index')

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance, Enum, Button, Str, DelegatesTo, Event, Property
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import time
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from fusions_laser_manager import FusionsLaserManager
 from pychron.hardware.fusions.fusions_uv_logic_board import FusionsUVLogicBoard
 from pychron.hardware.fusions.atl_laser_control_unit import ATLLaserControlUnit
@@ -285,9 +285,9 @@ class FusionsUVManager(FusionsLaserManager):
         time.sleep(delay)
         atl.laser_stop()
 
-    #===============================================================================
+    # ===============================================================================
     # private
-    #===============================================================================
+    # ===============================================================================
     def _enable_hook(self):
         resp = self.laser_controller._enable_laser()
         if self.laser_controller.simulation:
@@ -312,9 +312,9 @@ class FusionsUVManager(FusionsLaserManager):
         self.firing = False
         return resp
 
-    #===============================================================================
+    # ===============================================================================
     # handlers
-    #===============================================================================
+    # ===============================================================================
     def _fire_button_fired(self):
         if self.firing:
             self.info('stopping laser')
@@ -332,15 +332,15 @@ class FusionsUVManager(FusionsLaserManager):
         else:
             self.atl_controller.set_burst_mode(False)
 
-    #===============================================================================
+    # ===============================================================================
     # property get/set
-    #===============================================================================
+    # ===============================================================================
     def _get_fire_label(self):
         return 'Fire' if not self.firing else 'Stop'
 
-    #===============================================================================
+    # ===============================================================================
     # defaults
-    #===============================================================================
+    # ===============================================================================
     def _stage_manager_default(self):
         args = dict(name='stage',
                     configuration_dir_name='fusions_uv',
@@ -373,7 +373,7 @@ class FusionsUVManager(FusionsLaserManager):
 #        '''
 #        '''
 #        return LaserShotHistory(view_mode='simple')
-#============= EOF ====================================
+# ============= EOF ====================================
 #    def _auto_fired(self):
 #        '''
 #        '''
@@ -467,7 +467,7 @@ class FusionsUVManager(FusionsLaserManager):
 #        g = self._update_slider_group_factory(s)
 #        return self.laser_controller.control_view()
 
-#============= views ===================================
+# ============= views ===================================
 
 #    def _get_gas_contents(self):
 #        '''

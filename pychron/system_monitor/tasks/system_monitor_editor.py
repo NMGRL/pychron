@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from datetime import datetime, timedelta
 from threading import Thread, Lock
 import time
@@ -22,8 +22,8 @@ import time
 from pyface.timer.do_later import do_later
 from traits.api import Instance, Property, Int, Bool, on_trait_change, Any
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.displays.display import DisplayController
 from pychron.messaging.notify.subscriber import Subscriber
 from pychron.processing.plotter_options_manager import SystemMonitorOptionsManager
@@ -354,7 +354,7 @@ class SystemMonitorEditor(SeriesEditor):
                                                  labnumber=identifier,
                                                  limit=tool.limit)
             else:
-                ans, tc = db.get_labnumber_analyses(identifier)
+                ans, tc = db.get_labnumber_analyses(identifier, limit=25)
 
             return self.processor.make_analyses(ans)
 
@@ -391,4 +391,4 @@ class SystemMonitorEditor(SeriesEditor):
                          port=self.conn_spec.port,
                          verbose=False)
         return sub
-        #============= EOF =============================================
+        # ============= EOF =============================================

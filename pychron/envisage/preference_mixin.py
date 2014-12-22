@@ -15,8 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.ui.preference_binding import bind_preference, color_bind_preference
 
 
@@ -33,7 +33,7 @@ class PreferenceMixin(object):
         for attr in attrs:
             mod(obj, attr, '{}.{}'.format(prefid, attr))
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

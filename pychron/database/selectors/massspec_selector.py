@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Str, Event
 from traitsui.tabular_adapter import TabularAdapter
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 from pychron.database.core.database_selector import DatabaseSelector
 from pychron.database.core.base_db_result import RIDDBResult
@@ -111,4 +111,4 @@ class MassSpecSelector(DatabaseSelector):
 #    m._db = db = MassSpecDatabaseAdapter(name='massspecdata_local')
 #    db.connect()
 #    m.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================

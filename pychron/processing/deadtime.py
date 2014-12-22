@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 from numpy import polyfit, linspace, polyval
 
 from pychron.core.ui import set_qt
@@ -25,12 +25,12 @@ from uncertainties import ufloat, nominal_value, std_dev
 from pychron.core.stats import calculate_weighted_mean, calculate_mswd
 from pychron.graph.graph import Graph
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Instance
 from traitsui.api import View, UItem
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.csv.csv_parser import CSVColumnParser
 
 
@@ -164,5 +164,5 @@ if __name__ == '__main__':
 
 
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

@@ -27,7 +27,7 @@ from pyface.tasks.traits_dock_pane import TraitsDockPane
 # ============= local library imports  ==========================
 from traitsui.menu import Action
 from pychron.core.ui.custom_label_editor import CustomLabel
-from pychron.envisage.browser.adapters import BrowserAdapter, SampleAdapter
+from pychron.envisage.browser.adapters import BrowserAdapter, LabnumberAdapter
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.tasks.browser.sample_view import BrowserSampleView
 from pychron.processing.tasks.browser.query_view import BrowserQueryView
@@ -111,7 +111,7 @@ class BrowserPane(TraitsDockPane):
     multi_select = True
     analyses_defined = Str('1')
 
-    sample_tabular_adapter = Instance(SampleAdapter, ())
+    labnumber_tabular_adapter = Instance(LabnumberAdapter, ())
     analysis_tabular_adapter = Instance(AnalysisAdapter, ())
     analysis_group_tabular_adapter = Instance(AnalysisGroupAdapter, ())
 
@@ -201,7 +201,7 @@ class BrowserPane(TraitsDockPane):
         #                                tooltip='Configure Sample Table')),
         #         UItem('samples',
         #               editor=TabularEditor(
-        #                   adapter=self.sample_tabular_adapter,
+        #                   adapter=self.labnumber_tabular_adapter,
         #                   editable=False,
         #                   selected='selected_samples',
         #                   multi_select=True,

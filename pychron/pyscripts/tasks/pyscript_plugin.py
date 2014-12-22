@@ -12,16 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from envisage.ui.tasks.task_factory import TaskFactory
 from envisage.ui.tasks.task_extension import TaskExtension
 from pyface.tasks.action.schema_addition import SchemaAddition
 from pyface.tasks.action.task_action import TaskAction
 from pyface.tasks.action.schema import SMenu
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.pyscripts.tasks.pyscript_actions import OpenPyScriptAction, \
     NewPyScriptAction, OpenHopsEditorAction, NewHopsEditorAction
@@ -36,7 +36,7 @@ class PyScriptPlugin(BaseTaskPlugin):
         return [('pychron.open_pyscript', 'Ctrl+Shift+O', 'Open PyScript'),
                 ('pychron.new_pyscript', 'Ctrl+Shift+N', 'New PyScript'),]
 
-    def _my_task_extensions_default(self):
+    def _task_extensions_default(self):
         def _replace_action():
             return TaskAction(name='Replace',
                               method='replace')
@@ -97,4 +97,4 @@ class PyScriptPlugin(BaseTaskPlugin):
     def _preferences_panes_default(self):
         return [PyScriptPreferencesPane]
 
-#============= EOF =============================================
+# ============= EOF =============================================

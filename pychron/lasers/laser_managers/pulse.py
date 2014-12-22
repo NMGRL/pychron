@@ -1,34 +1,32 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Any, Instance, Float, Event, \
-     Property, Bool, on_trait_change
-from traitsui.api import View, Item, Handler, HGroup, ButtonEditor, spring, Label, \
-    VGroup
+    Property, Bool, on_trait_change
+from traitsui.api import View, Item, Handler, HGroup, ButtonEditor, spring, VGroup
 # import apptools.sweet_pickle as pickle
-#============= standard library imports ========================
+# ============= standard library imports ========================
 # import os
 from threading import Thread
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 # from pychron.paths import paths
 # from pychron.pyscripts.wait_dialog import WaitDialog
 # import time
 from pychron.wait.wait_control import WaitControl
-
 
 
 class PulseHandler(Handler):
@@ -51,10 +49,10 @@ class Pulse(HasTraits):
 
     disable_at_end = Bool(False)
 
-#     def dump(self):
-#         p = os.path.join(paths.hidden_dir, 'pulse')
-#         with open(p, 'wb') as f:
-#             pickle.dump(self, f)
+    #     def dump(self):
+    #         p = os.path.join(paths.hidden_dir, 'pulse')
+    #         with open(p, 'wb') as f:
+    #             pickle.dump(self, f)
 
     @on_trait_change('manager:enabled')
     def upad(self, obj, name, old, new):
@@ -65,20 +63,20 @@ class Pulse(HasTraits):
             self.manager.set_laser_power(self.power)
 
     def _duration_changed(self):
-        self.wait_control.wtime = self.duration
+        self.wait_control.duration = self.duration
         self.wait_control.reset()
 
     def _wait_control_default(self):
         return WaitControl(low_name=0,
-                          auto_start=False,
-                          wtime=self.duration,
-                          title='',
-                          dispose_at_end=False
-                          )
+                           auto_start=False,
+                           duration=self.duration,
+                           title='',
+                           dispose_at_end=False)
+
     def start(self):
         self._duration_changed()
 
-#         evt = TEvent()
+        #         evt = TEvent()
         man = self.manager
         if man is not None:
             # man.enable_laser()
@@ -114,22 +112,22 @@ class Pulse(HasTraits):
 
     def traits_view(self):
         v = View(
-                 VGroup(
-                     HGroup(Item('power', tooltip='Hit Enter for change to take effect'),
-                            Item('units', style='readonly', show_label=False),
-                            spring,
-                            Item('pulse_button',
-                                 editor=ButtonEditor(label_value='pulse_label'),
-                                 show_label=False,
-                                 enabled_when='object.enabled'
-                                )
-                            ),
-                     Item('duration', label='Duration (s)', tooltip='Set the laser pulse duration in seconds'),
-                     ),
-                 Item('wait_control', show_label=False, style='custom'),
-                 id='pulse',
-                 handler=PulseHandler()
-                 )
+            VGroup(
+                HGroup(Item('power', tooltip='Hit Enter for change to take effect'),
+                       Item('units', style='readonly', show_label=False),
+                       spring,
+                       Item('pulse_button',
+                            editor=ButtonEditor(label_value='pulse_label'),
+                            show_label=False,
+                            enabled_when='object.enabled'
+                       )
+                ),
+                Item('duration', label='Duration (s)', tooltip='Set the laser pulse duration in seconds'),
+            ),
+            Item('wait_control', show_label=False, style='custom'),
+            id='pulse',
+            handler=PulseHandler()
+        )
         return v
 
 
@@ -172,4 +170,4 @@ class Pulse(HasTraits):
 # if __name__ == '__main__':
 #    lp = LaserPulseManager()
 #    lp.configure_traits()
-#============= EOF ====================================
+# ============= EOF ====================================

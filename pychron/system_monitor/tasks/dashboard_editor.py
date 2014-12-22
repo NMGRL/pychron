@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import time
 #from apptools.preferences.preference_binding import bind_preference
 from traits.api import Instance, Int, Dict
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import array, vstack
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.processing.plotter_options_manager import DashboardOptionsManager
 from pychron.processing.plotters.figure_container import FigureContainer
 from pychron.processing.plotters.series.series_model import DashboardSeriesModel
@@ -109,4 +109,4 @@ class DashboardEditor(SeriesEditor):
         return tool
 
 
-        #============= EOF =============================================
+        # ============= EOF =============================================

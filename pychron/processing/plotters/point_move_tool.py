@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from enable.enable_traits import Pointer
 from traits.api import Enum, CArray
 from chaco.tools.api import DragTool
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 normal_pointer = Pointer('normal')
 hand_pointer = Pointer('hand')
 
@@ -122,4 +122,4 @@ class LabelMoveTool(OverlayMoveTool):
         comp.request_redraw()
         event.handled = False
 
-    #============= EOF =============================================
+    # ============= EOF =============================================

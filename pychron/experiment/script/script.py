@@ -12,19 +12,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 from pychron.core.ui import set_qt
 
 set_qt()
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Str, Property, Button, cached_property, \
     String, HasTraits, Event, List
 from traitsui.api import View, HGroup, Label, spring, EnumEditor, UItem
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 import yaml
 import ast
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_directory, add_extension
 from pychron.experiment.script.options_editor import OptionsEditor
 from pychron.paths import paths
@@ -173,4 +173,4 @@ if __name__ == '__main__':
     s.mass_spectrometer = 'jan'
     s.configure_traits()
 
-#============= EOF =============================================
+# ============= EOF =============================================

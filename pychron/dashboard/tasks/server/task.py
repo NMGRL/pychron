@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pyface.tasks.task_layout import TaskLayout, PaneItem
 from traits.api import Instance
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.dashboard.tasks.server.panes import DashboardDevicePane, DashboardCentralPane
 from pychron.dashboard.server import DashboardServer
 from pychron.envisage.tasks.base_task import BaseTask
@@ -31,7 +31,10 @@ class DashboardServerTask(BaseTask):
     #devices = DelegatesTo('server')
     #selected_device = Instance(DashboardDevice)
 
-    #def activated(self):
+    def activated(self):
+        emailer = self.application.get_service('pychron.social.emailer.Emailer')
+        self.server.emailer = emailer
+
     #load devices
     #self._load_devices()
     #
@@ -50,4 +53,4 @@ class DashboardServerTask(BaseTask):
 
     def _default_layout_default(self):
         return TaskLayout(left=PaneItem('pychron.dashboard.devices'))
-        #============= EOF =============================================
+        # ============= EOF =============================================

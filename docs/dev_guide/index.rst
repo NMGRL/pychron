@@ -18,7 +18,13 @@ Pychron Develop Guide
 
   running_pychron
   hardware
+  database
   database_analysis
   automated_analysis
   experiment_construction
   communications
+  notification_network
+  figure
+  remote_hardware
+  errors/el_errors
+  errors/laser_errors

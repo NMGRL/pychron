@@ -190,7 +190,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
     def refresh_samples(self):
         self.debug('refresh samples')
-        self.set_samples(self._retrieve_samples())
+        self.set_samples(self._retrieve_labnumbers())
 
     def load_time_view(self):
         self.debug('load time view')
@@ -329,9 +329,9 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
                 selector.add_query('Analysis Type', '=', at, chain_rule='Or')
 
         if self.use_low_post:
-            selector.add_query('Run Date/Time', '>', self.low_post)
+            selector.add_query('Run Date/Time', '>', self.low_post.strftime('%m/%d/%Y %H:%M:%S'))
         if self.use_high_post:
-            selector.add_query('Run Date/Time', '<', self.high_post)
+            selector.add_query('Run Date/Time', '<', self.high_post.strftime('%m/%d/%Y %H:%M:%S'))
 
         if not selector.queries:
             if not psel.active:
@@ -402,7 +402,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     def _create_browser_pane(self, **kw):
         self.browser_pane = BrowserPane(model=self, **kw)
         self.analysis_table.tabular_adapter = self.browser_pane.analysis_tabular_adapter
-        self.sample_tabular_adapter = self.browser_pane.sample_tabular_adapter
+        self.labnumber_tabular_adapter = self.browser_pane.labnumber_tabular_adapter
         return self.browser_pane
 
     def _ok_ed(self):
@@ -427,7 +427,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
                     irrads = db.get_irradiations(project_names=names)
                     self.irradiations = [i.name for i in irrads]
 
-    def _retrieve_samples_hook(self, db):
+    def _retrieve_labnumbers_hook(self, db):
         low_post = self.low_post
         high_post = self.high_post
         ms = None
@@ -457,7 +457,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
         if self.project_enabled:
             if not self.irradiation_enabled:
-                ls = super(BaseBrowserTask, self)._retrieve_samples_hook(db)
+                ls = super(BaseBrowserTask, self)._retrieve_labnumbers_hook(db)
             else:
                 if self.selected_projects and self.irradiation_enabled and self.irradiation:
                     ls = db.get_project_irradiation_labnumbers([si.name for si in self.selected_projects],
@@ -622,7 +622,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         if name == 'irradiation':
             self.levels = obj.levels
         elif name == 'level':
-            self.set_samples(self._retrieve_samples())
+            self.set_samples(self._retrieve_labnumbers())
 
     def _use_analysis_type_filtering_changed(self):
         self.refresh_samples()
@@ -659,6 +659,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         with db.session_ctx():
             for pp in self.selected_projects:
                 bins = db.get_project_date_bins(identifier, pp.name, hours)
+                print bins
                 if bins:
                     for li, hi in bins:
                         yield li, hi
@@ -673,28 +674,36 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
             ss = self.selected_samples
             xx = ss[:]
-            reftypes = ('blank_unknown',)
-            if any((si.analysis_type in reftypes
-                    for si in ss)):
-                with self.db.session_ctx():
-                    ans = []
-                    for si in ss:
-                        if si.analysis_type in reftypes:
-                            xx.remove(si)
-                            dates = list(self._project_date_bins(si.identifier))
-                            progress = open_progress(len(dates))
-                            for lp, hp in dates:
-                                progress.change_message('Loading Date Range '
-                                                        '{} to {}'.format(lp.strftime('%m-%d-%Y %H:%M:%S'),
-                                                                          hp.strftime('%m-%d-%Y %H:%M:%S')))
-                                ais = self._retrieve_sample_analyses([si],
-                                                                     make_records=False,
-                                                                     low_post=lp,
-                                                                     high_post=hp, **kw)
-                                ans.extend(ais)
-                            progress.close()
+            # if not any(['RECENT' in p for p in self.selected_projects]):
+            # sp=self.selected_projects
+            # if not hasattr(sp, '__iter__'):
+            #     sp = (sp, )
 
-                    ans = self._make_records(ans)
+            if not any(['RECENT' in p.name for p in self.selected_projects]):
+                reftypes = ('blank_unknown',)
+                if any((si.analysis_type in reftypes
+                        for si in ss)):
+                    with self.db.session_ctx():
+                        ans = []
+                        for si in ss:
+                            if si.analysis_type in reftypes:
+                                xx.remove(si)
+                                dates = list(self._project_date_bins(si.identifier))
+                                print dates
+                                progress = open_progress(len(dates))
+                                for lp, hp in dates:
+
+                                    progress.change_message('Loading Date Range '
+                                                            '{} to {}'.format(lp.strftime('%m-%d-%Y %H:%M:%S'),
+                                                                              hp.strftime('%m-%d-%Y %H:%M:%S')))
+                                    ais = self._retrieve_sample_analyses([si],
+                                                                         make_records=False,
+                                                                         low_post=lp,
+                                                                         high_post=hp, **kw)
+                                    ans.extend(ais)
+                                progress.close()
+
+                        ans = self._make_records(ans)
                     # print len(ans), len(set([si.record_id for si in ans]))
             if xx:
                 lp, hp = self.low_post, self.high_post

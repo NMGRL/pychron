@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
+
 from pychron.core.helpers.filetools import unique_path
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 root = os.path.join(os.path.expanduser('~'), 'Desktop', 'filelog')
 if not os.path.isdir(root):
     os.mkdir(root)
@@ -27,4 +29,4 @@ p, _ = unique_path(root, 'mem')
 def file_log(msg):
     with open(os.path.join(root, p), 'a') as fp:
         fp.write('{}\n'.format(msg))
-#============= EOF =============================================
+# ============= EOF =============================================

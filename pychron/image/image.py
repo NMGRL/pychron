@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,18 +12,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import HasTraits, Any, List, Int, Bool
-#=============standard library imports ========================
+# =============standard library imports ========================
 # import wx
 from numpy import asarray, flipud, ndarray
 from pychron.globals import globalv
 # from pychron.image.pyopencv_image_helper import colorspace
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 from cv_wrapper import load_image, asMat, get_size, grayspace, resize, \
     save_image, draw_lines
 from cv_wrapper import swap_rb as cv_swap_rb

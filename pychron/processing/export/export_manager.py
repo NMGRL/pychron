@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,20 +12,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance, Enum, Any
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.loggable import Loggable
 from pychron.processing.export.export_spec import ExportSpec
-from pychron.processing.export.exporter import MassSpecExporter, Exporter
+from pychron.processing.export.exporter import Exporter
+from pychron.processing.export.massspec_analysis_exporter import MassSpecAnalysisExporter
 from pychron.processing.export.xml_analysis_exporter import XMLAnalysisExporter
 from pychron.processing.export.yaml_analysis_exporter import YAMLAnalysisExporter
 
-EX_KLASS_DICT={'MassSpec':MassSpecExporter,
+EX_KLASS_DICT={'MassSpec':MassSpecAnalysisExporter,
                'XML':XMLAnalysisExporter,
                'YAML':YAMLAnalysisExporter}
 
@@ -60,7 +61,7 @@ class ExportManager(Loggable):
         return exp
 
     def _exporter_default(self):
-        return MassSpecExporter()
+        return MassSpecAnalysisExporter()
 
     def _kind_changed(self):
 
@@ -83,5 +84,5 @@ class ExportManager(Loggable):
         espec = self._make_export_spec(ai)
         self.exporter.add(espec)
         prog.change_message('Export analysis {}'.format(ai.record_id))
-#============= EOF =============================================
+# ============= EOF =============================================
 

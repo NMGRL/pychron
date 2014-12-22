@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Instance, on_trait_change, Float, Str, \
     Dict, Property, Event, Int, Bool, List, cached_property, Button, Any
 from traits.trait_errors import TraitError
@@ -22,11 +22,11 @@ from traitsui.api import View, UItem, InstanceEditor, TableEditor, \
     VSplit, HGroup, VGroup, spring, Item
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import linspace, array, min, max, zeros, meshgrid, \
     vstack, arctan2, sin, cos, unravel_index
 import math
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.envisage.browser.record_views import RecordView
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.graph.contour_graph import ContourGraph
@@ -534,4 +534,4 @@ class FluxEditor(GraphEditor):
                    UItem('positions', editor=editor, height=0.28))))
         return v
 
-#============= EOF =============================================
+# ============= EOF =============================================

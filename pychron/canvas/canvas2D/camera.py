@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import  Bool, Any, Float, Tuple, Int, Str
 # from traitsui.api import View, Item  # , TableEditor
 # import apptools.sweet_pickle as pickle
-#============= standard library imports ========================
-from numpy import polyval, exp
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+from numpy import polyval
+# ============= local library imports  ==========================
 from pychron.config_loadable import ConfigLoadable
 
 
@@ -239,7 +239,7 @@ class Camera(ConfigLoadable):
 #     c = CalibrationData(xcoeff_str='1.1, 5')
 #     c.configure_traits()
 
-#============= EOF ====================================
+# ============= EOF ====================================
 #    def reset_calibration_data(self):
 #
 #        self.calibration_data = np.array([[], []])

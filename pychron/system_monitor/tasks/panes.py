@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,19 +12,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from datetime import datetime
+
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traits.api import Instance, Property, Int, Color, Str
 from traitsui.api import View, UItem, TabularEditor, VGroup
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.processing.tasks.analysis_edit.panes import TablePane
-from pychron.pychron_constants import LIGHT_RED_COLOR
+from pychron.pychron_constants import LIGHT_RED
 from pychron.system_monitor.tasks.connection_spec import ConnectionSpec
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.processing.tasks.analysis_edit.adapters import UnknownsAdapter
@@ -86,7 +88,7 @@ class DashboardTabularAdapter(TabularAdapter):
     def get_bg_color(self, object, trait, row, column=0):
         color = 'white'
         if self.item.timed_out or not self.item.last_time:
-            color = LIGHT_RED_COLOR
+            color = LIGHT_RED
         return color
 
     def _get_last_time_text(self):
@@ -116,4 +118,4 @@ class DashboardPane(TraitsDockPane):
                        editor=editor))
         return v
 
-        #============= EOF =============================================
+        # ============= EOF =============================================

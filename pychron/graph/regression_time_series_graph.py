@@ -15,8 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.graph.regression_graph import RegressionGraph
 from pychron.graph.stacked_regression_graph import StackedRegressionGraph
 from pychron.graph.time_series_graph import TimeSeriesGraph
@@ -29,4 +29,4 @@ class RegressionTimeSeriesGraph(RegressionGraph, TimeSeriesGraph):
 class StackedRegressionTimeSeriesGraph(StackedRegressionGraph, TimeSeriesGraph):
     pass
 
-#============= EOF =============================================
+# ============= EOF =============================================

@@ -12,12 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Date, Float, Property, Long
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.experiment.utilities.identifier import get_analysis_type
 
 
@@ -165,4 +165,4 @@ class AnalysisRecordView(RecordView):
         for attr in ('record_id', 'tag'):
             setattr(self, attr, getattr(dbrecord, attr))
 
-#============= EOF =============================================
+# ============= EOF =============================================

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Bool, Float, Property, String, Enum
 from traitsui.api import VGroup, HGroup, Item, Group
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.processing.plotters.options.age import AgeOptions
 from pychron.processing.plotters.options.option import InverseIsochronPlotOptions
 from pychron.pychron_constants import FIT_ERROR_TYPES
@@ -85,4 +85,4 @@ class InverseIsochronOptions(AgeOptions):
             v **= -1
         return v
 
-#============= EOF =============================================
+# ============= EOF =============================================

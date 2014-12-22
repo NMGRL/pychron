@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Any, File, String, Int, Enum, Instance, Dict, \
     on_trait_change, Bool, Range
 from traitsui.api import View, Item, UItem, EnumEditor
@@ -24,8 +24,9 @@ from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pychron.canvas.canvas2D.video_canvas import VideoCanvas
 from pychron.core.ui.stage_component_editor import VideoComponentEditor
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 class Source(HasTraits):
     def url(self):
         return
@@ -130,4 +131,4 @@ class VideoPane(TraitsTaskPane, BaseVideoPane):
 class VideoDockPane(TraitsDockPane, BaseVideoPane):
     id = 'pychron.video'
     name = 'Video'
-#============= EOF =============================================
+# ============= EOF =============================================

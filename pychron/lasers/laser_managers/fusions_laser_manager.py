@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import DelegatesTo, Property, Instance, Str, List, Dict, \
     on_trait_change, Event, Bool, Any
 from traitsui.api import VGroup, Item, HGroup, spring
 from apptools.preferences.preference_binding import bind_preference
-#=============standard library imports ========================
+# =============standard library imports ========================
 # from threading import Thread, Timer as DoLaterTimer, Lock
 # import os
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 # from pychron.graph.stream_graph import StreamGraph
 # from pychron.database.adapters.power_adapter import PowerAdapter
 # from pychron.managers.data_managers.h5_data_manager import H5DataManager
@@ -117,9 +117,9 @@ class FusionsLaserManager(LaserManager):
         if self.stage_manager:
             self.stage_manager.canvas.request_redraw()
 
-            #===============================================================================
+            # ===============================================================================
             #   IExtractionDevice interface
-            #===============================================================================
+            # ===============================================================================
 
     def extract(self, power, **kw):
         self.enable_laser()
@@ -275,9 +275,9 @@ class FusionsLaserManager(LaserManager):
     def is_degassing(self):
         if self._degas_thread:
             return self._degas_thread.isRunning()
-            #===============================================================================
+            # ===============================================================================
             # pyscript interface
-            #===============================================================================
+            # ===============================================================================
 
     def _move_to_position(self, position, autocenter):
 
@@ -328,7 +328,7 @@ class FusionsLaserManager(LaserManager):
         m = factory(motion_controller=stage_controller)
         m.edit_traits()
 
-    #========================= views =========================
+    # ========================= views =========================
 
     def get_control_buttons(self):
         '''
@@ -447,7 +447,7 @@ class FusionsLaserManager(LaserManager):
     def _get_record_brightness(self):
         return self.record_brightness and self._get_machine_vision() is not None
 
-    #========================= defaults =======================
+    # ========================= defaults =======================
     def get_power_database(self):
         from pychron.database.adapters.power_adapter import PowerAdapter
 
@@ -487,7 +487,7 @@ if __name__ == '__main__':
     d = FusionsLaserManager()
 #    d.open_power_graph('1')
 #    d.configure_traits()
-#========================== EOF ====================================
+# ========================== EOF ====================================
 # def collect_baseline_brightness(self, **kw):
 #         bm = self.brightness_manager
 #         if bm is not None:

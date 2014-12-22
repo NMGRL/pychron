@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 import yaml
 
 from pychron.core.helpers.filetools import add_extension
@@ -24,15 +24,15 @@ from pychron.paths import paths
 set_qt()
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 from pyface.file_dialog import FileDialog
 from traits.api import HasTraits, List, Enum, Float, Int, Button, Any, Property, Str
 from traitsui.api import View, Item, Controller, UItem, HGroup, VGroup
 from traitsui.editors import ListEditor
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
 class ActionItem(HasTraits):
@@ -209,5 +209,5 @@ if __name__ == '__main__':
     a = ActionEditor(model=ActionModel())
     a.configure_traits()
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

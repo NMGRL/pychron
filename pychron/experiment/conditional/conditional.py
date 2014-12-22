@@ -15,15 +15,19 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str, Either, Int, Callable, Bool, Float
+import os
+from traits.api import Str, Either, Int, Callable, Bool, Float, Enum
 # ============= standard library imports ========================
 from uncertainties import nominal_value, std_dev
 import pprint
 # ============= local library imports  ==========================
+import yaml
 from pychron.experiment.conditional.regexes import MAPPER_KEY_REGEX, \
     STD_REGEX
-from pychron.experiment.conditional.utilities import tokenize, get_teststr_attr_func
+from pychron.experiment.conditional.utilities import tokenize, get_teststr_attr_func, extract_attr
+from pychron.experiment.utilities.conditionals import RUN, QUEUE, SYSTEM
 from pychron.loggable import Loggable
+from pychron.paths import paths
 
 
 def dictgetter(d, attrs, default=None):
@@ -39,7 +43,46 @@ def dictgetter(d, attrs, default=None):
         return default
 
 
-def conditional_from_dict(cd, klass):
+def conditionals_from_file(p, name=None, level=SYSTEM):
+    with open(p, 'r') as fp:
+        yd = yaml.load(fp)
+        cs = (('TruncationConditional', 'truncation', 'truncations'),
+              ('ActionConditional', 'action', 'actions'),
+              ('ActionConditional', 'action', 'post_run_actions'),
+              ('TerminationConditional', 'termination', 'terminations'),
+              ('TerminationConditional', 'pre_run_termination', 'pre_run_terminations'),
+              ('TerminationConditional', 'post_run_termination', 'post_run_terminations'),
+              ('CancelationConditional', 'cancelation', 'cancelations'))
+
+        conddict = {}
+        for klass, _, tag in cs:
+            if name and tag != name:
+                continue
+
+            yl = yd.get(tag)
+            if not yl:
+                continue
+
+            # print 'yyyy', yl
+            # var = getattr(self, '{}_conditionals'.format(var))
+            conds = [conditional_from_dict(ti, klass, level=level, location=p) for ti in yl]
+            # print 'ffff', conds
+            conds = [c for c in conds if c is not None]
+            if conds:
+                conddict[tag] = conds
+
+                # var.extend(conds)
+
+        if name:
+            try:
+                conddict = conddict[name]
+            except KeyError:
+                conddict = None
+
+        return conddict
+
+
+def conditional_from_dict(cd, klass, level=None, location=None):
     if isinstance(klass, str):
         klass = globals()[klass]
 
@@ -53,8 +96,7 @@ def conditional_from_dict(cd, klass):
 
     # attr = cd.get('attr')
     # if not attr:
-    #     return
-
+    # return
     teststr = dictgetter(cd, ('teststr', 'comp', 'check'))
     if not teststr:
         return
@@ -64,7 +106,18 @@ def conditional_from_dict(cd, klass):
     win = cd.get('window', 0)
     mapper = cd.get('mapper', '')
     action = cd.get('action', '')
-    cx = klass(teststr, start_count=start, frequency=freq, window=win, mapper=mapper, action=action)
+    ntrips = cd.get('ntrips', 1)
+
+    attr = extract_attr(teststr)
+    cx = klass(teststr, start_count=start, frequency=freq,
+               attr=attr,
+               window=win, mapper=mapper, action=action, ntrips=ntrips)
+    if level:
+        cx.level = level
+    if location:
+        location = os.path.relpath(location, paths.root_dir)
+        cx.location = location
+
     return cx
 
 
@@ -72,6 +125,9 @@ class BaseConditional(Loggable):
     attr = Str
     teststr = Str
     start_count = Int
+    level = Enum(SYSTEM, QUEUE, RUN)
+    tripped = Bool
+    location = Str
 
     def to_string(self):
         raise NotImplementedError
@@ -113,11 +169,12 @@ class AutomatedRunConditional(BaseConditional):
 
     active = True
     value = Float
-
+    ntrips = Int(1)
+    trips = 0
     # def __init__(self, attr, teststr,
     # start_count=0,
     # frequency=1,
-    #              *args, **kw):
+    # *args, **kw):
     def __init__(self, teststr,
                  start_count=0,
                  frequency=1,
@@ -160,9 +217,15 @@ class AutomatedRunConditional(BaseConditional):
                                                          pprint.pformat(ctx, width=1))
         self.debug(msg)
         if eval(teststr, ctx):
-            self.debug('condition {} is true'.format(teststr))
-            self.message = 'condition {} is True'.format(teststr)
-            return True
+            self.trips += 1
+            self.debug('condition {} is true trips={}/{}'.format(teststr, self.trips,
+                                                                 self.ntrips))
+            if self.trips >= self.ntrips:
+                self.tripped = True
+                self.message = 'condition {} is True'.format(teststr)
+                return True
+        else:
+            self.trips = 0
 
     def _make_context(self, obj, data):
         teststr = self.teststr
@@ -197,7 +260,7 @@ class TruncationConditional(AutomatedRunConditional):
 
 
 class TerminationConditional(AutomatedRunConditional):
-    nfails = Int
+    pass
 
 
 class CancelationConditional(AutomatedRunConditional):
@@ -230,13 +293,13 @@ class ActionConditional(AutomatedRunConditional):
             # v = None
             # args = ARGS_REGEX.search(between).group(0)[1:-1].split(',')
             # key = args[0]
-            #     if '.' in key:
-            #         key = key.split('.')[0].strip()
-            #         v = 0
-            #         # v = self.get_modified_value(arun, key, key)
+            # if '.' in key:
+            # key = key.split('.')[0].strip()
+            # v = 0
+            # # v = self.get_modified_value(arun, key, key)
             #
-            #     v1, v2 = args[1:]
-            #     nc = '{}<={}<={}'.format(v1, key, v2)
+            # v1, v2 = args[1:]
+            # nc = '{}<={}<={}'.format(v1, key, v2)
             #
             #     teststr = teststr.replace(between, nc)
             #     if between.startswith('not '):

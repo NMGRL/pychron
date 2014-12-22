@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import Enum, Instance
 import apptools.sweet_pickle as pickle
-#=============standard library imports ========================
+# =============standard library imports ========================
 import os
 import time
 import math
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 from pychron.hardware.core.data_helper import make_bitarray
 from pychron.hardware.motion_controller import MotionController
 from newport_axis import NewportAxis
@@ -148,9 +148,9 @@ ABLE TO USE THE HARDWARE JOYSTICK
         if self.axes.has_key('x'):
             return self.axes['x'].id == 2
 
-#===============================================================================
+# ===============================================================================
 # RPCable
-#===============================================================================
+# ===============================================================================
     def get_current_position(self, aid):
         ''' 
         '''
@@ -891,7 +891,7 @@ ABLE TO USE THE HARDWARE JOYSTICK
             setattr(self, '_%s_position' % a, val)
 
         self.parent.canvas.set_stage_position(self._x_position, self._y_position)
-#======================EOF========================================
+# ======================EOF========================================
 # def jog_move(self, c):
 #
 #        if c == 'Left':

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, List, on_trait_change, Any
 from traitsui.api import View, TableEditor, UItem
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
+
 from pychron.canvas.canvas2D.laser_tray_canvas import ImageOverlay
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class ImageOverlayManager(HasTraits):
     canvas = Any
@@ -47,4 +49,4 @@ class ImageOverlayManager(HasTraits):
     def redraw(self, obj, name, old, new):
         self.canvas.request_redraw()
 
-#============= EOF =============================================
+# ============= EOF =============================================

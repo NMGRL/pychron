@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Instance, Button, Bool, List, Str, Property, Any, \
     Enum, File, Int
 from traitsui.api import View, Item, EnumEditor, HGroup, ListEditor, InstanceEditor, Label, Spring, \
@@ -22,11 +22,11 @@ from traitsui.api import View, Item, EnumEditor, HGroup, ListEditor, InstanceEdi
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
 from pyface.timer.do_later import do_later
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import numpy as np
 import csv
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 from pychron.graph.graph import Graph
 from pychron.graph.regression_graph import RegressionGraph
@@ -203,9 +203,9 @@ class CSVGrapher(Loggable):
     def remove_column_selector(self, cs):
         self.data_selectors.remove(cs)
 
-    #===============================================================================
+    # ===============================================================================
     # handlers
-    #===============================================================================
+    # ===============================================================================
     def _open_button_fired(self):
         self.data_selectors = []
         #        p = '/Users/ross/Sandbox/csvdata.txt'
@@ -334,9 +334,9 @@ class CSVGrapher(Loggable):
 
         show(gii)
 
-    #===============================================================================
+    # ===============================================================================
     # property get/set
-    #===============================================================================
+    # ===============================================================================
     def _get_file_name(self):
         if os.path.isfile(self._path):
             return os.path.relpath(self._path, paths.data_dir)
@@ -348,9 +348,9 @@ class CSVGrapher(Loggable):
             return os.path.basename(self._path)
         else:
             return ''
-            #===============================================================================
+            # ===============================================================================
             # views
-            #===============================================================================
+            # ===============================================================================
 
     def traits_view(self):
         v = View(Item('as_series'), Item('delimiter', editor=EnumEditor(values=DELIMITERS)),
@@ -377,4 +377,4 @@ if __name__ == '__main__':
     #    do_later(cs.quick_graph, '/Users/ross/Sandbox/baselines/scan011.txt')
     do_later(cs.quick_graph, '/Users/argonlab2/Pychrondata/data/spectrometer_scans/scan017.txt')
     cs.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================

@@ -5,32 +5,98 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 import os
 import sys
-#============= local library imports  ==========================
+import logging
+
+# ============= local library imports  ==========================
+
+logger = logging.getLogger()
+
+
 def entry_point(modname, klass, setup_version_id='', debug=False):
     """
         entry point
     """
+
     from traits.etsconfig.api import ETSConfig
 
     ETSConfig.toolkit = "qt4"
 
-    build_version('',
-                  setup_version_id, debug=debug)
+    user = initialize_version(modname, debug)
+    set_commandline_args()
 
-    from pychron.core.helpers.logger_setup import logging_setup
+    # import app klass and pass to launch function
+    mod = __import__('pychron.applications.{}'.format(modname), fromlist=[klass])
+    from pychron.envisage.pychron_run import launch
+
+    launch(getattr(mod, klass), user)
+
+
+def set_commandline_args():
+    from pychron.globals import globalv
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Generate a password')
+    parser.add_argument('-t', '--testbot',
+                        action='store')
+    args = parser.parse_args()
+    globalv.use_testbot = args.testbot
+
+
+def initialize_version(appname, debug):
+    root = os.path.dirname(__file__)
+
+    if not debug:
+        add_eggs(root)
+    else:
+        build_sys_path()
+
+    # can now use pychron.
+    from pychron.envisage.user_login import get_user
+
+    user = get_user()
+    if not user:
+        logger.info('user login failed')
+        os._exit(0)
+
+    if appname.startswith('py'):
+        appname = appname[2:]
+
+    from pychron.paths import paths
+
+    pref_path = os.path.join(paths.base, '.enthought',
+                             'pychron.{}.application.{}'.format(appname, user),
+                             'preferences.ini')
+
+    from ConfigParser import ConfigParser
+
+    cp = ConfigParser()
+    cp.read(pref_path)
+
+    try:
+        proot = cp.get('pychron.general', 'root_dir')
+    except BaseException, e:
+        print 'root_dir exception={}'.format(e)
+        proot = os.path.join(os.path.expanduser('~'), 'Pychron')
+
+    paths.build(proot)
+
+    # build globals
+    build_globals(debug)
+
+    from pychron.core.helpers.logger_setup import logging_setup, set_exception_handler
     from pychron.paths import build_directories
 
     # build directories
@@ -38,45 +104,13 @@ def entry_point(modname, klass, setup_version_id='', debug=False):
 
     # setup logging. set a basename for log files and logging level
     logging_setup('pychron', level='DEBUG')
-
-    #import app klass and pass to launch function
-    mod = __import__('pychron.applications.{}'.format(modname), fromlist=[klass])
-    from pychron.envisage.pychron_run import launch
-
-    launch(getattr(mod, klass))
-
-
-def build_version(ver=None, setup_ver=None, debug=False):
-    """
-        set the python path and build/setup Pychrondata for support files
-    """
-
-    if ver is None:
-        ver = ''
-
-    if setup_ver is None:
-        setup_ver = ''
-
-    root = os.path.dirname(__file__)
-
     if not debug:
-        add_eggs(root)
-    else:
-        build_sys_path(ver, root)
+        set_exception_handler()
 
-    # can now use pychron.
-    from pychron.paths import paths
-
-    paths.bundle_root = root
-    if '-' in setup_ver:
-        setup_ver = setup_ver.split('-')[0]
-    paths.build(setup_ver)
-
-    # build globals
-    build_globals(debug)
+    return user
 
 
-def build_sys_path(ver, root):
+def build_sys_path():
     """
         need to launch from terminal
     """
@@ -99,11 +133,11 @@ def add_eggs(root):
 
 def build_globals(debug):
     try:
-        from pychron.initialization_parser import InitializationParser
+        from pychron.envisage.initialization.initialization_parser import InitializationParser
     except ImportError, e:
         from pyface.message_dialog import warning
-        warning(None, str(e))
 
+        warning(None, str(e))
 
     ip = InitializationParser()
 
@@ -112,20 +146,5 @@ def build_globals(debug):
     globalv.build(ip)
     globalv.debug = debug
 
-# #    use_ipc = ip.get_global('use_ipc')
-#    boolfunc = lambda x:True if x in ['True', 'true', 'T', 't'] else False
-#    for attr, func in [('use_ipc', boolfunc),
-#                       ('ignore_initialization_')
-#                        #('mode', str)
-#                        ]:
-#        a = ip.get_global(attr)
-#        if a:
-#            setattr(globalv, attr, func(a))
 
-#    if use_ipc:
-#        globalv.use_ipc =
-#
-#    use_ipc = ip.get_global('use_ipc')
-#    if use_ipc:
-#        globalv.use_ipc = True if use_ipc in ['True', 'true', 'T', 't'] else False
-#============= EOF =============================================
+# ============= EOF =============================================

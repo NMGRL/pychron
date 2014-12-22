@@ -12,19 +12,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance, String, Property, Button, \
     Bool, Event, on_trait_change, Str, Int
 from apptools.preferences.preference_binding import bind_preference
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import time
 from threading import Thread, Timer
 
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import unique_path, unique_path2
 from pychron.paths import paths
 from pychron.image.video import Video
@@ -410,16 +410,16 @@ class VideoStageManager(StageManager):
 
         return rpos, corrected, interp
 
-    #===============================================================================
+    # ===============================================================================
     # views
-    #===============================================================================
-    #===============================================================================
+    # ===============================================================================
+    # ===============================================================================
     # view groups
-    #===============================================================================
+    # ===============================================================================
 
-    #===============================================================================
+    # ===============================================================================
     # handlers
-    #===============================================================================
+    # ===============================================================================
     @on_trait_change('parent:motor_event')
     def _update_zoom(self, new):
         s = self.stage_controller
@@ -496,9 +496,9 @@ class VideoStageManager(StageManager):
     def _get_record_label(self):
         return 'Start Recording' if not self.is_recording else 'Stop'
 
-    #===============================================================================
+    # ===============================================================================
     # factories
-    #===============================================================================
+    # ===============================================================================
     def _canvas_factory(self):
         """
         """
@@ -520,9 +520,9 @@ class VideoStageManager(StageManager):
         e.stop_timer = 'stop_timer'
         return e
 
-    #===============================================================================
+    # ===============================================================================
     # defaults
-    #===============================================================================
+    # ===============================================================================
     def _camera_default(self):
         camera = Camera()
 
@@ -577,9 +577,9 @@ class VideoStageManager(StageManager):
                                     application=self.application)
 
 
-#===============================================================================
+# ===============================================================================
 # calcualte camera params
-#===============================================================================
+# ===============================================================================
 # def _calculate_indicator_positions(self, shift=None):
 #        ccm = self.camera_calibration_manager
 #
@@ -660,7 +660,7 @@ class VideoStageManager(StageManager):
 #     # s.update_axes()
 #
 #     s.configure_traits()
-#============= EOF ====================================
+# ============= EOF ====================================
 #    def _mapcenters_button_fired(self):
 #        self.info('Mapping all holes for {}'.format(self.stage_map))
 #        mv = self.machine_vision_manager

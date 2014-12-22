@@ -17,8 +17,8 @@
 # ============= enthought library imports =======================
 from traits.api import Str, Bool, Int, File, Event
 from traitsui.api import View, Group
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.directory_editor import CustomEditor
 from traitsui.qt4.file_editor import _TreeView, filter_trait
@@ -131,7 +131,7 @@ class myDirectoryEditor(BasicEditorFactory):
 
     extras = Group()
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

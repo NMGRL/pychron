@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.processing.analyses.analysis_group import StepHeatAnalysisGroup
 from pychron.processing.tables.step_heat.csv_writer import StepHeatTableCSVWriter
 from pychron.processing.tables.step_heat.pdf_writer import StepHeatPDFTableWriter
@@ -38,4 +38,4 @@ class StepHeatTableEditor(ArArTableEditor):
     analysis_group_klass = StepHeatAnalysisGroup
     adapter_klass = StepHeatTableAdapter
     analysis_groups_adapter_klass = StepHeatGroupTableAdapter
-    #============= EOF =============================================
+    # ============= EOF =============================================

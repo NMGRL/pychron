@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy import Column, Integer, String, \
     ForeignKey, BLOB, Float, Boolean, DateTime, CHAR
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import Table
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 from pychron.database.core.base_orm import BaseMixin, NameMixin
 # from pychron.database.core.base_orm import PathMixin, ResultsMixin, ScriptTable
@@ -55,6 +55,7 @@ class gen_DetectorTable(Base, NameMixin):
     detector_parameters = relationship('proc_DetectorParamTable', backref='detector')
     gains = relationship('meas_GainTable', backref='detector')
 
+
 class gen_ExtractionDeviceTable(Base, NameMixin):
     extractions = relationship('meas_ExtractionTable',
                                backref='extraction_device')
@@ -73,13 +74,14 @@ class gen_ImportTable(Base, BaseMixin):
 
 class gen_LabTable(Base, BaseMixin):
     identifier = stringcolumn()
-    #    aliquot = Column(Integer)
+    note = stringcolumn(140)
+
     sample_id = foreignkey('gen_SampleTable')
 
     irradiation_id = foreignkey('irrad_PositionTable')
     selected_flux_id = foreignkey('flux_HistoryTable')
+
     selected_interpreted_age_id = foreignkey('proc_InterpretedAgeHistoryTable')
-    note = stringcolumn(140)
 
     analyses = relationship('meas_AnalysisTable',
                             backref='labnumber')
@@ -161,10 +163,10 @@ class gen_UserTable(Base, NameMixin):
     affiliation = stringcolumn(140)
     category = Column(Integer, default=0)
 
-    #===========================================================================
+    # ===========================================================================
     # permissions
-    #===========================================================================
+    # ===========================================================================
     max_allowable_runs = Column(Integer, default=25)
     can_edit_scripts = Column(Boolean, default=False)
 
-#============= EOF =============================================
+# ============= EOF =============================================

@@ -12,15 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from actuator import Actuator
 
 
@@ -43,4 +43,4 @@ class ValveController(Actuator):
 #        '''
 #        if self._cdevice is not None:
 #            return self._cdevice.get_hard_lock_indicator_state(*args, **kw)
-#============= EOF ====================================
+# ============= EOF ====================================

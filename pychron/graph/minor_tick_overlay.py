@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,18 +12,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import Float, Int, Bool, Enum, Any
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.ticks import auto_ticks
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 
 class MinorTicksOverlay(AbstractOverlay):
@@ -89,4 +89,4 @@ class MinorTicksOverlay(AbstractOverlay):
         finally:
             gc.restore_state()
 
-#============= EOF =====================================
+# ============= EOF =====================================

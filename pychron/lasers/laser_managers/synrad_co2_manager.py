@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,18 +12,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Property, Instance, DelegatesTo
 # from traitsui.api import View, Item, Group, HGroup, VGroup
 from traitsui.api import VGroup, Item, HGroup
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.hardware.agilent_dac import AgilentDAC
 from pychron.led.led_editor import LEDEditor
 from pychron.hardware.actuators.agilent_gp_actuator import AgilentGPActuator
@@ -119,5 +119,5 @@ class SynradCO2Manager(LaserManager):
         stm = self._stage_manager_factory(args)
 
         return stm
-#============= views ===================================
-#============= EOF ====================================
+# ============= views ===================================
+# ============= EOF ====================================

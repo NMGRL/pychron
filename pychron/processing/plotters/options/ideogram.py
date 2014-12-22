@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-from traits.api import Enum, Float, Bool, String, Button, Property, Int, on_trait_change, List
+# ============= enthought library imports =======================
+from traits.api import Enum, Float, Bool, Button, Property, Int, on_trait_change, List
 from traitsui.api import Item, HGroup, Group, VGroup, UItem, EnumEditor, InstanceEditor, spring
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.color_generators import colornames
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.plotters.options.age import AgeOptions
@@ -34,7 +34,7 @@ class IdeogramOptions(AgeOptions):
     use_static_limits = Bool
     xlow = Float
     xhigh = Float
-    use_centered_range = Bool
+
     _use_centered_range = Bool
     centered_range = Float(0.5)
 
@@ -43,7 +43,7 @@ class IdeogramOptions(AgeOptions):
     display_percent_error = Bool(True)
     plot_option_name = 'Ideogram'
     # index_attr = Enum('Age', 'Ar40*/Ar39k','Ar40/Ar36')
-    index_attr = String
+    #index_attr = String
 
     use_asymptotic_limits = Bool
     _use_asymptotic_limits = Bool
@@ -320,4 +320,4 @@ class IdeogramOptions(AgeOptions):
             # 'use_filled_line', 'fill_color', 'fill_alpha'
         ]
 
-#============= EOF =============================================
+# ============= EOF =============================================

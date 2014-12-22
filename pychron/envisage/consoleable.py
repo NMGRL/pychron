@@ -16,8 +16,8 @@
 
 # ============= enthought library imports =======================
 from traits.trait_types import Bool, Instance, Event, Int
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from traits.traits import Color
 from pychron.core.ui.preference_binding import color_bind_preference, bind_preference
 from pychron.displays.display import DisplayController
@@ -50,13 +50,13 @@ class Consoleable(Loggable):
 
         self.console_updated = '{}|{}'.format(color, msg)
 
-    def heading(self,msg, decorate_chr='=', *args, **kw):
+    def heading(self,msg, decorate_chr='*', *args, **kw):
         d = decorate_chr*7
         msg = '{} {} {}'.format(d, msg, d)
         self.info(msg)
 
     def info(self, msg, log=True, color=None, *args, **kw):
-        if color is None or not self.use_message_colormapping:
+        if color is None: #or not self.use_message_colormapping:
             color = self.console_default_color
 
         if self.console_display:
@@ -87,4 +87,4 @@ class Consoleable(Loggable):
             default_color=self.console_default_color,
             max_blocks=100)
 
-#============= EOF =============================================
+# ============= EOF =============================================

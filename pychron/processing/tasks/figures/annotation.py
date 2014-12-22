@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,20 +12,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import string
-from chaco.plot_component import PlotComponent
+
 from chaco.tools.data_label_tool import DataLabelTool
 from chaco.tooltip import ToolTip
 from enable.colors import transparent_color
-from enable.tools.drag_tool import DragTool
-from traits.api import HasTraits, Str, List
-from traitsui.api import View, Item
+from traits.api import Str, List
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 VK = string.ascii_letters
 
 KEY_MAP = {'Enter': '\n', ' ': ' '}
@@ -197,4 +196,4 @@ class AnnotationOverlay(ToolTip):
             #            rounded_rect(gc, self.x, self.y, self.width, self.height, 4)
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

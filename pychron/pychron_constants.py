@@ -12,11 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 SPECTROMETER_PROTOCOL = 'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager'
 ION_OPTICS_PROTOCOL = 'pychron.spectrometer.ion_optics_manager.IonOpticsManager'
 SCAN_PROTOCOL = 'pychron.spectrometer.scan_manager.ScanManager'
@@ -115,7 +115,7 @@ FAILED_COLOR = 'red'
 END_AFTER_COLOR = 'gray'
 NOT_EXECUTABLE_COLOR = 'red'
 
-LIGHT_RED_COLOR = '#FF7373'
+LIGHT_RED = '#FF7373'
 LIGHT_YELLOW = '#F7F6D0'
 LIGHT_GREEN = '#99FF99'
 
@@ -135,4 +135,4 @@ DEFAULT_INTEGRATION_TIME = 1.048576
 # ('NM-220', ['L', 'M', 'N', 'O']),
 # ('NM-222', ['A', 'B', 'C', 'D']),
 # ('NM-256', ['E', 'F'])]
-#============= EOF =============================================
+# ============= EOF =============================================

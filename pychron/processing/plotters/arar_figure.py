@@ -14,18 +14,18 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
 from chaco.array_data_source import ArrayDataSource
 from traits.api import HasTraits, Any, Int, Str, Tuple, Property, \
     Event, Bool, cached_property, on_trait_change
 from chaco.tools.data_label_tool import DataLabelTool
 from chaco.tools.broadcaster import BroadcasterTool
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import Inf, inf
 import re
 from uncertainties import std_dev, nominal_value, ufloat
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.graph.error_bar_overlay import ErrorBarOverlay
 from pychron.graph.tools.limits_tool import LimitsTool, LimitOverlay
 from pychron.processing.analyses.analysis_group import AnalysisGroup
@@ -262,9 +262,9 @@ class BaseArArFigure(HasTraits):
         ap.ylimits = self.graph.get_y_limits(pid)
         ap.xlimits = self.graph.get_x_limits(pid)
 
-    #===========================================================================
+    # ===========================================================================
     # aux plots
-    #===========================================================================
+    # ===========================================================================
     def _get_aux_plot_omits(self, po, ys):
         omits = []
         fs = po.filter_str
@@ -301,9 +301,9 @@ class BaseArArFigure(HasTraits):
         vs = self._unpack_attr(k)
         return [nominal_value(vi) for vi in vs], [std_dev(vi) for vi in vs]
 
-    #===============================================================================
+    # ===============================================================================
     #
-    #===============================================================================
+    # ===============================================================================
     def _add_point_labels(self, scatter):
         labels = []
 
@@ -372,9 +372,9 @@ class BaseArArFigure(HasTraits):
 
             # u = lambda a, b, c, d: self.update_graph_metadata(a, b, c, d)
             scatter.index.on_trait_change(self.update_graph_metadata, 'metadata_changed')
-            #===============================================================================
+            # ===============================================================================
             # labels
-            #===============================================================================
+            # ===============================================================================
 
 
     def _add_data_label(self, s, text, point, bgcolor='transparent',
@@ -512,9 +512,9 @@ class BaseArArFigure(HasTraits):
                             break
                     break
 
-    #===============================================================================
+    # ===============================================================================
     # property get/set
-    #===============================================================================
+    # ===============================================================================
     @cached_property
     def _get_sorted_analyses(self):
         return sorted(self.analyses,
@@ -524,4 +524,4 @@ class BaseArArFigure(HasTraits):
     @cached_property
     def _get_analysis_group(self):
         return self._analysis_group_klass(analyses=self.sorted_analyses)
-        #============= EOF =============================================
+        # ============= EOF =============================================

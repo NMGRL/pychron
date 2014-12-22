@@ -5,46 +5,39 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+from traits.api import HasTraits, Int, Str
+# ============= standard library imports ========================
 from datetime import datetime, timedelta
 from hashlib import sha1
-
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.expression import and_, not_
-from traits.api import HasTraits, Int, Str
 from uncertainties import ufloat
-
-
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.database.orms.isotope.gen import gen_AnalysisTypeTable, gen_MassSpectrometerTable, \
     gen_ExtractionDeviceTable
 
 from pychron.database.orms.isotope.meas import meas_AnalysisTable, meas_MeasurementTable, meas_ExtractionTable
-# from pychron.processing.analysis import Analysis
-# from pychron.processing.plotters.spectrum import Spectrum
-# from pychron.processing.plotters.ideogram import Ideogram
-# from pychron.processing.plotters.inverse_isochron import InverseIsochron
-# from pychron.processing.plotters.series import Series
 from pychron.core.helpers.iterfuncs import partition
-# from pychron.processing.plotters import plotter_options
+
 
 def unique_id(vs, *args):
-    h=sha1()
-    for ai in vs+list(args):
+    h = sha1()
+    for ai in vs + list(args):
         h.update(str(ai))
     return h.hexdigest()
+
 
 class IrradiationPositionRecord(HasTraits):
     position = Int
@@ -60,8 +53,13 @@ class IrradiationPositionRecord(HasTraits):
 
 
 class Processor(IsotopeDatabaseManager):
+    def get_adjacent_analysis(self, timestamp, previous, **kw):
+        db = self.db
+        with db.session_ctx():
+            an = db.get_adjacent_analysis(timestamp, previous)
+            return self.make_analysis(an, **kw)
 
-    def unique_id(self,vs, *args):
+    def unique_id(self, vs, *args):
         return unique_id(vs, *args)
 
     def find_associated_analyses(self, analysis, delta=12, limit=10, atype=None, **kw):
@@ -161,45 +159,10 @@ class Processor(IsotopeDatabaseManager):
                 q = q.limit(limit)
 
             return self._make_analyses_from_query(q)
-    #
-    # def save_arar(self, analysis, meas_analysis):
-    #     with self.db.session_ctx():
-    #         hist = meas_analysis.selected_histories.selected_arar
-    #         if not hist:
-    #             hist = self.db.add_arar_history(meas_analysis)
-    #             arar = self.db.add_arar(hist)
-    #         else:
-    #             arar = hist.arar_result
-    #
-    #         #force analysis to recalculate age
-    #         #potentially redundant
-    #         analysis.calculate_age(force=True)
-    #
-    #         units = analysis.arar_constants.age_scalar
-    #
-    #         attr = ('Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36',
-    #                 'rad40', 'cl36', 'ca37', 'k39')
-    #         for ai in attr:
-    #             a = getattr(analysis, ai)
-    #             v, e = float(a.nominal_value), float(a.std_dev)
-    #             setattr(arar, ai, v)
-    #             setattr(arar, '{}_err'.format(ai), e)
-    #
-    #         age = analysis.age * units
-    #         v, e = age.nominal_value, age.std_dev
-    #
-    #         je = analysis.age_error_wo_j * units
-    #
-    #         arar.age = float(v)
-    #         arar.age_err = float(e)
-    #         arar.age_err_wo_j = je
-    #
-    #         #update arar_history timestamp
-    #         arar.history.create_date = datetime.now()
 
-    #===============================================================================
+    # ===============================================================================
     # corrections
-    #===============================================================================
+    # ===============================================================================
     def add_history(self, dbrecord, kind, **kw):
         db = self.db
         return db.add_history(dbrecord, kind, **kw)
@@ -226,28 +189,28 @@ class Processor(IsotopeDatabaseManager):
                      user_error=ue)
 
     def apply_session_blank_history(self, analysis, hist_id):
-        db=self.db
+        db = self.db
         with db.session_ctx():
             hist = db.get_blank_history(hist_id)
             if hist.action:
-                session=hist.action.session
+                session = hist.action.session
                 if session:
                     histories = db.get_session_blank_histories(session)
                     if histories:
                         for hi in histories:
-                            an=hi.analysis
-                            an.selected_histories.selected_blanks_id=hi
+                            an = hi.analysis
+                            an.selected_histories.selected_blanks_id = hi
                             self.remove_from_cache(an)
 
     def apply_blank_history(self, analysis, hist_id):
-        db=self.db
+        db = self.db
         with db.session_ctx():
             an = db.get_analysis_uuid(analysis.uuid)
             self.debug('setting {} blank history_id to {}. '
                        'table=proc_BlanksHistoryTable'.format(an.record_id, hist_id))
-            cid =an.selected_histories.selected_blanks_id
+            cid = an.selected_histories.selected_blanks_id
             self.debug('current blank id={} >> {}'.format(cid, hist_id))
-            an.selected_histories.selected_blanks_id=hist_id
+            an.selected_histories.selected_blanks_id = hist_id
 
             analysis.sync_blanks(an)
 
@@ -257,7 +220,7 @@ class Processor(IsotopeDatabaseManager):
         # refs = [db.get_analysis_uuid(ri.uuid) for ri in refs]
         refs = db.get_analyses_uuid([ri.uuid for ri in refs],
                                     attr='id')
-        for ri, vi, ei in zip(refs,ss, es):
+        for ri, vi, ei in zip(refs, ss, es):
             db.add_blank_set_value_table(vi, ei, dbblank, ri[0])
 
     def apply_correction(self, history, analysis, fit_obj, set_id, kind):
@@ -266,6 +229,26 @@ class Processor(IsotopeDatabaseManager):
         func = getattr(self, '_apply_{}_correction'.format(kind))
         return func(history, analysis, fit_obj, set_id)
 
+    def add_predictor_set(self, predictors, kind):
+        set_id = None
+        if predictors:
+            db = self.db
+
+            #make set_id
+            dbrs = db.get_analyses_uuid([p.uuid for p in predictors], analysis_only=True)
+
+            # set_id = hash(tuple((ai.id for ai in dbrs)))
+            set_id = self.unique_id([ai.id for ai in dbrs])
+
+            gfunc = getattr(db, 'get_{}_set'.format(kind))
+            if not gfunc(set_id):
+                func = getattr(db, 'add_{}_set'.format(kind))
+                for dbr in dbrs:
+                    func(dbr, set_id=set_id)
+
+        return set_id
+
+    # private
     def _apply_detector_intercalibration_correction(self, history, analysis, fit_obj, set_id):
         n, d = fit_obj.name.split('/')
 
@@ -293,25 +276,6 @@ class Processor(IsotopeDatabaseManager):
                                          user_error=ic_e,
                                          fit=fit_obj.fit,
                                          set_id=set_id)
-
-    def add_predictor_set(self, predictors, kind):
-        set_id = None
-        if predictors:
-            db = self.db
-
-            #make set_id
-            dbrs = db.get_analyses_uuid([p.uuid for p in predictors], analysis_only=True)
-
-            # set_id = hash(tuple((ai.id for ai in dbrs)))
-            set_id = self.unique_id([ai.id for ai in dbrs])
-
-            gfunc=getattr(db, 'get_{}_set'.format(kind))
-            if not gfunc(set_id):
-                func = getattr(db, 'add_{}_set'.format(kind))
-                for dbr in dbrs:
-                    func(dbr, set_id=set_id)
-
-        return set_id
 
     def _apply_blanks_correction(self, history, analysis, fit_obj, set_id):
         if not fit_obj.name in analysis.isotopes:
@@ -434,280 +398,310 @@ class Processor(IsotopeDatabaseManager):
             traceback.print_exc()
 
         return self.make_analyses(ans, calculate_age=True)
+# ============= EOF =============================================
+# def save_arar(self, analysis, meas_analysis):
+#     with self.db.session_ctx():
+#         hist = meas_analysis.selected_histories.selected_arar
+#         if not hist:
+#             hist = self.db.add_arar_history(meas_analysis)
+#             arar = self.db.add_arar(hist)
+#         else:
+#             arar = hist.arar_result
+#
+#         #force analysis to recalculate age
+#         #potentially redundant
+#         analysis.calculate_age(force=True)
+#
+#         units = analysis.arar_constants.age_scalar
+#
+#         attr = ('Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36',
+#                 'rad40', 'cl36', 'ca37', 'k39')
+#         for ai in attr:
+#             a = getattr(analysis, ai)
+#             v, e = float(a.nominal_value), float(a.std_dev)
+#             setattr(arar, ai, v)
+#             setattr(arar, '{}_err'.format(ai), e)
+#
+#         age = analysis.age * units
+#         v, e = age.nominal_value, age.std_dev
+#
+#         je = analysis.age_error_wo_j * units
+#
+#         arar.age = float(v)
+#         arar.age_err = float(e)
+#         arar.age_err_wo_j = je
+#
+#         #update arar_history timestamp
+#         arar.history.create_date = datetime.now()
 
-        #============= EOF =============================================
+#     def new_ideogram2(self, ans, plotter_options=None):
+#         '''
+#             return a plotcontainer
+#         '''
+#
+#         probability_curve_kind = 'cumulative'
+#         mean_calculation_kind = 'weighted_mean'
+#         data_label_font = None
+#         metadata_label_font = None
+# #        highlight_omitted = True
+#         display_mean_indicator = True
+#         display_mean_text = True
+#
+#         p = Ideogram(
+# #                     db=self.db,
+# #                     processing_manager=self,
+#                      probability_curve_kind=probability_curve_kind,
+#                      mean_calculation_kind=mean_calculation_kind
+#                      )
+#         options = dict(
+#                        title='',
+#                        data_label_font=data_label_font,
+#                        metadata_label_font=metadata_label_font,
+#                        display_mean_text=display_mean_text,
+#                        display_mean_indicator=display_mean_indicator,
+#                        )
+#
+#         if plotter_options is None:
+#             pom = IdeogramOptionsManager()
+#             plotter_options = pom.plotter_options
+#
+#         if ans:
+# #             self.analyses = ans
+#             gideo = p.build(ans, options=options,
+#                             plotter_options=plotter_options)
+#             if gideo:
+#                 gideo, _plots = gideo
+#
+#             return gideo, p
+#     def new_spectrum(self, ans, plotter_options=None):
+#         pass
+#
+#         p = Spectrum()
+#
+#         if plotter_options is None:
+#             pom = SpectrumOptionsManager()
+#             plotter_options = pom.plotter_options
+#
+#         options = {}
+#
+#         self._plotter_options = plotter_options
+#         if ans:
+# #             self.analyses = ans
+#             gspec = p.build(ans, options=options,
+#                             plotter_options=plotter_options)
+#             if gspec:
+#                 gspec, _plots = gspec
+#
+#             return gspec, p
+#def load_sample_analyses(self, labnumber, sample, aliquot=None):
+#    db = self.db
+#    sess = db.get_session()
+#    q = sess.query(meas_AnalysisTable)
+#    q = q.join(gen_LabTable)
+#    q = q.join(gen_SampleTable)
+#
+#    q = q.filter(gen_SampleTable.name == sample)
+#    if aliquot is not None:
+#        q = q.filter(meas_AnalysisTable.aliquot == aliquot)
+#
+#    if sample == 'FC-2':
+#        q = q.filter(gen_LabTable.identifier == labnumber)
+#
+#    #        q = q.limit(10)
+#    return self._make_analyses_from_query(q)
 
-        #============= EOF =============================================
-        #     def new_ideogram2(self, ans, plotter_options=None):
-        #         '''
-        #             return a plotcontainer
-        #         '''
-        #
-        #         probability_curve_kind = 'cumulative'
-        #         mean_calculation_kind = 'weighted_mean'
-        #         data_label_font = None
-        #         metadata_label_font = None
-        # #        highlight_omitted = True
-        #         display_mean_indicator = True
-        #         display_mean_text = True
-        #
-        #         p = Ideogram(
-        # #                     db=self.db,
-        # #                     processing_manager=self,
-        #                      probability_curve_kind=probability_curve_kind,
-        #                      mean_calculation_kind=mean_calculation_kind
-        #                      )
-        #         options = dict(
-        #                        title='',
-        #                        data_label_font=data_label_font,
-        #                        metadata_label_font=metadata_label_font,
-        #                        display_mean_text=display_mean_text,
-        #                        display_mean_indicator=display_mean_indicator,
-        #                        )
-        #
-        #         if plotter_options is None:
-        #             pom = IdeogramOptionsManager()
-        #             plotter_options = pom.plotter_options
-        #
-        #         if ans:
-        # #             self.analyses = ans
-        #             gideo = p.build(ans, options=options,
-        #                             plotter_options=plotter_options)
-        #             if gideo:
-        #                 gideo, _plots = gideo
-        #
-        #             return gideo, p
-        #     def new_spectrum(self, ans, plotter_options=None):
-        #         pass
-        #
-        #         p = Spectrum()
-        #
-        #         if plotter_options is None:
-        #             pom = SpectrumOptionsManager()
-        #             plotter_options = pom.plotter_options
-        #
-        #         options = {}
-        #
-        #         self._plotter_options = plotter_options
-        #         if ans:
-        # #             self.analyses = ans
-        #             gspec = p.build(ans, options=options,
-        #                             plotter_options=plotter_options)
-        #             if gspec:
-        #                 gspec, _plots = gspec
-        #
-        #             return gspec, p
-        #def load_sample_analyses(self, labnumber, sample, aliquot=None):
-        #    db = self.db
-        #    sess = db.get_session()
-        #    q = sess.query(meas_AnalysisTable)
-        #    q = q.join(gen_LabTable)
-        #    q = q.join(gen_SampleTable)
-        #
-        #    q = q.filter(gen_SampleTable.name == sample)
-        #    if aliquot is not None:
-        #        q = q.filter(meas_AnalysisTable.aliquot == aliquot)
-        #
-        #    if sample == 'FC-2':
-        #        q = q.filter(gen_LabTable.identifier == labnumber)
-        #
-        #    #        q = q.limit(10)
-        #    return self._make_analyses_from_query(q)
+#def _make_analyses_from_query(self, q):
+#    ans = None
+#    try:
+#        ans = q.all()
+#        self.debug('{}'.format(ans))
+#    except Exception, e:
+#        import traceback
+#
+#        traceback.print_exc()
+#
+#    if ans:
+#        ans = self.make_analyses(ans)
+#        return ans
 
-        #def _make_analyses_from_query(self, q):
-        #    ans = None
-        #    try:
-        #        ans = q.all()
-        #        self.debug('{}'.format(ans))
-        #    except Exception, e:
-        #        import traceback
-        #
-        #        traceback.print_exc()
-        #
-        #    if ans:
-        #        ans = self.make_analyses(ans)
-        #        return ans
+#     def auto_blank_fit(self, irradiation, level, kind):
+#         if kind == 'preceding':
+#             '''
+#             1. supply a list of labnumbers/ supply level and extract labnumbers (with project minnabluff)
+#             2. get all analyses for the labnumbers
+#             3. sort analyses by run date
+#             4. calculate blank
+#                 1. preceding/bracketing
+#                     get max 2 predictors
+#
+#                 2. fit
+#                     a. group analyses by run date
+#                     b. get n predictors based on group date
+#             5. save blank
+#             '''
+#             db = self.db
+#             level = db.get_irradiation_level(irradiation, level)
+#
+#             labnumbers = [pi.labnumber for pi in level.positions
+#                             if pi.labnumber.sample.project.name in ('j', 'Minna Bluff', 'Mina Bluff')]
+#             ans = [ai
+#                     for ln in labnumbers
+#                         for ai in ln.analyses
+#                         ]
+#             pd = self.open_progress(n=len(ans))
+#             for ai in ans:
+#                 self.preceding_blank_correct(ai, pd=pd)
+#             db.commit()
 
-        #     def auto_blank_fit(self, irradiation, level, kind):
-        #         if kind == 'preceding':
-        #             '''
-        #             1. supply a list of labnumbers/ supply level and extract labnumbers (with project minnabluff)
-        #             2. get all analyses for the labnumbers
-        #             3. sort analyses by run date
-        #             4. calculate blank
-        #                 1. preceding/bracketing
-        #                     get max 2 predictors
-        #
-        #                 2. fit
-        #                     a. group analyses by run date
-        #                     b. get n predictors based on group date
-        #             5. save blank
-        #             '''
-        #             db = self.db
-        #             level = db.get_irradiation_level(irradiation, level)
-        #
-        #             labnumbers = [pi.labnumber for pi in level.positions
-        #                             if pi.labnumber.sample.project.name in ('j', 'Minna Bluff', 'Mina Bluff')]
-        #             ans = [ai
-        #                     for ln in labnumbers
-        #                         for ai in ln.analyses
-        #                         ]
-        #             pd = self.open_progress(n=len(ans))
-        #             for ai in ans:
-        #                 self.preceding_blank_correct(ai, pd=pd)
-        #             db.commit()
-
-        #def refit_isotopes(self, meas_analysis, pd=None, fits=None, keys=None, verbose=False):
-        #
-        ##         if not isinstance(analysis, Analysis):
-        #    analysis = self.make_analysis(meas_analysis)
-        #
-        #    #         analysis.load_isotopes()
-        #    dbr = meas_analysis
-        #    #         dbr = analysis.dbrecord
-        #    if keys is None:
-        #        keys = [iso.molecular_weight.name for iso in dbr.isotopes
-        #                if iso.kind == 'signal']
-        #
-        #    '''
-        #        if spectrometer is map use all linear
-        #
-        #        if spectrometer is Jan or Obama
-        #            if counts >150 use parabolic
-        #            else use linear
-        #    '''
-        #    if fits is None:
-        #        if analysis.mass_spectrometer in ('pychron obama', 'pychron jan', 'jan', 'obama'):
-        #            n = 0
-        #            if keys:
-        #                n = analysis.isotopes[keys[0]].xs.shape[0]
-        #
-        #            if n >= 150:
-        #                fits = ['parabolic', ] * len(keys)
-        #            else:
-        #                fits = ['linear', ] * len(keys)
-        #
-        #        else:
-        #            fits = ['linear', ] * len(keys)
-        #
-        #    db = self.db
-        #
-        #    if not dbr.selected_histories:
-        #        db.add_selected_histories(dbr)
-        #        db.sess.flush()
-        #
-        #    msg = 'fitting isotopes for {}'.format(analysis.record_id)
-        #    if pd is not None:
-        #        pd.change_message(msg)
-        #    self.debug(msg)
-        #    dbhist = db.add_fit_history(dbr)
-        #    for key, fit in zip(keys, fits):
-        #        dbiso_baseline = next((iso for iso in dbr.isotopes
-        #                               if iso.molecular_weight.name == key and iso.kind == 'baseline'), None)
-        #        if dbiso_baseline:
-        #            if verbose:
-        #                self.debug('{} {}'.format(key, fit))
-        #
-        #            vv = analysis.isotopes[key]
-        #            baseline = vv.baseline
-        #            if not baseline:
-        #                continue
-        #
-        #            v, e = baseline.value, baseline.error
-        #            db.add_fit(dbhist, dbiso_baseline, fit='average_sem', filter_outliers=True,
-        #                       filter_outlier_std_devs=2)
-        #            db.add_isotope_result(dbiso_baseline, dbhist, signal_=float(v), signal_err=float(e))
-        #
-        #            dbiso = next((iso for iso in dbr.isotopes
-        #                          if iso.molecular_weight.name == key and iso.kind == 'signal'), None)
-        #            if dbiso:
-        #                vv = analysis.isotopes[key]
-        #                v, e = vv.value, vv.error
-        #
-        #                db.add_fit(dbhist, dbiso, fit=fit, filter_outliers=True,
-        #                           filter_outlier_std_devs=2)
-        #                db.add_isotope_result(dbiso, dbhist, signal_=float(v), signal_err=float(e))
-        #
-        #    if pd is not None:
-        #        pd.increment()
-
-        #def _get_preceding_analysis(self, ms, post, atype):
-        #    if isinstance(post, float):
-        #        post = datetime.datetime.fromtimestamp(post)
-        #
-        #    sess = self.db.get_session()
-        #    q = sess.query(meas_AnalysisTable)
-        #    q = q.join(meas_MeasurementTable)
-        #    q = q.join(gen_AnalysisTypeTable)
-        #    q = q.join(gen_MassSpectrometerTable)
-        #
-        #    q = q.filter(and_(
-        #        gen_AnalysisTypeTable.name == atype,
-        #        gen_MassSpectrometerTable.name == ms,
-        #        meas_AnalysisTable.analysis_timestamp < post,
-        #    )
-        #    )
-        #
-        #    q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
-        #    try:
-        #        return q.first()
-        #    except NoResultFound:
-        #        pass
-
-        #def preceding_blank_correct(self, analysis, keys=None, pd=None):
-        #    from pychron.core.regression.interpolation_regressor import InterpolationRegressor
-        #
-        #    if not isinstance(analysis, Analysis):
-        #        analysis = self.make_analysis(analysis)
-        #        #             analysis.load_isotopes()
-        #
-        #    msg = 'applying preceding blank for {}'.format(analysis.record_id)
-        #    if pd is not None:
-        #        pd.change_message(msg)
-        #        pd.increment()
-        #
-        #    #         self.info(msg)
-        #    ms = analysis.mass_spectrometer
-        #
-        #    post = analysis.timestamp
-        #
-        #    #         delta = -5
-        #    atype = 'blank_{}'.format(analysis.analysis_type)
-        #
-        #    an = self._get_preceding_analysis(ms, post, atype)
-        #
-        #    if not an:
-        #        self.warning('no preceding blank for {}'.format(analysis.record_id))
-        #        return
-        #
-        #    ai = self.make_analyses(an)
-        #    #         ai.load_isotopes()
-        #
-        #    if keys is None:
-        #        keys = analysis.isotope_keys
-        #
-        #    kind = 'blanks'
-        #    history = self.add_history(an, kind)
-        #
-        #    fit = 'preceding'
-        #
-        #    reg = InterpolationRegressor(kind=fit)
-        #    for key in keys:
-        #    #             predictors = [ai for ai in br if key in ai.isotopes]
-        #        if key in ai.isotopes:
-        #            r_xs, r_y = (ai.timestamp,), (ai.isotopes[key].baseline_corrected_value(),)
-        #            #             if predictors:
-        #            #                 r_xs, r_y = zip(*[(ai.timestamp, ai.isotopes[key].baseline_corrected_value()
-        #            #                                           )
-        #            #                                         for ai in predictors])
-        #            r_ys, r_es = zip(*[(yi.nominal_value, yi.std_dev) for yi in r_y])
-        #
-        #            reg.trait_set(xs=r_xs,
-        #                          ys=r_ys,
-        #                          yserr=r_es,
-        #            )
-        #
-        #            fit_obj = Fit(name=key, fit=fit)
-        #            v, e = reg.predict(post), reg.predict_error(post)
-        #            analysis.set_blank(key, (v[0], e[0]))
-        #            self.apply_correction(history, analysis, fit_obj, [ai], kind)
+#def refit_isotopes(self, meas_analysis, pd=None, fits=None, keys=None, verbose=False):
+#
+##         if not isinstance(analysis, Analysis):
+#    analysis = self.make_analysis(meas_analysis)
+#
+#    #         analysis.load_isotopes()
+#    dbr = meas_analysis
+#    #         dbr = analysis.dbrecord
+#    if keys is None:
+#        keys = [iso.molecular_weight.name for iso in dbr.isotopes
+#                if iso.kind == 'signal']
+#
+#    '''
+#        if spectrometer is map use all linear
+#
+#        if spectrometer is Jan or Obama
+#            if counts >150 use parabolic
+#            else use linear
+#    '''
+#    if fits is None:
+#        if analysis.mass_spectrometer in ('pychron obama', 'pychron jan', 'jan', 'obama'):
+#            n = 0
+#            if keys:
+#                n = analysis.isotopes[keys[0]].xs.shape[0]
+#
+#            if n >= 150:
+#                fits = ['parabolic', ] * len(keys)
+#            else:
+#                fits = ['linear', ] * len(keys)
+#
+#        else:
+#            fits = ['linear', ] * len(keys)
+#
+#    db = self.db
+#
+#    if not dbr.selected_histories:
+#        db.add_selected_histories(dbr)
+#        db.sess.flush()
+#
+#    msg = 'fitting isotopes for {}'.format(analysis.record_id)
+#    if pd is not None:
+#        pd.change_message(msg)
+#    self.debug(msg)
+#    dbhist = db.add_fit_history(dbr)
+#    for key, fit in zip(keys, fits):
+#        dbiso_baseline = next((iso for iso in dbr.isotopes
+#                               if iso.molecular_weight.name == key and iso.kind == 'baseline'), None)
+#        if dbiso_baseline:
+#            if verbose:
+#                self.debug('{} {}'.format(key, fit))
+#
+#            vv = analysis.isotopes[key]
+#            baseline = vv.baseline
+#            if not baseline:
+#                continue
+#
+#            v, e = baseline.value, baseline.error
+#            db.add_fit(dbhist, dbiso_baseline, fit='average_sem', filter_outliers=True,
+#                       filter_outlier_std_devs=2)
+#            db.add_isotope_result(dbiso_baseline, dbhist, signal_=float(v), signal_err=float(e))
+#
+#            dbiso = next((iso for iso in dbr.isotopes
+#                          if iso.molecular_weight.name == key and iso.kind == 'signal'), None)
+#            if dbiso:
+#                vv = analysis.isotopes[key]
+#                v, e = vv.value, vv.error
+#
+#                db.add_fit(dbhist, dbiso, fit=fit, filter_outliers=True,
+#                           filter_outlier_std_devs=2)
+#                db.add_isotope_result(dbiso, dbhist, signal_=float(v), signal_err=float(e))
+#
+#    if pd is not None:
+#        pd.increment()
+#def _get_preceding_analysis(self, ms, post, atype):
+#    if isinstance(post, float):
+#        post = datetime.datetime.fromtimestamp(post)
+#
+#    sess = self.db.get_session()
+#    q = sess.query(meas_AnalysisTable)
+#    q = q.join(meas_MeasurementTable)
+#    q = q.join(gen_AnalysisTypeTable)
+#    q = q.join(gen_MassSpectrometerTable)
+#
+#    q = q.filter(and_(
+#        gen_AnalysisTypeTable.name == atype,
+#        gen_MassSpectrometerTable.name == ms,
+#        meas_AnalysisTable.analysis_timestamp < post,
+#    )
+#    )
+#
+#    q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
+#    try:
+#        return q.first()
+#    except NoResultFound:
+#        pass
+#def preceding_blank_correct(self, analysis, keys=None, pd=None):
+#    from pychron.core.regression.interpolation_regressor import InterpolationRegressor
+#
+#    if not isinstance(analysis, Analysis):
+#        analysis = self.make_analysis(analysis)
+#        #             analysis.load_isotopes()
+#
+#    msg = 'applying preceding blank for {}'.format(analysis.record_id)
+#    if pd is not None:
+#        pd.change_message(msg)
+#        pd.increment()
+#
+#    #         self.info(msg)
+#    ms = analysis.mass_spectrometer
+#
+#    post = analysis.timestamp
+#
+#    #         delta = -5
+#    atype = 'blank_{}'.format(analysis.analysis_type)
+#
+#    an = self._get_preceding_analysis(ms, post, atype)
+#
+#    if not an:
+#        self.warning('no preceding blank for {}'.format(analysis.record_id))
+#        return
+#
+#    ai = self.make_analyses(an)
+#    #         ai.load_isotopes()
+#
+#    if keys is None:
+#        keys = analysis.isotope_keys
+#
+#    kind = 'blanks'
+#    history = self.add_history(an, kind)
+#
+#    fit = 'preceding'
+#
+#    reg = InterpolationRegressor(kind=fit)
+#    for key in keys:
+#    #             predictors = [ai for ai in br if key in ai.isotopes]
+#        if key in ai.isotopes:
+#            r_xs, r_y = (ai.timestamp,), (ai.isotopes[key].baseline_corrected_value(),)
+#            #             if predictors:
+#            #                 r_xs, r_y = zip(*[(ai.timestamp, ai.isotopes[key].baseline_corrected_value()
+#            #                                           )
+#            #                                         for ai in predictors])
+#            r_ys, r_es = zip(*[(yi.nominal_value, yi.std_dev) for yi in r_y])
+#
+#            reg.trait_set(xs=r_xs,
+#                          ys=r_ys,
+#                          yserr=r_es,
+#            )
+#
+#            fit_obj = Fit(name=key, fit=fit)
+#            v, e = reg.predict(post), reg.predict_error(post)
+#            analysis.set_blank(key, (v[0], e[0]))
+#            self.apply_correction(history, analysis, fit_obj, [ai], kind)

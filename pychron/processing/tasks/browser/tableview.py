@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from traitsui.api import View, Item, HGroup, UItem, VGroup, EnumEditor, HSplit, TabularEditor, spring, Group, Heading
 # ============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 # from pychron.core.ui.qt.tabular_editor import UnselectTabularEditorHandler
 # from pychron.core.ui.qt.tabular_editor import UnselectTabularEditorHandler
 from pychron.core.ui.combobox_editor import ComboboxEditor
@@ -46,7 +46,7 @@ class TableView(PaneModelView):
                              label='Samples',
                              width=0.6,
                              editor=TabularEditor(
-                                 adapter=self.pane.sample_tabular_adapter,
+                                 adapter=self.pane.labnumber_tabular_adapter,
                                  editable=False,
                                  selected='selected_samples',
                                  multi_select=True,
@@ -153,7 +153,7 @@ class TableTools(PaneModelView):
         v = View(HGroup(sample_tools, analysis_tools))
         return v
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

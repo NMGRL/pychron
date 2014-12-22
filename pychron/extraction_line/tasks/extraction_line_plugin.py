@@ -12,38 +12,42 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-import os
-
-from traits.api import Str
+# ============= enthought library imports =======================
+from traits.api import Str, Instance
+from traitsui.menu import Action
+from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
 from pyface.tasks.action.schema import SMenu
 from pyface.tasks.action.schema_addition import SchemaAddition
-from envisage.ui.tasks.task_extension import TaskExtension
-
-#============= standard library imports ========================
-#============= local library imports  ==========================
-from traitsui.menu import Action
+# ============= standard library imports ========================
+import os
+# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_directory2
 from pychron.core.helpers.logger_setup import new_logger
+from pychron.envisage.initialization.initialization_parser import InitializationParser
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.extraction_line.extraction_line_manager import ExtractionLineManager
+from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
+from pychron.extraction_line.pyscript_runner import RemotePyScriptRunner, PyScriptRunner
 from pychron.extraction_line.tasks.extraction_line_task import ExtractionLineTask
 from pychron.extraction_line.tasks.extraction_line_actions import RefreshCanvasAction
-from pychron.extraction_line.tasks.extraction_line_preferences import ExtractionLinePreferencesPane
+from pychron.extraction_line.tasks.extraction_line_preferences import ExtractionLinePreferencesPane, \
+    ConsolePreferencesPane
 from pychron.paths import paths
 
 
 class ProcedureAction(Action):
     script_path = Str
+
     def __init__(self, *args, **kw):
         super(ProcedureAction, self).__init__(*args, **kw)
 
         ex = self.application.get_plugin('pychron.experiment')
-        ex = ex.experimentor.executor
-        ex.on_trait_change(self._update_alive, 'alive')
+        if ex:
+            ex = ex.experimentor.executor
+            ex.on_trait_change(self._update_alive, 'alive')
 
     def _update_alive(self, new):
         self.enabled = not new
@@ -51,14 +55,14 @@ class ProcedureAction(Action):
     def perform(self, event):
         app = event.task.application
 
-        for tid in ('pychron.experiment.task','pychron.spectrometer'):
+        for tid in ('pychron.experiment.task', 'pychron.spectrometer'):
             task = app.task_is_open(tid)
             if task:
-                #make sure extraction line canvas is visible
+                # make sure extraction line canvas is visible
                 task.show_pane('pychron.extraction_line.canvas_dock')
                 break
         else:
-            #open extraction line task
+            # open extraction line task
             app.open_task('pychron.extraction_line')
 
         manager = app.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
@@ -66,7 +70,7 @@ class ProcedureAction(Action):
         root = os.path.dirname(self.script_path)
         name = os.path.basename(self.script_path)
 
-        info=lambda x: '======= {} ======='.format(x)
+        info = lambda x: '======= {} ======='.format(x)
 
         manager.info(info('Started Procedure "{}"'.format(name)))
 
@@ -86,14 +90,79 @@ def procedure_action(name, application):
     return lambda: a
 
 
-logger = new_logger('ExtractionLinePlugin')
-
-
 class ExtractionLinePlugin(BaseTaskPlugin):
     id = 'pychron.extraction_line'
+    name = 'ExtractionLine'
+    _extraction_line_manager = Instance(ExtractionLineManager)
 
-    #    manager = Instance(ExtractionLineManager)
-    def _my_task_extensions_default(self):
+    def set_preference_defaults(self):
+        self._set_preference_defaults((('canvas_path', os.path.join(paths.canvas2D_dir, 'canvas.xml')),
+                                       ('canvas_config_path', os.path.join(paths.canvas2D_dir, 'canvas_config.xml')),
+                                       ('valves_path', os.path.join(paths.extraction_line_dir, 'valves.xml'))),
+                                      'pychron.extraction_line')
+
+    def test_gauge_communication(self):
+        return self._test('test_gauge_communication')
+
+    def test_valve_communication(self):
+        return self._test('test_valve_communication')
+
+    def _test(self, func):
+        man = self.application.get_service(ExtractionLineManager)
+        c = getattr(man, func)()
+        return 'Passed' if c else 'Failed'
+
+    def _factory(self):
+        elm = self._extraction_line_manager
+        if elm is None:
+
+            ip = InitializationParser()
+            try:
+                plugin = ip.get_plugin('ExtractionLine', category='hardware')
+                mode = ip.get_parameter(plugin, 'mode')
+            # mode = plugin.get('mode')
+            except AttributeError:
+                # no epxeriment plugin defined
+                mode = 'normal'
+
+            elm = ExtractionLineManager(mode=mode)
+            elm.bind_preferences()
+            self._extraction_line_manager = elm
+
+        return elm
+
+    def _runner_factory(self):
+        man = self.application.get_service(ExtractionLineManager)
+        if man.mode == 'client':
+
+            ip = InitializationParser()
+            elm = ip.get_plugin('ExtractionLine', category='hardware')
+            runner = elm.find('runner')
+            if runner is None:
+                man.warning_dialog('Script Runner is not configured in the Initialization file. See documentation')
+                return
+
+            host, port, kind = None, None, None
+
+            if runner is not None:
+                comms = runner.find('communications')
+                host = comms.find('host')
+                port = comms.find('port')
+                kind = comms.find('kind')
+
+            if host is not None:
+                host = host.text  # if host else 'localhost'
+            if port is not None:
+                port = int(port.text)  # if port else 1061
+                kind = kind.text  # if kind else 'udp'
+
+            runner = RemotePyScriptRunner(host, port, kind)
+        else:
+            runner = PyScriptRunner()
+        return runner
+
+    # defaults
+    def _task_extensions_default(self):
         ex = [TaskExtension(actions=[SchemaAddition(id='refresh_canvas',
                                                     factory=RefreshCanvasAction,
                                                     path='MenuBar/tools.menu')])]
@@ -114,7 +183,7 @@ class ExtractionLinePlugin(BaseTaskPlugin):
 
                 ex.append(TaskExtension(actions=actions))
             else:
-                logger.warning('no procedure scripts located in "{}"'.format(paths.procedures_dir))
+                self.warning('no procedure scripts located in "{}"'.format(paths.procedures_dir))
         return ex
 
     def _service_offers_default(self):
@@ -122,32 +191,12 @@ class ExtractionLinePlugin(BaseTaskPlugin):
         """
         so = self.service_offer_factory(
             protocol=ExtractionLineManager,
-            factory=self._factory
-            #                            factory=ExtractionLineManager
-        )
+            factory=self._factory)
+        so1 = self.service_offer_factory(
+            protocol=IPyScriptRunner,
+            factory=self._runner_factory)
 
-        #        so1 = self.service_offer_factory(
-        #                          protocol = GaugeManager,
-        #                          #protocol = GM_PROTOCOL,
-        #                          factory = self._gm_factory)
-
-        return [so]
-
-    def _factory(self):
-        from pychron.initialization_parser import InitializationParser
-
-        ip = InitializationParser()
-        try:
-            plugin = ip.get_plugin('ExtractionLine', category='hardware')
-            mode = ip.get_parameter(plugin, 'mode')
-        #            mode = plugin.get('mode')
-        except AttributeError:
-            # no epxeriment plugin defined
-            mode = 'normal'
-
-        elm = ExtractionLineManager(mode=mode)
-        elm.bind_preferences()
-        return elm
+        return [so, so1]
 
     def _managers_default(self):
         """
@@ -171,12 +220,6 @@ class ExtractionLinePlugin(BaseTaskPlugin):
         return t
 
     def _preferences_panes_default(self):
-        return [
-            ExtractionLinePreferencesPane]
+        return [ExtractionLinePreferencesPane, ConsolePreferencesPane]
 
-        #    def _my_task_extensions_default(self):
-
-#        return [TaskExtension(actions=[SchemaAddition(id='Load Canvas',
-#                                                      factory=LoadCanvasAction,
-#                                                      path='MenuBar/ExtractionLine')])]
-#============= EOF =============================================
+# ============= EOF =============================================

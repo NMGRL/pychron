@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,18 +12,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import HasTraits, Any, Float, List, Instance, Bool
 from traitsui.api import View, Item, Group, TabularEditor
 from traitsui.tabular_adapter import TabularAdapter
 
-#=============standard library imports ========================
+# =============standard library imports ========================
 from numpy import vstack
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 
 
 class DataItem(HasTraits):
@@ -169,4 +169,4 @@ class RegressionDataEditor(DataEditor):
         name = 'table%i' % i
         data = self._load_table(i)
         return name, data
-#============= EOF =====================================
+# ============= EOF =====================================

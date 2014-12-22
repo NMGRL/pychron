@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
 from traits.api import HasTraits, Property, Bool, Event, \
     Unicode, List, String, Int, on_trait_change, Instance
 from pyface.tasks.api import Editor
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 import time
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.pyscripts.context_editors.measurement_context_editor import MeasurementContextEditor
 from pychron.pyscripts.tasks.widgets import myAdvancedCodeWidget
@@ -276,9 +276,9 @@ class PyScriptEditor(Editor, PyScriptEdit):
     def _get_name(self):
         return os.path.basename(self.path) or 'Untitled'
 
-    #===============================================================================
+    # ===============================================================================
     # persistence
-    #===============================================================================
+    # ===============================================================================
     def load(self, path=None):
         if path is None:
             path = self.path
@@ -334,4 +334,4 @@ class ExtractionEditor(PyScriptEditor):
     # def _editor_default(self):
     #     return ParameterEditor(editor=self)
 
-#============= EOF =============================================
+# ============= EOF =============================================

@@ -12,13 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pyface.action.action import Action
 from pyface.tasks.action.task_action import TaskAction
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import FileOpenAction, NewAction
 
@@ -97,8 +97,8 @@ class NewPyScriptAction(NewAction):
 
 class JumpToGosubAction(TaskAction):
     name = 'Jump to Gosub'
-    image = icon('script_go.png')
+    image = icon('script_go')
     method = 'jump_to_gosub'
     tooltip = 'Jump to gosub defined at the current line. CMD+click on a gosub will also work.'
 
-#============= EOF =============================================
+# ============= EOF =============================================

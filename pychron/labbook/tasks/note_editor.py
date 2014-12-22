@@ -17,18 +17,21 @@
 # ============= enthought library imports =======================
 import hashlib
 import os
-from traits.api import HasTraits, Button, Str, Int, Bool, String, Property
-from traitsui.api import View, Item, UItem, HGroup, VGroup
+
+from traits.api import Str, Bool, String, Property, List
+from traitsui.api import View, UItem, VGroup
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.ui.label_editor import LabelEditor
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.paths import paths
 
 
 class NoteEditor(BaseTraitsEditor):
     note = String
-    use_commit = Bool
-    commit = String
+    # use_commit = Bool
+    # commit = String
     name = Property(depends_on='dirty, default_name')
     # _name = Str
     dirty = Bool
@@ -37,6 +40,16 @@ class NoteEditor(BaseTraitsEditor):
     name_editable = Bool(True)
     ohash = Str
     default_name = Str
+    root = Str
+    labels = List
+
+    def set_label(self, label):
+        if not label.active:
+            l = next((l for l in self.labels if l.text == label.text), None)
+            if l:
+                self.labels.remove(l)
+        else:
+            self.labels.append(label)
 
     def _get_name(self):
         if not self.path:
@@ -45,16 +58,19 @@ class NoteEditor(BaseTraitsEditor):
             name = os.path.relpath(self.path, paths.labbook_dir)
         return name
 
-    @property
-    def commit_message(self):
-        c = None
-        if self.use_commit:
-            c = self.commit
+    # def get_commit_message(self):
+    # cm = CommitDialog()
 
-        if not c:
-            c = 'modified' if os.path.isfile(self.path) else 'added'
-            c = '{} {}'.format(c, self.name)
-        return c
+    # @property
+    # def commit_message(self):
+    #     c = None
+    #     # if self.use_commit:
+    #     #     c = self.commit
+    #
+    #     if not c:
+    #         c = 'modified' if os.path.isfile(self.path) else 'added'
+    #         c = '{} {}'.format(c, self.name)
+    #     return c
 
     def load(self, path=None):
         if path is None:
@@ -81,7 +97,7 @@ class NoteEditor(BaseTraitsEditor):
     def reset_hash(self, note):
         h = hashlib.sha1(note)
         self.ohash = h.hexdigest()
-        self.dirty=False
+        self.dirty = False
 
     def _check_dirty(self):
         ch = hashlib.sha1(self.note)
@@ -92,14 +108,14 @@ class NoteEditor(BaseTraitsEditor):
         self._check_dirty()
 
     def traits_view(self):
-        cgrp = VGroup(HGroup(Item('use_commit')),
-                      UItem('commit', style='custom'))
+        # cgrp = VGroup(HGroup(Item('use_commit')),
+        #               UItem('commit', style='custom'))
 
         # v = View(VGroup(HGroup(Item('new_name', label='Name', visible_when='name_editable')),
         # VGroup(UItem('note', style='custom'),
         #                        cgrp)))
         v = View(VGroup(UItem('note', style='custom'),
-                        cgrp))
+                        UItem('labels', editor=LabelEditor())))
         return v
 
 # ============= EOF =============================================

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,27 +12,27 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import List, Str
 from envisage.ui.tasks.task_factory import TaskFactory
 from pyface.tasks.action.schema_addition import SchemaAddition
 from envisage.ui.tasks.task_extension import TaskExtension
 from pyface.tasks.action.schema import SMenu
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
-from pychron.initialization_parser import InitializationParser
+from pychron.envisage.initialization.initialization_parser import InitializationParser
 from pychron.paths import paths
 from pychron.lasers.tasks.laser_actions import OpenPowerMapAction, OpenPatternAction, NewPatternAction
 from pychron.lasers.tasks.laser_calibration_task import LaserCalibrationTask
 
 
 class CoreLaserPlugin(BaseTaskPlugin):
-    def _my_task_extensions_default(self):
+    def _task_extensions_default(self):
         actions = [
             SchemaAddition(factory=OpenPowerMapAction,
                            path='MenuBar/file.menu/Open')]
@@ -82,17 +82,16 @@ class BaseLaserPlugin(BaseTaskPlugin):
                 klass = 'PychronLaserManager'
 
             pkg = 'pychron.lasers.laser_managers.pychron_laser_manager'
+            params = dict()
             try:
                 tag = ip.get_parameter(plugin, 'communications', element=True)
-                #                tag = plugin.find('communications')
-                params = dict()
                 for attr in ['host', 'port', 'kind']:
                     try:
                         params[attr] = tag.find(attr).text.strip()
                     except Exception, e:
-                        print 'client comms fail', attr, e
+                        print 'client comms fail a', attr, e
             except Exception, e:
-                print 'client comms fail', e
+                print 'client comms fail b', e
 
             params['name'] = self.name
             factory = __import__(pkg, fromlist=[klass])
@@ -136,6 +135,11 @@ class BaseLaserPlugin(BaseTaskPlugin):
 class FusionsPlugin(BaseLaserPlugin):
     task_name = Str
 
+    def test_communication(self):
+        man = self._get_manager()
+        c = man.test_connection()
+        return 'Passed' if c else 'Failed'
+
     def _tasks_default(self):
         return [TaskFactory(id=self.id,
                             task_group='hardware',
@@ -165,7 +169,7 @@ class FusionsPlugin(BaseLaserPlugin):
             rs = [(source, self.task_name)]
         return rs
 
-    def _my_task_extensions_default(self):
+    def _task_extensions_default(self):
         def efactory():
             return SMenu(id='Laser', name='Laser')
 
@@ -180,4 +184,4 @@ class FusionsPlugin(BaseLaserPlugin):
         return exts
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

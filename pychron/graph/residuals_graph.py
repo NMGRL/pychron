@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from chaco.api import PlotGrid, BarPlot, ArrayDataSource, \
     DataRange1D, LinearMapper, add_default_axes
 
-#=============standard library imports ========================
+# =============standard library imports ========================
 
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 from regression_graph import RegressionGraph
 from pychron.graph.guide_overlay import GuideOverlay
 
@@ -168,4 +168,4 @@ class ResidualsGraph(RegressionGraph):
 
         self.residual_plots = [bar, bar2]
         self.plotcontainer.add(container)
-#============= EOF =====================================
+# ============= EOF =====================================

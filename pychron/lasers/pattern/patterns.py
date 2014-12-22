@@ -596,4 +596,4 @@ class CircularContourPattern(CircularPattern):
 if __name__ == '__main__':
     p = PolygonPattern()
     p.configure_traits()
-#============= EOF ====================================
+# ============= EOF ====================================

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,18 +12,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 # from traits.api import HasTraits
 # from pychron.core.ui import set_toolkit
 # set_toolkit('qt4')
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from unittest import TestCase
 
 from numpy import linspace, polyval
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.regression.mean_regressor import MeanRegressor  #, WeightedMeanRegressor
 from pychron.core.regression.new_york_regressor import ReedYorkRegressor, NewYorkRegressor
 from pychron.core.regression.ols_regressor import OLSRegressor
@@ -364,4 +364,4 @@ class NewYorkRegressionTest(PearsonRegressionTest, TestCase):
 #        self.assertEqual(y, self.Yprederr_5_parabolic)
 # #        self.assertEqual(yal, self.Yprederr_5_parabolic)
 
-#============= EOF =============================================
+# ============= EOF =============================================

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Instance, List, Str, Bool, on_trait_change, String, \
     Button, Dict, Any
 from traitsui.api import View, Item, ListStrEditor, HGroup, VGroup, \
@@ -25,12 +25,12 @@ from chaco.tools.image_inspector_tool import ImageInspectorOverlay, \
 from chaco.tools.api import ZoomTool, PanTool
 from enable.component_editor import ComponentEditor
 from enable.component import Component
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import Image
 from numpy import array
 import os
 import httplib
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.paths import paths
@@ -73,9 +73,9 @@ class ImageEditor(HasTraits):
     image_specs = Dict
 
     db = Any
-#===============================================================================
+# ===============================================================================
 # handlers
-#===============================================================================
+# ===============================================================================
     def _selected_changed(self):
         if self.selected in self.image_specs:
             spec = self.image_specs[self.selected]
@@ -230,9 +230,9 @@ class ImageBrowser(IsotopeDatabaseManager):
         img_plot.overlays.append(zoom)
 
 
-#===============================================================================
+# ===============================================================================
 # handlers
-#===============================================================================
+# ===============================================================================
     @on_trait_change('image_editor:selected')
     def _selected_changed(self):
         sel = self.image_editor.selected
@@ -278,4 +278,4 @@ if __name__ == '__main__':
 #    im.load_from_remote_source('foo')
 #    im.load_image_from_file('/Users/ross/Sandbox/diodefailsnapshot.jpg')
     im.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================

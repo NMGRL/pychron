@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 import weakref
 
 from traits.api import HasTraits, Any, Event, List, Bool, Property
@@ -23,9 +23,9 @@ from traitsui.tabular_adapter import TabularAdapter
 
 # from traitsui.extras.checkbox_column import CheckboxColumn
 
-#=============standard library imports ========================
+# =============standard library imports ========================
 
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 # from filetools import parse_setupfile
 
 # from explanable_item import ExplanableTurbo

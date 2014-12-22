@@ -15,8 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task import BaseManagerTask
 from pychron.spectrometer.tasks.inspector.panes import ScanInspectorCentralPane
 from pychron.spectrometer.tasks.inspector.scan_inspector import ScanInspector
@@ -36,7 +36,7 @@ class ScanInspectorTask(BaseManagerTask):
         return ScanInspector()
 
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

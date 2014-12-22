@@ -12,16 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import re
 
 from reportlab.pdfbase.pdfmetrics import stringWidth
 from traits.api import Int
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.pdf.items import Row, FootNoteRow, FooterRow
 from reportlab.lib import colors
 from pychron.processing.tables.pdf_writer import IsotopePDFTableWriter
@@ -145,9 +145,9 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
             ('extract_value', '{}'),
             ('moles_Ar40', value(scale=1e-16, n=1)),
 
-            #==============================================================
+            # ==============================================================
             # signals
-            #==============================================================
+            # ==============================================================
             ('Ar40', value(scale=scales['Ar40'])),
             ('Ar40', error(scale=scales['Ar40err'])),
             ('Ar39', value(scale=scales['Ar39'])),
@@ -159,9 +159,9 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
             ('Ar36', value(scale=scales['Ar36'])),
             ('Ar36', error(scale=scales['Ar36err'])),
 
-            #==============================================================
+            # ==============================================================
             # computed
-            #==============================================================
+            # ==============================================================
 
 
             # ('F', value(n=5)),
@@ -176,9 +176,9 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
         row = self._new_row(analysis, attrs, default_fontsize)
 
         # battrs = (
-        #     #==============================================================
+        #     # ==============================================================
         #     # blanks
-        #     #==============================================================
+        #     # ==============================================================
         #     #                     ('', '{}'),
         #     #                     ('', '{}'),
         #     ('', '{}'),
@@ -234,9 +234,9 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
         #             table._argH[i] = v.height * inch
 
 
-        #===============================================================================
+        # ===============================================================================
         # summary
-        #===============================================================================
+        # ===============================================================================
 
     def _make_summary_rows(self, agroup, idx, style):
         span = 14
@@ -287,13 +287,13 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
 
         return rows
 
-    #===============================================================================
+    # ===============================================================================
     # blanks
-    #===============================================================================
+    # ===============================================================================
 
-    #===============================================================================
+    # ===============================================================================
     # footnotes
-    #===============================================================================
+    # ===============================================================================
     def _calculate_span(self, p, start, fontName=None, fontSize=None):
         """
             determine number of columns required
@@ -376,7 +376,7 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
         #                style.add('VALIGN', (1, idx), (-1, idx), 'MIDDLE')
 
 
-#============= EOF =============================================
+# ============= EOF =============================================
 # class TableSpec(HasTraits):
 #     status_width = Int(5)
 #     id_width = Int(20)

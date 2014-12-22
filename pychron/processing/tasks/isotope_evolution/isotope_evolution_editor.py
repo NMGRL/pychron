@@ -20,10 +20,10 @@
 from traits.api import Instance, Bool, Any, Event
 from traitsui.api import View, UItem, InstanceEditor
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import time
 from numpy import Inf, polyfit
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.graph.graph import Graph
 from pychron.core.helpers.fits import convert_fit
 from pychron.processing.fits.iso_evo_fit_selector import IsoEvoFitSelector
@@ -548,7 +548,7 @@ class IsotopeEvolutionEditor(GraphEditor):
         g = IsoEvoGraph(container_dict=dict(kind='g', shape=shape, spacing=(1, 1)))
         return g
 
-    #============= deprecated =============================================
+    # ============= deprecated =============================================
     def calculate_optimal_eqtime(self):
         # get x,y data
         self.info('========================================')
@@ -581,7 +581,7 @@ class IsotopeEvolutionEditor(GraphEditor):
         self.info('========================================')
         self.component.invalidate_and_redraw()
 
-        #============= EOF =============================================
+        # ============= EOF =============================================
         #
         # fitted=[]
         # for fi in self.tool.fits:

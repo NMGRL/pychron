@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-from traits.api import HasTraits, Str, Password, Button, on_trait_change, Bool
-
-from pychron.loggable import Loggable
+# ============= enthought library imports =======================
 import urllib
 import urllib2
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+from traits.api import Str, Password, Button, on_trait_change, Bool
+
+from pychron.loggable import Loggable
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 class HTTPRepository(Loggable):
     username = Str
     password = Password
@@ -67,12 +68,12 @@ class HTTPRepository(Loggable):
             form['password'] = self.password
         return form
 
-#===============================================================================
+# ===============================================================================
 # handlers
-#===============================================================================
+# ===============================================================================
     @on_trait_change('username, password')
     def _update_enabled(self):
         self.enabled = all([getattr(self, a)
                                  for a in ('username', 'password')])
 
-#============= EOF =============================================
+# ============= EOF =============================================

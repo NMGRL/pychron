@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from envisage.ui.action.api import Action  # , Group, Menu, ToolBar
 from envisage.ui.workbench.api import WorkbenchActionSet
 
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 action_path = 'pychron.modeling.plugins.mdd_modeler_actions:'
 mdd_path = 'MenuBar/MDD'
@@ -71,4 +71,4 @@ class MDDModelerActionSet(WorkbenchActionSet):
 
 
              ]
-#============= EOF ====================================
+# ============= EOF ====================================

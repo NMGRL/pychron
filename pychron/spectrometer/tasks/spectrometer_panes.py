@@ -12,16 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Str
 from traitsui.api import View, Item, VGroup, HGroup, EnumEditor, spring, \
     Label, Spring, ListEditor, Group, InstanceEditor, UItem, TableEditor
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from pyface.tasks.traits_dock_pane import TraitsDockPane
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn, TableColumn
 from pychron.envisage.icon_button_editor import icon_button_editor
@@ -40,16 +40,16 @@ class ColorColumn(TableColumn):
         return
 
 
-class ScanPane(TraitsTaskPane):
-    def traits_view(self):
-        # v = View(UItem('graph', style='custom'))
-        v = View(UItem('graphs',
-                       editor=ListEditor(deletable=True,
-                                         use_notebook=True,
-                                         page_name='.name',
-                                         style='custom'),
-                       style='custom'))
-        return v
+# class ScanPane(TraitsTaskPane):
+#     def traits_view(self):
+#         # v = View(UItem('graph', style='custom'))
+#         v = View(UItem('graphs',
+#                        editor=ListEditor(deletable=True,
+#                                          use_notebook=True,
+#                                          page_name='.name',
+#                                          style='custom'),
+#                        style='custom'))
+#         return v
 
 
 class ReadoutPane(TraitsDockPane):
@@ -169,4 +169,4 @@ class ControlsPane(TraitsDockPane):
         return v
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

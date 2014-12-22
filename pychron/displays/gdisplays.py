@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 from pychron.utils import get_display_size
 from pychron.displays.display import ErrorDisplay, DisplayController
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 ds = get_display_size()
 
@@ -63,7 +63,7 @@ gTraceDisplay = ErrorDisplay(
     default_color='black'
 )
 
-#============= EOF =============================================
+# ============= EOF =============================================
 # from traits.api import HasTraits, List, Str, Property, Enum
 # from traitsui.api import View, Item, TabularEditor
 # from traitsui.tabular_adapter import TabularAdapter
@@ -122,7 +122,7 @@ gTraceDisplay = ErrorDisplay(
 #                  )
 #        self.messages.insert(0, m)
 #
-#    #============================================================
+#    # ============================================================
 #
 #
 #    def traits_view(self):

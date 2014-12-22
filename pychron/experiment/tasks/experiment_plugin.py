@@ -5,24 +5,24 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from envisage.ui.tasks.task_factory import TaskFactory
 from pyface.tasks.action.schema_addition import SchemaAddition
 from envisage.ui.tasks.task_extension import TaskExtension
 from pyface.action.group import Group
 from traits.api import Instance
-#============= standard library imports ========================
-#============= local library imports  ==========================
-from pychron.entry.sensitivity_entry import SensitivitySelector
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+from pychron.entry.entry_views.sensitivity_entry import SensitivitySelector
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 # from pychron.experiment.experiment_executor import ExperimentExecutor
 from pychron.experiment.experimentor import Experimentor
@@ -30,13 +30,12 @@ from pychron.experiment.signal_calculator import SignalCalculator
 from pychron.experiment.image_browser import ImageBrowser
 from pychron.experiment.tasks.experiment_task import ExperimentEditorTask
 from pychron.experiment.tasks.experiment_preferences import ExperimentPreferencesPane, ConsolePreferencesPane, \
-    SysLoggerPreferencesPane, \
     UserNotifierPreferencesPane, LabspyPreferencesPane
 from pychron.experiment.tasks.experiment_actions import NewExperimentQueueAction, \
     OpenExperimentQueueAction, SignalCalculatorAction, \
     DeselectAction, SendTestNotificationAction, \
     NewPatternAction, OpenPatternAction, ResetQueuesAction, OpenLastExperimentQueueAction, UndoAction, \
-    QueueConditionalsAction
+    QueueConditionalsAction, ConfigureEditorTableAction
 
 
 class ExperimentPlugin(BaseTaskPlugin):
@@ -49,15 +48,15 @@ class ExperimentPlugin(BaseTaskPlugin):
                 ('pychron.deselect', 'Ctrl+Shift+D', 'Deselect'),
                 ('pychron.open_last_experiment', 'Alt+Ctrl+O', 'Open Last Experiment')]
 
-    def _my_task_extensions_default(self):
+    def _task_extensions_default(self):
         factory = lambda: Group(DeselectAction(),
                                 ResetQueuesAction(),
-                                UndoAction())
+                                UndoAction(),
+                                ConfigureEditorTableAction())
 
         return [TaskExtension(task_id='pychron.experiment.task',
-                              actions=[SchemaAddition(
-                                  factory=factory,
-                                  path='MenuBar/Edit')]),
+                              actions=[SchemaAddition(factory=factory,
+                                                      path='MenuBar/Edit')]),
                 TaskExtension(actions=[
                     SchemaAddition(id='open_queue_conditionals',
                                    factory=QueueConditionalsAction,
@@ -96,19 +95,21 @@ class ExperimentPlugin(BaseTaskPlugin):
         so_sens_selector = self.service_offer_factory(
             protocol=SensitivitySelector,
             factory=self._sens_selector_factory)
-        so_ex = self.service_offer_factory(protocol=Experimentor,
-                                           factory=self._experimentor_factory)
+        # so_ex = self.service_offer_factory(protocol=Experimentor,
+        #                                    factory=self._experimentor_factory)
         return [so_signal_calculator,
                 so_image_browser,
                 so_sens_selector,
-                so_ex]
+                # so_ex
+        ]
 
-    def _experimentor_factory(self):
-        return self.experimentor
+    # def _experimentor_factory(self):
+    #     return self.experimentor
 
     def _experimentor_default(self):
         # from pychron.experiment.experimentor import Experimentor
-        from pychron.initialization_parser import InitializationParser
+        # from pychron.initialization_parser import InitializationParser
+        from pychron.envisage.initialization.initialization_parser import InitializationParser
 
         ip = InitializationParser()
         plugin = ip.get_plugin('Experiment', category='general')
@@ -123,6 +124,10 @@ class ExperimentPlugin(BaseTaskPlugin):
 
         return exp
 
+    def start(self):
+        super(ExperimentPlugin, self).start()
+
+        self.experimentor.executor.bind_preferences()
 
     def _signal_calculator_factory(self, *args, **kw):
         return SignalCalculator()
@@ -140,15 +145,13 @@ class ExperimentPlugin(BaseTaskPlugin):
                             image='applications-science',
                             task_group='experiment')]
 
-
     def _task_factory(self):
-        return ExperimentEditorTask()
+        return ExperimentEditorTask(manager=self.experimentor)
 
     def _preferences_panes_default(self):
         return [ExperimentPreferencesPane,
                 LabspyPreferencesPane,
                 ConsolePreferencesPane,
-                SysLoggerPreferencesPane,
                 UserNotifierPreferencesPane]
 
-        #============= EOF =============================================
+        # ============= EOF =============================================

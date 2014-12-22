@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,23 +12,33 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
+
 from pyface.image_resource import ImageResource
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
-from pychron.core.codetools.inspection import pcaller
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import add_extension
 from pychron.paths import paths
 
+def image(name):
+    name = add_extension(name, '.png')
+    for si in paths.image_search_path:
+        if si and os.path.isfile(os.path.join(si, name)):
+            break
+    else:
+        print 'no image for "{}"'.format(name)
+
+    return ImageResource(name=name, search_path=paths.image_search_path)
 
 def icon(name):
     name = add_extension(name, '.png')
     for si in paths.icon_search_path:
-        if os.path.isfile(os.path.join(si, name)):
+        if si and os.path.isfile(os.path.join(si, name)):
             break
     else:
         print 'no icon for "{}"'.format(name)
@@ -40,5 +50,5 @@ class Icon(ImageResource):
     def _search_path_default(self):
         return paths.icon_search_path
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

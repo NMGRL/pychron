@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.etsconfig.api import ETSConfig
 ETSConfig.toolkit = "qt4"
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 version_id = '_experiment-2.0.0'
 from helpers import build_version
@@ -48,11 +48,11 @@ def main():
 #    a.check()
     logging_setup('pychron', level='DEBUG')
 
-#===============================================================================
+# ===============================================================================
 # test flag
 # set if you want to execute tests after startup
 # explicitly set the flag here once. mode is a readonly property
-#===============================================================================
+# ===============================================================================
 #     from pychron.globals import globalv
 #     globalv._test = False
 
@@ -65,4 +65,4 @@ def main():
 if __name__ == '__main__':
 
     main()
-#============= EOF =============================================
+# ============= EOF =============================================

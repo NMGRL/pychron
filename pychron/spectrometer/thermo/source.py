@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Float, Range, Property
 from traitsui.api import View, Item, RangeEditor
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
 
 
@@ -82,9 +82,9 @@ class ArgusSource(SpectrometerDevice):
                  Item('extraction_lens'))
         return v
 
-    #===============================================================================
+    # ===============================================================================
     # property get/set
-    #===============================================================================
+    # ===============================================================================
     def _get_y_symmetry(self):
         return self._y_symmetry
 
@@ -106,4 +106,4 @@ class ArgusSource(SpectrometerDevice):
         if self._set_value('SetExtractionLens', v):
             self._extraction_lens = v
 
-#============= EOF =============================================
+# ============= EOF =============================================

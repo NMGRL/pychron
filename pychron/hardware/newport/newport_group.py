@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Float, Tuple
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 # from pychron.config_loadable import ConfigLoadable
 from pychron.hardware.axis import Axis
 class NewportGroup(Axis):
@@ -112,5 +112,5 @@ class NewportGroup(Axis):
 
         return ';'.join(cmds)
 
-#============= EOF ==============================================
+# ============= EOF ==============================================
 

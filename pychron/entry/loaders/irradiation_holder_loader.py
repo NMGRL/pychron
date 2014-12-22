@@ -16,9 +16,9 @@
 
 # ============= enthought library imports =======================
 from pyface.file_dialog import FileDialog
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.database.defaults import load_irradiation_map
 from pychron.loggable import Loggable
 from pychron.paths import paths
@@ -46,7 +46,7 @@ class IrradiationHolderLoader(Loggable):
         if dlg.open():
             if dlg.path:
                 return dlg.path
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

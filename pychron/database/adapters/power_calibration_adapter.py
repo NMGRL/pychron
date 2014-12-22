@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,11 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.database.core.database_adapter import PathDatabaseAdapter
 from pychron.database.orms.power_calibration_orm import PowerCalibrationTable, \
     PowerCalibrationPathTable
@@ -27,15 +27,15 @@ class PowerCalibrationAdapter(PathDatabaseAdapter):
     test_func = None
     selector_klass = PowerCalibrationSelector
     path_table = PowerCalibrationPathTable
-#==============================================================================
+# ==============================================================================
 #    getters
-#==============================================================================
+# ==============================================================================
 
     def get_calibration_records(self, **kw):
         return self._get_items(PowerCalibrationTable, globals(), **kw)
-#=============================================================================
+# =============================================================================
 #   adder
-#=============================================================================
+# =============================================================================
     def add_calibration_record(self, **kw):
         b = self._add_timestamped_item(PowerCalibrationTable, **kw)
         return b
@@ -52,4 +52,4 @@ if __name__ == '__main__':
     dbs = PowerCalibrationSelector(_db=db)
     dbs.load_recent()
     dbs.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================

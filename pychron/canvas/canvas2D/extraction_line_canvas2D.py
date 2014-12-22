@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Any, Str, on_trait_change, Bool
 from pyface.action.menu_manager import MenuManager
 from traitsui.menu import Action
 from pyface.qt.QtGui import QToolTip
 
-#============= standard library imports ========================`
+# ============= standard library imports ========================`
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.canvas.canvas2D.overlays.extraction_line_overlay import ExtractionLineInfoTool, ExtractionLineInfoOverlay
 from pychron.canvas.canvas2D.scene.primitives.primitives import BorderLine
 from pychron.canvas.scene_viewer import SceneCanvas
@@ -103,13 +103,24 @@ class ExtractionLineCanvas2D(SceneCanvas):
             valve.soft_lock = lockstate
             self.request_redraw()
 
-    def load_canvas_file(self, cname, setup_name='canvas', valve_name='valves'):
+    # def load_canvas_file(self, cname, setup_name='canvas', valve_name='valves'):
+    #
+    #     p = os.path.join(paths.canvas2D_dir, '{}.xml'.format(setup_name))
+    #     p2 = os.path.join(paths.canvas2D_dir, cname)
+    #     p3 = os.path.join(paths.extraction_line_dir, '{}.xml'.format(valve_name))
+    #     if os.path.isfile(p):
+    #         self.scene.load(p, p2, p3, self)
 
-        p = os.path.join(paths.canvas2D_dir, '{}.xml'.format(setup_name))
-        p2 = os.path.join(paths.canvas2D_dir, cname)
-        p3 = os.path.join(paths.extraction_line_dir, '{}.xml'.format(valve_name))
-        if os.path.isfile(p):
-            self.scene.load(p, p2, p3, self)
+    def load_canvas_file(self, canvas_path=None, canvas_config_path=None, valves_path=None):
+        if canvas_path is None:
+            canvas_path = self.manager.application.preferences.get('pychron.extraction_line.canvas_path')
+        if canvas_config_path is None:
+            canvas_config_path = self.manager.application.preferences.get('pychron.extraction_line.canvas_config_path')
+        if valves_path is None:
+            valves_path = self.manager.application.preferences.get('pychron.extraction_line.valves_path')
+
+        if os.path.isfile(canvas_path):
+            self.scene.load(canvas_path, canvas_config_path, valves_path, weakref.ref(self)())
 
     def _over_item(self, event):
         x, y = event.x, event.y
@@ -272,4 +283,4 @@ class ExtractionLineCanvas2D(SceneCanvas):
         return s
 
 
-#============= EOF ====================================
+# ============= EOF ====================================

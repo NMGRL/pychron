@@ -1,4 +1,4 @@
-##===============================================================================
+## ===============================================================================
 # # Copyright 2012 Jake Ross
 # #
 # # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,16 @@
 # # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # # See the License for the specific language governing permissions and
 # # limitations under the License.
-##===============================================================================
+## ===============================================================================
 #
-##============= enthought library imports =======================
+## ============= enthought library imports =======================
 # from traits.api import HasTraits
 # from traitsui.api import View, Item, TableEditor
 # import os
 # from pychron.database.adapters.isotope_adapter import IsotopeAdapter
 # from pychron.paths import paths
-##============= standard library imports ========================
-##============= local library imports  ==========================
+## ============= standard library imports ========================
+## ============= local library imports  ==========================
 # def getter(header):
 #    ind = lambda x:next((header.index(xi) for xi in [x.lower(), x.upper(), x.capitalize()]
 #                         if xi in header
@@ -93,4 +93,4 @@
 #
 #
 #
-##============= EOF =============================================
+## ============= EOF =============================================

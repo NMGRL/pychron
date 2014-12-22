@@ -15,16 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import re
-from apptools.preferences.preferences_helper import PreferencesHelper
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import HasTraits, Button, Str, String, Int, Bool, Property
-from traitsui.api import View, Item, UItem, HGroup, VGroup
+from traitsui.api import View, Item, HGroup, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
-from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.envisage.tasks.base_preferences_helper import GitRepoPreferencesHelper, test_connection_item
+from pychron.envisage.tasks.base_preferences_helper import GitRepoPreferencesHelper, test_connection_item, \
+    remote_status_item
 
 
 class LabBookPreferences(GitRepoPreferencesHelper):
@@ -36,14 +33,11 @@ class LabBookPreferencesPane(PreferencesPane):
     category = 'General'
 
     def traits_view(self):
-        v = View(VGroup(HGroup(Item('remote', label='LabBook Repo'),
-                               test_connection_item()),
-                        CustomLabel('remote_status', color_name='remote_status_color'),
-                        label='LabBook',
-                        show_border=True))
+        v = View(remote_status_item('LabBook Repo'))
+
         return v
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

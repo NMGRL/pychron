@@ -12,13 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 from numpy import zeros, percentile, array
 from scipy.stats import norm
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 
 def monte_carlo_error_estimation(reg, nominal_ys, pts, ntrials=100):
@@ -97,4 +97,4 @@ def perturb(pred, exog, nominal_ys, y_es, ga, yp):
 # timethis $$$$$$$$$$$$$$$$$$$$ 0.119521141052s
 # timethis $$$$$$$$$$$$$$$$$$$$ 1.32541584969s
 # '''
-#============= EOF =============================================
+# ============= EOF =============================================

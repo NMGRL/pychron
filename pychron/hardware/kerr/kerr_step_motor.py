@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import CInt, Str, Bool, Dict, Float, HasTraits, Any
 from traitsui.api import View, Item, EnumEditor, RangeEditor
 # from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.hardware.core.data_helper import make_bitarray
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 SPEED_MODES = {'1x':'11', '2x':'10', '4x':'01', '8x':'00'}
 from pychron.hardware.kerr.kerr_motor import KerrMotor
 '''
@@ -324,4 +324,4 @@ class KerrStepMotor(KerrMotor):
 
                  )
         return v
-#============= EOF =============================================
+# ============= EOF =============================================

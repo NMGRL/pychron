@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,19 +12,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Bool, Instance, Enum, Range, on_trait_change, Any
-from traitsui.api import View, HGroup, Group, Item, spring , VGroup
+from traitsui.api import HGroup, Group, Item, spring , VGroup
+
 from pychron.database.records.sqlite_record import SQLiteRecord
-#============= standard library imports ========================
+
+# ============= standard library imports ========================
 # import os
 import csv
 from pychron.managers.data_managers.h5_data_manager import H5DataManager
 
 from pychron.graph.contour_graph import ContourGraph
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 #    def load_graph(self, graph=None, xoffset=0):
 #
 #        if graph is None:
@@ -171,4 +173,4 @@ class PowerMapRecord(SQLiteRecord):
 #        v = View()
 #        return v
 
-#============= EOF =============================================
+# ============= EOF =============================================

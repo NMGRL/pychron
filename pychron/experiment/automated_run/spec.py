@@ -12,20 +12,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
+import imp
 
 from traits.api import Str, Int, Bool, Float, Property, \
     Enum, on_trait_change, CStr, Long
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from datetime import datetime
 import uuid
 import weakref
-#============= local library imports  ==========================
-from pychron.core.helpers.logger_setup import new_logger
-from pychron.experiment.automated_run.automated_run import AutomatedRun
+# ============= local library imports  ==========================
+#
 from pychron.experiment.utilities.identifier import get_analysis_type, make_rid, \
     make_runid, is_special, convert_extract_device
 from pychron.experiment.utilities.position_regex import XY_REGEX
@@ -49,17 +49,17 @@ class AutomatedRunSpec(Loggable):
 
     skip = Bool(False)
     end_after = Bool(False)
-    #===========================================================================
+    # ===========================================================================
     # queue globals
-    #===========================================================================
+    # ===========================================================================
     mass_spectrometer = Str
     extract_device = Str
     username = Str
     tray = Str
     queue_conditionals_name = Str
-    #===========================================================================
+    # ===========================================================================
     # run id
-    #===========================================================================
+    # ===========================================================================
     labnumber = Str
 
     aliquot = Property
@@ -73,9 +73,9 @@ class AutomatedRunSpec(Loggable):
 
     analysis_dbid = Long
     analysis_timestamp = None
-    #===========================================================================
+    # ===========================================================================
     # scripts
-    #===========================================================================
+    # ===========================================================================
     measurement_script = Str
     post_measurement_script = Str
     post_equilibration_script = Str
@@ -83,9 +83,9 @@ class AutomatedRunSpec(Loggable):
     script_options = Str
     use_cdd_warming = Bool
 
-    #===========================================================================
+    # ===========================================================================
     # extraction
-    #===========================================================================
+    # ===========================================================================
     extract_value = Float
     extract_units = Str
     position = Str
@@ -106,15 +106,15 @@ class AutomatedRunSpec(Loggable):
 
     collection_time_zero_offset = Float
 
-    #===========================================================================
+    # ===========================================================================
     # info
-    #===========================================================================
+    # ===========================================================================
     weight = Float
     comment = Str
 
-    #===========================================================================
+    # ===========================================================================
     # display only
-    #===========================================================================
+    # ===========================================================================
     project = Str
     sample = Str
     irradiation = Str
@@ -122,7 +122,7 @@ class AutomatedRunSpec(Loggable):
     data_reduction_tag = ''
 
     analysis_type = Property(depends_on='labnumber')
-    run_klass = AutomatedRun
+    run_klass = 'pychron.experiment.automated_run.automated_run.AutomatedRun'
 
     identifier_error = Bool(False)
     _executable = Bool(True)
@@ -258,7 +258,14 @@ class AutomatedRunSpec(Loggable):
 
     def make_run(self, new_uuid=True, run=None):
         if run is None:
-            run = self.run_klass()
+            args = self.run_klass.split('.')
+            md, klass = '.'.join(args[:-1]), args[-1]
+
+            md = __import__(md, fromlist=[klass])
+            # md = imp.find_module(md)
+            run =getattr(md,klass)()
+
+            # run = self.run_klass()
 
         for si in SCRIPT_KEYS:
             setattr(run.script_info, '{}_script_name'.format(si),
@@ -336,9 +343,9 @@ class AutomatedRunSpec(Loggable):
     #             'analysis_type',
     #             'sample', 'irradiation', 'username', 'comment', 'skip', 'end_after')
 
-    #===============================================================================
+    # ===============================================================================
     # handlers
-    #===============================================================================
+    # ===============================================================================
     #     @on_trait_change('automated_run:state')
     #     def _update_state(self, new):
     #         self.state = new
@@ -360,9 +367,9 @@ class AutomatedRunSpec(Loggable):
     def _extract_changed(self):
         self._changed = True
 
-    #===============================================================================
+    # ===============================================================================
     # property get/set
-    #===============================================================================
+    # ===============================================================================
     #    def _get_state(self):
     #        return self._state
     #

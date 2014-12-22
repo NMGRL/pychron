@@ -20,7 +20,7 @@ from datetime import datetime
 from traits.api import Event, Button, String, Bool, Enum, Property, Instance, Int, List, Any, Color, Dict, \
     on_trait_change, Long, Float
 from pyface.constant import CANCEL, YES, NO
-from pyface.timer.do_later import do_after
+from pyface.timer.do_later import do_after, do_later
 from traits.trait_errors import TraitError
 
 # ============= standard library imports ========================
@@ -33,20 +33,23 @@ import yaml
 from pychron.consumer_mixin import consumable
 from pychron.core.codetools.memory_usage import mem_available, mem_log
 from pychron.core.helpers.filetools import add_extension, get_path
+from pychron.core.notification_manager import NotificationManager
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.consoleable import Consoleable
 from pychron.envisage.preference_mixin import PreferenceMixin
+# from pychron.experiment.conditional.conditionals_edit_view import TAGS
+from pychron.experiment.conditional.conditional import conditionals_from_file
 from pychron.experiment.datahub import Datahub
-from pychron.experiment.user_notifier import UserNotifier
+from pychron.experiment.notifier.user_notifier import UserNotifier
 from pychron.experiment.stats import StatsGroup
-from pychron.experiment.utilities.conditionals import test_queue_conditionals_name
+from pychron.experiment.utilities.conditionals import test_queue_conditionals_name, SYSTEM, QUEUE, RUN, \
+    CONDITIONAL_GROUP_TAGS
 from pychron.experiment.utilities.conditionals_results import reset_conditional_results
 from pychron.experiment.utilities.identifier import convert_extract_device
+from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
 from pychron.globals import globalv
-from pychron.labspy.labspy import LabspyUpdater
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR, DEFAULT_INTEGRATION_TIME
-from pychron.pyscripts.pyscript_runner import RemotePyScriptRunner, PyScriptRunner
 from pychron.wait.wait_group import WaitGroup
 
 
@@ -55,8 +58,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     experiment_queue = Any
     user_notifier = Instance(UserNotifier, ())
     connectables = List
-
+    active_editor = Any
     console_bgcolor = 'black'
+    selected_run = Instance('pychron.experiment.automated_run.spec.AutomatedRunSpec', )
+
     # ===========================================================================
     # control
     # ===========================================================================
@@ -84,9 +89,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             quick     1= the current measure_iteration is truncated and a quick baseline is collected, peak center?
             next_int. 2= same as setting ncounts to < current step. measure_iteration is truncated but script continues
     '''
-    #===========================================================================
+    # ===========================================================================
     #
-    #===========================================================================
+    # ===========================================================================
 
     wait_group = Instance(WaitGroup, ())
     stats = Instance(StatsGroup)
@@ -95,17 +100,18 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     extraction_line_manager = Any
     ion_optics_manager = Any
 
-    pyscript_runner = Instance(PyScriptRunner)
+    pyscript_runner = Instance(IPyScriptRunner)
     monitor = Instance('pychron.monitors.automated_run_monitor.AutomatedRunMonitor')
 
     measuring_run = Instance('pychron.experiment.automated_run.automated_run.AutomatedRun')
     extracting_run = Instance('pychron.experiment.automated_run.automated_run.AutomatedRun')
 
     datahub = Instance(Datahub)
-    labspy = Instance(LabspyUpdater, ())
-    #===========================================================================
+    labspy_client = Instance('pychron.labspy.client.LabspyClient')
+    dashboard_client = Instance('pychron.dashboard.client.DashboardClient')
+    # ===========================================================================
     #
-    #===========================================================================
+    # ===========================================================================
     queue_modified = False
 
     executable = Bool
@@ -113,12 +119,13 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     extracting = Bool(False)
 
     mode = 'normal'
-    #===========================================================================
+    # ===========================================================================
     # preferences
-    #===========================================================================
+    # ===========================================================================
     auto_save_delay = Int(30)
     use_auto_save = Bool(True)
     use_labspy = Bool
+    use_dashboard_client = Bool
     min_ms_pumptime = Int(30)
     use_automated_run_monitor = Bool(False)
     set_integration_time_on_start = Bool(False)
@@ -143,11 +150,13 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     _prev_baselines = Dict
     _err_message = String
     _prev_blank_id = Long
+    _cv_info = None
 
     def __init__(self, *args, **kw):
         super(ExperimentExecutor, self).__init__(*args, **kw)
         self.wait_control_lock = Lock()
         self.set_managers()
+        self.notification_manager = NotificationManager()
 
     def set_managers(self):
         p1 = 'pychron.extraction_line.extraction_line_manager.ExtractionLineManager'
@@ -172,45 +181,49 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                  'default_integration_time')
         self._preference_binder(prefid, attrs)
         if self.use_labspy:
-            self._preference_binder(prefid, ('root', 'username', 'host', 'password'), obj=self.labspy.repo)
+            client = self.application.get_service('pychron.labspy.client.LabspyClient')
+            self.labspy_client = client
+            # self._preference_binder(prefid, ('root', 'username', 'host', 'password'), obj=self.labspy.repo)
 
-        #colors
+        # colors
         attrs = ('signal_color', 'sniff_color', 'baseline_color')
         self._preference_binder(prefid, attrs, mod='color')
 
-        #user_notifier
-        attrs = ('server_username', 'server_password', 'server_host', 'server_post', 'include_log')
-        self._preference_binder(prefid, attrs, obj=self.user_notifier.emailer)
+        # user_notifier
+        attrs = ('include_log', )
+        self._preference_binder(prefid, attrs, obj=self.user_notifier)
 
-        #memory
+        emailer = self.application.get_service('pychron.social.email.emailer.Emailer')
+        self.user_notifier.emailer = emailer
+
+        # memory
         attrs = ('use_memory_check', 'memory_threshold')
         self._preference_binder(prefid, attrs)
 
-        #console
+        # console
         self.console_bind_preferences(prefid)
         self._preference_binder(prefid, ('use_message_colormapping',))
 
-    def _reset(self):
-        self.alive = True
-        self._canceled = False
-
-        self._err_message = ''
-        self.end_at_run_completion = False
-        self.extraction_state_label = ''
-        self.experiment_queue.executed = True
-
-        if self.stats:
-            self.stats.reset()
-            self.stats.start_timer()
+        # dashboard
+        self._preference_binder('pychron.dashboard.client', ('use_dashboard_client',))
+        if self.use_dashboard_client:
+            self.dashboard_client = self.application.get_service('pychron.dashboard.client.DashboardClient')
 
     def execute(self):
+        if self.user_notifier.emailer is None:
+            if any((eq.use_email or eq.use_group_email for eq in self.experiment_queues)):
+                if not self.confirmation_dialog('Email Plugin not initialized. '
+                                                'Required for sending email notifications. '
+                                                'Are you sure you want to continue?'):
+                    return
+
         self.set_managers()
 
         if self.use_automated_run_monitor:
             self.monitor = self._monitor_factory()
 
         if self._pre_execute_check():
-            #reset executor
+            # reset executor
             self._reset()
 
             name = self.experiment_queue.name
@@ -270,9 +283,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.alive = False
             self.stats.stop_timer()
             self.wait_group.stop()
-            #            self.wait_group.active_control.stop
-            #            self.active_wait_control.stop()
-            #             self.wait_dialog.stop()
+            # self.wait_group.active_control.stop
+            # self.active_wait_control.stop()
+            # self.wait_dialog.stop()
 
             msg = '{} Stopped'.format(self.experiment_queue.name)
             self._set_message(msg, color='orange')
@@ -289,9 +302,22 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         else:
             self.warning('{} is not a valid file'.format(path))
 
-    #===============================================================================
+    # ===============================================================================
     # private
-    #===============================================================================
+    # ===============================================================================
+    def _reset(self):
+        self.alive = True
+        self._canceled = False
+
+        self._err_message = ''
+        self.end_at_run_completion = False
+        self.extraction_state_label = ''
+        self.experiment_queue.executed = True
+
+        if self.stats:
+            self.stats.reset()
+            self.stats.start_timer()
+
     def _wait_for_save(self):
         """
             wait for experiment queue to be saved.
@@ -365,13 +391,13 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         # save experiment to database
         self.info('saving experiment "{}" to database'.format(exp.name))
-        exp.start_timestamp = datetime.now()#.strftime('%m-%d-%Y %H:%M:%S')
-        if self.use_labspy:
-            self.labspy.add_experiment(exp)
+        exp.start_timestamp = datetime.now()  # .strftime('%m-%d-%Y %H:%M:%S')
+        if self.labspy_enabled:
+            self.labspy_client.add_experiment(exp)
 
         self.datahub.add_experiment(exp)
 
-        #reset conditionals result file
+        # reset conditionals result file
         reset_conditional_results()
 
         exp.executed = True
@@ -458,18 +484,18 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     break
 
             if self.end_at_run_completion:
-                #if overlapping run is a special labnumber cancel it and finish experiment
+                # if overlapping run is a special labnumber cancel it and finish experiment
                 if self.extracting_run:
                     if not self.extracting_run.spec.is_special():
                         self._wait_for(lambda x: self.extracting_run)
                     else:
                         self.extracting_run.cancel_run()
 
-                #wait for the measurement run to finish
+                # wait for the measurement run to finish
                 self._wait_for(lambda x: self.measuring_run)
 
             else:
-                #wait for overlapped runs to finish.
+                # wait for overlapped runs to finish.
                 self._wait_for(lambda x: self.extracting_run or self.measuring_run)
 
         if self._err_message:
@@ -485,7 +511,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if not self._err_message and self.end_at_run_completion:
             self._err_message = 'User terminated'
 
-        if exp.email:
+        if exp.use_email:
             self.info('Notifying user={} email={}'.format(exp.username, exp.email))
             self.user_notifier.notify(exp, last_runid, self._err_message)
 
@@ -494,8 +520,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if names:
                 self.info('Notifying user group names={}'.format(','.join(names)))
                 self.user_notifier.notify_group(exp, last_runid, self._err_message, addrs)
-        if self.use_labspy:
-            self.labspy.update_experiment(exp, self._err_message)
+
+        if self.labspy_enabled:
+            self.labspy_client.update_experiment(exp, self._err_message)
 
     def _get_group_emails(self, email):
         names, addrs = None, None
@@ -531,8 +558,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             time.sleep(period)
 
     def _join_run(self, spec, run):
-        #    def _join_run(self, spec, t, run):
-        #        t.join()
+        # def _join_run(self, spec, t, run):
+        # t.join()
         self.debug('Changing Thread name to {}'.format(run.runid))
         ct = currentThread()
         ct.name = run.runid
@@ -565,7 +592,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         run.state = 'not run'
 
         q = self.experiment_queue
-        #is this the last run in the queue. queue is not empty until _start runs so n==1 means last run
+        # is this the last run in the queue. queue is not empty until _start runs so n==1 means last run
         run.is_last = len(q.cleaned_automated_runs) == 1
 
         self.extracting_run = run
@@ -616,16 +643,16 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         run.finish()
 
         self.wait_group.pop()
-        if self.use_labspy:
-            self.labspy.add_run(run)
+        if self.labspy_enabled:
+            self.labspy_client.add_run(run, self.experiment_queue)
 
         mem_log('end run')
 
     def _overlapped_run(self, v):
         self._overlapping = True
         t, run = v
-        #         while t.is_alive():
-        #             time.sleep(1)
+        # while t.is_alive():
+        # time.sleep(1)
         self.debug('OVERLAPPING. waiting for run to finish')
         t.join()
 
@@ -642,7 +669,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         # arun = self.current_run
         aruns = (self.measuring_run, self.extracting_run)
 
-        #        arun = self.experiment_queue.current_run
+        # arun = self.experiment_queue.current_run
         if style == 'queue':
             name = os.path.basename(self.experiment_queue.path)
             name, _ = os.path.splitext(name)
@@ -681,7 +708,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
                         arun.cancel_run(state=state)
                         # if self.extracting_run:
-                        #     self.extracting_run.cancel_run(state=state)
+                        # self.extracting_run.cancel_run(state=state)
 
                         # self.non_clear_update_needed = True
                 self.measuring_run = None
@@ -690,14 +717,14 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 # self.current_run = None
 
     def _end_runs(self):
-        #         self._last_ran = None
+        # self._last_ran = None
         if self.stats:
             self.stats.stop_timer()
 
-        #         self.db.close()
+        # self.db.close()
         self.set_extract_state(False)
-        #        self.extraction_state = False
-        #        def _set_extraction_state():
+        # self.extraction_state = False
+        # def _set_extraction_state():
         if self.end_at_run_completion:
             c = 'orange'
             msg = 'Stopped'
@@ -713,9 +740,66 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         msg = '{} {}'.format(n, msg)
         self._set_message(msg, c)
 
-    #===============================================================================
+    def _show_conditionals(self, show_measuring=False, tripped=None, kind='livemodal'):
+        try:
+            if self._cv_info:
+                if self._cv_info.control:
+                    self._cv_info.control.raise_()
+                    return
+
+            from pychron.experiment.conditional.conditionals_view import ConditionalsView
+
+            v = ConditionalsView()
+
+            v.add_pre_run_terminations(self._load_default_conditionals('pre_run_terminations'))
+            v.add_pre_run_terminations(self._load_queue_conditionals('pre_run_terminations'))
+
+            v.add_system_conditionals(self._load_default_conditionals(None))
+            v.add_conditionals(self._load_queue_conditionals(None))
+
+            v.add_post_run_terminations(self._load_default_conditionals('post_run_terminations'))
+            v.add_post_run_terminations(self._load_queue_conditionals('post_run_terminations'))
+
+            run = self.selected_run
+            if run and not show_measuring:
+                # in this case run is an instance of AutomatedRunSpec
+                p = get_path(paths.conditionals_dir, self.selected_run.conditionals, ['.yaml', '.yml'])
+                if p:
+                    v.add_conditionals(conditionals_from_file(p, level=RUN))
+
+                if run.aliquot:
+                    runid = run.runid
+                else:
+                    runid = run.identifier
+
+                if run.position:
+                    id2 = 'position={}'.format(run.position)
+                else:
+                    idx = self.active_editor.queue.automated_runs.index(run) + 1
+                    id2 = 'RowIdx={}'.format(idx)
+
+                v.title = '{} ({}, {})'.format(v.title, runid, id2)
+            else:
+                if self.measuring_run:
+                    run = self.measuring_run
+                    v.add_conditionals({tag: getattr(run, '{}_conditionals'.format(tag))
+                                        for tag in CONDITIONAL_GROUP_TAGS})
+                    v.title = '{} ({})'.format(v.title, run.spec.runid)
+
+            if tripped:
+                v.select_conditional(tripped)
+
+            self._cv_info = self.application.open_view(v, kind=kind)
+
+        except BaseException:
+            import traceback
+
+            self.warning('******** Exception trying to open conditionals. Notify developer ********')
+            self.debug(traceback.format_exc())
+
+    # ===============================================================================
     # execution steps
-    #===============================================================================
+    # ===============================================================================
     def _start(self, run):
         ret = True
 
@@ -793,9 +877,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.alive = False
         return False
 
-    #===============================================================================
+    # ===============================================================================
     # utilities
-    #===============================================================================
+    # ===============================================================================
     def _report_execution_state(self, run):
         pass
 
@@ -812,7 +896,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if not self._set_run_aliquot(spec):
             return
 
-        #reuse run if not overlap
+        # reuse run if not overlap
         # run = self.current_run if not spec.overlap[0] else None
         run = None
         arun = spec.make_run(run=run)
@@ -868,7 +952,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if spec.conflicts_checked:
             return True
 
-        #if a run in executed runs is in extraction or measurement state
+        # if a run in executed runs is in extraction or measurement state
         # we are in overlap mode
         dh = self.datahub
 
@@ -922,7 +1006,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.message(self._err_message)
             # self.info('No response from user. Canceling run')
             # do_later(self.information_dialog,
-            #          'Databases are in conflict. No response from user. Canceling experiment')
+            # 'Databases are in conflict. No response from user. Canceling experiment')
 
         if self._canceled:
             self.cancel()
@@ -936,7 +1020,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
             sleep for ``delay`` seconds
         """
-        #        self.delaying_between_runs = True
+        # self.delaying_between_runs = True
         msg = 'Delay {} runs {} sec'.format(message, delay)
         self.info(msg)
         self._wait(delay, msg)
@@ -953,11 +1037,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         wc = self.get_wait_control()
 
         wc.message = msg
-        wc.start(wtime=delay)
+        wc.start(duration=delay)
         wg.pop(wc)
 
         # if wc.is_continued():
-        #     self.stats.continue_clock()
+        # self.stats.continue_clock()
 
     def _set_extract_state(self, state, *args):
         """
@@ -1061,9 +1145,21 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         with open(paths.backup_recovery_file, 'w') as fp:
             fp.write(r)
 
-    #===============================================================================
+    # ===============================================================================
     # checks
-    #===============================================================================
+    # ===============================================================================
+    def _check_dashboard(self):
+        """
+        return True if dashboard has an error
+        :return: boolean
+        """
+        if self.use_dashboard_client:
+            if self.dashboard_client:
+                ef = self.dashboard_client.error_flag
+                if ef:
+                    self.warning('Canceling experiment. Dashboard client reports an error\n {}'.format(ef))
+                    return ef
+
     def _check_memory(self, threshold=None):
         """
             if avaliable memory is less than threshold  (MB)
@@ -1092,7 +1188,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if not self.alive:
             return
 
-        conditionals = self._load_conditionals('pre_run_terminations')
+        conditionals = self._load_queue_conditionals('pre_run_terminations')
         default_conditionals = self._load_default_conditionals('pre_run_terminations')
         if default_conditionals or conditionals:
             self.heading('Pre Extraction Check')
@@ -1104,7 +1200,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.debug('Pre Extraction Termination data. keys={}, signals={}'.format(ks, ss))
 
             if conditionals:
-                self.debug('testing user defined conditionals')
+                self.info('testing user defined conditionals')
                 if self._test_conditionals(run, conditionals,
                                            'Checking user defined pre extraction terminations',
                                            'Pre Extraction Termination',
@@ -1112,6 +1208,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     return True
 
             if default_conditionals:
+                self.info('testing system defined conditionals')
                 if self._test_conditionals(run, default_conditionals,
                                            'Checking default pre extraction terminations',
                                            'Pre Extraction Termination',
@@ -1141,6 +1238,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         """
 
         self.heading('Pre Run Check')
+        ef = self._check_dashboard()
+        if ef:
+            self._err_message = 'Dashboard error. {}'.format(ef)
+
         if self._check_memory():
             self._err_message = 'Not enough memory'
             return True
@@ -1179,6 +1280,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if globalv.experiment_debug:
             self.debug('********************** NOT DOING PRE EXECUTE CHECK ')
             return True
+
+        if self._check_dashboard():
+            return
 
         if self._check_memory():
             return
@@ -1231,26 +1335,28 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             return
         self.heading('Post Run Check')
 
-        #check user defined terminations
-        conditionals = self._load_conditionals('post_run_terminations')
+        # check user defined terminations
+        conditionals = self._load_queue_conditionals('post_run_terminations')
         if self._test_conditionals(run, conditionals, 'Checking user defined post run terminations',
                                    'Post Run Termination'):
             return True
 
-        #check default terminations
+        # check default terminations
         conditionals = self._load_default_conditionals('post_run_terminations')
         if self._test_conditionals(run, conditionals, 'Checking default post run terminations',
                                    'Post Run Termination'):
             return True
 
-        #check user defined post run actions
-        conditionals = self._load_conditionals('post_run_actions', klass='ActionConditional')
+        # check user defined post run actions
+        # conditionals = self._load_queue_conditionals('post_run_actions', klass='ActionConditional')
+        conditionals = self._load_queue_conditionals('post_run_actions')
         if self._action_conditionals(run, conditionals, 'Checking user defined post run actions',
                                      'Post Run Action'):
             return True
 
-        #check default post run actions
-        conditionals = self._load_default_conditionals('post_run_actions', klass='ActionConditional')
+        # check default post run actions
+        # conditionals = self._load_default_conditionals('post_run_actions', klass='ActionConditional')
+        conditionals = self._load_default_conditionals('post_run_actions')
         if self._action_conditionals(run, conditionals, 'Checking default post run actions',
                                      'Post Run Action'):
             return True
@@ -1258,46 +1364,48 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             # #check queue actions
             # exp = self.experiment_queue
             # if self._action_conditionals(run, exp.queue_actions, 'Checking queue actions',
-            #                              'Queue Action'):
-            #     return True
+            # 'Queue Action'):
+            # return True
 
     def _load_default_conditionals(self, term_name, **kw):
+        self.debug('loading default (system) conditionals {}'.format(term_name))
         p = get_path(paths.spectrometer_dir, 'default_conditionals', ['.yaml', '.yml'])
         if p:
-            return self._extract_conditionals(p, term_name, **kw)
+            return self._extract_conditionals(p, term_name, level=SYSTEM, **kw)
         else:
             pp = os.path.join(paths.spectrometer_dir, 'default_conditionals.yaml')
             self.warning('no default conditionals file located at {}'.format(pp))
 
-    def _load_conditionals(self, term_name, **kw):
+    def _load_queue_conditionals(self, term_name, **kw):
+        self.debug('loading queue conditionals {}'.format(term_name))
         exp = self.experiment_queue
-        name = exp.queue_conditionals_name
-        if test_queue_conditionals_name(name):
-            p = get_path(paths.queue_conditionals_dir, name, ['.yaml', '.yml'])
-            return self._extract_conditionals(p, term_name, **kw)
+        if not exp and self.active_editor:
+            exp = self.active_editor.queue
 
-    def _extract_conditionals(self, p, term_name, klass='TerminationConditional'):
-        from pychron.experiment.conditional.conditional import conditional_from_dict
+        if exp:
+            name = exp.queue_conditionals_name
+            if test_queue_conditionals_name(name):
+                p = get_path(paths.queue_conditionals_dir, name, ['.yaml', '.yml'])
+                self.debug('queue conditionals path {}'.format(p))
+                return self._extract_conditionals(p, term_name, level=QUEUE, **kw)
 
+    def _extract_conditionals(self, p, term_name, level=RUN):
         if p and os.path.isfile(p):
             self.debug('loading condiitonals from {}'.format(p))
-            with open(p, 'r') as fp:
-                yd = yaml.load(fp)
-                yl = yd.get(term_name)
-                if not yl:
-                    self.debug('no {}'.format(term_name))
-                    return
-                else:
-                    conds = [conditional_from_dict(cd, klass) for cd in yl]
-                    return [c for c in conds if c is not None]
+            return conditionals_from_file(p, name=term_name, level=level)
 
     def _action_conditionals(self, run, conditionals, message1, message2):
         if conditionals:
             self.debug('{} n={}'.format(message1, len(conditionals)))
             for ci in conditionals:
                 if ci.check(run, None, True):
-                    self.info('{}. {}'.format(message2, ci.to_string()))
+                    self.info('{}. {}'.format(message2, ci.to_string()), color='yellow')
+                    self._show_conditionals(show_measuring=True, tripped=ci, kind='live')
                     self._do_action(ci)
+
+                    if self._cv_info:
+                        do_after(2000, self._cv_info.control.close)
+
                     return True
 
     def _test_conditionals(self, run, conditionals, message1, message2,
@@ -1309,9 +1417,15 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.debug('{} n={}'.format(message1, len(conditionals)))
             for ci in conditionals:
                 if ci.check(run, data, cnt):
-                    self.info('{}. {}'.format(message2, ci.to_string()),
-                              color='red')
+                    self.warning('!!!!!!!!!! Conditional Tripped !!!!!!!!!!')
+                    self.warning('{}. {}'.format(message2, ci.to_string()))
+
+                    # self.notification_manager.add_notification('Conditional Tripped. {}. {}'.format(message2,
+                    # ci.to_string()))
+
                     self.cancel(confirm=False)
+
+                    self._show_conditionals(show_measuring=True, tripped=ci)
                     return True
 
     def _do_action(self, action):
@@ -1354,8 +1468,8 @@ Use Last "blank_{}"= {}
         if an:
             anidx = aruns.index(an)
 
-            #find first blank_
-            #if idx > than an idx need a blank
+            # find first blank_
+            # if idx > than an idx need a blank
             nopreceding = True
             ban = next((a for a in aruns if a.analysis_type == 'blank_{}'.format(an.analysis_type)), None)
 
@@ -1475,11 +1589,13 @@ Use Last "blank_{}"= {}
                 elm_connectable.connected = True
 
         if exp.extract_device and exp.extract_device not in (NULL_STR, 'Extract Device'):
-            extract_device = convert_extract_device(exp.extract_device)
-            ed_connectable = Connectable(name=exp.extract_device)
+            # extract_device = convert_extract_device(exp.extract_device)
+            extract_device = exp.extract_device.replace(' ','')
+            ed_connectable = Connectable(name=extract_device)
             man = None
             if self.application:
                 protocol = 'pychron.lasers.laser_managers.ilaser_manager.ILaserManager'
+                self.debug('get service name={}'.format(extract_device))
                 man = self.application.get_service(protocol, 'name=="{}"'.format(extract_device))
 
                 if man is None:
@@ -1519,9 +1635,9 @@ Use Last "blank_{}"= {}
         invoke_in_main_thread(self.trait_set, extraction_state_label=msg,
                               extraction_state_color=color)
 
-    #===============================================================================
+    # ===============================================================================
     # handlers
-    #===============================================================================
+    # ===============================================================================
     def _measuring_run_changed(self):
         if self.measuring_run:
             self.measuring_run.is_last = self.end_at_run_completion
@@ -1567,66 +1683,30 @@ Use Last "blank_{}"= {}
             self.measuring_run.truncate_run(self.truncate_style)
 
     def _show_conditionals_button_fired(self):
-        from pychron.experiment.conditional.conditionals_view import ConditionalsView
+        self._show_conditionals()
 
-        try:
-            if self.measuring_run:
-                postt, pret = [], []
-                for name, l in (('post_run_terminations', postt),
-                                ('pre_run_terminations', pret)):
-                    c1 = self._load_conditionals(name)
-                    if c1:
-                        l.extend(c1)
-                    c2 = self._load_default_conditionals(name)
-                    if c2:
-                        l.extend(c2)
+    @on_trait_change('experiment_queue:selected, active_editor:queue:selected')
+    def _handle_selection(self, new):
+        if new:
+            self.selected_run = new[0]
+        else:
+            self.selected_run = None
 
-                v = ConditionalsView(self.measuring_run, postt, pret)
-                self.application.open_view(v)
-        except BaseException:
-            import traceback
-
-            self.warning('******** Exception trying to open conditionals. Notify developer ********')
-            self.debug(traceback.format_exc())
-
-    #===============================================================================
+    # ===============================================================================
     # property get/set
-    #===============================================================================
+    # ===============================================================================
     def _get_can_start(self):
         return self.executable and not self.is_alive()
 
-    #===============================================================================
+    # ===============================================================================
     # defaults
-    #===============================================================================
+    # ===============================================================================
     def _datahub_default(self):
         dh = Datahub()
         return dh
 
     def _pyscript_runner_default(self):
-        if self.mode == 'client':
-            from pychron.initialization_parser import InitializationParser
-
-            ip = InitializationParser()
-            elm = ip.get_plugin('Experiment', category='general')
-            runner = elm.find('runner')
-            host, port, kind = None, None, None
-
-            if runner is not None:
-                comms = runner.find('communications')
-                host = comms.find('host')
-                port = comms.find('port')
-                kind = comms.find('kind')
-
-            if host is not None:
-                host = host.text  # if host else 'localhost'
-            if port is not None:
-                port = int(port.text)  # if port else 1061
-                kind = kind.text  # if kind else 'udp'
-
-            runner = RemotePyScriptRunner(host, port, kind)
-        else:
-            runner = PyScriptRunner()
-
+        runner = self.application.get_service('pychron.extraction_line.ipyscript_runner.IPyScriptRunner')
         return runner
 
     def _monitor_factory(self):
@@ -1648,5 +1728,10 @@ Use Last "blank_{}"= {}
             else:
                 self.warning('no automated run monitor avaliable. '
                              'Make sure config file is located at setupfiles/monitors/automated_run_monitor.cfg')
+
+    @property
+    def labspy_enabled(self):
+        if self.use_labspy:
+            return self.labspy_client is not None
 
 # ============= EOF =============================================

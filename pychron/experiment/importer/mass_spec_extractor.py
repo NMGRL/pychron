@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
+from apptools.preferences.preference_binding import bind_preference
 from traits.api import HasTraits, Str, Bool, Instance, Button, Any
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import struct
 import datetime
 from sqlalchemy.sql.expression import and_, not_
 from sqlalchemy.orm.exc import NoResultFound
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.database.orms.massspec_orm import AnalysesTable, MachineTable, \
     LoginSessionTable, RunScriptTable
 from pychron.core.helpers.filetools import unique_path
@@ -55,21 +56,29 @@ class MassSpecExtractor(Extractor):
     db = Instance(MassSpecDatabaseAdapter, ())
     mapper = Any
 
-    def _dbconn_spec_default(self):
-    #        return DBConnectionSpec(database='massspecdata_minnabluff',
-    #                                username='root',
-    #                                password='Argon',
-    #                                host='localhost'
-    #                                )
-        return DBConnectionSpec(database='massspecdata',
-                                username='root',
-                                password='DBArgon',
-                                host='129.138.12.160')
+    # def _dbconn_spec_default(self):
+    # #        return DBConnectionSpec(database='massspecdata_minnabluff',
+    # #                                username='root',
+    # #                                password='Argon',
+    # #                                host='localhost'
+    # #                                )
+    #     return DBConnectionSpec(database='massspecdata',
+    #                             username='root',
+    #                             password='DBArgon',
+    #                             host='129.138.12.160')
+    #
+    #     return DBConnectionSpec(database='massspecdata_minnabluff',
+    #                             username='root',
+    #                             password='Argon',
+    #                             host='localhost')
+    def __init__(self, *args, **kw):
+        super(MassSpecExtractor, self).__init__(*args, **kw)
 
-        return DBConnectionSpec(database='massspecdata_minnabluff',
-                                username='root',
-                                password='Argon',
-                                host='localhost')
+        self.db.kind = 'mysql'
+        bind_preference(self.dbconn_spec, 'username', 'pychron.massspec.database.username')
+        bind_preference(self.dbconn_spec, 'host', 'pychron.massspec.database.host')
+        bind_preference(self.dbconn_spec, 'password', 'pychron.massspec.database.password')
+        bind_preference(self.dbconn_spec, 'name', 'pychron.massspec.database.name')
 
     def _connect_button_fired(self):
         self.connect()
@@ -79,7 +88,6 @@ class MassSpecExtractor(Extractor):
         self.db.username = self.dbconn_spec.username
         self.db.password = self.dbconn_spec.password
         self.db.host = self.dbconn_spec.host
-        self.db.kind = 'mysql'
         self.db.connect()
 
     def import_irradiation(self, dest, name,
@@ -150,7 +158,7 @@ class MassSpecExtractor(Extractor):
 
         name=dbirrad.name
         with db.session_ctx() as sess:
-            levels = db.get_levels_by_irradname(name,
+            levels = db.get_irradiation_levels(name,
                                                 levels=include_list)
             #if not include_list:
             #    include_list = [li.Level for li in levels]
@@ -332,14 +340,13 @@ class MassSpecExtractor(Extractor):
             return ln
 
         return self._add_associated(dest, dba, make_labnumber, atype=5,
-                                    analysis_type='blank_cocktail',
-        )
+                                    analysis_type='blank_cocktail')
 
     def _add_associated_unknown_blanks(self, dest, dba):
-        '''
+        """
             get blanks +/- Nhrs from dba run date
-        
-        '''
+
+        """
         self.info('============ Adding Associated Blanks ============')
 
         def make_labnumber(bi):
@@ -469,9 +476,9 @@ class MassSpecExtractor(Extractor):
     def _add_analysis(self, dest, dest_labnumber, dbanalysis,
                       analysis_type='unknown', _ed_cache=[], _an_cache=[]):
 
-        #=======================================================================
+        # =======================================================================
         # add analysis
-        #=======================================================================
+        # =======================================================================
         aliquot = dbanalysis.Aliquot
         step = dbanalysis.Increment
         changeable = dbanalysis.changeable
@@ -509,9 +516,9 @@ class MassSpecExtractor(Extractor):
 
         self.info('Adding analysis {}'.format(identifier))
 
-        #=======================================================================
+        # =======================================================================
         # add measurement
-        #=======================================================================
+        # =======================================================================
         ms = dbanalysis.login_session.machine
         if ms:
             ms = ms.Label.lower()
@@ -522,9 +529,9 @@ class MassSpecExtractor(Extractor):
             dest.add_measurement(dest_an,
                                  analysis_type, ms)
 
-        #=======================================================================
+        # =======================================================================
         # add extraction
-        #=======================================================================
+        # =======================================================================
 
         ed = dbanalysis.HeatingItemName
         if ed not in _ed_cache:
@@ -544,9 +551,9 @@ class MassSpecExtractor(Extractor):
         for pi in pos:
             dest.add_analysis_position(ext, pi.Hole, x=pi.X, y=pi.Y)
 
-        #=======================================================================
+        # =======================================================================
         # add isotopes
-        #=======================================================================
+        # =======================================================================
         fit_hist = None
         if len(dbanalysis.isotopes) < 4 or len(dbanalysis.isotopes) > 7:
             self.import_err_file.write('{}\n'.format(identifier))
@@ -625,9 +632,9 @@ class MassSpecExtractor(Extractor):
                 #                    fit_hist = dest.add_fit_history(dest_an)
                 #                dest.add_fit(fit_hist, dbiso, fit=fit)
 
-        #==============================================================
+        # ==============================================================
         # add selected history
-        #==============================================================
+        # ==============================================================
         dest.add_selected_histories(dest_an)
 
         dest_an.import_id = self.dbimport.id
@@ -705,8 +712,7 @@ class MassSpecExtractor(Extractor):
 
     def get_irradiations(self):
         self.connect()
-        irs = [ImportName(name='{}'.format(i[0]))
-               for i in self.db.get_irradiation_names()]
+        irs = [ImportName(name=i) for i in self.db.get_irradiation_names()]
         return irs
 
-#============= EOF =============================================
+# ============= EOF =============================================

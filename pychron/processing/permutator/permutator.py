@@ -22,7 +22,7 @@ import itertools
 from uncertainties import nominal_value, std_dev
 import yaml
 from scipy.stats import norm
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.helpers.logger_setup import logging_setup
 from pychron.core.progress import progress_loader
@@ -249,4 +249,4 @@ if __name__ == '__main__':
     # p.fits_permutation()
     v = PermutatorView(permutator=p)
     v.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================
