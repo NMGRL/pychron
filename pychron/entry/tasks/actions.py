@@ -65,26 +65,26 @@ class SensitivityEntryAction(Action):
 
 class SaveSensitivityAction(TaskAction):
     name = 'Save'
-    image = icon('database_save.png')
+    image = icon('database_save')
     method = 'save'
 
 
 class AddSensitivityAction(TaskAction):
     name = 'Add'
-    image = icon(name='database_add.png')
+    image = icon(name='database_add')
     method = 'add'
 
 
 class SavePDFAction(TaskAction):
     name = 'Save PDF'
-    image = icon('file_pdf.png')
+    image = icon('file_pdf')
 
     method = 'save_pdf'
 
 
 class SaveLabbookPDFAction(TaskAction):
     name = 'Save Labbook'
-    image = icon('file_pdf.png')
+    image = icon('file_pdf')
 
     method = 'save_labbook_pdf'
 
@@ -110,21 +110,21 @@ class ImportIrradiationAction(TaskAction):
 
 class GenerateTrayAction(TaskAction):
     name = 'Generate Tray'
-    image = icon('table_lightning.png')
+    image = icon('table_lightning')
 
     method = 'generate_tray'
 
 
 class ImportIrradiationLevelAction(TaskAction):
     name = 'Import Level'
-    image = icon('file_xls.png')
+    image = icon('file_xls')
 
     method = 'import_irradiation_load_xls'
 
 
 class MakeIrradiationTemplateAction(TaskAction):
     name = 'Irradiation Template'
-    image = icon('file_xls.png')
+    image = icon('file_xls')
 
     method = 'make_irradiation_load_template'
 

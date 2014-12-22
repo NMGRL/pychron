@@ -42,21 +42,21 @@ class DatabaseSaveAction(TaskAction):
     name = 'Database Save'
     description = 'Save current changes to the database'
     method = 'save_to_db'
-    image = icon('database_save.png')
+    image = icon('database_save')
 
 
 class BinAnalysesAction(TaskAction):
     name = 'Bin'
     description = ''
     method = 'bin_analyses'
-    image = icon('database_save.png')
+    image = icon('database_save')
 
 
 class FindAssociatedAction(TaskAction):
     name = 'Find Associated'
     description = 'Find associated analyses'
     method = 'find_associated_analyses'
-    image = icon('find.png')
+    image = icon('find')
 
 
 class TagAction(TaskAction):

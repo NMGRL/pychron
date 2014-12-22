@@ -25,7 +25,7 @@ from pychron.envisage.resources import icon
 class AddSystemMonitorAction(TaskAction):
     name = 'New Monitor'
     method = 'add_system_monitor'
-    image = icon('add.png')
+    image = icon('add')
 
 
 # ============= EOF =============================================

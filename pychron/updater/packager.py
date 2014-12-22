@@ -29,13 +29,23 @@ def copy_resources(root, dest, app_name):
         shutil.copyfile(icon_file,
                         os.path.join(dest, 'Resources', icon_name))
 
-    # copy entire icons dir
+    # copy icons
     iroot = os.path.join(root, 'resources', 'icons')
     idest = os.path.join(dest, 'icons')
     if not os.path.isdir(idest):
         os.mkdir(idest)
 
+    includes = []
+    icon_requirements = os.path.join(root, 'resources','icon_requirements.txt')
+    if os.path.isfile(icon_requirements):
+        with open(icon_requirements, 'r') as fp:
+            includes = [ri.strip() for ri in fp.read().split('\n')]
+
     for di in os.listdir(iroot):
+        head,_ = os.path.splitext(di)
+        if includes and head not in includes:
+            continue
+
         copy_resource(idest, os.path.join(iroot, di))
 
     # copy splashes and abouts

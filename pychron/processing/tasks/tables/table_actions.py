@@ -24,58 +24,58 @@ from pychron.envisage.resources import icon
 class MakePDFTableAction(TaskAction):
     name = 'Make PDF'
     method = 'make_pdf_table'
-    image = icon('file_pdf.png')
+    image = icon('file_pdf')
 
 
 class MakeXLSTableAction(TaskAction):
     name = 'Make Excel'
     method = 'make_xls_table'
-    image = icon('file_xls.png')
+    image = icon('file_xls')
 
 
 class MakeCSVTableAction(TaskAction):
     name = 'Make CSV'
     method = 'make_csv_table'
-    image = icon('file_csv.png')
+    image = icon('file_csv')
 
 
 class ToggleStatusAction(TaskAction):
     name = 'Toggle Status'
     method = 'toggle_status'
-    image = icon('arrow_switch.png')
+    image = icon('arrow_switch')
     tooltip = 'Toggle status'
 
 
 class SummaryTableAction(TaskAction):
     name = 'Summary'
     method = 'open_summary_table'
-    image = icon('report.png')
+    image = icon('report')
     tooltip = 'New summary table'
 
 
 class AppendSummaryTableAction(TaskAction):
     method = 'append_summary_table'
-    image = icon('report_add.png')
+    image = icon('report_add')
     tooltip = 'Append to current summary table'
 
 
 class FusionTableAction(TaskAction):
     name = 'Laser'
     method = 'new_fusion_table'
-    image = icon('report.png')
+    image = icon('report')
     tooltip = 'New fusion table'
 
 
 class AppendTableAction(TaskAction):
     name = 'Append Table'
     method = 'append_table'
-    image = icon('report_add.png')
+    image = icon('report_add')
     tooltip = 'Append to current table'
 
 # class AppendFusionTableAction(TaskAction):
 #    name='Append Fusion'
 #    method = 'append_fusion_table'
-#    image = icon('report_add.png',
+#    image = icon('report_add',
 #                         search_path=paths.icon_search_path
 #                         )
 #    tooltip = 'Append to current fusion table'
@@ -83,7 +83,7 @@ class AppendTableAction(TaskAction):
 #class AppendStepHeatTableAction(TaskAction):
 #    name='Append Step Heat'
 #    method='append_step_heat_table'
-#    image = icon('report_add.png',
+#    image = icon('report_add',
 #                         search_path=paths.icon_search_path
 #                         )
 #    tooltip = 'Append to current step heat table'

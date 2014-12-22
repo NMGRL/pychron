@@ -43,10 +43,10 @@ ICON_MAP = {'Database': icon('database'),
             'Fusions UV': icon('laser'),
             'Fusions CO2': icon('laser'),
             'ExtractionLine': icon('extraction_line'),
-            'Loading': icon('bonecrusher-icon'),
-            'Scripts': icon('1419242249_List'),
+            'Loading': icon('caterpillar'),
+            'Scripts': icon('scripts_text'),
             'Dashboard': icon('dashboard'),
-            'SystemMonitor': icon('sys_mon')}
+            'SystemMonitor': icon('action-log')}
 
 
 class CatergoryAdapter(TabularAdapter):

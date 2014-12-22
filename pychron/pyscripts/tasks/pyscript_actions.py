@@ -97,7 +97,7 @@ class NewPyScriptAction(NewAction):
 
 class JumpToGosubAction(TaskAction):
     name = 'Jump to Gosub'
-    image = icon('script_go.png')
+    image = icon('script_go')
     method = 'jump_to_gosub'
     tooltip = 'Jump to gosub defined at the current line. CMD+click on a gosub will also work.'
 

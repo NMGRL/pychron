@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -48,7 +48,8 @@ def make():
 
     parser.add_argument('-e', '--egg', action='store_true',
                         help='Do not make a python egg')
-
+    parser.add_argument('-d', '--debug', action='store_true',
+                        help='Do not make a python egg')
     args = parser.parse_args()
     apps = args.applications
     for name in apps:
@@ -59,6 +60,7 @@ def make():
             template.version = args.version[0]
             template.name = name
             template.use_egg = not args.egg
+            template.debug = args.debug
 
             if name in ('bakedpy',):
                 template.root = args.root[0]
@@ -75,7 +77,7 @@ def make():
                                      'pychron.remote_hardware.errors',
                                      'pychron.core',
                                      'pychron.core.helpers',
-                                     'pychron.core.ui','pychron.core.ui.qt',
+                                     'pychron.core.ui', 'pychron.core.ui.qt',
                                      'pychron.core.xml',
                                      'pychron.displays']
                 template.modules = ['pychron.managers.remote_hardware_server_manager',
@@ -113,6 +115,7 @@ class Template(object):
     packages = None
     modules = None
     use_egg = True
+    debug = False
 
     def build(self):
         root = os.path.realpath(self.root)
@@ -133,11 +136,13 @@ class Template(object):
         # =======================================================================
         # build
         # =======================================================================
+
         ins.build_app(op)
-        if self.use_egg:
-            ins.make_egg(self.packages, self.modules)
-        else:
-            ins.copy_source()
+        if not self.debug:
+            if self.use_egg:
+                ins.make_egg(self.packages, self.modules)
+            else:
+                ins.copy_source()
         # ins.make_migrate_repos()
         ins.make_argv()
 
@@ -178,9 +183,23 @@ class Template(object):
             if not os.path.isdir(idest):
                 os.mkdir(idest)
 
+        includes = []
+        icon_requirements = os.path.join(root, 'resources', 'icon_requirements.txt')
+        if os.path.isfile(icon_requirements):
+            with open(icon_requirements, 'r') as fp:
+                includes = [ri.strip() for ri in fp.read().split('\n')]
+
+        cnt, total = 0, 0
         for di in os.listdir(iroot):
+            total += 1
+            head,tail=os.path.splitext(di)
+            if includes and head not in includes:
+                continue
+
+            cnt += 1
             ins.copy_resource(os.path.join(iroot, di), name='icons/{}'.format(di))
 
+        print 'copied {}/{} icons'.format(cnt, total)
         # copy splashes and abouts
         for ni, nd in (('splash', 'splashes'), ('about', 'abouts')):
             sname = '{}_{}.png'.format(ni, self.name)
@@ -248,18 +267,19 @@ class Maker(object):
     def make_egg(self, pkgs=None, modules=None):
 
         from setuptools import setup, find_packages
+
         if pkgs is None:
             pkgs = find_packages(self.root,
-                             exclude=('launchers',
-                                      'tests',
-                                      'test',
-                                      'test.*',
-                                      'sandbox',
-                                      'sandbox.*',
-                                      '*.sandbox',
-                                      'app_utils'))
+                                 exclude=('launchers',
+                                          'tests',
+                                          'test',
+                                          'test.*',
+                                          'sandbox',
+                                          'sandbox.*',
+                                          '*.sandbox',
+                                          'app_utils'))
         if modules is None:
-            modules=[]
+            modules = []
 
         setup(name='pychron',
               script_args=('bdist_egg',),

@@ -204,7 +204,7 @@ class RecallAction(Action):
 class ConfigureRecallAction(myTaskAction):
     name = 'Configure Recall'
     method = 'configure_recall'
-    image = icon('cog.png')
+    image = icon('cog')
     task_ids = ('pychron.recall', 'pychron.processing.figures',
                 'pychron.processing.blanks',
                 'pychron.processing.isotope_evolution',
@@ -228,13 +228,13 @@ class SetInterpretedAgeAction(FigureTaskAction):
 class SetInterpretedAgeTBAction(FigureTaskAction):
     name = 'Set Interpreted Age'
     method = 'set_interpreted_age'
-    image = icon('database_add.png')
+    image = icon('database_add')
 
 
 class BrowseInterpretedAgeTBAction(FigureTaskAction):
     name = 'Browse Interpreted Age'
     method = 'browse_interpreted_age'
-    image = icon('application_view_list.png')
+    image = icon('application_view_list')
 
 
 # class OpenAdvancedQueryAction(Action):

@@ -25,7 +25,7 @@ from pychron.envisage.resources import icon
 class NewBrowserEditorAction(TaskAction):
     method = 'new_editor'
     name = 'New Tab'
-    image = icon('page_white_add.png')
+    image = icon('page_white_add')
 
 
 # ============= EOF =============================================

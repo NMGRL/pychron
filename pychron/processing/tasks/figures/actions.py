@@ -24,31 +24,31 @@ from pychron.envisage.tasks.actions import PTaskAction as TaskAction
 class AddTextBoxAction(TaskAction):
     method = 'add_text_box'
     name = 'Annotate'
-    image = icon('annotate.png')
+    image = icon('annotate')
 
 
 class SaveFigureAction(TaskAction):
     method = 'save_figure'
     name = 'Save Figure'
-    image = icon('database_save.png')
+    image = icon('database_save')
 
 
 class SaveAsFigureAction(TaskAction):
     method = 'save_as_figure'
     name = 'Save As Figure'
-    image = icon('database_save.png')
+    image = icon('database_save')
 
 
 class SavePDFFigureAction(TaskAction):
     method = 'save_pdf_figure'
     name = 'Save PDF Figure'
-    image = icon('file_pdf.png')
+    image = icon('file_pdf')
 
 
 class OpenFigureAction(TaskAction):
     method = 'open_figure'
     name = 'Open Figure'
-    image = icon('page_white_database.png')
+    image = icon('page_white_database')
 
 
 class NewXYScatterAction(TaskAction):
@@ -70,7 +70,7 @@ class NewIdeogramAction(TaskAction):
 class NewSpectrumAction(TaskAction):
     name = 'New Spectrum'
     method = 'tb_new_spectrum'
-    image = icon('chart_curve.png')
+    image = icon('chart_curve')
 
 
 class RefreshActiveEditorAction(TaskAction):

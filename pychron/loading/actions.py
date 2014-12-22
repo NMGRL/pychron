@@ -25,5 +25,5 @@ from pychron.envisage.resources import icon
 class SaveLoadingAction(TaskAction):
     name = 'Save PDF'
     method = 'save_loading'
-    image = icon('file_pdf.png')
+    image = icon('file_pdf')
 # ============= EOF =============================================
