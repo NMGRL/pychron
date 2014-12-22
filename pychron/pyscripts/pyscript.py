@@ -36,6 +36,9 @@ from pychron.pyscripts.error import PyscriptError, IntervalError, GosubError, \
     KlassError, MainError
 
 
+BLOCK_LOCK = Lock()
+
+
 class CTXObject(object):
     def update(self, ctx):
         self.__dict__.update(**ctx)
@@ -196,9 +199,9 @@ class PyScript(Loggable):
 
     _interpolation_context = None
 
-    def __init__(self, *args, **kw):
-        super(PyScript, self).__init__(*args, **kw)
-        self._block_lock = Lock()
+    # def __init__(self, *args, **kw):
+    # super(PyScript, self).__init__(*args, **kw)
+    # self._block_lock = Lock()
 
     def is_canceled(self):
         return self._cancel
@@ -345,7 +348,7 @@ class PyScript(Loggable):
                 return MainError
 
         else:
-            #         sys.settrace(self._tracer)
+            # sys.settrace(self._tracer)
             code_or_err = self.compile_snippet(snippet)
             if not isinstance(code_or_err, Exception):
                 try:
@@ -400,7 +403,7 @@ class PyScript(Loggable):
         self._exp_obj.update(kw)
         self._ctx['ex'] = self._exp_obj
 
-        #for backwards compatiblity add kw to main context
+        # for backwards compatiblity add kw to main context
         self._ctx.update(**kw)
         self._setup_docstr_context()
 
@@ -427,7 +430,7 @@ class PyScript(Loggable):
         if self._ctx:
             ctx.update(self._ctx)
 
-        #use a cmd object for visual clarity when writing pyscripts ie ```cmd.sleep``` instead of ```sleep```
+        # use a cmd object for visual clarity when writing pyscripts ie ```cmd.sleep``` instead of ```sleep```
         # cmd=CMDObject()
         # cmd.update(ctx)
         # ctx['cmd']=cmd
@@ -438,8 +441,7 @@ class PyScript(Loggable):
         return []
 
     def get_commands(self):
-        return self.get_command_register() + \
-               command_register.commands.items()
+        return self.get_command_register() + command_register.commands.items()
 
     def get_command_register(self):
         return []
@@ -612,7 +614,7 @@ class PyScript(Loggable):
 
     @command_register
     def sleep(self, duration=0, message=None):
-        #dont add to duration if within an interval
+        # dont add to duration if within an interval
         if not self._interval_stack.qsize() % 2:
             self._estimated_duration += duration
             if self.parent_script is not None:
@@ -761,10 +763,10 @@ class PyScript(Loggable):
         self._wait_control = wd
         if self.manager:
             self.manager.wait_group.active_control = wd
-        msg = 'Waiting for {:0.1f}  {}'.format(timeout, message)
+
+        msg = 'WaitControl setup for {:0.1f}  {}'.format(timeout, message)
+        wd.trait_set(message=msg, duration=timeout)
         self.debug(msg)
-        wd.trait_set(message=msg, wtime=timeout)
-        wd.start(block=False, wtime=timeout)
 
         return wd
 
@@ -780,17 +782,21 @@ class PyScript(Loggable):
                 this is necessary so that the created wait control has a chance to start
                 before the next control asks if the active control is running.
 
+                block lock should be global to all pyscripts
             """
-            with self._block_lock:
+            with BLOCK_LOCK:
+                # with self._block_lock:
                 wd = self._setup_wait_control(timeout, message)
 
-            wd.join()
+            wd.start(duration=timeout)
+            # wd.join()
 
             if self.manager:
                 self.manager.wait_group.pop(wd)
 
             if wd.is_canceled():
                 self.cancel()
+                self.console_info('canceling script after {:0.3f} s'.format(time.time() - st))
             elif wd.is_continued():
                 self.console_info('continuing script after {:0.3f} s'.format(time.time() - st))
                 if self.manager:
@@ -846,7 +852,6 @@ class PyScript(Loggable):
                   ctx['duration'],
                   ctx['cleanup'],
                   len(ctx['position'])):
-
             sha1.update(str(v))
         h = sha1.hexdigest()
         return h
@@ -867,6 +872,7 @@ class PyScript(Loggable):
 
     def _finish(self):
         pass
+
     # ===============================================================================
     # properties
     # ===============================================================================

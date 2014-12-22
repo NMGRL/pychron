@@ -1037,7 +1037,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         wc = self.get_wait_control()
 
         wc.message = msg
-        wc.start(wtime=delay)
+        wc.start(duration=delay)
         wg.pop(wc)
 
         # if wc.is_continued():
