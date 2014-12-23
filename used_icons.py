@@ -65,7 +65,7 @@ def locate_used_icons(root):
         # do a last yield to pass counts
         yield dcnt, cnt, lcnt, None, None
 
-    with open(os.path.join(os.path.dirname(root), 'resources','icon_requirements.txt'), 'w') as fp:
+    with open(os.path.join(os.path.dirname(root), 'resources','icon_req.txt'), 'w') as fp:
         for di, ci, lcnt, m,name in func():
             if m and name:
                 print '{:<40s}{}'.format(name, m)
