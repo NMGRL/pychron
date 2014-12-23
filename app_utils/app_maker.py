@@ -203,7 +203,7 @@ class Template(object):
         # copy splashes and abouts
         for ni, nd in (('splash', 'splashes'), ('about', 'abouts')):
             sname = '{}_{}.png'.format(ni, self.name)
-            ins.copy_resource(os.path.join(root, 'resources', nd, sname), name='{}.png'.format(ni))
+            ins.copy_resource(os.path.join(root, 'resources', nd, sname), name='icons/{}.png'.format(ni))
 
         # copy helper mod
         for a in ('helpers', ):

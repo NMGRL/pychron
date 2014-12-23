@@ -19,7 +19,10 @@ from pychron.applications.pychron_application import PychronApplication
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+
 class PyView(PychronApplication):
     id = 'pychron.view.application'
     name = 'pyView'
+    shortname='view'
+
 # ============= EOF =============================================

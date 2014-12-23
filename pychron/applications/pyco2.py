@@ -27,6 +27,8 @@ from pychron.applications.pychron_application import PychronApplication
 class PyCO2(PychronApplication):
     id = 'pychron.co2.application'
     name = 'pyCO2'
+    shortname = 'co2'
+
     default_layout = [
         TaskWindowLayout('tasks.hardware'),
         TaskWindowLayout('pychron.fusions.diode')]

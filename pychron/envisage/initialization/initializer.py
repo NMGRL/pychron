@@ -113,7 +113,7 @@ class Initializer(Loggable):
         mp, name = self._get_plugin(name, plugin_name)
 
         if mp is not None:
-            if not globalv.ignore_required:
+            if not globalv.ignore_initialization_required:
                 if not self._check_required(mp):
                     return False
 

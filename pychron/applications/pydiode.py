@@ -25,6 +25,8 @@ from pychron.applications.pychron_application import PychronApplication
 class PyDiode(PychronApplication):
     id = 'pychron.diode.application'
     name = 'pyDiode'
+    shortname = 'diode'
+
     default_layout = [
         TaskWindowLayout('tasks.hardware'),
         TaskWindowLayout('pychron.fusions.diode')]

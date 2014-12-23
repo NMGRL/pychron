@@ -49,6 +49,7 @@ class ConsolePreferencesPane(BaseConsolePreferencesPane):
                                UItem('textcolor'),
                                UItem('bgcolor')),
                         preview,
+                        show_border=True,
                         label=self.label))
         return v
 

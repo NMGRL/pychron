@@ -27,6 +27,8 @@ from pychron.applications.pychron_application import PychronApplication
 class PyValve(PychronApplication):
     id = 'pychron.valve.application'
     name = 'pyValve'
+    shortname = 'valve'
+
     default_layout = [TaskWindowLayout('tasks.hardware'),
                       TaskWindowLayout('pychron.extraction_line')]
 

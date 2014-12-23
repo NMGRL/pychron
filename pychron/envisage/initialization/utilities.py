@@ -52,6 +52,7 @@ DESCRIPTION_MAP = {'Experiment': 'Execute sets of automated runs',
                    'Use IPC': 'use Inter Process Communication e.g. use RemotHardwareServer',
                    'Ignore Initialization Warnings': 'Ignore initialization warnings',
                    'Ignore Initialization Questions': 'Ignore initialization questions',
+                   'Ignore Initializaiton Required': 'Ignore hen initialization "required" tag',
                    'Communication Simulation': 'Simulate communication.\nSet Ethernet timeout to 0',
                    'Dashboard Simulation': 'Use a dummy device if none available'}
 
@@ -83,6 +84,7 @@ DEFAULT_GLOBALS = (('Use IPC', 'use_ipc'),
                    ('Use Startup Tests', 'use_startup_tests'),
                    ('Ignore Initialization Warnings', 'ignore_initialization_warnings'),
                    ('Ignore Initialization Questions', 'ignore_initialization_questions'),
+                   ('Ignore Initialization Required', 'ignore_initialization_required'),
                    ('Communication Simulation', 'communication_simulation'),
                    ('Dashboard Simulation', 'dashboard_simulation'),)
 

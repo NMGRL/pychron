@@ -51,7 +51,7 @@ def copy_resources(root, dest, app_name):
     # copy splashes and abouts
     for ni, nd in (('splash', 'splashes'), ('about', 'abouts')):
         sname = '{}_{}.png'.format(ni, app_name)
-        copy_resource(dest, os.path.join(root, 'resources', nd, sname), name='{}.png'.format(ni))
+        copy_resource(idest, os.path.join(root, 'resources', nd, sname), name='{}.png'.format(ni))
 
     # copy helper mod
     for a in ('helpers', ):

@@ -39,7 +39,7 @@ class Globals(object):
     ignore_initialization_warnings = False
     ignore_connection_warnings = False
     ignore_chiller_unavailable = False
-    ignore_required = False
+    ignore_initialization_required = False
     ignore_initialization_questions = False
 
     video_test = False
@@ -90,7 +90,7 @@ class Globals(object):
                            ('ignore_initialization_warnings', to_bool),
                            ('ignore_connection_warnings', to_bool),
                            ('ignore_chiller_unavailable', to_bool),
-                           ('ignore_required', to_bool),
+                           ('ignore_initialization_required', to_bool),
                            ('ignore_initialization_questions', to_bool),
                            ('show_infos', to_bool),
                            ('show_warnings', to_bool),

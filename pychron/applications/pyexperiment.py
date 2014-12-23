@@ -25,5 +25,6 @@ from pychron.applications.pychron_application import PychronApplication
 class PyExperiment(PychronApplication):
     id = 'pychron.experiment.application'
     name = 'pyExperiment'
+    shortname = 'experiment'
 
 # ============= EOF =============================================
