@@ -20,13 +20,17 @@ CHANGELOG
  rounded message windows pinned to the upper right hand corner of a parent window
 * improved ConditionalsView. Display active conditionals in a modal window if condition trips
 * updated UpdatePlugin
+* added ability to edit device configuration from Hardware task
+* updated PreferencesDialog. Display categories in a TabularEditor instead of as Group tabs.
 
+<!---
 .. * fully implemented import irradiation from XLS file
 .. * added ability to export irradiations from Pychron to MassSpec
+-->
 
 
-2.0.5
-------------------
+2.0.5 Released 11/2014
+-----------------------
 * added switching between blank histories
 * added BlankDiffView
 * started Workspace
