@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Button, String
+from traits.api import HasTraits, Button, String, Str
 # ============= standard library imports ========================
 import re
 # ============= local library imports  ==========================
@@ -23,7 +23,7 @@ import re
 IPREGEX = re.compile(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$')
 
 
-class IPAddress(String):
+class IPAddress(Str):
     def validate(self, obj, name, value):
         if value == 'localhost' or IPREGEX.match(value):
             return value

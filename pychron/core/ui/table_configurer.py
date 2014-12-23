@@ -92,11 +92,12 @@ class TableConfigurer(HasTraits):
 
     def set_columns(self):
         # def _columns_changed(self):
-        cols = self._assemble_columns()
-        for ci in self.children:
-            ci.columns = cols
+        if self.adapter:
+            cols = self._assemble_columns()
+            for ci in self.children:
+                ci.columns = cols
 
-        self.adapter.columns = cols
+            self.adapter.columns = cols
 
     def _set_font(self, f):
         s = f.pointSize()
