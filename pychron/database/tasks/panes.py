@@ -39,15 +39,29 @@ class SlavePane(TraitsTaskPane):
                           label='Authentication')
 
         v = View(VGroup(auth_grp,
-                        HGroup(icon_button_editor('check_status_button', 'add'),
-                               icon_button_editor('start_button', 'start', enabled_when='not running'),
-                               icon_button_editor('stop_button', 'stop', enabled_when='running'),
-                               icon_button_editor('skip_button', 'skip'),
-                               UItem('skip_count'))),
-                 UItem('status_items', editor=TabularEditor(adapter=StatusItemsAdapter(),
-                                                            editable=False)),
-                 VGroup(UReadonly('last_error',
-                                  style_sheet='color: red; font-weight: bold'),
+                        HGroup(icon_button_editor('check_status_button', 'database_go_fatcow',
+                                                  tooltip='Check slave status. Equivalent to "Show Slave Status"'),
+                               icon_button_editor('start_button', 'start',
+                                                  tooltip='Start replication. Equivalent to "Start Slave"',
+                                                  enabled_when='not running'),
+                               icon_button_editor('stop_button', 'stop',
+                                                  tooltip='Stop replication. Equivalent to "Stop Slave"',
+                                                  enabled_when='running'),
+                               icon_button_editor('skip_button', 'skip_occurrence',
+                                                  tooltip='Set global skip counter.\n'
+                                                          'Equivalent to "Stop Slave;'
+                                                          'Set GLOBAL SQL_SKIP_COUNTER=N;Start Slave;"\n'
+                                                          'where N is the number of SQL statements to skip'),
+                               UItem('skip_count',
+                                     tooltip='Number of SQL statements to skip')),
+                        UItem('status_items', editor=TabularEditor(adapter=StatusItemsAdapter(),
+                                                                   editable=False)),
+                        VGroup(UReadonly('last_error',
+                                         height=200,
+                                         style_sheet='color: red; font-weight: bold'),
+                               label='Error',
+                               show_border=True),
+                        label='Slave',
                         show_border=True))
 
         v.width = 500

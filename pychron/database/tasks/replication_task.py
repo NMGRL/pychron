@@ -13,7 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+import os
 from pychron.core.ui import set_qt
+from pychron.paths import paths
+from pychron.persistence_loggable import load_persistence_dict, load_persistence_values, dump_persistence_values
 
 set_qt()
 
@@ -43,18 +46,18 @@ class StatusItem(HasTraits):
         self.value = value
 
 
-class SlaveTask(BaseTask):
+class ReplicationTask(BaseTask):
     check_status_button = Button
-    host = IPAddress
-    user = Str
-    password = Password
-    skip_count = Int
+    host = IPAddress(enter_set=True, auto_set=False)
+    user = Str(enter_set=True, auto_set=False)
+    password = Password(enter_set=True, auto_set=False)
+    skip_count = Int(1)
 
     skip_button = Button
     start_button = Button
     stop_button = Button
 
-    last_error = Str('asdfasdf')
+    last_error = Str
     status_items = List
     _connection = None
 
@@ -62,15 +65,25 @@ class SlaveTask(BaseTask):
         self.host = 'localhost'
         self.user = 'root'
         self.password = 'Argon'
-
+        self._load()
         self._check_status()
 
     def prepare_destroy(self):
-        self._connection.close()
-        self._connection = None
+        self._dump()
+        if self._connection:
+            self._connection.close()
+            self._connection = None
 
     def create_central_pane(self):
         return SlavePane(model=self)
+
+    def _load(self):
+        p = os.path.join(paths.hidden_dir,'slave')
+        load_persistence_values(self, p, ('host','user','password'))
+
+    def _dump(self):
+        p = os.path.join(paths.hidden_dir,'slave')
+        dump_persistence_values(self, p, ('host','user','password'))
 
     def _get_connection(self):
         if not self._connection:
@@ -182,10 +195,11 @@ class SlaveTask(BaseTask):
             self._check_status()
 
 if __name__ == '__main__':
-    f = SlaveTask()
+    f = ReplicationTask()
     f.activated()
     sp = SlavePane(model=f)
     sp.configure_traits()
+    f.prepare_destroy()
 
 # ============= EOF =============================================
 
