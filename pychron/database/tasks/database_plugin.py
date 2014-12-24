@@ -17,6 +17,8 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from envisage.ui.tasks.task_factory import TaskFactory
+from pychron.database.tasks.slave_task import SlaveTask
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.database.tasks.connection_preferences import ConnectionPreferencesPane, MassSpecConnectionPane
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
@@ -31,6 +33,12 @@ class DatabasePlugin(BaseTaskPlugin):
     test_pychron_description = 'Test the connection to the Pychron Database'
     test_massspec_description = 'Test the connection to the MassSpec Database'
 
+    def start(self):
+        self.startup_test()
+        if self._connectable:
+            self._db.populate_default_tables()
+            del self._db
+
     def test_pychron(self):
         iso = IsotopeDatabaseManager(application=self.application,
                                      version_warn=True, attribute_warn=True)
@@ -38,31 +46,27 @@ class DatabasePlugin(BaseTaskPlugin):
         self._connectable = c = iso.is_connected()
         return 'Passed' if c else 'Failed'
 
-    def _get_pref(self, name):
-        prefs = self.application.preferences
-        return prefs.get('pychron.massspec.database.{}'.format(name))
-
     def test_massspec(self):
         ret = 'Skipped'
-        # use_massspec = self._get_pref('enabled')
-        # if use_massspec:
-        #     from pychron.database.adapters.massspec_database_adapter import MassSpecDatabaseAdapter
-        #
-        #     name = self._get_pref('name')
-        #     host = self._get_pref('host')
-        #     password = self._get_pref('password')
-        #     username = self._get_pref('username')
-        #     db = MassSpecDatabaseAdapter(name=name,
-        #                                  host=host,
-        #                                  password=password,
-        #                                  username=username)
-        #     ret = 'Passed' if db.connect() else 'Failed'
         db = self.application.get_service('pychron.database.adapters.massspec_database_adapter.MassSpecDatabaseAdapter')
         if db:
             db.bind_preferences()
             ret = 'Passed' if db.connect() else 'Failed'
 
         return ret
+
+    def _get_pref(self, name):
+        prefs = self.application.preferences
+        return prefs.get('pychron.massspec.database.{}'.format(name))
+
+    def _slave_factory(self):
+        s = SlaveTask()
+        return s
+
+    def _tasks_default(self):
+        return [TaskFactory(id='pychron.slave',
+                            name='Replication',
+                            factory=self._slave_factory)]
 
     def _preferences_panes_default(self):
         return [ConnectionPreferencesPane,
@@ -90,13 +94,7 @@ class DatabasePlugin(BaseTaskPlugin):
 
         return sos
 
-    def start(self):
-        self.startup_test()
-        if self._connectable:
-            self._db.populate_default_tables()
-            del self._db
-
-            # ============= EOF =============================================
+# ============= EOF =============================================
             #def _task_extensions_default(self):
             #    return [TaskExtension(actions=[SchemaAddition(id='update_database',
             #                                                  factory=UpdateDatabaseAction,
