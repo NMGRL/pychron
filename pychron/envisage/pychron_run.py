@@ -14,30 +14,23 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-import os
 
 from envisage.core_plugin import CorePlugin
 from envisage.api import Plugin
 from pyface.message_dialog import warning
 # ============= standard library imports ========================
+import os
+import logging
 # ============= local library imports  ==========================
 from pychron.displays.gdisplays import gTraceDisplay
 from pychron.envisage.key_bindings import update_key_bindings
 from pychron.envisage.tasks.tasks_plugin import PychronTasksPlugin, myTasksPlugin
-# from pychron.core.helpers.logger_setup import new_logger
 from pychron.logger.tasks.logger_plugin import LoggerPlugin
 from pychron.envisage.initialization.initialization_parser import InitializationParser
-
-import logging
 from pychron.user.tasks.plugin import UsersPlugin
 
 logger = logging.getLogger()
 
-# try:
-#     from pychron.updater.tasks.update_plugin import UpdatePlugin
-# except ImportError:
-#     logger.warning('Git is required to use UpdatePlugin')
-#     UpdatePlugin = None
 
 PACKAGE_DICT = dict(
     CanvasDesignerPlugin='pychron.canvas.tasks.canvas_plugin',
@@ -66,7 +59,8 @@ PACKAGE_DICT = dict(
     WorkspacePlugin='pychron.workspace.tasks.workspace_plugin',
     LabBookPlugin='pychron.labbook.tasks.labbook_plugin',
     LabspyClientPlugin='pychron.labspy.tasks.plugin',
-    UpdatePlugin='pychron.updater.tasks.update_plugin')
+    UpdatePlugin='pychron.updater.tasks.update_plugin',
+    ImagePlugin='pychron.image.tasks.image_plugin')
 
 
 def get_module_name(klass):
@@ -190,7 +184,7 @@ def app_factory(klass, user):
 
     app = klass(username=user, plugins=plugins)
 
-    #set key bindings
+    # set key bindings
     update_key_bindings(pychron_plugin.actions)
 
     return app
