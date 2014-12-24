@@ -23,6 +23,8 @@ CHANGELOG
 * added ability to edit device configuration from Hardware task
 * updated PreferencesDialog. Display categories in a TabularEditor instead of as Group tabs.
 * added ReplicationTask for interacting with a replication db
+* added predefined initializations
+
 <!---
 .. * fully implemented import irradiation from XLS file
 .. * added ability to export irradiations from Pychron to MassSpec

@@ -88,6 +88,40 @@ DEFAULT_GLOBALS = (('Use IPC', 'use_ipc'),
                    ('Communication Simulation', 'communication_simulation'),
                    ('Dashboard Simulation', 'dashboard_simulation'),)
 
+DEFAULTS_MAP = {'Ar Data Reduction': {'globals': ('Use Startup Tests',),
+                                      'general': ('Processing',
+                                                  'Database',
+                                                  'ArArConstants'),
+                                      'hardware': None,
+                                      'social': None},
+                'Extraction Line': {'globals': ('Use IPC', 'Use Startup Tests',),
+                                    'general': None,
+                                    'hardware': ('ExtractionLine', ),
+                                    'social': ('Email',)},
+                'Experiment': {'globals': ('Use Startup Tests',),
+                               'general': ('Experiment', 'Database', 'ArArConstants', 'PyScript'),
+                               'hardware': ('ArgusSpectrometer', 'ExtractionLine'),
+                               'social': ('Email',)},
+                'Experiment CO2': {'globals': ('Use Startup Tests',),
+                                   'general': ('Experiment', 'Database', 'ArArConstants', 'PyScript'),
+                                   'hardware': ('ArgusSpectrometer', 'ExtractionLine', 'FusionsCO2'),
+                                   'social': ('Email',)},
+                'Experiment Diode': {'globals': ('Use Startup Tests',),
+                                     'general': ('Experiment', 'Database', 'ArArConstants', 'PyScript'),
+                                     'hardware': ('ArgusSpectrometer', 'ExtractionLine', 'FusionsDiode'),
+                                     'social': ('Email',)},
+                'Experiment UV': {'globals': ('Use Startup Tests',),
+                                  'general': ('Experiment', 'Database', 'ArArConstants', 'PyScript'),
+                                  'hardware': ('ArgusSpectrometer', 'ExtractionLine', 'FusionsUV'),
+                                  'social': ('Email',)}}
+
+NOMINAL_DEFAULTS = ['Ar Data Reduction',
+                    'Experiment',
+                    'Experiment CO2',
+                    'Experiment Diode',
+                    'Experiment UV',
+                    'Extraction Line']
+
 
 def load_plugin_tree():
     p = PluginTree(name='Plugins')

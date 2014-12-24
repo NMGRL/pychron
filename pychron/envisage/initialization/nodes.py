@@ -58,6 +58,10 @@ class PluginTree(Plugin):
     all_enabled = Bool
     enabled = True
 
+    def get_subtree(self, name):
+        name = name.lower()
+        return next((p for p in self.plugins if isinstance(p, PluginTree) and p.name.lower() == name))
+
     def set_all_enabled(self, v):
         """
 
@@ -85,7 +89,7 @@ class GlobalTree(BaseNode):
 
 class InitializationModel(BaseNode):
     name = 'Initalization'
-    trees = List  #(PluginTree)
+    trees = List  # (PluginTree)
     parser = Instance(InitializationParser)
     path_name = Str
     _hash = Str
@@ -98,7 +102,7 @@ class InitializationModel(BaseNode):
             return hashlib.md5(fp.read()).hexdigest()
 
     def is_dirty(self):
-        return self._current_hash()!=self._hash
+        return self._current_hash() != self._hash
 
     def save(self):
         self.parser.save()
