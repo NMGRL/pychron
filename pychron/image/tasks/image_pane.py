@@ -30,35 +30,6 @@ class SampleImagePane(TraitsTaskPane):
         v = View()
         return v
 
-
-class SampleBrowserPane(TraitsDockPane):
-    id = 'pychron.image.browser'
-    name = 'Browser'
-
-    def traits_view(self):
-        sample_grp = VGroup(UItem('samples',
-                                  editor=FilterTabularEditor(
-                                      adapter=LabnumberAdapter(),
-                                      editable=False,
-                                      multi_select=True,
-                                      selected='selected_samples',
-                                      stretch_last_section=False),
-                                  width=75),
-                            show_border=True, label='Samples')
-
-        project_grp = VGroup(
-            UItem('projects',
-                  editor=FilterTabularEditor(editable=False,
-                                             selected='selected_projects',
-                                             adapter=ProjectAdapter(),
-                                             multi_select=True),
-                  width=175),
-            show_border=True,
-            label='Projects')
-
-        v = View(VGroup(project_grp, sample_grp))
-        return v
-
 # ============= EOF =============================================
 
 

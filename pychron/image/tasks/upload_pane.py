@@ -15,37 +15,28 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pyface.tasks.action.task_action import TaskAction
-from traits.api import HasTraits, Button
-from traitsui.api import View, Item
+from pyface.tasks.traits_task_pane import TraitsTaskPane
+from traits.api import HasTraits, Button, Str
+from traitsui.api import View, Item, UItem, TabularEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.envisage.resources import icon
+from traitsui.tabular_adapter import TabularAdapter
 
 
-class SnapshotAction(TaskAction):
-    name = 'Snapshot'
-    image = icon('camera')
-    method = 'save_file_snapshot'
+class ImageAdapter(TabularAdapter):
+    columns = [('Name', 'name'),
+               ('Sample', 'sample')]
 
 
-class DBSnapshotAction(TaskAction):
-    name = 'DB Snapshot'
-    image = icon('camera')
-    method = 'save_db_snapshot'
+class UploadPane(TraitsTaskPane):
+    def traits_view(self):
+        v = View(UItem('items', editor=TabularEditor(adapter=ImageAdapter(),
+                                                     editable=False,
+                                                     selected='selected_items',
+                                                     auto_update=True,
+                                                     multi_select=True)))
+        return v
 
-
-class AssociateAction(TaskAction):
-    name = 'Associate Sample'
-    method = 'associate_sample'
-    enabled_name = 'association_enabled'
-
-
-class SaveAction(TaskAction):
-    name = 'Save'
-    method = 'save'
-    image = icon('database_save')
-    # enabled_name = 'save_enabled'
 # ============= EOF =============================================
 
 

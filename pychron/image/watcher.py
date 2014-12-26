@@ -15,38 +15,50 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pyface.tasks.action.task_action import TaskAction
-from traits.api import HasTraits, Button
-from traitsui.api import View, Item
+import time
+from traits.api import Str, Event
 # ============= standard library imports ========================
+from threading import Thread
+from glob import glob
+import os
 # ============= local library imports  ==========================
-from pychron.envisage.resources import icon
+from pychron.loggable import Loggable
 
 
-class SnapshotAction(TaskAction):
-    name = 'Snapshot'
-    image = icon('camera')
-    method = 'save_file_snapshot'
+class DirectoryWatcher(Loggable):
+    _path = Str
+    _alive = False
+    dir_changed = Event
 
+    def __init__(self, path, *args, **kw):
+        super(DirectoryWatcher, self).__init__(*args, **kw)
+        self._path = path
 
-class DBSnapshotAction(TaskAction):
-    name = 'DB Snapshot'
-    image = icon('camera')
-    method = 'save_db_snapshot'
+    def start(self):
+        self._start()
 
+    def stop(self):
+        self._alive = False
 
-class AssociateAction(TaskAction):
-    name = 'Associate Sample'
-    method = 'associate_sample'
-    enabled_name = 'association_enabled'
+    def _start(self):
+        self.info('start polling {} for changes'.format(self._path))
+        self._alive = True
+        t = Thread(target=self._poll)
+        t.start()
 
+    def _poll(self):
+        period = 1
+        while 1:
+            if not self._alive:
+                break
+            nfiles = glob(os.path.join(self._path, '*.png'))
 
-class SaveAction(TaskAction):
-    name = 'Save'
-    method = 'save'
-    image = icon('database_save')
-    # enabled_name = 'save_enabled'
+            if nfiles:
+                self.dir_changed = nfiles
+
+            time.sleep(period)
 # ============= EOF =============================================
+
 
 
 

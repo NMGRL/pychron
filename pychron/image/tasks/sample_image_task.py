@@ -22,7 +22,8 @@ from pyface.tasks.task_layout import TaskLayout, PaneItem
 from pychron.envisage.browser.browser_mixin import BrowserMixin
 from pychron.envisage.tasks.base_task import BaseManagerTask
 from pychron.image.tasks.actions import SnapshotAction, DBSnapshotAction
-from pychron.image.tasks.image_pane import SampleImagePane, SampleBrowserPane
+from pychron.image.tasks.image_pane import SampleImagePane
+from pychron.image.tasks.pane import SampleBrowserPane
 
 
 class SampleImageTask(BaseManagerTask, BrowserMixin):

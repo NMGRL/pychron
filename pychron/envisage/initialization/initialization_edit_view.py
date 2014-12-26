@@ -195,7 +195,7 @@ def edit_initialization():
 
     # pev.model = model
     # pev.plugin_tree = rtree
-    do_after(1000, pev.trait_set, default='Experiment CO2')
+    # do_after(1000, pev.trait_set, default='Experiment CO2')
     info = pev.edit_traits()
     if info.result:
         pev.save()
