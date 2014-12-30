@@ -100,6 +100,3 @@ class ImageUploadTask(BaseManagerTask, BrowserMixin):
                                         if self.selected_samples else False)
 
 # ============= EOF =============================================
-
-
-

@@ -16,22 +16,11 @@
 
 # ============= enthought library imports =======================
 from pyface.action.menu_manager import MenuManager
-from traits.api import List, Property, Int, HasTraits
-
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-
-# ============= EOF =============================================
+from traits.api import Int
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
-
-
-# class ConfigurableAdapterMixin(HasTraits):
-#     all_columns = List
-#     all_columns_dict = Property
-#
-#     def _get_all_columns_dict(self):
-#         return dict(self.all_columns)
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.configurable_tabular_adapter import ConfigurableMixin
 
 
@@ -67,7 +56,6 @@ class SampleAdapter(BrowserAdapter):
     material_width = Int(75)
 
 
-
 class LabnumberAdapter(BrowserAdapter):
     columns = [('Sample', 'name'),
                ('Identifier', 'labnumber'),
@@ -93,9 +81,12 @@ class LabnumberAdapter(BrowserAdapter):
             psenabled = isinstance(obj, FigureTask)
             return MenuManager(Action(name='Unselect', action='unselect_samples'),
                                Action(name='Time View', action='on_time_view'),
+                               Action(name='Configure', action='configure_sample_table'),
                                Action(name='Plot Selected (Grouped)',
                                       enabled=psenabled,
                                       action='plot_selected_grouped'),
                                Action(name='Plot Selected',
                                       enabled=psenabled,
                                       action='plot_selected'))
+
+# ============= EOF =============================================

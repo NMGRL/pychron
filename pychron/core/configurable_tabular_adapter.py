@@ -19,15 +19,11 @@ from traits.api import HasTraits, Button, List, Property
 from traitsui.api import View, Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from traitsui.tabular_adapter import TabularAdapter
 
 
 class ConfigurableMixin(HasTraits):
     all_columns = List
     all_columns_dict = Property
-    def __init__(self, *args, **kw):
-        super(ConfigurableMixin, self).__init__(*args, **kw)
-        self.all_columns = self.columns[:]
 
     def _get_all_columns_dict(self):
         return dict(self.all_columns)
