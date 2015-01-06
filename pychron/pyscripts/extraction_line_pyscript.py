@@ -338,8 +338,10 @@ class ExtractionPyScript(ValvePyScript):
                                                       position))
             success = self._extraction_action([('move_to_position',
                                                 (position, autocenter), {})])
+
             if not success:
-                self.console_info('{} move to position failed'.format(self.extract_device))
+                self.info('{} move to position failed'.format(self.extract_device))
+                self.cancel()
             else:
                 self.console_info('move to position suceeded')
                 return True
@@ -671,6 +673,9 @@ class ExtractionPyScript(ValvePyScript):
     # ===============================================================================
     # private
     # ===============================================================================
+    def _cancel_hook(self):
+        self.disable()
+
     def _get_device(self, name):
         app = self._get_application()
         if app is not None:

@@ -171,7 +171,8 @@ def xy_func(p):
     # return [p for p in map(str.strip,p.split(';')) if p]
 
 # XY_REGEX = (re.compile('[-,\d+].*\d*,[-,\d+].*\d*'), None, None)
-XY_REGEX = (re.compile('([-\d+]+.\d+(,[-\d+]+.\d+){1,3})(;([-\d+]+.\d+(,[-\d+]+.\d+){1,3}))*$'), xy_func, None, 'XY')
+# XY_REGEX = (re.compile('([-\d+]+.\d+(,[-\d+]+.\d+){1,3})(;([-\d+]+.\d+(,[-\d+]+.\d+){1,3}))*$'), xy_func, None, 'XY')
+XY_REGEX = (re.compile(r'([-\d+]+(\.\d)+(,[-\d+]+(\.\d)+){1,2})(;([-\d+]+(\.\d)+(,[-\d+]+(\.\d+)){1,2}))*$'), xy_func, None, 'XY')
 
 '''
     e.g d1
