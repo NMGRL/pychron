@@ -21,9 +21,12 @@ from pyface.tasks.task_layout import TaskLayout, PaneItem
 # ============= local library imports  ==========================
 from pychron.envisage.browser.browser_mixin import BrowserMixin
 from pychron.envisage.tasks.base_task import BaseManagerTask
+from pychron.image.camera import Camera
 from pychron.image.tasks.actions import SnapshotAction, DBSnapshotAction
-from pychron.image.tasks.image_pane import SampleImagePane
+# from pychron.image.tasks.image_pane import SampleImagePane
 from pychron.image.tasks.pane import SampleBrowserPane
+from pychron.image.tasks.video_pane import VideoPane
+from pychron.paths import paths
 
 
 class SampleImageTask(BaseManagerTask, BrowserMixin):
@@ -36,10 +39,14 @@ class SampleImageTask(BaseManagerTask, BrowserMixin):
         super(SampleImageTask, self).__init__(*args, **kw)
         if self.manager:
             self.tool_bars[0].items.append(DBSnapshotAction())
+        self.camera = Camera()
 
     # actions
     def save_file_snapshot(self):
-        pass
+        from pychron.core.helpers.filetools import unique_path2
+
+        p,_ = unique_path2(paths.sample_image_dir, 'nosample', extension='.jpg')
+        self.camera.save(p)
 
     def save_db_snapshot(self):
         if not self.selected_samples:
@@ -51,13 +58,14 @@ class SampleImageTask(BaseManagerTask, BrowserMixin):
 
     # task interface
     def activated(self):
+        self.camera.open()
         self.load_projects(include_recent=False)
 
     def prepare_destroy(self):
-        pass
+        self.camera.close()
 
     def create_central_pane(self):
-        return SampleImagePane(model=self)
+        return VideoPane(video=self.camera)
 
     def create_dock_panes(self):
         return [SampleBrowserPane(model=self)]

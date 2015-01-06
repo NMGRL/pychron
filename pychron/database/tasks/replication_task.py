@@ -47,6 +47,9 @@ class StatusItem(HasTraits):
 
 
 class ReplicationTask(BaseTask):
+    name = 'Replication'
+    id = 'pychron.database.replication'
+
     check_status_button = Button
     host = IPAddress(enter_set=True, auto_set=False)
     user = Str(enter_set=True, auto_set=False)
