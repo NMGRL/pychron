@@ -417,7 +417,11 @@ class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
         with db.session_ctx():
             if not ms:
                 ms = db.get_mass_spectrometers()
-                ms = [mi.name for mi in ms]
+                if ms:
+                    ms = [mi.name for mi in ms]
+                else:
+                    ms = []
+
             recents = []
             if include_recent:
                 recents = [ProjectRecordView('RECENT {}'.format(mi.upper())) for mi in ms]

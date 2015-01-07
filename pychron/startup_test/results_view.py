@@ -134,7 +134,10 @@ class ResultsView(Controller):
                         VGroup(UReadonly('controller.selected.description'),
                                show_border=True,
                                label='Description'),
-
+                        VGroup(UReadonly('controller.selected.error'),
+                               show_border=True,
+                               visible_when='controller.selected.error',
+                               label='error'),
                         VGroup(UReadonly('controller.help_str'),
                                show_border=True,
                                visible_when='controller.help_str')),

@@ -31,6 +31,7 @@ class TestResult(HasTraits):
     duration = Float
     result = Enum('Passed', 'Failed', 'Skipped', 'Invalid')
     description = Str
+    error = Str
 
 
 class StartupTester(Loggable):
@@ -62,7 +63,7 @@ class StartupTester(Loggable):
             try:
                 description = getattr(plugin, '{}_description'.format(ti))
             except AttributeError:
-                description=''
+                description = ''
 
             self.info('Testing "{} - {}"'.format(pname, ti))
             st = time.time()
@@ -72,9 +73,15 @@ class StartupTester(Loggable):
             elif result is None:
                 result = 'Invalid'
 
+            try:
+                error = getattr(plugin, '{}_error'.format(ti))
+            except AttributeError:
+                error = ''
+
             self.add_test_result(name=ti, plugin=pname,
                                  description=description,
                                  duration=time.time() - st,
+                                 error=error,
                                  result=result)
 
     def ok_close(self):
@@ -109,84 +116,84 @@ class StartupTester(Loggable):
 
     @property
     def all_passed(self):
-        a = all([ri.result in ('Passed','Skipped') for ri in self.results])
+        a = all([ri.result in ('Passed', 'Skipped') for ri in self.results])
         return a
 
-    # ============= EOF =============================================
-    # def do_test(self):
-    # yl = self._load()
-    # ip = InitializationParser()
-    #
-    # self.results = []
-    #
-    # # test database connections
-    #     for i, ti in enumerate(yl):
-    #         if self._verify_test(i, ti):
-    #             if self._should_test(ti, ip):
-    #                 self._do_test(ti, ip)
-    #             else:
-    #                 name = ti.get('name')
-    #                 self.results.append(TestResult(name=name, result='Skipped'))
-    #         else:
-    #             name = ti.get('name', 'Test #{:02n}'.format(i+1))
-    #             self.results.append(TestResult(name=name, result='Invalid'))
-    #
-    # def _do_test(self, testdict, ip):
-    #     name = testdict['name']
-    #     self.info('doing test {}'.format(name))
-    #     func = getattr(self, '_test_{}'.format(name))
-    #     st = time.time()
-    #
-    #     result = TestResult(name=name)
-    #     ret = func(ip)
-    #     result.trait_set(duration=time.time() - st, result=ret)
-    #     self.results.append(result)
-    #
-    # def _test_pychron_database(self, ip):
-    #     return 'Passed'
-    #
-    # def _test_massspec_database(self, ip):
-    #     return 'Passed'
-    #
-    # def _should_test(self, td, ip):
-    #     """
-    #     determine whether this test should be performed.
-    #
-    #     for example database tests should be skipped in DatabasePlugin not enabled in the Initialization file
-    #     :param td:
-    #     :param ip:
-    #     :return: True if should perform this test
-    #     """
-    #     ret = True
-    #     plugin_name = td.get('plugin')
-    #     if plugin_name:
-    #         plugin = ip.get_plugin(plugin_name)
-    #         if plugin is not None:
-    #             self.debug('Plugin "{}" not in Initialization file "{}"'.format(plugin_name, ip.path))
-    #             ret = False
-    #
-    #     return ret
-    #
-    # def _verify_test(self, i, td):
-    #     """
-    #     verify this is a valid test dictionary
-    #
-    #     :param i: counter
-    #     :param td: test dict
-    #     :return: True if valid test
-    #     """
-    #     ret = True
-    #     for attr in ('name',):
-    #         if not attr in td:
-    #             self.warning('Failed to verify test #{:02n} no key={}, test={}'.format(i, attr, td))
-    #             ret = False
-    #
-    #     else:
-    #         if not hasattr(self, '_test_{}'.format(td['name'])):
-    #             self.warning('invalid test name. "{}"'.format(td['name']))
-    #             ret = False
-    #
-    #     return ret
-    #
+        # ============= EOF =============================================
+        # def do_test(self):
+        # yl = self._load()
+        # ip = InitializationParser()
+        #
+        # self.results = []
+        #
+        # # test database connections
+        # for i, ti in enumerate(yl):
+        #         if self._verify_test(i, ti):
+        #             if self._should_test(ti, ip):
+        #                 self._do_test(ti, ip)
+        #             else:
+        #                 name = ti.get('name')
+        #                 self.results.append(TestResult(name=name, result='Skipped'))
+        #         else:
+        #             name = ti.get('name', 'Test #{:02n}'.format(i+1))
+        #             self.results.append(TestResult(name=name, result='Invalid'))
+        #
+        # def _do_test(self, testdict, ip):
+        #     name = testdict['name']
+        #     self.info('doing test {}'.format(name))
+        #     func = getattr(self, '_test_{}'.format(name))
+        #     st = time.time()
+        #
+        #     result = TestResult(name=name)
+        #     ret = func(ip)
+        #     result.trait_set(duration=time.time() - st, result=ret)
+        #     self.results.append(result)
+        #
+        # def _test_pychron_database(self, ip):
+        #     return 'Passed'
+        #
+        # def _test_massspec_database(self, ip):
+        #     return 'Passed'
+        #
+        # def _should_test(self, td, ip):
+        #     """
+        #     determine whether this test should be performed.
+        #
+        #     for example database tests should be skipped in DatabasePlugin not enabled in the Initialization file
+        #     :param td:
+        #     :param ip:
+        #     :return: True if should perform this test
+        #     """
+        #     ret = True
+        #     plugin_name = td.get('plugin')
+        #     if plugin_name:
+        #         plugin = ip.get_plugin(plugin_name)
+        #         if plugin is not None:
+        #             self.debug('Plugin "{}" not in Initialization file "{}"'.format(plugin_name, ip.path))
+        #             ret = False
+        #
+        #     return ret
+        #
+        # def _verify_test(self, i, td):
+        #     """
+        #     verify this is a valid test dictionary
+        #
+        #     :param i: counter
+        #     :param td: test dict
+        #     :return: True if valid test
+        #     """
+        #     ret = True
+        #     for attr in ('name',):
+        #         if not attr in td:
+        #             self.warning('Failed to verify test #{:02n} no key={}, test={}'.format(i, attr, td))
+        #             ret = False
+        #
+        #     else:
+        #         if not hasattr(self, '_test_{}'.format(td['name'])):
+        #             self.warning('invalid test name. "{}"'.format(td['name']))
+        #             ret = False
+        #
+        #     return ret
+        #
 
 

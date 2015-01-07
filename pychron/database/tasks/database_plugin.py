@@ -31,6 +31,8 @@ class DatabasePlugin(BaseTaskPlugin):
 
     test_pychron_description = 'Test the connection to the Pychron Database'
     test_massspec_description = 'Test the connection to the MassSpec Database'
+    test_pychron_error = 'ddd'
+
 
     def start(self):
         self.startup_test()
@@ -40,9 +42,16 @@ class DatabasePlugin(BaseTaskPlugin):
 
     def test_pychron(self):
         iso = IsotopeDatabaseManager(application=self.application,
-                                     version_warn=True, attribute_warn=True)
+                                     warn=False,
+                                     version_warn=False,
+                                     attribute_warn=False)
         self._db = iso
         self._connectable = c = iso.is_connected()
+
+        if not c:
+            self.test_pychron_error = iso.db.connection_error
+
+        print 'fffff', self.test_pychron_error
         return 'Passed' if c else 'Failed'
 
     def test_massspec(self):
@@ -53,7 +62,6 @@ class DatabasePlugin(BaseTaskPlugin):
             ret = 'Passed' if db.connect() else 'Failed'
 
         return ret
-
 
     def _get_pref(self, name):
         prefs = self.application.preferences
