@@ -308,9 +308,10 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
     def _load_mass_spectrometers(self):
         db = self.db
-        ms = [mi.name for mi in db.get_mass_spectrometers()]
-        self.available_mass_spectrometers = ms
-        # self.mass_spectrometers = ['Spectrometer', 'None'] + ms
+        ms = db.get_mass_spectrometers()
+        if ms:
+            ms = [mi.name for mi in ms]
+            self.available_mass_spectrometers = ms
 
     def _load_analysis_types(self):
         db = self.db

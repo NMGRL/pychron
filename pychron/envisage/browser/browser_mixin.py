@@ -413,6 +413,9 @@ class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
         return self._retrieve_analyses(samples=samples, **kw)
 
     def _make_project_records(self, ps, ms=None, include_recent=True, include_recent_first=True):
+        if not ps:
+            return []
+
         db = self.db
         with db.session_ctx():
             if not ms:

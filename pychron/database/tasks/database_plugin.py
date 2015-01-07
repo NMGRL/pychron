@@ -31,8 +31,8 @@ class DatabasePlugin(BaseTaskPlugin):
 
     test_pychron_description = 'Test the connection to the Pychron Database'
     test_massspec_description = 'Test the connection to the MassSpec Database'
-    test_pychron_error = 'ddd'
-
+    test_pychron_error = ''
+    test_massspec_error = ''
 
     def start(self):
         self.startup_test()
@@ -51,7 +51,6 @@ class DatabasePlugin(BaseTaskPlugin):
         if not c:
             self.test_pychron_error = iso.db.connection_error
 
-        print 'fffff', self.test_pychron_error
         return 'Passed' if c else 'Failed'
 
     def test_massspec(self):
