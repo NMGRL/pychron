@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2014 Jake Ross
+# Copyright 2015 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,38 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import List, Dict
+from traits.api import HasTraits
+from traitsui.api import View, UItem, Item, HGroup, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.core.templater.base_templater import BaseTemplater
+from pychron.core.templater.templater_view import BaseTemplateView
 
 
-class CommentTemplater(BaseTemplater):
-    attributes = List(['irrad_level', 'irrad_hole', '<SPACE>'])
-    example_context = Dict({'irrad_level': 'A',
-                            'irrad_hole': '9'})
-
-    base_predefined_labels = List(['', 'irrad_level : irrad_hole'])
-
-    label = 'irrad_level : irrad_hole'
-    persistence_name = 'comment'
-
-    def render(self, obj):
-        f = self.formatter
-        return f.format(**self._generate_context(obj))
-
-    def _generate_context(self, obj):
-        ctx = {}
-        for ai in self.attributes:
-            v = ' ' if ai=='<SPACE>' else getattr(obj, ai)
-            ctx[ai] = v
-        return ctx
-
-
-# if __name__ == '__main__':
-#     c = CommentTemplater()
-#     cv = CommentTemplateView(model=c)
-#     cv.configure_traits()
+class CommentTemplateView(BaseTemplateView):
+    view_title = 'Comment Maker'
 
 # ============= EOF =============================================
 
