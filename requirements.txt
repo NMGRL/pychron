@@ -5,7 +5,7 @@ traits>=4.4
 traitsui>=4.4
 envisage
 chaco>=4.4
-enable>=4.4
+enable>=4.3
 pyface>=4.4
 uncertainties
 PyMySQL

@@ -190,28 +190,7 @@ def app_factory(klass, user):
     return app
 
 
-def check_dependencies():
-    """
-        check the dependencies and
-    """
-    for mod, req in (('uncertainties', '2.1'),
-                     ('pint', '0.5')):
-        try:
-            mod = __import__(mod)
-            ver = mod.__version__
-        except ImportError:
-            warning(None, 'Install "{}" package. required version>={} '.format(mod, req))
-            return
 
-        vargs = ver.split('.')
-        maj = int(vargs[0])
-        if maj < int(float(req)):
-            warning(None, 'Update "{}" package. your version={}. required version>={} '.format(mod,
-                                                                                               maj,
-                                                                                               req))
-            return
-
-    return True
 
 
 def launch(klass, user):
@@ -228,10 +207,6 @@ def launch(klass, user):
     #     if not check_login(fp.read()):
     #         logger.critical('Login failed')
     #         return
-
-    if not check_dependencies():
-        logger.info('check dependencies failed')
-        os._exit(0)
 
     app = app_factory(klass, user)
 

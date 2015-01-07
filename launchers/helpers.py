@@ -24,7 +24,7 @@ import sys
 import logging
 
 # ============= local library imports  ==========================
-from pyface.message_dialog import information
+from pyface.message_dialog import information, warning
 
 logger = logging.getLogger()
 
@@ -38,11 +38,34 @@ def entry_point(modname, klass, setup_version_id='', debug=False):
     set_commandline_args()
 
     # import app klass and pass to launch function
-    mod = __import__('pychron.applications.{}'.format(modname), fromlist=[klass])
-    from pychron.envisage.pychron_run import launch
+    if check_dependencies():
+        from pychron.envisage.pychron_run import launch
+        mod = __import__('pychron.applications.{}'.format(modname), fromlist=[klass])
+        launch(getattr(mod, klass), user)
 
-    launch(getattr(mod, klass), user)
 
+def check_dependencies():
+    """
+        check the dependencies and
+    """
+    for mod, req in (('uncertainties', '2.1'),
+                     ('pint', '0.5')):
+        try:
+            mod = __import__(mod)
+            ver = mod.__version__
+        except ImportError:
+            warning(None, 'Install "{}" package. required version>={} '.format(mod, req))
+            return
+
+        vargs = ver.split('.')
+        maj = int(vargs[0])
+        if maj < int(float(req)):
+            warning(None, 'Update "{}" package. your version={}. required version>={} '.format(mod,
+                                                                                               maj,
+                                                                                               req))
+            return
+
+    return True
 
 def set_commandline_args():
     from pychron.globals import globalv
@@ -92,7 +115,7 @@ def initialize_version(appname, debug):
         proot = None
         information(None, 'Pychron root directory not set in Preferences/General. Defaulting to "Pychron"')
 
-    if not os.path.isdir(proot):
+    if proot and not os.path.isdir(proot):
         information(None, 'Pychron root directory "{}" is not a valid location. Defaulting to "Pychron"'.format(proot))
         proot = None
 

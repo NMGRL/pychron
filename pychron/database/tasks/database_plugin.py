@@ -18,7 +18,6 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from envisage.ui.tasks.task_factory import TaskFactory
-from pychron.database.tasks.replication_task import ReplicationTask
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.database.tasks.connection_preferences import ConnectionPreferencesPane, MassSpecConnectionPane
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
@@ -55,11 +54,13 @@ class DatabasePlugin(BaseTaskPlugin):
 
         return ret
 
+
     def _get_pref(self, name):
         prefs = self.application.preferences
         return prefs.get('pychron.massspec.database.{}'.format(name))
 
     def _slave_factory(self):
+        from pychron.database.tasks.replication_task import ReplicationTask
         s = ReplicationTask()
         return s
 
