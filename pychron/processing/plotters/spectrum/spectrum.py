@@ -173,7 +173,8 @@ class Spectrum(BaseArArFigure):
     def _add_info(self, g, plot):
         if self.group_id == 0:
             if self.options.show_info:
-                ts = ['+/-{}s'.format(self.options.nsigma)]
+                ts = ['Age +/-{}s'.format(self.options.nsigma),
+                      'Error Env. +/-{}s'.format(self.options.step_nsigma)]
 
                 if ts:
                     pl = FlowPlotLabel(text='\n'.join(ts),
