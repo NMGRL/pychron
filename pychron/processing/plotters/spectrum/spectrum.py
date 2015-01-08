@@ -286,7 +286,8 @@ class Spectrum(BaseArArFigure):
         for sp in self.spectrum_overlays:
             sp.selections = sel
 
-        self.plateau_overlay.selections = sel
+        if self.plateau_overlay:
+            self.plateau_overlay.selections = sel
 
         ag = self.analysis_group
         for i, ai in enumerate(ag.analyses):

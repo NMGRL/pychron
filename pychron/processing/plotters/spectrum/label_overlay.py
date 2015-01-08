@@ -97,7 +97,7 @@ class SpectrumLabelOverlay(AbstractOverlay):
                 yu = yi + ei * nsigma
 
                 (x, yl), (_, yu) = comp.map_screen([(x, yl), (x, yu)])
-                y = yl - 10
+                y = yl - 15
                 if y < 0:
                     y = yu + 10
                     if y > comp.height:
@@ -121,7 +121,7 @@ class SpectrumLabelOverlay(AbstractOverlay):
         if self.display_extract_value:
             ts.append('{:n}'.format(ai.extract_value))
 
-        return ' '.join(ts)
+        return '\n'.join(ts)
 
     @on_trait_change('display_extract_value, display_step')
     def _update_visible(self):
