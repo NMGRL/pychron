@@ -28,7 +28,7 @@ from traitsui.qt4.editor import Editor
 
 class _CameraEditor(Editor):
     timer = Instance(QTimer)
-
+    swap = False
     def init(self, parent):
         self.control = self._create_control(parent)
 
@@ -49,19 +49,23 @@ class _CameraEditor(Editor):
         # w, h = self.control.width(), self.control.height()
         # img = self.value.get_image_data(size=(w, h))
         img = self.value.get_image_data(size=(640,480))
-        s = img.shape
-        if s:
-            im = QImage(img, s[1], s[0], QImage.Format_RGB888)
-            pix = QPixmap.fromImage(QImage.rgbSwapped(im))
-            self.control.setPixmap(pix)
+        if img is not None:
+            s = img.shape
+            if s:
+                im = QImage(img, s[1], s[0], QImage.Format_RGB32)
+                if self.swap:
+                    im =QImage.rgbSwapped(im)
+
+                pix = QPixmap.fromImage(im)
+                self.control.setPixmap(pix)
 
     def _create_control(self, parent):
         label = QLabel()
-        # label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         # sp = label.sizePolicy()
         # sp.setHeightForWidth(True)
-        # label.setFixedWidth(640)
-        # label.setFixedHeight(480)
+        label.setFixedWidth(680)
+        label.setFixedHeight(510)
         parent.addWidget(label)
         return label
 
