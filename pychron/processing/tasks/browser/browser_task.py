@@ -111,83 +111,6 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         super(BaseBrowserTask, self).__init__(*args, **kw)
         self.pattributes += ('irradiation_enabled', 'use_focus_switching')
 
-    def _get_filter_label(self):
-        ss = []
-        if self.identifier:
-            ss.append('Identifier={}'.format(self.identifier))
-
-        if self.use_mass_spectrometers:
-            ss.append('MS={}'.format(','.join(self.mass_spectrometer_includes)))
-
-        if self.project_enabled:
-            if self.selected_projects:
-                s = 'Project= {}'.format(','.join([s.name for s in self.selected_projects]))
-                ss.append(s)
-
-        if self.irradiation_enabled:
-            if self.irradiation:
-                s = 'Irradiation= {}'.format(self.irradiation)
-                ss.append(s)
-
-        if self.use_analysis_type_filtering:
-            if self.analysis_include_types:
-                s = 'Types= {}'.format(self.analysis_include_types)
-                ss.append(s)
-
-        if self.use_low_post:
-            # s='>={}'.format(self.low_post.strftime('%m-%d-%Y %H:%M'))
-            s = '>={}'.format(self.low_post)
-            ss.append(s)
-
-        if self.use_high_post:
-            s = '<={}'.format(self.high_post)
-            ss.append(s)
-
-        if self.use_named_date_range:
-            ss.append(self.named_date_range)
-
-        txt = ''
-        if ss:
-            txt = ' + '.join(ss)
-
-        n = len(txt)
-        if n > NCHARS:
-            lines = REG.findall(txt)
-            nn = NCHARS * len(lines)
-            if nn < n:
-                lines.append(txt[nn:])
-            return '\n'.join(lines)
-
-        return txt
-
-    def _identifier_change_hook(self, db, new, lns):
-        if len(new) > 2:
-            if self.project_enabled:
-                def get_projects():
-                    for li in lns:
-                        try:
-                            yield li.sample.project
-                        except AttributeError, e:
-                            print e
-
-                ps = sorted(list(set(get_projects())))
-                ps = [ProjectRecordView(p) for p in ps]
-                self.projects = ps
-                self.selected_projects = []
-
-            if self.irradiation_enabled:
-                def get_irradiations():
-                    for li in lns:
-                        try:
-                            yield li.irradiation_position.level.irradiation.name
-                        except AttributeError:
-                            pass
-
-                irrads = sorted(list(set(get_irradiations())))
-                self.irradiations = irrads
-                if irrads:
-                    self.irradiation = irrads[0]
-
     def refresh_samples(self):
         self.debug('refresh samples')
         self.set_samples(self._retrieve_labnumbers())
@@ -385,9 +308,10 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
     def _load_mass_spectrometers(self):
         db = self.db
-        ms = [mi.name for mi in db.get_mass_spectrometers()]
-        self.available_mass_spectrometers = ms
-        # self.mass_spectrometers = ['Spectrometer', 'None'] + ms
+        ms = db.get_mass_spectrometers()
+        if ms:
+            ms = [mi.name for mi in ms]
+            self.available_mass_spectrometers = ms
 
     def _load_analysis_types(self):
         db = self.db
@@ -501,6 +425,34 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
         return ls
 
+    def _identifier_change_hook(self, db, new, lns):
+        if len(new) > 2:
+            if self.project_enabled:
+                def get_projects():
+                    for li in lns:
+                        try:
+                            yield li.sample.project
+                        except AttributeError, e:
+                            print e
+
+                ps = sorted(list(set(get_projects())))
+                ps = [ProjectRecordView(p) for p in ps]
+                self.projects = ps
+                self.selected_projects = []
+
+            if self.irradiation_enabled:
+                def get_irradiations():
+                    for li in lns:
+                        try:
+                            yield li.irradiation_position.level.irradiation.name
+                        except AttributeError:
+                            pass
+
+                irrads = sorted(list(set(get_irradiations())))
+                self.irradiations = irrads
+                if irrads:
+                    self.irradiation = irrads[0]
+
     # handlers
     def _filter_by_button_fired(self):
         self.debug('filter by button fired low_post={}, high_post={}'.format(self.low_post, self.high_post))
@@ -522,6 +474,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         self.dump()
 
     def _graphical_filter_button_fired(self):
+        print 'ffffassdf'
         self.debug('doing graphical filter')
         from pychron.processing.tasks.browser.graphical_filter import GraphicalFilterModel, GraphicalFilterView
 
@@ -719,7 +672,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
         self.filter_focus = not bool(new)
 
-    @on_trait_change('data_selector.database_selector.dclicked')
+    @on_trait_change('data_selector:database_selector:dclicked')
     def _handle_selector_dclick(self, new):
         self._selector_dclick(new.item)
 
@@ -746,6 +699,57 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         if self.use_focus_switching and not self.filter_focus:
             ret = False  # default
         return ret
+
+    def _get_filter_label(self):
+        ss = []
+        if self.identifier:
+            ss.append('Identifier={}'.format(self.identifier))
+
+        if self.use_mass_spectrometers:
+            ss.append('MS={}'.format(','.join(self.mass_spectrometer_includes)))
+
+        if self.project_enabled:
+            if self.selected_projects:
+                s = 'Project= {}'.format(','.join([s.name for s in self.selected_projects]))
+                ss.append(s)
+
+        if self.irradiation_enabled:
+            if self.irradiation:
+                s = 'Irradiation= {}'.format(self.irradiation)
+                ss.append(s)
+
+        if self.use_analysis_type_filtering:
+            if self.analysis_include_types:
+                s = 'Types= {}'.format(self.analysis_include_types)
+                ss.append(s)
+
+        if self.use_low_post:
+            # s='>={}'.format(self.low_post.strftime('%m-%d-%Y %H:%M'))
+            s = '>={}'.format(self.low_post)
+            ss.append(s)
+
+        if self.use_high_post:
+            s = '<={}'.format(self.high_post)
+            ss.append(s)
+
+        if self.use_named_date_range:
+            ss.append(self.named_date_range)
+
+        txt = ''
+        if ss:
+            txt = ' + '.join(ss)
+
+        n = len(txt)
+        if n > NCHARS:
+            lines = REG.findall(txt)
+            nn = NCHARS * len(lines)
+            if nn < n:
+                lines.append(txt[nn:])
+            return '\n'.join(lines)
+
+        return txt
+
+
 
     def _analysis_table_default(self):
         at = AnalysisTable(db=self.db,

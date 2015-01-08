@@ -16,23 +16,17 @@
 
 # ============= enthought library imports =======================
 from pyface.action.api import Action
+from pyface.tasks.action.task_action import TaskAction
 
 # ============= standard library imports ========================
 
 # ============= local library imports  ==========================
 # from pychron.envisage.core.action_helper import open_manager
 
-#sample change actions
-from pyface.image_resource import ImageResource
-from pyface.tasks.action.task_action import TaskAction
-from pychron.paths import paths
+from pychron.envisage.resources import icon
 
 
-def icon(name):
-    return ImageResource(name='{}.png'.format(name),
-                         search_path=paths.icon_search_path)
-
-
+# sample change actions
 class IsolateChamberAction(TaskAction):
     name = 'Isolate Chamber'
     method = 'isolate_chamber'

@@ -16,28 +16,23 @@
 
 # ============= enthought library imports =======================
 from traits.api import Instance
-from traitsui.api import View, UItem, VSplit, VGroup, EnumEditor, \
-    HGroup, TabularEditor, CheckListEditor, spring, Group
+from traitsui.api import View, UItem, VGroup, EnumEditor, \
+    HGroup, CheckListEditor, spring, Group
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.core.ui.custom_label_editor import CustomLabel
-from pychron.core.ui.qt.tabular_editor import FilterTabularEditor
+from pychron.core.ui.qt.tabular_editors import FilterTabularEditor
 from pychron.envisage.browser.adapters import ProjectAdapter
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.tasks.browser.pane_model_view import PaneModelView
-from pychron.processing.tasks.browser.tableview import TableView, TableTools
+from pychron.processing.tasks.browser.tableview import TableView
 
 
 class BrowserSampleView(PaneModelView):
     tableview = Instance(TableView)
-    tabletools = Instance(TableTools)
 
     def _tableview_default(self):
         return TableView(model=self.model, pane=self.pane)
-
-    def _tabletools_default(self):
-        return TableTools(model=self.model, pane=self.pane)
 
     def traits_view(self):
         irrad_grp = VGroup(
@@ -110,20 +105,15 @@ class BrowserSampleView(PaneModelView):
 
         top_level_filter_grp = VGroup(
             CustomLabel('filter_label',
-                  style='custom',
+                        style='custom',
                         width=-1.0,
                         visible_when='not filter_focus'),
             HGroup(ms_grp, ln_grp),
-                                      HGroup(project_grp, irrad_grp),
-                                      analysis_type_group,
-                                      date_grp)
+            HGroup(project_grp, irrad_grp),
+            analysis_type_group,
+            date_grp)
 
-        g1 = VGroup(UItem('controller.tabletools',
-                          style='custom', height=0.1),
-                    UItem('controller.tableview',
-                          height=0.6,
-                          style='custom'))
-
+        g1 = UItem('controller.tableview', style='custom')
         grp = VGroup(top_level_filter_grp, g1)
         return View(grp)
 

@@ -25,6 +25,7 @@ from pychron.applications.pychron_application import PychronApplication
 class PyUV(PychronApplication):
     id = 'pychron.uv.application'
     name = 'pyUV'
+    shortname ='uv'
     default_layout = [
         TaskWindowLayout('tasks.hardware'),
         TaskWindowLayout('pychron.fusions.uv')]

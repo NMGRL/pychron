@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -32,8 +32,8 @@ class ErrorBarOverlay(AbstractOverlay):
     draw_layer = 'underlay'
     nsigma = 1
     _cache_valid = False
-    use_end_caps= Bool(True)
-    line_width=Float(1)
+    use_end_caps = Bool(True)
+    line_width = Float(1)
 
     def overlay(self, component, gc, view_bounds, mode='normal'):
         with gc:
@@ -48,14 +48,14 @@ class ErrorBarOverlay(AbstractOverlay):
                 y = comp.value_mapper.map_screen(y)
                 err = comp.xerror.get_data()
 
-                err = err * self.nsigma
+                err *= self.nsigma
                 xlow, xhigh = x - err, x + err
                 xlow = comp.index_mapper.map_screen(xlow)
                 xhigh = comp.index_mapper.map_screen(xhigh)
 
                 start, end = column_stack((xlow, y)), column_stack((xhigh, y))
-                lstart, lend = column_stack((xlow, y-5)), column_stack((xlow, y+5))
-                ustart, uend = column_stack((xhigh, y-5)), column_stack((xhigh, y+5))
+                lstart, lend = column_stack((xlow, y - 5)), column_stack((xlow, y + 5))
+                ustart, uend = column_stack((xhigh, y - 5)), column_stack((xhigh, y + 5))
 
             else:
                 x = comp.index_mapper.map_screen(x)

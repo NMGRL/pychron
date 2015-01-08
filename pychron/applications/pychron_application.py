@@ -26,6 +26,7 @@ from pyface.image_resource import ImageResource
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================
+from pychron.envisage.resources import splash_icon
 from pychron.globals import globalv
 
 from pychron.paths import paths
@@ -62,6 +63,7 @@ class PychronApplication(BaseTasksApplication):
     username = Str
     use_login = Bool
     multi_user = Bool
+    shortname = ''
 
     def __init__(self, username=None, *args, **kw):
         if username:
@@ -122,9 +124,7 @@ class PychronApplication(BaseTasksApplication):
         return about_dialog
 
     def _splash_screen_default(self):
-        sp = SplashScreen(
-            image=ImageResource(name='splash.png',
-                                search_path=paths.splash_search_path))
+        sp = SplashScreen(image=splash_icon(self.shortname))
         return sp
 
     def get_version_info(self):

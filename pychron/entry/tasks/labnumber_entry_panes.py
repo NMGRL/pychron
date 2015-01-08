@@ -24,7 +24,7 @@ from pyface.tasks.traits_dock_pane import TraitsDockPane
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
-from pychron.core.ui.qt.tabular_editor import FilterTabularEditor
+from pychron.core.ui.qt.tabular_editors import FilterTabularEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.pane_helpers import spacer
 from pychron.entry.irradiated_position import IrradiatedPositionAdapter
@@ -76,9 +76,6 @@ class IrradiationEditorPane(TraitsDockPane):
                 UItem('sample_filter',
                       editor=EnumEditor(name='sample_filter_values'),
                       width=-25),
-                # icon_button_editor('configure_sample_table',
-                #                    'cog',
-                #                    tooltip='Configure Sample Table'),
                 icon_button_editor('edit_sample_button', 'database_edit',
                                    tooltip='Edit sample in database'),
                 icon_button_editor('add_sample_button', 'database_add',

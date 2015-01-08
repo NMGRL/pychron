@@ -111,7 +111,6 @@ class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
     sample_filter_parameter = Str('name')
     sample_filter_comparator = Enum('=', 'not =')
     sample_filter_parameters = Property(List, depends_on='labnumber_tabular_adapter.columns')
-    configure_sample_table = Button
     clear_sample_table = Button
     clear_selection_button = Button
 
@@ -155,65 +154,12 @@ class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
                    'use_named_date_range', 'named_date_range',
                    'low_post', 'high_post')
 
-    def _get_db(self):
-        if self.use_workspace:
-            return self.workspace.index_db
-        else:
-            return self.manager.db
-
     def dump_browser(self):
         self.dump()
         self.dump_browser_selection()
 
     def load_browser_options(self):
         self.load()
-
-    # persistence
-    @property
-    def persistence_path(self):
-        return os.path.join(paths.hidden_dir, 'browser_options')
-
-    @property
-    def selection_persistence_path(self):
-        p = os.path.join(paths.hidden_dir, 'browser_selection')
-        return self._make_persistence_path(p)
-
-    # def _browser_options_hook(self, d):
-    # pass
-
-    # def dump_browser_options(self):
-    # d = {
-    # # 'include_monitors': self.include_monitors,
-    # # 'include_unknowns': self.include_unknowns,
-    # 'project_enabled': self.project_enabled,
-    #         'sample_view_active': self.sample_view_active}
-    #     self._browser_options_hook(d)
-    #
-    #     p = os.path.join(paths.hidden_dir, 'browser_options')
-    #     with open(p, 'w') as fp:
-    #         pickle.dump(d, fp)
-
-    # def load_browser_options(self):
-    #     d = {}
-    #     p = os.path.join(paths.hidden_dir, 'browser_options')
-    #     if os.path.isfile(p):
-    #         with open(p, 'r') as fp:
-    #             try:
-    #                 d = pickle.load(fp)
-    #             except Exception:
-    #                 pass
-    #     if d:
-    #         self.trait_set(**d)
-
-    # def load_browser_date_bounds(self):
-    #     obj = self._get_browser_persistence()
-    #     if obj:
-    #         for attr in ('use_low_post', 'use_high_post',
-    #                      'use_named_date_range', 'named_date_range',
-    #                      'low_post', 'high_post', ):
-    #             sd = obj.get(attr)
-    #             if sd:
-    #                 setattr(self, attr, sd)
 
     def load_browser_selection(self):
         # self.debug('$$$$$$$$$$$$$$$$$$$$$ Loading browser selection')
@@ -248,8 +194,11 @@ class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
             with open(self.selection_persistence_path, 'wb') as fp:
                 pickle.dump(obj, fp)
         except (pickle.PickleError, EOFError, OSError), e:
-            #self.debug('Failed dumping previous browser selection. {}'.format(e))
+            # self.debug('Failed dumping previous browser selection. {}'.format(e))
             return
+
+    def configure_sample_table(self):
+        self.table_configurer.edit_traits()
 
     def set_projects(self, ps, sel=None):
         if sel is None:
@@ -266,32 +215,6 @@ class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
         self.samples = s
         self.osamples = s
         self.trait_set(selected_samples=sel)
-
-    def _make_project_records(self, ps, ms=None, include_recent=True, include_recent_first=True):
-        db = self.db
-        with db.session_ctx():
-            if not ms:
-                ms = db.get_mass_spectrometers()
-                ms = [mi.name for mi in ms]
-            recents = []
-            if include_recent:
-                recents = [ProjectRecordView('RECENT {}'.format(mi.upper())) for mi in ms]
-
-            pss = [ProjectRecordView(p) for p in ps]
-
-            if include_recent:
-                # move references project to after Recent
-                p = next((p for p in pss if p.name.lower() == 'references'), None)
-                if p is not None:
-                    rp = pss.pop(pss.index(p))
-                    pss.insert(0, rp)
-            else:
-                pss = [p for p in pss if p.name.lower() != 'references']
-
-            if include_recent_first:
-                return recents + pss
-            else:
-                return pss + recents
 
     def load_projects(self, include_recent=True):
         db = self.db
@@ -489,6 +412,39 @@ class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
                                   **kw):
         return self._retrieve_analyses(samples=samples, **kw)
 
+    def _make_project_records(self, ps, ms=None, include_recent=True, include_recent_first=True):
+        if not ps:
+            return []
+
+        db = self.db
+        with db.session_ctx():
+            if not ms:
+                ms = db.get_mass_spectrometers()
+                if ms:
+                    ms = [mi.name for mi in ms]
+                else:
+                    ms = []
+
+            recents = []
+            if include_recent:
+                recents = [ProjectRecordView('RECENT {}'.format(mi.upper())) for mi in ms]
+
+            pss = [ProjectRecordView(p) for p in ps]
+
+            if include_recent:
+                # move references project to after Recent
+                p = next((p for p in pss if p.name.lower() == 'references'), None)
+                if p is not None:
+                    rp = pss.pop(pss.index(p))
+                    pss.insert(0, rp)
+            else:
+                pss = [p for p in pss if p.name.lower() != 'references']
+
+            if include_recent_first:
+                return recents + pss
+            else:
+                return pss + recents
+
     def _make_records(self, ans):
         def func(xi, prog, i, n):
             if prog:
@@ -503,18 +459,6 @@ class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
             p = 'name'
 
         return p.lower()
-
-    # persistence private
-    def _get_browser_persistence(self):
-        p = self.selection_persistence_path
-        # p = os.path.join(paths.hidden_dir, 'browser_selection')
-        if os.path.isfile(p):
-            try:
-                with open(p, 'rb') as fp:
-                    return pickle.load(fp)
-            except (pickle.PickleError, EOFError, OSError), e:
-                # self.debug('Failed loaded previous browser selection. {}'.format(e))
-                pass
 
     def _load_browser_selection(self, selection):
         def load(attr, values):
@@ -589,10 +533,7 @@ class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
         self.samples = []
         self.osamples = []
 
-    def _configure_sample_table_fired(self):
-        self.table_configurer.edit_traits()
-
-    def _sample_tabular_adapter_changed(self):
+    def _labnumber_tabular_adapter_changed(self):
         self.table_configurer.adapter = self.labnumber_tabular_adapter
         self.table_configurer.load()
 
@@ -616,66 +557,17 @@ class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
         s = self._retrieve_labnumbers()
         self.set_samples(s, [])
 
-        # @on_trait_change('level')
-        # def _find_by_irradiation(self):
-        #     if not (self.level and self._activated):
-        #         return
-
-        # man = self.manager
-        # db = man.db
-        # with db.session_ctx():
-        #     level = man.get_level(self.level)
-        #     if level:
-        #
-        #         refs, unks = man.group_level(level)
-        #         xs = []
-        #         if 'Monitors' in self.analysis_include_types:
-        #         # if self.include_monitors:
-        #             xs.extend(refs)
-        #         if 'Unknowns' in self.analysis_include_types:
-        #         # if self.include_unknowns:
-        #             xs.extend(unks)
-        #
-        #         lns = [x.identifier for x in xs]
-        #         self.samples = [LabnumberRecordView(li)
-        #                         for li in db.get_labnumbers(lns)
-        #                         if li.sample]
-
-        # def _sample_filter_parameter_changed(self, new):
-        #     if new:
-        #         vs = []
-        #         p = self._get_sample_filter_parameter()
-
-        # for si in self.osamples:
-        #     v = getattr(si, p)
-        #     if not v in vs:
-        #         vs.append(v)
-        #
-        # self.sample_filter_values = vs
-
-    # def _project_filter_changed(self, new):
-    #     self.projects = filter(filter_func(new, 'name'), self.oprojects)
-
     def _sample_filter_changed(self, new):
         name = self._get_sample_filter_parameter()
         self.samples = filter(filter_func(new, name), self.osamples)
 
-    # proprty get/set
+    # property get/set
     def _set_low_post(self, v):
         self._low_post = v
-
-    # def _validate_low_post(self, v):
-    # v = v.replace('/', '-')
-    # if v.count('-') < 3:
-    # map(int, v.split('-'))
 
     def _set_high_post(self, v):
         self._high_post = v
 
-    # def _validate_high_post(self,v):
-    #     v=v.replace('/','-')
-    #     if v.count('-')<3:
-    #         map(int, v.split('-'))
 
     def _get_high_post(self):
         hp = None
@@ -729,18 +621,32 @@ class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
             ats = self._analysis_include_types
             return map(str.lower, ats)
 
-    #factories
-    # def _record_view_factory(self, ai, progress=None, **kw):
-    #
-    # iso = IsotopeRecordView(**kw)
-    #     iso.create(ai)
-    #     if progress:
-    #         progress.change_message('Loading {}'.format(iso.record_id))
-    #
-    #     return iso
+    def _get_db(self):
+        if self.use_workspace:
+            return self.workspace.index_db
+        else:
+            return self.manager.db
+    # persistence
+    @property
+    def persistence_path(self):
+        return os.path.join(paths.hidden_dir, 'browser_options')
 
+    @property
+    def selection_persistence_path(self):
+        p = os.path.join(paths.hidden_dir, 'browser_selection')
+        return self._make_persistence_path(p)
 
-
+    # persistence private
+    def _get_browser_persistence(self):
+        p = self.selection_persistence_path
+        # p = os.path.join(paths.hidden_dir, 'browser_selection')
+        if os.path.isfile(p):
+            try:
+                with open(p, 'rb') as fp:
+                    return pickle.load(fp)
+            except (pickle.PickleError, EOFError, OSError), e:
+                # self.debug('Failed loaded previous browser selection. {}'.format(e))
+                pass
     # defaults
     def _table_configurer_default(self):
         return SampleTableConfigurer()

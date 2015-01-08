@@ -197,7 +197,7 @@ class SpectrumErrorOverlay(AbstractOverlay):
                     gc.set_fill_color(c)
                     gc.set_stroke_color(c)
 
-                gc.rect(x, y, w + 1, h)
+                gc.rect(x, y, w, h)
                 func()
                 # gc.fill_path()
 

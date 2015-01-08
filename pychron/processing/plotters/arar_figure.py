@@ -408,6 +408,7 @@ class BaseArArFigure(HasTraits):
     def _build_label_text(self, x, we, mswd, valid_mswd, n,
                           percent_error=False,
                           sig_figs=3):
+
         display_n = True
         display_mswd = n >= 2
         if display_n:

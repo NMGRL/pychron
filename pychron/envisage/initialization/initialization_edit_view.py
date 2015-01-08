@@ -16,18 +16,24 @@
 
 # ============= enthought library imports =======================
 from pyface.constant import YES
-from traits.api import HasTraits, Str, List, Event, Instance
+from pyface.timer.do_later import do_after
+from traits.api import HasTraits, Str, List, Event, Instance, Dict, Button
 from pyface.confirmation_dialog import confirm
 from pyface.action.menu_manager import MenuManager
 from traitsui.menu import Action
-from traitsui.api import View, UItem, Handler, VGroup
+from traitsui.api import View, UItem, Handler, VGroup, HGroup, EnumEditor, Item
 from traitsui.tree_node import TreeNode
 # ============= standard library imports ========================
+import os
+import pickle
 # ============= local library imports  ==========================
 from pychron.core.ui.tree_editor import TreeEditor
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.initialization.nodes import Plugin, PluginTree, PluginTreeNode, GlobalsTreeNode, GlobalTree, \
     InitializationModel, PackageTreeNode, GlobalValue, BaseNode
-from pychron.envisage.initialization.utilities import DESCRIPTION_MAP, get_initialization_model
+from pychron.envisage.initialization.utilities import DESCRIPTION_MAP, get_initialization_model, NOMINAL_DEFAULTS, \
+    DEFAULTS_MAP
+from pychron.paths import paths
 
 
 class PEVHandler(Handler):
@@ -51,12 +57,69 @@ class PEVHandler(Handler):
 class InitializationEditView(HasTraits):
     model = Instance(InitializationModel, ())
 
+    default = Str
+    defaults = List
+    defaults_map = Dict
+    add_default_button = Button
+
     refresh_needed = Event
     refresh_all_needed = Event
     selected = List
     dclicked = Event
     description = Str
     help_str = 'Enable/Disable the active plugins.\nDouble-click to toggle or Right-click for menu options'
+
+    def load_defaults(self):
+
+        nominal_defaults = NOMINAL_DEFAULTS[:]
+        p = os.path.join(paths.hidden_dir, 'initialization_defaults')
+        if os.path.isfile(p):
+            with open(p, 'r') as fp:
+                try:
+                    ds = pickle.load(fp)
+                    nominal_defaults.extend(ds)
+                except (pickle.PickleError, OSError, EOFError):
+                    pass
+        self.defaults = nominal_defaults
+
+    def set_enabled(self, v):
+        for si in self.selected:
+            si.enabled = v
+        self.update()
+
+    def save(self):
+        self.model.save()
+
+    def update(self):
+        self.model.update()
+        self.refresh_all_needed = True
+
+    def _set_defaults(self, new):
+        if new:
+            gtree, ptree = self.model.trees
+            dd = DEFAULTS_MAP[new]
+            dglobals = dd['globals']
+
+            for value in gtree.values:
+                name = value.name
+                value.enabled = name in dglobals if dglobals else False
+
+            for subtree in ('general', 'hardware', 'social'):
+                d = dd[subtree]
+                tree = ptree.get_subtree(subtree)
+                for plugin in tree.plugins:
+                    plugin.enabled = plugin.name in d if d else False
+
+            self.update()
+
+    # handlers
+    def _default_changed(self, new):
+        self._set_defaults(new)
+
+    def _dclicked_fired(self):
+        s = self.selected[0]
+        s.enabled = not s.enabled
+        self.update()
 
     def _selected_changed(self, new):
         desc = ''
@@ -71,23 +134,6 @@ class InitializationEditView(HasTraits):
                 desc = '{}. {}'.format(name, desc)
 
         self.description = desc
-
-    def set_enabled(self, v):
-        for si in self.selected:
-            si.enabled = v
-        self.update()
-
-    def _dclicked_fired(self):
-        s = self.selected[0]
-        s.enabled = not s.enabled
-        self.update()
-
-    def save(self):
-        self.model.save()
-
-    def update(self):
-        self.model.update()
-        self.refresh_all_needed = True
 
     def traits_view(self):
         nodes = [
@@ -118,7 +164,9 @@ class InitializationEditView(HasTraits):
                             auto_open=True,
                             children='values')]
 
-        v = View(VGroup(UItem('model', editor=TreeEditor(nodes=nodes,
+        v = View(VGroup(HGroup(Item('default', label='Predefined Initialiation',
+                                    editor=EnumEditor(name='defaults'))),
+                        UItem('model', editor=TreeEditor(nodes=nodes,
                                                          editable=False,
                                                          selection_mode='extended',
                                                          selected='selected',
@@ -142,13 +190,15 @@ def edit_initialization():
     # ip = InitializationParser()
 
     pev = InitializationEditView()
+    pev.load_defaults()
     pev.model = get_initialization_model()
 
     # pev.model = model
     # pev.plugin_tree = rtree
+    # do_after(1000, pev.trait_set, default='Experiment CO2')
     info = pev.edit_traits()
     if info.result:
-        pev.model.save()
+        pev.save()
         if pev.model.is_dirty():
             return confirm(None, 'Restart for changes to take effect. Restart now?') == YES
 

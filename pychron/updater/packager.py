@@ -36,9 +36,9 @@ def copy_resources(root, dest, app_name):
         os.mkdir(idest)
 
     includes = []
-    icon_requirements = os.path.join(root, 'resources','icon_requirements.txt')
-    if os.path.isfile(icon_requirements):
-        with open(icon_requirements, 'r') as fp:
+    icon_req = os.path.join(root, 'resources','icon_req.txt')
+    if os.path.isfile(icon_req):
+        with open(icon_req, 'r') as fp:
             includes = [ri.strip() for ri in fp.read().split('\n')]
 
     for di in os.listdir(iroot):
@@ -51,7 +51,7 @@ def copy_resources(root, dest, app_name):
     # copy splashes and abouts
     for ni, nd in (('splash', 'splashes'), ('about', 'abouts')):
         sname = '{}_{}.png'.format(ni, app_name)
-        copy_resource(dest, os.path.join(root, 'resources', nd, sname), name='{}.png'.format(ni))
+        copy_resource(idest, os.path.join(root, 'resources', nd, sname), name='{}.png'.format(ni))
 
     # copy helper mod
     for a in ('helpers', ):

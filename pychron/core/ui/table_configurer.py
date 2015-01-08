@@ -92,11 +92,12 @@ class TableConfigurer(HasTraits):
 
     def set_columns(self):
         # def _columns_changed(self):
-        cols = self._assemble_columns()
-        for ci in self.children:
-            ci.columns = cols
+        if self.adapter:
+            cols = self._assemble_columns()
+            for ci in self.children:
+                ci.columns = cols
 
-        self.adapter.columns = cols
+            self.adapter.columns = cols
 
     def _set_font(self, f):
         s = f.pointSize()
@@ -255,7 +256,7 @@ class AnalysisTableConfigurer(TableConfigurer):
                         show_border=True,
                         label='Limiting'),
                  buttons=['OK', 'Cancel', 'Revert'],
-                 kind='modal',
+                 # kind='modal',
                  title=self.title,
                  handler=TableConfigurerHandler,
                  resizable=True,
@@ -284,11 +285,12 @@ class SampleTableConfigurer(TableConfigurer):
                          style='custom',
                          editor=CheckListEditor(name='available_columns', cols=3)),
                    label='Columns', show_border=True),
-            Item('filter_non_run_samples',
-                 tooltip='Omit samples that have not been analyzed to date',
-                 label='Exclude Non-Run')),
+            # Item('filter_non_run_samples',
+            #      tooltip='Omit samples that have not been analyzed to date',
+            #      label='Exclude Non-Run')
+        ),
                  buttons=['OK', 'Cancel', 'Revert'],
-                 kind='modal',
+                 # kind='modal',
                  title=self.title,
                  handler=TableConfigurerHandler,
                  resizable=True,

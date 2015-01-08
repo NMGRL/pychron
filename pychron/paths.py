@@ -174,6 +174,8 @@ class Paths(object):
     power_map_dir = None
     labbook_dir = None
     data_det_ic_dir = None
+    sample_image_dir = None
+    sample_image_backup_dir = None
     # vcs_dir = None
     # initialization_dir = None
     # device_creator_dir = None
@@ -327,6 +329,8 @@ class Paths(object):
         self.loading_dir = join(self.data_dir, 'loads')
         self.power_map_dir = join(self.data_dir, 'power_maps')
         self.labbook_dir = join(self.data_dir, 'labbook')
+        self.sample_image_dir = join(self.data_dir, 'sample_image_dir')
+        self.sample_image_backup_dir = join(self.sample_image_dir, 'backup')
         # self.vcs_dir = join(self.data_dir, 'vcs')
         # ==============================================================================
         # lovera exectuables

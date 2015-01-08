@@ -35,18 +35,20 @@ ICON_MAP = {'Database': icon('database'),
             'Processing': icon('tools-anvil'),
             'Update': icon('update_misc'),
             'General': icon('go-home-5'),
-            'Spectrometer': icon('prism'),
-
+            'Spectrometer': icon('spectrum_emission'),
+            # 'Hardware': icon('speedometer'),
+            'Hardware': icon('toolbox'),
             'Constants': icon('applications-education-mathematics'),
             'Labspy': icon('labspy'),
             'Fusions Diode': icon('laser'),
             'Fusions UV': icon('laser'),
             'Fusions CO2': icon('laser'),
-            'ExtractionLine': icon('extraction_line'),
+            'ExtractionLine': icon('motherboard'),
+            'Entry': icon('radioactivity'),
             'Loading': icon('caterpillar'),
             'Scripts': icon('scripts_text'),
             'Dashboard': icon('dashboard'),
-            'SystemMonitor': icon('action-log')}
+            'SystemMonitor': icon('action_log')}
 
 
 class CatergoryAdapter(TabularAdapter):

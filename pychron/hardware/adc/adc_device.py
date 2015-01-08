@@ -13,12 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
 # =============enthought library imports=======================
 from traits.api import Str
 # =============standard library imports ========================
 # =============local library imports  ==========================
-from pychron.core import Q_
 
 from pychron.hardware.core.abstract_device import AbstractDevice
 from pychron.hardware.polyinomial_mapper import PolynomialMapper

@@ -15,10 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from numpy.core.umath import log10
 from traits.api import Int
 from chaco.ticks import DefaultTickGenerator
 # ============= standard library imports ========================
-from numpy import log10
+# from numpy import log10
 # ============= local library imports  ==========================
 
 
@@ -43,6 +44,8 @@ class SparseLogTicks(DefaultTickGenerator):
     def get_ticks(self, *args, **kw):
         ticks = super(SparseLogTicks, self).get_ticks(*args, **kw)
         # get only 0.1,1,10,100,1000...
+
+        ticks = ticks[ticks>0]
         ticks = ticks[log10(ticks) % 1 == 0]
         return ticks
 

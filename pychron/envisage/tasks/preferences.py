@@ -29,6 +29,7 @@ class GeneralPreferences(GitRepoPreferencesHelper):
     root_dir = Directory
     use_login = Bool
     multi_user = Bool
+    confirm_quit = Bool
 
 
 class GeneralPreferencesPane(PreferencesPane):
@@ -40,7 +41,9 @@ class GeneralPreferencesPane(PreferencesPane):
                           show_border=True, label='Root')
         login_grp = VGroup(Item('use_login'), Item('multi_user'),
                            label='Login', show_border=True)
-        v = View(VGroup(root_grp,
+        v = View(VGroup(Item('confirm_quit', label='Confirm Quit',
+                             tooltip='Ask user for confirmation when quitting application'),
+                        root_grp,
                         login_grp,
                         remote_status_item('Laboratory Repo'),
                         label='General',

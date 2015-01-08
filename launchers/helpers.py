@@ -13,6 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from traits.etsconfig.api import ETSConfig
+
+ETSConfig.toolkit = "qt4"
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
@@ -21,6 +24,7 @@ import sys
 import logging
 
 # ============= local library imports  ==========================
+from pyface.message_dialog import information, warning
 
 logger = logging.getLogger()
 
@@ -30,19 +34,38 @@ def entry_point(modname, klass, setup_version_id='', debug=False):
         entry point
     """
 
-    from traits.etsconfig.api import ETSConfig
-
-    ETSConfig.toolkit = "qt4"
-
     user = initialize_version(modname, debug)
     set_commandline_args()
 
     # import app klass and pass to launch function
-    mod = __import__('pychron.applications.{}'.format(modname), fromlist=[klass])
-    from pychron.envisage.pychron_run import launch
+    if check_dependencies():
+        from pychron.envisage.pychron_run import launch
+        mod = __import__('pychron.applications.{}'.format(modname), fromlist=[klass])
+        launch(getattr(mod, klass), user)
 
-    launch(getattr(mod, klass), user)
 
+def check_dependencies():
+    """
+        check the dependencies and
+    """
+    for mod, req in (('uncertainties', '2.1'),
+                     ('pint', '0.5')):
+        try:
+            mod = __import__(mod)
+            ver = mod.__version__
+        except ImportError:
+            warning(None, 'Install "{}" package. required version>={} '.format(mod, req))
+            return
+
+        vargs = ver.split('.')
+        maj = int(vargs[0])
+        if maj < int(float(req)):
+            warning(None, 'Update "{}" package. your version={}. required version>={} '.format(mod,
+                                                                                               maj,
+                                                                                               req))
+            return
+
+    return True
 
 def set_commandline_args():
     from pychron.globals import globalv
@@ -89,6 +112,14 @@ def initialize_version(appname, debug):
         proot = cp.get('pychron.general', 'root_dir')
     except BaseException, e:
         print 'root_dir exception={}'.format(e)
+        proot = None
+        information(None, 'Pychron root directory not set in Preferences/General. Defaulting to "Pychron"')
+
+    if proot and not os.path.isdir(proot):
+        information(None, 'Pychron root directory "{}" is not a valid location. Defaulting to "Pychron"'.format(proot))
+        proot = None
+
+    if proot is None:
         proot = os.path.join(os.path.expanduser('~'), 'Pychron')
 
     paths.build(proot)

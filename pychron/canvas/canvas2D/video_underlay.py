@@ -23,20 +23,17 @@ from chaco.api import AbstractOverlay
 # from pychron.image.video import Video
 
 class VideoUnderlay(AbstractOverlay):
-    '''
-    '''
-
-    '''
+    """
         video only needs to be an object the implements
         get_image_data([,size=(w,h)])
             returns  ndarray
-    '''
+    """
     video = Any
 
     def overlay(self, component, gc, *args, **kw):
-        '''
+        """
 
-        '''
+        """
         with gc:
             gc.clip_to_rect(self.component.x, self.component.y,
                             self.component.width, self.component.height)

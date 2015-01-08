@@ -50,7 +50,7 @@ class ResultsAdapter(TabularAdapter):
                ('Result', 'result')]
     plugin_width = Int(200)
     name_width = Int(190)
-    duration_width = Int(70)
+    duration_width = Int(80)
     duration_text = Property
     result_image_image = Property
     result_image_text = Property
@@ -134,7 +134,10 @@ class ResultsView(Controller):
                         VGroup(UReadonly('controller.selected.description'),
                                show_border=True,
                                label='Description'),
-
+                        VGroup(UReadonly('controller.selected.error'),
+                               show_border=True,
+                               visible_when='controller.selected.error',
+                               label='error'),
                         VGroup(UReadonly('controller.help_str'),
                                show_border=True,
                                visible_when='controller.help_str')),

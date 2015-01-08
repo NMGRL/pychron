@@ -127,6 +127,7 @@ class DatabaseAdapter(Loggable):
     echo = False
     verbose_retrieve_query = False
     verbose = True
+    connection_error = Str
 
     def __init__(self, *args, **kw):
         super(DatabaseAdapter, self).__init__(*args, **kw)
@@ -161,6 +162,7 @@ class DatabaseAdapter(Loggable):
 
     # @caller
     def connect(self, test=True, force=False, warn=True, version_warn=False, attribute_warn=False):
+        self.connection_error = ''
         if force:
             self.debug('forcing database connection')
             #             self.reset()
@@ -176,10 +178,11 @@ class DatabaseAdapter(Loggable):
             if self.kind == 'sqlite':
                 test = False
 
+            self.connection_error = 'Database "{}" kind not set. ' \
+                                    'Set in Preferences. current kind="{}"'.format(self.name, self.kind)
+
             if not self.enabled and attribute_warn:
-                self.warning_dialog(
-                    'Database "{}" kind not set. Set in Preferences. current kind="{}"'.format(self.name,
-                                                                                               self.kind))
+                self.warning_dialog(self.connection_error)
             else:
                 url = self.url
                 if url is not None:
@@ -199,10 +202,11 @@ class DatabaseAdapter(Loggable):
                     if self.connected:
                         self.info('connected to db {}'.format(self.url))
                         self.initialize_database()
-                    elif warn:
-
-                        self.warning_dialog('Not Connected to Database "{}".\nAccess Denied for user= {} \
-host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
+                    else:
+                        self.connection_error = 'Not Connected to Database "{}".\nAccess Denied for user= {} \
+host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
+                        if warn:
+                            self.warning_dialog(self.connection_error)
 
         self.connection_parameters_changed = False
         return self.connected

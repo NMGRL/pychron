@@ -15,6 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import shutil
+from traits.api import on_trait_change, Bool, Instance, Event, Color, Int
+# from traitsui.api import View, Item
 from pyface.timer.do_later import do_later, do_after
 from traits.api import on_trait_change, Bool, Instance, Event, Color
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
@@ -24,13 +27,15 @@ import weakref
 import os
 import xlrd
 # ============= local library imports  ==========================
-from pychron.core.helpers.filetools import add_extension, backup
+from pychron.core.helpers.filetools import add_extension, backup, unique_date_path
 from pychron.core.ui.preference_binding import color_bind_preference
 from pychron.envisage.tasks.editor_task import EditorTask
 from pychron.envisage.tasks.pane_helpers import ConsolePane
 from pychron.experiment.queue.base_queue import extract_meta
 from pychron.experiment.tasks.experiment_editor import ExperimentEditor, UVExperimentEditor
 from pychron.experiment.tasks.experiment_panes import LoggerPane
+from pychron.experiment.utilities.identifier import convert_extract_device
+from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.messaging.notify.notifier import Notifier
 from pychron.paths import paths
 from pychron.pychron_constants import SPECTROMETER_PROTOCOL
@@ -47,8 +52,8 @@ class ExperimentEditorTask(EditorTask):
     wildcard = '*.txt'
 
     use_notifications = Bool
-    notifier = Instance(Notifier, ())
-    # notifications_port = Int
+    use_syslogger = Bool
+    notifications_port = Int
 
     loading_manager = Instance('pychron.loading.loading_manager.LoadingManager')
 
@@ -167,12 +172,12 @@ class ExperimentEditorTask(EditorTask):
 
         self._preference_binder('pychron.experiment',
                                 ('use_notifications',
-                                 'notifications_port',
+                                 # 'notifications_port',
                                  'automated_runs_editable'))
 
         # force notifier setup
         if self.use_notifications:
-            self.notifier.setup(self.notifier.port)
+            self.notifier.setup(self.notifications_port)
 
         # sys logger
         # bind_preference(self, 'use_syslogger', 'pychron.use_syslogger')
@@ -486,15 +491,13 @@ class ExperimentEditorTask(EditorTask):
 
     @on_trait_change('manager:experiment_factory:extract_device')
     def _handle_extract_device(self, new):
-        if new and self.window:
-            app = self.window.application
-            from pychron.experiment.utilities.identifier import convert_extract_device
-
-            ed = convert_extract_device(new)
-            man = app.get_service('pychron.lasers.laser_managers.ilaser_manager.ILaserManager',
-                                  'name=="{}"'.format(ed))
-            if man:
-                self.laser_control_client_pane.model = man
+        if new:
+            if self.window:
+                app = self.window.application
+                ed = convert_extract_device(new)
+                man = app.get_service(ILaserManager, 'name=="{}"'.format(ed))
+                if man:
+                    self.laser_control_client_pane.model = man
 
         if new == 'Fusions UV':
             if self.active_editor and not isinstance(self.active_editor, UVExperimentEditor):
@@ -584,6 +587,50 @@ class ExperimentEditorTask(EditorTask):
                 except AttributeError:
                     pass
                 break
+
+    def _backup_editor(self, editor):
+        p = editor.path
+        p = add_extension(p, '.txt')
+
+        if os.path.isfile(p):
+            # make a backup copy of the original experiment file
+            bp, _ = os.path.splitext(os.path.basename(p))
+
+            pp = unique_date_path(paths.backup_experiment_dir, bp)
+
+            self.info('{} - saving a backup copy to {}'.format(bp, pp))
+            shutil.copyfile(p, pp)
+
+    def _close_external_windows(self):
+        """
+            ask user if ok to close open spectrometer and extraction line windows
+        """
+
+        if not self.application:
+            return
+
+        # ask user if ok to close windows
+        windows = []
+        names = []
+
+        for wi in self.application.windows:
+            wid = wi.active_task.id
+            if wid == 'pychron.spectrometer':
+                windows.append(wi)
+                names.append('Spectrometer')
+            elif wid == 'pychron.extraction_line':
+                windows.append(wi)
+                names.append('Extraction Line')
+
+        if windows:
+            is_are, them = 'is', 'it'
+            if len(windows) > 1:
+                is_are, them = 'are', 'them'
+            msg = '{} {} open. Is it ok to close {}?'.format(','.join(names), is_are, them)
+
+            if self.confirmation_dialog(msg):
+                for wi in windows:
+                    wi.close()
 
     @on_trait_change('manager:execute_event')
     def _execute(self):

@@ -184,9 +184,9 @@ class Template(object):
                 os.mkdir(idest)
 
         includes = []
-        icon_requirements = os.path.join(root, 'resources', 'icon_requirements.txt')
-        if os.path.isfile(icon_requirements):
-            with open(icon_requirements, 'r') as fp:
+        icon_req = os.path.join(root, 'resources', 'icon_req.txt')
+        if os.path.isfile(icon_req):
+            with open(icon_req, 'r') as fp:
                 includes = [ri.strip() for ri in fp.read().split('\n')]
 
         cnt, total = 0, 0
@@ -203,7 +203,7 @@ class Template(object):
         # copy splashes and abouts
         for ni, nd in (('splash', 'splashes'), ('about', 'abouts')):
             sname = '{}_{}.png'.format(ni, self.name)
-            ins.copy_resource(os.path.join(root, 'resources', nd, sname), name='{}.png'.format(ni))
+            ins.copy_resource(os.path.join(root, 'resources', nd, sname), name='icons/{}.png'.format(ni))
 
         # copy helper mod
         for a in ('helpers', ):
