@@ -402,7 +402,7 @@ class Spectrum(BaseArArFigure):
         if not isnan(nominal_value(tga)):
             age, error = tga.nominal_value, tga.std_dev
             error *= self.options.nsigma
-            txt = self._build_label_text(age, error, *args, sig_figs=2)
+            txt = self._build_label_text(age, error, *args, sig_figs=self.options.integrated_sig_figs)
 
         return 'Integrated Age= {}'.format(txt)
         # ============= EOF =============================================

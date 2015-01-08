@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,7 +23,8 @@ from traits.api import List, Bool, Int, on_trait_change
 # ============= local library imports  ==========================
 
 class IntegratedPlotLabel(PlotLabel):
-    relative_position=Int
+    relative_position = Int
+
     def _draw_overlay(self, gc, view_bounds=None, mode="normal"):
         """ Draws the overlay layer of a component.
 
@@ -40,9 +41,9 @@ class IntegratedPlotLabel(PlotLabel):
             x_offset = int((self.width - width) / 2)
         #
         if self.vjustify == "bottom":
-            y=self.component.y+5+(self.relative_position*(height+2))
+            y = self.component.y + 5 + (self.relative_position * (height + 2))
         elif self.vjustify == "top":
-            y = self.component.y2 -height-(self.relative_position*(height+2))
+            y = self.component.y2 - height - (self.relative_position * (height + 2))
 
         # elif self.vjustify == "center":
         #     y_offset = int((self.height - height) / 2)
@@ -62,68 +63,69 @@ class IntegratedPlotLabel(PlotLabel):
 
 
 class SpectrumLabelOverlay(AbstractOverlay):
-    display_extract_value=Bool(True)
-    display_step=Bool(True)
-    nsigma=Int
-    font_size=Int
-    _cached_labels=List
+    display_extract_value = Bool(True)
+    display_step = Bool(True)
+    nsigma = Int
+    font_size = Int
+    _cached_labels = List
+
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
-        labels=self._get_labels()
+        labels = self._get_labels()
         for label in labels:
             label.overlay(other_component, gc)
 
     def _get_labels(self):
         if self.layout_needed or not self._cached_labels:
-            labels=[]
-            nsigma=self.nsigma
-            spec=self.spectrum
-            comp=self.component
+            labels = []
+            nsigma = self.nsigma
+            spec = self.spectrum
+            comp = self.component
             xs = comp.index.get_data()
             ys = comp.value.get_data()
-            es=comp.errors
-            n=len(xs)
+            es = comp.errors
+            n = len(xs)
             xs = xs.reshape(n / 2, 2)
             ys = ys.reshape(n / 2, 2)
             es = es.reshape(n / 2, 2)
 
             for i, ((xa, xb), (ya, yb), (ea, eb)) in enumerate(zip(xs, ys, es)):
-                ui=spec.sorted_analyses[i]
+                ui = spec.sorted_analyses[i]
 
-                x=(xb-xa)/2.0+xa
-                yi,ei=ya,ea
-                yl=yi-ei*nsigma
-                yu=yi+ei*nsigma
+                x = (xb - xa) / 2.0 + xa
+                yi, ei = ya, ea
+                yl = yi - ei * nsigma
+                yu = yi + ei * nsigma
 
-                (x, yl), (_,yu)=comp.map_screen([(x, yl), (x,yu)])
-                y=yl-10
-                if y<0:
-                    y=yu+10
-                    if y>comp.height:
-                        y=50
+                (x, yl), (_, yu) = comp.map_screen([(x, yl), (x, yu)])
+                y = yl - 10
+                if y < 0:
+                    y = yu + 10
+                    if y > comp.height:
+                        y = 50
 
-                txt=self._assemble_text(ui)
+                txt = self._assemble_text(ui)
                 labels.append(PlotLabel(text=txt,
                                         font='modern {}'.format(self.font_size),
                                         x=x,
                                         y=y))
 
-            self._cached_labels=labels
+            self._cached_labels = labels
 
         return self._cached_labels
 
     def _assemble_text(self, ai):
-        ts=[]
+        ts = []
         if self.display_step:
             ts.append(ai.step)
 
         if self.display_extract_value:
-            ts.append(str(ai.extract_value))
+            ts.append('{:n}'.format(ai.extract_value))
 
         return ' '.join(ts)
 
     @on_trait_change('display_extract_value, display_step')
     def _update_visible(self):
-        self.visible =self.display_extract_value or self.display_step
+        self.visible = self.display_extract_value or self.display_step
 
 
 # ============= EOF =============================================
