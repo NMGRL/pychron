@@ -192,7 +192,7 @@ class Spectrum(BaseArArFigure):
         self.integrated_label = o
         plot.overlays.append(o)
 
-    def _add_plot(self, xs, ys, es, plotid, po, value_scale='linear'):
+    def _add_plot(self, xs, ys, es, plotid, po):
         graph = self.graph
         if not self.broadcaster:
             self.broadcaster = BroadcasterTool()
@@ -240,8 +240,7 @@ class Spectrum(BaseArArFigure):
                                       display_step=self.options.display_step)
 
             ds.underlays.append(lo)
-
-        if value_scale == 'log':
+        if po.scale == 'log':
             p.value_axis.tick_generator = SparseLogTicks()
         else:
             p.value_axis.tick_generator = SparseTicks()
