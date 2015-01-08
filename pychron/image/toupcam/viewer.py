@@ -20,25 +20,13 @@ from traitsui.api import View, UItem, Item, HGroup, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.qt.camera_editor import CameraEditor
-from pychron.image.toupcam.api import start, get_camera
 
 
-class Camera(HasTraits):
-    _data = None
-    def __init__(self):
-        super(Camera, self).__init__()
-        cam = get_camera()
-        start(cam, self._callback)
-
-    def _callback(self, data):
-        self._data = data
-
-    def get_image_data(self, *args, **kw):
-        return self._data
+from pychron.image.toupcam.camera import ToupCamCamera
 
 
 class D(HasTraits):
-    camera = Instance(Camera, ())
+    camera = Instance(ToupCamCamera, ())
 
     def traits_view(self):
         v = View(UItem('camera', editor=CameraEditor()),
@@ -47,7 +35,9 @@ class D(HasTraits):
 
 
 if __name__ == '__main__':
-    D().configure_traits()
+    d = D()
+    d.camera.start()
+    d.configure_traits()
 
 # ============= EOF =============================================
 

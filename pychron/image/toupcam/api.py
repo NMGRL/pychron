@@ -14,14 +14,17 @@
 # limitations under the License.
 # ===============================================================================
 
+import warnings
+warnings.warn("deprecated. Use ToupCamCamera instead", DeprecationWarning)
+
+
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-# from ctypes import cdll, byref, c_int, POINTER, c_long, c_ulong
 import ctypes
+from numpy import zeros, uint8, uint32
 # ============= local library imports  ==========================
-from numpy import zeros, frombuffer, dtype, fromstring, array, uint8, uint32
-import time
-from numpy.ctypeslib import as_array
+
+
 
 
 lib = ctypes.cdll.LoadLibrary('libtoupcam.dylib')
@@ -112,15 +115,21 @@ def start(cobj, draw_cb, resolution=2, bits=32):
         return frame_fn
 
     CB = ctypes.CFUNCTYPE(None, ctypes.c_uint, ctypes.c_void_p)
+
+    # make global to prevent garbage collection
     global _frame_fn
     _frame_fn = CB(func(cobj, draw_cb))
+
     result = lib.Toupcam_StartPullModeWithCallback(cobj, _frame_fn)
-    print 'start', result
+    return success(result)
+
+
 
 
 if __name__ == '__main__':
     cam = get_camera()
     start(cam, lambda x: 1)
+    import time
 
     for i in range(100):
         time.sleep(0.25)
