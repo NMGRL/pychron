@@ -277,6 +277,21 @@ class BaseArArFigure(HasTraits):
 
         return omits
 
+    def _plot_raw_40_36(self,  po, plot, pid, **kw):
+        k = 'uAr40/Ar36'
+        ys, es = self._get_aux_plot_data(k)
+        return self._plot_aux('40/36', k, ys, po, plot, pid, es, **kw)
+
+    def _plot_ic_40_36(self,  po, plot, pid, **kw):
+        k = 'Ar40/Ar36'
+        ys, es = self._get_aux_plot_data(k)
+        return self._plot_aux('40/36', k, ys, po, plot, pid, es, **kw)
+
+    def _plot_ic_if_40_36(self,  po, plot, pid, **kw):
+        k = 'icf_40_36'
+        ys, es = self._get_aux_plot_data(k)
+        return self._plot_aux('40/36', k, ys, po, plot, pid, es, **kw)
+
     def _plot_radiogenic_yield(self, po, plot, pid, **kw):
         k = 'rad40_percent'
         ys, es = self._get_aux_plot_data(k)

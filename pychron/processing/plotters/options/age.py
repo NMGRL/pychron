@@ -74,8 +74,7 @@ class AgeOptions(PlotterOptions):
                   'analysis_label_display',
                   'analysis_label_format',
                   'error_info_fontname',
-                  'error_info_fontsize','label_fontsize'
-        ]
+                  'error_info_fontsize','label_fontsize']
         return attrs
 
 

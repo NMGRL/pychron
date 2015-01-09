@@ -97,7 +97,6 @@ class TableConfigurer(HasTraits):
             for ci in self.children:
                 ci.columns = cols
 
-            print 'bb', id(self.adapter)
             self.adapter.columns = cols
 
     def _set_font(self, f):

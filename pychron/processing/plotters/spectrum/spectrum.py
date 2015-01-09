@@ -67,6 +67,7 @@ class Spectrum(BaseArArFigure):
     # ===============================================================================
     # plotters
     # ===============================================================================
+
     def _plot_aux(self, title, vk, ys, po, plot, pid, es=None, **kw):
         graph = self.graph
         graph.set_y_title(title,
@@ -119,8 +120,6 @@ class Spectrum(BaseArArFigure):
                 y = po.overlay_positions[overlay.id]
                 overlay.y = y
                 pma = y
-
-
 
         # filter ys,es if 39Ar < 1% of total
         ps = s39 / s39.sum()
