@@ -38,33 +38,32 @@ COLORS = {'success': SUCCESS_COLOR,
 
 
 class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
-    columns = [
-            ('Labnumber', 'labnumber'),
-            ('Aliquot', 'aliquot'),
-            ('Sample', 'sample'),
-            ('Position', 'position'),
-            ('Extract', 'extract_value'),
-            ('Units', 'extract_units'),
+    all_columns = [
+        ('Labnumber', 'labnumber'),
+        ('Aliquot', 'aliquot'),
+        ('Sample', 'sample'),
+        ('Position', 'position'),
+        ('Extract', 'extract_value'),
+        ('Units', 'extract_units'),
+        ('Ramp (s)', 'ramp_duration'),
+        ('Duration (s)', 'duration'),
+        ('Cleanup (s)', 'cleanup'),
+        ('Overlap (s)', 'overlap'),
+        ('Beam (mm)', 'beam_diameter'),
+        ('Pattern', 'pattern'),
+        ('Extraction', 'extraction_script'),
+        ('T_o Offset', 'collection_time_zero_offset'),
+        ('Measurement', 'measurement_script'),
+        ('Conditionals', 'conditionals'),
+        ('SynExtraction', 'syn_extraction'),
+        ('CDDWarm', 'use_cdd_warming'),
+        ('Post Eq.', 'post_equilibration_script'),
+        ('Post Meas.', 'post_measurement_script'),
+        ('Options', 'script_options'),
+        ('Comment', 'comment')]
 
-            ('Ramp (s)', 'ramp_duration'),
-            ('Duration (s)', 'duration'),
-            ('Cleanup (s)', 'cleanup'),
-            # ('Overlap (s)', 'overlap'),
-
-            ('Beam (mm)', 'beam_diameter'),
-            ('Pattern', 'pattern'),
-            ('Extraction', 'extraction_script'),
-            # ('T_o Offset', 'collection_time_zero_offset'),
-            ('Measurement', 'measurement_script'),
-            ('Conditionals', 'conditionals'),
-            # ('SynExtraction', 'syn_extraction'),
-            ('CDDWarm', 'use_cdd_warming'),
-            ('Post Eq.', 'post_equilibration_script'),
-            ('Post Meas.', 'post_measurement_script'),
-            # ('Options', 'script_options'),
-            # ('Comment', 'comment')
-        ]
-
+    columns = [('Labnumber', 'labnumber'),
+                   ('Aliquot', 'aliquot'), ]
     font = 'arial 10'
     # all_columns = List
     # all_columns_dict = Dict
@@ -85,7 +84,7 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
     beam_diameter_width = Int(65)
 
     overlap_width = Int(50)
-    #    autocenter_width = Int(70)
+    # autocenter_width = Int(70)
     #    extract_device_width = Int(125)
     extraction_script_width = Int(80)
     measurement_script_width = Int(90)
@@ -141,8 +140,8 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
                     # color = self.even_bg_color
                     color = self.even_bg_color
                 else:
-                    color = self.odd_bg_color #'#E6F2FF'  # light gray blue
-                # print row, color, self.odd_bg_color, self.even_bg_color
+                    color = self.odd_bg_color  #'#E6F2FF'  # light gray blue
+                    # print row, color, self.odd_bg_color, self.even_bg_color
 
         return color
 
@@ -194,8 +193,9 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
     def _set_post_equilibration_script_text(self, v):
         pass
 
-    def _set_position_text(self,v):
+    def _set_position_text(self, v):
         pass
+
     # ============================================
 
     def _get_overlap_text(self):
@@ -301,8 +301,6 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
             return ''
 
 
-
-
 class AutomatedRunMixin(object):
     """
         mixin for table of automated runs that have not yet been executed
@@ -325,7 +323,7 @@ class AutomatedRunMixin(object):
                               Action(name='Select Same Attributes...', action='select_same_attr'),
                               name='Select')
 
-        return MenuManager(move, jump, blocks,selects,
+        return MenuManager(move, jump, blocks, selects,
                            Action(name='Unselect', action='unselect'),
                            Action(name='Toggle End After', action='toggle_end_after'),
                            Action(name='Toggle Skip', action='toggle_skip'))
@@ -337,92 +335,91 @@ class AutomatedRunSpecAdapter(AutomatedRunMixin, ExecutedAutomatedRunSpecAdapter
 
 class RunBlockAdapter(AutomatedRunSpecAdapter):
     columns = [
-            ('Labnumber', 'labnumber'),
-            # ('Aliquot', 'aliquot'),
-            ('Sample', 'sample'),
-            ('Position', 'position'),
-            ('Extract', 'extract_value'),
-            ('Units', 'extract_units'),
+        ('Labnumber', 'labnumber'),
+        # ('Aliquot', 'aliquot'),
+        ('Sample', 'sample'),
+        ('Position', 'position'),
+        ('Extract', 'extract_value'),
+        ('Units', 'extract_units'),
 
-            ('Ramp (s)', 'ramp_duration'),
-            ('Duration (s)', 'duration'),
-            ('Cleanup (s)', 'cleanup'),
-            # ('Overlap (s)', 'overlap'),
+        ('Ramp (s)', 'ramp_duration'),
+        ('Duration (s)', 'duration'),
+        ('Cleanup (s)', 'cleanup'),
+        # ('Overlap (s)', 'overlap'),
 
-            ('Beam (mm)', 'beam_diameter'),
-            ('Pattern', 'pattern'),
-            ('Extraction', 'extraction_script'),
-            # ('T_o Offset', 'collection_time_zero_offset'),
-            ('Measurement', 'measurement_script'),
-            ('Conditionals', 'conditionals'),
-            # ('SynExtraction', 'syn_extraction'),
-            ('CDDWarm', 'use_cdd_warming'),
-            ('Post Eq.', 'post_equilibration_script'),
-            ('Post Meas.', 'post_measurement_script'),
-            # ('Options', 'script_options'),
-            # ('Comment', 'comment')
-        ]
-
+        ('Beam (mm)', 'beam_diameter'),
+        ('Pattern', 'pattern'),
+        ('Extraction', 'extraction_script'),
+        # ('T_o Offset', 'collection_time_zero_offset'),
+        ('Measurement', 'measurement_script'),
+        ('Conditionals', 'conditionals'),
+        # ('SynExtraction', 'syn_extraction'),
+        ('CDDWarm', 'use_cdd_warming'),
+        ('Post Eq.', 'post_equilibration_script'),
+        ('Post Meas.', 'post_measurement_script'),
+        # ('Options', 'script_options'),
+        # ('Comment', 'comment')
+    ]
 
 
 class ExecutedUVAutomatedRunSpecAdapter(ExecutedAutomatedRunSpecAdapter):
-    columns  = [
-            # ('', 'state'),
-            ('Labnumber', 'labnumber'),
-            ('Aliquot', 'aliquot'),
-            ('Sample', 'sample'),
-            ('Position', 'position'),
+    columns = [
+        # ('', 'state'),
+        ('Labnumber', 'labnumber'),
+        ('Aliquot', 'aliquot'),
+        ('Sample', 'sample'),
+        ('Position', 'position'),
 
-            ('Extract', 'extract_value'),
-            ('Units', 'extract_units'),
-            ('Rep. Rate', 'reprate'),
-            ('Mask', 'mask'),
-            ('Attenuator', 'attenuator'),
-            ('Cleanup (s)', 'cleanup'),
-            ('Extraction', 'extraction_script'),
-            ('Measurement', 'measurement_script'),
-            ('Conditionals', 'conditionals'),
-            ('SynExtraction', 'syn_extraction'),
-            ('CDDWarm', 'use_cdd_warming'),
-            ('Post Eq.', 'post_equilibration_script'),
-            ('Post Meas.', 'post_measurement_script'),
-            ('Comment', 'comment')]
+        ('Extract', 'extract_value'),
+        ('Units', 'extract_units'),
+        ('Rep. Rate', 'reprate'),
+        ('Mask', 'mask'),
+        ('Attenuator', 'attenuator'),
+        ('Cleanup (s)', 'cleanup'),
+        ('Extraction', 'extraction_script'),
+        ('Measurement', 'measurement_script'),
+        ('Conditionals', 'conditionals'),
+        ('SynExtraction', 'syn_extraction'),
+        ('CDDWarm', 'use_cdd_warming'),
+        ('Post Eq.', 'post_equilibration_script'),
+        ('Post Meas.', 'post_measurement_script'),
+        ('Comment', 'comment')]
 
 
 class UVAutomatedRunSpecAdapter(AutomatedRunMixin, ExecutedUVAutomatedRunSpecAdapter):
     pass
 
-# ============= EOF =============================================
-# def _columns_default(self):
-#         cols = self._columns_factory()
-#         return cols
-#
-#     def _columns_factory(self):
-#         cols = [
-#             ('Labnumber', 'labnumber'),
-#             ('Aliquot', 'aliquot'),
-#             ('Sample', 'sample'),
-#             ('Position', 'position'),
-#             ('Extract', 'extract_value'),
-#             ('Units', 'extract_units'),
-#
-#             ('Ramp (s)', 'ramp_duration'),
-#             ('Duration (s)', 'duration'),
-#             ('Cleanup (s)', 'cleanup'),
-#             # ('Overlap (s)', 'overlap'),
-#
-#             ('Beam (mm)', 'beam_diameter'),
-#             ('Pattern', 'pattern'),
-#             ('Extraction', 'extraction_script'),
-#             # ('T_o Offset', 'collection_time_zero_offset'),
-#             ('Measurement', 'measurement_script'),
-#             ('Conditionals', 'conditionals'),
-#             # ('SynExtraction', 'syn_extraction'),
-#             ('CDDWarm', 'use_cdd_warming'),
-#             ('Post Eq.', 'post_equilibration_script'),
-#             ('Post Meas.', 'post_measurement_script'),
-#             # ('Options', 'script_options'),
-#             # ('Comment', 'comment')
-#         ]
-#
-#         return colss
+    # ============= EOF =============================================
+    # def _columns_default(self):
+    # cols = self._columns_factory()
+    #         return cols
+    #
+    #     def _columns_factory(self):
+    #         cols = [
+    #             ('Labnumber', 'labnumber'),
+    #             ('Aliquot', 'aliquot'),
+    #             ('Sample', 'sample'),
+    #             ('Position', 'position'),
+    #             ('Extract', 'extract_value'),
+    #             ('Units', 'extract_units'),
+    #
+    #             ('Ramp (s)', 'ramp_duration'),
+    #             ('Duration (s)', 'duration'),
+    #             ('Cleanup (s)', 'cleanup'),
+    #             # ('Overlap (s)', 'overlap'),
+    #
+    #             ('Beam (mm)', 'beam_diameter'),
+    #             ('Pattern', 'pattern'),
+    #             ('Extraction', 'extraction_script'),
+    #             # ('T_o Offset', 'collection_time_zero_offset'),
+    #             ('Measurement', 'measurement_script'),
+    #             ('Conditionals', 'conditionals'),
+    #             # ('SynExtraction', 'syn_extraction'),
+    #             ('CDDWarm', 'use_cdd_warming'),
+    #             ('Post Eq.', 'post_equilibration_script'),
+    #             ('Post Meas.', 'post_measurement_script'),
+    #             # ('Options', 'script_options'),
+    #             # ('Comment', 'comment')
+    #         ]
+    #
+    #         return colss

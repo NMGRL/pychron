@@ -97,6 +97,7 @@ class TableConfigurer(HasTraits):
             for ci in self.children:
                 ci.columns = cols
 
+            print 'bb', id(self.adapter)
             self.adapter.columns = cols
 
     def _set_font(self, f):
@@ -379,6 +380,9 @@ class RecallTableConfigurer(TableConfigurer):
         self.isotope_table_configurer.set_columns()
         self.intermediate_table_configurer.set_columns()
 
+        self.isotope_table_configurer.update()
+        self.intermediate_table_configurer.update()
+
     def set_font(self):
         self.isotope_table_configurer.set_font()
         self.intermediate_table_configurer.set_font()
@@ -439,7 +443,7 @@ class RecallTableConfigurer(TableConfigurer):
                                extraction_view, label='Scripts')),
 
                  buttons=['OK', 'Cancel', 'Revert'],
-                 kind='modal',
+                 kind='livemodal',
                  title='Configure Table',
                  handler=TableConfigurerHandler,
                  resizable=True,

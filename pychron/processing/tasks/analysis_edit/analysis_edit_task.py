@@ -192,7 +192,7 @@ class AnalysisEditTask(BaseBrowserTask):
                     e.close()
                     self.recall(e.model)
 
-            for e in self.editor_area.editors:
+            for e in self.get_recall_editors():
                 tc.set_fonts(e.analysis_view)
 
     def recall(self, records, open_copy=False):
