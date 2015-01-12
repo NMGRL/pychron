@@ -21,11 +21,12 @@ from pyface.tasks.task_layout import TaskLayout, PaneItem
 # ============= local library imports  ==========================
 from pychron.envisage.browser.browser_mixin import BrowserMixin
 from pychron.envisage.tasks.base_task import BaseManagerTask
-from pychron.image.camera import Camera
+# from pychron.image.camera import Camera
 from pychron.image.tasks.actions import SnapshotAction, DBSnapshotAction
 # from pychron.image.tasks.image_pane import SampleImagePane
-from pychron.image.tasks.pane import SampleBrowserPane
+from pychron.image.tasks.pane import SampleBrowserPane, CameraPane
 from pychron.image.tasks.video_pane import VideoPane
+from pychron.image.toupcam.camera import ToupCamCamera
 from pychron.paths import paths
 
 
@@ -39,7 +40,7 @@ class SampleImageTask(BaseManagerTask, BrowserMixin):
         super(SampleImageTask, self).__init__(*args, **kw)
         if self.manager:
             self.tool_bars[0].items.append(DBSnapshotAction())
-        self.camera = Camera()
+        self.camera = ToupCamCamera()
 
     # actions
     def save_file_snapshot(self):
@@ -65,7 +66,7 @@ class SampleImageTask(BaseManagerTask, BrowserMixin):
         self.camera.close()
 
     def create_central_pane(self):
-        return VideoPane(video=self.camera)
+        return CameraPane(model=self)
 
     def create_dock_panes(self):
         return [SampleBrowserPane(model=self)]

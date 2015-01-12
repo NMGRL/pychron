@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -46,16 +46,16 @@ class SparseLogTicks(DefaultTickGenerator):
     def get_ticks(self, *args, **kw):
         oticks = super(SparseLogTicks, self).get_ticks(*args, **kw)
         # get only 0.1,1,10,100,1000...
-        ticks = oticks[oticks>0]
+        ticks = oticks[oticks > 0]
         ticks = ticks[log10(ticks) % 1 == 0]
 
         if ticks.shape[0] == 1:
-            tlow=10**math.floor(math.log10(ticks[0]))
-            if tlow==ticks[0]:
-                tlow = 10**math.floor(math.log10(ticks[0])-1)
+            tlow = 10 ** math.floor(math.log10(ticks[0]))
+            if tlow == ticks[0]:
+                tlow = 10 ** math.floor(math.log10(ticks[0]) - 1)
 
             ticks = hstack(([tlow], ticks))
-            ticks = hstack((ticks, [10**math.ceil(math.log10(oticks[-1]))]))
+            ticks = hstack((ticks, [10 ** math.ceil(math.log10(oticks[-1]))]))
 
         return ticks
 

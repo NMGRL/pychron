@@ -16,13 +16,20 @@
 
 # ============= enthought library imports =======================
 from pyface.tasks.traits_dock_pane import TraitsDockPane
+from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import HasTraits, Button
 from traitsui.api import View, Item, VGroup, UItem
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.ui.qt.camera_editor import CameraEditor
 from pychron.core.ui.qt.tabular_editors import FilterTabularEditor
 from pychron.envisage.browser.adapters import LabnumberAdapter, ProjectAdapter
 
+
+class CameraPane(TraitsTaskPane):
+    def traits_view(self):
+        v = View(UItem('camera', editor=CameraEditor()))
+        return v
 
 class SampleBrowserPane(TraitsDockPane):
     id = 'pychron.image.browser'

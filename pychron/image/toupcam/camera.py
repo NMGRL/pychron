@@ -15,12 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change
-from traitsui.api import View, UItem, Item, HGroup, VGroup
+from traits.api import provides
 # ============= standard library imports ========================
 import ctypes
 from numpy import zeros, uint8, uint32
 # ============= local library imports  ==========================
+from pychron.image.cv_wrapper import save_image
+from pychron.image.i_camera import ICamera
+
 lib = ctypes.cdll.LoadLibrary('libtoupcam.dylib')
 
 TOUPCAM_EVENT_EXPOSURE = 1  # exposure time changed
@@ -45,23 +47,33 @@ def success(r):
     return r == 0
 
 
+@provides(ICamera)
 class ToupCamCamera(object):
     _data = None
     _frame_fn = None
 
-    def __init__(self, resolution=2):
+    def __init__(self, resolution=2, bits=32):
         self.resolution = resolution
         self.cam = self.get_camera()
+        self.bits = bits
+
+    # icamera interface
+    def save(self, p):
+        save_image(self._data, p)
 
     def get_image_data(self, *args, **kw):
         return self._data
 
-    def start(self, bits=32):
+    def close(self):
+        if self.cam:
+            lib.Toupcam_Close(self.cam)
+
+    def open(self):
         self.set_esize(self.resolution)
         w, h = self.get_size()
 
         dtype = uint8
-        if bits == 32:
+        if self.bits == 32:
             dtype = uint32
 
         self._data = zeros((h.value, w.value, 3), dtype=dtype)
@@ -81,6 +93,7 @@ class ToupCamCamera(object):
         result = lib.Toupcam_StartPullModeWithCallback(self.cam, self._frame_fn)
         return success(result)
 
+    # ToupCam interface
     def get_camera(self, cid=None):
         func = lib.Toupcam_Open
         func.restype = ctypes.POINTER(HToupCam)
@@ -118,7 +131,6 @@ class ToupCamCamera(object):
         result = lib.Toupcam_get_eSize(self.cam, ctypes.byref(res))
         if success(result):
             return res
-
 
     def set_esize(self, nres):
         lib.Toupcam_put_eSize(self.cam, ctypes.c_ulong(nres))
