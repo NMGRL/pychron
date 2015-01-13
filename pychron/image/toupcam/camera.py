@@ -20,7 +20,8 @@ from scipy.misc import imsave
 from traits.api import provides, Event
 # ============= standard library imports ========================
 import ctypes
-from numpy import zeros, uint8, uint32
+from numpy import zeros, uint8, uint32, asarray, uint16
+import Image as pil
 # ============= local library imports  ==========================
 from pychron.image.cv_wrapper import save_image
 from pychron.image.i_camera import ICamera
@@ -57,17 +58,19 @@ class ToupCamCamera(object):
     save_event = Event
 
     def __init__(self, resolution=2, bits=32):
+        if bits not in (32,):
+            raise ValueError('Bits needs to by 8 or 32')
+
         self.resolution = resolution
         self.cam = self.get_camera()
         self.bits = bits
-        self._save_lock = Lock()
 
-    # icamera interface
-    def save(self, p):
-        with self._save_lock:
-            print self._data.shape
-            self.save_event = p
-            # imsave(p, self._data)
+        # icamera interface
+        # def save(self, p):
+        # imsave(p, self._data)
+        # pil.save(p, self._data)
+        # im = pil.fromarray(self._data)
+        # im.save(p)
 
     def get_image_data(self, *args, **kw):
         return self._data
@@ -81,28 +84,64 @@ class ToupCamCamera(object):
         w, h = self.get_size()
         h, w = h.value, w.value
 
-        dtype = uint8
-        if self.bits == 32:
-            dtype = uint32
+        dtype = uint32
+        shape = (h, w, 3)
 
-        self._data = zeros((h,w, 3), dtype=dtype)
+        self._data = zeros(shape, dtype=dtype)
 
         def get_frame(nEvent, ctx):
-
             if nEvent == TOUPCAM_EVENT_IMAGE:
                 w, h = ctypes.c_uint(), ctypes.c_uint()
-                with self._save_lock:
-                    lib.Toupcam_PullImage(self.cam, ctypes.c_void_p(self._data.ctypes.data), self.bits,
-                                          ctypes.byref(w),
-                                          ctypes.byref(h))
+                lib.Toupcam_PullImage(self.cam, ctypes.c_void_p(self._data.ctypes.data), self.bits,
+                                      ctypes.byref(w),
+                                      ctypes.byref(h))
+
         CB = ctypes.CFUNCTYPE(None, ctypes.c_uint, ctypes.c_void_p)
 
         self._frame_fn = CB(get_frame)
 
         result = lib.Toupcam_StartPullModeWithCallback(self.cam, self._frame_fn)
+
         return success(result)
 
     # ToupCam interface
+    def _lib_func(self, func, *args, **kw):
+        ff = getattr(lib, 'Toupcam_{}'.format(func))
+        result = ff(self.cam, *args, **kw)
+        return success(result)
+
+    def do_awb(self, callback=None):
+        """
+        Toupcam_AwbOnePush(HToupCam h, PITOUPCAM_TEMPTINT_CALLBACK fnTTProc, void* pTTCtx);
+        :return:
+        """
+        def temptint_cb(temp, tint):
+            if callback:
+                callback((temp, tint))
+
+        CB = ctypes.CFUNCTYPE(None, ctypes.c_uint, ctypes.c_void_p)
+        self._temptint_cb = CB(temptint_cb)
+
+        return self._lib_func('AwbOnePush', self._temptint_cb)
+
+    def set_temperature_tint(self, temp, tint):
+        lib.Toupcam_put_TempTint(self.cam, temp, tint)
+
+    def get_temperature_tint(self):
+        temp = ctypes.c_int()
+        tint = ctypes.c_int()
+        if self._lib_func('get_TempTint', ctypes.byref(temp), ctypes.byref(tint)):
+            return temp.value, tint.value
+
+    def get_auto_exposure(self):
+        expo_enabled = ctypes.c_bool()
+        result = lib.Toupcam_get_AutoExpoEnable(self.cam, ctypes.byref(expo_enabled))
+        if success(result):
+            return expo_enabled.value
+
+    def set_auto_exposure(self, expo_enabled):
+        lib.Toupcam_put_AutoExpoEnable(self.cam, expo_enabled)
+
     def get_camera(self, cid=None):
         func = lib.Toupcam_Open
         func.restype = ctypes.POINTER(HToupCam)

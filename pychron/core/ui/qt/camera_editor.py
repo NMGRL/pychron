@@ -45,7 +45,6 @@ class _CameraEditor(Editor):
         pic = self.control.pixmap()
         pic.save(new)
 
-
     def _setup_loop(self):
         self.timer = QTimer(self.control)
         self.timer.timeout.connect(self._update)
@@ -56,7 +55,7 @@ class _CameraEditor(Editor):
     def _update(self):
         # w, h = self.control.width(), self.control.height()
         # img = self.value.get_image_data(size=(w, h))
-        img = self.value.get_image_data(size=(640, 480))
+        img = self.value.get_image_data()
         if img is not None:
             s = img.shape
             if s:

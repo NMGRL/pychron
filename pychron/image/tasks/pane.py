@@ -29,7 +29,7 @@ from pychron.envisage.browser.adapters import LabnumberAdapter, ProjectAdapter
 class CameraPane(TraitsTaskPane):
     def traits_view(self):
         v = View(UItem('camera', editor=CameraEditor(),
-                       width=680, height=510))
+                       width=896, height=680))
         # v = View(UItem('camera', editor=CameraEditor()))
         return v
 
