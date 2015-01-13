@@ -28,7 +28,9 @@ from pychron.envisage.browser.adapters import LabnumberAdapter, ProjectAdapter
 
 class CameraPane(TraitsTaskPane):
     def traits_view(self):
-        v = View(UItem('camera', editor=CameraEditor()))
+        v = View(UItem('camera', editor=CameraEditor(),
+                       width=680, height=510))
+        # v = View(UItem('camera', editor=CameraEditor()))
         return v
 
 class SampleBrowserPane(TraitsDockPane):
@@ -43,6 +45,7 @@ class SampleBrowserPane(TraitsDockPane):
                                       multi_select=True,
                                       selected='selected_samples',
                                       stretch_last_section=False),
+                                  height=-200,
                                   width=75),
                             show_border=True, label='Samples')
 
@@ -52,6 +55,7 @@ class SampleBrowserPane(TraitsDockPane):
                                              selected='selected_projects',
                                              adapter=ProjectAdapter(),
                                              multi_select=True),
+                  height=-200,
                   width=175),
             show_border=True,
             label='Projects')

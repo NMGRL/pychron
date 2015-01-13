@@ -15,7 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import provides
+from threading import Lock
+from scipy.misc import imsave
+from traits.api import provides, Event
 # ============= standard library imports ========================
 import ctypes
 from numpy import zeros, uint8, uint32
@@ -52,14 +54,20 @@ class ToupCamCamera(object):
     _data = None
     _frame_fn = None
 
+    save_event = Event
+
     def __init__(self, resolution=2, bits=32):
         self.resolution = resolution
         self.cam = self.get_camera()
         self.bits = bits
+        self._save_lock = Lock()
 
     # icamera interface
     def save(self, p):
-        save_image(self._data, p)
+        with self._save_lock:
+            print self._data.shape
+            self.save_event = p
+            # imsave(p, self._data)
 
     def get_image_data(self, *args, **kw):
         return self._data
@@ -71,21 +79,22 @@ class ToupCamCamera(object):
     def open(self):
         self.set_esize(self.resolution)
         w, h = self.get_size()
+        h, w = h.value, w.value
 
         dtype = uint8
         if self.bits == 32:
             dtype = uint32
 
-        self._data = zeros((h.value, w.value, 3), dtype=dtype)
+        self._data = zeros((h,w, 3), dtype=dtype)
 
         def get_frame(nEvent, ctx):
 
             if nEvent == TOUPCAM_EVENT_IMAGE:
                 w, h = ctypes.c_uint(), ctypes.c_uint()
-                lib.Toupcam_PullImage(self.cam, ctypes.c_void_p(self._data.ctypes.data), bits,
-                                      ctypes.byref(w),
-                                      ctypes.byref(h))
-
+                with self._save_lock:
+                    lib.Toupcam_PullImage(self.cam, ctypes.c_void_p(self._data.ctypes.data), self.bits,
+                                          ctypes.byref(w),
+                                          ctypes.byref(h))
         CB = ctypes.CFUNCTYPE(None, ctypes.c_uint, ctypes.c_void_p)
 
         self._frame_fn = CB(get_frame)

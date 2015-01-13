@@ -15,8 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change, Instance
-from traitsui.api import View, UItem, Item, HGroup, VGroup
+from traits.api import HasTraits, Instance, Button,Event
+from traitsui.api import View, UItem
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.qt.camera_editor import CameraEditor
@@ -27,16 +27,24 @@ from pychron.image.toupcam.camera import ToupCamCamera
 
 class D(HasTraits):
     camera = Instance(ToupCamCamera, ())
+    save_button = Button
+    save_event = Event
+
+    def _save_button_fired(self):
+        p = '/Users/ross/Desktop/output.png'
+        # self.camera.save(p)
+        self.save_event = p
 
     def traits_view(self):
-        v = View(UItem('camera', editor=CameraEditor()),
+        v = View(UItem('save_button'),
+                 UItem('camera', editor=CameraEditor(save_event='save_event')),
                  width=680, height=510)
         return v
 
 
 if __name__ == '__main__':
     d = D()
-    d.camera.start()
+    d.camera.open()
     d.configure_traits()
 
 # ============= EOF =============================================
