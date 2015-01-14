@@ -54,7 +54,7 @@ def success(r):
 class ToupCamCamera(object):
     _data = None
     _frame_fn = None
-
+    _temptint_cb = None
     save_event = Event
 
     def __init__(self, resolution=2, bits=32):
@@ -110,11 +110,47 @@ class ToupCamCamera(object):
         result = ff(self.cam, *args, **kw)
         return success(result)
 
+    def _lib_get_func(self, func):
+        v = ctypes.c_int()
+        if self._lib_func('get_{}'.format(func), ctypes.byref(v)):
+            return v.value
+
+    def set_gamma(self, v):
+        self._lib_func('put_Gamma', ctypes.c_int(v))
+
+    def set_contrast(self, v):
+        self._lib_func('put_Contrast', ctypes.c_int(v))
+
+    def set_brightness(self, v):
+        self._lib_func('put_Brightness', ctypes.c_int(v))
+
+    def set_saturation(self, v):
+        self._lib_func('put_Saturation', ctypes.c_int(v))
+
+    def set_hue(self, v):
+        self._lib_func('put_Hue', ctypes.c_int(v))
+
+    def get_gamma(self):
+        return self._lib_get_func('Gamma')
+
+    def get_contrast(self):
+        return self._lib_get_func('Contrast')
+
+    def get_brightness(self):
+        return self._lib_get_func('Brightness')
+
+    def get_saturation(self):
+        return self._lib_get_func('Saturation')
+
+    def get_hue(self):
+        return self._lib_get_func('Hue')
+
     def do_awb(self, callback=None):
         """
         Toupcam_AwbOnePush(HToupCam h, PITOUPCAM_TEMPTINT_CALLBACK fnTTProc, void* pTTCtx);
         :return:
         """
+
         def temptint_cb(temp, tint):
             if callback:
                 callback((temp, tint))

@@ -15,8 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Instance, Button, Event, Range
-from traitsui.api import View, UItem, Item, HGroup, VGroup
+from traits.api import HasTraits, Instance, Button, Event, Range, on_trait_change
+from traitsui.api import View, UItem, Item, HGroup, VGroup, spring
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
@@ -31,15 +31,24 @@ class D(HasTraits):
     save_button = Button
     save_event = Event
     awb_button = Button
+    contrast_default_button = Button('Defaults')
+    hue_default_button = Button('Defaults')
+
     temperature = Range(2000, 15000, mode='slider')
     tint = Range(200, 2500, mode='slider')
+    hue = Range(-180, 180, mode='slider')
+    saturation = Range(0, 255, mode='slider')
+    brightness = Range(-64, 64, mode='slider')
+    contrast = Range(-100, 100, mode='slider')
+    gamma = Range(0, 180, mode='slider')
 
     _no_update = False
 
     def activate(self):
         self.camera.open()
-        self._update_temptint()
+        self._update_color()
 
+    # handlers
     def _awb_button_fired(self):
         self.camera.do_awb(self._update_temptint)
 
@@ -49,12 +58,24 @@ class D(HasTraits):
         self.save_event = p
         view_file(p)
 
+    def _hue_default_button_fired(self):
+        self.trait_set(hue=0, saturation=128, brightness=0)
+
+    def _contrast_default_button_fired(self):
+        self.trait_set(contrast=0, gamma=100)
+
+    @on_trait_change('hue,saturation,brightness,contrast,gamma')
+    def _handle_color_change(self, name, new):
+        if not self._no_update:
+            getattr(self.camera, 'set_{}'.format(name))(new)
+
     def _temperature_changed(self):
         self._set_temp_tint()
 
     def _tint_changed(self):
         self._set_temp_tint()
 
+    # private
     def _update_temptint(self, args=None):
         if args is None:
             args = self.camera.get_temperature_tint()
@@ -67,15 +88,36 @@ class D(HasTraits):
         if not self._no_update:
             self.camera.set_temperature_tint(self.temperature, self.tint)
 
+    def _update_color(self):
+        self._update_temptint()
+        with no_update(self):
+            d = {k: getattr(self.camera, 'get_{}'.format(k))() for k in
+                 ('hue', 'saturation', 'brightness', 'contrast', 'gamma')}
+            print d
+            self.trait_set(**d)
+
     def traits_view(self):
+        hue_grp = VGroup(HGroup(spring, UItem('hue_default_button')),
+                         Item('hue'),
+                         Item('saturation'),
+                         Item('brightness'),
+                         show_border=True,
+                         label='Hue/Saturation/Brightness')
+        c_gamma_grp = VGroup(HGroup(spring, UItem('contrast_default_button')),
+                             Item('contrast'),
+                             Item('gamma'),
+                             show_border=True,
+                             label='Contrast/Gamma')
+
         ctrl_grp = VGroup(UItem('save_button'),
                           UItem('awb_button'),
                           Item('temperature', label='Temp.', width=300),
-                          Item('tint'))
+                          Item('tint'),
+                          hue_grp, c_gamma_grp)
 
         v = View(HGroup(ctrl_grp,
                         UItem('camera', editor=CameraEditor(save_event='save_event'))),
-                 width=896+350, height=680,
+                 width=896 + 350, height=680,
                  resizable=True)
         return v
 
