@@ -76,7 +76,7 @@ class _CameraEditor(Editor):
         return label
 
 
-class CameraEditor(BasicEditorFactory):
+class  CameraEditor(BasicEditorFactory):
     klass = _CameraEditor
     fps = Int(24)
     save_event = Str

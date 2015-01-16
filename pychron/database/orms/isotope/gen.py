@@ -121,6 +121,7 @@ class gen_SampleTable(Base, NameMixin):
     project_id = foreignkey('gen_ProjectTable')
     labnumbers = relationship('gen_LabTable', backref='sample')
     monitors = relationship('flux_MonitorTable', backref='sample')
+    images = relationship('med_SampleImageTable', backref='sample')
 
     igsn = Column(CHAR(9))
     location = stringcolumn(80)

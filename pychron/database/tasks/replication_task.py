@@ -147,25 +147,26 @@ class ReplicationTask(BaseTask):
         last_error = ''
         if r:
             header, results = r
-            nofunc = lambda x: x
+            if results:
+                nofunc = lambda x: x
 
-            for args in (('Status', 'Slave_IO_State'),
-                         ('MasterHost', 'Master_Host'),
-                         ('IO Running', 'Slave_IO_Running'),
-                         ('SQL Running', 'Slave_SQL_Running'),
-                         ('Replicating DBs', 'Replicate_Do_DB'),
-                         ('Seconds Behind', 'Seconds_Behind_Master', lambda x: '0' if x is None else x)):
-                if len(args) == 2:
-                    display_name, tag = args
-                    func = nofunc
+                for args in (('Status', 'Slave_IO_State'),
+                             ('MasterHost', 'Master_Host'),
+                             ('IO Running', 'Slave_IO_Running'),
+                             ('SQL Running', 'Slave_SQL_Running'),
+                             ('Replicating DBs', 'Replicate_Do_DB'),
+                             ('Seconds Behind', 'Seconds_Behind_Master', lambda x: '0' if x is None else x)):
+                    if len(args) == 2:
+                        display_name, tag = args
+                        func = nofunc
 
-                else:
-                    display_name, tag, func = args
+                    else:
+                        display_name, tag, func = args
 
-                value = results[header.index(tag)]
-                items.append(StatusItem(display_name, tag, func(value)))
-            running = bool(items[0].value)
-            last_error = results[header.index('Last_Error')]
+                    value = results[header.index(tag)]
+                    items.append(StatusItem(display_name, tag, func(value)))
+                running = bool(items[0].value)
+                last_error = results[header.index('Last_Error')]
 
         self.running = running
         self.status_items = items

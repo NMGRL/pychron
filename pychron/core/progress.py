@@ -64,12 +64,20 @@ def progress_loader(xs, func, threshold=50, progress=None, reraise_cancel=False)
                     break
                 r = func(x, prog, i, n)
                 if r:
-                    yield r
+                    if isinstance(r, (list,tuple)):
+                        for ri in r:
+                            yield ri
+                    else:
+                        yield r
         else:
             for x in xs:
                 r = func(x, None, 0, 0)
                 if r:
-                    yield r
+                    if isinstance(r, (list,tuple)):
+                        for ri in r:
+                            yield ri
+                    else:
+                        yield r
 
     try:
         return list(gen(progress))

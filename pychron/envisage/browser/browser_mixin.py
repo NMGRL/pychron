@@ -344,7 +344,6 @@ class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
             if not hp:
                 hp = thp
 
-        print lp, hp, self.low_post
         ls = db.get_project_labnumbers(projects,
                                        self.filter_non_run_samples,
                                        lp, hp,

@@ -23,12 +23,12 @@ from traitsui.api import View, Item, VGroup, UItem
 # ============= local library imports  ==========================
 from pychron.core.ui.qt.camera_editor import CameraEditor
 from pychron.core.ui.qt.tabular_editors import FilterTabularEditor
-from pychron.envisage.browser.adapters import LabnumberAdapter, ProjectAdapter
+from pychron.envisage.browser.adapters import LabnumberAdapter, ProjectAdapter, SampleAdapter, SampleImageAdapter
 
 
 class CameraPane(TraitsTaskPane):
     def traits_view(self):
-        v = View(UItem('camera', editor=CameraEditor(),
+        v = View(UItem('camera', editor=CameraEditor(save_event='save_event'),
                        width=896, height=680))
         # v = View(UItem('camera', editor=CameraEditor()))
         return v
@@ -40,7 +40,8 @@ class SampleBrowserPane(TraitsDockPane):
     def traits_view(self):
         sample_grp = VGroup(UItem('samples',
                                   editor=FilterTabularEditor(
-                                      adapter=LabnumberAdapter(),
+                                      # adapter=LabnumberAdapter(),
+                                      adapter=SampleImageAdapter(),
                                       editable=False,
                                       multi_select=True,
                                       selected='selected_samples',

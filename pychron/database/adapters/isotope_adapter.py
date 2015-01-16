@@ -36,7 +36,7 @@ from pychron.database.i_browser import IBrowser
 from pychron.database.orms.isotope.spec import spec_MassCalHistoryTable, spec_MassCalScanTable, spec_MFTableTable
 
 # med_
-from pychron.database.orms.isotope.med import med_ImageTable, med_SnapshotTable
+from pychron.database.orms.isotope.med import med_ImageTable, med_SnapshotTable, med_SampleImageTable
 
 # flux_
 from pychron.database.orms.isotope.flux import flux_FluxTable, flux_HistoryTable, flux_MonitorTable
@@ -339,6 +339,14 @@ class IsotopeAdapter(DatabaseAdapter):
         dbim = med_ImageTable(name=name, image=image)
         self._add_item(dbim)
         return dbim
+
+    def add_sample_image(self, name, image, project=None, material=None, identifier=None):
+
+        with self.session_ctx():
+            sam = self.get_sample(name, project, material, identifier)
+            obj = med_SampleImageTable(image=image)
+            obj.sample_id = sam.id
+            self._add_item(obj)
 
     def add_monitor(self, analysis, **kw):
         dbm = meas_MonitorTable(**kw)
@@ -1828,7 +1836,7 @@ class IsotopeAdapter(DatabaseAdapter):
     def get_script(self, value):
         return self._retrieve_item(meas_ScriptTable, value, key='hash', )
 
-    def get_sample(self, value, project=None, material=None, **kw):
+    def get_sample(self, value, project=None, material=None, identifier=None, **kw):
         if project:
             kw = self._append_joins(gen_ProjectTable, kw)
             kw = self._append_filters(gen_ProjectTable.name == project, kw)
@@ -1836,6 +1844,10 @@ class IsotopeAdapter(DatabaseAdapter):
         if material:
             kw = self._append_joins(gen_MaterialTable, kw)
             kw = self._append_filters(gen_MaterialTable.name == material, kw)
+
+        if identifier:
+            kw = self._append_joins(gen_LabTable, kw)
+            kw = self._append_filters(gen_LabTable.identifier == identifier, kw)
 
         return self._retrieve_item(gen_SampleTable, value, **kw)
 

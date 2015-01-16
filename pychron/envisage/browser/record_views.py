@@ -39,6 +39,7 @@ class SampleRecordView(RecordView):
     elevation = Float
     lithology = Str
     rock_type = Str
+    identifier = Str
 
     def _create(self, dbrecord):
         if dbrecord.material:
@@ -56,6 +57,7 @@ class SampleRecordView(RecordView):
             v = getattr(dbrecord, dbattr)
             if v is not None:
                 setattr(self, attr, v)
+
 
 
 class LabnumberRecordView(RecordView):
