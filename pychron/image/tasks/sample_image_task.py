@@ -68,16 +68,8 @@ class SampleImageTask(BaseManagerTask, BrowserMixin):
         # self.save_event = p
 
         db = self.manager.db
+        img = self.camera.get_image_data('uint8')
 
-        img = self.camera.get_image_data()
-
-        # s = img.shape
-        # from PySide.QtGui import QImage, QPixmap
-        # img = QImage(img, s[1], s[0], QImage.Format_RGB32)
-        # img.save(p, format='jpeg', quality=50)
-        #
-        # # self.camera.save(p)
-        #
         # with open(p, 'r') as fp:
         db.add_sample_image(sample.name, img.tobytes(), identifier=sample.identifier)
 

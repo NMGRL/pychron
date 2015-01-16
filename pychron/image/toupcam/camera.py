@@ -15,14 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from skimage import io
 from threading import Lock
 from scipy.misc import imsave
 from traits.api import provides, Event
 # ============= standard library imports ========================
 import ctypes
-from numpy import zeros, uint8, uint32, asarray, uint16
+from numpy import zeros, uint8, uint32, asarray, uint16, int8, rot90, flipud, array, int32, save
 import Image as pil
 # ============= local library imports  ==========================
+from pychron.core.helpers.filetools import view_file
 from pychron.image.cv_wrapper import save_image
 from pychron.image.i_camera import ICamera
 
@@ -60,20 +62,57 @@ class ToupCamCamera(object):
     def __init__(self, resolution=2, bits=32):
         if bits not in (32,):
             raise ValueError('Bits needs to by 8 or 32')
-
+        # bits = 8
         self.resolution = resolution
         self.cam = self.get_camera()
         self.bits = bits
 
         # icamera interface
-        # def save(self, p):
-        # imsave(p, self._data)
-        # pil.save(p, self._data)
-        # im = pil.fromarray(self._data)
-        # im.save(p)
 
-    def get_image_data(self, *args, **kw):
-        return self._data
+    def save(self, p):
+        self._save_path = p
+        lib.Toupcam_Snap(self.cam, self.resolution)
+
+    def _do_save(self, im):
+
+        pix = im[0,0]
+        print pix, hex(pix)
+        r,g,b=int(hex(pix)[2:4],16),int(hex(pix)[4:6],16),int(hex(pix)[6:8],16)
+        print r,g,b
+        print '{:02X}{:02X}{:02X}'.format(r,g,b)
+
+        # im = im.astype(int32)
+        save('/Users/ross/Desktop/image_uint32', im)
+        pix = im[0,0]
+        print pix, hex(pix)
+        r,g,b=int(hex(pix)[2:4],16),int(hex(pix)[4:6],16),int(hex(pix)[6:8],16)
+        print r,g,b
+        print '{:02X}{:02X}{:02X}'.format(r,g,b)
+
+        image = pil.fromarray(im, 'I')
+
+        # pil._show(image)
+        # image = pil.fromarray(im).convert('RGB')
+        # image = image.convert('RGB')
+
+        # ima = array(image)
+        # pix = ima[0,0]
+        # print pix
+        # print pix, hex(pix)
+
+        image.save(self._save_path)
+        # print io.available_plugins
+        # io.imsave(self._save_path, im)
+        view_file(self._save_path)
+
+    def get_image_data(self, dtype=None, *args, **kw):
+        d = self._data
+        # if dtype:
+        #     if dtype == 'uint8':
+        #         d *= 255.0 / (2 ** 24)
+        #         d = d.astype(uint8)
+
+        return d
 
     def close(self):
         if self.cam:
@@ -84,17 +123,42 @@ class ToupCamCamera(object):
         w, h = self.get_size()
         h, w = h.value, w.value
 
-        dtype = uint32
-        shape = (h, w, 3)
+        shape = (h, w)
+        if self.bits==8:
+            dtype = uint8
+        else:
+            dtype = uint32
 
         self._data = zeros(shape, dtype=dtype)
+
+        self._cnt = 0
 
         def get_frame(nEvent, ctx):
             if nEvent == TOUPCAM_EVENT_IMAGE:
                 w, h = ctypes.c_uint(), ctypes.c_uint()
-                lib.Toupcam_PullImage(self.cam, ctypes.c_void_p(self._data.ctypes.data), self.bits,
+                bits = ctypes.c_int(self.bits)
+                # if self._cnt == 4:
+                # for i,row in enumerate(self._data):
+                #         print i, row[10]
+                #
+                # self._cnt+=1
+
+                lib.Toupcam_PullImage(self.cam, ctypes.c_void_p(self._data.ctypes.data), bits,
                                       ctypes.byref(w),
                                       ctypes.byref(h))
+
+
+            elif nEvent == TOUPCAM_EVENT_STILLIMAGE:
+                w, h = self.get_size()
+                h, w = h.value, w.value
+
+                dtype = uint32
+                shape = (h, w)
+
+                still = zeros(shape, dtype=dtype)
+                bits = ctypes.c_int(self.bits)
+                lib.Toupcam_PullStillImage(self.cam, ctypes.c_void_p(still.ctypes.data), bits, None, None)
+                self._do_save(still)
 
         CB = ctypes.CFUNCTYPE(None, ctypes.c_uint, ctypes.c_void_p)
 

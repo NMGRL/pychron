@@ -53,10 +53,10 @@ class D(HasTraits):
         self.camera.do_awb(self._update_temptint)
 
     def _save_button_fired(self):
-        p = '/Users/ross/Desktop/output.png'
-        # self.camera.save(p)
-        self.save_event = p
-        view_file(p)
+        p = '/Users/ross/Desktop/output_uint8.png'
+        self.camera.save(p)
+        # self.save_event = p
+
 
     def _hue_default_button_fired(self):
         self.trait_set(hue=0, saturation=128, brightness=0)
@@ -93,7 +93,6 @@ class D(HasTraits):
         with no_update(self):
             d = {k: getattr(self.camera, 'get_{}'.format(k))() for k in
                  ('hue', 'saturation', 'brightness', 'contrast', 'gamma')}
-            print d
             self.trait_set(**d)
 
     def traits_view(self):

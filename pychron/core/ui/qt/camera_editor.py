@@ -60,6 +60,7 @@ class _CameraEditor(Editor):
             s = img.shape
             if s:
                 im = QImage(img, s[1], s[0], QImage.Format_RGB32)
+                # im = QImage(img, s[1], s[0], QImage.Format_RGB16)
                 if self.swap:
                     im = QImage.rgbSwapped(im)
 
