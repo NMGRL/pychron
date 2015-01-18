@@ -15,18 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pyface.tasks.advanced_editor_area_pane import AdvancedEditorAreaPane
 from pyface.tasks.traits_dock_pane import TraitsDockPane
-from pyface.tasks.traits_task_pane import TraitsTaskPane
-from traits.api import HasTraits, Button
-from traitsui.api import View, Item, VGroup, UItem, TabularEditor
+from traitsui.api import View, VGroup, UItem, TabularEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
-from pychron.core.ui.qt.camera_editor import CameraEditor
 from pychron.core.ui.qt.tabular_editors import FilterTabularEditor
-from pychron.envisage.browser.adapters import LabnumberAdapter, ProjectAdapter, SampleAdapter, SampleImageAdapter
-from pychron.envisage.tasks.advanced_editor_area_pane import myAdvancedEditorAreaPane
+from pychron.envisage.browser.adapters import ProjectAdapter, SampleImageAdapter
 
 
 class ImageAdapter(TabularAdapter):

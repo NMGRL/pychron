@@ -70,6 +70,7 @@ class ExperimentQueue(BaseExperimentQueue):
     linked_copy_cache = List
     start_timestamp = Date
     # queue_actions = List
+    auto_save_detector_ic = Bool
 
     executed = Bool(False)
 
@@ -273,14 +274,10 @@ class ExperimentQueue(BaseExperimentQueue):
     def _load_actions(self):
         pass
 
-    def _extract_device_changed(self):
-        self.debug('extract device changed {}'.format(self.extract_device))
-        if 'uv' in self.extract_device.lower():
-            k = UVHumanErrorChecker
-        else:
-            k = HumanErrorChecker
-
-        self.human_error_checker = k()
+    def _load_meta_hook(self, meta):
+        bool_default = lambda x: bool(x) if x else False
+        self._set_meta_param('auto_save_detector_ic', meta, bool_default)
+        self.debug('$$$$$$$$$$$$$$$$$$$$$ auto_save_detector_ic={}'.format(self.auto_save_detector_ic))
 
     def _get_execution_ratio(self):
         ex = len(self.executed_runs)
@@ -294,6 +291,15 @@ class ExperimentQueue(BaseExperimentQueue):
 
             for si in reversed(self.selected):
                 self.automated_runs.insert(idx, si)
+
+    def _extract_device_changed(self):
+        self.debug('extract device changed {}'.format(self.extract_device))
+        if 'uv' in self.extract_device.lower():
+            k = UVHumanErrorChecker
+        else:
+            k = HumanErrorChecker
+
+        self.human_error_checker = k()
 
     @on_trait_change('automated_runs[]')
     def _refresh_info(self, new):

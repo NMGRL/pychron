@@ -792,10 +792,17 @@ class AutomatedRun(Loggable):
         script_name, script_blob = self._assemble_script_blob()
         eqn, eqb = '', ''
         pb = {}
-        if self.experiment_executor:
-            eqn = self.experiment_executor.experiment_queue.name
-            eqb = self.experiment_executor.experiment_blob()
-            pb = self.experiment_executor.get_prev_blanks()
+        auto_save_detector_ic = False
+
+        executor = self.experiment_executor
+        if executor:
+            queue = executor.experiment_queue
+
+            eqn = queue.name
+            eqb = executor.experiment_blob()
+            pb = executor.get_prev_blanks()
+            auto_save_detector_ic = queue.auto_save_detector_ic
+            self.debug('$$$$$$$$$$$$$$$ auto_save_detector_ic={}'.format(auto_save_detector_ic))
 
         ext_name, ext_blob = '', ''
         if self.extraction_script:
@@ -818,6 +825,7 @@ class AutomatedRun(Loggable):
                                  run_spec=self.spec,
                                  arar_age=self.arar_age,
                                  positions=self.spec.get_position_list(),
+                                 auto_save_detector_ic = auto_save_detector_ic,
                                  extraction_positions=ext_pos,
                                  sensitivity_multiplier=sens,
                                  experiment_queue_name=eqn,

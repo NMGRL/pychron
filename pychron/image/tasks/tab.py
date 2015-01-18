@@ -15,8 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change, Long
-from traitsui.api import View, UItem, Item, HGroup, VGroup
+from traits.api import Any, Long
+from traitsui.api import View, UItem
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.image_editor import ImageEditor

@@ -25,36 +25,13 @@ from traitsui.tabular_adapter import TabularAdapter
 from uncertainties import std_dev, nominal_value, ufloat
 from pychron.core.helpers.filetools import unique_path2, add_extension
 from pychron.core.helpers.formatting import floatfmt
+from pychron.experiment.utilities.detector_ic import make_items
 from pychron.paths import paths
 from pychron.pychron_constants import PLUSMINUS_SIGMA, DETECTOR_ORDER
 
 
 class DetectorICTabularAdapter(TabularAdapter):
     font = 'arial 12'
-
-
-class RatioItem(HasTraits):
-    name = Str
-    refvalue = 1.0
-    intensity = Str
-    intensity_err = Str
-
-    def add_ratio(self, x):
-        v = x.get_non_detector_corrected_value() / self.refvalue
-
-        self.add_trait(x.detector, Float(round(nominal_value(v), 5)))
-        self.add_trait('{}_err'.format(x.detector), Float(round(std_dev(v), 5)))
-
-    def to_row(self):
-        vs = [self.name, self.intensity, self.intensity_err]
-        for det in DETECTOR_ORDER:
-            try:
-                v = getattr(self, det)
-                vs.append(v)
-            except AttributeError:
-                vs.append(0)
-        return vs
-        # return [for det in DETECTOR_ORDER if hasattr(self, det)]
 
 
 class DetectorICView(HasTraits):
@@ -75,22 +52,8 @@ class DetectorICView(HasTraits):
                                         ('Intensity', 'intensity'),
                                         (PLUSMINUS_SIGMA, 'intensity_err')] + detcols
 
-        items = []
-        for det in DETECTOR_ORDER:
-            ai = next((ai for ai in isotopes if ai.detector.upper() == det), None)
-            if ai:
-                rv = ai.get_non_detector_corrected_value()
-                r = RatioItem(name=ai.detector,
-                              refvalue=rv,
-                              intensity=floatfmt(nominal_value(rv)),
-                              intensity_err=floatfmt(std_dev(rv)))
-                r.add_ratio(ai)
-                for bi in isotopes:
-                    r.add_ratio(bi)
-
-                items.append(r)
-
-        self.items = items
+        # self.items = items
+        self.items = make_items(an.isotopes)
 
     def _get_columns(self, isos):
 
@@ -104,14 +67,8 @@ class DetectorICView(HasTraits):
                 # yield PLUSMINUS_SIGMA, '{}_err'.format(iso.detector)
 
     def _export_button_fired(self):
-        path = os.path.join(paths.data_det_ic_dir, add_extension(self.record_id,'.csv'))
-        # path, _ = unique_path2(paths.data_dir, 'det_ic')
-        with open(path, 'w') as fp:
-            wrt = csv.writer(fp, delimiter='\t')
-            wrt.writerow(['#det','intensity','err']+DETECTOR_ORDER)
-            for i in self.items:
-                wrt.writerow(i.to_row())
-
+        from pychron.experiment.utilities.detector_ic import save_csv
+        save_csv(self.record_id, self.items)
 
     def traits_view(self):
         v = View(VGroup(HGroup(spring,UItem('export_button')),
