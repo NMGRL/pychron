@@ -18,12 +18,17 @@
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import HasTraits, Button
-from traitsui.api import View, Item, VGroup, UItem
+from traitsui.api import View, Item, VGroup, UItem, TabularEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.ui.qt.camera_editor import CameraEditor
 from pychron.core.ui.qt.tabular_editors import FilterTabularEditor
 from pychron.envisage.browser.adapters import LabnumberAdapter, ProjectAdapter, SampleAdapter, SampleImageAdapter
+
+
+class ImageAdapter(TabularAdapter):
+    columns = [('Name', 'name'), ('Date', 'create_date')]
 
 
 class CameraPane(TraitsTaskPane):
@@ -32,6 +37,7 @@ class CameraPane(TraitsTaskPane):
                        width=896, height=680))
         # v = View(UItem('camera', editor=CameraEditor()))
         return v
+
 
 class SampleBrowserPane(TraitsDockPane):
     id = 'pychron.image.browser'
@@ -60,9 +66,16 @@ class SampleBrowserPane(TraitsDockPane):
                   width=175),
             show_border=True,
             label='Projects')
-
-        v = View(VGroup(project_grp, sample_grp))
+        image_grp = VGroup(UItem('images',
+                                 editor=TabularEditor(editable=False,
+                                                      adapter=ImageAdapter(),
+                                                      multi_select=False,
+                                                      selected='selected_image')),
+                           show_border=True,
+                           label='Images')
+        v = View(VGroup(project_grp, sample_grp, image_grp))
         return v
+
 # ============= EOF =============================================
 
 

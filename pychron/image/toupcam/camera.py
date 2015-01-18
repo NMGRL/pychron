@@ -120,8 +120,11 @@ class ToupCamCamera(object):
 
     def open(self):
         self.set_esize(self.resolution)
-        w, h = self.get_size()
-        h, w = h.value, w.value
+        args = self.get_size()
+        if not args:
+            return
+
+        h, w = args[1].value, args[0].value
 
         shape = (h, w)
         if self.bits==8:

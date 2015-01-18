@@ -17,8 +17,10 @@ import sqlalchemy as sa
 def upgrade():
     op.create_table('med_SampleImageTable',
                     sa.Column('id', sa.Integer, primary_key=True),
+                    sa.Column('name', sa.String(80)),
                     sa.Column('create_date', sa.TIMESTAMP),
                     sa.Column('image', sa.BLOB),
+                    sa.Column('note', sa.BLOB),
                     sa.Column('sample_id', sa.Integer, sa.ForeignKey('gen_SampleTable.id')))
 
 

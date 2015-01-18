@@ -23,14 +23,12 @@ import psutil
 
 from pychron.core.helpers.filetools import unique_path
 
-
-
-
 # import objgraph
 USE_MEM_LOG = False
-root = os.path.join(os.path.expanduser('~'), 'Desktop', 'memtest')
-if not os.path.isdir(root):
-    os.mkdir(root)
+if USE_MEM_LOG:
+    root = os.path.join(os.path.expanduser('~'), 'Desktop', 'memtest')
+    if not os.path.isdir(root):
+        os.mkdir(root)
 
 p, _ = unique_path(root, 'mem')
 def write_mem(msg, m, verbose):

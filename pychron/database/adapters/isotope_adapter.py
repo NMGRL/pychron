@@ -96,8 +96,8 @@ def binfunc(ds, hours):
 
 # class session(object):
 # def __call__(self, f):
-#         def wrapped_f(obj, *args, **kw):
-#             with obj.session_ctx() as sess:
+# def wrapped_f(obj, *args, **kw):
+# with obj.session_ctx() as sess:
 #                 kw['sess']=sess
 #                 return f(obj, *args, **kw)
 #
@@ -896,6 +896,29 @@ class IsotopeAdapter(DatabaseAdapter):
     # ===========================================================================
     # getters
     # ===========================================================================
+    def get_sample_image_count(self, sample, project=None, material=None, identifier=None):
+        with self.session_ctx() as sess:
+            q = sess.query(med_SampleImageTable)
+            q = q.join(gen_SampleTable)
+
+            if project:
+                q = q.join(gen_ProjectTable)
+            if material:
+                q = q.join(gen_MaterialTable)
+            if identifier:
+                q = q.join(gen_LabTable)
+
+            q = q.filter(gen_SampleTable.name == sample)
+            if project:
+                q = q.filter(gen_ProjectTable.name == project)
+            if material:
+                q = q.filter(gen_MaterialTable.name == material)
+            if identifier:
+                q = q.filter(gen_LabTable.identifier == identifier)
+
+            return q.count()
+
+
     def get_adjacent_analysis(self, timestamp, previous):
         with self.session_ctx() as sess:
             q = sess.query(meas_AnalysisTable)
@@ -1406,6 +1429,7 @@ class IsotopeAdapter(DatabaseAdapter):
             # except NoResultFound, e:
             #     self.debug('get last labnumber {}'.format(e))
             #     return
+
     def get_last_labnumber(self, sample=None):
         with self.session_ctx() as s:
             #         sess = self.get_session()
@@ -2014,7 +2038,7 @@ class IsotopeAdapter(DatabaseAdapter):
     def get_labnumbers(self, identifiers=None, low_post=None, high_post=None,
                        mass_spectrometers=None,
                        filter_non_run=False,
-                       projects = None, **kw):
+                       projects=None, **kw):
 
         if identifiers is not None:
             f = gen_LabTable.identifier.in_(identifiers)
@@ -2049,7 +2073,7 @@ class IsotopeAdapter(DatabaseAdapter):
                 kw['query_hook'] = func
 
         if projects:
-            kw = self._append_joins((gen_SampleTable,gen_ProjectTable), kw)
+            kw = self._append_joins((gen_SampleTable, gen_ProjectTable), kw)
             kw = self._append_filters(gen_ProjectTable.name.in_(projects), kw)
 
         return self._retrieve_items(gen_LabTable, verbose_query=True, **kw)
