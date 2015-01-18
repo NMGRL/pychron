@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -32,8 +32,8 @@ class BaseEditorTask(BaseManagerTask):
     def db_save_info(self):
         self.information_dialog('Changes saved to the database')
 
-    def get_editor(self, name):
-        return next((e for e in self.editor_area.editors if e.name==name), None)
+    def get_editor(self, name, key='name'):
+        return next((e for e in self.editor_area.editors if getattr(e, key) == name), None)
 
     def get_editor_names(self):
         return [e.name for e in self.editor_area.editors]
@@ -43,7 +43,7 @@ class BaseEditorTask(BaseManagerTask):
             self.information_dialog('No active tab. Please open a tab')
         elif klass:
             if not isinstance(self.active_editor, klass):
-                name=str(klass).split('.')[-1][:-2].replace('Editor', '')
+                name = str(klass).split('.')[-1][:-2].replace('Editor', '')
                 self.information_dialog('No active tab. Please open a "{}" tab'.format(name))
                 return
 

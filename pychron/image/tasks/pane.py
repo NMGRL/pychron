@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.tasks.advanced_editor_area_pane import AdvancedEditorAreaPane
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import HasTraits, Button
@@ -25,18 +26,19 @@ from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.ui.qt.camera_editor import CameraEditor
 from pychron.core.ui.qt.tabular_editors import FilterTabularEditor
 from pychron.envisage.browser.adapters import LabnumberAdapter, ProjectAdapter, SampleAdapter, SampleImageAdapter
+from pychron.envisage.tasks.advanced_editor_area_pane import myAdvancedEditorAreaPane
 
 
 class ImageAdapter(TabularAdapter):
     columns = [('Name', 'name'), ('Date', 'create_date')]
 
 
-class CameraPane(TraitsTaskPane):
-    def traits_view(self):
-        v = View(UItem('camera', editor=CameraEditor(save_event='save_event'),
-                       width=896, height=680))
-        # v = View(UItem('camera', editor=CameraEditor()))
-        return v
+# class CameraPane(TraitsTaskPane):
+#     def traits_view(self):
+#         v = View(UItem('camera', editor=CameraEditor(save_event='save_event'),
+#                        width=896, height=680))
+#         # v = View(UItem('camera', editor=CameraEditor()))
+#         return v
 
 
 class SampleBrowserPane(TraitsDockPane):

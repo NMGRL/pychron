@@ -26,16 +26,18 @@ from pychron.envisage.browser.browser_mixin import BrowserMixin
 from pychron.envisage.browser.record_views import SampleRecordView, SampleImageRecordView
 from pychron.envisage.tasks.base_task import BaseManagerTask
 # from pychron.image.camera import Camera
+from pychron.envisage.tasks.editor_task import BaseEditorTask
 from pychron.image.tasks.actions import SnapshotAction, DBSnapshotAction
 # from pychron.image.tasks.image_pane import SampleImagePane
-from pychron.image.tasks.pane import SampleBrowserPane, CameraPane
+from pychron.image.tasks.pane import SampleBrowserPane#, CameraTabPane
 from pychron.image.tasks.save_view import DBSaveView
+from pychron.image.tasks.tab import CameraTab, ImageTabEditor
 from pychron.image.tasks.video_pane import VideoPane
 from pychron.image.toupcam.camera import ToupCamCamera
 from pychron.paths import paths
 
 
-class SampleImageTask(BaseManagerTask, BrowserMixin):
+class SampleImageTask(BaseEditorTask, BrowserMixin):
     name = 'Sample Imager'
     id = 'pychron.image.sample_imager'
 
@@ -99,13 +101,15 @@ class SampleImageTask(BaseManagerTask, BrowserMixin):
     # task interface
     def activated(self):
         self.camera.open()
+
+        editor = CameraTab(model=self,
+                           name='Camera')
+
+        self._open_editor(editor)
         self.load_projects(include_recent=False)
 
     def prepare_destroy(self):
         self.camera.close()
-
-    def create_central_pane(self):
-        return CameraPane(model=self)
 
     def create_dock_panes(self):
         return [SampleBrowserPane(model=self)]
@@ -131,6 +135,14 @@ class SampleImageTask(BaseManagerTask, BrowserMixin):
             with db.session_ctx():
                 dbim = db.get_sample_image(new.record_id)
                 print dbim
+                editor = self.get_editor(new.record_id, key='record_id')
+                if not editor:
+                    im = dbim.image
+                    editor = ImageTabEditor(record_id=new.record_id,
+                                            image=im)
+                    self._open_editor(editor)
+                else:
+                    self.activate_editor(editor)
 
     def _load_associated_images(self, sample_records):
         db = self.manager.db
