@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from numpy import load, random
+from numpy import load, random, uint8, roll
 import Image as pil
 from numpy.core.umath import bitwise_or, bitwise_and
 from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change
@@ -25,15 +25,21 @@ from traitsui.api import View, UItem, Item, HGroup, VGroup
 def main():
     im = load('/Users/ross/Desktop/image_uint32.npy')
     print im.shape, im.dtype
-    pix = im[0,0]
+    raw = im.view(uint8).reshape(im.shape+(-1,))
+    print raw
+    # pix = im[0,0]
 
-    print pix, hex(pix)
+    # print pix, hex(pix)
     # im+=255
     # data = random.randint(0,2**16-1,(1000,1000))
     # im = pil.fromarray(data)
     # im.show()
-
-    image = pil.fromarray(im, 'I')
+    im = raw[...,:3]
+    # print im
+    # im = roll(im, 1, axis=2)
+    image = pil.fromarray(im, 'RGB')
+    b,g,r = image.split()
+    image = pil.merge('RGB', (r,g,b))
     image.show()
 
 if __name__ == '__main__':

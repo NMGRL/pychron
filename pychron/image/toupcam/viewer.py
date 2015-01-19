@@ -53,7 +53,7 @@ class D(HasTraits):
         self.camera.do_awb(self._update_temptint)
 
     def _save_button_fired(self):
-        p = '/Users/ross/Desktop/output_uint8.png'
+        p = '/Users/ross/Desktop/output_uint8.jpg'
         self.camera.save(p)
         # self.save_event = p
 

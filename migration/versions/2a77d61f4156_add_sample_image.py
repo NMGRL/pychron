@@ -12,6 +12,7 @@ down_revision = '502bd4123969'
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects.mysql import MEDIUMBLOB
 
 
 def upgrade():
@@ -19,7 +20,7 @@ def upgrade():
                     sa.Column('id', sa.Integer, primary_key=True),
                     sa.Column('name', sa.String(80)),
                     sa.Column('create_date', sa.TIMESTAMP),
-                    sa.Column('image', sa.BLOB),
+                    sa.Column('image', MEDIUMBLOB),
                     sa.Column('note', sa.BLOB),
                     sa.Column('sample_id', sa.Integer, sa.ForeignKey('gen_SampleTable.id')))
 

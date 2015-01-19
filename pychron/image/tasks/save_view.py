@@ -20,14 +20,16 @@ from traitsui.api import View, UItem, Item, HGroup, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+
 class DBSaveView(HasTraits):
     name = Str
     note = Str
 
     def traits_view(self):
-        v = View(Item('name'),
-                 Item('note', style='custom'),
-
+        v = View(VGroup(Item('name'),
+                        VGroup(UItem('note', style='custom'),
+                               show_border=True,
+                               label='Note')),
                  title='DB Save',
                  buttons=['OK', 'Cancel'],
                  resizable=True,

@@ -340,11 +340,11 @@ class IsotopeAdapter(DatabaseAdapter):
         self._add_item(dbim)
         return dbim
 
-    def add_sample_image(self, name, image, project=None, material=None, identifier=None):
+    def add_sample_image(self, sample_name, image_name, image, note, project=None, material=None, identifier=None):
 
         with self.session_ctx():
-            sam = self.get_sample(name, project, material, identifier)
-            obj = med_SampleImageTable(image=image)
+            sam = self.get_sample(sample_name, project, material, identifier)
+            obj = med_SampleImageTable(name=image_name, image=image, note=note)
             obj.sample_id = sam.id
             self._add_item(obj)
 

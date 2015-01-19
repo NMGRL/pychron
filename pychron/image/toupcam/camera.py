@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from cStringIO import StringIO
+import os
 from skimage import io
 from threading import Lock
 from scipy.misc import imsave
@@ -75,43 +77,40 @@ class ToupCamCamera(object):
 
     def _do_save(self, im):
 
-        pix = im[0,0]
-        print pix, hex(pix)
-        r,g,b=int(hex(pix)[2:4],16),int(hex(pix)[4:6],16),int(hex(pix)[6:8],16)
-        print r,g,b
-        print '{:02X}{:02X}{:02X}'.format(r,g,b)
-
-        # im = im.astype(int32)
-        save('/Users/ross/Desktop/image_uint32', im)
-        pix = im[0,0]
-        print pix, hex(pix)
-        r,g,b=int(hex(pix)[2:4],16),int(hex(pix)[4:6],16),int(hex(pix)[6:8],16)
-        print r,g,b
-        print '{:02X}{:02X}{:02X}'.format(r,g,b)
-
-        image = pil.fromarray(im, 'I')
-
-        # pil._show(image)
-        # image = pil.fromarray(im).convert('RGB')
-        # image = image.convert('RGB')
-
-        # ima = array(image)
-        # pix = ima[0,0]
-        # print pix
-        # print pix, hex(pix)
-
-        image.save(self._save_path)
-        # print io.available_plugins
-        # io.imsave(self._save_path, im)
+        # raw = im.view(uint8).reshape(im.shape+(-1,))
+        # bgr = raw[...,:3]
+        # image = pil.fromarray(bgr, 'RGB')
+        # b,g,r = image.split()
+        # image = pil.merge('RGB', (r,g,b))
+        # image = self.get_jpeg_data(im, 10)
+        image = self.get_pil_image(im)
+        image.save(self._save_path, 'JPEG', quality=10)
         view_file(self._save_path)
 
-    def get_image_data(self, dtype=None, *args, **kw):
-        d = self._data
-        # if dtype:
-        #     if dtype == 'uint8':
-        #         d *= 255.0 / (2 ** 24)
-        #         d = d.astype(uint8)
+    def get_jpeg_data(self, data=None, quality=75):
 
+        im = self.get_pil_image(data)
+
+        s = StringIO()
+        im.save(s, 'JPEG', quality=quality)
+        s.seek(0, os.SEEK_END)
+        print s.tell()
+
+        return s.getvalue()
+
+    def get_pil_image(self, data=None):
+        # im = self._data
+        if data is None:
+            data= self._data
+
+        raw = data.view(uint8).reshape(data.shape+(-1,))
+        bgr = raw[...,:3]
+        image = pil.fromarray(bgr, 'RGB')
+        b,g,r = image.split()
+        return pil.merge('RGB', (r,g,b))
+
+    def get_image_data(self, *args, **kw):
+        d = self._data
         return d
 
     def close(self):

@@ -89,14 +89,11 @@ class SampleImageTask(BaseEditorTask, BrowserMixin):
         if info.result:
             self._prev_name = v.name
             self.debug('save image with name={}'.format(name))
-            # p = os.path.join(paths.hidden_dir, 'temp_image.jpg')
-            # self.save_event = p
 
-            # db = self.manager.db
-            # img = self.camera.get_image_data('uint8')
+            jpgblob = self.camera.get_jpeg_data(quality=75)
 
-            # with open(p, 'r') as fp:
-            # db.add_sample_image(sample.name, img.tobytes(), identifier=sample.identifier)
+            db.add_sample_image(sample.name, v.name, jpgblob, v.note, identifier=sample.identifier)
+
 
     # task interface
     def activated(self):
