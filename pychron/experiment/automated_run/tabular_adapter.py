@@ -59,7 +59,7 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter):
     #    extract_device_width = Int(125)
     extraction_script_width = Int(80)
     measurement_script_width = Int(90)
-    truncate_conditional_width = Int(80)
+    conditionals_width = Int(80)
     syn_extraction_width = Int(80)
     use_cdd_warming_width = Int(80)
     post_measurement_script_width = Int(90)
@@ -105,11 +105,14 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter):
             elif item.end_after:
                 color = COLORS['end_after']
             else:
+
                 if row % 2 == 0:
                     # color = 'white'
-                    color = self.odd_bg_color
+                    # color = self.even_bg_color
+                    color = self.even_bg_color
                 else:
-                    color = '#E6F2FF'  # light gray blue
+                    color = self.odd_bg_color #'#E6F2FF'  # light gray blue
+                # print row, color, self.odd_bg_color, self.even_bg_color
 
         return color
 
@@ -289,7 +292,7 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter):
             ('Extraction', 'extraction_script'),
             # ('T_o Offset', 'collection_time_zero_offset'),
             ('Measurement', 'measurement_script'),
-            ('Truncate', 'truncate_conditional'),
+            ('Conditionals', 'conditionals'),
             # ('SynExtraction', 'syn_extraction'),
             ('CDDWarm', 'use_cdd_warming'),
             ('Post Eq.', 'post_equilibration_script'),
@@ -319,16 +322,46 @@ class AutomatedRunMixin(object):
         blocks = MenuManager(Action(name='Make Block', action='make_block'),
                              Action(name='Repeat Block', action='repeat_block'),
                              name='Blocks')
-        return MenuManager(move, jump,
+        return MenuManager(move, jump, blocks,
                            Action(name='Unselect', action='unselect'),
                            Action(name='Toggle End After', action='toggle_end_after'),
-                           Action(name='Toggle Skip', action='toggle_skip')
-                           )
+                           Action(name='Toggle Skip', action='toggle_skip'))
 
 
 class AutomatedRunSpecAdapter(AutomatedRunMixin, ExecutedAutomatedRunSpecAdapter, ):
     pass
 
+
+class RunBlockAdapter(AutomatedRunSpecAdapter):
+    def _columns_factory(self):
+        cols = [
+            ('Labnumber', 'labnumber'),
+            # ('Aliquot', 'aliquot'),
+            ('Sample', 'sample'),
+            ('Position', 'position'),
+            ('Extract', 'extract_value'),
+            ('Units', 'extract_units'),
+
+            ('Ramp (s)', 'ramp_duration'),
+            ('Duration (s)', 'duration'),
+            ('Cleanup (s)', 'cleanup'),
+            # ('Overlap (s)', 'overlap'),
+
+            ('Beam (mm)', 'beam_diameter'),
+            ('Pattern', 'pattern'),
+            ('Extraction', 'extraction_script'),
+            # ('T_o Offset', 'collection_time_zero_offset'),
+            ('Measurement', 'measurement_script'),
+            ('Conditionals', 'conditionals'),
+            # ('SynExtraction', 'syn_extraction'),
+            ('CDDWarm', 'use_cdd_warming'),
+            ('Post Eq.', 'post_equilibration_script'),
+            ('Post Meas.', 'post_measurement_script'),
+            # ('Options', 'script_options'),
+            # ('Comment', 'comment')
+        ]
+
+        return cols
 
 class ExecutedUVAutomatedRunSpecAdapter(ExecutedAutomatedRunSpecAdapter):
     def _columns_factory(self):
@@ -347,7 +380,7 @@ class ExecutedUVAutomatedRunSpecAdapter(ExecutedAutomatedRunSpecAdapter):
             ('Cleanup (s)', 'cleanup'),
             ('Extraction', 'extraction_script'),
             ('Measurement', 'measurement_script'),
-            ('Truncate', 'truncate_conditional'),
+            ('Conditionals', 'conditionals'),
             ('SynExtraction', 'syn_extraction'),
             ('CDDWarm', 'use_cdd_warming'),
             ('Post Eq.', 'post_equilibration_script'),

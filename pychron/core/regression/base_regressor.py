@@ -182,17 +182,14 @@ class BaseRegressor(HasTraits):
         return rmodel - es, rmodel + es
 
     def calculate_ci(self, rx, rmodel):
-        cors = self.calculate_ci_error(rx, rmodel)
+        cors = self.calculate_ci_error(rx)
         if rmodel is not None and cors is not None:
             if rmodel.shape[0] and cors.shape[0]:
                 return rmodel - cors, rmodel + cors
 
-    def calculate_ci_error(self, rx, rmodel=None):
-        if rmodel is None:
-            rmodel = self.predict(rx)
-
-        cors = self._calculate_ci(rx, rmodel)
-        return cors
+    def calculate_ci_error(self, rx):
+        cors = self._calculate_ci(rx)
+        return 2*cors
 
     def get_syx(self):
         n = self.clean_xs.shape[0]
@@ -254,20 +251,19 @@ class BaseRegressor(HasTraits):
         s = '{}    y={}+{}'.format(fit, eq, constant)
         return s
 
-    def _calculate_ci(self, rx, rmodel):
+    def _calculate_ci(self, rx):
         if isinstance(rx, (float, int)):
             rx = [rx]
 
         X = self.clean_xs
         Y = self.clean_ys
-        cors = self._calculate_confidence_interval(X, Y, rx, rmodel)
+        cors = self._calculate_confidence_interval(X, Y, rx)
         return cors
 
     def _calculate_confidence_interval(self,
                                        x,
                                        observations,
                                        rx,
-                                       model,
                                        confidence=95):
 
         alpha = 1.0 - confidence / 100.0
@@ -321,19 +317,19 @@ class BaseRegressor(HasTraits):
         exc = set(self.user_excluded) ^ set(self.truncate_excluded) ^ set(self.outlier_excluded)
         return delete(v, list(exc), 0)
 
-    def _check_integrity(self, x, y):
+    def _check_integrity(self, x, y, verbose=False):
         nx, ny = len(x), len(y)
         if not nx or not ny:
-            if self.integrity_warning:
+            if self.integrity_warning or verbose:
                 logger.warning('not x={} y={}'.format(nx, ny))
             return
         if nx != ny:
-            if self.integrity_warning:
+            if self.integrity_warning or verbose:
                 logger.warning('x!=y x={} y={}'.format(nx, ny))
             return
 
         if nx == 1 or ny == 1:
-            if self.integrity_warning:
+            if self.integrity_warning or verbose:
                 logger.warning('==1 x={} y={}'.format(nx, ny))
             return
 

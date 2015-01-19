@@ -1,11 +1,11 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,12 +21,16 @@ from envisage.api import Plugin
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.displays.gdisplays import gTraceDisplay
-from pychron.envisage.tasks.tasks_plugin import myTasksPlugin
-from pychron.core.helpers.logger_setup import new_logger
+from pychron.envisage.key_bindings import update_key_bindings
+from pychron.envisage.tasks.tasks_plugin import PychronTasksPlugin, myTasksPlugin
+# from pychron.core.helpers.logger_setup import new_logger
 from pychron.logger.tasks.logger_plugin import LoggerPlugin
-from pychron.initialization_parser import InitializationParser
+from pychron.envisage.initialization.initialization_parser import InitializationParser
 
-logger = new_logger('launcher')
+import logging
+
+logger = logging.getLogger()
+
 try:
     from pychron.updater.tasks.update_plugin import UpdatePlugin
 except ImportError:
@@ -34,45 +38,30 @@ except ImportError:
     UpdatePlugin = None
 
 PACKAGE_DICT = dict(
+    CanvasDesignerPlugin='pychron.canvas.tasks.canvas_plugin',
+    ArArConstantsPlugin='pychron.constants.tasks.arar_constants_plugin',
+    DashboardServerPlugin='pychron.dashboard.tasks.server.plugin',
+    DatabasePlugin='pychron.database.tasks.database_plugin',
+    EntryPlugin='pychron.entry.tasks.entry_plugin',
     ExperimentPlugin='pychron.experiment.tasks.experiment_plugin',
-    LoadingPlugin='pychron.loading.loading_plugin',
+    ExternalPipettePlugin='pychron.external_pipette.tasks.external_pipette_plugin',
     ExtractionLinePlugin='pychron.extraction_line.tasks.extraction_line_plugin',
+    GeoPlugin='pychron.geo.tasks.geo_plugin',
     VideoPlugin='pychron.image.tasks.video_plugin',
-    #                   CanvasDesignerPlugin='pychron.canvas.plugins.canvas_designer_plugin',
-    #                   MDDModelerPlugin='pychron.modeling.plugins.mdd_modeler_plugin',
-
-    #                   SVNPlugin='pychron.svn.plugins.svn_plugin',
-
     FusionsDiodePlugin='pychron.lasers.tasks.plugins.diode',
     FusionsCO2Plugin='pychron.lasers.tasks.plugins.co2',
     FusionsUVPlugin='pychron.lasers.tasks.plugins.uv',
+    LoadingPlugin='pychron.loading.loading_plugin',
     CoreLaserPlugin='pychron.lasers.tasks.plugins.laser_plugin',
-    #                   FusionsDiodePlugin='pychron.lasers.plugins.fusions.diode.plugin',
-    #                   FusionsCO2Plugin='pychron.lasers.plugins.fusions.co2.plugin',
-    #                   FusionsUVPlugin='pychron.lasers.plugins.fusions.uv.plugin',
-
-    #                   SynradCO2Plugin='pychron.lasers.plugins.synrad_co2_plugin',
-
+    MediaServerPlugin='pychron.media_server.tasks.media_server_plugin',
+    ProcessingPlugin='pychron.processing.tasks.processing_plugin',
+    PyScriptPlugin='pychron.pyscripts.tasks.pyscript_plugin',
     ArgusSpectrometerPlugin='pychron.spectrometer.tasks.argus_spectrometer_plugin',
     MapSpectrometerPlugin='pychron.spectrometer.tasks.map_spectrometer_plugin',
-
-    #                   GraphPlugin='pychron.graph.plugins.graph_plugin',
-
-    #                   TwitterPlugin='pychron.social.plugins.twitter_plugin',
-
     EmailPlugin='pychron.social.tasks.email_plugin',
-    ProcessingPlugin='pychron.processing.tasks.processing_plugin',
-
-    MediaServerPlugin='pychron.media_server.tasks.media_server_plugin',
-    PyScriptPlugin='pychron.pyscripts.tasks.pyscript_plugin',
-    DatabasePlugin='pychron.database.tasks.database_plugin',
-    CanvasDesignerPlugin='pychron.canvas.tasks.canvas_plugin',
-    ArArConstantsPlugin='pychron.constants.tasks.arar_constants_plugin',
-    EntryPlugin='pychron.entry.tasks.entry_plugin',
     SystemMonitorPlugin='pychron.system_monitor.tasks.system_monitor_plugin',
-    DashboardServerPlugin='pychron.dashboard.tasks.server.plugin',
-    GeoPlugin='pychron.geo.tasks.geo_plugin',
-    ExternalPipettePlugin='pychron.external_pipette.tasks.external_pipette_plugin')
+    WorkspacePlugin='pychron.workspace.tasks.workspace_plugin',
+    LabBookPlugin='pychron.labbook.tasks.labbook_plugin')
 
 
 def get_module_name(klass):
@@ -171,14 +160,17 @@ def get_user_plugins():
     return plugins
 
 
-def app_factory(klass):
+def app_factory(klass, user):
     """
         assemble the plugins
         return a Pychron TaskApplication
     """
+    pychron_plugin = PychronTasksPlugin()
     plugins = [
         CorePlugin(),
         myTasksPlugin(),
+        pychron_plugin,
+        # FoobotPlugin(),
         LoggerPlugin()]
 
     # if UpdatePlugin is not None:
@@ -187,7 +179,11 @@ def app_factory(klass):
     plugins += get_hardware_plugins()
     plugins += get_user_plugins()
 
-    app = klass(plugins=plugins)
+    app = klass(username=user, plugins=plugins)
+
+    #set key bindings
+    update_key_bindings(pychron_plugin.actions)
+
     return app
 
 
@@ -197,26 +193,27 @@ def check_dependencies():
     """
     from pyface.api import warning
 
-    try:
-        mod = __import__('uncertainties',
-                         fromlist=['ver'])
-        ver = mod.__version__
-    except ImportError:
-        warning(None, 'Install "{}" package. required version>={} '.format('uncertainties', '2.1'))
-        return
+    for mod, req in (('uncertainties', '2.1'),
+                     ('pint', '0.5')):
+        try:
+            mod = __import__(mod)
+            ver = mod.__version__
+        except ImportError:
+            warning(None, 'Install "{}" package. required version>={} '.format(mod, req))
+            return
 
-    vargs = ver.split('.')
-    maj = vargs[0]
-    if int(maj) < 2:
-        warning(None, 'Update "{}" package. your version={}. required version>={} '.format('uncertainties',
-                                                                                           ver,
-                                                                                           '2.1'))
-        return
+        vargs = ver.split('.')
+        maj = int(vargs[0])
+        if maj < int(float(req)):
+            warning(None, 'Update "{}" package. your version={}. required version>={} '.format(mod,
+                                                                                               maj,
+                                                                                               req))
+            return
 
     return True
 
 
-def launch(klass):
+def launch(klass, user):
     """
     """
     # login protection
@@ -232,9 +229,11 @@ def launch(klass):
     #         return
 
     if not check_dependencies():
-        return
+        logger.info('check dependencies failed')
+        os._exit(0)
 
-    app = app_factory(klass)
+
+    app = app_factory(klass, user)
 
     try:
         app.run()

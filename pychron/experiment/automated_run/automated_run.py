@@ -48,7 +48,7 @@ from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR, MEASUREMENT_COLOR, \
     EXTRACTION_COLOR, SCRIPT_KEYS
 from pychron.experiment.conditional.conditional import TruncationConditional, \
-    ActionConditional, TerminationConditional, conditional_from_dict
+    ActionConditional, TerminationConditional, conditional_from_dict, CancelationConditional
 from pychron.processing.arar_age import ArArAge
 from pychron.processing.export.export_spec import assemble_script_blob
 from pychron.core.ui.gui import invoke_in_main_thread
@@ -123,6 +123,7 @@ class AutomatedRun(Loggable):
     termination_conditionals = List
     truncation_conditionals = List
     action_conditionals = List
+    cancelation_conditionals = List
 
     peak_center = None
     coincidence_scan = None
@@ -140,9 +141,15 @@ class AutomatedRun(Loggable):
     min_ms_pumptime = Int(60)
     overlap_evt = None
 
-    #===============================================================================
+    # ===============================================================================
     # pyscript interface
-    #===============================================================================
+    # ===============================================================================
+    def py_whiff(self, ncounts, conditionals, starttime, starttime_offset, series=0, fit_series=0):
+        return self._whiff(ncounts, conditionals, starttime, starttime_offset, series, fit_series)
+
+    def py_reset_data(self):
+        self.persister.pre_measurement_save()
+
     def py_set_integration_time(self, v):
         self.set_integration_time(v)
 
@@ -233,8 +240,6 @@ class AutomatedRun(Loggable):
 
         self.persister.build_tables(gn, self._active_detectors)
 
-        self._add_truncate_conditionals()
-
         self.multi_collector.is_baseline = False
         self.multi_collector.fit_series_idx = fit_series
 
@@ -251,6 +256,9 @@ class AutomatedRun(Loggable):
                                series,
                                check_conditionals, sc, obj)
         return result
+
+    def py_post_equilibration(self):
+        self.do_post_equilibration()
 
     def py_equilibration(self, eqtime=None, inlet=None, outlet=None,
                          do_post_equilibration=True,
@@ -344,8 +352,9 @@ class AutomatedRun(Loggable):
             add additional isotopes and associated plots if necessary
         """
         if self.plot_panel is None:
-            self.warning('Need to call "define_hops(...)" after "activate_detectors(...)"')
-            return
+            self.plot_panel = self._new_plot_panel(self.plot_panel, stack_order='top_to_bottom')
+        # self.warning('Need to call "define_hops(...)" after "activate_detectors(...)"')
+        # return
 
         self.plot_panel.is_peak_hop = True
 
@@ -361,13 +370,14 @@ class AutomatedRun(Loggable):
                              not self.spec.analysis_type.startswith('background'))
         for iso, dets in groupby(hops, key=key):
             dets = list(dets)
+            print iso, dets, dets[0][2]
             if dets[0][2]:
                 continue
 
             add_detector = len(dets) > 1
 
-            plot = g.get_plot_by_ytitle(iso)
             for _, di, _ in dets:
+                self._add_active_detector(di)
                 name = iso
                 if iso in a.isotopes:
                     ii = a.isotopes[iso]
@@ -383,10 +393,12 @@ class AutomatedRun(Loggable):
                         b = pbs[iso]
                         ii.set_baseline(nominal_value(b), std_dev(b))
 
-                    if plot is None:
-                        plot = self.plot_panel.new_plot()
-                        pid = g.plots.index(plot)
-                        g.new_series(kind='scatter', fit=None, plotid=pid)
+                plot = g.get_plot_by_ytitle(iso) or g.get_plot_by_ytitle('{}{}'.format(iso, di))
+                if plot is None:
+                    plot = self.plot_panel.new_plot()
+                    pid = g.plots.index(plot)
+                    print 'adding', pid
+                    g.new_series(type='scatter', fit='linear', plotid=pid)
 
                 if add_detector:
                     name = '{}{}'.format(name, di)
@@ -418,7 +430,7 @@ class AutomatedRun(Loggable):
         writer = self.persister.get_data_writer(group)
 
         check_conditionals = True
-        self._add_truncate_conditionals()
+        self._add_conditionals()
 
         ret = self._peak_hop(cycles, counts, hops, group, writer,
                              starttime, starttime_offset, series,
@@ -458,49 +470,50 @@ class AutomatedRun(Loggable):
         self.coincidence_scan = obj
         t.join()
 
-    #===============================================================================
+    # ===============================================================================
     # conditionals
-    #===============================================================================
-    def py_add_termination(self, attr, comp, start_count, frequency,
-                           window=0, mapper=''):
+    # ===============================================================================
+    def py_add_cancelation(self, **kw):
+        """
+        cancel experiment if teststr evaluates to true
+        """
+        self._conditional_appender('cancelation', kw, CancelationConditional)
+
+    def py_add_action(self, **kw):
         """
             attr must be an attribute of arar_age
-        """
-        self.termination_conditionals.append(TerminationConditional(attr, comp,
-                                                                    start_count,
-                                                                    frequency,
-                                                                    window=window,
-                                                                    mapper=mapper))
 
-    def py_add_truncation(self, attr, comp, start_count, frequency,
-                          abbreviated_count_ratio):
+            perform a specified action if teststr evaluates to true
+        """
+        self._conditional_appender('action', kw, ActionConditional)
+
+    def py_add_termination(self, **kw):
         """
             attr must be an attribute of arar_age
+
+            terminate run and continue experiment if teststr evaluates to true
         """
-        self.info('adding truncation {} {} {}'.format(attr, comp, start_count))
+        self._conditional_appender('termination', kw, TerminationConditional)
 
-        if not self.arar_age.has_attr(attr):
-            self.warning('invalid truncation attribute "{}"'.format(attr))
-        else:
-            self.truncation_conditionals.append(TruncationConditional(attr, comp,
-                                                                      start_count,
-                                                                      frequency,
-                                                                      abbreviated_count_ratio=abbreviated_count_ratio))
-
-    def py_add_action(self, attr, comp, start_count, frequency, action, resume):
+    def py_add_truncation(self, **kw):
         """
             attr must be an attribute of arar_age
+
+            truncate measurement and continue run if teststr evaluates to true
+            default kw:
+            attr='', comp='',start_count=50, frequency=5,
+            abbreviated_count_ratio=1.0
         """
-        self.action_conditionals.append(ActionConditional(attr, comp,
-                                                          start_count,
-                                                          frequency,
-                                                          action=action,
-                                                          resume=resume))
+        self._conditional_appender('truncation', kw, TruncationConditional)
 
     def py_clear_conditionals(self):
         self.py_clear_terminations()
         self.py_clear_truncations()
         self.py_clear_actions()
+        self.py_clear_cancelations()
+
+    def py_clear_cancelations(self):
+        self.cancelation_conditionals = []
 
     def py_clear_terminations(self):
         self.termination_conditionals = []
@@ -511,9 +524,9 @@ class AutomatedRun(Loggable):
     def py_clear_actions(self):
         self.action_conditionals = []
 
-    #===============================================================================
+    # ===============================================================================
     # run termination
-    #===============================================================================
+    # ===============================================================================
     def cancel_run(self, state='canceled', do_post_equilibration=True):
         """
             terminate the measurement script immediately
@@ -594,8 +607,13 @@ class AutomatedRun(Loggable):
     def start(self):
         if self.experiment_executor.set_integration_time_on_start:
             dit = self.experiment_executor.default_integration_time
-            self.debug('Setting default integration. t={}'.format(dit))
+            self.info('Setting default integration. t={}'.format(dit))
             self.set_integration_time(dit)
+
+        if self.experiment_executor.send_config_before_run:
+            self.info('Sending spectrometer configuration')
+            man = self.spectrometer_manager
+            man.send_configuration()
 
         if self.monitor is None:
             return self._start()
@@ -700,6 +718,7 @@ class AutomatedRun(Loggable):
             if self.spectrometer_manager:
                 self.persister.trait_set(spec_dict=self.spectrometer_manager.make_parameters_dict(),
                                          defl_dict=self.spectrometer_manager.make_deflections_dict(),
+                                         gains=self.spectrometer_manager.make_gains_list(),
                                          active_detectors=self._active_detectors)
 
             self.persister.post_measurement_save()
@@ -1044,6 +1063,12 @@ anaylsis_type={}
 
         self.info('Start automated run {}'.format(self.runid))
 
+        try:
+            self._add_conditionals()
+        except BaseException, e:
+            self.warning('Failed adding conditionals {}'.format(e))
+            return
+
         self.measuring = False
         self.truncated = False
 
@@ -1124,45 +1149,62 @@ anaylsis_type={}
     def _add_conditionals_from_file(self, p):
         with open(p, 'r') as fp:
             yd = yaml.load(fp)
-            cs = yd.get('terminations')
-            self._add_default_terminations(cs)
-            cs = yd.get('truncations')
-            self._add_default_truncations(cs)
-            cs = yd.get('actions')
-            self._add_default_actions(cs)
+            cs = (('TruncationConditional', 'truncation', 'truncations'),
+                  ('ActionConditional', 'action', 'actions'),
+                  ('TerminationConditional', 'termination', 'terminations'),
+                  ('CancelationConditional', 'cancelation', 'cancelations'))
+            for klass, var, tag in cs:
+                yl = yd.get(tag)
+                if not yl:
+                    continue
 
-    def _add_default_truncations(self, yl):
-        """
-            yl: list of dicts
-        """
-        if not yl:
+                var = getattr(self, '{}_conditionals'.format(var))
+                conds = [conditional_from_dict(ti, klass) for ti in yl]
+                conds = [c for c in conds if c is not None]
+                if conds:
+                    var.extend(conds)
+                    # for ti in yl:
+                    #     cx =
+                    # var.append(cx)
+
+    def _conditional_appender(self, name, cd, klass):
+        if not self.arar_age:
+            self.warning('No ArArAge to use for conditional testing')
             return
 
-        for ti in yl:
-            cx = conditional_from_dict(ti, 'TruncationConditional')
-            self.truncation_conditionals.append(cx)
-
-    def _add_default_actions(self, yl):
-        """
-            yl: list of dicts
-        """
-        if not yl:
+        attr = cd.get('attr')
+        if not attr:
+            self.debug('not attr for this {} cd={}'.format(name, cd))
             return
 
-        for ti in yl:
-            cx = conditional_from_dict(ti, 'ActionConditional')
-            self.action_conditionals.append(cx)
+        #for 2.0.4 backwards compatiblity
+        # comp = dictgetter(cd, ('teststr','check','comp'))
+        # if not comp:
+        #     self.debug('not teststr for this conditional "{}" cd={}'.format(name, cd))
+        #     return
+        #
+        # #for 2.0.4 backwards compatiblity
+        # start_count = dictgetter(cd, ('start','start_count'))
+        # if start_count is None:
+        #     start_count = 50
+        #     self.debug('defaulting to start_count={}'.format(start_count))
+        #
+        # self.info('adding {} {} {} {}'.format(name, attr, comp, start_count))
 
-    def _add_default_terminations(self, yl):
-        """
-            yl: list of dicts
-        """
-        if not yl:
-            return
+        if attr == 'age' and self.spec.analysis_type not in ('unknown', 'cocktail'):
+            self.debug('not adding because analysis_type not unknown or cocktail')
 
-        for ti in yl:
-            cx = conditional_from_dict(ti, 'TerminationConditional')
-            self.termination_conditionals.append(cx)
+        if not self.arar_age.has_attr(attr):
+            self.warning('invalid {} attribute "{}"'.format(name, attr))
+        else:
+            obj = getattr(self, '{}_conditionals'.format(name))
+            con = conditional_from_dict(cd, klass)
+            if con:
+                self.info(
+                    'adding {} attr="{}" test="{}" start="{}"'.format(name, con.attr, con.teststr, con.start_count))
+                obj.append(con)
+            else:
+                self.warning('Failed adding {}, {}'.format(name, cd))
 
     def _refresh_scripts(self):
         for name in SCRIPT_KEYS:
@@ -1225,6 +1267,12 @@ anaylsis_type={}
             return
 
         return True
+
+    def _add_active_detector(self, di):
+        spec = self.spectrometer_manager.spectrometer
+        det = spec.get_detector(di)
+        if not det in self._active_detectors:
+            self._active_detectors.append(det)
 
     def _set_active_detectors(self, dets):
         spec = self.spectrometer_manager.spectrometer
@@ -1301,26 +1349,44 @@ anaylsis_type={}
 
         p.analysis_view.load(self)
 
-    def _add_truncate_conditionals(self):
-        t = self.spec.truncate_conditional
-        self.debug('adding truncate conditional {}'.format(t))
+    def _add_conditionals(self):
+        klass_dict = {'actions': ActionConditional, 'truncations': TruncationConditional,
+                      'terminations': TerminationConditional, 'cancelations': CancelationConditional}
+
+        t = self.spec.conditionals
+        self.debug('adding conditionals {}'.format(t))
         if t:
             p = os.path.join(paths.conditionals_dir, add_extension(t, '.yaml'))
             if os.path.isfile(p):
-                self.debug('extract truncations from file. {}'.format(p))
+                self.debug('extract conditionals from file. {}'.format(p))
                 with open(p, 'r') as fp:
-                    doc = yaml.load(fp)
-
-                    for c in doc:
+                    yd = yaml.load(fp)
+                    for kind, items in yd.iteritems():
                         try:
-                            attr = c['attr']
-                            comp = c['check']
-                            start = c['start']
-                            freq = c.get('frequency', 1)
-                            acr = c.get('abbreviated_count_ratio', 1)
-                            self.py_add_truncation(attr, comp, int(start), freq, acr)
-                        except BaseException:
-                            self.warning('Failed adding truncation. {}'.format(c))
+                            klass = klass_dict[kind]
+                            for i in items:
+                                try:
+                                    #trim off s
+                                    if kind.endswith('s'):
+                                        kind = kind[:-1]
+
+                                    self._conditional_appender(kind, i, klass)
+                                except BaseException, e:
+                                    self.debug('Failed adding {}. excp="{}", cd={}'.format(kind, e, i))
+
+                        except KeyError:
+                            self.debug('Invalid conditional kind="{}"'.format(kind))
+                            #
+                            #     for c in doc:
+                            #         try:
+                            #             attr = c['attr']
+                            #             comp = c['check']
+                            #             start = c['start']
+                            #             freq = c.get('frequency', 1)
+                            #             acr = c.get('abbreviated_count_ratio', 1)
+                            #             self.py_add_truncation(attr, comp, int(start), freq, acr)
+                            #         except BaseException:
+                            #             self.warning('Failed adding truncation. {}'.format(c))
 
             else:
                 try:
@@ -1331,10 +1397,13 @@ anaylsis_type={}
                     freq = 1
                     acr = 0.5
                 except Exception, e:
-                    self.debug('truncate_conditional parse failed {} {}'.format(e, t))
+                    self.debug('conditionals parse failed {} {}'.format(e, t))
                     return
 
-                self.py_add_truncation(attr, c, int(start), freq, acr)
+                self.py_add_truncation(attr=attr, teststr=c,
+                                       start_count=int(start),
+                                       frequency=freq,
+                                       abbreviated_count_ratio=acr)
 
     def _get_measurement_parameter(self, key, default=None):
         return self._get_yaml_parameter(self.measurement_script, key, default)
@@ -1468,6 +1537,24 @@ anaylsis_type={}
 
         return gen()
 
+    def _whiff(self, ncounts, conditionals, starttime, starttime_offset, series, fit_series):
+        """
+        conditionals: list of dicts
+        """
+        for ci in conditionals:
+            if ci.get('start') is None:
+                ci['start'] = ncounts
+
+        conds = [conditional_from_dict(ci, ActionConditional) for ci in conditionals]
+        self.collector.set_temporary_conditionals(conds)
+        self.py_data_collection(None, ncounts, starttime, starttime_offset, series, fit_series)
+        self.collector.clear_temporary_conditionals()
+
+        result = self.collector.measurement_result
+        self.persister.whiff_result = result
+        self.debug('WHIFF Result={}'.format(result))
+        return result
+
     def _peak_hop(self, ncycles, ncounts, hops, grpname, data_writer,
                   starttime, starttime_offset, series,
                   check_conditionals):
@@ -1577,6 +1664,10 @@ anaylsis_type={}
             m.measure()
 
         mem_log('post measure')
+        if m.terminated:
+            self.debug('measurement terminated')
+            self.cancel_run()
+
         return not m.canceled
 
     def _setup_isotope_graph(self, starttime_offset, color, grpname):
@@ -1605,6 +1696,7 @@ anaylsis_type={}
         series = self.collector.series_idx
         for k, iso in self.arar_age.isotopes.iteritems():
             idx = graph.get_plotid_by_ytitle(k)
+            # print 'ff', k, iso.name, idx
             if idx is not None:
                 try:
                     graph.series[idx][series]
@@ -1852,4 +1944,4 @@ anaylsis_type={}
         c.console_bind_preferences('pychron.experiment')
         return c
 
-#============= EOF =============================================
+# ============= EOF =============================================

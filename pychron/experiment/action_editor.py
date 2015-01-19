@@ -17,6 +17,7 @@ import yaml
 
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.ui import set_qt
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.paths import paths
 
 
@@ -32,7 +33,6 @@ from traitsui.editors import ListEditor
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
 
 
 class ActionItem(HasTraits):

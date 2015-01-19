@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,7 +41,7 @@ class Detector(SpectrometerDevice):
     deflection = Property(Float(enter_set=True, auto_set=False), depends_on='_deflection')
     _deflection = Float(0)
 
-    deflection_correction_sign=Int(1)
+    deflection_correction_sign = Int(1)
 
     _deflection_correction_factors = None
     #    intensity = Property(depends_on='spectrometer:intensity_dirty')
@@ -52,6 +52,7 @@ class Detector(SpectrometerDevice):
     intensities = Array
     nstd = Int(10)
     active = Bool(True)
+    gain = Float
 
     color = Color
     series_id = Int
@@ -79,14 +80,15 @@ class Detector(SpectrometerDevice):
         r = self.ask('GetDeflection {}'.format(self.name))
         try:
             if r is None:
-                self.warning('Failed reading {} deflection. Error=No response. Using previous value {}'.format(self.name,
-                                                                                                            self._deflection))
+                self.warning(
+                    'Failed reading {} deflection. Error=No response. Using previous value {}'.format(self.name,
+                                                                                                      self._deflection))
             else:
                 self._deflection = float(r)
 
         except (ValueError, TypeError), e:
-            self.warning('Failed reading {} deflection. Error={}. Using previous value {}'.format(self.name,e,
-                                                                                       self._deflection))
+            self.warning('Failed reading {} deflection. Error={}. Using previous value {}'.format(self.name, e,
+                                                                                                  self._deflection))
 
     def get_deflection_correction(self, current=False):
         if current:
@@ -95,12 +97,28 @@ class Detector(SpectrometerDevice):
         de = self._deflection
         dev = polyval(self._deflection_correction_factors, [de])[0]
 
-        return self.deflection_correction_sign*dev
+        return self.deflection_correction_sign * dev
 
     def map_dac_to_deflection(self, dac):
         c = self._deflection_correction_factors[:]
         c[-1] -= dac
         return optimize.newton(poly1d(c), 1)
+
+    @property
+    def gain_outdated(self):
+        return abs(self.get_gain()-self.gain)<1e-7
+
+    def get_gain(self):
+        v = self.ask('GetGain {}'.format(self.name))
+        try:
+            v = float(v)
+        except (TypeError, ValueError):
+            v = 0
+        self.gain=v
+        return v
+
+    def set_gain(self):
+        self.ask('SetGain {},{}'.format(self.name, self.gain))
 
     def _get_isotopes(self):
         molweights = self.spectrometer.molecular_weights
@@ -136,7 +154,7 @@ class Detector(SpectrometerDevice):
 
     def traits_view(self):
         v = View(HGroup(Item('active'),
-                        Item('color',width=25, editor=ColorSquareEditor()),
+                        Item('color', width=25, editor=ColorSquareEditor()),
                         Item('name', style='readonly'),
                         spring,
                         Item('deflection'),
@@ -145,4 +163,4 @@ class Detector(SpectrometerDevice):
 
     def __repr__(self):
         return self.name
-#============= EOF =============================================
+        #============= EOF =============================================

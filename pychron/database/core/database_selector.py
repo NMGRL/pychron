@@ -17,10 +17,12 @@
 #============= enthought library imports =======================
 from datetime import datetime, timedelta
 
+from sqlalchemy import and_, or_
 from traits.api import Button, List, Any, Dict, Bool, Int, Enum, Event, \
     on_trait_change, Str, Instance, Property
 from traitsui.api import View, Item, \
     HGroup, spring, ListEditor, InstanceEditor, Handler, VGroup, VSplit
+
 
 
 #============= standard library imports ========================
@@ -90,7 +92,7 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
     title = ''
 
     dclicked = Any
-    selected = Any
+    selected = List
     scroll_to_row = Int
     scroll_to_bottom = True
     key_pressed = Event
@@ -144,16 +146,43 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
     def query_factory(self, *args, **kw):
         return self._query_factory(**kw)
 
-    def add_query(self, parent_query, parameter, comparator, criterion, add=True):
+    def add_query(self, parameter, comparator, criterion,
+                  add=True, chain_rule='And', parent=None):
+        pp,pc,pco=None, None, None
+
+        if not parent and self.queries:
+            parent=self.queries[-1]
+
+        if parent:
+            pp = parent.parent_parameters
+            pc = parent.parent_criterions
+            pco = parent.parent_comparators
+            parent.chain_rule='And'
+
+        # pp = pp + [parameter] if pp else [parameter]
+        # pc = pc + [criterion] if pc else [criterion]
+        # pco = pco + [comparator] if pc else [comparator]
+        pp = pp or [parameter]
+        pc = pc or [criterion]
+        pco = pco or [comparator]
+
         q = self._query_factory(
-            parent_parameters=parent_query.parent_parameters + [parameter],
-            parent_criterions=parent_query.parent_criterions + [criterion],
-            parent_comparators=parent_query.parent_comparators + [comparator],)
+            parameter=parameter,
+            criterion=criterion,
+            comparator=comparator,
+            parent_parameters= pp,
+            parent_criterions= pc,
+            parent_comparators= pco,
+            chain_rule=chain_rule)
+
         if add:
             self.queries.append(q)
-        parent_query.on_trait_change(q.update_parent_parameter, 'parameter')
-        parent_query.on_trait_change(q.update_parent_criterion, 'criterion')
-        parent_query.on_trait_change(q.update_parent_comparator, 'comparator')
+
+        if parent:
+            parent.on_trait_change(q.update_parent_parameter, 'parameter')
+            parent.on_trait_change(q.update_parent_criterion, 'criterion')
+            parent.on_trait_change(q.update_parent_comparator, 'comparator')
+        return q
 
     def remove_query(self, q):
         if q in self.queries:
@@ -204,18 +233,27 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
             if add:
                 self.queries.append(q)
         else:
-            self.add_query(pq, pq.parameter, pq.comparator, pq.criterion, add=add)
+            self.add_query(pq.parameter, pq.comparator, pq.criterion,
+                           parent=pq, add=add)
 
     def _get_recent(self, criterion):
-        q = self.queries[0]
-        q.parameter = self.date_str
-        q.comparator = '>'
-        q.trait_set(criterion=criterion)
+        parameter=self.date_str
+        comparator='>'
+        if self.queries:
+            q = self.queries[0]
+            q.parameter = self.date_str
+            q.comparator = '>'
+            q.trait_set(criterion=criterion)
+        else:
+            q = self.add_query(parameter, comparator, criterion)
 
         return self._execute_query(queries=[q])
 
     def _assemble_query(self, q, queries, lookup):
         joined = []
+
+        ands = []
+        ors = []
         for qi in queries:
             if not qi.use:
                 continue
@@ -230,11 +268,25 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
                         joined.append(tab)
                         q = q.join(tab)
                 try:
-                    q = qi.assemble_filter(q, attr)
+                    f, is_or = qi.assemble_filter(q, attr)
                 except ValueError:
                     self.warning_dialog('Invalid query "{}", "{}"'.format(qi.parameter, attr))
                     return
 
+                if is_or:
+                    ors.append(f)
+                else:
+                    ands.append(f)
+
+        if ands:
+            fs = and_(*ands)
+            if ors:
+                fs=or_(fs, *ors)
+        elif ors:
+            fs=or_(*ors)
+
+        q = q.filter(fs)
+        self.debug('Query={}'.format(compile_query(q)))
         return q
 
     def _execute_query(self, queries=None, limit=None, use_filters=True):
@@ -403,6 +455,15 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
     #        self.debug('dclicked changed {}'.format(self.dclicked))
         if self.dclicked and self.dclick_recall_enabled:
             self._open_selected()
+
+    @on_trait_change('queries[]')
+    def _handle_queries_change(self):
+        if self.queries:
+            n=len(self.queries)-1
+            for i, q in enumerate(self.queries):
+                ar = q.chain_rule
+                if not ar:
+                    q.chain_rule = '' if i==n else 'And'
 
     # def _open_button_fired(self):
     #     self.debug('open button fired')

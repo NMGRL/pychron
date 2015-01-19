@@ -26,6 +26,30 @@ Run conditionals file are located in ``scripts/conditionals``
 
 .. note:: QueueActions may only be specified at the Queue level
 
+Testable Attributes
+
+==================== ==========================================================
+Name                 Modifiers
+-------------------- ----------------------------------------------------------
+age
+<Valid Isotope>      bs_corrected, bs, current[cur], std_dev[sd,stddev]
+kca
+kcl
+cak
+clk
+<Detector>           inactive, deflection
+<m1>/<m2>
+==================== ==========================================================
+
+Functions
+==================== ==========================================================
+Name                 Example
+-------------------- ----------------------------------------------------------
+min                  min(Ar40)
+max                  max(Ar40)
+average              average(Ar40)
+slope                slope(Ar40)
+==================== ==========================================================
 
 Position Rules
 ~~~~~~~~~~~~~~~

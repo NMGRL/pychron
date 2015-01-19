@@ -82,7 +82,7 @@ class SmartBlanks(BaseSmarter):
             refiso = gs[0]
 
             ae = self.editor
-            ae.tool.load_fits(refiso.isotope_keys,
+            ae.tool.load_fits(refiso.isotope_keys[:],
                                 refiso.isotope_fits
                                 )
             fkeys = fits.keys()

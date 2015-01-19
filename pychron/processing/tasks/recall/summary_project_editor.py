@@ -23,7 +23,7 @@ from traitsui.api import View, VGroup, UItem, TabularEditor, Tabbed
 from traitsui.tabular_adapter import TabularAdapter
 from uncertainties import nominal_value, std_dev
 from pychron.core.helpers.formatting import floatfmt
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.tasks.browser.panes import AnalysisGroupAdapter
 from pychron.processing.tasks.recall.base_summary_editor import BaseSummaryEditor
 from pychron.pychron_constants import PLUSMINUS_SIGMA

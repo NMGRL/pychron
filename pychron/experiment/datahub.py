@@ -1,11 +1,11 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,7 +24,7 @@ import time
 #============= local library imports  ==========================
 from pychron.database.adapters.massspec_database_adapter import MissingAliquotPychronException
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
-from pychron.experiment.utilities.identifier import make_aliquot_step, make_step
+from pychron.experiment.utilities.identifier import make_aliquot_step, make_step, get_analysis_type
 from pychron.experiment.utilities.mass_spec_database_importer import MassSpecDatabaseImporter
 from pychron.loggable import Loggable
 
@@ -41,6 +41,16 @@ def check_list(lst):
     return not lst or [lst[0]] * len(lst) == lst
 
 
+def check_secondary_database_save(identifier):
+    ret = True
+    if identifier == 'bu-debug':
+        ret = False
+    elif get_analysis_type(identifier) == 'detector_ic':
+        ret = False
+    print identifier, ret
+    return ret
+
+
 class Datahub(Loggable):
     mainstore = Instance(IsotopeDatabaseManager)
     secondarystore = Instance(MassSpecDatabaseImporter, ())
@@ -48,12 +58,12 @@ class Datahub(Loggable):
     bind_mainstore = True
 
     def bind_preferences(self):
-        prefid = 'pychron.database'
+        prefid = 'pychron.massspec.database'
 
-        bind_preference(self.secondarystore.db, 'name', '{}.massspec_dbname'.format(prefid))
-        bind_preference(self.secondarystore.db, 'host', '{}.massspec_host'.format(prefid))
-        bind_preference(self.secondarystore.db, 'username', '{}.massspec_username'.format(prefid))
-        bind_preference(self.secondarystore.db, 'password', '{}.massspec_password'.format(prefid))
+        bind_preference(self.secondarystore.db, 'name', '{}.name'.format(prefid))
+        bind_preference(self.secondarystore.db, 'host', '{}.host'.format(prefid))
+        bind_preference(self.secondarystore.db, 'username', '{}.username'.format(prefid))
+        bind_preference(self.secondarystore.db, 'password', '{}.password'.format(prefid))
 
     def secondary_connect(self):
         if self.secondarystore:
@@ -66,11 +76,13 @@ class Datahub(Loggable):
         """
             return str listing the differences if databases are in conflict
         """
+
         self._new_step = -1
         self._new_aliquot = 1
         self.debug('check for conflicts')
-        self.secondary_connect()
-        self.debug('connected to secondary')
+        if check_secondary_database_save(spec.identifier):
+            self.secondary_connect()
+            self.debug('connected to secondary')
 
         if spec.is_step_heat():
             k = 'Stepheat'
@@ -113,8 +125,8 @@ class Datahub(Loggable):
         spec.conflicts_checked = True
 
         self.debug('setting AutomatedRunSpec aliquot={}, step={}, increment={}'.format(spec.aliquot,
-                                                                         spec.step,
-                                                                         spec.increment))
+                                                                                       spec.step,
+                                                                                       spec.increment))
 
     def load_analysis_backend(self, ln, arar_age):
         db = self.mainstore.db
@@ -145,8 +157,10 @@ class Datahub(Loggable):
 
     def add_experiment(self, exp):
         db = self.mainstore.db
-        with db.session_ctx():
+        with db.session_ctx() as sess:
             dbexp = db.add_experiment(exp.path)
+
+            sess.flush()
             exp.database_identifier = int(dbexp.id)
 
     def get_greatest_aliquot(self, identifier, store='main'):
@@ -161,9 +175,13 @@ class Datahub(Loggable):
             pass
 
     def _get_greatest_aliquots(self, identifier):
-        return zip(*[(store.precedence, store.db.name,
-                      store.get_greatest_aliquot(identifier) or 0 if store.is_connected() else 0)
-                     for store in self.sorted_stores])
+        if not check_secondary_database_save(identifier):
+            main = self.mainstore
+            return (main.precedence,), (main.db.name,), (main.get_greatest_aliquot(identifier),)
+        else:
+            return zip(*[(store.precedence, store.db.name,
+                          store.get_greatest_aliquot(identifier) or 0 if store.is_connected() else 0)
+                         for store in self.sorted_stores])
 
     def _get_greatest_steps(self, identifier, aliquot):
         f = lambda x: x if x is not None else -1
@@ -186,6 +204,7 @@ class Datahub(Loggable):
         return self._new_runid
 
     _sorted_stores = None
+
     @property
     def sorted_stores(self):
         if self._sorted_stores:

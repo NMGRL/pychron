@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -79,13 +79,26 @@ class UserNotifier(Loggable):
     def notify(self, exp, last_runid, err):
         address = exp.email
         if address:
-
             subject, msg = self._assemble_message(exp, last_runid, err)
-            # self.debug('Subject= {}'.format(subject))
-            # self.debug('Body= {}'.format(msg))
+            self._notify(address, subject, msg)
 
-            if not self.emailer.send(address, subject, msg):
-                self.warning('email server not available')
+    def _notify(self, address, subject, msg):
+        # self.debug('Subject= {}'.format(subject))
+        # self.debug('Body= {}'.format(msg))
+        if not self.emailer.send(address, subject, msg):
+            self.warning('email server not available')
+            return True
+
+    def notify_group(self, exp, last_runid, err, addrs):
+        subject, msg = self._assemble_message(exp, last_runid, err)
+        failed = addrs[:]
+        for email in addrs:
+            if self._notify(email, subject, msg):
+                break
+            failed.remove(email)
+
+        if failed:
+            self.warning('Failed sending notification to emails {}'.join(','.join(failed)))
 
     def _assemble_message(self, exp, last_runid, err):
         name = exp.name
@@ -95,7 +108,7 @@ class UserNotifier(Loggable):
             subject = '{} Canceled'.format(name)
 
             err = '{}\n{}\n{}'.format(header.format('Error Message'), err, div)
-            log=''
+            log = ''
             if self.emailer.include_log:
                 log = self._get_log(100)
                 log = '{}\n{}\n{}'.format(header.format('Log'), log, div)

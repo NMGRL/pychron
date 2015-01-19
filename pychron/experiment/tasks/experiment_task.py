@@ -16,36 +16,32 @@
 
 # ============= enthought library imports =======================
 from traits.api import on_trait_change, Bool, Instance, Event, Color
-# from traitsui.api import View, Item
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
 from pyface.constant import CANCEL, NO
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import shutil
 import weakref
 import os
-#============= local library imports  ==========================
 import xlrd
+# ============= local library imports  ==========================
+from pychron.core.helpers.filetools import add_extension, unique_date_path
 from pychron.core.ui.preference_binding import bind_preference, color_bind_preference
+from pychron.envisage.tasks.editor_task import EditorTask
 from pychron.envisage.tasks.pane_helpers import ConsolePane
 from pychron.experiment.queue.base_queue import extract_meta
-from pychron.experiment.tasks.experiment_panes import ExperimentFactoryPane, StatsPane, \
-    ControlsPane, WaitPane, IsotopeEvolutionPane, ConnectionStatusPane
-
-from pychron.envisage.tasks.editor_task import EditorTask
 from pychron.experiment.tasks.experiment_editor import ExperimentEditor, UVExperimentEditor
-from pychron.experiment.utilities.identifier import convert_extract_device
-from pychron.image.tasks.video_pane import VideoDockPane
-from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
-from pychron.paths import paths
-from pychron.core.helpers.filetools import add_extension, unique_date_path
 from pychron.messaging.notify.notifier import Notifier
-from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
+from pychron.paths import paths
+from pychron.pychron_constants import SPECTROMETER_PROTOCOL
 
 
 class ExperimentEditorTask(EditorTask):
-    wildcard = '*.txt'
-    group_count = 0
     name = 'Experiment'
+
+    default_filename='Experiment Current.txt'
+    default_directory = paths.experiment_dir
+    default_open_action = 'open files'
+    wildcard = '*.txt'
 
     use_notifications = Bool
     use_syslogger = Bool
@@ -59,15 +55,16 @@ class ExperimentEditorTask(EditorTask):
     last_experiment_changed = Event
 
     bgcolor = Color
+    even_bgcolor = Color
 
     automated_runs_editable = Bool
 
     def new_pattern(self):
-        pm = PatternMakerView()
+        pm = self._pattern_maker_view_factory()
         self.window.application.open_view(pm)
 
     def open_pattern(self):
-        pm = PatternMakerView()
+        pm = self._pattern_maker_view_factory()
         if pm.load_pattern():
             self.window.application.open_view(pm)
 
@@ -103,9 +100,43 @@ class ExperimentEditorTask(EditorTask):
                 dnames = spec.spectrometer.detector_names
 
             edit_conditionals(self.manager.experiment_factory.queue_factory.queue_conditionals_name,
-                            detectors=dnames,
-                            app=self.application)
+                              detectors=dnames,
+                              app=self.application)
 
+    def reset_queues(self):
+        for editor in self.editor_area.editors:
+            editor.queue.reset()
+
+        # reset the experimentors db session
+        # since the executor session will have made changes
+        man = self.manager
+        ex = man.executor
+        man.update_info()
+        man.stats.reset()
+
+        ex.end_at_run_completion = False
+        ex.set_extract_state('')
+
+    def new(self):
+        manager = self.manager
+        if manager.verify_database_connection(inform=True):
+            if manager.load():
+                self.manager.experiment_factory.activate(load_persistence=True)
+
+                editor = ExperimentEditor()
+                editor.set_colors(self.bgcolor, self.even_bgcolor)
+                editor.new_queue()
+
+                self._open_editor(editor)
+                if not self.manager.executor.is_alive():
+                    self.manager.executor.executable = False
+
+    def execute(self):
+        if not self.manager.executor.is_alive():
+            self._execute()
+    #===============================================================================
+    # tasks protocol
+    #===============================================================================
     def prepare_destroy(self):
         super(ExperimentEditorTask, self).prepare_destroy()
 
@@ -132,35 +163,33 @@ class ExperimentEditorTask(EditorTask):
             self._use_syslogger_changed()
 
         color_bind_preference(self, 'bgcolor', 'pychron.experiment.bg_color')
+        color_bind_preference(self, 'even_bgcolor', 'pychron.experiment.even_bg_color')
 
     def activated(self):
 
         self.bind_preferences()
         super(ExperimentEditorTask, self).activated()
 
-    def _use_syslogger_changed(self):
-        if self.use_syslogger:
-            from pychron.experiment.sys_log import SysLogger
-
-            self.syslogger = SysLogger()
-            bind_preference(self.syslogger, 'username',
-                            'pychron.syslogger.username')
-            bind_preference(self.syslogger, 'password',
-                            'pychron.syslogger.password')
-            bind_preference(self.syslogger, 'host',
-                            'pychron.syslogger.host')
-
     def create_dock_panes(self):
-        self.isotope_evolution_pane = IsotopeEvolutionPane()
+        from pychron.experiment.tasks.experiment_panes import ExperimentFactoryPane, StatsPane, \
+            ControlsPane, WaitPane, IsotopeEvolutionPane, ConnectionStatusPane
+
+        name = 'Isotope Evolutions'
+        man = self.application.get_service(SPECTROMETER_PROTOCOL)
+        if not man or man.simulation:
+            name = '{}(Simulation)'.format(name)
+
+        self.isotope_evolution_pane = IsotopeEvolutionPane(name=name)
 
         self.experiment_factory_pane = ExperimentFactoryPane(model=self.manager.experiment_factory)
         self.wait_pane = WaitPane(model=self.manager.executor)
 
+        ex = self.manager.executor
         panes = [StatsPane(model=self.manager),
-                 ControlsPane(model=self.manager.executor),
-                 ConsolePane(model=self.manager.executor),
+                 ControlsPane(model=ex),
+                 ConsolePane(model=ex),
                  #AnalysisHealthPane(model=self.analysis_health),
-                 ConnectionStatusPane(model=self.manager.executor),
+                 ConnectionStatusPane(model=ex),
                  self.experiment_factory_pane,
                  self.isotope_evolution_pane,
                  self.wait_pane]
@@ -176,18 +205,14 @@ class ExperimentEditorTask(EditorTask):
         panes = self._add_canvas_pane(panes)
 
         app = self.window.application
-        man = app.get_service(ILaserManager)
+        man = app.get_service('pychron.lasers.laser_managers.ilaser_manager.ILaserManager')
         if man:
             if hasattr(man.stage_manager, 'video'):
-                #vt = VideoTask()
-                #             plugin = app.get_plugin('pychron.video')
-                #             task = plugin.tasks[0].factory()
-                #             self.window.add_task(task)
+                from pychron.image.tasks.video_pane import VideoDockPane
 
                 video = man.stage_manager.video
                 man.initialize_video()
                 pane = VideoDockPane(video=video)
-                #pane = vt.new_video_dock_pane(video=video)
                 panes.append(pane)
 
             from pychron.lasers.tasks.laser_panes import ClientDockPane
@@ -198,11 +223,53 @@ class ExperimentEditorTask(EditorTask):
 
         return panes
 
-    #===============================================================================
-    # generic actions
-    #===============================================================================
-    def _open_experiment(self, path, **kw):
-        name=os.path.basename(path)
+    # def open(self, path=None):
+        # self.manager.experiment_factory.activate(load_persistence=False)
+        #
+        # if not os.path.isfile(path):
+        #     path = None
+        #
+        # if path is None:
+        #     ps = self.open_file_dialog(action='open files',
+        #                                default_filename='Current Experiment.txt')
+        # else:
+        #     ps = (path,)
+        #
+        # if ps:
+        #     manager = self.manager
+        #     if manager.verify_database_connection(inform=True):
+        #         if manager.load():
+        #             for path in ps:
+        #                 self.manager.info('Opening experiment {}'.format(path))
+        #                 self._open_experiment(path)
+        #
+        #             manager.path = path
+        #             manager.update_info()
+        #
+        #     return True
+        # else:
+        #     self.notifier.close()
+    def _open_abort(self):
+        self.notifier.close()
+
+    def _open_file(self, path, **kw):
+        if not isinstance(path, (tuple, list)):
+            path=(path, )
+
+        manager = self.manager
+        if manager.verify_database_connection(inform=True):
+            if manager.load():
+                manager.experiment_factory.activate(load_persistence=False)
+                for p in path:
+                    self.manager.info('Opening experiment {}'.format(p))
+                    self._open_experiment(p)
+
+                manager.path = path
+                manager.update_info()
+                return True
+
+    def _open_experiment(self, path):
+        name = os.path.basename(path)
         self.info('------------------------------ Open Experiment {} -------------------------------'.format(name))
         editor = self._check_opened(path)
         if not editor:
@@ -213,8 +280,8 @@ class ExperimentEditorTask(EditorTask):
 
             klass = UVExperimentEditor if is_uv else ExperimentEditor
             editor = klass(path=path,
-                           automated_runs_editable=self.automated_runs_editable,
-                           bgcolor=self.bgcolor)
+                           automated_runs_editable=self.automated_runs_editable)
+            editor.set_colors(self.bgcolor, self.even_bgcolor)
             editor.new_queue(txt)
             self._open_editor(editor)
         else:
@@ -284,88 +351,13 @@ class ExperimentEditorTask(EditorTask):
 
         return txt, is_uv
 
+    def _check_opened(self, path):
+        return next((e for e in self.editor_area.editors if e.path == path), None)
+
     def _set_last_experiment(self, p):
         with open(paths.last_experiment, 'w') as fp:
             fp.write(p)
         self.last_experiment_changed = True
-
-    def open(self, path=None):
-        self.manager.experiment_factory.activate(load_persistence=False)
-        #path = '/Users/ross/Pychrondata_dev/experiments/uv.xls'
-        #        path = '/Users/ross/Pychrondata_dev/experiments/uv.txt'
-        if not os.path.isfile(path):
-            path = None
-
-        if path is None:
-            ps = self.open_file_dialog(action='open files',
-                                       #default_path='/Users/ross/Pychrondata_dev/experiments/Current Experiment.txt',
-                                       default_filename='Current Experiment.txt')
-        else:
-            ps = (path,)
-
-        if ps:
-            manager = self.manager
-            if manager.verify_database_connection(inform=True):
-                if manager.load():
-                    for path in ps:
-                        self.manager.info('Opening experiment {}'.format(path))
-                        self._open_experiment(path)
-
-                    manager.path = path
-                    manager.executor.reset()
-                    manager.update_info()
-
-                    #                     manager.update_queues()
-                    #                    manager.start_file_listener(path)
-
-            # do_later(self._show_pane,self.experiment_factory_pane)
-
-            return True
-        else:
-            self.notifier.close()
-
-    #def _split_text(self, txt):
-    #    ts = []
-    #    tis = []
-    #    a = ''
-    #    for l in txt.split('\n'):
-    #        a += l
-    #        if l.startswith('*' * 80):
-    #            ts.append(''.join(tis))
-    #            tis = []
-    #            continue
-    #
-    #        tis.append(l)
-    #    ts.append('\n'.join(tis))
-    #    return ts
-
-    def reset_queues(self):
-        for editor in self.editor_area.editors:
-            editor.queue.reset()
-
-        # reset the experimentors db session
-        # since the executor session will have made changes
-        man = self.manager
-        ex = man.executor
-        man.update_info()
-        man.stats.reset()
-
-        ex.end_at_run_completion = False
-        ex.set_extract_state('')
-
-    def new(self):
-
-        # ms = self.manager.experiment_factory.queue_factory.mass_spectrometer
-        self.manager.experiment_factory.activate(load_persistence=True)
-
-        editor = ExperimentEditor()
-        editor.new_queue()  #mass_spectrometer=ms)
-
-        self._open_editor(editor)
-        # self._show_pane(self.experiment_factory_pane)
-
-        if not self.manager.executor.is_alive():
-            self.manager.executor.executable = False
 
     def _save_file(self, path):
         if self.active_editor.save(path):
@@ -374,20 +366,87 @@ class ExperimentEditorTask(EditorTask):
             self.manager.reset_run_generator()
             return True
 
-    def _active_editor_changed(self):
-        if self.active_editor:
-            self.manager.experiment_queue = self.active_editor.queue
-            self._show_pane(self.experiment_factory_pane)
-
     def _publish_notification(self, run):
         if self.use_notifications:
             #msg = 'RunAdded {}'.format(run.uuid)
             #self.info('pushing notification {}'.format(msg))
             self.notifier.send_notification(run.uuid)
 
+    def _prompt_for_save(self):
+        """
+            Prompt the user to save when exiting.
+        """
+        if self.manager.executor.is_alive():
+            name = self.manager.executor.experiment_queue.name
+            result = self._confirmation('{} is running. Are you sure you want to quit?'.format(name))
+            if result in (CANCEL, NO):
+                return False
+            else:
+                ret = super(ExperimentEditorTask, self)._prompt_for_save()
+                if ret:
+                    self.manager.executor.cancel(confirm=False)
+                return ret
+        else:
+            return super(ExperimentEditorTask, self)._prompt_for_save()
+
+    def _backup_editor(self, editor):
+        p = editor.path
+        p = add_extension(p, '.txt')
+
+        if os.path.isfile(p):
+            # make a backup copy of the original experiment file
+            bp, _ = os.path.splitext(os.path.basename(p))
+
+            pp = unique_date_path(paths.backup_experiment_dir, bp)
+
+            self.info('{} - saving a backup copy to {}'.format(bp, pp))
+            shutil.copyfile(p, pp)
+
+    def _close_external_windows(self):
+        """
+            ask user if ok to close open spectrometer and extraction line windows
+        """
+        # ask user if ok to close windows
+        windows = []
+        names = []
+        # print self.window, self.application
+        if self.application:
+            for wi in self.application.windows:
+                wid = wi.active_task.id
+                if wid == 'pychron.spectrometer':
+                    windows.append(wi)
+                    names.append('Spectrometer')
+                elif wid == 'pychron.extraction_line':
+                    windows.append(wi)
+                    names.append('Extraction Line')
+
+        if windows:
+            is_are, them = 'is', 'it'
+            if len(windows) > 1:
+                is_are, them = 'are', 'them'
+            msg = '{} {} open. Is it ok to close {}?'.format(','.join(names), is_are, them)
+
+            if self.confirmation_dialog(msg):
+                for wi in windows:
+                    wi.close()
+
     #===============================================================================
     # handlers
     #===============================================================================
+    def _active_editor_changed(self):
+        if self.active_editor:
+            self.manager.experiment_queue = self.active_editor.queue
+            self._show_pane(self.experiment_factory_pane)
+
+    def _use_syslogger_changed(self):
+        if self.use_syslogger:
+            from pychron.experiment.sys_log import SysLogger
+
+            prefid = 'pychron.syslogger'
+            self.syslogger = SysLogger()
+            for attr in ('username', 'password', 'host'):
+                bind_preference(self.syslogger, attr, '{}.{}'.format(prefid, attr))
+
     @on_trait_change('manager:executor:auto_save_event')
     def _auto_save(self):
         self.save()
@@ -440,12 +499,15 @@ class ExperimentEditorTask(EditorTask):
             if group_positions:
                 rf.position = ','.join(ns)
 
-    @on_trait_change('manager.experiment_factory:extract_device')
+    @on_trait_change('manager:experiment_factory:extract_device')
     def _handle_extract_device(self, new):
-        app = self.window.application
-        if new:
+        if new and self.window:
+            app = self.window.application
+            from pychron.experiment.utilities.identifier import convert_extract_device
+
             ed = convert_extract_device(new)
-            man = app.get_service(ILaserManager, 'name=="{}"'.format(ed))
+            man = app.get_service('pychron.lasers.laser_managers.ilaser_manager.ILaserManager',
+                                  'name=="{}"'.format(ed))
             if man:
                 self.laser_control_client_pane.model = man
 
@@ -472,7 +534,6 @@ class ExperimentEditorTask(EditorTask):
                 self._open_editor(editor)
                 if not self.manager.executor.is_alive():
                     self.manager.executor.executable = False
-
 
     @on_trait_change('manager.experiment_factory:queue_factory:load_name')
     def _update_load(self, new):
@@ -501,13 +562,10 @@ class ExperimentEditorTask(EditorTask):
     def _update_editors(self, new):
         self.manager.experiment_queues = [ei.queue for ei in new]
 
-    #        self.manager.executor.executable = False
-
     @on_trait_change('manager:executor:measuring_run:plot_panel')
     def _update_plot_panel(self, new):
         if new is not None:
             self.isotope_evolution_pane.plot_panel = new
-            #         self.summary_pane.plot_panel = new
 
     @on_trait_change('manager:executor:console_updated')
     def _update_console(self, new):
@@ -541,45 +599,6 @@ class ExperimentEditorTask(EditorTask):
                 except AttributeError:
                     pass
                 break
-
-    def _backup_editor(self, editor):
-        p = editor.path
-        p = add_extension(p, '.txt')
-
-        if os.path.isfile(p):
-            # make a backup copy of the original experiment file
-            bp, _ = os.path.splitext(os.path.basename(p))
-
-            pp = unique_date_path(paths.backup_experiment_dir, bp)
-
-            self.info('{} - saving a backup copy to {}'.format(bp, pp))
-            shutil.copyfile(p, pp)
-
-    def _close_external_windows(self):
-        """
-            ask user if ok to close open spectrometer and extraction line windows
-        """
-        # ask user if ok to close windows
-        windows = []
-        names = []
-        for wi in self.application.windows:
-            wid = wi.active_task.id
-            if wid == 'pychron.spectrometer':
-                windows.append(wi)
-                names.append('Spectrometer')
-            elif wid == 'pychron.extraction_line':
-                windows.append(wi)
-                names.append('Extraction Line')
-
-        if windows:
-            is_are, them = 'is', 'it'
-            if len(windows) > 1:
-                is_are, them = 'are', 'them'
-            msg = '{} {} open. Is it ok to close {}?'.format(','.join(names), is_are, them)
-
-            if self.confirmation_dialog(msg):
-                for wi in windows:
-                    wi.close()
 
     @on_trait_change('manager:execute_event')
     def _execute(self):
@@ -620,23 +639,6 @@ class ExperimentEditorTask(EditorTask):
     def _save_queue(self):
         self.save()
 
-    def _prompt_for_save(self):
-        """
-            Prompt the user to save when exiting.
-        """
-        if self.manager.executor.is_alive():
-            name = self.manager.executor.experiment_queue.name
-            result = self._confirmation('{} is running. Are you sure you want to quit?'.format(name))
-            if result in (CANCEL, NO):
-                return False
-            else:
-                ret = super(ExperimentEditorTask, self)._prompt_for_save()
-                if ret:
-                    self.manager.executor.cancel(confirm=False)
-                return ret
-        else:
-            return super(ExperimentEditorTask, self)._prompt_for_save()
-
     @on_trait_change('active_editor:dirty')
     def _update_active_editor_dirty(self):
         if self.active_editor:
@@ -646,27 +648,13 @@ class ExperimentEditorTask(EditorTask):
     #===============================================================================
     # default/factory
     #===============================================================================
-
     #def _notifier_factory(self):
     #    n = Notifier(port=self.notifications_port)
     #    return n
+    def _pattern_maker_view_factory(self):
+        from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
 
-    # def _manager_factory(self):
-    #     from pychron.experiment.experimentor import Experimentor
-    #     from pychron.initialization_parser import InitializationParser
-    #
-    #     ip = InitializationParser()
-    #     plugin = ip.get_plugin('Experiment', category='general')
-    #     mode = ip.get_parameter(plugin, 'mode')
-    #
-    #     app = None
-    #     if self.window:
-    #         app = self.window.application
-    #
-    #     exp = Experimentor(application=app,
-    #                        mode=mode)
-    #
-    #     return exp
+        return PatternMakerView()
 
     def _manager_default(self):
         return self.application.get_service('pychron.experiment.experimentor.Experimentor')
@@ -693,8 +681,6 @@ class ExperimentEditorTask(EditorTask):
         return paths.experiment_dir
 
     def _default_layout_default(self):
-        #return TaskLayout(left=PaneItem('pychron.lasers.client'))
-
         return TaskLayout(
             left=Splitter(
                 PaneItem('pychron.experiment.wait', height=100),
@@ -710,47 +696,5 @@ class ExperimentEditorTask(EditorTask):
                     PaneItem('pychron.experiment.connection_status')),
                 orientation='vertical'),
             top=PaneItem('pychron.experiment.controls'))
-        #============= EOF =============================================
-        #         editor = self.active_editor
-        #         if editor is None:
-        #             if self.editor_area.editors:
-        #                 editor = self.editor_area.editors[0]
-        #
-        #         if editor:
-        #             p = editor.path
-        #             p = add_extension(p, '.txt')
-        #
-        #             if os.path.isfile(p):
-        #                 # make a backup copy of the original experiment file
-        #                 shutil.copyfile(p, '{}.orig'.format(p))
-        #
-        # #                 group = editor.group
-        # #                 min_idx = editor.merge_id
-        # #                 text = open(p, 'r').read()
-        # #                 hash_val = hashlib.sha1(text).hexdigest()
-        # #                 qs = [ei.queue
-        # #                         for ei in self.editor_area.editors
-        # #                             if ei.group == group and ei.merge_id >= min_idx]
-        #                 qs = [ei.queue for ei in self.editor_area.editors]
-        #                 # launch execution thread
-        #                 # if successful open an auto figure task
-        # #                 if self.manager.execute_queues(qs, p, text, hash_val):
-        #                 if self.manager.execute_queues(qs, p):
-        #                     self._open_auto_figure()
 
-        #     def merge(self):
-        #         eqs = [self.active_editor.queue]
-        #         self.active_editor.merge_id = 1
-        #         self.active_editor.group = self.group_count
-        #         self.group_count += 1
-        #         for i, ei in enumerate(self.editor_area.editors):
-        #             if not ei == self.active_editor:
-        #                 eqs.append(ei.queue)
-        #                 ei.merge_id = i + 2
-        #                 ei.group = self.group_count
-        #
-        #         path = self.save_file_dialog()
-        #         if path:
-        #             self.active_editor.save(path, eqs)
-        #             for ei in self.editor_area.editors:
-        #                 ei.path = path
+#============= EOF =============================================

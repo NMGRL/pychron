@@ -143,7 +143,7 @@ class Series(BaseArArFigure):
 
             #p.value_scale = po.scale
             end_caps = True
-            if yerr is not None:
+            if po.y_error and yerr is not None:
                 self._add_error_bars(scatter, yerr, 'y', 2, end_caps, visible=True)
 
             if set_ylimits:

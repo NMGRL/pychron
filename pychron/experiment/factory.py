@@ -78,6 +78,7 @@ class ExperimentFactory(Loggable, ConsumerMixin):
         eq = self.queue
         qf = self.queue_factory
         for a in ('username', 'mass_spectrometer', 'extract_device',
+                  'use_group_email',
                   'load_name',
                   'delay_before_analyses', 'delay_between_analyses',
                   'queue_conditionals_name'):
@@ -139,8 +140,8 @@ class ExperimentFactory(Loggable, ConsumerMixin):
                 idx = len(aruns) - 1
 
             runs = q.add_runs(new_runs, freq,
-                              freq_before=rf.freq_before,
-                              freq_after=rf.freq_after,
+                              # freq_before=rf.freq_before,
+                              # freq_after=rf.freq_after,
                               is_run_block=rf.run_block_enabled)
 
             self.undoer.push('add runs', runs)

@@ -83,7 +83,7 @@ class RunParser(Loggable):
             'comment',
             'syn_extraction',
             'overlap',
-            ('truncate_conditional', 'truncate'),
+            ('conditionals', 'truncate'),
             ('extract_units', 'e_units')]:
             v = self._get_attr_value(header, args, attr)
             if v is not None:

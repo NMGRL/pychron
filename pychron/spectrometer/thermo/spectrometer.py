@@ -12,12 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance, Int, Property, List, \
-    Any, Enum, Str, DelegatesTo, Bool, TraitError
-#============= standard library imports ========================
+    Any, Enum, Str, DelegatesTo, Bool, TraitError, cached_property
+# ============= standard library imports ========================
 import os
 from numpy import array, argmin
 #============= local library imports  ==========================
@@ -68,6 +68,7 @@ class Spectrometer(SpectrometerDevice):
 
     molecular_weight = Str('Ar40')
     molecular_weights = None
+    isotopes = Property
     sub_cup_configurations = List
 
     sub_cup_configuration = Property(depends_on='_sub_cup_configuration')
@@ -85,6 +86,19 @@ class Spectrometer(SpectrometerDevice):
 
     def test_connection(self):
         return self.ask('GetIntegrationTime') is not None
+
+    def set_gains(self, history=None):
+        if history:
+            self.debug('setting gains to {}, user={}'.format(history.create_date,
+                                                             history.username))
+        for di in self.detectors:
+            di.set_gain()
+
+        return [(di.name, di.gain) for di in self.detectors]
+
+    def load_current_detector_gains(self):
+        for di in self.detectors:
+            di.get_gain()
 
     def get_integration_time(self, current=True):
         if current:
@@ -322,7 +336,28 @@ class Spectrometer(SpectrometerDevice):
             else:
                 return signals[keys.index(dkeys)]
 
-    def get_hv_correction(self, current=False):
+    def get_hv_correction(self, dac, uncorrect=False, current=False):
+        """
+        ion optics correction
+
+        r=M*v_o/(q*B_o)
+        r=M*v_c/(q*B_c)
+
+        E=m*v^2/2
+        v=(2*E/m)^0.5
+
+        v_o/B_o = v_c/B_c
+        B_c = B_o*v_c/v_o
+
+        B_c = B_o*(E_c/E_o)^0.5
+
+        B_o = B_c*(E_o/E_c)^0.5
+
+        E_o = nominal hv
+        E_c = current hv
+        B_o = nominal dac
+        B_c = corrected dac
+        """
         source = self.source
         cur = source.current_hv
         if current:
@@ -332,50 +367,53 @@ class Spectrometer(SpectrometerDevice):
             cor = 1
         else:
             try:
-                cor = source.nominal_hv / cur
+                # cor = source.nominal_hv / cur
+                if uncorrect:
+                    cor = source.nominal_hv / cur
+                else:
+                    cor = cur / source.nominal_hv
+
+                cor **= 0.5
+
             except ZeroDivisionError:
                 cor = 1
 
-        return cor
+        dac *= cor
+        return dac
 
     def correct_dac(self, det, dac, current=True):
         """
-            dac is in axial units
-            convert to detector units
-                convert to axial detector
-                dac_a=  dac_d / relpos
-                relpos==dac_detA/dac_axial
-
             correct for deflection
             correct for hv
         """
-        #self.debug('correct dac {} {} {}'.format(det, dac, current))
-        #dac is already in detector units.
-        #mftable has mappings for each detector
-
         #correct for deflection
         dev = det.get_deflection_correction(current=current)
         dac += dev
 
         #correct for hv
-        dac *= self.get_hv_correction(current=current)
+        # dac *= self.get_hv_correction(current=current)
+        dac = self.get_hv_correction(dac, current=current)
         return dac
 
     def uncorrect_dac(self, det, dac, current=True):
         """
             inverse of correct_dac
         """
-        #self.debug('uncorrect dac {} {} {}'.format(det, dac, current))
-        dac /= self.get_hv_correction(current=current)
+        dac = self.get_hv_correction(dac, uncorrect=True, current=current)
         dac -= det.get_deflection_correction(current=current)
         return dac
 
+    def send_configuration(self):
+        self._send_configuration()
     #===============================================================================
     # private
     #===============================================================================
+    @cached_property
+    def _get_isotopes(self):
+        return sorted(self.molecular_weights.keys(), key=lambda x: int(x[2:]))
 
     def _send_configuration(self):
-        COMMAND_MAP = dict(ionrepeller='IonRepeller',
+        command_map = dict(ionrepeller='IonRepeller',
                            electronenergy='ElectronEnergy',
                            ysymmetry='YSymmetry',
                            zsymmetry='ZSymmetry',
@@ -383,10 +421,14 @@ class Spectrometer(SpectrometerDevice):
                            extractionlens='ExtractionLens',
                            ioncountervoltage='IonCounterVoltage')
 
-        self.debug('Sending configuration to spectrometer')
         if self.microcontroller:
 
             p = os.path.join(paths.spectrometer_dir, 'config.cfg')
+            if not os.path.isfile(p):
+                self.warning('Spectrometer configuration file {} not found'.format(p))
+                return
+
+            self.info('Sending configuration "{}" to spectrometer'.format(p))
             config = self.get_configuration_writer(p)
 
             for section in config.sections():
@@ -401,7 +443,7 @@ class Spectrometer(SpectrometerDevice):
                             cmd = 'SetDeflection'
                             v = '{},{}'.format(attr.upper(), v)
                         else:
-                            cmd = 'Set{}'.format(COMMAND_MAP[attr])
+                            cmd = 'Set{}'.format(command_map[attr])
 
                         self.set_parameter(cmd, v)
 

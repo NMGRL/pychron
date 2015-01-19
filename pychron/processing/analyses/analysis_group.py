@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,6 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+import math
 from traits.api import HasTraits, List, Property, cached_property, Str, Bool, Int, Event
 #============= standard library imports ========================
 from numpy import array, nan
@@ -35,7 +36,6 @@ def AGProperty(*depends):
 
 
 class AnalysisGroup(HasTraits):
-
     analyses = List
     nanalyses = AGProperty()
 
@@ -128,7 +128,7 @@ class AnalysisGroup(HasTraits):
         try:
             return ufloat(v, e)
         except AttributeError:
-            return ufloat(0,0)
+            return ufloat(0, 0)
 
     def _modify_error(self, v, e, kind, mswd=None, include_j_error=None):
 
@@ -167,12 +167,15 @@ class AnalysisGroup(HasTraits):
 
     @cached_property
     def _get_nanalyses(self):
-        return len([ai for ai in self.analyses if not ai.is_omitted()])
+        return len(list(self.clean_analyses()))
+
+    def clean_analyses(self):
+        return (ai for ai in self.analyses if not ai.is_omitted())
 
     def _get_values(self, attr):
-        vs = (getattr(ai, attr) for ai in self.analyses
-              if not ai.is_omitted())
-
+        # vs = (getattr(ai, attr) for ai in self.analyses
+        #       if not ai.is_omitted())
+        vs = (getattr(ai, attr) for ai in self.clean_analyses())
         vs = [vi for vi in vs if vi is not None]
         if vs:
             vs, es = zip(*[(v.nominal_value, v.std_dev) for v in vs])
@@ -204,10 +207,10 @@ class AnalysisGroup(HasTraits):
         return self._calculate_mean(attr, use_weights=True, error_kind=error_kind)
 
     def get_isochron_data(self):
-        return calculate_isochron(self.analyses)
+        return calculate_isochron(list(self.clean_analyses()))
 
     def _calculate_isochron_age(self):
-        args = calculate_isochron(self.analyses)
+        args = calculate_isochron(list(self.clean_analyses()))
         if args:
             age = args[0]
             reg = args[1]
@@ -289,8 +292,10 @@ class StepHeatAnalysisGroup(AnalysisGroup):
                                    self.plateau_age_error_kind,
                                    mswd=mswd,
                                    include_j_error=self.include_j_error_in_plateau)
+            if math.isnan(e):
+                e = 0
 
-            return ufloat(v, e)
+            return ufloat(v, max(0, e))
 
 
 class InterpretedAge(StepHeatAnalysisGroup):

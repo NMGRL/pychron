@@ -16,38 +16,14 @@
 
 #============= enthought library imports =======================
 from traits.api import Bool
-# from pyface.tasks.editor import Editor
 from pychron.loggable import Loggable
 from pyface.tasks.traits_editor import TraitsEditor
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
-# class BaseTraitsEditorHandler(Handler):
-#     def close( self, info, is_ok ):
-#         print info, is_ok
-#         if self.info.object.dirty:
-#             return False
-#         return True
-#
-#     def _on_close(self, info):
-#         print 'onasdf', info
-
 
 class BaseTraitsEditor(TraitsEditor, Loggable):
     dirty = Bool(False)
-
-    # @on_trait_change('ui:closing')
-    # def prepare_closing(self, new):
-    #     print new
-
-    # def create(self, parent):
-    #     """ Create and set the toolkit-specific contents of the editor.
-    #     """
-    #     print 'asdfsadasdf'
-    #     self.ui = self.edit_traits(kind='subpanel', parent=parent,
-    #                                handler=BaseTraitsEditorHandler())
-    #     self.control = self.ui.control
-    #     print self.ui.handler
 
     def prepare_destroy(self):
         pass
@@ -58,10 +34,5 @@ class BaseTraitsEditor(TraitsEditor, Loggable):
 
     def filter_invalid_analyses(self):
         pass
-
-#
-#    def _create_control(self, parent):
-#        self.ui = self.edit_traits(kind='subpanel', parent=parent)
-#        return self.ui.control
 
 #============= EOF =============================================

@@ -237,8 +237,8 @@ class Builder(object):
         self.copy_resource(helper)
 
         #copy version
-        version = os.path.join(self.root, 'launchers', 'version.py')
-        self.copy_resource(version)
+        # version = os.path.join(self.root, 'launchers', 'version.py')
+        # self.copy_resource(version)
 
     def move(self):
         """

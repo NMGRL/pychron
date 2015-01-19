@@ -38,7 +38,7 @@ class BaseTasksApplication(TasksApplication, Loggable):
     def start(self):
         if globalv.open_logger_on_launch:
             self._load_state()
-            self.get_task('pychron.logger')
+            self.open_task('pychron.logger')
 
         return super(BaseTasksApplication, self).start()
 
@@ -50,6 +50,11 @@ class BaseTasksApplication(TasksApplication, Loggable):
         else:
             win = self.create_window(TaskWindowLayout(tid))
             return win, win.active_task, False
+
+    def task_is_open(self, tid):
+        for win in self.windows:
+            if win.active_task and win.active_task.id==tid:
+                return win.active_task
 
     def is_open(self, win):
         return win in self.windows

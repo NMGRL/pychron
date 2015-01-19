@@ -25,7 +25,7 @@ import os
 #============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
-from pychron.initialization_parser import InitializationParser
+from pychron.envisage.initialization.initialization_parser import InitializationParser
 from pychron.paths import paths
 from pychron.lasers.tasks.laser_actions import OpenPowerMapAction, OpenPatternAction, NewPatternAction
 from pychron.lasers.tasks.laser_calibration_task import LaserCalibrationTask
@@ -35,18 +35,18 @@ class CoreLaserPlugin(BaseTaskPlugin):
     def _my_task_extensions_default(self):
         actions = [
             SchemaAddition(factory=OpenPowerMapAction,
-                           path='MenuBar/File/Open')]
+                           path='MenuBar/file.menu/Open')]
 
         # if experiment plugin available dont add pattern actions
         ids = [p.id for p in self.application.plugin_manager._plugins]
-        if not 'pychron.experiment' in ids:
+        if not 'pychron.experiment.task' in ids:
             actions.extend([
                 SchemaAddition(id='Open Pattern',
                                factory=OpenPatternAction,
-                               path='MenuBar/File/Open'),
+                               path='MenuBar/file.menu/Open'),
                 SchemaAddition(id='New Pattern',
                                factory=NewPatternAction,
-                               path='MenuBar/File/New')])
+                               path='MenuBar/file.menu/New')])
 
         return [TaskExtension(actions=actions)]
 

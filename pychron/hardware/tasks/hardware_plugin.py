@@ -125,7 +125,7 @@ class HardwarePlugin(BaseTaskPlugin):
 
     def start(self):
         # if self.managers:
-        from pychron.initializer import Initializer
+        from pychron.envisage.initialization.initializer import Initializer
 
         dp = DevicePreferences()
         afh = self.application.preferences.get('pychron.hardware.auto_find_handle')

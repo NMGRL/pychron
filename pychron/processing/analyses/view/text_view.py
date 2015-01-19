@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Str, Int
+from traits.api import HasTraits, Str, Int, TraitError
 from traitsui.api import View, UItem
 
 #============= standard library imports ========================
@@ -32,7 +32,10 @@ class TextView(HasTraits):
         self._load(analysis)
 
     def _load(self, an):
-        self.text = getattr(an, self.attribute)  #an.experiment_txt
+        try:
+            self.text = getattr(an, self.attribute)  #an.experiment_txt
+        except TraitError:
+            pass
 
     def traits_view(self):
         editor = myTextEditor(bgcolor='#F7F6D0',

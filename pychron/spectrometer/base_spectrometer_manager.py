@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Any
+from traits.api import Any, DelegatesTo
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.managers.manager import Manager
@@ -24,8 +24,14 @@ from pychron.managers.manager import Manager
 class BaseSpectrometerManager(Manager):
     spectrometer = Any
     spectrometer_klass = None
+    simulation = DelegatesTo('spectrometer')
+
     def _spectrometer_default(self):
         return self.spectrometer_klass(application=self.application)
+
+    def send_configuration(self):
+        if self.spectrometer:
+            self.spectrometer.send_configuration()
 
 #============= EOF =============================================
 

@@ -260,7 +260,7 @@ class FusionsDiodeManager(FusionsLaserManager):
 
 if __name__ == '__main__':
     from pychron.core.helpers.logger_setup import logging_setup
-    from pychron.initializer import Initializer
+    from pychron.envisage.initialization.initializer import Initializer
 
 
     logging_setup('fusions diode')

@@ -1,11 +1,11 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,9 +17,12 @@
 #============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import List, Button, Any, Int, Str, Enum, Color
+from traits.trait_types import String
+from traits.traits import Property
 from traitsui.api import View, VGroup, UItem, HGroup
 from apptools.preferences.api import PreferencesHelper
 #============= standard library imports ========================
+import re
 #============= local library imports  ==========================
 from traitsui.list_str_adapter import ListStrAdapter
 
@@ -35,6 +38,7 @@ from traitsui.list_str_adapter import ListStrAdapter
 #                 editor=ButtonEditor(image=image, **editor_kw),
 #                 **kw)
 from pychron.core.ui.custom_label_editor import CustomLabel
+from pychron.envisage.icon_button_editor import icon_button_editor
 
 
 class FavoritesAdapter(ListStrAdapter):
@@ -59,6 +63,50 @@ class BasePreferencesHelper(PreferencesHelper):
         else:
             value = super(BasePreferencesHelper, self)._get_value(name, value)
         return value
+
+
+REPO_REGEX = re.compile(r'^[^\\]\w+/\w+')
+
+
+def test_connection_item():
+    return icon_button_editor('test_connection', 'server-connect',
+                              tooltip='Test connection to Github Repo')
+
+
+class GitRepoPreferencesHelper(BasePreferencesHelper):
+    remote = Property(String, depends_on='_remote')
+    _remote = String
+    test_connection = Button
+    remote_status = Str
+    remote_status_color = Color
+
+    def _test_connection_fired(self):
+        import urllib2
+
+        if self.remote.strip():
+            try:
+                urllib2.urlopen('https://github.com/{}'.format(self.remote))
+                self.remote_status = 'Valid'
+                self.remote_status_color = 'green'
+                return
+            except:
+                pass
+
+        self.remote_status_color = 'red'
+        self.remote_status = 'Invalid'
+
+    def _set_remote(self, v):
+        self._remote = v
+
+    def _get_remote(self):
+        return self._remote
+
+    def _validate_remote(self, v):
+        if not v.strip():
+            return ''
+
+        if REPO_REGEX.match(v):
+            return v
 
 
 class FavoritesPreferencesHelper(BasePreferencesHelper):
@@ -142,4 +190,4 @@ class BaseConsolePreferencesPane(PreferencesPane):
                         label=self.label))
         return v
 
-    #============= EOF =============================================
+        #============= EOF =============================================

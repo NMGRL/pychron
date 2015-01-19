@@ -219,7 +219,7 @@ class MainView(HasTraits):
 
         if niso and diso:
             try:
-                return niso.get_corrected_value() / diso.get_corrected_value()
+                return niso.get_non_detector_corrected_value() / diso.get_non_detector_corrected_value()
             except ZeroDivisionError:
                 pass
 
@@ -343,6 +343,7 @@ class MainView(HasTraits):
                 return ComputedValue(name=n,
                                      tag=a,
                                      value=nominal_value(value) or 0,
+                                     value_tag=value_tag,
                                      display_value=display_value,
                                      error=e or 0)
 
@@ -355,8 +356,10 @@ class MainView(HasTraits):
                 attr = ci.tag
                 if attr == 'wo_j':
                     ci.error = an.age_err_wo_j
+                    ci.value = nominal_value(getattr(an, ci.value_tag))
                 elif attr == 'wo_irrad':
                     ci.error = an.F_err_wo_irrad
+                    ci.value = nominal_value(getattr(an, ci.value_tag))
                 else:
                     v = getattr(an, attr)
                     if v is not None:

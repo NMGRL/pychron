@@ -26,6 +26,7 @@ from pychron.loggable import Loggable
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -82,6 +83,7 @@ class ExportSpec(Loggable):
         attrs = [('labnumber', 'labnumber'),
                  ('aliquot', 'aliquot'),
                  ('step', 'step'),
+                 ('uuid','uuid'),
                  ('irradpos', 'labnumber'),
                  ('timestamp', 'timestamp'),
                  ('extract_device', 'extract_device'), ('tray', 'tray'),

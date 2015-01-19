@@ -100,7 +100,7 @@ class MassSpecDatabaseImporter(Loggable):
             db = self.db
             with db.session_ctx() as sess:
                 sl = db.add_sample_loading(ms, tray)
-                sess.flush()
+                #sess.flush()
                 #             db.flush()
                 self.sample_loading_id = sl.SampleLoadingID
 
@@ -109,7 +109,7 @@ class MassSpecDatabaseImporter(Loggable):
         db = self.db
         with db.session_ctx() as sess:
             ls = db.add_login_session(ms)
-            sess.flush()
+            #sess.flush()
             self.login_session_id = ls.LoginSessionID
 
     def add_data_reduction_session(self):
@@ -117,7 +117,7 @@ class MassSpecDatabaseImporter(Loggable):
             db = self.db
             with db.session_ctx() as sess:
                 dr = db.add_data_reduction_session()
-                sess.flush()
+                #sess.flush()
                 self.data_reduction_session_id = dr.DataReductionSessionID
 
     def create_import_session(self, spectrometer, tray):
@@ -187,43 +187,46 @@ class MassSpecDatabaseImporter(Loggable):
                 self.db.add_irradiation_chronology_segment(irrad, st, et)
 
     def add_analysis(self, spec, commit=True):
-        with self.db.session_ctx(commit=False) as sess:
-            irradpos = spec.irradpos
-            rid = spec.runid
-            trid = rid.lower()
-            identifier = spec.labnumber
+        for i in range(3):
+            with self.db.session_ctx(commit=False) as sess:
+                irradpos = spec.irradpos
+                rid = spec.runid
+                trid = rid.lower()
+                identifier = spec.labnumber
 
-            if trid.startswith('b'):
-                runtype = 'Blank'
-                irradpos = -1
-            elif trid.startswith('a'):
-                runtype = 'Air'
-                irradpos = -2
-            elif trid.startswith('c'):
-                runtype = 'Unknown'
-                identifier = irradpos = self.get_identifier(spec)
-            else:
-                runtype = 'Unknown'
+                if trid.startswith('b'):
+                    runtype = 'Blank'
+                    irradpos = -1
+                elif trid.startswith('a'):
+                    runtype = 'Air'
+                    irradpos = -2
+                elif trid.startswith('c'):
+                    runtype = 'Unknown'
+                    identifier = irradpos = self.get_identifier(spec)
+                else:
+                    runtype = 'Unknown'
 
-            # paliquot = self.db.get_latest_analysis_aliquot(identifier)
-            # if paliquot is None:
-            #     paliquot=0
-            #
-            #rid = '{}-{:02n}'.format(identifier, spec.aliquot, spec.step)
-            # self.info('Saving analysis {} to database as {}'.format(spec.rid, rid))
-            rid = make_runid(identifier, spec.aliquot, spec.step)
+                rid = make_runid(identifier, spec.aliquot, spec.step)
 
-            self._analysis = None
-            try:
-                return self._add_analysis(sess, spec, irradpos, rid, runtype)
-            except Exception, e:
-                import traceback
-
-                tb = traceback.format_exc()
-                self.message(
-                    'Could not save spec.runid={} rid={} to Mass Spec database.\n {}'.format(spec.runid, rid, tb))
-                if commit:
+                self._analysis = None
+                self.db.reraise = True
+                try:
+                    ret = self._add_analysis(sess, spec, irradpos, rid, runtype)
+                    sess.commit()
+                    return ret
+                except Exception, e:
+                    self.debug('Mass Spec save exception. {}'.format(e))
+                    if i==2:
+                        import traceback
+                        tb = traceback.format_exc()
+                        self.message('Could not save spec.runid={} rid={} '
+                                     'to Mass Spec database.\n {}'.format(spec.runid, rid, tb))
+                    else:
+                        self.debug('retry mass spec save')
+                    #if commit:
                     sess.rollback()
+                finally:
+                    self.db.reraise = True
 
     def _add_analysis(self, sess, spec, irradpos, rid, runtype):
 
@@ -261,6 +264,7 @@ class MassSpecDatabaseImporter(Loggable):
 
         # add the reference detector
         refdbdet = db.add_detector('H1', Label='H1')
+        #sess.flush()
 
         spec.runid = rid
         analysis = db.add_analysis(rid, spec.aliquot, spec.step,
@@ -283,7 +287,7 @@ class MassSpecDatabaseImporter(Loggable):
                                    SampleLoadingID=self.sample_loading_id,
                                    LoginSessionID=self.login_session_id,
                                    RunScriptID=rs.RunScriptID)
-
+        # sess.flush()
         if spec.update_rundatetime:
             d = datetime.fromtimestamp(spec.timestamp)
             analysis.RunDateTime = d
@@ -301,7 +305,7 @@ class MassSpecDatabaseImporter(Loggable):
         analysis.ChangeableItemsID = item.ChangeableItemsID
 
         self._add_isotopes(analysis, spec, refdbdet, runtype)
-        sess.flush()
+        # sess.flush()
 
         t = time.time() - gst
         self.debug('{} added analysis time {}s'.format(spec.runid, t))
@@ -458,7 +462,7 @@ class MassSpecDatabaseImporter(Loggable):
         return b
 
     def _db_default(self):
-        db = MassSpecDatabaseAdapter(kind='mysql')
+        db = MassSpecDatabaseAdapter(kind='mysql', autoflush=True)
 
         return db
 

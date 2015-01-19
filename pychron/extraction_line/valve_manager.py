@@ -264,6 +264,9 @@ class ValveManager(Manager):
             word = actuator.get_lock_word()
             return self._parse_word(word)
 
+    def get_valve_names(self):
+        return self.valves.keys()
+
     def _parse_word(self, word):
         if word is not None:
             try:

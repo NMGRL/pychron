@@ -15,17 +15,20 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Bool, Float, Property, String
+from traits.api import Bool, Float, Property, String, Enum
 from traitsui.api import VGroup, HGroup, Item, Group
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.processing.plotters.options.age import AgeOptions
 from pychron.processing.plotters.options.option import InverseIsochronPlotOptions
+from pychron.pychron_constants import FIT_ERROR_TYPES
 
 
 class InverseIsochronOptions(AgeOptions):
     plot_option_name = 'Inv. Isochron'
     plot_option_klass = InverseIsochronPlotOptions
+
+    error_calc_method = Enum(*FIT_ERROR_TYPES)
 
     fill_ellipses = Bool(False)
 
@@ -63,10 +66,15 @@ class InverseIsochronOptions(AgeOptions):
 
         # egrp=Group(
         #            label='Display')
+        label_grp = VGroup(self._get_x_axis_group(),
+                           self._get_y_axis_group(),
+                           # self._get_indicator_font_group(),
+                           self._get_label_font_group(),
+                           label='Fonts')
 
         return (VGroup(self._get_title_group(),
                        # egrp,
-                       g, g2, label='Options'),)
+                       g, g2, label='Options'),label_grp)
 
     def _set_nominal_value(self, v):
         self._nominal_intercept_value = v

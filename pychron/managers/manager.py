@@ -141,33 +141,29 @@ class Manager(Viewable, RPCable):
 
         self.add_window(ui)
 
-    #    def add_window(self, ui):
-    #
-    #        try:
-    #            if self.application is not None:
-    #                self.application.uis.append(ui)
-    #        except AttributeError:
-    #            pass
-    #
-    #    def open_view(self, obj, **kw):
-    #        def _open_():
-    #            ui = obj.edit_traits(**kw)
-    #            self.add_window(ui)
-    #
-    #        do_after(1, _open_)
+    def add_window(self, ui):
 
-    #    def close_ui(self):
-    #        if self.ui is not None:
-    #            #disposes 50 ms from now
-    #            do_after(1, self.ui.dispose)
-    #            #sleep a little so everything has time to update
-    #            #time.sleep(0.05)
+        try:
+            if self.application is not None:
+                self.application.uis.append(ui)
+        except AttributeError:
+            pass
 
-    #    def close(self, is_ok):
-    # #        print self.name, 'close', is_ok
-    #        return True
-    #    def close(self, *args, **kw):
-    #        return True
+    def open_view(self, obj, **kw):
+        def _open_():
+            ui = obj.edit_traits(**kw)
+            self.add_window(ui)
+
+        from pychron.core.ui.gui import invoke_in_main_thread
+
+        invoke_in_main_thread(_open_)
+
+    def close_displays(self):
+        from pychron.displays.gdisplays import gLoggerDisplay, gWarningDisplay, gMessageDisplay
+
+        gLoggerDisplay.close_ui()
+        gWarningDisplay.close_ui()
+        gMessageDisplay.close_ui()
 
     def _kill_hook(self):
         pass

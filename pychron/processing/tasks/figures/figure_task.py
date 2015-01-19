@@ -25,6 +25,7 @@ from itertools import groupby
 import os
 import weakref
 #============= local library imports  ==========================
+from pychron.envisage.tasks.actions import ToggleFullWindowAction
 from pychron.paths import paths
 from pychron.processing.plotters.xy.xy_scatter import XYScatterEditor
 from pychron.processing.tasks.actions.edit_actions import TagAction
@@ -57,6 +58,7 @@ class FigureTask(AnalysisEditTask):
     id = 'pychron.processing.figures'
     plotter_options_pane = Instance(PlotterOptionsPane)
     tool_bars = [
+        SToolBar(ToggleFullWindowAction()),
         SToolBar(RefreshActiveEditorAction(),
                  AddIsoEvoAction(),
                  TagAction()),
@@ -70,11 +72,12 @@ class FigureTask(AnalysisEditTask):
                  NewIsochronAction()),
         SToolBar(SetInterpretedAgeTBAction(),
                  BrowseInterpretedAgeTBAction()),
-        SToolBar(GroupSelectedAction(name='Selected'),
-                 GroupbyAliquotAction(name='by Aliquot'),
-                 GroupbyLabnumberAction(name='by Labnumber'),
-                 GroupbySampleAction(name='by Sample'),
-                 ClearGroupAction(name='Clear'))]
+        # SToolBar(GroupSelectedAction(name='Selected'),
+        #          GroupbyAliquotAction(name='by Aliquot'),
+        #          GroupbyLabnumberAction(name='by Labnumber'),
+        #          GroupbySampleAction(name='by Sample'),
+        #          ClearGroupAction(name='Clear'))
+    ]
 
     auto_select_analysis = False
 
@@ -87,10 +90,10 @@ class FigureTask(AnalysisEditTask):
 
     selected_figures = Any
     dclicked_figure = Event
-    #
+
     # ===============================================================================
     # task protocol
-    #===============================================================================
+    # ===============================================================================
     def prepare_destroy(self):
         for ed in self.editor_area.editors:
             if isinstance(ed, FigureEditor):
@@ -106,9 +109,46 @@ class FigureTask(AnalysisEditTask):
         return panes + [self.plotter_options_pane,
                         self.figure_selector_pane]
 
-    #===============================================================================
+    # ===============================================================================
+    # context menu handler
+    # ===============================================================================
+    def _clear_group(self):
+        for i in self.unknowns_pane.items:
+            i.group_id=0
+            i.graph_id=0
+
+        self.unknowns_pane.refresh_needed = True
+
+    def plot_selected_grouped(self):
+        self.debug('plot selected grouped')
+        if self.has_active_editor():
+            self._clear_group()
+            self._append_replace_unknowns(False, self.analysis_table.analyses)
+
+    def plot_selected(self):
+        self.debug('plot selected')
+        ac=self.has_active_editor()
+        if ac:
+            pane = self.unknowns_pane
+
+            #remember original setting
+            oauto_group1 = ac.auto_group
+            oauto_group2 = pane.auto_group
+
+            #turn off auto grouping
+            ac.auto_group=False
+            pane.auto_group=False
+
+            self._clear_group()
+            self._append_replace_unknowns(False, self.analysis_table.analyses)
+
+            #return to original settings
+            ac.auto_group=oauto_group1
+            pane.auto_group=oauto_group2
+
+    # ===============================================================================
     # graph grouping
-    #===============================================================================
+    # ===============================================================================
     def graph_group_selected(self):
         if self.unknowns_pane.selected:
             idxs = self._get_selected_indices()
@@ -142,6 +182,7 @@ class FigureTask(AnalysisEditTask):
 
     def group_by_labnumber(self):
         if self.unknowns_pane and self.unknowns_pane.items:
+            self.debug('group by labnumber')
             self.unknowns_pane.group_by_labnumber()
 
     def group_selected(self):
@@ -255,8 +296,6 @@ class FigureTask(AnalysisEditTask):
     #===============================================================================
     # actions
     #===============================================================================
-
-
     def refresh_active_editor(self):
         if self.has_active_editor():
             self.active_editor.rebuild()
@@ -398,6 +437,7 @@ class FigureTask(AnalysisEditTask):
         if self.active_editor:
             # if hasattr(self.active_editor, 'auto_group'):
             # if self.active_editor.auto_group:
+
             if self.unknowns_pane.auto_group and self.active_editor.auto_group:
                 self.group_by_labnumber()
                     # for ai in self.active_editor.associated_editors:
@@ -439,25 +479,40 @@ class FigureTask(AnalysisEditTask):
 
     def _load_sample_figures(self, new):
         if new:
+            lns = [p.labnumber for p in new]
+            self.debug('loading sample figures for {}'.format(','.join(lns)))
             db = self.manager.db
             with db.session_ctx():
-                lns = [p.labnumber for p in new]
+
                 figs = db.get_labnumber_figures(lns)
-                figs = [self._dbfigure_factory(f) for f in figs]
-                figs = [f for f in figs if f]
-                self.ofigures = figs
-                self.figures = self.ofigures
+
+                # figs = [self._dbfigure_factory(f) for f in figs]
+
+                def gen():
+                    for f in figs:
+                        fig=self._dbfigure_factory(f)
+                        if fig:
+                            yield fig
+
+                figs = list(gen())
+
+                self.ofigures = figs[:]
+                self.figures = figs
                 self._figure_kind_changed()
 
     def _dbfigure_factory(self, f):
         if f.preference:
-            dbf = DBFigure(name=f.name or '',
-                           project=f.project.name,
-                           identifiers=[s.labnumber.identifier for s in f.labnumbers],
-                           samples=list(set([s.labnumber.sample.name for s in f.labnumbers])),
-                           kind=f.preference.kind,
-                           id=f.id)
-            return dbf
+            try:
+                dbf = DBFigure(name=f.name or '',
+                               project=f.project.name if f.project else '',
+                               identifiers=[s.labnumber.identifier for s in f.labnumbers],
+                               samples=list(set([s.labnumber.sample.name for s in f.labnumbers])),
+                               kind=f.preference.kind,
+                               id=f.id)
+                return dbf
+            except AttributeError:
+                self.debug_exception()
+                self.debug('failed making dbfigure {}'.format(f.name))
 
     def _get_sample_obj(self, s):
         return next((sr for sr in self.samples if sr.labnumber == s), None)

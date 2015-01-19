@@ -17,9 +17,9 @@
 # ============= enthought library imports =======================
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.pychron_constants import LINE_STR
+from pychron.pychron_constants import LINE_STR, NULL_STR
 
 
 def test_queue_conditionals_name(name):
-    return bool(name and not name in ('Queue Conditionals', LINE_STR))
+    return bool(name and not name in ('Queue Conditionals', NULL_STR, LINE_STR))
 #============= EOF =============================================

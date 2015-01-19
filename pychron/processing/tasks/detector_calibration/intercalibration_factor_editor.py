@@ -53,7 +53,7 @@ class IntercalibrationFactorEditor(InterpolationEditor):
                 else:
                     progress.increase_max(n)
 
-            set_id = self.processor.add_predictor_set(self._clean_references())
+            set_id = self.processor.add_predictor_set(self._clean_references(), 'detector_intercalibration')
 
             for unk in self.analyses:
                 if progress:
@@ -73,8 +73,8 @@ class IntercalibrationFactorEditor(InterpolationEditor):
             self.rebuild_graph()
 
             fits = ','.join(('{} {}'.format(fi.name, fi.fit) for fi in self.tool.fits))
-            self.processor.update_vcs_analyses(self.analyses,
-                                               'Update detector intercalibration fits={}'.format(fits))
+            # self.processor.update_vcs_analyses(self.analyses,
+            #                                    'Update detector intercalibration fits={}'.format(fits))
             if progress:
                 progress.soft_close()
 
@@ -130,8 +130,8 @@ class IntercalibrationFactorEditor(InterpolationEditor):
         self.debug('get reference values {}, {}'.format(n, d))
         nys = [ri.get_isotope(detector=n) for ri in ans]
         dys = [ri.get_isotope(detector=d) for ri in ans]
-        nys = array([ni.get_corrected_value() for ni in nys if ni is not None])
-        dys = array([di.get_corrected_value() for di in dys if di is not None])
+        nys = array([ni.get_non_detector_corrected_value() for ni in nys if ni is not None])
+        dys = array([di.get_non_detector_corrected_value() for di in dys if di is not None])
 
         try:
             rys = (nys / dys) / self.tool.standard_ratio

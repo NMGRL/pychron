@@ -1,5 +1,39 @@
 CHANGELOG
 ============
+2.0.5
+------------------
+* added switching between blank histories
+* added BlankDiffView
+* started Workspace
+* added switching between sample_view(Jake) and query_view(Al) in browser
+* added "Time View" to sample table context menu. Use to display list of analyses based on
+    date ranges defined by the selected labnumbers
+* added project, irradiation enabled toggles
+* if high or low post only filters defined load the analysis table with the date range
+* added detector ic view
+* added comment template
+* use notebook for scan manager graphs
+* updated Procedures. don't open multiple extraction line canvases
+* added Find References context menu action
+* added user login
+* added ability to archive loads
+* added identifier (Labnumber) top level filter
+* added Filter/Results focus switching
+* added group emailing
+* gitified pyscripts
+* added frequency template
+* added LabBook Plugin
+* added open boxes to spectrum
+* added uncorrected ratios to Series
+* unified conditionals editing
+* added database version checking
+* updated conditionals. can do and/or with multiple variables e.g Ar40>10 and age<10.0
+* added wake command to ExtractionLinePyScript. jitters mouse to wake from screen saver
+* added Edit Initialiation action and view
+* added Labeling to LabBook
+* changed Pychrondata to Pychron. 
+* added ability to set Pychron root directory in the preferences. Uses ~/Pychron as default
+* moved use_login,multi_user from initializtion file to preferences.
 
 2.0.4
 ------------------

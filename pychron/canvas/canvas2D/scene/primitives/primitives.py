@@ -183,9 +183,12 @@ class Primitive(HasTraits):
 
         return w, h
 
-    def map_dimension(self, d):
+    def map_dimension(self, d, keep_square=False):
         (w, h), (ox, oy) = self.canvas.map_screen([(d, d), (0, 0)])
         w, h = w - ox, h - oy
+        if keep_square:
+            w=min(w, h)
+
         return w
 
     def set_canvas(self, canvas):

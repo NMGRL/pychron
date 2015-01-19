@@ -14,6 +14,8 @@
 # limitations under the License.
 #===============================================================================
 from pychron.core.ui import set_qt
+from pychron.envisage.icon_button_editor import icon_button_editor
+
 set_qt()
 
 from pyface.confirmation_dialog import ConfirmationDialog
@@ -36,7 +38,6 @@ from pychron.envisage.resources import icon
 from pychron.core.helpers.filetools import fileiter, add_extension
 from pychron.experiment.automated_run.hop_util import split_hopstr
 from pychron.loggable import Loggable
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.core.ui.table_editor import myTableEditor
 
 # class NullInt(Int):

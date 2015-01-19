@@ -140,8 +140,14 @@ class YorkRegressor(OLSRegressor):
         return v
 
     def _get_x_intercept_error(self):
-        v = self.x_intercept
-        e = self.get_intercept_error() * v ** 0.5
+        """
+            this method for calculating the x intercept error is incorrect.
+            the current solution is to sway xs and ys and calculate the y intercept error
+        """
+        #v = self.x_intercept
+        #e = self.get_intercept_error() * v ** 0.5
+
+        e=0
         return e
 
     def _get_mswd(self):

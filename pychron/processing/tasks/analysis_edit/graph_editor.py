@@ -207,7 +207,8 @@ class GraphEditor(BaseUnknownsEditor):
     def load_fits(self, refiso):
         if refiso.isotope_keys:
             if self.tool:
-                self.tool.load_fits(refiso.isotope_keys,
+                refs =refiso.isotope_keys[:]
+                self.tool.load_fits(refs,
                                     refiso.get_isotope_fits())
             self.load_tool()
 

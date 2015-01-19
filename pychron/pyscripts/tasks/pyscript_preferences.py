@@ -16,19 +16,22 @@
 
 #============= enthought library imports =======================
 from traits.api import Bool
-from traitsui.api import View, Item
+from traitsui.api import View, Item, HGroup, VGroup
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 
-from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
+from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper, GitRepoPreferencesHelper, \
+    test_connection_item
+
 
 # from pychron.pychron_constants import PLUSMINUS
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
-class PyScriptPreferences(BasePreferencesHelper):
+class PyScriptPreferences(GitRepoPreferencesHelper):
     name = 'Scripts'
     preferences_path = 'pychron.pyscript'
-    auto_detab = Bool(True)
+    auto_detab = Bool
+    use_git_repo = Bool
 
 
 class PyScriptPreferencesPane(PreferencesPane):
@@ -36,7 +39,11 @@ class PyScriptPreferencesPane(PreferencesPane):
     model_factory = PyScriptPreferences
 
     def traits_view(self):
-        v = View(Item('auto_detab'))
+        v = View(Item('auto_detab'),
+                 Item('use_git_repo'),
+                 VGroup(
+                     Item('remote', label='Script Repo'),
+                     HGroup(test_connection_item())))
         return v
 
         #============= EOF =============================================

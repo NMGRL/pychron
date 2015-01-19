@@ -15,12 +15,11 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from pyface.tasks.action.task_action import TaskAction
-
-from pychron.envisage.resources import icon
-
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.envisage.resources import icon
+from pychron.envisage.tasks.actions import PTaskAction as TaskAction
+
 
 class AddTextBoxAction(TaskAction):
     method = 'add_text_box'
@@ -78,8 +77,8 @@ class RefreshActiveEditorAction(TaskAction):
     name = 'Refresh Plot'
     method = 'refresh_active_editor'
     image = icon('refresh')
-    accelerator = 'Ctrl+Shift+R'
-
+    # accelerator = 'Ctrl+Shift+R'
+    id = 'pychron.refresh_plot'
 #============= EOF =============================================
 # class AppendSpectrumAction(TaskAction):
 #     name = 'Append Spectrum'

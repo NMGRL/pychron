@@ -24,7 +24,7 @@ from traitsui.table_column import ObjectColumn
 import os
 #============= local library imports  ==========================
 from pychron.managers.manager import Manager
-from pychron.initialization_parser import InitializationParser
+from pychron.envisage.initialization.initialization_parser import InitializationParser
 from pychron.remote_hardware.command_processor import CommandProcessor
 from pychron.messaging.remote_command_server import RemoteCommandServer
 from pychron.globals import globalv

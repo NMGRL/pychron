@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,6 +24,7 @@ from datetime import datetime
 import uuid
 import weakref
 #============= local library imports  ==========================
+from pychron.core.helpers.logger_setup import new_logger
 from pychron.experiment.automated_run.automated_run import AutomatedRun
 from pychron.experiment.utilities.identifier import get_analysis_type, make_rid, \
     make_runid, is_special, convert_extract_device
@@ -71,6 +72,7 @@ class AutomatedRunSpec(Loggable):
     _step = Int(-1)
 
     analysis_dbid = Long
+    analysis_timestamp = None
     #===========================================================================
     # scripts
     #===========================================================================
@@ -99,7 +101,7 @@ class AutomatedRunSpec(Loggable):
     overlap = Property
     _overlap = Int
     _min_ms_pumptime = Int
-    truncate_conditional = Str
+    conditionals = Str
     syn_extraction = Str
 
     collection_time_zero_offset = Float
@@ -135,6 +137,9 @@ class AutomatedRunSpec(Loggable):
     rundate = Property
     _step_heat = False
     conflicts_checked = False
+
+    def is_detector_ic(self):
+        return self.analysis_type == 'detector_ic'
 
     def is_step_heat(self):
         return bool(self.user_defined_aliquot) and not self.is_special()

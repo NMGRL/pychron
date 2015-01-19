@@ -23,15 +23,21 @@ from envisage.ui.tasks.task_extension import TaskExtension
 from pyface.tasks.action.schema_addition import SchemaAddition
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.envisage.tasks.actions import ToggleFullWindowAction
+
+SERVICE_OFFERS = 'envisage.service_offers'
+TASK_EXTENSIONS = 'envisage.ui.tasks.task_extensions'
+TASKS = 'envisage.ui.tasks.tasks'
+
 
 class BaseTaskPlugin(Plugin):
-    SERVICE_OFFERS = 'envisage.service_offers'
-    TASK_EXTENSIONS = 'envisage.ui.tasks.task_extensions'
-    TASKS = 'envisage.ui.tasks.tasks'
+    actions = List(contributes_to='pychron.actions')
+
     tasks = List(contributes_to=TASKS)
     service_offers = List(contributes_to=SERVICE_OFFERS)
 
     my_task_extensions = List(contributes_to=TASK_EXTENSIONS)
+    # base_task_extensions = List(contributes_to=TASK_EXTENSIONS)
 
     preferences = List(contributes_to='envisage.preferences')
     preferences_panes = List(
@@ -49,7 +55,7 @@ class BaseTaskPlugin(Plugin):
     #     actions = [
     #     #SchemaAddition(id='Exit',
     #     #                       factory=ExitAction,
-    #     #                       path='MenuBar/File'),
+    #     #                       path='MenuBar/file.menu'),
     #     #        SchemaAddition(id='Preferences',
     #     #                       factory=PreferencesGroup,
     #     #                       path='MenuBar/Edit'),
@@ -58,13 +64,15 @@ class BaseTaskPlugin(Plugin):
     #                           path='MenuBar/View')]
     #     return [TaskExtension(actions=actions)]
 
-    def _base_task_extensions_default(self):
-        actions = [
-                   SchemaAddition(id='DockPaneToggleGroup',
-                                  factory=DockPaneToggleGroup,
-                                  path='MenuBar/View')]
-
-        return [TaskExtension(actions=actions)]
+    # def _base_task_extensions_default(self):
+    #     actions = [SchemaAddition(id='DockPaneToggleGroup',
+    #                               factory=DockPaneToggleGroup,
+    #                               path='MenuBar/View'),
+    #                SchemaAddition(factory=ToggleFullWindowAction,
+    #                               id='toggle_full_window',
+    #                               path='MenuBar/window.menu')]
+    #     # print 'asdsadfasdf'
+    #     return [TaskExtension(actions=actions)]+self.my_task_extensions
 
     def _get_task_extensions(self):
         return []

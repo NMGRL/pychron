@@ -14,81 +14,64 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
-
+# ============= enthought library imports =======================
 from traits.api import Str, Either, Int, Callable, Bool, Float
-#============= standard library imports ========================
-import re
-from uncertainties import nominal_value, std_dev, ufloat
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+from uncertainties import nominal_value, std_dev
+import pprint
+# ============= local library imports  ==========================
+from pychron.experiment.conditional.regexes import MAPPER_KEY_REGEX, \
+    STD_REGEX
+from pychron.experiment.conditional.utilities import tokenize, get_teststr_attr_func
 from pychron.loggable import Loggable
 
-#match .current_point
-CP_REGEX = re.compile(r'\.(current|cur)')
-#match .std_dev
-STD_REGEX = re.compile(r'\.(std_dev|sd|stddev)')
 
-#match .inactive
-ACTIVE_REGEX = re.compile(r'\.inactive')
+def dictgetter(d, attrs, default=None):
+    if not isinstance(attrs, tuple):
+        attrs = (attrs, )
 
-#match average(ar##)
-AVG_REGEX = re.compile(r'average\([A-Za-z]+\d*\)')
-#match max(ar##)
-MAX_REGEX = re.compile(r'max\([A-Za-z]+\d*\)')
-#match min(ar##)
-MIN_REGEX = re.compile(r'min\([A-Za-z]+\d*\)')
-
-#match slope(ar##)
-SLOPE_REGEX = re.compile(r'slope\([A-Za-z]+\d*\)')
-
-#match x in x**2+3x+1
-MAPPER_KEY_REGEX = re.compile(r'[A-Za-z]+')
-
-#match kca, ar40, etc..
-KEY_REGEX = re.compile(r'[A-Za-z]+\d*')
-
-BASELINE_REGEX = re.compile(r'\.bs')
-BASELINECOR_REGEX = re.compile(r'\.bs_corrected')
-
-PARENTHESES_REGEX = re.compile(r'\([\w\d\s]+\)')
-
-COMP_REGEX = re.compile(r'<=|>=|>|<|==')
-
-DEFLECTION_REGEX = re.compile(r'\.deflection')
-#todo: add between ability
+    for ai in attrs:
+        try:
+            return d[ai]
+        except KeyError:
+            pass
+    else:
+        return default
 
 
 def conditional_from_dict(cd, klass):
     if isinstance(klass, str):
         klass = globals()[klass]
 
-    comp = cd.get('check', None)
-    if not comp:
+    # try:
+    # teststr = cd['teststr']
+    # except KeyError:
+    # #for pre 2.0.5 conditionals files
+    # teststr = cd.get('check')
+    # if not teststr:
+    # return
+
+    # attr = cd.get('attr')
+    # if not attr:
+    #     return
+
+    teststr = dictgetter(cd, ('teststr', 'comp', 'check'))
+    if not teststr:
         return
 
-    attr = cd.get('attr', '')
-    start = cd.get('start', 30)
-    freq = cd.get('frequency', 5)
+    start = dictgetter(cd, ('start', 'start_count'), default=50)
+    freq = cd.get('frequency', 1)
     win = cd.get('window', 0)
     mapper = cd.get('mapper', '')
-    cx = klass(attr, comp, start_count=start, frequency=freq, window=win, mapper=mapper)
+    action = cd.get('action', '')
+    cx = klass(teststr, start_count=start, frequency=freq, window=win, mapper=mapper, action=action)
     return cx
-
-
-def remove_attr(s):
-    """
-        return >10 where s=Ar40>10
-    """
-    try:
-        c = COMP_REGEX.findall(s)[0]
-        return '{}{}'.format(c, s.split(c)[-1])
-    except IndexError:
-        return ''
 
 
 class BaseConditional(Loggable):
     attr = Str
-    comp = Str
+    teststr = Str
+    start_count = Int
 
     def to_string(self):
         raise NotImplementedError
@@ -113,125 +96,99 @@ class BaseConditional(Loggable):
     def _should_check(self, run, data, cnt):
         return True
 
+    def __repr__(self):
+        return self.to_string()
+
 
 class AutomatedRunConditional(BaseConditional):
-    start_count = Int
     frequency = Int
     message = Str
 
     # used to specify a window (in counts) of data to average, etc.
     window = Int
     mapper = Str
+    analysis_types = None
 
-    _key = ''
     _mapper_key = ''
 
     active = True
     value = Float
 
-    def __init__(self, attr, comp,
+    # def __init__(self, attr, teststr,
+    # start_count=0,
+    # frequency=1,
+    #              *args, **kw):
+    def __init__(self, teststr,
                  start_count=0,
-                 frequency=10,
+                 frequency=1,
                  *args, **kw):
 
         self.active = True
-        self.attr = attr
-        self.comp = comp
+        # self.attr = attr
+        self.teststr = teststr
         self.start_count = start_count
         self.frequency = frequency
         super(AutomatedRunConditional, self).__init__(*args, **kw)
 
-        # m = re.findall(r'[A-Za-z]+\d*', comp)
-        m = PARENTHESES_REGEX.findall(comp)
-        if m:
-            self._key = m[0][1:-1]
-        else:
-            m = KEY_REGEX.findall(comp)
-            if m:
-                self._key = m[0]
-            else:
-                self._key = self.attr
-
-        if self.mapper:
-            m = MAPPER_KEY_REGEX.findall(self.mapper)
-            if m:
-                self._mapper_key = m[0]
-
     def to_string(self):
-        s = '{} {}'.format(self.comp, self.message)
+        s = '{} {}'.format(self.teststr, self.message)
         return s
 
     def _should_check(self, run, data, cnt):
+        if self.analysis_types:
+            if run.analysis_type not in self.analysis_types:
+                return
+
         d = False
         if isinstance(cnt, bool):
             d = True
 
-        a = cnt > self.start_count
-        b = (cnt - self.start_count) > 0
-        c = (cnt - self.start_count) % self.frequency == 0
-        cnt_flag = a and b and c
+        ocnt = cnt - self.start_count
 
+        # "a" flag not necessary cnt>scnt == cnt-scnt>0
+        # a = cnt > self.start_count
+        b = ocnt > 0
+        c = ocnt % self.frequency == 0
+        cnt_flag = b and c
+        # print ocnt, self.frequency, b, c
         return self.active and (cnt_flag or d)
 
-    def _check(self, arun, data):
-        attr = self.attr
-        if not self.attr:
-            attr = self._key
+    def _check(self, run, data):
+        teststr, ctx = self._make_context(run, data)
+        self.debug('testing {}'.format(teststr))
+        msg = 'evaluate ot="{}" t="{}", ctx="{}"'.format(self.teststr, teststr,
+                                                         pprint.pformat(ctx, width=1))
+        self.debug(msg)
+        if eval(teststr, ctx):
+            self.debug('condition {} is true'.format(teststr))
+            self.message = 'condition {} is True'.format(teststr)
+            return True
 
-        obj = arun.arar_age
+    def _make_context(self, obj, data):
+        teststr = self.teststr
 
-        comp = self.comp
-        for reg, func in ((CP_REGEX, lambda: obj.get_current_intensity(attr)),
-                          (BASELINECOR_REGEX, lambda: obj.get_baseline_corrected_value(attr)),
-                          (BASELINE_REGEX, lambda: obj.get_baseline_value(attr)),
-                          (ACTIVE_REGEX, lambda: not attr in data[0]),
-                          (AVG_REGEX, lambda: obj.get_values(attr, self.window or -1).mean()),
-                          (MAX_REGEX, lambda: obj.get_values(attr, self.window or -1).max()),
-                          (MIN_REGEX, lambda: obj.get_values(attr, self.window or -1).min()),
-                          (SLOPE_REGEX, lambda: obj.get_slope(attr, self.window or -1))):
-            if reg.findall(comp):
-                v = func()
-                comp = '{}{}'.format(self._key, remove_attr(comp))
-                break
-        else:
-            if DEFLECTION_REGEX.findall(comp):
-                v = arun.get_deflection(attr, current=True)
-                comp = '{}{}'.format(self._key, remove_attr(comp))
-            elif '37/39' in comp:
-                v=obj.get_value('37/39')
-                comp = 'ratio3739{}'.format(remove_attr(comp))
-                self._key='ratio3739'
+        ctx = {}
+        tt = []
+        for ti, oper in tokenize(teststr):
+            ts, attr, func = get_teststr_attr_func(ti)
+            v = func(obj, data, self.window)
 
-            else:
-                try:
-                    if self.window:
-                        vs = obj.get_values(attr, self.window)
-                        if not vs:
-                            self.warning('Deactivating check. check attr invalid for use with window')
-                            self.active = False
-                            return
-                        v = ufloat(vs.mean(), vs.std())
-                    else:
-                        v = obj.get_value(attr)
-                except Exception, e:
-                    self.warning('Deactivating check. Check Exception "{}."'.format(e))
-                    self.active = False
-
-        self.debug('testing {} (eval={}) key={} attr={} value={}'.format(self.comp, comp, self._key, self.attr, v))
-        if v is not None:
-            vv = std_dev(v) if STD_REGEX.match(comp) else nominal_value(v)
+            vv = std_dev(v) if STD_REGEX.match(teststr) else nominal_value(v)
             vv = self._map_value(vv)
-            self.value = vv
+            ctx[attr] = vv
 
-            self.debug('testing {} (eval={}) key={} attr={} value={} mapped_value={}'.format(self.comp, comp,
-                                                                                             self._key, self.attr, v, vv))
-            if eval(comp, {self._key: vv}):
-                self.message = 'attr={}, value= {} {} is True'.format(self.attr, vv, self.comp)
-                return True
+            tt.append(ts)
+            if oper:
+                tt.append(oper)
+
+        return ' '.join(tt), ctx
 
     def _map_value(self, vv):
-        if self.mapper and self._mapper_key:
-            vv = eval(self.mapper, {self._mapper_key: vv})
+        if self.mapper:
+            m = MAPPER_KEY_REGEX.search(self.mapper)
+            if m:
+                key = m.group(0)
+                vv = eval(self.mapper, {key: vv})
         return vv
 
 
@@ -240,7 +197,15 @@ class TruncationConditional(AutomatedRunConditional):
 
 
 class TerminationConditional(AutomatedRunConditional):
+    nfails = Int
+
+
+class CancelationConditional(AutomatedRunConditional):
     pass
+    # def check(self, run, data, cnt):
+    # result = super(CancelationConditional, self).check(run, data, cnt)
+    # if result:
+    #
 
 
 class ActionConditional(AutomatedRunConditional):
@@ -251,7 +216,182 @@ class ActionConditional(AutomatedRunConditional):
         action = self.action
         if isinstance(action, str):
             script.execute_snippet(action)
-        else:
+        elif hasattr(action, '__call__'):
             action()
 
-#============= EOF =============================================
+            # ============= EOF =============================================
+            # attr = extract_attr(token)
+            # tkey = attr
+            # def default_wrapper(teststr, found):
+            # teststr = '{}{}'.format(tkey, remove_attr(teststr))
+            # return teststr, tkey
+            #
+            # def between_wrapper(teststr, func, between):
+            # v = None
+            # args = ARGS_REGEX.search(between).group(0)[1:-1].split(',')
+            # key = args[0]
+            #     if '.' in key:
+            #         key = key.split('.')[0].strip()
+            #         v = 0
+            #         # v = self.get_modified_value(arun, key, key)
+            #
+            #     v1, v2 = args[1:]
+            #     nc = '{}<={}<={}'.format(v1, key, v2)
+            #
+            #     teststr = teststr.replace(between, nc)
+            #     if between.startswith('not '):
+            #         teststr = 'not {}'.format(teststr)
+            #
+            #     if v is None:
+            #         v = func()
+            #     return v, teststr, key
+            #
+            # def ratio_wrapper(teststr, func, ratio):
+            #     v = obj.get_value(ratio)
+            #     key = 'ratio{}'.format(ratio.replace('/', ''))
+            #     teststr = '{}{}'.format(key, remove_attr(teststr))
+            #     return v, teststr, key
+            # for aa in ((CP_REGEX, lambda obj, data, window: obj.arar_age.get_current_intensity(attr)),
+            #            (BASELINECOR_REGEX, lambda obj, data, window: obj.garar_age.et_baseline_corrected_value(attr)),
+            #            (BASELINE_REGEX, lambda obj, data, window: obj.arar_age.get_baseline_value(attr)),
+            #            (ACTIVE_REGEX, lambda obj, data, window: not attr in data[0]),
+            #            (AVG_REGEX, lambda obj, data, window: obj.arar_age.get_values(attr, window or -1).mean()),
+            #            (MAX_REGEX, lambda obj, data, window: obj.arar_age.get_values(attr, window or -1).max()),
+            #            (MIN_REGEX, lambda obj, data, window: obj.arar_age.get_values(attr, window or -1).min()),
+            #            (SLOPE_REGEX, lambda obj, data, window: obj.arar_age.get_slope(attr, window or -1)),
+            #            (DEFLECTION_REGEX, lambda obj, data, window: obj.get_deflection(attr, current=True)),
+            #            (RATIO_REGEX, None, ratio_wrapper),
+            #            (BETWEEN_REGEX, lambda obj, data, window: obj.arar_age.get_value(attr), between_wrapper)):
+            #
+            #     if len(aa) == 2:
+            #         wrapper = default_wrapper
+            #         reg, func = aa
+            #     else:
+            #         reg, func, wrapper = aa
+            #
+            #     found = reg.match(attr)
+            #     if found:
+            #         args = wrapper(attr, found.group(0))
+            #         if args:
+            #             teststr, tkey = args
+            #             # teststr, tkey = args
+            #             break
+            # else:
+            #     teststr='asdf'
+            # def _get_simple_key(self, teststr):
+            # m = PARENTHESES_REGEX.findall(teststr)
+            # if m:
+            # key = m[0][1:-1]
+            # else:
+            #         m = KEY_REGEX.findall(teststr)
+            #         if m:
+            #             k = m[0]
+            #             if k in ('not',):
+            #                 k = m[1]
+            #             key = k
+            #         else:
+            #             key = self.attr
+            #     return key
+
+            # def _check(self, arun, data):
+            #     obj = arun.arar_age
+            #     # attr = self.attr
+            #
+            #     cc = self.teststr
+            #     invert = False
+            #     if cc.startswith('not '):
+            #         cc = cc[4:]
+            #         invert = True
+            #
+            #     tkey = self._get_simple_key(cc)
+            #
+            #     def default_wrapper(teststr, func, found):
+            #         teststr = '{}{}'.format(tkey, remove_attr(teststr))
+            #         return func(), teststr, tkey
+            #
+            #     def between_wrapper(teststr, func, between):
+            #         v = None
+            #         args = ARGS_REGEX.search(between).group(0)[1:-1].split(',')
+            #         key = args[0]
+            #         if '.' in key:
+            #             key = key.split('.')[0].strip()
+            #             v = self.get_modified_value(arun, key, key)
+            #
+            #         v1, v2 = args[1:]
+            #         nc = '{}<={}<={}'.format(v1, key, v2)
+            #
+            #         teststr = teststr.replace(between, nc)
+            #         if between.startswith('not '):
+            #             teststr = 'not {}'.format(teststr)
+            #
+            #         if v is None:
+            #             v = func()
+            #         return v, teststr, key
+            #
+            #     def ratio_wrapper(teststr, func, ratio):
+            #         v = obj.get_value(ratio)
+            #         key = 'ratio{}'.format(ratio.replace('/', ''))
+            #         teststr = '{}{}'.format(key, remove_attr(teststr))
+            #         return v, teststr, key
+            #
+            #     for aa in ((CP_REGEX, lambda: obj.get_current_intensity(attr)),
+            #                (BASELINECOR_REGEX, lambda: obj.get_baseline_corrected_value(attr)),
+            #                (BASELINE_REGEX, lambda: obj.get_baseline_value(attr)),
+            #                (ACTIVE_REGEX, lambda: not attr in data[0]),
+            #                (AVG_REGEX, lambda: obj.get_values(attr, self.window or -1).mean()),
+            #                (MAX_REGEX, lambda: obj.get_values(attr, self.window or -1).max()),
+            #                (MIN_REGEX, lambda: obj.get_values(attr, self.window or -1).min()),
+            #                (SLOPE_REGEX, lambda: obj.get_slope(attr, self.window or -1)),
+            #                (DEFLECTION_REGEX, lambda: arun.get_deflection(attr, current=True)),
+            #                (RATIO_REGEX, None, ratio_wrapper),
+            #                (BETWEEN_REGEX, lambda: obj.get_value(attr), between_wrapper)):
+            #
+            #         if len(aa) == 2:
+            #             wrapper = default_wrapper
+            #             reg, func = aa
+            #         else:
+            #             reg, func, wrapper = aa
+            #
+            #         found = reg.match(cc)
+            #         if found:
+            #             args = wrapper(cc, func, found.group(0))
+            #             if args:
+            #                 v, teststr, tkey = args
+            #                 break
+            #     else:
+            #         teststr = cc
+            #         try:
+            #             if self.window:
+            #                 vs = obj.get_values(attr, self.window)
+            #                 if not vs:
+            #                     self.warning('Deactivating check. check attr invalid for use with window')
+            #                     self.active = False
+            #                     return
+            #                 v = ufloat(vs.mean(), vs.std())
+            #             else:
+            #                 v = obj.get_value(attr)
+            #         except Exception, e:
+            #             self.warning('Deactivating check. Check Exception "{}."'.format(e))
+            #             self.active = False
+            #
+            #     if tkey == 'age':
+            #         atype = arun.spec.analysis_type
+            #         if not atype in AGE_TESTABLE:
+            #             msg = 'age conditional for {} not allowed'.format(atype)
+            #             self.unique_warning(msg)
+            #             return
+            #
+            #     if v is not None:
+            #         vv = std_dev(v) if STD_REGEX.match(teststr) else nominal_value(v)
+            #         vv = self._map_value(vv)
+            #         self.value = vv
+            #         if invert:
+            #             teststr = 'not {}'.format(teststr)
+            #
+            #         self.debug('testing {} (eval={}) key={} attr={} value={} mapped_value={}'.format(self.teststr, teststr,
+            #                                                                                          tkey, self.attr, v,
+            #                                                                                          vv))
+            #         if eval(teststr, {tkey: vv}):
+            #             self.debug('condition {} is true'.format(teststr))
+            #             self.message = 'attr={}, value= {} {} is True'.format(self.attr, vv, self.teststr)
+            #             return True

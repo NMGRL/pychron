@@ -165,7 +165,7 @@ class ImportManager(IsotopeDatabaseManager):
                     self.imported_names = []
                     #                    self.db.reset()
 
-                    self.db.save_username = 'jake({})'.format(self.db.username)
+                    # self.db.save_username = 'jake({})'.format(self.db.username)
                     self.info('====== Import Started  ======')
                     self.info('user name= {}'.format(self.db.save_username))
                     # get import func from extractor

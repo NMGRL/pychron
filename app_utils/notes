@@ -9,4 +9,9 @@
         now the Info.plist at
         <pychron_app>/Contents/Info.plist is used.
 
-# use pythonw instead of python
+# <invalid> use pythonw instead of python
+
+# git ver 1.8.3.2 required for mac osx 10.6
+# https://code.google.com/p/git-osx-installer/downloads/list
+
+

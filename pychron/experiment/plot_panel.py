@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import Instance, Property, List, on_trait_change, Bool, \
-    Str, CInt, Tuple, Color, HasTraits, Any
+    Str, CInt, Tuple, Color, HasTraits, Any, Int
 from traitsui.api import View, UItem, VGroup, HGroup, spring, ListEditor
 #============= standard library imports ========================
 from threading import Event
@@ -100,7 +100,9 @@ class PlotPanel(Loggable):
 
     plot_title = Str
 
-    ncounts = Property(CInt(enter_set=True, auto_set=False), depends_on='_ncounts')
+    counts = Int
+    ncounts = Property(CInt(enter_set=True, auto_set=False),
+                       depends_on='_ncounts')
     _ncounts = CInt
 
     ncycles = Property(CInt(enter_set=True, auto_set=False),
@@ -124,7 +126,7 @@ class PlotPanel(Loggable):
     ratios = ['Ar40:Ar36', 'Ar40:Ar39', ]
     info_func = None
 
-    #refresh_age = True
+    # refresh_age = True
 
     def set_peak_center_graph(self, graph):
         self.peak_center_graph = graph
@@ -160,6 +162,9 @@ class PlotPanel(Loggable):
         #wait here until _create finishes
         while not evt.is_set():
             time.sleep(0.05)
+
+    def new_plot(self, **kw):
+        return self._new_plot(**kw)
 
     def _new_plot(self, **kw):
         g = self.isotope_graph
@@ -208,7 +213,7 @@ class PlotPanel(Loggable):
             #update ncounts
             integration_time = 1.1
             counts = sum([ci * integration_time + s for _h, ci, s in self.hops]) * v
-            self.ncounts = counts
+            self._ncounts = counts
 
     def _graph_factory(self):
         return StackedRegressionGraph(container_dict=dict(padding=5, bgcolor='gray',

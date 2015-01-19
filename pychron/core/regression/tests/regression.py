@@ -20,6 +20,9 @@
 # set_toolkit('qt4')
 #============= standard library imports ========================
 from unittest import TestCase
+
+from numpy import linspace, polyval
+
 #============= local library imports  ==========================
 from pychron.core.regression.mean_regressor import MeanRegressor  #, WeightedMeanRegressor
 from pychron.core.regression.new_york_regressor import ReedYorkRegressor, NewYorkRegressor
@@ -80,6 +83,25 @@ class OLSRegressionTest(RegressionTestCase, TestCase):
         e = self.reg.predict_error(self.solution['pred_x'], error_calc='SEM')
         self.assertAlmostEqual(e, self.solution['pred_error'], 3)
 
+
+class OLSRegressionTest2(RegressionTestCase, TestCase):
+    reg_klass = OLSRegressor
+    def setUp(self):
+        n=100
+        coeffs=[2.12,1.13,5.14]
+        xs = linspace(0, 100, n)
+        ys = polyval(coeffs, xs)
+
+        self.reg.trait_set(xs=xs, ys=ys, fit='parabolic')
+
+        sol = {'coefficients':coeffs, 'n':n}
+        self.solution = sol
+        self.reg.calculate()
+
+    def testcoefficients(self):
+        self.assertListEqual(list(map(lambda x: round(x, 6),
+                                      self.reg.coefficients[::-1])),
+                             self.solution['coefficients'])
 
 class FilterOLSRegressionTest(RegressionTestCase, TestCase):
     reg_klass = OLSRegressor

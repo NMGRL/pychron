@@ -19,7 +19,7 @@ from traits.api import HasTraits, Int, Button, Event
 from traitsui.api import View, Item, HGroup, spring, VGroup
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
+from pychron.envisage.icon_button_editor import icon_button_editor
 
 
 def EInt(*args, **kw):

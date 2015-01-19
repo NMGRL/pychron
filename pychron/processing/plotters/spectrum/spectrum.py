@@ -54,7 +54,7 @@ class Spectrum(BaseArArFigure):
             # self.update_options_limits(pid)
 
         try:
-            self.graph.set_x_title('Cumulative %39ArK')
+            self.graph.set_x_title('Cumulative %39ArK', plotid=0)
             self.graph.set_x_limits(0, 100)
         except IndexError:
             pass
@@ -223,6 +223,7 @@ class Spectrum(BaseArArFigure):
         sp = SpectrumErrorOverlay(component=ds,
                                   spectrum=self,
                                   alpha=max(min(1.0, a), 0.0),
+                                  use_fill=self.options.use_error_envelope_fill,
                                   nsigma=ns)
         ds.underlays.append(sp)
 

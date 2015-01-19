@@ -26,27 +26,31 @@ from pychron.processing.tasks.actions.processing_actions import myTaskAction
 class AddIsoEvoAction(TaskAction):
     name = 'Iso. Evo'
     method = 'add_iso_evo'
-    image = icon('chart_curve_add.png')
+    image = icon('chart_curve_add')
 
 
 
 class AddDiffAction(TaskAction):
     name = 'Diff'
     method = 'add_diff'
-    image = icon('edit_diff.png')
+    image = icon('edit_diff')
 
 
 class EditDataAction(TaskAction):
     name = 'Edit Data'
     method = 'edit_data'
-    image = icon('edit_diff.png')
+    image = icon('application-form-edit')
+
+
+class DatasetAction(TaskAction):
+    name = 'New Dataset'
+    method = 'new_dataset'
 
 
 class RatioEditorAction(TaskAction):
     name='Ratio'
     method = 'open_ratio_editor'
     image = icon('window-new')
-#============= EOF =============================================
 class SummaryLabnumberAction(myTaskAction):
     name = 'Summary L# View'
     method = 'new_summary_labnumber_editor'
@@ -66,3 +70,11 @@ class SummaryProjectAction(myTaskAction):
     method = 'new_summary_project_editor'
     task_ids = ['pychron.recall']
     image = icon('window-new')
+
+
+class ContextViewAction(myTaskAction):
+    name = 'Context View'
+    method = 'new_context_editor'
+    task_ids = ['pychron.recall']
+    image = icon('window-new')
+#============= EOF =============================================

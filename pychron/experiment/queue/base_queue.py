@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,7 +21,7 @@ import yaml
 import os
 import datetime
 #============= local library imports  ==========================
-from pychron.experiment.queue.experiment_block import ExperimentBlock
+from pychron.experiment.queue.run_block import RunBlock
 from pychron.experiment.utilities.frequency_generator import frequency_index_gen
 from pychron.pychron_constants import NULL_STR, LINE_STR
 from pychron.experiment.stats import ExperimentStats
@@ -40,9 +40,10 @@ def extract_meta(line_gen):
     return yaml.load(metastr), metastr
 
 
-__METASTR__='''
+__METASTR__ = '''
 username: {}
 email: {}
+uss_group_email: {}
 date: {}
 queue_conditionals_name: {}
 mass_spectrometer: {}
@@ -53,7 +54,8 @@ tray: {}
 load: {}
 '''
 
-class BaseExperimentQueue(ExperimentBlock):
+
+class BaseExperimentQueue(RunBlock):
     selected = List
 
     automated_runs = List
@@ -61,6 +63,7 @@ class BaseExperimentQueue(ExperimentBlock):
 
     username = String
     email = String
+    use_group_email = Bool
 
     tray = Str
     delay_before_analyses = CInt(5)
@@ -227,11 +230,16 @@ class BaseExperimentQueue(ExperimentBlock):
         return runspecs
 
     def _add_queue_meta(self, params):
-        params['extract_device'] = self.extract_device
-        params['tray'] = self.tray
-        params['username'] = self.username
-        params['email'] = self.email
-        params['queue_conditionals_name'] = self.queue_conditionals_name
+        for attr in ('extract_device', 'tray', 'username', 'email',
+                     'use_group_email', 'queue_conditionals_name'):
+            params[attr] = getattr(self, attr)
+
+            # params['extract_device'] = self.extract_device
+            # params['tray'] = self.tray
+            # params['username'] = self.username
+            # params['email'] = self.email
+            # params['use_group_email']
+            # params['queue_conditionals_name'] = self.queue_conditionals_name
 
     def _extract_meta(self, f):
         meta, metastr = extract_meta(f)
@@ -259,6 +267,7 @@ class BaseExperimentQueue(ExperimentBlock):
         self._set_meta_param('delay_before_analyses', meta, default_int)
         self._set_meta_param('username', meta, default)
         self._set_meta_param('email', meta, default)
+        self._set_meta_param('use_group_email', meta, bool_default)
         self._set_meta_param('load_name', meta, default, metaname='load')
         self._set_meta_param('queue_conditionals_name', meta, default)
 
@@ -304,7 +313,7 @@ class BaseExperimentQueue(ExperimentBlock):
                ('ramp', 'ramp_duration'),
                ('t_o', 'collection_time_zero_offset'),
                ('measurement', 'measurement_script'),
-               ('truncate', 'truncate_conditional'),
+               ('conditionals', 'conditionals'),
                'syn_extraction',
                'use_cdd_warming',
                ('post_meas', 'post_measurement_script'),
@@ -331,6 +340,7 @@ class BaseExperimentQueue(ExperimentBlock):
         s = __METASTR__.format(
             self.username,
             self.email,
+            self.use_group_email,
             datetime.datetime.today(),
             self.queue_conditionals_name,
             ms,

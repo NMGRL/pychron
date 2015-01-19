@@ -1,0 +1,232 @@
+<%
+ ANALYSIS_ATTRS=[('Experiment', 'experiment_name'),
+                 ('Date','date'),
+                 ('RunID','runid'),
+                 ('Status','state'),
+                 ('Project','project'),('Sample','sample'),
+                 ('Type', 'analysis_type'),
+                 ('Extraction','extraction_script'),
+                 ('Position','position'),
+                 ('Extract Value', 'extract_value'),
+                 ('Duration','duration'),
+                 ('Cleanup','cleanup'),
+                 ('Measurement', 'measurement_script')
+                 ]
+ EXP_ATTRS = [('Name','name'), ('Spectrometer', 'mass_spectrometer'),
+              ('Extraction Device', 'extract_device'), ('User','username'),
+              ('Status','status'), ('Date','start_timestamp')]
+%>
+
+<html>
+  <head>
+    <style>
+    p {background-color: lightblue;
+       font-family: "Helvetica";}
+    h1 {font-family: "Helvetica";}
+    h2 {font-family: "Helvetica";}
+    </style>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script>
+     var time = new Date().getTime();
+     $(document.body).bind("mousemove keypress", function(e) {
+         time = new Date().getTime();
+     });
+
+     function refresh() {
+         if(new Date().getTime() - time >= 60000)
+             window.location.reload(true);
+         else
+             setTimeout(refresh, 10000);
+    }
+    setTimeout(refresh, 10000);
+    </script>
+
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+      google.load("visualization", "1", {packages:["table","corechart"]});
+      google.setOnLoadCallback(drawCharts);
+
+      function drawCharts() {
+       <!-- Draw barchart -->
+          var data = google.visualization.arrayToDataTable([
+          ['Spectrometer', 'Unknowns', 'Airs', 'Blank Unknowns', 'Blank Airs'],
+          % for spec in spectrometer_usages:
+          ['${spec["name"]}', ${spec["nunknowns"]}, ${spec["nairs"]},
+                ${spec["nblank_unknowns"]}, ${spec["nblank_airs"]}, ],
+          % endfor
+          ]);
+          var chart = new google.visualization.BarChart(document.getElementById('bar_div'));
+          chart.draw(data);
+
+        <!-- Draw Linechart -->
+        var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+
+
+        var data = google.visualization.arrayToDataTable([
+        ['Timestamp','Extract Value'],
+        % for ai in reversed(analyses):
+        ['${ai['runtime']}',${ai['extract_value']}],
+        % endfor
+        ]);
+        var options = {
+          title: 'Time Series'
+        };
+        chart.draw(data, options);
+
+        <!-- Draw Spectrometer Usage -->
+        var data = google.visualization.arrayToDataTable([
+          ['Spectrometer', 'Usage'],
+          % for spec in spectrometer_usages:
+          ['${spec["name"]}', ${spec["usage"]}],
+          % endfor
+        ]);
+
+        var options = {
+          title: 'Spectrometer Usage'
+        };
+
+        var chart = new google.visualization.PieChart(document.getElementById('spectrometer_usage_div'));
+        chart.draw(data, options);
+
+        <!-- Draw Extract Device Usage -->
+                var data = google.visualization.arrayToDataTable([
+          ['Device', 'Usage'],
+          % for dev in extract_device_usages:
+          ['${dev["name"]}', ${dev["usage"]}],
+          % endfor
+        ]);
+
+        var options = {
+          title: 'Extract Device Usage'
+        };
+
+        var chart = new google.visualization.PieChart(document.getElementById('extract_usage_div'));
+        chart.draw(data, options);
+
+
+       <!-- Draw Experiments -->
+        ${make_table(experiments, EXP_ATTRS, 'experiment_div')}
+
+        <!-- Draw Analyses -->
+        ${make_analyses_table(analyses, ANALYSIS_ATTRS, 'analyses_div')}
+      }
+    </script>
+    <script>
+        function update_date(){
+         var t = new Date();
+         var cd = t.toLocaleDateString()
+         var ct = t.toLocaleTimeString()
+          $("#lastrefresh").html('<p> Last Refresh: '+cd+' '+ct+'</p>');
+        }
+        window.onload= update_date;
+    </script>
+  </head>
+  <body>
+     <table>
+        <tr>
+            <td width="400px">
+                <img src="images/RossLabsLogo.png" style="width:200px" >
+            </td>
+            <td>
+                <h1>NMGRL Labspy</h1>
+            </td>
+            <td width="400px">
+                <img src="images/NMGRL_logo.png" style="width:200px; float: right" >
+            </td>
+        </tr>
+    </table>
+    <table>
+        <tr>
+            <td><p>Last Update: ${last_update}</p></td>
+            <td></td>
+            <td><p><div id="lastrefresh"></div><p></td>
+        </tr>
+    </table>
+    <table>
+        <tr>
+            <td>
+                <div id="spectrometer_usage_div"></div>
+            </td>
+            <td>
+                <div id="extract_usage_div"></div>
+            </td>
+        </tr>
+    </table>
+    <div id="bar_div"></div>
+    <div id="chart_div"></div>
+    <h2>Experiments</h2>
+    <div id="experiment_div"></div>
+    <h2>Analyses</h2>
+    <div id="analyses_div"></div>
+  </body>
+</html>
+
+<%def name="make_table(items, attrs, tag)">
+var data = new google.visualization.DataTable();
+
+        % for h, attr in attrs:
+        data.addColumn('string', '${h}')
+        % endfor
+
+        data.addRows([
+        % for item in items:
+            [\
+            % for h, attr in attrs:
+'${item[attr]}',\
+            % endfor
+],
+        % endfor
+        ]);
+
+        var table = new google.visualization.Table(document.getElementById('${tag}'));
+        table.draw(data, {showRowNumber: true});
+</%def>
+
+<%def name="make_analyses_table(items, attrs, tag)">
+
+        var data = new google.visualization.DataTable();
+
+        % for h, attr in attrs:
+        data.addColumn('string', '${h}')
+        % endfor
+
+
+        var cssClassNames = {
+    'headerRow': 'italic-darkblue-font large-font bold-font',
+    'tableRow': '',
+    'oddTableRow': 'beige-background',
+    'selectedTableRow': 'orange-background large-font',
+    'hoverTableRow': '',
+    'headerCell': 'gold-border',
+    'tableCell': '',
+    'rowNumberCell': 'underline-blue-font'};
+        <%
+            n=len(items)
+        %>
+        data.addRows(${n})
+
+        % for i,item in enumerate(items):
+            % for j, (h,attr) in enumerate(attrs):
+            % if item['mass_spectrometer'].lower()=='jan':
+        data.setCell(${i},${j},'${item[attr]}','${item[attr]}', {'style': 'background-color: lightblue;'})
+            % elif item['mass_spectrometer'].lower()=='obama':
+        data.setCell(${i},${j},'${item[attr]}','${item[attr]}', {'style': 'background-color: lightcoral;'})
+            % else:
+        data.setCell(${i},${j},'${item[attr]}','${item[attr]}', {'style': 'background-color: rgba(255, 93, 16, 0.67);'})
+            % endif
+            % endfor
+        % endfor
+        <%doc>
+        data.addRows([
+        % for item in items:
+            [\
+            % for h, attr in attrs:
+'${item[attr]}',\
+            % endfor
+],
+        % endfor
+        ]);
+        </%doc>
+        var table = new google.visualization.Table(document.getElementById('${tag}'));
+        table.draw(data, {showRowNumber: true, allowHtml: true});
+</%def>

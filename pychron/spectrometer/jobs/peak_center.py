@@ -41,6 +41,9 @@ class PeakCenter(MagnetScan):
     directions = None
     _markup_idx = 1
 
+    def close_graph(self):
+        self.graph.close_ui()
+
     def cancel(self):
         self.canceled = True
         self.stop()

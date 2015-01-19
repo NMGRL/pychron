@@ -79,7 +79,9 @@ class PeakHopCollector(DataCollector):
         detector = dets[0]
         isotope = isos[0]
         is_baseline = is_baselines[0]
-        self.debug('$$$$$$$$$$$$$$$$$ SETTING is_baseline {}'.format(is_baseline))
+        if count==0:
+            self.debug('$$$$$$$$$$$$$$$$$ SETTING is_baseline {}'.format(is_baseline))
+
         if is_baseline:
             self.parent.is_peak_hop = False
             #remember original settings. return to these values after baseline finished
@@ -143,6 +145,11 @@ class PeakHopCollector(DataCollector):
                                                 update_isotopes=not is_baseline,
                                                 remove_non_active=False)
                 if change:
+                    try:
+                        self.automated_run.plot_panel.counts+=int(settle)
+                    except AttributeError:
+                        pass
+
                     msg = 'delaying {} for detectors to settle after peak hop'.format(settle)
                     self.parent.wait(settle, msg)
                     self.debug(msg)

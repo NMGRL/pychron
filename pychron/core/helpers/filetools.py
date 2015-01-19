@@ -5,20 +5,34 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #========== standard library imports ==========
 import glob
 import os
 import subprocess
 from datetime import datetime
+
+
+def modified_datetime(path, strformat='%m-%d-%Y %H:%M:%S'):
+    dt = datetime.fromtimestamp(os.path.getmtime(path))
+    if strformat:
+        dt = dt.strftime(strformat)
+    return dt
+
+
+def created_datetime(path, strformat='%m-%d-%Y %H:%M:%S'):
+    dt = datetime.fromtimestamp(os.path.getctime(path))
+    if strformat:
+        dt = dt.strftime(strformat)
+    return dt
 
 
 def view_file(p, application='Preview', logger=None):
@@ -131,11 +145,11 @@ def unique_date_path(root, base, extension='.txt'):
         e.g foo_11-01-2012-001
     """
     base = '{}_{}'.format(base, datetime.now().strftime('%m-%d-%Y'))
-    p, _ = unique_path2(root, base, extension)
+    p, _ = unique_path2(root, base, extension=extension)
     return p
 
 
-def unique_path2(root, base, extension='.txt'):
+def unique_path2(root, base, delimiter='-', extension='.txt'):
     """
         unique_path suffers from the fact that it starts at 001.
         this is a problem for log files because the logs are periodically archived which means
@@ -144,16 +158,52 @@ def unique_path2(root, base, extension='.txt'):
         unique_path2 solves this by finding the max path then incrementing by 1
     """
     # find the max path in the root directory
-    basename = '{}-*{}'.format(base, extension)
+    # basename = '{}-*{}'.format(base, extension)
+    # cnt = 0
+    # for p in glob.iglob(os.path.join(root, basename)):
+    #     p = os.path.basename(p)
+    #     head, tail = os.path.splitext(p)
+    #     cnt = max(int(head.split('-')[1]), cnt)
+    #
+    # cnt += 1
+    cnt = max_path_cnt(root, '{}-'.format(base), delimiter=delimiter, extension=extension)
+    p = os.path.join(root, '{}-{:03n}{}'.format(base, cnt, extension))
+    return p, cnt
+
+
+def max_file_cnt(root, excludes=None):
+
+    def test(p):
+        if excludes and p in excludes:
+            return
+
+        if os.path.isfile(os.path.join(root, p)):
+            return True
+
+    ps = [p for p in os.listdir(root) if test(p)]
+
+    return len(ps)+1
+
+
+def max_path_cnt(root, base, delimiter='-', extension='.txt'):
+    """
+
+    :param root:
+    :param base:
+    :param extension:
+    :return: int max+1
+    """
+    basename = '{}*{}'.format(base, extension)
     cnt = 0
+
     for p in glob.iglob(os.path.join(root, basename)):
         p = os.path.basename(p)
         head, tail = os.path.splitext(p)
-        cnt = max(int(head.split('-')[1]), cnt)
+
+        cnt = max(int(head.split(delimiter)[-1]), cnt)
 
     cnt += 1
-    p = os.path.join(root, '{}-{:03n}{}'.format(base, cnt, extension))
-    return p, cnt
+    return cnt
 
 
 def unique_path(root, base, extension='.txt'):
@@ -342,7 +392,7 @@ def get_path(root, name, extensions):
 
     """
     for ext in extensions:
-        p=os.path.join(root, add_extension(name, ext))
+        p = os.path.join(root, add_extension(name, ext))
         if os.path.isfile(p):
             return p
 

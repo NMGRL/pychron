@@ -64,18 +64,19 @@ class ScriptOptions(HasTraits):
 class Script(Loggable):
     # application = Any
     edit_event = Event
+    refresh_lists = Event
     label = Str
     mass_spectrometer = String
     extract_device = String
 
     name = Str
-    names = Property(depends_on='mass_spectrometer, directory')
+    names = Property(depends_on='mass_spectrometer, directory, refresh_lists')
     edit = Button
     kind = 'ExtractionLine'
     shared_logger = True
 
     directory = Str(NULL_STR)
-    directories = Property
+    directories = Property(depends_on='refresh_lists')
 
     def get_parameter(self, key, default=None):
         p = self.script_path()

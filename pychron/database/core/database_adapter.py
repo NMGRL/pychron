@@ -12,23 +12,28 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
+import sys
+
 from traits.api import Password, Bool, Str, on_trait_change, Any, Property, cached_property
-#=============standard library imports ========================
-from sqlalchemy import create_engine, distinct
+
+# =============standard library imports ========================
+from sqlalchemy import create_engine, distinct, MetaData
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, StatementError, \
-    DBAPIError
+    DBAPIError, OperationalError
+from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 import os
-#=============local library imports  ==========================
+import weakref
+# =============local library imports  ==========================
+from pychron.core.codetools.inspection import conditional_caller
 from pychron.database.core.query import compile_query
-
 from pychron.loggable import Loggable
 from pychron.database.core.base_orm import AlembicVersionTable
-from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
-import weakref
+from pychron import version
+
 
 ATTR_KEYS = ['kind', 'username', 'host', 'name', 'password']
 
@@ -93,6 +98,7 @@ class DatabaseAdapter(Loggable):
     sess = None
 
     sess_stack = 0
+    reraise = False
 
     connected = Bool(False)
     kind = Str  # ('mysql')
@@ -110,9 +116,9 @@ class DatabaseAdapter(Loggable):
     test_func = 'get_migrate_version'
 
     selector = Any
-
+    autoflush = False
     # name used when writing to database
-    save_username = Str
+    # save_username = Str
     connection_parameters_changed = Bool
 
     url = Property(depends_on='connection_parameters_changed')
@@ -142,11 +148,18 @@ class DatabaseAdapter(Loggable):
     def enabled(self):
         return self.kind in ['mysql', 'sqlite']
 
+    @property
+    def save_username(self):
+        from pychron.globals import globalv
+
+        return globalv.username
+
     @on_trait_change('username,host,password,name')
     def reset_connection(self, obj, name, old, new):
         self.connection_parameters_changed = True
 
-    def connect(self, test=True, force=False, warn=True):
+    # @caller
+    def connect(self, test=True, force=False, warn=True, version_warn=False, attribute_warn=False):
         if force:
             self.debug('forcing database connection')
             #             self.reset()
@@ -162,7 +175,7 @@ class DatabaseAdapter(Loggable):
             if self.kind == 'sqlite':
                 test = False
 
-            if not self.enabled:
+            if not self.enabled and attribute_warn:
                 self.warning_dialog(
                     'Database "{}" kind not set. Set in Preferences. current kind="{}"'.format(self.name,
                                                                                                self.kind))
@@ -173,10 +186,10 @@ class DatabaseAdapter(Loggable):
                     engine = create_engine(url, echo=self.echo)
                     #                     Session.configure(bind=engine)
 
-                    self.session_factory = sessionmaker(bind=engine, autoflush=False)
+                    self.session_factory = sessionmaker(bind=engine, autoflush=self.autoflush)
                     if test:
                         if self.test_func:
-                            self.connected = self._test_db_connection()
+                            self.connected = self._test_db_connection(version_warn)
                         else:
                             self.connected = True
                     else:
@@ -195,6 +208,13 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
 
     def initialize_database(self):
         pass
+
+    def commit(self):
+        if self.sess:
+            try:
+                self.sess.commit()
+            except:
+                self.sess.rollback()
 
     def get_session(self):
         sess = self.sess
@@ -228,7 +248,12 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
 
     @cached_property
     def _get_datasource_url(self):
-        return '{}:{}'.format(self.host, self.name)
+        if self.kind == 'sqlite':
+            url = '{}:{}'.format(os.path.basename(os.path.dirname(self.path)),
+                                 os.path.basename(self.path))
+        else:
+            url = '{}:{}'.format(self.host, self.name)
+        return url
 
     @cached_property
     def _get_url(self):
@@ -273,7 +298,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
         self.info('using {}'.format(driver))
         return driver
 
-    def _test_db_connection(self):
+    def _test_db_connection(self, version_warn):
         with self.session_ctx():
             try:
                 # connected = False
@@ -282,7 +307,20 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
                 #                 self.get_session()
                 #                sess = self.session_factory()
                 self.info('testing database connection {}'.format(self.test_func))
-                getattr(self, self.test_func)(reraise=True)
+                ver = getattr(self, self.test_func)(reraise=True)
+                if version_warn:
+                    ver = ver.version_num
+                    aver = version.__alembic__
+                    self.debug('testing database versions current={} local={}'.format(ver, aver))
+                    if ver != aver:
+                        if not self.confirmation_dialog(
+                                'Your database is out of date and it may not work correctly with '
+                                'this version of Pychron. Contact admin to update db.\n\n'
+                                'Current={} Yours={}\n\n'
+                                'Continue with Pychron despite out of date db?'.format(ver, aver)):
+                            self.application.stop()
+                            sys.exit()
+
                 connected = True
             except Exception, e:
                 print 'exception', e
@@ -322,31 +360,34 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
         if sess:
             sess.add(obj)
             try:
-                sess.flush()
+
+                if self.autoflush:
+                    sess.flush()
                 return obj
             except SQLAlchemyError, e:
                 import traceback
                 # traceback.print_exc()
                 self.debug('add_item exception {} {}'.format(obj, traceback.format_exc()))
                 sess.rollback()
+                if self.reraise:
+                    raise
 
+                    #     def _add_item(self, obj, sess=None):
 
-                #     def _add_item(self, obj, sess=None):
+                    #         def func(s):
+                    #             s.add(obj)
+                    #
+                    #         if sess is None:
+                    #             with session() as sess:
+                    #                 func(sess)
+                    #         else:
+                    #             func(sess)
 
-                #         def func(s):
-                #             s.add(obj)
-                #
-                #         if sess is None:
-                #             with session() as sess:
-                #                 func(sess)
-                #         else:
-                #             func(sess)
-
-                #         with session(sess) as s:
-                #             s.add(obj)
-                #         sess = self.get_session()
-                #         if sess is not None:
-                #             sess.add(obj)
+                    #         with session(sess) as s:
+                    #             s.add(obj)
+                    #         sess = self.get_session()
+                    #         if sess is not None:
+                    #             sess.add(obj)
 
 
     def _add_unique(self, item, attr, name):
@@ -366,18 +407,19 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
         return args
 
     def _delete_item(self, value, name=None):
-        sess = self.sess
-        if sess is None:
-            if self.session_factory:
-                sess = self.session_factory()
+        # sess = self.sess
+        # if sess is None:
+        #     if self.session_factory:
+        #         sess = self.session_factory()
 
-        with self.session_ctx(sess):
+        with self.session_ctx() as sess:
             if name is not None:
                 func = getattr(self, 'get_{}'.format(name))
                 item = func(value)
             else:
                 item = value
 
+            self.debug('deleting value={},name={},item={}'.format(value, name, item))
             if item:
                 sess.delete(item)
 
@@ -385,8 +427,11 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
                         joins=None,
                         filters=None,
                         limit=None, order=None,
-                        distinct_ =False,
+                        distinct_=False,
+                        query_hook=None,
                         reraise=False,
+                        func='all',
+                        group_by=None,
                         debug_query=False):
 
         sess = self.sess
@@ -403,10 +448,15 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
                     q = sess.query(distinct(table))
                 else:
                     q = sess.query(distinct(distinct_))
+            elif isinstance(table, tuple):
+                q = sess.query(*table)
             else:
                 q = sess.query(table)
 
             if joins:
+                # print joins
+                # joins = list(set(joins))
+                # print joins
                 try:
                     for ji in joins:
                         if ji != table:
@@ -420,37 +470,48 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
                     q = q.filter(fi)
 
             if order is not None:
-                q = q.order_by(order)
+                if not isinstance(order, tuple):
+                    order = (order, )
+                q = q.order_by(*order)
+
+            if group_by is not None:
+                if not isinstance(order, tuple):
+                    group_by = (group_by, )
+                q = q.group_by(*group_by)
 
             if limit is not None:
                 q = q.limit(limit)
 
+            if query_hook:
+                q = query_hook(q)
+
             if debug_query:
                 self.debug(compile_query(q))
 
-            r = self._query_all(q, reraise)
-            return r
+            return self._query(q, func, reraise)
 
     def _retrieve_first(self, table, value=None, key='name', order_by=None):
         if value is not None:
             if not isinstance(value, (str, int, unicode, long, float)):
                 return value
 
-        sess = self.get_session()
-        if sess is None:
-            return
+        # sess = self.sess
+        # if sess is None:
+        #     if self.session_factory:
+        #         sess = self.session_factory()
 
-        q = sess.query(table)
-        if value is not None:
-            q = q.filter(getattr(table, key) == value)
+        with self.session_ctx() as sess:
+            q = sess.query(table)
+            if value is not None:
+                q = q.filter(getattr(table, key) == value)
 
-        try:
-            if order_by is not None:
-                q = q.order_by(order_by)
-            return q.first()
-        except SQLAlchemyError, e:
-            print e
-            return
+            try:
+                if order_by is not None:
+                    q = q.order_by(order_by)
+                return q.first()
+            except SQLAlchemyError, e:
+                print 'execption first', e
+                return
 
     def _query_all(self, q, reraise=False):
         ret = self._query(q, 'all', reraise)
@@ -459,6 +520,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
 
         return ret
 
+    @conditional_caller
     def _query(self, q, func, reraise):
         # print compile_query(q)
         f = getattr(q, func)
@@ -467,14 +529,18 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
         except SQLAlchemyError, e:
             if reraise:
                 raise
-            print e
+            print '_query exception', e
+            # import traceback
+            # traceback.print_exc()
+            self.sess.rollback()
 
     def _query_one(self, q, reraise=False):
         q = q.limit(1)
         return self._query(q, 'one', reraise)
 
     def _retrieve_item(self, table, value, key='name', last=None,
-                       joins=None, filters=None, options=None, verbose=True):
+                       joins=None, filters=None, options=None, verbose=True,
+                       verbose_query=False):
         #         sess = self.get_session()
         #         if sess is None:
         #             return
@@ -512,22 +578,19 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
             if last:
                 q = q.order_by(last)
 
+            if verbose_query:
+                self.debug(compile_query(q))
+
             ntries = 3
             import traceback
+
             for i in range(ntries):
                 try:
                     return q.one()
-                except DBAPIError:
+                except (DBAPIError, OperationalError, StatementError):
                     self.debug(traceback.format_exc())
                     s.rollback()
                     continue
-
-                except StatementError:
-                    self.debug(traceback.format_exc())
-                    s.rollback()
-                    continue
-                    #                 return __retrieve()
-
                 except MultipleResultsFound:
                     if verbose:
                         self.debug(
@@ -642,6 +705,20 @@ class PathDatabaseAdapter(DatabaseAdapter):
         p = self.path_table(**kw)
         rec.path = p
         return p
+
+
+class SQLiteDatabaseAdapter(DatabaseAdapter):
+    kind = 'sqlite'
+
+    def build_database(self):
+        self.connect(test=False)
+        if not os.path.isfile(self.path):
+            with self.session_ctx() as sess:
+                meta = MetaData()
+                self._build_database(sess, meta)
+
+    def _build_database(self, sess, meta):
+        raise NotImplementedError
 
 #============= EOF =============================================
 

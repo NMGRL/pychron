@@ -23,24 +23,25 @@ from pychron.experiment.conditional.conditionals_edit_view import ConditionalsVi
 
 
 class ConditionalsView(ConditionalsViewable):
+    title = 'Active Conditionals'
+
     def __init__(self, run, pret, postt, *args, **kw):
         super(ConditionalsView, self).__init__(*args, **kw)
         self._load(run, pret, postt)
 
     def _load(self, run, pret, postt):
-        for name, items, klass, cklass in (('actions', ConditionalGroup, ActionConditional),
-                                    ('truncations', ConditionalGroup, TruncationConditional),
-                                    ('terminations', ConditionalGroup, TerminationConditional)):
-            items=getattr(run, '{}_conditionals'.format(name[:-1]))
+        for name, items, klass, cklass in (('action', ConditionalGroup, ActionConditional),
+                                           ('truncation', ConditionalGroup, TruncationConditional),
+                                           ('termination', ConditionalGroup, TerminationConditional)):
+            items = getattr(run, '{}_conditionals'.format(name))
             grp = self._group_factory(items, klass, cklass)
-            setattr(self, '{}_group'.format(name), grp)
-
+            setattr(self, '{}s_group'.format(name), grp)
 
             grp = self._group_factory(pret, 'pre_run_terminations', PreRunGroup)
-            self.pre_run_terminations_group=grp
+            self.pre_run_terminations_group = grp
 
             grp = self._group_factory(postt, 'post_run_terminations', PostRunGroup)
-            self.post_run_terminations_group=grp
+            self.post_run_terminations_group = grp
 
     def _group_factory(self, items, klass, conditional_klass=None):
         if conditional_klass is None:
@@ -50,7 +51,7 @@ class ConditionalsView(ConditionalsViewable):
                       editable=False)
         return group
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

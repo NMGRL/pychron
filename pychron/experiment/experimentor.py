@@ -55,7 +55,14 @@ class Experimentor(IsotopeDatabaseManager):
 
     activate_editor_event = Event
     save_event = Event
-    #    clear_display_event = Event
+
+    def load(self):
+        super(Experimentor, self).load()
+        self.experiment_factory.queue_factory.db_refresh_needed=True
+        self.experiment_factory.run_factory.db_refresh_needed=True
+
+        return True
+
     def reset_run_generator(self):
         if self.executor.is_alive():
             self.debug('Queue modified. Reset run generator')
@@ -74,16 +81,6 @@ class Experimentor(IsotopeDatabaseManager):
 
     def update_queues(self):
         self._update_queues()
-
-    # def test_connections(self):
-    #     if not self.db:
-    #         return
-    #
-    #     if not self.db.connect():
-    #         self.warning_dialog('Failed connecting to database. {}'.format(self.db.url))
-    #         return
-    #
-    #     return True
 
     def update_info(self):
         self._update()
@@ -227,20 +224,14 @@ class Experimentor(IsotopeDatabaseManager):
     #===============================================================================
     # handlers
     #===============================================================================
+    def _experiment_queue_changed(self, eq):
+        if eq:
+            self.experiment_factory.queue = eq
+            self.experiment_factory.sync_queue_meta()
+
     @on_trait_change('executor:experiment_queue')
     def _activate_editor(self, eq):
         self.activate_editor_event = id(eq)
-
-    # @on_trait_change('executor:stop_button')
-    # def _stop(self):
-    #     self.debug('%%%%%%%%%%%%%%%%%% Stop fired {}'.format(self.executor.isAlive()))
-    #     if self.executor.isAlive():
-    #         self.info('stop execution')
-    #         '''
-    #             if the executor is delaying then stop but dont cancel
-    #             otherwise cancel
-    #         '''
-    #         self.executor.stop()
 
     @on_trait_change('executor:start_button')
     def _execute(self):
@@ -248,44 +239,24 @@ class Experimentor(IsotopeDatabaseManager):
             trigger the experiment task to assemble current queues.
             the queues are then passed back to execute_queues()
         """
-        self.debug('%%%%%%%%%%%%%%%%%% Start fired')
+        self.info('Start Executor')
         if not self.executor.is_alive():
-            self.debug('%%%%%%%%%%%%%%%%%% Execute event true')
+            self.debug('execute_event fired')
             self.execute_event = True
 
     @on_trait_change('experiment_queues[]')
     def _update_queues(self):
         qs = self.experiment_queues
         self.stats.experiment_queues = qs
-        # try:
-        #     self.stats.calculate()
-        # except PyscriptError, e:
-        #     self.warning_dialog(str(e))
-        # self.refresh_executable(qs)
-        #
-        # self.debug('executor executable {}'.format(self.executor.executable))
 
     @on_trait_change('experiment_factory:run_factory:changed')
     def _queue_dirty(self):
         self.experiment_queue.changed = True
 
-    #         executor = self.executor
-    #         executor.executable = False
-
-    #         if executor.isAlive():
-    #             executor.prev_end_at_run_completion = executor.end_at_run_completion
-    #             executor.end_at_run_completion = True
-    #             executor.changed_flag = True
-
     @on_trait_change('experiment_queue:dclicked')
     def _dclicked_changed(self, new):
         self.experiment_factory.run_factory.edit_mode = True
         self._set_factory_runs(self.experiment_queue.selected)
-
-    # @on_trait_change('executor:non_clear_update_needed')
-    # def _refresh2(self):
-    #     self.debug('non clear update needed fired')
-    #     self.update_info()
 
     @on_trait_change('experiment_factory:run_factory:update_info_needed')
     def _refresh3(self):
@@ -306,11 +277,6 @@ class Experimentor(IsotopeDatabaseManager):
     @on_trait_change('experiment_factory:save_button')
     def _save_update(self):
         self.save_event = True
-
-    def _experiment_queue_changed(self, eq):
-        if eq:
-            self.experiment_factory.queue = eq
-            self.experiment_factory.sync_queue_meta()
 
     @on_trait_change('experiment_queue:refresh_info_needed')
     def _handle_refresh(self):
@@ -344,13 +310,6 @@ class Experimentor(IsotopeDatabaseManager):
         rf.suppress_update = True
         rf.set_selected_runs(new)
 
-    #===============================================================================
-    # property get/set
-    #===============================================================================
-    #     def _get_title(self):
-    #         if self.experiment_queue:
-    #             return 'Experiment {}'.format(self.experiment_queue.name)
-
     def _executor_factory(self):
         e = ExperimentExecutor(
             mode=self.mode,
@@ -376,10 +335,6 @@ class Experimentor(IsotopeDatabaseManager):
         e = ExperimentFactory(application=self.application,
                               db=self.db,
                               default_mass_spectrometer=dms)
-
-        # e.run_factory.activate()
-        # e.queue_factory.activate()
-        # e.default_mass_spectrometer = dms
 
         return e
 

@@ -16,14 +16,15 @@
 
 #============= enthought library imports =======================
 from traits.api import Str, Property, cached_property, Int, \
-    Any, String, Event, Bool, Dict, List
+    Any, String, Event, Bool, Dict, List, Button
 #============= standard library imports ========================
 import os
 from ConfigParser import ConfigParser
 #============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_directory2
 from pychron.entry.user_entry import UserEntry
-from pychron.experiment.utilities.persistence_loggable import PersistenceLoggable
+from pychron.persistence_loggable import PersistenceLoggable
+from pychron.globals import globalv
 from pychron.pychron_constants import NULL_STR, LINE_STR
 from pychron.paths import paths
 
@@ -37,18 +38,21 @@ class ExperimentQueueFactory(PersistenceLoggable):
     _email = Str
     _emails = Dict
 
+    use_group_email = Bool
     use_email_notifier = Bool(True)
+    edit_emails = Button
 
-    usernames = Property(depends_on='users_dirty')
+    usernames = Property(depends_on='users_dirty, db_refresh_needed')
     edit_user = Event
     add_user = Event
     users_dirty = Event
+    db_refresh_needed = Event
 
     mass_spectrometer = String('Spectrometer')
-    mass_spectrometers = Property
+    mass_spectrometers = Property(depends_on='db_refresh_needed')
 
     extract_device = String('Extract Device')
-    extract_devices = Property
+    extract_devices = Property(depends_on='db_refresh_needed')
 
     queue_conditionals_name = Str
     available_conditionals = List
@@ -63,7 +67,8 @@ class ExperimentQueueFactory(PersistenceLoggable):
 
     ok_make = Property(depends_on='mass_spectrometer, username')
 
-    pattributes = ('username', 'mass_spectrometer', 'extract_device',
+    pattributes = ('mass_spectrometer', 'extract_device',
+                   'use_group_email',
                    'delay_between_analyses',
                    'delay_before_analyses',
                    'queue_conditionals_name')
@@ -78,6 +83,7 @@ class ExperimentQueueFactory(PersistenceLoggable):
         self._load_queue_conditionals()
         if load_persistence:
             self.load()
+            self.username=globalv.username
 
     def deactivate(self):
         """
@@ -88,7 +94,7 @@ class ExperimentQueueFactory(PersistenceLoggable):
     def _load_queue_conditionals(self):
         root = paths.queue_conditionals_dir
         cs = list_directory2(root, remove_extension=True)
-        self.available_conditionals = ['Queue Conditional', LINE_STR] + cs
+        self.available_conditionals = [NULL_STR] + cs
 
     def _edit_user_fired(self):
         a = UserEntry()
@@ -118,20 +124,14 @@ class ExperimentQueueFactory(PersistenceLoggable):
     def _set_email(self, v):
         self._email = v
 
-    @cached_property
-    def _get_usernames(self):
-        db = self.db
-        with db.session_ctx():
-            dbus = db.get_users()
-            us = [ui.name for ui in dbus]
-            self._emails = dict([(ui.name, ui.email or '') for ui in dbus])
-
-            return [''] + us
-
-    @cached_property
+    # @cached_property
     def _get_load_names(self):
-        with self.db.session_ctx():
-            ts = self.db.get_loads()
+        db=self.db
+        if not db.connected:
+            return []
+
+        with db.session_ctx():
+            ts = db.get_loads()
             names = [ti.name for ti in ts]
             return names
 
@@ -146,14 +146,30 @@ class ExperimentQueueFactory(PersistenceLoggable):
         return [NULL_STR]
 
     @cached_property
+    def _get_usernames(self):
+        db = self.db
+        if not db.connected:
+            return []
+
+        with db.session_ctx():
+            dbus = db.get_users()
+            us = [ui.name for ui in dbus]
+            self._emails = dict([(ui.name, ui.email or '') for ui in dbus])
+
+            return [''] + us
+
+    @cached_property
     def _get_extract_devices(self):
         """
             look in db first
             then look for a config file
             then use hardcorded defaults
         """
+        db=self.db
         cp = os.path.join(paths.setup_dir, 'names')
-        if self.db:
+        if db:
+            if not db.connected:
+                return []
             eds = self.db.get_extraction_devices()
             names = [ei.name for ei in eds]
         elif os.path.isfile(cp):
@@ -169,8 +185,11 @@ class ExperimentQueueFactory(PersistenceLoggable):
             then look for a config file
             then use hardcorded defaults
         """
+        db=self.db
         cp = os.path.join(paths.setup_dir, 'names')
-        if self.db:
+        if db:
+            if not db.connected:
+                return []
             ms = self.db.get_mass_spectrometers()
             names = [mi.name.capitalize() for mi in ms]
         elif os.path.isfile(cp):
@@ -188,6 +207,16 @@ class ExperimentQueueFactory(PersistenceLoggable):
 
     def _mass_spectrometer_changed(self, new):
         self.debug('mass spectrometer ="{}"'.format(new))
+
+    def _edit_emails_fired(self):
+        from pychron.experiment.utilities.email_selection_view import EmailSelectionView, boiler_plate
+        path = os.path.join(paths.setup_dir, 'users.yaml')
+        if not os.path.isfile(path):
+            boiler_plate(path)
+
+        esv = EmailSelectionView(path=path,
+                                 emails=self._emails)
+        esv.edit_traits(kind='livemodal')
 
 
 if __name__ == '__main__':

@@ -184,6 +184,11 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         return self._retrieve_item(IrradiationPositionTable, value,
                                    key='IrradPosition', )
 
+    def get_irradiation_level(self, name, level):
+        return self._retrieve_item(IrradiationLevelTable,
+                                   value=(name, level),
+                                   key=('IrradBaseID','Level'))
+
     def get_sample(self, value):
         return self._retrieve_item(SampleTable, value, key='Sample')
 
@@ -317,9 +322,8 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
                 ms = 0
 
         sm = SampleLoadingTable(SampleHolder=tray,
-                                SpecSysN=ms
-        )
-        self._add_item(sm, )
+                                SpecSysN=ms)
+        self._add_item(sm)
         return sm
 
     def add_analysis_positions(self, analysis, positions):

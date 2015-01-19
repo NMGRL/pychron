@@ -29,7 +29,7 @@ from traitsui.tabular_adapter import TabularAdapter
 #============= local library imports  ==========================
 
 #============= EOF =============================================
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.tagging.analysis_tags import AnalysisTagModel
 from pychron.processing.tagging.data_reduction_tags import DataReductionTagModel, SelectDataReductionTagModel
 

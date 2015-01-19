@@ -14,18 +14,22 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
+from datetime import timedelta
+
 from traits.api import Instance, on_trait_change
 from enable.component import Component
 from pyface.tasks.action.schema import SToolBar
 from pyface.qt.QtGui import QTabBar
-#============= standard library imports ========================
+
+# ============= standard library imports ========================
 import binascii
 #============= local library imports  ==========================
 from pychron.core.helpers.iterfuncs import partition
 from pychron.core.progress import progress_iterator
 from pychron.easy_parser import EasyParser
 from pychron.envisage.browser.table_configurer import RecallTableConfigurer
+from pychron.envisage.tasks.actions import ToggleFullWindowAction
 from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter, IntermediateTabularAdapter
 from pychron.processing.k3739_edit import K3739EditModel, K3739EditView
 from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction
@@ -54,6 +58,7 @@ class AnalysisEditTask(BaseBrowserTask):
     ic_factor_editor_count = 0
 
     tool_bars = [SToolBar(DatabaseSaveAction(),
+                          ToggleFullWindowAction(),
                           # FindAssociatedAction(),
                           image_size=(16, 16))]
 
@@ -68,7 +73,7 @@ class AnalysisEditTask(BaseBrowserTask):
     recall_configurer = Instance(RecallTableConfigurer)
 
     def activate_blank_task(self):
-        tid ='pychron.processing.blanks'
+        tid = 'pychron.processing.blanks'
         self._activate_task(tid)
 
     def activate_recall_task(self):
@@ -175,7 +180,7 @@ class AnalysisEditTask(BaseBrowserTask):
             pane.items = ans
 
     def get_recall_editors(self):
-        es=self.editor_area.editors
+        es = self.editor_area.editors
         return [e for e in es if isinstance(e, RecallEditor)]
 
     def configure_recall(self):
@@ -207,7 +212,10 @@ class AnalysisEditTask(BaseBrowserTask):
         if not open_copy:
             records = self._open_existing_recall_editors(records)
             if records:
-                ans = self.manager.make_analyses(records, calculate_age=True, load_aux=True)
+                if self.use_workspace:
+                    ans = self.workspace.make_analyses(records)
+                else:
+                    ans = self.manager.make_analyses(records, calculate_age=True, load_aux=True)
                 self._open_recall_editors(ans)
         else:
             ans = self.manager.make_analyses(records, use_cache=False, calculate_age=True, load_aux=True)
@@ -244,9 +252,8 @@ class AnalysisEditTask(BaseBrowserTask):
 
                 self.recall_configurer.set_fonts(av)
 
-                editor = RecallEditor(analysis_view=av,
-                                      model=rec,
-                                      manager=self.manager)
+                editor = RecallEditor(manager=self.manager)
+                editor.set_items(rec)
                 if existing and editor.basename in existing:
                     editor.instance_id = existing.count(editor.basename)
 
@@ -565,7 +572,6 @@ class AnalysisEditTask(BaseBrowserTask):
             self.active_editor.save_file(path)
             return True
 
-
     def _recall_item(self, item, open_copy=False):
         if not self.external_recall_window:
             self.recall(item, open_copy=open_copy)
@@ -658,6 +664,35 @@ class AnalysisEditTask(BaseBrowserTask):
 
         return items
 
+    def _find_refs(self, ref):
+
+        from pychron.processing.tasks.analysis_edit.selection_view import ReferenceSelectionView, AnalysisSelectionView
+
+        rsd = ReferenceSelectionView()
+        rsd.load()
+        info = rsd.edit_traits(kind='livemodal')
+        if info.result:
+            rsd.dump()
+            td = timedelta(hours=rsd.hours)
+            db = self.db
+            with db.session_ctx():
+                mi = ref.rundate - td
+                ma = ref.rundate + td
+                ans = db.get_analyses_date_range(mi, ma,
+                                                 analysis_type=list(rsd.analysis_types),
+                                                 mass_spectrometers=[ref.mass_spectrometer])
+
+                ans = self._make_records(ans)
+                ans.append(ref)
+                ans = sorted(ans, key=lambda x: x.rundate)
+
+                asv = AnalysisSelectionView(analyses=ans,
+                                            ref=ref)
+                info = asv.edit_traits(kind='livemodal')
+                if info.result:
+                    if asv.selected:
+                        self._recall_item(asv.selected)
+
     #hooks
     def _dclicked_analysis_group_hook(self, unks, b):
         pass
@@ -701,11 +736,10 @@ class AnalysisEditTask(BaseBrowserTask):
         if new:
             if self.controls_pane:
                 tool = None
-                if isinstance(new, RecallEditor):
-                    tool = new.analysis_view.selection_tool
-                elif hasattr(new, 'tool'):
+                if hasattr(new, 'tool'):
                     tool = new.tool
-
+                elif isinstance(new, RecallEditor):
+                    tool = new.analysis_view.selection_tool
                 self.controls_pane.tool = tool
 
             if self.unknowns_pane:
@@ -741,10 +775,10 @@ class AnalysisEditTask(BaseBrowserTask):
                     self.debug('Setting auto find to True')
                     if hasattr(self.active_editor, 'set_auto_find'):
                         self.active_editor.set_auto_find(True)
-                    self.active_editor.set_items(self.unknowns_pane.items)
+                    self.active_editor.set_items(obj.items)
 
                 if self.plot_editor_pane:
-                    self.plot_editor_pane.analyses = self.unknowns_pane.items
+                    self.plot_editor_pane.analyses = obj.items
 
     @on_trait_change('plot_editor_pane:current_editor')
     def _update_current_plot_editor(self, obj, name, new):
@@ -752,9 +786,11 @@ class AnalysisEditTask(BaseBrowserTask):
             if not obj.suppress_pane_change:
                 self._show_pane(self.plot_editor_pane)
 
-
     @on_trait_change('analysis_table:selected')
     def _handle_analysis_selected(self, new):
+        if self.use_focus_switching:
+            self.filter_focus = not bool(new)
+
         if self.auto_show_unknowns_pane:
             if hasattr(self, 'unknowns_pane'):
                 show = bool(new)
@@ -777,6 +813,9 @@ class AnalysisEditTask(BaseBrowserTask):
             self._recall_item(new.item)
 
     # @on_trait_change('analysis_table:[append_event,replace_event]')
+    # @on_trait_change('sample_table:context_menu_event')
+    # def _handle_analysis_table_context_menu(self, new):
+
     @on_trait_change('analysis_table:context_menu_event')
     def _handle_analysis_table_context_menu(self, new):
         if new:
@@ -791,6 +830,9 @@ class AnalysisEditTask(BaseBrowserTask):
 
                     for it in self.analysis_table.selected:
                         self._recall_item(it, open_copy=open_copy)
+            elif action == 'find_refs':
+                if self.analysis_table.selected:
+                    self._find_refs(self.analysis_table.selected[-1])
 
     @on_trait_change('unknowns_pane:previous_selection')
     def _update_up_previous_selection(self, obj, name, old, new):

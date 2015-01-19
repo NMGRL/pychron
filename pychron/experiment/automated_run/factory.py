@@ -12,20 +12,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import String, Str, Property, Any, Float, Instance, Int, List, \
     cached_property, on_trait_change, Bool, Button, Event, Enum
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from traits.trait_errors import TraitError
 import yaml
 import os
 #============= local library imports  ==========================
-from pychron.experiment.action_editor import ActionEditor, ActionModel
+from pychron.experiment.conditional.conditionals_edit_view import edit_conditionals
 from pychron.experiment.datahub import Datahub
-from pychron.experiment.queue.experiment_block import ExperimentBlock
-from pychron.experiment.utilities.persistence_loggable import PersistenceLoggable
+from pychron.experiment.queue.run_block import RunBlock
+from pychron.experiment.utilities.frequency_edit_view import FrequencyModel
+from pychron.persistence_loggable import PersistenceLoggable
 from pychron.experiment.utilities.position_regex import SLICE_REGEX, PSLICE_REGEX, \
     SSLICE_REGEX, TRANSECT_REGEX, POSITION_REGEX, CSLICE_REGEX, XY_REGEX
 from pychron.pychron_constants import NULL_STR, SCRIPT_KEYS, SCRIPT_NAMES, LINE_STR
@@ -37,7 +38,7 @@ from pychron.paths import paths
 from pychron.experiment.script.script import Script, ScriptOptions
 from pychron.experiment.queue.increment_heat_template import IncrementalHeatTemplate
 from pychron.experiment.utilities.human_error_checker import HumanErrorChecker
-from pychron.core.helpers.filetools import list_directory, add_extension
+from pychron.core.helpers.filetools import list_directory, add_extension, list_directory2
 from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
 from pychron.core.ui.gui import invoke_in_main_thread
 
@@ -143,14 +144,16 @@ class AutomatedRunFactory(PersistenceLoggable):
     aliquot = EKlass(Int)
     special_labnumber = Str('Special Labnumber')
 
+    db_refresh_needed = Event
+
     _labnumber = String
     labnumbers = Property(depends_on='project, selected_level')
 
     project = Any
-    projects = Property(depends_on='db')
+    projects = Property(depends_on='db, db_refresh_needed')
 
     selected_irradiation = Str('Irradiation')
-    irradiations = Property(depends_on='db')
+    irradiations = Property(depends_on='db, db_refresh_needed')
     selected_level = Str('Level')
     levels = Property(depends_on='selected_irradiation, db')
 
@@ -168,6 +171,9 @@ class AutomatedRunFactory(PersistenceLoggable):
     weight = Float
     comment = Str
     auto_fill_comment = Bool
+    comment_template = Str
+    comment_templates = List
+    edit_comment_template = Button
 
     position = Property(depends_on='_position')
     _position = String
@@ -214,15 +220,15 @@ class AutomatedRunFactory(PersistenceLoggable):
     edit_template_label = Property(depends_on='template')
 
     #===========================================================================
-    # truncation
+    # conditionals
     #===========================================================================
     trunc_attr = String('age')
     trunc_attrs = List(['age',
-                        'age_err',
                         'kca',
-                        'kca_err',
                         'kcl',
-                        'kcl_err',
+                        'age.std',
+                        'kca.std',
+                        'kcl.std',
                         'rad40_percent',
                         'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36'])
     trunc_comp = Enum('>', '<', '>=', '<=', '=')
@@ -230,25 +236,29 @@ class AutomatedRunFactory(PersistenceLoggable):
     trunc_start = Int(100, enter_set=True, auto_set=False)
     use_simple_truncation = Bool
 
-    truncation_str = Property(depends_on='trunc_+')
-    truncation_path = String
-    truncations = List
-    clear_truncation = Button
-    edit_truncation_button = Button
-    new_truncation_button = Button
+    conditionals_str = Property(depends_on='trunc_+')
+    conditionals_path = String
+    conditionals = List
+    clear_conditionals = Button
+    edit_conditionals_button = Button
+    new_conditionals_button = Button
 
     #===========================================================================
     # blocks
     #===========================================================================
     run_block = Str('RunBlock')
     run_blocks = List
+    edit_run_blocks = Button
 
     #===========================================================================
     # frequency
     #===========================================================================
-    frequency = Int
-    freq_before = Bool(True)
-    freq_after = Bool(False)
+    # frequency = Int
+    # freq_before = Bool(True)
+    # freq_after = Bool(False)
+    # freq_template = Str
+    frequency_model = Instance(FrequencyModel, ())
+    edit_frequency_button = Button
     #===========================================================================
     # readonly
     #===========================================================================
@@ -283,7 +293,7 @@ class AutomatedRunFactory(PersistenceLoggable):
                    'duration', 'beam_diameter', 'ramp_duration', 'overlap',
                    'pattern', 'labnumber', 'position',
                    'weight', 'comment', 'template',
-                   'use_simple_truncation', 'truncation_path')
+                   'use_simple_truncation', 'conditionals_path')
 
     _no_clear_labnumber = False
 
@@ -292,11 +302,12 @@ class AutomatedRunFactory(PersistenceLoggable):
         self.load_run_blocks()
         # self.remote_patterns = self._get_patterns()
         self.load_patterns()
-        self.load_truncations()
+        self.load_conditionals()
+        # self.load_comment_templates()
 
     def activate(self, load_persistence):
         # self.load_run_blocks()
-        self.truncation_path = NULL_STR
+        self.conditionals_path = NULL_STR
         if load_persistence:
             self.load()
 
@@ -325,6 +336,9 @@ class AutomatedRunFactory(PersistenceLoggable):
 
         return True
 
+    # def load_comment_templates(self):
+    #     self.comment_templates = self._get_comment_templates()
+
     def load_run_blocks(self):
         self.run_blocks = self._get_run_blocks()
 
@@ -334,8 +348,8 @@ class AutomatedRunFactory(PersistenceLoggable):
     def load_patterns(self):
         self.patterns = self._get_patterns()
 
-    def load_truncations(self):
-        self.truncations = self._get_truncations()
+    def load_conditionals(self):
+        self.conditionals = self._get_conditionals()
 
     # def load_defaults(self):
     #     p = os.path.join(paths.hidden_dir, 'run_factory_defaults')
@@ -366,7 +380,7 @@ class AutomatedRunFactory(PersistenceLoggable):
     #             self.debug('failed dumping defaults Exception: {}'.format(e))
 
     def use_frequency(self):
-        return self.labnumber in ANALYSIS_MAPPING and self.frequency
+        return self.labnumber in ANALYSIS_MAPPING and self.frequency_model.frequency
 
     def load_from_run(self, run):
         self._clone_run(run)
@@ -426,19 +440,23 @@ class AutomatedRunFactory(PersistenceLoggable):
 
         return arvs, freq
 
+    def refresh(self):
+        self.changed = True
+        self.refresh_table_needed = True
+
     #===============================================================================
     # private
     #===============================================================================
     # def _new_runs(self, positions, extract_group_cnt=0):
     def _new_run_block(self):
-        p = os.path.join(paths.run_block_dir, self.run_block)
-        block = ExperimentBlock(extract_device=self.extract_device,
-                                mass_spectrometer=self.mass_spectrometer)
-        return block.extract_runs(p), self.frequency
+        p = os.path.join(paths.run_block_dir, add_extension(self.run_block, '.txt'))
+        block = RunBlock(extract_device=self.extract_device,
+                         mass_spectrometer=self.mass_spectrometer)
+        return block.make_runs(p), self.frequency_model.frequency
 
     def _new_runs(self, exp_queue, positions):
         _ln, special = self._make_short_labnumber()
-        freq = self.frequency if special else None
+        freq = self.frequency_model.frequency if special else None
 
         if not special:
             if not positions:
@@ -508,7 +526,7 @@ class AutomatedRunFactory(PersistenceLoggable):
         return ['position',
                 'extract_value', 'extract_units', 'cleanup', 'duration',
                 'use_cdd_warming',
-                'truncation_str',
+                'conditionals_str',
                 'collection_time_zero_offset',
                 'pattern', 'beam_diameter',
                 'weight', 'comment',
@@ -529,8 +547,8 @@ class AutomatedRunFactory(PersistenceLoggable):
                 continue
 
             sattr = attr
-            if attr == 'truncation_str':
-                sattr = 'truncate_conditional'
+            if attr == 'conditionals_str':
+                sattr = 'conditionals'
 
             v = getattr(self, attr)
             if attr == 'pattern':
@@ -825,6 +843,10 @@ class AutomatedRunFactory(PersistenceLoggable):
 
     @cached_property
     def _get_irradiations(self):
+        db = self.db
+        if not db.connected:
+            return []
+
         irradiations = []
         if self.db:
             irradiations = [pi.name for pi in self.db.get_irradiations()]
@@ -834,6 +856,10 @@ class AutomatedRunFactory(PersistenceLoggable):
     @cached_property
     def _get_levels(self):
         levels = []
+        db = self.db
+        if not db.connected:
+            return []
+
         if self.db:
             with self.db.session_ctx():
                 if not self.selected_irradiation in ('IRRADIATION', LINE_STR):
@@ -849,6 +875,10 @@ class AutomatedRunFactory(PersistenceLoggable):
     def _get_projects(self):
 
         if self.db:
+            db = self.db
+            if not db.connected:
+                return dict()
+
             keys = [(pi, pi.name) for pi in self.db.get_projects()]
             keys = [(NULL_STR, NULL_STR)] + keys
             return dict(keys)
@@ -860,6 +890,10 @@ class AutomatedRunFactory(PersistenceLoggable):
         lns = []
         db = self.db
         if db:
+            # db=self.db
+            if not db.connected:
+                return []
+
             with db.session_ctx():
                 if self.selected_level and not self.selected_level in ('Level', LINE_STR):
                     level = db.get_irradiation_level(self.selected_irradiation,
@@ -936,8 +970,13 @@ class AutomatedRunFactory(PersistenceLoggable):
 
     def _get_run_blocks(self):
         p = paths.run_block_dir
-        blocks = list_directory(p, '.txt')
+        blocks = list_directory2(p, '.txt', remove_extension=True)
         return ['RunBlock', LINE_STR] + blocks
+
+    def _get_comment_templates(self):
+        p = paths.comment_templates
+        templates = list_directory(p)
+        return templates
 
     def _get_patterns(self):
         return ['Pattern', LINE_STR] + self.remote_patterns
@@ -958,11 +997,11 @@ class AutomatedRunFactory(PersistenceLoggable):
 
         return ['Step Heat Template', LINE_STR] + temps
 
-    def _get_truncations(self):
+    def _get_conditionals(self):
         p = paths.conditionals_dir
         extension = '.yaml'
         temps = list_directory(p, extension, remove_extension=True)
-        return [NULL_STR, ] + temps
+        return [NULL_STR] + temps
 
     def _get_beam_diameter(self):
         bd = ''
@@ -977,15 +1016,15 @@ class AutomatedRunFactory(PersistenceLoggable):
         except (ValueError, TypeError):
             pass
 
-    def _get_truncation_str(self):
+    def _get_conditionals_str(self):
         r = ''
-        if self.truncation_path !=NULL_STR:
-            r = os.path.basename(self.truncation_path)
+        if self.conditionals_path != NULL_STR:
+            r = os.path.basename(self.conditionals_path)
         elif self.use_simple_truncation and self.trunc_attr is not None and \
                         self.trunc_comp is not None and \
                         self.trunc_crit is not None:
-            r =  '{}{}{}, {}'.format(self.trunc_attr, self.trunc_comp,
-                                       self.trunc_crit, self.trunc_start)
+            r = '{}{}{}, {}'.format(self.trunc_attr, self.trunc_comp,
+                                    self.trunc_crit, self.trunc_start)
         return r
         # elif self.truncation_path:
         #     return os.path.basename(self.truncation_path)
@@ -1024,16 +1063,54 @@ class AutomatedRunFactory(PersistenceLoggable):
         self.set_end_after(v)
         self._end_after = v
 
+    def _set_auto_comment(self, temp=None):
+        if not temp:
+            from pychron.experiment.utilities.comment_template import CommentTemplater
+
+            temp = CommentTemplater()
+
+        c = temp.render(self)
+        self.debug('Comment template rendered = {}'.format(c))
+        self.comment = c
+
+    def _set_conditionals(self, t):
+        for s in self._selected_runs:
+            s.conditionals = t
+
+        self.changed = True
+        self.refresh_table_needed = True
+
     #===============================================================================
     # handlers
     #===============================================================================
+    def _edit_run_blocks(self):
+        from pychron.experiment.queue.run_block import RunBlockEditView
+
+        rbev = RunBlockEditView()
+        rbev.edit_traits()
+
+    def _edit_frequency_button_fired(self):
+        from pychron.experiment.utilities.frequency_edit_view import FrequencyEditView
+
+        fev = FrequencyEditView(model=self.frequency_model)
+        fev.edit_traits(kind='modal')
+
+    def _edit_comment_template_fired(self):
+        from pychron.experiment.utilities.comment_template import CommentTemplater, CommentTemplateView
+
+        ct = CommentTemplater()
+        ctv = CommentTemplateView(model=ct)
+        info = ctv.edit_traits()
+        if info.result:
+            self._set_auto_comment(ct)
+
     def _use_simple_truncation_changed(self, new):
         if new:
-            self.truncation_path = NULL_STR
+            self.conditionals_path = NULL_STR
 
-    def _truncation_path_changed(self, new):
-        if not new==NULL_STR:
-            self.use_simple_truncation=False
+    def _conditionals_path_changed(self, new):
+        if not new == NULL_STR:
+            self.use_simple_con = False
 
     @on_trait_change('[measurement_script, post_measurement_script, '
                      'post_equilibration_script, extraction_script]:edit_event')
@@ -1043,6 +1120,14 @@ class AutomatedRunFactory(PersistenceLoggable):
         path, kind = new
         task.kind = kind
         task.open(path=path)
+        task.set_on_save_as_handler(self._update_script_lists)
+        task.set_on_close_handler(self._update_script_lists)
+
+    def _update_script_lists(self):
+        self.debug('update script lists')
+        for si in SCRIPT_NAMES:
+            si = getattr(self, si)
+            si.refresh_lists = True
 
     def _load_defaults_button_fired(self):
         if self.labnumber:
@@ -1067,58 +1152,49 @@ class AutomatedRunFactory(PersistenceLoggable):
             ed.context_editor.default_fits = str(m.name)
             ed.update_docstr()
 
-    def _new_truncation_button_fired(self):
+    def _new_conditionals_button_fired(self):
+        edit_conditionals(self.conditionals_path,
+                          app=self.application, root=paths.conditionals_dir,
+                          save_as=True,
+                          title='Edit Run Conditionals',
+                          kinds=('actions', 'cancelations', 'terminations', 'truncations'))
+        # edit_conditionals(p)
+        # # e = ActionEditor()
+        # if os.path.isfile(p):
+        #     # e.load(p)
+        #     e.model.path = ''
+        # else:
+        #     e.model = ActionModel()
+        #
+        # info = e.edit_traits(kind='livemodal')
+        # if info.result:
+        #     self.load_truncations()
+        #     p = e.model.path
+        #     d = os.path.splitext(os.path.basename(p))[0]
+        #
+        #     self.conditionals_path = d
 
-        p = os.path.join(paths.conditionals_dir,
-                         add_extension(self.truncation_path, '.yaml'))
+    def _edit_conditionals_button_fired(self):
+        edit_conditionals(self.conditionals_path,
+                          app=self.application, root=paths.conditionals_dir,
+                          title='Edit Run Conditionals',
+                          kinds=('actions', 'cancelations', 'terminations', 'truncations'))
+        # e = ActionEditor()
+        # e.load(p)
 
-        e = ActionEditor()
-        if os.path.isfile(p):
-            e.load(p)
-            e.model.path = ''
-        else:
-            e.model = ActionModel()
+        # e.edit_traits(kind='livemodal')
 
-        info = e.edit_traits(kind='livemodal')
-        if info.result:
-            self.load_truncations()
-            p = e.model.path
-            d = os.path.splitext(os.path.basename(p))[0]
-
-            self.truncation_path = d
-
-    def _edit_truncation_button_fired(self):
-        p = os.path.join(paths.conditionals_dir,
-                         add_extension(self.truncation_path, '.yaml'))
-
-        if os.path.isfile(p):
-            e = ActionEditor()
-            e.load(p)
-            e.edit_traits(kind='livemodal')
-
-    @on_trait_change('trunc_+, truncation_path')
-    def _handle_truncation(self, obj, name, old, new):
+    @on_trait_change('trunc_+, conditionals_path')
+    def _handle_conditionals(self, obj, name, old, new):
         if self.edit_mode and \
                 self._selected_runs and \
                 not self.suppress_update:
-
             # if name == 'truncation_path':
             #     t = new
-                # t = add_extension(new, '.yaml') if new else None
+            # t = add_extension(new, '.yaml') if new else None
             # else:
-            t = self.truncation_str
-            self._set_truncation(t)
-
-    def _set_truncation(self, t):
-        for s in self._selected_runs:
-            s.truncate_conditional = t
-
-        self.changed = True
-        self.refresh_table_needed = True
-
-    def refresh(self):
-        self.changed = True
-        self.refresh_table_needed = True
+            t = self.conditionals_str
+            self._set_conditionals(t)
 
     @on_trait_change('''cleanup, duration, extract_value,ramp_duration,
 collection_time_zero_offset,
@@ -1259,7 +1335,7 @@ post_equilibration_script:name''')
                     self.irradiation = self._make_irrad_level(ln)
 
                     if self.auto_fill_comment:
-                        self.set_auto_comment()
+                        self._set_auto_comment()
 
                     self._load_scripts(old, labnumber)
 
@@ -1285,13 +1361,9 @@ post_equilibration_script:name''')
                     self.warning_dialog(
                         '{} does not exist. Add using "Labnumber Entry" or "Utilities>>Import"'.format(labnumber))
 
-    def set_auto_comment(self):
-        self.comment = '{}:{}'.format(self.irrad_level,
-                                      self.irrad_hole)
-
     def _auto_fill_comment_changed(self):
         if self.auto_fill_comment:
-            self.set_auto_comment()
+            self._set_auto_comment()
         else:
             self.comment = ''
 
@@ -1309,11 +1381,11 @@ post_equilibration_script:name''')
     def _edit_mode_button_fired(self):
         self.edit_mode = not self.edit_mode
 
-    def _clear_truncation_fired(self):
+    def _clear_conditionals_fired(self):
         if self.edit_mode and \
                 self._selected_runs and \
                 not self.suppress_update:
-            self._set_truncation('')
+            self._set_conditionals('')
 
     def _aliquot_changed(self):
         if self.edit_mode:

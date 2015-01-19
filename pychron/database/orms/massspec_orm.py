@@ -262,6 +262,9 @@ class IrradiationProductionTable(Base):
     Label = Column(String(80))
     levels = relationship('IrradiationLevelTable', backref='production')
 
+    @property
+    def Cl3638(self):
+        return self.P36Cl38Cl
 
 class IrradiationChronologyTable(Base):
     __tablename__ = 'irradiationchronologytable'

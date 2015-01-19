@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,6 +23,7 @@ from traits.api import Instance
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.entry.sensitivity_entry import SensitivitySelector
+from pychron.envisage.initialization.initialization_parser import InitializationParser
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 # from pychron.experiment.experiment_executor import ExperimentExecutor
 from pychron.experiment.experimentor import Experimentor
@@ -31,7 +32,7 @@ from pychron.experiment.image_browser import ImageBrowser
 from pychron.experiment.tasks.experiment_task import ExperimentEditorTask
 from pychron.experiment.tasks.experiment_preferences import ExperimentPreferencesPane, ConsolePreferencesPane, \
     SysLoggerPreferencesPane, \
-    UserNotifierPreferencesPane
+    UserNotifierPreferencesPane, LabspyPreferencesPane
 from pychron.experiment.tasks.experiment_actions import NewExperimentQueueAction, \
     OpenExperimentQueueAction, SignalCalculatorAction, \
     DeselectAction, SendTestNotificationAction, \
@@ -41,14 +42,20 @@ from pychron.experiment.tasks.experiment_actions import NewExperimentQueueAction
 
 class ExperimentPlugin(BaseTaskPlugin):
     id = 'pychron.experiment'
-    experimentor=Instance(Experimentor)
+    experimentor = Instance(Experimentor)
+
+    def _actions_default(self):
+        return [('pychron.open_experiment', 'Ctrl+O', 'Open Experiment'),
+                ('pychron.new_experiment', 'Ctrl+N', 'New Experiment'),
+                ('pychron.deselect', 'Ctrl+Shift+D', 'Deselect'),
+                ('pychron.open_last_experiment', 'Alt+Ctrl+O', 'Open Last Experiment')]
 
     def _my_task_extensions_default(self):
         factory = lambda: Group(DeselectAction(),
                                 ResetQueuesAction(),
                                 UndoAction())
 
-        return [TaskExtension(task_id='pychron.experiment',
+        return [TaskExtension(task_id='pychron.experiment.task',
                               actions=[SchemaAddition(
                                   factory=factory,
                                   path='MenuBar/Edit')]),
@@ -58,25 +65,25 @@ class ExperimentPlugin(BaseTaskPlugin):
                                    path='MenuBar/Edit'),
                     SchemaAddition(id='open_experiment',
                                    factory=OpenExperimentQueueAction,
-                                   path='MenuBar/File/Open'),
+                                   path='MenuBar/file.menu/Open'),
                     SchemaAddition(id='open_last_experiment',
                                    factory=OpenLastExperimentQueueAction,
-                                   path='MenuBar/File/Open'),
+                                   path='MenuBar/file.menu/Open'),
                     SchemaAddition(id='test_notify',
                                    factory=SendTestNotificationAction,
-                                   path='MenuBar/File'),
+                                   path='MenuBar/file.menu'),
                     SchemaAddition(id='new_experiment',
                                    factory=NewExperimentQueueAction,
-                                   path='MenuBar/File/New'),
+                                   path='MenuBar/file.menu/New'),
                     SchemaAddition(id='signal_calculator',
                                    factory=SignalCalculatorAction,
                                    path='MenuBar/Tools'),
                     SchemaAddition(id='new_pattern',
                                    factory=NewPatternAction,
-                                   path='MenuBar/File/New'),
+                                   path='MenuBar/file.menu/New'),
                     SchemaAddition(id='open_pattern',
                                    factory=OpenPatternAction,
-                                   path='MenuBar/File/Open')])]
+                                   path='MenuBar/file.menu/Open')])]
 
     def _service_offers_default(self):
         so_signal_calculator = self.service_offer_factory(
@@ -102,7 +109,7 @@ class ExperimentPlugin(BaseTaskPlugin):
 
     def _experimentor_default(self):
         # from pychron.experiment.experimentor import Experimentor
-        from pychron.initialization_parser import InitializationParser
+
 
         ip = InitializationParser()
         plugin = ip.get_plugin('Experiment', category='general')
@@ -128,7 +135,7 @@ class ExperimentPlugin(BaseTaskPlugin):
         return ImageBrowser(application=self.application)
 
     def _tasks_default(self):
-        return [TaskFactory(id=self.id,
+        return [TaskFactory(id='pychron.experiment.task',
                             factory=self._task_factory,
                             name='Experiment',
                             image='applications-science',
@@ -140,6 +147,7 @@ class ExperimentPlugin(BaseTaskPlugin):
 
     def _preferences_panes_default(self):
         return [ExperimentPreferencesPane,
+                LabspyPreferencesPane,
                 ConsolePreferencesPane,
                 SysLoggerPreferencesPane,
                 UserNotifierPreferencesPane]

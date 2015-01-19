@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 #============= enthought library imports =======================
@@ -108,7 +108,7 @@ class ArArAge(Loggable):
     #     self.logger = logger
 
     def set_j(self, s, e):
-        self.j=ufloat(s, std_dev=e)
+        self.j = ufloat(s, std_dev=e)
 
     def clear_isotopes(self):
         for iso in self.isotopes:
@@ -131,10 +131,15 @@ class ArArAge(Loggable):
         elif hasattr(self, attr):
             return True
 
-    def get_ratio(self, r):
+    def get_ratio(self, r, non_ic_cor=False):
         n, d = r.split('/')
         isos = self.isotopes
-        func = self.get_intensity
+
+        if non_ic_cor:
+            func = self.get_non_ic_corrected
+        else:
+            func = self.get_intensity
+
         if n in isos and d in isos:
             try:
                 return func(n) / func(d)
@@ -143,27 +148,27 @@ class ArArAge(Loggable):
 
     def get_slope(self, attr, n=-1):
         try:
-            r=self.isotopes[attr].get_slope(n)
+            r = self.isotopes[attr].get_slope(n)
         except KeyError:
-            r=None
+            r = None
         return r
 
     def get_baseline_value(self, attr):
         try:
-            r=self.isotopes[attr].baseline.uvalue
+            r = self.isotopes[attr].baseline.uvalue
         except KeyError:
-            r=None
+            r = None
         return r
 
     def get_current_intensity(self, attr):
         try:
-            r=self.isotopes[attr].ys[-1]
+            r = self.isotopes[attr].ys[-1]
         except KeyError:
-            r=None
+            r = None
         return r
 
     def get_detector_active(self, attr):
-        det = next((i for i in self.isotopes if i.detector==attr), None)
+        det = next((i for i in self.isotopes if i.detector == attr), None)
         if det:
             pass
 
@@ -176,12 +181,15 @@ class ArArAge(Loggable):
             return all values if n==-1
         """
         try:
-            r=self.isotopes[attr].ys
-            if not n==-1:
-                r=r[-n:]
+            r = self.isotopes[attr].ys
+            if not n == -1:
+                r = r[-n:]
         except KeyError:
-            r=None
+            r = None
         return r
+
+    def _get_iso_by_detector(self, det):
+        return (i for i in self.isotopes if i.detector == det)
 
     def get_value(self, attr):
         r = ufloat(0, 0, tag=attr)
@@ -190,7 +198,20 @@ class ArArAge(Loggable):
             if iso in self.isotopes:
                 r = self.isotopes[iso].baseline.value
         elif '/' in attr:
-            r = self.get_ratio(attr)
+            non_ic_cor = attr.startswith('u')
+            if non_ic_cor:
+                attr=attr[1:]
+
+            r = self.get_ratio(attr, non_ic_cor)
+
+        elif attr.endswith('ic'):
+            # ex. attr='Ar40ic'
+            isok = attr[:-2]
+            try:
+                r = self.isotopes[isok].ic_factor
+            except KeyError:
+                r = ufloat(0, 0)
+
         elif attr in self.computed:
             r = self.computed[attr]
         elif attr in self.isotopes:
@@ -198,11 +219,18 @@ class ArArAge(Loggable):
         elif hasattr(self, attr):
             r = getattr(self, attr)
         else:
-            iso=next((i for i in self.isotopes if i.detector==attr), None)
+            iso = self._get_iso_by_detector(attr)
+            # iso=next((i for i in self.isotopes if i.detector==attr), None)
             if iso:
-                r=ufloat(iso.ys[-1], tag=attr)
+                r = ufloat(iso.ys[-1], tag=attr)
 
         return r
+
+    def get_non_ic_corrected(self, iso):
+        try:
+            return self.isotopes[iso].get_non_detector_corrected_value()
+        except KeyError:
+            return ufloat(0, 0, tag=iso)
 
     def get_intensity(self, iso):
         if iso in self.isotopes:
@@ -264,11 +292,14 @@ class ArArAge(Loggable):
 
         def _append(isotope):
             if kind in ('sniff', 'baseline'):
-                if kind=='sniff':
-                    isotope._value=signal
+                if kind == 'sniff':
+                    isotope._value = signal
                     isotope.dirty = True
 
                 isotope = getattr(isotope, kind)
+
+            if kind == 'sniff':
+                isotope._value = signal
 
             isotope.xs = hstack((isotope.xs, (x,)))
             isotope.ys = hstack((isotope.ys, (signal,)))
@@ -355,6 +386,7 @@ class ArArAge(Loggable):
                          if getattr(iso, attr) == value), None)
 
     def set_isotope(self, iso, v, **kw):
+        # print 'set isotope', iso, v
         if not self.isotopes.has_key(iso):
             niso = Isotope(name=iso)
             self.isotopes[iso] = niso
@@ -367,6 +399,7 @@ class ArArAge(Loggable):
         return niso
 
     def set_blank(self, iso, v):
+        #print 'set blank', iso, v
         if not self.isotopes.has_key(iso):
             niso = Isotope(name=iso)
             self.isotopes[iso] = niso
@@ -375,6 +408,7 @@ class ArArAge(Loggable):
         self.isotopes[iso].blank.set_uvalue(v)
 
     def set_baseline(self, iso, v):
+        #print 'set baseline', iso
         if not self.isotopes.has_key(iso):
             niso = Isotope(name=iso)
             self.isotopes[iso] = niso

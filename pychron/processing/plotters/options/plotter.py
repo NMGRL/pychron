@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,8 +27,7 @@ from traitsui.api import View, Item, HGroup, VGroup, Group, \
 #============= local library imports  ==========================
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
-from pychron.processing.label_maker import TitleMaker
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.plotters.options.base import FigurePlotterOptions
 from pychron.pychron_constants import ALPHAS
 
@@ -79,11 +78,15 @@ class PlotterOptions(FigurePlotterOptions):
     x_filter_str = Str
 
     def _edit_title_format_fired(self):
-        tm = TitleMaker(label=self.title,
-                        delimiter=self.title_delimiter,
-                        leading_text=self.title_leading_text,
-                        trailing_text=self.title_trailing_text)
-        info = tm.edit_traits()
+        from pychron.processing.label_maker import TitleTemplater, TitleTemplateView
+
+        tm = TitleTemplater(label=self.title,
+                            delimiter=self.title_delimiter,
+                            leading_text=self.title_leading_text,
+                            trailing_text=self.title_trailing_text)
+
+        tv = TitleTemplateView(model=tm)
+        info = tv.edit_traits()
         if info.result:
             self.title_formatter = tm.formatter
             self.title_attribute_keys = tm.attribute_keys
@@ -253,7 +256,7 @@ class PlotterOptions(FigurePlotterOptions):
                                   tooltip='Auto generate a title based on the analysis list'),
                              icon_button_editor('edit_title_format', 'cog',
                                                 enabled_when='auto_generate_title')),
-                      Item('title', springy=True,
+                      Item('title', springy=False,
                            enabled_when='not auto_generate_title',
                            tooltip='User specified plot title'),
                       label='Title', show_border=True)

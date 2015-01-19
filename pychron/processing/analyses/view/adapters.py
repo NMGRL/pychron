@@ -232,15 +232,15 @@ class IntermediateTabularAdapter(BaseTabularAdapter, ConfigurableAdapterMixin):
 
     #============================================================
     def _get_bs_bk_corrected_text(self):
-        v = self.item.get_corrected_value()
+        v = self.item.get_non_detector_corrected_value()
         return floatfmt(nominal_value(v), n=7)
 
     def _get_bs_bk_corrected_error_text(self):
-        v = self.item.get_corrected_value()
+        v = self.item.get_non_detector_corrected_value()
         return floatfmt(std_dev(v), n=7)
 
     def _get_bs_bk_corrected_percent_error_text(self):
-        v = self.item.get_corrected_value()
+        v = self.item.get_non_detector_corrected_value()
         return format_percent_error(v.nominal_value, v.std_dev)
 
     #============================================================
@@ -394,7 +394,7 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableAdapterMixin):
         return format_percent_error(b.value, b.error)
 
     def _get_value_percent_error_text(self, *args):
-        cv = self.item.get_corrected_value()
+        cv = self.item.get_non_detector_corrected_value()
         return format_percent_error(cv.nominal_value, cv.std_dev)
 
     def _get_age_error_component_text(self):

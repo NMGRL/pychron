@@ -21,15 +21,4 @@ Pychron Develop Guide
   database_analysis
   automated_analysis
   experiment_construction
-  communication
-
-
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
+  communications

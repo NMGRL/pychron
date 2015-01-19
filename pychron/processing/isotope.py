@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, Str, Float, Property, Instance, \
-    Array, String, Either, Dict, cached_property, Event, List, Bool
+    Array, String, Either, Dict, cached_property, Event, List, Bool, Int
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
 from numpy import array, Inf, polyfit
@@ -40,6 +40,7 @@ class BaseMeasurement(HasTraits):
     ys = Array
 
     n = Property(depends_on='xs')
+    _n = Int
     name = Str
     mass = Float
     detector = Str
@@ -96,7 +97,13 @@ class BaseMeasurement(HasTraits):
             print 'unpack_blob', e
 
     def _get_n(self):
-        return len(self.xs)
+        if not self._n:
+            return len(self.xs)
+        else:
+            return self._n
+
+    def _set_n(self, v):
+        self._n=v
 
     def _get_offset_xs(self):
         return self.xs - self.time_zero_offset
@@ -220,6 +227,12 @@ class IsotopicMeasurement(BaseMeasurement):
                 for s, e, f in self.fit_blocks:
                     if s < cnt < e:
                         return f
+
+    def set_filter_outliers_dict(self, filter_outliers=True, iterations=1, std_devs=2, notify=True):
+        self.filter_outliers_dict={'filter_outliers':filter_outliers,
+                                   'iterations':iterations,
+                                   'std_devs':std_devs}
+        self.dirty=notify
 
     def set_fit(self, fit, notify=True):
         if fit is not None:
@@ -479,12 +492,12 @@ class Isotope(BaseIsotope):
         if disc is None:
             disc = 1
 
-        return self.get_corrected_value() * disc
+        return self.get_non_detector_corrected_value() * disc
 
     def get_ic_corrected_value(self):
-        return self.get_corrected_value() * (self.ic_factor or 1.0)
+        return self.get_non_detector_corrected_value() * (self.ic_factor or 1.0)
 
-    def get_corrected_value(self):
+    def get_non_detector_corrected_value(self):
         v = self.get_baseline_corrected_value()
 
         #this is a temporary hack for handling Minna bluff data

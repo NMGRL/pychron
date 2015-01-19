@@ -63,14 +63,15 @@ class NewHopsEditorAction(HopsEditorAction):
 class OpenPyScriptAction(FileOpenAction):
     """
     """
+    id = 'pychron.open_pyscript'
     description = 'Open pyscript'
     name = 'Open Script...'
-    accelerator = 'Ctrl+Shift+O'
+    # accelerator = 'Ctrl+Shift+O'
     image = icon('document-open')
     task_id = 'pychron.pyscript.task'
     # test_path = '/Users/ross/Pychrondata_dev/scripts/extraction/jan_pause.py'
-    # test_path = '/Users/ross/Pychrondata_dev/scripts/measurement/jan_unknown.py'
-    test_path = '/Users/argonlab2/Pychrondata_view/scripts/measurement/obama_analysis400_120.py'
+    test_path = '/Users/ross/Pychrondata_dev/scripts/measurement/jan_unknown.py'
+    # test_path = '/Users/argonlab2/Pychrondata_view/scripts/measurement/obama_analysis400_120.py'
 
 
 class NewPyScriptAction(NewAction):
@@ -78,7 +79,8 @@ class NewPyScriptAction(NewAction):
     """
     description = 'New pyscript'
     name = 'New Script'
-    task_id = 'pychron.pyscript/task'
+    task_id = 'pychron.pyscript.task'
+    id = 'pychron.new_pyscript'
     #    accelerator = 'Shift+Ctrl+O'
     #     image = icon('script-new')
     # def perform(self, event):

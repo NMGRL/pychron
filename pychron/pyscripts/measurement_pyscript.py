@@ -1,11 +1,11 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,6 +26,9 @@ import yaml
 
 
 
+
+
+
 #============= local library imports  ==========================
 from pychron.core.helpers.filetools import fileiter
 from pychron.paths import paths
@@ -41,7 +44,7 @@ command_register = makeRegistry()
 
 class MeasurementCTXObject(object):
     def create(self, yd):
-        for k in ('baseline', 'multicollect', 'peakcenter', 'equilibration'):
+        for k in ('baseline', 'multicollect', 'peakcenter', 'equilibration', 'whiff'):
             try:
                 c = CTXObject()
                 c.update(yd[k])
@@ -72,15 +75,7 @@ class MeasurementPyScript(ValvePyScript):
     def reset(self, arun):
         self.debug('%%%%%%%%%%%%%%%%%% setting automated run {}'.format(arun.runid))
         self.automated_run = arun
-
-        self._baseline_series = None
-        self._series_count = 0
-        self._fit_series_count = 0
-        self._time_zero = None
-        self._detectors = None
-
-        self.abbreviated_count_ratio = None
-        self.ncounts = 0
+        self._reset()
 
     def get_command_register(self):
         cs = super(MeasurementPyScript, self).get_command_register()
@@ -253,6 +248,38 @@ class MeasurementPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
+    def whiff(self, ncounts=0, conditionals=None):
+        ret = self._automated_run_call('py_whiff', ncounts, conditionals,
+                                       self._time_zero, self._time_zero_offset,
+                                       fit_series=self._fit_series_count,
+                                       series=self._series_count)
+        return ret
+
+    @verbose_skip
+    @command_register
+    def reset_measurement(self, detectors=None):
+        if detectors:
+            self.reset_data()
+            self.activate_detectors(*detectors)
+            try:
+                self.automated_run.plot_panel.total_counts = 0
+            except AttributeError:
+                pass
+
+            self._reset()
+
+    @verbose_skip
+    @command_register
+    def reset_data(self):
+        self._automated_run_call('py_reset_data')
+
+    @verbose_skip
+    @command_register
+    def post_equilibration(self):
+        self._automated_run_call('py_post_equilibration')
+
+    @verbose_skip
+    @command_register
     def equilibrate(self, eqtime=20, inlet=None, outlet=None,
                     do_post_equilibration=True, close_inlet=True, delay=3):
         """
@@ -346,28 +373,44 @@ class MeasurementPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def add_termination(self, attr, comp, start_count=0, frequency=10, window=0, mapper=''):
-        self._automated_run_call('py_add_termination', attr, comp,
+    def add_termination(self, attr, teststr, start_count=0, frequency=10, window=0, mapper=''):
+        self._automated_run_call('py_add_termination',
+                                 attr=attr,
+                                 teststr=teststr,
                                  start_count=start_count,
                                  frequency=frequency, window=window,
                                  mapper=mapper)
 
     @verbose_skip
     @command_register
-    def add_truncation(self, attr, comp, start_count=0, frequency=10,
+    def add_cancelation(self, attr, teststr, start_count=0, frequency=10, window=0, mapper=''):
+        self._automated_run_call('py_add_cancelation',
+                                 attr=attr,
+                                 teststr=teststr,
+                                 start_count=start_count,
+                                 frequency=frequency, window=window,
+                                 mapper=mapper)
+
+    @verbose_skip
+    @command_register
+    def add_truncation(self, attr, teststr, start_count=0, frequency=10,
                        abbreviated_count_ratio=1.0):
-        self._automated_run_call('py_add_truncation', attr, comp,
+        self._automated_run_call('py_add_truncation',
+                                 attr=attr,
+                                 teststr=teststr,
                                  start_count=start_count,
                                  frequency=frequency,
                                  abbreviated_count_ratio=abbreviated_count_ratio)
 
     @verbose_skip
     @command_register
-    def add_action(self, attr, comp, start_count=0, frequency=10,
+    def add_action(self, attr, teststr, start_count=0, frequency=10,
                    action=None,
                    resume=False):
 
-        self._automated_run_call('py_add_action', attr, comp,
+
+        self._automated_run_call('py_add_action',
+                                 attr=attr, teststr=teststr,
                                  start_count=start_count,
                                  frequency=frequency,
                                  action=action,
@@ -556,6 +599,16 @@ class MeasurementPyScript(ValvePyScript):
         except AttributeError:
             pass
 
+    def _reset(self):
+        self._baseline_series = None
+        self._series_count = 0
+        self._fit_series_count = 0
+        self._time_zero = None
+        self._detectors = None
+
+        self.abbreviated_count_ratio = None
+        self.ncounts = 0
+
     @property
     def truncated(self):
         return self._automated_run_call(lambda: self.automated_run.truncated)
@@ -581,7 +634,6 @@ class MeasurementPyScript(ValvePyScript):
     @property
     def use_cdd_warming(self):
         return self._automated_run_call(lambda: self.automated_run.spec.use_cdd_warming)
-
 
 
 #============= EOF =============================================

@@ -17,6 +17,11 @@
 #============= enthought library imports =======================
 #============= standard library imports ========================
 #============= local library imports  ==========================
+SPECTROMETER_PROTOCOL = 'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager'
+ION_OPTICS_PROTOCOL = 'pychron.spectrometer.ion_optics_manager.IonOpticsManager'
+SCAN_PROTOCOL = 'pychron.spectrometer.scan_manager.ScanManager'
+EL_PROTOCOL = 'pychron.extraction_line.extraction_line_manager.ExtractionLineManager'
+
 
 PLUSMINUS = u'\u00b1'
 try:
@@ -42,14 +47,14 @@ LINE_STR = '---------'
 SCRIPT_KEYS = ['measurement', 'post_measurement', 'extraction', 'post_equilibration']
 SCRIPT_NAMES = ['{}_script'.format(si) for si in SCRIPT_KEYS]
 
-FIT_TYPES = ['linear', 'parabolic', 'cubic',
-             'average', 'weighted_mean']
+FIT_TYPES = ['Linear', 'Parabolic', 'Cubic',
+             'Average', 'Weighted Mean']
 FIT_ERROR_TYPES = ['SD', 'SEM', 'CI']
 
 ERROR_TYPES = ['SD', 'SEM', 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)']
 
-INTERPOLATE_TYPES = ['preceding', 'Bracketing Interpolate', 'Bracketing Average']
-FIT_TYPES_INTERPOLATE = FIT_TYPES + ['preceding', 'Bracketing Interpolate', 'Bracketing Average']
+INTERPOLATE_TYPES = ['Preceding', 'Bracketing Interpolate', 'Bracketing Average']
+FIT_TYPES_INTERPOLATE = FIT_TYPES + ['Preceding', 'Bracketing Interpolate', 'Bracketing Average']
 DELIMITERS = {',': 'comma', '\t': 'tab', ' ': 'space'}
 AGE_SCALARS = {'Ga': 1e9, 'Ma': 1e6, 'ka': 1e3, 'a': 1}
 AGE_MA_SCALARS = {'Ma': 1, 'ka': 1e-3, 'a': 1e-6, 'Ga': 1e3}
@@ -112,6 +117,7 @@ NOT_EXECUTABLE_COLOR = 'red'
 
 LIGHT_RED_COLOR = '#FF7373'
 LIGHT_YELLOW = '#F7F6D0'
+LIGHT_GREEN = '#99FF99'
 
 DETECTOR_ORDER = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
 DETECTOR_MAP = {o: i for i, o in enumerate(DETECTOR_ORDER)}

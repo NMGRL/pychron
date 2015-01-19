@@ -131,11 +131,11 @@ class DataSelector(Loggable):
 
     selector = Any
     kind = Enum('Database', 'File')
-    open_button = Button('open')
-    append_button=Button
-    replace_button=Button
-    append_enabled=Bool(True)
-    replace_enabled=Bool(True)
+    # open_button = Button('open')
+    # append_button=Button
+    # replace_button=Button
+    # append_enabled=Bool(True)
+    # replace_enabled=Bool(True)
 
     active = Bool(False)
     #def _append_button_fired(self):

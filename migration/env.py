@@ -16,13 +16,19 @@ fileConfig(config.config_file_name)
 # add your model's MetaData object here
 # for 'autogenerate' support
 # from myapp import mymodel
-#target_metadata = mymodel.Base.metadata
-#target_metadata = None
-import sys
-sys.path.append('/Users/ross/Programming/git/pychron_dev')
+# target_metadata = mymodel.Base.metadata
+# target_metadata = None
+import sys, os
+
+root = os.path.join(os.path.expanduser('~'), 'Programming/git/pychron_dev')
+if not os.path.isdir(root):
+    root = os.path.join(os.path.expanduser('~'), 'Programming/git/pychron')
+
+sys.path.append(root)
 
 from pychron.database.orms.isotope.util import Base
-target_metadata=Base.metadata
+
+target_metadata = Base.metadata
 
 
 # other values from the config, defined by the needs of env.py,
@@ -48,6 +54,7 @@ def run_migrations_offline():
     with context.begin_transaction():
         context.run_migrations()
 
+
 def run_migrations_online():
     """Run migrations in 'online' mode.
 
@@ -56,21 +63,68 @@ def run_migrations_online():
 
     """
     engine = engine_from_config(
-                config.get_section(config.config_ini_section),
-                prefix='sqlalchemy.',
-                poolclass=pool.NullPool)
+        config.get_section(config.config_ini_section),
+        prefix='sqlalchemy.',
+        poolclass=pool.NullPool)
 
     connection = engine.connect()
     context.configure(
-                connection=connection,
-                target_metadata=target_metadata
-                )
+        connection=connection,
+        target_metadata=target_metadata
+    )
 
+    nver = get_revision(context)
     try:
         with context.begin_transaction():
-            context.run_migrations()
+            try:
+                context.run_migrations()
+            except Exception, e:
+                nver=None
+                raise e
     finally:
+        # print context.get_head_revision()
+        # print context.get_revision_argument()
+        # for di in dir(context):
+        #     print di
+        update_pychron_version(nver)
+
         connection.close()
+
+
+def get_revision(context):
+    ctx = context.get_context()
+    # for change, prev_rev, rev, doc in ctx._migrations_fn(
+    #                                         ctx.get_current_revision(),
+    #                                         ctx):
+    #     print '00000000000000',change, prev_rev, rev, doc
+    #
+    changes=ctx._migrations_fn(
+        ctx.get_current_revision(),
+        ctx)
+    if changes:
+        change, prev_rev, rev, doc=changes[-1]
+        return rev
+
+
+def update_pychron_version(nver):
+    if not nver:
+        return
+    from pychron import version
+
+    temp = '''
+__version__ = '{}'
+__commit__ = '{}'
+__alembic__ = '{}'
+#============= EOF =============================================
+'''.format(version.__version__,
+           version.__commit__, nver)
+
+    # print context.get_context().opts
+    # # print context.context_opts['destination_rev']
+    pp = os.path.join(root, 'pychron', 'version.py')
+    with open(pp, 'w') as fp:
+        fp.write(temp)
+
 
 if context.is_offline_mode():
     run_migrations_offline()

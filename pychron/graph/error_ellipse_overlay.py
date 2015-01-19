@@ -29,7 +29,8 @@ import math
 # http://www.earth-time.org/projects/upb/public_docs/ErrorEllipses.pdf
 # 5) To create a 95% confidence ellipse from the 1s error ellipse, we must enlarge it by a factor of 2.4477.
 
-SCALE_FACTOR = 2.4477
+# SCALE_FACTOR = 2.4477
+SCALE_FACTOR = 1
 
 
 def error_ellipse(sx, sy, pxy, aspectratio=1):

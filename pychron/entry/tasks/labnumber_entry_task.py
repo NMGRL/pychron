@@ -1,11 +1,11 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,6 +23,7 @@ from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, Tabbed
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+
 from pychron.entry.graphic_generator import GraphicModel, GraphicGeneratorController
 from pychron.experiment.importer.import_manager import ImportManager
 from pychron.envisage.browser.browser_mixin import BrowserMixin
@@ -138,6 +139,19 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
         if path:
             self.manager.import_sample_metadata(path)
 
+    def export_irradiation(self):
+        from pychron.entry.export.export_selection_view import ExportSelectionView
+
+        pref = self.application.preferences
+        connection = {attr: pref.get('pychron.massspec.database.{}'.format(attr))
+                      for attr in ('name', 'host', 'password', 'username')}
+        es = ExportSelectionView(irradiations=self.manager.irradiations,
+                                 default_massspec_connection=connection)
+        info = es.edit_traits(kind='livemodal')
+        if info.result:
+            from pychron.entry.export.export_util import do_export
+            do_export(self.manager, es.export_type, es.destination_dict, es.irradiations)
+
     def _manager_default(self):
         return LabnumberEntry(application=self.application)
 
@@ -151,12 +165,9 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
                 PaneItem('pychron.labnumber.irradiation'),
                 Tabbed(
                     PaneItem('pychron.labnumber.extractor'),
-                    PaneItem('pychron.labnumber.editor')
-                ),
-                orientation='vertical'
-            ),
-            right=PaneItem('pychron.entry.irradiation_canvas')
-        )
+                    PaneItem('pychron.labnumber.editor')),
+                orientation='vertical'),
+            right=PaneItem('pychron.entry.irradiation_canvas'))
 
     def create_central_pane(self):
         return LabnumbersPane(model=self.manager)

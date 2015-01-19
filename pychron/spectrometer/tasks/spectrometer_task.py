@@ -35,7 +35,11 @@ class SpectrometerTask(BaseExtractionLineTask):
         super(SpectrometerTask, self).prepare_destroy()
 
     def activated(self):
+
         self.scan_manager.activate()
+        sim = self.scan_manager.spectrometer.simulation
+        self.name = 'Scan (Simulation)' if sim else 'Scan'
+
         super(SpectrometerTask, self).activated()
 
     def _default_layout_default(self):
