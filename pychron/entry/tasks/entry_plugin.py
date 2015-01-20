@@ -51,7 +51,7 @@ class EntryPlugin(BaseTaskPlugin):
     def _task_extensions_default(self):
         return [
             TaskExtension(actions=[SchemaAddition(id='entry',
-                                                  factory=lambda: SMenu(id='.menu', name='Entry'),
+                                                  factory=lambda: SMenu(id='entry.menu', name='Entry'),
                                                   path='MenuBar',
                                                   before='tools.menu',
                                                   after='view.menu')]),
