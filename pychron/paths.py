@@ -194,6 +194,7 @@ class Paths(object):
     deflection = None
     startup_tests = None
     ic_mftable = None
+    system_conditionals = None
 
     def set_search_paths(self, app_rec=None):
         self.app_resources = app_rec
@@ -347,6 +348,7 @@ class Paths(object):
         self.deflection = join(self.spectrometer_dir, 'deflection.yaml')
         self.startup_tests = join(self.setup_dir, 'startup_tests.yaml')
         self.set_search_paths()
+        self.system_conditionals = join(paths.spectrometer_dir, 'default_conditionals.yaml')
 
         self._write_default_files()
 

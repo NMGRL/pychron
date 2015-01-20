@@ -125,7 +125,7 @@ class BaseConditional(Loggable):
     attr = Str
     teststr = Str
     start_count = Int
-    level = Enum(SYSTEM, QUEUE, RUN)
+    level = Enum(None, SYSTEM, QUEUE, RUN)
     tripped = Bool
     location = Str
 

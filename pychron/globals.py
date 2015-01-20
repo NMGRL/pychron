@@ -21,7 +21,7 @@ from pychron.core.helpers.filetools import to_bool
 
 
 class Globals(object):
-    dev_pwd = '3da541559918a808c2402bba5012f6c60b27661c'
+    dev_pwd = '6e06f5d370baef1a115ae2f134fae22fbfbe79dc'  # Argon
     # use_shared_memory = False
 
     use_debug_logger = False

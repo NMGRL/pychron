@@ -245,7 +245,10 @@ class ExperimentEditorTask(EditorTask):
         return panes
 
     def _open_abort(self):
-        self.notifier.close()
+        try:
+            self.notifier.close()
+        except AttributeError:
+            pass
 
     def _open_file(self, path, **kw):
         if not isinstance(path, (tuple, list)):

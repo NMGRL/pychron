@@ -35,7 +35,7 @@ from pychron.experiment.tasks.experiment_actions import NewExperimentQueueAction
     OpenExperimentQueueAction, SignalCalculatorAction, \
     DeselectAction, SendTestNotificationAction, \
     NewPatternAction, OpenPatternAction, ResetQueuesAction, OpenLastExperimentQueueAction, UndoAction, \
-    QueueConditionalsAction, ConfigureEditorTableAction
+    QueueConditionalsAction, ConfigureEditorTableAction, SystemConditionalsAction
 
 
 class ExperimentPlugin(BaseTaskPlugin):
@@ -60,6 +60,9 @@ class ExperimentPlugin(BaseTaskPlugin):
                 TaskExtension(actions=[
                     SchemaAddition(id='open_queue_conditionals',
                                    factory=QueueConditionalsAction,
+                                   path='MenuBar/Edit'),
+                    SchemaAddition(id='open_queue_conditionals',
+                                   factory=SystemConditionalsAction,
                                    path='MenuBar/Edit'),
                     SchemaAddition(id='open_experiment',
                                    factory=OpenExperimentQueueAction,
