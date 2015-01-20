@@ -35,6 +35,8 @@ class irrad_HolderTable(Base, NameMixin):
 
 class irrad_LevelTable(Base, NameMixin):
     z = Column(Float)
+    note = Column(BLOB)
+
     holder_id = foreignkey('irrad_HolderTable')
     irradiation_id = foreignkey('irrad_IrradiationTable')
     production_id = foreignkey('irrad_ProductionTable')
