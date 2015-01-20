@@ -25,6 +25,8 @@ CHANGELOG
 * added ReplicationTask for interacting with a replication db
 * added predefined initializations
 * added "Whats New" action. brings user to this doc.
+* added Experiment Columns defaults. [root]/setupfiles/experiment_defaults.yaml
+* fixed displaying irradiation holder
 
 <!---
 .. * fully implemented import irradiation from XLS file

@@ -26,14 +26,15 @@ from pychron.loggable import Loggable
 class TransferConfigModel(HasTraits):
     forward_transfer = Bool(True)
     massspecname = Str
-
+    auto_save = Bool(False)
 
 class TransferConfigView(Controller):
     model = Instance(TransferConfigModel)
 
     def traits_view(self):
         v = View(VGroup(Readonly('massspecname', label='Mass Spec DB Name'),
-                        Item('forward_transfer')),
+                        Item('forward_transfer'),
+                        Item('auto_save', tooltip='Automatically save transferred J to the database')),
                  buttons=['OK', 'Cancel'],
                  kind='livemodal',
                  title='Configure J Transfer',
@@ -55,6 +56,8 @@ class JTransferer(Loggable):
             else:
                 self._transfer_pychron_to_massspec(*args)
 
+            return config.auto_save
+
     def _configure_transfer(self):
         config = TransferConfigModel()
         config.massspecname = self.massspecdb.name
@@ -67,8 +70,8 @@ class JTransferer(Loggable):
     def _transfer_massspec_to_pychron(self, *args):
         self._transfer(self._forward_transfer_func, *args)
 
-    def _transfer_pychron_to_massspec(self, positions):
-        self._transfer(self._backward_transfer_func, positions)
+    def _transfer_pychron_to_massspec(self, *args):
+        self._transfer(self._backward_transfer_func, *args)
 
     def _transfer(self, func, irrad, level, positions):
         with self.massspecdb.session_ctx(), self.pychrondb.session_ctx():
@@ -93,26 +96,31 @@ class JTransferer(Loggable):
             if ms_ip:
                 # get j for this position
                 j, j_err = ms_ip.J, ms_ip.JEr
+
+                position.trait_set(j=j, j_err=j_err)
+
                 # get the pychron irradiation_position
-                pos = pdb.get_irradiation_position(irrad, level, position.hole)
-
-                def add_flux():
-                    print 'change {} {} to {}'.format(pos.labnumber.identifier,
-                                                      flux.j, j)
-                    # hist = pdb.add_flux_history(pos, source=self.massspecdb.url)
-                    # pos.labnumber.selected_flux_history = hist
-                    # f = pdb.add_flux(j, j_err)
-                    # f.history = hist
-
-                if pos.labnumber.selected_flux_history:
-                    tol = 1e-10
-                    flux = pos.labnumber.selected_flux_history.flux
-                    if abs(flux.j - j) > tol or abs(flux.j_err - j_err) > tol:
-                        add_flux()
-                    else:
-                        self.info('No difference in J for {}'.format(posstr))
-                else:
-                    add_flux()
+                # pos = pdb.get_irradiation_position(irrad, level, position.hole)
+                #
+                # def add_flux(ff=None):
+                #     if ff:
+                #         print 'change {} {} to {}'.format(pos.labnumber.identifier,
+                #                                           ff.j, j)
+                #
+                #     hist = pdb.add_flux_history(pos, source=self.massspecdb.url)
+                #     pos.labnumber.selected_flux_history = hist
+                #     f = pdb.add_flux(j, j_err)
+                #     f.history = hist
+                #
+                # if pos.labnumber.selected_flux_history:
+                #     tol = 1e-10
+                #     flux = pos.labnumber.selected_flux_history.flux
+                #     if abs(flux.j - j) > tol or abs(flux.j_err - j_err) > tol:
+                #         add_flux(flux)
+                #     else:
+                #         self.info('No difference in J for {}'.format(posstr))
+                # else:
+                #     add_flux()
             else:
                 self.warning('Irradiation Position {} not in MassSpecDatabase'.format(posstr))
         else:
