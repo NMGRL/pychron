@@ -22,7 +22,7 @@ from traitsui.api import View, UItem
 import os
 # ============= local library imports  ==========================
 from pychron.core.ui.qt.tabular_editor import TabularEditorHandler
-from pychron.core.ui.table_configurer import TableConfigurer
+from pychron.core.ui.table_configurer import TableConfigurer, ExperimentTableConfigurer
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.experiment.automated_run.tabular_adapter import AutomatedRunSpecAdapter, UVAutomatedRunSpecAdapter, \
     ExecutedAutomatedRunSpecAdapter, ExecutedUVAutomatedRunSpecAdapter
@@ -68,7 +68,7 @@ class ExperimentEditor(BaseTraitsEditor):
     executed_tabular_adapter = Instance(ExecutedAutomatedRunSpecAdapter)
 
     automated_runs_editable = Bool
-    table_configurer = Instance(TableConfigurer)
+    table_configurer = Instance(ExperimentTableConfigurer)
 
     def show_table_configurer(self):
         t = self.table_configurer
@@ -77,7 +77,7 @@ class ExperimentEditor(BaseTraitsEditor):
     def refresh(self):
         self.queue.refresh_table_needed = True
 
-    def set_colors(self, c, ec):
+    def setup_tabular_adapters(self, c, ec):
         self.bgcolor = c
         self.tabular_adapter = self.tabular_adapter_klass()
         self.executed_tabular_adapter = self.executed_tabular_adapter_klass()
@@ -87,11 +87,11 @@ class ExperimentEditor(BaseTraitsEditor):
         self.tabular_adapter.even_bg_color = ec
         self.executed_tabular_adapter.even_bg_color = ec
 
-        v = TableConfigurer(adapter=self.tabular_adapter,
-                            children=[self.executed_tabular_adapter],
-                            auto_set=True,
-                            refresh_func=self.refresh,
-                            id='experiment.table')
+        v = ExperimentTableConfigurer(adapter=self.tabular_adapter,
+                                      children=[self.executed_tabular_adapter],
+                                      auto_set=True,
+                                      refresh_func=self.refresh,
+                                      id='experiment.table')
 
         self.table_configurer = v
 
@@ -139,6 +139,7 @@ class ExperimentEditor(BaseTraitsEditor):
                                                 refresh='refresh_table_needed',
                                                 scroll_to_row='automated_runs_scroll_to_row',
                                                 copy_cache='linked_copy_cache',
+                                                stretch_last_section=False,
                                                 multi_select=True),
                          height=200)
 
@@ -154,6 +155,7 @@ class ExperimentEditor(BaseTraitsEditor):
                                                     copy_cache='linked_copy_cache',
                                                     selected='executed_selected',
                                                     multi_select=True,
+                                                    stretch_last_section=False,
                                                     scroll_to_row='executed_runs_scroll_to_row'),
                              height=500,
                              visible_when='executed')

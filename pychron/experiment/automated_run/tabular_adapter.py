@@ -72,14 +72,14 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
     # ===========================================================================
 
     labnumber_width = Int(80)
-    aliquot_width = Int(40)
+    aliquot_width = Int(60)
     sample_width = Int(50)
     position_width = Int(50)
     extract_value_width = Int(50)
     extract_units_width = Int(40)
-    duration_width = Int(60)
+    duration_width = Int(70)
     ramp_duration_width = Int(50)
-    cleanup_width = Int(60)
+    cleanup_width = Int(70)
     pattern_width = Int(80)
     beam_diameter_width = Int(65)
 

@@ -144,7 +144,7 @@ class ExperimentEditorTask(EditorTask):
                 self.manager.experiment_factory.activate(load_persistence=True)
 
                 editor = ExperimentEditor()
-                editor.set_colors(self.bgcolor, self.even_bgcolor)
+                editor.setup_tabular_adapters(self.bgcolor, self.even_bgcolor)
                 editor.new_queue()
 
                 self._open_editor(editor)
@@ -280,7 +280,7 @@ class ExperimentEditorTask(EditorTask):
             klass = UVExperimentEditor if is_uv else ExperimentEditor
             editor = klass(path=path,
                            automated_runs_editable=self.automated_runs_editable)
-            editor.set_colors(self.bgcolor, self.even_bgcolor)
+            editor.setup_tabular_adapters(self.bgcolor, self.even_bgcolor)
             editor.new_queue(txt)
             self._open_editor(editor)
         else:
