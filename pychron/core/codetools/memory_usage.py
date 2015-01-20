@@ -29,8 +29,8 @@ if USE_MEM_LOG:
     root = os.path.join(os.path.expanduser('~'), 'Desktop', 'memtest')
     if not os.path.isdir(root):
         os.mkdir(root)
+    p, _ = unique_path(root, 'mem')
 
-p, _ = unique_path(root, 'mem')
 def write_mem(msg, m, verbose):
     with open(os.path.join(root, p), 'a') as fp:
         msg = '{:<50s}:{}\n'.format(msg, m)
