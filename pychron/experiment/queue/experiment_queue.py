@@ -25,6 +25,7 @@ from itertools import groupby
 import os
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
+from pychron.core.helpers.filetools import replace_extension
 from pychron.core.ui.qt.tabular_editor import MoveToRow
 from pychron.experiment.queue.base_queue import BaseExperimentQueue
 from pychron.experiment.queue.select_attr_view import SelectAttrView
@@ -78,6 +79,17 @@ class ExperimentQueue(BaseExperimentQueue):
     execution_ratio = Property
 
     refresh_blocks_needed = Event
+
+    def auto_save(self):
+        path = self.path
+        if os.path.isfile(path):
+            bk = os.path.join(paths.auto_save_experiment_dir, '{}.bak'.format(self.name))
+        else:
+            bk = os.path.join(paths.auto_save_experiment_dir, 'Untitled.bak')
+
+        self.debug('Autosaving to {}'.format(bk))
+        with open(bk, 'w') as fp:
+            self.dump(fp)
 
     def toggle_skip(self):
         for si in self.selected:

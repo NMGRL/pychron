@@ -212,6 +212,10 @@ queue_conditionals_name]''')
             self.queue.trait_set(**{name: new})
 
         self.queue.changed = True
+        self._auto_save()
+
+    def _auto_save(self):
+        self.queue.auto_save()
 
     # ===============================================================================
     # private
@@ -275,6 +279,7 @@ queue_conditionals_name]''')
         # rf.activate()
         rf.on_trait_change(lambda x: self.trait_set(_labnumber=x), 'labnumber')
         rf.on_trait_change(self._update_end_after, 'end_after')
+        rf.on_trait_change(self._auto_save, 'auto_save_needed')
 
         return rf
 
