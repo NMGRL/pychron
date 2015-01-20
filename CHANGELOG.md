@@ -28,6 +28,7 @@ CHANGELOG
 * updated PreferencesDialog. Display categories in a TabularEditor instead of as Group tabs.
 * added ReplicationTask for interacting with a replication db
 * added predefined initializations
+* added SampleImageTask
 
 <!---
 .. * fully implemented import irradiation from XLS file
