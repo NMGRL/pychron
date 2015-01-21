@@ -9,7 +9,7 @@ xlrd
 xlwt
 lxml
 sqlalchemy>=0.9.7
-pint
+#pint
 
 #GitPython>=0.3.2.RC1
 #paramiko
