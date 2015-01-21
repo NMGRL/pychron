@@ -17,8 +17,10 @@
 # ============= enthought library imports =======================
 from copy import copy
 import os
+
 from traits.api import Instance, HasTraits, List, Str, Bool, Event, Int
 from traitsui.api import View, VGroup, Item, EnumEditor
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.editors import TabularEditor
@@ -234,6 +236,7 @@ class AnalysisModifier(Loggable):
                     dbirradpos = db.get_irradiation_position(ident)
                     if dbirradpos:
                         dban.RID = make_runid(ident, ni.aliquot, ni.step)
+                        self.debug('setting {} to {}'.format(ident, dban.RID))
                         dban.Aliquot = '{:02n}'.format(int(ni.aliquot))
                         dban.Increment = ni.step
                         dban.Aliquot_pychron = ni.aliquot

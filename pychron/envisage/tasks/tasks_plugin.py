@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 import hashlib
-from apptools.preferences.preference_binding import bind_preference
+
 from envisage.extension_point import ExtensionPoint
 from envisage.plugin import Plugin
 from envisage.ui.tasks.action.exit_action import ExitAction
@@ -28,10 +28,11 @@ from pyface.constant import NO
 from pyface.tasks.action.dock_pane_toggle_group import DockPaneToggleGroup
 from pyface.tasks.action.schema_addition import SchemaAddition
 from traits.api import List
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traits.has_traits import HasTraits
-from traits.trait_types import Str, Password
+from traits.trait_types import Password
 from traitsui.item import Item
 from traitsui.view import View
 from pychron.envisage.resources import icon
@@ -67,6 +68,7 @@ class ConfirmApplicationExit(HasTraits):
     pwd = Password
 
     def validate(self):
+        return True
         return hashlib.sha1(self.pwd).hexdigest() == globalv.dev_pwd
 
     def traits_view(self):
