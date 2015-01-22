@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,7 +19,7 @@
 
 from datetime import datetime
 
-from sqlalchemy import Column, Integer, BLOB, Float, DateTime
+from sqlalchemy import Column, Integer, BLOB, Float, DateTime, func
 from sqlalchemy.orm import relationship
 
 # ============= local library imports  ==========================
@@ -42,6 +42,9 @@ class irrad_LevelTable(Base, NameMixin):
     production_id = foreignkey('irrad_ProductionTable')
 
     positions = relationship('irrad_PositionTable', backref='level')
+    create_date = Column(DateTime, default=func.now())
+
+    last_modified = Column(DateTime, onupdate=func.now())
 
 
 class irrad_PositionTable(Base, BaseMixin):
@@ -79,7 +82,7 @@ class irrad_ProductionTable(Base, NameMixin):
     Cl_K_err = Column(Float)
 
     note = Column(BLOB)
-    last_modified=Column(DateTime)
+    last_modified = Column(DateTime, onupdate=func.now())
     # irradiations = relationship('irrad_IrradiationTable', backref='production')
     levels = relationship('irrad_LevelTable', backref='production')
 
