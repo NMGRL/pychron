@@ -27,13 +27,22 @@ class TransferConfigModel(HasTraits):
     forward_transfer = Bool(True)
     massspecname = Str
     auto_save = Bool(False)
+    include_j = Bool(True)
+    include_note = Bool(True)
+
 
 class TransferConfigView(Controller):
     model = Instance(TransferConfigModel)
 
     def traits_view(self):
+        transfer_grp = VGroup(
+            Item('include_j', label='J', tooltip='Transfer J data'),
+            Item('include_note', label='Note', tooltip='Transfer Notes'),
+            label='Transfer', show_border=True)
+
         v = View(VGroup(Readonly('massspecname', label='Mass Spec DB Name'),
-                        Item('forward_transfer'),
+                        transfer_grp,
+                        Item('forward_transfer', label='MassSpec to Pychron'),
                         Item('auto_save', tooltip='Automatically save transferred J to the database')),
                  buttons=['OK', 'Cancel'],
                  kind='livemodal',
@@ -52,9 +61,9 @@ class JTransferer(Loggable):
         config = self._configure_transfer()
         if config:
             if config.forward_transfer:  # e.g. mass spec to pychron
-                self._transfer_massspec_to_pychron(*args)
+                self._transfer_massspec_to_pychron(config, *args)
             else:
-                self._transfer_pychron_to_massspec(*args)
+                self._transfer_pychron_to_massspec(config, *args)
 
             return config.auto_save
 
@@ -73,15 +82,15 @@ class JTransferer(Loggable):
     def _transfer_pychron_to_massspec(self, *args):
         self._transfer(self._backward_transfer_func, *args)
 
-    def _transfer(self, func, irrad, level, positions):
+    def _transfer(self, config, func, irrad, level, positions):
         with self.massspecdb.session_ctx(), self.pychrondb.session_ctx():
             for pp in positions:
                 self.debug('Transferring position {}. labnumber={} current_j={}'.format(pp.hole,
                                                                                         pp.labnumber,
                                                                                         pp.j))
-                func(irrad, level, pp)
+                func(config, irrad, level, pp)
 
-    def _forward_transfer_func(self, irrad, level, position):
+    def _forward_transfer_func(self, config, irrad, level, position):
         """
             transfer j from mass spec to pychron
         :param position:
@@ -90,22 +99,28 @@ class JTransferer(Loggable):
 
         posstr = '{}{} {}'.format(irrad, level, position.hole)
         if position.labnumber:
-            pdb = self.pychrondb
+            # pdb = self.pychrondb
             # get the massspec irradiation_position
             ms_ip = self.massspecdb.get_irradiation_position(position.labnumber)
             if ms_ip:
                 # get j for this position
                 j, j_err = ms_ip.J, ms_ip.JEr
 
-                position.trait_set(j=j, j_err=j_err)
+                d = {}
+                if config.include_note:
+                    d['note'] = ms_ip.Note
+                if config.include_j:
+                    d['j'] = j
+                    d['j_err'] = j_err
+                position.trait_set(**d)
 
                 # get the pychron irradiation_position
                 # pos = pdb.get_irradiation_position(irrad, level, position.hole)
                 #
                 # def add_flux(ff=None):
-                #     if ff:
-                #         print 'change {} {} to {}'.format(pos.labnumber.identifier,
-                #                                           ff.j, j)
+                # if ff:
+                # print 'change {} {} to {}'.format(pos.labnumber.identifier,
+                # ff.j, j)
                 #
                 #     hist = pdb.add_flux_history(pos, source=self.massspecdb.url)
                 #     pos.labnumber.selected_flux_history = hist
