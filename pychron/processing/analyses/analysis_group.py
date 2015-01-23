@@ -38,6 +38,7 @@ def AGProperty(*depends):
 
 
 class AnalysisGroup(HasTraits):
+    attribute = Str('uage')
     analyses = List
     nanalyses = AGProperty()
 
@@ -82,9 +83,11 @@ class AnalysisGroup(HasTraits):
 
     # @cached_property
     def _get_mswd(self):
-        attr = 'uage_wo_j_err'
-        if self.include_j_error_in_individual_analyses:
-            attr = 'uage'
+        attr = self.attribute
+        if attr.startswith('uage'):
+            attr = 'uage_wo_j_err'
+            if self.include_j_error_in_individual_analyses:
+                attr = 'uage'
 
         return self._calculate_mswd(attr)
 
@@ -120,11 +123,16 @@ class AnalysisGroup(HasTraits):
 
     # @cached_property
     def _get_weighted_age(self):
+        attr = self.attribute
+        if attr.startswith('uage'):
+            attr = 'uage' if self.include_j_error_in_individual_analyses else 'uage_wo_j_err'
+        #     if self.include_j_error_in_individual_analyses:
+        #         v, e = self._calculate_weighted_mean('uage', self.weighted_age_error_kind)
+        #     else:
+        #         v, e = self._calculate_weighted_mean('uage_wo_j_err', self.weighted_age_error_kind)
+        # else:
+        v, e = self._calculate_weighted_mean(attr, self.weighted_age_error_kind)
 
-        if self.include_j_error_in_individual_analyses:
-            v, e = self._calculate_weighted_mean('uage', self.weighted_age_error_kind)
-        else:
-            v, e = self._calculate_weighted_mean('uage_wo_j_err', self.weighted_age_error_kind)
 
         e = self._modify_error(v, e, self.weighted_age_error_kind)
         try:

@@ -30,6 +30,7 @@ from pychron.processing.arar_age import ArArAge
 #from pychron.processing.analyses.db_summary import DBAnalysisSummary
 from pychron.experiment.utilities.identifier import make_aliquot_step, make_runid
 from pychron.processing.isotope import Isotope
+from pychron.pychron_constants import PLUSMINUS
 
 Fit = namedtuple('Fit', 'fit '
                         'filter_outliers filter_outlier_iterations filter_outlier_std_devs '
@@ -177,7 +178,7 @@ class Analysis(ArArAge):
                 v = v.get_intensity()
             a, e = v.nominal_value, v.std_dev
         pe = format_percent_error(a, e)
-        return u'{} +/-{} ({}%)'.format(floatfmt(a), floatfmt(e), pe)
+        return u'{} {}{} ({}%)'.format(floatfmt(a), PLUSMINUS, floatfmt(e), pe)
 
     def _get_status_text(self):
         r = 'OK'

@@ -97,6 +97,7 @@ class ComputedValueTabularAdapter(BaseTabularAdapter):
     name_width = Int(80)
     value_width = Int(120)
     units_width = Int(40)
+    error_width = Int(60)
     error_text = Property
     percent_error_text = Property
     value_text = Property

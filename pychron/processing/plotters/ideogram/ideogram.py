@@ -66,6 +66,7 @@ class Ideogram(BaseArArFigure):
 
         self._analysis_number_cnt = 0
 
+
         try:
             self.xs, self.xes = array([(ai.nominal_value, ai.std_dev)
                                        for ai in self._get_xs(key=index_attr)]).T
@@ -188,11 +189,16 @@ class Ideogram(BaseArArFigure):
         if po.show_labels:
             self._add_point_labels(scatter)
 
-        ia = 'uage_wo_j_err'
-        if self.options.include_j_error:
-            ia = 'uage'
+        ia = self.options.index_attr
+        if ia.startswith('uage'):
+            name = 'Age'
+            ia = 'uage_wo_j_err'
+            if self.options.include_j_error:
+                ia = 'uage'
+        else:
+            name = ia
 
-        f = lambda x: u'Age= {}'.format(x.value_string(ia))
+        f = lambda x: u'{}= {}'.format(name, x.value_string(ia))
         self._add_scatter_inspector(scatter,
                                     additional_info=f)
 
@@ -245,9 +251,9 @@ class Ideogram(BaseArArFigure):
         self._set_y_limits(0, my, min_=0, max_=my, pid=pid)
         # print 'settting ylimits {}'.format(my)
         omits = self._get_aux_plot_omits(po, ys)
-        ia = self.options.index_attr
 
-        f = lambda x: u'Age= {}'.format(x.value_string(ia))
+        ia = self.options.index_attr
+        f = lambda x: u'{}= {}'.format(ia, x.value_string(ia))
 
         self._add_scatter_inspector(scatter,
                                     value_format=lambda x: '{:d}'.format(int(x)),
@@ -257,7 +263,6 @@ class Ideogram(BaseArArFigure):
 
     def _plot_relative_probability(self, po, plot, pid):
         graph = self.graph
-
         bins, probs = self._calculate_probability_curve(self.xs, self.xes, calculate_limits=True)
 
         ogid = self.group_id
@@ -343,7 +348,6 @@ class Ideogram(BaseArArFigure):
     def _add_mean_indicator(self, g, line, po, bins, probs, pid):
         # maxp = max(probs)
         wm, we, mswd, valid_mswd = self._calculate_stats(bins, probs)
-
         #ym = maxp * percentH + offset
         #set ym in screen space
         #convert to data space
@@ -638,6 +642,7 @@ class Ideogram(BaseArArFigure):
 
     def _calculate_stats(self, xs, ys):
         ag = self.analysis_group
+        ag.attribute = self.options.index_attr
         ag.weighted_age_error_kind = self.options.error_calc_method
         ag.include_j_error_in_mean = self.options.include_j_error_in_mean
         ag.include_j_error_in_individual_analyses = self.options.include_j_error

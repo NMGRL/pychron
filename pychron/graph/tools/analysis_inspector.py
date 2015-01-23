@@ -21,6 +21,8 @@ from traits.api import List, Callable
 from pychron.graph.tools.point_inspector import PointInspector
 
 from traitsui.menu import Action, Menu as MenuManager
+from pychron.pychron_constants import PLUSMINUS
+
 
 class AnalysisPointInspector(PointInspector):
     analyses = List
@@ -92,7 +94,6 @@ class AnalysisPointInspector(PointInspector):
 
                     rid = analysis.record_id
                     name = self.component.container.y_axis.title
-
                     y = self.component.value.get_data()[ind]
 
                     if hasattr(self.component, 'yerror'):
@@ -103,7 +104,7 @@ class AnalysisPointInspector(PointInspector):
                         if self.value_format:
                             y = self.value_format(y)
 
-                        y='{} +/-{} {}'.format(y,ye, pe)
+                        y=u'{} {}{} {}'.format(y,PLUSMINUS,ye, pe)
                     else:
                         if self.value_format:
                             y = self.value_format(y)
@@ -116,7 +117,6 @@ class AnalysisPointInspector(PointInspector):
                     if hasattr(analysis, 'status_text'):
                         info.insert(1, 'Status= {}'.format(analysis.status_text))
                     lines.extend(info)
-
                     if self.additional_info is not None:
                         ad = self.additional_info(analysis)
                         if isinstance(ad, (list, tuple)):

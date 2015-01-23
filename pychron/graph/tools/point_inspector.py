@@ -34,7 +34,7 @@ class PointInspector(InfoInspector):
             d = vstack((d, zeros_like(d))).T
             spts = self.component.map_screen(d)
             tol = 2
-            return where(abs(spts - xxyy[0]) < tol)[0]
+            return where(abs(spts[:,0] - xxyy[0]) < tol)[0]
 
     def percent_error(self, s, e):
         v = '(Inf%)'

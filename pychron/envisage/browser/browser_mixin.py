@@ -249,12 +249,13 @@ class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
     # database querying
     def _load_project_date_range(self, names):
         lp, hp = self.db.get_project_date_range(names)
-        ol, oh = self.use_low_post, self.use_high_post
         self.use_low_post, self.use_high_post = True, True
+        ol, oh = self.use_low_post, self.use_high_post
         self._low_post, self._high_post = lp, hp
-        self.use_low_post, self.use_high_post = ol, oh
         self.trait_property_changed('low_post', None)
         self.trait_property_changed('high_post', None)
+
+        self.use_low_post, self.use_high_post = ol, oh
 
     def _load_associated_groups(self, names):
         """
