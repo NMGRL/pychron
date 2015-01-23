@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,8 +16,8 @@
 
 # ============= enthought library imports =======================
 from traits.api import HasTraits, List, Str, TraitError, \
-    Button, Bool, Event, Color, Range, String
-from traitsui.api import View, HGroup, spring
+    Button, Bool, Event, Color, Range, String, Float, Int
+from traitsui.api import View, HGroup, spring, VGroup, Item
 
 import apptools.sweet_pickle as pickle
 # ============= standard library imports ========================
@@ -102,13 +102,17 @@ class FigurePlotterOptions(BasePlotterOptions):
     # refresh_plot_needed = Event
 
     auto_refresh = Bool(False)
-    initialized = True
     auto_generate_title = Bool(False)
     index_attr = String
 
     bgcolor = Color
     plot_bgcolor = Color
     plot_spacing = Range(0, 50)
+
+    padding_left = Int(100)
+    padding_right = Int(100)
+    padding_top = Int(100)
+    padding_bottom = Int(100)
 
     def deinitialize(self):
         for po in self.aux_plots:
@@ -170,10 +174,14 @@ class FigurePlotterOptions(BasePlotterOptions):
          disabled auto_refresh. causing a max recursion depth error. something to do with persisted xlimits
         """
         return HGroup(icon_button_editor('refresh_plot', 'refresh',
-                                         tooltip='Refresh plot'),
-                      spring,
-                      # Item('auto_refresh', label='Auto Plot')
-        )
+                                         tooltip='Refresh plot'))
+
+    def _get_padding_group(self):
+        return VGroup(Item('padding_left', label='Left'),
+                      Item('padding_right', label='Right'),
+                      Item('padding_top', label='Top'),
+                      Item('padding_bottom', label='Bottom'),
+                      label='Padding', show_border=True)
 
     # ==============================================================================
     # persistence
@@ -181,7 +189,11 @@ class FigurePlotterOptions(BasePlotterOptions):
     def _get_dump_attrs(self):
         return ['auto_refresh', 'aux_plots',
                 'bgcolor', 'plot_bgcolor',
-                'plot_spacing']
+                'plot_spacing',
+                'padding_left',
+                'padding_right',
+                'padding_top',
+                'padding_bottom']
 
     def _load_hook(self):
         klass = self.plot_option_klass

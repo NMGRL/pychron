@@ -3,7 +3,7 @@ CHANGELOG
 2.0.7
 ------------------
 * added level and chronology panes to Labnumber entry
-
+* padding to plot options
 
 2.0.6
 ------------------
