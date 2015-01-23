@@ -4,6 +4,8 @@ CHANGELOG
 ------------------
 * added level and chronology panes to Labnumber entry
 * padding to plot options
+* fixed plotting ideograms of attributes other than age
+
 
 2.0.6
 ------------------

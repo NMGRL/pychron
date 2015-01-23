@@ -56,7 +56,7 @@ class Ideogram(BaseArArFigure):
         opt = self.options
         if opt.index_attr:
             index_attr = opt.index_attr
-            if not opt.include_j_error:
+            if index_attr=='uage' and not opt.include_j_error:
                 index_attr = 'uage_wo_j_err'
         else:
             warning(None, 'X Value not set. Defaulting to Age')
@@ -65,6 +65,7 @@ class Ideogram(BaseArArFigure):
         graph = self.graph
 
         self._analysis_number_cnt = 0
+
         try:
             self.xs, self.xes = array([(ai.nominal_value, ai.std_dev)
                                        for ai in self._get_xs(key=index_attr)]).T
