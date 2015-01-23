@@ -35,7 +35,7 @@ from pychron.entry.labnumber_entry import LabnumberEntry
 from pychron.entry.tasks.actions import SavePDFAction
 # from pychron.entry.tasks.importer_panes import ImporterPane
 from pychron.entry.tasks.labnumber_entry_panes import LabnumbersPane, \
-    IrradiationPane, IrradiationEditorPane, IrradiationCanvasPane
+    IrradiationPane, IrradiationEditorPane, IrradiationCanvasPane, LevelInfoPane, ChronologyPane
 from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction
 from pychron.envisage.tasks.base_task import BaseManagerTask
 
@@ -184,7 +184,11 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
                     # PaneItem('pychron.labnumber.extractor'),
                     PaneItem('pychron.labnumber.editor')),
                 orientation='vertical'),
-            right=PaneItem('pychron.entry.irradiation_canvas'))
+            right=Splitter(
+                PaneItem('pychron.entry.level'),
+                PaneItem('pychron.entry.chronology'),
+                PaneItem('pychron.entry.irradiation_canvas'),
+                           orientation='vertical'))
 
     def create_central_pane(self):
         return LabnumbersPane(model=self.manager)
@@ -194,6 +198,8 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
         self.labnumber_tabular_adapter = iep.labnumber_tabular_adapter
         return [
             IrradiationPane(model=self.manager),
+            ChronologyPane(model=self.manager),
+            LevelInfoPane(model=self.manager),
             # ImporterPane(model=self.importer),
             iep,
             IrradiationCanvasPane(model=self.manager)]

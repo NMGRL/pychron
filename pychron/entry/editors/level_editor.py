@@ -25,13 +25,6 @@ from traits.api import List, Instance, Str, Float, Any, Button, Property, HasTra
 from traitsui.api import View, Item, TabularEditor, HGroup, UItem, VSplit, Group, VGroup, \
     HSplit
 
-
-
-
-
-
-
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
