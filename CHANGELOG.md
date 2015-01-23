@@ -2,6 +2,7 @@ CHANGELOG
 ============
 2.0.7
 ------------------
+* added level and chronology panes to Labnumber entry
 
 
 2.0.6
@@ -33,7 +34,6 @@ CHANGELOG
 * fixed displaying irradiation holder
 * added auto saving of experiment queues. Auto saves to a .bak file whenever values change or run added
 * added SampleImageTask
-* added level and chronology panes to Labnumber entry
 * added notes to irradiation levels
 * added task switching to Browser pane
 
