@@ -27,8 +27,8 @@ from enable.base_tool import BaseTool
 from enable.tools.drag_tool import DragTool
 # ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
-from pychron.graph.tools.info_inspector import InfoOverlay
-from pychron.pychron_constants import ALPHAS
+from pychron.graph.tools.info_inspector import InfoOverlay, InfoInspector
+from pychron.pychron_constants import ALPHAS, PLUSMINUS
 
 
 class BasePlateauOverlay(AbstractOverlay):
@@ -45,11 +45,11 @@ class BasePlateauOverlay(AbstractOverlay):
         return tt
 
 
-class SpectrumTool(BaseTool, BasePlateauOverlay):
+class SpectrumTool(InfoInspector, BasePlateauOverlay):
     nsigma = Int(2)
-    metadata_changed = Event
-    current_position = None
-    current_screen = None
+    # metadata_changed = Event
+    # current_position = None
+    # current_screen = None
     analyses = List
 
     def hittest(self, screen_pt, threshold=20):
@@ -59,8 +59,15 @@ class SpectrumTool(BaseTool, BasePlateauOverlay):
         ys = comp.value.get_data()[::2]
         if ndx < len(ys):
             yd = ys[ndx]
-            e = comp.errors[ndx] * self.nsigma
+
+
+            e = comp.errors[ndx*2] * self.nsigma
             yl, yu = comp.y_mapper.map_screen(array([yd - e, yd + e]))
+            # print ys
+            # print ndx, yd, yd+e, yd-e, yu, yl, screen_pt[1], self.nsigma
+            if yu-yl<1:
+                yu+=1
+                yl-=1
 
             if yl < screen_pt[1] < yu:
                 return ndx
@@ -104,7 +111,7 @@ class SpectrumTool(BaseTool, BasePlateauOverlay):
         return ['RunID={}'.format(an.record_id),
                 'Tag={}'.format(an.tag),
                 'Status={}'.format(an.status_text),
-                '{}={} +/- {} (1s)'.format(comp.container.y_axis.title, floatfmt(v),
+                u'{}={} {}{} (1\u03c3)'.format(comp.container.y_axis.title, floatfmt(v),PLUSMINUS,
                                            floatfmt(e)),
                 'Cumulative. Ar39={}-{}'.format(floatfmt(low_c),
                                                 floatfmt(self.cumulative39s[idx]))]

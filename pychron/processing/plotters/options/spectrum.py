@@ -65,7 +65,7 @@ class SpectrumOptions(AgeOptions):
         self.plateau_age_error_kind = v
 
     # def _get_info_group(self):
-    #     g = VGroup(
+    # g = VGroup(
     #         HGroup(Item('show_info', label='Display Info'),
     #                Item('show_mean_info', label='Mean', enabled_when='show_info'),
     #                Item('show_error_type_info', label='Error Type', enabled_when='show_info')
@@ -135,17 +135,17 @@ class SpectrumOptions(AgeOptions):
             show_border=True,
             label='Plateau')
 
-        error_grp = Group(HGroup(Item('step_nsigma',
-                                      editor=EnumEditor(values=[1, 2, 3]),
-                                      tooltip='Set the size of the error envelope in standard deviations',
-                                      label='N. Sigma'),
-                                 Item('use_error_envelope_fill', label='Fill'),
-                                 Item('envelope_alpha',
-                                      label='Opacity',
-                                      enabled_when='use_error_envelope_fill',
-                                      tooltip='Set the opacity (alpha-value) for the error envelope')),
-                          show_border=True,
-                          label='Error Envelope')
+        error_grp = VGroup(HGroup(Item('step_nsigma',
+                                       editor=EnumEditor(values=[1, 2, 3]),
+                                       tooltip='Set the size of the error envelope in standard deviations',
+                                       label='N. Sigma')),
+                                  HGroup(Item('use_error_envelope_fill', label='Fill'),
+                                         Item('envelope_alpha',
+                                              label='Opacity',
+                                              enabled_when='use_error_envelope_fill',
+                                              tooltip='Set the opacity (alpha-value) for the error envelope')),
+                           show_border=True,
+                           label='Error Envelope')
 
         display_grp = Group(HGroup(UItem('show_info',
                                          tooltip='Show general info in the upper right corner'),

@@ -124,7 +124,7 @@ class InfoOverlay(AbstractOverlay):
         if x < sx:
             x = sx - lw - xoffset - 6
 
-        h = lhs[0]
+        h = lhs[0]+2
 
         gc.rect(x, y, lw, lh)
         gc.draw_path()

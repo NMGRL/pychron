@@ -109,7 +109,7 @@ class Spectrum(BaseArArFigure):
             # e = plateau_age.std_dev * self.options.nsigma
             # info_txt = self._build_label_text(plateau_age.nominal_value, e,
             # plateau_mswd, valid_mswd, nsteps,
-            #                                   sig_figs=self.options.plateau_sig_figs)
+            # sig_figs=self.options.plateau_sig_figs)
             txt = self._make_plateau_text()
             overlay = self._add_plateau_overlay(spec, platbounds, plateau_age,
                                                 ys[::2], es[::2],
@@ -204,10 +204,11 @@ class Spectrum(BaseArArFigure):
 
         ds.index.sort_order = 'ascending'
         # ds.index.on_trait_change(self._update_graph, 'metadata_changed')
-
+        ns = self.options.step_nsigma
         # sp = SpectrumTool(ds, spectrum=self, group_id=group_id)
         sp = SpectrumTool(component=ds,
                           cumulative39s=self.xs,
+                          nsigma=ns,
                           analyses=self.analyses)
 
         self.broadcaster.tools.append(sp)
@@ -219,9 +220,7 @@ class Spectrum(BaseArArFigure):
         # provide 1s errors use nsigma to control display
         ds.errors = es
 
-        ns = self.options.step_nsigma
         a = self.options.envelope_alpha * 0.01
-
         sp = SpectrumErrorOverlay(component=ds,
                                   spectrum=self,
                                   alpha=max(min(1.0, a), 0.0),
@@ -278,7 +277,7 @@ class Spectrum(BaseArArFigure):
 
     # def update_index_mapper(self, gid, obj, name, old, new):
     # if new is True:
-    #         self._update_graph_metadata(gid, None, name, old, new)
+    # self._update_graph_metadata(gid, None, name, old, new)
 
     def _update_graph_metadata(self, obj, name, old, new):
         sel = obj.metadata['selections']
