@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -156,10 +156,10 @@ class MassSpecExtractor(Extractor):
         added_to_db = False
         db = self.db
 
-        name=dbirrad.name
+        name = dbirrad.name
         with db.session_ctx() as sess:
             levels = db.get_irradiation_levels(name,
-                                                levels=include_list)
+                                               levels=include_list)
             #if not include_list:
             #    include_list = [li.Level for li in levels]
 
@@ -216,7 +216,7 @@ class MassSpecExtractor(Extractor):
                         dbpos = dest.add_irradiation_position(ip.HoleNumber, ln,
                                                               name, mli.Level)
 
-                        fh = dest.add_flux_history(dbpos)
+                        fh = dest.add_flux_history(dbpos, note=ip.Note)
                         ln.selected_flux_history = fh
                         fl = dest.add_flux(ip.J, ip.JEr)
                         fh.flux = fl
@@ -238,7 +238,7 @@ class MassSpecExtractor(Extractor):
 
                             if self._add_analysis(dest, ln, ai):
                                 added_to_db = True
-                        #
+                                #
                             if include_blanks:
                                 if self._add_associated_unknown_blanks(dest, ai):
                                     added_to_db = True
@@ -444,7 +444,7 @@ class MassSpecExtractor(Extractor):
             get all before post+delta and after post
         '''
         with self.db.session_ctx() as sess:
-        #         sess = self.db.get_session()
+            #         sess = self.db.get_session()
             q = sess.query(AnalysesTable)
             q = q.join(LoginSessionTable)
             q = q.join(MachineTable)
@@ -493,7 +493,7 @@ class MassSpecExtractor(Extractor):
 
         ans = dest.get_unique_analysis(dest_labnumber, al, step=step)
         if ans:
-        #             self.debug('{}-{}{} already exists'.format(dest_labnumber, aliquot, step))
+            #             self.debug('{}-{}{} already exists'.format(dest_labnumber, aliquot, step))
             return
 
         dest_an = dest.add_analysis(dest_labnumber,
@@ -558,7 +558,7 @@ class MassSpecExtractor(Extractor):
         if len(dbanalysis.isotopes) < 4 or len(dbanalysis.isotopes) > 7:
             self.import_err_file.write('{}\n'.format(identifier))
 
-        ic_hist=None
+        ic_hist = None
         for iso in dbanalysis.isotopes:
 
             pkt = iso.peak_time_series[-1]
@@ -588,9 +588,9 @@ class MassSpecExtractor(Extractor):
             # add ic factors
             if det:
                 if ic_hist is None:
-                    ic_hist=dest.add_detector_intercalibration_history(dest_an)
+                    ic_hist = dest.add_detector_intercalibration_history(dest_an)
 
-                v,e=iso.detector.ICFactor, iso.detector.ICFactorEr
+                v, e = iso.detector.ICFactor, iso.detector.ICFactorEr
                 dest.add_detector_intercalibration(ic_hist, det,
                                                    user_value=v,
                                                    user_error=e)

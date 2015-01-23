@@ -144,7 +144,7 @@ class ExperimentEditorTask(EditorTask):
                 self.manager.experiment_factory.activate(load_persistence=True)
 
                 editor = ExperimentEditor()
-                editor.set_colors(self.bgcolor, self.even_bgcolor)
+                editor.setup_tabular_adapters(self.bgcolor, self.even_bgcolor)
                 editor.new_queue()
 
                 self._open_editor(editor)
@@ -245,7 +245,10 @@ class ExperimentEditorTask(EditorTask):
         return panes
 
     def _open_abort(self):
-        self.notifier.close()
+        try:
+            self.notifier.close()
+        except AttributeError:
+            pass
 
     def _open_file(self, path, **kw):
         if not isinstance(path, (tuple, list)):
@@ -277,7 +280,7 @@ class ExperimentEditorTask(EditorTask):
             klass = UVExperimentEditor if is_uv else ExperimentEditor
             editor = klass(path=path,
                            automated_runs_editable=self.automated_runs_editable)
-            editor.set_colors(self.bgcolor, self.even_bgcolor)
+            editor.setup_tabular_adapters(self.bgcolor, self.even_bgcolor)
             editor.new_queue(txt)
             self._open_editor(editor)
         else:

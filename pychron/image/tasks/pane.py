@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from pyface.tasks.traits_dock_pane import TraitsDockPane
-from traitsui.api import View, VGroup, UItem, TabularEditor
+from traitsui.api import View, VGroup, UItem, TabularEditor, Item, TextEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
@@ -35,6 +35,16 @@ class ImageAdapter(TabularAdapter):
 #         # v = View(UItem('camera', editor=CameraEditor()))
 #         return v
 
+class InfoPane(TraitsDockPane):
+    id = 'pychron.image.info'
+    name = 'Image Info'
+
+    def traits_view(self):
+        v=View(VGroup(Item('object.selected_info_model.create_date', style='readonly'),
+                      Item('object.selected_info_model.name'),
+                      VGroup(UItem('object.selected_info_model.note', style='custom',
+                                   editor=TextEditor(read_only=False)))))
+        return v
 
 class SampleBrowserPane(TraitsDockPane):
     id = 'pychron.image.browser'
@@ -67,6 +77,7 @@ class SampleBrowserPane(TraitsDockPane):
                                  editor=TabularEditor(editable=False,
                                                       adapter=ImageAdapter(),
                                                       multi_select=False,
+                                                      dclicked='dclicked',
                                                       selected='selected_image')),
                            show_border=True,
                            label='Images')

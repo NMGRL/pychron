@@ -137,7 +137,10 @@ class LabnumberEntry(IsotopeDatabaseManager):
             if ms.connect():
                 jt = JTransferer(pychrondb=self.db,
                                  massspecdb=ms)
-                jt.do_transfer(self.irradiation, self.level, items)
+                if jt.do_transfer(self.irradiation, self.level, items):
+                    self._save_to_db()
+
+                self.refresh_table = True
         else:
             self.warning_dialog('Unable to Transfer Js. Mass Spec database not configured properly. '
                                 'Check Preferences>Database')
@@ -164,7 +167,7 @@ class LabnumberEntry(IsotopeDatabaseManager):
             return j, j * 0.001
 
     # def set_selected_sample(self, new):
-    #     self.selected_sample = new
+    # self.selected_sample = new
     #     self.set_selected_attr(new.name, 'sample')
     #     #self.canvas.selected_samples=new
 
@@ -572,9 +575,10 @@ THIS CHANGE CANNOT BE UNDONE')
     def _level_changed(self, new):
         self.debug('level changed "{}"'.format(new))
         self.irradiated_positions = []
-        self.canvas = IrradiationCanvas()
         if new:
             self._update_level(debug=True)
+        # else:
+        #     self.canvas = IrradiationCanvas()
 
     def _auto_increment_irradiation(self):
         lastname = self.irradiations[0]
@@ -779,7 +783,7 @@ if __name__ == '__main__':
 # irradiation = self.irradiation
 # level = Level(db=self.db,
 # name=self.level,
-#               trays=self.trays)
+# trays=self.trays)
 # level.load(irradiation)
 # info = level.edit_traits(kind='livemodal')
 # if info.result:

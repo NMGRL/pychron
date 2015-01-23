@@ -28,6 +28,10 @@ CHANGELOG
 * updated PreferencesDialog. Display categories in a TabularEditor instead of as Group tabs.
 * added ReplicationTask for interacting with a replication db
 * added predefined initializations
+* added "Whats New" action. brings user to this doc.
+* added Experiment Columns defaults. [root]/setupfiles/experiment_defaults.yaml
+* fixed displaying irradiation holder
+* added auto saving of experiment queues. Auto saves to a .bak file whenever values change or run added
 * added SampleImageTask
 
 <!---

@@ -59,7 +59,6 @@ class ToupCamCamera(object):
     _data = None
     _frame_fn = None
     _temptint_cb = None
-    save_event = Event
 
     def __init__(self, resolution=2, bits=32):
         if bits not in (32,):
@@ -85,7 +84,7 @@ class ToupCamCamera(object):
         # image = self.get_jpeg_data(im, 10)
         image = self.get_pil_image(im)
         image.save(self._save_path, 'JPEG', quality=10)
-        view_file(self._save_path)
+        # view_file(self._save_path)
 
     def get_jpeg_data(self, data=None, quality=75):
 
@@ -94,7 +93,6 @@ class ToupCamCamera(object):
         s = StringIO()
         im.save(s, 'JPEG', quality=quality)
         s.seek(0, os.SEEK_END)
-        print s.tell()
 
         return s.getvalue()
 

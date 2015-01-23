@@ -29,7 +29,7 @@ from pychron.envisage.tasks.actions import PAction as Action
 class ActivateBlankAction(myTaskAction):
     name = 'Activate Blanks'
     task_ids = ['pychron.processing.figures', 'pychron.recall']
-    method = 'activate_blank_task'
+    method = 'activate_blanks_task'
 
 
 class ActivateRecallAction(myTaskAction):

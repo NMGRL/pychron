@@ -217,6 +217,21 @@ class DocumentationAction(WebAction):
         self._open_url(url)
 
 
+class ChangeLogAction(WebAction):
+    name = "What's New"
+    image = icon('documentation')
+    description = 'View changelog'
+
+
+    def perform(self, event):
+        """
+            goto issues page add an request or report bug
+        """
+        from pychron.version import __version__
+        url = 'https://github.com/NMGRL/pychron/blob/release/v{}/CHANGELOG.md'.format(__version__)
+        self._open_url(url)
+
+
 class AboutAction(PAction):
     name = 'About Pychron'
 

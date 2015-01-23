@@ -1369,12 +1369,13 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     def _load_default_conditionals(self, term_name, **kw):
         self.debug('loading default (system) conditionals {}'.format(term_name))
-        p = get_path(paths.spectrometer_dir, 'default_conditionals', ['.yaml', '.yml'])
+        p = paths.system_conditionals
+        # p = get_path(paths.spectrometer_dir, 'default_conditionals', ['.yaml', '.yml'])
         if p:
             return self._extract_conditionals(p, term_name, level=SYSTEM, **kw)
         else:
-            pp = os.path.join(paths.spectrometer_dir, 'default_conditionals.yaml')
-            self.warning('no default conditionals file located at {}'.format(pp))
+            # pp = os.path.join(paths.spectrometer_dir, 'default_conditionals.yaml')
+            self.warning('no default conditionals file located at {}'.format(p))
 
     def _load_queue_conditionals(self, term_name, **kw):
         self.debug('loading queue conditionals {}'.format(term_name))

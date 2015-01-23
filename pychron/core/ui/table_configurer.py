@@ -53,12 +53,19 @@ class TableConfigurer(HasTraits):
     title = Str('Configure Table')
     refresh_func = Callable
     show_all = Button('Show All')
-    show_sparse = Button('Show Sparse')
-    set_sparse = Button('Set Sparse')
+
+    set_sparse = Button('Define Sparse')
+    toggle_sparse = Button('Toggle Sparse')
+
     sparse_enabled = Property(depends_on='columns[]')
 
+    _toggle_sparse_enabled = Bool(False)
+
+    default_button = Button('Default')
+    defaults_path = Str
+
     def _get_sparse_enabled(self):
-        return self.sparse_columns!=self.columns
+        return self.sparse_columns != self.columns and len(self.columns) < 5
 
     def __init__(self, *args, **kw):
         super(TableConfigurer, self).__init__(*args, **kw)
@@ -88,7 +95,7 @@ class TableConfigurer(HasTraits):
             if self.refresh_func:
                 self.refresh_func()
 
-            # self.refresh_table_needed = True
+                # self.refresh_table_needed = True
 
     def set_columns(self):
         # def _columns_changed(self):
@@ -160,12 +167,36 @@ class TableConfigurer(HasTraits):
     def _get_columns_grp(self):
         return
 
+    def _set_defaults(self):
+        p = self.defaults_path
+        if os.path.isfile(p):
+            import yaml
+
+            with open(p, 'r') as fp:
+                yd = yaml.load(fp)
+                try:
+                    self.columns = yd['columns']
+                except KeyError:
+                    pass
+            self.set_columns()
+
+    def _default_button_fired(self):
+        self._set_defaults()
+
     def _set_sparse_fired(self):
         self.sparse_columns = self.columns
 
-    def _show_sparse_fired(self):
-        self.columns = self.sparse_columns
+    def _toggle_sparse_fired(self):
+        if self._toggle_sparse_enabled:
+            columns = self._prev_columns
+        else:
+            self._prev_columns = self.columns
+            columns = self.sparse_columns
+
+        self.columns = columns
         self.set_columns()
+
+        self._toggle_sparse_enabled = not self._toggle_sparse_enabled
 
     def _show_all_fired(self):
         self.columns = self.available_columns
@@ -192,18 +223,19 @@ class TableConfigurer(HasTraits):
                                UItem('set_sparse',
                                      tooltip='Set the current set of columns to the Sparse Column Set',
                                      enabled_when='sparse_enabled'),
-                               UItem('show_sparse',
-                                     tooltip='Display only Sparse Column Set',
-                                     enabled_when='sparse_enabled',
-                                     visible_when='sparse_columns')),
-                 VGroup(UItem('columns',
-                              style='custom',
-                              editor=CheckListEditor(name='available_columns', cols=3)),
-                        Item('font', enabled_when='fontsize_enabled'),
-                        show_border=True)),
+                               UItem('toggle_sparse',
+                                     tooltip='Display only Sparse Column Set'),
+                               UItem('default_button',
+                                     tooltip='Set to Laboratory defaults. File located at '
+                                             '[root]/experiments/experiment_defaults.yaml')),
+                        VGroup(UItem('columns',
+                                     style='custom',
+                                     editor=CheckListEditor(name='available_columns', cols=3)),
+                               Item('font', enabled_when='fontsize_enabled'),
+                               show_border=True)),
                  handler=TableConfigurerHandler(),
                  title=self.title,
-                 buttons=['OK', 'Cancel'],)
+                 buttons=['OK', 'Cancel'], )
         return v
 
 
@@ -223,6 +255,10 @@ def str_to_time(lp):
         fmt = '%Y' if len(lp) == 4 else '%y'
 
     return datetime.strptime(lp, fmt)
+
+
+class ExperimentTableConfigurer(TableConfigurer):
+    defaults_path = paths.experiment_defaults
 
 
 class AnalysisTableConfigurer(TableConfigurer):
@@ -246,7 +282,7 @@ class AnalysisTableConfigurer(TableConfigurer):
                         # Group(
                         # VGroup(HGroup(Heading('Lower Bound'), UItem('use_low_post')),
                         # UItem('low_post', style='custom', enabled_when='use_low_post')),
-                        #     VGroup(HGroup(Heading('Upper Bound'), UItem('use_high_post')),
+                        # VGroup(HGroup(Heading('Upper Bound'), UItem('use_high_post')),
                         #            UItem('high_post', style='custom', enabled_when='use_high_post')),
                         #     VGroup(HGroup(Heading('Named Range'), UItem('use_named_date_range')),
                         #            UItem('named_date_range', enabled_when='use_named_date_range'))),
@@ -286,7 +322,7 @@ class SampleTableConfigurer(TableConfigurer):
                          editor=CheckListEditor(name='available_columns', cols=3)),
                    label='Columns', show_border=True),
             # Item('filter_non_run_samples',
-            #      tooltip='Omit samples that have not been analyzed to date',
+            # tooltip='Omit samples that have not been analyzed to date',
             #      label='Exclude Non-Run')
         ),
                  buttons=['OK', 'Cancel', 'Revert'],
@@ -333,7 +369,7 @@ class RecallTableConfigurer(TableConfigurer):
 
     # def closed(self):
     # super(RecallTableConfigurer, self).closed()
-    #     self.experiment_view
+    # self.experiment_view
 
     def _get_dump(self):
         obj = super(RecallTableConfigurer, self)._get_dump()
