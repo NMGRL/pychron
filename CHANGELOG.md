@@ -5,7 +5,8 @@ CHANGELOG
 * added level and chronology panes to Labnumber entry
 * padding to plot options
 * fixed plotting ideograms of attributes other than age
-
+* improved database startup tests
+* added database version check to startup tests
 
 2.0.6
 ------------------

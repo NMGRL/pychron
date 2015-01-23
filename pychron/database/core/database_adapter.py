@@ -75,7 +75,7 @@ class SessionCTX(object):
         # self._sess.flush()
         if self._close_at_exit:
             try:
-                #self._parent.debug('$%$%$%$%$%$%$%$ commit {}'.format(self._commit))
+                # self._parent.debug('$%$%$%$%$%$%$%$ commit {}'.format(self._commit))
                 if self._commit:
                     self._sess.commit()
                 else:
@@ -113,6 +113,7 @@ class DatabaseAdapter(Loggable):
     application = Any
 
     test_func = 'get_migrate_version'
+    version_func = 'get_migrate_version'
 
     selector = Any
     autoflush = False
@@ -165,8 +166,8 @@ class DatabaseAdapter(Loggable):
         self.connection_error = ''
         if force:
             self.debug('forcing database connection')
-            #             self.reset()
-        #             self.session_factory = None
+            # self.reset()
+        # self.session_factory = None
 
         if self.connection_parameters_changed:
             force = True
@@ -237,7 +238,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
 
     def get_migrate_version(self, **kw):
         with self.session_ctx() as s:
-            #q = s.query(MigrateVersionTable)
+            # q = s.query(MigrateVersionTable)
             q = s.query(AlembicVersionTable)
             mv = q.one()
             return mv
@@ -247,7 +248,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
 
         tables = self._get_tables()
         table = tables[tablename]
-        #         sess = self.get_session()
+        # sess = self.get_session()
         q = sess.query(table)
         if kw:
 
@@ -275,7 +276,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
         host = self.host
         name = self.name
         if kind in ('mysql', 'postgresql'):
-            if kind =='mysql':
+            if kind == 'mysql':
                 # add support for different mysql drivers
                 driver = self._import_mysql_driver()
                 if driver is None:
@@ -318,11 +319,12 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
             try:
                 # connected = False
                 # if self.test_func is not None:
-                #                 self.sess = None
+                # self.sess = None
                 #                 self.get_session()
                 #                sess = self.session_factory()
                 self.info('testing database connection {}'.format(self.test_func))
                 ver = getattr(self, self.test_func)(reraise=True)
+                print 'ffff', version_warn
                 if version_warn:
                     ver = ver.version_num
                     aver = version.__alembic__
@@ -345,14 +347,22 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
 
             finally:
                 self.info('closing test session')
-                #                 if self.sess is not None:
+                # if self.sess is not None:
                 #                     self.sess.close()
 
         return connected
 
-        # @deprecated
+    def test_version(self):
+        if self.version_func:
+            with self.session_ctx():
+                ver = getattr(self, self.version_func)()
+                ver = ver.version_num
+                aver = version.__alembic__
+                if ver != aver:
+                    return 'Database is out of data. Pychron ver={}, Database ver={}'.format(aver, ver)
+                    # @deprecated
 
-    #     def _get_query(self, klass, join_table=None, filter_str=None, sess=None,
+    # def _get_query(self, klass, join_table=None, filter_str=None, sess=None,
     #                     *args, **clause):
     # #         sess = self.get_session()
     #         q = sess.query(klass)
@@ -552,11 +562,11 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
         except SQLAlchemyError, e:
             if reraise:
                 raise
-            # if self.verbose:
-            #     self.debug('_query exception {}'.format(e))
-            # import traceback
-            # traceback.print_exc()
-            # self.sess.rollback()
+                # if self.verbose:
+                #     self.debug('_query exception {}'.format(e))
+                # import traceback
+                # traceback.print_exc()
+                # self.sess.rollback()
 
     def _retrieve_item(self, table, value, key='name', last=None,
                        joins=None, filters=None, options=None, verbose=True,
@@ -695,7 +705,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
 
 
 # def _get(self, table, query_dict, func='one'):
-#        sess = self.get_session()
+# sess = self.get_session()
 #        q = sess.query(table)
 #        f = q.filter_by(**query_dict)
 #        return getattr(f, func)()

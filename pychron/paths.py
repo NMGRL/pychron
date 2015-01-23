@@ -55,6 +55,7 @@ DEFAULT_STARTUP_TESTS = '''
 - plugin: Database
   tests:
     - test_pychron
+    - test_pychron_version
     - test_massspec
 - plugin: LabBook
   tests:

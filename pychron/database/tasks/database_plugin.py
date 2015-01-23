@@ -31,8 +31,11 @@ class DatabasePlugin(BaseTaskPlugin):
 
     test_pychron_description = 'Test the connection to the Pychron Database'
     test_massspec_description = 'Test the connection to the MassSpec Database'
+    test_pychron_version_description = 'Test compatibility of Pychron with the current Database'
+
     test_pychron_error = ''
     test_massspec_error = ''
+    test_pychron_version_error = ''
 
     def start(self):
         self.startup_test()
@@ -40,12 +43,16 @@ class DatabasePlugin(BaseTaskPlugin):
             self._db.populate_default_tables()
             del self._db
 
+    def test_pychron_version(self):
+        iso = self._get_database()
+        err = iso.db.test_version()
+        if err:
+            self.test_pychron_version_error = err
+
+        return 'Passed' if not err else 'Failed'
+
     def test_pychron(self):
-        iso = IsotopeDatabaseManager(application=self.application,
-                                     warn=False,
-                                     version_warn=False,
-                                     attribute_warn=False)
-        self._db = iso
+        iso = self._get_database()
         self._connectable = c = iso.is_connected()
 
         if not c:
@@ -53,13 +60,26 @@ class DatabasePlugin(BaseTaskPlugin):
 
         return 'Passed' if c else 'Failed'
 
+    def _get_database(self):
+        if not self._db:
+            iso = IsotopeDatabaseManager(application=self.application,
+                                         warn=False,
+                                         version_warn=False,
+                                         attribute_warn=False)
+            self._db = iso
+
+        return self._db
+
     def test_massspec(self):
         ret = 'Skipped'
         db = self.application.get_service('pychron.database.adapters.massspec_database_adapter.MassSpecDatabaseAdapter')
         if db:
             db.bind_preferences()
-            ret = 'Passed' if db.connect() else 'Failed'
-
+            connected = db.connect(warn=False)
+            ret = 'Passed'
+            if not connected:
+                self.test_massspec_error = db.connection_error
+                ret = 'Failed'
         return ret
 
     def _get_pref(self, name):
