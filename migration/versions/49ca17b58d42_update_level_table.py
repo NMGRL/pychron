@@ -7,7 +7,6 @@ Create Date: 2015-01-22 14:53:59.064931
 """
 
 # revision identifiers, used by Alembic.
-from migration.triggers import create_timestamp_trigger_for_modification
 
 revision = '49ca17b58d42'
 down_revision = '52f976e8c538'

@@ -29,21 +29,15 @@ from traitsui.qt4.editor import Editor
 class _CameraEditor(Editor):
     timer = Instance(QTimer)
     swap = False
-    save_event = Event
 
     def init(self, parent):
         self.control = self._create_control(parent)
-        self.sync_value(self.factory.save_event, 'save_event', 'from')
 
     def update_editor(self):
         self._setup_loop()
 
     def dispose(self):
         self.timer.stop()
-
-    def _save_event_fired(self, new):
-        pic = self.control.pixmap()
-        pic.save(new)
 
     def _setup_loop(self):
         self.timer = QTimer(self.control)
@@ -80,7 +74,6 @@ class _CameraEditor(Editor):
 class  CameraEditor(BasicEditorFactory):
     klass = _CameraEditor
     fps = Int(24)
-    save_event = Str
 
 # ============= EOF =============================================
 

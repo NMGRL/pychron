@@ -27,11 +27,11 @@ from pychron.envisage.browser.record_views import SampleRecordView, SampleImageR
 from pychron.envisage.tasks.base_task import BaseManagerTask
 # from pychron.image.camera import Camera
 from pychron.envisage.tasks.editor_task import BaseEditorTask
-from pychron.image.tasks.actions import SnapshotAction, DBSnapshotAction
+from pychron.image.tasks.actions import SnapshotAction, DBSnapshotAction, UploadAction
 # from pychron.image.tasks.image_pane import SampleImagePane
-from pychron.image.tasks.pane import SampleBrowserPane#, CameraTabPane
+from pychron.image.tasks.pane import SampleBrowserPane, InfoPane  # , CameraTabPane
 from pychron.image.tasks.save_view import DBSaveView
-from pychron.image.tasks.tab import CameraTab, ImageTabEditor
+from pychron.image.tasks.tab import CameraTab, ImageTabEditor, ImageModel
 from pychron.image.tasks.video_pane import VideoPane
 from pychron.image.toupcam.camera import ToupCamCamera
 from pychron.paths import paths
@@ -41,11 +41,14 @@ class SampleImageTask(BaseEditorTask, BrowserMixin):
     name = 'Sample Imager'
     id = 'pychron.image.sample_imager'
 
-    tool_bars = [SToolBar(SnapshotAction())]
+    tool_bars = [SToolBar(SnapshotAction()),
+                 SToolBar(UploadAction())]
     save_event = Event
 
     images = List
     selected_image = Instance(SampleImageRecordView)
+    selected_info_model = Instance(ImageModel, ())
+    dclicked = Event
     _prev_name = None
 
     def __init__(self, *args, **kw):
@@ -55,15 +58,43 @@ class SampleImageTask(BaseEditorTask, BrowserMixin):
         self.camera = ToupCamCamera()
         self.filter_non_run_samples = False
 
+    def save(self, path=None):
+        if self.active_editor and isinstance(self.active_editor, ImageTabEditor):
+            if self.active_editor.dirty:
+                db = self.manager.db
+                with db.session_ctx():
+                    dbim = db.get_sample_image(self.active_editor.record_id)
+                    dbim.note = self.active_editor.model.note
+                    dbim.name = self.active_editor.model.name
+                    self.active_editor.model.original_note = dbim.note
+                    self.active_editor.model.original_name = dbim.name
+                self.active_editor.dirty = False
+
+            self._load_associated_images(self.selected_samples)
+
+    def save_as(self):
+        self.save()
+
     # actions
+    def upload_image_from_file(self):
+        if not self.selected_samples:
+            self.information_dialog('Please select a sample to associate with the image')
+            return
+
+        path = self.open_file_dialog(default_directory=os.path.expanduser('~'), wildcard='*.jpg|*.jpeg')
+        if path is not None:
+            with open(path, 'rb') as fp:
+                self.save_db_snapshot(fp.read())
+
+        self._load_associated_images(self.selected_samples)
+
     def save_file_snapshot(self):
         from pychron.core.helpers.filetools import unique_path2
 
         p, _ = unique_path2(paths.sample_image_dir, 'nosample', extension='.jpg')
-        # self.camera.save(p)
-        self.save_event = p
+        self.camera.save(p)
 
-    def save_db_snapshot(self):
+    def save_db_snapshot(self, blob=None):
         if not self.selected_samples:
             self.warning_dialog('Please select a sample')
             return
@@ -89,10 +120,10 @@ class SampleImageTask(BaseEditorTask, BrowserMixin):
         if info.result:
             self._prev_name = v.name
             self.debug('save image with name={}'.format(name))
+            if blob is None:
+                blob = self.camera.get_jpeg_data(quality=75)
 
-            jpgblob = self.camera.get_jpeg_data(quality=75)
-
-            db.add_sample_image(sample.name, v.name, jpgblob, v.note, identifier=sample.identifier)
+            db.add_sample_image(sample.name, v.name, blob, v.note, identifier=sample.identifier)
 
 
     # task interface
@@ -109,7 +140,8 @@ class SampleImageTask(BaseEditorTask, BrowserMixin):
         self.camera.close()
 
     def create_dock_panes(self):
-        return [SampleBrowserPane(model=self)]
+        return [SampleBrowserPane(model=self),
+                InfoPane(model=self)]
 
     def _selected_projects_changed(self, old, new):
         if new and self.project_enabled:
@@ -125,21 +157,30 @@ class SampleImageTask(BaseEditorTask, BrowserMixin):
         if new:
             self._load_associated_images(new)
 
-    def _selected_image_changed(self, new):
-        if new:
-            print new
+    # def _selected_image_changed(self, new):
+    def _dclicked_changed(self):
+        selected = self.selected_image
+        if selected:
             db = self.manager.db
             with db.session_ctx():
-                dbim = db.get_sample_image(new.record_id)
-                print dbim
-                editor = self.get_editor(new.record_id, key='record_id')
+                dbim = db.get_sample_image(selected.record_id)
+                editor = self.get_editor(selected.record_id, key='record_id')
                 if not editor:
-                    im = dbim.image
-                    editor = ImageTabEditor(record_id=new.record_id,
-                                            image=im)
+                    model = ImageModel(blob=dbim.image,
+                                       name=dbim.name,
+                                       create_date=dbim.create_date,
+                                       note=dbim.note or '')
+
+                    editor = ImageTabEditor(record_id=selected.record_id,
+                                            model=model,
+                                            name=dbim.name)
                     self._open_editor(editor)
                 else:
                     self.activate_editor(editor)
+
+    def _active_editor_changed(self, new):
+        if new and isinstance(new.model, ImageModel):
+            self.selected_info_model = new.model
 
     def _load_associated_images(self, sample_records):
         db = self.manager.db
@@ -173,7 +214,8 @@ class SampleImageTask(BaseEditorTask, BrowserMixin):
 
 
     def _default_layout_default(self):
-        return TaskLayout(left=PaneItem(id='pychron.image.browser'))
+        return TaskLayout(left=PaneItem(id='pychron.image.browser'),
+                          right=PaneItem(id='pychron.image.info'))
 
 # ============= EOF =============================================
 

@@ -23,6 +23,12 @@ from traitsui.api import View, Item
 from pychron.envisage.resources import icon
 
 
+class UploadAction(TaskAction):
+    name = 'Upload'
+    image = icon('image_add')
+    method = 'upload_image_from_file'
+
+
 class SnapshotAction(TaskAction):
     name = 'Snapshot'
     image = icon('camera')

@@ -918,6 +918,8 @@ class IsotopeAdapter(DatabaseAdapter):
 
             return q.count()
 
+    def get_sample_image(self, sid):
+        return self._retrieve_item(med_SampleImageTable, sid, key='id')
 
     def get_adjacent_analysis(self, timestamp, previous):
         with self.session_ctx() as sess:
