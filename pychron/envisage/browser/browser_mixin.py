@@ -19,7 +19,7 @@ from traits.api import List, Str, Bool, Any, Enum, Button, \
     Int, Property, cached_property, DelegatesTo, Date, Instance, HasTraits
 import apptools.sweet_pickle as pickle
 # ============= standard library imports ========================
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, date
 import os
 import re
 # ============= local library imports  ==========================
@@ -128,8 +128,9 @@ class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
     available_mass_spectrometers = List
 
     named_date_range = Enum('this month', 'this week', 'yesterday')
-    low_post = Property(Date, depends_on='_low_post')
-    high_post = Property(Date, depends_on='_high_post')
+    low_post = Property(Date, depends_on='_low_post, use_low_post')
+    high_post = Property(Date, depends_on='_high_post, use_high_post')
+
     use_low_post = Bool
     use_high_post = Bool
     use_named_date_range = Bool
@@ -252,6 +253,8 @@ class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
         self.use_low_post, self.use_high_post = True, True
         self._low_post, self._high_post = lp, hp
         self.use_low_post, self.use_high_post = ol, oh
+        self.trait_property_changed('low_post', None)
+        self.trait_property_changed('high_post', None)
 
     def _load_associated_groups(self, names):
         """
@@ -292,13 +295,14 @@ class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
 
         db = self.db
         with db.session_ctx():
-            self.use_high_post = False
-            self.use_low_post = True
-
             hpost = datetime.now()
             lpost = hpost - timedelta(hours=self.search_criteria.recent_hours)
             self._low_post = lpost
 
+            self.use_high_post = False
+            self.use_low_post = True
+
+            self.trait_property_changed('low_post', self._low_post)
             self._recent_mass_spectrometers.append(ms)
             sams = self._retrieve_labnumbers()
 
@@ -347,7 +351,7 @@ class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
         ls = db.get_project_labnumbers(projects,
                                        self.filter_non_run_samples,
                                        lp, hp,
-                                       #self.low_post,
+                                       # self.low_post,
                                        #self.high_post,
                                        analysis_types=atypes,
                                        mass_spectrometers=mass_spectrometers)
@@ -567,7 +571,6 @@ class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
     def _set_high_post(self, v):
         self._high_post = v
 
-
     def _get_high_post(self):
         hp = None
 
@@ -598,8 +601,9 @@ class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
 
         elif self.use_low_post:
             lp = self._low_post
-            if not lp:
-                lp = tdy
+
+        if not lp:
+            lp = tdy
 
         return lp
 
@@ -625,6 +629,7 @@ class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
             return self.workspace.index_db
         else:
             return self.manager.db
+
     # persistence
     @property
     def persistence_path(self):
@@ -646,6 +651,7 @@ class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
             except (pickle.PickleError, EOFError, OSError), e:
                 # self.debug('Failed loaded previous browser selection. {}'.format(e))
                 pass
+
     # defaults
     def _table_configurer_default(self):
         return SampleTableConfigurer()
