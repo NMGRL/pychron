@@ -22,6 +22,7 @@ from traits.trait_errors import TraitError
 import yaml
 import os
 # ============= local library imports  ==========================
+from pychron.core.codetools.inspection import caller
 from pychron.experiment.conditional.conditionals_edit_view import edit_conditionals
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.queue.run_block import RunBlock
@@ -145,6 +146,7 @@ class AutomatedRunFactory(PersistenceLoggable):
     special_labnumber = Str('Special Labnumber')
 
     db_refresh_needed = Event
+    auto_save_needed = Event
 
     _labnumber = String
     labnumbers = Property(depends_on='project, selected_level')
@@ -426,6 +428,8 @@ class AutomatedRunFactory(PersistenceLoggable):
             returns a list of runs even if its only one run
             also returns self.frequency if using special labnumber else None
         """
+        self._auto_save()
+
         if self.run_block not in ('RunBlock', LINE_STR):
             arvs, freq = self._new_run_block()
         else:
@@ -441,15 +445,21 @@ class AutomatedRunFactory(PersistenceLoggable):
             if pos:
                 self.position = increment_position(pos)
 
+        self._auto_save()
         return arvs, freq
 
     def refresh(self):
         self.changed = True
         self.refresh_table_needed = True
+        self._auto_save()
 
     # ===============================================================================
     # private
     # ===============================================================================
+
+    def _auto_save(self):
+        self.auto_save_needed = True
+
     # def _new_runs(self, positions, extract_group_cnt=0):
     def _new_run_block(self):
         p = os.path.join(paths.run_block_dir, add_extension(self.run_block, '.txt'))
@@ -702,6 +712,8 @@ class AutomatedRunFactory(PersistenceLoggable):
                 self._selected_runs and \
                 not self.suppress_update:
 
+            self._auto_save()
+
             self.edit_event = dict(attribute=attr, value=v,
                                    previous_state=[(ri, getattr(ri, attr)) for ri in self._selected_runs])
 
@@ -777,6 +789,7 @@ class AutomatedRunFactory(PersistenceLoggable):
 
         if new in ANALYSIS_MAPPING or \
                         old in ANALYSIS_MAPPING or not old and new:
+
             # set default scripts
             self._load_default_scripts(new)
 
@@ -841,6 +854,9 @@ class AutomatedRunFactory(PersistenceLoggable):
         return defaults
 
     def _load_labnumber_meta(self, labnumber):
+        if '-##-' in labnumber:
+            return True
+
         db = self.db
         self._aliquot = 0
         with db.session_ctx():
@@ -880,6 +896,7 @@ class AutomatedRunFactory(PersistenceLoggable):
             self._load_defaults(labnumber if special else 'u')
 
         self._load_scripts(old, labnumber)
+        self._load_extraction_info()
 
     # ===============================================================================
     # property get/set
@@ -1152,9 +1169,11 @@ class AutomatedRunFactory(PersistenceLoggable):
         fev.edit_traits(kind='modal')
 
     def _edit_comment_template_fired(self):
-        from pychron.experiment.utilities.comment_template import CommentTemplater, CommentTemplateView
+        from pychron.experiment.utilities.comment_template import CommentTemplater
+        from pychron.experiment.utilities.template_view import CommentTemplateView
 
         ct = CommentTemplater()
+
         ctv = CommentTemplateView(model=ct)
         info = ctv.edit_traits()
         if info.result:
@@ -1171,6 +1190,8 @@ class AutomatedRunFactory(PersistenceLoggable):
     @on_trait_change('[measurement_script, post_measurement_script, '
                      'post_equilibration_script, extraction_script]:edit_event')
     def _handle_edit_script(self, new):
+        self._auto_save()
+
         app = self.application
         task = app.open_task('pychron.pyscript.task')
         path, kind = new
@@ -1249,6 +1270,7 @@ class AutomatedRunFactory(PersistenceLoggable):
             #     t = new
             # t = add_extension(new, '.yaml') if new else None
             # else:
+            self._auto_save()
             t = self.conditionals_str
             self._set_conditionals(t)
 
@@ -1260,6 +1282,8 @@ pattern,
 position,
 weight, comment, skip, overlap''')
     def _edit_handler(self, name, new):
+        # self._auto_save()
+
         if name == 'pattern':
             if not self._use_pattern():
                 new = ''
@@ -1271,7 +1295,9 @@ extraction_script:name,
 post_measurement_script:name,
 post_equilibration_script:name''')
     def _edit_script_handler(self, obj, name, new):
+
         if self.edit_mode and not self.suppress_update:
+            self._auto_save()
             if obj.label == 'Extraction':
                 self._load_extraction_info(obj)
 
@@ -1281,9 +1307,9 @@ post_equilibration_script:name''')
                     setattr(si, name, new)
                 self.refresh()
 
-
     @on_trait_change('script_options:name')
     def _edit_script_options_handler(self, new):
+        self._auto_save()
         if self.edit_mode and not self.suppress_update:
             if self._selected_runs:
                 for si in self._selected_runs:
@@ -1339,7 +1365,6 @@ post_equilibration_script:name''')
                             ln = make_special_identifier(ln, edname, msname)
 
                 self.labnumber = ln
-                self._load_extraction_info()
 
             self._frequency_enabled = True
 

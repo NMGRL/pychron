@@ -39,9 +39,10 @@ def entry_point(modname, klass, setup_version_id='', debug=False):
 
     # import app klass and pass to launch function
     if check_dependencies():
-        from pychron.envisage.pychron_run import launch
         mod = __import__('pychron.applications.{}'.format(modname), fromlist=[klass])
-        launch(getattr(mod, klass), user)
+        app = getattr(mod, klass)
+        from pychron.envisage.pychron_run import launch
+        launch(app, user)
 
 
 def check_dependencies():

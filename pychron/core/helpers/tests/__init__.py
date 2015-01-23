@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2014 Jake Ross
+# Copyright 2015 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,43 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pyface.tasks.action.task_action import TaskAction
-from traits.api import HasTraits, Button
-from traitsui.api import View, Item
+from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change
+from traitsui.api import View, UItem, Item, HGroup, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.envisage.resources import icon
 
 
-class UploadAction(TaskAction):
-    name = 'Upload'
-    image = icon('image_add')
-    method = 'upload_image_from_file'
-
-
-class SnapshotAction(TaskAction):
-    name = 'Snapshot'
-    image = icon('camera')
-    method = 'save_file_snapshot'
-
-
-class DBSnapshotAction(TaskAction):
-    name = 'DB Snapshot'
-    image = icon('camera')
-    method = 'save_db_snapshot'
-
-
-class AssociateAction(TaskAction):
-    name = 'Associate Sample'
-    method = 'associate_sample'
-    enabled_name = 'association_enabled'
-
-
-class SaveAction(TaskAction):
-    name = 'Save'
-    method = 'save'
-    image = icon('database_save')
-    # enabled_name = 'save_enabled'
 # ============= EOF =============================================
 
 

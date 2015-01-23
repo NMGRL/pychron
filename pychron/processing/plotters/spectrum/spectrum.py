@@ -67,6 +67,7 @@ class Spectrum(BaseArArFigure):
     # ===============================================================================
     # plotters
     # ===============================================================================
+
     def _plot_aux(self, title, vk, ys, po, plot, pid, es=None, **kw):
         graph = self.graph
         graph.set_y_title(title,
@@ -119,8 +120,6 @@ class Spectrum(BaseArArFigure):
                 y = po.overlay_positions[overlay.id]
                 overlay.y = y
                 pma = y
-
-
 
         # filter ys,es if 39Ar < 1% of total
         ps = s39 / s39.sum()
@@ -286,7 +285,8 @@ class Spectrum(BaseArArFigure):
         for sp in self.spectrum_overlays:
             sp.selections = sel
 
-        self.plateau_overlay.selections = sel
+        if self.plateau_overlay:
+            self.plateau_overlay.selections = sel
 
         ag = self.analysis_group
         for i, ai in enumerate(ag.analyses):

@@ -18,7 +18,7 @@
 
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import List, Str, Bool, Any, String, \
-    on_trait_change, Date, Int, Time, Instance, Button, Property
+    on_trait_change, Date, Int, Time, Instance, Button, Property, Enum
 # ============= standard library imports ========================
 from datetime import datetime, timedelta
 import re

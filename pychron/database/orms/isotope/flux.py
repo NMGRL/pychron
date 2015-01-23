@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from sqlalchemy import Column, Float, DateTime
+from sqlalchemy import Column, Float, DateTime, BLOB
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import func
 # ============= local library imports  ==========================
@@ -44,7 +44,6 @@ class flux_HistoryTable(Base, BaseMixin):
     irradiation_position_id = foreignkey('irrad_PositionTable')
     create_date = Column(DateTime, default=func.now())
     source = stringcolumn(140)
-
     selected = relationship('gen_LabTable',
                             backref='selected_flux_history',
                             uselist=False)

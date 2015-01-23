@@ -112,9 +112,13 @@ class FitPlotterOptions(AuxPlotOptions):
 
 
 class SpectrumPlotOptions(AuxPlotOptions):
-    names = List([NULL_STR, '%40Ar*', 'K/Ca', 'K/Cl', 'Mol K39', 'Age'])
+    names = List([NULL_STR,
+                  '40/36', '(40/36)ic', '(40/36)if',
+                  '%40Ar*', 'K/Ca', 'K/Cl', 'Mol K39', 'Age'])
 
-    _plot_names = List(['', 'radiogenic_yield', 'kca', 'kcl', 'moles_k39', 'age_spectrum'])
+    _plot_names = List(['',
+                        'raw_40_36', 'ic_40_36', 'icf_40_36',
+                        'radiogenic_yield', 'kca', 'kcl', 'moles_k39', 'age_spectrum'])
     #def _get_plot_names(self):
     #    return {NULL_STR: NULL_STR,
     #            'radiogenic_yield': 'Radiogenic 40Ar',

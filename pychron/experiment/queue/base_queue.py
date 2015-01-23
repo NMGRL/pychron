@@ -274,6 +274,11 @@ class BaseExperimentQueue(RunBlock):
         self._set_meta_param('load_name', meta, default, metaname='load')
         self._set_meta_param('queue_conditionals_name', meta, default)
 
+        self._load_meta_hook(meta)
+
+    def _load_meta_hook(self, meta):
+        pass
+
     def _load_map(self, meta):
         from pychron.lasers.stage_managers.stage_map import StageMap
         from pychron.experiment.map_view import MapView

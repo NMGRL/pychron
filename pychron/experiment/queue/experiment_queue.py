@@ -25,6 +25,7 @@ from itertools import groupby
 import os
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
+from pychron.core.helpers.filetools import replace_extension
 from pychron.core.ui.qt.tabular_editor import MoveToRow
 from pychron.experiment.queue.base_queue import BaseExperimentQueue
 from pychron.experiment.queue.select_attr_view import SelectAttrView
@@ -70,6 +71,7 @@ class ExperimentQueue(BaseExperimentQueue):
     linked_copy_cache = List
     start_timestamp = Date
     # queue_actions = List
+    auto_save_detector_ic = Bool
 
     executed = Bool(False)
 
@@ -77,6 +79,17 @@ class ExperimentQueue(BaseExperimentQueue):
     execution_ratio = Property
 
     refresh_blocks_needed = Event
+
+    def auto_save(self):
+        path = self.path
+        if os.path.isfile(path):
+            bk = os.path.join(paths.auto_save_experiment_dir, '{}.bak'.format(self.name))
+        else:
+            bk = os.path.join(paths.auto_save_experiment_dir, 'Untitled.bak')
+
+        self.debug('Autosaving to {}'.format(bk))
+        with open(bk, 'w') as fp:
+            self.dump(fp)
 
     def toggle_skip(self):
         for si in self.selected:
@@ -273,14 +286,10 @@ class ExperimentQueue(BaseExperimentQueue):
     def _load_actions(self):
         pass
 
-    def _extract_device_changed(self):
-        self.debug('extract device changed {}'.format(self.extract_device))
-        if 'uv' in self.extract_device.lower():
-            k = UVHumanErrorChecker
-        else:
-            k = HumanErrorChecker
-
-        self.human_error_checker = k()
+    def _load_meta_hook(self, meta):
+        bool_default = lambda x: bool(x) if x else False
+        self._set_meta_param('auto_save_detector_ic', meta, bool_default)
+        self.debug('$$$$$$$$$$$$$$$$$$$$$ auto_save_detector_ic={}'.format(self.auto_save_detector_ic))
 
     def _get_execution_ratio(self):
         ex = len(self.executed_runs)
@@ -294,6 +303,15 @@ class ExperimentQueue(BaseExperimentQueue):
 
             for si in reversed(self.selected):
                 self.automated_runs.insert(idx, si)
+
+    def _extract_device_changed(self):
+        self.debug('extract device changed {}'.format(self.extract_device))
+        if 'uv' in self.extract_device.lower():
+            k = UVHumanErrorChecker
+        else:
+            k = HumanErrorChecker
+
+        self.human_error_checker = k()
 
     @on_trait_change('automated_runs[]')
     def _refresh_info(self, new):

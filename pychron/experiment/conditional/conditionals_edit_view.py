@@ -438,7 +438,7 @@ class ConditionalsViewable(HasTraits):
 
     # def _view_tabs2(self):
     # vs = []
-    #     for name in self.group_names:
+    # for name in self.group_names:
     #         gname = '{}_group'.format(name)
     #         uname = ' '.join([ni.capitalize() for ni in name.split('_')])
     #         grp = Group(UItem(gname, style='custom'), label=uname)
@@ -453,7 +453,7 @@ class ConditionalsViewable(HasTraits):
             items = items.get(name, []) if items else []
 
         group = klass(items, conditional_klass,
-                      label=label,
+                      label=label or name,
                       available_attrs=self.available_attrs,
                       **kw)
 
@@ -466,6 +466,7 @@ class ConditionalsEditView(ConditionalsViewable):
     root = Str
     detectors = List
     title = 'Edit Default Conditionals'
+    pre_run_terminations_group = Any
 
     def __init__(self, detectors=None, *args, **kw):
         attrs = ['', 'age', 'kca', 'kcl', 'cak', 'clk', 'rad40_percent',
@@ -503,17 +504,22 @@ class ConditionalsEditView(ConditionalsViewable):
             with open(p, 'r') as fp:
                 yd = yaml.load(fp)
 
-        for name, klass, cklass in (('actions', EConditionalGroup, ActionConditional),
-                                    ('truncations', EConditionalGroup, TruncationConditional),
-                                    ('cancelations', EConditionalGroup, CancelationConditional),
-                                    ('terminations', EConditionalGroup, TerminationConditional),
-                                    ('post_run_terminations', EPostRunGroup, TerminationConditional)):
+        for name, klass, cklass, label in (('actions', EConditionalGroup, ActionConditional, 'Actions'),
+                                           ('truncations', EConditionalGroup, TruncationConditional, 'Truncations'),
+                                           ('cancelations', EConditionalGroup, CancelationConditional, 'Cancelations'),
+                                           ('terminations', EConditionalGroup, TerminationConditional, 'Terminations'),
+                                           ('post_run_terminations', EPostRunGroup, TerminationConditional,
+                                            'PostRunTerminations')):
             if name in self.group_names:
-                grp = self._group_factory(yd, klass, conditional_klass=cklass, name=name)
+                grp = self._group_factory(yd, klass, conditional_klass=cklass, name=name, label=label, editable=True)
+                if name == 'post_run_terminations':
+                    grp.available_attrs = self.detectors
                 setattr(self, '{}_group'.format(name), grp)
 
         if 'pre_run_terminations' in self.group_names:
-            grp = self._group_factory(yd, EPreRunGroup, name='pre_run_terminations')
+            grp = self._group_factory(yd, EPreRunGroup, name='pre_run_terminations',
+                                      label='PreRunTerminations',
+                                      editable=True)
             grp.available_attrs = self.detectors
             self.pre_run_terminations_group = grp
 
@@ -587,7 +593,7 @@ def edit_conditionals(name, detectors=None, app=None, root=None, save_as=False,
 
 # if __name__ == '__main__':
 # # c = ConditionalsEditView(detectors=['H2', 'H1', 'AX', 'L1', 'L2', 'CDD'])
-#     # c.open('normal', False)
+# # c.open('normal', False)
 #     # c.configure_traits()
 #     # c.dump()
 #     class D(HasTraits):

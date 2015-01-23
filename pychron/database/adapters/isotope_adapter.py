@@ -36,7 +36,7 @@ from pychron.database.i_browser import IBrowser
 from pychron.database.orms.isotope.spec import spec_MassCalHistoryTable, spec_MassCalScanTable, spec_MFTableTable
 
 # med_
-from pychron.database.orms.isotope.med import med_ImageTable, med_SnapshotTable
+from pychron.database.orms.isotope.med import med_ImageTable, med_SnapshotTable, med_SampleImageTable
 
 # flux_
 from pychron.database.orms.isotope.flux import flux_FluxTable, flux_HistoryTable, flux_MonitorTable
@@ -96,8 +96,8 @@ def binfunc(ds, hours):
 
 # class session(object):
 # def __call__(self, f):
-#         def wrapped_f(obj, *args, **kw):
-#             with obj.session_ctx() as sess:
+# def wrapped_f(obj, *args, **kw):
+# with obj.session_ctx() as sess:
 #                 kw['sess']=sess
 #                 return f(obj, *args, **kw)
 #
@@ -339,6 +339,14 @@ class IsotopeAdapter(DatabaseAdapter):
         dbim = med_ImageTable(name=name, image=image)
         self._add_item(dbim)
         return dbim
+
+    def add_sample_image(self, sample_name, image_name, image, note, project=None, material=None, identifier=None):
+
+        with self.session_ctx():
+            sam = self.get_sample(sample_name, project, material, identifier)
+            obj = med_SampleImageTable(name=image_name, image=image, note=note)
+            obj.sample_id = sam.id
+            self._add_item(obj)
 
     def add_monitor(self, analysis, **kw):
         dbm = meas_MonitorTable(**kw)
@@ -888,6 +896,31 @@ class IsotopeAdapter(DatabaseAdapter):
     # ===========================================================================
     # getters
     # ===========================================================================
+    def get_sample_image_count(self, sample, project=None, material=None, identifier=None):
+        with self.session_ctx() as sess:
+            q = sess.query(med_SampleImageTable)
+            q = q.join(gen_SampleTable)
+
+            if project:
+                q = q.join(gen_ProjectTable)
+            if material:
+                q = q.join(gen_MaterialTable)
+            if identifier:
+                q = q.join(gen_LabTable)
+
+            q = q.filter(gen_SampleTable.name == sample)
+            if project:
+                q = q.filter(gen_ProjectTable.name == project)
+            if material:
+                q = q.filter(gen_MaterialTable.name == material)
+            if identifier:
+                q = q.filter(gen_LabTable.identifier == identifier)
+
+            return q.count()
+
+    def get_sample_image(self, sid):
+        return self._retrieve_item(med_SampleImageTable, sid, key='id')
+
     def get_adjacent_analysis(self, timestamp, previous):
         with self.session_ctx() as sess:
             q = sess.query(meas_AnalysisTable)
@@ -1398,6 +1431,7 @@ class IsotopeAdapter(DatabaseAdapter):
             # except NoResultFound, e:
             #     self.debug('get last labnumber {}'.format(e))
             #     return
+
     def get_last_labnumber(self, sample=None):
         with self.session_ctx() as s:
             #         sess = self.get_session()
@@ -1828,7 +1862,7 @@ class IsotopeAdapter(DatabaseAdapter):
     def get_script(self, value):
         return self._retrieve_item(meas_ScriptTable, value, key='hash', )
 
-    def get_sample(self, value, project=None, material=None, **kw):
+    def get_sample(self, value, project=None, material=None, identifier=None, **kw):
         if project:
             kw = self._append_joins(gen_ProjectTable, kw)
             kw = self._append_filters(gen_ProjectTable.name == project, kw)
@@ -1836,6 +1870,10 @@ class IsotopeAdapter(DatabaseAdapter):
         if material:
             kw = self._append_joins(gen_MaterialTable, kw)
             kw = self._append_filters(gen_MaterialTable.name == material, kw)
+
+        if identifier:
+            kw = self._append_joins(gen_LabTable, kw)
+            kw = self._append_filters(gen_LabTable.identifier == identifier, kw)
 
         return self._retrieve_item(gen_SampleTable, value, **kw)
 
@@ -2002,7 +2040,7 @@ class IsotopeAdapter(DatabaseAdapter):
     def get_labnumbers(self, identifiers=None, low_post=None, high_post=None,
                        mass_spectrometers=None,
                        filter_non_run=False,
-                       projects = None, **kw):
+                       projects=None, **kw):
 
         if identifiers is not None:
             f = gen_LabTable.identifier.in_(identifiers)
@@ -2037,7 +2075,7 @@ class IsotopeAdapter(DatabaseAdapter):
                 kw['query_hook'] = func
 
         if projects:
-            kw = self._append_joins((gen_SampleTable,gen_ProjectTable), kw)
+            kw = self._append_joins((gen_SampleTable, gen_ProjectTable), kw)
             kw = self._append_filters(gen_ProjectTable.name.in_(projects), kw)
 
         return self._retrieve_items(gen_LabTable, verbose_query=True, **kw)

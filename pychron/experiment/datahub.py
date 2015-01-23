@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 
 from apptools.preferences.preference_binding import bind_preference
-from traits.api import Instance
+from traits.api import Instance, Bool
 # ============= standard library imports ========================
 from datetime import datetime
 import time
@@ -56,21 +56,26 @@ class Datahub(Loggable):
     secondarystore = Instance(MassSpecDatabaseImporter, ())
 
     bind_mainstore = True
+    massspec_enabled = Bool
 
     def bind_preferences(self):
         prefid = 'pychron.massspec.database'
 
-        bind_preference(self.secondarystore.db, 'name', '{}.name'.format(prefid))
-        bind_preference(self.secondarystore.db, 'host', '{}.host'.format(prefid))
-        bind_preference(self.secondarystore.db, 'username', '{}.username'.format(prefid))
-        bind_preference(self.secondarystore.db, 'password', '{}.password'.format(prefid))
+        bind_preference(self, 'massspec_enabled', '{}.enabled'.format(prefid))
+        if self.massspec_enabled:
+            bind_preference(self.secondarystore.db, 'name', '{}.name'.format(prefid))
+            bind_preference(self.secondarystore.db, 'host', '{}.host'.format(prefid))
+            bind_preference(self.secondarystore.db, 'username', '{}.username'.format(prefid))
+            bind_preference(self.secondarystore.db, 'password', '{}.password'.format(prefid))
 
     def secondary_connect(self):
-        if self.secondarystore:
-            return self.secondarystore.connect()
+        if self.massspec_enabled:
+            if self.secondarystore:
+                return self.secondarystore.connect()
 
     def has_secondary_store(self):
-        return self.secondarystore and self.secondarystore.db.connected
+        if self.massspec_enabled:
+            return self.secondarystore and self.secondarystore.db.connected
 
     def is_conflict(self, spec):
         """

@@ -49,7 +49,7 @@ class BaseArArFigure(HasTraits):
     _analysis_group_klass = AnalysisGroup
 
     group_id = Int
-    padding = Tuple((60, 10, 5, 40))
+    # padding = Tuple((60, 10, 5, 40))
     ytitle = Str
     replot_needed = Event
     _reverse_sorted_analyses = False
@@ -87,7 +87,7 @@ class BaseArArFigure(HasTraits):
         """
         self._plots = plots
 
-        def _setup_plot(pp, po):
+        def _setup_plot(i, pp, po):
 
             #add limit tools
             self._add_limit_tool(pp, 'x')
@@ -112,6 +112,12 @@ class BaseArArFigure(HasTraits):
             pp.y_axis.tick_label_font = options.ytick_font
 
             pp.bgcolor = options.plot_bgcolor
+            for attr in ('left','right','top'):
+                setattr(pp, 'padding_{}'.format(attr),
+                        getattr(options, 'padding_{}'.format(attr)))
+
+            if not i:
+                pp.padding_bottom = options.padding_bottom
 
             if po:
                 pp.value_scale = po.scale
@@ -137,9 +143,9 @@ class BaseArArFigure(HasTraits):
             title = self.options.title
 
         for i, po in enumerate(plots):
-            kw = {'padding': self.padding,
-                  'ytitle': po.name}
-
+            # kw = {'padding': self.padding,
+            #       'ytitle': po.name}
+            kw = {'ytitle': po.name}
             if po.height:
                 kw['bounds'] = [50, po.height]
 
@@ -153,9 +159,9 @@ class BaseArArFigure(HasTraits):
 
             p = graph.new_plot(**kw)
 
-            #set a tag for easy identification
+            # set a tag for easy identification
             p.y_axis.tag = po.name
-            _setup_plot(p, po)
+            _setup_plot(i, p, po)
 
     def plot(self, *args, **kw):
         pass
@@ -276,6 +282,21 @@ class BaseArArFigure(HasTraits):
                 omits = [idx for ti, idx in ts if ti]
 
         return omits
+
+    def _plot_raw_40_36(self,  po, plot, pid, **kw):
+        k = 'uAr40/Ar36'
+        ys, es = self._get_aux_plot_data(k)
+        return self._plot_aux('40/36', k, ys, po, plot, pid, es, **kw)
+
+    def _plot_ic_40_36(self,  po, plot, pid, **kw):
+        k = 'Ar40/Ar36'
+        ys, es = self._get_aux_plot_data(k)
+        return self._plot_aux('40/36', k, ys, po, plot, pid, es, **kw)
+
+    def _plot_ic_if_40_36(self,  po, plot, pid, **kw):
+        k = 'icf_40_36'
+        ys, es = self._get_aux_plot_data(k)
+        return self._plot_aux('40/36', k, ys, po, plot, pid, es, **kw)
 
     def _plot_radiogenic_yield(self, po, plot, pid, **kw):
         k = 'rad40_percent'

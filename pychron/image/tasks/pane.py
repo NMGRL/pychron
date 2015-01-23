@@ -16,13 +16,35 @@
 
 # ============= enthought library imports =======================
 from pyface.tasks.traits_dock_pane import TraitsDockPane
-from traits.api import HasTraits, Button
-from traitsui.api import View, Item, VGroup, UItem
+from traitsui.api import View, VGroup, UItem, TabularEditor, Item, TextEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.ui.qt.tabular_editors import FilterTabularEditor
-from pychron.envisage.browser.adapters import LabnumberAdapter, ProjectAdapter
+from pychron.envisage.browser.adapters import ProjectAdapter, SampleImageAdapter
 
+
+class ImageAdapter(TabularAdapter):
+    columns = [('Name', 'name'), ('Date', 'create_date')]
+
+
+# class CameraPane(TraitsTaskPane):
+#     def traits_view(self):
+#         v = View(UItem('camera', editor=CameraEditor(save_event='save_event'),
+#                        width=896, height=680))
+#         # v = View(UItem('camera', editor=CameraEditor()))
+#         return v
+
+class InfoPane(TraitsDockPane):
+    id = 'pychron.image.info'
+    name = 'Image Info'
+
+    def traits_view(self):
+        v=View(VGroup(Item('object.selected_info_model.create_date', style='readonly'),
+                      Item('object.selected_info_model.name'),
+                      VGroup(UItem('object.selected_info_model.note', style='custom',
+                                   editor=TextEditor(read_only=False)))))
+        return v
 
 class SampleBrowserPane(TraitsDockPane):
     id = 'pychron.image.browser'
@@ -31,11 +53,13 @@ class SampleBrowserPane(TraitsDockPane):
     def traits_view(self):
         sample_grp = VGroup(UItem('samples',
                                   editor=FilterTabularEditor(
-                                      adapter=LabnumberAdapter(),
+                                      # adapter=LabnumberAdapter(),
+                                      adapter=SampleImageAdapter(),
                                       editable=False,
                                       multi_select=True,
                                       selected='selected_samples',
                                       stretch_last_section=False),
+                                  height=-200,
                                   width=75),
                             show_border=True, label='Samples')
 
@@ -45,12 +69,21 @@ class SampleBrowserPane(TraitsDockPane):
                                              selected='selected_projects',
                                              adapter=ProjectAdapter(),
                                              multi_select=True),
+                  height=-200,
                   width=175),
             show_border=True,
             label='Projects')
-
-        v = View(VGroup(project_grp, sample_grp))
+        image_grp = VGroup(UItem('images',
+                                 editor=TabularEditor(editable=False,
+                                                      adapter=ImageAdapter(),
+                                                      multi_select=False,
+                                                      dclicked='dclicked',
+                                                      selected='selected_image')),
+                           show_border=True,
+                           label='Images')
+        v = View(VGroup(project_grp, sample_grp, image_grp))
         return v
+
 # ============= EOF =============================================
 
 

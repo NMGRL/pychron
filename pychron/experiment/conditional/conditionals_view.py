@@ -49,13 +49,14 @@ class ConditionalsView(ConditionalsViewable):
             grp.conditionals.extend(items)
 
     def add_system_conditionals(self, ditems):
-        for name, klass, cklass in (('actions', ConditionalGroup, ActionConditional),
-                                    ('truncations', ConditionalGroup, TruncationConditional),
-                                    ('cancelations', ConditionalGroup, CancelationConditional),
-                                    ('terminations', ConditionalGroup, TerminationConditional)):
-            items = ditems.get(name, [])
-            self._group_factory(items, klass, conditional_klass=cklass,
-                                auto_select=False, label=name.capitalize())
+        if ditems:
+            for name, klass, cklass in (('actions', ConditionalGroup, ActionConditional),
+                                        ('truncations', ConditionalGroup, TruncationConditional),
+                                        ('cancelations', ConditionalGroup, CancelationConditional),
+                                        ('terminations', ConditionalGroup, TerminationConditional)):
+                items = ditems.get(name, [])
+                self._group_factory(items, klass, conditional_klass=cklass,
+                                    auto_select=False, label=name.capitalize())
 
     def add_conditionals(self, ditems):
         for tag in CONDITIONAL_GROUP_TAGS:

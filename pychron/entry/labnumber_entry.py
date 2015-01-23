@@ -18,7 +18,7 @@
 from apptools.preferences.preference_binding import bind_preference
 from pyface.constant import YES, CANCEL
 from traits.api import Property, Str, cached_property, \
-    List, Event, Any, Button, Instance, Bool, on_trait_change, Float
+    List, Event, Any, Button, Instance, Bool, on_trait_change, Float, HasTraits
 from traitsui.api import Image
 from pyface.image_resource import ImageResource
 
@@ -27,6 +27,7 @@ import os
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
 from pychron.core.helpers.ctx_managers import no_update
+from pychron.core.helpers.formatting import floatfmt
 from pychron.database.defaults import load_irradiation_map
 from pychron.entry.editors.irradiation_editor import IrradiationEditor
 from pychron.entry.editors.level_editor import LevelEditor, load_holder_canvas, iter_geom
@@ -37,7 +38,7 @@ from pychron.entry.identifier_generator import IdentifierGenerator
 from pychron.paths import paths
 # from pychron.entry.irradiation import Irradiation
 # from pychron.entry.level import Level, load_holder_canvas, iter_geom
-from pychron.pychron_constants import NULL_STR
+from pychron.pychron_constants import NULL_STR, PLUSMINUS
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.entry.irradiated_position import IrradiatedPosition
 from pychron.database.orms.isotope.gen import gen_ProjectTable, gen_SampleTable
@@ -52,6 +53,12 @@ from pychron.database.orms.isotope.gen import gen_ProjectTable, gen_SampleTable
 #
 # def __exit__(self, exc_type, exc_val, exc_tb):
 # self._p.information_dialog('Changes saved to database')
+
+class NeutronDose(HasTraits):
+    def __init__(self, power, start, end): 
+        self.power = power
+        self.start = start.strftime('%m-%d-%Y %H:%M')
+        self.end = end.strftime('%m-%d-%Y %H:%M')
 
 
 class dirty_ctx(object):
@@ -83,6 +90,11 @@ class LabnumberEntry(IsotopeDatabaseManager):
 
     load_file_button = Button('Load File')
     generate_labnumbers_button = Button('Generate Labnumbers')
+
+    level_note = Str
+    level_production_name = Str
+    chronology_items = List
+    estimated_j_value = Str
     # ===========================================================================
     # irradiation positions table events
     # ===========================================================================
@@ -137,7 +149,10 @@ class LabnumberEntry(IsotopeDatabaseManager):
             if ms.connect():
                 jt = JTransferer(pychrondb=self.db,
                                  massspecdb=ms)
-                jt.do_transfer(self.irradiation, self.level, items)
+                if jt.do_transfer(self.irradiation, self.level, items):
+                    self._save_to_db()
+
+                self.refresh_table = True
         else:
             self.warning_dialog('Unable to Transfer Js. Mass Spec database not configured properly. '
                                 'Check Preferences>Database')
@@ -164,7 +179,7 @@ class LabnumberEntry(IsotopeDatabaseManager):
             return j, j * 0.001
 
     # def set_selected_sample(self, new):
-    #     self.selected_sample = new
+    # self.selected_sample = new
     #     self.set_selected_attr(new.name, 'sample')
     #     #self.canvas.selected_samples=new
 
@@ -569,12 +584,28 @@ THIS CHANGE CANNOT BE UNDONE')
             self.level = new_level
             self.updated = True
 
+    def _irradiation_changed(self):
+        super(LabnumberEntry, self)._irradiation_changed()
+        if self.irradiation:
+            db = self.db
+            with db.session_ctx():
+                irrad = db.get_irradiation(self.irradiation)
+
+                j = irrad.chronology.duration
+                j *= self.j_multiplier
+                self.estimated_j_value = u'{} {}{}'.format(floatfmt(j),
+                                                          PLUSMINUS,
+                                                          floatfmt(j*0.001))
+                items = [NeutronDose(*args) for args in irrad.chronology.get_doses()]
+                self.chronology_items = items
+
     def _level_changed(self, new):
         self.debug('level changed "{}"'.format(new))
         self.irradiated_positions = []
-        self.canvas = IrradiationCanvas()
         if new:
             self._update_level(debug=True)
+        # else:
+        #     self.canvas = IrradiationCanvas()
 
     def _auto_increment_irradiation(self):
         lastname = self.irradiations[0]
@@ -609,6 +640,9 @@ THIS CHANGE CANNOT BE UNDONE')
             if not level:
                 self.debug('no level for {}'.format(name))
                 return
+
+            self.level_note = level.note or ''
+            self.level_production_name = level.production.name
 
             holder = level.holder
             if holder:
@@ -779,7 +813,7 @@ if __name__ == '__main__':
 # irradiation = self.irradiation
 # level = Level(db=self.db,
 # name=self.level,
-#               trays=self.trays)
+# trays=self.trays)
 # level.load(irradiation)
 # info = level.edit_traits(kind='livemodal')
 # if info.result:

@@ -1,5 +1,10 @@
 CHANGELOG
 ============
+2.0.7
+------------------
+* added level and chronology panes to Labnumber entry
+* padding to plot options
+
 2.0.6
 ------------------
 * added StartupTester. use setupfiles/startup_tests.yaml to configure
@@ -24,6 +29,13 @@ CHANGELOG
 * updated PreferencesDialog. Display categories in a TabularEditor instead of as Group tabs.
 * added ReplicationTask for interacting with a replication db
 * added predefined initializations
+* added "Whats New" action. brings user to this doc.
+* added Experiment Columns defaults. [root]/setupfiles/experiment_defaults.yaml
+* fixed displaying irradiation holder
+* added auto saving of experiment queues. Auto saves to a .bak file whenever values change or run added
+* added SampleImageTask
+* added notes to irradiation levels
+* added task switching to Browser pane
 
 <!---
 .. * fully implemented import irradiation from XLS file

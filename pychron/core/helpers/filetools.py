@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#========== standard library imports ==========
+# ========== standard library imports ==========
 import glob
 import os
 import subprocess
@@ -34,6 +34,7 @@ def backup(p, backupdir, **kw):
     pp = unique_date_path(backupdir, bp, **kw)
     shutil.copyfile(p, pp)
     return bp, pp
+
 
 def modified_datetime(path, strformat='%m-%d-%Y %H:%M:%S'):
     dt = datetime.fromtimestamp(os.path.getmtime(path))
@@ -129,6 +130,11 @@ def list_directory(p, extension=None, filtername=None, remove_extension=False):
     return ds
 
 
+def replace_extension(p, ext='.txt'):
+    head, _ = os.path.splitext(p)
+    return add_extension(head, ext)
+
+
 def add_extension(p, ext='.txt'):
     if not p.endswith(ext):
         # p += ext
@@ -186,7 +192,6 @@ def unique_path2(root, base, delimiter='-', extension='.txt'):
 
 
 def max_file_cnt(root, excludes=None):
-
     def test(p):
         if excludes and p in excludes:
             return
@@ -196,7 +201,7 @@ def max_file_cnt(root, excludes=None):
 
     ps = [p for p in os.listdir(root) if test(p)]
 
-    return len(ps)+1
+    return len(ps) + 1
 
 
 def max_path_cnt(root, base, delimiter='-', extension='.txt'):

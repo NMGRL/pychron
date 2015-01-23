@@ -69,6 +69,23 @@ DEFAULT_STARTUP_TESTS = '''
     - test_gauge_communication
 '''
 
+EXPERIMENT_DEFAULTS = '''
+columns:
+  - Labnumber
+  - Aliquot
+  - Sample
+  - Position
+  - Extract
+  - Units
+  - Duration (s)
+  - Cleanup (s)
+  - Beam (mm)
+  - Pattern
+  - Extraction
+  - Measurement
+  - Conditionals
+  - Comment
+'''
 
 class Paths(object):
     dissertation = '/Users/ross/Programming/git/dissertation'
@@ -104,6 +121,8 @@ class Paths(object):
     # ==============================================================================
     scripts_dir = scripts_dir = None
     experiment_dir = None
+    auto_save_experiment_dir = None
+
     run_block_dir = None
     generic_experiment_dir = None
     backup_experiment_dir = None
@@ -194,6 +213,8 @@ class Paths(object):
     deflection = None
     startup_tests = None
     ic_mftable = None
+    system_conditionals = None
+    experiment_defaults = None
 
     def set_search_paths(self, app_rec=None):
         self.app_resources = app_rec
@@ -267,6 +288,7 @@ class Paths(object):
         self.fits_dir = join(self.measurement_dir, 'fits')
 
         self.experiment_dir = join(root, 'experiments')
+        self.auto_save_experiment_dir = join(self.experiment_dir, 'auto_save_experiment_dir')
         self.run_block_dir = join(self.experiment_dir, 'blocks')
         self.generic_experiment_dir = join(self.experiment_dir, 'generic')
         self.backup_experiment_dir = join(self.experiment_dir, 'backup')
@@ -347,12 +369,15 @@ class Paths(object):
         self.deflection = join(self.spectrometer_dir, 'deflection.yaml')
         self.startup_tests = join(self.setup_dir, 'startup_tests.yaml')
         self.set_search_paths()
+        self.system_conditionals = join(self.spectrometer_dir, 'default_conditionals.yaml')
+        self.experiment_defaults = join(setup_dir, 'experiment_defaults.yaml')
 
         self._write_default_files()
 
     def _write_default_files(self):
         for p, d in ((path.join(self.setup_dir, 'initialization.xml'), DEFAULT_INITIALIZATION),
-                     (self.startup_tests, DEFAULT_STARTUP_TESTS)):
+                     (self.startup_tests, DEFAULT_STARTUP_TESTS),
+                     (self.experiment_defaults, EXPERIMENT_DEFAULTS)):
             self._write_default_file(p, d)
 
     def _write_default_file(self, p, default):

@@ -41,4 +41,10 @@ class med_SnapshotTable(Base, BaseMixin):
     image = Column(BLOB)
     extraction_id = foreignkey('meas_ExtractionTable')
 
+
+class med_SampleImageTable(Base, NameMixin):
+    create_date = Column(DateTime, default=func.now())
+    image = Column(BLOB)
+    sample_id = foreignkey('gen_SampleTable')
+    note = Column(BLOB)
 # ============= EOF =============================================

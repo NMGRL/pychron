@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -30,6 +30,16 @@ class RecordView(HasTraits):
         pass
 
 
+class SampleImageRecordView(RecordView):
+    name = Str
+    record_id = Long
+    crete_date = Date
+    def _create(self, dbrecord):
+        self.name = dbrecord.name
+        self.record_id = dbrecord.id
+        self.create_date = dbrecord.create_date
+
+
 class SampleRecordView(RecordView):
     name = Str
     material = Str
@@ -39,6 +49,7 @@ class SampleRecordView(RecordView):
     elevation = Float
     lithology = Str
     rock_type = Str
+    identifier = Str
 
     def _create(self, dbrecord):
         if dbrecord.material:
@@ -95,7 +106,7 @@ class LabnumberRecordView(RecordView):
         sample = dbrecord.sample
         if sample:
             if sample.material:
-                if isinstance(sample.material,(str, unicode)):
+                if isinstance(sample.material, (str, unicode)):
                     self.material = sample.material
                 else:
                     self.material = sample.material.name

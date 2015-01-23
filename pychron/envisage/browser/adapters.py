@@ -56,6 +56,13 @@ class SampleAdapter(BrowserAdapter):
     material_width = Int(75)
 
 
+class SampleImageAdapter(BrowserAdapter):
+    columns = [('Sample', 'name'),
+               ('Identifier', 'identifier'),
+               ('Material', 'material'),
+               ('Project', 'project')]
+
+
 class LabnumberAdapter(BrowserAdapter):
     columns = [('Sample', 'name'),
                ('Identifier', 'labnumber'),

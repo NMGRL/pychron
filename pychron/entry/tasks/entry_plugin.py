@@ -50,11 +50,7 @@ class EntryPlugin(BaseTaskPlugin):
 
     def _task_extensions_default(self):
         return [
-            TaskExtension(actions=[SchemaAddition(id='entry',
-                                                  factory=lambda: SMenu(id='.menu', name='Entry'),
-                                                  path='MenuBar',
-                                                  before='tools.menu',
-                                                  after='view.menu')]),
+            # TaskExtension(actions=[]),
             TaskExtension(task_id='pychron.entry.labnumber',
                           actions=[
                               SchemaAddition(id='transfer_j',
@@ -77,29 +73,29 @@ class EntryPlugin(BaseTaskPlugin):
                                              path='MenuBar/tools.menu')]),
             TaskExtension(
                 actions=[
+                    SchemaAddition(id='entry',
+                                   factory=lambda: SMenu(id='entry.menu', name='Entry'),
+                                   path='MenuBar',
+                                   before='tools.menu',
+                                   after='view.menu'),
                     SchemaAddition(id='generate_irradiation_table',
                                    factory=GenerateIrradiationTableAction,
                                    path='MenuBar/tools.menu'),
                     SchemaAddition(id='import_irradiation_holder',
                                    factory=ImportIrradiationHolderAction,
-                                   absolute_position='first',
                                    path='MenuBar/entry.menu'),
                     SchemaAddition(id='labnumber_entry',
                                    factory=LabnumberEntryAction,
-                                   path='MenuBar/entry.menu',
-                                   absolute_position='first', ),
+                                   path='MenuBar/entry.menu', absolute_position='first'),
                     SchemaAddition(id='sensitivity_entry',
                                    factory=SensitivityEntryAction,
-                                   path='MenuBar/entry.menu',
-                                   absolute_position='first'),
+                                   path='MenuBar/entry.menu'),
                     SchemaAddition(id='molecular_weight_entry',
                                    factory=AddMolecularWeightAction,
-                                   path='MenuBar/entry.menu',
-                                   absolute_position='first'),
+                                   path='MenuBar/entry.menu'),
                     SchemaAddition(id='molecular_weight_entry',
                                    factory=AddFluxMonitorAction,
-                                   path='MenuBar/entry.menu',
-                                   absolute_position='first')])]
+                                   path='MenuBar/entry.menu', )])]
 
     def _tasks_default(self):
         return [TaskFactory(id='pychron.entry.labnumber',

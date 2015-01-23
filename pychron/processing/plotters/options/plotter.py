@@ -305,6 +305,7 @@ class PlotterOptions(FigurePlotterOptions):
         if grps:
             g = Group(main_grp,
                       bg_grp,
+                      self._get_padding_group(),
                       layout='fold', *grps)
         else:
             g = Group(main_grp, bg_grp)

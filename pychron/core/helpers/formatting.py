@@ -61,17 +61,19 @@ def floatfmt(f, n=4, s=4, max_width=None, default='NaN', use_scientific=False):
     if f is None:
         return default
 
-    if abs(f) < 1e-20:
+    absf = abs(f)
+    if absf < 1e-20:
         v = '0.0'
     else:
-
-        if abs(f) < math.pow(10, -n) or abs(f) > math.pow(10, s + 1):
+        if absf < math.pow(10, -n) or absf > math.pow(10, s + 1):
             if use_scientific:
                 fmt = '{{:0.{}E}}'.format(s)
             else:
-                if abs(f) < math.pow(10, s + 1):
-                    f = Decimal(f)
-                    n = int(math.ceil(abs(math.log10(abs(f)))))
+                if absf < math.pow(10, s + 1):
+                    # f = Decimal(f)
+                    # n = int(math.ceil(abs(math.log10(absf))))
+                    n = int(round(abs(math.log10(absf))))
+
                 fmt = '{{:0.{}f}}'.format(n)
 
         else:

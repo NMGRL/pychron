@@ -36,7 +36,7 @@ class ExperimentAction(Action):
     task_id = EXP_ID
 
     # def _get_experimentor(self, event):
-    #     return self._get_service(event, 'pychron.experiment.experimentor.Experimentor')
+    # return self._get_service(event, 'pychron.experiment.experimentor.Experimentor')
 
     def _get_service(self, event, name):
         app = event.task.window.application
@@ -119,8 +119,10 @@ class QueueConditionalsAction(Action):
     def perform(self, event):
         task = event.task
         if hasattr(task, 'edit_queue_conditionals'):
+            # edit the current queue's conditionals
             task.edit_queue_conditionals()
         else:
+            # choose a conditionals file to edit
             from pychron.experiment.conditional.conditionals_edit_view import edit_conditionals
 
             dnames = None
@@ -130,6 +132,26 @@ class QueueConditionalsAction(Action):
                 dnames = spec.spectrometer.detector_names
 
             edit_conditionals(None, detectors=dnames, app=task.application)
+
+
+class SystemConditionalsAction(Action):
+    name = 'Edit System Conditionals'
+
+    def perform(self, event):
+        from pychron.experiment.conditional.conditionals_edit_view import edit_conditionals
+
+        task = event.task
+        dnames = None
+        spec = task.application.get_service(
+            'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager')
+        if spec:
+            dnames = spec.spectrometer.detector_names
+
+        p = paths.system_conditionals
+        if os.path.isfile(p):
+            edit_conditionals(p, detectors=dnames, app=task.application)
+        else:
+            warning(None, 'No system conditionals file at {}'.format(p))
 
 
 class QueueAction(ExperimentAction):
@@ -177,7 +199,7 @@ class OpenLastExperimentQueueAction(QueueAction):
         else:
             warning(None, 'No last experiment available')
             # if os.path.isfile(paths.last_experiment):
-            #     with open(paths.last_experiment, 'r') as fp:
+            # with open(paths.last_experiment, 'r') as fp:
             #         path = fp.readline()
             #         if os.path.isfile(path):
             #             self._open_experiment(event, path)

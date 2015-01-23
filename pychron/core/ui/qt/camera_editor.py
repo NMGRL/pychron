@@ -18,7 +18,7 @@
 from PySide.QtCore import QTimer
 from PySide.QtGui import QLabel, QImage, QPixmap, QSizePolicy
 from pyface.qt import QtCore
-from traits.api import HasTraits, Button, Int, Instance
+from traits.api import HasTraits, Button, Int, Instance, Str, Event
 from traitsui.api import View, Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -28,6 +28,7 @@ from traitsui.qt4.editor import Editor
 
 class _CameraEditor(Editor):
     timer = Instance(QTimer)
+    swap = False
 
     def init(self, parent):
         self.control = self._create_control(parent)
@@ -48,25 +49,29 @@ class _CameraEditor(Editor):
     def _update(self):
         # w, h = self.control.width(), self.control.height()
         # img = self.value.get_image_data(size=(w, h))
-        img = self.value.get_image_data(size=(640,480))
-        s = img.shape
-        if s:
-            im = QImage(img, s[1], s[0], QImage.Format_RGB888)
-            pix = QPixmap.fromImage(QImage.rgbSwapped(im))
-            self.control.setPixmap(pix)
+        img = self.value.get_image_data()
+        if img is not None:
+            s = img.shape
+            if s:
+                im = QImage(img, s[1], s[0], QImage.Format_RGB32)
+                # im = QImage(img, s[1], s[0], QImage.Format_RGB16)
+                if self.swap:
+                    im = QImage.rgbSwapped(im)
+
+                pix = QPixmap.fromImage(im)
+                self.control.setPixmap(pix)
 
     def _create_control(self, parent):
         label = QLabel()
-        # label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        # sp = label.sizePolicy()
-        # sp.setHeightForWidth(True)
-        # label.setFixedWidth(640)
-        # label.setFixedHeight(480)
-        parent.addWidget(label)
+        width, height = self.item.width, self.item.height
+        if self.item.width != -1.0:
+            label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+            label.setFixedWidth(abs(width))
+            label.setFixedHeight(abs(height))
         return label
 
 
-class CameraEditor(BasicEditorFactory):
+class  CameraEditor(BasicEditorFactory):
     klass = _CameraEditor
     fps = Int(24)
 

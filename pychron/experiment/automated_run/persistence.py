@@ -50,7 +50,9 @@ class AutomatedRunPersister(Loggable):
     run_spec = Instance('pychron.experiment.automated_run.spec.AutomatedRunSpec')
     data_manager = Instance(H5DataManager, ())
     monitor = Any
+    arar_age = Any
 
+    auto_save_detector_ic = Bool
     signal_fods = Dict
     baseline_fods = Dict
 
@@ -364,6 +366,13 @@ class AutomatedRunPersister(Loggable):
                 self.debug('pychron save time= {:0.3f} '.format(pt))
                 file_log(pt)
 
+        self.debug('$$$$$$$$$$$$$$$ auto_save_detector_ic={}'.format(self.auto_save_detector_ic))
+        if self.auto_save_detector_ic:
+            try:
+                self._save_detector_ic_csv()
+            except BaseException, e:
+                self.debug('Failed auto saving detector ic. {}'.format(e))
+
         # don't save detector_ic runs to mass spec
         # measurement of an isotope on multiple detectors likely possible with mass spec but at this point
         # not worth trying.
@@ -378,6 +387,16 @@ class AutomatedRunPersister(Loggable):
                 self._save_to_massspec(cp)
                 self.debug('mass spec save time= {:0.3f}'.format(time.time() - mt))
                 mem_log('post mass spec save')
+
+    def _save_detector_ic_csv(self):
+
+        from pychron.experiment.utilities.detector_ic import make_items, save_csv
+        from pychron.experiment.utilities.identifier import get_analysis_type
+
+        if get_analysis_type(self.run_spec.identifier) == 'detector_ic':
+            items = make_items(self.arar_age.isotopes)
+
+            save_csv(self.run_spec.record_id, items)
 
     def _save_gains(self, db, analysis):
         self.debug('saving gains')

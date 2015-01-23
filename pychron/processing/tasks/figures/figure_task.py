@@ -753,7 +753,7 @@ class FigureTask(AnalysisEditTask):
             left=HSplitter(
                 browser_pane_item(),
                 Tabbed(
-                    PaneItem('pychron.processing.figures.saved_figures'),
+                    # PaneItem('pychron.processing.figures.saved_figures'),
                     PaneItem('pychron.processing.unknowns'),
                     PaneItem('pychron.processing.figures.plotter_options'),
                     PaneItem('pychron.plot_editor'))))
