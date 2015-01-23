@@ -46,6 +46,14 @@ class BasePlotterOptions(HasTraits):
         if plot:
             plot.height = height
 
+    def load_factory_defaults(self, path):
+        with open(path, 'r') as fp:
+            yd = yaml.load(fp)
+            self._load_factory_defaults(yd)
+
+    def _load_factory_defaults(self, yd):
+        print 'prrrr',yd
+
     def dump(self, root):
         self._dump(root)
 
@@ -210,5 +218,18 @@ class FigurePlotterOptions(BasePlotterOptions):
 
         self.initialize()
 
+    def _load_factory_defaults(self, yd):
+        padding = yd.get('padding')
+        if padding:
+            self.trait_set(**padding)
+
+    def _set_defaults(self, yd, name, attrs):
+        d = yd.get(name)
+        if d:
+            for attr in attrs:
+                try:
+                    setattr(self, attr, d[attr])
+                except KeyError:
+                    pass
 
 # ============= EOF =============================================

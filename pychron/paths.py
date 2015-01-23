@@ -89,8 +89,37 @@ columns:
 '''
 
 IDEOGRAM_DEFAULTS = '''
-padding_left: 100
-padding_right: 100
+padding:
+ padding_left: 100
+ padding_right: 100
+ padding_top: 100
+ padding_bottom: 100
+
+calculations:
+ probability_curve_kind: cumulative
+ mean_calculation_kind: 'weighted mean'
+display:
+ mean_indicator_fontsize: 12
+ mean_sig_figs: 2
+
+general:
+ index_attr: uage
+'''
+
+SPECTRUM_DEFAULTS = '''
+padding:
+ padding_left: 100
+ padding_right: 100
+ padding_top: 100
+ padding_bottom: 100
+plateau:
+ plateau_line_width: 1
+ plateau_line_color: black
+ plateau_font_size: 12
+ plateau_sig_figs: 2
+integrated:
+ integrated_font_size: 12
+ integrated_sig_figs: 2
 '''
 
 class Paths(object):
@@ -222,6 +251,7 @@ class Paths(object):
     system_conditionals = None
     experiment_defaults = None
     ideogram_defaults = None
+    spectrum_defaults = None
 
     def set_search_paths(self, app_rec=None):
         self.app_resources = app_rec
@@ -379,15 +409,17 @@ class Paths(object):
         self.system_conditionals = join(self.spectrometer_dir, 'default_conditionals.yaml')
         self.experiment_defaults = join(setup_dir, 'experiment_defaults.yaml')
         self.ideogram_defaults = join(self.hidden_dir, 'ideogram_defaults.yaml')
+        self.spectrum_defaults = join(self.hidden_dir, 'spectrum_defaults.yaml')
         self._write_default_files()
 
     def _write_default_files(self):
         for p, d in ((path.join(self.setup_dir, 'initialization.xml'), DEFAULT_INITIALIZATION),
                      (self.startup_tests, DEFAULT_STARTUP_TESTS),
                      (self.experiment_defaults, EXPERIMENT_DEFAULTS),
-                     (self.ideogram_defaults, IDEOGRAM_DEFAULTS)):
+                     (self.ideogram_defaults, IDEOGRAM_DEFAULTS),
+                     (self.spectrum_defaults, SPECTRUM_DEFAULTS)):
 
-            overwrite = d == IDEOGRAM_DEFAULTS
+            overwrite = d in (IDEOGRAM_DEFAULTS, SPECTRUM_DEFAULTS)
             self._write_default_file(p, d, overwrite)
 
     def _write_default_file(self, p, default, overwrite=False):

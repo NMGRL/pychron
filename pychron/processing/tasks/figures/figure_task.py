@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,6 +25,7 @@ from itertools import groupby
 import os
 import weakref
 # ============= local library imports  ==========================
+from pychron.core.helpers.ctx_managers import no_update
 from pychron.envisage.tasks.actions import ToggleFullWindowAction
 from pychron.paths import paths
 from pychron.processing.plotters.xy.xy_scatter import XYScatterEditor
@@ -54,6 +55,7 @@ from .editors.ideogram_editor import IdeogramEditor
 
 class FigureTask(AnalysisEditTask):
     name = 'Figure'
+    default_task_name = 'Ideogram'
     id = 'pychron.processing.figures'
     plotter_options_pane = Instance(PlotterOptionsPane)
     tool_bars = [
@@ -93,6 +95,7 @@ class FigureTask(AnalysisEditTask):
     # ===============================================================================
     # task protocol
     # ===============================================================================
+
     def prepare_destroy(self):
         for ed in self.editor_area.editors:
             if isinstance(ed, FigureEditor):
@@ -113,8 +116,8 @@ class FigureTask(AnalysisEditTask):
     # ===============================================================================
     def _clear_group(self):
         for i in self.unknowns_pane.items:
-            i.group_id=0
-            i.graph_id=0
+            i.group_id = 0
+            i.graph_id = 0
 
         self.unknowns_pane.refresh_needed = True
 
@@ -126,7 +129,7 @@ class FigureTask(AnalysisEditTask):
 
     def plot_selected(self):
         self.debug('plot selected')
-        ac=self.has_active_editor()
+        ac = self.has_active_editor()
         if ac:
             pane = self.unknowns_pane
 
@@ -135,15 +138,15 @@ class FigureTask(AnalysisEditTask):
             oauto_group2 = pane.auto_group
 
             #turn off auto grouping
-            ac.auto_group=False
-            pane.auto_group=False
+            ac.auto_group = False
+            pane.auto_group = False
 
             self._clear_group()
             self._append_replace_unknowns(False, self.analysis_table.analyses)
 
             #return to original settings
-            ac.auto_group=oauto_group1
-            pane.auto_group=oauto_group2
+            ac.auto_group = oauto_group1
+            pane.auto_group = oauto_group2
 
     # ===============================================================================
     # graph grouping
@@ -197,6 +200,7 @@ class FigureTask(AnalysisEditTask):
         if self.unknowns_pane and self.unknowns_pane.items:
             self.unknowns_pane.clear_grouping(refresh_plot=refresh,
                                               idxs=selection_idxs)
+
     # ===============================================================================
     # figures
     # ===============================================================================
@@ -364,11 +368,10 @@ class FigureTask(AnalysisEditTask):
 
     def tb_new_isochron(self):
         self.new_inverse_isochron()
+
     # ===============================================================================
     #
     # ===============================================================================
-
-
     # ===============================================================================
     # private
     # ===============================================================================
@@ -376,6 +379,13 @@ class FigureTask(AnalysisEditTask):
                     add_table=True,
                     add_iso=True,
                     set_ans=True):
+
+        with no_update(self):
+            if klass == IdeogramEditor:
+                self.current_task_name = 'Ideogram'
+            else:
+                self.current_task_name = 'Spectrum'
+
         # new figure editor
         editor = klass(
             name=name,
@@ -439,9 +449,9 @@ class FigureTask(AnalysisEditTask):
 
             if self.unknowns_pane.auto_group and self.active_editor.auto_group:
                 self.group_by_labnumber()
-                    # for ai in self.active_editor.associated_editors:
-                    # if isinstance(ai, FigureEditor):
-                    #         ai.rebuild_graph()
+                # for ai in self.active_editor.associated_editors:
+                # if isinstance(ai, FigureEditor):
+                #         ai.rebuild_graph()
 
     # def _get_unique_group_id(self):
     # gids = {i.group_id for i in self.unknowns_pane.items}
@@ -489,7 +499,7 @@ class FigureTask(AnalysisEditTask):
 
                 def gen():
                     for f in figs:
-                        fig=self._dbfigure_factory(f)
+                        fig = self._dbfigure_factory(f)
                         if fig:
                             yield fig
 

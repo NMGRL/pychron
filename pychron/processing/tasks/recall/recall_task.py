@@ -43,6 +43,7 @@ from pychron.processing.utils.grouping import group_analyses_by_key
 class RecallTask(AnalysisEditTask):
     name = 'Recall'
     id = 'pychron.recall'
+    default_task_name = 'Recall'
 
     tool_bars = [
         SToolBar(ToggleFullWindowAction()),

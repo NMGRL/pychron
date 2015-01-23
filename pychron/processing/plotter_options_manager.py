@@ -106,15 +106,13 @@ class PlotterOptionsManager(HasTraits):
             read defaults from yaml file
         """
         if os.path.isfile(self._defaults_path):
-            with open(self._defaults_path, 'r') as fp:
-                yd = yaml.load(fp)
-                print yd
-
+            self.plotter_options.load_factory_defaults(self._defaults_path)
     # ===============================================================================
     # handlers
     # ===============================================================================
     def _factory_default_fired(self):
         self._factory_default()
+        self.plotter_options.refresh_plot_needed = True
 
     def _save_options_fired(self):
         self.save()
@@ -160,7 +158,7 @@ class PlotterOptionsManager(HasTraits):
                                    enabled_when='object.plotter_options.name!="Default"',),
                 icon_button_editor('save_options', 'disk',
                                    tooltip='Save changes to options'),
-                icon_button_editor('factory_default', 'factory_default',
+                icon_button_editor('factory_default', 'edit-bomb',
                                    tooltip='Apply factory defaults')),
             Item('plotter_options',
                  show_label=False,
@@ -205,31 +203,27 @@ class IdeogramOptionsManager(PlotterOptionsManager):
     plotter_options_klass = IdeogramOptions
     persistence_name = 'ideogram'
     _defaults_path = paths.ideogram_defaults
-    #title = 'Ideogram Plot Options'
 
 
 class SpectrumOptionsManager(PlotterOptionsManager):
     plotter_options_klass = SpectrumOptions
     persistence_name = 'spectrum'
-    #title = 'Spectrum Plot Options'
+    _defaults_path = paths.spectrum_defaults
 
 
 class InverseIsochronOptionsManager(PlotterOptionsManager):
     plotter_options_klass = InverseIsochronOptions
     persistence_name = 'inverse_isochron'
-    #title = 'Isochron Plot Options'
 
 
 class SeriesOptionsManager(PlotterOptionsManager):
     plotter_options_klass = SeriesOptions
     persistence_name = 'series'
-    #title = 'Series Plot Options'
 
 
 class SystemMonitorOptionsManager(PlotterOptionsManager):
     plotter_options_klass = SystemMonitorOptions
     persistence_name = 'system_monitor'
-    #title = 'Series Plot Options'
 
 
 class DashboardOptionsManager(PlotterOptionsManager):

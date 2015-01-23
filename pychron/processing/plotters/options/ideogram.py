@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -143,6 +143,7 @@ class IdeogramOptions(AgeOptions):
 
     def _edit_label_format_fired(self):
         from pychron.processing.label_maker import LabelTemplater, LabelTemplateView
+
         lm = LabelTemplater(label=self.analysis_label_display)
         lv = LabelTemplateView(model=lm)
         info = lv.edit_traits()
@@ -320,5 +321,12 @@ class IdeogramOptions(AgeOptions):
             'label_fontsize'
             # 'use_filled_line', 'fill_color', 'fill_alpha'
         ]
+
+    def _load_factory_defaults(self, yd):
+        super(IdeogramOptions, self)._load_factory_defaults(yd)
+
+        self._set_defaults(yd, 'calculations', ('probability_curve_kind', 'mean_calculation_kind'))
+        self._set_defaults(yd, 'display', ('mean_indicator_fontsize', 'mean_sig_figs',))
+        self._set_defaults(yd, 'general', ('index_attr',))
 
 # ============= EOF =============================================

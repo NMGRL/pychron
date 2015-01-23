@@ -66,7 +66,7 @@ class SpectrumOptions(AgeOptions):
 
     # def _get_info_group(self):
     # g = VGroup(
-    #         HGroup(Item('show_info', label='Display Info'),
+    # HGroup(Item('show_info', label='Display Info'),
     #                Item('show_mean_info', label='Mean', enabled_when='show_info'),
     #                Item('show_error_type_info', label='Error Type', enabled_when='show_info')
     #         ),
@@ -139,11 +139,11 @@ class SpectrumOptions(AgeOptions):
                                        editor=EnumEditor(values=[1, 2, 3]),
                                        tooltip='Set the size of the error envelope in standard deviations',
                                        label='N. Sigma')),
-                                  HGroup(Item('use_error_envelope_fill', label='Fill'),
-                                         Item('envelope_alpha',
-                                              label='Opacity',
-                                              enabled_when='use_error_envelope_fill',
-                                              tooltip='Set the opacity (alpha-value) for the error envelope')),
+                           HGroup(Item('use_error_envelope_fill', label='Fill'),
+                                  Item('envelope_alpha',
+                                       label='Opacity',
+                                       enabled_when='use_error_envelope_fill',
+                                       tooltip='Set the opacity (alpha-value) for the error envelope')),
                            show_border=True,
                            label='Error Envelope')
 
@@ -185,5 +185,14 @@ class SpectrumOptions(AgeOptions):
                            label='Fonts')
         return g, label_grp
 
+    def _load_factory_defaults(self, yd):
+        super(SpectrumOptions, self)._load_factory_defaults(yd)
 
+        self._set_defaults(yd, 'plateau', ('plateau_line_width',
+                                           'plateau_line_color',
+                                           'plateau_font_size',
+                                           'plateau_sig_figs',))
+
+        self._set_defaults(yd, 'integrated', ('integrated_font_size',
+                                              'integrated_sig_figs',))
 # ============= EOF =============================================

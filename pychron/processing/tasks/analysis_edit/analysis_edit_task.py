@@ -76,6 +76,11 @@ class AnalysisEditTask(BaseBrowserTask):
 
     _no_update = False
 
+    def activated(self):
+        super(AnalysisEditTask, self).activated()
+        with no_update(self):
+            self.current_task_name = self.default_task_name
+
     def activate_isoevo_task(self):
         tid = 'pychron.processing.isotope_evolution'
         self._activate_task(tid, 'IsoEvo')
