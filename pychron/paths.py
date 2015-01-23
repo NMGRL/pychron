@@ -88,6 +88,11 @@ columns:
   - Comment
 '''
 
+IDEOGRAM_DEFAULTS = '''
+padding_left: 100
+padding_right: 100
+'''
+
 class Paths(object):
     dissertation = '/Users/ross/Programming/git/dissertation'
     enthought = path.join(path.expanduser('~'), '.enthought')
@@ -216,6 +221,7 @@ class Paths(object):
     ic_mftable = None
     system_conditionals = None
     experiment_defaults = None
+    ideogram_defaults = None
 
     def set_search_paths(self, app_rec=None):
         self.app_resources = app_rec
@@ -372,17 +378,20 @@ class Paths(object):
         self.set_search_paths()
         self.system_conditionals = join(self.spectrometer_dir, 'default_conditionals.yaml')
         self.experiment_defaults = join(setup_dir, 'experiment_defaults.yaml')
-
+        self.ideogram_defaults = join(self.hidden_dir, 'ideogram_defaults.yaml')
         self._write_default_files()
 
     def _write_default_files(self):
         for p, d in ((path.join(self.setup_dir, 'initialization.xml'), DEFAULT_INITIALIZATION),
                      (self.startup_tests, DEFAULT_STARTUP_TESTS),
-                     (self.experiment_defaults, EXPERIMENT_DEFAULTS)):
-            self._write_default_file(p, d)
+                     (self.experiment_defaults, EXPERIMENT_DEFAULTS),
+                     (self.ideogram_defaults, IDEOGRAM_DEFAULTS)):
 
-    def _write_default_file(self, p, default):
-        if not path.isfile(p):
+            overwrite = d == IDEOGRAM_DEFAULTS
+            self._write_default_file(p, d, overwrite)
+
+    def _write_default_file(self, p, default, overwrite=False):
+        if not path.isfile(p) or overwrite:
             with open(p, 'w') as fp:
                 fp.write(default)
 

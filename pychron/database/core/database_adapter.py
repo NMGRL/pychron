@@ -324,7 +324,6 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
                 #                sess = self.session_factory()
                 self.info('testing database connection {}'.format(self.test_func))
                 ver = getattr(self, self.test_func)(reraise=True)
-                print 'ffff', version_warn
                 if version_warn:
                     ver = ver.version_num
                     aver = version.__alembic__

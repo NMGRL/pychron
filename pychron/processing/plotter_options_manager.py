@@ -22,6 +22,7 @@ import apptools.sweet_pickle as pickle
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================
+import yaml
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.globals import globalv
 from pychron.processing.plotters.options.base import BasePlotterOptions
@@ -46,9 +47,12 @@ class PlotterOptionsManager(HasTraits):
     delete_options = Button
     add_options = Button
     save_options = Button
+    factory_default = Button
+
     new_options_name = Str
     persistence_name = ''
     persistence_root = Property
+    _defaults_path = Str
 
     def deinitialize(self):
         if self.plotter_options:
@@ -97,9 +101,21 @@ class PlotterOptionsManager(HasTraits):
         self.plotter_options = next((pi for pi in self.plotter_options_list
                                      if pi.name == name), None)
 
+    def _factory_default(self):
+        """
+            read defaults from yaml file
+        """
+        if os.path.isfile(self._defaults_path):
+            with open(self._defaults_path, 'r') as fp:
+                yd = yaml.load(fp)
+                print yd
+
     # ===============================================================================
     # handlers
     # ===============================================================================
+    def _factory_default_fired(self):
+        self._factory_default()
+
     def _save_options_fired(self):
         self.save()
 
@@ -143,7 +159,9 @@ class PlotterOptionsManager(HasTraits):
                                    tooltip='Delete current plot options',
                                    enabled_when='object.plotter_options.name!="Default"',),
                 icon_button_editor('save_options', 'disk',
-                                   tooltip='Save changes to options')),
+                                   tooltip='Save changes to options'),
+                icon_button_editor('factory_default', 'factory_default',
+                                   tooltip='Apply factory defaults')),
             Item('plotter_options',
                  show_label=False,
                  style='custom'),
@@ -186,6 +204,7 @@ class PlotterOptionsManager(HasTraits):
 class IdeogramOptionsManager(PlotterOptionsManager):
     plotter_options_klass = IdeogramOptions
     persistence_name = 'ideogram'
+    _defaults_path = paths.ideogram_defaults
     #title = 'Ideogram Plot Options'
 
 
