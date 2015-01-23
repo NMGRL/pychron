@@ -45,6 +45,8 @@ from pychron.processing.tasks.isotope_evolution.isotope_evolution_editor import 
 
 class IsotopeEvolutionTask(AnalysisEditTask):
     name = 'Isotope Evolutions'
+    default_task_name = 'IsoEvo'
+
     iso_evo_editor_count = 1
     id = 'pychron.processing.isotope_evolution',
     auto_select_analysis = False

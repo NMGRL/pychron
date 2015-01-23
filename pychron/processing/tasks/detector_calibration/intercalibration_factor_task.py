@@ -34,6 +34,7 @@ class IntercalibrationFactorTask(InterpolationTask):
     id = 'pychron.processing.ic_factor'
     ic_factor_editor_count = 1
     name = 'Detector Intercalibration'
+    default_task_name = 'ICFactor'
 
     def _default_layout_default(self):
         return TaskLayout(
