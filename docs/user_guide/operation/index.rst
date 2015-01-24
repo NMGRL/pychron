@@ -9,3 +9,4 @@ Operation
   pychron_lasers
   experiment
   scripting
+  conditionals
