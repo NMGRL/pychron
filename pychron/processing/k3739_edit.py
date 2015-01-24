@@ -26,8 +26,9 @@ from traitsui.api import View, Item,UItem, Controller, VGroup, HGroup, TabularEd
 # ============= local library imports  ==========================
 from uncertainties import ufloat
 from pychron.core.ui.progress_dialog import myProgressDialog
+from pychron.envisage.browser.adapters import AnalysisAdapter
 from pychron.paths import paths
-from pychron.processing.tasks.browser.panes import AnalysisAdapter
+# from pychron.processing.tasks.browser.panes import AnalysisAdapter
 from pychron.pychron_constants import PLUSMINUS_SIGMA
 
 

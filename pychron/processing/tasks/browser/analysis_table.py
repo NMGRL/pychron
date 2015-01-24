@@ -15,12 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.action.menu_manager import MenuManager
 from traits.api import HasTraits, List, Any, Str, Enum, Bool, Button, \
-    Event, Property, cached_property, Instance, DelegatesTo, CStr
+    Event, Property, cached_property, Instance, DelegatesTo, CStr, Int
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from traitsui.menu import Action
+from pychron.envisage.browser.adapters import BrowserAdapter, AnalysisAdapter
 from pychron.envisage.browser.browser_mixin import filter_func
 from pychron.core.ui.table_configurer import AnalysisTableConfigurer
+
+
 
 
 class AnalysisTable(HasTraits):
@@ -45,7 +50,7 @@ class AnalysisTable(HasTraits):
     no_update = False
     scroll_to_row = Event
     refresh_needed = Event
-    tabular_adapter = Any
+    tabular_adapter = Instance(AnalysisAdapter, ())
     append_replace_enabled = Bool(True)
 
     def set_analyses(self, ans, tc=None, page=None, reset_page=False):

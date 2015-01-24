@@ -75,7 +75,7 @@ class TableView(PaneModelView):
                                 UItem(make_name('analyses'),
                                       width=0.4,
                                       editor=myTabularEditor(
-                                          adapter=self.pane.analysis_tabular_adapter,
+                                          adapter=self.model.analysis_table.tabular_adapter,
                                           operations=['move'],
                                           refresh=make_name('refresh_needed'),
                                           selected=make_name('selected'),

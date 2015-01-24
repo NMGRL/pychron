@@ -40,47 +40,7 @@ class AnalysisGroupAdapter(BrowserAdapter):
                ('Modified', 'last_modified')]
 
 
-class AnalysisAdapter(BrowserAdapter):
-    all_columns = [('Run ID', 'record_id'),
-                   ('Tag', 'tag'),
-                   ('Iso Fits', 'iso_fit_status'),
-                   ('Blank', 'blank_fit_status'),
-                   ('IC', 'ic_fit_status'),
-                   ('Flux', 'flux_fit_status'),
-                   ('Spec.', 'mass_spectrometer'),
-                   ('Meas.', 'meas_script_name'),
-                   ('Ext.', 'extract_script_name'),
-                   ('EVal.', 'extract_value'),
-                   ('Cleanup', 'cleanup'),
-                   ('Dur', 'duration'),
-                   ('Device', 'extract_device')]
 
-    columns = [('Run ID', 'record_id'),
-               ('Tag', 'tag')]
-
-    record_id_width = Int(100)
-    tag_width = Int(65)
-    odd_bg_color = 'lightgray'
-    font = 'arial 10'
-
-    def get_menu(self, obj, trait, row, column):
-        e = obj.append_replace_enabled
-        actions = [Action(name='Configure', action='configure_analysis_table'),
-                   Action(name='Unselect', action='unselect_analyses'),
-                   Action(name='Replace', action='replace_items', enabled=e),
-                   Action(name='Append', action='append_items', enabled=e),
-                   Action(name='Open', action='recall_items'),
-                   Action(name='Open Copy', action='recall_copies'),
-                   Action(name='Find References', action='find_refs')]
-
-        return MenuManager(*actions)
-
-    def get_bg_color(self, obj, trait, row, column=0):
-        color = 'white'
-        if self.item.is_plateau_step:
-            color = 'lightgreen'
-
-        return color
 
 
 class BrowserPane(TraitsDockPane):
@@ -90,7 +50,7 @@ class BrowserPane(TraitsDockPane):
     analyses_defined = Str('1')
 
     labnumber_tabular_adapter = Instance(LabnumberAdapter, ())
-    analysis_tabular_adapter = Instance(AnalysisAdapter, ())
+    # analysis_tabular_adapter = Instance(AnalysisAdapter, ())
     analysis_group_tabular_adapter = Instance(AnalysisGroupAdapter, ())
 
     sample_view = Instance(BrowserSampleView)

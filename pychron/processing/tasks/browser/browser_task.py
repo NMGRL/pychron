@@ -23,13 +23,14 @@ from traits.api import List, Str, Bool, Any, String, \
 from datetime import datetime, timedelta
 import re
 # ============= local library imports  ==========================
+from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.progress import progress_loader, open_progress
 from pychron.database.records.isotope_record import GraphicalRecordView
 from pychron.envisage.browser.record_views import ProjectRecordView
 from pychron.envisage.tasks.editor_task import BaseEditorTask
-from pychron.envisage.browser.browser_mixin import BrowserMixin
+# from pychron.envisage.browser.browser_mixin import BrowserMixin
 from pychron.processing.selection.data_selector import DataSelector
-from pychron.processing.tasks.browser.analysis_table import AnalysisTable
+# from pychron.processing.tasks.browser.analysis_table import AnalysisTable
 from pychron.processing.tasks.browser.graphical_filter_selector import GraphicalFilterSelector
 from pychron.processing.tasks.browser.panes import BrowserPane
 from pychron.processing.tasks.browser.util import get_pad
@@ -56,30 +57,30 @@ def unique_list(seq):
     return [x for x in seq if not (x.name in seen or seen_add(x.name))]
 
 
-NCHARS = 60
-REG = re.compile(r'.' * NCHARS)
+# NCHARS = 60
+# REG = re.compile(r'.' * NCHARS)
 
 
-class BaseBrowserTask(BaseEditorTask, BrowserMixin):
-    filter_focus = Bool(True)
-    use_focus_switching = Bool(True)
-    filter_label = Property(Str, depends_on='filter_focus')
-
-    irradiation_visible = Property(depends_on='filter_focus')
-    analysis_types_visible = Property(depends_on='filter_focus')
-    date_visible = Property(depends_on='filter_focus')
-    mass_spectrometer_visible = Property(depends_on='filter_focus')
-    identifier_visible = Property(depends_on='filter_focus')
-    project_visible = Property(depends_on='filter_focus')
-
-    analysis_table = Instance(AnalysisTable)
+class BaseBrowserTask(BaseEditorTask):
+    # filter_focus = Bool(True)
+    # use_focus_switching = Bool(True)
+    # filter_label = Property(Str, depends_on='filter_focus')
+    #
+    # irradiation_visible = Property(depends_on='filter_focus')
+    # analysis_types_visible = Property(depends_on='filter_focus')
+    # date_visible = Property(depends_on='filter_focus')
+    # mass_spectrometer_visible = Property(depends_on='filter_focus')
+    # identifier_visible = Property(depends_on='filter_focus')
+    # project_visible = Property(depends_on='filter_focus')
+    default_task_name = 'Recall'
+    browser_model = Instance('pychron.processing.tasks.browser.browser_model.BrowserModel')
     analysis_filter = String(enter_set=True, auto_set=False)
 
-    irradiations = List  # Property #DelegatesTo('manager')
-    irradiation = Str  # Property # DelegatesTo('manager')
-    irradiation_enabled = Bool
-    levels = List  # Property #DelegatesTo('manager')
-    level = Str  # Property #DelegatesTo('manager')
+    # irradiations = List  # Property #DelegatesTo('manager')
+    # irradiation = Str  # Property # DelegatesTo('manager')
+    # irradiation_enabled = Bool
+    # levels = List  # Property #DelegatesTo('manager')
+    # level = Str  # Property #DelegatesTo('manager')
 
     auto_select_analysis = Bool(False)
 
@@ -95,10 +96,10 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
     data_selector = Instance(DataSelector)
 
-    filter_by_button = Button
-    graphical_filter_button = Button
-    toggle_view = Button
-    toggle_focus = Button
+    # filter_by_button = Button
+    # graphical_filter_button = Button
+    # toggle_view = Button
+    # toggle_focus = Button
 
     _activated = False
     update_on_level_change = True
@@ -109,7 +110,6 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
     def __init__(self, *args, **kw):
         super(BaseBrowserTask, self).__init__(*args, **kw)
-        self.pattributes += ('irradiation_enabled', 'use_focus_switching')
 
     def refresh_samples(self):
         self.debug('refresh samples')
@@ -150,37 +150,55 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             self.analysis_table.set_analyses(xx)
 
     def prepare_destroy(self):
-        self.dump_browser()
-        self._activated = False
+        if self.browser_model:
+            self.browser_model.dump_browser()
+            self._activated = False
+
+            self._destroy_browser_model()
 
     def activate_workspace(self):
         if self.initialize_workspace:
             workspace = self.application.get_service('pychron.workspace.workspace_manager.WorkspaceManager')
             if workspace:
-                self.use_workspace = workspace.active
+                self.browser_model.use_workspace = workspace.active
                 self.workspace = workspace
 
-    def load_irradiation(self):
-        if self.use_workspace:
-            obj = self.workspace.index_db
-        else:
-            obj = self.manager
+    # def load_irradiation(self):
+    #     if self.use_workspace:
+    #         obj = self.workspace.index_db
+    #     else:
+    #         obj = self.manager
+    #
+    #     self.irradiations = irs = obj.irradiations
+    #     if irs:
+    #         self.irradiation = irs[0]
+    #         self.levels = ls = obj.levels
+    #         if ls:
+    #             self.level = ls[0]
+    def _setup_browser_model(self):
+        model = self.browser_model
+        model.pattributes += ('irradiation_enabled', 'use_focus_switching')
 
-        self.irradiations = irs = obj.irradiations
-        if irs:
-            self.irradiation = irs[0]
-            self.levels = ls = obj.levels
-            if ls:
-                self.level = ls[0]
+    def _destroy_browser_model(self):
+        pass
 
     def activated(self):
+
+        model = self._get_browser_model()
+        self.browser_model = model
+        if not model.is_activated:
+            self._setup_browser_model()
+
+        with no_update(self):
+            self.browser_model.current_task_name = self.default_task_name
+
         self._top_level_filter = None
         self.activate_workspace()
 
-        self.load_browser_options()
-        if self.sample_view_active:
+        self.browser_model.activated()
+
+        if self.browser_model.sample_view_active:
             self._activate_sample_browser()
-            self.filter_focus = True
         else:
             self._activate_query_browser()
 
@@ -266,21 +284,22 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         self.browser_pane.name = 'Browser/Query'
 
     def _activate_sample_browser(self):
-        if not self._activated:
-            self.load_projects()
+        # if not self._activated:
+        #     pass
+            # self.load_projects()
 
-            db = self.manager.db
-            with db.session_ctx():
-                self._load_mass_spectrometers()
-
-            self.datasource_url = db.datasource_url
-            self._preference_binder('pychron.browsing',
-                                    ('recent_hours','graphical_filtering_max_days',
-                                     'reference_hours_padding'),
-                                    obj=self.search_criteria)
-
-            self.load_browser_selection()
-
+            # db = self.manager.db
+            # with db.session_ctx():
+            #     self._load_mass_spectrometers()
+            #
+            # self.datasource_url = db.datasource_url
+            # self._preference_binder('pychron.browsing',
+            #                         ('recent_hours','graphical_filtering_max_days',
+            #                          'reference_hours_padding'),
+            #                         obj=self.search_criteria)
+            #
+            # self.load_browser_selection()
+        self.browser_model.activate_sample_browser()
         self.browser_pane.name = 'Browser/Sample'
         self._activated = True
 
@@ -306,27 +325,17 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
                                                                make_records=make_records)]
         return ret
 
-    def _load_mass_spectrometers(self):
-        db = self.db
-        ms = db.get_mass_spectrometers()
-        if ms:
-            ms = [mi.name for mi in ms]
-            self.available_mass_spectrometers = ms
-
-    def _load_analysis_types(self):
-        db = self.db
-        ms = [mi.name for mi in db.get_analysis_types()]
-        self.analysis_types = ['Analysis Type', 'None'] + ms
-
-    def _load_extraction_devices(self):
-        db = self.db
-        ms = [mi.name for mi in db.get_extraction_devices()]
-        self.extraction_devices = ['Extraction Device', 'None'] + ms
+    def _get_browser_model(self):
+        model = self.application.get_service('pychron.processing.tasks.browser.browser_model.BrowserModel')
+        self.debug('Browser model id={}'.format(id(model)))
+        return model
 
     def _create_browser_pane(self, **kw):
-        self.browser_pane = BrowserPane(model=self, **kw)
-        self.analysis_table.tabular_adapter = self.browser_pane.analysis_tabular_adapter
+        self.browser_pane = BrowserPane(model=self._get_browser_model(), **kw)
+
+        # self.analysis_table.tabular_adapter = self.browser_pane.analysis_tabular_adapter
         self.labnumber_tabular_adapter = self.browser_pane.labnumber_tabular_adapter
+
         return self.browser_pane
 
     def _ok_ed(self):
@@ -461,17 +470,17 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         else:
             self.data_selector.execute_query()
 
-    def _toggle_focus_fired(self):
-        self.filter_focus = not self.filter_focus
-
-    def _toggle_view_fired(self):
-        self.sample_view_active = not self.sample_view_active
-        if not self.sample_view_active:
-            self._activate_query_browser()
-        else:
-            self._activate_sample_browser()
-
-        self.dump()
+    # def _toggle_focus_fired(self):
+    #     self.filter_focus = not self.filter_focus
+    #
+    # def _toggle_view_fired(self):
+    #     self.sample_view_active = not self.sample_view_active
+    #     if not self.sample_view_active:
+    #         self._activate_query_browser()
+    #     else:
+    #         self._activate_sample_browser()
+    #
+    #     self.dump()
 
     def _graphical_filter_button_fired(self):
         print 'ffffassdf'
@@ -597,14 +606,20 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     def _selected_analysis_changed(self, new):
         self._set_selected_analysis(new)
 
-    @on_trait_change('analysis_table:omit_invalid')
-    def _omit_invalid_changed(self):
-        self._selected_samples_changed(self.selected_samples)
+    # @on_trait_change('analysis_table:omit_invalid')
+    # def _omit_invalid_changed(self):
+        # self._selected_samples_changed(self.selected_samples)
 
+    @on_trait_change('browser_model:dclicked_sample')
     def _dclicked_sample_changed(self):
+        self._dclicked_sample_hook()
+
         if self.active_editor:
-            ans = self.analysis_table.analyses
+            ans = self.browser_model.analysis_table.analyses
             self.active_editor.set_items(ans)
+
+    def _dclicked_sample_hook(self):
+        pass
 
     def _project_date_bins(self, identifier):
         db = self.db
@@ -617,144 +632,69 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
                     for li, hi in bins:
                         yield li, hi
 
-    def _selected_samples_changed(self, new):
-        if new:
-            at = self.analysis_table
-            lim = at.limit
-            kw = dict(limit=lim,
-                      include_invalid=not at.omit_invalid,
-                      mass_spectrometers=self._recent_mass_spectrometers)
-
-            ss = self.selected_samples
-            xx = ss[:]
-            # if not any(['RECENT' in p for p in self.selected_projects]):
-            # sp=self.selected_projects
-            # if not hasattr(sp, '__iter__'):
-            #     sp = (sp, )
-
-            if not any(['RECENT' in p.name for p in self.selected_projects]):
-                reftypes = ('blank_unknown',)
-                if any((si.analysis_type in reftypes
-                        for si in ss)):
-                    with self.db.session_ctx():
-                        ans = []
-                        for si in ss:
-                            if si.analysis_type in reftypes:
-                                xx.remove(si)
-                                dates = list(self._project_date_bins(si.identifier))
-                                print dates
-                                progress = open_progress(len(dates))
-                                for lp, hp in dates:
-
-                                    progress.change_message('Loading Date Range '
-                                                            '{} to {}'.format(lp.strftime('%m-%d-%Y %H:%M:%S'),
-                                                                              hp.strftime('%m-%d-%Y %H:%M:%S')))
-                                    ais = self._retrieve_sample_analyses([si],
-                                                                         make_records=False,
-                                                                         low_post=lp,
-                                                                         high_post=hp, **kw)
-                                    ans.extend(ais)
-                                progress.close()
-
-                        ans = self._make_records(ans)
-                    # print len(ans), len(set([si.record_id for si in ans]))
-            if xx:
-                lp, hp = self.low_post, self.high_post
-                ans = self._retrieve_sample_analyses(xx,
-                                                     low_post=lp,
-                                                     high_post=hp,
-                                                     **kw)
-                self.debug('selected samples changed. loading analyses. '
-                           'low={}, high={}, limit={}'.format(lp, hp, lim))
-
-            self.analysis_table.set_analyses(ans)
-            self.dump_browser()
-
-        self.filter_focus = not bool(new)
+    # def _selected_samples_changed(self, new):
+    #     if new:
+    #         at = self.analysis_table
+    #         lim = at.limit
+    #         kw = dict(limit=lim,
+    #                   include_invalid=not at.omit_invalid,
+    #                   mass_spectrometers=self._recent_mass_spectrometers)
+    #
+    #         ss = self.selected_samples
+    #         xx = ss[:]
+    #         # if not any(['RECENT' in p for p in self.selected_projects]):
+    #         # sp=self.selected_projects
+    #         # if not hasattr(sp, '__iter__'):
+    #         #     sp = (sp, )
+    #
+    #         if not any(['RECENT' in p.name for p in self.selected_projects]):
+    #             reftypes = ('blank_unknown',)
+    #             if any((si.analysis_type in reftypes
+    #                     for si in ss)):
+    #                 with self.db.session_ctx():
+    #                     ans = []
+    #                     for si in ss:
+    #                         if si.analysis_type in reftypes:
+    #                             xx.remove(si)
+    #                             dates = list(self._project_date_bins(si.identifier))
+    #                             print dates
+    #                             progress = open_progress(len(dates))
+    #                             for lp, hp in dates:
+    #
+    #                                 progress.change_message('Loading Date Range '
+    #                                                         '{} to {}'.format(lp.strftime('%m-%d-%Y %H:%M:%S'),
+    #                                                                           hp.strftime('%m-%d-%Y %H:%M:%S')))
+    #                                 ais = self._retrieve_sample_analyses([si],
+    #                                                                      make_records=False,
+    #                                                                      low_post=lp,
+    #                                                                      high_post=hp, **kw)
+    #                                 ans.extend(ais)
+    #                             progress.close()
+    #
+    #                     ans = self._make_records(ans)
+    #                 # print len(ans), len(set([si.record_id for si in ans]))
+    #         if xx:
+    #             lp, hp = self.low_post, self.high_post
+    #             ans = self._retrieve_sample_analyses(xx,
+    #                                                  low_post=lp,
+    #                                                  high_post=hp,
+    #                                                  **kw)
+    #             self.debug('selected samples changed. loading analyses. '
+    #                        'low={}, high={}, limit={}'.format(lp, hp, lim))
+    #
+    #         self.analysis_table.set_analyses(ans)
+    #         self.dump_browser()
+    #
+    #     self.filter_focus = not bool(new)
 
     @on_trait_change('data_selector:database_selector:dclicked')
     def _handle_selector_dclick(self, new):
         self._selector_dclick(new.item)
 
-    def _get_analysis_types_visible(self):
-        return self._get_visible(self.use_analysis_type_filtering)
-
-    def _get_irradiation_visible(self):
-        return self._get_visible(self.irradiation_enabled)
-
-    def _get_date_visible(self):
-        return self._get_visible(self.use_low_post or self.use_high_post or self.use_named_date_range)
-
-    def _get_mass_spectrometer_visible(self):
-        return self._get_visible(self.use_mass_spectrometers)
-
-    def _get_identifier_visible(self):
-        return self.filter_focus if self.use_focus_switching else True
-
-    def _get_project_visible(self):
-        return self._get_visible(self.project_enabled)
-
-    def _get_visible(self, default):
-        ret = True
-        if self.use_focus_switching and not self.filter_focus:
-            ret = False  # default
-        return ret
-
-    def _get_filter_label(self):
-        ss = []
-        if self.identifier:
-            ss.append('Identifier={}'.format(self.identifier))
-
-        if self.use_mass_spectrometers:
-            ss.append('MS={}'.format(','.join(self.mass_spectrometer_includes)))
-
-        if self.project_enabled:
-            if self.selected_projects:
-                s = 'Project= {}'.format(','.join([s.name for s in self.selected_projects]))
-                ss.append(s)
-
-        if self.irradiation_enabled:
-            if self.irradiation:
-                s = 'Irradiation= {}'.format(self.irradiation)
-                ss.append(s)
-
-        if self.use_analysis_type_filtering:
-            if self.analysis_include_types:
-                s = 'Types= {}'.format(self.analysis_include_types)
-                ss.append(s)
-
-        if self.use_low_post:
-            # s='>={}'.format(self.low_post.strftime('%m-%d-%Y %H:%M'))
-            s = '>={}'.format(self.low_post)
-            ss.append(s)
-
-        if self.use_high_post:
-            s = '<={}'.format(self.high_post)
-            ss.append(s)
-
-        if self.use_named_date_range:
-            ss.append(self.named_date_range)
-
-        txt = ''
-        if ss:
-            txt = ' + '.join(ss)
-
-        n = len(txt)
-        if n > NCHARS:
-            lines = REG.findall(txt)
-            nn = NCHARS * len(lines)
-            if nn < n:
-                lines.append(txt[nn:])
-            return '\n'.join(lines)
-
-        return txt
-
-
-
-    def _analysis_table_default(self):
-        at = AnalysisTable(db=self.db,
-                           append_replace_enabled=self._append_replace_analyses_enabled)
-        return at
+    # def _analysis_table_default(self):
+    #     at = AnalysisTable(db=self.manager.db,
+    #                        append_replace_enabled=self._append_replace_analyses_enabled)
+    #     return at
 
     def _data_selector_default(self):
         return DataSelector(database_selector=self.manager.db.selector)

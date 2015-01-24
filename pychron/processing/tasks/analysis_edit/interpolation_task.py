@@ -22,6 +22,7 @@ from traits.api import on_trait_change, Any, HasTraits, Str, List, Property, Int
 from traitsui.api import View, VGroup, HGroup, Item, UItem, TabularEditor
 
 from pychron.database.records.isotope_record import IsotopeRecordView
+from pychron.envisage.browser.adapters import AnalysisAdapter
 from pychron.processing.analyses.analysis import Analysis
 from pychron.processing.easy.easy_manager import EasyManager
 from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction, BinAnalysesAction, FindAssociatedAction
@@ -32,7 +33,7 @@ from pychron.processing.tasks.analysis_edit.adapters import ReferencesAdapter
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.processing.tasks.browser.browser_task import DEFAULT_AT
-from pychron.processing.tasks.browser.panes import AnalysisAdapter
+# from pychron.processing.tasks.browser.panes import AnalysisAdapter
 from pychron.processing.tasks.recall.recall_editor import RecallEditor
 
 
