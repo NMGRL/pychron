@@ -256,15 +256,29 @@ class AutomatedRunConditional(BaseConditional):
 
 
 class TruncationConditional(AutomatedRunConditional):
+    """
+        stops the current measurement and continues to next step in pyscript.
+        If more measure calls are main use abbreviated_count_ratio to reduce
+        the number of counts. for example of abbreviated_count_ratio = 0.5 and
+        the original baseline counts = 100, only 50 counts will be made for a truncated
+        run.
+
+    """
     abbreviated_count_ratio = 1.0
 
 
 class TerminationConditional(AutomatedRunConditional):
-    pass
+    """
+        Stop the current analysis immediately. Don't save to database.
+        Continue to next run in experiment queue
+    """
 
 
 class CancelationConditional(AutomatedRunConditional):
-    pass
+    """
+        Stop the current analysis immediately then stop the experiment.
+    """
+
     # def check(self, run, data, cnt):
     # result = super(CancelationConditional, self).check(run, data, cnt)
     # if result:

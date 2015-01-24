@@ -1212,7 +1212,7 @@ anaylsis_type={}
 
         attr = cd.get('attr')
         if not attr:
-            self.debug('not attr for this {} cd={}'.format(name, cd))
+            self.debug('no attr for this {} cd={}'.format(name, cd))
             return
 
         # for 2.0.4 backwards compatiblity
