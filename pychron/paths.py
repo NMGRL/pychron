@@ -410,7 +410,9 @@ class Paths(object):
         self.experiment_defaults = join(setup_dir, 'experiment_defaults.yaml')
         self.ideogram_defaults = join(self.hidden_dir, 'ideogram_defaults.yaml')
         self.spectrum_defaults = join(self.hidden_dir, 'spectrum_defaults.yaml')
-        self._write_default_files()
+
+        if not os.environ.get('TRAVIS_CI', False):
+            self._write_default_files()
 
     def _write_default_files(self):
         for p, d in ((path.join(self.setup_dir, 'initialization.xml'), DEFAULT_INITIALIZATION),

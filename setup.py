@@ -9,6 +9,10 @@ import multiprocessing
 multiprocessing
 from setuptools import setup
 
+import os
+
+os.environ['TRAVIS_CI'] = True
+
 setup(name='pychron',
       version='2.0.6',
       setup_requires=['nose>=1.0'],
