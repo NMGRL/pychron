@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from datetime import timedelta
+from pyface.timer.do_later import do_later
 
 from traits.api import Instance, on_trait_change, Enum
 from enable.component import Component
@@ -56,7 +57,6 @@ class AnalysisEditTask(BaseBrowserTask):
     unknowns_adapter = UnknownsAdapter
     unknowns_pane_klass = UnknownsPane
 
-    current_task_name = Enum('Recall', 'IsoEvo', 'Blanks', 'ICFactor', 'Ideogram', 'Spectrum')
     ic_factor_editor_count = 0
 
     tool_bars = [SToolBar(DatabaseSaveAction(),
@@ -76,42 +76,33 @@ class AnalysisEditTask(BaseBrowserTask):
 
     _no_update = False
 
-    def activated(self):
-        super(AnalysisEditTask, self).activated()
-        with no_update(self):
-            self.current_task_name = self.default_task_name
-
     def activate_isoevo_task(self):
         tid = 'pychron.processing.isotope_evolution'
         self._activate_task(tid, 'IsoEvo')
-        # with no_update(self):
-        # self.current_task_name = 'Blanks'
 
     def activate_blanks_task(self):
         tid = 'pychron.processing.blanks'
         self._activate_task(tid, 'Blanks')
-        # with no_update(self):
-        # self.current_task_name = 'Blanks'
 
     def activate_icfactor_task(self):
         tid = 'pychron.processing.ic_factor'
         self._activate_task(tid, 'ICFactor')
-        # with no_update(self):
-        # self.current_task_name = 'ICFactor'
 
     def activate_recall_task(self):
         tid = 'pychron.recall'
         self._activate_task(tid, 'Recall')
-        # with no_update(self):
-        # self.current_task_name = 'Recall'
 
     def activate_ideogram_task(self):
         task = self._activate_figure_task('Ideogram')
-        task.new_ideogram()
+        if task:
+            if task.active_editor is None:
+                task.new_ideogram()
 
     def activate_spectrum_task(self):
         task = self._activate_figure_task('Spectrum')
-        task.new_spectrum()
+        if task:
+            if task.active_editor is None:
+                task.new_spectrum()
 
     def _activate_figure_task(self, name):
         tid = 'pychron.processing.figures'
@@ -119,13 +110,16 @@ class AnalysisEditTask(BaseBrowserTask):
         return task
 
     def _activate_task(self, tid, name):
-        task = self.application.create_task(tid)
-        with no_update(task):
-            task.current_task_name = name
+        if self.window:
+            for task in self.window.tasks:
+                if task.id == tid:
+                    break
+            else:
+                task = self.application.create_task(tid)
+                self.window.add_task(task)
 
-        self.window.add_task(task)
-        self.window.activate_task(task)
-        return task
+            self.window.activate_task(task)
+            return task
 
     def split_editor_area_hor(self):
         """
@@ -248,7 +242,7 @@ class AnalysisEditTask(BaseBrowserTask):
         if not open_copy:
             records = self._open_existing_recall_editors(records)
             if records:
-                if self.use_workspace:
+                if self.browser_model.use_workspace:
                     ans = self.workspace.make_analyses(records)
                 else:
                     ans = self.manager.make_analyses(records, calculate_age=True, load_aux=True)
@@ -293,7 +287,10 @@ class AnalysisEditTask(BaseBrowserTask):
                 if existing and editor.basename in existing:
                     editor.instance_id = existing.count(editor.basename)
 
-                self.editor_area.add_editor(editor)
+                try:
+                    self.editor_area.add_editor(editor)
+                except AttributeError:
+                    pass
 
             ed = self.editor_area.editors[-1]
             self.editor_area.activate_editor(ed)
@@ -743,15 +740,30 @@ class AnalysisEditTask(BaseBrowserTask):
         if self.active_editor:
             self.active_editor.set_items(ans, is_append)
 
+    def _setup_browser_model(self):
+        super(AnalysisEditTask, self)._setup_browser_model()
+        # self.browser_model.on_trait_change(self._current_task_name_changed, 'current_task_name')
+        # self.browser_model.on_trait_change(self._dclicked_sample_changed, 'dclicked_sample')
+
+    def _destroy_browser_model(self):
+        super(AnalysisEditTask, self)._destroy_browser_model()
+        # self.browser_model.on_trait_change(self._current_task_name_changed,
+        #                                    'current_task_name', remove=True)
+        # self.browser_model.on_trait_change(self._dclicked_sample_changed,
+        #                                    'dclicked_sample', remove=True)
+
+
     # ===============================================================================
     # handlers
     # ===============================================================================
+    @on_trait_change('browser_model:current_task_name')
     def _current_task_name_changed(self, new):
+        print 'task change {} {}'.format(id(self), new)
         if self._no_update:
             return
 
         func = getattr(self, 'activate_{}_task'.format(new.lower()))
-        func()
+        do_later(func)
 
     def _dclicked_analysis_group_changed(self):
         if self.active_editor:
@@ -767,13 +779,15 @@ class AnalysisEditTask(BaseBrowserTask):
                     self.active_editor.set_items([ai.analysis for ai in unks])
                     self._dclicked_analysis_group_hook(unks, b)
 
-    def _dclicked_sample_changed(self):
+    # def _dclicked_sample_changed(self):
+    def _dclicked_sample_hook(self):
         if self.unknowns_pane:
             self.debug('Dumping UnknownsPane selection')
             self.unknowns_pane.dump_selection()
             self.unknowns_pane.load_previous_selections()
 
-        super(AnalysisEditTask, self)._dclicked_sample_changed()
+        # super(AnalysisEditTask, self)._dclicked_sample_changed()
+        super(AnalysisEditTask, self)._dclicked_sample_hook()
 
     def _active_editor_changed(self, new):
         if new:
@@ -829,10 +843,10 @@ class AnalysisEditTask(BaseBrowserTask):
             if not obj.suppress_pane_change:
                 self._show_pane(self.plot_editor_pane)
 
-    @on_trait_change('analysis_table:selected')
+    @on_trait_change('browser_model:analysis_table:selected')
     def _handle_analysis_selected(self, new):
-        if self.use_focus_switching:
-            self.filter_focus = not bool(new)
+        # if self.browser_model.use_focus_switching:
+        #     self.browser_model.filter_focus = not bool(new)
 
         if self.auto_show_unknowns_pane:
             if hasattr(self, 'unknowns_pane'):
@@ -850,7 +864,7 @@ class AnalysisEditTask(BaseBrowserTask):
                 if show:
                     self._show_pane(self.unknowns_pane)
 
-    @on_trait_change('analysis_table:dclicked')
+    @on_trait_change('browser_model:analysis_table:dclicked')
     def _dclicked_analysis_changed(self, obj, name, old, new):
         if new:
             self._recall_item(new.item)
@@ -859,12 +873,12 @@ class AnalysisEditTask(BaseBrowserTask):
     # @on_trait_change('sample_table:context_menu_event')
     # def _handle_analysis_table_context_menu(self, new):
 
-    @on_trait_change('analysis_table:context_menu_event')
+    @on_trait_change('browser_model:analysis_table:context_menu_event')
     def _handle_analysis_table_context_menu(self, new):
         if new:
             action, modifiers = new
             if action in ('append', 'replace'):
-                self._append_replace_unknowns(action == 'append_event')
+                self._append_replace_unknowns(action == 'append')
             elif action == 'open':
                 if self.analysis_table.selected:
                     open_copy = False

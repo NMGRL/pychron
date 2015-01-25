@@ -46,6 +46,7 @@ from pychron.processing.tasks.actions.edit_actions import BlankEditAction, \
     FluxAction, IsotopeEvolutionAction, ICFactorAction, \
     BatchEditAction, TagAction, DatabaseSaveAction, DiscriminationAction, DataReductionTagAction, \
     SelectDataReductionTagAction
+from pychron.processing.tasks.browser.browser_model import BrowserModel
 from pychron.processing.tasks.figures.actions import RefreshActiveEditorAction
 from pychron.processing.tasks.interpreted_age.actions import OpenInterpretedAgeGroupAction, \
     DeleteInterpretedAgeGroupAction, MakeGroupFromFileAction, MakeDataTablesAction, MakeTASAction
@@ -372,6 +373,14 @@ class ProcessingPlugin(BaseTaskPlugin):
     # def _vcs_data_task_factory(self):
     #     from pychron.processing.tasks.vcs_data.vcs_data_task import VCSDataTask
     #     return VCSDataTask(manager=self._processor_factory())
+
+    def _browser_model_factory(self):
+        return BrowserModel(manager = self._processor_factory())
+
+    def _service_offers_default(self):
+        so = self.service_offer_factory(protocol=BrowserModel,
+                                        factory=self._browser_model_factory)
+        return [so]
 
     def _preferences_panes_default(self):
         return [

@@ -18,7 +18,7 @@
 
 from traits.api import on_trait_change, Instance, List, Event, Any, Enum, Button
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Tabbed, \
-    HSplitter
+    HSplitter, VSplitter
 from pyface.tasks.action.schema import SToolBar
 # ============= standard library imports ========================
 from itertools import groupby
@@ -49,7 +49,7 @@ from .editors.spectrum_editor import SpectrumEditor
 from .editors.isochron_editor import InverseIsochronEditor
 from .editors.ideogram_editor import IdeogramEditor
 
-#@todo: add layout editing.
+# @todo: add layout editing.
 #@todo: add vertical stack. link x-axes
 
 
@@ -80,7 +80,7 @@ class FigureTask(AnalysisEditTask):
         #          ClearGroupAction(name='Clear'))
     ]
 
-    auto_select_analysis = False
+    # auto_select_analysis = False
 
     figures_help = 'Double-click to open'
     figure_kind = Enum('All', 'Ideogram', 'Spectrum', 'Inv Iso')
@@ -421,7 +421,7 @@ class FigureTask(AnalysisEditTask):
                     ieditor.parent_editor = editor
 
         # activate figure editor
-        self.editor_area.activate_editor(editor)
+        # self.editor_area.activate_editor(editor)
         return editor
 
     def _add_editor(self, editor, ans):
@@ -637,9 +637,10 @@ class FigureTask(AnalysisEditTask):
     #     # self._load_project_figures(new)
     #     super(FigureTask, self)._selected_projects_changed(new)
 
+    @on_trait_change('browser_model:selected_samples')
     def _selected_samples_changed(self, new):
         self._load_sample_figures(new)
-        super(FigureTask, self)._selected_samples_changed(new)
+        # super(FigureTask, self)._selected_samples_changed(new)
 
     def _delete_figure_button_fired(self):
         if self.selected_figures:
@@ -660,7 +661,8 @@ class FigureTask(AnalysisEditTask):
                 kind = self.figure_kind[:4].lower()
                 self.figures = filter(lambda x: x.kind == kind, self.ofigures)
 
-    def _dclicked_sample_changed(self, new):
+    # def _dclicked_sample_changed(self, new):
+    def _dclicked_sample_hook(self):
         if not self.has_active_editor():
             return
 
@@ -669,7 +671,8 @@ class FigureTask(AnalysisEditTask):
             self.active_editor.clear_aux_plot_limits()
             self.active_editor.enable_aux_plots()
 
-        super(FigureTask, self)._dclicked_sample_changed()
+        # super(FigureTask, self)._dclicked_sample_changed()
+        super(FigureTask, self)._dclicked_sample_hook()
 
     def _dclicked_figure_changed(self, new):
         if not new:
@@ -758,15 +761,23 @@ class FigureTask(AnalysisEditTask):
     # defaults
     # ===============================================================================
     def _default_layout_default(self):
-        return TaskLayout(
-            id='pychron.processing',
-            left=HSplitter(
-                browser_pane_item(),
-                Tabbed(
-                    # PaneItem('pychron.processing.figures.saved_figures'),
-                    PaneItem('pychron.processing.unknowns'),
-                    PaneItem('pychron.processing.figures.plotter_options'),
-                    PaneItem('pychron.plot_editor'))))
+
+        return TaskLayout(id='pychron.processing',
+                          left=VSplitter(
+                              Tabbed(browser_pane_item(),
+                                     PaneItem('pychron.processing.figures.plotter_options'),
+                                     PaneItem('pychron.plot_editor')),
+                              PaneItem('pychron.processing.unknowns')))
+
+        # return TaskLayout(
+        #     id='pychron.processing',
+        # left=HSplitter(
+        #     browser_pane_item(),
+        #     Tabbed(
+        #         # PaneItem('pychron.processing.figures.saved_figures'),
+        #         PaneItem('pychron.processing.unknowns'),
+        #         PaneItem('pychron.processing.figures.plotter_options'),
+        #         PaneItem('pychron.plot_editor'))))
         # ============= EOF =============================================
         #@classmethod
         # def group_by(cls, editor, items, key):

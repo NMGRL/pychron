@@ -264,15 +264,18 @@ class ExperimentTableConfigurer(TableConfigurer):
 class AnalysisTableConfigurer(TableConfigurer):
     id = 'analysis.table'
     limit = Int
+    omit_invalid = Bool(True)
 
     def _get_dump(self):
         obj = super(AnalysisTableConfigurer, self)._get_dump()
         obj['limit'] = self.limit
+        obj['omit_invalid'] = self.omit_invalid
 
         return obj
 
     def _load_hook(self, obj):
         self.limit = obj.get('limit', 500)
+        self.omit_invalid = obj.get('omit_invalid', True)
 
     def traits_view(self):
         v = View(VGroup(VGroup(UItem('columns',
@@ -286,6 +289,7 @@ class AnalysisTableConfigurer(TableConfigurer):
                         #            UItem('high_post', style='custom', enabled_when='use_high_post')),
                         #     VGroup(HGroup(Heading('Named Range'), UItem('use_named_date_range')),
                         #            UItem('named_date_range', enabled_when='use_named_date_range'))),
+                        Item('omit_invalid'),
                         Item('limit',
                              tooltip='Limit number of displayed analyses',
                              label='Limit'),

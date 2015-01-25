@@ -75,7 +75,7 @@ class TableView(PaneModelView):
                                 UItem(make_name('analyses'),
                                       width=0.4,
                                       editor=myTabularEditor(
-                                          adapter=self.pane.analysis_tabular_adapter,
+                                          adapter=self.model.analysis_table.tabular_adapter,
                                           operations=['move'],
                                           refresh=make_name('refresh_needed'),
                                           selected=make_name('selected'),
@@ -84,7 +84,7 @@ class TableView(PaneModelView):
                                           drag_external=True,
                                           scroll_to_row=make_name('scroll_to_row'),
                                           stretch_last_section=False)),
-                                HGroup(spring, Item(make_name('omit_invalid'))),
+                                # HGroup(spring, Item(make_name('omit_invalid'))),
                                 defined_when=self.pane.analyses_defined,
                                 show_border=True,
                                 label='Analyses')

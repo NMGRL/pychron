@@ -60,8 +60,9 @@ class RecallTask(AnalysisEditTask):
                  NextAction(),
                  PreviousAction(),
                  image_size=(16, 16))]
-    auto_select_analysis = False
-    _append_replace_analyses_enabled = False
+
+    # auto_select_analysis = False
+    # _append_replace_analyses_enabled = False
     recaller = Instance(MassSpecRecaller)
 
     def _recaller_default(self):

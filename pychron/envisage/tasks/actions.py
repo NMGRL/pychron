@@ -311,9 +311,9 @@ class RaiseAction(PTaskAction):
         self.window.activate()
         self.checked = True
 
-    @on_trait_change('window:deactivated')
-    def _on_deactivate(self):
-        self.checked = False
+    # @on_trait_change('window:deactivated')
+    # def _on_deactivate(self):
+    #     self.checked = False
 
 
 class RaiseUIAction(PTaskAction):

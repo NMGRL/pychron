@@ -23,7 +23,7 @@ from pyface.timer.do_later import do_later
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.envisage.browser.adapters import ProjectAdapter
-from pychron.envisage.browser.browser_mixin import filter_func
+from pychron.envisage.browser.base_browser_model import filter_func
 
 
 class GroupAdapter(TabularAdapter):

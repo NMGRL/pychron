@@ -49,7 +49,7 @@ class IsotopeEvolutionTask(AnalysisEditTask):
 
     iso_evo_editor_count = 1
     id = 'pychron.processing.isotope_evolution',
-    auto_select_analysis = False
+    # auto_select_analysis = False
     tool_bars = [SToolBar(DatabaseSaveAction(),
                           FindAssociatedAction(),
                           image_size=(16, 16)),

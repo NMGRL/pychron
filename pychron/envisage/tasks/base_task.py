@@ -84,15 +84,13 @@ class WindowGroup(Group):
                             checked = vi == application.active_window
                             items.append(ActionItem(action=RaiseAction(window=vi,
                                                                        checked=checked,
-                                                                       name=vi.active_task.name
-                            )))
+                                                                       name=vi.active_task.name)))
                             added.append(vi.active_task.id)
                 else:
                     items.append(ActionItem(action=RaiseUIAction(
                         name=vi.title or vi.id,
                         ui=vi,
-                        checked=checked,
-                    )))
+                        checked=checked)))
 
         return items
 

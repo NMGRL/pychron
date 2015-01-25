@@ -15,12 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.action.menu_manager import MenuManager
 from traits.api import HasTraits, List, Any, Str, Enum, Bool, Button, \
-    Event, Property, cached_property, Instance, DelegatesTo, CStr
+    Event, Property, cached_property, Instance, DelegatesTo, CStr, Int
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.envisage.browser.browser_mixin import filter_func
+from traitsui.menu import Action
+from pychron.envisage.browser.adapters import BrowserAdapter, AnalysisAdapter
+from pychron.envisage.browser.base_browser_model import filter_func
 from pychron.core.ui.table_configurer import AnalysisTableConfigurer
+
+
 
 
 class AnalysisTable(HasTraits):
@@ -37,15 +42,16 @@ class AnalysisTable(HasTraits):
     analysis_filter_parameter = Str
     analysis_filter_parameters = Property(List, depends_on='tabular_adapter.columns')
 
-    omit_invalid = Bool(True)
+    # omit_invalid = Bool(True)
     table_configurer = Instance(AnalysisTableConfigurer)
 
     limit = DelegatesTo('table_configurer')
+    omit_invalid = DelegatesTo('table_configurer')
 
     no_update = False
     scroll_to_row = Event
     refresh_needed = Event
-    tabular_adapter = Any
+    tabular_adapter = Instance(AnalysisAdapter)
     append_replace_enabled = Bool(True)
 
     def set_analyses(self, ans, tc=None, page=None, reset_page=False):
@@ -54,13 +60,9 @@ class AnalysisTable(HasTraits):
         self._analysis_filter_parameter_changed(True)
 
     def configure_analysis_table(self):
-       self.table_configurer.edit_traits()
+        self.table_configurer.edit_traits()
 
     # handlers
-    def _tabular_adapter_changed(self):
-        self.table_configurer.adapter = self.tabular_adapter
-        self.table_configurer.load()
-
     def _analysis_filter_changed(self, new):
         if new:
             name = self.analysis_filter_parameter
@@ -97,5 +99,11 @@ class AnalysisTable(HasTraits):
 
     def _analysis_filter_parameter_default(self):
         return 'record_id'
+
+    def _tabular_adapter_default(self):
+        adapter = AnalysisAdapter()
+        self.table_configurer.adapter = adapter
+        self.table_configurer.load()
+        return adapter
 
 # ============= EOF =============================================
