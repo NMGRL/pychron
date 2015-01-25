@@ -42,10 +42,11 @@ class AnalysisTable(HasTraits):
     analysis_filter_parameter = Str
     analysis_filter_parameters = Property(List, depends_on='tabular_adapter.columns')
 
-    omit_invalid = Bool(True)
+    # omit_invalid = Bool(True)
     table_configurer = Instance(AnalysisTableConfigurer)
 
     limit = DelegatesTo('table_configurer')
+    omit_invalid = DelegatesTo('table_configurer')
 
     no_update = False
     scroll_to_row = Event

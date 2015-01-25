@@ -84,7 +84,7 @@ class TableView(PaneModelView):
                                           drag_external=True,
                                           scroll_to_row=make_name('scroll_to_row'),
                                           stretch_last_section=False)),
-                                HGroup(spring, Item(make_name('omit_invalid'))),
+                                # HGroup(spring, Item(make_name('omit_invalid'))),
                                 defined_when=self.pane.analyses_defined,
                                 show_border=True,
                                 label='Analyses')

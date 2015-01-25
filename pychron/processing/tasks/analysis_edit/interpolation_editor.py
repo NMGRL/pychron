@@ -354,7 +354,8 @@ class InterpolationEditor(GraphEditor):
         p = graph.new_plot(
             ytitle=iso,
             xtitle='Time (hrs)',
-            padding=[80, 10, 5, 30])
+            # padding=[80, 10, 5, 30]
+            padding=[80, 80, 80, 80])
         p.y_axis.title_spacing = 60
         p.value_range.tight_bounds = False
 

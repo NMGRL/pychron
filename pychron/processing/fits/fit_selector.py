@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -113,18 +113,17 @@ class FitSelector(HasTraits):
                 fi.error_type = self.global_error_type
 
     def _get_auto_group(self):
-        return HGroup(icon_button_editor('plot_button', 'refresh',
-                                         tooltip='Replot the isotope evolutions. '
-                                                 'This may take awhile if many analyses are selected'),
-                      icon_button_editor('save_event', 'database_save',
-                                         tooltip='Save fits to database'),
-                      UItem('global_fit', editor=EnumEditor(name='fit_types')),
-                      UItem('global_error_type', editor=EnumEditor(name='error_types')),
-                      spring,
-                      Item('auto_update',
-                           label='Auto Plot',
-                           tooltip='Should the plot refresh after each change ie. "fit" or "show". '
-                                   'It is not advisable to use this option with many analyses'))
+        return VGroup(HGroup(icon_button_editor('plot_button', 'refresh',
+                                                tooltip='Replot the isotope evolutions. '
+                                                        'This may take awhile if many analyses are selected'),
+                             icon_button_editor('save_event', 'database_save',
+                                                tooltip='Save fits to database'),
+                             Item('auto_update',
+                                  label='Auto Plot',
+                                  tooltip='Should the plot refresh after each change ie. "fit" or "show". '
+                                          'It is not advisable to use this option with many analyses')),
+                      HGroup(UItem('global_fit', editor=EnumEditor(name='fit_types')),
+                             UItem('global_error_type', editor=EnumEditor(name='error_types'))))
 
     def traits_view(self):
         v = View(VGroup(
@@ -202,9 +201,9 @@ class FitSelector(HasTraits):
 
 
     # def load_baseline_fits(self, keys):
-    #     fits = self.fits
-    #     if not fits:
-    #         fits = []
+    # fits = self.fits
+    # if not fits:
+    # fits = []
     #
     #     fs = [
     #         self.fit_klass(name='{}bs'.format(ki), fit='average')
