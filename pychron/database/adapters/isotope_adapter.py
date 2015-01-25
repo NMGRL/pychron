@@ -1078,7 +1078,7 @@ class IsotopeAdapter(DatabaseAdapter):
                 q = q.filter(irrad_LevelTable.name == level)
 
             q = self._labnumber_filter(q, project_names, mass_spectrometers,
-                                       analysis_types, filter_non_run, low_post, high_post)
+                                       analysis_types, filter_non_run, low_post, high_post, False)
             self.debug(compile_query(q))
             return self._query_all(q)
 

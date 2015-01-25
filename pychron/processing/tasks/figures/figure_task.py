@@ -18,7 +18,7 @@
 
 from traits.api import on_trait_change, Instance, List, Event, Any, Enum, Button
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Tabbed, \
-    HSplitter
+    HSplitter, VSplitter
 from pyface.tasks.action.schema import SToolBar
 # ============= standard library imports ========================
 from itertools import groupby
@@ -49,7 +49,7 @@ from .editors.spectrum_editor import SpectrumEditor
 from .editors.isochron_editor import InverseIsochronEditor
 from .editors.ideogram_editor import IdeogramEditor
 
-#@todo: add layout editing.
+# @todo: add layout editing.
 #@todo: add vertical stack. link x-axes
 
 
@@ -761,15 +761,23 @@ class FigureTask(AnalysisEditTask):
     # defaults
     # ===============================================================================
     def _default_layout_default(self):
-        return TaskLayout(
-            id='pychron.processing',
-            left=HSplitter(
-                browser_pane_item(),
-                Tabbed(
-                    # PaneItem('pychron.processing.figures.saved_figures'),
-                    PaneItem('pychron.processing.unknowns'),
-                    PaneItem('pychron.processing.figures.plotter_options'),
-                    PaneItem('pychron.plot_editor'))))
+
+        return TaskLayout(id='pychron.processing',
+                          left=VSplitter(
+                              Tabbed(browser_pane_item(),
+                                     PaneItem('pychron.processing.figures.plotter_options'),
+                                     PaneItem('pychron.plot_editor')),
+                              PaneItem('pychron.processing.unknowns')))
+
+        # return TaskLayout(
+        #     id='pychron.processing',
+        # left=HSplitter(
+        #     browser_pane_item(),
+        #     Tabbed(
+        #         # PaneItem('pychron.processing.figures.saved_figures'),
+        #         PaneItem('pychron.processing.unknowns'),
+        #         PaneItem('pychron.processing.figures.plotter_options'),
+        #         PaneItem('pychron.plot_editor'))))
         # ============= EOF =============================================
         #@classmethod
         # def group_by(cls, editor, items, key):

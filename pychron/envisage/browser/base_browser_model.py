@@ -82,7 +82,7 @@ def extract_mass_spectrometer_name(name):
         return ms
 
 
-class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
+class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     projects = List
     oprojects = List
     project_enabled = Bool(True)
@@ -293,7 +293,6 @@ class BrowserMixin(PersistenceLoggable, ColumnSorterMixin):
 
     def _retrieve_recent_labnumbers(self, recent_name):
         ms = extract_mass_spectrometer_name(recent_name)
-
         db = self.db
         with db.session_ctx():
             hpost = datetime.now()

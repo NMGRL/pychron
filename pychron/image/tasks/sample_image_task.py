@@ -22,7 +22,7 @@ from traits.api import Event, List, Str, HasTraits, Instance
 import os
 # ============= local library imports  ==========================
 from pychron.core.progress import progress_loader
-from pychron.envisage.browser.browser_mixin import BrowserMixin
+from pychron.envisage.browser.base_browser_model import BaseBrowserModel
 from pychron.envisage.browser.record_views import SampleRecordView, SampleImageRecordView
 from pychron.envisage.tasks.base_task import BaseManagerTask
 # from pychron.image.camera import Camera
@@ -37,7 +37,7 @@ from pychron.image.toupcam.camera import ToupCamCamera
 from pychron.paths import paths
 
 
-class SampleImageTask(BaseEditorTask, BrowserMixin):
+class SampleImageTask(BaseEditorTask, BaseBrowserModel):
     name = 'Sample Imager'
     id = 'pychron.image.sample_imager'
 

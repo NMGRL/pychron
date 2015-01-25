@@ -28,7 +28,7 @@ from pychron.entry.graphic_generator import GraphicModel, GraphicGeneratorContro
 from pychron.entry.tasks.importer_view import ImporterView
 from pychron.envisage.browser.record_views import SampleRecordView
 from pychron.entry.tasks.importer import ImporterModel
-from pychron.envisage.browser.browser_mixin import BrowserMixin
+from pychron.envisage.browser.base_browser_model import BaseBrowserModel
 from pychron.entry.entry_views.project_entry import ProjectEntry
 from pychron.entry.entry_views.sample_entry import SampleEntry
 from pychron.entry.labnumber_entry import LabnumberEntry
@@ -40,7 +40,7 @@ from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction
 from pychron.envisage.tasks.base_task import BaseManagerTask
 
 
-class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
+class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     name = 'Labnumber'
     # importer = Instance(ImportManager)
 

@@ -94,14 +94,15 @@ class AnalysisEditTask(BaseBrowserTask):
 
     def activate_ideogram_task(self):
         task = self._activate_figure_task('Ideogram')
-        if task.active_editor is None:
-            task.new_ideogram()
+        if task:
+            if task.active_editor is None:
+                task.new_ideogram()
 
     def activate_spectrum_task(self):
         task = self._activate_figure_task('Spectrum')
-
-        if task.active_editor is None:
-            task.new_spectrum()
+        if task:
+            if task.active_editor is None:
+                task.new_spectrum()
 
     def _activate_figure_task(self, name):
         tid = 'pychron.processing.figures'
@@ -109,15 +110,16 @@ class AnalysisEditTask(BaseBrowserTask):
         return task
 
     def _activate_task(self, tid, name):
-        for task in self.window.tasks:
-            if task.id ==tid:
-                break
-        else:
-            task = self.application.create_task(tid)
+        if self.window:
+            for task in self.window.tasks:
+                if task.id == tid:
+                    break
+            else:
+                task = self.application.create_task(tid)
+                self.window.add_task(task)
 
-        self.window.add_task(task)
-        self.window.activate_task(task)
-        return task
+            self.window.activate_task(task)
+            return task
 
     def split_editor_area_hor(self):
         """
@@ -876,7 +878,7 @@ class AnalysisEditTask(BaseBrowserTask):
         if new:
             action, modifiers = new
             if action in ('append', 'replace'):
-                self._append_replace_unknowns(action == 'append_event')
+                self._append_replace_unknowns(action == 'append')
             elif action == 'open':
                 if self.analysis_table.selected:
                     open_copy = False
