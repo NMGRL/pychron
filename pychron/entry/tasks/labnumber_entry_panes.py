@@ -24,6 +24,7 @@ from pyface.tasks.traits_dock_pane import TraitsDockPane
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
+from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.qt.tabular_editors import FilterTabularEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
@@ -105,10 +106,8 @@ class IrradiationEditorPane(TraitsDockPane):
                 UItem('sample_filter_parameter',
                       editor=EnumEditor(name='sample_filter_parameters')),
                 UItem('sample_filter',
+                      editor=ComboboxEditor(name='sample_filter_values'),
                       width=75),
-                UItem('sample_filter',
-                      editor=EnumEditor(name='sample_filter_values'),
-                      width=-25),
                 icon_button_editor('edit_sample_button', 'database_edit',
                                    tooltip='Edit sample in database'),
                 icon_button_editor('add_sample_button', 'database_add',
