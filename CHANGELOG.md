@@ -1,12 +1,13 @@
 CHANGELOG
 ============
-2.0.7
+2.1.0
 ------------------
 * added level and chronology panes to Labnumber entry
 * padding to plot options
 * fixed plotting ideograms of attributes other than age
 * improved database startup tests
 * added database version check to startup tests
+* !SubMajor Version Bump! Changed to a global shared browser model for all processing tasks
 
 2.0.6
 ------------------
