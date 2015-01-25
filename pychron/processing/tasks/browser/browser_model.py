@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
+from datetime import datetime, timedelta
 from traits.api import HasTraits, Str, Int, Bool, Any, Float, \
     Property, on_trait_change, Button, Enum, List, Instance
 from traitsui.api import View, UItem, Item, HGroup, VGroup
@@ -23,10 +24,12 @@ from traitsui.api import View, UItem, Item, HGroup, VGroup
 import re
 # ============= local library imports  ==========================
 # from pychron.processing.tasks.browser.browser_task import NCHARS
-from pychron.core.progress import open_progress
+from pychron.core.progress import open_progress, progress_loader
+from pychron.database.records.isotope_record import GraphicalRecordView
 from pychron.envisage.browser.base_browser_model import BaseBrowserModel
 from pychron.envisage.browser.record_views import ProjectRecordView
 from pychron.processing.tasks.browser.analysis_table import AnalysisTable
+from pychron.processing.tasks.browser.graphical_filter_selector import GraphicalFilterSelector
 from pychron.processing.tasks.browser.util import get_pad
 
 NCHARS = 60
@@ -34,7 +37,6 @@ REG = re.compile(r'.' * NCHARS)
 
 
 class BrowserModel(BaseBrowserModel):
-    manager = Any
 
     filter_focus = Bool(True)
     use_focus_switching = Bool(True)
@@ -97,7 +99,7 @@ class BrowserModel(BaseBrowserModel):
             self.load_projects()
             self._load_projects_and_irradiations()
 
-            db = self.manager.db
+            db = self.db
             with db.session_ctx():
                 self._load_mass_spectrometers()
 
@@ -113,7 +115,7 @@ class BrowserModel(BaseBrowserModel):
 
     def load_time_view(self):
         self.debug('load time view')
-        db = self.manager.db
+        db = self.db
         with db.session_ctx():
             ss = [si.labnumber for si in self.selected_samples]
             bt = self.search_criteria.reference_hours_padding
@@ -144,6 +146,17 @@ class BrowserModel(BaseBrowserModel):
                 xx = self._get_analysis_series(pad.low_post, pad.high_post, ms)
 
             self.analysis_table.set_analyses(xx)
+
+    def _project_date_bins(self, identifier):
+        db = self.db
+        hours = self.search_criteria.reference_hours_padding
+        with db.session_ctx():
+            for pp in self.selected_projects:
+                bins = db.get_project_date_bins(identifier, pp.name, hours)
+                print bins
+                if bins:
+                    for li, hi in bins:
+                        yield li, hi
 
     def _get_analysis_series(self, lp, hp, ms):
         self.use_low_post = True
@@ -292,6 +305,66 @@ class BrowserModel(BaseBrowserModel):
                 if irrads:
                     self.irradiation = irrads[0]
     # handlers
+    def _graphical_filter_button_fired(self):
+        print 'ffffassdf'
+        self.debug('doing graphical filter')
+        from pychron.processing.tasks.browser.graphical_filter import GraphicalFilterModel, GraphicalFilterView
+
+        sams = self.selected_samples
+        if not sams:
+            sams = self.samples
+
+        db = self.db
+        with db.session_ctx():
+            if sams:
+                lns = [si.identifier for si in sams]
+                lpost, hpost = db.get_min_max_analysis_timestamp(lns)
+                ams = ms = db.get_analysis_mass_spectrometers(lns)
+                force = False
+            else:
+                force = True
+                lpost = datetime.now() - timedelta(hours=self.search_criteria.recent_hours)
+                hpost = datetime.now()
+                ams = [mi.name for mi in db.get_mass_spectrometers()]
+                ms = ams[:1]
+
+            # if date range > X days make user fine tune range
+            tdays = 3600 * 24 * max(1, self.search_criteria.graphical_filtering_max_days)
+
+            if force or (hpost - lpost).total_seconds() > tdays or len(ms) > 1:
+                d = GraphicalFilterSelector(lpost=lpost, hpost=hpost,
+                                            available_mass_spectrometers=ams,
+                                            mass_spectrometers=ms)
+                info = d.edit_traits(kind='livemodal')
+                if info.result:
+                    lpost, hpost, ms = d.lpost, d.hpost, d.mass_spectrometers
+                    if not ms:
+                        self.warning_dialog('Please select at least one Mass Spectrometer')
+                        return
+                else:
+                    return
+
+            ans = db.get_date_range_analyses(lpost, hpost, ordering='asc', spectrometer=ms)
+
+            def func(xi, prog, i, n):
+                if prog:
+                    prog.change_message('Loading {}-{}. {}'.format(i, n, xi.record_id))
+                return GraphicalRecordView(xi)
+
+            ans = progress_loader(ans, func)
+            if not ans:
+                return
+
+        gm = GraphicalFilterModel(analyses=ans,
+                                  projects=[p.name for p in self.selected_projects])
+        gm.setup()
+        gv = GraphicalFilterView(model=gm)
+        info = gv.edit_traits(kind='livemodal')
+        if info.result:
+            ans = gm.get_selection()
+            self.analysis_table.analyses = ans
+            self._graphical_filter_hook(ans, gm.is_append)
+
     def _irradiation_enabled_changed(self, new):
         if not new:
             self._top_level_filter = None
@@ -455,19 +528,19 @@ class BrowserModel(BaseBrowserModel):
 
     # private
     def _load_mass_spectrometers(self):
-        db = self.manager.db
+        db = self.db
         ms = db.get_mass_spectrometers()
         if ms:
             ms = [mi.name for mi in ms]
             self.available_mass_spectrometers = ms
 
     def _load_analysis_types(self):
-        db = self.manager.db
+        db = self.db
         ms = [mi.name for mi in db.get_analysis_types()]
         self.analysis_types = ['Analysis Type', 'None'] + ms
 
     def _load_extraction_devices(self):
-        db = self.manager.db
+        db = self.db
         ms = [mi.name for mi in db.get_extraction_devices()]
         self.extraction_devices = ['Extraction Device', 'None'] + ms
 

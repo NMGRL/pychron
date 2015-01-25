@@ -16,24 +16,14 @@
 
 # ============= enthought library imports =======================
 
-from apptools.preferences.preference_binding import bind_preference
-from traits.api import List, Str, Bool, Any, String, \
-    on_trait_change, Date, Int, Time, Instance, Button, Property, Enum
+from traits.api import Bool, Any, String, \
+    on_trait_change, Date, Time, Instance
 # ============= standard library imports ========================
-from datetime import datetime, timedelta
-import re
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
-from pychron.core.progress import progress_loader, open_progress
-from pychron.database.records.isotope_record import GraphicalRecordView
-from pychron.envisage.browser.record_views import ProjectRecordView
 from pychron.envisage.tasks.editor_task import BaseEditorTask
-# from pychron.envisage.browser.browser_mixin import BrowserMixin
 from pychron.processing.selection.data_selector import DataSelector
-# from pychron.processing.tasks.browser.analysis_table import AnalysisTable
-from pychron.processing.tasks.browser.graphical_filter_selector import GraphicalFilterSelector
 from pychron.processing.tasks.browser.panes import BrowserPane
-from pychron.processing.tasks.browser.util import get_pad
 
 '''
 add toolbar action to open another editor tab
@@ -74,7 +64,7 @@ class BaseBrowserTask(BaseEditorTask):
     # project_visible = Property(depends_on='filter_focus')
     default_task_name = 'Recall'
     browser_model = Instance('pychron.processing.tasks.browser.browser_model.BrowserModel')
-    analysis_filter = String(enter_set=True, auto_set=False)
+    # analysis_filter = String(enter_set=True, auto_set=False)
 
     # irradiations = List  # Property #DelegatesTo('manager')
     # irradiation = Str  # Property # DelegatesTo('manager')
@@ -82,7 +72,7 @@ class BaseBrowserTask(BaseEditorTask):
     # levels = List  # Property #DelegatesTo('manager')
     # level = Str  # Property #DelegatesTo('manager')
 
-    auto_select_analysis = Bool(False)
+    # auto_select_analysis = Bool(False)
 
     start_date = Date
     start_time = Time
@@ -483,65 +473,65 @@ class BaseBrowserTask(BaseEditorTask):
     #
     #     self.dump()
 
-    def _graphical_filter_button_fired(self):
-        print 'ffffassdf'
-        self.debug('doing graphical filter')
-        from pychron.processing.tasks.browser.graphical_filter import GraphicalFilterModel, GraphicalFilterView
-
-        sams = self.selected_samples
-        if not sams:
-            sams = self.samples
-
-        db = self.db
-        with db.session_ctx():
-            if sams:
-                lns = [si.identifier for si in sams]
-                lpost, hpost = db.get_min_max_analysis_timestamp(lns)
-                ams = ms = db.get_analysis_mass_spectrometers(lns)
-                force = False
-            else:
-                force = True
-                lpost = datetime.now() - timedelta(hours=self.search_criteria.recent_hours)
-                hpost = datetime.now()
-                ams = [mi.name for mi in db.get_mass_spectrometers()]
-                ms = ams[:1]
-
-            # if date range > X days make user fine tune range
-            tdays = 3600 * 24 * max(1, self.search_criteria.graphical_filtering_max_days)
-
-            if force or (hpost - lpost).total_seconds() > tdays or len(ms) > 1:
-                d = GraphicalFilterSelector(lpost=lpost, hpost=hpost,
-                                            available_mass_spectrometers=ams,
-                                            mass_spectrometers=ms)
-                info = d.edit_traits(kind='livemodal')
-                if info.result:
-                    lpost, hpost, ms = d.lpost, d.hpost, d.mass_spectrometers
-                    if not ms:
-                        self.warning_dialog('Please select at least one Mass Spectrometer')
-                        return
-                else:
-                    return
-
-            ans = db.get_date_range_analyses(lpost, hpost, ordering='asc', spectrometer=ms)
-
-            def func(xi, prog, i, n):
-                if prog:
-                    prog.change_message('Loading {}-{}. {}'.format(i, n, xi.record_id))
-                return GraphicalRecordView(xi)
-
-            ans = progress_loader(ans, func)
-            if not ans:
-                return
-
-        gm = GraphicalFilterModel(analyses=ans,
-                                  projects=[p.name for p in self.selected_projects])
-        gm.setup()
-        gv = GraphicalFilterView(model=gm)
-        info = gv.edit_traits(kind='livemodal')
-        if info.result:
-            ans = gm.get_selection()
-            self.analysis_table.analyses = ans
-            self._graphical_filter_hook(ans, gm.is_append)
+    # def _graphical_filter_button_fired(self):
+    #     print 'ffffassdf'
+    #     self.debug('doing graphical filter')
+    #     from pychron.processing.tasks.browser.graphical_filter import GraphicalFilterModel, GraphicalFilterView
+    #
+    #     sams = self.selected_samples
+    #     if not sams:
+    #         sams = self.samples
+    #
+    #     db = self.db
+    #     with db.session_ctx():
+    #         if sams:
+    #             lns = [si.identifier for si in sams]
+    #             lpost, hpost = db.get_min_max_analysis_timestamp(lns)
+    #             ams = ms = db.get_analysis_mass_spectrometers(lns)
+    #             force = False
+    #         else:
+    #             force = True
+    #             lpost = datetime.now() - timedelta(hours=self.search_criteria.recent_hours)
+    #             hpost = datetime.now()
+    #             ams = [mi.name for mi in db.get_mass_spectrometers()]
+    #             ms = ams[:1]
+    #
+    #         # if date range > X days make user fine tune range
+    #         tdays = 3600 * 24 * max(1, self.search_criteria.graphical_filtering_max_days)
+    #
+    #         if force or (hpost - lpost).total_seconds() > tdays or len(ms) > 1:
+    #             d = GraphicalFilterSelector(lpost=lpost, hpost=hpost,
+    #                                         available_mass_spectrometers=ams,
+    #                                         mass_spectrometers=ms)
+    #             info = d.edit_traits(kind='livemodal')
+    #             if info.result:
+    #                 lpost, hpost, ms = d.lpost, d.hpost, d.mass_spectrometers
+    #                 if not ms:
+    #                     self.warning_dialog('Please select at least one Mass Spectrometer')
+    #                     return
+    #             else:
+    #                 return
+    #
+    #         ans = db.get_date_range_analyses(lpost, hpost, ordering='asc', spectrometer=ms)
+    #
+    #         def func(xi, prog, i, n):
+    #             if prog:
+    #                 prog.change_message('Loading {}-{}. {}'.format(i, n, xi.record_id))
+    #             return GraphicalRecordView(xi)
+    #
+    #         ans = progress_loader(ans, func)
+    #         if not ans:
+    #             return
+    #
+    #     gm = GraphicalFilterModel(analyses=ans,
+    #                               projects=[p.name for p in self.selected_projects])
+    #     gm.setup()
+    #     gv = GraphicalFilterView(model=gm)
+    #     info = gv.edit_traits(kind='livemodal')
+    #     if info.result:
+    #         ans = gm.get_selection()
+    #         self.analysis_table.analyses = ans
+    #         self._graphical_filter_hook(ans, gm.is_append)
 
     # def _use_mass_spectrometer_changed(self, new):
     #     if new:
@@ -622,16 +612,16 @@ class BaseBrowserTask(BaseEditorTask):
     def _dclicked_sample_hook(self):
         pass
 
-    def _project_date_bins(self, identifier):
-        db = self.db
-        hours = self.search_criteria.reference_hours_padding
-        with db.session_ctx():
-            for pp in self.selected_projects:
-                bins = db.get_project_date_bins(identifier, pp.name, hours)
-                print bins
-                if bins:
-                    for li, hi in bins:
-                        yield li, hi
+    # def _project_date_bins(self, identifier):
+    #     db = self.db
+    #     hours = self.search_criteria.reference_hours_padding
+    #     with db.session_ctx():
+    #         for pp in self.selected_projects:
+    #             bins = db.get_project_date_bins(identifier, pp.name, hours)
+    #             print bins
+    #             if bins:
+    #                 for li, hi in bins:
+    #                     yield li, hi
 
     # def _selected_samples_changed(self, new):
     #     if new:

@@ -80,7 +80,7 @@ class FigureTask(AnalysisEditTask):
         #          ClearGroupAction(name='Clear'))
     ]
 
-    auto_select_analysis = False
+    # auto_select_analysis = False
 
     figures_help = 'Double-click to open'
     figure_kind = Enum('All', 'Ideogram', 'Spectrum', 'Inv Iso')

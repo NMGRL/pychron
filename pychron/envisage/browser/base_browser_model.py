@@ -149,6 +149,8 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
     use_workspace = False
     workspace = None
+    manager = Any
+
     db = Property
 
     pattributes = ('project_enabled', 'sample_view_active', 'use_low_post', 'use_high_post',
