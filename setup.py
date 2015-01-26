@@ -11,7 +11,7 @@ from setuptools import setup
 
 import os
 
-os.environ['TRAVIS_CI'] = True
+os.environ['TRAVIS_CI'] = 'True'
 
 setup(name='pychron',
       version='2.1.0',

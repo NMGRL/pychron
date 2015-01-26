@@ -122,6 +122,7 @@ integrated:
  integrated_sig_figs: 2
 '''
 
+
 class Paths(object):
     dissertation = '/Users/ross/Programming/git/dissertation'
     enthought = path.join(path.expanduser('~'), '.enthought')
@@ -411,7 +412,7 @@ class Paths(object):
         self.ideogram_defaults = join(self.hidden_dir, 'ideogram_defaults.yaml')
         self.spectrum_defaults = join(self.hidden_dir, 'spectrum_defaults.yaml')
 
-        if not os.environ.get('TRAVIS_CI', False):
+        if os.environ.get('TRAVIS_CI', 'False') == 'False':
             self._write_default_files()
 
     def _write_default_files(self):
@@ -420,7 +421,6 @@ class Paths(object):
                      (self.experiment_defaults, EXPERIMENT_DEFAULTS),
                      (self.ideogram_defaults, IDEOGRAM_DEFAULTS),
                      (self.spectrum_defaults, SPECTRUM_DEFAULTS)):
-
             overwrite = d in (IDEOGRAM_DEFAULTS, SPECTRUM_DEFAULTS)
             self._write_default_file(p, d, overwrite)
 

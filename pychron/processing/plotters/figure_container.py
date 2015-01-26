@@ -18,28 +18,23 @@
 from traits.api import HasTraits, Any, Int
 from chaco.plot_containers import GridPlotContainer
 
-from pychron.processing.plotters.graph_panel_info import GraphPanelInfo
-
-
-
-
-
+# from pychron.processing.plotters.graph_panel_info import GraphPanelInfo
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
 class FigureContainer(HasTraits):
     component = Any
     model = Any
-    nrows = Int(1)
-    ncols = Int(2)
+    # nrows = Int(1)
+    # ncols = Int(2)
 
     def _model_changed(self):
 
-        gpi = GraphPanelInfo()
-
+        # gpi = GraphPanelInfo()
+        layout = self.model.layout
         self.model.refresh_panels()
         n = self.model.npanels
-        comp, r, c = self._component_factory(n, gpi)
+        comp, r, c = self._component_factory(n, layout)
         for i in range(r):
             for j in range(c):
                 try:
@@ -54,13 +49,13 @@ class FigureContainer(HasTraits):
 
         self.component = comp
 
-    def _component_factory(self, ngraphs, gpi):
+    def _component_factory(self, ngraphs, layout):
 
-        r = gpi.nrows
-        c = gpi.ncols
+        r = layout.rows
+        c = layout.columns
 
         while ngraphs > r * c:
-            if gpi.fixed == 'cols':
+            if layout.fixed == 'cols':
                 r += 1
             else:
                 c += 1

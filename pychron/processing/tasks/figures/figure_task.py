@@ -35,6 +35,7 @@ from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEd
 from pychron.processing.tagging.analysis_tags import Tag
 from pychron.processing.tasks.browser.util import browser_pane_item
 from pychron.processing.tasks.figures.db_figure import DBFigure
+from pychron.processing.tasks.figures.editors.composite_editor import CompositeEditor
 from pychron.processing.tasks.figures.panes import PlotterOptionsPane, \
     FigureSelectorPane
 from pychron.processing.tasks.figures.actions import SaveFigureAction, \
@@ -227,7 +228,8 @@ class FigureTask(AnalysisEditTask):
                      name='Spec',
                      add_table=True, add_iso=True):
         if klass is None:
-            klass = SpectrumEditor
+            # klass = SpectrumEditor
+            klass = CompositeEditor
 
         if tklass is None:
             from pychron.processing.tasks.tables.editors.step_heat.step_heat_table_editor import \
