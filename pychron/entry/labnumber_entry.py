@@ -184,7 +184,7 @@ class LabnumberEntry(IsotopeDatabaseManager):
 
     def import_sample_metadata(self, p):
         try:
-            from pychron.entry.loaders.sample_loader import SampleLoader
+            from pychron.entry.loaders.mb_sample_loader import SampleLoader
         except ImportError, e:
             self.warning_dialog(str(e))
             return

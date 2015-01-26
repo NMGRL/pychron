@@ -62,9 +62,14 @@ class EntryPlugin(BaseTaskPlugin):
                               SchemaAddition(id='export_irradiation',
                                              factory=ExportIrradiationAction,
                                              path='MenuBar/tools.menu'),
-                              SchemaAddition(id='import_sample_metadata',
-                                             factory=ImportSampleMetadataAction,
+                              # SchemaAddition(id='import_sample_metadata',
+                              #                factory=ImportSampleMetadataAction,
+                              #                path='MenuBar/tools.menu', ),
+
+                              SchemaAddition(id='import_samples_from_file',
+                                             factory=ImportSamplesAction,
                                              path='MenuBar/tools.menu', ),
+
                               SchemaAddition(id='generate_tray',
                                              factory=GenerateTrayAction,
                                              path='MenuBar/tools.menu', ),

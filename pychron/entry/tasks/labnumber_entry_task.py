@@ -146,15 +146,23 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
             #self.information_dialog('Template saved to {}'.format(p))
             self.view_xls(path)
 
-    def import_sample_metadata(self):
-        path = '/Users/ross/Programming/git/dissertation/data/minnabluff/lithologies.xls'
-        path = '/Users/ross/Programming/git/dissertation/data/minnabluff/tables/TAS.xls'
-        path = '/Users/ross/Programming/git/dissertation/data/minnabluff/tables/environ.xls'
-        if not os.path.isfile(path):
-            path = self.open_file_dialog()
-
+    def import_sample_from_file(self):
+        path = self.open_file_dialog()
         if path:
-            self.manager.import_sample_metadata(path)
+            from pychron.entry.loaders.xls_sample_loader import XLSSampleLoader
+            sample_loader = XLSSampleLoader()
+            sample_loader.do_loading(self.manager, path)
+
+    def import_sample_metadata(self):
+        self.warning('Import sample metadata Deprecated')
+    #     path = '/Users/ross/Programming/git/dissertation/data/minnabluff/lithologies.xls'
+    #     path = '/Users/ross/Programming/git/dissertation/data/minnabluff/tables/TAS.xls'
+    #     path = '/Users/ross/Programming/git/dissertation/data/minnabluff/tables/environ.xls'
+    #     if not os.path.isfile(path):
+    #         path = self.open_file_dialog()
+    #
+    #     if path:
+    #         self.manager.import_sample_metadata(path)
 
     def export_irradiation(self):
         from pychron.entry.export.export_selection_view import ExportSelectionView
