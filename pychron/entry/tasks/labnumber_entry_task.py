@@ -151,7 +151,7 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
         if path:
             from pychron.entry.loaders.xls_sample_loader import XLSSampleLoader
             sample_loader = XLSSampleLoader()
-            sample_loader.do_loading(self.manager, path)
+            sample_loader.do_loading(self.manager, self.manager.db, path)
 
     def import_sample_metadata(self):
         self.warning('Import sample metadata Deprecated')

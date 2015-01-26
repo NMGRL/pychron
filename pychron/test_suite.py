@@ -10,6 +10,7 @@ def suite():
         from pychron.core.helpers.logger_setup import logging_setup
         logging_setup('unittests')
 
+    from pychron.entry.tests.sample_loader import SampleLoaderTestCase
     from pychron.core.helpers.tests.floatfmt import FloatfmtTestCase
     from pychron.processing.tests.analysis_modifier import AnalysisModifierTestCase
     from pychron.experiment.tests.backup import BackupTestCase
@@ -36,7 +37,8 @@ def suite():
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
 
-    tests = (AnalysisModifierTestCase,
+    tests = (SampleLoaderTestCase,
+             AnalysisModifierTestCase,
              BackupTestCase,
              MassSpecIrradExportTestCase,
              XMLParserTestCase,

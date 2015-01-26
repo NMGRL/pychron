@@ -25,7 +25,7 @@ from pychron.loggable import Loggable
 
 
 class XLSSampleLoader(Loggable):
-    def do_loading(self, manager, path, dry=True):
+    def do_loading(self, manager, db, path, dry=True, use_progress=True, quiet=False):
         if not os.path.isfile(path):
             self.warning('No file located at {}'.format(path))
 
@@ -33,28 +33,58 @@ class XLSSampleLoader(Loggable):
         p = ''
 
         xp = XLSParser()
-        xp.load(path, header_idx=2)
+        xp.load(path)
 
         overwrite_meta = True
         overwrite_alt_name = True
         add_samples = True
 
-        db = manager.db
-        progress = manager.open_progress(xp.nrows)
+        if manager and use_progress:
+            db = manager.db
+            progress = manager.open_progress(xp.nrows)
 
+        added_projects = []
+        added_materials = []
         with db.session_ctx(commit=not dry):
             keys = ('sample', 'project', 'material')
             for args in xp.itervalues(keys=keys):
                 sample, project, material = args['sample'], args['project'], args['material']
 
-                progress.change_message('Setting sample {}'.format(sample))
+                # check if project exists
+                if project not in added_projects:
+                    dbproject = db.get_project(project)
+                    if not dbproject:
+                        if quiet or self.confirmation_dialog('"{}" does not exist. Add to database?'.format(project)):
+                            added_projects.append(project)
+                            db.add_project(project)
+                        else:
+                            continue
+
+                # check if material exists
+                if material not in added_materials:
+                    dbmaterial = db.get_material(material)
+                    if not dbmaterial:
+                        if quiet or self.confirmation_dialog('"{}" does not exist. Add to database?'.format(material)):
+                            added_materials.append(material)
+                            db.add_material(material)
+                        else:
+                            continue
+
+                if use_progress:
+                    progress.change_message('Setting sample {}'.format(sample))
+
+                if not dry:
+                    db.flush()
 
                 dbsample = db.get_sample(sample, project, material, verbose=False)
                 if not dbsample:
                     if add_samples:
+                        # print 'trying to add sample {} {} {}'.format(sample,project, material)
                         dbsample = db.add_sample(sample, project, material)
 
-            progress.close()
+
+            if use_progress:
+                progress.close()
 
 # ============= EOF =============================================
 
