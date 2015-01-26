@@ -19,7 +19,7 @@ from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait
 from traitsui.api import View, UItem, Item, HGroup, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.processing.plotter_options_manager import SpectrumOptionsManager
+from pychron.processing.plotter_options_manager import SpectrumOptionsManager, CompositeOptionsManager
 from pychron.processing.plotters.composite_model import CompositeModel
 from pychron.processing.plotters.figure_container import FigureContainer
 from pychron.processing.plotters.options.option import SpectrumPlotOptions
@@ -27,7 +27,7 @@ from pychron.processing.tasks.figures.figure_editor import FigureEditor
 
 
 class CompositeEditor(FigureEditor):
-    plotter_options_manager = Instance(SpectrumOptionsManager, ())
+    plotter_options_manager = Instance(CompositeOptionsManager, ())
     
     def get_component(self, ans, *args, **kw):
 

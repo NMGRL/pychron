@@ -27,11 +27,12 @@ from pychron.processing.plotters.spectrum.spectrum_panel import SpectrumPanel
 
 class CompositeModel(FigureModel):
     def _make_panels(self):
-        m = InverseIsochronOptionsManager()
-        ipo = m.plotter_options
-        
-        gs = [SpectrumPanel(analyses=self.analyses, plot_options=self.plot_options),
-              InverseIsochronPanel(analyses=self.analyses, plot_options=ipo)]
+        spo = self.plot_options.get_options('spectrum')
+        ipo = self.plot_options.get_options('inverseisochron')
+        gs = [SpectrumPanel(analyses=self.analyses,
+                            plot_options=spo),
+              InverseIsochronPanel(analyses=self.analyses,
+                                   plot_options=ipo)]
 
         return gs
 

@@ -814,8 +814,9 @@ class AnalysisEditTask(BaseBrowserTask):
             self.plot_editor_pane.component = self.active_editor.component
             if hasattr(self.active_editor, 'plotter_options_manager'):
                 opt = self.active_editor.plotter_options_manager.plotter_options
-                index_attr = opt.index_attr
-                self.plot_editor_pane.index_attr = index_attr
+                if hasattr(opt, 'index_attr'):
+                    index_attr = opt.index_attr
+                    self.plot_editor_pane.index_attr = index_attr
 
     @on_trait_change('unknowns_pane:[items, update_needed, dclicked, refresh_editor_needed]')
     def _update_unknowns_runs(self, obj, name, old, new):

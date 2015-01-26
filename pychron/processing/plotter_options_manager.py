@@ -26,6 +26,7 @@ import yaml
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.globals import globalv
 from pychron.processing.plotters.options.base import BasePlotterOptions
+from pychron.processing.plotters.options.composite import CompositeOptions
 from pychron.processing.plotters.options.dashboard import DashboardOptions
 from pychron.processing.plotters.options.ideogram import IdeogramOptions
 from pychron.processing.plotters.options.isochron import InverseIsochronOptions
@@ -235,4 +236,8 @@ class XYScatterOptionsManager(PlotterOptionsManager):
     plotter_options_klass = XYScatterOptions
     persistence_name = 'xy_scatter'
 
+
+class CompositeOptionsManager(PlotterOptionsManager):
+    plotter_options_klass = CompositeOptions
+    persistence_name = 'composite'
 # ============= EOF =============================================
