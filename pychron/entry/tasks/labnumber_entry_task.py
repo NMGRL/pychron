@@ -148,12 +148,25 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
             self.view_xls(path)
 
     def import_sample_from_file(self):
-        path = self.open_file_dialog(default_directory=paths.root_dir,
-                                     wildcard='*.xls')
+        # path = self.open_file_dialog(default_directory=paths.root_dir,
+        #                              wildcard='*.xls')
+        path = '/Users/ross/Desktop/sample_import.xls'
         if path:
             from pychron.entry.loaders.xls_sample_loader import XLSSampleLoader
             sample_loader = XLSSampleLoader()
             sample_loader.do_loading(self.manager, self.manager.db, path)
+
+            spnames = []
+            if self.selected_projects:
+                spnames =[ni.name for ni in self.selected_projects]
+
+            self.load_projects(include_recent=False)
+
+            if spnames:
+                sel = [si for si in self.projects if si.name in spnames]
+                self.selected_projects = sel
+
+            self._load_associated_samples()
 
     def import_sample_metadata(self):
         self.warning('Import sample metadata Deprecated')
@@ -236,7 +249,11 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
         if new:
             self.manager.set_selected_attr(new.name, 'sample')
 
-    def _load_associated_samples(self, names):
+    def _load_associated_samples(self, names=None):
+        if names is None:
+            if self.selected_projects:
+                names = [ni.name for ni in self.selected_projects]
+
         db = self.db
         with db.session_ctx():
             # load associated samples
@@ -273,7 +290,7 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
                           projects = [p.name for p in self.projects],
                           materials = mats)
         if sam.do():
-            self._load_associated_samples([si.name for si in self.selected_projects])
+            self._load_associated_samples()
 
     # def _add_material_button_fired(self):
     #     mat = MaterialEntry(db=self.manager.db)
