@@ -129,6 +129,10 @@ class MakeIrradiationTemplateAction(TaskAction):
     method = 'make_irradiation_load_template'
 
 
+class ImportSamplesAction(TaskAction):
+    name = 'Import Sample File'
+    method = 'import_sample_from_file'
+
 class ImportSampleMetadataAction(TaskAction):
     name = 'Import Sample Metadata...'
     method = 'import_sample_metadata'

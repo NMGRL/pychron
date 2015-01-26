@@ -40,6 +40,7 @@ CHANGELOG
 * added SampleImageTask
 * added notes to irradiation levels
 * added task switching to Browser pane
+* added Import Sample Data action. import samples from xls file.
 
 <!---
 .. * fully implemented import irradiation from XLS file
