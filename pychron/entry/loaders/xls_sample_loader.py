@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 import os
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change
+from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change, Instance
 from traitsui.api import View, UItem, Item, HGroup, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -24,24 +24,40 @@ from pychron.core.xls.xls_parser import XLSParser
 from pychron.loggable import Loggable
 
 
+class XLSSampleLoaderOption(HasTraits):
+    dry = Bool(False)
+
+    def traits_view(self):
+        v = View(Item('dry'),
+                 kind='livemodal',
+                 buttons=['OK', 'Cancel'])
+        return v
+
+
 class XLSSampleLoader(Loggable):
+    options = Instance(XLSSampleLoaderOption, ())
+
     def do_loading(self, manager, db, path, dry=True, use_progress=True, quiet=False):
+        if not quiet:
+            option = self.options
+            info = option.edit_traits()
+            if not info.result:
+                return
+
+            dry = option.dry
+
         if not os.path.isfile(path):
             self.warning('No file located at {}'.format(path))
-
-        # path to sample_file.xls
-        p = ''
 
         xp = XLSParser()
         xp.load(path)
 
-        overwrite_meta = True
-        overwrite_alt_name = True
         add_samples = True
 
         if manager and use_progress:
             db = manager.db
             progress = manager.open_progress(xp.nrows)
+            progress.position = (100,100)
 
         added_projects = []
         added_materials = []
@@ -81,7 +97,6 @@ class XLSSampleLoader(Loggable):
                     if add_samples:
                         # print 'trying to add sample {} {} {}'.format(sample,project, material)
                         dbsample = db.add_sample(sample, project, material)
-
 
             if use_progress:
                 progress.close()

@@ -38,21 +38,24 @@ def db_factory():
 
 class SampleLoaderTestCase(unittest.TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        cls.loader = XLSSampleLoader()
-        cls.db = db_factory()
+    # @classmethod
+    # def setUpClass(cls):
+    #
+    def setUp(self):
+        self.loader = XLSSampleLoader()
+        self.db = db_factory()
 
     def test_load_samples1(self):
         path = os.path.join(fget_data_dir(), 'sample_import.xls')
-        self.loader.do_loading(None, self.db, path, dry=False, use_progress=False, quiet=True)
+        self.loader.do_loading(None, self.db, path, dry=True, use_progress=False, quiet=True)
 
         db=self.db
         with db.session_ctx():
             dbsam = db.get_sample('foo-001')
-            self.assertEqual(dbsam.name, 'foo-001')
-            self.assertEqual(dbsam.project.name, 'bar')
-            self.assertEqual(dbsam.material.name, 'bat')
+            self.assertIsNone(dbsam)
+            # self.assertEqual(dbsam.name, 'foo-001')
+            # self.assertEqual(dbsam.project.name, 'bar')
+            # self.assertEqual(dbsam.material.name, 'bat')
 
     def test_load_samples2(self):
         path = os.path.join(fget_data_dir(), 'sample_import.xls')
