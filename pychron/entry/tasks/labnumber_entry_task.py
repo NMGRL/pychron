@@ -36,6 +36,7 @@ from pychron.entry.tasks.actions import SavePDFAction
 # from pychron.entry.tasks.importer_panes import ImporterPane
 from pychron.entry.tasks.labnumber_entry_panes import LabnumbersPane, \
     IrradiationPane, IrradiationEditorPane, IrradiationCanvasPane
+from pychron.paths import paths
 from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction
 from pychron.envisage.tasks.base_task import BaseManagerTask
 
@@ -147,7 +148,8 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
             self.view_xls(path)
 
     def import_sample_from_file(self):
-        path = self.open_file_dialog()
+        path = self.open_file_dialog(default_directory=paths.root_dir,
+                                     wildcard='*.xls')
         if path:
             from pychron.entry.loaders.xls_sample_loader import XLSSampleLoader
             sample_loader = XLSSampleLoader()
