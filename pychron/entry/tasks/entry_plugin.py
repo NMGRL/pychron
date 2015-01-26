@@ -29,7 +29,7 @@ from pychron.entry.tasks.actions import SaveLabbookPDFAction, MakeIrradiationTem
     SensitivityEntryAction, AddMolecularWeightAction, ImportSampleMetadataAction, AddFluxMonitorAction, \
     GenerateTrayAction, \
     GenerateIrradiationTableAction, ImportIrradiationHolderAction, ExportIrradiationAction, ImportIrradiationAction, \
-    TransferJAction
+    TransferJAction, ImportSamplesAction
 from pychron.entry.editors.molecular_weight_editor import MolecularWeightEditor
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 
