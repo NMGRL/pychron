@@ -240,4 +240,5 @@ class XYScatterOptionsManager(PlotterOptionsManager):
 class CompositeOptionsManager(PlotterOptionsManager):
     plotter_options_klass = CompositeOptions
     persistence_name = 'composite'
+    _defaults_path = paths.composites_defaults
 # ============= EOF =============================================

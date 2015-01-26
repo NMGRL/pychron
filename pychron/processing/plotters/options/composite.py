@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 import os
+import pickle
 from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change, List
 from traitsui.api import View, UItem, Item, HGroup, VGroup
 # ============= standard library imports ========================
@@ -32,8 +33,31 @@ class CompositeOptions(BasePlotterOptions):
     suboptions = List
     # def __init__(self, proot, *args, **kw):
     #     super(CompositeOptions, self).__init__(*args, **kw)
+
+    def _load_factory_defaults(self, yd):
+        so1 = self.suboptions[0]
+        so2 = self.suboptions[1]
+
+        so1.trait_set(**yd[0]['padding'])
+        so2.trait_set(**yd[1]['padding'])
+
+    def _load(self, root):
+        p = os.path.join(root, '{}.options'.format(self.name))
+        if os.path.isfile(p):
+            with open(p, 'r') as fp:
+                suboptions = pickle.load(fp)
+                for si in suboptions:
+                    si.load(os.path.join(root, si.name))
+                self.suboptions = suboptions
+
     def _dump(self, root):
-        pass
+        droot = os.path.join(root, self.name)
+        for option in self.suboptions:
+            option.dump(droot)
+
+        with open(os.path.join(root, '{}.options'.format(self.name)), 'w') as fp:
+            pickle.dump(self.suboptions, fp)
+
 
     def get_options(self, kind):
         return next((o for o in self.suboptions
@@ -42,8 +66,13 @@ class CompositeOptions(BasePlotterOptions):
     def traits_view(self):
         v=View(UItem('suboptions',
                      style='custom',
-                     editor=ListEditor(use_notebook=True)))
+                     editor=ListEditor(use_notebook=True,
+                                       page_name='.label')))
         return v
+
+    @on_trait_change('suboptions:refresh_plot_needed')
+    def _handle_refresh(self):
+        self.refresh_plot_needed = True
 
     def _suboptions_default(self):
         sp=os.path.join(paths.plotter_options_dir,

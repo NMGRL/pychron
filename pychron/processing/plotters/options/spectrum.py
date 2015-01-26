@@ -30,6 +30,7 @@ plat_regex = re.compile(r'\w{1,2}-{1}\w{1,2}$')
 
 
 class SpectrumOptions(AgeOptions):
+    label = 'Spectrum'
     step_nsigma = Int(2)
     plot_option_klass = SpectrumPlotOptions
 
@@ -80,7 +81,8 @@ class SpectrumOptions(AgeOptions):
         return self._plateau_steps
 
     def _set_plateau_steps(self, v):
-        self._plateau_steps = v
+        if v:
+            self._plateau_steps = v
 
     def _validate_plateau_steps(self, v):
         if plat_regex.match(v):

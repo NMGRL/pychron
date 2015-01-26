@@ -229,7 +229,7 @@ class FigureTask(AnalysisEditTask):
                      add_table=True, add_iso=True):
         if klass is None:
             klass = SpectrumEditor
-            # klass = CompositeEditor
+            klass = CompositeEditor
 
         if tklass is None:
             from pychron.processing.tasks.tables.editors.step_heat.step_heat_table_editor import \

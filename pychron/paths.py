@@ -122,7 +122,19 @@ integrated:
  integrated_sig_figs: 2
 '''
 
+COMPOSITE_DEFAULTS = '''
+- padding:
+   padding_left: 100
+   padding_right: 50
+   padding_top: 100
+   padding_bottom: 100
+- padding:
+   padding_left: 50
+   padding_right: 100
+   padding_top: 100
+   padding_bottom: 100
 
+'''
 class Paths(object):
     dissertation = '/Users/ross/Programming/git/dissertation'
     enthought = path.join(path.expanduser('~'), '.enthought')
@@ -253,6 +265,7 @@ class Paths(object):
     experiment_defaults = None
     ideogram_defaults = None
     spectrum_defaults = None
+    composites_defaults = None
 
     def set_search_paths(self, app_rec=None):
         self.app_resources = app_rec
@@ -411,6 +424,7 @@ class Paths(object):
         self.experiment_defaults = join(setup_dir, 'experiment_defaults.yaml')
         self.ideogram_defaults = join(self.hidden_dir, 'ideogram_defaults.yaml')
         self.spectrum_defaults = join(self.hidden_dir, 'spectrum_defaults.yaml')
+        self.composites_defaults = join(self.hidden_dir, 'composite_defaults.yaml')
 
         if os.environ.get('TRAVIS_CI', 'False') == 'False':
             self._write_default_files()
@@ -420,7 +434,9 @@ class Paths(object):
                      (self.startup_tests, DEFAULT_STARTUP_TESTS),
                      (self.experiment_defaults, EXPERIMENT_DEFAULTS),
                      (self.ideogram_defaults, IDEOGRAM_DEFAULTS),
-                     (self.spectrum_defaults, SPECTRUM_DEFAULTS)):
+                     (self.spectrum_defaults, SPECTRUM_DEFAULTS),
+                     (self.composites_defaults, COMPOSITE_DEFAULTS)):
+
             overwrite = d in (IDEOGRAM_DEFAULTS, SPECTRUM_DEFAULTS)
             self._write_default_file(p, d, overwrite)
 

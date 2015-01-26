@@ -25,6 +25,8 @@ from pychron.pychron_constants import FIT_ERROR_TYPES
 
 
 class InverseIsochronOptions(AgeOptions):
+    label = 'Inv. Isochron'
+
     plot_option_name = 'Inv. Isochron'
     plot_option_klass = InverseIsochronPlotOptions
 

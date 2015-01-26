@@ -46,6 +46,9 @@ class BasePlotterOptions(HasTraits):
         if plot:
             plot.height = height
 
+    def load(self, root):
+        self._load(root)
+
     def load_factory_defaults(self, path):
         with open(path, 'r') as fp:
             yd = yaml.load(fp)
