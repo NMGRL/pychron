@@ -288,7 +288,7 @@ class Paths(object):
         self.fits_dir = join(self.measurement_dir, 'fits')
 
         self.experiment_dir = join(root, 'experiments')
-        self.auto_save_experiment_dir = join(self.experiment_dir, 'auto_save_experiment_dir')
+        self.auto_save_experiment_dir = join(self.experiment_dir, 'auto_save')
         self.run_block_dir = join(self.experiment_dir, 'blocks')
         self.generic_experiment_dir = join(self.experiment_dir, 'generic')
         self.backup_experiment_dir = join(self.experiment_dir, 'backup')
