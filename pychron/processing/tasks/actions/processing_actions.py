@@ -160,6 +160,12 @@ class IdeogramAction(FigureAction):
     id = 'pychron.ideogram'
 
 
+class CompositeAction(FigureAction):
+    name = 'Composite'
+    method = 'new_composite'
+    id = 'pychron.composite'
+
+
 class SpectrumAction(FigureAction):
     name = 'Spectrum'
     method = 'new_spectrum'

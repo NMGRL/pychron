@@ -223,13 +223,27 @@ class FigureTask(AnalysisEditTask):
                                 add_iso=add_iso,
                                 add_table=add_table)
 
+    def new_composite(self, ans=None, klass=None,
+                     tklass=None,
+                     name='Comp',
+                     add_table=True, add_iso=True):
+        if klass is None:
+            klass = CompositeEditor
+
+        if tklass is None:
+            from pychron.processing.tasks.tables.editors.step_heat.step_heat_table_editor import \
+                StepHeatTableEditor as tklass
+
+        return self._new_figure(ans, name, klass, tklass,
+                                add_iso=add_iso,
+                                add_table=add_table)
+
     def new_spectrum(self, ans=None, klass=None,
                      tklass=None,
                      name='Spec',
                      add_table=True, add_iso=True):
         if klass is None:
             klass = SpectrumEditor
-            klass = CompositeEditor
 
         if tklass is None:
             from pychron.processing.tasks.tables.editors.step_heat.step_heat_table_editor import \
