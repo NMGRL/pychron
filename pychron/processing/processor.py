@@ -16,6 +16,7 @@
 
 
 # ============= enthought library imports =======================
+from pyface.file_dialog import FileDialog
 from traits.api import HasTraits, Int, Str
 # ============= standard library imports ========================
 from datetime import datetime, timedelta
@@ -30,6 +31,7 @@ from pychron.database.orms.isotope.gen import gen_AnalysisTypeTable, gen_MassSpe
 
 from pychron.database.orms.isotope.meas import meas_AnalysisTable, meas_MeasurementTable, meas_ExtractionTable
 from pychron.core.helpers.iterfuncs import partition
+from pychron.paths import paths
 
 
 def unique_id(vs, *args):
@@ -53,6 +55,21 @@ class IrradiationPositionRecord(HasTraits):
 
 
 class Processor(IsotopeDatabaseManager):
+    def set_sqlite_dataset(self):
+        def get_path():
+            return '/Users/ross/Sandbox/exporttest2.db'
+            dlg = FileDialog(action='open',
+                             default_directory=paths.data_dir,
+                             wildcard='*.db')
+            if dlg.open():
+                if dlg.path:
+                    return dlg.path
+
+
+        self.db.trait_set(kind='sqlite',
+                          path=get_path())
+        self.db.connect()
+
     def get_adjacent_analysis(self, timestamp, previous, **kw):
         db = self.db
         with db.session_ctx():

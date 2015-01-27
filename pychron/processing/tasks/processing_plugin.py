@@ -40,7 +40,7 @@ from pychron.processing.tasks.actions.processing_actions import IdeogramAction, 
     GraphGroupSelectedAction, IdeogramFromFile, SpectrumFromFile, MakeAnalysisGroupAction, GraphGroupbySampleAction, \
     DeleteAnalysisGroupAction, XYScatterAction, ModifyK3739Action, GroupbySampleAction, \
     SplitEditorActionVert, ConfigureRecallAction, ActivateBlankAction, ActivateRecallAction, ActivateIdeogramAction, \
-    ModifyIdentifierAction, CompositeAction
+    ModifyIdentifierAction, CompositeAction, SetSQLiteAction
 
 from pychron.processing.tasks.actions.edit_actions import BlankEditAction, \
     FluxAction, IsotopeEvolutionAction, ICFactorAction, \
@@ -54,7 +54,7 @@ from pychron.processing.tasks.recall.actions import SummaryLabnumberAction, Calc
 from pychron.processing.tasks.isotope_evolution.actions import CalcOptimalEquilibrationAction
 from pychron.processing.tasks.preferences.offline_preferences import OfflinePreferencesPane
 from pychron.processing.tasks.preferences.processing_preferences import BrowsingPreferencesPane, EasyPreferencesPane
-#from pychron.processing.tasks.browser.browser_task import BrowserTask
+# from pychron.processing.tasks.browser.browser_task import BrowserTask
 from pyface.message_dialog import warning
 
 
@@ -65,7 +65,7 @@ class ProcessingPlugin(BaseTaskPlugin):
     _processor = None
 
     def set_preference_defaults(self):
-        ds = (('recent_hours',12),)
+        ds = (('recent_hours', 12),)
         self._set_preference_defaults(ds, 'pychron.browsing')
 
     def _make_task_extension(self, actions, **kw):
@@ -158,6 +158,7 @@ class ProcessingPlugin(BaseTaskPlugin):
         default_actions = [('recall_action', RecallAction, 'MenuBar/file.menu'),
                            #('find_action', OpenAdvancedQueryAction, 'MenuBar/file.menu'),
                            ('export_analyses', ExportAnalysesAction, 'MenuBar/file.menu'),
+                           ('set_sqlite_dataset', SetSQLiteAction, 'MenuBar/file.menu'),
 
                            ('batch_edit', BatchEditAction, 'MenuBar/Edit'),
 
@@ -276,7 +277,7 @@ class ProcessingPlugin(BaseTaskPlugin):
             #  self._advanced_query_task_factory, 'Advanced Query'),
             # ('pychron.processing.smart_batch',
             # self._smart_batch_edit_task_factory, 'Smart Batch Edit'),
-            ]
+        ]
 
         return [self._meta_task_factory(*args) for args in tasks]
 
@@ -289,6 +290,7 @@ class ProcessingPlugin(BaseTaskPlugin):
 
     def _export_task_factory(self):
         from pychron.processing.tasks.export.export_task import ExportTask
+
         return ExportTask(manager=self._processor_factory())
 
     def _blanks_edit_task_factory(self):
@@ -348,13 +350,15 @@ class ProcessingPlugin(BaseTaskPlugin):
         return InterpretedAgeTask(manager=self._processor_factory())
 
     def _browser_model_factory(self):
-        return BrowserModel(manager = self._processor_factory())
+        return BrowserModel(manager=self._processor_factory())
 
     # defaults
     def _service_offers_default(self):
         so = self.service_offer_factory(protocol=BrowserModel,
                                         factory=self._browser_model_factory)
-        return [so]
+        so1 = self.service_offer_factory(protocol=Processor,
+                                         factory=self._processor_factory)
+        return [so, so1]
 
     def _preferences_panes_default(self):
         return [
@@ -372,10 +376,10 @@ class ProcessingPlugin(BaseTaskPlugin):
                 ('pychron.blank', 'Ctrl+B', 'Blanks'),
                 ('pychron.isotope_evolution', 'Ctrl+K', 'Isotope Evolutions'),
                 ('pychron.ic_factor', 'Ctrl+Shift+I', 'IC Factors'),
-                ('pychron.refresh_plot','Ctrl+Shift+R','Refresh Plot'),
+                ('pychron.refresh_plot', 'Ctrl+Shift+R', 'Refresh Plot'),
                 ('pychron.recall', 'Ctrl+R', 'Open Recall')]
 
-# ============= EOF =============================================
+    # ============= EOF =============================================
 
     # def _dataset_factory(self):
     #     return DataSetTask(manager=self._prcoessor_factory())

@@ -437,6 +437,7 @@ class BrowserModel(BaseBrowserModel):
             ps = db.get_projects(mass_spectrometers=ms)
             ps = self._make_project_records(ps,
                                             ms, include_recent_first=True)
+            print ms, ps
             self.projects = ps
             sp = []
             if self.selected_projects:
@@ -447,7 +448,10 @@ class BrowserModel(BaseBrowserModel):
 
             self.selected_projects = sp
             irs = db.get_irradiations(mass_spectrometers=ms)
-            self.irradiations = [i.name for i in irs]
+            if irs:
+                self.irradiations = [i.name for i in irs]
+            else:
+                self.debug('_load_projects_and_irradiations. no irradiations')
 
     def _filter_by_button_fired(self):
         self.debug('filter by button fired low_post={}, high_post={}'.format(self.low_post, self.high_post))

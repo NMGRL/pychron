@@ -157,7 +157,7 @@ class DatabaseAdapter(Loggable):
 
         return globalv.username
 
-    @on_trait_change('username,host,password,name')
+    @on_trait_change('username,host,password,name,kind,path')
     def reset_connection(self, obj, name, old, new):
         self.connection_parameters_changed = True
 

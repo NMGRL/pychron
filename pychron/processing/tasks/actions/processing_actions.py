@@ -272,6 +272,14 @@ class ExportAnalysesAction(Action):
         app.open_task('pychron.export')
 
 
+class SetSQLiteAction(Action):
+    name = 'Set SQLite Dataset...'
+    def perform(self, event):
+        app = event.task.window.application
+        man = app.get_service('pychron.processing.processor.Processor')
+        man.set_sqlite_dataset()
+
+
 class ModifyK3739Action(myTaskAction):
     name = 'Modify (37/39)K...'
     method = 'modify_k3739'
