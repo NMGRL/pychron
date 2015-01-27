@@ -1,11 +1,11 @@
 # ===============================================================================
-# Copyright 2012 Jake Ross
+# Copyright 2015 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,23 +15,36 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-
-from pychron.loggable import Loggable
+from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change, List, Instance
+from traitsui.api import View, UItem, Item, HGroup, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.database.offline_bridge import OfflineBridge
+from pychron.processing.export.destinations import SQLiteDestination
+from pychron.processing.export.exporter import Exporter
 
 
-class Exporter(Loggable):
+class SQLiteAnalysisExporter(Exporter):
+    analyses = List
+    iso_manager = Any
+
+    destination = Instance(SQLiteDestination, ())
+
     def add(self, analysis):
-        pass
-
-    def start_export(self):
-        return True
+        self.analyses.append(analysis)
 
     def export(self, *args, **kw):
-        raise NotImplementedError
+        db = self.iso_manager.db
 
-    def rollback(self):
-        pass
+        bridge = OfflineBridge()
+        bridge.init(self.destination.destination)
 
+        progress = self.iso_manager.open_progress(len(self.analyses))
+        with db.session_ctx():
+            bridge.add_analyses(db, self.analyses, progress)
+
+        progress.close()
 # ============= EOF =============================================
+
+
+

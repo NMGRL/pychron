@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -32,7 +32,6 @@ from pychron.loggable import Loggable
 from pychron.paths import paths
 
 
-
 def quick_mapper(table):
     Base = declarative_base()
 
@@ -57,8 +56,8 @@ class DatabaseBridge(Loggable):
     #         self.debug('init creating all tables')
     #         metadata = Base.metadata
     #         self.create_all(metadata)
-    source=Any
-    dest=Any
+    source = Any
+    dest = Any
 
     def add_analyses(self, ans):
         self.debug('adding analyses')
@@ -66,16 +65,16 @@ class DatabaseBridge(Loggable):
         self.debug('dest={}'.format(self.dest.url))
         self.dest.connect()
 
-        db=self.source
+        db = self.source
         with self.dest.session_ctx() as dest:
             for ai in ans:
                 self._add_analysis(ai, dest, db)
                 # if not self.get_analysis_uuid(ai.uuid):
-                    # if progress:
-                    #     progress.change_message('Transfering analysis {}'.format(ai.record_id))
+                # if progress:
+                #     progress.change_message('Transfering analysis {}'.format(ai.record_id))
 
     def _add_analysis(self, ai, dest, db):
-        src=db.sess
+        src = db.sess
         ln = ai.labnumber
         if ln:
             # self.debug('copying analysis {}'.format(ai.record_id))
@@ -106,7 +105,6 @@ class DatabaseBridge(Loggable):
                 self._copy_table(dest, src, ln.selected_interpreted_age.id, 'proc_InterpretedAgeHistoryTable')
                 self._copy_table(dest, src, ln.selected_interpreted_age.interpreted_age.id, 'proc_InterpretedAgeTable')
 
-
             self._copy_table(dest, src, ai.lab_id, 'gen_labtable')
 
             self._copy_table(dest, src, ai.measurement.mass_spectrometer_id, 'gen_massspectrometertable')
@@ -133,12 +131,14 @@ class DatabaseBridge(Loggable):
             for bi in ai.selected_histories.selected_fits.fits:
                 self._copy_table(dest, src, bi.id, 'proc_FitTable')
 
-            self._copy_table(dest, src, ai.selected_histories.selected_detector_param.id, 'proc_DetectorParamHistoryTable')
+            self._copy_table(dest, src, ai.selected_histories.selected_detector_param.id,
+                             'proc_DetectorParamHistoryTable')
             for bi in ai.selected_histories.selected_detector_param.detector_params:
                 self._copy_table(dest, src, bi.id, 'proc_DetectorParamTable')
 
             if ai.selected_histories.selected_detector_intercalibration is not None:
-                self._copy_table(dest, src, ai.selected_histories.selected_detector_intercalibration.id, 'proc_DetectorIntercalibrationHistoryTable')
+                self._copy_table(dest, src, ai.selected_histories.selected_detector_intercalibration.id,
+                                 'proc_DetectorIntercalibrationHistoryTable')
                 for bi in ai.selected_histories.selected_detector_intercalibration.detector_intercalibrations:
                     self._copy_table(dest, src, bi.id, 'proc_DetectorIntercalibrationTable')
 
@@ -151,7 +151,7 @@ class DatabaseBridge(Loggable):
         dtable = Table(tn, meta, autoload=True)
         dq = dest.query(dtable)
 
-        dq = dq.filter(getattr(dtable.c,attr) == pid)
+        dq = dq.filter(getattr(dtable.c, attr) == pid)
 
         try:
             if dq.one():
@@ -172,7 +172,7 @@ class DatabaseBridge(Loggable):
                 self.debug(msg)
 
                 q = src.query(table)
-                q = q.filter(getattr(table.c,attr) == pid)
+                q = q.filter(getattr(table.c, attr) == pid)
             try:
 
                 record = q.one()
@@ -201,7 +201,7 @@ class OfflineBridge(IsotopeAdapter):
         self.connect()
         if not os.path.isfile(p):
             self.debug('init creating all tables')
-            metadata=Base.metadata
+            metadata = Base.metadata
             self.create_all(metadata)
 
     def add_analyses(self, db, ans, progress):
@@ -216,15 +216,15 @@ class OfflineBridge(IsotopeAdapter):
                 if not self.get_analysis_uuid(ai.uuid):
                     if progress:
                         progress.change_message('Transfering analysis {}'.format(ai.record_id))
-                    ln=ai.labnumber
+                    ln = ai.labnumber
                     if ln:
                         self.debug('copying analysis {}'.format(ai.record_id))
 
-                        #get the source objects
-                        ai=db.get_analysis_uuid(ai.uuid)
-                        ln=db.get_labnumber(ln)
+                        # get the source objects
+                        dban = db.get_analysis_uuid(ai.uuid)
+                        ln = db.get_labnumber(ln)
 
-                        self._copy_table(dest, src, ai.lab_id, 'gen_labtable')
+                        self._copy_table(dest, src, dban.lab_id, 'gen_labtable')
                         self._copy_table(dest, src, ln.sample_id, 'gen_sampletable')
 
                         sample = ln.sample
@@ -234,19 +234,20 @@ class OfflineBridge(IsotopeAdapter):
 
                         self._copy_table(dest, src, ln.irradiation_id, 'irrad_positiontable')
                         self._copy_table(dest, src, ln.irradiation_position.level_id, 'irrad_leveltable')
-                        self._copy_table(dest, src, ln.irradiation_position.level.irradiation_id, 'irrad_irradiationtable')
+                        self._copy_table(dest, src, ln.irradiation_position.level.irradiation_id,
+                                         'irrad_irradiationtable')
 
-                        self._copy_table(dest, src, ai.id, 'meas_analysistable')
-                        self._copy_table(dest, src, ai.measurement_id, 'meas_measurementtable')
-                        self._copy_table(dest, src, ai.extraction_id, 'meas_extractiontable')
+                        self._copy_table(dest, src, dban.id, 'meas_analysistable')
+                        self._copy_table(dest, src, dban.measurement_id, 'meas_measurementtable')
+                        self._copy_table(dest, src, dban.extraction_id, 'meas_extractiontable')
                         dest.commit()
 
     def _copy_table(self, dest, src, pid, tn, verbose=True):
-        meta=Base.metadata
-        meta.bind=dest.bind
+        meta = Base.metadata
+        meta.bind = dest.bind
         dtable = Table(tn, meta, autoload=True)
-        dq=dest.query(dtable)
-        dq=dq.filter(dtable.c.id==pid)
+        dq = dest.query(dtable)
+        dq = dq.filter(dtable.c.id == pid)
 
         try:
             if dq.one():
@@ -259,18 +260,18 @@ class OfflineBridge(IsotopeAdapter):
             columns = table.columns.keys()
 
             if verbose:
-                msg='Transferring records {}'.format(tn)
-                if verbose==1:
-                    cols=wrap(columns)
-                    msg='{} {}'.format(msg, 'Columns={}'.format(tn, cols))
+                msg = 'Transferring records {}'.format(tn)
+                if verbose == 1:
+                    cols = wrap(columns)
+                    msg = '{} {}'.format(msg, 'Columns={}'.format(tn, cols))
 
                 self.debug(msg)
 
-                q=src.query(table)
-                q=q.filter(table.c.id==pid)
+                q = src.query(table)
+                q = q.filter(table.c.id == pid)
             try:
 
-                record=q.one()
+                record = q.one()
                 data = dict([(str(column), getattr(record, column)) for column in columns])
                 dest.merge(nrec(**data))
             except NoResultFound:
