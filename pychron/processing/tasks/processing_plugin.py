@@ -62,38 +62,11 @@ class ProcessingPlugin(BaseTaskPlugin):
     id = 'pychron.processing.plugin'
     name = 'Processing'
 
+    _processor = None
+
     def set_preference_defaults(self):
         ds = (('recent_hours',12),)
         self._set_preference_defaults(ds, 'pychron.browsing')
-
-    def _actions_default(self):
-        return [('pychron.ideogram', 'Ctrl+J', 'Open Ideogram'),
-                ('pychron.spectrum', 'Ctrl+D', 'Open Spectrum'),
-                ('pychron.series', 'Ctrl+U', 'Open Series'),
-                ('pychron.inverse_isochron', 'Ctrl+I', 'Open Inverse Isochron'),
-                ('pychron.tag', 'Ctrl+Shift+T', 'Tag'),
-                ('pychron.flux', 'Ctrl+G', 'Flux'),
-                ('pychron.blank', 'Ctrl+B', 'Blanks'),
-                ('pychron.isotope_evolution', 'Ctrl+K', 'Isotope Evolutions'),
-                ('pychron.ic_factor', 'Ctrl+Shift+I', 'IC Factors'),
-                ('pychron.refresh_plot','Ctrl+Shift+R','Refresh Plot'),
-                ('pychron.recall', 'Ctrl+R', 'Open Recall')]
-
-    def _service_offers_default(self):
-        process_so = self.service_offer_factory(
-            protocol=Processor,
-            factory=self._processor_factory)
-
-        return [process_so]
-
-    # def start(self):
-#         try:
-#             import xlwt
-#         except ImportError:
-#             warning(None, '''"xlwt" package not installed.
-#
-# Install to enable MS Excel export''')
-#         super
 
     def _make_task_extension(self, actions, **kw):
         def make_schema(args):
@@ -269,8 +242,8 @@ class ProcessingPlugin(BaseTaskPlugin):
         tasks = [
             ('pychron.recall',
              self._recall_task_factory, 'Recall'),
-            # ('pychron.advanced_query',
-            #  self._advanced_query_task_factory, 'Advanced Query'),
+            ('pychron.export',
+             self._export_task_factory, 'Export'),
 
             ('pychron.processing.blanks',
              self._blanks_edit_task_factory, 'Blanks'),
@@ -285,30 +258,38 @@ class ProcessingPlugin(BaseTaskPlugin):
 
             ('pychron.processing.batch',
              self._batch_edit_task_factory, 'Batch Edit'),
-            #('pychron.processing.smart_batch',
-            # self._smart_batch_edit_task_factory, 'Smart Batch Edit'),
 
             ('pychron.processing.figures',
              self._figure_task_factory, 'Figures'),
             ('pychron.processing.interpreted_age',
              self._interpreted_age_task_factory, 'Interpeted Age'),
 
-            # ('pychron.processing.publisher', self._publisher_task_factory, 'Publisher'),
             ('pychron.processing.publisher',
              self._table_task_factory, 'Table', '', 'Ctrl+t'),
             ('pychron.processing.respository',
              self._repository_task_factory, 'Repository', '', 'Ctrl+Shift+R', '', 'irc-server'),
+
+            # ('pychron.processing.publisher', self._publisher_task_factory, 'Publisher'),
             # ('pychron.processing.vcs',
             #  self._vcs_data_task_factory, 'VCS', '', ''),
+            # ('pychron.advanced_query',
+            #  self._advanced_query_task_factory, 'Advanced Query'),
+            # ('pychron.processing.smart_batch',
+            # self._smart_batch_edit_task_factory, 'Smart Batch Edit'),
             ]
 
         return [self._meta_task_factory(*args) for args in tasks]
 
     def _processor_factory(self):
-        return Processor(application=self.application)
+        processor = self._processor
+        if not processor:
+            processor = Processor(application=self.application)
+            self._processor = processor
+        return processor
 
-    # def _dataset_factory(self):
-    #     return DataSetTask(manager=self._prcoessor_factory())
+    def _export_task_factory(self):
+        from pychron.processing.tasks.export.export_task import ExportTask
+        return ExportTask(manager=self._processor_factory())
 
     def _blanks_edit_task_factory(self):
         from pychron.processing.tasks.blanks.blanks_task import BlanksTask
@@ -319,11 +300,6 @@ class ProcessingPlugin(BaseTaskPlugin):
         from pychron.processing.tasks.flux.flux_task import FluxTask
 
         return FluxTask(manager=self._processor_factory())
-
-    # def _advanced_query_task_factory(self):
-    #     from pychron.processing.tasks.query.advanced_query_task import AdvancedQueryTask
-    #
-    #     return AdvancedQueryTask(manager=self._processor_factory())
 
     def _recall_task_factory(self):
         from pychron.processing.tasks.recall.recall_task import RecallTask
@@ -371,13 +347,10 @@ class ProcessingPlugin(BaseTaskPlugin):
 
         return InterpretedAgeTask(manager=self._processor_factory())
 
-    # def _vcs_data_task_factory(self):
-    #     from pychron.processing.tasks.vcs_data.vcs_data_task import VCSDataTask
-    #     return VCSDataTask(manager=self._processor_factory())
-
     def _browser_model_factory(self):
         return BrowserModel(manager = self._processor_factory())
 
+    # defaults
     def _service_offers_default(self):
         so = self.service_offer_factory(protocol=BrowserModel,
                                         factory=self._browser_model_factory)
@@ -388,4 +361,30 @@ class ProcessingPlugin(BaseTaskPlugin):
             BrowsingPreferencesPane,
             # VCSPreferencesPane,
             OfflinePreferencesPane, EasyPreferencesPane]
+
+    def _actions_default(self):
+        return [('pychron.ideogram', 'Ctrl+J', 'Open Ideogram'),
+                ('pychron.spectrum', 'Ctrl+D', 'Open Spectrum'),
+                ('pychron.series', 'Ctrl+U', 'Open Series'),
+                ('pychron.inverse_isochron', 'Ctrl+I', 'Open Inverse Isochron'),
+                ('pychron.tag', 'Ctrl+Shift+T', 'Tag'),
+                ('pychron.flux', 'Ctrl+G', 'Flux'),
+                ('pychron.blank', 'Ctrl+B', 'Blanks'),
+                ('pychron.isotope_evolution', 'Ctrl+K', 'Isotope Evolutions'),
+                ('pychron.ic_factor', 'Ctrl+Shift+I', 'IC Factors'),
+                ('pychron.refresh_plot','Ctrl+Shift+R','Refresh Plot'),
+                ('pychron.recall', 'Ctrl+R', 'Open Recall')]
+
 # ============= EOF =============================================
+
+    # def _dataset_factory(self):
+    #     return DataSetTask(manager=self._prcoessor_factory())
+
+    # def _vcs_data_task_factory(self):
+    #     from pychron.processing.tasks.vcs_data.vcs_data_task import VCSDataTask
+    #     return VCSDataTask(manager=self._processor_factory())
+
+    # def _advanced_query_task_factory(self):
+    #     from pychron.processing.tasks.query.advanced_query_task import AdvancedQueryTask
+    #
+    #     return AdvancedQueryTask(manager=self._processor_factory())

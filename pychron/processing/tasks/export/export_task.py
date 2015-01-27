@@ -34,8 +34,12 @@
 #     name = 'Export'
 #
 #
-# class ExportTask(AnalysisEditTask):
-#     id = 'pychron.export'
+from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
+
+
+class ExportTask(AnalysisEditTask):
+    id = 'pychron.export'
+
 #     export_analyses = List
 #     name = 'Export'
 #

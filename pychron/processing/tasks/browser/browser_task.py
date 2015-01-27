@@ -317,7 +317,7 @@ class BaseBrowserTask(BaseEditorTask):
 
     def _get_browser_model(self):
         model = self.application.get_service('pychron.processing.tasks.browser.browser_model.BrowserModel')
-        self.debug('Browser model id={}'.format(id(model)))
+        self.debug('Browser model model={}, id={}'.format(model, id(model)))
         return model
 
     def _create_browser_pane(self, **kw):

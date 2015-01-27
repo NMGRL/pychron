@@ -199,6 +199,9 @@ class DiffEditor(BaseTraitsEditor):
         vs.append(Value(name=u'\u00b1 w/o JEr',
                         lvalue=left.age_wo_j_err,
                         rvalue=right.age_wo_j_err))
+        vs.append(Value(name='40Ar* %',
+                        lvalue=nominal_value(left.rad40_percent),
+                        rvalue=nominal_value(left.rad40_percent)))
 
         for a in isotopes:
             iso = left.isotopes[a]

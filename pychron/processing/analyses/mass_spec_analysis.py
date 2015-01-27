@@ -35,6 +35,7 @@ class MassSpecAnalysis(Analysis):
             self.age = arar.Age
             self.age_err = arar.ErrAge
             self.age_err_wo_j = arar.ErrAgeWOErInJ
+            self.rad40_percent = ufloat(arar.PctRad, arar.PctRadEr)
 
         for dbiso in obj.isotopes:
             r = dbiso.results[-1]
