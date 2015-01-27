@@ -235,23 +235,30 @@ class DBAnalysis(Analysis):
             if material:
                 self.material = material
 
+        print 'pre maa'
         self._sync_meas_analysis_attributes(meas_analysis)
+
+        print 'pre irrad'
         self._sync_irradiation(lab)
 
+        print 'pre dr'
         #sync the dr tag first so we can set selected_histories
         sh = self._sync_data_reduction_tag(meas_analysis)
-
+        print 'pre isotopes'
         #this is the dominant time sink
         self._sync_isotopes(meas_analysis, isos,
                             unpack, load_peak_center=load_aux, selected_histories=sh)
         # timethis(self._sync_isotopes, args=(meas_analysis, isos, unpack),
         #          kwargs={'load_peak_center': load_aux})
 
+        print 'pre det info'
         self._sync_detector_info(meas_analysis)
         if load_aux:
             self.sync_aux(meas_analysis)
 
+        print 'pre ext'
         self._sync_extraction(meas_analysis)
+        print 'pre meas'
         self._sync_measurement(meas_analysis)
 
     def _sync_data_reduction_tag(self, meas_analysis):
@@ -283,12 +290,13 @@ class DBAnalysis(Analysis):
             if extraction.script:
                 self.extraction_script_name = remove_extension(extraction.script.name)
 
-            #sensitivity
-            shist = meas_analysis.selected_histories.selected_sensitivity
-            if shist:
-                sm = extraction.sensitivity_multiplier or 1
-                s = shist.sensitivity.value
-                self.sensitivity = sm * s
+            # sensitivity
+            if meas_analysis.selected_histories:
+                shist = meas_analysis.selected_histories.selected_sensitivity
+                if shist:
+                    sm = extraction.sensitivity_multiplier or 1
+                    s = shist.sensitivity.value
+                    self.sensitivity = sm * s
 
             self.extract_device = self._get_extraction_device(extraction)
             self.extract_value = extraction.extract_value
@@ -310,7 +318,7 @@ class DBAnalysis(Analysis):
                     v = ''
                 setattr(self, attr, v)
 
-            #uv
+            # uv
             if 'uv' in self.extract_device:
                 for attr in ('reprate', 'mask_position', 'mask_name', 'attenuator'):
                     v = getattr(extraction, attr)
@@ -549,6 +557,7 @@ class DBAnalysis(Analysis):
         default_fit = self._default_fit_factory('linear', 'SEM')
         for iso in dbisos:
             mw = iso.molecular_weight
+            print iso.kind, iso.detector
             if not iso.kind == 'signal' or not mw:
                 continue
             if not iso.detector:

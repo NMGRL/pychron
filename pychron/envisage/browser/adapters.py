@@ -85,7 +85,8 @@ class LabnumberAdapter(BrowserAdapter):
         from pychron.processing.tasks.figures.figure_task import FigureTask
 
         if obj.selected_samples:
-            psenabled = isinstance(obj, FigureTask)
+            psenabled = obj.current_task_name in ('Ideogram','Spectrum')
+            # psenabled = isinstance(obj, FigureTask)
             return MenuManager(Action(name='Unselect', action='unselect_samples'),
                                Action(name='Time View', action='on_time_view'),
                                Action(name='Configure', action='configure_sample_table'),

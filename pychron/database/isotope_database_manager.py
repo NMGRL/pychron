@@ -340,7 +340,6 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             # partition into DBAnalysis vs IsotopeRecordView
             db_ans, no_db_ans = map(list, partition(ans, lambda x: isinstance(x, DBAnalysis)))
             self._calculate_cached_ages(db_ans, calculate_age, calculate_F)
-
             if unpack:
                 for di in db_ans:
                     if not di.has_raw_data:
@@ -376,7 +375,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                             no_db_ans.extend(b)
                     else:
                         self._calculate_cached_ages(cns, calculate_age, calculate_F)
-                        #add analyses from cache to db_ans
+                        # add analyses from cache to db_ans
                         db_ans.extend(cns)
 
                     # increment value in cache_count
@@ -441,7 +440,9 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
         #     self.debug('loading uuid={}'.format(ui))
 
         # get all dbrecords with one call
+        # print uuids
         ms = self.db.get_analyses_uuid(uuids)
+        # print ms
         # ms = timethis(self.db.get_analyses_uuid, args=(uuids,))
 
         construct = self._construct_analysis
@@ -456,7 +457,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             a = construct(x, gi, prog, unpack=unpack,
                           calculate_age=calculate_age,
                           calculate_F=calculate_F, **kw)
-
+            print a
             if use_cache:
                 add_to_cache(a)
             return a
@@ -508,7 +509,9 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                 ai.sync(group, unpack=unpack, load_aux=load_aux)
         else:
             ai = DBAnalysis()  # if not self.use_vcs else VCSAnalysis
+            print ai
             ai.sync(group, unpack=unpack, load_aux=load_aux)
+            print ai, group
 
             # ai = klass(group_id=group_id,
             #        graph_id=graph_id)

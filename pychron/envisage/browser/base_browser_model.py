@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import List, Str, Bool, Any, Enum, Button, \
-    Int, Property, cached_property, DelegatesTo, Date, Instance, HasTraits
+    Int, Property, cached_property, DelegatesTo, Date, Instance, HasTraits, Event
 import apptools.sweet_pickle as pickle
 # ============= standard library imports ========================
 from datetime import timedelta, datetime, date
@@ -83,6 +83,8 @@ def extract_mass_spectrometer_name(name):
 
 
 class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
+
+    plot_selected = Event
     projects = List
     oprojects = List
     project_enabled = Bool(True)
@@ -251,9 +253,12 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     # database querying
     def _load_project_date_range(self, names):
         lp, hp = self.db.get_project_date_range(names)
+        if lp.date() == hp.date():
+            hp += timedelta(days=1)
+
         self.use_low_post, self.use_high_post = True, True
         ol, oh = self.use_low_post, self.use_high_post
-        self._low_post, self._high_post = lp, hp
+        self.low_post, self.high_post = lp, hp
         self.trait_property_changed('low_post', None)
         self.trait_property_changed('high_post', None)
 
@@ -354,7 +359,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
                                        self.filter_non_run_samples,
                                        lp, hp,
                                        # self.low_post,
-                                       #self.high_post,
+                                       # self.high_post,
                                        analysis_types=atypes,
                                        mass_spectrometers=mass_spectrometers)
         return ls

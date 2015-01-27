@@ -560,6 +560,9 @@ class ArArAge(Loggable):
         """
         # self.debug('calculate age')
         iso_intensities = self._assemble_isotope_intensities()
+        if not iso_intensities:
+            return
+
         self.Ar39_decay_corrected = iso_intensities[1]
         self.Ar37_decay_corrected = iso_intensities[3]
 

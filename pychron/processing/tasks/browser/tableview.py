@@ -129,13 +129,16 @@ class TableView(PaneModelView):
 
     def plot_selected(self, info, obj):
         try:
-            obj.plot_selected()
+            obj.plot_selected = False
+            # obj.plot_selected()
         except AttributeError:
             pass
 
     def plot_selected_grouped(self, info, obj):
+        print info, obj
         try:
-            obj.plot_selected_grouped()
+            obj.plot_selected = True
+            # obj.plot_selected_grouped()
         except AttributeError:
             pass
 

@@ -122,11 +122,18 @@ class FigureTask(AnalysisEditTask):
 
         self.unknowns_pane.refresh_needed = True
 
+    @on_trait_change('browser_model:plot_selected')
+    def _handle_plot_selected(self, new):
+        if new:
+            self.plot_selected_grouped()
+        else:
+            self.plot_selected()
+
     def plot_selected_grouped(self):
         self.debug('plot selected grouped')
         if self.has_active_editor():
             self._clear_group()
-            self._append_replace_unknowns(False, self.analysis_table.analyses)
+            self._append_replace_unknowns(False, self.browser_model.analysis_table.analyses)
 
     def plot_selected(self):
         self.debug('plot selected')
@@ -143,7 +150,7 @@ class FigureTask(AnalysisEditTask):
             pane.auto_group = False
 
             self._clear_group()
-            self._append_replace_unknowns(False, self.analysis_table.analyses)
+            self._append_replace_unknowns(False, self.browser_model.analysis_table.analyses)
 
             #return to original settings
             ac.auto_group = oauto_group1

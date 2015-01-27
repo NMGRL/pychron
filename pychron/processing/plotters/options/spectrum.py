@@ -59,6 +59,9 @@ class SpectrumOptions(AgeOptions):
     error_calc_method = Property
     use_error_envelope_fill = Bool
 
+    include_plateau_sample = Bool
+    include_plateau_identifier = Bool
+
     def _get_error_calc_method(self):
         return self.plateau_age_error_kind
 
@@ -68,7 +71,7 @@ class SpectrumOptions(AgeOptions):
     # def _get_info_group(self):
     # g = VGroup(
     # HGroup(Item('show_info', label='Display Info'),
-    #                Item('show_mean_info', label='Mean', enabled_when='show_info'),
+    # Item('show_mean_info', label='Mean', enabled_when='show_info'),
     #                Item('show_error_type_info', label='Error Type', enabled_when='show_info')
     #         ),
     #         HGroup(Item('display_step'), Item('display_extract_value'),
@@ -123,6 +126,7 @@ class SpectrumOptions(AgeOptions):
             Item('extend_plateau_end_caps'),
             Item('plateau_line_width'),
             Item('plateau_line_color'),
+
             Item('nsigma'),
             Item('plateau_age_error_kind',
                  width=-100,
@@ -151,18 +155,25 @@ class SpectrumOptions(AgeOptions):
 
         display_grp = Group(HGroup(UItem('show_info',
                                          tooltip='Show general info in the upper right corner'),
+                                   show_border=True,
                                    label='General'),
+                            VGroup(Item('include_legend', label='Show'),
+                                   Item('include_sample_in_legend', label='Include Sample'),
+                                   label='Legend', show_border=True),
+
                             HGroup(Item('display_step', label='Step'),
                                    Item('display_extract_value', label='Power/Temp'),
                                    spring,
                                    Item('step_label_font_size', label='Size'),
                                    show_border=True,
                                    label='Labels'),
-                            HGroup(UItem('display_plateau_info',
-                                         tooltip='Display plateau info'),
-                                   Item('plateau_font_size', label='Size',
-                                        enabled_when='display_plateau_info'),
-                                   Item('plateau_sig_figs', label='SigFigs'),
+                            VGroup(HGroup(UItem('display_plateau_info',
+                                                tooltip='Display plateau info'),
+                                          Item('plateau_font_size', label='Size',
+                                               enabled_when='display_plateau_info'),
+                                          Item('plateau_sig_figs', label='SigFigs')),
+                                   VGroup(Item('include_plateau_sample'),
+                                          Item('include_plateau_identifier')),
                                    show_border=True,
                                    label='Plateau'),
                             HGroup(UItem('display_integrated_info',
@@ -197,4 +208,5 @@ class SpectrumOptions(AgeOptions):
 
         self._set_defaults(yd, 'integrated', ('integrated_font_size',
                                               'integrated_sig_figs',))
+
 # ============= EOF =============================================

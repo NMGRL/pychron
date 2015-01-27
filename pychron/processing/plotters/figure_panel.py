@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from math import isinf
+from chaco.legend import Legend
 
 from numpy import Inf, inf
 from traits.api import HasTraits, Any, on_trait_change, List, Int, Str
@@ -89,6 +90,11 @@ class FigurePanel(HasTraits):
         center, mi, ma = self._get_init_xlimits()
         plots = list(po.get_aux_plots())
         if plots:
+            if self.plot_options.include_legend:
+                legend = Legend()
+            else:
+                legend = None
+
             for i, fig in enumerate(self.figures):
                 fig.trait_set(xma=ma, xmi=mi,
                               center=center,
@@ -101,11 +107,14 @@ class FigurePanel(HasTraits):
 
                 fig.suppress_ylimits_update = True
                 fig.suppress_xlimits_update = True
-                fig.plot(plots)
+                fig.plot(plots, legend)
                 fig.suppress_ylimits_update = False
                 fig.suppress_xlimits_update = False
                 # print fig.xma, fig.xmi
                 ma, mi = max(fig.xma, ma), min(fig.xmi, mi)
+
+            if legend:
+                g.plots[0].overlays.append(legend)
 
             if self.use_previous_limits:
                 # print plots[0], plots[0].has_xlimits(), plots[0].name

@@ -8,6 +8,10 @@ CHANGELOG
 * improved database startup tests
 * added database version check to startup tests
 * !SubMajor Version Bump! Changed to a global shared browser model for all processing tasks
+* added Legend to Spectrum
+* added ability to display Sample/Identifier in Plateau
+* updated export task
+* added sqlite export
 
 2.0.6
 ------------------

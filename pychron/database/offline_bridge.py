@@ -45,7 +45,7 @@ class DatabaseBridge(Loggable):
     kind = 'sqlite'
     # def init(self, p=None):
     #
-    #     #create a default db
+    # #create a default db
     #     if p is None:
     #         p = os.path.join(paths.hidden_dir, 'data.db')
     #
@@ -192,7 +192,7 @@ class OfflineBridge(IsotopeAdapter):
 
     def init(self, p=None):
 
-        #create a default db
+        # create a default db
         if p is None:
             p = os.path.join(paths.hidden_dir, 'data.db')
 
@@ -225,7 +225,18 @@ class OfflineBridge(IsotopeAdapter):
                         ln = db.get_labnumber(ln)
 
                         self._copy_table(dest, src, dban.lab_id, 'gen_labtable')
+                        self._copy_table(dest, src, dban.measurement.analysis_type_id, 'gen_analysistypetable')
                         self._copy_table(dest, src, ln.sample_id, 'gen_sampletable')
+                        self._copy_table(dest, src, dban.tag, 'proc_tagtable', primary_key='name')
+                        self._copy_table(dest, src, dban.measurement.mass_spectrometer_id, 'gen_massspectrometertable')
+
+                        for iso in dban.isotopes:
+                            self._copy_table(dest, src, iso.id, 'meas_isotopetable')
+                            self._copy_table(dest, src, iso.detector_id, 'gen_detectortable')
+                            self._copy_table(dest, src, iso.molecular_weight_id, 'gen_molecularweighttable')
+                            dest.flush()
+                            # for fi in iso.fits:
+                            # self._copy_table(dest, src, fi.id, 'proc_Fit')
 
                         sample = ln.sample
                         if sample:
@@ -237,17 +248,21 @@ class OfflineBridge(IsotopeAdapter):
                         self._copy_table(dest, src, ln.irradiation_position.level.irradiation_id,
                                          'irrad_irradiationtable')
 
+                        self._copy_table(dest, src, ln.irradiation_position.level.production_id,
+                                         'irrad_productiontable')
+
                         self._copy_table(dest, src, dban.id, 'meas_analysistable')
                         self._copy_table(dest, src, dban.measurement_id, 'meas_measurementtable')
                         self._copy_table(dest, src, dban.extraction_id, 'meas_extractiontable')
-                        dest.commit()
 
-    def _copy_table(self, dest, src, pid, tn, verbose=True):
+                        dest.flush()
+
+    def _copy_table(self, dest, src, pid, tn, primary_key='id', verbose=True):
         meta = Base.metadata
         meta.bind = dest.bind
         dtable = Table(tn, meta, autoload=True)
         dq = dest.query(dtable)
-        dq = dq.filter(dtable.c.id == pid)
+        dq = dq.filter(getattr(dtable.c, primary_key) == pid)
 
         try:
             if dq.one():
@@ -267,8 +282,8 @@ class OfflineBridge(IsotopeAdapter):
 
                 self.debug(msg)
 
-                q = src.query(table)
-                q = q.filter(table.c.id == pid)
+            q = src.query(table)
+            q = q.filter(getattr(dtable.c, primary_key) == pid)
             try:
 
                 record = q.one()
@@ -278,7 +293,7 @@ class OfflineBridge(IsotopeAdapter):
                 pass
 
 # if __name__=='__main__':
-#     o=OfflineBridge()
+# o=OfflineBridge()
 #     o.init('/Users/ross/Sandbox/data.db')
 # ============= EOF =============================================
 

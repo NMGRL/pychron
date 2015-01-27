@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 
 from chaco.array_data_source import ArrayDataSource
+from chaco.legend import Legend
 from traits.api import HasTraits, Any, Int, Str, Tuple, Property, \
     Event, Bool, cached_property, on_trait_change
 from chaco.tools.data_label_tool import DataLabelTool
@@ -85,8 +86,6 @@ class BaseArArFigure(HasTraits):
         """
             make plots
         """
-        self._plots = plots
-
         def _setup_plot(i, pp, po):
 
             #add limit tools
@@ -131,6 +130,7 @@ class BaseArArFigure(HasTraits):
                 else:
                     pp.value_axis.tick_generator = SparseTicks()
 
+        self._plots = plots
         graph = self.graph
 
         vertical_resize = not all([p.height for p in plots])
@@ -162,6 +162,10 @@ class BaseArArFigure(HasTraits):
             # set a tag for easy identification
             p.y_axis.tag = po.name
             _setup_plot(i, p, po)
+
+        # if self.options.use_legend:
+        # if True:
+        #     self._add_legend()
 
     def plot(self, *args, **kw):
         pass
@@ -325,6 +329,7 @@ class BaseArArFigure(HasTraits):
     # ===============================================================================
     #
     # ===============================================================================
+
     def _add_point_labels(self, scatter):
         labels = []
 

@@ -1078,7 +1078,7 @@ class IsotopeAdapter(DatabaseAdapter):
                 q = q.filter(irrad_LevelTable.name == level)
 
             q = self._labnumber_filter(q, project_names, mass_spectrometers,
-                                       analysis_types, filter_non_run, low_post, high_post, False)
+                                       analysis_types, filter_non_run, low_post, high_post)
             self.debug(compile_query(q))
             return self._query_all(q)
 
@@ -1599,7 +1599,7 @@ class IsotopeAdapter(DatabaseAdapter):
 
             q = q.filter(meas_AnalysisTable.uuid.in_(uuids))
             q = q.order_by(meas_AnalysisTable.analysis_timestamp.asc())
-
+            # print compile_query(q)
             return self._query_all(q)
 
     def get_analysis_isotopes(self, uuid):
@@ -2252,9 +2252,9 @@ class IsotopeAdapter(DatabaseAdapter):
     # ===============================================================================
     def _get_post_filter(self, post, comp, cast=True):
         t = meas_AnalysisTable.analysis_timestamp
-        if cast and not isinstance(post, datetime):
-            print 'casting to date'
-            t = sql_cast(t, Date)
+        # if cast and not isinstance(post, datetime):
+        #     print 'casting to date'
+        #     t = sql_cast(t, Date)
 
         return getattr(t, comp)(post)
 
@@ -2311,6 +2311,7 @@ class IsotopeAdapter(DatabaseAdapter):
 
     def _labnumber_filter(self, q, project_names, mass_spectrometers,
                           analysis_types, filter_non_run, low_post, high_post, cast_date):
+
         if low_post:
             # q = q.filter(cast(meas_AnalysisTable.analysis_timestamp, Date) >= low_post)
             q = q.filter(self._get_post_filter(low_post, '__ge__', cast=cast_date))

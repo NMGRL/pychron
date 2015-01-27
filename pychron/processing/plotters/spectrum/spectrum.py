@@ -43,7 +43,7 @@ class Spectrum(BaseArArFigure):
     integrated_label = None
     broadcaster = None
 
-    def plot(self, plots):
+    def plot(self, plots, legend=None):
         """
             plot data on plots
         """
@@ -51,7 +51,13 @@ class Spectrum(BaseArArFigure):
         graph = self.graph
 
         for pid, (plotobj, po) in enumerate(zip(graph.plots, plots)):
-            getattr(self, '_plot_{}'.format(po.plot_name))(po, plotobj, pid)
+
+            plot = getattr(self, '_plot_{}'.format(po.plot_name))(po, plotobj, pid)
+            if legend and po.plot_name == 'age_spectrum':
+                ident = self.analysis_group.identifier
+                sample = self.analysis_group.sample
+                key = self.options.make_legend_key(ident, sample)
+                legend.plots[key] = plot
 
         self.graph.set_x_title('Cumulative %39ArK', plotid=0)
 
@@ -168,6 +174,7 @@ class Spectrum(BaseArArFigure):
 
         self.graph.set_y_limits(min_=_mi, max_=_ma, pad=pad, plotid=pid)
         # self._set_y_limits(_mi, _ma, pad=pad)
+        return spec
 
     def _add_info(self, g, plot):
         if self.group_id == 0:
@@ -255,7 +262,9 @@ class Spectrum(BaseArArFigure):
                             ages=ages,
                             age_errors=age_errors,
                             line_width=self.options.plateau_line_width,
-                            line_color=self.options.plateau_line_color,
+
+                            line_color=lp.color,
+                            # line_color=self.options.plateau_line_color,
                             extend_end_caps=self.options.extend_plateau_end_caps,
                             label_visible=self.options.display_plateau_info,
                             label_font_size=self.options.plateau_font_size,
@@ -316,6 +325,18 @@ class Spectrum(BaseArArFigure):
         text = self._build_label_text(plateau_age.nominal_value, e,
                                       plateau_mswd, valid_mswd, nsteps,
                                       sig_figs=self.options.plateau_sig_figs)
+
+        sample = self.analysis_group.sample
+        identifier = self.analysis_group.identifier
+
+        if self.options.include_plateau_sample:
+            if self.options.include_plateau_identifier:
+                text = '{}({}) {}'.format(sample, identifier, text)
+            else:
+                text = '{} {}'.format(sample, text)
+        elif self.options.include_plateau_identifier:
+            text = '{} {}'.format(identifier, text)
+
         return text
 
     def _make_integrated_text(self):
@@ -419,7 +440,7 @@ class Spectrum(BaseArArFigure):
         # n = platbounds[1] - platbounds[0] + 1
         #
         # if n > 1:
-        #     ans = []
+        # ans = []
         #
         #     for j, ai in enumerate(analyses):
         #         if j not in exclude and platbounds[0] <= j <= platbounds[1]:

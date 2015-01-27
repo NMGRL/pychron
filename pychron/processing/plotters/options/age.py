@@ -28,6 +28,9 @@ class AgeOptions(PlotterOptions):
     include_j_error_in_mean = Bool(True)
     error_calc_method = Enum(*ERROR_TYPES)
 
+    include_legend = Bool(False)
+    include_sample_in_legend = Bool(False)
+
     include_irradiation_error = Bool(True)
     include_decay_error = Bool(False)
     nsigma = Enum(1, 2, 3)
@@ -48,6 +51,12 @@ class AgeOptions(PlotterOptions):
 
     label_fontsize = Enum(*SIZES)
     use_centered_range = Bool
+
+    def make_legend_key(self, ident, sample):
+        key = ident
+        if self.include_sample_in_legend:
+            key = '{}({})'.format(sample, ident)
+        return key
 
     def _include_j_error_changed(self, new):
         if new:
@@ -70,6 +79,8 @@ class AgeOptions(PlotterOptions):
                   'include_decay_error',
                   'nsigma', 'label_box',
                   'error_calc_method',
+                  'include_legend',
+                  'include_sample_in_legend',
                   'show_info', 'show_mean_info', 'show_error_type_info',
                   'analysis_label_display',
                   'analysis_label_format',
