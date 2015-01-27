@@ -751,13 +751,13 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
             v = ConditionalsView()
 
-            v.add_pre_run_terminations(self._load_default_conditionals('pre_run_terminations'))
+            v.add_pre_run_terminations(self._load_system_conditionals('pre_run_terminations'))
             v.add_pre_run_terminations(self._load_queue_conditionals('pre_run_terminations'))
 
-            v.add_system_conditionals(self._load_default_conditionals(None))
+            v.add_system_conditionals(self._load_system_conditionals(None))
             v.add_conditionals(self._load_queue_conditionals(None))
 
-            v.add_post_run_terminations(self._load_default_conditionals('post_run_terminations'))
+            v.add_post_run_terminations(self._load_system_conditionals('post_run_terminations'))
             v.add_post_run_terminations(self._load_queue_conditionals('post_run_terminations'))
 
             run = self.selected_run
@@ -1189,7 +1189,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             return
 
         conditionals = self._load_queue_conditionals('pre_run_terminations')
-        default_conditionals = self._load_default_conditionals('pre_run_terminations')
+        default_conditionals = self._load_system_conditionals('pre_run_terminations')
         if default_conditionals or conditionals:
             self.heading('Pre Extraction Check')
 
@@ -1342,7 +1342,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             return True
 
         # check default terminations
-        conditionals = self._load_default_conditionals('post_run_terminations')
+        conditionals = self._load_system_conditionals('post_run_terminations')
         if self._test_conditionals(run, conditionals, 'Checking default post run terminations',
                                    'Post Run Termination'):
             return True
@@ -1356,7 +1356,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         # check default post run actions
         # conditionals = self._load_default_conditionals('post_run_actions', klass='ActionConditional')
-        conditionals = self._load_default_conditionals('post_run_actions')
+        conditionals = self._load_system_conditionals('post_run_actions')
         if self._action_conditionals(run, conditionals, 'Checking default post run actions',
                                      'Post Run Action'):
             return True
@@ -1367,15 +1367,15 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             # 'Queue Action'):
             # return True
 
-    def _load_default_conditionals(self, term_name, **kw):
-        self.debug('loading default (system) conditionals {}'.format(term_name))
+    def _load_system_conditionals(self, term_name, **kw):
+        self.debug('loading system conditionals {}'.format(term_name))
         p = paths.system_conditionals
         # p = get_path(paths.spectrometer_dir, 'default_conditionals', ['.yaml', '.yml'])
         if p:
             return self._extract_conditionals(p, term_name, level=SYSTEM, **kw)
         else:
             # pp = os.path.join(paths.spectrometer_dir, 'default_conditionals.yaml')
-            self.warning('no default conditionals file located at {}'.format(p))
+            self.warning('no system conditionals file located at {}'.format(p))
 
     def _load_queue_conditionals(self, term_name, **kw):
         self.debug('loading queue conditionals {}'.format(term_name))
