@@ -38,7 +38,7 @@ from pychron.experiment.automated_run.hop_util import parse_hops
 from pychron.loggable import Loggable
 from pychron.managers.data_managers.h5_data_manager import H5DataManager
 from pychron.paths import paths
-from pychron.processing.export.export_spec import ExportSpec
+from pychron.processing.export.export_spec import MassSpecExportSpec
 from pychron.pychron_constants import NULL_STR
 
 DEBUG = False
@@ -755,7 +755,7 @@ class AutomatedRunPersister(Loggable):
 
         ic = self.arar_age.get_ic_factor('CDD')
 
-        exp = ExportSpec(runid=rid,
+        exp = MassSpecExportSpec(runid=rid,
                          runscript_name=self.runscript_name,
                          runscript_text=self.runscript_blob,
                          # signal_fits=sf,

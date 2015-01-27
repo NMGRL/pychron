@@ -58,8 +58,8 @@ class XMLDestination(HasTraits):
         return self.destination
 
 
-class YamlDestination(HasTraits):
-    destination = Str
+class YamlDestination(XMLDestination):
+    destination = Str('/Users/ross/Sandbox/exporttest2.yaml')
 
 # ============= EOF =============================================
 

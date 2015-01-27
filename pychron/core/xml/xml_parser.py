@@ -180,15 +180,15 @@ class XMLParser(object):
         if p is None:
             p = self.path
         if p and os.path.isdir(os.path.dirname(p)):
-            txt = self.tostring(pretty_print)
-            with open(p,'w') as fp:
-                fp.write(pprint_xml(txt))
+            # txt = self.tostring(pretty_print)
+            # with open(p,'w') as fp:
+                # fp.write(pprint_xml(txt))
 
-            # tree = self.get_tree()
-            # tree.write(p,
-            #            xml_declaration=True,
-            #            method='xml',
-            #            pretty_print=pretty_print)
+            tree = self.get_tree()
+            tree.write(p,
+                       xml_declaration=True,
+                       method='xml',
+                       pretty_print=pretty_print)
 
 
 

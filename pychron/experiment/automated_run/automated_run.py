@@ -36,6 +36,7 @@ from pychron.experiment.automated_run.peak_hop_collector import PeakHopCollector
 from pychron.experiment.automated_run.syn_extraction import SynExtractionCollector
 from pychron.experiment.automated_run.hop_util import parse_hops
 from pychron.experiment.utilities.conditionals import test_queue_conditionals_name
+from pychron.experiment.utilities.script import assemble_script_blob
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.processing.analyses.view.automated_run_view import AutomatedRunAnalysisView
@@ -50,7 +51,6 @@ from pychron.pychron_constants import NULL_STR, MEASUREMENT_COLOR, \
 from pychron.experiment.conditional.conditional import TruncationConditional, \
     ActionConditional, TerminationConditional, conditional_from_dict, CancelationConditional, conditionals_from_file
 from pychron.processing.arar_age import ArArAge
-from pychron.processing.export.export_spec import assemble_script_blob
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.codetools.memory_usage import mem_log
 from pychron.experiment.automated_run.multi_collector import MultiCollector
