@@ -21,28 +21,34 @@ from traitsui.api import View, Item, UItem, VGroup, HGroup
 from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from uncertainties import nominal_value
+from uncertainties import nominal_value, std_dev
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.core.helpers.formatting import floatfmt
 from pychron.processing.tasks.recall.mass_spec_recaller import MassSpecRecaller
+
+DIFF_TOLERANCE = 1e-8
 
 
 class ValueTabularAdapter(TabularAdapter):
     columns = [('Name', 'name'),
                ('Pychron', 'lvalue'),
                ('Diff', 'diff'),
-               ('MassSpec', 'rvalue')]
+               ('MassSpec', 'rvalue'),
+               ('% Dff', 'percent_diff')]
 
     lvalue_width = Int(100)
     diff_width = Int(100)
     rvalue_width = Int(100)
-    name_width = Int(100)
+    # name_width = Int(100)
+    name_width = Int(60)
 
+    # name_text = Property
     lvalue_text = Property
     diff_text = Property
     rvalue_text = Property
-    name_width = Int(60)
+    percent_diff_text = Property
+
     font = '9'
     use_bg_color = Bool(True)
 
@@ -54,6 +60,13 @@ class ValueTabularAdapter(TabularAdapter):
                 color = '#FFCCCC'
         return color
 
+    # def _get_name_text(self):
+    #     return '<b>{}</b'.format(self.item.name)
+
+    def _get_percent_diff_text(self):
+        v = self.item.percent_diff
+        return self._get_value_text(v, n=2)
+
     def _get_lvalue_text(self):
         v = self.item.lvalue
         return self._get_value_text(v)
@@ -62,15 +75,15 @@ class ValueTabularAdapter(TabularAdapter):
         v = self.item.rvalue
         return self._get_value_text(v)
 
-    def _get_value_text(self, v):
+    def _get_value_text(self, v, n=8):
         if isinstance(v, float):
-            v = floatfmt(v, n=8)
+            v = floatfmt(v, n=n)
         return v
 
     def _get_diff_text(self):
         v = self.item.diff
         if isinstance(v, float):
-            if abs(v) < 1e-8:
+            if abs(v) < DIFF_TOLERANCE:
                 v = ''
             else:
                 v = floatfmt(v, n=8)
@@ -88,9 +101,20 @@ class Value(HasTraits):
     lvalue = Either(Int, Float)
     rvalue = Either(Int, Float)
     diff = Property(depends_on='lvalue,rvalue')
+    enabled = Property(depends_on='lvalue,rvalue')
+    percent_diff = Property(depends_on='lvalue,rvalue')
+
+    def _get_percent_diff(self):
+        try:
+            return self.diff / self.lvalue * 100
+        except ZeroDivisionError:
+            return 'NaN'
 
     def _get_diff(self):
         return self.lvalue - self.rvalue
+
+    def _get_enabled(self):
+        return abs(self.diff) > DIFF_TOLERANCE
 
 
 class StrValue(Value):
@@ -99,6 +123,12 @@ class StrValue(Value):
 
     def _get_diff(self):
         return self.lvalue != self.rvalue
+
+    def _get_enabled(self):
+        return self.diff
+
+    def _get_percent_diff(self):
+        return ''
 
 
 class DiffEditor(BaseTraitsEditor):
@@ -112,15 +142,15 @@ class DiffEditor(BaseTraitsEditor):
     _right = None
     basename = Str
 
-    diffs_only=Bool(True)
+    diffs_only = Bool(True)
     adapter = None
 
     def _diffs_only_changed(self, new):
         if new:
-            self.values = [vi for vi in self.ovalues if vi.diff]
-            self.adapter.use_bg_color=False
+            self.values = [vi for vi in self.ovalues if vi.enabled]
+            self.adapter.use_bg_color = False
         else:
-            self.adapter.use_bg_color=True
+            self.adapter.use_bg_color = True
             self.values = self.ovalues
 
     def setup(self, left):
@@ -147,17 +177,33 @@ class DiffEditor(BaseTraitsEditor):
 
         # if recaller.connect():
         return recaller.find_analysis(left.labnumber, left.aliquot,
-                                          left.step)
+                                      left.step)
 
     def _set_values(self, left, right, isotopes):
         vs = []
         err = u'\u00b11\u03c3'
-        pfunc=lambda x: lambda n: '{} {}'.format(x,n)
+        pfunc = lambda x: lambda n: '{} {}'.format(x, n)
+
+        vs.append(Value(name='J',
+                        lvalue=nominal_value(left.j),
+                        rvalue=nominal_value(right.j)))
+        vs.append(Value(name=err,
+                        lvalue=std_dev(left.j),
+                        rvalue=std_dev(right.j)))
+        vs.append(Value(name='Age',
+                        lvalue=left.age,
+                        rvalue=right.age))
+        vs.append(Value(name=err,
+                        lvalue=left.age_err,
+                        rvalue=right.age_err))
+        vs.append(Value(name=u'\u00b1 w/o JEr',
+                        lvalue=left.age_wo_j_err,
+                        rvalue=right.age_wo_j_err))
 
         for a in isotopes:
             iso = left.isotopes[a]
             riso = right.isotopes[a]
-            func=pfunc(a)
+            func = pfunc(a)
 
             vs.append(Value(name=a,
                             lvalue=nominal_value(iso.get_intensity()),
@@ -169,7 +215,7 @@ class DiffEditor(BaseTraitsEditor):
                             rvalue=nominal_value(iso.ic_factor)))
 
         for a in isotopes:
-            func=pfunc(a)
+            func = pfunc(a)
             iso = left.isotopes[a]
             riso = right.isotopes[a]
             vs.append(Value(name=func('Bs'), lvalue=iso.baseline.value, rvalue=riso.baseline.value))
@@ -178,7 +224,7 @@ class DiffEditor(BaseTraitsEditor):
             self.right_baselines[a] = iso.baseline
 
         for a in isotopes:
-            func=pfunc(a)
+            func = pfunc(a)
             iso = left.isotopes[a]
             riso = right.isotopes[a]
             vs.append(Value(name=func('Bl'), lvalue=iso.blank.value, rvalue=riso.blank.value))
@@ -186,24 +232,24 @@ class DiffEditor(BaseTraitsEditor):
 
         rpr = right.production_ratios
         for k, v in left.production_ratios.iteritems():
-            vs.append(Value(name=k,lvalue=nominal_value(v),
+            vs.append(Value(name=k, lvalue=nominal_value(v),
                             rvalue=nominal_value(rpr[k])))
 
-        rifc=right.interference_corrections
+        rifc = right.interference_corrections
         for k, v in left.interference_corrections.iteritems():
             vs.append(Value(name=k, lvalue=nominal_value(v),
                             rvalue=nominal_value(rifc[k])))
 
         # self.values = vs
-        self.ovalues=vs[:]
+        self.ovalues = vs[:]
         self._diffs_only_changed(self.diffs_only)
 
     def traits_view(self):
         v = View(VGroup(
             HGroup(Item('diffs_only')),
             UItem('values', editor=myTabularEditor(adapter=self.adapter,
-                                                      editable=False,
-                                                      selected_row='selected_row'))))
+                                                   editable=False,
+                                                   selected_row='selected_row'))))
         return v
 
 # ============= EOF =============================================

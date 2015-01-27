@@ -26,6 +26,8 @@ from sqlalchemy.orm import relation, relationship
 from sqlalchemy.sql.expression import func
 
 # =============local library imports  ==========================
+from pychron.database.orms.isotope.util import doublecolumn
+
 Base = declarative_base()
 
 
@@ -120,23 +122,23 @@ class ArArAnalysisTable(Base):
     #    AnalysisID = Column(Integer, primary_key=True)
     AnalysisID = Column(Integer, ForeignKey('AnalysesTable.AnalysisID'))
     DataReductionSessionID = Column(Integer)
-    JVal = Column(Float, default=0)
-    JEr = Column(Float, default=0)
-    Tot40 = Column(Float, default=0)
-    Tot39 = Column(Float, default=0)
-    Tot38 = Column(Float, default=0)
-    Tot37 = Column(Float, default=0)
-    Tot36 = Column(Float, default=0)
+    JVal = doublecolumn()#Column(Float, default=0)
+    JEr = doublecolumn()#Column(Float, default=0)
+    Tot40 = doublecolumn()
+    Tot39 = doublecolumn()
+    Tot38 = doublecolumn()
+    Tot37 = doublecolumn()
+    Tot36 = doublecolumn()
 
-    Tot40Er = Column(Float, default=0)
-    Tot39Er = Column(Float, default=0)
-    Tot38Er = Column(Float, default=0)
-    Tot37Er = Column(Float, default=0)
-    Tot36Er = Column(Float, default=0)
+    Tot40Er = doublecolumn()
+    Tot39Er = doublecolumn()
+    Tot38Er = doublecolumn()
+    Tot37Er = doublecolumn()
+    Tot36Er = doublecolumn()
 
-    Age = Column(Float, default=0, primary_key=True)
-    ErrAge = Column(Float, default=0)
-
+    Age = doublecolumn(primary_key=True)
+    ErrAge = doublecolumn()
+    ErrAgeWOErInJ = doublecolumn()
 
 class BaselinesChangeableItemsTable(Base):
     __tablename__ = 'baselineschangeableitemstable'

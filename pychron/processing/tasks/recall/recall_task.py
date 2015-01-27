@@ -67,6 +67,7 @@ class RecallTask(AnalysisEditTask):
 
     def _recaller_default(self):
         db = self.application.get_service('pychron.database.adapters.massspec_database_adapter.MassSpecDatabaseAdapter')
+        db.bind_preferences()
         recaller=MassSpecRecaller(db=db)
 
         return recaller
