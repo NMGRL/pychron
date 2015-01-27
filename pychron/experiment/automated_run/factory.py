@@ -313,6 +313,8 @@ class AutomatedRunFactory(PersistenceLoggable):
         if load_persistence:
             self.load()
 
+        self.setup_files()
+
     def deactivate(self):
         self.dump(verbose=True)
 
@@ -1074,6 +1076,8 @@ class AutomatedRunFactory(PersistenceLoggable):
         p = paths.conditionals_dir
         extension = '.yaml'
         temps = list_directory(p, extension, remove_extension=True)
+        self.debug('loading conditionals from {}'.format(p))
+
         return [NULL_STR] + temps
 
     def _get_beam_diameter(self):
@@ -1222,7 +1226,7 @@ class AutomatedRunFactory(PersistenceLoggable):
         f = MeasurementFitsSelectorView(model=m)
         info = f.edit_traits(kind='livemodal')
         if info.result:
-            #update the default_fits entry in the docstr
+            # update the default_fits entry in the docstr
             ed = PyScriptEdit()
             ed.context_editor = MeasurementContextEditor()
             ed.open_script(sp)
@@ -1230,36 +1234,20 @@ class AutomatedRunFactory(PersistenceLoggable):
             ed.update_docstr()
 
     def _new_conditionals_button_fired(self):
-        edit_conditionals(self.conditionals_path,
+        name = edit_conditionals(self.conditionals_path,
                           app=self.application, root=paths.conditionals_dir,
                           save_as=True,
                           title='Edit Run Conditionals',
                           kinds=('actions', 'cancelations', 'terminations', 'truncations'))
-        # edit_conditionals(p)
-        # # e = ActionEditor()
-        # if os.path.isfile(p):
-        #     # e.load(p)
-        #     e.model.path = ''
-        # else:
-        #     e.model = ActionModel()
-        #
-        # info = e.edit_traits(kind='livemodal')
-        # if info.result:
-        #     self.load_truncations()
-        #     p = e.model.path
-        #     d = os.path.splitext(os.path.basename(p))[0]
-        #
-        #     self.conditionals_path = d
+        if name:
+            self.load_conditionals()
+            self.conditionals_path = os.path.splitext(name)[0]
 
     def _edit_conditionals_button_fired(self):
         edit_conditionals(self.conditionals_path,
                           app=self.application, root=paths.conditionals_dir,
                           title='Edit Run Conditionals',
                           kinds=('actions', 'cancelations', 'terminations', 'truncations'))
-        # e = ActionEditor()
-        # e.load(p)
-
-        # e.edit_traits(kind='livemodal')
 
     @on_trait_change('trunc_+, conditionals_path')
     def _handle_conditionals(self, obj, name, old, new):

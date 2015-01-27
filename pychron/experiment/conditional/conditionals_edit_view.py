@@ -630,6 +630,7 @@ class ConditionalsEditView(ConditionalsViewable):
             path = get_file_path(self.root, action='save as')
 
         if path:
+            self.path = path
             with open(path, 'w') as fp:
                 # d = {k: getattr(self, '{}_group'.format(k)).dump() for k in self.group_names}
                 d = {g.name: g.dump() for g in self.groups}
@@ -688,6 +689,7 @@ def edit_conditionals(name, detectors=None, app=None, root=None, save_as=False,
 
     if info.result:
         cev.dump()
+        return cev.name
 
 
 if __name__ == '__main__':
