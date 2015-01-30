@@ -14,6 +14,9 @@ CHANGELOG
 * added sqlite export
 * added sqlite access
 * added ability to edit plateau criteria
+* fixed plateau age calculation
+* added forced plateau
+* added legend to Spectrum
 
 2.0.6
 ------------------

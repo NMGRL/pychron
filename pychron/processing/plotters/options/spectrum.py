@@ -42,8 +42,12 @@ class SpectrumOptions(AgeOptions):
     include_j_error_in_plateau = Bool(True)
     plateau_age_error_kind = Enum(*ERROR_TYPES)
     force_plateau = Bool(False)
-    plateau_steps = Property(Str)
-    _plateau_steps = Str
+    # plateau_steps = Property(Str)
+    # _plateau_steps = Str
+
+    force_plateau_start = Str
+    force_plateau_end = Str
+
     plot_option_name = 'Age'
     display_extract_value = Bool(False)
     display_step = Bool(False)
@@ -94,26 +98,28 @@ class SpectrumOptions(AgeOptions):
 
     # return g
 
-    def _get_plateau_steps(self):
-        return self._plateau_steps
-
-    def _set_plateau_steps(self, v):
-        if v:
-            self._plateau_steps = v
-
-    def _validate_plateau_steps(self, v):
-        if plat_regex.match(v):
-            s, e = v.split('-')
-            try:
-                assert s < e
-                return v
-            except AssertionError:
-                pass
+    # def _get_plateau_steps(self):
+    #     return self._plateau_steps
+    #
+    # def _set_plateau_steps(self, v):
+    #     if v:
+    #         self._plateau_steps = v
+    #
+    # def _validate_plateau_steps(self, v):
+    #     if plat_regex.match(v):
+    #         s, e = v.split('-')
+    #         try:
+    #             assert s < e
+    #             return v
+    #         except AssertionError:
+    #             pass
 
     def _get_dump_attrs(self):
         attrs = super(SpectrumOptions, self)._get_dump_attrs()
         return attrs + ['step_nsigma',
                         'force_plateau',
+                        'force_plateau_start',
+                        'force_plateau_end',
                         'display_extract_value',
                         'display_step',
                         'display_plateau_info',
@@ -153,9 +159,12 @@ class SpectrumOptions(AgeOptions):
             HGroup(
                 Item('force_plateau',
                      tooltip='Force a plateau over provided steps'),
-                UItem('plateau_steps',
-                      enabled_when='force_plateau',
-                      tooltip='Enter start and end steps. e.g A-C ')),
+                Item('force_plateau_start', label='Start'),
+                Item('force_plateau_end', label='End')
+                # UItem('plateau_steps',
+                #       enabled_when='force_plateau',
+                #       tooltip='Enter start and end steps. e.g A-C ')
+            ),
             show_border=True,
             label='Plateau')
 
@@ -222,7 +231,8 @@ class SpectrumOptions(AgeOptions):
         self._set_defaults(yd, 'plateau', ('plateau_line_width',
                                            'plateau_line_color',
                                            'plateau_font_size',
-                                           'plateau_sig_figs',))
+                                           'plateau_sig_figs',
+                                           'force_plateau'))
 
         self._set_defaults(yd, 'integrated', ('integrated_font_size',
                                               'integrated_sig_figs',))

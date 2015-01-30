@@ -105,6 +105,10 @@ class Spectrum(BaseArArFigure):
         ag.plateau_age_error_kind = self.options.plateau_age_error_kind
         ag.pc_nsteps = self.options.pc_nsteps
         ag.pc_gas_fraction = self.options.pc_gas_fraction
+        if self.options.force_plateau:
+            ag.force_plateau_steps = self.options.force_plateau_start, self.options.force_plateau_end
+        else:
+            ag.force_plateau_steps = tuple()
 
         pma = None
         plateau_age = ag.plateau_age

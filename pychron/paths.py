@@ -117,6 +117,7 @@ plateau:
  plateau_line_color: black
  plateau_font_size: 12
  plateau_sig_figs: 2
+ force_plateau: False
 integrated:
  integrated_font_size: 12
  integrated_sig_figs: 2

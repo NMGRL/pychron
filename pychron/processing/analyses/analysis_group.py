@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 import math
 
-from traits.api import HasTraits, List, Property, cached_property, Str, Bool, Int, Event
+from traits.api import HasTraits, List, Property, cached_property, Str, Bool, Int, Event, Tuple
 
 # ============= standard library imports ========================
 from numpy import array, nan
@@ -241,6 +241,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
 
     plateau_age_error_kind = Str
     nsteps = Int
+    force_plateau_steps = Tuple
 
     # def _get_nanalyses(self):
     #     if self.plateau_steps:
@@ -284,7 +285,10 @@ class StepHeatAnalysisGroup(AnalysisGroup):
     def _get_plateau_age(self):
         ages, errors, k39 = self._get_steps()
 
-        options = {'nsteps': self.pc_nsteps, 'gas_fraction': self.pc_gas_fraction}
+        options = {'nsteps': self.pc_nsteps,
+                   'gas_fraction': self.pc_gas_fraction,
+                   'force_steps': self.force_plateau_steps}
+
         args = calculate_plateau_age(ages, errors, k39, options=options)
         if args:
             v, e, pidx = args
@@ -292,7 +296,6 @@ class StepHeatAnalysisGroup(AnalysisGroup):
             self.plateau_steps = pidx
             self.plateau_steps_str = '{}-{}'.format(ALPHAS[pidx[0]],
                                                     ALPHAS[pidx[1]])
-
 
             self.nsteps = (pidx[1] - pidx[0]) + 1
 

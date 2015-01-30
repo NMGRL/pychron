@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -38,6 +38,7 @@ from pychron.core.stats.core import calculate_weighted_mean
 
 
 # ============= local library imports  ==========================
+from pychron.pychron_constants import ALPHAS
 
 
 def calculate_F_ratio(m4039, m3739, m3639, pr):
@@ -97,7 +98,7 @@ def calculate_isochron(analyses, reg='NewYork'):
     xns, xnes = zip(*[(xi.nominal_value, xi.std_dev) for xi in a39])
 
     regx = isochron_regressor(ys, yerrs, xs, xerrs,
-                              xds,xdes, yns, ynes, xns, xnes)
+                              xds, xdes, yns, ynes, xns, xnes)
 
     reg = isochron_regressor(xs, xerrs, ys, yerrs,
                              xds, xdes, xns, xnes, yns, ynes,
@@ -148,23 +149,40 @@ def calculate_plateau_age(ages, errors, k39, kind='inverse_variance', method='fl
 
     ages = asarray(ages)
     errors = asarray(errors)
-
     k39 = asarray(k39)
-    from pychron.processing.plateau import Plateau
 
-    p = Plateau(ages=ages,
-                errors=errors,
-                signals=k39,
-                nsteps = options.get('nsteps', 3),
-                gas_fraction = options.get('gas_fraction', 50))
+    force_steps = options.get('force_steps', False)
+    if force_steps:
+        sstep, estep = force_steps
 
-    pidx = p.find_plateaus(method)
-    # pidx = find_plateaus(ages, errors, k39,
-    #                      overlap_sigma=2)
+        if not sstep:
+            sidx = 0
+        else:
+            sidx = ALPHAS.index(sstep)
+
+        if not estep:
+            eidx = len(ages)-1
+        else:
+            eidx = ALPHAS.index(estep)
+
+        pidx = (sidx, eidx) if sidx < eidx else (eidx, sidx)
+
+    else:
+
+        from pychron.processing.plateau import Plateau
+
+        p = Plateau(ages=ages,
+                    errors=errors,
+                    signals=k39,
+                    nsteps=options.get('nsteps', 3),
+                    gas_fraction=options.get('gas_fraction', 50))
+
+        pidx = p.find_plateaus(method)
+        # pidx = find_plateaus(ages, errors, k39,
+        #                      overlap_sigma=2)
     if pidx:
-        sx = slice(*pidx)
+        sx = slice(pidx[0], pidx[1]+1)
         plateau_ages = ages[sx]
-
         if kind == 'vol_fraction':
             weights = k39[sx]
             wm, we = average(plateau_ages, weights=weights)
