@@ -322,7 +322,7 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
     age_error_component_text = Property
 
     name_width = Int(40)
-    fit_abbreviation_width = Int(25)
+    fit_abbreviation_width = Int(40)
     include_baseline_error_width = Int(40)
     baseline_fit_abbreviation_width = Int(40)
     detector_width = Int(40)

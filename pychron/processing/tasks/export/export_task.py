@@ -51,6 +51,13 @@ class ExportTask(AnalysisEditTask):
     #         ans = [ai for ai in self.analysis_table.analyses if ai not in self.export_analyses]
     #         self.export_analyses.extend(ans)
     #
+    
+    def activated(self):
+        super(ExportTask, self).activated()
+        ans = self.browser_model.analysis_table.analyses
+
+        self.unknowns_pane.items = ans
+
     def _append_replace_unknowns(self, is_append, items=None):
         if not items:
             ans = None

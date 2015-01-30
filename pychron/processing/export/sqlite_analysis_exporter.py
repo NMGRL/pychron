@@ -37,7 +37,7 @@ class SQLiteAnalysisExporter(Exporter):
         db = self.iso_manager.db
 
         bridge = OfflineBridge()
-        bridge.init(self.destination.destination)
+        bridge.init(self.destination.destination, overwrite=True)
 
         progress = self.iso_manager.open_progress(len(self.analyses))
         with db.session_ctx():

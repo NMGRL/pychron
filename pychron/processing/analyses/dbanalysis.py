@@ -235,30 +235,30 @@ class DBAnalysis(Analysis):
             if material:
                 self.material = material
 
-        print 'pre maa'
+        # print 'pre maa'
         self._sync_meas_analysis_attributes(meas_analysis)
 
-        print 'pre irrad'
+        # print 'pre irrad'
         self._sync_irradiation(lab)
 
-        print 'pre dr'
-        #sync the dr tag first so we can set selected_histories
+        # print 'pre dr'
+        # sync the dr tag first so we can set selected_histories
         sh = self._sync_data_reduction_tag(meas_analysis)
-        print 'pre isotopes'
+        # print 'pre isotopes'
         #this is the dominant time sink
         self._sync_isotopes(meas_analysis, isos,
                             unpack, load_peak_center=load_aux, selected_histories=sh)
         # timethis(self._sync_isotopes, args=(meas_analysis, isos, unpack),
         #          kwargs={'load_peak_center': load_aux})
 
-        print 'pre det info'
+        # print 'pre det info'
         self._sync_detector_info(meas_analysis)
         if load_aux:
             self.sync_aux(meas_analysis)
 
-        print 'pre ext'
+        # print 'pre ext'
         self._sync_extraction(meas_analysis)
-        print 'pre meas'
+        # print 'pre meas'
         self._sync_measurement(meas_analysis)
 
     def _sync_data_reduction_tag(self, meas_analysis):

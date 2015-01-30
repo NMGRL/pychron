@@ -437,7 +437,6 @@ class BrowserModel(BaseBrowserModel):
             ps = db.get_projects(mass_spectrometers=ms)
             ps = self._make_project_records(ps,
                                             ms, include_recent_first=True)
-            print ms, ps
             self.projects = ps
             sp = []
             if self.selected_projects:
