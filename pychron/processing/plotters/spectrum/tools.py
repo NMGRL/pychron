@@ -101,7 +101,7 @@ class SpectrumTool(InfoInspector, BasePlateauOverlay):
         idx = self.current_position
         comp = self.component
 
-        e = comp.errors[idx]
+        e = comp.errors[idx*2]
         ys = comp.value.get_data()[::2]
         v = ys[idx]
 

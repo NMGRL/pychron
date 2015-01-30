@@ -282,6 +282,7 @@ class Spectrum(BaseArArFigure):
         return ov
 
     def _handle_plateau_overlay_move(self, obj, name, old, new):
+        print new
         self._handle_overlay_move(obj, name, old, float(new[0]))
 
     # def update_index_mapper(self, gid, obj, name, old, new):
@@ -289,6 +290,8 @@ class Spectrum(BaseArArFigure):
     # self._update_graph_metadata(gid, None, name, old, new)
 
     def _update_graph_metadata(self, obj, name, old, new):
+        return
+
         sel = obj.metadata['selections']
         for sp in self.spectrum_overlays:
             sp.selections = sel

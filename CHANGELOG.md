@@ -12,6 +12,7 @@ CHANGELOG
 * added ability to display Sample/Identifier in Plateau
 * updated export task
 * added sqlite export
+* added sqlite access
 
 2.0.6
 ------------------
