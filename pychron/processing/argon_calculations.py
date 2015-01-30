@@ -132,7 +132,7 @@ def isochron_regressor(xs, xes, ys, yes,
     return reg
 
 
-def calculate_plateau_age(ages, errors, k39, kind='inverse_variance', method='fleck 1977'):
+def calculate_plateau_age(ages, errors, k39, kind='inverse_variance', method='fleck 1977', options=None):
     """
         ages: list of ages
         errors: list of corresponding  1sigma errors
@@ -143,6 +143,8 @@ def calculate_plateau_age(ages, errors, k39, kind='inverse_variance', method='fl
     # print 'ages=array({})'.format(ages)
     # print 'errors=array({})'.format(errors)
     # print 'k39=array({})'.format(k39)
+    if options is None:
+        options = {}
 
     ages = asarray(ages)
     errors = asarray(errors)
@@ -152,7 +154,10 @@ def calculate_plateau_age(ages, errors, k39, kind='inverse_variance', method='fl
 
     p = Plateau(ages=ages,
                 errors=errors,
-                signals=k39)
+                signals=k39,
+                nsteps = options.get('nsteps', 3),
+                gas_fraction = options.get('gas_fraction', 50))
+
     pidx = p.find_plateaus(method)
     # pidx = find_plateaus(ages, errors, k39,
     #                      overlap_sigma=2)

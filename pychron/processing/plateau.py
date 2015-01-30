@@ -46,6 +46,7 @@ class Plateau(HasTraits):
 
     nsteps = 3
     overlap_sigma = 2
+    gas_fraction = 50
 
     use_overlap = True  # fleck criterion
     use_mswd = False  #mahon criterion
@@ -120,7 +121,7 @@ class Plateau(HasTraits):
 
         # log.debug('percent {} {} {}'.format(start, end, ss / self.total_signal))
 
-        return ss / self.total_signal >= 0.5
+        return ss / self.total_signal >= self.gas_fraction/100.
 
     def check_mswd(self, start, end):
         """

@@ -13,6 +13,7 @@ CHANGELOG
 * updated export task
 * added sqlite export
 * added sqlite access
+* added ability to edit plateau criteria
 
 2.0.6
 ------------------

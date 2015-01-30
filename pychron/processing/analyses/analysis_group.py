@@ -284,7 +284,8 @@ class StepHeatAnalysisGroup(AnalysisGroup):
     def _get_plateau_age(self):
         ages, errors, k39 = self._get_steps()
 
-        args = calculate_plateau_age(ages, errors, k39)
+        options = {'nsteps': self.pc_nsteps, 'gas_fraction': self.pc_gas_fraction}
+        args = calculate_plateau_age(ages, errors, k39, options=options)
         if args:
             v, e, pidx = args
 

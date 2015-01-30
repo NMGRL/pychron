@@ -15,12 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str, Int, Property, Bool, Enum, Float, Color, Range
-from traitsui.api import Item, Group, HGroup, UItem, EnumEditor, spring, VGroup
+from traits.api import Str, Int, Property, Bool, Enum, Float, Color, Range, Button
+from traitsui.api import View, Item, Group, HGroup, UItem, EnumEditor, spring, VGroup
 
 # ============= standard library imports ========================
 import re
 # ============= local library imports  ==========================
+from pychron.envisage.icon_button_editor import icon_button_editor
 
 from pychron.processing.plotters.options.age import AgeOptions
 from pychron.processing.plotters.options.option import SpectrumPlotOptions
@@ -33,6 +34,10 @@ class SpectrumOptions(AgeOptions):
     label = 'Spectrum'
     step_nsigma = Int(2)
     plot_option_klass = SpectrumPlotOptions
+
+    edit_plateau_criteria = Button
+    pc_nsteps = Int
+    pc_gas_fraction = Float
 
     include_j_error_in_plateau = Bool(True)
     plateau_age_error_kind = Enum(*ERROR_TYPES)
@@ -62,6 +67,15 @@ class SpectrumOptions(AgeOptions):
     include_plateau_sample = Bool
     include_plateau_identifier = Bool
 
+    def _edit_plateau_criteria_fired(self):
+        v = View(Item('pc_nsteps', label='Num. Steps', tooltip='Number of contiguous steps'),
+                 Item('pc_gas_fraction', label='Min. Gas%',
+                      tooltip='Plateau must represent at least Min. Gas% release'),
+                 buttons=['OK', 'Cancel'],
+                 title = 'Edit Plateau Criteria',
+                 kind='livemodal')
+        self.edit_traits(v)
+
     def _get_error_calc_method(self):
         return self.plateau_age_error_kind
 
@@ -72,7 +86,7 @@ class SpectrumOptions(AgeOptions):
     # g = VGroup(
     # HGroup(Item('show_info', label='Display Info'),
     # Item('show_mean_info', label='Mean', enabled_when='show_info'),
-    #                Item('show_error_type_info', label='Error Type', enabled_when='show_info')
+    # Item('show_error_type_info', label='Error Type', enabled_when='show_info')
     #         ),
     #         HGroup(Item('display_step'), Item('display_extract_value'),
     #                Item('display_plateau_info')),
@@ -116,12 +130,16 @@ class SpectrumOptions(AgeOptions):
                         'plateau_sig_figs',
                         'integrated_sig_figs',
                         'use_error_envelope_fill',
-                        'plateau_method']
+                        'plateau_method',
+                        'pc_nsteps',
+                        'pc_gas_fraction']
 
     def _get_groups(self):
 
         plat_grp = Group(
-            Item('plateau_method', label='Method'),
+            HGroup(Item('plateau_method', label='Method'),
+                   icon_button_editor('edit_plateau_criteria', 'cog',
+                                      tooltip='Edit Plateau Criteria')),
             Item('center_line_style'),
             Item('extend_plateau_end_caps'),
             Item('plateau_line_width'),

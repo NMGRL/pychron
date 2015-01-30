@@ -19,16 +19,15 @@ from chaco.label import Label
 from chaco.plot_label import PlotLabel
 from enable.colors import color_table, convert_from_pyqt_color
 from enable.font_metrics_provider import font_metrics_provider
-from traits.api import Array, Int, Float, Str, Color, Event, Bool, List
+from traits.api import Array, Int, Float, Str, Color, Bool, List
 from chaco.abstract_overlay import AbstractOverlay
+from enable.tools.drag_tool import DragTool
 # ============= standard library imports ========================
 from numpy import where, array
-from enable.base_tool import BaseTool
-from enable.tools.drag_tool import DragTool
 # ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
 from pychron.graph.tools.info_inspector import InfoOverlay, InfoInspector
-from pychron.pychron_constants import ALPHAS, PLUSMINUS
+from pychron.pychron_constants import PLUSMINUS
 
 
 class BasePlateauOverlay(AbstractOverlay):

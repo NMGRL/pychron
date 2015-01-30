@@ -103,6 +103,8 @@ class Spectrum(BaseArArFigure):
         ag = self.analysis_group
         ag.include_j_error_in_plateau = self.options.include_j_error_in_plateau
         ag.plateau_age_error_kind = self.options.plateau_age_error_kind
+        ag.pc_nsteps = self.options.pc_nsteps
+        ag.pc_gas_fraction = self.options.pc_gas_fraction
 
         pma = None
         plateau_age = ag.plateau_age
@@ -282,7 +284,6 @@ class Spectrum(BaseArArFigure):
         return ov
 
     def _handle_plateau_overlay_move(self, obj, name, old, new):
-        print new
         self._handle_overlay_move(obj, name, old, float(new[0]))
 
     # def update_index_mapper(self, gid, obj, name, old, new):
@@ -290,7 +291,6 @@ class Spectrum(BaseArArFigure):
     # self._update_graph_metadata(gid, None, name, old, new)
 
     def _update_graph_metadata(self, obj, name, old, new):
-        return
 
         sel = obj.metadata['selections']
         for sp in self.spectrum_overlays:
