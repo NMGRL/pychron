@@ -71,12 +71,13 @@ class SpectrumOptions(AgeOptions):
     include_plateau_sample = Bool
     include_plateau_identifier = Bool
 
+
     def _edit_plateau_criteria_fired(self):
         v = View(Item('pc_nsteps', label='Num. Steps', tooltip='Number of contiguous steps'),
                  Item('pc_gas_fraction', label='Min. Gas%',
                       tooltip='Plateau must represent at least Min. Gas% release'),
                  buttons=['OK', 'Cancel'],
-                 title = 'Edit Plateau Criteria',
+                 title='Edit Plateau Criteria',
                  kind='livemodal')
         self.edit_traits(v)
 
@@ -91,9 +92,9 @@ class SpectrumOptions(AgeOptions):
     # HGroup(Item('show_info', label='Display Info'),
     # Item('show_mean_info', label='Mean', enabled_when='show_info'),
     # Item('show_error_type_info', label='Error Type', enabled_when='show_info')
-    #         ),
-    #         HGroup(Item('display_step'), Item('display_extract_value'),
-    #                Item('display_plateau_info')),
+    # ),
+    # HGroup(Item('display_step'), Item('display_extract_value'),
+    # Item('display_plateau_info')),
     #         show_border=True, label='Info')
 
     # return g
@@ -138,10 +139,12 @@ class SpectrumOptions(AgeOptions):
                         'use_error_envelope_fill',
                         'plateau_method',
                         'pc_nsteps',
-                        'pc_gas_fraction']
+                        'pc_gas_fraction',
+                        'legend_location',
+                        'include_legend',
+                        'include_sample_in_legend']
 
     def _get_groups(self):
-
         plat_grp = Group(
             HGroup(Item('plateau_method', label='Method'),
                    icon_button_editor('edit_plateau_criteria', 'cog',
@@ -160,11 +163,7 @@ class SpectrumOptions(AgeOptions):
                 Item('force_plateau',
                      tooltip='Force a plateau over provided steps'),
                 Item('force_plateau_start', label='Start'),
-                Item('force_plateau_end', label='End')
-                # UItem('plateau_steps',
-                #       enabled_when='force_plateau',
-                #       tooltip='Enter start and end steps. e.g A-C ')
-            ),
+                Item('force_plateau_end', label='End')),
             show_border=True,
             label='Plateau')
 
@@ -186,6 +185,7 @@ class SpectrumOptions(AgeOptions):
                                    label='General'),
                             VGroup(Item('include_legend', label='Show'),
                                    Item('include_sample_in_legend', label='Include Sample'),
+                                   Item('legend_location', label='Location'),
                                    label='Legend', show_border=True),
 
                             HGroup(Item('display_step', label='Step'),
@@ -199,8 +199,12 @@ class SpectrumOptions(AgeOptions):
                                           Item('plateau_font_size', label='Size',
                                                enabled_when='display_plateau_info'),
                                           Item('plateau_sig_figs', label='SigFigs')),
-                                   VGroup(Item('include_plateau_sample'),
-                                          Item('include_plateau_identifier')),
+                                   HGroup(Item('include_plateau_sample',
+                                               tooltip='Add the Sample name to the Plateau indicator',
+                                               label='Sample'),
+                                          Item('include_plateau_identifier',
+                                               tooltip='Add the Identifier to the Plateau indicator',
+                                               label='Identifier')),
                                    show_border=True,
                                    label='Plateau'),
                             HGroup(UItem('display_integrated_info',
@@ -228,11 +232,19 @@ class SpectrumOptions(AgeOptions):
     def _load_factory_defaults(self, yd):
         super(SpectrumOptions, self)._load_factory_defaults(yd)
 
+        self._set_defaults(yd, 'legend', ('legend_location',
+                                          'include_legend',
+                                          'include_sample_in_legend'))
+
         self._set_defaults(yd, 'plateau', ('plateau_line_width',
                                            'plateau_line_color',
                                            'plateau_font_size',
                                            'plateau_sig_figs',
-                                           'force_plateau'))
+                                           'force_plateau',
+                                           'force_plateau_start',
+                                           'force_plateau_end',
+                                           'pc_nsteps',
+                                           'pc_gas_fraction'))
 
         self._set_defaults(yd, 'integrated', ('integrated_font_size',
                                               'integrated_sig_figs',))

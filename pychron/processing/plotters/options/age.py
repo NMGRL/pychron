@@ -30,6 +30,7 @@ class AgeOptions(PlotterOptions):
 
     include_legend = Bool(False)
     include_sample_in_legend = Bool(False)
+    legend_location = Enum('Upper Right', 'Upper Left', 'Lower Left', 'Lower Right')
 
     include_irradiation_error = Bool(True)
     include_decay_error = Bool(False)

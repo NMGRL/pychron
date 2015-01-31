@@ -557,7 +557,7 @@ class DBAnalysis(Analysis):
         default_fit = self._default_fit_factory('linear', 'SEM')
         for iso in dbisos:
             mw = iso.molecular_weight
-            print iso.kind, iso.detector
+            # print iso.kind, iso.detector
             if not iso.kind == 'signal' or not mw:
                 continue
             if not iso.detector:

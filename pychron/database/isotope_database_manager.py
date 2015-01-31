@@ -457,7 +457,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             a = construct(x, gi, prog, unpack=unpack,
                           calculate_age=calculate_age,
                           calculate_F=calculate_F, **kw)
-            print a
+            # print a
             if use_cache:
                 add_to_cache(a)
             return a
@@ -509,9 +509,9 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                 ai.sync(group, unpack=unpack, load_aux=load_aux)
         else:
             ai = DBAnalysis()  # if not self.use_vcs else VCSAnalysis
-            print ai
+            # print ai
             ai.sync(group, unpack=unpack, load_aux=load_aux)
-            print ai, group
+            # print ai, group
 
             # ai = klass(group_id=group_id,
             #        graph_id=graph_id)

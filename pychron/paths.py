@@ -118,9 +118,17 @@ plateau:
  plateau_font_size: 12
  plateau_sig_figs: 2
  force_plateau: False
+ force_plateau_start:
+ force_plateau_end:
+ pc_nsteps: 3
+ pc_gas_fraction: 50
 integrated:
  integrated_font_size: 12
  integrated_sig_figs: 2
+legend:
+ legend_location: Upper Right
+ include_legend: False
+ include_sample_in_legend: False
 '''
 
 COMPOSITE_DEFAULTS = '''

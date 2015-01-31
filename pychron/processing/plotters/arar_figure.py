@@ -88,7 +88,7 @@ class BaseArArFigure(HasTraits):
         """
         def _setup_plot(i, pp, po):
 
-            #add limit tools
+            # add limit tools
             self._add_limit_tool(pp, 'x')
             self._add_limit_tool(pp, 'y')
 

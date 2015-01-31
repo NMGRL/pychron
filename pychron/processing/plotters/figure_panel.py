@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -39,7 +39,7 @@ class FigurePanel(HasTraits):
     plot_spacing = Int
     meta = Any
     title = Str
-    use_previous_limits=True
+    use_previous_limits = True
 
     @on_trait_change('analyses[]')
     def _analyses_items_changed(self):
@@ -91,7 +91,11 @@ class FigurePanel(HasTraits):
         plots = list(po.get_aux_plots())
         if plots:
             if self.plot_options.include_legend:
-                legend = Legend()
+
+                align = self.plot_options.legend_location
+                a, b = align.split(' ')
+                align = '{}{}'.format(a[0].lower(), b[0].lower())
+                legend = Legend(align=align)
             else:
                 legend = None
 

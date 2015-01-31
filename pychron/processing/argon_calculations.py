@@ -154,18 +154,20 @@ def calculate_plateau_age(ages, errors, k39, kind='inverse_variance', method='fl
     force_steps = options.get('force_steps', False)
     if force_steps:
         sstep, estep = force_steps
-
+        sstep, estep = sstep.upper(), estep.upper()
         if not sstep:
             sidx = 0
         else:
             sidx = ALPHAS.index(sstep)
 
+        n = ages.shape[0] - 1
         if not estep:
-            eidx = len(ages)-1
+            eidx = n
         else:
             eidx = ALPHAS.index(estep)
 
-        pidx = (sidx, eidx) if sidx < eidx else (eidx, sidx)
+        sidx, eidx = min(sidx, eidx), min(max(sidx, eidx), n)
+        pidx = (sidx, eidx) if sidx < n else None
 
     else:
 
@@ -178,10 +180,9 @@ def calculate_plateau_age(ages, errors, k39, kind='inverse_variance', method='fl
                     gas_fraction=options.get('gas_fraction', 50))
 
         pidx = p.find_plateaus(method)
-        # pidx = find_plateaus(ages, errors, k39,
-        #                      overlap_sigma=2)
+
     if pidx:
-        sx = slice(pidx[0], pidx[1]+1)
+        sx = slice(pidx[0], pidx[1] + 1)
         plateau_ages = ages[sx]
         if kind == 'vol_fraction':
             weights = k39[sx]
@@ -203,9 +204,9 @@ def calculate_flux(f, age, arar_constants=None):
         solve age equation for J
     """
     # if isinstance(rad40, (list, tuple)):
-    #     rad40 = ufloat(*rad40)
+    # rad40 = ufloat(*rad40)
     # if isinstance(k39, (list, tuple)):
-    #     k39 = ufloat(*k39)
+    # k39 = ufloat(*k39)
 
     if isinstance(f, (list, tuple)):
         f = ufloat(*f)
@@ -224,7 +225,7 @@ def calculate_flux(f, age, arar_constants=None):
         return 1, 0
 
 
-#    return j
+# return j
 def calculate_decay_time(dc, f):
     return math.log(f) / dc
 
@@ -360,7 +361,7 @@ def calculate_F(isotopes,
     """
     a40, a39, a38, a37, a36 = isotopes
 
-    #a37*=113
+    # a37*=113
 
     if interferences is None:
         interferences = {}
@@ -499,7 +500,7 @@ def calculate_error_t(F, ssF, j, ssJ):
 #
 #
 # def overlap(a1, a2, e1, e2, overlap_sigma):
-#     e1 *= overlap_sigma
+# e1 *= overlap_sigma
 #     e2 *= overlap_sigma
 #     if a1 - e1 < a2 + e2 and a1 + e1 > a2 - e2:
 #         return True
