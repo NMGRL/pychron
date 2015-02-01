@@ -69,7 +69,7 @@ class Series(BaseArArFigure):
             p.padding_left = 75
             p.value_range.tight_bounds = False
 
-    def plot(self, plots):
+    def plot(self, plots, legend=None):
         """
             plot data on plots
         """

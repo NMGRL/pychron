@@ -49,7 +49,7 @@ class Ideogram(BaseArArFigure):
 
     _omit_key = 'omit_ideo'
 
-    def plot(self, plots):
+    def plot(self, plots, legend=None):
         """
             plot data on plots
         """

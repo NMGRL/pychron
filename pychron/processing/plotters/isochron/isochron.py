@@ -83,7 +83,7 @@ class InverseIsochron(Isochron):
     suppress = False
     xpad = '0.1'
 
-    def plot(self, plots):
+    def plot(self, plots, legend=None):
         """
             plot data on plots
         """

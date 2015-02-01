@@ -46,7 +46,7 @@ class IntegratedPlotLabel(PlotLabel):
             y = self.component.y2 - height - (self.relative_position * (height + 2))
 
         # elif self.vjustify == "center":
-        #     y_offset = int((self.height - height) / 2)
+        # y_offset = int((self.height - height) / 2)
         # x_offset, y_offset=0,0
         # print self.x, self.y, self.width, self.height, self.bounds
         with gc:
@@ -122,6 +122,10 @@ class SpectrumLabelOverlay(AbstractOverlay):
             ts.append('{:n}'.format(ai.extract_value))
 
         return '\n'.join(ts)
+
+    @on_trait_change('component:padding+')
+    def _handle_component_change(self):
+        self.layout_needed = True
 
     @on_trait_change('display_extract_value, display_step')
     def _update_visible(self):
