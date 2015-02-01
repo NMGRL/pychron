@@ -60,6 +60,7 @@ class AnalysisGroup(HasTraits):
     isochron_age_error_kind = Str
     identifier = Property
     sample = Property
+    _sample = Str
     age_scalar = Property
     age_units = Property
 
@@ -119,7 +120,13 @@ class AnalysisGroup(HasTraits):
 
     @cached_property
     def _get_sample(self):
-        return self.analyses[0].sample
+        sam = self._sample
+        if not sam:
+            sam = self.analyses[0].sample
+        return sam
+
+    def _set_sample(self, s):
+        self._sample = s
 
     # @cached_property
     def _get_weighted_age(self):

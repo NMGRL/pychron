@@ -16,6 +16,7 @@ CHANGELOG
 * added ability to edit plateau criteria
 * added forced plateau
 * added legend to Spectrum
+* added table view to Figure Task. Use "New Table" action in toolbar
 
 ### Bug Fixes ###
 * fixed plotting ideograms of attributes other than age

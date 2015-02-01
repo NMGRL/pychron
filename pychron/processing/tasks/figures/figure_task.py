@@ -40,7 +40,7 @@ from pychron.processing.tasks.figures.panes import PlotterOptionsPane, \
     FigureSelectorPane
 from pychron.processing.tasks.figures.actions import SaveFigureAction, \
     NewIdeogramAction, NewSpectrumAction, \
-    SavePDFFigureAction, SaveAsFigureAction, RefreshActiveEditorAction, NewIsochronAction
+    SavePDFFigureAction, SaveAsFigureAction, RefreshActiveEditorAction, NewIsochronAction, NewTableAction
 from pychron.processing.tasks.figures.figure_editor import FigureEditor
 from pychron.processing.tasks.figures.save_figure_dialog import SaveFigureDialog
 from pychron.processing.tasks.recall.actions import AddIsoEvoAction
@@ -71,7 +71,8 @@ class FigureTask(AnalysisEditTask):
             name='Figure'),
         SToolBar(NewIdeogramAction(),
                  NewSpectrumAction(),
-                 NewIsochronAction()),
+                 NewIsochronAction(),
+                 NewTableAction()),
         SToolBar(SetInterpretedAgeTBAction(),
                  BrowseInterpretedAgeTBAction()),
         # SToolBar(GroupSelectedAction(name='Selected'),
@@ -212,6 +213,57 @@ class FigureTask(AnalysisEditTask):
     # ===============================================================================
     # figures
     # ===============================================================================
+    def new_table(self, ans=None):
+        if self.has_active_editor():
+            if isinstance(self.active_editor, IdeogramEditor):
+                from pychron.processing.tasks.tables.editors.fusion.fusion_table_editor import FusionTableEditor
+                klass = FusionTableEditor
+            elif isinstance(self.active_editor, SpectrumEditor):
+                from pychron.processing.tasks.tables.editors.step_heat.step_heat_table_editor import StepHeatTableEditor
+                klass = StepHeatTableEditor
+            else:
+                return
+
+            name = self.active_editor.name.replace(self.active_editor.basename, '')
+            return self._new_table(ans, name, klass)
+        # # new figure editor
+        #     editor = klass(
+        #         name=name,
+        #         processor=self.manager)
+        #
+        #     if ans is None:
+        #         ans = self.unknowns_pane.items
+        #
+        #     if ans:
+        #         editor.analyses = ans
+        #         editor.set_name()
+        #         editor.rebuild()
+        #         # if set_ans:
+        #         #     self.unknowns_pane.items = ans
+        #
+        #     self._open_editor(editor)
+        #
+        #     # add_associated = False
+        #     # if not add_associated:
+        #     #     self.debug('Not adding associated editors')
+        #     # else:
+        #     #     if tklass and add_table:
+        #     #         # open table
+        #     #         teditor = self._new_table(ans, name, tklass)
+        #     #         if teditor:
+        #     #             editor.associated_editors.append(weakref.ref(teditor)())
+        #     #
+        #     #     if add_iso:
+        #     #         # open associated isochron
+        #     #         ieditor = self._new_associated_isochron(ans, name)
+        #     #         if ieditor:
+        #     #             editor.associated_editors.append(weakref.ref(ieditor)())
+        #     #             ieditor.parent_editor = editor
+        #
+        #     # activate figure editor
+        #     # self.editor_area.activate_editor(editor)
+        #     return editor
+
     def new_ideogram(self, ans=None, klass=None, tklass=None,
                      name='Ideo', set_ans=True,
                      add_table=True, add_iso=True):
@@ -369,29 +421,29 @@ class FigureTask(AnalysisEditTask):
 
                 self.plot_editor_pane.set_annotation_tool(at)
 
-    def tb_new_ideogram(self):
-        self.new_ideogram()
-
-        # if isinstance(self.active_editor, IdeogramEditor) and \
-        #         not self.unknowns_pane.items:
-        #     self.append_ideogram()
-        # else:
-        #     self.new_ideogram()
-
-    def tb_new_spectrum(self):
-        self.new_spectrum()
-        # if isinstance(self.active_editor, SpectrumEditor) and \
-        #         not self.unknowns_pane.items:
-        #     self.append_spectrum()
-        # else:
-        #     self.new_spectrum()
-
-    def tb_new_xy_scatter(self):
-        self.new_xy_scatter()
-
-    def tb_new_isochron(self):
-        self.new_inverse_isochron()
-
+    # def tb_new_ideogram(self):
+    #     self.new_ideogram()
+    #
+    #     # if isinstance(self.active_editor, IdeogramEditor) and \
+    #     #         not self.unknowns_pane.items:
+    #     #     self.append_ideogram()
+    #     # else:
+    #     #     self.new_ideogram()
+    #
+    # def tb_new_spectrum(self):
+    #     self.new_spectrum()
+    #     # if isinstance(self.active_editor, SpectrumEditor) and \
+    #     #         not self.unknowns_pane.items:
+    #     #     self.append_spectrum()
+    #     # else:
+    #     #     self.new_spectrum()
+    #
+    # def tb_new_xy_scatter(self):
+    #     self.new_xy_scatter()
+    #
+    # def tb_new_isochron(self):
+    #     self.new_inverse_isochron()
+    #
     # ===============================================================================
     #
     # ===============================================================================
@@ -426,22 +478,22 @@ class FigureTask(AnalysisEditTask):
 
         self._open_editor(editor)
 
-        add_associated = False
-        if not add_associated:
-            self.debug('Not adding associated editors')
-        else:
-            if tklass and add_table:
-                # open table
-                teditor = self._new_table(ans, name, tklass)
-                if teditor:
-                    editor.associated_editors.append(weakref.ref(teditor)())
-
-            if add_iso:
-                # open associated isochron
-                ieditor = self._new_associated_isochron(ans, name)
-                if ieditor:
-                    editor.associated_editors.append(weakref.ref(ieditor)())
-                    ieditor.parent_editor = editor
+        # add_associated = False
+        # if not add_associated:
+        #     self.debug('Not adding associated editors')
+        # else:
+        #     if tklass and add_table:
+        #         # open table
+        #         teditor = self._new_table(ans, name, tklass)
+        #         if teditor:
+        #             editor.associated_editors.append(weakref.ref(teditor)())
+        #
+        #     if add_iso:
+        #         # open associated isochron
+        #         ieditor = self._new_associated_isochron(ans, name)
+        #         if ieditor:
+        #             editor.associated_editors.append(weakref.ref(ieditor)())
+        #             ieditor.parent_editor = editor
 
         # activate figure editor
         # self.editor_area.activate_editor(editor)
@@ -495,6 +547,9 @@ class FigureTask(AnalysisEditTask):
         return self._add_editor(editor, ans)
 
     def _new_table(self, ans, name, klass):
+        if ans is None:
+            ans = self.unknowns_pane.items
+
         name = '{}-table'.format(name)
         editor = klass(name=name)
         return self._add_editor(editor, ans)

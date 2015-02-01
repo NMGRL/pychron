@@ -98,31 +98,27 @@ class BaseAdapter(TabularAdapter):
     font = 'Arial 10'
 
     def _get_value(self, attr, n=3, **kw):
-        v = ''
-        item = self.item
-        if hasattr(item, attr):
-            v = getattr(self.item, attr)
-            if v:
-                v = floatfmt(nominal_value(v), n=n, **kw)
-        elif hasattr(item, 'isotopes'):
-            if attr in item.isotopes:
-                v = item.isotopes[attr].get_intensity()
-                v = floatfmt(nominal_value(v), n=n, **kw)
-
-        return v
+        return self._get_attribute_value(nominal_value, attr, n, **kw)
 
     def _get_error(self, attr, n=3, **kw):
+        return self._get_attribute_value(std_dev, attr, n, **kw)
+
+    def _get_attribute_value(self, func, attr, n, **kw):
         v = ''
         item = self.item
-        if hasattr(item, attr):
-            v = getattr(self.item, attr)
-            if v:
-                v = floatfmt(std_dev(v), n=n, **kw)
-        elif hasattr(item, 'isotopes'):
+        if hasattr(item, 'isotopes'):
+            # print attr in item.isotopes
             if attr in item.isotopes:
                 v = item.isotopes[attr].get_intensity()
-                v = floatfmt(std_dev(v), n=n, **kw)
-
+                v = floatfmt(func(v), n=n, **kw)
+            elif hasattr(item, attr):
+                v = getattr(self.item, attr)
+                if v:
+                    v = floatfmt(func(v), n=n, **kw)
+        elif hasattr(item, attr):
+            v = getattr(self.item, attr)
+            if v:
+                v = floatfmt(func(v), n=n, **kw)
         return v
 
     def get_bg_color(self, obj, trait, row, column):

@@ -183,7 +183,6 @@ class InverseIsochronAction(FigureAction):
     method = 'new_inverse_isochron'
     id = 'pychron.inverse_isochron'
 
-
 class IdeogramFromFile(FigureAction):
     name = 'Ideogram'
     method = 'new_ideogram_from_file'
