@@ -2,10 +2,10 @@ CHANGELOG
 ============
 2.1.0
 ------------------
+
+### Features ###
 * added level and chronology panes to Labnumber entry
-* padding to plot options
-* fixed plotting ideograms of attributes other than age
-* improved database startup tests
+* added padding to plot options
 * added database version check to startup tests
 * !SubMajor Version Bump! Changed to a global shared browser model for all processing tasks
 * added Legend to Spectrum
@@ -14,9 +14,15 @@ CHANGELOG
 * added sqlite export
 * added sqlite access
 * added ability to edit plateau criteria
-* fixed plateau age calculation
 * added forced plateau
 * added legend to Spectrum
+
+### Bug Fixes ###
+* fixed plotting ideograms of attributes other than age
+* improved database startup tests
+* fixed plateau age calculation
+
+
 
 2.0.6
 ------------------
