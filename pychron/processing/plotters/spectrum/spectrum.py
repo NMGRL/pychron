@@ -41,7 +41,6 @@ class Spectrum(BaseArArFigure):
     spectrum_overlays = List
     plateau_overlay = Instance(PlateauOverlay)
     integrated_label = None
-    broadcaster = None
 
     def plot(self, plots, legend=None):
         """
@@ -206,12 +205,10 @@ class Spectrum(BaseArArFigure):
 
     def _add_plot(self, xs, ys, es, plotid, po):
         graph = self.graph
-        if not self.broadcaster:
-            self.broadcaster = BroadcasterTool()
 
-        ds, p = graph.new_series(xs, ys, plotid=plotid)
-
-        ds.tools.append(self.broadcaster)
+        ds, p = graph.new_series(xs, ys,
+                                 value_scale=po.scale,
+                                 plotid=plotid)
 
         ds.index.on_trait_change(self._update_graph_metadata, 'metadata_changed')
 
@@ -224,7 +221,6 @@ class Spectrum(BaseArArFigure):
                           nsigma=ns,
                           analyses=self.analyses)
 
-        self.broadcaster.tools.append(sp)
         # sp.on_trait_change('selection_changed')
         ov = SpectrumInspectorOverlay(tool=sp, component=ds)
         ds.tools.append(sp)
@@ -251,10 +247,10 @@ class Spectrum(BaseArArFigure):
                                       display_step=self.options.display_step)
 
             ds.underlays.append(lo)
-        if po.scale == 'log':
-            p.value_axis.tick_generator = SparseLogTicks()
-        else:
-            p.value_axis.tick_generator = SparseTicks()
+        # if po.scale == 'log':
+        #     p.value_axis.tick_generator = SparseLogTicks()
+        # else:
+        #     p.value_axis.tick_generator = SparseTicks()
         return ds
 
     # ===============================================================================

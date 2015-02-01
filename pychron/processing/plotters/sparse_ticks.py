@@ -17,9 +17,9 @@
 # ============= enthought library imports =======================
 import math
 from numpy.core.umath import log10
-from numpy import hstack
+from numpy import hstack, array, float64
 from traits.api import Int
-from chaco.ticks import DefaultTickGenerator
+from chaco.ticks import DefaultTickGenerator, auto_ticks
 # ============= standard library imports ========================
 # from numpy import log10
 # ============= local library imports  ==========================
@@ -45,6 +45,7 @@ class SparseTicks(DefaultTickGenerator):
 class SparseLogTicks(DefaultTickGenerator):
     def get_ticks(self, *args, **kw):
         oticks = super(SparseLogTicks, self).get_ticks(*args, **kw)
+
         # get only 0.1,1,10,100,1000...
         ticks = oticks[oticks > 0]
         ticks = ticks[log10(ticks) % 1 == 0]
@@ -56,6 +57,8 @@ class SparseLogTicks(DefaultTickGenerator):
 
             ticks = hstack(([tlow], ticks))
             ticks = hstack((ticks, [10 ** math.ceil(math.log10(oticks[-1]))]))
+
+            ticks[0] = max(oticks[0], ticks[0])
 
         return ticks
 

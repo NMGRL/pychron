@@ -23,7 +23,7 @@ CHANGELOG
 * improved database startup tests
 * fixed plateau age calculation
 * fixed spectrum label overlay. layout required when component's padding changes
-
+* fixed spectrum log plotting
 
 
 2.0.6
