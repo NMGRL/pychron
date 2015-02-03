@@ -15,10 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change, Color, Range, List
+from traits.api import HasTraits, Str, Int, Bool, Button, Any, Float, Property, on_trait_change, Color, Range, List
 from traitsui.api import View, UItem, Item, HGroup, VGroup, ListEditor, InstanceEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.envisage.icon_button_editor import icon_button_editor
 
 
 class SpectrumGroupOptions(HasTraits):
@@ -33,6 +34,7 @@ class SpectrumGroupOptions(HasTraits):
     calculate_fixed_plateau = Bool(False)
     calculate_fixed_plateau_start = Str
     calculate_fixed_plateau_end = Str
+    edit_button = Button
 
     def _color_changed(self):
         if self.bind_colors:
@@ -47,14 +49,16 @@ class SpectrumGroupOptions(HasTraits):
             self.line_color = self.color
 
     def traits_view(self):
-        g = self._get_group()
-        g.show_border=True
+        grps = self._get_groups()
+
+        g = VGroup(Item('bind_colors'), *grps)
+
+        g.show_border = True
         g.label = 'Group {}'.format(self.group_id + 1)
         v = View(g)
         return v
 
-    def _get_group(self):
-
+    def _get_groups(self):
         envelope_grp = VGroup(HGroup(UItem('use_fill'),
                                      Item('color')),
                               Item('alpha', label='Opacity'),
@@ -74,12 +78,14 @@ class SpectrumGroupOptions(HasTraits):
                           Item('calculate_fixed_plateau_end', label='End', enabled_when='calculate_fixed_plateau'),
                           show_border=True, label='Calculate Plateau')
 
-        return VGroup(Item('bind_colors'),
-                      envelope_grp, line_grp, plat_grp)
+        return envelope_grp, line_grp, plat_grp
 
     def simple_view(self):
-        grp = self._get_group()
-        v = View(grp)
+        grps = self._get_groups()
+        g = VGroup(HGroup(Item('bind_colors'),
+                          icon_button_editor('edit_button', 'cog')),
+                   *grps)
+        v = View(g)
         return v
 
 

@@ -411,10 +411,13 @@ class PlateauOverlay(BasePlateauOverlay):
                 x = comp.x + 5
                 hjustify = 'left'
 
+            x = max(comp.x, x)
             p = PlotLabel(text=self.info_txt,
                           font='modern {}'.format(self.label_font_size),
                           color=self.line_color,
                           hjustify=hjustify,
+                          border_visible=True,
+                          bgcolor='white',
                           x=x,
                           y=oy + 15)
             self.plateau_label = p

@@ -15,7 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str, Int, Property, Bool, Enum, Float, Color, Range, Button, HasTraits, Dict, List, on_trait_change
+from traits.api import Str, Int, Property, Bool, Enum, Float, Color, Range, Button, HasTraits, Dict, List, \
+    on_trait_change
 from traitsui.api import View, Item, Group, HGroup, UItem, EnumEditor, spring, VGroup, InstanceEditor
 
 # ============= standard library imports ========================
@@ -38,8 +39,8 @@ class SpectrumOptions(AgeOptions):
     plot_option_klass = SpectrumPlotOptions
 
     edit_plateau_criteria = Button
-    pc_nsteps = Int
-    pc_gas_fraction = Float
+    pc_nsteps = Int(3)
+    pc_gas_fraction = Float(50)
 
     include_j_error_in_plateau = Bool(True)
     plateau_age_error_kind = Enum(*ERROR_TYPES)
@@ -77,7 +78,7 @@ class SpectrumOptions(AgeOptions):
     include_plateau_sample = Bool
     include_plateau_identifier = Bool
 
-    edit_groups_button = Button
+    # edit_groups_button = Button
     groups = List
     group = Property
 
@@ -85,17 +86,24 @@ class SpectrumOptions(AgeOptions):
         n = len(self.groups)
         return self.groups[gid % n]
 
+    @on_trait_change('groups:edit_button')
+    def _handle_edit_groups(self):
+        eg = SpectrumGroupEditor(error_envelopes=self.groups)
+        info = eg.edit_traits()
+        if info.result:
+            self.refresh_plot_needed = True
+
     # handlers
     @on_trait_change('display_step,display_extract_value')
     def _handle_labels(self):
         labels_enabled = self.display_extract_value or self.display_step
         self.aux_plots[-1].show_labels = labels_enabled
-
-    def _edit_groups_button_fired(self):
-        eg = SpectrumGroupEditor(error_envelopes=self.groups)
-        info = eg.edit_traits()
-        if info.result:
-            self.refresh_plot_needed = True
+    #
+    # def _edit_groups_button_fired(self):
+    #     eg = SpectrumGroupEditor(error_envelopes=self.groups)
+    #     info = eg.edit_traits()
+    #     if info.result:
+    #         self.refresh_plot_needed = True
 
     def _edit_plateau_criteria_fired(self):
         v = View(Item('pc_nsteps', label='Num. Steps', tooltip='Number of contiguous steps'),
@@ -135,10 +143,10 @@ class SpectrumOptions(AgeOptions):
     # self._plateau_steps = v
     #
     # def _validate_plateau_steps(self, v):
-    #     if plat_regex.match(v):
-    #         s, e = v.split('-')
-    #         try:
-    #             assert s < e
+    # if plat_regex.match(v):
+    # s, e = v.split('-')
+    # try:
+    # assert s < e
     #             return v
     #         except AssertionError:
     #             pass
@@ -178,30 +186,46 @@ class SpectrumOptions(AgeOptions):
                         'include_sample_in_legend']
 
     def _get_groups(self):
-        plat_grp = Group(
-            HGroup(Item('plateau_method', label='Method'),
-                   icon_button_editor('edit_plateau_criteria', 'cog',
-                                      tooltip='Edit Plateau Criteria')),
-            Item('center_line_style'),
-            Item('extend_plateau_end_caps'),
-            # Item('plateau_line_width'),
-            # HGroup(UItem('user_plateau_line_color'),
-            #        Item('plateau_line_color', enabled_when='user_plateau_line_color')),
+        lgrp = VGroup(Item('plateau_method', label='Method'),
+                      Item('nsigma'),
+                      Item('plateau_age_error_kind',
+                           width=-100,
+                           label='Error Type'),
+                      Item('include_j_error_in_plateau', label='Include J Error'))
+        rgrp = VGroup(Item('center_line_style',
+                           label='Line Stype'),
+                      Item('extend_plateau_end_caps',
+                           label='Extend End Caps'),
+                      icon_button_editor('edit_plateau_criteria', 'cog',
+                                         tooltip='Edit Plateau Criteria'), )
+        plat_grp = HGroup(lgrp, rgrp,
+                          show_border=True,
+                          label='Plateau')
 
-            Item('nsigma'),
-            Item('plateau_age_error_kind',
-                 width=-100,
-                 label='Error Type'),
-            Item('include_j_error_in_plateau', label='Include J Error'),
-            # HGroup(
-            #     Item('calculate_fixed_plateau',
-            #          label='Calc. Plateau',
-            #          tooltip='Calculate a plateau over provided steps'),
-            #     Item('calculate_fixed_plateau_start', label='Start'),
-            #     Item('calculate_fixed_plateau_end', label='End')
-            # ),
-            show_border=True,
-            label='Plateau')
+        # plat_grp = Group(
+        #     HGroup(Item('plateau_method', label='Method'),
+        #            icon_button_editor('edit_plateau_criteria', 'cog',
+        #                               tooltip='Edit Plateau Criteria')),
+        #     Item('center_line_style'),
+        #     Item('extend_plateau_end_caps'),
+        #     # Item('plateau_line_width'),
+        #     # HGroup(UItem('user_plateau_line_color'),
+        #     #        Item('plateau_line_color', enabled_when='user_plateau_line_color')),
+        #
+        #     Item('nsigma'),
+        #     Item('plateau_age_error_kind',
+        #          width=-100,
+        #          label='Error Type'),
+        #     Item('include_j_error_in_plateau', label='Include J Error'),
+        #     # HGroup(
+        #     #     Item('calculate_fixed_plateau',
+        #     #          label='Calc. Plateau',
+        #     #          tooltip='Calculate a plateau over provided steps'),
+        #     #     Item('calculate_fixed_plateau_start', label='Start'),
+        #     #     Item('calculate_fixed_plateau_end', label='End')
+        #     # ),
+        #     show_border=True,
+        #     label='Plateau')
 
         # error_grp = VGroup(HGroup(Item('step_nsigma',
         #                                editor=EnumEditor(values=[1, 2, 3]),
@@ -218,10 +242,15 @@ class SpectrumOptions(AgeOptions):
         #                                tooltip='Set the opacity (alpha-value) for the error envelope')),
         #                    show_border=True,
         #                    label='Error Envelope')
-        grp_grp = VGroup(HGroup(UItem('group',
-                                      style='custom',
-                                      editor=InstanceEditor(view='simple_view')),
-                                icon_button_editor('edit_groups_button', 'cog')),
+        # grp_grp = VGroup(HGroup(UItem('group',
+        #                               style='custom',
+        #                               editor=InstanceEditor(view='simple_view')),
+        #                         icon_button_editor('edit_groups_button', 'cog')),
+        #                  show_border=True,
+        #                  label='Group Attributes')
+        grp_grp = VGroup(UItem('group',
+                               style='custom',
+                               editor=InstanceEditor(view='simple_view')),
                          show_border=True,
                          label='Group Attributes')
 
@@ -322,4 +351,5 @@ class SpectrumOptions(AgeOptions):
         return [SpectrumGroupOptions(color=ci,
                                      line_color=ci,
                                      group_id=i) for i, ci in enumerate(colornames)]
+
 # ============= EOF =============================================

@@ -306,8 +306,8 @@ class Spectrum(BaseArArFigure):
                             # label_offset=plateau_age.std_dev*self.options.step_nsigma,
                             y=plateau_age.nominal_value * 1.25)
 
-        lp.underlays.append(ov)
-
+        # lp.underlays.append(ov)
+        lp.overlays.append(ov)
         tool = PlateauTool(component=ov)
         lp.tools.append(tool)
         # plateau_label:[x, y
@@ -366,11 +366,11 @@ class Spectrum(BaseArArFigure):
 
         if self.options.include_plateau_sample:
             if self.options.include_plateau_identifier:
-                text = '{}({}) {}'.format(sample, identifier, text)
+                text = u'{}({}) {}'.format(sample, identifier, text)
             else:
-                text = '{} {}'.format(sample, text)
+                text = u'{} {}'.format(sample, text)
         elif self.options.include_plateau_identifier:
-            text = '{} {}'.format(identifier, text)
+            text = u'{} {}'.format(identifier, text)
 
         return text
 
