@@ -117,9 +117,9 @@ plateau:
  plateau_line_color: black
  plateau_font_size: 12
  plateau_sig_figs: 2
- calculate_fixed_plateau: False
- calculate_fixed_plateau_start:
- calculate_fixed_plateau_end:
+ # calculate_fixed_plateau: False
+ # calculate_fixed_plateau_start: ''
+ # calculate_fixed_plateau_end: ''
  pc_nsteps: 3
  pc_gas_fraction: 50
 integrated:
@@ -129,6 +129,11 @@ legend:
  legend_location: Upper Right
  include_legend: False
  include_sample_in_legend: False
+labels:
+ display_step: True
+ display_extract_value: False
+ step_label_font_size: 10
+
 '''
 
 COMPOSITE_DEFAULTS = '''

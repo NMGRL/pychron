@@ -31,6 +31,7 @@ from pychron.processing.plotters.sparse_ticks import SparseLogTicks, SparseTicks
 from pychron.processing.plotters.spectrum.label_overlay import SpectrumLabelOverlay, IntegratedPlotLabel
 from pychron.processing.plotters.spectrum.tools import SpectrumTool, \
     SpectrumErrorOverlay, PlateauTool, PlateauOverlay, SpectrumInspectorOverlay
+from pychron.pychron_constants import PLUSMINUS, SIGMA
 
 
 class Spectrum(BaseArArFigure):
@@ -110,8 +111,10 @@ class Spectrum(BaseArArFigure):
         ag.plateau_age_error_kind = self.options.plateau_age_error_kind
         ag.pc_nsteps = self.options.pc_nsteps
         ag.pc_gas_fraction = self.options.pc_gas_fraction
-        if self.options.calculate_fixed_plateau:
-            ag.calculate_fixed_plateau_steps = self.options.calculate_fixed_plateau_start, self.options.calculate_fixed_plateau_end
+
+        grp = self.options.get_group(self.group_id)
+        if grp.calculate_fixed_plateau:
+            ag.calculate_fixed_plateau_steps = grp.calculate_fixed_plateau_start, grp.calculate_fixed_plateau_end
         else:
             ag.calculate_fixed_plateau_steps = tuple()
 
@@ -190,8 +193,8 @@ class Spectrum(BaseArArFigure):
     def _add_info(self, g, plot):
         if self.group_id == 0:
             if self.options.show_info:
-                ts = ['Age +/-{}s'.format(self.options.nsigma),
-                      'Error Env. +/-{}s'.format(self.options.step_nsigma)]
+                ts = [u'Age {}{}{}'.format(PLUSMINUS, self.options.nsigma, SIGMA),
+                      u'Error Env. {}{}{}'.format(PLUSMINUS, self.options.step_nsigma, SIGMA)]
 
                 if ts:
                     pl = FlowPlotLabel(text='\n'.join(ts),
@@ -212,7 +215,12 @@ class Spectrum(BaseArArFigure):
     def _add_plot(self, xs, ys, es, plotid, po):
         graph = self.graph
 
+        # color = self.options.get_group_color(self.group_id)
+        # color.setAlphaF(1.0)
+        group = self.options.get_group(self.group_id)
+
         ds, p = graph.new_series(xs, ys,
+                                 color = group.line_color,
                                  value_scale=po.scale,
                                  plotid=plotid)
 
@@ -235,26 +243,27 @@ class Spectrum(BaseArArFigure):
         # provide 1s errors use nsigma to control display
         ds.errors = es
 
-        a = self.options.envelope_alpha * 0.01
-        sp = SpectrumErrorOverlay(component=ds,
-                                  use_user_color=self.options.user_envelope_color,
-                                  user_color=self.options.envelope_color,
-                                  alpha=max(min(1.0, a), 0.0),
-                                  use_fill=self.options.use_error_envelope_fill,
-                                  nsigma=ns)
+        # edict = self.options.get_envelope(self.group_id)
 
-        if self.options.user_envelope_color:
-            sp.user_color = self.options.envelope_color
+        sp = SpectrumErrorOverlay(component=ds,
+                                  use_user_color=True,
+                                  user_color=group.color,
+                                  alpha=group.alpha,
+                                  use_fill=group.use_fill,
+                                  nsigma=ns)
 
         ds.underlays.append(sp)
         self.spectrum_overlays.append(sp)
 
         if po.show_labels:
+            # edict =self.options.get_envelope(self.group_id)
+            grp = self.options.get_group(self.group_id)
             lo = SpectrumLabelOverlay(component=ds,
                                       nsigma=ns,
-                                      spectrum=self,
-                                      use_user_color=self.options.user_envelope_color,
-                                      user_color=self.options.envelope_color,
+                                      sorted_analyses = self.sorted_analyses,
+                                      # spectrum=self,
+                                      use_user_color=True,
+                                      user_color=grp.line_color,
 
                                       font_size=self.options.step_label_font_size,
                                       display_extract_value=self.options.display_extract_value,
@@ -272,16 +281,24 @@ class Spectrum(BaseArArFigure):
     # ===============================================================================
     def _add_plateau_overlay(self, lp, bounds, plateau_age, ages, age_errors, info_txt):
         opt = self.options
+
+        # color = opt.get_group_color(self.group_id)
+        # line_width = option.get_group(self.group_id)
+        group = self.options.get_group(self.group_id)
+
         ov = PlateauOverlay(component=lp, plateau_bounds=bounds,
                             cumulative39s=hstack(([0], self.xs)),
                             info_txt=info_txt,
                             id='plateau',
                             ages=ages,
                             age_errors=age_errors,
-                            line_width=opt.plateau_line_width,
 
-                            line_color=opt.plateau_line_color if opt.user_plateau_line_color else lp.color,
-                            # line_color=opt.plateau_line_color,
+                            line_width = group.line_width,
+                            line_color = group.line_color,
+                            # line_width=opt.plateau_line_width,
+                            # line_color=opt.plateau_line_color if opt.user_plateau_line_color else lp.color,
+                            # line_color=color,
+
                             extend_end_caps=opt.extend_plateau_end_caps,
                             label_visible=opt.display_plateau_info,
                             label_font_size=opt.plateau_font_size,

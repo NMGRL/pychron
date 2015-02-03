@@ -83,7 +83,7 @@ class SpectrumLabelOverlay(AbstractOverlay):
             self._mlayout_needed =False
             labels = []
             nsigma = self.nsigma
-            spec = self.spectrum
+            # spec = self.spectrum
             comp = self.component
             xs = comp.index.get_data()
             ys = comp.value.get_data()
@@ -98,9 +98,10 @@ class SpectrumLabelOverlay(AbstractOverlay):
             else:
                 color = comp.color
 
+            sorted_analyses = self.sorted_analyses
             for i, ((xa, xb), (ya, yb), (ea, eb)) in enumerate(zip(xs, ys, es)):
-                ui = spec.sorted_analyses[i]
-
+                # ui = spec.sorted_analyses[i]
+                analysis = sorted_analyses[i]
                 x = (xb - xa) / 2.0 + xa
                 yi, ei = ya, ea
                 yl = yi - ei * nsigma
@@ -113,7 +114,7 @@ class SpectrumLabelOverlay(AbstractOverlay):
                     if y > comp.height:
                         y = 50
 
-                txt = self._assemble_text(ui)
+                txt = self._assemble_text(analysis)
 
                 labels.append(PlotLabel(text=txt,
                                         font='modern {}'.format(self.font_size),
