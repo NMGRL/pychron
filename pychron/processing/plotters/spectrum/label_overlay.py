@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.plot_label import PlotLabel
-from traits.api import List, Bool, Int, on_trait_change
+from traits.api import List, Bool, Int, on_trait_change, Color
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -51,7 +51,7 @@ class IntegratedPlotLabel(PlotLabel):
         # print self.x, self.y, self.width, self.height, self.bounds
         with gc:
             # XXX: Uncomment this after we fix kiva GL backend's clip stack
-            #gc.clip_to_rect(self.x, self.y, self.width, self.height)
+            # gc.clip_to_rect(self.x, self.y, self.width, self.height)
 
             # We have to translate to our position because the label
             # tries to draw at (0,0).
@@ -68,6 +68,10 @@ class SpectrumLabelOverlay(AbstractOverlay):
     nsigma = Int
     font_size = Int
     _cached_labels = List
+    use_user_color = Bool
+    user_color = Color
+
+    _mlayout_needed = Bool
 
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
         labels = self._get_labels()
@@ -75,7 +79,8 @@ class SpectrumLabelOverlay(AbstractOverlay):
             label.overlay(other_component, gc)
 
     def _get_labels(self):
-        if self.layout_needed or not self._cached_labels:
+        if self._mlayout_needed or not self._cached_labels:
+            self._mlayout_needed =False
             labels = []
             nsigma = self.nsigma
             spec = self.spectrum
@@ -87,6 +92,11 @@ class SpectrumLabelOverlay(AbstractOverlay):
             xs = xs.reshape(n / 2, 2)
             ys = ys.reshape(n / 2, 2)
             es = es.reshape(n / 2, 2)
+
+            if self.use_user_color:
+                color = self.user_color
+            else:
+                color = comp.color
 
             for i, ((xa, xb), (ya, yb), (ea, eb)) in enumerate(zip(xs, ys, es)):
                 ui = spec.sorted_analyses[i]
@@ -104,8 +114,10 @@ class SpectrumLabelOverlay(AbstractOverlay):
                         y = 50
 
                 txt = self._assemble_text(ui)
+
                 labels.append(PlotLabel(text=txt,
                                         font='modern {}'.format(self.font_size),
+                                        color=color,
                                         x=x,
                                         y=y))
 
@@ -123,9 +135,10 @@ class SpectrumLabelOverlay(AbstractOverlay):
 
         return '\n'.join(ts)
 
-    @on_trait_change('component:padding+')
-    def _handle_component_change(self):
-        self.layout_needed = True
+    @on_trait_change('component.+')
+    def _handle_component_change(self, name, new):
+        self._mlayout_needed = True
+        self.request_redraw()
 
     @on_trait_change('display_extract_value, display_step')
     def _update_visible(self):

@@ -841,10 +841,10 @@ class FigureTask(AnalysisEditTask):
     def _default_layout_default(self):
 
         return TaskLayout(id='pychron.processing',
-                          left=VSplitter(
+                          left=HSplitter(VSplitter(
                               Tabbed(browser_pane_item(),
                                      PaneItem('pychron.processing.figures.plotter_options'),
-                                     PaneItem('pychron.plot_editor')),
+                                     PaneItem('pychron.plot_editor'))),
                               PaneItem('pychron.processing.unknowns')))
 
         # return TaskLayout(

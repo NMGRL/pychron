@@ -117,9 +117,9 @@ plateau:
  plateau_line_color: black
  plateau_font_size: 12
  plateau_sig_figs: 2
- force_plateau: False
- force_plateau_start:
- force_plateau_end:
+ calculate_fixed_plateau: False
+ calculate_fixed_plateau_start:
+ calculate_fixed_plateau_end:
  pc_nsteps: 3
  pc_gas_fraction: 50
 integrated:

@@ -17,6 +17,11 @@ CHANGELOG
 * added forced plateau
 * added legend to Spectrum
 * added table view to Figure Task. Use "New Table" action in toolbar
+#### 2/3/2015 ####
+* removed mswd from integrated age
+* added ability to control plateau envelope/line color
+* spectrum labels match envelope color
+* display number of analyses as n/m if n != m. n = # of valid analyses, m = total # of analyses
 
 ### Bug Fixes ###
 * fixed plotting ideograms of attributes other than age
@@ -24,7 +29,10 @@ CHANGELOG
 * fixed plateau age calculation
 * fixed spectrum label overlay. layout required when component's padding changes
 * fixed spectrum log plotting
-
+#### 2/3/2015 ####
+* fixed spectrum legend. use aliquot if necessary to generate unique legend key
+* fixed info overlay background rect. 
+* fixed spectrum labels layout when spectrum changes
 
 2.0.6
 ------------------

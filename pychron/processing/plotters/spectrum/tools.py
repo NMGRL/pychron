@@ -156,6 +156,8 @@ class SpectrumErrorOverlay(AbstractOverlay):
     alpha = Float
     use_fill = Bool(False)
     selections = List
+    use_user_color = Bool(False)
+    user_color = Color
 
     def overlay(self, component, gc, *args, **kw):
         comp = self.component
@@ -195,11 +197,16 @@ class SpectrumErrorOverlay(AbstractOverlay):
                     gc.set_fill_color((0.75, 0, 0))
                     gc.set_stroke_color((0.75, 0, 0))
                 else:
-                    c = comp.color
-                    if isinstance(c, str):
-                        c = color_table[c]
+                    if self.use_user_color:
+                        c = map(lambda x: x/255., self.user_color.toTuple())
+
+                    else:
+                        c = comp.color
+                        if isinstance(c, str):
+                            c = color_table[c]
 
                     c = c[0], c[1], c[2], alpha
+
                     gc.set_fill_color(c)
                     gc.set_stroke_color(c)
 

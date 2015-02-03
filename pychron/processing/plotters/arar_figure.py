@@ -38,6 +38,7 @@ from pychron.graph.tools.rect_selection_tool import RectSelectionOverlay, \
     RectSelectionTool
 from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
 from pychron.graph.tools.point_inspector import PointInspectorOverlay
+from pychron.pychron_constants import PLUSMINUS
 
 PLOT_MAPPING = {'analysis #': 'Analysis Number', 'Analysis #': 'Analysis Number Stacked',
                 '%40Ar*': 'Radiogenic 40Ar'}
@@ -86,6 +87,7 @@ class BaseArArFigure(HasTraits):
         """
             make plots
         """
+
         def _setup_plot(i, pp, po):
 
             # add limit tools
@@ -95,7 +97,7 @@ class BaseArArFigure(HasTraits):
             pp.value_range.tight_bounds = False
             # print po, po.ylimits, po.has_ylimits()
             # if po.has_ylimits():
-            #     print 'setting ylimits {}'.format(po.ylimits)
+            # print 'setting ylimits {}'.format(po.ylimits)
             #     pp.value_range.set_bounds(*po.ylimits)
             # if po.has_xlimits():
             #     pp.index_range.set_bounds(*po.xlimits)
@@ -111,7 +113,7 @@ class BaseArArFigure(HasTraits):
             pp.y_axis.tick_label_font = options.ytick_font
 
             pp.bgcolor = options.plot_bgcolor
-            for attr in ('left','right','top'):
+            for attr in ('left', 'right', 'top'):
                 setattr(pp, 'padding_{}'.format(attr),
                         getattr(options, 'padding_{}'.format(attr)))
 
@@ -144,7 +146,7 @@ class BaseArArFigure(HasTraits):
 
         for i, po in enumerate(plots):
             # kw = {'padding': self.padding,
-            #       'ytitle': po.name}
+            # 'ytitle': po.name}
             kw = {'ytitle': po.name}
             if po.height:
                 kw['bounds'] = [50, po.height]
@@ -163,9 +165,9 @@ class BaseArArFigure(HasTraits):
             p.y_axis.tag = po.name
             _setup_plot(i, p, po)
 
-        # if self.options.use_legend:
-        # if True:
-        #     self._add_legend()
+            # if self.options.use_legend:
+            # if True:
+            #     self._add_legend()
 
     def plot(self, *args, **kw):
         pass
@@ -219,7 +221,7 @@ class BaseArArFigure(HasTraits):
         return sel
 
     # def _get_mswd(self, ages, errors):
-    #     mswd = calculate_mswd(ages, errors)
+    # mswd = calculate_mswd(ages, errors)
     #     n = len(ages)
     #     valid_mswd = validate_mswd(mswd, n)
     #     return mswd, valid_mswd, n
@@ -245,10 +247,11 @@ class BaseArArFigure(HasTraits):
 
             for ai in self.sorted_analyses:
                 v = ai.get_value(attr)
-                yield v or ufloat(0,0)
+                yield v or ufloat(0, 0)
                 # if v is not None:
                 #     yield v
                 # yield f(ai.get_value(attr))
+
         return gen()
 
     def _set_y_limits(self, a, b, min_=None, max_=None,
@@ -287,17 +290,17 @@ class BaseArArFigure(HasTraits):
 
         return omits
 
-    def _plot_raw_40_36(self,  po, plot, pid, **kw):
+    def _plot_raw_40_36(self, po, plot, pid, **kw):
         k = 'uAr40/Ar36'
         ys, es = self._get_aux_plot_data(k)
         return self._plot_aux('40/36', k, ys, po, plot, pid, es, **kw)
 
-    def _plot_ic_40_36(self,  po, plot, pid, **kw):
+    def _plot_ic_40_36(self, po, plot, pid, **kw):
         k = 'Ar40/Ar36'
         ys, es = self._get_aux_plot_data(k)
         return self._plot_aux('40/36', k, ys, po, plot, pid, es, **kw)
 
-    def _plot_ic_if_40_36(self,  po, plot, pid, **kw):
+    def _plot_ic_if_40_36(self, po, plot, pid, **kw):
         k = 'icf_40_36'
         ys, es = self._get_aux_plot_data(k)
         return self._plot_aux('40/36', k, ys, po, plot, pid, es, **kw)
@@ -431,18 +434,25 @@ class BaseArArFigure(HasTraits):
         label.on_trait_change(self._handle_overlay_move, 'label_position')
         return label
 
-    def _build_label_text(self, x, we, mswd, valid_mswd, n,
+    def _build_label_text(self, x, we, n,
+                          total_n=None,
+                          mswd_args=None,
                           percent_error=False,
                           sig_figs=3):
 
         display_n = True
         display_mswd = n >= 2
+
         if display_n:
-            n = 'n= {}'.format(n)
+            if total_n and n != total_n:
+                n = 'n= {}/{}'.format(n, total_n)
+            else:
+                n = 'n= {}'.format(n)
         else:
             n = ''
 
-        if display_mswd:
+        if mswd_args and display_mswd:
+            mswd, valid_mswd, _ = mswd_args
             vd = '' if valid_mswd else '*'
             mswd = '{}mswd= {:0.2f}'.format(vd, mswd)
         else:
@@ -452,14 +462,14 @@ class BaseArArFigure(HasTraits):
         swe = floatfmt(we, sig_figs)
 
         if self.options.index_attr in ('uF', 'Ar40/Ar36'):
-            me = '{} +/-{}'.format(sx, swe)
+            me = u'{} {}{}'.format(sx, PLUSMINUS, swe)
         else:
             age_units = self._get_age_units()
             pe = ''
             if percent_error:
                 pe = '({})'.format(format_percent_error(x, we, include_percent_sign=True))
 
-            me = '{} +/-{}{} {}'.format(sx, swe, pe, age_units)
+            me = u'{} {}{}{} {}'.format(sx, PLUSMINUS, swe, pe, age_units)
 
         return u'{} {} {}'.format(me, mswd, n)
 

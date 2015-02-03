@@ -357,7 +357,10 @@ class Ideogram(BaseArArFigure):
 
         text = ''
         if self.options.display_mean:
-            text = self._build_label_text(wm, we, mswd, valid_mswd, len(self.xs),
+            n = self.xs.shape[0]
+            mswd_args = (mswd, valid_mswd, n)
+            text = self._build_label_text(wm, we, n,
+                                          mswd_args = mswd_args,
                                           sig_figs=self.options.mean_sig_figs,
                                           percent_error=self.options.display_percent_error)
 
@@ -467,13 +470,17 @@ class Ideogram(BaseArArFigure):
             self._set_y_limits(mi, ma, min_=0)
 
             n = len(fxs)
+            total_n = self.xs.shape[0]
             for ov in lp.overlays:
                 if isinstance(ov, MeanIndicatorOverlay):
                     ov.set_x(wm)
                     #ov.x=wm
                     ov.error = we
                     if ov.label:
-                        ov.label.text = self._build_label_text(wm, we, mswd, valid_mswd, n,
+                        mswd_args = mswd, valid_mswd, n
+                        ov.label.text = self._build_label_text(wm, we, n,
+                                                               mswd_args = mswd_args,
+                                                               total_n =total_n,
                                                                percent_error=self.options.display_percent_error,
                                                                sig_figs=self.options.mean_sig_figs)
 

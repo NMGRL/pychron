@@ -60,6 +60,8 @@ class AnalysisGroup(HasTraits):
     isochron_age_error_kind = Str
     identifier = Property
     sample = Property
+    aliquot = Property
+
     _sample = Str
     age_scalar = Property
     age_units = Property
@@ -113,6 +115,10 @@ class AnalysisGroup(HasTraits):
     @cached_property
     def _get_isochron_age(self):
         return self._calculate_isochron_age()
+
+    @cached_property
+    def _get_aliquot(self):
+        return self.analyses[0].aliquot
 
     @cached_property
     def _get_identifier(self):
@@ -248,7 +254,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
 
     plateau_age_error_kind = Str
     nsteps = Int
-    force_plateau_steps = Tuple
+    calculate_fixed_plateau_steps = Tuple
 
     # def _get_nanalyses(self):
     #     if self.plateau_steps:
@@ -294,7 +300,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
 
         options = {'nsteps': self.pc_nsteps,
                    'gas_fraction': self.pc_gas_fraction,
-                   'force_steps': self.force_plateau_steps}
+                   'force_steps': self.calculate_fixed_plateau_steps}
 
         args = calculate_plateau_age(ages, errors, k39, options=options)
         if args:

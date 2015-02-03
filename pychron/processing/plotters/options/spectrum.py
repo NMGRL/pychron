@@ -41,12 +41,12 @@ class SpectrumOptions(AgeOptions):
 
     include_j_error_in_plateau = Bool(True)
     plateau_age_error_kind = Enum(*ERROR_TYPES)
-    force_plateau = Bool(False)
+    calculate_fixed_plateau = Bool(False)
     # plateau_steps = Property(Str)
     # _plateau_steps = Str
 
-    force_plateau_start = Str
-    force_plateau_end = Str
+    calculate_fixed_plateau_start = Str
+    calculate_fixed_plateau_end = Str
 
     plot_option_name = 'Age'
     display_extract_value = Bool(False)
@@ -60,10 +60,14 @@ class SpectrumOptions(AgeOptions):
     integrated_font_size = Enum(6, 7, 8, 10, 11, 12, 14, 15, 18, 24, 28, 32)
     step_label_font_size = Enum(6, 7, 8, 10, 11, 12, 14, 15, 18, 24, 28, 32)
     envelope_alpha = Range(0, 100, style='simple')
+    envelope_color = Color
+    user_envelope_color = Bool
     center_line_style = Enum('solid', 'dash', 'dot dash', 'dot', 'long dash')
     extend_plateau_end_caps = Bool(True)
     plateau_line_width = Float
     plateau_line_color = Color
+    user_plateau_line_color = Bool
+
     plateau_method = Enum('Fleck 1977', 'Mahon 1996')
     error_calc_method = Property
     use_error_envelope_fill = Bool
@@ -95,12 +99,12 @@ class SpectrumOptions(AgeOptions):
     # ),
     # HGroup(Item('display_step'), Item('display_extract_value'),
     # Item('display_plateau_info')),
-    #         show_border=True, label='Info')
+    # show_border=True, label='Info')
 
     # return g
 
     # def _get_plateau_steps(self):
-    #     return self._plateau_steps
+    # return self._plateau_steps
     #
     # def _set_plateau_steps(self, v):
     #     if v:
@@ -118,9 +122,9 @@ class SpectrumOptions(AgeOptions):
     def _get_dump_attrs(self):
         attrs = super(SpectrumOptions, self)._get_dump_attrs()
         return attrs + ['step_nsigma',
-                        'force_plateau',
-                        'force_plateau_start',
-                        'force_plateau_end',
+                        'calculate_fixed_plateau',
+                        'calculate_fixed_plateau_start',
+                        'calculate_fixed_plateau_end',
                         'display_extract_value',
                         'display_step',
                         'display_plateau_info',
@@ -129,9 +133,10 @@ class SpectrumOptions(AgeOptions):
                         'integrated_font_size',
                         'step_label_font_size',
                         'envelope_alpha',
+                        'user_envelope_color', 'envelope_color',
                         '_plateau_steps', 'center_line_style',
                         'extend_plateau_end_caps',
-                        'plateau_line_width', 'plateau_line_color',
+                        'plateau_line_width', 'plateau_line_color', 'user_plateau_line_color',
                         'include_j_error_in_plateau',
                         'plateau_age_error_kind',
                         'plateau_sig_figs',
@@ -152,7 +157,8 @@ class SpectrumOptions(AgeOptions):
             Item('center_line_style'),
             Item('extend_plateau_end_caps'),
             Item('plateau_line_width'),
-            Item('plateau_line_color'),
+            HGroup(UItem('user_plateau_line_color'),
+                   Item('plateau_line_color', enabled_when='user_plateau_line_color')),
 
             Item('nsigma'),
             Item('plateau_age_error_kind',
@@ -160,18 +166,23 @@ class SpectrumOptions(AgeOptions):
                  label='Error Type'),
             Item('include_j_error_in_plateau', label='Include J Error'),
             HGroup(
-                Item('force_plateau',
-                     tooltip='Force a plateau over provided steps'),
-                Item('force_plateau_start', label='Start'),
-                Item('force_plateau_end', label='End')),
+                Item('calculate_fixed_plateau',
+                     label='Calc. Plateau',
+                     tooltip='Calculate a plateau over provided steps'),
+                Item('calculate_fixed_plateau_start', label='Start'),
+                Item('calculate_fixed_plateau_end', label='End')),
             show_border=True,
             label='Plateau')
 
         error_grp = VGroup(HGroup(Item('step_nsigma',
                                        editor=EnumEditor(values=[1, 2, 3]),
                                        tooltip='Set the size of the error envelope in standard deviations',
-                                       label='N. Sigma')),
-                           HGroup(Item('use_error_envelope_fill', label='Fill'),
+                                       label='N. Sigma'),
+                                  Item('use_error_envelope_fill', label='Fill')),
+                           HGroup(UItem('user_envelope_color'),
+                                  Item('envelope_color',
+                                       label='Color',
+                                       enabled_when='user_envelope_color'),
                                   Item('envelope_alpha',
                                        label='Opacity',
                                        enabled_when='use_error_envelope_fill',
@@ -240,9 +251,9 @@ class SpectrumOptions(AgeOptions):
                                            'plateau_line_color',
                                            'plateau_font_size',
                                            'plateau_sig_figs',
-                                           'force_plateau',
-                                           'force_plateau_start',
-                                           'force_plateau_end',
+                                           'calculate_fixed_plateau',
+                                           'calculate_fixed_plateau_start',
+                                           'calculate_fixed_plateau_end',
                                            'pc_nsteps',
                                            'pc_gas_fraction'))
 
