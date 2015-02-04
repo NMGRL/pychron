@@ -41,6 +41,8 @@ class FigurePanel(HasTraits):
     title = Str
     use_previous_limits = True
 
+    track_value = True
+
     @on_trait_change('analyses[]')
     def _analyses_items_changed(self):
         self.figures = self._make_figures()
@@ -134,6 +136,13 @@ class FigurePanel(HasTraits):
             if not (isinf(mi) or isinf(ma)):
                 # print 'setting xlimits', mi, ma
                 g.set_x_limits(mi, ma, pad=fig.xpad or 0)
+
+            if not self.track_value:
+                for p in g.plots:
+                    l,h= p.value_range.low, p.value_range.high
+                    p.value_range.low_setting=l
+                    p.value_range.high_setting=h
+
 
             for fig in self.figures:
                 for i in range(len(plots)):

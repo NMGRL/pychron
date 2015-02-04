@@ -92,6 +92,7 @@ class LimitsTool(BaseTool):
 
             self._set_ruler_pos(event)
             self.component.request_redraw()
+            event.handled=True
 
     def _set_ruler_pos(self, v):
         self.ruler_pos = (v.x, v.y)
@@ -102,6 +103,7 @@ class LimitsTool(BaseTool):
         self._finish(event)
         v = event.x if self.orientation == 'x' else event.y
         self._set_value(v)
+        event.handled=True
 
     def _finish(self, event):
         self.event_state = 'normal'
@@ -124,6 +126,7 @@ class LimitsTool(BaseTool):
         if a < b or a > b2:
             self._set_value(a)
         self.component.request_redraw()
+        event.handled=True
 
     def _set_value(self, screen_val):
         v = self._map_value(screen_val)

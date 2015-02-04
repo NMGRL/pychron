@@ -23,6 +23,7 @@ CHANGELOG
 * spectrum labels match envelope color
 * display number of analyses as n/m if n != m. n = # of valid analyses, m = total # of analyses
 * added group attributes to spectrum options. allows you to set color for group and calculate a fixed plateau for a specific group
+#### 2/4/2015 ####
 
 
 ### Bug Fixes ###
@@ -35,6 +36,11 @@ CHANGELOG
 * fixed spectrum legend. use aliquot if necessary to generate unique legend key
 * fixed info overlay background rect. 
 * fixed spectrum labels layout when spectrum changes
+#### 2/4/2015 ####
+* fixed isochron info placement
+* fixed isochron atm indicator
+* fixed updating isochron regression line
+* fixed RectSelection/LimitsTools event collision
 
 2.0.6
 ------------------

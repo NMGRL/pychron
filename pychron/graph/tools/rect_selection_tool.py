@@ -56,7 +56,6 @@ class RectSelectionTool(BaseTool):
         if event.character=='Esc':
             self._end_select(event)
 
-
     def normal_mouse_move(self, event):
         if event.handled:
             return
@@ -115,6 +114,9 @@ class RectSelectionTool(BaseTool):
                 else:
                     self._select_token(token)
                     event.handled = True
+
+    def select_mouse_leave(self, event):
+        self._end_select(event)
 
     def _near_edge(self, event, tol=5):
         if self.filter_near_edge:

@@ -32,16 +32,17 @@ from pychron.processing.plotters.arar_figure import BaseArArFigure
 
 from pychron.graph.error_ellipse_overlay import ErrorEllipseOverlay
 from pychron.core.stats import validate_mswd
-
+from pychron.pychron_constants import PLUSMINUS
 
 
 class OffsetPlotLabel(PlotLabel):
     offset = None
 
     def overlay(self, component, gc, view_bounds=None, mode="normal"):
-        if self.offset:
-            gc.translate_ctm(*self.offset)
-        super(OffsetPlotLabel, self).overlay(component, gc, view_bounds, mode)
+        with gc:
+            if self.offset:
+                gc.translate_ctm(*self.offset)
+            super(OffsetPlotLabel, self).overlay(component, gc, view_bounds, mode)
 
 
 class AtmInterceptOverlay(AbstractOverlay):
@@ -74,13 +75,13 @@ class Isochron(BaseArArFigure):
 
 
 class InverseIsochron(Isochron):
-    #     xmi = Float
-    #     xma = Float
+    # xmi = Float
+    # xma = Float
 
     xs = Array
     _cached_data = None
     _plot_label = None
-    suppress = False
+    # suppress = False
     xpad = '0.1'
 
     def plot(self, plots, legend=None):
@@ -89,16 +90,16 @@ class InverseIsochron(Isochron):
         """
         graph = self.graph
 
-        #self._plot_inverse_isochron(graph.plots[0], 0)
+        # self._plot_inverse_isochron(graph.plots[0], 0)
 
         for pid, (plotobj, po) in enumerate(zip(graph.plots, plots)):
             getattr(self, '_plot_{}'.format(po.plot_name))(po, plotobj, pid)
 
-        #for si in self.sorted_analyses:
-        #    print si.record_id, si.group_id
+        # for si in self.sorted_analyses:
+        # print si.record_id, si.group_id
 
         omit = self._get_omitted(self.sorted_analyses)
-        #print 'iso omit', omit
+        # print 'iso omit', omit
         if omit:
             self._rebuild_iso(omit)
 
@@ -113,7 +114,7 @@ class InverseIsochron(Isochron):
 
     def _plot_inverse_isochron(self, po, plot, pid):
         analyses = self.sorted_analyses
-        plot.padding_left = 75
+        # plot.padding_left = 75
 
         refiso = analyses[0]
 
@@ -123,7 +124,7 @@ class InverseIsochron(Isochron):
         self._ref_age_units = refiso.arar_constants.age_units
 
         # try:
-        #     age, reg, data = calculate_isochron(analyses)
+        # age, reg, data = calculate_isochron(analyses)
         # except TypeError:
         #     return
         data = self.analysis_group.get_isochron_data()
@@ -140,7 +141,6 @@ class InverseIsochron(Isochron):
 
         graph.set_grid_traits(visible=False)
         graph.set_grid_traits(visible=False, grid='y')
-
         scatter, _p = graph.new_series(xs, ys,
                                        xerror=ArrayDataSource(data=xerrs),
                                        yerror=ArrayDataSource(data=yerrs),
@@ -194,18 +194,21 @@ class InverseIsochron(Isochron):
             except ZeroDivisionError:
                 pe = '(Inf%)'
 
-            return '39Ar/40Ar = {} +/-{} {}'.format(floatfmt(v, n=6), floatfmt(e, n=7), pe)
+            return u'39Ar/40Ar = {} {}{} {}'.format(floatfmt(v, n=6), PLUSMINUS, floatfmt(e, n=7), pe)
 
         graph.add_vertical_rule(0, color='black')
         self._add_info(plot, reg, text_color=scatter.color)
 
-        if self.options.show_nominal_intercept:
+        if self.options.show_nominal_intercept and self.group_id < 1:
             self._add_atm_overlay(plot)
 
         if po.show_labels:
             self._add_point_labels(scatter)
 
         self._add_scatter_inspector(scatter, additional_info=ad)
+
+        # d = lambda a, b, c, d: self.update_index_mapper(a, b, c, d)
+        p.index_mapper.on_trait_change(self.update_index_mapper, 'updated')
 
     # ===============================================================================
     # overlays
@@ -233,7 +236,7 @@ class InverseIsochron(Isochron):
         except ZeroDivisionError:
             v, e, p, mse = 'NaN', 'NaN', 'NaN', 'NaN'
 
-        ratio_line = 'Ar40/Ar36= {} +/-{} ({}%) mse= {}'.format(v, e, p, mse)
+        ratio_line = u'Ar40/Ar36= {} {}{} ({}%) mse= {}'.format(v, PLUSMINUS, e, p, mse)
 
         u = self._ref_age_units
 
@@ -249,15 +252,22 @@ class InverseIsochron(Isochron):
         mswd = '{:0.2f}'.format(mswd)
         if not valid:
             mswd = '*{}'.format(mswd)
-            #n = len([ai for ai in self.analyses if ai.temp_status == 0])
-        #mswd = 'NaN'
-        age_line = 'Age= {} +/-{} ({}%) {}. mse= {}'.format(floatfmt(v, n=3),
+            # n = len([ai for ai in self.analyses if ai.temp_status == 0])
+        # mswd = 'NaN'
+        age_line = u'Age= {} {}{} ({}%) {}. mse= {}'.format(floatfmt(v, n=3),
+                                                            PLUSMINUS,
                                                             floatfmt(e, n=4, s=3), p, u,
                                                             floatfmt(mse_age, s=3))
         mswd_line = 'N= {} mswd= {}'.format(n, mswd)
         if label is None:
+            th = 0
+            for overlay in plot.overlays:
+                if isinstance(overlay, OffsetPlotLabel):
+                    w, h = overlay.get_preferred_size()
+                    th += h + 2
+
             label = OffsetPlotLabel(
-                offset=(1, 1 + 50 * self.group_id),
+                offset=(1, th),
                 component=plot,
                 overlay_position='inside bottom',
                 hjustify='left',
@@ -267,18 +277,19 @@ class InverseIsochron(Isochron):
             plot.overlays.append(label)
             self._plot_label = label
 
-        lines = '\n'.join((ratio_line, age_line, mswd_line))
-        label.text = '{}'.format(lines)
+        lines = u'\n'.join((ratio_line, age_line, mswd_line))
+        label.text = u'{}'.format(lines)
         label.request_redraw()
 
     def replot(self):
-        self.suppress = True
+        # self.suppress = True
 
         om = self._get_omitted(self.sorted_analyses)
         self._rebuild_iso(om)
-        self.suppress = False
+        # self.suppress = False
 
     def _rebuild_iso(self, sel):
+        # print sel
         g = self.graph
         ss = [p.plots[pp][0] for p in g.plots
               for pp in p.plots
@@ -291,7 +302,7 @@ class InverseIsochron(Isochron):
 
             reg.user_excluded = sel
             reg.dirty = True
-            reg.error_calc_type= self.options.error_calc_method
+            reg.error_calc_type = self.options.error_calc_method
             reg.calculate()
 
             fit = self.graph.plots[0].plots['fit{}'.format(self.group_id)][0]
@@ -303,6 +314,7 @@ class InverseIsochron(Isochron):
 
             fit.index.set_data(rxs)
             fit.value.set_data(rys)
+            # print fit.value_range.low_setting, fit.value_range.high_setting
 
             fit.error_envelope.invalidate()
 
@@ -318,8 +330,11 @@ class InverseIsochron(Isochron):
             self._filter_metadata_changes(obj, self._rebuild_iso, self.analyses)
 
     def update_index_mapper(self, obj, name, old, new):
-        if new is True:
+        if new:
             self.update_graph_metadata(None, name, old, new)
+
+        if name == 'updated':
+            self.replot()
 
     # ===============================================================================
     # utils
@@ -350,7 +365,7 @@ class InverseIsochron(Isochron):
         return s
 
         # def _get_age_errors(self, ans):
-        #     ages, errors = zip(*[(ai.age.nominal_value,
+        # ages, errors = zip(*[(ai.age.nominal_value,
         #                           ai.age.std_dev)
         #                          for ai in self.sorted_analyses])
         #     return array(ages), array(errors)
@@ -418,9 +433,9 @@ class InverseIsochron(Isochron):
 # ===============================================================================
 # labels
 # ===============================================================================
-#     def _build_integrated_age_label(self, tga, *args):
-#         age, error = tga.nominal_value, tga.std_dev
-#         error *= self.options.nsigma
+# def _build_integrated_age_label(self, tga, *args):
+# age, error = tga.nominal_value, tga.std_dev
+# error *= self.options.nsigma
 #         txt = self._build_label_text(age, error, *args)
 #         return 'Integrated Age= {}'.format(txt)
 

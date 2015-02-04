@@ -22,9 +22,10 @@ from pychron.processing.plotters.figure_panel import FigurePanel
 # ============= local library imports  ==========================
 class IsochronPanel(FigurePanel):
     _figure_klass = Isochron
+    track_value = False
 
 class InverseIsochronPanel(FigurePanel):
     _figure_klass = InverseIsochron
-
+    track_value = False
 
 # ============= EOF =============================================

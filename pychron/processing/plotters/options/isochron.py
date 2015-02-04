@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -57,13 +57,16 @@ class InverseIsochronOptions(AgeOptions):
 
         g2 = Group(HGroup(Item('show_info', label='Show'),
                           label='Info'),
-                   Item('fill_ellipses', ),
-                   Item('label_box'),
+                   HGroup(Item('fill_ellipses', ),
+                          Item('label_box'),
+                          show_border=True, label='Labels'),
                    VGroup(Item('show_nominal_intercept'),
                           HGroup(Item('nominal_intercept_label', label='Label', enabled_when='show_nominal_intercept'),
                                  Item('_nominal_intercept_value', label='Value', enabled_when='show_nominal_intercept'),
                                  Item('invert_nominal_intercept', label='Invert')),
+                          show_border=True,
                           label='Nominal Intercept'),
+                   show_border=True,
                    label='Display')
 
         # egrp=Group(
@@ -76,7 +79,7 @@ class InverseIsochronOptions(AgeOptions):
 
         return (VGroup(self._get_title_group(),
                        # egrp,
-                       g, g2, label='Options'),label_grp)
+                       g, g2, label='Options'), label_grp)
 
     def _set_nominal_value(self, v):
         self._nominal_intercept_value = v
