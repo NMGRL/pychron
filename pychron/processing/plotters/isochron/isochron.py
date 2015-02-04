@@ -82,7 +82,16 @@ class InverseIsochron(Isochron):
     _cached_data = None
     _plot_label = None
     # suppress = False
-    xpad = '0.1'
+    # xpad = '0.1'
+    xpad = None
+
+    def post_make(self):
+        g = self.graph
+        for i, p in enumerate(g.plots):
+            l, h = self.ymis[i], self.ymas[i]
+            g.set_y_limits(l, h, pad='0.1',plotid=i)
+
+        g.set_x_limits(0, self.xma, pad='0.1')
 
     def plot(self, plots, legend=None):
         """
@@ -126,7 +135,7 @@ class InverseIsochron(Isochron):
         # try:
         # age, reg, data = calculate_isochron(analyses)
         # except TypeError:
-        #     return
+        # return
         data = self.analysis_group.get_isochron_data()
 
         _, reg, (xs, ys, xerrs, yerrs) = data
@@ -163,6 +172,9 @@ class InverseIsochron(Isochron):
         # ma = max(ma, max(xs))
         # mi = min(mi, min(xs))
         mi, ma = min(xs), max(xs)
+        self.xma = max(self.xma, ma)
+        self.xmi = min(self.xmi, mi)
+
         # print len(xs),mi,ma
         mi = 0
         rxs = linspace(mi, ma)
@@ -175,6 +187,15 @@ class InverseIsochron(Isochron):
 
         l.index.set_data(rxs)
         l.value.set_data(rys)
+        yma, ymi = max(rys), min(rys)
+
+        try:
+            self.ymis[pid] = min(self.ymis[pid], ymi)
+            self.ymas[pid] = max(self.ymas[pid], yma)
+        except IndexError:
+            self.ymis.append(ymi)
+            self.ymas.append(yma)
+
         xs = l.index.get_data()
         lci, uci = reg.calculate_error_envelope(xs)
         ee = ErrorEnvelopeOverlay(component=l,
@@ -366,7 +387,7 @@ class InverseIsochron(Isochron):
 
         # def _get_age_errors(self, ans):
         # ages, errors = zip(*[(ai.age.nominal_value,
-        #                           ai.age.std_dev)
+        # ai.age.std_dev)
         #                          for ai in self.sorted_analyses])
         #     return array(ages), array(errors)
 
@@ -436,7 +457,7 @@ class InverseIsochron(Isochron):
 # def _build_integrated_age_label(self, tga, *args):
 # age, error = tga.nominal_value, tga.std_dev
 # error *= self.options.nsigma
-#         txt = self._build_label_text(age, error, *args)
+# txt = self._build_label_text(age, error, *args)
 #         return 'Integrated Age= {}'.format(txt)
 
 # ============= EOF =============================================

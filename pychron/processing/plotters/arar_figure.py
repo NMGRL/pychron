@@ -19,7 +19,7 @@
 from chaco.array_data_source import ArrayDataSource
 from chaco.legend import Legend
 from traits.api import HasTraits, Any, Int, Str, Tuple, Property, \
-    Event, Bool, cached_property, on_trait_change
+    Event, Bool, cached_property, on_trait_change, List, Float
 from chaco.tools.data_label_tool import DataLabelTool
 from chaco.tools.broadcaster import BroadcasterTool
 # ============= standard library imports ========================
@@ -74,14 +74,10 @@ class BaseArArFigure(HasTraits):
 
     bgcolor = None
 
-    def _add_limit_tool(self, plot, orientation):
-        t = LimitsTool(component=plot,
-                       orientation=orientation)
-
-        o = LimitOverlay(component=plot, tool=t)
-
-        plot.tools.append(t)
-        plot.overlays.append(o)
+    ymas = List
+    ymis = List
+    xmi = Float
+    xma = Float
 
     def build(self, plots):
         """
@@ -168,6 +164,9 @@ class BaseArArFigure(HasTraits):
             # if self.options.use_legend:
             # if True:
             #     self._add_legend()
+
+    def post_make(self):
+        pass
 
     def plot(self, *args, **kw):
         pass
@@ -332,6 +331,14 @@ class BaseArArFigure(HasTraits):
     # ===============================================================================
     #
     # ===============================================================================
+    def _add_limit_tool(self, plot, orientation):
+        t = LimitsTool(component=plot,
+                       orientation=orientation)
+
+        o = LimitOverlay(component=plot, tool=t)
+
+        plot.tools.append(t)
+        plot.overlays.append(o)
 
     def _add_point_labels(self, scatter):
         labels = []

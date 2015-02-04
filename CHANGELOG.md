@@ -41,6 +41,7 @@ CHANGELOG
 * fixed isochron atm indicator
 * fixed updating isochron regression line
 * fixed RectSelection/LimitsTools event collision
+* fixed isochron autoscaling
 
 2.0.6
 ------------------

@@ -35,8 +35,7 @@ N = 500
 
 
 class Ideogram(BaseArArFigure):
-    xmi = Float
-    xma = Float
+
     xs = Array
     xes = Array
     # index_key = 'uage'

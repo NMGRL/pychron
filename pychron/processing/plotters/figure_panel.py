@@ -101,8 +101,10 @@ class FigurePanel(HasTraits):
             else:
                 legend = None
 
+            ymas,ymis = [], []
             for i, fig in enumerate(self.figures):
                 fig.trait_set(xma=ma, xmi=mi,
+                              ymas=ymas, ymis=ymis,
                               center=center,
                               options=po,
                               graph=g,
@@ -118,6 +120,7 @@ class FigurePanel(HasTraits):
                 fig.suppress_xlimits_update = False
                 # print fig.xma, fig.xmi
                 ma, mi = max(fig.xma, ma), min(fig.xmi, mi)
+                ymas,ymis = fig.ymas, fig.ymis
 
             if legend:
                 g.plots[0].overlays.append(legend)
@@ -143,8 +146,9 @@ class FigurePanel(HasTraits):
                     p.value_range.low_setting=l
                     p.value_range.high_setting=h
 
-
+            self.figures[0].post_make()
             for fig in self.figures:
+
                 for i in range(len(plots)):
                     fig.update_options_limits(i)
 
