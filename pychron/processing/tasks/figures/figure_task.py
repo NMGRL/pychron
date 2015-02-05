@@ -324,6 +324,10 @@ class FigureTask(AnalysisEditTask):
         feditor = self._new_figure(ans, name, klass, tklass,
                                    add_iso=False)
 
+        ans = self.browser_model.analysis_table.analyses
+        if ans:
+            self.unknowns_pane.items = ans
+
     def new_series(self, ans=None, name='Series',
                    klass=None, tklass=None,
                    add_iso=False,

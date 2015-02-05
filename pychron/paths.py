@@ -24,131 +24,6 @@ from os import path, mkdir
 import os
 
 
-DEFAULT_INITIALIZATION = '''<root>
-    <globals>
-    </globals>
-    <plugins>
-        <general>
-            <plugin enabled="false">Processing</plugin>
-            <plugin enabled="false">MediaServer</plugin>
-            <plugin enabled="false">PyScript</plugin>
-            <plugin enabled="false">Video</plugin>
-            <plugin enabled="false">Database</plugin>
-            <plugin enabled="false">Entry</plugin>
-            <plugin enabled="false">SystemMonitor</plugin>
-            <plugin enabled="false">ArArConstants</plugin>
-            <plugin enabled="false">Loading</plugin>
-            <plugin enabled="false">Workspace</plugin>
-            <plugin enabled="false">LabBook</plugin>
-            <plugin enabled="false">DashboardServer</plugin>
-            <plugin enabled="false">DashboardClient</plugin>
-        </general>
-        <hardware>
-        </hardware>
-        <social>
-        </social>
-    </plugins>
-</root>
-'''
-
-DEFAULT_STARTUP_TESTS = '''
-- plugin: Database
-  tests:
-    - test_pychron
-    - test_pychron_version
-    - test_massspec
-- plugin: LabBook
-  tests:
-- plugin: ArArConstants
-  tests:
-- plugin: ArgusSpectrometer
-  tests:
-    - test_communication
-- plugin: ExtractionLine
-  tests:
-    - test_valve_communication
-    - test_gauge_communication
-'''
-
-EXPERIMENT_DEFAULTS = '''
-columns:
-  - Labnumber
-  - Aliquot
-  - Sample
-  - Position
-  - Extract
-  - Units
-  - Duration (s)
-  - Cleanup (s)
-  - Beam (mm)
-  - Pattern
-  - Extraction
-  - Measurement
-  - Conditionals
-  - Comment
-'''
-
-IDEOGRAM_DEFAULTS = '''
-padding:
- padding_left: 100
- padding_right: 100
- padding_top: 100
- padding_bottom: 100
-
-calculations:
- probability_curve_kind: cumulative
- mean_calculation_kind: 'weighted mean'
-display:
- mean_indicator_fontsize: 12
- mean_sig_figs: 2
-
-general:
- index_attr: uage
-'''
-
-SPECTRUM_DEFAULTS = '''
-padding:
- padding_left: 100
- padding_right: 100
- padding_top: 100
- padding_bottom: 100
-plateau:
- plateau_line_width: 1
- plateau_line_color: black
- plateau_font_size: 12
- plateau_sig_figs: 2
- # calculate_fixed_plateau: False
- # calculate_fixed_plateau_start: ''
- # calculate_fixed_plateau_end: ''
- pc_nsteps: 3
- pc_gas_fraction: 50
-integrated:
- integrated_font_size: 12
- integrated_sig_figs: 2
-legend:
- legend_location: Upper Right
- include_legend: False
- include_sample_in_legend: False
-labels:
- display_step: True
- display_extract_value: False
- step_label_font_size: 10
-
-'''
-
-COMPOSITE_DEFAULTS = '''
-- padding:
-   padding_left: 100
-   padding_right: 50
-   padding_top: 100
-   padding_bottom: 100
-- padding:
-   padding_left: 50
-   padding_right: 100
-   padding_top: 100
-   padding_bottom: 100
-
-'''
 class Paths(object):
     dissertation = '/Users/ross/Programming/git/dissertation'
     enthought = path.join(path.expanduser('~'), '.enthought')
@@ -279,6 +154,7 @@ class Paths(object):
     experiment_defaults = None
     ideogram_defaults = None
     spectrum_defaults = None
+    inverse_isochron_defaults = None
     composites_defaults = None
 
     def set_search_paths(self, app_rec=None):
@@ -438,20 +314,24 @@ class Paths(object):
         self.experiment_defaults = join(setup_dir, 'experiment_defaults.yaml')
         self.ideogram_defaults = join(self.hidden_dir, 'ideogram_defaults.yaml')
         self.spectrum_defaults = join(self.hidden_dir, 'spectrum_defaults.yaml')
+        self.inverse_isochron_defaults = join(self.hidden_dir, 'inverse_isochron_defaults.yaml')
         self.composites_defaults = join(self.hidden_dir, 'composite_defaults.yaml')
 
         if os.environ.get('TRAVIS_CI', 'False') == 'False':
             self._write_default_files()
 
     def _write_default_files(self):
+        from pychron.file_defaults import DEFAULT_INITIALIZATION, DEFAULT_STARTUP_TESTS, EXPERIMENT_DEFAULTS, \
+            IDEOGRAM_DEFAULTS, ISOCHRON_DEFAULTS, COMPOSITE_DEFAULTS, SPECTRUM_DEFAULTS, INVERSE_ISOCHRON_DEFAULTS
+
         for p, d in ((path.join(self.setup_dir, 'initialization.xml'), DEFAULT_INITIALIZATION),
                      (self.startup_tests, DEFAULT_STARTUP_TESTS),
                      (self.experiment_defaults, EXPERIMENT_DEFAULTS),
                      (self.ideogram_defaults, IDEOGRAM_DEFAULTS),
                      (self.spectrum_defaults, SPECTRUM_DEFAULTS),
+                     (self.inverse_isochron_defaults, INVERSE_ISOCHRON_DEFAULTS),
                      (self.composites_defaults, COMPOSITE_DEFAULTS)):
-
-            overwrite = d in (IDEOGRAM_DEFAULTS, SPECTRUM_DEFAULTS)
+            overwrite = d in (IDEOGRAM_DEFAULTS, SPECTRUM_DEFAULTS, INVERSE_ISOCHRON_DEFAULTS)
             self._write_default_file(p, d, overwrite)
 
     def _write_default_file(self, p, default, overwrite=False):

@@ -32,6 +32,7 @@ from pychron.processing.plotters.arar_figure import BaseArArFigure
 
 from pychron.graph.error_ellipse_overlay import ErrorEllipseOverlay
 from pychron.core.stats import validate_mswd
+from pychron.processing.plotters.isochron.isochron_inset import InverseIsochronPointsInset, InverseIsochronLineInset
 from pychron.pychron_constants import PLUSMINUS
 
 
@@ -89,7 +90,7 @@ class InverseIsochron(Isochron):
         g = self.graph
         for i, p in enumerate(g.plots):
             l, h = self.ymis[i], self.ymas[i]
-            g.set_y_limits(l, h, pad='0.1',plotid=i)
+            g.set_y_limits(l, h, pad='0.1', plotid=i)
 
         g.set_x_limits(0, self.xma, pad='0.1')
 
@@ -143,7 +144,13 @@ class InverseIsochron(Isochron):
         self._cached_reg = reg
 
         graph = self.graph
-        graph.set_x_title('39Ar/40Ar', plotid=pid)
+
+        # u39 = u'\u00b3\u2079'
+        # u40 = u'\u2074\u2070'
+        # xtitle = u'{}Ar/{}Ar'.format(u39, u40)
+        xtitle='39Ar/40Ar'
+        # print plot.x_axis.title_font
+        graph.set_x_title(xtitle, plotid=pid)
         graph.set_y_title('36Ar/40Ar', plotid=pid)
         p = graph.plots[pid]
         p.y_axis.title_spacing = 50
@@ -156,10 +163,10 @@ class InverseIsochron(Isochron):
                                        type='scatter',
                                        marker='circle',
                                        bind_id=self.group_id,
-                                       #selection_marker_size=5,
+                                       # selection_marker_size=5,
                                        #selection_color='green',
                                        marker_size=2)
-        #self._scatter = scatter
+        # self._scatter = scatter
         graph.set_series_label('data{}'.format(self.group_id))
 
         eo = ErrorEllipseOverlay(component=scatter,
@@ -196,8 +203,7 @@ class InverseIsochron(Isochron):
             self.ymis.append(ymi)
             self.ymas.append(yma)
 
-        xs = l.index.get_data()
-        lci, uci = reg.calculate_error_envelope(xs)
+        lci, uci = reg.calculate_error_envelope(l.index.get_data())
         ee = ErrorEnvelopeOverlay(component=l,
                                   upper=uci, lower=lci)
         l.underlays.append(ee)
@@ -217,11 +223,15 @@ class InverseIsochron(Isochron):
 
             return u'39Ar/40Ar = {} {}{} {}'.format(floatfmt(v, n=6), PLUSMINUS, floatfmt(e, n=7), pe)
 
+        if self.group_id == 0:
+            if self.options.display_inset:
+                self._add_inset(plot, xs, ys, reg)
+
+            if self.options.show_nominal_intercept:
+                self._add_atm_overlay(plot)
+
         graph.add_vertical_rule(0, color='black')
         self._add_info(plot, reg, text_color=scatter.color)
-
-        if self.options.show_nominal_intercept and self.group_id < 1:
-            self._add_atm_overlay(plot)
 
         if po.show_labels:
             self._add_point_labels(scatter)
@@ -234,6 +244,41 @@ class InverseIsochron(Isochron):
     # ===============================================================================
     # overlays
     # ===============================================================================
+    def _add_inset(self, plot, xs, ys, reg):
+        opt = self.options
+        insetp = InverseIsochronPointsInset(xs, ys,
+                                            marker_size = opt.inset_marker_size,
+                                            color = opt.inset_marker_color,
+                                            line_width=0,
+                                            # regressor=reg,
+                                            nominal_intercept = opt.nominal_intercept_value,
+                                            location=opt.inset_location,
+                                            width=opt.inset_width,
+                                            height=opt.inset_height,
+                                            visible_axes=False)
+
+        xintercept = reg.x_intercept * 1.1
+        yintercept = reg.predict(0)
+        m, _ = insetp.index.get_bounds()
+        lx = -0.1 * (xintercept - m)
+        hx = xintercept
+
+        xs = linspace(lx, hx, 20)
+        ys = reg.predict(xs)
+        insetl = InverseIsochronLineInset(xs, ys,
+                                          # regressor=reg,
+                                          location=opt.inset_location,
+                                          width=opt.inset_width,
+                                          height=opt.inset_height)
+
+        for inset in (insetl, insetp):
+            inset.index_range.low = lx
+            inset.index_range.high = hx
+
+            inset.value_range.low = 0
+            inset.value_range.high = max(1.1*opt.nominal_intercept_value, yintercept * 1.1)
+            plot.overlays.append(inset)
+
 
     def _add_atm_overlay(self, plot):
         v = self.options.nominal_intercept_value
@@ -388,7 +433,7 @@ class InverseIsochron(Isochron):
         # def _get_age_errors(self, ans):
         # ages, errors = zip(*[(ai.age.nominal_value,
         # ai.age.std_dev)
-        #                          for ai in self.sorted_analyses])
+        # for ai in self.sorted_analyses])
         #     return array(ages), array(errors)
 
         #def _calculate_stats(self, ages, errors, xs, ys):
@@ -458,6 +503,6 @@ class InverseIsochron(Isochron):
 # age, error = tga.nominal_value, tga.std_dev
 # error *= self.options.nsigma
 # txt = self._build_label_text(age, error, *args)
-#         return 'Integrated Age= {}'.format(txt)
+# return 'Integrated Age= {}'.format(txt)
 
 # ============= EOF =============================================

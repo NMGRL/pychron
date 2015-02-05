@@ -215,6 +215,7 @@ class SpectrumOptionsManager(PlotterOptionsManager):
 class InverseIsochronOptionsManager(PlotterOptionsManager):
     plotter_options_klass = InverseIsochronOptions
     persistence_name = 'inverse_isochron'
+    _defaults_path = paths.inverse_isochron_defaults
 
 
 class SeriesOptionsManager(PlotterOptionsManager):
