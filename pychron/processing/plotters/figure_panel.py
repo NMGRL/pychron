@@ -25,6 +25,7 @@ from traits.api import HasTraits, Any, on_trait_change, List, Int, Str
 from itertools import groupby
 
 # ============= local library imports  ==========================
+from pychron.core.codetools.inspection import caller
 from pychron.processing.analysis_graph import AnalysisStackedGraph
 
 
@@ -82,8 +83,9 @@ class FigurePanel(HasTraits):
 
         return center, mi, ma
 
+    @caller
     def make_graph(self):
-        # print '----------------------- make graph -----------------------'
+        print '----------------------- make graph -----------------------'
         po = self.plot_options
         g = self.graph_klass(panel_height=200,
                              equi_stack=self.equi_stack,

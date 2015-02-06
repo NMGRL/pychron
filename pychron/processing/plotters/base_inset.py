@@ -31,6 +31,7 @@ class BaseInset(HasTraits):
     location = Str
     visible_axes = True
     # plots = List
+    yoffset = Float
 
     def __init__(self, xs, ys, index_bounds=None, value_bounds=None, *args, **kw):
         index = ArrayDataSource(xs)
@@ -89,10 +90,7 @@ class BaseInset(HasTraits):
             x = x1 + 2
 
         # self.x, self.y, self.width, self.height = x, y, w, h
-        self.trait_set(x=x, y=y, w=w, h=h)
-        # for p in self.plots:
-        #     p.trait_set(x=x, y=y, w=w, h=h)
-            # print self.x, self.y, self.width, self.height
+        self.trait_set(x=x, y=y-self.yoffset)
 
     def overlay(self, component, gc, *args, **kw):
         with gc:
