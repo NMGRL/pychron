@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from chaco.base_plot_container import BasePlotContainer
 from chaco.plot_label import PlotLabel
-from numpy import isnan
+from math import isnan
 from traits.api import Any, on_trait_change, \
     List, Event, Int
 from traitsui.api import View, UItem

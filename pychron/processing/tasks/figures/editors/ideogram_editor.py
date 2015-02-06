@@ -24,7 +24,6 @@ from traits.api import Instance
 from pychron.processing.analyses.file_analysis import InterpretedAgeAnalysis, FileAnalysis
 from pychron.processing.tasks.figures.figure_editor import FigureEditor
 from pychron.processing.plotter_options_manager import IdeogramOptionsManager
-from pychron.processing.plotters.figure_container import FigureContainer
 
 
 class Caption(AbstractOverlay):

@@ -26,7 +26,6 @@ CHANGELOG
 #### 2/5/2015 ####
 * added inset to inverse isochron
 
-
 ### Bug Fixes ###
 * fixed plotting ideograms of attributes other than age
 * improved database startup tests
@@ -43,7 +42,8 @@ CHANGELOG
 * fixed updating isochron regression line
 * fixed RectSelection/LimitsTools event collision
 * fixed isochron autoscaling
-
+#### 2/5/2015 ####
+* updated x,y limits persistence
 
 2.0.6
 ------------------

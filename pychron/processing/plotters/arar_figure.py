@@ -17,13 +17,12 @@
 # ============= enthought library imports =======================
 
 from chaco.array_data_source import ArrayDataSource
-from chaco.legend import Legend
-from traits.api import HasTraits, Any, Int, Str, Tuple, Property, \
-    Event, Bool, cached_property, on_trait_change, List, Float
+from traits.api import HasTraits, Any, Int, Str, Property, \
+    Event, Bool, cached_property, List, Float
 from chaco.tools.data_label_tool import DataLabelTool
 from chaco.tools.broadcaster import BroadcasterTool
 # ============= standard library imports ========================
-from numpy import Inf, inf
+from numpy import Inf
 import re
 from uncertainties import std_dev, nominal_value, ufloat
 # ============= local library imports  ==========================

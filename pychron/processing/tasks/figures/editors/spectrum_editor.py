@@ -22,7 +22,6 @@ from traits.api import Instance
 # ============= local library imports  ==========================
 from pychron.processing.analyses.file_analysis import SpectrumFileAnalysis
 from pychron.processing.tasks.figures.figure_editor import FigureEditor
-from pychron.processing.plotters.figure_container import FigureContainer
 from pychron.processing.plotter_options_manager import SpectrumOptionsManager
 #from pychron.processing.tasks.figures.editors.auto_controls import AutoSpectrumControl
 
