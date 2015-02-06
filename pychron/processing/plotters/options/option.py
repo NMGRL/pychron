@@ -19,6 +19,7 @@ from traits.api import HasTraits, Str, Bool, Property, Int, Enum, List, String, 
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.codetools.inspection import caller
 from pychron.pychron_constants import NULL_STR, FIT_TYPES
 
 

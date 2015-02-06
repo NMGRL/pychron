@@ -35,12 +35,11 @@ N = 500
 
 
 class Ideogram(BaseArArFigure):
-
     xs = Array
     xes = Array
     # index_key = 'uage'
     ytitle = 'Relative Probability'
-    #     _reverse_sorted_analyses = True
+    # _reverse_sorted_analyses = True
     _analysis_number_cnt = 0
 
     x_grid_visible = False
@@ -55,7 +54,7 @@ class Ideogram(BaseArArFigure):
         opt = self.options
         if opt.index_attr:
             index_attr = opt.index_attr
-            if index_attr=='uage' and not opt.include_j_error:
+            if index_attr == 'uage' and not opt.include_j_error:
                 index_attr = 'uage_wo_j_err'
         else:
             warning(None, 'X Value not set. Defaulting to Age')
@@ -64,7 +63,6 @@ class Ideogram(BaseArArFigure):
         graph = self.graph
 
         self._analysis_number_cnt = 0
-
 
         try:
             self.xs, self.xes = array([(ai.nominal_value, ai.std_dev)
@@ -359,7 +357,7 @@ class Ideogram(BaseArArFigure):
             n = self.xs.shape[0]
             mswd_args = (mswd, valid_mswd, n)
             text = self._build_label_text(wm, we, n,
-                                          mswd_args = mswd_args,
+                                          mswd_args=mswd_args,
                                           sig_figs=self.options.mean_sig_figs,
                                           percent_error=self.options.display_percent_error)
 
@@ -461,30 +459,30 @@ class Ideogram(BaseArArFigure):
             lp.value.set_data(ys)
             lp.index.set_data(xs)
 
-            #sp.index.set_data([wm])
-            #sp.xerror.set_data([we])
+            # sp.index.set_data([wm])
+            # sp.xerror.set_data([we])
 
-            mi = min(ys)
-            ma = max(ys)
-            self._set_y_limits(mi, ma, min_=0)
+            # mi = min(ys)
+            # ma = max(ys)
+            # self._set_y_limits(mi, ma, min_=0)
 
             n = len(fxs)
             total_n = self.xs.shape[0]
             for ov in lp.overlays:
                 if isinstance(ov, MeanIndicatorOverlay):
                     ov.set_x(wm)
-                    #ov.x=wm
+                    # ov.x=wm
                     ov.error = we
                     if ov.label:
                         mswd_args = mswd, valid_mswd, n
                         ov.label.text = self._build_label_text(wm, we, n,
-                                                               mswd_args = mswd_args,
-                                                               total_n =total_n,
+                                                               mswd_args=mswd_args,
+                                                               total_n=total_n,
                                                                percent_error=self.options.display_percent_error,
                                                                sig_figs=self.options.mean_sig_figs)
 
             # update the data label position
-            #for ov in sp.overlays:
+            # for ov in sp.overlays:
             #    if isinstance(ov, DataLabel):
             #        _, y = ov.data_point
             #        ov.data_point = wm, y

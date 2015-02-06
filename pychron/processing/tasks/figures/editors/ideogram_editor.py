@@ -76,44 +76,61 @@ class IdeogramEditor(FigureEditor):
                 ap.enabled = False
 
     def get_component(self, ans, plotter_options):
-        # meta = None
-        # if self.figure_model:
-        #     meta = self.figure_model.dump_metadata()
-
         if plotter_options is None:
             pom = IdeogramOptionsManager()
             plotter_options = pom.plotter_options
 
-        model = self.figure_model
-        if not model:
-            from pychron.processing.plotters.ideogram.ideogram_model import IdeogramModel
-
-            model = IdeogramModel(plot_options=plotter_options,
-                                  titles=self.titles)
-
-        model.trait_set(plot_options=plotter_options,
-                        titles=self.titles,
-                        analyses=ans)
-
-        iv = FigureContainer(model=model)
-        component = iv.component
-
-        po = plotter_options
-        m = po.mean_calculation_kind
-        s = po.nsigma
-        es = po.error_bar_nsigma
-        ecm = po.error_calc_method
-        captext = u'Mean: {} +/-{}\u03c3 Data: +/-{}\u03c3. ' \
-                  u'Error Type:{}. Analyses omitted from calculation \n' \
-                  u'indicated by open squares. Dashed line represents ' \
-                  u'cumulative probability for all analyses'.format(m, s, es, ecm)
-
-        self._add_caption(component, plotter_options, default_captext=captext)
-
-        # if meta:
-        #     model.load_metadata(meta)
-
+        from pychron.processing.plotters.ideogram.ideogram_model import IdeogramModel
+        model, component = self._make_component(IdeogramModel, ans, plotter_options)
         return model, component
+
+    # def get_component(self, ans, plotter_options):
+    #     # meta = None
+    #     # if self.figure_model:
+    #     #     meta = self.figure_model.dump_metadata()
+    #
+    #     if plotter_options is None:
+    #         pom = IdeogramOptionsManager()
+    #         plotter_options = pom.plotter_options
+    #
+    #     model = self.figure_model
+    #     container = self.figure_container
+    #     if not model:
+    #         from pychron.processing.plotters.ideogram.ideogram_model import IdeogramModel
+    #
+    #         model = IdeogramModel(plot_options=plotter_options,
+    #                               titles=self.titles)
+    #
+    #         self.figure_model = model
+    #
+    #     model.trait_set(plot_options=plotter_options,
+    #                     titles=self.titles,
+    #                     analyses=ans)
+    #
+    #     if not container:
+    #         container = FigureContainer(model=model)
+    #         self.figure_container = container
+    #
+    #     container.refresh()
+    #     component = container.component
+    #     # print self.figure_container
+    #     # print self.figure_model
+    #     # po = plotter_options
+    #     # m = po.mean_calculation_kind
+    #     # s = po.nsigma
+    #     # es = po.error_bar_nsigma
+    #     # ecm = po.error_calc_method
+    #     # captext = u'Mean: {} +/-{}\u03c3 Data: +/-{}\u03c3. ' \
+    #     #           u'Error Type:{}. Analyses omitted from calculation \n' \
+    #     #           u'indicated by open squares. Dashed line represents ' \
+    #     #           u'cumulative probability for all analyses'.format(m, s, es, ecm)
+    #     #
+    #     # self._add_caption(component, plotter_options, default_captext=captext)
+    #
+    #     # if meta:
+    #     #     model.load_metadata(meta)
+    #
+    #     return model, component
 
     def _get_items_from_file(self, parser):
         # ans = []

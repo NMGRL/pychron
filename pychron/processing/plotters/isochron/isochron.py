@@ -145,13 +145,22 @@ class InverseIsochron(Isochron):
 
         graph = self.graph
 
-        # u39 = u'\u00b3\u2079'
-        # u40 = u'\u2074\u2070'
-        # xtitle = u'{}Ar/{}Ar'.format(u39, u40)
-        xtitle='39Ar/40Ar'
-        # print plot.x_axis.title_font
+        u39 = u'\u00b3\u2079'
+        u40 = u'\u2074\u2070'
+        u36 = u'\u00b3\u2076'
+        xtitle = u'{}Ar/{}Ar'.format(u39, u40)
+        ytitle = u'{}Ar/{}Ar'.format(u36, u40)
+
+        xtitle = '39Ar/40Ar'
+        ytitle = '36Ar/40Ar'
+        # for axis in (plot.x_axis, plot.y_axis):
+        #     axis.title_font = 'courier 15'
+        # for font in (plot.x_axis.title_font, plot.y_axis.title_font):
+            # font.face_name = 'courier new'
+            # font.size = 15
+
         graph.set_x_title(xtitle, plotid=pid)
-        graph.set_y_title('36Ar/40Ar', plotid=pid)
+        graph.set_y_title(ytitle, plotid=pid)
         p = graph.plots[pid]
         p.y_axis.title_spacing = 50
 
@@ -164,7 +173,7 @@ class InverseIsochron(Isochron):
                                        marker='circle',
                                        bind_id=self.group_id,
                                        # selection_marker_size=5,
-                                       #selection_color='green',
+                                       # selection_color='green',
                                        marker_size=2)
         # self._scatter = scatter
         graph.set_series_label('data{}'.format(self.group_id))
@@ -247,11 +256,11 @@ class InverseIsochron(Isochron):
     def _add_inset(self, plot, xs, ys, reg):
         opt = self.options
         insetp = InverseIsochronPointsInset(xs, ys,
-                                            marker_size = opt.inset_marker_size,
-                                            color = opt.inset_marker_color,
+                                            marker_size=opt.inset_marker_size,
+                                            color=opt.inset_marker_color,
                                             line_width=0,
                                             # regressor=reg,
-                                            nominal_intercept = opt.nominal_intercept_value,
+                                            nominal_intercept=opt.nominal_intercept_value,
                                             location=opt.inset_location,
                                             width=opt.inset_width,
                                             height=opt.inset_height,
@@ -276,7 +285,7 @@ class InverseIsochron(Isochron):
             inset.index_range.high = hx
 
             inset.value_range.low = 0
-            inset.value_range.high = max(1.1*opt.nominal_intercept_value, yintercept * 1.1)
+            inset.value_range.high = max(1.1 * opt.nominal_intercept_value, yintercept * 1.1)
             plot.overlays.append(inset)
 
 
@@ -434,7 +443,7 @@ class InverseIsochron(Isochron):
         # ages, errors = zip(*[(ai.age.nominal_value,
         # ai.age.std_dev)
         # for ai in self.sorted_analyses])
-        #     return array(ages), array(errors)
+        # return array(ages), array(errors)
 
         #def _calculate_stats(self, ages, errors, xs, ys):
         #    mswd, valid_mswd, n = self._get_mswd(ages, errors)

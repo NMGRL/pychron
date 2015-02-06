@@ -213,6 +213,11 @@ class FigureTask(AnalysisEditTask):
     # ===============================================================================
     # figures
     # ===============================================================================
+    def _debug_add(self):
+        ans = self.browser_model.analysis_table.analyses
+        if ans:
+            self.unknowns_pane.items = ans
+
     def new_table(self, ans=None):
         if self.has_active_editor():
             if isinstance(self.active_editor, IdeogramEditor):
@@ -277,10 +282,13 @@ class FigureTask(AnalysisEditTask):
             #            from pychron.processing.tasks.tables.editors.fusion_table_editor \
         #                import FusionTableEditor as tklass
 
-        return self._new_figure(ans, name, klass, tklass,
+        editor = self._new_figure(ans, name, klass, tklass,
                                 set_ans=set_ans,
                                 add_iso=add_iso,
                                 add_table=add_table)
+
+        self._debug_add()
+        return editor
 
     def new_composite(self, ans=None, klass=None,
                      tklass=None,

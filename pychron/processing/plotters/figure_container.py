@@ -28,9 +28,7 @@ class FigureContainer(HasTraits):
     # nrows = Int(1)
     # ncols = Int(2)
 
-    def _model_changed(self):
-
-        # gpi = GraphPanelInfo()
+    def refresh(self, clear=False):
         layout = self.model.layout
         self.model.refresh_panels()
         n = self.model.npanels
@@ -43,11 +41,15 @@ class FigureContainer(HasTraits):
                     break
 
                 comp.add(p.make_graph())
-                for ap in p.plot_options.aux_plots:
-                    ap.clear_ylimits()
-                    ap.clear_xlimits()
+                if clear:
+                    for ap in p.plot_options.aux_plots:
+                        ap.clear_ylimits()
+                        ap.clear_xlimits()
 
         self.component = comp
+
+    def _model_changed(self):
+        self.refresh(clear=True)
 
     def _component_factory(self, ngraphs, layout):
 

@@ -27,8 +27,6 @@ from traitsui.api import View, UItem, Item, HGroup, VGroup
 # ============= local library imports  ==========================
 
 
-# ============= EOF =============================================
-
 class BaseInset(HasTraits):
     location = Str
     visible_axes = True
@@ -60,7 +58,7 @@ class BaseInset(HasTraits):
         # self.line_width = 1.0
         # self.line_style = "solid"
 
-        tick_label_font = 'Arial 8'
+        tick_label_font = 'modern 8'
         left = PlotAxis(orientation='left',
                         mapper=value_mapper,
                         tick_label_font=tick_label_font)
@@ -103,14 +101,5 @@ class BaseInset(HasTraits):
             self._draw_underlay(gc, *args, **kw)
 
             self._draw_plot(gc, *args, **kw)
-
-            # print self._cached_data_pts
-            # print 'ss', self.get_screen_points()
-            # for pp in self.plots:
-            #     pp._draw_plot(gc, *args, **kw)
-
-                # print pp._cached_data_pts
-                # print pp.get_screen_points()
-
-
             self._draw_border(gc, *args, **kw)
+# ============= EOF =============================================

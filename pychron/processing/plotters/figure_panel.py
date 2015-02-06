@@ -56,7 +56,7 @@ class FigurePanel(HasTraits):
         return gs
 
     # def dump_metadata(self):
-    #     return self.graph.dump_metadata()
+    # return self.graph.dump_metadata()
     #
     # def load_metadata(self, md):
     #     self.graph.load_metadata(md)
@@ -83,6 +83,7 @@ class FigurePanel(HasTraits):
         return center, mi, ma
 
     def make_graph(self):
+        # print '----------------------- make graph -----------------------'
         po = self.plot_options
         g = self.graph_klass(panel_height=200,
                              equi_stack=self.equi_stack,
@@ -101,7 +102,7 @@ class FigurePanel(HasTraits):
             else:
                 legend = None
 
-            ymas,ymis = [], []
+            ymas, ymis = [], []
             for i, fig in enumerate(self.figures):
                 fig.trait_set(xma=ma, xmi=mi,
                               ymas=ymas, ymis=ymis,
@@ -120,18 +121,27 @@ class FigurePanel(HasTraits):
                 fig.suppress_xlimits_update = False
                 # print fig.xma, fig.xmi
                 ma, mi = max(fig.xma, ma), min(fig.xmi, mi)
-                ymas,ymis = fig.ymas, fig.ymis
+                ymas, ymis = fig.ymas, fig.ymis
 
             if legend:
                 g.plots[0].overlays.append(legend)
 
+            if not self.track_value:
+                for p in g.plots:
+                    l, h = p.value_range.low, p.value_range.high
+                    p.value_range.low_setting = l
+                    p.value_range.high_setting = h
+
             if self.use_previous_limits:
-                # print plots[0], plots[0].has_xlimits(), plots[0].name
                 if plots[0].has_xlimits():
                     tmi, tma = plots[0].xlimits
                     if tmi != -inf and tma != inf:
                         mi, ma = tmi, tma
                         print 'using previous limits', mi, ma
+
+                for i, p in enumerate(plots):
+                    if p.has_ylimits():
+                        g.set_y_limits(p.ylimits[0], p.ylimits[1], plotid=i)
 
             if mi is None and ma is None:
                 mi, ma = 0, 100
@@ -140,15 +150,8 @@ class FigurePanel(HasTraits):
                 # print 'setting xlimits', mi, ma
                 g.set_x_limits(mi, ma, pad=fig.xpad or 0)
 
-            if not self.track_value:
-                for p in g.plots:
-                    l,h= p.value_range.low, p.value_range.high
-                    p.value_range.low_setting=l
-                    p.value_range.high_setting=h
-
             self.figures[0].post_make()
             for fig in self.figures:
-
                 for i in range(len(plots)):
                     fig.update_options_limits(i)
 

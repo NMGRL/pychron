@@ -41,26 +41,36 @@ class InverseIsochronEditor(FigureEditor):
     def load_fits(self, refiso):
         pass
 
-    def get_component(self, ans, plotter_options):
+    # def get_component(self, ans, plotter_options):
+    #
+    #     if plotter_options is None:
+    #         pom = InverseIsochronOptionsManager()
+    #         plotter_options = pom.plotter_options
+    #
+    #     from pychron.processing.plotters.isochron.isochron_model \
+    #         import InverseIsochronModel
+    #
+    #     model = InverseIsochronModel(plot_options=plotter_options)
+    #     model.analyses = ans
+    #     iv = FigureContainer(model=model)
+    #
+    #     #force are refresh
+    #     model.refresh()
+    #
+    #     return model, iv.component
+    #
+    #     #def replot(self):
+    #     #    print self.model
 
+    def get_component(self, ans, plotter_options):
         if plotter_options is None:
             pom = InverseIsochronOptionsManager()
             plotter_options = pom.plotter_options
 
         from pychron.processing.plotters.isochron.isochron_model \
             import InverseIsochronModel
-
-        model = InverseIsochronModel(plot_options=plotter_options)
-        model.analyses = ans
-        iv = FigureContainer(model=model)
-
-        #force are refresh
-        model.refresh()
-
-        return model, iv.component
-
-        #def replot(self):
-        #    print self.model
+        model, component = self._make_component(InverseIsochronModel, ans, plotter_options)
+        return model, component
 
     def _set_preferred_age_kind(self, ias):
         for ia in ias:

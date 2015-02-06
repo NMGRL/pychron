@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,6 +29,7 @@ import os
 from uncertainties import nominal_value, std_dev
 from pychron.core.csv.csv_parser import CSVColumnParser
 from pychron.processing.analyses.analysis_group import InterpretedAge
+from pychron.processing.plotters.figure_container import FigureContainer
 from pychron.processing.plotters.options.isochron import InverseIsochronOptions
 from pychron.processing.plotters.options.spectrum import SpectrumOptions
 from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
@@ -246,6 +247,24 @@ class FigureEditor(GraphEditor):
 
     def get_component(self, ans, po):
         pass
+
+    def _make_component(self, klass, ans, plot_options):
+        model = self.figure_model
+        if model is None:
+            model = klass()
+            self.figure_model = model
+
+        model.trait_set(plot_options=plot_options,
+                        titles=self.titles,
+                        analyses=ans)
+
+        container = self.figure_container
+        if not container:
+            container = FigureContainer(model=model)
+            self.figure_container = container
+
+        container.refresh()
+        return model, container.component
 
     def _set_group(self, idxs, gid, attr, refresh=True):
         ans = self.analyses

@@ -90,6 +90,8 @@ class BaseArArFigure(HasTraits):
             self._add_limit_tool(pp, 'x')
             self._add_limit_tool(pp, 'y')
 
+            pp.value_range.on_trait_change(lambda: self.update_options_limits(i), 'updated')
+            pp.index_range.on_trait_change(lambda: self.update_options_limits(i), 'updated')
             pp.value_range.tight_bounds = False
             # print po, po.ylimits, po.has_ylimits()
             # if po.has_ylimits():
@@ -271,8 +273,11 @@ class BaseArArFigure(HasTraits):
     def update_options_limits(self, pid):
         n = len(self.options.aux_plots)
         ap = self.options.aux_plots[n - pid - 1]
-        ap.ylimits = self.graph.get_y_limits(pid)
-        ap.xlimits = self.graph.get_x_limits(pid)
+        if not self.suppress_ylimits_update:
+            ap.ylimits = self.graph.get_y_limits(pid)
+
+        if not self.suppress_xlimits_update:
+            ap.xlimits = self.graph.get_x_limits(pid)
 
     # ===========================================================================
     # aux plots
@@ -519,42 +524,42 @@ class BaseArArFigure(HasTraits):
 
                 break
 
-    @on_trait_change('graph:plots:index_mapper:updated')
-    def _handle_index_range(self, obj, name, old, new):
+    # @on_trait_change('graph:plots:index_mapper:updated')
+    # def _handle_index_range(self, obj, name, old, new):
+    #
+    #     if not isinstance(new, bool):
+    #         if new.low == -inf or new.high == inf:
+    #             return
+    #
+    #         if self.suppress_xlimits_update:
+    #             return
+    #
+    #         for p in self.graph.plots:
+    #             if p.index_mapper == obj:
+    #                 op = self.options.aux_plots[-1]
+    #                 op.xlimits = (new.low, new.high)
+    #                 # print 'setting xlimits', op.xlimits, op, op.name
+    #                 break
 
-        if not isinstance(new, bool):
-            if new.low == -inf or new.high == inf:
-                return
-
-            if self.suppress_xlimits_update:
-                return
-
-            for p in self.graph.plots:
-                if p.index_mapper == obj:
-                    op = self.options.aux_plots[-1]
-                    op.xlimits = (new.low, new.high)
-                    # print 'setting xlimits', op.xlimits, op, op.name
-                    break
-
-    @on_trait_change('graph:plots:value_mapper:updated')
-    def _handle_value_range(self, obj, name, old, new):
-        if not isinstance(new, bool):
-            if self.suppress_ylimits_update:
-                return
-
-            for p in self.graph.plots:
-                if p.value_mapper == obj:
-                    plot = p
-                    title = plot.y_axis.title
-
-                    if title in PLOT_MAPPING:
-                        title = PLOT_MAPPING[title]
-
-                    for op in self.options.aux_plots:
-                        if title.startswith(op.name):
-                            op.ylimits = (new.low, new.high)
-                            break
-                    break
+    # @on_trait_change('graph:plots:value_mapper:updated')
+    # def _handle_value_range(self, obj, name, old, new):
+    #     if not isinstance(new, bool):
+    #         if self.suppress_ylimits_update:
+    #             return
+    #
+    #         for p in self.graph.plots:
+    #             if p.value_mapper == obj:
+    #                 plot = p
+    #                 title = plot.y_axis.title
+    #
+    #                 if title in PLOT_MAPPING:
+    #                     title = PLOT_MAPPING[title]
+    #
+    #                 for op in self.options.aux_plots:
+    #                     if title.startswith(op.name):
+    #                         op.ylimits = (new.low, new.high)
+    #                         break
+    #                 break
 
     # ===============================================================================
     # property get/set
