@@ -23,6 +23,7 @@ from chaco.lineplot import LinePlot
 from chaco.plot import Plot
 from chaco.plot_containers import VPlotContainer
 from chaco.scatterplot import ScatterPlot
+from pychron.graph.error_bar_overlay import ErrorBarOverlay
 from pychron.processing.plotters.base_inset import BaseInset
 
 GOLDEN_RATIO = 1.618
@@ -65,6 +66,18 @@ class IdeogramPointsInset(BaseIdeogramInset, ScatterPlot):
             self.y_axis.visible = False
 
         self.set_limits()
+
+        nsigma = 1
+        orientation = 'x'
+        line_width = 1
+        visible = True
+        ebo = ErrorBarOverlay(component=self,
+                              orientation=orientation,
+                              nsigma=nsigma,
+                              line_width=line_width,
+                              use_end_caps=False,
+                              visible=visible)
+        self.overlays.append(ebo)
 
 # ============= EOF =============================================
 

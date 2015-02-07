@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from chaco.array_data_source import ArrayDataSource
 from pyface.message_dialog import warning
 from traits.api import Float, Array
 # ============= standard library imports ========================
@@ -188,18 +189,9 @@ class Ideogram(BaseArArFigure):
         if po.show_labels:
             self._add_point_labels(scatter)
 
-        ia = self.options.index_attr
-        if ia.startswith('uage'):
-            name = 'Age'
-            ia = 'uage_wo_j_err'
-            if self.options.include_j_error:
-                ia = 'uage'
-        else:
-            name = ia
-
-        f = lambda x: u'{}= {}'.format(name, x.value_string(ia))
+        func = self._get_index_attr_label_func()
         self._add_scatter_inspector(scatter,
-                                    additional_info=f)
+                                    additional_info=func)
 
         return scatter, omits
 
@@ -251,14 +243,25 @@ class Ideogram(BaseArArFigure):
         # print 'settting ylimits {}'.format(my)
         omits = self._get_aux_plot_omits(po, ys)
 
-        ia = self.options.index_attr
-        f = lambda x: u'{}= {}'.format(ia, x.value_string(ia))
-
+        func = self._get_index_attr_label_func()
         self._add_scatter_inspector(scatter,
                                     value_format=lambda x: '{:d}'.format(int(x)),
-                                    additional_info=f)
+                                    additional_info=func)
 
         return scatter, omits
+
+    def _get_index_attr_label_func(self):
+        ia = self.options.index_attr
+        if ia.startswith('uage'):
+            name = 'Age'
+            ia = 'uage_wo_j_err'
+            if self.options.include_j_error:
+                ia = 'uage'
+        else:
+            name = ia
+
+        f = lambda x: u'{}= {}'.format(name, x.value_string(ia))
+        return f
 
     def _plot_relative_probability(self, po, plot, pid):
         graph = self.graph
@@ -318,6 +321,7 @@ class Ideogram(BaseArArFigure):
                                         width=self.options.inset_width,
                                         height=h,
                                         visible_axes=False,
+                                        xerror=ArrayDataSource(self.xes),
                                         location=self.options.inset_location)
                 # o.x_axis.visible = False
                 plot.overlays.append(o)

@@ -97,7 +97,7 @@ class BaseInset(HasTraits):
             gc.clip_to_rect(component.x, component.y, component.width, component.height)
             self._compute_location(component)
             self._draw_underlay(gc, *args, **kw)
-
             self._draw_plot(gc, *args, **kw)
+            self._draw_overlay(gc, *args, **kw)
             self._draw_border(gc, *args, **kw)
 # ============= EOF =============================================

@@ -82,7 +82,6 @@ class AnalysisPointInspector(PointInspector):
         menu_manager.destroy()
         event.handled = True
 
-
     def assemble_lines(self):
         lines = []
         if self.current_position:

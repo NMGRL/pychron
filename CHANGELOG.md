@@ -25,6 +25,9 @@ CHANGELOG
 * added group attributes to spectrum options. allows you to set color for group and calculate a fixed plateau for a specific group
 #### 2/5/2015 ####
 * added inset to inverse isochron
+#### 2/7/2015 ####
+* added analysis number aux plot to ideogram inset
+
 
 ### Bug Fixes ###
 * fixed plotting ideograms of attributes other than age
@@ -44,6 +47,8 @@ CHANGELOG
 * fixed isochron autoscaling
 #### 2/5/2015 ####
 * updated x,y limits persistence
+#### 2/7/2015 ####
+* fixed AnalysisPointInspector for analysis number plots. was displaying uage... changed to Age
 
 2.0.6
 ------------------
