@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from enable.markers import marker_names
 from traits.api import HasTraits, Str, Bool, Property, Int, Enum, List, String, Tuple, Float, Dict
 
 # ============= standard library imports ========================
@@ -54,6 +55,9 @@ class AuxPlotOptions(HasTraits):
     _has_xlimits = Bool(False)
 
     enabled = True
+
+    marker = Str('circle')
+    marker_size = Float(2)
 
     def set_overlay_position(self, k, v):
         self.overlay_positions[k] = v

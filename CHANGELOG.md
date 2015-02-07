@@ -27,7 +27,7 @@ CHANGELOG
 * added inset to inverse isochron
 #### 2/7/2015 ####
 * added analysis number aux plot to ideogram inset
-
+* added edit view to aux plots. edit marker and marker size
 
 ### Bug Fixes ###
 * fixed plotting ideograms of attributes other than age

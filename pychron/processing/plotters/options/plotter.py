@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from itertools import groupby
+from enable.markers import marker_names
 
 from kiva.fonttools import str_to_font
 from traits.api import Str, Property, Enum, Button, List
@@ -283,12 +284,17 @@ class PlotterOptions(FigurePlotterOptions):
                 checkbox_column(name='ytitle_visible', label='Y Title'),
                 object_column(name='filter_str', label='Filter')]
 
+        v = View(Item('name', editor=EnumEditor(name='names')),
+                 Item('marker', editor=EnumEditor(values=marker_names)),
+                 Item('marker_size'))
+
         aux_plots_grp = Item('aux_plots',
                              style='custom',
                              show_label=False,
                              editor=TableEditor(columns=cols,
                                                 sortable=False,
                                                 deletable=False,
+                                                edit_view = v,
                                                 reorderable=False))
         return aux_plots_grp
 

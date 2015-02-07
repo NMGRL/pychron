@@ -531,8 +531,8 @@ class Ideogram(BaseArArFigure):
         s, p = graph.new_series(
             x=self.xs, y=ys,
             type='scatter',
-            marker='circle',
-            marker_size=3,
+            marker=po.marker,
+            marker_size=po.marker_size,
             selection_marker_size=3,
             bind_id=self.group_id,
             plotid=pid, **kw)
