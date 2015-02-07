@@ -51,7 +51,7 @@ from .editors.isochron_editor import InverseIsochronEditor
 from .editors.ideogram_editor import IdeogramEditor
 
 # @todo: add layout editing.
-#@todo: add vertical stack. link x-axes
+# @todo: add vertical stack. link x-axes
 
 
 class FigureTask(AnalysisEditTask):
@@ -214,60 +214,65 @@ class FigureTask(AnalysisEditTask):
     # figures
     # ===============================================================================
     def _debug_add(self):
-        ans = self.browser_model.analysis_table.analyses
-        if ans:
-            self.unknowns_pane.items = ans
+        from pychron.globals import globalv
+
+        if globalv.debug:
+            ans = self.browser_model.analysis_table.analyses
+            if ans:
+                self.unknowns_pane.items = ans
 
     def new_table(self, ans=None):
         if self.has_active_editor():
             if isinstance(self.active_editor, IdeogramEditor):
                 from pychron.processing.tasks.tables.editors.fusion.fusion_table_editor import FusionTableEditor
+
                 klass = FusionTableEditor
             elif isinstance(self.active_editor, SpectrumEditor):
                 from pychron.processing.tasks.tables.editors.step_heat.step_heat_table_editor import StepHeatTableEditor
+
                 klass = StepHeatTableEditor
             else:
                 return
 
             name = self.active_editor.name.replace(self.active_editor.basename, '')
             return self._new_table(ans, name, klass)
-        # # new figure editor
-        #     editor = klass(
-        #         name=name,
-        #         processor=self.manager)
-        #
-        #     if ans is None:
-        #         ans = self.unknowns_pane.items
-        #
-        #     if ans:
-        #         editor.analyses = ans
-        #         editor.set_name()
-        #         editor.rebuild()
-        #         # if set_ans:
-        #         #     self.unknowns_pane.items = ans
-        #
-        #     self._open_editor(editor)
-        #
-        #     # add_associated = False
-        #     # if not add_associated:
-        #     #     self.debug('Not adding associated editors')
-        #     # else:
-        #     #     if tklass and add_table:
-        #     #         # open table
-        #     #         teditor = self._new_table(ans, name, tklass)
-        #     #         if teditor:
-        #     #             editor.associated_editors.append(weakref.ref(teditor)())
-        #     #
-        #     #     if add_iso:
-        #     #         # open associated isochron
-        #     #         ieditor = self._new_associated_isochron(ans, name)
-        #     #         if ieditor:
-        #     #             editor.associated_editors.append(weakref.ref(ieditor)())
-        #     #             ieditor.parent_editor = editor
-        #
-        #     # activate figure editor
-        #     # self.editor_area.activate_editor(editor)
-        #     return editor
+            # # new figure editor
+            #     editor = klass(
+            #         name=name,
+            #         processor=self.manager)
+            #
+            #     if ans is None:
+            #         ans = self.unknowns_pane.items
+            #
+            #     if ans:
+            #         editor.analyses = ans
+            #         editor.set_name()
+            #         editor.rebuild()
+            #         # if set_ans:
+            #         #     self.unknowns_pane.items = ans
+            #
+            #     self._open_editor(editor)
+            #
+            #     # add_associated = False
+            #     # if not add_associated:
+            #     #     self.debug('Not adding associated editors')
+            #     # else:
+            #     #     if tklass and add_table:
+            #     #         # open table
+            #     #         teditor = self._new_table(ans, name, tklass)
+            #     #         if teditor:
+            #     #             editor.associated_editors.append(weakref.ref(teditor)())
+            #     #
+            #     #     if add_iso:
+            #     #         # open associated isochron
+            #     #         ieditor = self._new_associated_isochron(ans, name)
+            #     #         if ieditor:
+            #     #             editor.associated_editors.append(weakref.ref(ieditor)())
+            #     #             ieditor.parent_editor = editor
+            #
+            #     # activate figure editor
+            #     # self.editor_area.activate_editor(editor)
+            #     return editor
 
     def new_ideogram(self, ans=None, klass=None, tklass=None,
                      name='Ideo', set_ans=True,
@@ -283,17 +288,17 @@ class FigureTask(AnalysisEditTask):
         #                import FusionTableEditor as tklass
 
         editor = self._new_figure(ans, name, klass, tklass,
-                                set_ans=set_ans,
-                                add_iso=add_iso,
-                                add_table=add_table)
+                                  set_ans=set_ans,
+                                  add_iso=add_iso,
+                                  add_table=add_table)
 
         self._debug_add()
         return editor
 
     def new_composite(self, ans=None, klass=None,
-                     tklass=None,
-                     name='Comp',
-                     add_table=True, add_iso=True):
+                      tklass=None,
+                      name='Comp',
+                      add_table=True, add_iso=True):
         if klass is None:
             klass = CompositeEditor
 
@@ -316,9 +321,11 @@ class FigureTask(AnalysisEditTask):
             from pychron.processing.tasks.tables.editors.step_heat.step_heat_table_editor import \
                 StepHeatTableEditor as tklass
 
-        return self._new_figure(ans, name, klass, tklass,
-                                add_iso=add_iso,
-                                add_table=add_table)
+        editor = self._new_figure(ans, name, klass, tklass,
+                                  add_iso=add_iso,
+                                  add_table=add_table)
+        self._debug_add()
+        return editor
 
     def new_inverse_isochron(self, ans=None, name='Inv. Iso.',
                              klass=None, tklass=None, plotter_kw=None):
@@ -857,7 +864,7 @@ class FigureTask(AnalysisEditTask):
                               Tabbed(browser_pane_item(),
                                      PaneItem('pychron.processing.figures.plotter_options'),
                                      PaneItem('pychron.plot_editor'))),
-                              PaneItem('pychron.processing.unknowns')))
+                                         PaneItem('pychron.processing.unknowns')))
 
         # return TaskLayout(
         #     id='pychron.processing',

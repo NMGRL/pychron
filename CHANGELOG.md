@@ -49,7 +49,8 @@ CHANGELOG
 * updated x,y limits persistence
 #### 2/7/2015 ####
 * fixed AnalysisPointInspector for analysis number plots. was displaying uage... changed to Age
-
+* fixed Plateau overlay placement. position 100px above nominal plateau or ymax-50px.
+ 
 2.0.6
 ------------------
 * added StartupTester. use setupfiles/startup_tests.yaml to configure

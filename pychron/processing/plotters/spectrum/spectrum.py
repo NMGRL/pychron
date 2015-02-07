@@ -304,7 +304,8 @@ class Spectrum(BaseArArFigure):
                             label_font_size=opt.plateau_font_size,
 
                             # label_offset=plateau_age.std_dev*self.options.step_nsigma,
-                            y=plateau_age.nominal_value * 1.25)
+                            # y=plateau_age.nominal_value * 1.25)
+                            y=plateau_age.nominal_value)
 
         # lp.underlays.append(ov)
         lp.overlays.append(ov)
