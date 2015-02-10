@@ -49,7 +49,7 @@ class ValueTabularAdapter(TabularAdapter):
     rvalue_text = Property
     percent_diff_text = Property
 
-    font = '9'
+    font = '12'
     use_bg_color = Bool(True)
 
     def get_bg_color(self, object, trait, row, column=0):
@@ -197,11 +197,11 @@ class DiffEditor(BaseTraitsEditor):
                         lvalue=left.age_err,
                         rvalue=right.age_err))
         vs.append(Value(name=u'\u00b1 w/o JEr',
-                        lvalue=left.age_wo_j_err,
-                        rvalue=right.age_wo_j_err))
+                        lvalue=std_dev(left.uage_wo_j_err),
+                        rvalue=right.age_err_wo_j))
         vs.append(Value(name='40Ar* %',
                         lvalue=nominal_value(left.rad40_percent),
-                        rvalue=nominal_value(left.rad40_percent)))
+                        rvalue=nominal_value(right.rad40_percent)))
 
         for a in isotopes:
             iso = left.isotopes[a]

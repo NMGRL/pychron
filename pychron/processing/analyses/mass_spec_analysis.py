@@ -28,7 +28,6 @@ from pychron.pychron_constants import IRRADIATION_KEYS
 class MassSpecAnalysis(Analysis):
     def _sync(self, obj):
 
-        # ip = obj.irradiation_position
         arar = obj.araranalyses[-1]
         if arar:
             self.j = ufloat(arar.JVal, arar.JEr)

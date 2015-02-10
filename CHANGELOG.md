@@ -50,6 +50,9 @@ CHANGELOG
 #### 2/7/2015 ####
 * fixed AnalysisPointInspector for analysis number plots. was displaying uage... changed to Age
 * fixed Plateau overlay placement. position 100px above nominal plateau or ymax-50px.
+#### 2/10/2015 ####
+* fixed diff editor. fixed age and rad yield diffing
+ 
  
 2.0.6
 ------------------

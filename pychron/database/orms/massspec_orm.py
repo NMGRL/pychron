@@ -139,6 +139,8 @@ class ArArAnalysisTable(Base):
     Age = doublecolumn(primary_key=True)
     ErrAge = doublecolumn()
     ErrAgeWOErInJ = doublecolumn()
+    PctRad = doublecolumn()
+    PctRadEr = doublecolumn()
 
 class BaselinesChangeableItemsTable(Base):
     __tablename__ = 'baselineschangeableitemstable'

@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,40 +20,17 @@ from traits.api import Instance
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.database.adapters.massspec_database_adapter import MassSpecDatabaseAdapter
-from pychron.database.database_connection_spec import DBConnectionSpec
 from pychron.loggable import Loggable
 from pychron.processing.analyses.mass_spec_analysis import MassSpecAnalysis
 
 
 class MassSpecRecaller(Loggable):
-    # dbconn_spec = Instance(DBConnectionSpec, ())
     db = Instance(MassSpecDatabaseAdapter)
-    # connect_button = Button('Connect')
-    # def _dbconn_spec_default(self):
-    #        return DBConnectionSpec(database='massspecdata_minnabluff',
-    #                                username='root',
-    #                                password='Argon',
-    #                                host='localhost'
-    #                                )
-    #    return DBConnectionSpec(database='massspecdata',
-    #                            username='root',
-    #                            password='DBArgon',
-    #                            host='129.138.12.160')
-
-        # return DBConnectionSpec(database='massspecdata_minnabluff',
-        #                         username='root',
-        #                         password='Argon',
-        #                         host='localhost')
 
     def is_connected(self):
         return self.db.connected
 
     def connect(self):
-        # self.db.name = self.dbconn_spec.name
-        # self.db.username = self.dbconn_spec.username
-        # self.db.password = self.dbconn_spec.password
-        # self.db.host = self.dbconn_spec.host
-        # self.db.kind = 'mysql'
         return self.db.connect()
 
     def find_analysis(self, labnumber, aliquot, step):
@@ -65,7 +42,7 @@ class MassSpecRecaller(Loggable):
                 rec.sync(dbrec)
                 irradpos = db.get_irradiation_position(dbrec.IrradPosition)
                 r = irradpos.IrradiationLevel
-                n,l=r[:-1],r[-1:]
+                n, l = r[:-1], r[-1:]
 
                 dbirrad = db.get_irradiation_level(n, l)
 
@@ -73,6 +50,4 @@ class MassSpecRecaller(Loggable):
 
                 return rec
 
-    # def _connect_button_fired(self):
-    #     self.connect()
 # ============= EOF =============================================
