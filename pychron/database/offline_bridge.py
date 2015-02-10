@@ -256,10 +256,10 @@ class OfflineBridge(IsotopeAdapter):
 
         self._copy_table(dest, src, ln.irradiation_id, 'irrad_positiontable')
         self._copy_table(dest, src, ln.irradiation_position.level_id, 'irrad_leveltable')
-        self._copy_table(dest, src, ln.irradiation_position.level.irradiation_id,
-                         'irrad_irradiationtable')
-        self._copy_table(dest, src, ln.irradiation_position.level.production_id,
-                         'irrad_productiontable')
+        self._copy_table(dest, src, ln.irradiation_position.level.irradiation_id, 'irrad_irradiationtable')
+        self._copy_table(dest, src, ln.irradiation_position.level.production_id,'irrad_productiontable')
+
+        self._copy_table(dest, src, ln.irradiation_position.level.irradiation.chronology.id, 'irrad_chronologytable')
 
         for fhist in ln.irradiation_position.flux_histories:
             self._copy_table(dest, src, fhist.id, 'flux_historytable')
@@ -294,7 +294,7 @@ class OfflineBridge(IsotopeAdapter):
                     self.debug('copying analysis {}'.format(ai.record_id))
                     self._copy(dban, ln, dest, src)
                 times.append(time.time()-st)
-            print times, sum(times)/len(times)
+            # print times, sum(times)/len(times)
 
     def _copy_table(self, dest, src, pid, tn, primary_key='id', verbose=False):
 

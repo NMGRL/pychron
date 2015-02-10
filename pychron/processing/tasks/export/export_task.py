@@ -56,7 +56,7 @@ class ExportTask(AnalysisEditTask):
         super(ExportTask, self).activated()
         ans = self.browser_model.analysis_table.analyses
 
-        self.unknowns_pane.items = ans
+        self.unknowns_pane.items = self.manager.make_analyses(ans, calculate_age=True)
 
     def _append_replace_unknowns(self, is_append, items=None):
         if not items:
