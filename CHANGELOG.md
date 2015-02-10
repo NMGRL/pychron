@@ -28,6 +28,9 @@ CHANGELOG
 #### 2/7/2015 ####
 * added analysis number aux plot to ideogram inset
 * added edit view to aux plots. edit marker and marker size
+#### 2/10/2015 ####
+* added history limit to sqlite export. transfer the last n histories. defaults to 1. so only transfer the latest history
+
 
 ### Bug Fixes ###
 * fixed plotting ideograms of attributes other than age
@@ -52,7 +55,7 @@ CHANGELOG
 * fixed Plateau overlay placement. position 100px above nominal plateau or ymax-50px.
 #### 2/10/2015 ####
 * fixed diff editor. fixed age and rad yield diffing
- 
+
  
 2.0.6
 ------------------

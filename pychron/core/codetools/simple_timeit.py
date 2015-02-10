@@ -30,7 +30,7 @@ def timethis(func, msg=None, log=None, args=None, kwargs=None, decorate='$', ret
     st = time.time()
     r = func(*args, **kwargs)
     et = time.time() - st
-    s = '{}s'.format(et)
+    s = '{:0.5f}s'.format(et)
 
     if msg is None:
         if hasattr(func, 'func_name'):

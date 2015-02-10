@@ -26,6 +26,7 @@ from traits.api import Any
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from sqlalchemy.orm.exc import NoResultFound
+from pychron.core.codetools.simple_timeit import timethis
 from pychron.core.helpers.logger_setup import wrap
 from pychron.database.adapters.isotope_adapter import IsotopeAdapter
 from pychron.database.orms.isotope.util import Base
@@ -47,7 +48,7 @@ class DatabaseBridge(Loggable):
     # def init(self, p=None):
     #
     # #create a default db
-    #     if p is None:
+    # if p is None:
     #         p = os.path.join(paths.hidden_dir, 'data.db')
     #
     #     self.debug('init database {}'.format(p))
@@ -190,15 +191,15 @@ class OfflineBridge(IsotopeAdapter):
         use to gather data from mysql and save to sqlite
     """
     kind = 'sqlite'
-    _cache = None
-    _table_cache = None
-    _src_table_cache = None
+    history_limit = 1
+    # _cache = None
+    # _table_cache = None
+    # _src_table_cache = None
 
     def init(self, p=None, overwrite=False):
-        self._table_cache = dict()
-        self._src_table_cache = dict()
-
-        self._cache = defaultdict(list)
+        # self._table_cache = dict()
+        # self._src_table_cache = dict()
+        # self._cache = defaultdict(list)
 
         # create a default db
         if p is None:
@@ -215,58 +216,6 @@ class OfflineBridge(IsotopeAdapter):
             metadata = Base.metadata
             self.create_all(metadata)
 
-    def _copy(self, dban, ln, dest, src):
-        # get the source objects
-        self._copy_table(dest, src, dban.id, 'meas_analysistable')
-        self._copy_table(dest, src, dban.lab_id, 'gen_labtable')
-        self._copy_table(dest, src, dban.extraction_id, 'meas_extractiontable')
-        self._copy_table(dest, src, dban.measurement_id, 'meas_measurementtable')
-        self._copy_table(dest, src, dban.measurement.analysis_type_id, 'gen_analysistypetable')
-        self._copy_table(dest, src, dban.measurement.mass_spectrometer_id, 'gen_massspectrometertable')
-        self._copy_table(dest, src, dban.selected_histories.id, 'proc_selectedhistoriestable')
-        self._copy_table(dest, src, dban.tag, 'proc_tagtable', primary_key='name')
-        for fi in dban.fit_histories:
-            self._copy_table(dest, src, fi.id, 'proc_fithistorytable')
-            for fit in fi.fits:
-                self._copy_table(dest, src, fit.id, 'proc_fittable')
-
-        for bhist in dban.blanks_histories:
-            self._copy_table(dest, src, bhist.id, 'proc_blankshistorytable')
-            for blank in bhist.blanks:
-                self._copy_table(dest, src, blank.id, 'proc_blankstable')
-                for aset in blank.analysis_set:
-                    self._copy_table(dest, src, aset.id, 'proc_blankssettable')
-                for vset in blank.value_set:
-                    self._copy_table(dest, src, vset.id, 'proc_BlanksSetValueTable')
-
-        for iso in dban.isotopes:
-            self._copy_table(dest, src, iso.id, 'meas_isotopetable')
-            self._copy_table(dest, src, iso.detector_id, 'gen_detectortable')
-            self._copy_table(dest, src, iso.molecular_weight_id, 'gen_molecularweighttable')
-            for result in iso.results:
-                self._copy_table(dest, src, result.id, 'proc_IsotopeResultsTable')
-
-            dest.flush()
-
-        self._copy_table(dest, src, ln.sample_id, 'gen_sampletable')
-        sample = ln.sample
-        if sample:
-            self._copy_table(dest, src, sample.project_id, 'gen_projecttable')
-            self._copy_table(dest, src, sample.material_id, 'gen_materialtable')
-
-        self._copy_table(dest, src, ln.irradiation_id, 'irrad_positiontable')
-        self._copy_table(dest, src, ln.irradiation_position.level_id, 'irrad_leveltable')
-        self._copy_table(dest, src, ln.irradiation_position.level.irradiation_id, 'irrad_irradiationtable')
-        self._copy_table(dest, src, ln.irradiation_position.level.production_id,'irrad_productiontable')
-
-        self._copy_table(dest, src, ln.irradiation_position.level.irradiation.chronology.id, 'irrad_chronologytable')
-
-        for fhist in ln.irradiation_position.flux_histories:
-            self._copy_table(dest, src, fhist.id, 'flux_historytable')
-            self._copy_table(dest, src, fhist.flux.id, 'flux_fluxtable')
-
-        dest.flush()
-
     def add_analyses(self, db, ans, progress):
         self.debug('adding analyses')
         self.debug('source={}'.format(db.url))
@@ -276,6 +225,7 @@ class OfflineBridge(IsotopeAdapter):
         src = db.sess
         with self.session_ctx() as dest:
             import time
+
             times = []
             for ai in ans:
                 st = time.time()
@@ -293,8 +243,87 @@ class OfflineBridge(IsotopeAdapter):
 
                     self.debug('copying analysis {}'.format(ai.record_id))
                     self._copy(dban, ln, dest, src)
-                times.append(time.time()-st)
-            # print times, sum(times)/len(times)
+                times.append(time.time() - st)
+                # print times, sum(times)/len(times)
+
+    def _copy_irradiation(self, dest, src, ln):
+        self._copy_table(dest, src, ln.irradiation_id, 'irrad_positiontable')
+        self._copy_table(dest, src, ln.irradiation_position.level_id, 'irrad_leveltable')
+        self._copy_table(dest, src, ln.irradiation_position.level.irradiation_id, 'irrad_irradiationtable')
+        self._copy_table(dest, src, ln.irradiation_position.level.production_id, 'irrad_productiontable')
+        self._copy_table(dest, src, ln.irradiation_position.level.irradiation.chronology.id, 'irrad_chronologytable')
+
+    def _copy_flux(self, dest, src, ln):
+        for fhist in ln.irradiation_position.flux_histories:
+            self._copy_table(dest, src, fhist.id, 'flux_historytable')
+            self._copy_table(dest, src, fhist.flux.id, 'flux_fluxtable')
+
+    def _copy_meta(self, dest, src, ln):
+        self._copy_table(dest, src, ln.sample_id, 'gen_sampletable')
+        sample = ln.sample
+        if sample:
+            self._copy_table(dest, src, sample.project_id, 'gen_projecttable')
+            self._copy_table(dest, src, sample.material_id, 'gen_materialtable')
+
+    def _copy_isotopes(self,dest, src, dban):
+        for iso in dban.isotopes:
+            self._copy_table(dest, src, iso.id, 'meas_isotopetable')
+            self._copy_table(dest, src, iso.detector_id, 'gen_detectortable')
+            self._copy_table(dest, src, iso.molecular_weight_id, 'gen_molecularweighttable')
+            for result in iso.results[-self.history_limit:]:
+                self._copy_table(dest, src, result.id, 'proc_IsotopeResultsTable')
+
+            dest.flush()
+
+    def _copy_blanks(self, dest, src, dban):
+        histories = dban.blanks_histories[-self.history_limit:]
+        for bhist in histories:
+            self._copy_table(dest, src, bhist.id, 'proc_blankshistorytable')
+            for blank in bhist.blanks:
+                self._copy_table(dest, src, blank.id, 'proc_blankstable')
+                for aset in blank.analysis_set:
+                    self._copy_table(dest, src, aset.id, 'proc_blankssettable')
+
+                for vset in blank.value_set:
+                    self._copy_table(dest, src, vset.id, 'proc_BlanksSetValueTable')
+
+    def _copy_fits(self, dest, src, dban):
+        histories = dban.fit_histories[-self.history_limit:]
+        for fi in histories:
+            self._copy_table(dest, src, fi.id, 'proc_fithistorytable')
+            for fit in fi.fits:
+                self._copy_table(dest, src, fit.id, 'proc_fittable')
+
+    def _copy(self, dban, ln, dest, src):
+        # get the source objects
+        self._copy_table(dest, src, dban.id, 'meas_analysistable')
+        self._copy_table(dest, src, dban.lab_id, 'gen_labtable')
+        self._copy_table(dest, src, dban.extraction_id, 'meas_extractiontable')
+        self._copy_table(dest, src, dban.measurement_id, 'meas_measurementtable')
+        self._copy_table(dest, src, dban.measurement.analysis_type_id, 'gen_analysistypetable')
+        self._copy_table(dest, src, dban.measurement.mass_spectrometer_id, 'gen_massspectrometertable')
+        self._copy_table(dest, src, dban.selected_histories.id, 'proc_selectedhistoriestable')
+        self._copy_table(dest, src, dban.tag, 'proc_tagtable', primary_key='name')
+
+        # timethis(self._copy_fits, args=(dest, src, dban))
+        self._copy_fits(dest, src, dban)
+
+        # timethis(self._copy_blanks, args=(dest, src, dban))
+        self._copy_blanks(dest, src, dban)
+
+        # timethis(self._copy_isotopes, args=(dest, src, dban))
+        self._copy_isotopes(dest, src, dban)
+
+        # timethis(self._copy_meta, args=(dest, src, ln))
+        self._copy_meta(dest, src, ln)
+
+        # timethis(self._copy_irradiation, args=(dest, src, ln))
+        self._copy_irradiation(dest, src, ln)
+
+        # timethis(self._copy_flux, args=(dest, src, ln))
+        self._copy_flux(dest, src, ln)
+
+        dest.flush()
 
     def _copy_table(self, dest, src, pid, tn, primary_key='id', verbose=False):
 
@@ -305,7 +334,7 @@ class OfflineBridge(IsotopeAdapter):
         # added_ids = self._cache[tn]
         # # print tn, pid, added_ids, pid in added_ids
         # if pid in added_ids:
-        #     print 'skipping', pid, tn
+        # print 'skipping', pid, tn
         #     return
         # else:
         #     added_ids.append(pid)
@@ -361,6 +390,6 @@ class OfflineBridge(IsotopeAdapter):
 
 # if __name__=='__main__':
 # o=OfflineBridge()
-#     o.init('/Users/ross/Sandbox/data.db')
+# o.init('/Users/ross/Sandbox/data.db')
 # ============= EOF =============================================
 
