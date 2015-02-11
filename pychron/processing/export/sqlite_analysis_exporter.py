@@ -19,6 +19,7 @@ from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait
 from traitsui.api import View, UItem, Item, HGroup, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.filetools import view_file
 from pychron.database.offline_bridge import OfflineBridge
 from pychron.processing.export.destinations import SQLiteDestination
 from pychron.processing.export.exporter import Exporter
@@ -29,21 +30,35 @@ class SQLiteAnalysisExporter(Exporter):
     iso_manager = Any
 
     destination = Instance(SQLiteDestination, ())
+    history_limit = Int(1)
 
     def add(self, analysis):
         self.analyses.append(analysis)
 
+    def edit_view(self):
+        v = View(VGroup(Item('destination', style='custom', label='Destination'),
+                        Item('history_limit', label='History Limit',
+                             tooltip='Only export the last N data reduction history entries')),
+                 width = 500,
+                 buttons = ['OK','Cancel'],
+                 title='Export Options',
+                 kind='livemodal')
+        return v
+
     def export(self, *args, **kw):
-        db = self.iso_manager.db
+        info = self.edit_traits(view='edit_view')
+        if info.result:
+            db = self.iso_manager.db
 
-        bridge = OfflineBridge()
-        bridge.init(self.destination.destination, overwrite=True)
+            bridge = OfflineBridge()
+            bridge.init(self.destination.destination, overwrite=True)
 
-        progress = self.iso_manager.open_progress(len(self.analyses))
-        with db.session_ctx():
-            bridge.add_analyses(db, self.analyses, progress)
+            progress = self.iso_manager.open_progress(len(self.analyses))
+            with db.session_ctx():
+                bridge.add_analyses(db, self.analyses, progress)
 
-        progress.close()
+            progress.close()
+
 # ============= EOF =============================================
 
 

@@ -38,11 +38,8 @@ class ExportCentralPane(TraitsTaskPane):
                                editable=False)
         v = View(
             VGroup(HGroup(Item('kind', label='Export Kind')),
-                   VGroup(UItem('object.exporter.destination', style='custom'),
-                          label='Destination', show_border=True),
-
-            # HGroup(icon_button_editor('append_button', 'add'),
-            #        icon_button_editor('replace_button', 'arrow_refresh')),
+                   # VGroup(UItem('object.exporter.destination', style='custom'),
+                   #        label='Destination', show_border=True),
             UItem('exported_analyses', editor=editor)))
         return v
 
