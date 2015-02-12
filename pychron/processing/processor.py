@@ -65,7 +65,14 @@ class Processor(IsotopeDatabaseManager):
                 if dlg.path:
                     return dlg.path
 
+        # the db's connection paramaters are bound to the ConnectionPreferences.
+        # this binding is two way so by setting kind='sqlite', kind in the preferences is also changed
+        # easiest solution is to save the current kind value and when the database plugin stops
+        # set kind to the old value
 
+        from pychron.globals import globalv
+
+        globalv.prev_db_kind = self.db.kind
         self.db.trait_set(kind='sqlite',
                           path=get_path())
         self.db.connect()

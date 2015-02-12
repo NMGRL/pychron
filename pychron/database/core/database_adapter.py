@@ -101,6 +101,7 @@ class DatabaseAdapter(Loggable):
 
     connected = Bool(False)
     kind = Str  # ('mysql')
+    prev_kind = Str
     username = Str  # ('root')
     host = Str  # ('localhost')
     # name = Str#('massspecdata_local')
@@ -130,12 +131,8 @@ class DatabaseAdapter(Loggable):
     verbose = True
     connection_error = Str
 
-    def __init__(self, *args, **kw):
-        super(DatabaseAdapter, self).__init__(*args, **kw)
-        # import logging
-        #
-        # logging.basicConfig()
-        # logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+    # def __init__(self, *args, **kw):
+    #     super(DatabaseAdapter, self).__init__(*args, **kw)
 
     def create_all(self, metadata):
         # if self.kind == 'sqlite':

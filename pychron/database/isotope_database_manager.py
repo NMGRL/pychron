@@ -60,7 +60,7 @@ class BaseIsotopeDatabaseManager(Loggable):
         if connect:
             self.db.connect(warn=warn, version_warn=version_warn, attribute_warn=attribute_warn)
 
-    #IDatastore protocol
+    # IDatastore protocol
     def get_greatest_aliquot(self, identifier):
         ret = 0
         if self.db:
@@ -172,8 +172,8 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
     # vcs = Any
     # offline_bridge = Any
 
-    def bind_preferences(self):
-        super(IsotopeDatabaseManager, self).bind_preferences()
+    # def bind_preferences(self):
+    #     super(IsotopeDatabaseManager, self).bind_preferences()
 
         # prefid = 'pychron.vcs'
         # bind_preference(self, 'use_vcs', '{}.use_vcs'.format(prefid))

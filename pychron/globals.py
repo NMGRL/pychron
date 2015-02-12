@@ -21,6 +21,7 @@ from pychron.core.helpers.filetools import to_bool
 
 
 class Globals(object):
+    prev_db_kind = None
     dev_pwd = '6e06f5d370baef1a115ae2f134fae22fbfbe79dc'  # Argon
     # use_shared_memory = False
 

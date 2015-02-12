@@ -37,6 +37,14 @@ class DatabasePlugin(BaseTaskPlugin):
     test_massspec_error = ''
     test_pychron_version_error = ''
 
+    def stop(self):
+        from pychron.globals import globalv
+
+        kind = globalv.prev_db_kind
+        if kind:
+            man = self._get_database_manager(connect=False)
+            man.db.kind = globalv.prev_db_kind
+
     def start(self):
         self.startup_test()
         if self._connectable:
@@ -44,7 +52,7 @@ class DatabasePlugin(BaseTaskPlugin):
             del self._db
 
     def test_pychron_version(self):
-        iso = self._get_database()
+        iso = self._get_database_manager()
         err = iso.db.test_version()
         if err:
             self.test_pychron_version_error = err
@@ -52,7 +60,7 @@ class DatabasePlugin(BaseTaskPlugin):
         return 'Passed' if not err else 'Failed'
 
     def test_pychron(self):
-        iso = self._get_database()
+        iso = self._get_database_manager()
         self._connectable = c = iso.is_connected()
 
         if not c:
@@ -60,12 +68,13 @@ class DatabasePlugin(BaseTaskPlugin):
 
         return 'Passed' if c else 'Failed'
 
-    def _get_database(self):
+    def _get_database_manager(self, connect=True):
         if not self._db:
             iso = IsotopeDatabaseManager(application=self.application,
                                          warn=False,
                                          version_warn=False,
-                                         attribute_warn=False)
+                                         attribute_warn=False,
+                                         connect=connect)
             self._db = iso
 
         return self._db
@@ -88,6 +97,7 @@ class DatabasePlugin(BaseTaskPlugin):
 
     def _slave_factory(self):
         from pychron.database.tasks.replication_task import ReplicationTask
+
         s = ReplicationTask()
         return s
 
@@ -107,6 +117,7 @@ class DatabasePlugin(BaseTaskPlugin):
 
         if self._get_pref('enabled'):
             from pychron.database.adapters.massspec_database_adapter import MassSpecDatabaseAdapter
+
             sos.append(self.service_offer_factory(
                 protocol=MassSpecDatabaseAdapter,
                 factory=MassSpecDatabaseAdapter))
@@ -115,15 +126,15 @@ class DatabasePlugin(BaseTaskPlugin):
             # password = self._get_pref('password')
             # username = self._get_pref('username')
             # db = MassSpecDatabaseAdapter(name=name,
-            #                              host=host,
+            # host=host,
             #                              password=password,
             #                              username=username)
             #
 
         return sos
 
-# ============= EOF =============================================
-            #def _task_extensions_default(self):
-            #    return [TaskExtension(actions=[SchemaAddition(id='update_database',
-            #                                                  factory=UpdateDatabaseAction,
-            #                                                  path='MenuBar/Tools')])]
+        # ============= EOF =============================================
+        # def _task_extensions_default(self):
+        #    return [TaskExtension(actions=[SchemaAddition(id='update_database',
+        #                                                  factory=UpdateDatabaseAction,
+        #                                                  path='MenuBar/Tools')])]
