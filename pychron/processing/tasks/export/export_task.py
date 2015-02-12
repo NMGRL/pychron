@@ -30,7 +30,7 @@ from pychron.processing.tasks.export.panes import ExportCentralPane
 
 class ExportAction(TaskAction):
     method = 'do_export'
-    image = icon('')
+    image = icon('text_exports')
     name = 'Export'
 
 

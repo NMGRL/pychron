@@ -87,3 +87,4 @@ arrow-right-2
 arrow-left-2
 image_add
 edit-bomb
+text_exports

@@ -19,7 +19,6 @@ from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait
 from traitsui.api import View, UItem, Item, HGroup, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.core.helpers.filetools import view_file
 from pychron.database.offline_bridge import OfflineBridge
 from pychron.processing.export.destinations import SQLiteDestination
 from pychron.processing.export.exporter import Exporter
@@ -39,8 +38,8 @@ class SQLiteAnalysisExporter(Exporter):
         v = View(VGroup(Item('destination', style='custom', label='Destination'),
                         Item('history_limit', label='History Limit',
                              tooltip='Only export the last N data reduction history entries')),
-                 width = 500,
-                 buttons = ['OK','Cancel'],
+                 width=500,
+                 buttons=['OK', 'Cancel'],
                  title='Export Options',
                  kind='livemodal')
         return v
