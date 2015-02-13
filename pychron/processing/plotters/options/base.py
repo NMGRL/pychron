@@ -229,13 +229,16 @@ class FigurePlotterOptions(BasePlotterOptions):
         self._set_defaults(yd, 'axes', ('xtick_in', 'xtick_out',
                                         'ytick_in', 'ytick_out'))
 
+        self._set_defaults(yd, 'background', ('bgcolor',
+                                              'plot_bgcolor'))
+
     def _set_defaults(self, yd, name, attrs):
         d = yd.get(name)
         if d:
             for attr in attrs:
                 try:
                     setattr(self, attr, d[attr])
-                except KeyError:
-                    pass
+                except KeyError, e:
+                    print d, attr
 
 # ============= EOF =============================================

@@ -123,6 +123,7 @@ class IrradiationChronology(HasTraits):
                 ObjectColumn(name='end_time'),
                 ObjectColumn(name='power')]
         table = UItem('dosages', editor=TableEditor(columns=cols,
+                                                    edit_on_first_click=False,
                                                     selected='selected_dosage',
                                                     sortable=False))
         v = View(VGroup(tb, table))

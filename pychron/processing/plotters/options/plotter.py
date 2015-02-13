@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 
-from traits.api import Str, Property, Enum, Button, List, Int
+from traits.api import Str, Property, Enum, Button, List, Int, Any, on_trait_change, Instance, Bool
 from traitsui.api import View, Item, HGroup, VGroup, Group, \
     EnumEditor, TableEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
@@ -26,8 +26,10 @@ from enable.markers import marker_names
 # ============= standard library imports ========================
 from itertools import groupby
 # ============= local library imports  ==========================
+from pychron.core.ui.table_editor import myTableEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.plotters.options.base import FigurePlotterOptions
+from pychron.processing.plotters.options.option import AuxPlotOptions
 from pychron.pychron_constants import ALPHAS
 
 FONTS = ['modern', 'arial']
@@ -79,6 +81,12 @@ class PlotterOptions(FigurePlotterOptions):
     ytitle_font_name = Enum(*FONTS)
 
     x_filter_str = Str
+
+    @on_trait_change('aux_plots:name')
+    def _handle_name_change(self, obj, name, old, new):
+        print obj, name, old, new
+        obj.clear_ylimits()
+
 
     def _edit_title_format_fired(self):
         from pychron.processing.label_maker import TitleTemplater, TitleTemplateView
@@ -174,7 +182,7 @@ class PlotterOptions(FigurePlotterOptions):
                   'title_delimiter',
                   'title_leading_text',
                   'title_trailing_text',
-                  #                  'data_type',
+                  # 'data_type',
                   'xtick_in',
                   'ytick_in',
                   'xtick_out',
@@ -264,7 +272,7 @@ class PlotterOptions(FigurePlotterOptions):
         return v
 
     # def _get_info_group(self):
-    #     return Group()
+    # return Group()
     def _get_title_group(self):
         return VGroup(HGroup(Item('auto_generate_title',
                                   tooltip='Auto generate a title based on the analysis list'),
@@ -277,8 +285,8 @@ class PlotterOptions(FigurePlotterOptions):
 
     def _get_main_group(self):
         main_grp = VGroup(self._get_aux_plots_group(),
-                          HGroup(Item('plot_spacing', label='Spacing')),
-                          # HGroup(Item('x_filter_str', label='X Filter')),
+                          HGroup(Item('plot_spacing', label='Spacing',
+                                      tooltip = 'Spacing between stacked plots')),
                           label='Plots')
         return main_grp
 
@@ -305,11 +313,15 @@ class PlotterOptions(FigurePlotterOptions):
         aux_plots_grp = Item('aux_plots',
                              style='custom',
                              show_label=False,
-                             editor=TableEditor(columns=cols,
-                                                sortable=False,
-                                                deletable=False,
-                                                edit_view=v,
-                                                reorderable=False))
+                             editor=myTableEditor(columns=cols,
+                                                  sortable=False,
+                                                  deletable=False,
+                                                  clear_selection_on_dclicked=True,
+                                                  edit_on_first_click=False,
+                                                  # on_select=lambda *args: setattr(self, 'selected', True),
+                                                  # selected='selected',
+                                                  edit_view=v,
+                                                  reorderable=False))
         return aux_plots_grp
 
     def _get_bg_group(self):

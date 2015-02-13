@@ -103,6 +103,9 @@ axes:
  xtick_out: 5
  ytick_in: 1
  ytick_out: 5
+background:
+ bgcolor: 239,238,185
+ plot_bgcolor: 208,243,241
 '''
 
 SPECTRUM_DEFAULTS = '''
@@ -137,9 +140,14 @@ axes:
  xtick_out: 5
  ytick_in: 1
  ytick_out: 5
+background:
+ bgcolor: 239,238,185
+ plot_bgcolor: 208,243,241
 '''
 ISOCHRON_DEFAULTS = '''
-
+background:
+ bgcolor: 239,238,185
+ plot_bgcolor: 208,243,241
 '''
 
 INVERSE_ISOCHRON_DEFAULTS = '''

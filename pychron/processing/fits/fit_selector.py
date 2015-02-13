@@ -159,6 +159,7 @@ class FitSelector(HasTraits):
                                selected='selected',
                                selection_mode='rows',
                                sortable=False,
+                               edit_on_first_click=False,
                                clear_selection_on_dclicked=True,
                                on_command_key=self._update_command_key,
                                cell_bg_color='red',
