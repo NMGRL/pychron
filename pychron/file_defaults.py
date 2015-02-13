@@ -97,6 +97,12 @@ display:
 
 general:
  index_attr: uage
+
+axes:
+ xtick_in: 1
+ xtick_out: 5
+ ytick_in: 1
+ ytick_out: 5
 '''
 
 SPECTRUM_DEFAULTS = '''
@@ -126,7 +132,11 @@ labels:
  display_step: True
  display_extract_value: False
  step_label_font_size: 10
-
+axes:
+ xtick_in: 1
+ xtick_out: 5
+ ytick_in: 1
+ ytick_out: 5
 '''
 ISOCHRON_DEFAULTS = '''
 

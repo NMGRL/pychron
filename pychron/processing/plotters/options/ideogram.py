@@ -43,7 +43,7 @@ class IdeogramOptions(AgeOptions):
     display_percent_error = Bool(True)
     plot_option_name = 'Ideogram'
     # index_attr = Enum('Age', 'Ar40*/Ar39k','Ar40/Ar36')
-    #index_attr = String
+    # index_attr = String
 
     use_asymptotic_limits = Bool
     _use_asymptotic_limits = Bool
@@ -272,18 +272,21 @@ class IdeogramOptions(AgeOptions):
                      # layout='tabbed',
                      label='Options')
 
-        label_grp = VGroup(self._get_x_axis_group(),
-                           self._get_y_axis_group(),
-                           self._get_indicator_font_group(),
+        axis_grp = VGroup(self._get_x_axis_group(),
+                          self._get_y_axis_group(),
+                          label='Axes')
+
+        label_grp = VGroup(self._get_indicator_font_group(),
                            self._get_label_font_group(),
                            label='Fonts')
-        return orgp, label_grp
+        return orgp, axis_grp, label_grp
 
     def _get_indicator_font_group(self):
         g = VGroup(HGroup(Item('mean_indicator_fontname', label='Mean Indicator'),
                           Item('mean_indicator_fontsize', show_label=False)),
                    HGroup(Item('error_info_fontname', label='Error Info'),
                           Item('error_info_fontsize', show_label=False)),
+                   show_border=True,
                    label='Info')
         return g
 
@@ -328,5 +331,6 @@ class IdeogramOptions(AgeOptions):
         self._set_defaults(yd, 'calculations', ('probability_curve_kind', 'mean_calculation_kind'))
         self._set_defaults(yd, 'display', ('mean_indicator_fontsize', 'mean_sig_figs',))
         self._set_defaults(yd, 'general', ('index_attr',))
+
 
 # ============= EOF =============================================

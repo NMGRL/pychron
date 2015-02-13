@@ -55,7 +55,7 @@ class BasePlotterOptions(HasTraits):
             self._load_factory_defaults(yd)
 
     def _load_factory_defaults(self, yd):
-        print 'prrrr',yd
+        print 'prrrr', yd
 
     def dump(self, root):
         self._dump(root)
@@ -74,7 +74,7 @@ class BasePlotterOptions(HasTraits):
         if not self.name:
             return
         p = os.path.join(root, self.name)
-        #         print root, self.name
+        # print root, self.name
         self._make_dir(root)
         with open(p, 'w') as fp:
             d = dict()
@@ -225,6 +225,9 @@ class FigurePlotterOptions(BasePlotterOptions):
         padding = yd.get('padding')
         if padding:
             self.trait_set(**padding)
+
+        self._set_defaults(yd, 'axes', ('xtick_in', 'xtick_out',
+                                        'ytick_in', 'ytick_out'))
 
     def _set_defaults(self, yd, name, attrs):
         d = yd.get(name)

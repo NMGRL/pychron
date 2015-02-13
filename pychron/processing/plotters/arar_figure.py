@@ -92,12 +92,6 @@ class BaseArArFigure(HasTraits):
             pp.value_range.on_trait_change(lambda: self.update_options_limits(i), 'updated')
             pp.index_range.on_trait_change(lambda: self.update_options_limits(i), 'updated')
             pp.value_range.tight_bounds = False
-            # print po, po.ylimits, po.has_ylimits()
-            # if po.has_ylimits():
-            # print 'setting ylimits {}'.format(po.ylimits)
-            #     pp.value_range.set_bounds(*po.ylimits)
-            # if po.has_xlimits():
-            #     pp.index_range.set_bounds(*po.xlimits)
 
             pp.x_grid.visible = self.x_grid_visible
             pp.y_grid.visible = self.y_grid_visible
@@ -105,9 +99,13 @@ class BaseArArFigure(HasTraits):
             options = self.options
             pp.x_axis.title_font = options.xtitle_font
             pp.x_axis.tick_label_font = options.xtick_font
+            pp.x_axis.tick_in = options.xtick_in
+            pp.x_axis.tick_out = options.xtick_out
 
             pp.y_axis.title_font = options.ytitle_font
             pp.y_axis.tick_label_font = options.ytick_font
+            pp.y_axis.tick_in = options.ytick_in
+            pp.y_axis.tick_out = options.ytick_out
 
             pp.bgcolor = options.plot_bgcolor
             for attr in ('left', 'right', 'top'):
@@ -267,7 +265,7 @@ class BaseArArFigure(HasTraits):
 
         ma = max_ if max_ is not None else max(ma, b)
 
-        self.graph.set_y_limits(min_=mi, max_=ma, pad=pad, plotid=pid)
+        self.graph.set_y_limits(min_=mi, max_=ma, pad=pad, plotid=pid, pad_style='upper')
 
     def update_options_limits(self, pid):
         n = len(self.options.aux_plots)

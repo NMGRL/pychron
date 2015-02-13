@@ -21,6 +21,8 @@ from chaco.plot_containers import GridPlotContainer
 # from pychron.processing.plotters.graph_panel_info import GraphPanelInfo
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.codetools.inspection import caller
+
 
 class FigureContainer(HasTraits):
     component = Any
@@ -28,6 +30,7 @@ class FigureContainer(HasTraits):
     # nrows = Int(1)
     # ncols = Int(2)
 
+    @caller
     def refresh(self, clear=False):
         layout = self.model.layout
         self.model.refresh_panels()

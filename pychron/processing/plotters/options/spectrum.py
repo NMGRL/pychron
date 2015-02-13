@@ -88,7 +88,7 @@ class SpectrumOptions(AgeOptions):
 
     @on_trait_change('groups:edit_button')
     def _handle_edit_groups(self):
-        eg = SpectrumGroupEditor(error_envelopes=self.groups)
+        eg = SpectrumGroupEditor(option_groups=self.groups)
         info = eg.edit_traits()
         if info.result:
             self.refresh_plot_needed = True

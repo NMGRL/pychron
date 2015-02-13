@@ -20,12 +20,13 @@ from traitsui.api import View, UItem, Item, HGroup, VGroup, ListEditor, Instance
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.icon_button_editor import icon_button_editor
+from pychron.processing.plotters.options.base_group_options import BaseGroupOptions
 
 
-class SpectrumGroupOptions(HasTraits):
-    color = Color
+class SpectrumGroupOptions(BaseGroupOptions):
+    # color = Color
+    # group_id = Int
     alpha = Range(0, 100, 70)
-    group_id = Int
     use_fill = Bool(True)
     line_color = Color
     bind_colors = Bool(True)
@@ -34,7 +35,6 @@ class SpectrumGroupOptions(HasTraits):
     calculate_fixed_plateau = Bool(False)
     calculate_fixed_plateau_start = Str
     calculate_fixed_plateau_end = Str
-    edit_button = Button
 
     def _color_changed(self):
         if self.bind_colors:
@@ -82,18 +82,18 @@ class SpectrumGroupOptions(HasTraits):
 
     def simple_view(self):
         grps = self._get_groups()
-        g = VGroup(HGroup(Item('bind_colors'),
-                          icon_button_editor('edit_button', 'cog')),
+        g = VGroup(HGroup(Item('bind_colors', tooltip='Link line color and error envelope color'),
+                          icon_button_editor('edit_button', 'cog', tooltip='Edit group attributes')),
                    *grps)
         v = View(g)
         return v
 
 
 class SpectrumGroupEditor(HasTraits):
-    error_envelopes = List
+    option_groups = List
 
     def traits_view(self):
-        v = View(UItem('error_envelopes',
+        v = View(UItem('option_groups',
                        style='custom',
                        editor=ListEditor(mutable=False,
                                          style='custom',
@@ -101,7 +101,7 @@ class SpectrumGroupEditor(HasTraits):
                  buttons=['OK', 'Cancel', 'Revert'],
                  kind='livemodal', resizable=True,
                  height=700,
-                 title='Error Envelope Colors')
+                 title='Group Attributes')
         return v
 
 

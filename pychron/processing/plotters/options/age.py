@@ -69,6 +69,7 @@ class AgeOptions(PlotterOptions):
 
     def _get_label_font_group(self):
         g = VGroup(UItem('label_fontsize'),
+                   show_border=True,
                    label='Labels')
         return g
 
