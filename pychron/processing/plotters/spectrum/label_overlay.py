@@ -71,7 +71,7 @@ class SpectrumLabelOverlay(AbstractOverlay):
     use_user_color = Bool
     user_color = Color
 
-    _mlayout_needed = Bool
+    # _mlayout_needed = Bool
 
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
         labels = self._get_labels()
@@ -79,8 +79,8 @@ class SpectrumLabelOverlay(AbstractOverlay):
             label.overlay(other_component, gc)
 
     def _get_labels(self):
-        if self._mlayout_needed or not self._cached_labels:
-            self._mlayout_needed =False
+        if self._layout_needed or not self._cached_labels:
+            self._layout_needed = False
             labels = []
             nsigma = self.nsigma
             # spec = self.spectrum
@@ -138,7 +138,7 @@ class SpectrumLabelOverlay(AbstractOverlay):
 
     @on_trait_change('component.+')
     def _handle_component_change(self, name, new):
-        self._mlayout_needed = True
+        self._layout_needed = True
         self.request_redraw()
 
     @on_trait_change('display_extract_value, display_step')

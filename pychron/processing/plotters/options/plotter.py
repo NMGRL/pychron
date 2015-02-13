@@ -284,9 +284,10 @@ class PlotterOptions(FigurePlotterOptions):
                 checkbox_column(name='ytitle_visible', label='Y Title'),
                 object_column(name='filter_str', label='Filter')]
 
-        v = View(Item('name', editor=EnumEditor(name='names')),
+        v = View(VGroup(Item('name', editor=EnumEditor(name='names')),
                  Item('marker', editor=EnumEditor(values=marker_names)),
-                 Item('marker_size'))
+                 Item('marker_size'),
+                 show_border=True))
 
         aux_plots_grp = Item('aux_plots',
                              style='custom',

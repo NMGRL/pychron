@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-from traits.api import Enum, Bool, Float
+from traits.api import Enum, Bool, Float, on_trait_change
 from chaco.api import AbstractOverlay
 from enable.colors import color_table
 # ============= standard library imports ========================
@@ -28,14 +28,13 @@ class ErrorBarOverlay(AbstractOverlay):
 
     draw_layer = 'underlay'
     nsigma = 1
-    _cache_valid = False
     use_end_caps = Bool(True)
     line_width = Float(1)
     _cached_points = None
 
     def _get_cached_points(self):
         pts = self._cached_points
-        if pts is None:
+        if pts is None or self.layout_needed:
             comp = self.component
             x = comp.index.get_data()
             y = comp.value.get_data()
@@ -94,5 +93,9 @@ class ErrorBarOverlay(AbstractOverlay):
 
             gc.draw_path()
 
+    @on_trait_change('component.+')
+    def _handle_component_change(self, name, new):
+        self._layout_needed = True
+        self.request_redraw()
 
 # ============= EOF =====================================

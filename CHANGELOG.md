@@ -55,7 +55,8 @@ CHANGELOG
 * fixed Plateau overlay placement. position 100px above nominal plateau or ymax-50px.
 #### 2/10/2015 ####
 * fixed diff editor. fixed age and rad yield diffing
-
+#### 2/13/2015 ####
+* fixed ErrorBarOverlay. trigger layout_needed when component changes
  
 2.0.6
 ------------------
