@@ -1,6 +1,6 @@
-from traits.etsconfig.etsconfig import ETSConfig
+# from traits.etsconfig.etsconfig import ETSConfig
 
-ETSConfig.toolkit = 'qt4'
+# ETSConfig.toolkit = 'qt4'
 
 # required to fix atexit bug with travis ci
 import multiprocessing

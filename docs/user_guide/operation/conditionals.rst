@@ -22,7 +22,7 @@ Name             Description
 System           Executed for all runs in all experiment queues
 Queue            Executed for all runs in this experiment queue
 Run              Executed for only this run
-================ ===========================
+================ ==========================
 
 Conditional Types
 -------------------
@@ -35,4 +35,4 @@ Termination              Executed for only this run
 Cancelation
 PreRunTermination
 PostRunTermination
-=================== ===========================
+=================== ==========================
