@@ -40,6 +40,7 @@ from pychron.envisage.preference_mixin import PreferenceMixin
 # from pychron.experiment.conditional.conditionals_edit_view import TAGS
 from pychron.experiment.conditional.conditional import conditionals_from_file
 from pychron.experiment.datahub import Datahub
+from pychron.experiment.health.series import SystemHealthSeries
 from pychron.experiment.notifier.user_notifier import UserNotifier
 from pychron.experiment.stats import StatsGroup
 from pychron.experiment.utilities.conditionals import test_queue_conditionals_name, SYSTEM, QUEUE, RUN, \
@@ -102,6 +103,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     pyscript_runner = Instance(IPyScriptRunner)
     monitor = Instance('pychron.monitors.automated_run_monitor.AutomatedRunMonitor')
+    system_health = Instance(SystemHealthSeries)
 
     measuring_run = Instance('pychron.experiment.automated_run.automated_run.AutomatedRun')
     extracting_run = Instance('pychron.experiment.automated_run.automated_run.AutomatedRun')
@@ -128,6 +130,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     use_dashboard_client = Bool
     min_ms_pumptime = Int(30)
     use_automated_run_monitor = Bool(False)
+    use_system_health = Bool(False)
     set_integration_time_on_start = Bool(False)
     send_config_before_run = Bool(False)
     default_integration_time = Float(DEFAULT_INTEGRATION_TIME)
@@ -180,10 +183,13 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                  'send_config_before_run',
                  'default_integration_time')
         self._preference_binder(prefid, attrs)
+
         if self.use_labspy:
             client = self.application.get_service('pychron.labspy.client.LabspyClient')
             self.labspy_client = client
-            # self._preference_binder(prefid, ('root', 'username', 'host', 'password'), obj=self.labspy.repo)
+
+        # system health
+        self._preference_binder(prefid, ('use_system_health',))
 
         # colors
         attrs = ('signal_color', 'sniff_color', 'baseline_color')
@@ -937,6 +943,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             mon.automated_run = weakref.ref(arun)()
             arun.monitor = mon
             arun.persister.monitor = mon
+
+        if self.use_system_health:
+            arun.system_health = self.system_health
 
         return arun
 
@@ -1702,6 +1711,10 @@ Use Last "blank_{}"= {}
     # ===============================================================================
     # defaults
     # ===============================================================================
+    def _system_health_default(self):
+        sh = SystemHealthSeries()
+        return sh
+
     def _datahub_default(self):
         dh = Datahub()
         return dh

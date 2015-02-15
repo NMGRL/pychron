@@ -30,7 +30,8 @@ CHANGELOG
 * added edit view to aux plots. edit marker and marker size
 #### 2/10/2015 ####
 * added history limit to sqlite export. transfer the last n histories. defaults to 1. so only transfer the latest history
-
+#### 2/14/2015 ####
+* started system health concept. analyze a time series and take action
 
 ### Bug Fixes ###
 * fixed plotting ideograms of attributes other than age

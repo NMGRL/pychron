@@ -87,6 +87,8 @@ class AutomatedRun(Loggable):
     multi_collector = Instance(MultiCollector)
     peak_hop_collector = Instance(PeakHopCollector)
     persister = Instance('pychron.experiment.automated_run.persistence.AutomatedRunPersister', ())
+    system_health = Instance('pychron.experiment.health.series.SystemHealthSeries')
+
     collector = Property
 
     script_info = Instance(ScriptInfo, ())
@@ -731,13 +733,20 @@ class AutomatedRun(Loggable):
     def post_measurement_save(self):
         if self._measured:
             if self.spectrometer_manager:
+                # get current spectrometer values
+                # maybe this should be done during pre_measurement_save
                 self.persister.trait_set(spec_dict=self.spectrometer_manager.make_parameters_dict(),
                                          defl_dict=self.spectrometer_manager.make_deflections_dict(),
                                          gains=self.spectrometer_manager.make_gains_list(),
                                          active_detectors=self._active_detectors)
 
+            # save to database
             self.persister.post_measurement_save()
 
+            # save analysis
+            self.system_health.add_analysis(self)
+
+            # cancel the experiment if fail to save to the secondary database
             if self.persister.secondary_database_fail:
                 if self.experiment_executor:
                     self.experiment_executor.cancel(cancel_run=True,

@@ -22,6 +22,7 @@ make sure directory exists and build if not
 """
 from os import path, mkdir
 import os
+from pychron.file_defaults import SYSTEM_HEALTH
 
 
 class Paths(object):
@@ -156,6 +157,7 @@ class Paths(object):
     spectrum_defaults = None
     inverse_isochron_defaults = None
     composites_defaults = None
+    system_health = None
 
     def set_search_paths(self, app_rec=None):
         self.app_resources = app_rec
@@ -316,6 +318,7 @@ class Paths(object):
         self.spectrum_defaults = join(self.hidden_dir, 'spectrum_defaults.yaml')
         self.inverse_isochron_defaults = join(self.hidden_dir, 'inverse_isochron_defaults.yaml')
         self.composites_defaults = join(self.hidden_dir, 'composite_defaults.yaml')
+        self.system_health =  join(self.setup_dir, 'system_health.yaml')
 
         if os.environ.get('TRAVIS_CI', 'False') == 'False':
             self._write_default_files()
@@ -330,8 +333,10 @@ class Paths(object):
                      (self.ideogram_defaults, IDEOGRAM_DEFAULTS),
                      (self.spectrum_defaults, SPECTRUM_DEFAULTS),
                      (self.inverse_isochron_defaults, INVERSE_ISOCHRON_DEFAULTS),
-                     (self.composites_defaults, COMPOSITE_DEFAULTS)):
-            overwrite = d in (IDEOGRAM_DEFAULTS, SPECTRUM_DEFAULTS, INVERSE_ISOCHRON_DEFAULTS)
+                     (self.composites_defaults, COMPOSITE_DEFAULTS),
+                     (self.system_health, SYSTEM_HEALTH)):
+            overwrite = d in (IDEOGRAM_DEFAULTS, SPECTRUM_DEFAULTS,
+                              INVERSE_ISOCHRON_DEFAULTS, SYSTEM_HEALTH)
             self._write_default_file(p, d, overwrite)
 
     def _write_default_file(self, p, default, overwrite=False):

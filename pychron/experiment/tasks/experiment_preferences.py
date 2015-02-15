@@ -60,6 +60,8 @@ class ExperimentPreferences(BasePreferencesHelper):
 
     min_ms_pumptime = Int
 
+    use_system_health = Bool
+
     use_memory_check = Bool
     memory_threshold = Property(PositiveInteger,
                                 depends_on='_memory_threshold')
@@ -124,6 +126,9 @@ class ExperimentPreferencesPane(PreferencesPane):
     category = 'Experiment'
 
     def traits_view(self):
+        system_health_grp = VGroup(Item('use_system_health'),
+                                   label='System Health')
+
         notification_grp = VGroup(
             Item('use_notifications'),
             Item('notifications_port',
@@ -196,7 +201,7 @@ class ExperimentPreferencesPane(PreferencesPane):
         return View(color_group,
                     automated_grp, notification_grp,
                     editor_grp,
-                    analysis_grouping_grp, memory_grp)
+                    analysis_grouping_grp, memory_grp, system_health_grp)
 
 
 class UserNotifierPreferencesPane(PreferencesPane):

@@ -175,6 +175,19 @@ COMPOSITE_DEFAULTS = '''
 
 '''
 
+SYSTEM_HEALTH = '''
+values:
+ - Ar40/Ar36
+ - uAr40/Ar36
+general:
+ limit: 100
+conditionals:
+ -
+  attribute: Ar40/Ar36
+  function: std
+  comparison: x>1
+  action: cancel
+'''
 # ============= EOF =============================================
 
 
