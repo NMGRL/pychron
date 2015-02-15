@@ -36,7 +36,8 @@ MOCK_MODULES = ['numpy',
                 'traits.api',
                 'traitsui.api',
                 'apptools.preferences.preference_binding',
-                'scipy.optimize']
+                'scipy.optimize',
+                'scipy']
 
 
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
