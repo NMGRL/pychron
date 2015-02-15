@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from traits.api import HasTraits, List, Str, Dict, Float, Bool, Property
 from traitsui.api import View, Controller, TableEditor, UItem
-from traitsui.table_column import ObjectColumn
+# from traitsui.table_column import ObjectColumn
 from apptools.preferences.preference_binding import bind_preference
 # ============= standard library imports ========================
 import shutil
@@ -331,39 +331,6 @@ class MagnetFieldTable(Loggable):
         return p
 
 
-class MagnetFieldTableView(Controller):
-    model = MagnetFieldTable
 
-    def closed(self, info, is_ok):
-        if is_ok:
-            self.model.save()
-
-    def traits_view(self):
-
-        # self.model.load_mftable(True)
-
-        cols = [ObjectColumn(name='isotope', editable=False)]
-
-        for di in self.model._detectors:
-            cols.append(ObjectColumn(name=di,
-                                     format='%0.5f',
-                                     label=di))
-
-        v = View(UItem('items',
-                       editor=TableEditor(columns=cols,
-                                          sortable=False)),
-                 title='Edit Magnet Field Table',
-                 buttons=['OK', 'Cancel'],
-                 kind='livemodal',
-                 resizable=True)
-        return v
-
-
-if __name__ == '__main__':
-    from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS as molweights
-
-    m = MagnetFieldTable(molweights=molweights)
-    mv = MagnetFieldTableView(model=m)
-    mv.configure_traits()
 # ============= EOF =============================================
 

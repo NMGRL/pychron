@@ -320,7 +320,7 @@ class Paths(object):
         self.composites_defaults = join(self.hidden_dir, 'composite_defaults.yaml')
         self.system_health =  join(self.setup_dir, 'system_health.yaml')
 
-        if os.environ.get('TRAVIS_CI', 'False') == 'False' or \
+        if os.environ.get('TRAVIS_CI', 'False') == 'False' and \
                         os.environ.get('RTD', 'False') == 'False':
             self._write_default_files()
 

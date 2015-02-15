@@ -25,14 +25,17 @@ import sys
 # from mock import Mock
 try:
     from unittest.mock import MagicMock
-
-    class Mock(MagicMock):
-        @classmethod
-        def __getattr__(cls, name):
-            return Mock()
-
 except ImportError:
-    from mock import Mock
+    from mock import MagicMock
+
+
+class Mock(MagicMock):
+    @classmethod
+    def __getattr__(cls, name):
+        return Mock()
+
+    def __str__(self, *args):
+        return ''
 
 MOCK_MODULES = ['numpy',
                 'traits.api',
@@ -41,7 +44,7 @@ MOCK_MODULES = ['numpy',
                 'scipy.optimize',
                 'scipy']
 
-sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+sys.modules.update((mod_name, MagicMock()) for mod_name in MOCK_MODULES)
 
 # -- General configuration -----------------------------------------------------
 

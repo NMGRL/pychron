@@ -180,7 +180,7 @@ class MagnetFieldTableAction(Action):
         if man.spectrometer:
             mft = man.spectrometer.magnet.mftable
 
-            from pychron.spectrometer.mftable import MagnetFieldTableView
+            from pychron.spectrometer.mftable_view import MagnetFieldTableView
 
             mv = MagnetFieldTableView(model=mft)
             mv.edit_traits()
