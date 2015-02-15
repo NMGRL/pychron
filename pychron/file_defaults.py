@@ -181,6 +181,7 @@ values:
  - uAr40/Ar36
 general:
  limit: 100
+ bin_hours: 6
 conditionals:
  -
   attribute: Ar40/Ar36
@@ -188,6 +189,8 @@ conditionals:
   comparison: x>1
   action: cancel
   min_n: 10
+  analysis_types:
+   - air
 '''
 # ============= EOF =============================================
 

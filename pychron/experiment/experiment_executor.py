@@ -713,14 +713,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                             arun.aliquot = 0
 
                         arun.cancel_run(state=state)
-                        # if self.extracting_run:
-                        # self.extracting_run.cancel_run(state=state)
 
-                        # self.non_clear_update_needed = True
                 self.measuring_run = None
                 self.extracting_run = None
                 self._err_message = 'User Canceled'
-                # self.current_run = None
 
     def _end_runs(self):
         # self._last_ran = None

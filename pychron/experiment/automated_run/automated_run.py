@@ -743,14 +743,27 @@ class AutomatedRun(Loggable):
             # save to database
             self.persister.post_measurement_save()
 
-            # save analysis
-            self.system_health.add_analysis(self)
+            # save analysis. don't cancel immediately
+            ret = None
+            if self.system_health:
+                ret = self.system_health.add_analysis(self)
 
-            # cancel the experiment if fail to save to the secondary database
+            executor = self.experiment_executor
+            # cancel the experiment if failed to save to the secondary database
+            # cancel/terminate if system health returns a value
             if self.persister.secondary_database_fail:
-                if self.experiment_executor:
-                    self.experiment_executor.cancel(cancel_run=True,
-                                                    msg=self.persister.secondary_database_fail)
+                if executor:
+                    executor.cancel(cancel_run=True,
+                                    msg=self.persister.secondary_database_fail)
+            elif ret == 'cancel':
+                if executor:
+                    executor.cancel(cancel_run=True,
+                                    msg=self.system_health.error_msg)
+            elif ret == 'terminate':
+                if executor:
+                    executor.cancel('run',
+                                    cancel_run=True,
+                                    msg=self.system_health.error_msg)
             else:
                 return True
 
@@ -834,7 +847,7 @@ class AutomatedRun(Loggable):
                                  run_spec=self.spec,
                                  arar_age=self.arar_age,
                                  positions=self.spec.get_position_list(),
-                                 auto_save_detector_ic = auto_save_detector_ic,
+                                 auto_save_detector_ic=auto_save_detector_ic,
                                  extraction_positions=ext_pos,
                                  sensitivity_multiplier=sens,
                                  experiment_queue_name=eqn,
@@ -1190,29 +1203,29 @@ anaylsis_type={}
     def _add_conditionals_from_file(self, p):
         d = conditionals_from_file(p)
         for k, v in d.items():
-            if k in ('actions','truncations','terminations','cancelations'):
+            if k in ('actions', 'truncations', 'terminations', 'cancelations'):
                 var = getattr(self, '{}_conditionals'.format(k))
                 var.extend(v)
 
-            # with open(p, 'r') as fp:
-            # yd = yaml.load(fp)
-            #     cs = (('TruncationConditional', 'truncation', 'truncations'),
-            #           ('ActionConditional', 'action', 'actions'),
-            #           ('TerminationConditional', 'termination', 'terminations'),
-            #           ('CancelationConditional', 'cancelation', 'cancelations'))
-            #     for klass, var, tag in cs:
-            #         yl = yd.get(tag)
-            #         if not yl:
-            #             continue
-            #
-            #         var = getattr(self, '{}_conditionals'.format(var))
-            #         conds = [conditional_from_dict(ti, klass) for ti in yl]
-            #         conds = [c for c in conds if c is not None]
-            #         if conds:
-            #             var.extend(conds)
-            #             # for ti in yl:
-            #             # cx =
-            #             # var.append(cx)
+                # with open(p, 'r') as fp:
+                # yd = yaml.load(fp)
+                # cs = (('TruncationConditional', 'truncation', 'truncations'),
+                #           ('ActionConditional', 'action', 'actions'),
+                #           ('TerminationConditional', 'termination', 'terminations'),
+                #           ('CancelationConditional', 'cancelation', 'cancelations'))
+                #     for klass, var, tag in cs:
+                #         yl = yd.get(tag)
+                #         if not yl:
+                #             continue
+                #
+                #         var = getattr(self, '{}_conditionals'.format(var))
+                #         conds = [conditional_from_dict(ti, klass) for ti in yl]
+                #         conds = [c for c in conds if c is not None]
+                #         if conds:
+                #             var.extend(conds)
+                #             # for ti in yl:
+                #             # cx =
+                #             # var.append(cx)
 
     def _conditional_appender(self, name, cd, klass):
         if not self.arar_age:
@@ -1233,7 +1246,7 @@ anaylsis_type={}
         # #for 2.0.4 backwards compatiblity
         # start_count = dictgetter(cd, ('start','start_count'))
         # if start_count is None:
-        #     start_count = 50
+        # start_count = 50
         #     self.debug('defaulting to start_count={}'.format(start_count))
         #
         # self.info('adding {} {} {} {}'.format(name, attr, comp, start_count))
@@ -1427,7 +1440,7 @@ anaylsis_type={}
                             # for c in doc:
                             # try:
                             # attr = c['attr']
-                            #             comp = c['check']
+                            # comp = c['check']
                             #             start = c['start']
                             #             freq = c.get('frequency', 1)
                             #             acr = c.get('abbreviated_count_ratio', 1)
@@ -1938,7 +1951,7 @@ anaylsis_type={}
     def _get_runid(self):
         return self.spec.runid
         # return make_runid(self.spec.labnumber,
-        #                   self.spec.aliquot,
+        # self.spec.aliquot,
         #                   self.spec.step)
 
     def _get_collector(self):
