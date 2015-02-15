@@ -26,25 +26,30 @@ import sys
 try:
     from unittest.mock import MagicMock
 except ImportError:
-    from mock import MagicMock
+    from mock import Mock as MagicMock
+
+
+class HT(object):
+    def __init__(self, *args, **kw):
+        pass
 
 
 class Mock(MagicMock):
     @classmethod
     def __getattr__(cls, name):
+        # if name=='HasTraits':
+        #     return HT()
+        # else:
         return Mock()
 
-    def __str__(self, *args):
-        return ''
-
 MOCK_MODULES = ['numpy',
-                'traits.api',
+                # 'traits.api',
                 'traitsui.api',
                 'apptools.preferences.preference_binding',
                 'scipy.optimize',
                 'scipy']
 
-sys.modules.update((mod_name, MagicMock()) for mod_name in MOCK_MODULES)
+sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 # -- General configuration -----------------------------------------------------
 

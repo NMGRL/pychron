@@ -16,17 +16,16 @@
 
 # ============= enthought library imports =======================
 from traits.api import Float, Str, Bool, Property, Color, \
-    Int, Array
+    Int
 from traitsui.api import View, Item, HGroup, \
     spring
 # ============= standard library imports ========================
 import os
-from numpy import loadtxt, polyfit, polyval, hstack, poly1d
+from numpy import loadtxt, polyfit, polyval, hstack, poly1d, array
 from scipy import optimize
 # ============= local library imports  ==========================
 from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
 from pychron.paths import paths
-from pychron.core.ui.qt.color_square_editor import ColorSquareEditor
 
 
 charge = 1.6021764874e-19
@@ -34,7 +33,6 @@ charge = 1.6021764874e-19
 
 class Detector(SpectrometerDevice):
     name = Str
-
     kind = Str
 
     protection_threshold = None
@@ -44,12 +42,12 @@ class Detector(SpectrometerDevice):
     deflection_correction_sign = Int(1)
 
     _deflection_correction_factors = None
-    # intensity = Property(depends_on='spectrometer:intensity_dirty')
-    #    intensity = Float
-    #    std = Float
+    # # intensity = Property(depends_on='spectrometer:intensity_dirty')
+    # #    intensity = Float
+    # #    std = Float
     intensity = Str
     std = Str
-    intensities = Array
+    intensities = None
     nstd = Int(10)
     active = Bool(True)
     gain = Float
@@ -134,6 +132,9 @@ class Detector(SpectrometerDevice):
     def set_intensity(self, v):
         if v is not None:
             n = self.nstd
+            if self.intensities is None:
+                self.intensities=array([])
+
             self.intensities = hstack((self.intensities[-n:], [v]))
             self.std = '{:0.5f}'.format(self.intensities.std())
             self.intensity = '{:0.5f}'.format(v)
@@ -160,6 +161,7 @@ class Detector(SpectrometerDevice):
     #    return v
 
     def traits_view(self):
+        from pychron.core.ui.qt.color_square_editor import ColorSquareEditor
         v = View(HGroup(Item('active'),
                         Item('color', width=25, editor=ColorSquareEditor()),
                         Item('name', style='readonly'),
@@ -171,4 +173,4 @@ class Detector(SpectrometerDevice):
     def __repr__(self):
         return self.name
 
-        # ============= EOF =============================================
+#============= EOF =============================================

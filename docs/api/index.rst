@@ -5,5 +5,4 @@ API
   :maxdepth: 1
 
   simple
-  database
   spectrometer
