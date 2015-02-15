@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import shutil
 import time
 # ============= standard library imports ========================
 import os
@@ -22,6 +23,7 @@ from uncertainties import nominal_value, std_dev
 import yaml
 from numpy import array, diff, where
 # ============= local library imports  ==========================
+from pychron.core.helpers.filetools import unique_path2
 from pychron.loggable import Loggable
 from pychron.paths import paths
 
@@ -34,6 +36,17 @@ class SystemHealthSeries(Loggable):
     def __init__(self, *args, **kw):
         super(SystemHealthSeries, self).__init__(*args, **kw)
         self._load()
+
+    def reset(self):
+        """
+            backup and erase the current health_series.yaml file
+
+        :return:
+        """
+        src = os.path.join(paths.hidden_dir, 'health_series.yaml')
+        dest, _ = unique_path2(paths.hidden_dir, 'health_series', extension='.yaml')
+        shutil.copyfile(src, dest)
+        os.remove(src)
 
     def add_analysis(self, an):
         """
@@ -83,49 +96,83 @@ class SystemHealthSeries(Loggable):
         """
         # bin series by analysis time
         # only analyze the last bin
-        tolerance_seconds = 60 * 60 * self._bin_hours
         ts = array([si['timestamp'] for si in series])
-        ds = diff(ts) > tolerance_seconds
-        bounds = where(ds)[0]
-        itemidx = bounds[-1] if bounds else 0
-        series = series[itemidx:]
+        ds = diff(ts)
+
+        # tolerance_seconds = 60 * 60 * self._bin_hours
+        # ds = diff(ts) > tolerance_seconds
+        # bounds = where(ds)[0]
+        # itemidx = bounds[-1] if bounds else 0
+        # series = series[itemidx:]
 
         for ci in self._conditionals:
-            ret = self._execute_conditional(ci, series)
+            ret = self._execute_conditional(ci, series, ds)
             if ret:
                 return ret
 
-    def _execute_conditional(self, cond, series):
-        ret = None
-        attr = cond['attribute']
-        comp = cond['comparison']
-        func = cond['function']
-        atypes = cond.get('analysis_types', None)
-        minx = cond.get('min_n', 10)
-        if len(series) <= minx:
-            return
+    def _execute_conditional(self, cond, series, ds):
+        """
+        evaluate conditional with series as concept
+        conditionals defined in system_health.yaml
 
-        if func not in ['std', 'mean']:
+        std - standard deviation
+        mean- mean
+        value - check if the latest value is different from the previous
+
+        :param cond: dict
+        :param series: list of dicts
+        :param ds: result of np.diff
+        :return: None, 'cancel', 'terminate'
+        """
+
+        ret = None
+        func = cond['function']
+        if func not in ['std', 'mean', 'value']:
             self.debug('invalid function. "{}"'.format(func))
             return
 
+        attr = cond['attribute']
+        action = cond.get('action', 'cancel')
+        atypes = cond.get('analysis_types', None)
+        bin_hours = cond.get('bin_hours', 6)
+
+        tolerance_seconds = 60 * 60 * bin_hours
+        dd = ds > tolerance_seconds
+        bounds = where(dd)[0]
+        itemidx = bounds[-1] if bounds else 0
+        series = series[itemidx:]
+
+        series = [si[attr] for si in series if si.has_key(attr)]
+
         if atypes:
-            x = [si[attr] for si in series if si['analysis_type'] in atypes]
+            x = [si for si in series if si['analysis_type'] in atypes]
+
+        if func == 'value':
+            if x[-1] != x[-2]:
+                ret = action
         else:
-            x = [si[attr] for si in series]
+            minx = cond.get('min_n', 10)
+            if len(series) <= minx:
+                return
 
-        x = array(x)
-        if func == 'std':
-            x = x.std()
-        elif func == 'mean':
-            x = x.mean()
+            x = array(x)
+            if func == 'std':
+                x = x.std()
+            elif func == 'mean':
+                x = x.mean()
 
-        if eval(comp, {'x': x}):
-            ret = cond['action']
+            comp = cond['comparison']
+            if eval(comp, {'x': x}):
+                ret = action
 
         return ret
 
     def _load(self):
+        """
+        load system_health.yaml file.
+        this file defines multiple configuration values
+        :return:
+        """
         p = os.path.join(paths.setup_dir, 'system_health.yaml')
         with open(p, 'r') as fp:
             config = yaml.load(fp)
@@ -138,6 +185,14 @@ class SystemHealthSeries(Loggable):
             self._bin_hours = general['bin_hours']
 
     def _make_analysis_dict(self, an):
+        """
+        make a dictionary from this automated run.
+
+        value keys are defined in system_health.yaml
+        :param an: AutomatedRun
+        :return: dict
+        """
+
         arar = an.arar_age
         try:
             spec = an.spec
@@ -149,10 +204,24 @@ class SystemHealthSeries(Loggable):
                  'uuid': spec.uuid,
                  'timestamp': time.mktime(spec.analysis_timestamp.timetuple())}
 
+            spec_dict = an.persister.spec_dict
+            defl_dict = an.persister.defl_dict
+
             for v in self._values:
-                vv = arar.get_value(v)
-                d[v] = nominal_value(vv)
-                d['{}_err'.format(v)] = std_dev(vv)
+                if v.endswith('_deflection'):
+                    try:
+                        k, _ = v.split('_')
+                        d[v] = defl_dict[k]
+                        continue
+                    except KeyError:
+                        pass
+                else:
+                    try:
+                        d[v] = spec_dict[v]
+                    except KeyError:
+                        vv = arar.get_value(v)
+                        d[v] = nominal_value(vv)
+                        d['{}_err'.format(v)] = std_dev(vv)
 
         except BaseException, e:
             self.warning('failed making system health analysis dict. error="{}"'.format(e))

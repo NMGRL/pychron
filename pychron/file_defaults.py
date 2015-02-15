@@ -179,9 +179,19 @@ SYSTEM_HEALTH = '''
 values:
  - Ar40/Ar36
  - uAr40/Ar36
+ - ysymmetry
+ - extraction_lens
+ - ysymmetry
+ - zsymmetry
+ - zfocus
+ - H2_deflection
+ - H1_deflection
+ - AX_deflection
+ - L1_deflection
+ - L2_deflection
+ - CDD_deflection
 general:
  limit: 100
- bin_hours: 6
 conditionals:
  -
   attribute: Ar40/Ar36
@@ -189,8 +199,16 @@ conditionals:
   comparison: x>1
   action: cancel
   min_n: 10
+  bin_hours: 6
   analysis_types:
    - air
+ -
+  attribute: ysymmetry
+  function: value
+  action: cancel
+  analysis_types:
+   - air
+
 '''
 # ============= EOF =============================================
 
