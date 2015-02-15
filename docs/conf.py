@@ -33,10 +33,10 @@ except ImportError:
     from mock import Mock
 
 MOCK_MODULES = ['numpy',
-                'traits',
-                'traitsui',
-                'apptools',
-                'scipy']
+                'traits.api',
+                'traitsui.api',
+                'apptools.preferences.preference_binding',
+                'scipy.optimize']
 
 
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
