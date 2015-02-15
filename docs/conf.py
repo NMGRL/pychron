@@ -19,10 +19,11 @@ import os,sys
 sys.path.insert(0, os.path.abspath('../'))
 
 import sys
-from mock import Mock
+# from mock import Mock
+from unittest.mock import MagicMock
 
 MOCK_MODULES = ['numpy','traits.api','traitsui.api']
-sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+sys.modules.update((mod_name, MagicMock()) for mod_name in MOCK_MODULES)
 
 # -- General configuration -----------------------------------------------------
 
