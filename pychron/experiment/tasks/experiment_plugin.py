@@ -35,7 +35,7 @@ from pychron.experiment.tasks.experiment_actions import NewExperimentQueueAction
     OpenExperimentQueueAction, SignalCalculatorAction, \
     DeselectAction, SendTestNotificationAction, \
     NewPatternAction, OpenPatternAction, ResetQueuesAction, OpenLastExperimentQueueAction, UndoAction, \
-    QueueConditionalsAction, ConfigureEditorTableAction, SystemConditionalsAction
+    QueueConditionalsAction, ConfigureEditorTableAction, SystemConditionalsAction, ResetSystemHealthAction
 
 
 class ExperimentPlugin(BaseTaskPlugin):
@@ -58,6 +58,9 @@ class ExperimentPlugin(BaseTaskPlugin):
                               actions=[SchemaAddition(factory=factory,
                                                       path='MenuBar/Edit')]),
                 TaskExtension(actions=[
+                    SchemaAddition(id='reset_system_health',
+                                   factory=ResetSystemHealthAction,
+                                   path='MenuBar/file.menu'),
                     SchemaAddition(id='open_queue_conditionals',
                                    factory=QueueConditionalsAction,
                                    path='MenuBar/Edit'),

@@ -57,6 +57,9 @@ class FieldItem(HasTraits):
 
 
 class MagnetFieldTable(Loggable):
+    """
+        map a voltage to a mass
+    """
     items = List
     molweights = Dict
 

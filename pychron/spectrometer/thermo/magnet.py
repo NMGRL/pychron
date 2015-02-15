@@ -25,13 +25,18 @@ from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
 
 
 class ArgusMagnet(BaseMagnet, SpectrometerDevice):
+    """
+    Magnet interface to Qtegra.
+
+    uses MFTable object of mapping dac to mass
+    """
     protected_detectors = List
 
     use_detector_protection = Bool
     use_beam_blank = Bool
 
-    detector_protection_threshold = Float(0.1)  #DAC units
-    beam_blank_threshold = Float(0.1)  #DAC units
+    detector_protection_threshold = Float(0.1)  # DAC units
+    beam_blank_threshold = Float(0.1)  # DAC units
 
     # ===============================================================================
     # ##positioning

@@ -55,6 +55,10 @@ from pychron.wait.wait_group import WaitGroup
 
 
 class ExperimentExecutor(Consoleable, PreferenceMixin):
+    """
+    ExperimentExecutor coordinates execution of an experiment queue
+
+    """
     experiment_queues = List
     experiment_queue = Any
     user_notifier = Instance(UserNotifier, ())

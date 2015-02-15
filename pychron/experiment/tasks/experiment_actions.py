@@ -32,6 +32,14 @@ from pychron.paths import paths
 EXP_ID = 'pychron.experiment.task'
 
 
+class ResetSystemHealthAction(Action):
+    name = 'Reset System Health'
+
+    def perform(self, event):
+        from pychron.experiment.health.series import reset_system_health_series
+        reset_system_health_series()
+
+
 class ExperimentAction(Action):
     task_id = EXP_ID
 

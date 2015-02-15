@@ -79,6 +79,44 @@ WARNED_SCRIPTS = []
 
 
 class AutomatedRun(Loggable):
+    """
+    The AutomatedRun object is used to execute automated analyses.
+
+    It mostly delegates responisbility to other objects.
+    It provides an interface for MeasurementPyscripts.
+    All measurement script commands have a corresponding function defined here.
+    A commands corresponding function is defined as py_{function_name}
+
+    for example position_magnet calls AutomatedRun.py_position_magnet
+
+    data collection is handled by either MultiCollector or PeakHopCollector
+
+    persistence (saving to file and database) is handled by AutomatedRunPersister
+
+    An automated run is executed in four steps by the ExperimentExecutor.
+    1. start
+    2. extraction
+    3a. measurement
+     b. equilibration *
+     c. post_equilibration *
+    4. post_measurement
+
+    * equilibration and post_equilibration are executed concurrently with the measurement script
+     this way equilibration gas can be measured.
+
+    four pyscripts (all optional) are used to program analysis execution
+    1. extraction
+    2. measurement
+    3. post_equilibration
+    4. post_measurement
+
+    four types of conditionals are available
+    1. termination_conditionals
+    2. truncation_conditionals
+    3. action_conditionals
+    4. cancelation_conditionals
+
+    """
     spectrometer_manager = Any
     extraction_line_manager = Any
     experiment_executor = Any

@@ -40,6 +40,9 @@ logger = new_logger('ArArAge')
 
 
 class ArArAge(Loggable):
+    """
+    High level representation of the ArAr attributes of an analysis.
+    """
     j = Either(Variable, AffineScalarFunc)
     irradiation = Str
     irradiation_level = Str

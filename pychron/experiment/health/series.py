@@ -28,7 +28,23 @@ from pychron.loggable import Loggable
 from pychron.paths import paths
 
 
+def reset_system_health_series():
+    src = os.path.join(paths.hidden_dir, 'health_series.yaml')
+    if os.path.isfile(src):
+        dest, _ = unique_path2(paths.hidden_dir, 'health_series', extension='.yaml')
+        shutil.copyfile(src, dest)
+        os.remove(src)
+
+
 class SystemHealthSeries(Loggable):
+    """
+    Maintain a series of analyses.
+    Provides an interface to check conditionals and cancel/terminate if conditional evaluates to true.
+    For example you can check to make sure the standard deviation of the last N airs is less than
+    and threshold value.
+
+    configuration and definition of conditionals is located in setupfiles/system_health.yaml
+    """
     _limit = 100
     _values = None
     _bin_hours = 6
@@ -43,10 +59,7 @@ class SystemHealthSeries(Loggable):
 
         :return:
         """
-        src = os.path.join(paths.hidden_dir, 'health_series.yaml')
-        dest, _ = unique_path2(paths.hidden_dir, 'health_series', extension='.yaml')
-        shutil.copyfile(src, dest)
-        os.remove(src)
+        reset_system_health_series()
 
     def add_analysis(self, an):
         """

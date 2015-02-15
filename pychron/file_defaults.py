@@ -17,6 +17,13 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+"""
+This file defines the text for various default files.
+
+Values are used in pychron.paths when building directory structure
+"""
+
+
 DEFAULT_INITIALIZATION = '''<root>
     <globals>
     </globals>

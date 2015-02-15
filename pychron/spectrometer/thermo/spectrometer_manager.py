@@ -32,6 +32,13 @@ from pychron.spectrometer.spectrometer_parameters import SpectrometerParameters,
 
 
 class ArgusSpectrometerManager(BaseSpectrometerManager):
+    """
+    Top level interface to an Thermo Scientific Argus Mass Spectrometer
+
+    direct access provided by spectrometer_microcontroller; an instance
+    of thermo.spectrometer.Spectrometer
+
+    """
     spectrometer_klass = Spectrometer
     spectrometer_microcontroller = Any
     name = Property(depends_on='spectrometer_microcontroller')

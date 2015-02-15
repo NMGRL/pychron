@@ -50,6 +50,15 @@ def calculate_radius(m_e, hv, mfield):
 
 
 class Spectrometer(SpectrometerDevice):
+    """
+    Interface to a Thermo Scientific Argus Mass Spectrometer via Qtegra and RemoteControlServer.cs
+    magnet control provided by ArgusMagnet
+    source control provided by ArgusSource
+
+    direct access to RemoteControlServer.cs API via microcontroller
+    e.g. microcontroller.ask('GetIntegrationTime')
+    """
+
     magnet = Instance(ArgusMagnet)
     source = Instance(ArgusSource)
 
@@ -273,7 +282,7 @@ class Spectrometer(SpectrometerDevice):
             pt = self.config_get(config, name, 'protection_threshold', default=None, optional=True)
 
             self.add_detector(name=name,
-                              #relative_position=relative_position,
+                              # relative_position=relative_position,
                               protection_threshold=pt,
                               deflection_corrrection_sign=deflection_corrrection_sign,
                               color=color,
@@ -297,7 +306,7 @@ class Spectrometer(SpectrometerDevice):
             # else:
             datastr = self.ask('GetData', verbose=False, quiet=True)
             if datastr:
-                if not 'ERROR' in datastr:
+                if 'ERROR' not in datastr:
                     data = datastr.split(',')
                     if tagged:
                         keys = data[::2]
@@ -329,7 +338,6 @@ class Spectrometer(SpectrometerDevice):
                 return [signals[keys.index(key)] for key in dkeys]
             else:
                 return signals[keys.index(dkeys)]
-
 
     def get_hv_correction(self, dac, uncorrect=False, current=False):
         """
@@ -376,7 +384,6 @@ class Spectrometer(SpectrometerDevice):
         dac *= cor
         return dac
 
-
     def correct_dac(self, det, dac, current=True):
         """
             correct for deflection
@@ -392,7 +399,6 @@ class Spectrometer(SpectrometerDevice):
         dac = self.get_hv_correction(dac, current=current)
         return dac
 
-
     def uncorrect_dac(self, det, dac, current=True):
         """
                 inverse of correct_dac
@@ -401,7 +407,6 @@ class Spectrometer(SpectrometerDevice):
         if self.use_deflection_correction:
             dac -= det.get_deflection_correction(current=current)
         return dac
-
 
     # ===============================================================================
     # private
@@ -412,7 +417,6 @@ class Spectrometer(SpectrometerDevice):
         signals = [1, 100, 3, 0.01, 0.01, 0.01] + random(6)
         keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
         return keys, signals
-
 
     def _send_configuration(self):
         command_map = dict(ionrepeller='IonRepeller',
@@ -449,21 +453,17 @@ class Spectrometer(SpectrometerDevice):
 
                         self.set_parameter(cmd, v)
 
-
     # ===============================================================================
     # defaults
     # ===============================================================================
     def _magnet_default(self):
         return ArgusMagnet(spectrometer=self)
 
-
     def _source_default(self):
         return ArgusSource(spectrometer=self)
 
-
     def _integration_time_default(self):
         return DEFAULT_INTEGRATION_TIME
-
 
     # ===============================================================================
     # property get/set
@@ -474,22 +474,29 @@ class Spectrometer(SpectrometerDevice):
             ds.append(self._detectors[di])
         return ds
 
-
     def _get_sub_cup_configuration(self):
         return self._sub_cup_configuration
-
 
     def _set_sub_cup_configuration(self, v):
         self._sub_cup_configuration = v
         self.ask('SetSubCupConfiguration {}'.format(v))
 
-
     @cached_property
     def _get_isotopes(self):
         return sorted(self.molecular_weights.keys(), key=lambda x: int(x[2:]))
 
-
     @property
     def detector_names(self):
         return [di.name for di in self.detectors]
+
+# if __name__ == '__main__':
+# s = Spectrometer()
+#     ss = ArgusSource()
+#     ss.current_hv = 4505
+#     s.source = ss
+#     corrected = s.get_hv_correction(100,current=False)
+#     uncorrected = s.get_hv_correction(corrected, uncorrect=True, current=False)
+#
+#     print corrected, uncorrected
+
 # ============= EOF =============================================
