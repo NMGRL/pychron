@@ -13,14 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from apptools.preferences.preference_binding import bind_preference
 
 # ============= enthought library imports =======================
-import shutil
 from traits.api import HasTraits, List, Str, Dict, Float, Bool, Property
 from traitsui.api import View, Controller, TableEditor, UItem
 from traitsui.table_column import ObjectColumn
+from apptools.preferences.preference_binding import bind_preference
 # ============= standard library imports ========================
+import shutil
 import csv
 import os
 import hashlib

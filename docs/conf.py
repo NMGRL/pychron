@@ -19,11 +19,27 @@ import os,sys
 sys.path.insert(0, os.path.abspath('../'))
 
 import sys
-# from mock import Mock
-from unittest.mock import MagicMock
 
-MOCK_MODULES = ['numpy','traits.api','traitsui.api']
-sys.modules.update((mod_name, MagicMock()) for mod_name in MOCK_MODULES)
+# from mock import Mock
+try:
+    from unittest.mock import MagicMock
+
+    class Mock(MagicMock):
+        @classmethod
+        def __getattr__(cls, name):
+            return Mock()
+
+except ImportError:
+    from mock import Mock
+
+MOCK_MODULES = ['numpy',
+                'traits',
+                'traitsui',
+                'apptools',
+                'scipy']
+
+
+sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 # -- General configuration -----------------------------------------------------
 
