@@ -112,6 +112,11 @@ class Spectrometer(SpectrometerDevice):
         return ret
 
     def set_gains(self, history=None):
+        """
+
+        :param history:
+        :return: list
+        """
         if history:
             self.debug('setting gains to {}, user={}'.format(history.create_date,
                                                              history.username))
@@ -121,10 +126,19 @@ class Spectrometer(SpectrometerDevice):
         return [(di.name, di.gain) for di in self.detectors]
 
     def load_current_detector_gains(self):
+        """
+        load the detector gains from the spectrometer
+        """
         for di in self.detectors:
             di.get_gain()
 
     def get_integration_time(self, current=True):
+        """
+        return current or cached integration time, i.e time between intensity measurements
+
+        :param current: bool, if True retrieve value from qtegra
+        :return: float
+        """
         if current:
             resp = self.ask('GetIntegrationTime')
             if resp:
@@ -139,6 +153,12 @@ class Spectrometer(SpectrometerDevice):
         return self.integration_time
 
     def set_integration_time(self, it, force=False):
+        """
+
+        :param it: float, integration time
+        :param force: set integration even if "it" is not different than self.integration_time
+        :return: float, integration time
+        """
         it = normalize_integration_time(it)
         if self.integration_time != it or force:
             self.debug('setting integration time = {}'.format(it))
@@ -171,6 +191,13 @@ class Spectrometer(SpectrometerDevice):
             d.load()
 
     def get_deflection(self, name, current=False):
+        """
+        get deflection by detector name
+
+        :param name: str, detector name
+        :param current: bool, if True query qtegra
+        :return: float
+        """
         deflection = 0
         det = self.get_detector(name)
         if det:
@@ -181,13 +208,27 @@ class Spectrometer(SpectrometerDevice):
         return deflection
 
     def get_detector(self, name):
+        """
+        get Detector object by name
+
+        :param name: str
+        :return: Detector
+        """
         if not isinstance(name, str):
             name = str(name)
 
         return next((det for det in self.detectors if det.name == name), None)
 
     def update_isotopes(self, isotope, detector):
+        """
+        update the isotope name for each detector
 
+        called by AutomatedRun._define_detectors
+
+        :param isotope: str
+        :param detector: str or Detector
+        :return:
+        """
         if isotope != NULL_STR:
             det = self.get_detector(detector)
             if not det:
@@ -341,7 +382,7 @@ class Spectrometer(SpectrometerDevice):
 
     def get_hv_correction(self, dac, uncorrect=False, current=False):
         """
-            ion optics correction
+        ion optics correction::
 
             r=M*v_o/(q*B_o)
             r=M*v_c/(q*B_c)
@@ -360,7 +401,8 @@ class Spectrometer(SpectrometerDevice):
             E_c = current hv
             B_o = nominal dac
             B_c = corrected dac
-            """
+
+        """
         source = self.source
         cur = source.current_hv
         if current:

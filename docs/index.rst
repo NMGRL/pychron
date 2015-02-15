@@ -23,6 +23,7 @@ Welcome to Pychron's documentation!
   dev_guide/index
   course/index
   tutorials/index
+  api/index
 
 Indices and tables
 ==================
