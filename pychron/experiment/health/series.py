@@ -89,11 +89,15 @@ class SystemHealthSeries(Loggable):
         attr = cond['attribute']
         comp = cond['comparison']
         func = cond['function']
+        minx = cond.get('min_n', 10)
+        if len(series) <= minx:
+            return
+
         if func not in ['std', 'mean']:
             self.debug('invalid function. "{}"'.format(func))
             return
 
-        x = array([si[attr] for si in series])
+        x = array([si[attr] for si in series])[-minx:]
         if func == 'std':
             x = x.std()
         elif func == 'mean':

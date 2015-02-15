@@ -187,6 +187,7 @@ conditionals:
   function: std
   comparison: x>1
   action: cancel
+  min_n: 10
 '''
 # ============= EOF =============================================
 
