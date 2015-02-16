@@ -19,21 +19,22 @@ from traits.trait_types import Bool, Instance, Event, Int
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traits.traits import Color
-from pychron.core.ui.preference_binding import color_bind_preference, bind_preference
-from pychron.displays.display import DisplayController
+
 from pychron.loggable import Loggable
 from pychron.pychron_constants import LIGHT_YELLOW
 
 
 class Consoleable(Loggable):
     use_message_colormapping = Bool
-    console_display = Instance(DisplayController)
+    console_display = Instance('pychron.displays.display.DisplayController')
     console_updated = Event
     console_bgcolor = LIGHT_YELLOW
     console_fontsize = Int(11)
     console_default_color = Color('black')
 
     def console_bind_preferences(self, prefid):
+        from pychron.core.ui.preference_binding import color_bind_preference, bind_preference
+
         color_bind_preference(self, 'console_bgcolor', '{}.bgcolor'.format(prefid))
         color_bind_preference(self, 'console_default_color', '{}.textcolor'.format(prefid))
         bind_preference(self, 'console_fontsize', '{}.fontsize'.format(prefid))
@@ -81,6 +82,7 @@ class Consoleable(Loggable):
         self.info('')
 
     def _console_display_default(self):
+        from pychron.displays.display import DisplayController
         return DisplayController(
             bgcolor=self.console_bgcolor,
             font_size=self.console_fontsize,

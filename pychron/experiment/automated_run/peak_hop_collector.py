@@ -28,6 +28,10 @@ from pychron.experiment.automated_run.hop_util import generate_hops
 
 
 class PeakHopCollector(DataCollector):
+    """
+    Collector class for doing a peak hop measurement. Measure one or more intensities at given mass for ncounts then
+    jump magnet to next new mass.
+    """
     hops = List
     settling_time = 0
     ncycles = Int

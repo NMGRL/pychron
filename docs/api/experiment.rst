@@ -7,6 +7,17 @@ Automated Run
 .. autoclass:: pychron.experiment.automated_run.automated_run.AutomatedRun
    :members:
 
+Collectors
+-------------------
+.. autoclass:: pychron.experiment.automated_run.data_collector.DataCollector
+   :members:
+
+.. autoclass:: pychron.experiment.automated_run.multi_collector.MultiCollector
+   :members:
+
+.. autoclass:: pychron.experiment.automated_run.peak_hop_collector.PeakHopCollector
+   :members:
+
 Conditional
 --------------------
 

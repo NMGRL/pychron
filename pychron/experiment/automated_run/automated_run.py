@@ -63,20 +63,20 @@ WARNED_SCRIPTS = []
 
 class AutomatedRun(Loggable):
     """
-    The AutomatedRun object is used to execute automated analyses.
+    The ``AutomatedRun`` object is used to execute automated analyses.
 
     It mostly delegates responisbility to other objects.
-    It provides an interface for MeasurementPyscripts.
+    It provides an interface for ``MeasurementPyscripts``.
     All measurement script commands have a corresponding function defined here.
     A commands corresponding function is defined as py_{function_name}
 
-    for example position_magnet calls AutomatedRun.py_position_magnet
+    for example ``position_magnet`` calls ``AutomatedRun.py_position_magnet``
 
-    data collection is handled by either MultiCollector or PeakHopCollector
+    data collection is handled by either ``MultiCollector`` or ``PeakHopCollector``
 
-    persistence (saving to file and database) is handled by AutomatedRunPersister
+    persistence (saving to file and database) is handled by ``AutomatedRunPersister``
 
-    An automated run is executed in four steps by the ExperimentExecutor.
+    An automated run is executed in four steps by the ``ExperimentExecutor``.
 
     #. start
     #. extraction

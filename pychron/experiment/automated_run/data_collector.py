@@ -32,6 +32,10 @@ from pychron.core.ui.gui import invoke_in_main_thread
 
 
 class DataCollector(Consoleable):
+    """
+    Base class for ``Collector`` objects. Provides logic for iterative measurement.
+    """
+
     measurement_script = Any
     # plot_panel = Any
     # arar_age = Any
