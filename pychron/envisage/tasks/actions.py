@@ -15,32 +15,26 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+
+from pyface.tasks.task_window_layout import TaskWindowLayout
+from traits.api import Any, List
+from pyface.action.action import Action
+from pyface.tasks.action.task_action import TaskAction
+from pyface.confirmation_dialog import confirm
+from pyface.constant import YES
+# ============= standard library imports ========================
 import os
 import shutil
 import sys
-
-from pyface.tasks.task_window_layout import TaskWindowLayout
-from traits.api import on_trait_change, Any, List
-from pyface.action.action import Action
-from pyface.tasks.action.task_action import TaskAction
-
-
-
-
-# ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.envisage.resources import icon
 
-import webbrowser
-from pyface.confirmation_dialog import confirm
-from pyface.constant import YES
+# from pychron.processing.tasks.actions.processing_actions import myTaskAction
+
 
 # ===============================================================================
 # help
 # ===============================================================================
-from pychron.envisage.resources import icon
-# from pychron.processing.tasks.actions.processing_actions import myTaskAction
-
-
 def restart():
     os.execl(sys.executable, *([sys.executable] + sys.argv))
 
@@ -173,7 +167,17 @@ class RestartAction(PAction):
 
 class WebAction(PAction):
     def _open_url(self, url):
+
+        import webbrowser
+        import urllib2
+
+        try:
+            urllib2.urlopen(url)
+        except (urllib2.HTTPError, urllib2.URLError):
+            return
+
         webbrowser.open_new(url)
+
 
 
 class IssueAction(WebAction):
@@ -229,7 +233,9 @@ class ChangeLogAction(WebAction):
         """
         from pychron.version import __version__
         url = 'https://github.com/NMGRL/pychron/blob/release/v{}/CHANGELOG.md'.format(__version__)
-        self._open_url(url)
+        if not self._open_url(url):
+            url = 'https://github.com/NMGRL/pychron/blob/develop/CHANGELOG.md'
+            self._open_url(url)
 
 
 class AboutAction(PAction):

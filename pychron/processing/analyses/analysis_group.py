@@ -305,13 +305,15 @@ class StepHeatAnalysisGroup(AnalysisGroup):
         args = calculate_plateau_age(ages, errors, k39, options=options)
         if args:
             v, e, pidx = args
+            if pidx[0]==pidx[1]:
+                return
 
             self.plateau_steps = pidx
             self.plateau_steps_str = '{}-{}'.format(ALPHAS[pidx[0]],
                                                     ALPHAS[pidx[1]])
 
             self.nsteps = (pidx[1] - pidx[0]) + 1
-
+            # print pidx
             pages, perrs = zip(*[(ages[i], errors[i]) for i in range(pidx[0], pidx[1])])
             mswd = calculate_mswd(pages, perrs)
             self.plateau_mswd_valid = validate_mswd(mswd, self.nsteps)
