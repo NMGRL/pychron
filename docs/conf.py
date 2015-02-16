@@ -35,6 +35,7 @@ class Mock(MagicMock):
         return Mock()
 
 MOCK_MODULES = ['numpy',
+                'uncertainties',
                 # 'traits.api',
                 # 'traitsui.api',
                 'apptools.preferences.preference_binding',
