@@ -36,8 +36,10 @@ def fit_abbreviation(fit, ):
 
 
 class BaseMeasurement(HasTraits):
-    xs = Array
-    ys = Array
+    # xs = Array
+    # ys = Array
+    xs = None
+    ys = None
 
     n = Property(depends_on='xs')
     _n = Int
@@ -61,7 +63,7 @@ class BaseMeasurement(HasTraits):
 
             blob = unpacker(dbrecord)
             self.unpack_data(blob)
-
+        self.xs, self.ys = array([]), array([])
     def pack(self, endianness=None, as_hex=True):
         if endianness is None:
             endianness = self.endianness

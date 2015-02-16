@@ -15,12 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import binascii
 
 from traits.api import Instance, Bool, Int, Float, Str, \
     Dict, List, Time, Date, Any, Long
-
 # ============= standard library imports ========================
+import binascii
 import os
 import struct
 import time
@@ -28,7 +27,7 @@ import math
 from uncertainties import nominal_value, std_dev
 # ============= local library imports  ==========================
 from pychron.core.codetools.file_log import file_log
-from pychron.core.codetools.memory_usage import mem_log
+# from pychron.core.codetools.memory_usage import mem_log
 from pychron.core.helpers.datetime_tools import get_datetime
 from pychron.core.ui.preference_binding import bind_preference
 from pychron.database.adapters.local_lab_adapter import LocalLabAdapter
@@ -36,7 +35,7 @@ from pychron.experiment.datahub import Datahub, check_secondary_database_save
 from pychron.experiment.automated_run.hop_util import parse_hops
 
 from pychron.loggable import Loggable
-from pychron.managers.data_managers.h5_data_manager import H5DataManager
+# from pychron.managers.data_managers.h5_data_manager import H5DataManager
 from pychron.paths import paths
 from pychron.processing.export.export_spec import MassSpecExportSpec
 from pychron.pychron_constants import NULL_STR
@@ -45,10 +44,18 @@ DEBUG = False
 
 
 class AutomatedRunPersister(Loggable):
+    """
+    Save automated run data to file and database(s)
+
+    #. save meta data to the local_lab database. This keeps are local record of all analyses run on the local system
+    #. save data to an HDF5 file using a ``H5DataManager``
+    #. use the ``Datahub`` to save data to databases
+
+    """
     local_lab_db = Instance(LocalLabAdapter)
     datahub = Instance(Datahub)
     run_spec = Instance('pychron.experiment.automated_run.spec.AutomatedRunSpec')
-    data_manager = Instance(H5DataManager, ())
+    data_manager = Instance('pychron.managers.data_managers.h5_data_manager.H5DataManager', ())
     monitor = Any
     arar_age = Any
 
@@ -108,6 +115,9 @@ class AutomatedRunPersister(Loggable):
         self._temp_analysis_buffer = []
 
     def bind_preferences(self):
+        """
+        bind to application preferences
+        """
         prefid = 'pychron.experiment'
         bind_preference(self, 'use_analysis_grouping', '{}.use_analysis_grouping'.format(prefid))
         bind_preference(self, 'grouping_threshold', '{}.grouping_threshold'.format(prefid))
@@ -117,6 +127,11 @@ class AutomatedRunPersister(Loggable):
     # data writing
     # ===============================================================================
     def save_peak_center_to_file(self, pc):
+        """
+        save a peak center to file
+
+        :param pc: ``PeakCenter``
+        """
         dm = self.data_manager
         with dm.open_file(self._current_data_frame):
             tab = dm.new_table('/', 'peak_center')
@@ -140,6 +155,13 @@ class AutomatedRunPersister(Loggable):
             tab.flush()
 
     def get_data_writer(self, grpname):
+        """
+        grpname should be a str such as "signal", "baseline",etc
+        return a closure for writing the data
+
+        :param grpname: str
+        :return: function
+        """
         def write_data(dets, x, keys, signals):
             # todo: test whether saving data to h5 in real time is expansive
             # self.unique_warning('NOT Writing data to H5 in real time')
@@ -168,33 +190,46 @@ class AutomatedRunPersister(Loggable):
 
         return write_data
 
-    def build_tables(self, gn, detectors):
-        self.debug('build tables- {} {}'.format(gn, detectors))
+    def build_tables(self, grpname, detectors):
+        """
+        construct the hdf5 table structure
+
+        :param grpname: str
+        :param detectors: list
+        """
+
+        self.debug('build tables- {} {}'.format(grpname, detectors))
         dm = self.data_manager
         with dm.open_file(self._current_data_frame):
-            dm.new_group(gn)
+            dm.new_group(grpname)
             for i, d in enumerate(detectors):
                 iso = d.isotope
                 name = d.name
-                if gn == 'baseline':
-                    dm.new_table('/{}'.format(gn), name)
-                    self.debug('add group {} table {}'.format(gn, name))
+                if grpname == 'baseline':
+                    dm.new_table('/{}'.format(grpname), name)
+                    self.debug('add group {} table {}'.format(grpname, name))
                 else:
-                    isogrp = dm.new_group(iso, parent='/{}'.format(gn))
+                    isogrp = dm.new_group(iso, parent='/{}'.format(grpname))
                     dm.new_table(isogrp, name)
                     self.debug('add group {} table {}'.format(isogrp, name))
 
-    def build_peak_hop_tables(self, gn, hops):
+    def build_peak_hop_tables(self, grpname, hops):
+        """
+        construct the table structure for a peak hop
+        hops needs to be a str parsable by ``parse_hops``
 
+        :param grpname: str
+        :param hops: str
+        """
         dm = self.data_manager
 
         with dm.open_file(self._current_data_frame):
-            dm.new_group(gn)
+            dm.new_group(grpname)
 
             for iso, det, is_baseline in parse_hops(hops, ret='iso,det,is_baseline'):
                 if is_baseline:
                     continue
-                isogrp = dm.new_group(iso, parent='/{}'.format(gn))
+                isogrp = dm.new_group(iso, parent='/{}'.format(grpname))
                 dm.new_table(isogrp, det)
                 self.debug('add group {} table {}'.format(isogrp, det))
 
@@ -205,6 +240,9 @@ class AutomatedRunPersister(Loggable):
         return self.data_manager.open_file(self._current_data_frame)
 
     def pre_extraction_save(self):
+        """
+        set runtime and rundate
+        """
         d = get_datetime()
         self.runtime = d.time()
         self.rundate = d.date()
@@ -212,9 +250,11 @@ class AutomatedRunPersister(Loggable):
 
     def post_extraction_save(self, rblob, oblob, snapshots):
         """
-            rblob: response blob. binary time, value. time versus measured output
-            oblob: output blob. binary time, value. time versus requested output
-            snapshots: list of snapshot paths
+        save extraction blobs, loadtable, and snapshots to the primary db
+
+        :param rblob: response blob. binary time, value. time versus measured output
+        :param oblob: output blob. binary time, value. time versus requested output
+        :param snapshots: list of snapshot paths
         """
         if DEBUG:
             self.debug('Not saving extraction to database')
@@ -237,6 +277,9 @@ class AutomatedRunPersister(Loggable):
             self.debug('No database instance')
 
     def pre_measurement_save(self):
+        """
+        setup hdf5 file
+        """
         self.info('pre measurement save')
 
         dm = self.data_manager
@@ -255,6 +298,13 @@ class AutomatedRunPersister(Loggable):
         dm.close_file()
 
     def post_measurement_save(self):
+        """
+        check for runid conflicts. automatically update runid if conflict
+
+        #. save to primary database (aka mainstore)
+        #. save detector_ic to csv if applicable
+        #. save to secondary database
+        """
         if DEBUG:
             self.debug('Not measurement saving to database')
             return
@@ -360,7 +410,7 @@ class AutomatedRunPersister(Loggable):
                 if self.use_analysis_grouping:
                     self._save_analysis_group(db, a)
 
-                mem_log('post pychron save')
+                # mem_log('post pychron save')
 
                 pt = time.time() - pt
                 self.debug('pychron save time= {:0.3f} '.format(pt))
@@ -386,8 +436,9 @@ class AutomatedRunPersister(Loggable):
                 mt = time.time()
                 self._save_to_massspec(cp)
                 self.debug('mass spec save time= {:0.3f}'.format(time.time() - mt))
-                mem_log('post mass spec save')
+                # mem_log('post mass spec save')
 
+    # private
     def _save_detector_ic_csv(self):
 
         from pychron.experiment.utilities.detector_ic import make_items, save_csv

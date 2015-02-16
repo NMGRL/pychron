@@ -18,6 +18,11 @@ Collectors
 .. autoclass:: pychron.experiment.automated_run.peak_hop_collector.PeakHopCollector
    :members:
 
+Persistence
+-----------------------
+.. autoclass:: pychron.experiment.automated_run.persistence.AutomatedRunPersister
+   :members:
+
 Conditional
 --------------------
 
