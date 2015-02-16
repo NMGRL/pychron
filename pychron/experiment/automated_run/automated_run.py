@@ -31,7 +31,7 @@ from numpy import Inf
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import add_extension, get_path
 from pychron.core.helpers.filetools import add_extension
-from pychron.core.codetools.memory_usage import mem_log
+# from pychron.core.codetools.memory_usage import mem_log
 
 from pychron.experiment.automated_run.hop_util import parse_hops
 from pychron.experiment.conditional.conditional import TruncationConditional, \
@@ -996,7 +996,7 @@ class AutomatedRun(Loggable):
         self.persister.save_enabled = True
 
         if script.execute():
-            mem_log('post measurement execute')
+            # mem_log('post measurement execute')
             self.heading('Measurement Finished')
             self.measuring = False
             self.info_color = None
@@ -1704,7 +1704,7 @@ anaylsis_type={}
         gn = 'sniff'
 
         self.persister.build_tables(gn, self._active_detectors)
-        mem_log('build tables')
+        # mem_log('build tables')
 
         check_conditionals = False
         writer = self.persister.get_data_writer(gn)
@@ -1729,7 +1729,7 @@ anaylsis_type={}
         if script is None:
             script = self.measurement_script
 
-        mem_log('pre measure')
+        # mem_log('pre measure')
         if not self.spectrometer_manager:
             self.warning('no spectrometer manager')
             return True
@@ -1771,7 +1771,7 @@ anaylsis_type={}
         with self.persister.writer_ctx():
             m.measure()
 
-        mem_log('post measure')
+        # mem_log('post measure')
         if m.terminated:
             self.debug('measurement terminated')
             self.cancel_run()
