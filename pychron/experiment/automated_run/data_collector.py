@@ -28,7 +28,6 @@ from pychron.experiment.utilities.conditionals_results import check_conditional_
 from pychron.globals import globalv
 from pychron.consumer_mixin import consumable
 # from pychron.core.codetools.memory_usage import mem_log
-from pychron.core.ui.gui import invoke_in_main_thread
 
 
 class DataCollector(Consoleable):
@@ -126,7 +125,7 @@ class DataCollector(Consoleable):
 
 
     def plot_data(self, *args, **kw):
-
+        from pychron.core.ui.gui import invoke_in_main_thread
         invoke_in_main_thread(self._plot_data, *args, **kw)
 
     def set_temporary_conditionals(self, cd):
