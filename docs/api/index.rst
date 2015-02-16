@@ -6,3 +6,4 @@ API
 
   simple
   spectrometer
+  experiment

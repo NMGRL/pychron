@@ -27,7 +27,7 @@ from uncertainties import ufloat
 from pychron.core.helpers.filetools import remove_extension
 from pychron.database.orms.isotope.meas import meas_AnalysisTable
 from pychron.processing.analyses.analysis import Analysis, Fit
-from pychron.processing.analyses.analysis_view import DBAnalysisView
+# from pychron.processing.analyses.analysis_view import DBAnalysisView
 from pychron.processing.analyses.changes import BlankChange, FitChange
 from pychron.processing.analyses.exceptions import NoProductionError
 from pychron.processing.analyses.view.snapshot_view import Snapshot
@@ -61,7 +61,7 @@ def get_position(extraction):
 
 class DBAnalysis(Analysis):
     meas_analysis_id = Long
-    analysis_view_klass = DBAnalysisView
+    analysis_view_klass = ('pychron.processing.analyses.analysis_view', 'DBAnalysisView')
 
     uuid = Str
 

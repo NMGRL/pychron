@@ -246,6 +246,10 @@ class Spectrometer(SpectrometerDevice):
     # load
     # ===============================================================================
     def load_configurations(self):
+        """
+        load configurations from Qtegra
+        :return:
+        """
         self.sub_cup_configurations = ['A', 'B', 'C']
         self._sub_cup_configuration = 'B'
 
@@ -262,7 +266,13 @@ class Spectrometer(SpectrometerDevice):
         self.molecular_weight = 'Ar40'
 
     def load(self):
-
+        """
+        load detectors
+        load setupfiles/spectrometer/config.cfg file
+        load magnet
+        load deflections coefficients
+        :return:
+        """
         self.load_detectors()
 
         p = os.path.join(paths.spectrometer_dir, 'config.cfg')
@@ -301,6 +311,11 @@ class Spectrometer(SpectrometerDevice):
             d.load_deflection_coefficients()
 
     def finish_loading(self):
+        """
+        finish loading magnet
+        send configuration if self.send_config_on_startup set in Preferences
+        :return:
+        """
         if self.microcontroller:
             self.name = self.microcontroller.name
 
@@ -311,6 +326,11 @@ class Spectrometer(SpectrometerDevice):
             self._send_configuration()
 
     def load_detectors(self):
+        """
+        load setupfiles/spectrometer/detectors.cfg
+        populates self.detectors
+        :return:
+        """
         config = self.get_configuration(path=os.path.join(paths.spectrometer_dir, 'detectors.cfg'))
         for name in config.sections():
             # relative_position = self.config_get(config, name, 'relative_position', cast='float')
@@ -322,7 +342,7 @@ class Spectrometer(SpectrometerDevice):
             kind = self.config_get(config, name, 'kind', default='Faraday', optional=True)
             pt = self.config_get(config, name, 'protection_threshold', default=None, optional=True)
 
-            self.add_detector(name=name,
+            self._add_detector(name=name,
                               # relative_position=relative_position,
                               protection_threshold=pt,
                               deflection_corrrection_sign=deflection_corrrection_sign,
@@ -331,14 +351,22 @@ class Spectrometer(SpectrometerDevice):
                               isotope=isotope,
                               kind=kind)
 
-    def add_detector(self, **kw):
-        d = Detector(spectrometer=self, **kw)
-        self.detectors.append(d)
-
     # ===============================================================================
     # signals
     # ===============================================================================
     def get_intensities(self, tagged=True):
+        """
+        issue a GetData command to Qtegra.
+
+        keys, list of strings
+        signals, list of floats::
+
+            keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
+            signals = [10,100,1,0.1,1,0.001]
+
+        :param tagged:
+        :return: keys, signals
+        """
         keys = []
         signals = []
         if self.microcontroller and not self.microcontroller.simulation:
@@ -453,6 +481,10 @@ class Spectrometer(SpectrometerDevice):
     # ===============================================================================
     # private
     # ===============================================================================
+    def _add_detector(self, **kw):
+        d = Detector(spectrometer=self, **kw)
+        self.detectors.append(d)
+
     def _get_simulation_data(self):
         from numpy.random import random
 

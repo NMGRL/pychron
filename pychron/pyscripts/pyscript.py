@@ -16,7 +16,6 @@
 
 # ============= enthought library imports =======================
 from traits.api import Str, Any, Bool, Property, Int, Dict
-from pyface.confirmation_dialog import confirm
 # ============= standard library imports ========================
 from threading import Event, Thread, Lock
 from Queue import Empty, LifoQueue
@@ -673,6 +672,7 @@ class PyScript(Loggable):
 
     def _cancel_flag_changed(self, v):
         if v:
+            from pyface.confirmation_dialog import confirm
             result = confirm(None,
                              'Are you sure you want to cancel {}'.format(self.logger_name),
                              title='Cancel Script')

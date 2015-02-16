@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,24 +23,44 @@ from pychron.spectrometer.base_magnet import BaseMagnet, get_float
 
 
 class MapMagnet(BaseMagnet):
+    """
+    Abstraction for the MAP Magent
+    """
     device = Any
 
     # ===============================================================================
-    # ##positioning
+    # positioning
     # ===============================================================================
     def set_range(self, r, verbose=False):
         """
-            r: float or int
+        if float convert to integer and use as range.
 
-            if float convert to integer and use as range
+        send B[r-1] ::
+
+            # r = 6
+            dev.tell('B5')
+
+        :param r: float or int
+        :param verbose:
         """
-        dev=self.device
+        dev = self.device
         if dev:
             r = int(r) - 1
             dev.tell('B{}.'.format(r), verbose=verbose)
 
     def set_dac(self, v, verbose=False):
-        dev=self.device
+        """
+        set the magnet dac voltage.
+
+        set the range then send W[v] ::
+
+            dev.tell('W4.543')
+
+        :param v: v, dac voltage
+        :param verbose:
+        :return: bool, True if dac changed else False
+        """
+        dev = self.device
         if dev:
             self.set_range(v)
             dev.tell('W{}.'.format(v), verbose=verbose)
@@ -55,4 +75,4 @@ class MapMagnet(BaseMagnet):
     def read_dac(self):
         return self._dac
 
-# ============= EOF =============================================
+        # ============= EOF =============================================

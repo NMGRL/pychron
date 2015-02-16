@@ -14,57 +14,40 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
+# # ============= enthought library imports =======================
 from traits.api import Any, Str, List, Property, \
     Event, Instance, Bool, HasTraits, Float, Int, Long
 # ============= standard library imports ========================
 import os
-from itertools import groupby
 import re
 import time
 import ast
 import yaml
+import weakref
+from itertools import groupby
 from threading import Thread, Event as TEvent
 from uncertainties import ufloat, nominal_value, std_dev
 from numpy import Inf
-# from memory_profiler import profile
-import weakref
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import add_extension, get_path
-from pychron.experiment.automated_run.peak_hop_collector import PeakHopCollector
-# from pychron.experiment.automated_run.persistence import AutomatedRunPersister
-from pychron.experiment.automated_run.syn_extraction import SynExtractionCollector
+from pychron.core.helpers.filetools import add_extension
+from pychron.core.codetools.memory_usage import mem_log
+
 from pychron.experiment.automated_run.hop_util import parse_hops
+from pychron.experiment.conditional.conditional import TruncationConditional, \
+    ActionConditional, TerminationConditional, conditional_from_dict, CancelationConditional, conditionals_from_file
 from pychron.experiment.utilities.conditionals import test_queue_conditionals_name
+from pychron.experiment.utilities.identifier import convert_identifier
 from pychron.experiment.utilities.script import assemble_script_blob
+
 from pychron.globals import globalv
 from pychron.loggable import Loggable
-from pychron.processing.analyses.view.automated_run_view import AutomatedRunAnalysisView
-from pychron.pyscripts.measurement_pyscript import MeasurementPyScript
-from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
-from pychron.experiment.plot_panel import PlotPanel
-from pychron.experiment.utilities.identifier import convert_identifier, \
-    make_runid
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR, MEASUREMENT_COLOR, \
     EXTRACTION_COLOR, SCRIPT_KEYS
-from pychron.experiment.conditional.conditional import TruncationConditional, \
-    ActionConditional, TerminationConditional, conditional_from_dict, CancelationConditional, conditionals_from_file
-from pychron.processing.arar_age import ArArAge
-from pychron.core.ui.gui import invoke_in_main_thread
-from pychron.core.codetools.memory_usage import mem_log
-from pychron.experiment.automated_run.multi_collector import MultiCollector
+
 
 DEBUG = False
-
-"""
-    @todo
-    need to handle different integration times
-
-    change total_counts to total_seconds
-    convert counts to seconds
-        total_seconds += ncounts * self._integration_seconds
-"""
 
 
 class ScriptInfo(HasTraits):
@@ -94,36 +77,41 @@ class AutomatedRun(Loggable):
     persistence (saving to file and database) is handled by AutomatedRunPersister
 
     An automated run is executed in four steps by the ExperimentExecutor.
-    1. start
-    2. extraction
-    3a. measurement
-     b. equilibration *
-     c. post_equilibration *
-    4. post_measurement
 
-    * equilibration and post_equilibration are executed concurrently with the measurement script
-     this way equilibration gas can be measured.
+    #. start
+    #. extraction
+    #. measurement
+
+       a. equilibration
+       b. post_equilibration
+
+    #. post_measurement
+
+    equilibration and post_equilibration are executed concurrently with the measurement script
+    this way equilibration gas can be measured.
 
     four pyscripts (all optional) are used to program analysis execution
+
     1. extraction
     2. measurement
     3. post_equilibration
     4. post_measurement
 
     four types of conditionals are available
+
     1. termination_conditionals
     2. truncation_conditionals
     3. action_conditionals
     4. cancelation_conditionals
-
     """
+
     spectrometer_manager = Any
     extraction_line_manager = Any
     experiment_executor = Any
     ion_optics_manager = Any
 
-    multi_collector = Instance(MultiCollector)
-    peak_hop_collector = Instance(PeakHopCollector)
+    multi_collector = Instance('pychron.experiment.automated_run.multi_collector.MultiCollector')
+    peak_hop_collector = Instance('pychron.experiment.automated_run.peak_hop_collector.PeakHopCollector')
     persister = Instance('pychron.experiment.automated_run.persistence.AutomatedRunPersister', ())
     system_health = Instance('pychron.experiment.health.series.SystemHealthSeries')
 
@@ -134,7 +122,7 @@ class AutomatedRun(Loggable):
     runner = Any
     monitor = Any
     plot_panel = Any
-    arar_age = Instance(ArArAge)
+    arar_age = Instance('pychron.processing.arar_age.ArArAge')
 
     spec = Any
     runid = Property
@@ -155,10 +143,10 @@ class AutomatedRun(Loggable):
     dirty = Bool(False)
     update = Event
 
-    measurement_script = Instance(MeasurementPyScript)
-    post_measurement_script = Instance(ExtractionPyScript)
-    post_equilibration_script = Instance(ExtractionPyScript)
-    extraction_script = Instance(ExtractionPyScript)
+    measurement_script = Instance('pychron.pyscripts.measurement_pyscript.MeasurementPyScript')
+    post_measurement_script = Instance('pychron.pyscripts.extraction_line_pyscript.ExtractionPyScript')
+    post_equilibration_script = Instance('pychron.pyscripts.extraction_line_pyscript.ExtractionPyScript')
+    extraction_script = Instance('pychron.pyscripts.extraction_line_pyscript.ExtractionPyScript')
 
     termination_conditionals = List
     truncation_conditionals = List
@@ -529,28 +517,28 @@ class AutomatedRun(Loggable):
 
     def py_add_action(self, **kw):
         """
-            attr must be an attribute of arar_age
+        attr must be an attribute of arar_age
 
-            perform a specified action if teststr evaluates to true
+        perform a specified action if teststr evaluates to true
         """
         self._conditional_appender('action', kw, ActionConditional)
 
     def py_add_termination(self, **kw):
         """
-            attr must be an attribute of arar_age
+        attr must be an attribute of arar_age
 
-            terminate run and continue experiment if teststr evaluates to true
+        terminate run and continue experiment if teststr evaluates to true
         """
         self._conditional_appender('termination', kw, TerminationConditional)
 
     def py_add_truncation(self, **kw):
         """
-            attr must be an attribute of arar_age
+        attr must be an attribute of arar_age
 
-            truncate measurement and continue run if teststr evaluates to true
-            default kw:
-            attr='', comp='',start_count=50, frequency=5,
-            abbreviated_count_ratio=1.0
+        truncate measurement and continue run if teststr evaluates to true
+        default kw:
+        attr='', comp='',start_count=50, frequency=5,
+        abbreviated_count_ratio=1.0
         """
         self._conditional_appender('truncation', kw, TruncationConditional)
 
@@ -577,11 +565,11 @@ class AutomatedRun(Loggable):
     # ===============================================================================
     def cancel_run(self, state='canceled', do_post_equilibration=True):
         """
-            terminate the measurement script immediately
+        terminate the measurement script immediately
 
-            do post termination
-                post_eq and post_meas
-            don't save run
+        do post termination
+            post_eq and post_meas
+        don't save run
 
         """
         # self.multi_collector.canceled = True
@@ -608,12 +596,12 @@ class AutomatedRun(Loggable):
 
     def truncate_run(self, style='normal'):
         """
-            truncate the measurement script
+        truncate the measurement script
 
-            style:
-                normal- truncate current measure iteration and continue
-                quick- truncate current measure iteration use truncated_counts for following
-                        measure iterations
+        style:
+            normal- truncate current measure iteration and continue
+            quick- truncate current measure iteration use truncated_counts for following
+                    measure iterations
 
         """
         if self.measuring:
@@ -932,6 +920,7 @@ class AutomatedRun(Loggable):
                 p = add_extension(p, '.yaml')
 
                 if os.path.isfile(p):
+                    from pychron.experiment.automated_run.syn_extraction import SynExtractionCollector
                     dur = self.extraction_script.calculate_estimated_duration(force=True)
                     syn_extractor = SynExtractionCollector(arun=weakref.ref(self)(),
                                                            path=p,
@@ -1104,7 +1093,7 @@ class AutomatedRun(Loggable):
         age_string = 'age={}'.format(age)
 
         return '''runid={} timestamp={} {}
-anaylsis_type={}        
+anaylsis_type={}
 # ===============================================================================
 # signals
 # ===============================================================================
@@ -1130,6 +1119,7 @@ anaylsis_type={}
         if self._use_arar_age():
             if self.arar_age is None:
                 # load arar_age object for age calculation
+                from pychron.processing.arar_age import ArArAge
                 self.arar_age = ArArAge()
 
             es = self.extraction_script
@@ -1514,6 +1504,7 @@ anaylsis_type={}
         return ln not in ('dg', 'pa')
 
     def _new_plot_panel(self, plot_panel, stack_order='bottom_to_top'):
+        from pychron.processing.analyses.view.automated_run_view import AutomatedRunAnalysisView
 
         title = self.runid
         sample, irradiation = self.spec.sample, self.spec.irradiation
@@ -1523,6 +1514,7 @@ anaylsis_type={}
             title = '{}   {}'.format(title, irradiation)
 
         if plot_panel is None:
+            from pychron.experiment.plot_panel import PlotPanel
             plot_panel = PlotPanel(
                 stack_order=stack_order,
                 info_func=self.info,
@@ -1773,6 +1765,7 @@ anaylsis_type={}
         if self.plot_panel:
             self.plot_panel._ncounts = ncounts
             self.plot_panel.total_counts += ncounts
+            from pychron.core.ui.gui import invoke_in_main_thread
             invoke_in_main_thread(self._setup_isotope_graph, starttime_offset, color, grpname)
 
         with self.persister.writer_ctx():
@@ -1784,7 +1777,7 @@ anaylsis_type={}
             self.cancel_run()
 
         return not m.canceled
-
+#
     def _setup_isotope_graph(self, starttime_offset, color, grpname):
         """
             execute in main thread is necessary.
@@ -1917,10 +1910,12 @@ anaylsis_type={}
         return s
 
     def _measurement_script_factory(self):
+        from pychron.pyscripts.measurement_pyscript import MeasurementPyScript
 
         sname = self.script_info.measurement_script_name
         root = paths.measurement_dir
         sname = self._make_script_name(sname)
+
 
         ms = MeasurementPyScript(root=root,
                                  name=sname,
@@ -1944,6 +1939,8 @@ anaylsis_type={}
         file_name = self._make_script_name(file_name)
         if os.path.isfile(os.path.join(root, file_name)):
             if klass is None:
+                from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
+
                 klass = ExtractionPyScript
 
             obj = klass(
@@ -2049,13 +2046,16 @@ anaylsis_type={}
 
     def _extraction_script_default(self):
         return self._load_script('extraction')
-
+#
     def _peak_hop_collector_default(self):
+
+        from pychron.experiment.automated_run.peak_hop_collector import PeakHopCollector
         c = PeakHopCollector()
         c.console_bind_preferences('pychron.experiment')
         return c
 
     def _multi_collector_default(self):
+        from pychron.experiment.automated_run.multi_collector import MultiCollector
         c = MultiCollector()
         c.console_bind_preferences('pychron.experiment')
         return c

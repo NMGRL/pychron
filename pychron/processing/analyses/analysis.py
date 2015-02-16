@@ -24,8 +24,8 @@ from collections import namedtuple
 # ============= local library imports  ==========================
 from pychron.core.helpers.formatting import format_percent_error, floatfmt
 from pychron.core.helpers.logger_setup import new_logger
-from pychron.processing.analyses.analysis_view import AnalysisView
 from pychron.processing.arar_age import ArArAge
+# from pychron.processing.analyses.analysis_view import AnalysisView
 #from pychron.processing.analyses.summary import AnalysisSummary
 #from pychron.processing.analyses.db_summary import DBAnalysisSummary
 from pychron.experiment.utilities.identifier import make_aliquot_step, make_runid
@@ -43,8 +43,8 @@ class Analysis(ArArAge):
     group_id = Int
     graph_id = Int
 
-    analysis_view_klass = AnalysisView
-    analysis_view = Instance(AnalysisView)
+    analysis_view_klass = ('pychron.processing.analyses.analysis_view','AnalysisView')
+    analysis_view = Instance('pychron.processing.analyses.analysis_view.AnalysisView')
 
     labnumber = Str
     aliquot = Int
@@ -140,7 +140,12 @@ class Analysis(ArArAge):
     #     return self.analysis_summary_klass(model=self)
 
     def _analysis_view_default(self):
-        v = self.analysis_view_klass()
+
+        mod, klass= self.analysis_view_klass
+        mod = __import__(mod, fromlist=[klass,])
+        klass=getattr(mod, klass)
+        # v = self.analysis_view_klass()
+        v = klass()
         self._sync_view(v)
         return v
 
