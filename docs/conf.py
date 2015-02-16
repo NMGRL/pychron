@@ -29,22 +29,14 @@ except ImportError:
     from mock import Mock as MagicMock
 
 
-class HT(object):
-    def __init__(self, *args, **kw):
-        pass
-
-
 class Mock(MagicMock):
     @classmethod
     def __getattr__(cls, name):
-        # if name=='HasTraits':
-        #     return HT()
-        # else:
         return Mock()
 
 MOCK_MODULES = ['numpy',
                 # 'traits.api',
-                'traitsui.api',
+                # 'traitsui.api',
                 'apptools.preferences.preference_binding',
                 'scipy.optimize',
                 'scipy']
