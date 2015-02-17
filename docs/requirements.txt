@@ -2,3 +2,5 @@ mock
 traits
 traitsui
 apptools
+pint
+sqlalchemy
