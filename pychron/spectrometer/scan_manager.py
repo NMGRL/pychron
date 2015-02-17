@@ -300,7 +300,7 @@ class ScanManager(Manager):
 
     def _update(self, data):
         keys, signals = data
-        if signals is not None:
+        if keys:
             x = self.graph.record_multiple(signals,
                                            track_y=False)
 

@@ -145,20 +145,25 @@ class _TableView(TableView, ConsumerMixin):
         vheader = self.verticalHeader()
 
         # size = vheader.minimumSectionSize()
+        height = None
         font = editor.adapter.get_font(editor.object, editor.name, 0)
         if font is not None:
             fnt = QtGui.QFont(font)
             size = QtGui.QFontMetrics(fnt)
             height = size.height()+6
+            vheader.setFont(fnt)
+            hheader = self.horizontalHeader()
+            hheader.setFont(fnt)
+
         if editor.factory.row_height:
             height = editor.factory.row_height
 
-        vheader.setDefaultSectionSize(height)
+        if height:
+            vheader.setDefaultSectionSize(height)
+
         vheader.ResizeMode(QHeaderView.ResizeToContents)
-        hheader = self.horizontalHeader()
             # hheader.setStretchLastSection(editor.factory.stretch_last_section)
-        vheader.setFont(fnt)
-        hheader.setFont(fnt)
+
 
     def set_bg_color(self, bgcolor):
         if isinstance(bgcolor, tuple):
