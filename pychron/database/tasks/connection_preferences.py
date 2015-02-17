@@ -228,7 +228,8 @@ class ConnectionPreferencesPane(PreferencesPane):
                               Item('db_name',
                                    label='Database Name',
                                    editor=ComboboxEditor(name='_names')),
-                              UItem('progress_icon', editor=AnimatedPNGEditor(state='progress_state'))),
+                              # UItem('progress_icon', editor=AnimatedPNGEditor(state='progress_state'))
+                              ),
                        # Item('save_username', label='User'),
                        HGroup(fav_grp, db_auth_grp),
                        show_border=True,
