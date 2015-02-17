@@ -71,8 +71,8 @@ class MeasurementPyScript(ValvePyScript):
         """
         Reset the script with a new automated run
 
-        :param arun: ``AutomatedRun``
-        :return:
+        :param arun: A new ``AutomatedRun``
+        :type arun: ``AutomatedRun``
         """
         self.debug('%%%%%%%%%%%%%%%%%% setting automated run {}'.format(arun.runid))
         self.automated_run = arun
@@ -102,10 +102,12 @@ class MeasurementPyScript(ValvePyScript):
 
         cancel script if generating mftable fails
 
-        :param detectors:
-        :param refiso:
-        :return:
+        :param detectors: list of detectors to peak center
+        :type detectors: list
+        :param refiso: isotope to peak center
+        :type refiso: str
         """
+
         if calc_time:
             self._estimated_duration += len(detectors) * 30
             return
@@ -126,10 +128,12 @@ class MeasurementPyScript(ValvePyScript):
         """
         collect a sniff measurement. Sniffs are the measurement of the equilibration gas.
 
-        :param ncounts: int
-        :param integration_time: float
-        :param block: bool
-        :return:
+        :param ncounts: Number of counts
+        :type ncounts: int
+        :param integration_time: integration time in seconds
+        :type integration_time: float
+        :param block: Is this call blocking or should it return immediately
+        :type block: bool
         """
 
         if calc_time:
@@ -147,9 +151,11 @@ class MeasurementPyScript(ValvePyScript):
     def multicollect(self, ncounts=200, integration_time=1.04, calc_time=False):
         """
         Do a multicollection. Measure all detectors setup using ``activate_detectors``
-        :param ncounts: int
-        :param integration_time: float
-        :return:
+
+        :param ncounts: Number of counts
+        :type ncounts: int
+        :param integration_time: integration time in seconds
+        :type integration_time: float
         """
         if calc_time:
             self._estimated_duration += (ncounts * integration_time * ESTIMATED_DURATION_FF)
@@ -179,11 +185,17 @@ class MeasurementPyScript(ValvePyScript):
         """
         Measure the baseline for all detectors. Position ion beams using mass and detector
 
-        :param ncounts: int
-        :param mass: float
-        :param detector: str
-        :param integration_time: float
-        :param settling_time: float
+        :param ncounts: Number of counts
+        :type ncounts: int
+        :param mass: Mass to measure baseline in amu
+        :type mass: float
+        :param detector: name of detector
+        :type detector: str
+        :param integration_time: integration time in seconds
+        :type integration_time: float
+        :param settling_time: delay between magnet positioning and measurement in seconds
+        :type settling_time: float
+
         """
         if self.abbreviated_count_ratio:
             ncounts *= self.abbreviated_count_ratio
@@ -220,7 +232,8 @@ class MeasurementPyScript(ValvePyScript):
         load the hops definition from a file
 
         :param p: path. absolute or relative to this scripts root
-        :return:
+        :return: hops
+        :rtype: list of tuples
         """
         if not os.path.isfile(p):
             p = os.path.join(self.root, p)
@@ -325,7 +338,7 @@ class MeasurementPyScript(ValvePyScript):
 
         :param ncounts: int
         :param conditionals: list of dicts
-        :return:
+
         """
         ret = self._automated_run_call('py_whiff', ncounts, conditionals,
                                        self._time_zero, self._time_zero_offset,
@@ -408,8 +421,8 @@ class MeasurementPyScript(ValvePyScript):
     def set_baseline_fits(self, *fits):
         """
         set baseline fits for detectors
+
         :param fits:
-        :return:
         """
         self._automated_run_call('py_set_baseline_fits', fits)
 
@@ -434,6 +447,16 @@ class MeasurementPyScript(ValvePyScript):
     @command_register
     def position_magnet(self, pos, detector='AX', dac=False):
         """
+
+        :param pos: location to set magnetic field
+        :type pos: str, float
+        :param detector: detector to position ``pos``
+        :type pos: str
+        :param dac: is the ``pos`` a DAC voltage
+        :type dac: bool
+
+        examples::
+
             position_magnet(4.54312, dac=True) # detector is not relevant
             position_magnet(39.962, detector='AX')
             position_magnet('Ar40', detector='AX') #Ar40 will be converted to 39.962 use mole weight dict
@@ -710,6 +733,7 @@ class MeasurementPyScript(ValvePyScript):
     def truncated(self):
         """
         Property. True if run was truncated otherwise False
+
         :return: bool
         """
         return self._automated_run_call(lambda: self.automated_run.truncated)
@@ -718,6 +742,7 @@ class MeasurementPyScript(ValvePyScript):
     def eqtime(self):
         """
         Property. Equilibration time. Get value from ``AutomatedRun``.
+
         :return: float, int
         """
         if self.automated_run:
@@ -733,6 +758,7 @@ class MeasurementPyScript(ValvePyScript):
     def time_zero_offset(self):
         """
         Property. Substract ``time_zero_offset`` from time value for all data points
+
         :return: float, int
         """
         if self.automated_run:
@@ -744,6 +770,7 @@ class MeasurementPyScript(ValvePyScript):
     def use_cdd_warming(self):
         """
         Property. Use CDD Warming. Get value from ``AutomatedRunSpec``
+
         :return: bool
         """
         return self._automated_run_call(lambda: self.automated_run.spec.use_cdd_warming)

@@ -102,10 +102,14 @@ class ExtractionPyScript(ValvePyScript):
 
     def get_extraction_positions(self, clear=True):
         """
-        return a list of x,y,z tuples
+        Returns a list of x,y,z tuples
         each tuple represents where the extraction occurred
-        if clear is True (default)
-        _extraction_positions set to empty list
+
+        if clear is True (default) ``self._extraction_positions`` set to an empty list
+
+        :return: list of x,y,z tuples
+        :rtype: list of tuples
+
         """
         ret = self._extraction_positions
         if clear:
@@ -114,12 +118,33 @@ class ExtractionPyScript(ValvePyScript):
         return ret
 
     def get_response_blob(self):
+        """
+        Get the extraction device's response blob
+
+        :return: response blob. binary string representing time v measured output
+        :rtype: str
+        """
         return self._extraction_action([('get_response_blob', (), {})])
 
     def get_output_blob(self):
+        """
+        Get the extraction device's output blob
+
+        :return: output blob: binary string representing time v requested output
+        :rtype: str
+        """
         return self._extraction_action([('get_output_blob', (), {})])
 
     def output_achieved(self):
+        """
+        Return a formated string with the extraction "heating" results::
+
+            Requested Output= 100.000
+            Achieved Output= 99.012
+
+        :return: Formatted string with results
+        :rtype: str
+        """
         request = self.extract
         ach = self._extraction_action([('get_achieved_output', (), {})])
         try:
@@ -141,7 +166,7 @@ class ExtractionPyScript(ValvePyScript):
 
     def set_default_context(self):
         """
-            provide default values for all the properties exposed in the script
+        provide default values for all the properties exposed in the script
         """
 
         self.setup_context(analysis_type='',
@@ -171,14 +196,26 @@ class ExtractionPyScript(ValvePyScript):
     def waitfor(self, func_or_tuple, start_message='', end_message='',
                 check_period=1, timeout=0):
         """
-            func_or_tuple: callable or a tuple
 
-            tuple format: (device_name, get_..., comparison)
-                comparison: x<10
-                          : 10<x<20
+        tuple format: (device_name, function_name, comparison)
+        comparison ::
 
-            callable can of form func() or func(ti) or func(ti, i)
-            where ti is the current relative time (relative to start of waitfor) and i is a counter
+          x<10
+          10<x<20
+
+        callable can of form ``func() or func(ti) or func(ti, i)``
+        where ``ti`` is the current relative time (relative to start of waitfor) and ``i`` is a counter
+
+        :param func_or_tuple: wait for function to return True
+        :type func_or_tuple: callable, tuple
+        :param start_message: Message to display at start
+        :type start_message: str
+        :param end_message: Message to display at end
+        :type end_message: str
+        :param check_period: Delay between checks in seconds
+        :type check_period: int, float
+        :param timeout: Cancel waiting after ``timeout`` seconds
+        :type timeout: int, float
         """
         include_time = False
         include_time_and_count = False
