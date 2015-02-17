@@ -78,7 +78,7 @@ class PyScriptPlugin(BaseTaskPlugin):
                             name='PyScript',
                             factory=self._task_factory,
                             task_group='experiment',
-                            image='script.png'),
+                            image='script'),
                 TaskFactory(id='pychron.pyscript.visual_el_programmer',
                             name='Visual Programmer',
                             factory=self._visual_task_factory,

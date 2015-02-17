@@ -222,7 +222,9 @@ class AutomatedRunSpec(Loggable):
         return ps
 
     def make_script_context(self):
-        hdn = convert_extract_device(self.extract_device)
+        # hdn = convert_extract_device(self.extract_device)
+        hdn = self.extract_device.replace(' ','')
+
         an = self.analysis_type.split('_')[0]
         ctx = dict(tray=self.tray,
                    position=self.get_position_list(),
