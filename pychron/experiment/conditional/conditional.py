@@ -146,6 +146,7 @@ class BaseConditional(Loggable):
         :param cnt: int
         :return: True if check passes. e.i. Write checks to trip on success. to terminate if Ar36 intensity is less
         than x use Ar36<x
+
         """
         if self._should_check(run, data, cnt):
             return self._check(run, data)
@@ -266,11 +267,11 @@ class AutomatedRunConditional(BaseConditional):
 
 class TruncationConditional(AutomatedRunConditional):
     """
-        stops the current measurement and continues to next step in pyscript.
-        If more measure calls are main use abbreviated_count_ratio to reduce
-        the number of counts. for example of abbreviated_count_ratio = 0.5 and
-        the original baseline counts = 100, only 50 counts will be made for a truncated
-        run.
+    stops the current measurement and continues to next step in pyscript.
+    If more measure calls are main use abbreviated_count_ratio to reduce
+    the number of counts. for example of abbreviated_count_ratio = 0.5 and
+    the original baseline counts = 100, only 50 counts will be made for a truncated
+    run.
 
     """
     abbreviated_count_ratio = 1.0
@@ -278,14 +279,14 @@ class TruncationConditional(AutomatedRunConditional):
 
 class TerminationConditional(AutomatedRunConditional):
     """
-        Stop the current analysis immediately. Don't save to database.
-        Continue to next run in experiment queue
+    Stop the current analysis immediately. Don't save to database.
+    Continue to next run in experiment queue
     """
 
 
 class CancelationConditional(AutomatedRunConditional):
     """
-        Stop the current analysis immediately then stop the experiment.
+    Stop the current analysis immediately then stop the experiment.
     """
 
 

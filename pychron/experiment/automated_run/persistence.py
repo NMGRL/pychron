@@ -31,7 +31,6 @@ from uncertainties import nominal_value, std_dev
 from pychron.core.helpers.datetime_tools import get_datetime
 from pychron.core.ui.preference_binding import bind_preference
 from pychron.database.adapters.local_lab_adapter import LocalLabAdapter
-from pychron.experiment.datahub import Datahub, check_secondary_database_save
 from pychron.experiment.automated_run.hop_util import parse_hops
 
 from pychron.loggable import Loggable
@@ -53,7 +52,7 @@ class AutomatedRunPersister(Loggable):
 
     """
     local_lab_db = Instance(LocalLabAdapter)
-    datahub = Instance(Datahub)
+    datahub = Instance('pychron.experiment.datahub.Datahub')
     run_spec = Instance('pychron.experiment.automated_run.spec.AutomatedRunSpec')
     data_manager = Instance('pychron.managers.data_managers.h5_data_manager.H5DataManager', ())
     monitor = Any
@@ -426,17 +425,19 @@ class AutomatedRunPersister(Loggable):
         # don't save detector_ic runs to mass spec
         # measurement of an isotope on multiple detectors likely possible with mass spec but at this point
         # not worth trying.
-        if self.use_secondary_database and check_secondary_database_save(ln):
-            if not self.datahub.secondary_connect():
-                # if not self.massspec_importer or not self.massspec_importer.db.connected:
-                self.debug('Secondary database is not available')
-            else:
-                self.debug('saving post measurement to secondary database')
-                # save to massspec
-                mt = time.time()
-                self._save_to_massspec(cp)
-                self.debug('mass spec save time= {:0.3f}'.format(time.time() - mt))
-                # mem_log('post mass spec save')
+        if self.use_secondary_database:
+            from pychron.experiment.datahub import check_secondary_database_save
+            if check_secondary_database_save(ln):
+                if not self.datahub.secondary_connect():
+                    # if not self.massspec_importer or not self.massspec_importer.db.connected:
+                    self.debug('Secondary database is not available')
+                else:
+                    self.debug('saving post measurement to secondary database')
+                    # save to massspec
+                    mt = time.time()
+                    self._save_to_massspec(cp)
+                    self.debug('mass spec save time= {:0.3f}'.format(time.time() - mt))
+                    # mem_log('post mass spec save')
 
     # private
     def _save_detector_ic_csv(self):
