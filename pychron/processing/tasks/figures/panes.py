@@ -62,7 +62,7 @@ class PlotterOptionsPane(TraitsDockPane):
     """
     id = 'pychron.processing.figures.plotter_options'
 
-    name = 'Plot Options'
+    name = 'Figure Options'
     pom = Any
 
     def traits_view(self):
