@@ -22,7 +22,6 @@ import time
 import inspect
 import re
 # ============= local library imports  ==========================
-from pychron.external_pipette.apis_manager import InvalidPipetteError
 from pychron.external_pipette.protocol import IPipetteManager
 from pychron.hardware.core.exceptions import TimeoutError
 from pychron.hardware.core.i_core_device import ICoreDevice
@@ -31,16 +30,13 @@ from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.pyscripts.valve_pyscript import ValvePyScript
 from pychron.pychron_constants import EXTRACTION_COLOR
 
-ELPROTOCOL = 'pychron.extraction_line.extraction_line_manager.ExtractionLineManager'
+# ELPROTOCOL = 'pychron.extraction_line.extraction_line_manager.ExtractionLineManager'
 
 COMPRE = re.compile(r'[A-Za-z]*')
 
-'''
-    make a registry to hold all the commands exposed by ExtractionPyScript
-    used when building the context
-    see PyScript.get_context and get_command_register
-    
-'''
+# make a registry to hold all the commands exposed by ExtractionPyScript
+# used when building the context
+# see PyScript.get_context and get_command_register
 command_register = makeRegistry()
 
 
@@ -91,6 +87,10 @@ class Ramper(object):
 
 
 class ExtractionPyScript(ValvePyScript):
+    """
+    The ExtractionPyScript is used to program the extraction and gettering of
+    sample gas.
+    """
     _resource_flag = None
     info_color = EXTRACTION_COLOR
     snapshots = List
@@ -102,10 +102,10 @@ class ExtractionPyScript(ValvePyScript):
 
     def get_extraction_positions(self, clear=True):
         """
-            return a list of x,y,z tuples
-            each tuple represents where the extraction occurred
-            if clear is True (default)
-            _extraction_positions set to empty list
+        return a list of x,y,z tuples
+        each tuple represents where the extraction occurred
+        if clear is True (default)
+        _extraction_positions set to empty list
         """
         ret = self._extraction_positions
         if clear:
@@ -381,6 +381,7 @@ class ExtractionPyScript(ValvePyScript):
             it is the ExtractionPyScripts responsiblity to handle the waiting.
             use the waitfor command to wait for signals from apis.
         """
+        from pychron.external_pipette.apis_manager import InvalidPipetteError
         cmd = 'load_blank_non_blocking' if self.analysis_type == 'blank' else 'load_pipette_non_blocking'
         try:
             #bug _manager_action only with except tuple of len 1 for args
@@ -404,6 +405,7 @@ class ExtractionPyScript(ValvePyScript):
             this is an atomic command. use the apis_controller config file to define
             the isolation procedures.
         """
+        from pychron.external_pipette.apis_manager import InvalidPipetteError
         if identifier == '':
             identifier = self.extract_value
 

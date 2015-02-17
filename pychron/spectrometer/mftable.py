@@ -18,7 +18,6 @@
 from traits.api import HasTraits, List, Str, Dict, Float, Bool, Property
 from traitsui.api import View, Controller, TableEditor, UItem
 # from traitsui.table_column import ObjectColumn
-from apptools.preferences.preference_binding import bind_preference
 # ============= standard library imports ========================
 import shutil
 import csv
@@ -80,6 +79,8 @@ class MagnetFieldTable(Loggable):
         # self.warning_dialog('No Magnet Field Table. Create {}'.format(p))
         # else:
         # self.load_mftable()
+
+        # if os.environ.get('RTD', 'False') == 'False':
         self.bind_preferences()
 
     def initialize(self, molweights):
@@ -92,6 +93,8 @@ class MagnetFieldTable(Loggable):
             self.load_mftable(load_items=True)
 
     def bind_preferences(self):
+        from apptools.preferences.preference_binding import bind_preference
+
         prefid = 'pychron.spectrometer'
         bind_preference(self, 'use_local_archive',
                         '{}.use_local_mftable_archive'.format(prefid))
@@ -271,8 +274,6 @@ class MagnetFieldTable(Loggable):
         if not self._mftable or not self._check_mftable_hash():
             self.load_mftable()
 
-
-
         return self._mftable
 
     def _check_mftable_hash(self):
@@ -329,7 +330,6 @@ class MagnetFieldTable(Loggable):
         else:
             p = paths.mftable
         return p
-
 
 
 # ============= EOF =============================================

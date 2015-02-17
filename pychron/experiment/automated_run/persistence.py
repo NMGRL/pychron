@@ -26,7 +26,7 @@ import time
 import math
 from uncertainties import nominal_value, std_dev
 # ============= local library imports  ==========================
-from pychron.core.codetools.file_log import file_log
+# from pychron.core.codetools.file_log import file_log
 # from pychron.core.codetools.memory_usage import mem_log
 from pychron.core.helpers.datetime_tools import get_datetime
 from pychron.core.ui.preference_binding import bind_preference
@@ -414,7 +414,7 @@ class AutomatedRunPersister(Loggable):
 
                 pt = time.time() - pt
                 self.debug('pychron save time= {:0.3f} '.format(pt))
-                file_log(pt)
+                # file_log(pt)
 
         self.debug('$$$$$$$$$$$$$$$ auto_save_detector_ic={}'.format(self.auto_save_detector_ic))
         if self.auto_save_detector_ic:

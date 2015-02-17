@@ -5,5 +5,6 @@ API
   :maxdepth: 1
 
   simple
-  spectrometer
   experiment
+  pyscripts
+  spectrometer
