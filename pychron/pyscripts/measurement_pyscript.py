@@ -46,6 +46,9 @@ class MeasurementCTXObject(object):
 
 
 class MeasurementPyScript(ValvePyScript):
+    """
+    MeasurementPyScripts are used to collect isotopic data
+    """
     automated_run = None
     ncounts = 0
     info_color = MEASUREMENT_COLOR
@@ -65,6 +68,12 @@ class MeasurementPyScript(ValvePyScript):
         super(MeasurementPyScript, self).gosub(*args, **kw)
 
     def reset(self, arun):
+        """
+        Reset the script with a new automated run
+
+        :param arun: ``AutomatedRun``
+        :return:
+        """
         self.debug('%%%%%%%%%%%%%%%%%% setting automated run {}'.format(arun.runid))
         self.automated_run = arun
         self._reset()
@@ -87,6 +96,16 @@ class MeasurementPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def generate_ic_mftable(self, detectors, refiso='Ar40', calc_time=False):
+        """
+        Generate an IC MFTable. Use this when doing a Detector Intercalibration.
+        peak centers the ``refiso`` on a list of ``detectors``. MFTable saved as ic_mftable
+
+        cancel script if generating mftable fails
+
+        :param detectors:
+        :param refiso:
+        :return:
+        """
         if calc_time:
             self._estimated_duration += len(detectors) * 30
             return
@@ -143,7 +162,7 @@ class MeasurementPyScript(ValvePyScript):
                   integration_time=1.04,
                   settling_time=4, calc_time=False):
         """
-            if detector is not none then it is peak hopped
+        if detector is not none then it is peak hopped
         """
         if self.abbreviated_count_ratio:
             ncounts *= self.abbreviated_count_ratio

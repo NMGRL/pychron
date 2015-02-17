@@ -64,29 +64,32 @@ class IntervalContext(object):
 
 
 def verbose_skip(func):
-    def decorator(obj, *args, **kw):
+    if os.environ.get('RTD', 'False')=='True':
+        return func
+    else:
+        def decorator(obj, *args, **kw):
 
-        fname = func.__name__
-        if fname.startswith('_m_'):
-            fname = fname[3:]
+            fname = func.__name__
+            if fname.startswith('_m_'):
+                fname = fname[3:]
 
-        args1, _, _, defaults = inspect.getargspec(func)
+            args1, _, _, defaults = inspect.getargspec(func)
 
-        nd = sum([1 for di in defaults if di is not None]) if defaults else 0
+            nd = sum([1 for di in defaults if di is not None]) if defaults else 0
 
-        min_args = len(args1) - 1 - nd
-        an = len(args) + len(kw)
-        if an < min_args:
-            raise PyscriptError(obj.name, 'invalid arguments count for {}, args={} kwargs={}'.format(fname,
-                                                                                                     args, kw))
-        if obj.testing_syntax or obj.is_canceled() or obj.is_truncated():
-            return 0
+            min_args = len(args1) - 1 - nd
+            an = len(args) + len(kw)
+            if an < min_args:
+                raise PyscriptError(obj.name, 'invalid arguments count for {}, args={} kwargs={}'.format(fname,
+                                                                                                         args, kw))
+            if obj.testing_syntax or obj.is_canceled() or obj.is_truncated():
+                return 0
 
-        obj.debug('{} {} {}'.format(fname, args, kw))
+            obj.debug('{} {} {}'.format(fname, args, kw))
 
-        return func(obj, *args, **kw)
+            return func(obj, *args, **kw)
 
-    return decorator
+        return decorator
 
 
 def skip(func):

@@ -144,8 +144,7 @@ class BaseConditional(Loggable):
         :param run: ``AutomatedRun``
         :param data: 2-tuple. (keys, signals) where keys==detector names, signals== measured intensities
         :param cnt: int
-        :return: True if check passes. e.i. Write checks to trip on success. to terminate if Ar36 intensity is less
-        than x use Ar36<x
+        :return: True if check passes. e.i. Write checks to trip on success.
 
         """
         if self._should_check(run, data, cnt):
@@ -338,7 +337,7 @@ class ActionConditional(AutomatedRunConditional):
 # v1, v2 = args[1:]
 # nc = '{}<={}<={}'.format(v1, key, v2)
 #
-#     teststr = teststr.replace(between, nc)
+# teststr = teststr.replace(between, nc)
 #     if between.startswith('not '):
 #         teststr = 'not {}'.format(teststr)
 #
