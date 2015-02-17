@@ -103,8 +103,13 @@ class PychronLaserManager(BaseLaserManager, PychronDevice):
         self._opened_hook()
 
     def update_position(self):
-        self.trait_set(**dict(zip(('_x', '_y', '_z'),
-                                  self.get_position())))
+
+        pos = self.get_position()
+        if pos:
+            self.trait_set(**dict(zip(('_x', '_y', '_z'), pos)))
+
+        # self.trait_set(**dict(zip(('_x', '_y', '_z'),
+        #                           self.get_position())))
 
     def get_tray(self):
         return self._ask('GetSampleHolder')
