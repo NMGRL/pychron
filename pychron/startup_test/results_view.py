@@ -19,7 +19,7 @@ from threading import Thread
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
 import time
-from traits.api import Instance, Int, Property, Any, Str, String
+from traits.api import Instance, Int, Property, Any, Str, String, Bool
 from traitsui.api import View, Controller, UItem, TabularEditor, VGroup, UReadonly
 from pyface.timer.do_later import do_after
 # ============= standard library imports ========================
@@ -77,6 +77,7 @@ class ResultsView(Controller):
     help_str = String
     _auto_closed = False
     _cancel_auto_close = False
+    can_cancel = Bool(True)
 
     def _selected_changed(self, new):
         self._cancel_auto_close = bool(new)
@@ -128,6 +129,11 @@ class ResultsView(Controller):
                 pass
 
     def traits_view(self):
+        if self.can_cancel:
+            buttons = ['OK','Cancel']
+        else:
+            buttons = ['OK']
+
         v = View(VGroup(UItem('results', editor=TabularEditor(adapter=ResultsAdapter(),
                                                               editable=False,
                                                               selected='controller.selected')),
@@ -143,7 +149,7 @@ class ResultsView(Controller):
                                visible_when='controller.help_str')),
                  title='Test Results',
 
-                 buttons=['OK', 'Cancel'],
+                 buttons=buttons,
                  width=650,
                  kind='livemodal',
                  resizable=True)

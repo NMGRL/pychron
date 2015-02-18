@@ -94,6 +94,30 @@ class PTaskAction(TaskAction):
         self.accelerator = acc or self.accelerator
 
 
+class StartupTestsAction(Action):
+    name = 'Run Startup Tests'
+    def perform(self, event):
+        app = event.task.application
+        from pychron.globals import globalv
+
+        ov = globalv.use_startup_tests
+        globalv.use_startup_tests = True
+
+        for plugin in app.plugin_manager:
+            if hasattr(plugin, 'startup_test'):
+                plugin.startup_test()
+
+        globalv.use_startup_tests = ov
+
+        st = app.startup_tester
+        if st.results:
+            from pychron.startup_test.results_view import ResultsView
+
+            v = ResultsView(model=st,
+                            _cancel_auto_close=True,
+                            can_cancel=False)
+            app.open_view(v)
+
 class KeyBindingsAction(PAction):
     name = 'Edit Key Bindings'
 
@@ -177,7 +201,6 @@ class WebAction(PAction):
             return
 
         webbrowser.open_new(url)
-
 
 
 class IssueAction(WebAction):

@@ -38,6 +38,9 @@ CHANGELOG
 #### 2/14/2015 ####
 * started system health concept. analyze a time series and take action
 
+#### 2/18/2015 ####
+* added "Run Startup Tests" to help menu
+
 ### Bug Fixes ###
 * fixed plotting ideograms of attributes other than age
 * improved database startup tests
