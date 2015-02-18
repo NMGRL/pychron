@@ -130,6 +130,7 @@ class ExperimentStats(Loggable):
         self._timer.start()
 
     def stop_timer(self):
+        self.debug('Stop timer. self._timer: {}'.format(self._timer))
         if self._timer:
             tt = self._total_time
             et = self._elapsed

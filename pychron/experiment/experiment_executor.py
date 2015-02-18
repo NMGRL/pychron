@@ -241,9 +241,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             msg = 'Starting Execution "{}"'.format(name)
             self.heading(msg)
 
-            if self.stats:
-                self.stats.reset()
-                self.stats.start_timer()
+            # if self.stats:
+            #     self.stats.reset()
+            #     self.stats.start_timer()
 
             self._canceled = False
             self.extraction_state_label = ''
@@ -702,7 +702,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 # stop queue
                 if style == 'queue':
                     self.alive = False
+                    self.debug('Queue cancel. stop timer')
                     self.stats.stop_timer()
+
                 self.set_extract_state(False)
                 self.wait_group.stop()
                 self._canceled = True
@@ -723,6 +725,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 self._err_message = 'User Canceled'
 
     def _end_runs(self):
+        self.debug('End Runs. stats={}'.format(self.stats))
         # self._last_ran = None
         if self.stats:
             self.stats.stop_timer()
