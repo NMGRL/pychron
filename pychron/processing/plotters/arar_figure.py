@@ -29,6 +29,7 @@ from uncertainties import std_dev, nominal_value, ufloat
 from pychron.graph.error_bar_overlay import ErrorBarOverlay
 from pychron.graph.tools.limits_tool import LimitsTool, LimitOverlay
 from pychron.processing.analyses.analysis_group import AnalysisGroup
+from pychron.processing.plotters.formatting_options import FormattingOptions
 from pychron.processing.plotters.points_label_overlay import PointsLabelOverlay
 from pychron.processing.plotters.sparse_ticks import SparseLogTicks, SparseTicks
 from pychron.core.helpers.formatting import floatfmt, format_percent_error
@@ -78,6 +79,8 @@ class BaseArArFigure(HasTraits):
     xmi = Float
     xma = Float
 
+    _has_formatting_hash = None
+
     def build(self, plots):
         """
             make plots
@@ -117,7 +120,7 @@ class BaseArArFigure(HasTraits):
 
             # if self.options.use_legend:
             # if True:
-            #     self._add_legend()
+            # self._add_legend()
 
     def post_make(self):
         pass
@@ -173,7 +176,7 @@ class BaseArArFigure(HasTraits):
                 pp.value_axis.tick_generator = SparseLogTicks()
             else:
                 pp.value_axis.tick_generator = SparseTicks()
-                
+
     def _set_fonts(self, pp):
 
         # implement a formatting_options object.
@@ -196,18 +199,38 @@ class BaseArArFigure(HasTraits):
         options = self.options
 
         self.formatting_options = None
-        if self.formatting_options is None:
-            pp.x_axis.title_font = options.xtitle_font
-            pp.x_axis.tick_label_font = options.xtick_font
-            pp.x_axis.tick_in = options.xtick_in
-            pp.x_axis.tick_out = options.xtick_out
+        # from pychron.paths import paths
+        # self.formatting_options = FormattingOptions(paths.presentation_formatting_options)
 
-            pp.y_axis.title_font = options.ytitle_font
-            pp.y_axis.tick_label_font = options.ytick_font
-            pp.y_axis.tick_in = options.ytick_in
-            pp.y_axis.tick_out = options.ytick_out
+        if self.formatting_options is None:
+            self._set_options_fonts(pp)
         else:
-            pass
+
+            if self.options.has_changes():
+                self._set_options_fonts(pp)
+            else:
+                print 'using formatting options'
+                fmt_opt = self.formatting_options
+                for name, axis in (('x', pp.x_axis), ('y', pp.y_axis)):
+                    for attr in ('title_font', 'tick_label_font', 'tick_in', 'tick_out'):
+                        value = fmt_opt.get_value(name, attr)
+                        setattr(axis, attr, value)
+
+            options.se.get_hash()
+
+    def _set_options_fonts(self, pp):
+        print 'using options fonts'
+
+        options = self.options
+        pp.x_axis.title_font = options.xtitle_font
+        pp.x_axis.tick_label_font = options.xtick_font
+        pp.x_axis.tick_in = options.xtick_in
+        pp.x_axis.tick_out = options.xtick_out
+
+        pp.y_axis.title_font = options.ytitle_font
+        pp.y_axis.tick_label_font = options.ytick_font
+        pp.y_axis.tick_in = options.ytick_in
+        pp.y_axis.tick_out = options.ytick_out
 
     def _get_omitted(self, ans, omit=None, include_value_filtered=True):
         return [i for i, ai in enumerate(ans)
@@ -247,7 +270,7 @@ class BaseArArFigure(HasTraits):
 
     # def _get_mswd(self, ages, errors):
     # mswd = calculate_mswd(ages, errors)
-    #     n = len(ages)
+    # n = len(ages)
     #     valid_mswd = validate_mswd(mswd, n)
     #     return mswd, valid_mswd, n
 

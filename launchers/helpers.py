@@ -133,6 +133,7 @@ def initialize_version(appname, debug):
 
     # build directories
     build_directories()
+    paths.write_defaults()
 
     # setup logging. set a basename for log files and logging level
     logging_setup('pychron', level='DEBUG')

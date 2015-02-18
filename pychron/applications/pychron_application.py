@@ -88,6 +88,9 @@ class PychronApplication(BaseTasksApplication):
         # self.dump_user_file()
         from pychron.envisage.user_login import set_last_login
 
+        # print 'set last login', self.username, self.use_login, self.multi_user
+        self.debug('set last login. username={} use_login={} multi_user={}'.format(self.username,
+                                                                                   self.use_login, self.multi_user))
         set_last_login(self.username, self.use_login, self.multi_user)
 
         if self.multi_user:

@@ -44,6 +44,7 @@ class BaseIdeogramInset(BaseInset):
         self.index_range.low = x1
         self.index_range.high = x2
 
+
 class IdeogramInset(BaseIdeogramInset, LinePlot):
     def __init__(self, *args, **kw):
         self.border_visible = kw.get('border_visible', True)

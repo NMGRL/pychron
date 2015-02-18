@@ -217,6 +217,33 @@ conditionals:
    - air
 
 '''
+
+
+SCREEN_FORMATTING_DEFAULTS = '''
+x_tick_in: 2
+x_tick_out: 5
+x_title_label_font: Helvetica 12
+x_tick_label_font: Helvetica 10
+
+y_tick_in: 2
+y_tick_out: 5
+y_title_label_font: Helvetica 12
+y_tick_label_font: Helvetica 10
+
+'''
+
+PRESENTATION_FORMATTING_DEFAULTS = '''
+x_tick_in: 2
+x_tick_out: 5
+x_title_font: Helvetica 22
+x_tick_label_font: Helvetica 14
+
+y_tick_in: 2
+y_tick_out: 5
+y_title_font: Helvetica 22
+y_tick_label_font: Helvetica 14
+
+'''
 # ============= EOF =============================================
 
 

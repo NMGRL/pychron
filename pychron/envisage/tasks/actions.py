@@ -35,6 +35,9 @@ from pychron.envisage.resources import icon
 # ===============================================================================
 # help
 # ===============================================================================
+from pychron.envisage.user_login import login_file
+
+
 def restart():
     os.execl(sys.executable, *([sys.executable] + sys.argv))
 
@@ -146,9 +149,9 @@ class SwitchUserAction(UserAction):
         base_id, cuser = self._get_current_user(event)
         user = get_user(current=cuser)
         if user:
-            from pychron.paths import paths
-            #set login file
-            with open(paths.login_file, 'w') as fp:
+            # from pychron.paths import paths
+            # set login file
+            with open(login_file, 'w') as fp:
                 fp.write(user)
             restart()
 

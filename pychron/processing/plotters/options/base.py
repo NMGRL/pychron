@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import hashlib
 from traits.api import HasTraits, List, Str, TraitError, \
     Button, Bool, Event, Color, Range, String, Float, Int
 from traitsui.api import View, HGroup, spring, VGroup, Item
@@ -34,7 +35,7 @@ class BasePlotterOptions(HasTraits):
     name = Str
     initialized = True
     refresh_plot_needed = Event
-
+    _hash  = None
     def __init__(self, root, clean=False, *args, **kw):
         super(BasePlotterOptions, self).__init__(*args, **kw)
         if not clean:
@@ -66,6 +67,19 @@ class BasePlotterOptions(HasTraits):
         else:
             self._make_dir(os.path.dirname(root))
             os.mkdir(root)
+
+    def get_hash(self):
+        attrs = self._get_dump_attrs()
+        h = hashlib.md5()
+        for ai in attrs:
+            h.update('{}{}'.format(ai, (getattr(self, ai))))
+        return h.hexdigest()
+
+    def set_hash(self):
+        self._hash = self.get_hash()
+
+    def has_changes(self):
+        return self._hash and self._hash != self.get_hash()
 
     def _get_dump_attrs(self):
         raise NotImplementedError
