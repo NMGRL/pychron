@@ -40,6 +40,7 @@ CHANGELOG
 
 #### 2/18/2015 ####
 * added "Run Startup Tests" to help menu
+* added "Select Unknowns" to experiment queue context menu
 
 ### Bug Fixes ###
 * fixed plotting ideograms of attributes other than age

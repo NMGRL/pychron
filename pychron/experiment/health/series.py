@@ -189,13 +189,11 @@ class SystemHealthSeries(Loggable):
         p = os.path.join(paths.setup_dir, 'system_health.yaml')
         with open(p, 'r') as fp:
             config = yaml.load(fp)
-
             self._values = config['values']
             self._conditionals = config['conditionals']
 
             general = config['general']
             self._limit = general['limit']
-            self._bin_hours = general['bin_hours']
 
     def _make_analysis_dict(self, an):
         """

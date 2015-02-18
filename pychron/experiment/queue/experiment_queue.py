@@ -144,6 +144,12 @@ class ExperimentQueue(BaseExperimentQueue):
     def jump_to_start(self):
         self.automated_runs_scroll_to_row = 0
 
+    def select_unknowns(self):
+        def test(ss):
+            return ss.analysis_type == 'unknown'
+
+        self.selected = [si for si in self.cleaned_automated_runs if test(si)]
+
     def select_same(self):
         ident = self.selected[0].identifier
         self._select_same(lambda si: si.identifier == ident)

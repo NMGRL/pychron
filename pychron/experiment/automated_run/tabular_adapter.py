@@ -319,7 +319,8 @@ class AutomatedRunMixin(object):
         blocks = MenuManager(Action(name='Make Block', action='make_block'),
                              Action(name='Repeat Block', action='repeat_block'),
                              name='Blocks')
-        selects = MenuManager(Action(name='Select Same', action='select_same'),
+        selects = MenuManager(Action(name='Select Unknowns', action='select_unknowns'),
+                              Action(name='Select Same Labnumber', action='select_same'),
                               Action(name='Select Same Attributes...', action='select_same_attr'),
                               name='Select')
 
