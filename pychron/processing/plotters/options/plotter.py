@@ -308,6 +308,10 @@ class PlotterOptions(FigurePlotterOptions):
         v = View(VGroup(Item('name', editor=EnumEditor(name='names')),
                         Item('marker', editor=EnumEditor(values=marker_names)),
                         Item('marker_size'),
+                        HGroup(Item('ymin', label='Min'),
+                               Item('ymax', label='Max'),
+                               show_border=True,
+                               label='Y Limits'),
                         show_border=True))
 
         aux_plots_grp = Item('aux_plots',
