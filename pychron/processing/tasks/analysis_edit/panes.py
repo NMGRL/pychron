@@ -327,8 +327,7 @@ class UnknownsPane(HistoryTablePane):
         self.refresh()
 
     def group_by_selected(self):
-        max_gid = max([si.group_id for si in self.selected]) + 1
-
+        max_gid = max([si.group_id for si in self.items]) + 1
         for si in self.selected:
             si.group_id = max_gid
 
