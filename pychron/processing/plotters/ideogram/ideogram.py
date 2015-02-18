@@ -108,7 +108,7 @@ class Ideogram(BaseArArFigure):
             # elif opt.use_centered_range:
             # w2 = opt.centered_range / 2.0
             # r = self.center
-            #     xmi, xma = r - w2, w2 + r
+            # xmi, xma = r - w2, w2 + r
             # pad=False
             # elif opt.xlow or opt.xhigh:
             #     xmi, xma = opt.xlow, opt.xhigh
@@ -147,7 +147,7 @@ class Ideogram(BaseArArFigure):
         # return max([ai
         # for ai in self._unpack_attr(attr)])
         # except (AttributeError, ValueError):
-        #     return 0
+        # return 0
 
     def max_x(self, attr):
         try:
@@ -330,11 +330,16 @@ class Ideogram(BaseArArFigure):
                 xs, ys, xmi, xma = self._calculate_asymptotic_limits(cfunc,
                                                                      asymptotic_width=10,
                                                                      tol=10)
-                plot.overlays.append(IdeogramInset(xs, ys,
-                                                   yoffset=h,
-                                                   width=self.options.inset_width,
-                                                   height=self.options.inset_height,
-                                                   location=self.options.inset_location))
+
+                oo = IdeogramInset(xs, ys,
+                                   yoffset=h,
+                                   width=self.options.inset_width,
+                                   height=self.options.inset_height,
+                                   location=self.options.inset_location)
+                o.set_x_limits(xmi, xma)
+                oo.set_x_limits(xmi, xma)
+
+                plot.overlays.append(oo)
 
     def _add_info(self, g, plot):
         if self.group_id == 0:
@@ -430,12 +435,12 @@ class Ideogram(BaseArArFigure):
             # self._set_selected(sorted_ans, sel)
             # set the temp_status for all the analyses
             # for i, a in enumerate(sorted_ans):
-            #    a.temp_status = 1 if i in sel else 0
+            # a.temp_status = 1 if i in sel else 0
         else:
             # sel = [i for i, a in enumerate(sorted_ans)
             # if a.temp_status]
             sel = self._get_omitted(sorted_ans, omit='omit_ideo')
-            #print 'update graph meta'
+            # print 'update graph meta'
             self._rebuild_ideo(sel)
 
     def _rebuild_ideo(self, sel):
@@ -498,7 +503,7 @@ class Ideogram(BaseArArFigure):
             # update the data label position
             # for ov in sp.overlays:
             # if isinstance(ov, DataLabel):
-            #        _, y = ov.data_point
+            # _, y = ov.data_point
             #        ov.data_point = wm, y
             #        n = len(fxs)
             #        ov.label_text = self._build_label_text(wm, we, mswd, valid_mswd, n)
@@ -685,7 +690,7 @@ class Ideogram(BaseArArFigure):
         # ec = self.options.error_calc_method
         # n = self.options.nsigma
         # if ec == 'SEM':
-        #         a = 1
+        # a = 1
         #     elif ec == 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)':
         #         a = 1
         #         if mswd > 1:

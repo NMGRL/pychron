@@ -82,51 +82,6 @@ class BaseArArFigure(HasTraits):
         """
             make plots
         """
-
-        def _setup_plot(i, pp, po):
-
-            # add limit tools
-            self._add_limit_tool(pp, 'x')
-            self._add_limit_tool(pp, 'y')
-
-            pp.value_range.on_trait_change(lambda: self.update_options_limits(i), 'updated')
-            pp.index_range.on_trait_change(lambda: self.update_options_limits(i), 'updated')
-            pp.value_range.tight_bounds = False
-
-            pp.x_grid.visible = self.x_grid_visible
-            pp.y_grid.visible = self.y_grid_visible
-
-            options = self.options
-            pp.x_axis.title_font = options.xtitle_font
-            pp.x_axis.tick_label_font = options.xtick_font
-            pp.x_axis.tick_in = options.xtick_in
-            pp.x_axis.tick_out = options.xtick_out
-
-            pp.y_axis.title_font = options.ytitle_font
-            pp.y_axis.tick_label_font = options.ytick_font
-            pp.y_axis.tick_in = options.ytick_in
-            pp.y_axis.tick_out = options.ytick_out
-
-            pp.bgcolor = options.plot_bgcolor
-            for attr in ('left', 'right', 'top'):
-                setattr(pp, 'padding_{}'.format(attr),
-                        getattr(options, 'padding_{}'.format(attr)))
-
-            if not i:
-                pp.padding_bottom = options.padding_bottom
-
-            if po:
-                pp.value_scale = po.scale
-                if not po.ytick_visible:
-                    pp.y_axis.tick_visible = False
-                    pp.y_axis.tick_label_formatter = lambda x: ''
-
-            if self.use_sparse_ticks:
-                if pp.value_scale == 'log':
-                    pp.value_axis.tick_generator = SparseLogTicks()
-                else:
-                    pp.value_axis.tick_generator = SparseTicks()
-
         self._plots = plots
         graph = self.graph
 
@@ -158,7 +113,7 @@ class BaseArArFigure(HasTraits):
 
             # set a tag for easy identification
             p.y_axis.tag = po.name
-            _setup_plot(i, p, po)
+            self._setup_plot(i, p, po)
 
             # if self.options.use_legend:
             # if True:
@@ -181,6 +136,78 @@ class BaseArArFigure(HasTraits):
 
     def mean_x(self, *args):
         return 0
+
+    # private
+    def _setup_plot(self, i, pp, po):
+        # add limit tools
+        self._add_limit_tool(pp, 'x')
+        self._add_limit_tool(pp, 'y')
+
+        pp.value_range.on_trait_change(lambda: self.update_options_limits(i), 'updated')
+        pp.index_range.on_trait_change(lambda: self.update_options_limits(i), 'updated')
+        pp.value_range.tight_bounds = False
+
+        pp.x_grid.visible = self.x_grid_visible
+        pp.y_grid.visible = self.y_grid_visible
+
+        options = self.options
+
+        self._set_fonts(pp)
+
+        pp.bgcolor = options.plot_bgcolor
+        for attr in ('left', 'right', 'top'):
+            setattr(pp, 'padding_{}'.format(attr),
+                    getattr(options, 'padding_{}'.format(attr)))
+
+        if not i:
+            pp.padding_bottom = options.padding_bottom
+
+        if po:
+            pp.value_scale = po.scale
+            if not po.ytick_visible:
+                pp.y_axis.tick_visible = False
+                pp.y_axis.tick_label_formatter = lambda x: ''
+
+        if self.use_sparse_ticks:
+            if pp.value_scale == 'log':
+                pp.value_axis.tick_generator = SparseLogTicks()
+            else:
+                pp.value_axis.tick_generator = SparseTicks()
+                
+    def _set_fonts(self, pp):
+
+        # implement a formatting_options object.
+        # this object defines the fonts, sizes and some colors.
+        # there will be 5 default formatting_object objects
+        # the user may save more. a single formatting object maybe applied to any of the options types
+        # e.g ideogram, spectrum, etc. therefore the formatting_options object should be defined
+        # at the PlotterOptionsManager level and not PlotterOptions.
+        # defaults
+        # 1. screen
+        # 2. pdf
+        # 3. poster
+        # 4. projector
+        # 5. publication
+        #
+        # in the future publication may be divided into various formats. e.g. 1/2 column, 2/3 column etc.
+        # a Null formatting option should be available. If null is used the the fonts etc are defined by
+        # the options object.
+
+        options = self.options
+
+        self.formatting_options = None
+        if self.formatting_options is None:
+            pp.x_axis.title_font = options.xtitle_font
+            pp.x_axis.tick_label_font = options.xtick_font
+            pp.x_axis.tick_in = options.xtick_in
+            pp.x_axis.tick_out = options.xtick_out
+
+            pp.y_axis.title_font = options.ytitle_font
+            pp.y_axis.tick_label_font = options.ytick_font
+            pp.y_axis.tick_in = options.ytick_in
+            pp.y_axis.tick_out = options.ytick_out
+        else:
+            pass
 
     def _get_omitted(self, ans, omit=None, include_value_filtered=True):
         return [i for i, ai in enumerate(ans)
@@ -410,11 +437,10 @@ class BaseArArFigure(HasTraits):
 
             # u = lambda a, b, c, d: self.update_graph_metadata(a, b, c, d)
             scatter.index.on_trait_change(self.update_graph_metadata, 'metadata_changed')
-            # ===============================================================================
-            # labels
-            # ===============================================================================
 
-
+    # ===============================================================================
+    # labels
+    # ===============================================================================
     def _add_data_label(self, s, text, point, bgcolor='transparent',
                         label_position='top right', color=None, append=True, **kw):
         if color is None:
@@ -506,7 +532,6 @@ class BaseArArFigure(HasTraits):
                     new = float(new)
                 axp.set_overlay_position(obj.id, new)
 
-
     def _handle_overlay_move(self, obj, name, old, new):
         axps = [a for a in self.options.aux_plots if a.use][::-1]
         for i, p in enumerate(self.graph.plots):
@@ -570,4 +595,5 @@ class BaseArArFigure(HasTraits):
     @cached_property
     def _get_analysis_group(self):
         return self._analysis_group_klass(analyses=self.sorted_analyses)
-        # ============= EOF =============================================
+
+# ============= EOF =============================================
