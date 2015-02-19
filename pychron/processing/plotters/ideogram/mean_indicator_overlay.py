@@ -149,8 +149,8 @@ class MeanIndicatorOverlay(AbstractOverlay, Movable):
             label = XYPlotLabel(component=self.component,
                                 font=self.font,
                                 text=self.text,
-                                id='{}_label'.format(self.id)
-            )
+                                color=self.color,
+                                id='{}_label'.format(self.id))
             self.label = label
             self.overlays.append(label)
             tool = LabelMoveTool(component=label)

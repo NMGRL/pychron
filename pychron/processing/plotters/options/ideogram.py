@@ -24,6 +24,7 @@ from pychron.core.helpers.color_generators import colornames
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.plotters.options.age import AgeOptions
 from pychron.processing.plotters.options.fill_group_editor import Fill, FillGroupEditor
+from pychron.processing.plotters.options.ideogram_group_options import IdeogramGroupEditor, IdeogramGroupOptions
 from pychron.processing.plotters.options.plotter import FONTS, SIZES
 
 
@@ -75,27 +76,44 @@ class IdeogramOptions(AgeOptions):
     # use_filled_line = Bool
     # fill_color = Color
     # fill_alpha = Range(0.0, 100.0)
-    edit_group_fill_color_button = Button
-    fill_groups = List
-    fill_group = Property  #(trait=Fill)
+    # edit_group_fill_color_button = Button
+    # fill_groups = List
+    # fill_group = Property  #(trait=Fill)
+    group_editor_klass = IdeogramGroupEditor
+    options_klass = IdeogramGroupOptions
 
-    def get_fill_dict(self, group_id):
-        n = len(self.fill_groups)
+    def get_plot_dict(self, group_id):
+        # return {}
+
+        n = len(self.groups)
         gid = group_id % n
-        fg = self.fill_groups[gid]
-        if fg.use_filled_line:
+        fg = self.groups[gid]
+        d = {'color': fg.line_color,
+             'edge_color': fg.line_color,
+             'edge_width': fg.line_width,
+             'line_width': fg.line_width,
+             'line_color': fg.line_color}
+
+        if fg.use_fill:
             color = fg.color
             color.setAlphaF(fg.alpha * 0.01)
-            return dict(fill_color=fg.color,
-                        type='filled_line')
-        else:
-            return {}
+            d['fill_color'] = fg.color
+            d['type'] = 'filled_line'
+        return d
 
-    def _edit_group_fill_color_button_fired(self):
-        eg = FillGroupEditor(fill_groups=self.fill_groups)
-        info = eg.edit_traits()
-        if info.result:
-            self.refresh_plot_needed = True
+        # if fg.use_filled_line:
+        # color = fg.color
+        # color.setAlphaF(fg.alpha * 0.01)
+        #     return dict(fill_color=fg.color,
+        #                 type='filled_line')
+        # else:
+        #     return {}
+
+    # def _edit_group_fill_color_button_fired(self):
+    # eg = FillGroupEditor(fill_groups=self.fill_groups)
+    # info = eg.edit_traits()
+    #     if info.result:
+    #         self.refresh_plot_needed = True
 
     @on_trait_change('use_static_limits, use_centered_range')
     def _handle_use_limits(self, new):
@@ -192,6 +210,12 @@ class IdeogramOptions(AgeOptions):
                              show_border=True,
                              enabled_when='not object.use_static_limits'))
 
+        grp_grp = VGroup(UItem('group',
+                               style='custom',
+                               editor=InstanceEditor(view='simple_view')),
+                         show_border=True,
+                         label='Group Attributes')
+
         g = Group(
             Item('probability_curve_kind',
                  width=-150,
@@ -244,10 +268,10 @@ class IdeogramOptions(AgeOptions):
                           Item('show_error_type_info', label='Error Type', enabled_when='show_info'),
                           show_border=True,
                           label='Info'),
-                   VGroup(UItem('fill_group', style='custom',
-                                editor=InstanceEditor(view='simple_view')),
-                          HGroup(icon_button_editor('edit_group_fill_color_button', 'cog'), spring),
-                          show_border=True, label='Fill'),
+                   # VGroup(UItem('fill_group', style='custom',
+                   #              editor=InstanceEditor(view='simple_view')),
+                   #        HGroup(icon_button_editor('edit_group_fill_color_button', 'cog'), spring),
+                   #        show_border=True, label='Fill'),
                    # VGroup(HGroup(UItem('use_filled_line'),
                    #               Item('fill_color', enabled_when='use_filled_line')),
                    #        Item('fill_alpha'),
@@ -265,6 +289,7 @@ class IdeogramOptions(AgeOptions):
                       label='Error Bars')
         main_grp = VGroup(self._get_title_group(),
                           xgrp,
+                          grp_grp,
                           g, g2, egrp, label='Main')
 
         orgp = Group(main_grp,
@@ -294,13 +319,13 @@ class IdeogramOptions(AgeOptions):
         return '{} {}'.format(self.mean_indicator_fontname,
                               self.mean_indicator_fontsize)
 
-    def _get_fill_group(self):
-        return self.fill_groups[0]
-
-    def _fill_groups_default(self):
-        return [Fill(group_id=i,
-                     color=colornames[i + 1],
-                     alpha=100) for i in range(10)]
+    # def _get_fill_group(self):
+    #     return self.fill_groups[0]
+    #
+    # def _fill_groups_default(self):
+    #     return [Fill(group_id=i,
+    #                  color=colornames[i + 1],
+    #                  alpha=100) for i in range(10)]
 
     def _get_dump_attrs(self):
         attrs = super(IdeogramOptions, self)._get_dump_attrs()

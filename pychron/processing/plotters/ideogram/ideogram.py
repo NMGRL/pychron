@@ -274,7 +274,7 @@ class Ideogram(BaseArArFigure):
         plotkw = dict()
         # if self.group_id==0:
         # if self.options.use_filled_line:
-        plotkw.update(**self.options.get_fill_dict(ogid))
+        plotkw.update(**self.options.get_plot_dict(ogid))
         # color= self.options.fill_color
         # color.setAlphaF(self.options.fill_alpha*0.01)
         # plotkw['fill_color']=self.options.fill_color
@@ -380,12 +380,15 @@ class Ideogram(BaseArArFigure):
                                           sig_figs=self.options.mean_sig_figs,
                                           percent_error=self.options.display_percent_error)
 
+        group = self.options.get_group(self.group_id)
+        color = group.color
+
         m = MeanIndicatorOverlay(component=line,
                                  x=wm,
                                  y=20 * gid,
                                  error=we,
                                  nsgima=self.options.nsigma,
-                                 color=line.color,
+                                 color=color,
                                  visible=self.options.display_mean_indicator,
                                  id='mean_{}'.format(self.group_id))
 
@@ -532,13 +535,17 @@ class Ideogram(BaseArArFigure):
 
         graph = self.graph
 
+        group = self.options.get_group(self.group_id)
+        color = group.color
+
         # print 'aux plot',title, self.group_id
         s, p = graph.new_series(
             x=self.xs, y=ys,
+            color = color,
             type='scatter',
             marker=po.marker,
             marker_size=po.marker_size,
-            selection_marker_size=3,
+            selection_marker_size=po.marker_size,
             bind_id=self.group_id,
             plotid=pid, **kw)
 

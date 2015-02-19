@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,15 +15,42 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Bool, Enum, String, Property
+from traits.api import Bool, Enum, String, Property, List, on_trait_change
 from traitsui.api import VGroup, UItem
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.color_generators import colornames
 from pychron.processing.plotters.options.plotter import PlotterOptions, FONTS, SIZES
 from pychron.pychron_constants import ERROR_TYPES
 
 
-class AgeOptions(PlotterOptions):
+class GroupablePlotterOptions(PlotterOptions):
+    groups = List
+    group = Property
+    group_editor_klass = None
+    options_klass = None
+
+    def _get_group(self):
+        return self.groups[0]
+
+    def get_group(self, gid):
+        n = len(self.groups)
+        return self.groups[gid % n]
+
+    @on_trait_change('groups:edit_button')
+    def _handle_edit_groups(self):
+        eg = self.group_editor_klass(option_groups=self.groups)
+        info = eg.edit_traits()
+        if info.result:
+            self.refresh_plot_needed = True
+
+    def _groups_default(self):
+        return [self.options_klass(color=ci,
+                                   line_color=ci,
+                                   group_id=i) for i, ci in enumerate(colornames)]
+
+
+class AgeOptions(GroupablePlotterOptions):
     include_j_error = Bool(False)
     include_j_error_in_mean = Bool(True)
     error_calc_method = Enum(*ERROR_TYPES)
@@ -87,7 +114,8 @@ class AgeOptions(PlotterOptions):
                   'analysis_label_display',
                   'analysis_label_format',
                   'error_info_fontname',
-                  'error_info_fontsize','label_fontsize']
+                  'error_info_fontsize', 'label_fontsize',
+                  'groups']
         return attrs
 
 

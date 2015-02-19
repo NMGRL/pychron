@@ -417,6 +417,7 @@ class BaseArArFigure(HasTraits):
     def _add_error_bars(self, scatter, errors, axis, nsigma,
                         end_caps,
                         visible=True):
+
         ebo = ErrorBarOverlay(component=scatter,
                               orientation=axis,
                               nsigma=nsigma,

@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Int, Bool, Button, Any, Float, Property, on_trait_change, Color, Range, List
+from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change, Color, Range, List
 from traitsui.api import View, UItem, Item, HGroup, VGroup, ListEditor, InstanceEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -23,16 +23,7 @@ from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.plotters.options.base_group_options import BaseGroupOptions
 
 
-class SpectrumGroupOptions(BaseGroupOptions):
-    # color = Color
-    # group_id = Int
-
-    calculate_fixed_plateau = Bool(False)
-    calculate_fixed_plateau_start = Str
-    calculate_fixed_plateau_end = Str
-
-
-
+class IdeogramGroupOptions(BaseGroupOptions):
     def traits_view(self):
         grps = self._get_groups()
 
@@ -44,11 +35,10 @@ class SpectrumGroupOptions(BaseGroupOptions):
         return v
 
     def _get_groups(self):
-        envelope_grp = VGroup(HGroup(UItem('use_fill'),
-                                     Item('color')),
-                              Item('alpha', label='Opacity'),
-                              show_border=True,
-                              label='Error Envelope')
+        fill_grp = VGroup(HGroup(UItem('use_fill'),
+                                 Item('color')),
+                          Item('alpha', label='Opacity'),
+                          show_border=True)
 
         line_grp = VGroup(UItem('line_color'),
                           Item('line_width',
@@ -56,25 +46,18 @@ class SpectrumGroupOptions(BaseGroupOptions):
                           show_border=True,
                           label='Line')
 
-        plat_grp = HGroup(Item('calculate_fixed_plateau',
-                               label='Fixed',
-                               tooltip='Calculate a plateau over provided steps'),
-                          Item('calculate_fixed_plateau_start', label='Start', enabled_when='calculate_fixed_plateau'),
-                          Item('calculate_fixed_plateau_end', label='End', enabled_when='calculate_fixed_plateau'),
-                          show_border=True, label='Calculate Plateau')
 
-        return envelope_grp, line_grp, plat_grp
+        return fill_grp, line_grp
 
     def simple_view(self):
         grps = self._get_groups()
-        g = VGroup(HGroup(Item('bind_colors', tooltip='Link line color and error envelope color'),
-                          icon_button_editor('edit_button', 'cog', tooltip='Edit group attributes')),
+        g = VGroup(HGroup(icon_button_editor('edit_button', 'cog', tooltip='Edit group attributes')),
                    *grps)
         v = View(g)
         return v
 
 
-class SpectrumGroupEditor(HasTraits):
+class IdeogramGroupEditor(HasTraits):
     option_groups = List
 
     def traits_view(self):
@@ -88,7 +71,6 @@ class SpectrumGroupEditor(HasTraits):
                  height=700,
                  title='Group Attributes')
         return v
-
 
 # ============= EOF =============================================
 

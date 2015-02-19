@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change, Color, Button
+from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change, Color, Button, Range
 from traitsui.api import View, UItem, Item, HGroup, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -24,8 +24,25 @@ from traitsui.api import View, UItem, Item, HGroup, VGroup
 class BaseGroupOptions(HasTraits):
     group_id = Int
     color = Color
+    alpha = Range(0, 100, 70)
+    use_fill = Bool(True)
+    line_color = Color
+    line_width = Int(1)
+
+    bind_colors = Bool(True)
     edit_button = Button
 
+    def _color_changed(self):
+        if self.bind_colors:
+            self.line_color = self.color
+
+    def _line_color_changed(self):
+        if self.bind_colors:
+            self.color = self.line_color
+
+    def _bind_colors_changed(self, new):
+        if new:
+            self.line_color = self.color
 # ============= EOF =============================================
 
 

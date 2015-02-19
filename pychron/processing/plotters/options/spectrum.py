@@ -79,19 +79,8 @@ class SpectrumOptions(AgeOptions):
     include_plateau_identifier = Bool
 
     # edit_groups_button = Button
-    groups = List
-    group = Property
-
-    def get_group(self, gid):
-        n = len(self.groups)
-        return self.groups[gid % n]
-
-    @on_trait_change('groups:edit_button')
-    def _handle_edit_groups(self):
-        eg = SpectrumGroupEditor(option_groups=self.groups)
-        info = eg.edit_traits()
-        if info.result:
-            self.refresh_plot_needed = True
+    group_editor_klass = SpectrumGroupEditor
+    options_klass = SpectrumGroupOptions
 
     # handlers
     @on_trait_change('display_step,display_extract_value')
@@ -113,9 +102,6 @@ class SpectrumOptions(AgeOptions):
                  title='Edit Plateau Criteria',
                  kind='livemodal')
         self.edit_traits(v)
-
-    def _get_group(self):
-        return self.groups[0]
 
     def _get_error_calc_method(self):
         return self.plateau_age_error_kind
@@ -166,7 +152,7 @@ class SpectrumOptions(AgeOptions):
                         'step_label_font_size',
                         # 'envelope_alpha',
                         # 'user_envelope_color', 'envelope_color',
-                        'groups',
+                        # 'groups',
                         # '_plateau_steps',
                         'center_line_style',
                         'extend_plateau_end_caps',
@@ -347,9 +333,6 @@ class SpectrumOptions(AgeOptions):
                                           'display_extract_value',
                                           'step_label_font_size'))
 
-    def _groups_default(self):
-        return [SpectrumGroupOptions(color=ci,
-                                     line_color=ci,
-                                     group_id=i) for i, ci in enumerate(colornames)]
+
 
 # ============= EOF =============================================
