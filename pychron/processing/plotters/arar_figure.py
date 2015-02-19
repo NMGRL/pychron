@@ -27,6 +27,7 @@ import re
 from uncertainties import std_dev, nominal_value, ufloat
 # ============= local library imports  ==========================
 from pychron.graph.error_bar_overlay import ErrorBarOverlay
+from pychron.graph.tools.axis_tool import AxisTool
 from pychron.graph.tools.limits_tool import LimitsTool, LimitOverlay
 from pychron.processing.analyses.analysis_group import AnalysisGroup
 from pychron.processing.plotters.formatting_options import FormattingOptions
@@ -145,6 +146,9 @@ class BaseArArFigure(HasTraits):
         # add limit tools
         self._add_limit_tool(pp, 'x')
         self._add_limit_tool(pp, 'y')
+
+        self._add_axis_tool(pp, pp.x_axis)
+        self._add_axis_tool(pp, pp.y_axis)
 
         pp.value_range.on_trait_change(lambda: self.update_options_limits(i), 'updated')
         pp.index_range.on_trait_change(lambda: self.update_options_limits(i), 'updated')
@@ -383,6 +387,10 @@ class BaseArArFigure(HasTraits):
     # ===============================================================================
     #
     # ===============================================================================
+    def _add_axis_tool(self, plot, axis):
+        t = AxisTool(component=axis)
+        plot.tools.append(t)
+
     def _add_limit_tool(self, plot, orientation):
         t = LimitsTool(component=plot,
                        orientation=orientation)

@@ -42,6 +42,8 @@ CHANGELOG
 * added "Run Startup Tests" to help menu
 * added "Select Unknowns" to experiment queue context menu
 * started formatting modes e.g Screen, Presentation, Publication, etc. each mode has an associated set of fonts.
+* added AxisTool. Right click on a axis to edit it. 
+
 
 ### Bug Fixes ###
 * fixed plotting ideograms of attributes other than age
