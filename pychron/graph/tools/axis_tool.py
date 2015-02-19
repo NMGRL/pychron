@@ -67,7 +67,7 @@ class AxisTool(BaseTool):
             self.component.request_redraw()
             event.handled = True
 
-    @on_trait_change('component.+')
+    @on_trait_change('component:+')
     def handle_change(self, name, new):
         if name.startswith('_'):
             return

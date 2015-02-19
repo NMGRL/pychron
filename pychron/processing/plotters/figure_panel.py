@@ -87,11 +87,13 @@ class FigurePanel(HasTraits):
     def make_graph(self):
         print '----------------------- make graph -----------------------'
         po = self.plot_options
+
+        bgcolor = po.get_formatting_value('bgcolor')
         g = self.graph_klass(panel_height=200,
                              equi_stack=self.equi_stack,
                              container_dict=dict(padding=0,
                                                  spacing=self.plot_spacing or po.plot_spacing,
-                                                 bgcolor=po.bgcolor))
+                                                 bgcolor=bgcolor))
         center, mi, ma = self._get_init_xlimits()
         plots = list(po.get_aux_plots())
         if plots:

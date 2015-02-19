@@ -354,10 +354,12 @@ class Ideogram(BaseArArFigure):
                     ts.append('Error Type:{}'.format(self.options.error_calc_method))
 
                 if ts:
+
+                    font = self.options.get_formatting_value('label_font', 'error_info_font')
                     pl = FlowPlotLabel(text='\n'.join(ts),
                                        overlay_position='inside top',
                                        hjustify='left',
-                                       font=self.options.error_info_font,
+                                       font=font,
                                        component=plot)
                     plot.overlays.append(pl)
 
@@ -392,7 +394,8 @@ class Ideogram(BaseArArFigure):
                                  visible=self.options.display_mean_indicator,
                                  id='mean_{}'.format(self.group_id))
 
-        m.font = self.options.mean_indicator_font
+        font = self.options.get_formatting_value('label_font', 'mean_indicator_font')
+        m.font = font
         m.text = text
         line.overlays.append(m)
 

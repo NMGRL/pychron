@@ -23,6 +23,7 @@ from traits.api import Color, Instance, Str, Float, Int, HasTraits, Any
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from traits.traits import Font
 from pychron.processing.plotters.point_move_tool import LabelMoveTool
 
 
@@ -151,6 +152,7 @@ class MeanIndicatorOverlay(AbstractOverlay, Movable):
                                 text=self.text,
                                 color=self.color,
                                 id='{}_label'.format(self.id))
+            print label.font
             self.label = label
             self.overlays.append(label)
             tool = LabelMoveTool(component=label)

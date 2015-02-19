@@ -36,6 +36,8 @@ class BasePlotterOptions(HasTraits):
     initialized = True
     refresh_plot_needed = Event
     _hash  = None
+    formatting_options = None
+
     def __init__(self, root, clean=False, *args, **kw):
         super(BasePlotterOptions, self).__init__(*args, **kw)
         if not clean:
@@ -67,6 +69,29 @@ class BasePlotterOptions(HasTraits):
         else:
             self._make_dir(os.path.dirname(root))
             os.mkdir(root)
+
+    def get_formatting_value(self, attr, oattr=None):
+        """
+        retrieve either a value from the formatting_options object or from the plotter_options object
+        use formatting_options first and if it exists
+        any subsequent refreshes check if plotter_options has changed if so use its values
+
+        :param attr: FormattingOptions attribute
+        :param oattr: PlotterOptions attribute
+        :return: formatting value
+        """
+        if oattr is None:
+            oattr = attr
+
+        if self.formatting_options is None:
+            v = getattr(self, oattr)
+        else:
+            if self.has_changes():
+                v = getattr(self, oattr)
+            else:
+                v = getattr(self.formatting_options, attr)
+            self.set_hash()
+        return v
 
     def get_hash(self):
         attrs = self._get_dump_attrs()

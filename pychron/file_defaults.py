@@ -222,14 +222,18 @@ conditionals:
 SCREEN_FORMATTING_DEFAULTS = '''
 x_tick_in: 2
 x_tick_out: 5
-x_title_label_font: Helvetica 12
+x_title_font: Helvetica 12
 x_tick_label_font: Helvetica 10
 
 y_tick_in: 2
 y_tick_out: 5
-y_title_label_font: Helvetica 12
+y_title_font: Helvetica 12
 y_tick_label_font: Helvetica 10
 
+bgcolor: white
+plot_bgcolor: white
+
+label_font: Helvetica 10
 '''
 
 PRESENTATION_FORMATTING_DEFAULTS = '''
@@ -243,6 +247,10 @@ y_tick_out: 5
 y_title_font: Helvetica 22
 y_tick_label_font: Helvetica 14
 
+bgcolor: 239,238,185
+plot_bgcolor: 208,243,241
+
+label_font: Helvetica 14
 '''
 # ============= EOF =============================================
 

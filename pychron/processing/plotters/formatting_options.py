@@ -15,13 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import os
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change
+from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change, Color
 from traitsui.api import View, UItem, Item, HGroup, VGroup
 # ============= standard library imports ========================
-# ============= local library imports  ==========================
+import os
 import yaml
-from pychron.paths import paths
+# ============= local library imports  ==========================
 
 
 class FormattingOptions(HasTraits):
@@ -34,6 +33,11 @@ class FormattingOptions(HasTraits):
     y_tick_label_font = Str
     y_tick_in = Int
     y_tick_out = Int
+
+    bgcolor = Color
+    plot_bgcolor = Color
+
+    label_font = Str
 
     def __init__(self, path, *args, **kw):
         super(FormattingOptions, self).__init__(*args, **kw)

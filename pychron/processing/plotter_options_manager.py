@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,8 +16,8 @@
 
 # ============= enthought library imports =======================
 from traits.api import Property, List, Event, Instance, Button, cached_property, Str, \
-    HasTraits
-from traitsui.api import View, Item, EnumEditor, HGroup
+    HasTraits, Enum
+from traitsui.api import View, Item, EnumEditor, HGroup, UItem, VGroup
 import apptools.sweet_pickle as pickle
 # ============= standard library imports ========================
 import os
@@ -25,6 +25,7 @@ import os
 import yaml
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.globals import globalv
+from pychron.processing.plotters.formatting_options import FormattingOptions
 from pychron.processing.plotters.options.base import BasePlotterOptions
 from pychron.processing.plotters.options.composite import CompositeOptions
 from pychron.processing.plotters.options.dashboard import DashboardOptions
@@ -36,6 +37,7 @@ from pychron.processing.plotters.options.spectrum import SpectrumOptions
 from pychron.processing.plotters.options.system_monitor import SystemMonitorOptions
 from pychron.paths import paths
 from pychron.processing.plotters.options.xy_scatter import XYScatterOptions
+from pychron.pychron_constants import NULL_STR
 
 
 class PlotterOptionsManager(HasTraits):
@@ -55,18 +57,20 @@ class PlotterOptionsManager(HasTraits):
     persistence_root = Property
     _defaults_path = Str
 
+    formatting_option = Enum('Screen', 'Presentation', NULL_STR)
+
     def deinitialize(self):
         if self.plotter_options:
             self.plotter_options.deinitialize()
 
     def load_yaml(self, blob):
-        po=self.plotter_options_klass(self.persistence_root)
+        po = self.plotter_options_klass(self.persistence_root)
         po.load_yaml(blob)
-        self.plotter_options=po
+        self.plotter_options = po
         po.initialize()
 
     def dump_yaml(self):
-        po=self.plotter_options
+        po = self.plotter_options
         return po.dump_yaml()
 
     def _get_persistence_root(self):
@@ -95,8 +99,7 @@ class PlotterOptionsManager(HasTraits):
         self.plotter_options.dump(self.persistence_root)
         self._plotter_options_list_dirty = True
 
-        self.plotter_options=next((pp for pp in self.plotter_options_list if pp.name==name), None)
-
+        self.plotter_options = next((pp for pp in self.plotter_options_list if pp.name == name), None)
 
     def set_plotter_options(self, name):
         self.plotter_options = next((pi for pi in self.plotter_options_list
@@ -108,9 +111,26 @@ class PlotterOptionsManager(HasTraits):
         """
         if os.path.isfile(self._defaults_path):
             self.plotter_options.load_factory_defaults(self._defaults_path)
+
     # ===============================================================================
     # handlers
     # ===============================================================================
+    def _formatting_option_factory(self):
+        p = getattr(paths, '{}_formatting_options'.format(self.formatting_option.lower()))
+        fmt = FormattingOptions(p)
+        return fmt
+
+    def _formatting_option_changed(self, new):
+        if self.plotter_options:
+            fmt = None if new == NULL_STR else self._formatting_option_factory()
+            self.plotter_options.formatting_options = fmt
+            self.plotter_options.refresh_plot_needed = True
+
+    def _plotter_options_changed(self, new):
+        if new:
+            fmt = self._formatting_option_factory()
+            new.formatting_options = fmt
+
     def _factory_default_fired(self):
         self._factory_default()
         self.plotter_options.refresh_plot_needed = True
@@ -146,27 +166,26 @@ class PlotterOptionsManager(HasTraits):
 
     def traits_view(self):
         v = View(
-            HGroup(
+            VGroup(HGroup(
                 Item('plotter_options', show_label=False,
                      editor=EnumEditor(name='plotter_options_list'),
                      tooltip='List of available plot options'),
                 icon_button_editor('add_options',
                                    'add',
-                                   tooltip='Add new plot options',),
+                                   tooltip='Add new plot options', ),
                 icon_button_editor('delete_options',
                                    'delete',
                                    tooltip='Delete current plot options',
-                                   enabled_when='object.plotter_options.name!="Default"',),
+                                   enabled_when='object.plotter_options.name!="Default"', ),
                 icon_button_editor('save_options', 'disk',
                                    tooltip='Save changes to options'),
                 icon_button_editor('factory_default', 'edit-bomb',
                                    tooltip='Apply factory defaults')),
-            Item('plotter_options',
-                 show_label=False,
-                 style='custom'),
-            resizable=True,
-            #handler=self.handler_klass
-        )
+                   UItem('formatting_option'),
+                   Item('plotter_options',
+                        show_label=False,
+                        style='custom')),
+            resizable=True)
         return v
 
     @cached_property
@@ -196,7 +215,7 @@ class PlotterOptionsManager(HasTraits):
         po = next((pi for pi in self.plotter_options_list if pi.name == n), None)
         if not po:
             po = self.plotter_options_list[0]
-
+        self._plotter_options_changed(po)
         return po
 
 
@@ -242,4 +261,5 @@ class CompositeOptionsManager(PlotterOptionsManager):
     plotter_options_klass = CompositeOptions
     persistence_name = 'composite'
     _defaults_path = paths.composites_defaults
+
 # ============= EOF =============================================

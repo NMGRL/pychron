@@ -77,7 +77,10 @@ class AgeOptions(GroupablePlotterOptions):
     error_info_fontname = Enum(*FONTS)
     error_info_fontsize = Enum(*SIZES)
 
+    label_font = Property
+    label_fontname = Enum(*FONTS)
     label_fontsize = Enum(*SIZES)
+
     use_centered_range = Bool
 
     def make_legend_key(self, ident, sample):
@@ -90,6 +93,8 @@ class AgeOptions(GroupablePlotterOptions):
         if new:
             self.include_j_error_in_mean = False
 
+    def _get_label_font(self):
+        return '{} {}'.format(self.label_fontname, self.label_fontsize)
     def _get_error_info_font(self):
         return '{} {}'.format(self.error_info_fontname,
                               self.error_info_fontsize)

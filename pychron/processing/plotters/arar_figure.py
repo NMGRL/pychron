@@ -159,9 +159,9 @@ class BaseArArFigure(HasTraits):
 
         options = self.options
 
-        self._set_fonts(pp)
+        self._set_formatting(pp)
 
-        pp.bgcolor = options.plot_bgcolor
+        # pp.bgcolor = options.plot_bgcolor
         for attr in ('left', 'right', 'top'):
             setattr(pp, 'padding_{}'.format(attr),
                     getattr(options, 'padding_{}'.format(attr)))
@@ -181,7 +181,7 @@ class BaseArArFigure(HasTraits):
             else:
                 pp.value_axis.tick_generator = SparseTicks()
 
-    def _set_fonts(self, pp):
+    def _set_formatting(self, pp):
 
         # implement a formatting_options object.
         # this object defines the fonts, sizes and some colors.
@@ -202,28 +202,30 @@ class BaseArArFigure(HasTraits):
 
         options = self.options
 
-        self.formatting_options = None
+        # self.formatting_options = None
         # from pychron.paths import paths
         # self.formatting_options = FormattingOptions(paths.presentation_formatting_options)
 
-        if self.formatting_options is None:
-            self._set_options_fonts(pp)
+        if options.formatting_options is None:
+            self._set_options_format(pp)
         else:
 
             if self.options.has_changes():
-                self._set_options_fonts(pp)
+                self._set_options_format(pp)
             else:
                 print 'using formatting options'
-                fmt_opt = self.formatting_options
+                fmt_opt = options.formatting_options
                 for name, axis in (('x', pp.x_axis), ('y', pp.y_axis)):
                     for attr in ('title_font', 'tick_label_font', 'tick_in', 'tick_out'):
                         value = fmt_opt.get_value(name, attr)
                         setattr(axis, attr, value)
 
-            options.se.get_hash()
+                pp.bgcolor = fmt_opt.plot_bgcolor
 
-    def _set_options_fonts(self, pp):
-        print 'using options fonts'
+            options.set_hash()
+
+    def _set_options_format(self, pp):
+        print 'using options format'
 
         options = self.options
         pp.x_axis.title_font = options.xtitle_font
@@ -235,6 +237,8 @@ class BaseArArFigure(HasTraits):
         pp.y_axis.tick_label_font = options.ytick_font
         pp.y_axis.tick_in = options.ytick_in
         pp.y_axis.tick_out = options.ytick_out
+
+        pp.bgcolor = options.plot_bgcolor
 
     def _get_omitted(self, ans, omit=None, include_value_filtered=True):
         return [i for i, ai in enumerate(ans)
@@ -416,10 +420,11 @@ class BaseArArFigure(HasTraits):
             x = f.format(**ctx)
             labels.append(x)
 
+        font = self.options.get_formatting_value('label_font', 'label_font')
         ov = PointsLabelOverlay(component=scatter,
                                 labels=labels,
                                 label_box=self.options.label_box,
-                                font='modern {}'.format(self.options.label_fontsize))
+                                font=font)
         scatter.underlays.append(ov)
 
     def _add_error_bars(self, scatter, errors, axis, nsigma,
