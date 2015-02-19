@@ -56,6 +56,7 @@ class BaseMeasurement(HasTraits):
     # __slots__ = ['xs', 'ys', 'n', 'name', 'mass', 'detector', 'time_zero_offset']
 
     def __init__(self, dbrecord=None, unpack=False, unpacker=None, *args, **kw):
+        self.xs, self.ys = array([]), array([])
         super(BaseMeasurement, self).__init__(*args, **kw)
         if dbrecord and unpack:
             if unpacker is None:
@@ -63,7 +64,7 @@ class BaseMeasurement(HasTraits):
 
             blob = unpacker(dbrecord)
             self.unpack_data(blob)
-        self.xs, self.ys = array([]), array([])
+
     def pack(self, endianness=None, as_hex=True):
         if endianness is None:
             endianness = self.endianness
