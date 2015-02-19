@@ -197,6 +197,21 @@ class SpectrumFromFile(FigureAction):
 # ===============================================================================
 #
 # ===============================================================================
+class TimeViewAction(Action):
+    name = 'Time View'
+    accelerator = 'Ctrl+t'
+    def perform(self, event):
+        app = event.task.window.application
+        from pychron.processing.tasks.browser.time_view import TimeViewModel
+        from pychron.processing.tasks.browser.time_view import TimeView
+        manager = app.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
+
+        m = TimeViewModel(manager = manager)
+        m.load()
+        v = TimeView(model=m)
+        app.open_view(v)
+
+
 class RecallAction(Action):
     name = 'Recall'
     id = 'pychron.recall'

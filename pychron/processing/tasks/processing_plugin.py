@@ -40,7 +40,7 @@ from pychron.processing.tasks.actions.processing_actions import IdeogramAction, 
     GraphGroupSelectedAction, IdeogramFromFile, SpectrumFromFile, MakeAnalysisGroupAction, GraphGroupbySampleAction, \
     DeleteAnalysisGroupAction, XYScatterAction, ModifyK3739Action, GroupbySampleAction, \
     SplitEditorActionVert, ConfigureRecallAction, ActivateBlankAction, ActivateRecallAction, ActivateIdeogramAction, \
-    ModifyIdentifierAction, CompositeAction, SetSQLiteAction
+    ModifyIdentifierAction, CompositeAction, SetSQLiteAction, TimeViewAction
 
 from pychron.processing.tasks.actions.edit_actions import BlankEditAction, \
     FluxAction, IsotopeEvolutionAction, ICFactorAction, \
@@ -135,7 +135,8 @@ class ProcessingPlugin(BaseTaskPlugin):
         def recall_group():
             return Group(RecallAction(),
                          # OpenAdvancedQueryAction(),
-                         ConfigureRecallAction())
+                         ConfigureRecallAction(),
+                         TimeViewAction())
 
         def misc_group():
             return Group(TagAction(),

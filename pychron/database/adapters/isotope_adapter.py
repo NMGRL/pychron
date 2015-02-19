@@ -1341,6 +1341,7 @@ class IsotopeAdapter(DatabaseAdapter):
                                 mass_spectrometers=None,
                                 extract_device=None,
                                 project=None,
+                                order='asc',
                                 exclude_invalid=True):
         ed = extract_device
         ms = mass_spectrometers
@@ -1378,7 +1379,7 @@ class IsotopeAdapter(DatabaseAdapter):
             if exclude_invalid:
                 q = q.filter(meas_AnalysisTable.tag != 'invalid')
 
-            q = q.order_by(meas_AnalysisTable.analysis_timestamp.asc())
+            q = q.order_by(getattr(meas_AnalysisTable.analysis_timestamp, order)())
             if limit:
                 q = q.limit(limit)
 
