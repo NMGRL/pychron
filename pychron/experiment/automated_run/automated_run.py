@@ -1814,11 +1814,11 @@ anaylsis_type={}
     def _load_script(self, name):
         script = None
         sname = getattr(self.script_info, '{}_script_name'.format(name))
-
         if sname and sname != NULL_STR:
             sname = self._make_script_name(sname)
-            if sname in SCRIPTS:
-                script = SCRIPTS[sname]
+            skey = '{}{}'.format(name, sname)
+            if skey in SCRIPTS:
+                script = SCRIPTS[skey]
                 if script.check_for_modifications() or self.is_alive():
                     self.debug('script {} modified/overlapping. reloading'.format(sname))
                     script = self._bootstrap_script(sname, name)
@@ -1912,7 +1912,7 @@ anaylsis_type={}
         docstr = ast.get_docstring(m)
         if docstr:
             docstr = docstr.strip()
-            self.debug('{} {} metadata\n{}'.format(script.name, key, docstr))
+            # self.debug('{} {} metadata\n{}'.format(script.name, key, docstr))
             try:
                 params = yaml.load(docstr)
                 return params[key]

@@ -65,6 +65,9 @@ class PychronDevice(Loggable):
             self.communicator.close()
 
     def _ask(self, *args, **kw):
+        if not self.communicator:
+            self.setup_communicator()
+
         if self.communicator:
             return self.communicator.ask(*args, **kw)
 
