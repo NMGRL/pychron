@@ -110,3 +110,4 @@ tools-anvil
 server-connect
 start
 table_row_delete
+document-preview

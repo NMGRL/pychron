@@ -426,6 +426,7 @@ class IsotopeEvolutionPane(TraitsDockPane):
                            Spring(springy=False, width=-10),
                            CustomLabel('object.plot_panel.counts',
                                        color='red',
+                                       size=14,
                                        width=100),
                            Spring(springy=False, width=-5)),
                     UItem('object.plot_panel.analysis_view',

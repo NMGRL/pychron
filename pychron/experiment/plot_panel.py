@@ -100,7 +100,8 @@ class PlotPanel(Loggable):
 
     plot_title = Str
 
-    counts = Int
+    counts = Property(depends_on='_counts')
+    _counts = Int
     ncounts = Property(CInt(enter_set=True, auto_set=False),
                        depends_on='_ncounts')
     _ncounts = CInt
@@ -159,7 +160,7 @@ class PlotPanel(Loggable):
         evt = Event()
         invoke_in_main_thread(self._create, evt)
 
-        #wait here until _create finishes
+        # wait here until _create finishes
         while not evt.is_set():
             time.sleep(0.05)
 
@@ -175,7 +176,7 @@ class PlotPanel(Loggable):
         plot.y_axis.title_spacing = 50
         return plot
 
-    #private
+    # private
     def _create(self, evt):
         self.reset()
 
@@ -199,8 +200,6 @@ class PlotPanel(Loggable):
         xmi, xma = self.isotope_graph.get_x_limits()
         xm = max(xma, xma + (v - o) * 1.05)
         self.isotope_graph.set_x_limits(max_=xm)
-        #print xma, v, o
-        #print 'setting x limits {} '.format(xm)
 
     def _get_ncycles(self):
         return self._ncycles
@@ -210,10 +209,16 @@ class PlotPanel(Loggable):
         self._ncycles = v
 
         if self.hops:
-            #update ncounts
+            # update ncounts
             integration_time = 1.1
             counts = sum([ci * integration_time + s for _h, ci, s in self.hops]) * v
             self._ncounts = counts
+
+    def _get_counts(self):
+        return 'Current: {:03n}'.format(self._counts)
+
+    def _set_counts(self, v):
+        self._counts = v
 
     def _graph_factory(self):
         return StackedRegressionGraph(container_dict=dict(padding=5, bgcolor='gray',
@@ -222,6 +227,7 @@ class PlotPanel(Loggable):
                                       bind_index=False,
                                       use_data_tool=False,
                                       padding_bottom=35)
+
     # ===============================================================================
     # handlers
     # ===============================================================================
