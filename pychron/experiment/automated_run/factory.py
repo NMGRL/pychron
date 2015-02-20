@@ -974,10 +974,12 @@ class AutomatedRunFactory(PersistenceLoggable):
                     level = db.get_irradiation_level(self.selected_irradiation,
                                                      self.selected_level)
                     if level:
-                        lns = [str(pi.labnumber.identifier)
+                        lns = [str(pi.labnumber.identifier).strip()
                                for pi in level.positions if pi.labnumber]
+                        lns = [li for li in lns if li]
+                        lns = sorted(lns)
 
-        return sorted(lns)
+        return lns
 
     def _get_position(self):
         return self._position
