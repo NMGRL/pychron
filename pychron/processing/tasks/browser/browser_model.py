@@ -127,9 +127,6 @@ class BrowserModel(BaseBrowserModel):
                                                               make_records=make_records)]
         return ret
 
-    def replace_items(self, info, obj):
-        print info, obj,'fffasdf'
-
     def refresh_samples(self):
         self.debug('refresh samples')
         self.set_samples(self._retrieve_labnumbers())
@@ -488,7 +485,7 @@ class BrowserModel(BaseBrowserModel):
     def _toggle_view_fired(self):
         self.sample_view_active = not self.sample_view_active
         if not self.sample_view_active:
-            self.time_view_model.load_filter()
+            self.time_view_model.load()
         else:
             self.activate_sample_browser()
 
