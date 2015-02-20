@@ -381,7 +381,7 @@ def build_directories():
             r_mkdir(getattr(paths, l))
 
 paths = Paths()
-# paths.build('_dev')
+paths.build('_dev')
 build_directories()
 # ============= EOF ==============================================
 # ==============================================================================
