@@ -63,7 +63,7 @@ class ExportTask(AnalysisEditTask):
             ans = None
             if is_append:
                 ans = self.export_analyses
-            items = self._get_selected_analyses(ans)
+            items = self._get_selected_analyses(unks=ans)
 
         if items:
             if is_append:

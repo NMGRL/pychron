@@ -193,7 +193,8 @@ class MeanIndicatorOverlay(AbstractOverlay, Movable):
 
             x, y = self.get_current_point()
 
-            e = self.error / 2.0 * max(1, self.nsigma)
+            # e = self.error / 2.0 * max(1, self.nsigma)
+            e = self.error * max(1, self.nsigma)
             p1, p2 = self.component.map_screen([(self.x - e, 0), (self.x + e, 0)])
 
             render_error_bar(gc, p1[0], p2[0], y,

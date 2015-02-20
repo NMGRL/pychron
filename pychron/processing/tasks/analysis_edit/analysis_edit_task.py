@@ -642,7 +642,7 @@ class AnalysisEditTask(BaseBrowserTask):
                     unks = None
                     if is_append:
                         unks = self.active_editor.analyses
-                    items = self._get_selected_analyses(unks)
+                    items = self._get_selected_analyses(unks=unks)
 
                 if items:
                     self.active_editor.set_items(items, is_append)
@@ -847,7 +847,7 @@ class AnalysisEditTask(BaseBrowserTask):
             if not obj.suppress_pane_change:
                 self._show_pane(self.plot_editor_pane)
 
-    @on_trait_change('browser_model:analysis_table:selected')
+    @on_trait_change('browser_model:[analysis_table:selected, time_view_model:selected]')
     def _handle_analysis_selected(self, new):
         # if self.browser_model.use_focus_switching:
         #     self.browser_model.filter_focus = not bool(new)
@@ -868,7 +868,8 @@ class AnalysisEditTask(BaseBrowserTask):
                 if show:
                     self._show_pane(self.unknowns_pane)
 
-    @on_trait_change('browser_model:analysis_table:dclicked')
+
+    @on_trait_change('browser_model:[analysis_table:dclicked, time_view_model:dclicked]')
     def _dclicked_analysis_changed(self, obj, name, old, new):
         if new:
             self._recall_item(new.item)
@@ -877,7 +878,7 @@ class AnalysisEditTask(BaseBrowserTask):
     # @on_trait_change('sample_table:context_menu_event')
     # def _handle_analysis_table_context_menu(self, new):
 
-    @on_trait_change('browser_model:analysis_table:context_menu_event')
+    @on_trait_change('browser_model:[analysis_table:context_menu_event, time_view_model:context_menu_event]')
     def _handle_analysis_table_context_menu(self, new):
         if new:
             action, modifiers = new

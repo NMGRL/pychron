@@ -22,7 +22,7 @@ from traits.api import Bool, Any, String, \
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.envisage.tasks.editor_task import BaseEditorTask
-from pychron.processing.selection.data_selector import DataSelector
+# from pychron.processing.selection.data_selector import DataSelector
 from pychron.processing.tasks.browser.panes import BrowserPane
 
 '''
@@ -84,7 +84,7 @@ class BaseBrowserTask(BaseEditorTask):
 
     browser_pane = Any
 
-    data_selector = Instance(DataSelector)
+    # data_selector = Instance(DataSelector)
 
     # filter_by_button = Button
     # graphical_filter_button = Button
@@ -103,7 +103,7 @@ class BaseBrowserTask(BaseEditorTask):
 
     # def refresh_samples(self):
     # self.debug('refresh samples')
-    #     self.set_samples(self._retrieve_labnumbers())
+    # self.set_samples(self._retrieve_labnumbers())
 
     # def load_time_view(self):
     #     self.debug('load time view')
@@ -187,10 +187,11 @@ class BaseBrowserTask(BaseEditorTask):
 
         self.browser_model.activated()
 
-        if self.browser_model.sample_view_active:
-            self._activate_sample_browser()
-        else:
-            self._activate_query_browser()
+        # if self.browser_model.sample_view_active:
+        #     self._activate_sample_browser()
+        # else:
+
+        # self._activate_query_browser()
 
     # def _get_analysis_series(self, lp, hp, ms):
     #     self.use_low_post = True
@@ -293,26 +294,29 @@ class BaseBrowserTask(BaseEditorTask):
         self.browser_pane.name = 'Browser/Sample'
         self._activated = True
 
-    def _get_selected_analyses(self, unks=None, selection=None, make_records=True):
+    def _get_selected_analyses(self, **kw):  #unks=None, selection=None, make_records=True):
         """
         """
-        if selection is None:
-            if self.browser_model.analysis_table.selected:
-                ret = self.browser_model.analysis_table.selected
-            elif self.data_selector.selector.selected:
-                ret = self.data_selector.selector.selected
-            else:
-                selection = self.browser_model.selected_samples
-
-        if selection:
-            iv = not self.browser_model.analysis_table.omit_invalid
-            uuids = [x.uuid for x in unks] if unks else None
-            ret = [ai for ai in self.browser_model.retrieve_sample_analyses(selection,
-                                                                            exclude_uuids=uuids,
-                                                                            include_invalid=iv,
-                                                                            low_post=self.start_date,
-                                                                            high_post=self.end_date,
-                                                                            make_records=make_records)]
+        ret = self.browser_model.get_selection(low_post=self.start_date, high_post=self.end_date, **kw)
+        # if selection is None:
+        #     if self.browser_model.analysis_table.selected:
+        #         ret = self.browser_model.analysis_table.selected
+        #     # # elif self.data_selector.selector.selected:
+        #     # #     ret = self.data_selector.selector.selected
+        #     elif self.browser_model.time_view_model.selected:
+        #         ret = self.browser_model.time_view_model.selected
+        #     else:
+        #         selection = self.browser_model.selected_samples
+        #
+        # if selection:
+        #     iv = not self.browser_model.analysis_table.omit_invalid
+        #     uuids = [x.uuid for x in unks] if unks else None
+        #     ret = [ai for ai in self.browser_model.retrieve_sample_analyses(selection,
+        #                                                                     exclude_uuids=uuids,
+        #                                                                     include_invalid=iv,
+        #                                                                     low_post=self.start_date,
+        #                                                                     high_post=self.end_date,
+        #                                                                     make_records=make_records)]
         return ret
 
     def _get_browser_model(self):
@@ -612,83 +616,83 @@ class BaseBrowserTask(BaseEditorTask):
     def _dclicked_sample_hook(self):
         pass
 
-    # def _project_date_bins(self, identifier):
-    #     db = self.db
-    #     hours = self.search_criteria.reference_hours_padding
-    #     with db.session_ctx():
-    #         for pp in self.selected_projects:
-    #             bins = db.get_project_date_bins(identifier, pp.name, hours)
-    #             print bins
-    #             if bins:
-    #                 for li, hi in bins:
-    #                     yield li, hi
+        # def _project_date_bins(self, identifier):
+        #     db = self.db
+        #     hours = self.search_criteria.reference_hours_padding
+        #     with db.session_ctx():
+        #         for pp in self.selected_projects:
+        #             bins = db.get_project_date_bins(identifier, pp.name, hours)
+        #             print bins
+        #             if bins:
+        #                 for li, hi in bins:
+        #                     yield li, hi
 
-    # def _selected_samples_changed(self, new):
-    #     if new:
-    #         at = self.analysis_table
-    #         lim = at.limit
-    #         kw = dict(limit=lim,
-    #                   include_invalid=not at.omit_invalid,
-    #                   mass_spectrometers=self._recent_mass_spectrometers)
-    #
-    #         ss = self.selected_samples
-    #         xx = ss[:]
-    #         # if not any(['RECENT' in p for p in self.selected_projects]):
-    #         # sp=self.selected_projects
-    #         # if not hasattr(sp, '__iter__'):
-    #         #     sp = (sp, )
-    #
-    #         if not any(['RECENT' in p.name for p in self.selected_projects]):
-    #             reftypes = ('blank_unknown',)
-    #             if any((si.analysis_type in reftypes
-    #                     for si in ss)):
-    #                 with self.db.session_ctx():
-    #                     ans = []
-    #                     for si in ss:
-    #                         if si.analysis_type in reftypes:
-    #                             xx.remove(si)
-    #                             dates = list(self._project_date_bins(si.identifier))
-    #                             print dates
-    #                             progress = open_progress(len(dates))
-    #                             for lp, hp in dates:
-    #
-    #                                 progress.change_message('Loading Date Range '
-    #                                                         '{} to {}'.format(lp.strftime('%m-%d-%Y %H:%M:%S'),
-    #                                                                           hp.strftime('%m-%d-%Y %H:%M:%S')))
-    #                                 ais = self._retrieve_sample_analyses([si],
-    #                                                                      make_records=False,
-    #                                                                      low_post=lp,
-    #                                                                      high_post=hp, **kw)
-    #                                 ans.extend(ais)
-    #                             progress.close()
-    #
-    #                     ans = self._make_records(ans)
-    #                 # print len(ans), len(set([si.record_id for si in ans]))
-    #         if xx:
-    #             lp, hp = self.low_post, self.high_post
-    #             ans = self._retrieve_sample_analyses(xx,
-    #                                                  low_post=lp,
-    #                                                  high_post=hp,
-    #                                                  **kw)
-    #             self.debug('selected samples changed. loading analyses. '
-    #                        'low={}, high={}, limit={}'.format(lp, hp, lim))
-    #
-    #         self.analysis_table.set_analyses(ans)
-    #         self.dump_browser()
-    #
-    #     self.filter_focus = not bool(new)
+        # def _selected_samples_changed(self, new):
+        #     if new:
+        #         at = self.analysis_table
+        #         lim = at.limit
+        #         kw = dict(limit=lim,
+        #                   include_invalid=not at.omit_invalid,
+        #                   mass_spectrometers=self._recent_mass_spectrometers)
+        #
+        #         ss = self.selected_samples
+        #         xx = ss[:]
+        #         # if not any(['RECENT' in p for p in self.selected_projects]):
+        #         # sp=self.selected_projects
+        #         # if not hasattr(sp, '__iter__'):
+        #         #     sp = (sp, )
+        #
+        #         if not any(['RECENT' in p.name for p in self.selected_projects]):
+        #             reftypes = ('blank_unknown',)
+        #             if any((si.analysis_type in reftypes
+        #                     for si in ss)):
+        #                 with self.db.session_ctx():
+        #                     ans = []
+        #                     for si in ss:
+        #                         if si.analysis_type in reftypes:
+        #                             xx.remove(si)
+        #                             dates = list(self._project_date_bins(si.identifier))
+        #                             print dates
+        #                             progress = open_progress(len(dates))
+        #                             for lp, hp in dates:
+        #
+        #                                 progress.change_message('Loading Date Range '
+        #                                                         '{} to {}'.format(lp.strftime('%m-%d-%Y %H:%M:%S'),
+        #                                                                           hp.strftime('%m-%d-%Y %H:%M:%S')))
+        #                                 ais = self._retrieve_sample_analyses([si],
+        #                                                                      make_records=False,
+        #                                                                      low_post=lp,
+        #                                                                      high_post=hp, **kw)
+        #                                 ans.extend(ais)
+        #                             progress.close()
+        #
+        #                     ans = self._make_records(ans)
+        #                 # print len(ans), len(set([si.record_id for si in ans]))
+        #         if xx:
+        #             lp, hp = self.low_post, self.high_post
+        #             ans = self._retrieve_sample_analyses(xx,
+        #                                                  low_post=lp,
+        #                                                  high_post=hp,
+        #                                                  **kw)
+        #             self.debug('selected samples changed. loading analyses. '
+        #                        'low={}, high={}, limit={}'.format(lp, hp, lim))
+        #
+        #         self.analysis_table.set_analyses(ans)
+        #         self.dump_browser()
+        #
+        #     self.filter_focus = not bool(new)
 
-    @on_trait_change('data_selector:database_selector:dclicked')
-    def _handle_selector_dclick(self, new):
-        self._selector_dclick(new.item)
+        # @on_trait_change('data_selector:database_selector:dclicked')
+        # def _handle_selector_dclick(self, new):
+        #     self._selector_dclick(new.item)
 
-    # def _analysis_table_default(self):
-    #     at = AnalysisTable(db=self.manager.db,
-    #                        append_replace_enabled=self._append_replace_analyses_enabled)
-    #     return at
+        # def _analysis_table_default(self):
+        #     at = AnalysisTable(db=self.manager.db,
+        #                        append_replace_enabled=self._append_replace_analyses_enabled)
+        #     return at
 
-    def _data_selector_default(self):
-        return DataSelector(database_selector=self.manager.db.selector)
+        # def _data_selector_default(self):
+        #     return DataSelector(database_selector=self.manager.db.selector)
 
 # ============= EOF =============================================
 

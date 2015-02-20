@@ -122,6 +122,7 @@ class AnalysisAdapter(BrowserAdapter):
 
     def get_menu(self, obj, trait, row, column):
         e = obj.append_replace_enabled
+        print obj,'ffffasd'
         actions = [Action(name='Configure', action='configure_analysis_table'),
                    Action(name='Unselect', action='unselect_analyses'),
                    Action(name='Replace', action='replace_items', enabled=e),

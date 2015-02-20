@@ -364,14 +364,10 @@ class Ideogram(BaseArArFigure):
                     plot.overlays.append(pl)
 
     def _add_mean_indicator(self, g, line, po, bins, probs, pid):
-        # maxp = max(probs)
         wm, we, mswd, valid_mswd = self._calculate_stats(bins, probs)
-        # ym = maxp * percentH + offset
-        # set ym in screen space
-        # convert to data space
+
         ogid = self.group_id
         gid = ogid + 1
-        # sgid = ogid * 2
 
         text = ''
         if self.options.display_mean:
@@ -691,10 +687,7 @@ class Ideogram(BaseArArFigure):
             wage = self.analysis_group.weighted_age
             wm, we = wage.nominal_value, wage.std_dev
 
-            # wm, we = calculate_weighted_mean(ages, errors)
-            # we = self._calc_error(we, mswd)
-
-        return wm, we * self.options.nsigma, mswd, valid_mswd
+        return wm, we, mswd, valid_mswd
 
         # def _calc_error(self, we, mswd):
         # ec = self.options.error_calc_method

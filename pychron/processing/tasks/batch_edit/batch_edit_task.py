@@ -200,7 +200,7 @@ class BatchEditTask(AnalysisEditTask):
     @on_trait_change('unknowns_pane:[append_button, replace_button]')
     def _append_unknowns(self, obj, name, old, new):
 
-        s = self._get_selected_analyses(self.unknowns_pane.items)
+        s = self._get_selected_analyses(unks=self.unknowns_pane.items)
         if s:
             if name == 'replace_button':
                 self.unknowns_pane.items = s

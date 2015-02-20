@@ -191,7 +191,7 @@ class InterpolationTask(AnalysisEditTask):
                 if is_append:
                     refs = self.active_editor.references
 
-                s = self._get_selected_analyses(refs)
+                s = self._get_selected_analyses(unks=refs)
                 if s:
                     if is_append:
                         refs = self.active_editor.references
