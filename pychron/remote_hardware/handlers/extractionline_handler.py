@@ -32,6 +32,9 @@ TM_PROTOCOL = 'pychron.social.twitter_manager.TwitterManager'
 
 
 class ExtractionlineHandler(BaseRemoteHardwareHandler):
+    """
+    ``ExtractionlineHandler`` provides a protocol for interacting with an ExtractionLineManager
+    """
     extraction_line_manager = None
     manager_name = 'extraction_line_manager'
 
@@ -63,6 +66,13 @@ class ExtractionlineHandler(BaseRemoteHardwareHandler):
     #        return dev
 
     def Open(self, manager, vname, sender_address, *args):
+        """
+        Open a valve. Valve name e.g. A
+        if vname ends with 'Flag' interpret this command as ``Set``
+
+        :param vname: name of valve
+        :return: OK or ErrorCode
+        """
         # intercept flags
         if vname.endswith('Flag'):
             r = self.Set(manager, vname, 1, sender_address, *args)
@@ -83,6 +93,13 @@ class ExtractionlineHandler(BaseRemoteHardwareHandler):
         return result
 
     def Close(self, manager, vname, sender_address, *args):
+        """
+        Close a valve. Valve name e.g. A
+        if vname ends with 'Flag' interpret this command as ``Set``
+
+        :param vname: name of valve
+        :return: OK or ErrorCode
+        """
         # intercept flags
         if vname.endswith('Flag'):
             r = self.Set(manager, vname, 0, sender_address, *args)
@@ -102,24 +119,60 @@ class ExtractionlineHandler(BaseRemoteHardwareHandler):
         return result
 
     def GetValveState(self, manager, vname, *args):
+        """
+        Get the state (True,False) of the valve.
+
+        - True == valve open
+        - False == valve closed
+
+        :param vname: name of valve
+        :return: True, False, or InvalidValveErrorCode
+        """
         result = manager.get_valve_state(vname)
         if result is None:
             result = InvalidValveErrorCode(vname)
         return result
 
     def GetValveStates(self, manager, *args):
+        """
+        Get all the valve states::
+
+            # 0 == close
+            # 1 == open
+            A0,B1,C0
+
+        :return: valve state str
+        """
         result = manager.get_valve_states()
         #        if result is None:
         #            result = 'ERROR'
         return result
 
     def GetValveLockStates(self, manager, *args):
+        """
+        Get all the valve lock states::
+
+            # 0 == unlocked
+            # 1 == locked
+            A0,B1,C0
+
+        :return: valve lock str
+        """
         result = manager.get_valve_lock_states()
         #        if result is None:
         #            result = 'ERROR'
         return result
 
     def GetValveLockState(self, manager, vname, *args):
+        """
+        Get the lock state (True,False) of the valve.
+
+        - True == valve locked
+        - False == valve unlocked
+
+        :param vname: name of valve
+        :return: True, False
+        """
         result = manager.get_software_lock(vname)
         return result
 
@@ -128,62 +181,116 @@ class ExtractionlineHandler(BaseRemoteHardwareHandler):
         result = manager.get_valve_owners()
         return result
 
-    def GetManualState(self, manager, vname, *args):
-        result = manager.get_software_lock(vname)
-        if result is None:
-            result = InvalidValveErrorCode(vname)
-            #            result = 'ERROR: {} name available'.format(vname)
-        #            result = False
+    def GetPressure(self, manager, controller, gauge):
+        """
+        Get the pressure from ``controller``'s ``gauge``
 
-        return result
+        :param controller: name of gauge controller
+        :param gauge: name of gauge
+        :return: pressure
+        """
+        p = None
+        if manager:
+            p = manager.get_pressure(controller, gauge)
 
-    def StartRun(self, manager, *args):
-        '''
-            data is a str in form:
-            RID,Sample,Power/Temp
-        '''
-        data = ' '.join(args[:-1])
-        if manager.multruns_report_manager is not None:
-            run = manager.multruns_report_manager.start_run(data)
+        if p is None:
+            p = InvalidGaugeErrorCode(controller, gauge)
 
-            if run and run.kind == 'co2':
-                lm = self.get_laser_manager(name='co2')
-                if lm is not None:
-                    self.application.open_view(lm)
+        return str(p)
 
-        if self.application is not None:
-            tm = self.application.get_service(TM_PROTOCOL)
-            if tm is not None:
-                tm.post('Run {} started'.format(data))
-
-        return 'OK'
-
-    def CompleteRun(self, manager, *args):
-        '''
-            complete run should report age
-        '''
-
-        data = ' '.join(args[:-1])
-        mrm = manager.multruns_report_manager
-        if mrm is not None:
-            run = mrm.complete_run()
-
-            # clean up any open windows
-            # close power recording, close autocenter
-            if run and run.kind == 'co2':
-                lm = self.get_laser_manager(name='co2')
-                if lm is not None:
-                    lm.dispose_optional_windows()
-
-        if self.application is not None:
-            tm = self.application.get_service(TM_PROTOCOL)
-            if tm is not None:
-                if 'cancel' in data.lower():
-                    tm.post('Run {}'.format(data))
-                else:
-                    tm.post('Run {} completed'.format(data))
-
-        return 'OK'
+# ===============================================================================
+# not current used
+# ===============================================================================
+#     def GetManualState(self, manager, vname, *args):
+#         result = manager.get_software_lock(vname)
+#         if result is None:
+#             result = InvalidValveErrorCode(vname)
+#             #            result = 'ERROR: {} name available'.format(vname)
+#         #            result = False
+#
+#         return result
+#
+#     def PychronScript(self, manager, name, *args):
+#         result = manager.execute_pyscript(name)
+#
+#         # result should be a unique key that mass spec can use to identify this
+#         # script
+#
+#         return result
+#
+#     def ScriptState(self, manager, uuid, *args):
+#         result = manager.get_script_state(uuid)
+#         return result
+#     def ClaimGroup(self, manager, grp, sender_addr, *args):
+#         rhm = self.application.get_service(RHM_PROTOCOL)
+#         if rhm.validate_address(sender_addr):
+#             err = manager.claim_section(grp, sender_addr)
+#             if err is True:
+#                 return InvalidValveGroupErrorCode(grp)
+#         else:
+#             return InvalidIPAddressErrorCode(sender_addr)
+#
+#         return 'OK'
+#
+#     def ReleaseGroup(self, manager, grp, sender_addr, *args):
+#         rhm = self.application.get_service(RHM_PROTOCOL)
+#         if rhm.validate_address(sender_addr):
+#             err = manager.release_section(grp)
+#             if err:
+#                 return InvalidValveGroupErrorCode(grp)
+#         else:
+#             return InvalidIPAddressErrorCode(sender_addr)
+#
+#         return 'OK'
+#
+#
+# def StartRun(self, manager, *args):
+    #     """
+    #     data is a str in form:
+    #     RID,Sample,Power/Temp
+    #     """
+    #     data = ' '.join(args[:-1])
+    #     if manager.multruns_report_manager is not None:
+    #         run = manager.multruns_report_manager.start_run(data)
+    #
+    #         if run and run.kind == 'co2':
+    #             lm = self.get_laser_manager(name='co2')
+    #             if lm is not None:
+    #                 self.application.open_view(lm)
+    #
+    #     if self.application is not None:
+    #         tm = self.application.get_service(TM_PROTOCOL)
+    #         if tm is not None:
+    #             tm.post('Run {} started'.format(data))
+    #
+    #     return 'OK'
+    #
+    # def CompleteRun(self, manager, *args):
+    #     """
+    #     complete run should report age
+    #     """
+    #
+    #     data = ' '.join(args[:-1])
+    #     mrm = manager.multruns_report_manager
+    #     if mrm is not None:
+    #         run = mrm.complete_run()
+    #
+    #         # clean up any open windows
+    #         # close power recording, close autocenter
+    #         if run and run.kind == 'co2':
+    #             lm = self.get_laser_manager(name='co2')
+    #             if lm is not None:
+    #                 lm.dispose_optional_windows()
+    #
+    #     if self.application is not None:
+    #         tm = self.application.get_service(TM_PROTOCOL)
+    #         if tm is not None:
+    #             if 'cancel' in data.lower():
+    #                 tm.post('Run {}'.format(data))
+    #             else:
+    #                 tm.post('Run {} completed'.format(data))
+    #
+    #     return 'OK'
 
     # def StartMultRuns(self, manager, *args):
     #     '''
@@ -241,54 +348,5 @@ class ExtractionlineHandler(BaseRemoteHardwareHandler):
     #         return InvalidIPAddressErrorCode(sender_addr)
     #
     #     return 'OK'
-
-    def PychronScript(self, manager, name, *args):
-        result = manager.execute_pyscript(name)
-
-        # result should be a unique key that mass spec can use to identify this
-        # script
-
-        return result
-
-    def ScriptState(self, manager, uuid, *args):
-        result = manager.get_script_state(uuid)
-        return result
-
-    def GetPressure(self, manager, controller, gauge):
-        p = None
-        if manager:
-            p = manager.get_pressure(controller, gauge)
-
-        if p is None:
-            p = InvalidGaugeErrorCode(controller, gauge)
-
-        return str(p)
-
-# ===============================================================================
-# not current used
-# ===============================================================================
-#     def ClaimGroup(self, manager, grp, sender_addr, *args):
-#         rhm = self.application.get_service(RHM_PROTOCOL)
-#         if rhm.validate_address(sender_addr):
-#             err = manager.claim_section(grp, sender_addr)
-#             if err is True:
-#                 return InvalidValveGroupErrorCode(grp)
-#         else:
-#             return InvalidIPAddressErrorCode(sender_addr)
-#
-#         return 'OK'
-#
-#     def ReleaseGroup(self, manager, grp, sender_addr, *args):
-#         rhm = self.application.get_service(RHM_PROTOCOL)
-#         if rhm.validate_address(sender_addr):
-#             err = manager.release_section(grp)
-#             if err:
-#                 return InvalidValveGroupErrorCode(grp)
-#         else:
-#             return InvalidIPAddressErrorCode(sender_addr)
-#
-#         return 'OK'
-#
-#
 
 # ============= EOF ====================================

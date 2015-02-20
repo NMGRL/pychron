@@ -29,9 +29,13 @@ from pychron.core.helpers.filetools import to_bool
 # import os
 
 class LaserHandler(BaseRemoteHardwareHandler):
+    """
+    ``LaserHandler`` provides a protocol for interfacing with a pychron laser.
+    """
     _elm = None
     _mrm = None
     _lm = None
+
     def error_response(self, err):
         return 'OK' if (err is None or err is True) else err
 
@@ -212,8 +216,8 @@ class LaserHandler(BaseRemoteHardwareHandler):
         """
             returns the cached value
 
-            mass spec excessively calls GetPosition which calling moving
-            it appears this was wacking out the newport stage controller.
+            mass spec excessively calls GetPosition.
+            When called during moving it appears to wack out the newport stage controller.
             moving will only do a hardware query if the stage is actually in motion or
             use keyword force_query=True
         """

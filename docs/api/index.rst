@@ -5,7 +5,8 @@ API
   :maxdepth: 1
 
   simple
+  database
   experiment
   pyscripts
   spectrometer
-  database
+  remote_hardware
