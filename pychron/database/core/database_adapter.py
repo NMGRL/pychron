@@ -38,15 +38,23 @@ ATTR_KEYS = ['kind', 'username', 'host', 'name', 'password']
 
 
 class SessionCTX(object):
+    """
+    Session Context Manager.
+    This object is rarely used directly. It is mostly called by ``DatabaseAdapter.session_ctx()``
+
+    - enter. initialize sess
+    - exit. nothing, commit, or rollback
+
+    """
     _close_at_exit = True
     _commit = True
     _parent = None
 
     def __init__(self, sess=None, commit=True, parent=None):
         """
-            sess: existing Session object
-            commit: commit Session at exit
-            parent: DatabaseAdapter instance
+        :param sess: existing Session object
+        :param commit: commit Session at exit
+        :param parent: DatabaseAdapter instance
 
         """
         self._sess = sess
@@ -93,6 +101,15 @@ class SessionCTX(object):
 
 class DatabaseAdapter(Loggable):
     """
+    The DatabaseAdapter is a base class for interacting with a SQLAlchemy database.
+    Two main subclasses are used by pychron, IsotopeAdapter and MassSpecDatabaseAdapter.
+
+    This class provides attributes for describing the database url, i.e host, user, password etc,
+    and methods for connecting and opening database sessions.
+
+    It also provides some helper functions used extensively by the subclasses, e.g. ``_add_item``,
+    ``_retrieve_items``
+
     """
     sess = None
 
@@ -107,7 +124,8 @@ class DatabaseAdapter(Loggable):
     # name = Str#('massspecdata_local')
     password = Password  # ('Argon')
 
-    selector_klass = Any
+    # selector_klass = Any
+    # selector = Any
 
     session_factory = None
 
@@ -116,7 +134,6 @@ class DatabaseAdapter(Loggable):
     test_func = 'get_migrate_version'
     version_func = 'get_migrate_version'
 
-    selector = Any
     autoflush = False
     # name used when writing to database
     # save_username = Str
@@ -135,11 +152,21 @@ class DatabaseAdapter(Loggable):
     #     super(DatabaseAdapter, self).__init__(*args, **kw)
 
     def create_all(self, metadata):
+        """
+        Build a database schema with the current connection
+
+        :param metadata: SQLAchemy MetaData object
+        """
         # if self.kind == 'sqlite':
         with self.session_ctx() as sess:
             metadata.create_all(sess.bind)
 
     def session_ctx(self, sess=None, commit=True):
+        """
+        Make a new session context.
+
+        :return: ``SessionCTX``
+        """
         if sess is None:
             sess = self.sess
         return SessionCTX(sess, parent=self, commit=commit)
@@ -155,11 +182,24 @@ class DatabaseAdapter(Loggable):
         return globalv.username
 
     @on_trait_change('username,host,password,name,kind,path')
-    def reset_connection(self, obj, name, old, new):
+    def reset_connection(self):
+        """
+        Trip the ``connection_parameters_changed`` flag. Next ``connect`` call with use the new values
+        """
         self.connection_parameters_changed = True
 
     # @caller
     def connect(self, test=True, force=False, warn=True, version_warn=False, attribute_warn=False):
+        """
+        Connect to the database
+
+        :param test: Test the connection by running ``test_func``
+        :param force: Test connection even if connection parameters haven't changed
+        :param warn: Warn if the connection test fails
+        :param version_warn: Warn if database/pychron versions don't match
+        :return: True if connected else False
+        :rtype: bool
+        """
         self.connection_error = ''
         if force:
             self.debug('forcing database connection')
@@ -179,7 +219,7 @@ class DatabaseAdapter(Loggable):
             self.connection_error = 'Database "{}" kind not set. ' \
                                     'Set in Preferences. current kind="{}"'.format(self.name, self.kind)
 
-            if not self.enabled and attribute_warn:
+            if not self.enabled:
                 self.warning_dialog(self.connection_error)
             else:
                 url = self.url
@@ -213,6 +253,9 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
         pass
 
     def flush(self):
+        """
+        flush the session
+        """
         if self.sess:
             try:
                 self.sess.flush()
@@ -220,6 +263,9 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
                 self.sess.rollback()
 
     def commit(self):
+        """
+        commit the session
+        """
         if self.sess:
             try:
                 self.sess.commit()
@@ -227,6 +273,11 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
                 self.sess.rollback()
 
     def get_session(self):
+        """
+        return the current session or make a new one
+
+        :return: Session
+        """
         sess = self.sess
         if sess is None:
             sess = self.session_factory()
@@ -234,27 +285,15 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
         return sess
 
     def get_migrate_version(self, **kw):
+        """
+        Query the AlembicVersionTable
+
+        """
         with self.session_ctx() as s:
             # q = s.query(MigrateVersionTable)
             q = s.query(AlembicVersionTable)
             mv = q.one()
             return mv
-
-    def get_results(self, tablename, **kw):
-        sess = self.sess
-
-        tables = self._get_tables()
-        table = tables[tablename]
-        # sess = self.get_session()
-        q = sess.query(table)
-        if kw:
-
-            for k, (cp, val) in kw.iteritems():
-                d = getattr(table, k)
-                func = getattr(d, cp)
-                q = q.filter(func(val))
-
-        return q.all()
 
     @cached_property
     def _get_datasource_url(self):
@@ -673,52 +712,20 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
             return [getattr(ri, key) for ri in res]
         return res
 
+    # def selector_factory(self, **kw):
+    #     sel = self._selector_factory(**kw)
+    #     self.selector = weakref.ref(sel)()
+    #     return self.selector
+    #
+    # def _selector_default(self):
+    #     return self._selector_factory()
+    #
+    # def _selector_factory(self, **kw):
+    #     if self.selector_klass:
+    #         s = self.selector_klass(db=self, **kw)
+    #         #            s.load_recent()
+    #         return s
 
-    def _selector_default(self):
-        return self._selector_factory()
-
-    #    def open_selector(self):
-    #        s = self._selector_factory()
-    #        if s:
-    #            s.edit_traits()
-    #            self.
-
-    def selector_factory(self, **kw):
-        sel = self._selector_factory(**kw)
-        self.selector = weakref.ref(sel)()
-        return self.selector
-
-    #    def new_selector(self, **kw):
-    #        if self.selector_klass:
-    #            s = self.selector_klass(_db=self, **kw)
-    #            return s
-
-    def _selector_factory(self, **kw):
-        if self.selector_klass:
-            s = self.selector_klass(db=self, **kw)
-            #            s.load_recent()
-            return s
-
-
-# def _get(self, table, query_dict, func='one'):
-# sess = self.get_session()
-#        q = sess.query(table)
-#        f = q.filter_by(**query_dict)
-#        return getattr(f, func)()
-
-#    def _get_one(self, table, query_dict):
-#        sess = self.get_session()
-#        q = sess.query(table)
-#        f = q.filter_by(**query_dict)
-#        try:
-#            return f.one()
-#        except Exception, e:
-#            print 'get_one', e
-#
-#    def _get_all(self, query_args):
-#        sess = self.get_session()
-#        p = sess.query(*query_args).all()
-#        return p
 
 class PathDatabaseAdapter(DatabaseAdapter):
     path_table = None
@@ -746,4 +753,3 @@ class SQLiteDatabaseAdapter(DatabaseAdapter):
         raise NotImplementedError
 
 # ============= EOF =============================================
-

@@ -35,6 +35,7 @@ from pychron.core.codetools.memory_usage import mem_available, mem_log
 from pychron.core.helpers.filetools import add_extension, get_path
 from pychron.core.notification_manager import NotificationManager
 from pychron.core.ui.gui import invoke_in_main_thread
+from pychron.database.selectors.isotope_selector import IsotopeAnalysisSelector
 from pychron.envisage.consoleable import Consoleable
 from pychron.envisage.preference_mixin import PreferenceMixin
 # from pychron.experiment.conditional.conditionals_edit_view import TAGS
@@ -1548,7 +1549,9 @@ Use Last "blank_{}"= {}
             return dbr, selected
 
     def _select_blank(self, db, ms):
-        sel = db.selector_factory(style='single')
+        # sel = db.selector_factory(style='single')
+        sel = IsotopeAnalysisSelector(db=db)
+
         sel.set_columns(exclude='irradiation_info',
                         append=[('Measurement', 'meas_script_name', 120),
                                 ('Extraction', 'extract_script_name', 90)])

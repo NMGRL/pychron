@@ -115,11 +115,11 @@ class IsotopeAdapter(DatabaseAdapter):
 
     # selector_klass = IsotopeAnalysisSelector
 
-    @property
-    def selector_klass(self):
-        from pychron.database.selectors.isotope_selector import IsotopeAnalysisSelector
-
-        return IsotopeAnalysisSelector
+    # @property
+    # def selector_klass(self):
+    #     from pychron.database.selectors.isotope_selector import IsotopeAnalysisSelector
+    #
+    #     return IsotopeAnalysisSelector
 
     def set_analysis_sensitivity(self, analysis, v, e):
         hist = proc_SensitivityHistoryTable()

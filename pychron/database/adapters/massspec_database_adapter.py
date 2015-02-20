@@ -73,12 +73,12 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         bind_preference(self, 'password', '{}.password'.format(prefid))
         bind_preference(self, 'name', '{}.name'.format(prefid))
 
-    @property
-    def selector_klass(self):
-        # lazy load selector klass.
-        from pychron.database.selectors.massspec_selector import MassSpecSelector
-
-        return MassSpecSelector
+    # @property
+    # def selector_klass(self):
+    #     # lazy load selector klass.
+    #     from pychron.database.selectors.massspec_selector import MassSpecSelector
+    #
+    #     return MassSpecSelector
 
     # ===============================================================================
     # getters

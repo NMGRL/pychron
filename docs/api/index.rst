@@ -8,3 +8,4 @@ API
   experiment
   pyscripts
   spectrometer
+  database
