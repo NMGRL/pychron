@@ -2173,6 +2173,8 @@ class IsotopeAdapter(DatabaseAdapter):
     def get_extraction_devices(self, **kw):
         return self._retrieve_items(gen_ExtractionDeviceTable, **kw)
 
+    get_extract_devices = get_extraction_devices
+
     def get_analysis_types(self, **kw):
         return self._retrieve_items(gen_AnalysisTypeTable, **kw)
 
