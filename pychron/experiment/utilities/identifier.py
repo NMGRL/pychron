@@ -318,11 +318,11 @@ def is_special(ln):
 
 def convert_extract_device(name):
     """
-        change Fusions UV to fusions_uv, etc
+        change Fusions UV to FusionsUV, etc
     """
     n = ''
     if name:
-        n = name.lower().replace(' ', '_')
+        n = name.replace(' ', '')
     return n
 
 
