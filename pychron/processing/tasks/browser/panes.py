@@ -27,7 +27,8 @@ from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.browser.adapters import BrowserAdapter, LabnumberAdapter
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.tasks.browser.sample_view import BrowserSampleView
-from pychron.processing.tasks.browser.query_view import BrowserQueryView
+# from pychron.processing.tasks.browser.query_view import BrowserQueryView
+from pychron.processing.tasks.browser.time_view import TimeViewModel
 
 
 class AnalysisGroupAdapter(BrowserAdapter):
@@ -38,9 +39,6 @@ class AnalysisGroupAdapter(BrowserAdapter):
     columns = [('Name', 'name'),
                ('Create Date', 'create_date'),
                ('Modified', 'last_modified')]
-
-
-
 
 
 class BrowserPane(TraitsDockPane):
@@ -54,15 +52,19 @@ class BrowserPane(TraitsDockPane):
     analysis_group_tabular_adapter = Instance(AnalysisGroupAdapter, ())
 
     sample_view = Instance(BrowserSampleView)
-    query_view = Instance(BrowserQueryView)
+    # query_view = Instance(BrowserQueryView)
+    time_view = Instance(TimeViewModel)
 
     def _get_browser_group(self):
         grp = Group(UItem('pane.sample_view',
                           style='custom',
                           visible_when='sample_view_active'),
+                    UItem('time_view_model',
+                          style='custom',
+                          visible_when='not sample_view_active')
                     # UItem('pane.query_view',
                     # style='custom',
-                    #       visible_when='not sample_view_active')
+                    # visible_when='not sample_view_active')
         )
         return grp
 
@@ -81,9 +83,9 @@ class BrowserPane(TraitsDockPane):
                                        'chart_curve_go',
                                        # enabled_when='samples',
                                        tooltip='Filter analyses graphically'),
-                    # icon_button_editor('toggle_view',
-                    # 'arrow_switch',
-                    #                    tooltip='Toggle between Sample and Time views'),
+                    icon_button_editor('toggle_view',
+                                       'arrow_switch',
+                                       tooltip='Toggle between Sample and Time views'),
                     spring,
                     UItem('use_focus_switching',
                           tooltip='Show/Hide Filters on demand'),
@@ -106,7 +108,7 @@ class BrowserPane(TraitsDockPane):
     def _sample_view_default(self):
         return BrowserSampleView(model=self.model, pane=self)
 
-    def _query_view_default(self):
-        return BrowserQueryView(model=self.model.data_selector, pane=self)
+        # def _query_view_default(self):
+        # return BrowserQueryView(model=self.model.data_selector, pane=self)
 
 # ============= EOF =============================================

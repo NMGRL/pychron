@@ -206,7 +206,8 @@ class TimeViewAction(Action):
         from pychron.processing.tasks.browser.time_view import TimeView
         manager = app.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
 
-        m = TimeViewModel(manager = manager)
+        m = TimeViewModel(db = manager.db,
+                          context_menu_enabled=False)
         m.load()
         v = TimeView(model=m)
         app.open_view(v)

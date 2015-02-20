@@ -145,8 +145,6 @@ class AnalysisGroup(HasTraits):
         #         v, e = self._calculate_weighted_mean('uage_wo_j_err', self.weighted_age_error_kind)
         # else:
         v, e = self._calculate_weighted_mean(attr, self.weighted_age_error_kind)
-
-
         e = self._modify_error(v, e, self.weighted_age_error_kind)
         try:
             return ufloat(v, e)

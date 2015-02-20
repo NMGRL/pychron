@@ -30,6 +30,7 @@ from pychron.envisage.browser.base_browser_model import BaseBrowserModel
 from pychron.envisage.browser.record_views import ProjectRecordView
 from pychron.processing.tasks.browser.analysis_table import AnalysisTable
 from pychron.processing.tasks.browser.graphical_filter_selector import GraphicalFilterSelector
+from pychron.processing.tasks.browser.time_view import TimeViewModel
 from pychron.processing.tasks.browser.util import get_pad
 
 NCHARS = 60
@@ -37,7 +38,6 @@ REG = re.compile(r'.' * NCHARS)
 
 
 class BrowserModel(BaseBrowserModel):
-
     filter_focus = Bool(True)
     use_focus_switching = Bool(True)
     filter_label = Property(Str, depends_on='filter_focus')
@@ -63,7 +63,7 @@ class BrowserModel(BaseBrowserModel):
     levels = List
     level = Str
     analysis_table = Instance(AnalysisTable, ())
-
+    time_view_model = Instance(TimeViewModel)
     update_on_level_change = True
     is_activated = False
 
@@ -78,9 +78,9 @@ class BrowserModel(BaseBrowserModel):
                         '{}.reference_hours_padding'.format(prefid))
 
         # self._preference_binder('pychron.browsing',
-        #                             ('recent_hours','graphical_filtering_max_days',
-        #                              'reference_hours_padding'),
-        #                             obj=self.search_criteria)
+        # ('recent_hours','graphical_filtering_max_days',
+        # 'reference_hours_padding'),
+        # obj=self.search_criteria)
 
     def activated(self, force=False):
         if not self.is_activated or force:
@@ -88,13 +88,14 @@ class BrowserModel(BaseBrowserModel):
             if self.sample_view_active:
                 self.activate_sample_browser(force)
                 self.filter_focus = True
+                self.is_activated = True
             else:
-                pass
+                self.time_view_model.load()
+
             self._top_level_filter = None
 
-        self.is_activated = True
-
     def activate_sample_browser(self, force=False):
+        print self.is_activated, force
         if not self.is_activated or force:
             self.load_projects()
             self._load_projects_and_irradiations()
@@ -105,6 +106,29 @@ class BrowserModel(BaseBrowserModel):
 
             self.datasource_url = db.datasource_url
             self.load_browser_selection()
+
+    def get_selection(self, low_post, high_post, unks=None, selection=None, make_records=True):
+        if selection is None:
+            if self.analysis_table.selected:
+                ret = self.analysis_table.selected
+            elif self.time_view_model.selected:
+                ret = self.time_view_model.selected
+            else:
+                selection = self.selected_samples
+
+        if selection:
+            iv = not self.analysis_table.omit_invalid
+            uuids = [x.uuid for x in unks] if unks else None
+            ret = [ai for ai in self.retrieve_sample_analyses(selection,
+                                                              exclude_uuids=uuids,
+                                                              include_invalid=iv,
+                                                              low_post=low_post,
+                                                              high_post=high_post,
+                                                              make_records=make_records)]
+        return ret
+
+    def replace_items(self, info, obj):
+        print info, obj,'fffasdf'
 
     def refresh_samples(self):
         self.debug('refresh samples')
@@ -304,6 +328,7 @@ class BrowserModel(BaseBrowserModel):
                 self.irradiations = irrads
                 if irrads:
                     self.irradiation = irrads[0]
+
     # handlers
     def _graphical_filter_button_fired(self):
         print 'ffffassdf'
@@ -460,14 +485,18 @@ class BrowserModel(BaseBrowserModel):
     def _toggle_focus_fired(self):
         self.filter_focus = not self.filter_focus
 
-    # def _toggle_view_fired(self):
-    #     self.sample_view_active = not self.sample_view_active
-    #     if not self.sample_view_active:
-    #         self._activate_query_browser()
-    #     else:
-    #         self.activate_sample_browser()
-    #
-    #     self.dump()
+    def _toggle_view_fired(self):
+        self.sample_view_active = not self.sample_view_active
+        if not self.sample_view_active:
+            self.time_view_model.load_filter()
+        else:
+            self.activate_sample_browser()
+
+        self.dump()
+
+    def dump(self):
+        self.time_view_model.dump_filter()
+        super(BrowserModel, self).dump()
 
     def _selected_samples_changed(self, new):
         if new:
@@ -482,7 +511,7 @@ class BrowserModel(BaseBrowserModel):
             # if not any(['RECENT' in p for p in self.selected_projects]):
             # sp=self.selected_projects
             # if not hasattr(sp, '__iter__'):
-            #     sp = (sp, )
+            # sp = (sp, )
 
             if not any(['RECENT' in p.name for p in self.selected_projects]):
                 reftypes = ('blank_unknown',)
@@ -497,7 +526,6 @@ class BrowserModel(BaseBrowserModel):
                                 print dates
                                 progress = open_progress(len(dates))
                                 for lp, hp in dates:
-
                                     progress.change_message('Loading Date Range '
                                                             '{} to {}'.format(lp.strftime('%m-%d-%Y %H:%M:%S'),
                                                                               hp.strftime('%m-%d-%Y %H:%M:%S')))
@@ -509,7 +537,7 @@ class BrowserModel(BaseBrowserModel):
                                 progress.close()
 
                         ans = self._make_records(ans)
-                    # print len(ans), len(set([si.record_id for si in ans]))
+                        # print len(ans), len(set([si.record_id for si in ans]))
             if xx:
                 lp, hp = self.low_post, self.high_post
                 ans = self._retrieve_sample_analyses(xx,
@@ -619,6 +647,9 @@ class BrowserModel(BaseBrowserModel):
             return '\n'.join(lines)
 
         return txt
+
+    def _time_view_model_default(self):
+        return TimeViewModel(db=self.db)
 
 # ============= EOF =============================================
 
