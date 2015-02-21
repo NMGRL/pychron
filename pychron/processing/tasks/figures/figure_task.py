@@ -217,9 +217,10 @@ class FigureTask(AnalysisEditTask):
         from pychron.globals import globalv
 
         if globalv.debug:
-            ans = self.browser_model.analysis_table.analyses
-            if ans:
-                self.unknowns_pane.items = ans
+            if self.browser_model:
+                ans = self.browser_model.analysis_table.analyses
+                if ans:
+                    self.unknowns_pane.items = ans
 
     def new_table(self, ans=None):
         if self.has_active_editor():

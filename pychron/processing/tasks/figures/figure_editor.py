@@ -73,6 +73,10 @@ class FigureEditor(GraphEditor):
             ap.clear_ylimits()
             ap.clear_xlimits()
 
+    def set_items(self, *args, **kw):
+        self.clear_aux_plot_limits()
+        super(FigureEditor, self).set_items(*args, **kw)
+
     def set_items_from_file(self, p):
         if os.path.isfile(p):
             # def construct(d):

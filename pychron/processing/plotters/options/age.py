@@ -59,7 +59,7 @@ class AgeOptions(GroupablePlotterOptions):
     include_j_error_in_mean = Bool(True)
     error_calc_method = Enum(*ERROR_TYPES)
 
-    include_legend = Bool(False)
+
     include_sample_in_legend = Bool(False)
     legend_location = Enum('Upper Right', 'Upper Left', 'Lower Left', 'Lower Right')
 

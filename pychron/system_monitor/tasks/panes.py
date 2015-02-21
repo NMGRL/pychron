@@ -25,6 +25,7 @@ from traitsui.api import View, UItem, TabularEditor, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
+from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.processing.tasks.analysis_edit.panes import TablePane
 from pychron.pychron_constants import LIGHT_RED
 from pychron.system_monitor.tasks.connection_spec import ConnectionSpec
@@ -54,8 +55,10 @@ class AnalysisPane(TablePane):
         v = View(
             CustomLabel('n', color='blue'),
             UItem('items',
-                  editor=TabularEditor(
-                      editable=False,
+                  editor=myTabularEditor(
+                      # editable=False,
+                      multi_select=True,
+                      operations=['delete',],
                       refresh='refresh_needed',
                       adapter=AnalysisAdapter())))
         return v

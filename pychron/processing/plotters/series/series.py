@@ -55,7 +55,8 @@ class Series(BaseArArFigure):
         graph = self.graph
         plots = (pp for pp in plots if pp.use)
         for i, po in enumerate(plots):
-            p = graph.new_plot(padding=self.padding,
+            p = graph.new_plot(
+                               # padding=self.padding,
                                ytitle=po.name,
                                xtitle='Time')
 

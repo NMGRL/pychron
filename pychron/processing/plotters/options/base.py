@@ -148,6 +148,7 @@ class FigurePlotterOptions(BasePlotterOptions):
     plot_option_klass = AuxPlotOptions
     plot_option_name = None
 
+    include_legend = Bool(False)
     refresh_plot = Button
     # refresh_plot_needed = Event
 

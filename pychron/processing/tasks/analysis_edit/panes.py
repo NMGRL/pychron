@@ -304,6 +304,7 @@ class UnknownsHandler(UnselectTabularEditorHandler):
     def group_by_labnumber(self, info, obj):
         obj.group_by_labnumber()
 
+
 class UnknownsPane(HistoryTablePane):
     id = 'pychron.processing.unknowns'
     name = 'Unknowns'

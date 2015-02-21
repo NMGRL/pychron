@@ -24,6 +24,7 @@ import os
 from itertools import groupby
 import pickle
 # ============= local library imports  ==========================
+from pychron.core.codetools.inspection import caller
 from pychron.paths import paths
 from pychron.processing.fits.fit_selector import FitSelector
 from pychron.processing.tasks.editor import BaseUnknownsEditor

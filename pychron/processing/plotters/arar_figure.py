@@ -213,7 +213,7 @@ class BaseArArFigure(HasTraits):
             if self.options.has_changes():
                 self._set_options_format(pp)
             else:
-                print 'using formatting options'
+                # print 'using formatting options'
                 fmt_opt = options.formatting_options
                 for name, axis in (('x', pp.x_axis), ('y', pp.y_axis)):
                     for attr in ('title_font', 'tick_label_font', 'tick_in', 'tick_out'):

@@ -58,20 +58,11 @@ class SystemMonitorTask(FigureTask):
     dashboard_editor = Instance(DashboardEditor)
     dashboard_pane = Instance(DashboardPane)
 
-    def setup_dashboard(self):
-        self.dashboard_client = client = self.application.get_service('pychron.dashboard.client.DashboardClient')
-        if client:
-            client.on_trait_change(self._handle_dashboard, 'values:value')
-            bind_preference(client, 'host', 'pychron.dashboard.client.host')
-            bind_preference(client, 'port', 'pychron.dashboard.client.port')
-
-            client.connect()
-            client.load_configuration()
-            client.listen()
-
     def activated(self):
         self._setup_dashboard()
         self._make_connections()
+        # self.browser_model =
+        # super(SystemMonitorTask, self).activated()
         # editor = self.add_system_monitor()
         # self._setup_dashboard_client()
 
@@ -106,30 +97,41 @@ class SystemMonitorTask(FigureTask):
                  title='Choose System')
         return v
 
-    def tab_editors(self, *args):
-        def func(control, a, b):
-            control.tabifyDockWidget(a, b)
+    # def tab_editors(self, *args):
+    #     def func(control, a, b):
+    #         control.tabifyDockWidget(a, b)
 
-        self._layout_editors(func, *args)
+        # self._layout_editors(func, *args)
+    #
+    # def split_editors(self, a, b, orientation='h'):
+    #
+    #     def func(control, aa, bb):
+    #         print aa, bb
+    #         control.splitDockWidget(aa, bb, Qt.Horizontal if orientation == 'h' else Qt.Vertical)
 
-    def split_editors(self, a, b, orientation='h'):
+        # self._layout_editors(func, a, b)
 
-        def func(control, aa, bb):
-            print aa, bb
-            control.splitDockWidget(aa, bb, Qt.Horizontal if orientation == 'h' else Qt.Vertical)
+    def _setup_dashboard(self):
+        self.dashboard_client = client = self.application.get_service('pychron.dashboard.client.DashboardClient')
+        if client:
+            client.on_trait_change(self._handle_dashboard, 'values:value')
+            bind_preference(client, 'host', 'pychron.dashboard.client.host')
+            bind_preference(client, 'port', 'pychron.dashboard.client.port')
 
-        self._layout_editors(func, a, b)
+            client.connect()
+            client.load_configuration()
+            client.listen()
 
-    def _layout_editors(self, func, aidx, bidx):
-        ea = self.editor_area
-        control = ea.control
-        widgets = control.get_dock_widgets()
-        if widgets:
-            try:
-                a, b = widgets[aidx], widgets[bidx]
-                func(control, a, b)
-            except IndexError:
-                pass
+    # def _layout_editors(self, func, aidx, bidx):
+    #     ea = self.editor_area
+    #     control = ea.control
+    #     widgets = control.get_dock_widgets()
+    #     if widgets:
+    #         try:
+    #             a, b = widgets[aidx], widgets[bidx]
+    #             func(control, a, b)
+    #         except IndexError:
+    #             pass
 
     def _editor_factory(self):
         # self.connection = self.connections[0]
@@ -191,6 +193,11 @@ class SystemMonitorTask(FigureTask):
     def _make_connections(self):
         app = self.window.application
         connections = app.preferences.get('pychron.sys_mon.favorites')
+        if not connections:
+            self.warning_dialog('No Systems in Preferences')
+            return
+        
+
         cs = []
         for ci in eval(connections):
             n, sn, h, p = ci.split(',')

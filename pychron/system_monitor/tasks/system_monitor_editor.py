@@ -134,7 +134,6 @@ class SystemMonitorEditor(SeriesEditor):
                 self._refresh_figures(an)
                 # self._refresh_spectrum('62908', 11)
 
-
     def start(self):
 
         self.load_tool()
@@ -181,10 +180,10 @@ class SystemMonitorEditor(SeriesEditor):
 
         st = time.time()
         while 1:
-            #only check subscription availability if one poll_interval has elapsed
-            #sinde the last subscription message was received
+            # only check subscription availability if one poll_interval has elapsed
+            # since the last subscription message was received
 
-            #check subscription availability
+            # check subscription availability
             if time.time() - sub.last_message_time > poll_interval:
                 if sub.check_server_availability(timeout=0.5, verbose=True):
                     if not sub.is_listening():
@@ -277,7 +276,7 @@ class SystemMonitorEditor(SeriesEditor):
             e = self.task.new_series(ans=[],
                                      add_table=False,
                                      add_iso=False)
-            self.task.tab_editors(0, -1)
+            # self.task.tab_editors(0, -1)
             e.basename = '{} Series'.format(camel_case(attr))
             e.search_tool = SystemMonitorControls()
             return e
@@ -334,7 +333,7 @@ class SystemMonitorEditor(SeriesEditor):
         return editor
 
     def _sort_analyses(self, ans):
-        return sorted(ans, key=lambda x: x.timestamp)
+        return sorted(ans, key=lambda x: x.timestamp, reverse=True)
 
     def _get_analyses(self, tool, identifier, aliquot=None, use_date_range=False):
         db = self.processor.db
