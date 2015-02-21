@@ -26,6 +26,7 @@ import pickle
 # ============= local library imports  ==========================
 from pychron.core.codetools.inspection import caller
 from pychron.paths import paths
+from pychron.processing.analyses.file_analysis import FileAnalysis
 from pychron.processing.fits.fit_selector import FitSelector
 from pychron.processing.tasks.editor import BaseUnknownsEditor
 
@@ -137,7 +138,7 @@ class GraphEditor(BaseUnknownsEditor):
     def filter_invalid_analyses(self):
         # print items
         # if items is None:
-        #     # f=lambda x: not x.tag=='invalid'
+        # # f=lambda x: not x.tag=='invalid'
         #     self.analyses=[ai for ai in self.analyses
         #                    if ai.tag!='invalid']
         #     # self.analyses=filter(f, self.analyses)
@@ -150,7 +151,7 @@ class GraphEditor(BaseUnknownsEditor):
 
     def set_items(self, unks, is_append=False, update_graph=None, **kw):
         # ans = self.processor.make_analyses(unks,
-        #                                    calculate_age=self.calculate_age,
+        # calculate_age=self.calculate_age,
         #                                    unpack=self.unpack_peaktime,
         #                                    **kw)
         #
@@ -163,9 +164,13 @@ class GraphEditor(BaseUnknownsEditor):
 
         # ans = timethis(func)
         # print 'pre', all(map(lambda x: isinstance(x, DBAnalysis), ans))
-        ans = self.processor.make_analyses(unks, calculate_age=self.calculate_age,
-                                           unpack=self.unpack_peaktime,
-                                           **kw)
+
+        if any((isinstance(ai, FileAnalysis) for ai in unks)):
+            ans = unks
+        else:
+            ans = self.processor.make_analyses(unks, calculate_age=self.calculate_age,
+                                               unpack=self.unpack_peaktime,
+                                               **kw)
         if is_append:
             pans = self.analyses
             # print 'pans', all(map(lambda x: isinstance(x, DBAnalysis), pans))
@@ -208,7 +213,7 @@ class GraphEditor(BaseUnknownsEditor):
     def load_fits(self, refiso):
         if refiso.isotope_keys:
             if self.tool:
-                refs =refiso.isotope_keys[:]
+                refs = refiso.isotope_keys[:]
                 self.tool.load_fits(refs,
                                     refiso.get_isotope_fits())
             self.load_tool()
@@ -252,6 +257,7 @@ class GraphEditor(BaseUnknownsEditor):
 
     def _graph_factory(self, **kw):
         from pychron.graph.stacked_regression_graph import StackedRegressionGraph
+
         g = StackedRegressionGraph(container_dict=dict(stack_order='top_to_bottom',
                                                        use_backbuffer=True,
                                                        spacing=5), **kw)
@@ -350,7 +356,7 @@ class GraphEditor(BaseUnknownsEditor):
                 ai.group_id = gid - mgid
 
     # def _get_auto_plot(self):
-    #     return len(self.analyses) == 1 or self.update_on_analyses
+    # return len(self.analyses) == 1 or self.update_on_analyses
 
     def _tool_default(self):
         t = self.tool_klass()

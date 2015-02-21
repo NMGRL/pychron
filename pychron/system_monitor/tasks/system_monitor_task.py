@@ -23,12 +23,15 @@ from pyface.tasks.task_layout import TaskLayout, Splitter, PaneItem, Tabbed, VSp
 # ============= local library imports  ==========================
 from pychron.dashboard.client import DashboardClient
 from pychron.envisage.tasks.pane_helpers import ConsolePane
+from pychron.globals import globalv
 from pychron.processing.tasks.analysis_edit.panes import ControlsPane
 from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPane
+from pychron.processing.tasks.figures.editors.ideogram_editor import IdeogramEditor
+from pychron.processing.tasks.figures.editors.spectrum_editor import SpectrumEditor
 from pychron.processing.tasks.figures.figure_editor import FigureEditor
 from pychron.processing.tasks.figures.figure_task import FigureTask
 from pychron.processing.tasks.figures.panes import PlotterOptionsPane
-from pychron.system_monitor.tasks.actions import AddSystemMonitorAction
+from pychron.system_monitor.tasks.actions import AddSystemMonitorAction, ClearFigureAction, ResetEditorsAction
 from pychron.system_monitor.tasks.connection_spec import ConnectionSpec
 from pychron.system_monitor.tasks.dashboard_editor import DashboardEditor
 from pychron.system_monitor.tasks.panes import ConnectionPane, AnalysisPane, DashboardPane
@@ -44,6 +47,8 @@ class SystemMonitorTask(FigureTask):
     tool_bars = [SToolBar(AddSystemMonitorAction(),
                           image_size=(16, 16)),
                  SToolBar(
+                     ResetEditorsAction(),
+                     ClearFigureAction(),
                      image_size=(16, 16))]
 
     connection_pane = Instance(ConnectionPane)
@@ -80,6 +85,16 @@ class SystemMonitorTask(FigureTask):
             self.dashboard_client.on_trait_change(self._handle_dashboard, 'values:value', remove=True)
 
         super(FigureTask, self).prepare_destroy()
+
+    def reset_editors(self):
+        for ei in self.editor_area.editors:
+            if isinstance(ei, SystemMonitorEditor):
+                ei.reset_editors()
+
+    def clear_figure(self):
+        ac = self.has_active_editor()
+        if ac:
+            ac.set_items([])
 
     def add_system_monitor(self):
         return self._editor_factory()
@@ -134,19 +149,20 @@ class SystemMonitorTask(FigureTask):
     #             pass
 
     def _editor_factory(self):
-        # self.connection = self.connections[0]
-        # ask user for system
-        info = self.edit_traits(view='get_connection_view')
-        # if 1:
-        if info.result and self.connection:
+        if globalv.debug:
+            self.connection = self.connections[0]
+            result = True
+        else:
+            # ask user for system
+            info = self.edit_traits(view='get_connection_view')
+            result = info.result
+
+        if result and self.connection:
             editor = SystemMonitorEditor(processor=self.manager,
                                          conn_spec=self.connection,
                                          task=self)
             editor.start()
             self._open_editor(editor)
-
-            #if editor:
-            #    do_later(editor.run_added_handler)
 
             return editor
 

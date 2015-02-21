@@ -152,7 +152,6 @@ class MeanIndicatorOverlay(AbstractOverlay, Movable):
                                 text=self.text,
                                 color=self.color,
                                 id='{}_label'.format(self.id))
-            print label.font
             self.label = label
             self.overlays.append(label)
             tool = LabelMoveTool(component=label)

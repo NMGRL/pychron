@@ -21,6 +21,16 @@ from pyface.tasks.action.task_action import TaskAction
 # ============= local library imports  ==========================
 from pychron.envisage.resources import icon
 
+class ResetEditorsAction(TaskAction):
+    method = 'reset_editors'
+    name = 'Reset Editors'
+    image = icon('arrow_refresh')
+
+class ClearFigureAction(TaskAction):
+    name = 'Clear Figure'
+    method = 'clear_figure'
+    image = icon('clear')
+
 
 class AddSystemMonitorAction(TaskAction):
     name = 'New Monitor'

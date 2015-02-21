@@ -409,7 +409,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
 
             if progress:
                 progress.soft_close()
-
+        
             return db_ans
 
     def get_level(self, level, irradiation=None):

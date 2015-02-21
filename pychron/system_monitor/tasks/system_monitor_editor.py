@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,16 +16,19 @@
 
 # ============= enthought library imports =======================
 from datetime import datetime, timedelta
+import random
 from threading import Thread, Lock
 import time
-#from apptools.preferences.preference_binding import bind_preference
+# from apptools.preferences.preference_binding import bind_preference
 from pyface.timer.do_later import do_later
-from traits.api import Instance, Property, Int, Bool, on_trait_change, Any
+from traits.api import Instance, Property, Int, Bool, on_trait_change, Any, List
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.displays.display import DisplayController
+from pychron.globals import globalv
 from pychron.messaging.notify.subscriber import Subscriber
+from pychron.processing.analyses.file_analysis import FileAnalysis
 from pychron.processing.plotter_options_manager import SystemMonitorOptionsManager
 from pychron.processing.tasks.figures.editors.series_editor import SeriesEditor
 from pychron.system_monitor.tasks.connection_spec import ConnectionSpec
@@ -57,7 +60,7 @@ class SystemMonitorEditor(SeriesEditor):
     plotter_options_manager_klass = SystemMonitorOptionsManager
 
     use_poll = Bool(False)
-    _poll_interval = Int(10)
+    _poll_interval = Int(3)
     _db_poll_interval = Int(10)
     _polling = False
     pickle_path = 'system_monitor'
@@ -76,6 +79,10 @@ class SystemMonitorEditor(SeriesEditor):
     task = Any
 
     db_lock = None
+
+    _reset_ideogram = True
+    _reset_spectrum = True
+    editors = List
 
     def __init__(self, *args, **kw):
         super(SystemMonitorEditor, self).__init__(*args, **kw)
@@ -194,16 +201,17 @@ class SystemMonitorEditor(SeriesEditor):
                         self.warning('Subscription server no longer available. stop listen')
                         self.subscriber.stop()
 
-            if self._wait(poll_interval):
-                if not sub.is_listening():
-                    if time.time() - st > db_poll_interval:
-                        st = time.time()
-                        lr = self._get_last_run_uuid()
-                        if lr != last_run_uuid:
-                            self.debug('current uuid {} <> {}'.format(last_run_uuid, lr))
+            if not sub.is_listening():
+                if time.time() - st > db_poll_interval or globalv.debug:
+                    st = time.time()
+                    lr = self._get_last_run_uuid()
+                    if lr != last_run_uuid:
+                        self.debug('current uuid {} <> {}'.format(last_run_uuid, lr))
+                        if not globalv.debug:
                             last_run_uuid = lr
-                            invoke_in_main_thread(self.run_added_handler, lr)
-            else:
+                        invoke_in_main_thread(self.run_added_handler, lr)
+
+            if not self._wait(poll_interval):
                 break
 
     def _wait(self, t):
@@ -285,34 +293,44 @@ class SystemMonitorEditor(SeriesEditor):
                                      use_date_range=True)
         setattr(self, name, editor)
 
+    def reset_editors(self):
+        """
+        Trigger a new editors to be build next update
+
+        :param kind: i
+        :return:
+        """
+        self._ideogram_editor = None
+        self._spectrum_editor = None
+        self._cnt = 0
+
     def _refresh_ideogram(self, identifier):
         """
             open a ideogram editor if one is not already open
         """
         editor = self._ideogram_editor
         f = lambda: self.task.new_ideogram(add_table=False, add_iso=False)
-        editor = self._update_editor(editor, f, identifier, None, calculate_age=True)
+        editor = self._update_editor(editor, f, identifier, None,
+                                     calculate_age=True)
         self._ideogram_editor = editor
+        self._reset_ideogram = False
 
     def _refresh_spectrum(self, identifier, aliquot):
         editor = self._spectrum_editor
         f = lambda: self.task.new_spectrum(add_table=False, add_iso=False)
-        editor = self._update_editor(editor, f, identifier, aliquot, calculate_age=True)
+        editor = self._update_editor(editor, f, identifier, aliquot,
+                                     calculate_age=True)
         self._spectrum_editor = editor
+        self._reset_spectrum = False
 
     def _update_editor(self, editor, editor_factory,
-                       identifier, aliquot, layout=True,
+                       identifier, aliquot,
                        use_date_range=False, calculate_age=False):
         if editor is None:
             editor = editor_factory()
-        #     if layout:
-        #         self.task.split_editors(-2, -1)
-        # else:
-        #     if not self._polling:
-        #         self.task.activate_editor(editor)
 
-        #gather analyses
-        tool=None
+        # gather analyses
+        tool = None
         if hasattr(editor, 'search_tool'):
             tool = editor.search_tool
 
@@ -323,39 +341,47 @@ class SystemMonitorEditor(SeriesEditor):
         if calculate_age:
             for ai in ans:
                 ai.calculate_age()
-
         editor.set_items(ans, update_graph=False)
         group_analyses_by_key(editor.analyses, 'labnumber')
 
         editor.clear_aux_plot_limits()
         do_later(editor.rebuild)
-        # editor.rebuild()
         return editor
 
     def _sort_analyses(self, ans):
         return sorted(ans, key=lambda x: x.timestamp, reverse=True)
 
+    _cnt = 0
+
     def _get_analyses(self, tool, identifier, aliquot=None, use_date_range=False):
-        db = self.processor.db
-        with db.session_ctx():
-            if aliquot is not None:
-                def func(a, l):
-                    return l.identifier == identifier, a.aliquot == aliquot
+        if globalv.debug:
+            self._cnt += 1
 
-                ans = db.get_analyses(func=func)
-            elif use_date_range:
-                end = datetime.now()
-                start = end - timedelta(hours=tool.hours,
-                                        weeks=tool.weeks,
-                                        days=tool.days)
+            return [FileAnalysis(age=random.random() * 10,
+                                 aliquot=i,
+                                 labnumber='{:04n}'.format(i // 4),
+                                 age_err=random.random()) for i in range(self._cnt)]
+        else:
+            db = self.processor.db
+            with db.session_ctx():
+                if aliquot is not None:
+                    def func(a, l):
+                        return l.identifier == identifier, a.aliquot == aliquot
 
-                ans = db.get_date_range_analyses(start, end,
-                                                 labnumber=identifier,
-                                                 limit=tool.limit)
-            else:
-                ans, tc = db.get_labnumber_analyses(identifier, limit=25)
+                    ans = db.get_analyses(func=func)
+                elif use_date_range:
+                    end = datetime.now()
+                    start = end - timedelta(hours=tool.hours,
+                                            weeks=tool.weeks,
+                                            days=tool.days)
 
-            return self.processor.make_analyses(ans)
+                    ans = db.get_date_range_analyses(start, end,
+                                                     labnumber=identifier,
+                                                     limit=tool.limit)
+                else:
+                    ans, tc = db.get_labnumber_analyses(identifier, limit=25)
+
+                return self.processor.make_analyses(ans)
 
     @on_trait_change('search_tool:[+, refresh_button]')
     def _handle_tool_change(self):
