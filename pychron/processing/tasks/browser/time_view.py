@@ -117,7 +117,7 @@ class TimeViewModel(HasTraits):
     analyses = List
     column_clicked = Event
     dclicked = Event
-    selected = Any
+    selected = List
     refresh_table_needed = Event
     clear_filter_button = Button
     help_str = 'Select an analysis. Click on the column label to filter results by the selected value'

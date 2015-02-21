@@ -244,7 +244,6 @@ class Scanner(Loggable):
             if self._cancel_event.is_set():
                 self.debug('exiting scan. dac={}'.format(dac))
                 break
-            print i
             magnet.set_dac(dac, verbose=False)
             v = spec.get_intensity(self.spectrometer.reference_detector)
 

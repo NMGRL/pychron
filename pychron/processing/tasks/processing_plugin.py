@@ -266,8 +266,8 @@ class ProcessingPlugin(BaseTaskPlugin):
             ('pychron.processing.interpreted_age',
              self._interpreted_age_task_factory, 'Interpeted Age'),
 
-            ('pychron.processing.publisher',
-             self._table_task_factory, 'Table', '', 'Ctrl+t'),
+            # ('pychron.processing.publisher',
+            #  self._table_task_factory, 'Table', '', 'Ctrl+t'),
             ('pychron.processing.respository',
              self._repository_task_factory, 'Repository', '', 'Ctrl+Shift+R', '', 'irc-server'),
 
@@ -340,10 +340,10 @@ class ProcessingPlugin(BaseTaskPlugin):
 
         return RepositoryTask(manager=self._processor_factory())
 
-    def _table_task_factory(self):
-        from pychron.processing.tasks.tables.table_task import TableTask
-
-        return TableTask(manager=self._processor_factory())
+    # def _table_task_factory(self):
+    #     from pychron.processing.tasks.tables.table_task import TableTask
+    #
+    #     return TableTask(manager=self._processor_factory())
 
     def _interpreted_age_task_factory(self):
         from pychron.processing.tasks.interpreted_age.interpreted_age_task import InterpretedAgeTask

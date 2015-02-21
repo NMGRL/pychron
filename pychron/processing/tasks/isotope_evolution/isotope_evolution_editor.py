@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-#from chaco.label import Label
+# from chaco.label import Label
 
 from traits.api import Instance, Bool, Any, Event
 from traitsui.api import View, UItem, InstanceEditor
@@ -28,7 +28,7 @@ from pychron.graph.graph import Graph
 from pychron.core.helpers.fits import convert_fit
 from pychron.processing.fits.iso_evo_fit_selector import IsoEvoFitSelector
 from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
-#from pychron.core.ui.thread import Thread
+# from pychron.core.ui.thread import Thread
 
 
 def fits_equal(dbfit, fit, fod):
@@ -49,9 +49,28 @@ class IsoEvoGraph(Graph):
     _eq_visible_dict = None
     _eq_only_dict = None
     replot_needed = Event
+
+    def _get_selected_plotid(self):
+        r = 0
+        # if self.selected_plot is not None:
+        #     for ci in self.plotcontainer.components:
+        #         for i, cii in enumerate(ci.components):
+        #             if cii == self.selected_plot:
+        #                 r = i
+        #                 break
+                        # print ci, cii
+                        # for gi in self.graphs:
+                        # for pp in gi.plots:
+                        # pp == self.selected_plot
+
+                        # r = self.plots.index(self.selected_plot)
+        # print 'get selected plotid', r, self.selected_plot
+        return r
+
     def get_child_context_menu_actions(self):
         sid = self.selected_plotid
-        v=False
+        # print 'get context', sid
+        v = False
         try:
             v = self._eq_visible_dict[sid]
         except KeyError:
@@ -64,7 +83,7 @@ class IsoEvoGraph(Graph):
         else:
             a = self.action_factory('Show Equilibration', '_show_equilibration')
 
-        v=False
+        v = False
         try:
             v = self._eq_only_dict[sid]
         except KeyError:
@@ -91,7 +110,7 @@ class IsoEvoGraph(Graph):
             self._eq_visible_dict[sid] = v
         except AttributeError:
             self._eq_visible_dict = {sid: v}
-        self.replot_needed=True
+        self.replot_needed = True
 
     def _hide_equilibration_only(self):
         self._toggle_eq_only(False)
@@ -105,30 +124,31 @@ class IsoEvoGraph(Graph):
             self._eq_only_dict[sid] = v
         except AttributeError:
             self._eq_only_dict = {sid: v}
-        self.replot_needed=True
+        self.replot_needed = True
 
     def set_dicts(self, d):
-        self._eq_visible_dict,self._eq_only_dict=d
+        self._eq_visible_dict, self._eq_only_dict = d
 
     def get_dicts(self):
         return self._eq_visible_dict, self._eq_only_dict
 
     def get_eq_visible(self, idx):
         try:
-            self._eq_visible_dict[idx]
+            return self._eq_visible_dict[idx]
         except (TypeError, KeyError):
             return False
 
     def get_eq_only_visible(self, idx):
         try:
-            self._eq_only_dict[idx]
+            return self._eq_only_dict[idx]
         except (TypeError, KeyError):
             return False
 
+
 class IsotopeEvolutionEditor(GraphEditor):
     component = Any
-    #component = Instance(Container)
-    #component = Instance(VPlotContainer)
+    # component = Instance(Container)
+    # component = Instance(VPlotContainer)
     #component = Instance(HPlotContainer)
     #component = Instance(GridPlotContainer)
     # graphs = Dict
@@ -386,20 +406,22 @@ class IsotopeEvolutionEditor(GraphEditor):
         return xs
 
     def _get_sniff_visible(self, fit, i):
-        v=self.component.get_eq_visible(i)
+        v = self.component.get_eq_visible(i)
+        print 'get sniff', fit.use_sniff, v
         return fit.use_sniff or v
 
     def _plot_signal(self, add_tools, fd, fit, trunc, g, i, isok, unk):
-        xs=[]
+        xs = []
         if "/" in isok:
             return self._plot_ratio(add_tools, fd, fit, g, i, isok, trunc, unk)
         else:
-            eq_only = self.component.get_eq_only_visible(i)
+            eq_only = self.component.get_eq_only_visible(0)
             if not eq_only:
-                display_sniff = self._get_sniff_visible(fit, i)
+                display_sniff = self._get_sniff_visible(fit, 0)
             else:
-                display_sniff=True
+                display_sniff = True
 
+            # print i, ' eq_only: ', eq_only, 'display sniff: ', display_sniff
             if not isok in unk.isotopes:
                 return []
             iso = unk.isotopes[isok]
@@ -407,13 +429,20 @@ class IsotopeEvolutionEditor(GraphEditor):
             iso.time_zero_offset = self.tool.time_zero_offset
 
             if display_sniff:
+                # xs = [1,2,3,4]
+                # g.new_series(xs, [1,2,3,4],
+                #              plotid=i,
+                #              type='scatter',
+                #              fit=False)
+
                 sniff = iso.sniff
                 if sniff:
-                    xs=sniff.offset_xs
+                    xs = sniff.offset_xs
                     g.new_series(xs, sniff.ys,
                                  plotid=i,
                                  type='scatter',
                                  fit=False)
+
             if not eq_only:
                 iso.trait_setq(fit=fit.fit, error_type=fit.error_type)
                 iso.filter_outlier_dict = fd
@@ -444,11 +473,13 @@ class IsotopeEvolutionEditor(GraphEditor):
         #
         # if prog:
         #     prog.close()
-    _new_container=True
+
+    _new_container = True
+
     def simple_rebuild_graph(self):
-        self._new_container=False
+        self._new_container = False
         self.rebuild_graph()
-        self._new_container=True
+        self._new_container = True
 
     def __rebuild_graph(self):
         fits = list(self._graph_generator())
@@ -478,7 +509,7 @@ class IsotopeEvolutionEditor(GraphEditor):
         #     self.graphs=[]
 
         # add_tools = not self.tool.auto_update or n == 1
-        add_tools = n==1
+        add_tools = n == 1
         for j, unk in enumerate(self.analyses):
             set_ytitle = j % c == 0
             padding = [40, 10, 40, 40]
@@ -489,7 +520,7 @@ class IsotopeEvolutionEditor(GraphEditor):
 
             plot_kw = dict(padding=padding,
                            title=unk.record_id)
-
+            override_limits={}
             with g.no_regression(refresh=False):
                 ma = -Inf
                 set_x_flag = False
@@ -514,6 +545,9 @@ class IsotopeEvolutionEditor(GraphEditor):
                     else:
                         xs = self._plot_signal(add_tools, fd, fit, trunc, g, i, isok, unk)
 
+                            # print 'setting max',max(xs)*1.1, i
+                            # g.set_x_limits(0, max(xs)*1.1, plotid=i)
+
                     if len(xs):
                         ma = max(max(xs), ma)
                     else:
@@ -526,6 +560,7 @@ class IsotopeEvolutionEditor(GraphEditor):
                 unk.sync_view()
 
             if set_x_flag and ma > -Inf:
+
                 g.set_x_limits(0, ma * 1.1)
                 g.refresh()
 

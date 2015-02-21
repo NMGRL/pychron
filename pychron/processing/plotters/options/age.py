@@ -31,7 +31,8 @@ class GroupablePlotterOptions(PlotterOptions):
     options_klass = None
 
     def _get_group(self):
-        return self.groups[0]
+        if self.groups:
+            return self.groups[0]
 
     def get_group(self, gid):
         n = len(self.groups)
@@ -45,9 +46,12 @@ class GroupablePlotterOptions(PlotterOptions):
             self.refresh_plot_needed = True
 
     def _groups_default(self):
-        return [self.options_klass(color=ci,
-                                   line_color=ci,
+        if self.options_klass:
+            return [self.options_klass(color=ci,
+                                       line_color=ci,
                                    group_id=i) for i, ci in enumerate(colornames)]
+        else:
+            return []
 
 
 class AgeOptions(GroupablePlotterOptions):

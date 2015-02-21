@@ -68,10 +68,10 @@ class ArgusSpectrometerPlugin(BaseSpectrometerPlugin):
                                    path='MenuBar/spectrometer.menu'),
                     SchemaAddition(id='mftable_history',
                                    factory=MagnetFieldTableHistoryAction,
-                                   path='MenuBar/spectrometer.menu'),
-                    SchemaAddition(id='db_mftable_history',
-                                   factory=DBMagnetFieldTableHistoryAction,
                                    path='MenuBar/spectrometer.menu')]),
+                    # SchemaAddition(id='db_mftable_history',
+                    #                factory=DBMagnetFieldTableHistoryAction,
+                    #                path='MenuBar/spectrometer.menu')]),
             TaskExtension(
                 task_id='pychron.spectrometer.scan_inspector',
                 actions=[
@@ -93,6 +93,7 @@ class ArgusSpectrometerPlugin(BaseSpectrometerPlugin):
                     SchemaAddition(id='parameters',
                                    factory=SpectrometerParametersAction,
                                    path='MenuBar/spectrometer.menu')])]
+
 # ============= EOF =============================================
 # def _service_offers_default(self):
 #     """

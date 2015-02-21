@@ -102,7 +102,7 @@ class Graph(Viewable, ContextMenuMixin):
     container_dict = Dict
     plots = List(Plot)
 
-    selected_plotid = Property
+    selected_plotid = Property(depends_on='selected_plot')
     selected_plot = Instance(Plot)
     window_title = ''
     window_width = 600
@@ -1657,14 +1657,15 @@ class Graph(Viewable, ContextMenuMixin):
             self.redraw(force=force)
         return change
 
-    def _get_selected_plotid(self):
-        r = 0
-        if self.selected_plot is not None:
-            try:
-                r = self.plots.index(self.selected_plot)
-            except ValueError:
-                pass
-        return r
+    # def _get_selected_plotid(self):
+    #     r = 0
+    #     if self.selected_plot is not None:
+    #         print self, self.plots
+    #         for pp in self.plots:
+    #             print pp, self.selected_plot
+    #         # r = self.plots.index(self.selected_plot)
+    #     print 'get selected plotid', r, self.selected_plot
+    #     return r
 
     def show(self):
         do_after_timer(1, self.edit_traits)
