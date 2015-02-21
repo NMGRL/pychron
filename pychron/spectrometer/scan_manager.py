@@ -35,6 +35,7 @@ from pychron.envisage.resources import icon
 from pychron.managers.manager import Manager
 from pychron.graph.time_series_graph import TimeSeriesStreamGraph
 from pychron.spectrometer.graph.spectrometer_scan_graph import SpectrometerScanGraph
+from pychron.spectrometer.jobs.scanner import Scanner
 from pychron.spectrometer.thermo.detector import Detector
 from pychron.spectrometer.jobs.magnet_scan import MagnetScan
 from pychron.spectrometer.jobs.rise_rate import RiseRate
@@ -61,7 +62,7 @@ class ScanManager(Manager):
     detector = Instance(Detector)
     magnet = DelegatesTo('spectrometer')
     source = DelegatesTo('spectrometer')
-    scanner = Instance(MagnetScan)
+    scanner = Instance(Scanner)
     rise_rate = Instance(RiseRate)
     isotope = String
     isotopes = Property
@@ -241,7 +242,7 @@ class ScanManager(Manager):
 
     # def peak_center(self):
     #
-    #     man = self.ion_optics_manager
+    # man = self.ion_optics_manager
     #     # if len(self.graphs) > 1:
     #     #     i = int(self.graphs[-1].split(' ')[2]) + 1
     #     # else:
@@ -643,7 +644,7 @@ class ScanManager(Manager):
         return r
 
     def _scanner_default(self):
-        s = MagnetScan(spectrometer=self.spectrometer)
+        s = Scanner(spectrometer=self.spectrometer)
         return s
 
     def _readout_view_default(self):
@@ -711,7 +712,7 @@ if __name__ == '__main__':
     sm.configure_traits()
     # ============= EOF =============================================
     # def _check_detector_protection1(self, prev):
-    #     """
+    # """
     #         used when detector changes
     #         return True if magnet move should be aborted
     #     """

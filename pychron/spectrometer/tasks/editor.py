@@ -23,6 +23,8 @@ from traitsui.api import View, Item, UItem, InstanceEditor
 
 
 class ScanEditor(TraitsEditor):
+    id = 'pychron.scan'
+
     def traits_view(self):
         v = View(UItem('graph', style='custom', editor=InstanceEditor()))
         return v
@@ -34,6 +36,8 @@ class PeakCenterEditor(ScanEditor):
 
 class CoincidenceEditor(ScanEditor):
     pass
+
+
 
 # ============= EOF =============================================
 

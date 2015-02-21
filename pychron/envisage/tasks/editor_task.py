@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.tasks.task_layout import PaneItem, Splitter
 from traits.api import Property, Instance
 from pyface.tasks.api import IEditor, IEditorAreaPane
 # ============= standard library imports ========================
@@ -28,6 +29,16 @@ class BaseEditorTask(BaseManagerTask):
     active_editor = Property(Instance(IEditor),
                              depends_on='editor_area.active_editor')
     editor_area = Instance(IEditorAreaPane)
+
+    def set_editor_layout(self, layout):
+        ea = self.editor_area
+        ea.set_layout(layout)
+
+    def split_editors(self, a, b, h1=-1, h2=-1, orientation='horizontal'):
+        layout = Splitter(PaneItem(id=a, height=h1),
+                          PaneItem(id=b, height=h2),
+                          orientation=orientation)
+        self.set_editor_layout(layout)
 
     def db_save_info(self):
         self.information_dialog('Changes saved to the database')
@@ -113,10 +124,11 @@ class BaseEditorTask(BaseManagerTask):
     def _pre_open_hook(self):
         pass
 
-    def _open_editor(self, editor, **kw):
+    def _open_editor(self, editor, activate=True, **kw):
         if self.editor_area:
             self.editor_area.add_editor(editor)
-            self.editor_area.activate_editor(editor)
+            if activate:
+                self.editor_area.activate_editor(editor)
 
             # ===============================================================================
             # property get/set

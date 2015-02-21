@@ -44,6 +44,8 @@ CHANGELOG
 * started formatting modes e.g Screen, Presentation, Publication, etc. each mode has an associated set of fonts.
 * added AxisTool. Right click on a axis to edit it. 
 
+#### 2/20/2015 ####
+* added a new Magnet Scanner. Use rulers to set limits. 
 
 ### Bug Fixes ###
 * fixed plotting ideograms of attributes other than age

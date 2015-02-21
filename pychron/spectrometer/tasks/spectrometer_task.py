@@ -15,10 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pyface.qt import QtGui
 from pyface.ui.qt4.tasks.advanced_editor_area_pane import EditorWidget
 from traits.api import Any, Instance, on_trait_change
-from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, Tabbed
+from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, Tabbed, DockLayout, VSplitter
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -54,7 +53,7 @@ class SpectrometerTask(EditorTask):
         # if len(self.graphs) > 1:
         # i = int(self.graphs[-1].split(' ')[2]) + 1
         # else:
-        #     i = 1
+        # i = 1
 
         # i = 1
         self.scan_manager.log_events_enabled = False
@@ -85,9 +84,9 @@ class SpectrometerTask(EditorTask):
         super(SpectrometerTask, self).prepare_destroy()
 
     # def activated(self):
-    #     self.scan_manager.activate()
-    #     self._scan_factory()
-    #     super(SpectrometerTask, self).activated()
+    # self.scan_manager.activate()
+    # self._scan_factory()
+    # super(SpectrometerTask, self).activated()
 
     def create_dock_panes(self):
         panes = [
@@ -129,6 +128,21 @@ class SpectrometerTask(EditorTask):
         # g = ScanPane(model=self.scan_manager)
         # return g
 
+    @on_trait_change('scan_manager:scanner:new_scanner')
+    def _handle_scan_event(self):
+        sim = self.scan_manager.spectrometer.simulation
+        name = 'Magnet Scan (Simulation)' if sim else 'Magnet Scan'
+
+        editor = next((e for e in self.editor_area.editors if e.id == 'pychron.scanner'), None)
+        if editor is not None:
+            self.scan_manager.scanner.reset()
+        else:
+            editor = ScanEditor(model=self.scan_manager.scanner, name=name, id='pychron.scanner')
+            self._open_editor(editor, activate=False)
+            self.split_editors(0, 1, h2=300, orientation='vertical')
+
+        self.activate_editor(editor)
+
     @on_trait_change('window:opened')
     def _opened(self):
         self.scan_manager.activate()
@@ -139,4 +153,5 @@ class SpectrometerTask(EditorTask):
         # ee.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
         # print int(ee.features())
         # ee.update_title()
+
 # ============= EOF =============================================

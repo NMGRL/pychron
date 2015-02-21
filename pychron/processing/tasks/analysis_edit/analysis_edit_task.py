@@ -126,12 +126,12 @@ class AnalysisEditTask(BaseBrowserTask):
             horizontal splitting not currently working
         """
         self.debug('spliting editor area')
-        self._split_editors(0, 1)
+        self.split_editors(0, 1)
 
     def split_editor_area_vert(self):
 
         self.debug('spliting editor area')
-        self._split_editors(0, 1, 'v')
+        self.split_editors(0, 1, 'vertical')
 
     def add_iso_evo(self, name=None, rec=None):
         if rec is None:
@@ -503,29 +503,29 @@ class AnalysisEditTask(BaseBrowserTask):
         return up
 
     # private
-    def _split_editors(self, aidx, bidx, orientation='h'):
-        """
-            if orientation is hor
-            0 | 1
-            if orientation is ver
-            0
-            -
-            1
-
-        """
-        from pyface.qt.QtCore import Qt
-
-        ea = self.editor_area
-        control = ea.control
-        widgets = control.get_dock_widgets()
-        if not len(widgets) > 1:
-            return
-
-        try:
-            a, b = widgets[aidx], widgets[bidx]
-            control.splitDockWidget(a, b, Qt.Horizontal if orientation == 'v' else Qt.Vertical)
-        except IndexError:
-            pass
+    # def _split_editors(self, aidx, bidx, orientation='h'):
+    #     """
+    #         if orientation is hor
+    #         0 | 1
+    #         if orientation is ver
+    #         0
+    #         -
+    #         1
+    #
+    #     """
+    #     from pyface.qt.QtCore import Qt
+    #
+    #     ea = self.editor_area
+    #     control = ea.control
+    #     widgets = control.get_dock_widgets()
+    #     if not len(widgets) > 1:
+    #         return
+    #
+    #     try:
+    #         a, b = widgets[aidx], widgets[bidx]
+    #         control.splitDockWidget(a, b, Qt.Horizontal if orientation == 'v' else Qt.Vertical)
+    #     except IndexError:
+    #         pass
 
     def _make_analysis_group(self, db, group, ans):
         # db=self.manager.db

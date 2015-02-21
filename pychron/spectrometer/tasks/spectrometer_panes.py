@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -41,8 +41,8 @@ class ColorColumn(TableColumn):
 
 
 # class ScanPane(TraitsTaskPane):
-#     def traits_view(self):
-#         # v = View(UItem('graph', style='custom'))
+# def traits_view(self):
+# # v = View(UItem('graph', style='custom'))
 #         v = View(UItem('graphs',
 #                        editor=ListEditor(deletable=True,
 #                                          use_notebook=True,
@@ -84,6 +84,11 @@ class ControlsPane(TraitsDockPane):
     movable = False
     floatable = False
 
+    def trait_context(self):
+        ctx = super(ControlsPane, self).trait_context()
+        ctx['scanner'] = self.model.scanner
+        return ctx
+
     def traits_view(self):
         magnet_grp = VGroup(
             HGroup(
@@ -92,7 +97,31 @@ class ControlsPane(TraitsDockPane):
                 UItem('isotope',
                       editor=EnumEditor(name='isotopes'))),
             UItem('magnet', style='custom'),
-            UItem('scanner', style='custom'),
+            VGroup(icon_button_editor('scanner.new_scanner', 'new',
+                                      tooltip='Open a new magnet scan',
+                                      enabled_when='scanner.new_scanner_enabled'),
+                   HGroup(icon_button_editor('scanner.start_scanner', 'start',
+                                             tooltip='Start the magnet scan',
+                                             enabled_when='scanner.start_scanner_enabled'),
+                          icon_button_editor('scanner.stop_scanner', 'stop',
+                                             tooltip='Stop the magnet scan',
+                                             enabled_when='scanner.stop_scanner_enabled'),
+                          icon_button_editor('scanner.clear_graph_button','clear')),
+                   HGroup(Item('scanner.step', format_str='%0.5f'),
+                          UItem('scanner.scan_time_length')),
+                   HGroup(Item('scanner.min_dac', label='Min', format_str='%0.5f'),
+                          Item('scanner.max_dac', label='Max',format_str='%0.5f'),
+                          icon_button_editor('scanner.use_mftable_limits', 'foo',
+                                             tooltip='Set DAC limits based on the Magnetic Field Table'),
+                          show_border=True,
+                          label='Limits'),
+                   HGroup(Item('scanner.scan_min_dac', label='Min', format_str='%0.5f'),
+                          Item('scanner.scan_max_dac', label='max', format_str='%0.5f'),
+                          label='Scan Min/Max',
+                          show_border=True),
+                   show_border=True,
+                   label='Scanner'),
+            # UItem('scanner', style='custom'),
             label='Magnet')
         detector_grp = VGroup(
             HGroup(
@@ -108,14 +137,14 @@ class ControlsPane(TraitsDockPane):
         source_grp = UItem('source', style='custom')
 
         cols = [ObjectColumn(name='text', label='Text',
-                             width=0.40,),
+                             width=0.40, ),
                 ObjectColumn(name='data_x',
                              format='%0.1f',
-                             width = 0.22,
+                             width=0.22,
                              label='Time(s)', editable=False),
                 ObjectColumn(name='data_y',
                              format='%0.4f',
-                             width = 0.22,
+                             width=0.22,
                              label='Intensity', editable=False),
                 CheckboxColumn(name='visible', width=0.12)]
 
