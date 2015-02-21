@@ -37,5 +37,9 @@ class AddSystemMonitorAction(TaskAction):
     method = 'add_system_monitor'
     image = icon('add')
 
+class PauseAction(TaskAction):
+    name = 'Pause'
+    method = 'pause'
+    image = icon('pause')
 
 # ============= EOF =============================================

@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -64,11 +64,10 @@ class Globals(object):
     _test = False  # set test to 'true' when running tests
 
     experiment_debug = False
-    #    experiment_debug = True
     experiment_savedb = True
     automated_run_debug = False
     spectrometer_debug = False
-    #    spectrometer_debug = True
+    system_monitor_debug = False
 
     load_valve_states = True
     load_soft_locks = True
@@ -106,7 +105,8 @@ class Globals(object):
                            ('use_startup_tests', to_bool),
                            ('use_testbot', to_bool),
                            ('dev_confirm_exit', to_bool),
-                           ('test_experiment_set', str)]:
+                           ('test_experiment_set', str),
+                           ('system_monitor_debug', to_bool)]:
             a = ip.get_global(attr)
 
             if a:
@@ -117,6 +117,7 @@ class Globals(object):
 
     # mode is readonly. set once in the launchers/pychron.py module
     test = property(fget=_get_test)
+
 
 globalv = Globals()
 

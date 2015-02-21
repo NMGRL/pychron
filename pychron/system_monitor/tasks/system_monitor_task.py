@@ -31,7 +31,8 @@ from pychron.processing.tasks.figures.editors.spectrum_editor import SpectrumEdi
 from pychron.processing.tasks.figures.figure_editor import FigureEditor
 from pychron.processing.tasks.figures.figure_task import FigureTask
 from pychron.processing.tasks.figures.panes import PlotterOptionsPane
-from pychron.system_monitor.tasks.actions import AddSystemMonitorAction, ClearFigureAction, ResetEditorsAction
+from pychron.system_monitor.tasks.actions import AddSystemMonitorAction, ClearFigureAction, ResetEditorsAction, \
+    PauseAction
 from pychron.system_monitor.tasks.connection_spec import ConnectionSpec
 from pychron.system_monitor.tasks.dashboard_editor import DashboardEditor
 from pychron.system_monitor.tasks.panes import ConnectionPane, AnalysisPane, DashboardPane
@@ -45,10 +46,12 @@ class SystemMonitorTask(FigureTask):
     name = 'System Monitor'
 
     tool_bars = [SToolBar(AddSystemMonitorAction(),
+                          PauseAction(),
                           image_size=(16, 16)),
                  SToolBar(
                      ResetEditorsAction(),
                      ClearFigureAction(),
+
                      image_size=(16, 16))]
 
     connection_pane = Instance(ConnectionPane)
@@ -72,7 +75,7 @@ class SystemMonitorTask(FigureTask):
         # self._setup_dashboard_client()
 
         # if editor:
-        #    ideo = self.new_ideogram(add_table=False, add_iso=False)
+        # ideo = self.new_ideogram(add_table=False, add_iso=False)
         #    editor._ideogram_editor = ideo
         #    #self.active_editor.unknowns=[]
         #    self.activate_editor(self.editor_area.editors[0])
@@ -85,6 +88,21 @@ class SystemMonitorTask(FigureTask):
             self.dashboard_client.on_trait_change(self._handle_dashboard, 'values:value', remove=True)
 
         super(FigureTask, self).prepare_destroy()
+
+    _paused = False
+
+    def pause(self):
+        self._paused = not self._paused
+
+        for ei in self.editor_area.editors:
+            if self._paused:
+                ei.oname = ei.name
+                ei.name = '{} (Paused)'.format(ei.name)
+            else:
+                ei.name = ei.oname
+
+            if isinstance(ei, SystemMonitorEditor):
+                ei.pause()
 
     def reset_editors(self):
         for ei in self.editor_area.editors:
@@ -112,17 +130,17 @@ class SystemMonitorTask(FigureTask):
                  title='Choose System')
         return v
 
-    # def tab_editors(self, *args):
-    #     def func(control, a, b):
-    #         control.tabifyDockWidget(a, b)
+        # def tab_editors(self, *args):
+        # def func(control, a, b):
+        #         control.tabifyDockWidget(a, b)
 
         # self._layout_editors(func, *args)
-    #
-    # def split_editors(self, a, b, orientation='h'):
-    #
-    #     def func(control, aa, bb):
-    #         print aa, bb
-    #         control.splitDockWidget(aa, bb, Qt.Horizontal if orientation == 'h' else Qt.Vertical)
+        #
+        # def split_editors(self, a, b, orientation='h'):
+        #
+        #     def func(control, aa, bb):
+        #         print aa, bb
+        #         control.splitDockWidget(aa, bb, Qt.Horizontal if orientation == 'h' else Qt.Vertical)
 
         # self._layout_editors(func, a, b)
 
@@ -138,7 +156,7 @@ class SystemMonitorTask(FigureTask):
             client.listen()
 
     # def _layout_editors(self, func, aidx, bidx):
-    #     ea = self.editor_area
+    # ea = self.editor_area
     #     control = ea.control
     #     widgets = control.get_dock_widgets()
     #     if widgets:
@@ -149,7 +167,7 @@ class SystemMonitorTask(FigureTask):
     #             pass
 
     def _editor_factory(self):
-        if globalv.debug:
+        if globalv.system_monitor_debug:
             self.connection = self.connections[0]
             result = True
         else:
@@ -171,8 +189,6 @@ class SystemMonitorTask(FigureTask):
         editor.set_measurements(names)
         self._open_editor(editor)
         self.dashboard_editor = editor
-        # self.tab_editors(0,1)
-        #do_after(1000, self.tab_editors,1,2)
         return editor
 
     def _active_editor_changed(self, new):
@@ -212,7 +228,6 @@ class SystemMonitorTask(FigureTask):
         if not connections:
             self.warning_dialog('No Systems in Preferences')
             return
-        
 
         cs = []
         for ci in eval(connections):

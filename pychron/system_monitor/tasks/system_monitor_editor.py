@@ -58,12 +58,12 @@ class SystemMonitorEditor(SeriesEditor):
     search_tool = Instance(SystemMonitorControls)
     subscriber = Instance(Subscriber)
     plotter_options_manager_klass = SystemMonitorOptionsManager
+    pickle_path = 'system_monitor'
 
     use_poll = Bool(False)
-    _poll_interval = Int(3)
+    _poll_interval = Int(10)
     _db_poll_interval = Int(10)
     _polling = False
-    pickle_path = 'system_monitor'
 
     console_display = Instance(DisplayController)
     _ideogram_editor = None
@@ -77,18 +77,22 @@ class SystemMonitorEditor(SeriesEditor):
     _background_editor = None
 
     task = Any
-
-    db_lock = None
-
-    _reset_ideogram = True
-    _reset_spectrum = True
-    editors = List
-
+    _pause = False
     def __init__(self, *args, **kw):
         super(SystemMonitorEditor, self).__init__(*args, **kw)
         color_bind_preference(self.console_display.model, 'bgcolor', 'pychron.sys_mon.bgcolor')
         color_bind_preference(self.console_display, 'default_color', 'pychron.sys_mon.textcolor')
-        self.db_lock = Lock()
+
+    def reset_editors(self):
+        """
+        Trigger a new editors to be build next update
+
+        :param kind: i
+        :return:
+        """
+        self._ideogram_editor = None
+        self._spectrum_editor = None
+        self._cnt = 0
 
     def prepare_destroy(self):
         self.stop()
@@ -105,6 +109,9 @@ class SystemMonitorEditor(SeriesEditor):
         self._polling = False
         self.subscriber.stop()
 
+    def pause(self):
+        self._pause = not self._pause
+
     def console_message_handler(self, msg):
         color = 'green'
         if '|' in msg:
@@ -112,7 +119,92 @@ class SystemMonitorEditor(SeriesEditor):
 
         self.console_display.add_text(msg, color=color)
 
-    def run_added_handler(self, last_run_uuid=None):
+    def start(self):
+
+        self.load_tool()
+
+        if self.conn_spec.host:
+            sub = self.subscriber
+            connected = sub.connect(timeout=1)
+
+            sub.subscribe('RunAdded', self._run_added_handler, True)
+            sub.subscribe('ConsoleMessage', self.console_message_handler)
+
+            if connected:
+                sub.listen()
+                self.task.connection_pane.connection_status = 'Connected'
+                self.task.connection_pane.connection_color = 'green'
+
+            else:
+                self.task.connection_pane.connection_status = 'Not Connected'
+                self.task.connection_pane.connection_color = 'red'
+
+                url = self.conn_spec.url
+                self.warning('System publisher not available url={}'.format(url))
+
+        t = Thread(name='poll', target=self._poll)
+        t.setDaemon(True)
+        t.start()
+
+    def _get_dump_tool(self):
+        return self.search_tool
+
+    def _load_tool(self, obj, **kw):
+        self.search_tool = obj
+
+    def _poll(self, last_run_uuid=None):
+        self._polling = True
+        sub = self.subscriber
+
+        db_poll_interval = self._db_poll_interval
+        poll_interval = 3 if globalv.system_monitor_debug else self._poll_interval
+
+        st = time.time()
+        while 1:
+            # only check subscription availability if one poll_interval has elapsed
+            # since the last subscription message was received
+            if not self._pause:
+                # check subscription availability
+                if time.time() - sub.last_message_time > poll_interval:
+                    if sub.check_server_availability(timeout=0.5, verbose=True):
+                        if not sub.is_listening():
+                            self.info('Subscription server now available. starting to listen')
+                            self.subscriber.listen()
+                    else:
+                        if sub.was_listening:
+                            self.warning('Subscription server no longer available. stop listen')
+                            self.subscriber.stop()
+
+                if not sub.is_listening():
+                    if time.time() - st > db_poll_interval or globalv.system_monitor_debug:
+                        st = time.time()
+                        lr = self._get_last_run_uuid()
+                        if lr != last_run_uuid:
+                            self.debug('current uuid {} <> {}'.format(last_run_uuid, lr))
+                            if not globalv.system_monitor_debug:
+                                last_run_uuid = lr
+                            invoke_in_main_thread(self._run_added_handler, lr)
+
+            if not self._wait(poll_interval):
+                break
+
+    def _wait(self, t):
+        st = time.time()
+        while time.time() - st < t:
+            if not self._polling:
+                return
+            time.sleep(0.5)
+
+        return True
+
+    def _get_last_run_uuid(self):
+        db = self.processor.db
+        with db.session_ctx():
+            dbrun = db.get_last_analysis(spectrometer=self.conn_spec.system_name)
+            if dbrun:
+                return dbrun.uuid
+
+    def _run_added_handler(self, last_run_uuid=None):
         """
             add to sys mon series
             if atype is blank, air, cocktail, background
@@ -139,96 +231,6 @@ class SystemMonitorEditor(SeriesEditor):
                 an = proc.make_analysis(dbrun)
                 self._refresh_sys_mon_series(an)
                 self._refresh_figures(an)
-                # self._refresh_spectrum('62908', 11)
-
-    def start(self):
-
-        self.load_tool()
-
-        if self.conn_spec.host:
-            sub = self.subscriber
-            connected = sub.connect(timeout=1)
-
-            sub.subscribe('RunAdded', self.run_added_handler, True)
-            sub.subscribe('ConsoleMessage', self.console_message_handler)
-
-            if connected:
-                sub.listen()
-                self.task.connection_pane.connection_status = 'Connected'
-                self.task.connection_pane.connection_color = 'green'
-
-            else:
-                self.task.connection_pane.connection_status = 'Not Connected'
-                self.task.connection_pane.connection_color = 'red'
-
-                url = self.conn_spec.url
-                self.warning('System publisher not available url={}'.format(url))
-
-        # last_run_uuid = self._get_last_run_uuid()
-        #self.run_added_handler(last_run_uuid)
-
-        t = Thread(name='poll', target=self._poll)
-        # args=(last_run_uuid,))
-        t.setDaemon(True)
-        t.start()
-
-    def _get_dump_tool(self):
-        return self.search_tool
-
-    def _load_tool(self, obj, **kw):
-        self.search_tool = obj
-
-    def _poll(self, last_run_uuid=None):
-        self._polling = True
-        sub = self.subscriber
-
-        db_poll_interval = self._db_poll_interval
-        poll_interval = self._poll_interval
-
-        st = time.time()
-        while 1:
-            # only check subscription availability if one poll_interval has elapsed
-            # since the last subscription message was received
-
-            # check subscription availability
-            if time.time() - sub.last_message_time > poll_interval:
-                if sub.check_server_availability(timeout=0.5, verbose=True):
-                    if not sub.is_listening():
-                        self.info('Subscription server now available. starting to listen')
-                        self.subscriber.listen()
-                else:
-                    if sub.was_listening:
-                        self.warning('Subscription server no longer available. stop listen')
-                        self.subscriber.stop()
-
-            if not sub.is_listening():
-                if time.time() - st > db_poll_interval or globalv.debug:
-                    st = time.time()
-                    lr = self._get_last_run_uuid()
-                    if lr != last_run_uuid:
-                        self.debug('current uuid {} <> {}'.format(last_run_uuid, lr))
-                        if not globalv.debug:
-                            last_run_uuid = lr
-                        invoke_in_main_thread(self.run_added_handler, lr)
-
-            if not self._wait(poll_interval):
-                break
-
-    def _wait(self, t):
-        st = time.time()
-        while time.time() - st < t:
-            if not self._polling:
-                return
-            time.sleep(0.5)
-
-        return True
-
-    def _get_last_run_uuid(self):
-        db = self.processor.db
-        with db.session_ctx():
-            dbrun = db.get_last_analysis(spectrometer=self.conn_spec.system_name)
-            if dbrun:
-                return dbrun.uuid
 
     def _refresh_sys_mon_series(self, an):
 
@@ -239,9 +241,6 @@ class SystemMonitorEditor(SeriesEditor):
                   limit=self.search_tool.limit)
 
         ans = self.processor.analysis_series(ms, **kw)
-        # for ai in ans:
-        #     print ai.record_id, ai.timestamp
-
         ans = self._sort_analyses(ans)
         self.set_items(ans)
         self.rebuild_graph()
@@ -293,17 +292,6 @@ class SystemMonitorEditor(SeriesEditor):
                                      use_date_range=True)
         setattr(self, name, editor)
 
-    def reset_editors(self):
-        """
-        Trigger a new editors to be build next update
-
-        :param kind: i
-        :return:
-        """
-        self._ideogram_editor = None
-        self._spectrum_editor = None
-        self._cnt = 0
-
     def _refresh_ideogram(self, identifier):
         """
             open a ideogram editor if one is not already open
@@ -354,7 +342,7 @@ class SystemMonitorEditor(SeriesEditor):
     _cnt = 0
 
     def _get_analyses(self, tool, identifier, aliquot=None, use_date_range=False):
-        if globalv.debug:
+        if globalv.system_monitor_debug:
             self._cnt += 1
 
             return [FileAnalysis(age=random.random() * 10,
@@ -385,7 +373,7 @@ class SystemMonitorEditor(SeriesEditor):
 
     @on_trait_change('search_tool:[+, refresh_button]')
     def _handle_tool_change(self):
-        self.run_added_handler()
+        self._run_added_handler()
 
     def _load_refiso(self, ref):
         pass
