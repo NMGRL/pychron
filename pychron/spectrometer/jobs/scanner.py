@@ -149,8 +149,8 @@ class MFTableOverlay(AbstractOverlay):
 
         with gc:
             gc.set_font(self.font)
-            for x,iso in zip(screen_dacs, self.isotopes):
-                gc.set_text_position(x, y2+5)
+            for x, iso in zip(screen_dacs, self.isotopes):
+                gc.set_text_position(x, y2 + 5)
                 gc.show_text(iso)
 
 
@@ -172,7 +172,8 @@ class Scanner(Loggable):
 
     start_scanner = Button
     stop_scanner = Button
-    new_scanner = Button
+    new_scanner = Button('New Magnet Scan')
+
     start_scanner_enabled = Bool
     stop_scanner_enabled = Bool
     new_scanner_enabled = Bool(True)
@@ -215,7 +216,7 @@ class Scanner(Loggable):
         :return:
         """
         # if self.plotid>0:
-        #     self.graph.new_series()
+        # self.graph.new_series()
 
         self._cancel_event = Event()
 
@@ -239,11 +240,12 @@ class Scanner(Loggable):
         # period = 0.1
         st = time.time()
         self.debug('scan limits: low={}, high={}'.format(self.tool.low, self.tool.high))
-        for dac in self._calculate_steps():
+        for i, dac in enumerate(self._calculate_steps()):
             if self._cancel_event.is_set():
                 self.debug('exiting scan. dac={}'.format(dac))
                 break
-            magnet.set_dac(dac)
+            print i
+            magnet.set_dac(dac, verbose=False)
             v = spec.get_intensity(self.spectrometer.reference_detector)
 
             xs = hstack((xs, [dac]))
@@ -289,7 +291,7 @@ class Scanner(Loggable):
         d = (dacs[1] - dacs[0]) / (mws[1] - mws[0])
 
         o = MFTableOverlay(dacs=list(dacs),
-                           isotopes = list(isos),
+                           isotopes=list(isos),
                            one_amu_dac=d * 0.8)
         plot.underlays.append(o)
 
@@ -337,16 +339,17 @@ class Scanner(Loggable):
         self.scan_max_dac = self.tool.high
 
     def _scan_time_length_changed(self):
-        mi, ma = self.min_dac, self.max_dac
+        mi, ma = self.scan_min_dac, self.scan_max_dac
         st = self.spectrometer.integration_time
-        t = int(self.scan_time_length[:-2]) * st
+        t = int(self.scan_time_length[:-2])-1 # * st
+        # print t, int(self.scan_time_length[:-2]), st
         d = ma - mi
-        self.step = d / t
+        self.step = st * d / t
 
     def _handle_tool_change(self, new):
 
-        self.scan_min_dac = new[0]#self.tool.low
-        self.scan_max_dac = new[1]#self.tool.high
+        self.scan_min_dac = new[0]  # self.tool.low
+        self.scan_max_dac = new[1]  # self.tool.high
 
     def _handle_xbounds_change(self, new):
         self.tool.set_limits(*new)
@@ -359,11 +362,13 @@ class Scanner(Loggable):
     def _scan_min_dac_changed(self):
         self.tool.low = self.scan_min_dac
         self.tool.overlay.low = self.scan_min_dac
+        self._scan_time_length_changed()
         self.graph.redraw()
 
     def _scan_max_dac_changed(self):
         self.tool.high = self.scan_max_dac
         self.tool.overlay.high = self.scan_max_dac
+        self._scan_time_length_changed()
         self.graph.redraw()
 
     def _min_dac_changed(self):

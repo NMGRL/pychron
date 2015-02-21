@@ -43,7 +43,7 @@ class ColorColumn(TableColumn):
 # class ScanPane(TraitsTaskPane):
 # def traits_view(self):
 # # v = View(UItem('graph', style='custom'))
-#         v = View(UItem('graphs',
+# v = View(UItem('graphs',
 #                        editor=ListEditor(deletable=True,
 #                                          use_notebook=True,
 #                                          page_name='.name',
@@ -69,7 +69,7 @@ class IntensitiesPane(TraitsDockPane):
         cols = [ColorColumn(cell_color_name='color', label='Color'),
                 ObjectColumn(name='name', width=175),
                 ObjectColumn(name='intensity', width=100),
-                ObjectColumn(name='std', label=u'\u00b11\u03c3')]
+                ObjectColumn(name='std', label=u'\u00b11\u03c3', width=100)]
         g = UItem('detectors', editor=TableEditor(columns=cols,
                                                   sortable=False,
                                                   editable=False))
@@ -97,20 +97,20 @@ class ControlsPane(TraitsDockPane):
                 UItem('isotope',
                       editor=EnumEditor(name='isotopes'))),
             UItem('magnet', style='custom'),
-            VGroup(icon_button_editor('scanner.new_scanner', 'new',
-                                      tooltip='Open a new magnet scan',
-                                      enabled_when='scanner.new_scanner_enabled'),
+            VGroup(UItem('scanner.new_scanner',
+                        tooltip='Open a new magnet scan',
+                        enabled_when='scanner.new_scanner_enabled'),
                    HGroup(icon_button_editor('scanner.start_scanner', 'start',
                                              tooltip='Start the magnet scan',
                                              enabled_when='scanner.start_scanner_enabled'),
                           icon_button_editor('scanner.stop_scanner', 'stop',
                                              tooltip='Stop the magnet scan',
                                              enabled_when='scanner.stop_scanner_enabled'),
-                          icon_button_editor('scanner.clear_graph_button','clear')),
+                          icon_button_editor('scanner.clear_graph_button', 'clear')),
                    HGroup(Item('scanner.step', format_str='%0.5f'),
                           UItem('scanner.scan_time_length')),
                    HGroup(Item('scanner.min_dac', label='Min', format_str='%0.5f'),
-                          Item('scanner.max_dac', label='Max',format_str='%0.5f'),
+                          Item('scanner.max_dac', label='Max', format_str='%0.5f'),
                           icon_button_editor('scanner.use_mftable_limits', 'foo',
                                              tooltip='Set DAC limits based on the Magnetic Field Table'),
                           show_border=True,

@@ -19,7 +19,8 @@ from traits.api import Any, Float, DelegatesTo, List, Bool
 from traitsui.api import View, Item, EnumEditor, Group, HGroup, spring, ButtonEditor
 from pyface.timer.do_later import do_after
 # ============= standard library imports ========================
-from numpy import linspace, exp, hstack, array, Inf
+from numpy import linspace, hstack, array, Inf
+from numpy.core.umath import exp
 import random
 import time
 from threading import Event
@@ -133,18 +134,19 @@ class MagnetScan(SpectrometerTask):
             oys = array([v]) if oys is None else hstack((oys, v))
             setattr(plot, k, oys)
 
-            if i == 0:
-                # calculate ref range
-                miR = min(oys)
-                maR = max(oys)
-                R = maR - miR
-            else:
-                mir = min(oys)
-                mar = max(oys)
-                r = mar - mir
+            if self.normalize:
+                if i == 0:
+                    # calculate ref range
+                    miR = min(oys)
+                    maR = max(oys)
+                    R = maR - miR
+                else:
+                    mir = min(oys)
+                    mar = max(oys)
+                    r = mar - mir
 
-            if r and R and self.normalize:
-                oys = (oys - mir) * R / r + miR
+                if r and R:
+                    oys = (oys - mir) * R / r + miR
 
             xs = get_data('x{}'.format(i))
             xs = hstack((xs, di))
