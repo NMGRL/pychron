@@ -30,19 +30,30 @@ GOLDEN_RATIO = 1.618
 
 
 class BaseIdeogramInset(BaseInset):
-    def set_limits(self):
-        l, h = self.value.get_bounds()
-        self.value_range.low = 0
-        self.value_range.high = h + 1
+    # def set_limits(self):
+    #     l, h = self.value.get_bounds()
+    #     self.value_range.low = 0
+    #     self.value_range.high = h + 1
 
         # l, h = self.index.get_bounds()
         # pad = (h - l) * 0.1
         # self.index_range.low -= pad
         # self.index_range.high += pad
+    def set_y_limits(self, y1, y2):
+        self.value_range.low = y1
+        self.value_range.high = y2
+
+    def get_y_limits(self):
+        v = self.value_range
+        return v.low, v.high
 
     def set_x_limits(self, x1, x2):
         self.index_range.low = x1
         self.index_range.high = x2
+
+    def get_x_limits(self):
+        r = self.index_range
+        return r.low, r.high
 
 
 class IdeogramInset(BaseIdeogramInset, LinePlot):
@@ -53,7 +64,7 @@ class IdeogramInset(BaseIdeogramInset, LinePlot):
 
         self.y_axis.trait_set(tick_label_formatter=lambda x: '',
                               tick_visible=False)
-        self.set_limits()
+        # self.set_limits()
 
 
 class IdeogramPointsInset(BaseIdeogramInset, ScatterPlot):
@@ -69,7 +80,7 @@ class IdeogramPointsInset(BaseIdeogramInset, ScatterPlot):
             self.x_axis.visible = False
             self.y_axis.visible = False
 
-        self.set_limits()
+        # self.set_limits()
 
         nsigma = 1
         orientation = 'x'

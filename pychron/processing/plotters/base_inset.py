@@ -20,6 +20,7 @@ from chaco.axis import PlotAxis
 from chaco.data_range_1d import DataRange1D
 from chaco.linear_mapper import LinearMapper
 from chaco.lineplot import LinePlot
+from enable.abstract_overlay import AbstractOverlay
 from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change, List
 from traits.trait_types import Str
 from traitsui.api import View, UItem, Item, HGroup, VGroup
@@ -59,19 +60,21 @@ class BaseInset(HasTraits):
         # self.line_width = 1.0
         # self.line_style = "solid"
 
-        tick_label_font = 'modern 8'
+        super(BaseInset, self).__init__(*args, **kw)
+
+        tick_label_font = 'Helvetica 8'
         left = PlotAxis(orientation='left',
                         mapper=value_mapper,
+                        bgcolor=self.bgcolor,
                         tick_label_font=tick_label_font)
 
         bottom = PlotAxis(orientation='bottom',
                           mapper=index_mapper,
+                          bgcolor=self.bgcolor,
                           tick_label_font=tick_label_font)
 
         self.underlays.append(left)
         self.underlays.append(bottom)
-
-        super(BaseInset, self).__init__(*args, **kw)
 
     def _compute_location(self, component):
         x1, y1 = component.x, component.y
@@ -96,6 +99,7 @@ class BaseInset(HasTraits):
         with gc:
             gc.clip_to_rect(component.x, component.y, component.width, component.height)
             self._compute_location(component)
+            self._draw_background(gc, args, **kw)
             self._draw_underlay(gc, *args, **kw)
             self._draw_plot(gc, *args, **kw)
             self._draw_overlay(gc, *args, **kw)

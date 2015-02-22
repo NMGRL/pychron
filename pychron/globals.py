@@ -101,6 +101,7 @@ class Globals(object):
                            ('experiment_debug', to_bool),
                            ('experiment_savedb', to_bool),
                            ('recall_debug', to_bool),
+                           ('figure_debug', to_bool),
                            ('communication_simulation', to_bool),
                            ('dashboard_simulation', to_bool),
                            ('use_startup_tests', to_bool),

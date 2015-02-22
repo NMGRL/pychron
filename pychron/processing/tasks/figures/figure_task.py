@@ -236,7 +236,7 @@ class FigureTask(AnalysisEditTask):
     # ===============================================================================
     def _debug_add(self):
         from pychron.globals import globalv
-
+        self.debug('debug add figure_debug: {}'.format(globalv.figure_debug))
         if globalv.figure_debug:
             if self.browser_model:
                 ans = self.browser_model.analysis_table.analyses

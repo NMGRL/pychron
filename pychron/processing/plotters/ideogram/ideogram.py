@@ -111,7 +111,7 @@ class Ideogram(BaseArArFigure):
             # xmi, xma = r - w2, w2 + r
             # pad=False
             # elif opt.xlow or opt.xhigh:
-            #     xmi, xma = opt.xlow, opt.xhigh
+            # xmi, xma = opt.xlow, opt.xhigh
             # pad=False
 
         # print opt.use_centered_range, self.center, xmi, xma
@@ -305,41 +305,78 @@ class Ideogram(BaseArArFigure):
         d = lambda a, b, c, d: self.update_index_mapper(a, b, c, d)
         plot.index_mapper.on_trait_change(d, 'updated')
 
-        if self.group_id == 0:
-            if self.options.display_inset:
-                xs = self.xs
-                n = xs.shape[0]
+        # if self.group_id == 0:
+        if self.options.display_inset:
+            xs = self.xs
+            n = xs.shape[0]
+
+            startidx = 1
+            if self.group_id > 0:
+                for ov in plot.overlays:
+                    if isinstance(ov, IdeogramPointsInset):
+
+                        print self.group_id, startidx, ov.value.get_bounds()[1]+1
+                        startidx = max(startidx, ov.value.get_bounds()[1]+1)
+            else:
                 startidx = 1
+            print self.group_id, startidx
+            if self.options.analysis_number_sorting == 'Oldest @Top':
+                ys = arange(startidx, startidx + n)
+            else:
+                ys = arange(startidx + n - 1, startidx - 1, -1)
 
-                if self.options.analysis_number_sorting == 'Oldest @Top':
-                    ys = arange(startidx, startidx + n)
-                else:
-                    ys = arange(startidx + n - 1, startidx - 1, -1)
+            yma2 = max(ys)+1
+            h = self.options.inset_height / 2.0
+            if self.group_id == 0:
+                bgcolor = self.options.get_formatting_value('plot_bgcolor')
+            else:
+                bgcolor = 'transparent'
 
-                h = self.options.inset_height / 2.0
-                o = IdeogramPointsInset(self.xs, ys,
-                                        width=self.options.inset_width,
-                                        height=h,
-                                        visible_axes=False,
-                                        xerror=ArrayDataSource(self.xes),
-                                        location=self.options.inset_location)
-                # o.x_axis.visible = False
-                plot.overlays.append(o)
+            d = self.options.get_plot_dict(ogid)
+            o = IdeogramPointsInset(self.xs, ys,
+                                    color=d['color'],
+                                    outline_color = d['color'],
+                                    bgcolor=bgcolor,
+                                    width=self.options.inset_width,
+                                    height=h,
+                                    visible_axes=False,
+                                    xerror=ArrayDataSource(self.xes),
+                                    location=self.options.inset_location)
+            # o.x_axis.visible = False
+            plot.overlays.append(o)
 
-                cfunc = lambda x1, x2: self._cumulative_probability(self.xs, self.xes, x1, x2)
-                xs, ys, xmi, xma = self._calculate_asymptotic_limits(cfunc,
-                                                                     asymptotic_width=10,
-                                                                     tol=10)
+            cfunc = lambda x1, x2: self._cumulative_probability(self.xs, self.xes, x1, x2)
+            xs, ys, xmi, xma = self._calculate_asymptotic_limits(cfunc,
+                                                                 asymptotic_width=10,
+                                                                 tol=10)
+            oo = IdeogramInset(xs, ys,
+                               color=d['color'],
+                               bgcolor=bgcolor,
+                               yoffset=h,
+                               visible_axes=self.group_id == 0,
+                               width=self.options.inset_width,
+                               height=self.options.inset_height,
+                               location=self.options.inset_location)
 
-                oo = IdeogramInset(xs, ys,
-                                   yoffset=h,
-                                   width=self.options.inset_width,
-                                   height=self.options.inset_height,
-                                   location=self.options.inset_location)
-                o.set_x_limits(xmi, xma)
-                oo.set_x_limits(xmi, xma)
+            yma = max(ys)
+            if self.group_id > 0:
+                for ov in plot.overlays:
+                    if isinstance(ov, IdeogramInset):
+                        mi, ma = ov.get_x_limits()
+                        xmi = min(mi, xmi)
+                        xma = max(ma, xma)
 
-                plot.overlays.append(oo)
+                        _, ma = ov.get_y_limits()
+                        yma = max(ma, yma)
+
+            plot.overlays.append(oo)
+            for ov in plot.overlays:
+                if isinstance(ov, IdeogramInset):
+                    ov.set_x_limits(xmi, xma)
+                    ov.set_y_limits(0, yma * 1.1)
+                elif isinstance(ov, IdeogramPointsInset):
+                    ov.set_x_limits(xmi, xma)
+                    ov.set_y_limits(0, yma2)
 
     def _add_info(self, g, plot):
         if self.group_id == 0:
@@ -354,7 +391,6 @@ class Ideogram(BaseArArFigure):
                     ts.append('Error Type:{}'.format(self.options.error_calc_method))
 
                 if ts:
-
                     font = self.options.get_formatting_value('label_font', 'error_info_font')
                     pl = FlowPlotLabel(text='\n'.join(ts),
                                        overlay_position='inside top',
@@ -506,9 +542,9 @@ class Ideogram(BaseArArFigure):
             # for ov in sp.overlays:
             # if isinstance(ov, DataLabel):
             # _, y = ov.data_point
-            #        ov.data_point = wm, y
-            #        n = len(fxs)
-            #        ov.label_text = self._build_label_text(wm, we, mswd, valid_mswd, n)
+            # ov.data_point = wm, y
+            # n = len(fxs)
+            # ov.label_text = self._build_label_text(wm, we, mswd, valid_mswd, n)
 
             if sel:
                 dp.visible = True
@@ -540,7 +576,7 @@ class Ideogram(BaseArArFigure):
         # print 'aux plot',title, self.group_id
         s, p = graph.new_series(
             x=self.xs, y=ys,
-            color = color,
+            color=color,
             type='scatter',
             marker=po.marker,
             marker_size=po.marker_size,
@@ -694,11 +730,11 @@ class Ideogram(BaseArArFigure):
         # n = self.options.nsigma
         # if ec == 'SEM':
         # a = 1
-        #     elif ec == 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)':
-        #         a = 1
-        #         if mswd > 1:
-        #             a = mswd ** 0.5
-        #     return we * a * n
+        # elif ec == 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)':
+        # a = 1
+        # if mswd > 1:
+        # a = mswd ** 0.5
+        # return we * a * n
 
 
         # ============= EOF =============================================
