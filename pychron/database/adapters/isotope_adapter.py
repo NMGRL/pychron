@@ -78,15 +78,15 @@ from pychron.pychron_constants import ALPHAS, alpha_to_int, NULL_STR
 
 
 def binfunc(ds, hours):
-    p1 = ds[0][0]
+    ds = [dx[0] for dx in ds]
+    p1 = ds[0]
     delta_seconds = hours * 3600
     td = timedelta(seconds=delta_seconds * 0.25)
 
     for i, di in enumerate(ds):
         i = max(0, i - 1)
 
-        di = di[0]
-        dd = ds[i][0]
+        dd = ds[i]
         if (di - dd).total_seconds() > delta_seconds:
             yield p1 - td, dd + td
             p1 = di
@@ -98,7 +98,7 @@ def binfunc(ds, hours):
 # def __call__(self, f):
 # def wrapped_f(obj, *args, **kw):
 # with obj.session_ctx() as sess:
-#                 kw['sess']=sess
+# kw['sess']=sess
 #                 return f(obj, *args, **kw)
 #
 #         return wrapped_f
@@ -1281,8 +1281,10 @@ class IsotopeAdapter(DatabaseAdapter):
             q = q.filter(gen_LabTable.identifier.in_(lns))
             return [di[0] for di in q.all()]
 
-    def get_labnumber_analyses(self, lns, low_post=None, high_post=None,
-                               omit_key=None, exclude_uuids=None, mass_spectrometers=None, **kw):
+    def get_labnumber_analyses(self, lns,
+                               low_post=None, high_post=None,
+                               omit_key=None, exclude_uuids=None,
+                               mass_spectrometers=None, **kw):
         """
             get analyses that have labnunmbers in lns.
             low_post and high_post used to filter a date range.
@@ -1612,7 +1614,6 @@ class IsotopeAdapter(DatabaseAdapter):
             q = q.join(meas_IsotopeTable)
             q = q.join(gen_MolecularWeightTable)
             q = q.filter(meas_AnalysisTable.uuid == uuid)
-            print compile_query(q)
             return self._query_all(q)
 
     def get_analysis_isotope(self, uuid, iso, kind):
@@ -1626,7 +1627,6 @@ class IsotopeAdapter(DatabaseAdapter):
             q = q.filter(meas_IsotopeTable.kind == kind)
             q = q.filter(gen_MolecularWeightTable.name == iso)
             q = q.filter(meas_AnalysisTable.uuid == uuid)
-            print compile_query(q)
             try:
                 return q.first()
             except NoResultFound:
@@ -2440,15 +2440,18 @@ class IsotopeAdapter(DatabaseAdapter):
 
         return item
 
-    def _get_paginated_analyses(self, q, limit=None, offset=None,
+    def _get_paginated_analyses(self, q, order='asc',
+                                limit=None, offset=None,
                                 include_invalid=False, count_only=False):
 
         if not include_invalid:
             q = q.filter(meas_AnalysisTable.tag != 'invalid')
 
-        q = q.order_by(meas_AnalysisTable.analysis_timestamp.asc())
+        ofunc = getattr(meas_AnalysisTable.analysis_timestamp, order)
+        q = q.order_by(ofunc())
         tc = int(q.count())
         if not tc:
+            self.debug('No results for _get_paginated_analyses')
             self.debug(compile_query(q))
 
         if count_only:

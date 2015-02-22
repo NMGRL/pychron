@@ -134,17 +134,22 @@ class BrowserModel(BaseBrowserModel):
     def retrieve_sample_analyses(self, *args, **kw):
         return self._retrieve_sample_analyses(*args, **kw)
 
-    def load_time_view(self):
+    def load_chrono_view(self):
         self.debug('load time view')
         db = self.db
         with db.session_ctx():
+
             ss = [si.labnumber for si in self.selected_samples]
             bt = self.search_criteria.reference_hours_padding
             if not bt:
                 self.information_dialog('Set "References Window" in Preferences defaulting to 2hrs')
                 bt = 2
 
-            ts = db.get_analysis_date_ranges(ss, bt * 3600)
+            # ss  = ['bu-FD-O']
+            ts = db.get_analysis_date_ranges(ss, bt)
+            if any((vi.name.startswith('RECENT ') for vi in self.selected_projects)):
+                ts = ts[-1:]
+
             ms = db.get_labnumber_mass_spectrometers(ss)
             n = len(ts)
             if n > 1:
@@ -184,9 +189,9 @@ class BrowserModel(BaseBrowserModel):
         self._set_low_post(lp)
         self.use_high_post = True
         self._set_high_post(hp)
-
         ans = self._retrieve_analyses(low_post=lp,
                                       high_post=hp,
+                                      order='desc',
                                       mass_spectrometers=ms)
         return ans
 

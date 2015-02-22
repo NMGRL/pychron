@@ -88,7 +88,7 @@ class LabnumberAdapter(BrowserAdapter):
             psenabled = obj.current_task_name in ('Ideogram','Spectrum')
             # psenabled = isinstance(obj, FigureTask)
             return MenuManager(Action(name='Unselect', action='unselect_samples'),
-                               Action(name='Time View', action='on_time_view'),
+                               Action(name='Chronological View', action='on_chrono_view'),
                                Action(name='Configure', action='configure_sample_table'),
                                Action(name='Plot Selected (Grouped)',
                                       enabled=psenabled,
@@ -97,9 +97,11 @@ class LabnumberAdapter(BrowserAdapter):
                                       enabled=psenabled,
                                       action='plot_selected'))
 
+
 class AnalysisAdapter(BrowserAdapter):
     all_columns = [('Run ID', 'record_id'),
                    ('Tag', 'tag'),
+                   ('RunDate','rundate'),
                    ('Iso Fits', 'iso_fit_status'),
                    ('Blank', 'blank_fit_status'),
                    ('IC', 'ic_fit_status'),
@@ -115,6 +117,7 @@ class AnalysisAdapter(BrowserAdapter):
     columns = [('Run ID', 'record_id'),
                ('Tag', 'tag')]
 
+    rundate_width = Int(120)
     record_id_width = Int(100)
     tag_width = Int(65)
     odd_bg_color = 'lightgray'
@@ -122,7 +125,6 @@ class AnalysisAdapter(BrowserAdapter):
 
     def get_menu(self, obj, trait, row, column):
         e = obj.append_replace_enabled
-        print obj,'ffffasd'
         actions = [Action(name='Configure', action='configure_analysis_table'),
                    Action(name='Unselect', action='unselect_analyses'),
                    Action(name='Replace', action='replace_items', enabled=e),

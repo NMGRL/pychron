@@ -60,7 +60,7 @@ def filter_func(new, attr=None, comp=None):
                 except ValueError:
                     pass
             else:
-                return x.lower().startswith(new.lower())
+                return str(x).lower().startswith(new.lower())
         else:
             v = float(new) if isinstance(x, (float, int)) else str(new)
 
@@ -385,6 +385,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         return sams
 
     def _retrieve_analyses(self, samples=None, limit=500,
+                           order='asc',
                            low_post=None,
                            high_post=None,
                            exclude_uuids=None,
@@ -396,11 +397,11 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             if samples:
                 lns = [si.labnumber for si in samples]
                 self.debug('retrieving identifiers={}'.format(','.join(lns)))
-                if low_post is None:
-                    lps = [si.low_post for si in samples if si.low_post is not None]
-                    low_post = min(lps) if lps else None
-
+                # if low_post is None:
+                #     lps = [si.low_post for si in samples if si.low_post is not None]
+                #     low_post = min(lps) if lps else None
                 ans, tc = db.get_labnumber_analyses(lns,
+                                                    order=order,
                                                     low_post=low_post,
                                                     high_post=high_post,
                                                     limit=limit,
@@ -410,6 +411,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
                 self.debug('retrieved analyses n={}'.format(tc))
             else:
                 ans = db.get_analyses_date_range(low_post, high_post,
+                                                 order=order,
                                                  mass_spectrometers=mass_spectrometers,
                                                  limit=limit)
 

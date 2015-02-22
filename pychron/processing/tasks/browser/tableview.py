@@ -124,8 +124,8 @@ class TableView(PaneModelView):
     def configure_sample_table(self, info, obj):
         obj.configure_sample_table()
 
-    def on_time_view(self, info, obj):
-        obj.load_time_view()
+    def on_chrono_view(self, info, obj):
+        obj.load_chrono_view()
 
     def plot_selected(self, info, obj):
         try:
