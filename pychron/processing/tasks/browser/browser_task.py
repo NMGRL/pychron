@@ -101,44 +101,6 @@ class BaseBrowserTask(BaseEditorTask):
     def __init__(self, *args, **kw):
         super(BaseBrowserTask, self).__init__(*args, **kw)
 
-    # def refresh_samples(self):
-    # self.debug('refresh samples')
-    # self.set_samples(self._retrieve_labnumbers())
-
-    # def load_time_view(self):
-    #     self.debug('load time view')
-    #     db = self.db
-    #     with db.session_ctx():
-    #         ss = [si.labnumber for si in self.selected_samples]
-    #         bt = self.search_criteria.reference_hours_padding
-    #         if not bt:
-    #             self.information_dialog('Set "References Window" in Preferences defaulting to 2hrs')
-    #             bt = 2
-    #
-    #         ts = db.get_analysis_date_ranges(ss, bt * 3600)
-    #         ms = db.get_labnumber_mass_spectrometers(ss)
-    #         n = len(ts)
-    #         if n > 1:
-    #             if not self.confirmation_dialog('The date range you selected is to large. It will be '
-    #                                             'broken into {} subranges.\nDo you want to Continue?'.format(n)):
-    #                 return
-    #
-    #             xx = []
-    #             for lp, hp in ts:
-    #                 pad = get_pad(lp, hp)
-    #                 if not pad:
-    #                     break
-    #                 ans = self._get_analysis_series(pad.low_post, pad.high_post, ms)
-    #                 xx.extend(ans)
-    #         else:
-    #             lp, hp = db.get_min_max_analysis_timestamp(ss)
-    #             pad = get_pad(lp, hp)
-    #             if not pad:
-    #                 return
-    #             xx = self._get_analysis_series(pad.low_post, pad.high_post, ms)
-    #
-    #         self.analysis_table.set_analyses(xx)
-
     def prepare_destroy(self):
         if self.browser_model:
             self.browser_model.dump_browser()
@@ -152,25 +114,6 @@ class BaseBrowserTask(BaseEditorTask):
             if workspace:
                 self.browser_model.use_workspace = workspace.active
                 self.workspace = workspace
-
-    # def load_irradiation(self):
-    #     if self.use_workspace:
-    #         obj = self.workspace.index_db
-    #     else:
-    #         obj = self.manager
-    #
-    #     self.irradiations = irs = obj.irradiations
-    #     if irs:
-    #         self.irradiation = irs[0]
-    #         self.levels = ls = obj.levels
-    #         if ls:
-    #             self.level = ls[0]
-    def _setup_browser_model(self):
-        model = self.browser_model
-        model.pattributes += ('irradiation_enabled', 'use_focus_switching')
-
-    def _destroy_browser_model(self):
-        pass
 
     def activated(self):
 
@@ -188,11 +131,99 @@ class BaseBrowserTask(BaseEditorTask):
         self.browser_model.activated()
 
         # if self.browser_model.sample_view_active:
-        #     self._activate_sample_browser()
+        # self._activate_sample_browser()
         # else:
 
         # self._activate_query_browser()
 
+    # private
+    def _setup_browser_model(self):
+        model = self.browser_model
+        model.pattributes += ('irradiation_enabled', 'use_focus_switching')
+
+    def _destroy_browser_model(self):
+        pass
+
+    def _activate_sample_browser(self):
+        # if not self._activated:
+        # pass
+        # self.load_projects()
+
+        # db = self.manager.db
+        # with db.session_ctx():
+        #     self._load_mass_spectrometers()
+        #
+        # self.datasource_url = db.datasource_url
+        # self._preference_binder('pychron.browsing',
+        #                         ('recent_hours','graphical_filtering_max_days',
+        #                          'reference_hours_padding'),
+        #                         obj=self.search_criteria)
+        #
+        # self.load_browser_selection()
+        self.browser_model.activate_sample_browser()
+        self.browser_pane.name = 'Browser/Sample'
+        self._activated = True
+
+    def _get_selected_analyses(self, **kw):
+        """
+        """
+        ret = self.browser_model.get_selection(low_post=self.start_date, high_post=self.end_date, **kw)
+        return ret
+
+    def _get_browser_model(self):
+        model = self.application.get_service('pychron.processing.tasks.browser.browser_model.BrowserModel')
+        self.debug('Browser model model={}, id={}'.format(model, id(model)))
+        return model
+
+    def _create_browser_pane(self, **kw):
+        model = self._get_browser_model()
+        self.browser_pane = BrowserPane(model=model, **kw)
+
+        # self.analysis_table.tabular_adapter = self.browser_pane.analysis_tabular_adapter
+        # self.labnumber_tabular_adapter = self.browser_pane.labnumber_tabular_adapter
+        model.labnumber_tabular_adapter = self.browser_pane.labnumber_tabular_adapter
+        return self.browser_pane
+
+    def _ok_ed(self):
+        return self.extraction_device not in (DEFAULT_ED, 'None')
+
+    def _set_selected_analysis(self, new):
+        pass
+
+    def _selector_dclick(self, item):
+        pass
+
+    def _graphical_filter_hook(self, ans, is_append):
+        pass
+
+    @on_trait_change('analysis_table:selected')
+    def _selected_analysis_changed(self, new):
+        self._set_selected_analysis(new)
+
+    @on_trait_change('browser_model:dclicked_sample')
+    def _dclicked_sample_changed(self):
+        self._dclicked_sample_hook()
+
+        if self.active_editor:
+            ans = self.browser_model.analysis_table.analyses
+            self.active_editor.set_items(ans)
+
+    def _dclicked_sample_hook(self):
+        pass
+
+    # ============= EOF =============================================
+    # def load_irradiation(self):
+    # if self.use_workspace:
+    #         obj = self.workspace.index_db
+    #     else:
+    #         obj = self.manager
+    #
+    #     self.irradiations = irs = obj.irradiations
+    #     if irs:
+    #         self.irradiation = irs[0]
+    #         self.levels = ls = obj.levels
+    #         if ls:
+    #             self.level = ls[0]
     # def _get_analysis_series(self, lp, hp, ms):
     #     self.use_low_post = True
     #     self._set_low_post(lp)
@@ -273,77 +304,9 @@ class BaseBrowserTask(BaseEditorTask):
     #
     #     psel.active = True
     #     self.browser_pane.name = 'Browser/Query'
-
-    def _activate_sample_browser(self):
-        # if not self._activated:
-        #     pass
-        # self.load_projects()
-
-        # db = self.manager.db
-        # with db.session_ctx():
-        #     self._load_mass_spectrometers()
-        #
-        # self.datasource_url = db.datasource_url
-        # self._preference_binder('pychron.browsing',
-        #                         ('recent_hours','graphical_filtering_max_days',
-        #                          'reference_hours_padding'),
-        #                         obj=self.search_criteria)
-        #
-        # self.load_browser_selection()
-        self.browser_model.activate_sample_browser()
-        self.browser_pane.name = 'Browser/Sample'
-        self._activated = True
-
-    def _get_selected_analyses(self, **kw):  #unks=None, selection=None, make_records=True):
-        """
-        """
-        ret = self.browser_model.get_selection(low_post=self.start_date, high_post=self.end_date, **kw)
-        # if selection is None:
-        #     if self.browser_model.analysis_table.selected:
-        #         ret = self.browser_model.analysis_table.selected
-        #     # # elif self.data_selector.selector.selected:
-        #     # #     ret = self.data_selector.selector.selected
-        #     elif self.browser_model.time_view_model.selected:
-        #         ret = self.browser_model.time_view_model.selected
-        #     else:
-        #         selection = self.browser_model.selected_samples
-        #
-        # if selection:
-        #     iv = not self.browser_model.analysis_table.omit_invalid
-        #     uuids = [x.uuid for x in unks] if unks else None
-        #     ret = [ai for ai in self.browser_model.retrieve_sample_analyses(selection,
-        #                                                                     exclude_uuids=uuids,
-        #                                                                     include_invalid=iv,
-        #                                                                     low_post=self.start_date,
-        #                                                                     high_post=self.end_date,
-        #                                                                     make_records=make_records)]
-        return ret
-
-    def _get_browser_model(self):
-        model = self.application.get_service('pychron.processing.tasks.browser.browser_model.BrowserModel')
-        self.debug('Browser model model={}, id={}'.format(model, id(model)))
-        return model
-
-    def _create_browser_pane(self, **kw):
-        model = self._get_browser_model()
-        self.browser_pane = BrowserPane(model=model, **kw)
-
-        # self.analysis_table.tabular_adapter = self.browser_pane.analysis_tabular_adapter
-        # self.labnumber_tabular_adapter = self.browser_pane.labnumber_tabular_adapter
-        model.labnumber_tabular_adapter = self.browser_pane.labnumber_tabular_adapter
-        return self.browser_pane
-
-    def _ok_ed(self):
-        return self.extraction_device not in (DEFAULT_ED, 'None')
-
-    def _set_selected_analysis(self, new):
-        pass
-
-    def _selector_dclick(self, item):
-        pass
-
-    def _graphical_filter_hook(self, ans, is_append):
-        pass
+    # @on_trait_change('analysis_table:omit_invalid')
+    # def _omit_invalid_changed(self):
+    # self._selected_samples_changed(self.selected_samples)
 
     # def _selected_projects_change_hook(self, names):
     #     if not self._top_level_filter:
@@ -597,102 +560,118 @@ class BaseBrowserTask(BaseEditorTask):
     #     else:
     #         self.samples = []
 
-    @on_trait_change('analysis_table:selected')
-    def _selected_analysis_changed(self, new):
-        self._set_selected_analysis(new)
+    # def _project_date_bins(self, identifier):
+    #     db = self.db
+    #     hours = self.search_criteria.reference_hours_padding
+    #     with db.session_ctx():
+    #         for pp in self.selected_projects:
+    #             bins = db.get_project_date_bins(identifier, pp.name, hours)
+    #             print bins
+    #             if bins:
+    #                 for li, hi in bins:
+    #                     yield li, hi
 
-        # @on_trait_change('analysis_table:omit_invalid')
-        # def _omit_invalid_changed(self):
-        # self._selected_samples_changed(self.selected_samples)
+    # def _selected_samples_changed(self, new):
+    #     if new:
+    #         at = self.analysis_table
+    #         lim = at.limit
+    #         kw = dict(limit=lim,
+    #                   include_invalid=not at.omit_invalid,
+    #                   mass_spectrometers=self._recent_mass_spectrometers)
+    #
+    #         ss = self.selected_samples
+    #         xx = ss[:]
+    #         # if not any(['RECENT' in p for p in self.selected_projects]):
+    #         # sp=self.selected_projects
+    #         # if not hasattr(sp, '__iter__'):
+    #         #     sp = (sp, )
+    #
+    #         if not any(['RECENT' in p.name for p in self.selected_projects]):
+    #             reftypes = ('blank_unknown',)
+    #             if any((si.analysis_type in reftypes
+    #                     for si in ss)):
+    #                 with self.db.session_ctx():
+    #                     ans = []
+    #                     for si in ss:
+    #                         if si.analysis_type in reftypes:
+    #                             xx.remove(si)
+    #                             dates = list(self._project_date_bins(si.identifier))
+    #                             print dates
+    #                             progress = open_progress(len(dates))
+    #                             for lp, hp in dates:
+    #
+    #                                 progress.change_message('Loading Date Range '
+    #                                                         '{} to {}'.format(lp.strftime('%m-%d-%Y %H:%M:%S'),
+    #                                                                           hp.strftime('%m-%d-%Y %H:%M:%S')))
+    #                                 ais = self._retrieve_sample_analyses([si],
+    #                                                                      make_records=False,
+    #                                                                      low_post=lp,
+    #                                                                      high_post=hp, **kw)
+    #                                 ans.extend(ais)
+    #                             progress.close()
+    #
+    #                     ans = self._make_records(ans)
+    #                 # print len(ans), len(set([si.record_id for si in ans]))
+    #         if xx:
+    #             lp, hp = self.low_post, self.high_post
+    #             ans = self._retrieve_sample_analyses(xx,
+    #                                                  low_post=lp,
+    #                                                  high_post=hp,
+    #                                                  **kw)
+    #             self.debug('selected samples changed. loading analyses. '
+    #                        'low={}, high={}, limit={}'.format(lp, hp, lim))
+    #
+    #         self.analysis_table.set_analyses(ans)
+    #         self.dump_browser()
+    #
+    #     self.filter_focus = not bool(new)
 
-    @on_trait_change('browser_model:dclicked_sample')
-    def _dclicked_sample_changed(self):
-        self._dclicked_sample_hook()
+    # @on_trait_change('data_selector:database_selector:dclicked')
+    # def _handle_selector_dclick(self, new):
+    #     self._selector_dclick(new.item)
 
-        if self.active_editor:
-            ans = self.browser_model.analysis_table.analyses
-            self.active_editor.set_items(ans)
+    # def _analysis_table_default(self):
+    #     at = AnalysisTable(db=self.manager.db,
+    #                        append_replace_enabled=self._append_replace_analyses_enabled)
+    #     return at
 
-    def _dclicked_sample_hook(self):
-        pass
+    # def _data_selector_default(self):
+    #     return DataSelector(database_selector=self.manager.db.selector)
 
-        # def _project_date_bins(self, identifier):
-        #     db = self.db
-        #     hours = self.search_criteria.reference_hours_padding
-        #     with db.session_ctx():
-        #         for pp in self.selected_projects:
-        #             bins = db.get_project_date_bins(identifier, pp.name, hours)
-        #             print bins
-        #             if bins:
-        #                 for li, hi in bins:
-        #                     yield li, hi
+    # def refresh_samples(self):
+    # self.debug('refresh samples')
+    # self.set_samples(self._retrieve_labnumbers())
 
-        # def _selected_samples_changed(self, new):
-        #     if new:
-        #         at = self.analysis_table
-        #         lim = at.limit
-        #         kw = dict(limit=lim,
-        #                   include_invalid=not at.omit_invalid,
-        #                   mass_spectrometers=self._recent_mass_spectrometers)
-        #
-        #         ss = self.selected_samples
-        #         xx = ss[:]
-        #         # if not any(['RECENT' in p for p in self.selected_projects]):
-        #         # sp=self.selected_projects
-        #         # if not hasattr(sp, '__iter__'):
-        #         #     sp = (sp, )
-        #
-        #         if not any(['RECENT' in p.name for p in self.selected_projects]):
-        #             reftypes = ('blank_unknown',)
-        #             if any((si.analysis_type in reftypes
-        #                     for si in ss)):
-        #                 with self.db.session_ctx():
-        #                     ans = []
-        #                     for si in ss:
-        #                         if si.analysis_type in reftypes:
-        #                             xx.remove(si)
-        #                             dates = list(self._project_date_bins(si.identifier))
-        #                             print dates
-        #                             progress = open_progress(len(dates))
-        #                             for lp, hp in dates:
-        #
-        #                                 progress.change_message('Loading Date Range '
-        #                                                         '{} to {}'.format(lp.strftime('%m-%d-%Y %H:%M:%S'),
-        #                                                                           hp.strftime('%m-%d-%Y %H:%M:%S')))
-        #                                 ais = self._retrieve_sample_analyses([si],
-        #                                                                      make_records=False,
-        #                                                                      low_post=lp,
-        #                                                                      high_post=hp, **kw)
-        #                                 ans.extend(ais)
-        #                             progress.close()
-        #
-        #                     ans = self._make_records(ans)
-        #                 # print len(ans), len(set([si.record_id for si in ans]))
-        #         if xx:
-        #             lp, hp = self.low_post, self.high_post
-        #             ans = self._retrieve_sample_analyses(xx,
-        #                                                  low_post=lp,
-        #                                                  high_post=hp,
-        #                                                  **kw)
-        #             self.debug('selected samples changed. loading analyses. '
-        #                        'low={}, high={}, limit={}'.format(lp, hp, lim))
-        #
-        #         self.analysis_table.set_analyses(ans)
-        #         self.dump_browser()
-        #
-        #     self.filter_focus = not bool(new)
-
-        # @on_trait_change('data_selector:database_selector:dclicked')
-        # def _handle_selector_dclick(self, new):
-        #     self._selector_dclick(new.item)
-
-        # def _analysis_table_default(self):
-        #     at = AnalysisTable(db=self.manager.db,
-        #                        append_replace_enabled=self._append_replace_analyses_enabled)
-        #     return at
-
-        # def _data_selector_default(self):
-        #     return DataSelector(database_selector=self.manager.db.selector)
-
-# ============= EOF =============================================
-
+    # def load_time_view(self):
+    #     self.debug('load time view')
+    #     db = self.db
+    #     with db.session_ctx():
+    #         ss = [si.labnumber for si in self.selected_samples]
+    #         bt = self.search_criteria.reference_hours_padding
+    #         if not bt:
+    #             self.information_dialog('Set "References Window" in Preferences defaulting to 2hrs')
+    #             bt = 2
+    #
+    #         ts = db.get_analysis_date_ranges(ss, bt * 3600)
+    #         ms = db.get_labnumber_mass_spectrometers(ss)
+    #         n = len(ts)
+    #         if n > 1:
+    #             if not self.confirmation_dialog('The date range you selected is to large. It will be '
+    #                                             'broken into {} subranges.\nDo you want to Continue?'.format(n)):
+    #                 return
+    #
+    #             xx = []
+    #             for lp, hp in ts:
+    #                 pad = get_pad(lp, hp)
+    #                 if not pad:
+    #                     break
+    #                 ans = self._get_analysis_series(pad.low_post, pad.high_post, ms)
+    #                 xx.extend(ans)
+    #         else:
+    #             lp, hp = db.get_min_max_analysis_timestamp(ss)
+    #             pad = get_pad(lp, hp)
+    #             if not pad:
+    #                 return
+    #             xx = self._get_analysis_series(pad.low_post, pad.high_post, ms)
+    #
+    #         self.analysis_table.set_analyses(xx)

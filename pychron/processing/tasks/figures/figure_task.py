@@ -76,7 +76,7 @@ class FigureTask(AnalysisEditTask):
         SToolBar(SetInterpretedAgeTBAction(),
                  BrowseInterpretedAgeTBAction()),
         # SToolBar(GroupSelectedAction(name='Selected'),
-        #          GroupbyAliquotAction(name='by Aliquot'),
+        # GroupbyAliquotAction(name='by Aliquot'),
         #          GroupbyLabnumberAction(name='by Labnumber'),
         #          GroupbySampleAction(name='by Sample'),
         #          ClearGroupAction(name='Clear'))
@@ -93,6 +93,27 @@ class FigureTask(AnalysisEditTask):
 
     selected_figures = Any
     dclicked_figure = Event
+
+    def activate_spectrum_editor(self):
+        self._activate_editor('spectrum')
+
+    def activate_ideogram_editor(self):
+        self._activate_editor('ideogram')
+
+    def _activate_editor(self, kind):
+        func = getattr(self, 'new_{}'.format(kind))
+        klass = globals()['{}Editor'.format(kind.capitalize())]
+        if self.active_editor is None:
+            print 'new editor'
+            func()
+        else:
+            for editor in self.editor_area.editors:
+                if isinstance(editor, klass):
+                    self.activate_editor(editor)
+                    break
+            else:
+                print 'new editor'
+                func()
 
     # ===============================================================================
     # task protocol
@@ -142,7 +163,7 @@ class FigureTask(AnalysisEditTask):
         if ac:
             pane = self.unknowns_pane
 
-            #remember original setting
+            # remember original setting
             oauto_group1 = ac.auto_group
             oauto_group2 = pane.auto_group
 
@@ -216,7 +237,7 @@ class FigureTask(AnalysisEditTask):
     def _debug_add(self):
         from pychron.globals import globalv
 
-        if globalv.debug:
+        if globalv.figure_debug:
             if self.browser_model:
                 ans = self.browser_model.analysis_table.analyses
                 if ans:
@@ -238,7 +259,7 @@ class FigureTask(AnalysisEditTask):
             name = self.active_editor.name.replace(self.active_editor.basename, '')
             return self._new_table(ans, name, klass)
             # # new figure editor
-            #     editor = klass(
+            # editor = klass(
             #         name=name,
             #         processor=self.manager)
             #
@@ -285,8 +306,8 @@ class FigureTask(AnalysisEditTask):
         if tklass is None:
             from pychron.processing.tasks.tables.editors.fusion.fusion_table_editor import \
                 FusionTableEditor as tklass
-            #            from pychron.processing.tasks.tables.editors.fusion_table_editor \
-        #                import FusionTableEditor as tklass
+            # from pychron.processing.tasks.tables.editors.fusion_table_editor \
+        # import FusionTableEditor as tklass
 
         editor = self._new_figure(ans, name, klass, tklass,
                                   set_ans=set_ans,
@@ -442,7 +463,7 @@ class FigureTask(AnalysisEditTask):
                 self.plot_editor_pane.set_annotation_tool(at)
 
     # def tb_new_ideogram(self):
-    #     self.new_ideogram()
+    # self.new_ideogram()
     #
     #     # if isinstance(self.active_editor, IdeogramEditor) and \
     #     #         not self.unknowns_pane.items:
@@ -477,9 +498,9 @@ class FigureTask(AnalysisEditTask):
 
         with no_update(self):
             if klass == IdeogramEditor:
-                self.current_task_name = 'Ideogram'
+                self.browser_model.current_task_name = 'Ideogram'
             else:
-                self.current_task_name = 'Spectrum'
+                self.browser_model.current_task_name = 'Spectrum'
 
         # new figure editor
         editor = klass(
@@ -764,10 +785,11 @@ class FigureTask(AnalysisEditTask):
         if not self.has_active_editor():
             return
 
-        if isinstance(self.active_editor, FigureEditor):
-            self.active_editor.saved_figure_id = -1
-            self.active_editor.clear_aux_plot_limits()
-            self.active_editor.enable_aux_plots()
+        editor = self.active_editor
+        if isinstance(editor, FigureEditor):
+            editor.saved_figure_id = -1
+            editor.clear_aux_plot_limits()
+            editor.enable_aux_plots()
 
         # super(FigureTask, self)._dclicked_sample_changed()
         super(FigureTask, self)._dclicked_sample_hook()
@@ -787,31 +809,32 @@ class FigureTask(AnalysisEditTask):
 
                 kind = db_fig.preference.kind
                 open_editor_needed = True
-                if self.active_editor:
-                    open_editor_needed = self.active_editor.basename != kind
+                editor = self.active_editor
+                if editor:
+                    open_editor_needed = editor.basename != kind
 
                 if open_editor_needed:
                     #open new editor of this kind
                     if kind == 'spec':
-                        if self.active_editor:
-                            self.active_editor.close()
+                        if editor:
+                            editor.close()
                         self.new_spectrum()
                     elif kind == 'ideo':
-                        if self.active_editor:
-                            self.active_editor.close()
+                        if editor:
+                            editor.close()
                         self.new_ideogram()
 
-                if self.active_editor:
-                    self.active_editor.enable_aux_plots()
-                    self.active_editor.saved_figure_id = int(sf.id)
-                    self.active_editor.plotter_options_manager.deinitialize()
-                    self.active_editor.set_items([a.analysis for a in db_fig.analyses])
-                    for ai, dbai in zip(self.active_editor.analyses, db_fig.analyses):
+                if editor:
+                    editor.enable_aux_plots()
+                    editor.saved_figure_id = int(sf.id)
+                    editor.plotter_options_manager.deinitialize()
+                    editor.set_items([a.analysis for a in db_fig.analyses])
+                    for ai, dbai in zip(editor.analyses, db_fig.analyses):
                         ai.group_id = int(dbai.group or 0)
                         ai.graph_id = int(dbai.graph or 0)
 
-                    self.active_editor.plotter_options_manager.load_yaml(blob)
-                    self.active_editor.rebuild()
+                    editor.plotter_options_manager.load_yaml(blob)
+                    editor.rebuild()
 
     @on_trait_change('plotter_options_pane:pom:plotter_options:[+, refresh_plot_needed, aux_plots:+]')
     def _options_update(self, obj, name, old, new):
@@ -827,10 +850,22 @@ class FigureTask(AnalysisEditTask):
                     self.active_editor.rebuild()
                     self.active_editor.dump_tool()
 
+    def _set_current_task(self):
+        with no_update(self):
+            if isinstance(self.active_editor, IdeogramEditor):
+                self.browser_model.current_task_name = 'Ideogram'
+            elif isinstance(self.active_editor, SpectrumEditor):
+                self.browser_model.current_task_name = 'Spectrum'
+            else:
+                super(FigureTask, self)._set_current_task()
+
     def _active_editor_changed(self, new):
-        if self.active_editor:
-            if isinstance(self.active_editor, (FigureEditor, XYScatterEditor)):
-                self.plotter_options_pane.pom = self.active_editor.plotter_options_manager
+        editor = self.active_editor
+        if editor:
+            if isinstance(editor, (FigureEditor, XYScatterEditor)):
+                self.plotter_options_pane.pom = editor.plotter_options_manager
+
+            self._set_current_task()
 
         super(FigureTask, self)._active_editor_changed(new)
 

@@ -95,7 +95,7 @@ class BrowserPane(TraitsDockPane):
                                        enabled_when='use_focus_switching',
                                        tooltip='Toggle Filter and Result focus'),
                     spring,
-                    UItem('current_task_name'),
+                    # UItem('current_task_name', style='readonly'),
                     CustomLabel('datasource_url', color='maroon'),
                 ),
                 main_grp),

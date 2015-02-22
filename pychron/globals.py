@@ -68,6 +68,7 @@ class Globals(object):
     automated_run_debug = False
     spectrometer_debug = False
     system_monitor_debug = False
+    figure_debug = False
 
     load_valve_states = True
     load_soft_locks = True
