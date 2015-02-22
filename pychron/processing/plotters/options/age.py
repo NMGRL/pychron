@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Bool, Enum, String, Property, List, on_trait_change
+from traits.api import Bool, Enum, String, Property, List, on_trait_change, Event
 from traitsui.api import VGroup, UItem
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -29,6 +29,10 @@ class GroupablePlotterOptions(PlotterOptions):
     group = Property
     group_editor_klass = None
     options_klass = None
+    refresh_colors = Event
+
+    def get_group_colors(self):
+        return [gi.color for gi in self.groups]
 
     def _get_group(self):
         if self.groups:

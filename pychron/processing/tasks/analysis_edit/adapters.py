@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from pyface.action.menu_manager import MenuManager
-from traits.api import Int, Property
+from traits.api import Int, Property, List
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 from uncertainties import nominal_value, std_dev
@@ -50,7 +50,7 @@ class UnknownsAdapter(TabularAdapter):
     #     tag_text_color = Property
     age_text = Property
     error_text = Property
-
+    colors = List(colornames)
     # klass_text = Property
     # def _get_klass_text(self):
     #     return self.item.__class__.__name__.split('.')[-1]
@@ -84,11 +84,13 @@ class UnknownsAdapter(TabularAdapter):
         return r
 
     def get_text_color(self, obj, trait, row, column=0):
-        n = len(colornames)
+        # n = len(colornames)
+        colors = self.colors
+        n = len(colors)
         gid = obj.items[row].group_id
         cid = gid % n
-
-        return colornames[cid]
+        return colors[cid]
+        # return colornames[cid]
 
 
 class ReferencesAdapter(TabularAdapter):

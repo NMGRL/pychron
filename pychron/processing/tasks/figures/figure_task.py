@@ -863,11 +863,21 @@ class FigureTask(AnalysisEditTask):
         editor = self.active_editor
         if editor:
             if isinstance(editor, (FigureEditor, XYScatterEditor)):
-                self.plotter_options_pane.pom = editor.plotter_options_manager
+                self.plotter_options_pane.pom =pom= editor.plotter_options_manager
+
+                colors = pom.plotter_options.get_group_colors()
+                self.unknowns_pane.adapter.colors = colors
 
             self._set_current_task()
 
         super(FigureTask, self)._active_editor_changed(new)
+
+    @on_trait_change('plotter_options_pane:pom:plotter_options:groups:color')
+    def _handle_colors(self):
+        pom = self.plotter_options_pane.pom
+        colors = pom.plotter_options.get_group_colors()
+        self.unknowns_pane.adapter.colors = colors
+        self.unknowns_pane.refresh_needed=True
 
     @on_trait_change('active_editor:refresh_unknowns_table')
     def _ac_refresh_table(self):

@@ -25,6 +25,7 @@ import shelve
 import hashlib
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.ui.qt.tabular_editor import UnselectTabularEditorHandler
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.tasks.analysis_edit.table_filter import TableFilter
@@ -54,6 +55,9 @@ class TablePane(TraitsDockPane):
     selected = Any
     dclicked = Any
 
+    adapter = Instance(TabularAdapter)
+    adapter_klass = Any
+
     def load(self):
         pass
 
@@ -61,8 +65,9 @@ class TablePane(TraitsDockPane):
         pass
 
     def traits_view(self):
+
         v = View(VGroup(
-            UItem('items', editor=myTabularEditor(adapter=self.adapter_klass(),
+            UItem('items', editor=myTabularEditor(adapter=self.adapter,
                                                   operations=['move', 'delete'],
                                                   editable=True,
                                                   drag_external=True,
@@ -77,6 +82,8 @@ class TablePane(TraitsDockPane):
     def no_update(self):
         return self._no_update
 
+    def _adapter_default(self):
+        return self.adapter_klass()
 
 class HistoryTablePane(TablePane, ColumnSorterMixin):
     previous_selection = Any
@@ -247,7 +254,7 @@ class HistoryTablePane(TablePane, ColumnSorterMixin):
                    icon_button_editor('configure_button', 'cog',
                                       tooltip=self.configure_history_tooltip)),
             HGroup(spring, CustomLabel('cs_label'), spring),
-            UItem('items', editor=myTabularEditor(adapter=self.adapter_klass(),
+            UItem('items', editor=myTabularEditor(adapter=self.adapter,
                                                   operations=['move', 'delete'],
                                                   editable=True,
                                                   drag_external=True,
@@ -337,7 +344,6 @@ class UnknownsPane(HistoryTablePane):
     def group_appended(self):
         print len(self.items)
 
-
     def clear_grouping(self, refresh_plot=True, idxs=None):
         if idxs is None:
             if self.selected and len(self.selected) > 1:
@@ -391,7 +397,7 @@ class ReferencesPane(HistoryTablePane):
                    icon_button_editor('configure_button', 'cog',
                                       tooltip=self.configure_history_tooltip)),
             HGroup(spring, CustomLabel('cs_label'), spring, Item('auto_sort')),
-            UItem('items', editor=myTabularEditor(adapter=self.adapter_klass(),
+            UItem('items', editor=myTabularEditor(adapter=self.adapter,
                                                   operations=['move', 'delete'],
                                                   editable=True,
                                                   drag_external=True,

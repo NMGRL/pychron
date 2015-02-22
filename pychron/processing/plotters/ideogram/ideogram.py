@@ -319,7 +319,7 @@ class Ideogram(BaseArArFigure):
                         startidx = max(startidx, ov.value.get_bounds()[1]+1)
             else:
                 startidx = 1
-            print self.group_id, startidx
+
             if self.options.analysis_number_sorting == 'Oldest @Top':
                 ys = arange(startidx, startidx + n)
             else:
