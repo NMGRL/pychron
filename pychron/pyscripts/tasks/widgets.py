@@ -30,8 +30,17 @@ from pychron.pyscripts.tasks.pyscript_lexer import PyScriptLexer
 class myCodeWidget(CodeWidget):
     dclicked = QtCore.Signal((str,))
     modified_select = QtCore.Signal((str,))
+    alt_select = QtCore.Signal((str,int, int))
+
     _current_pos = None
     gotos = ['gosub']
+
+    popup = None
+
+    def __init__(self, *args, **kw):
+        super(myCodeWidget, self).__init__(*args, **kw)
+
+        self.setMouseTracking(True)
 
     def keyPressEvent(self, event):
         super(myCodeWidget, self).keyPressEvent(event)
@@ -44,6 +53,9 @@ class myCodeWidget(CodeWidget):
         super(myCodeWidget, self).keyReleaseEvent(event)
         # self.setMouseTracking(False)
         QApplication.restoreOverrideCursor()
+        if self.popup:
+            self.popup.close()
+            self.popup = None
 
     def clear_selected(self):
         # self.setMouseTracking(False)
@@ -81,11 +93,22 @@ class myCodeWidget(CodeWidget):
 
         super(myCodeWidget, self).mouseMoveEvent(event)
 
+    # def mouseReleaseEvent(self, event):
+    #     if event.modifiers() & Qt.AltModifier:
+    #         print 'popup', self.popup
+    #         if self.popup:
+    #             self.popup.close()
+    #             self.popup = None
+
     def mousePressEvent(self, event):
-        if event.modifiers() & Qt.ControlModifier:
+        if event.modifiers() & Qt.ControlModifier: # on Mac OSX "command"
             cursor, line = self._get_line_cursor(event.pos())
             self.modified_select.emit(line.strip())
             self.clear_selected()
+        elif event.modifiers() & Qt.AltModifier: # On Mac OSX "option"
+            cursor, line = self._get_line_cursor(event.pos())
+            pt = self.mapToGlobal(event.pos())
+            self.alt_select.emit(line.strip(), pt.x(), pt.y())
 
         self._current_pos = None
         super(myCodeWidget, self).mousePressEvent(event)
@@ -102,14 +125,12 @@ class myCodeWidget(CodeWidget):
         line = cursor.selectedText()
         return cursor, line
 
-
     def mouseDoubleClickEvent(self, event):
         self.clear_selected()
 
         self._current_pos = event.pos()
         cursor, line = self._get_line_cursor(self._current_pos)
         self.dclicked.emit(line.strip())
-
 
     def replace_command(self, cmd):
         if self._current_pos:
