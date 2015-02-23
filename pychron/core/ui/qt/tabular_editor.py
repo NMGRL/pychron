@@ -298,8 +298,9 @@ class _TableView(TableView, ConsumerMixin):
 
     # private
     def _copy(self):
-        copy_object = [(ri, self._editor.value[ri]) for ri in self.selectedIndexes()]
-
+        rows = sorted({ri.row() for ri in self.selectedIndexes()})
+        copy_object = [(ri, self._editor.value[ri]) for ri in rows]
+        # copy_object = [ri.row(), self._editor.value[ri.row()]) for ri in self.selectedIndexes()]
         mt = self._editor.factory.mime_type
         pdata = dumps(copy_object)
 
@@ -345,7 +346,7 @@ class _TableView(TableView, ConsumerMixin):
 
     # def _paste(self):
     # selection = self.selectedIndexes()
-    #     idx = None
+    # idx = None
     #     if len(selection):
     #         idx = selection[-1].row()
     #
@@ -678,7 +679,7 @@ class _TabularEditor(qtTabularEditor):
 
         # def _copy_cache_changed(self):
         # if self.control:
-        #         self.control._linked_copy_cache = self.copy_cache
+        # self.control._linked_copy_cache = self.copy_cache
 
         # def _update_changed(self):
         # super(_TabularEditor, self)._update_changed()
