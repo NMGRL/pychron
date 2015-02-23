@@ -68,7 +68,7 @@ class ExperimentQueue(BaseExperimentQueue):
     executed_runs = List
     executed_runs_scroll_to_row = Int
     automated_runs_scroll_to_row = Int
-    linked_copy_cache = List
+    # linked_copy_cache = List
     start_timestamp = Date
     # queue_actions = List
     auto_save_detector_ic = Bool

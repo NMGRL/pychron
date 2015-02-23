@@ -31,6 +31,7 @@ from pychron.messaging.notify.subscriber import Subscriber
 from pychron.processing.analyses.file_analysis import FileAnalysis
 from pychron.processing.plotter_options_manager import SystemMonitorOptionsManager
 from pychron.processing.tasks.figures.editors.series_editor import SeriesEditor
+from pychron.pychron_constants import ALPHAS
 from pychron.system_monitor.tasks.connection_spec import ConnectionSpec
 from pychron.system_monitor.tasks.controls import SystemMonitorControls
 from pychron.core.ui.gui import invoke_in_main_thread
@@ -78,6 +79,7 @@ class SystemMonitorEditor(SeriesEditor):
 
     task = Any
     _pause = False
+
     def __init__(self, *args, **kw):
         super(SystemMonitorEditor, self).__init__(*args, **kw)
         color_bind_preference(self.console_display.model, 'bgcolor', 'pychron.sys_mon.bgcolor')
@@ -247,10 +249,18 @@ class SystemMonitorEditor(SeriesEditor):
 
     def _refresh_figures(self, an):
         if an.analysis_type == 'unknown':
-            if an.step:
-                self._refresh_spectrum(an.labnumber, an.aliquot)
+            if globalv.system_monitor_debug:
+                if self._cnt > 3:
+                    self._refresh_spectrum(an.labnumber, an.aliquot)
+                else:
+                    self._refresh_ideogram(an.labnumber)
+
             else:
-                self._refresh_ideogram(an.labnumber)
+
+                if an.step:
+                    self._refresh_spectrum(an.labnumber, an.aliquot)
+                else:
+                    self._refresh_ideogram(an.labnumber)
         else:
             atype = an.analysis_type
 
@@ -344,11 +354,19 @@ class SystemMonitorEditor(SeriesEditor):
     def _get_analyses(self, tool, identifier, aliquot=None, use_date_range=False):
         if globalv.system_monitor_debug:
             self._cnt += 1
-
-            return [FileAnalysis(age=random.random() * 10,
-                                 aliquot=i,
-                                 labnumber='{:04n}'.format(i // 4),
-                                 age_err=random.random()) for i in range(self._cnt)]
+            if self._cnt > 4:
+                return [FileAnalysis(age=2 * random.random() + 10,
+                                     aliquot=1,
+                                     step=ALPHAS[i],
+                                     k39=2 + random.random() * 10,
+                                     k39_err=0,
+                                     labnumber='{:04n}'.format(2000 + i // 4),
+                                     age_err=random.random()) for i in range(self._cnt - 4)]
+            else:
+                return [FileAnalysis(age=2 * random.random() + 10,
+                                     aliquot=i,
+                                     labnumber='{:04n}'.format(1000 + i // 4),
+                                     age_err=random.random()) for i in range(self._cnt)]
         else:
             db = self.processor.db
             with db.session_ctx():

@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -43,7 +43,7 @@ class Analysis(ArArAge):
     group_id = Int
     graph_id = Int
 
-    analysis_view_klass = ('pychron.processing.analyses.analysis_view','AnalysisView')
+    analysis_view_klass = ('pychron.processing.analyses.analysis_view', 'AnalysisView')
     analysis_view = Instance('pychron.processing.analyses.analysis_view.AnalysisView')
 
     labnumber = Str
@@ -72,6 +72,7 @@ class Analysis(ArArAge):
     data_reduction_tag = Str
 
     record_id = Property(depends_on='labnumber,aliquot, step')
+    _record_id = Str
     status_text = Property
     age_string = Property
 
@@ -141,9 +142,9 @@ class Analysis(ArArAge):
 
     def _analysis_view_default(self):
 
-        mod, klass= self.analysis_view_klass
-        mod = __import__(mod, fromlist=[klass,])
-        klass=getattr(mod, klass)
+        mod, klass = self.analysis_view_klass
+        mod = __import__(mod, fromlist=[klass, ])
+        klass = getattr(mod, klass)
         # v = self.analysis_view_klass()
         v = klass()
         self._sync_view(v)
@@ -159,11 +160,18 @@ class Analysis(ArArAge):
             av.load(self)
         except BaseException, e:
             import traceback
+
             traceback.print_exc()
             print 'sync view {}'.format(e)
 
+    def _set_record_id(self, v):
+        self._record_id = v
+
     def _get_record_id(self):
-        return make_runid(self.labnumber, self.aliquot, self.step)
+        record_id = self._record_id
+        if not record_id:
+            record_id = make_runid(self.labnumber, self.aliquot, self.step)
+        return record_id
 
     def _get_age_string(self):
         a = self.age

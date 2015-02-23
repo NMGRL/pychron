@@ -496,11 +496,11 @@ class FigureTask(AnalysisEditTask):
                     add_iso=True,
                     set_ans=True):
 
-        with no_update(self):
-            if klass == IdeogramEditor:
-                self.browser_model.current_task_name = 'Ideogram'
-            else:
-                self.browser_model.current_task_name = 'Spectrum'
+        # with no_update(self):
+        #     if klass == IdeogramEditor:
+        #         self.browser_model.current_task_name = 'Ideogram'
+        #     else:
+        #         self.browser_model.current_task_name = 'Spectrum'
 
         # new figure editor
         editor = klass(

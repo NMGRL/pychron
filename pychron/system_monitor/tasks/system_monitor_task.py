@@ -286,7 +286,8 @@ class SystemMonitorTask(FigureTask):
                 PaneItem('pychron.sys_mon.analyses'),
                 orientation='horizontal'),
             right=VSplitter(Tabbed(PaneItem('pychron.console'),
-                                   PaneItem('pychron.plot_editor')),
+                                   PaneItem('pychron.plot_editor'),
+                                   PaneItem('pychron.processing.figures.plotter_options')),
                             PaneItem('pychron.dashboard.client')))
 
 # ============= EOF =============================================
