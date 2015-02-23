@@ -71,6 +71,20 @@ class myCodeWidget(CodeWidget):
         cursor.setCharFormat(fmt)
         cursor.endEditBlock()
 
+    def replace_selection(self, txt):
+
+        cursor = self.textCursor()
+        #  #     QtGui.QTextCursor.StartOfLine, QtGui.QTextCursor.KeepAnchor, txt.count('\n'))
+        cursor.beginEditBlock()
+        cursor.removeSelectedText()
+        cursor.insertText(txt)
+        cursor.endEditBlock()
+        # cursor.movePosition(
+        #     QtGui.QTextCursor.Left, QtGui.QTextCursor.MoveAnchor,len(txt))
+        # cursor.movePosition(
+        #     QtGui.QTextCursor.Right, QtGui.QTextCursor.KeepAnchor,len(txt))
+        self.setTextCursor(cursor)
+
     def mouseMoveEvent(self, event):
         if event.modifiers() & Qt.ControlModifier:
             self.clear_underline()

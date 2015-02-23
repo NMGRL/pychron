@@ -59,7 +59,7 @@ class ExternalPipettePlugin(BaseTaskPlugin):
                             task_group='hardware',
                             factory=self._task_factory,
                             name='External Pipette',
-                            image='pipette.png',
+                            image='pipette',
                             accelerator='Ctrl+Shift+0')]
 
     def _task_factory(self):

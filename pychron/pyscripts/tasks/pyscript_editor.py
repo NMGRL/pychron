@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from datetime import datetime
+from pyface.file_dialog import FileDialog
 
 from traits.api import HasTraits, Property, Bool, Event, \
     Unicode, List, String, Int, on_trait_change, Instance
@@ -24,7 +26,7 @@ import os
 import time
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
-from pychron.core.helpers.filetools import add_extension
+from pychron.core.helpers.filetools import add_extension, remove_extension
 from pychron.pyscripts.context_editors.measurement_context_editor import MeasurementContextEditor
 # from pychron.pyscripts.tasks.gosub_popup_view import GosubPopupView
 from pychron.pyscripts.tasks.gosub_popup_view import GosubPopupWidget
@@ -159,6 +161,33 @@ class PyScriptEditor(Editor, PyScriptEdit):
     detectors = List
     isotopes = List
 
+    def make_gosub(self):
+        selection = self.control.code.textCursor().selectedText()
+        dlg = FileDialog(action='save as',
+                         default_directory=os.path.dirname(self.path))
+
+        p = None
+        # root = os.path.dirname(self.path)
+        # p = os.path.join(root, 'common', 'test_gosub.py')
+        if dlg.open():
+            p = dlg.path
+
+        if p:
+            p = add_extension(p, '.py')
+            # p='/Users/ross/Desktop/foosub.py'
+            with open(p, 'w') as fp:
+                fp.write('# Extracted Gosub\n')
+                fp.write('# Source: from {}\n'.format(self.path))
+                fp.write('# Date: {}\n'.format(datetime.now().strftime('%m-%d-%Y %H:%M')))
+                fp.write('def main():\n')
+                for li in selection.split(u'\u2029'):
+                    fp.write(u'    {}\n'.format(li.lstrip()))
+
+            p = remove_extension(p)
+            rp = os.path.relpath(p, self.path)
+            rp = rp.replace('/', ':')
+            self.control.code.replace_selection("gosub('{}')".format(rp[3:]))
+
     def expand_gosub(self):
         def gen(text, yield_main=True):
             for li in text.split('\n'):
@@ -168,9 +197,9 @@ class PyScriptEditor(Editor, PyScriptEdit):
 
                     gosub = self._parse_gosub_line(sli)
                     gtext = self._get_gosub_text(gosub)
-                    spaces = len(li)-len(li.lstrip())
+                    spaces = len(li) - len(li.lstrip())
                     nident = spaces - 4
-                    ident = ''*nident
+                    ident = ' ' * nident
                     for gi in gen(gtext, False):
                         if gi.strip():
                             yield '{}{}'.format(ident, gi)

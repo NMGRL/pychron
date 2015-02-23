@@ -63,7 +63,7 @@ class TagAction(TaskAction):
     name = 'Tag...'
     # accelerator = 'Ctrl+Shift+t'
     method = 'set_tag'
-    image = icon('tag-blue-add.png')
+    image = icon('tag-blue-add')
     id = 'pychron.tag'
 
 class DataReductionTagAction(TaskAction):

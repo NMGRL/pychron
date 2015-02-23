@@ -106,4 +106,9 @@ class JumpToGosubAction(TaskAction):
 class ExpandGosubsAction(TaskAction):
     name = 'Expand Gosubs'
     method = 'expand_gosubs'
+
+
+class MakeGosubAction(TaskAction):
+    name = 'Make Gosub'
+    method = 'make_gosub'
 # ============= EOF =============================================

@@ -40,6 +40,6 @@ class AddSystemMonitorAction(TaskAction):
 class PauseAction(TaskAction):
     name = 'Pause'
     method = 'pause'
-    image = icon('pause')
+    image = icon('control_pause_blue')
 
 # ============= EOF =============================================

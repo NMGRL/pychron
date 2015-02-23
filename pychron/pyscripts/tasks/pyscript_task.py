@@ -25,7 +25,7 @@ import os
 from pychron.envisage.tasks.editor_task import EditorTask
 from pychron.core.helpers.filetools import add_extension
 from pychron.pyscripts.tasks.git_actions import CommitChangesAction
-from pychron.pyscripts.tasks.pyscript_actions import JumpToGosubAction, ExpandGosubsAction
+from pychron.pyscripts.tasks.pyscript_actions import JumpToGosubAction, ExpandGosubsAction, MakeGosubAction
 from pychron.pyscripts.tasks.pyscript_editor import ExtractionEditor, MeasurementEditor, PyScriptEditor
 from pychron.pyscripts.tasks.pyscript_panes import CommandsPane, DescriptionPane, \
     CommandEditorPane, ControlPane, ScriptBrowserPane, ContextEditorPane, RepoPane
@@ -56,7 +56,8 @@ class PyScriptTask(EditorTask, ExecuteMixin):
 
     description = String
 
-    tool_bars = [SToolBar(JumpToGosubAction(), ExpandGosubsAction()), ]
+    tool_bars = [SToolBar(JumpToGosubAction(), ExpandGosubsAction(),
+                          MakeGosubAction()), ]
 
     use_git_repo = Bool
 
@@ -82,6 +83,11 @@ class PyScriptTask(EditorTask, ExecuteMixin):
         self.repo_manager.commit_dialog()
         if self.active_editor:
             self.repo_manager.load_file_history(self.active_editor.path)
+
+    def make_gosub(self):
+        editor = self.has_active_editor()
+        if editor:
+            editor.make_gosub()
 
     def expand_gosubs(self):
         editor = self.has_active_editor()

@@ -111,3 +111,7 @@ server-connect
 start
 table_row_delete
 document-preview
+control_pause_blue
+media-record
+media-playback-stop
+pipette

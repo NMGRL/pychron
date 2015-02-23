@@ -78,12 +78,16 @@ class ScanManager(Manager):
     graph_scan_width = Float(enter_set=True, auto_set=False)  # in minutes
     clear_button = Event
     # record_button = Event
-    record_button = ToggleButton(image_on=icon('media-record'),
-                                 image_off=icon('media-playback-stop'),
-                                 tooltip_on='Start recording scan',
-                                 tooltip_off='Stop recording scan',
-                                 height=22,
-                                 width=45)
+    # record_button = ToggleButton(image_on=icon('media-record'),
+    #                              image_off=icon('media-playback-stop'),
+    #                              tooltip_on='Start recording scan',
+    #                              tooltip_off='Stop recording scan',
+    #                              # height=22,
+    #                              # width=45
+    #                             )
+
+    start_record_button = Button
+    stop_record_button = Button
 
     snapshot_button = Button
     snapshot_output = Enum('png', 'pdf')
@@ -461,13 +465,17 @@ class ScanManager(Manager):
     def _clear_all_markers_button_fired(self):
         self.graph.clear_markers()
 
-    def _record_button_fired(self):
-        if self._recording:
-            self._stop_recording()
-            self._recording = False
-        else:
-            self._start_recording()
-            self._recording = True
+    def _start_record_button_fired(self):
+        # if self._recording:
+        #     self._stop_recording()
+        #     self._recording = False
+        # else:
+        self._start_recording()
+        self._recording = True
+
+    def _stop_record_button_fired(self):
+        self._stop_recording()
+        self._recording = False
 
     def _snapshot_button_fired(self):
         self.debug('snapshot button fired')
