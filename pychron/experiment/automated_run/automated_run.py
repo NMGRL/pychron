@@ -876,6 +876,8 @@ class AutomatedRun(Loggable):
                 p = add_extension(p, '.yaml')
 
                 if os.path.isfile(p):
+                    from pychron.experiment.automated_run.syn_extraction import SynExtractionCollector
+
                     dur = self.extraction_script.calculate_estimated_duration(force=True)
                     syn_extractor = SynExtractionCollector(arun=weakref.ref(self)(),
                                                            path=p,
@@ -1000,7 +1002,7 @@ class AutomatedRun(Loggable):
         if block:
             self._post_equilibration()
         else:
-            t = Thread(target = self._post_equilibration)
+            t = Thread(target=self._post_equilibration)
             t.start()
 
     def _post_equilibration(self):
@@ -1081,6 +1083,8 @@ anaylsis_type={}
         if self._use_arar_age():
             if self.arar_age is None:
                 # load arar_age object for age calculation
+                from pychron.processing.arar_age import ArArAge
+
                 self.arar_age = ArArAge()
 
             es = self.extraction_script
@@ -1192,29 +1196,29 @@ anaylsis_type={}
     def _add_conditionals_from_file(self, p):
         d = conditionals_from_file(p)
         for k, v in d.items():
-            if k in ('actions','truncations','terminations','cancelations'):
+            if k in ('actions', 'truncations', 'terminations', 'cancelations'):
                 var = getattr(self, '{}_conditionals'.format(k[:-1]))
                 var.extend(v)
 
-            # with open(p, 'r') as fp:
-            # yd = yaml.load(fp)
-            #     cs = (('TruncationConditional', 'truncation', 'truncations'),
-            #           ('ActionConditional', 'action', 'actions'),
-            #           ('TerminationConditional', 'termination', 'terminations'),
-            #           ('CancelationConditional', 'cancelation', 'cancelations'))
-            #     for klass, var, tag in cs:
-            #         yl = yd.get(tag)
-            #         if not yl:
-            #             continue
-            #
-            #         var = getattr(self, '{}_conditionals'.format(var))
-            #         conds = [conditional_from_dict(ti, klass) for ti in yl]
-            #         conds = [c for c in conds if c is not None]
-            #         if conds:
-            #             var.extend(conds)
-            #             # for ti in yl:
-            #             # cx =
-            #             # var.append(cx)
+                # with open(p, 'r') as fp:
+                # yd = yaml.load(fp)
+                # cs = (('TruncationConditional', 'truncation', 'truncations'),
+                #           ('ActionConditional', 'action', 'actions'),
+                #           ('TerminationConditional', 'termination', 'terminations'),
+                #           ('CancelationConditional', 'cancelation', 'cancelations'))
+                #     for klass, var, tag in cs:
+                #         yl = yd.get(tag)
+                #         if not yl:
+                #             continue
+                #
+                #         var = getattr(self, '{}_conditionals'.format(var))
+                #         conds = [conditional_from_dict(ti, klass) for ti in yl]
+                #         conds = [c for c in conds if c is not None]
+                #         if conds:
+                #             var.extend(conds)
+                #             # for ti in yl:
+                #             # cx =
+                #             # var.append(cx)
 
     def _conditional_appender(self, name, cd, klass):
         if not self.arar_age:
@@ -1235,7 +1239,7 @@ anaylsis_type={}
         # #for 2.0.4 backwards compatiblity
         # start_count = dictgetter(cd, ('start','start_count'))
         # if start_count is None:
-        #     start_count = 50
+        # start_count = 50
         #     self.debug('defaulting to start_count={}'.format(start_count))
         #
         # self.info('adding {} {} {} {}'.format(name, attr, comp, start_count))
@@ -1429,7 +1433,7 @@ anaylsis_type={}
                             # for c in doc:
                             # try:
                             # attr = c['attr']
-                            #             comp = c['check']
+                            # comp = c['check']
                             #             start = c['start']
                             #             freq = c.get('frequency', 1)
                             #             acr = c.get('abbreviated_count_ratio', 1)
@@ -1474,6 +1478,8 @@ anaylsis_type={}
             title = '{}   {}'.format(title, irradiation)
 
         if plot_panel is None:
+            from pychron.experiment.plot_panel import PlotPanel
+
             plot_panel = PlotPanel(
                 stack_order=stack_order,
                 info_func=self.info,
@@ -1724,6 +1730,8 @@ anaylsis_type={}
         if self.plot_panel:
             self.plot_panel._ncounts = ncounts
             self.plot_panel.total_counts += ncounts
+            from pychron.core.ui.gui import invoke_in_main_thread
+
             invoke_in_main_thread(self._setup_isotope_graph, starttime_offset, color, grpname)
 
         with self.persister.writer_ctx():
@@ -1760,6 +1768,8 @@ anaylsis_type={}
         graph.set_x_limits(min_=min_, max_=max_)
 
         series = self.collector.series_idx
+
+        regressing = False
         for k, iso in self.arar_age.isotopes.iteritems():
             idx = graph.get_plotid_by_ytitle(k)
             # print 'ff', k, iso.name, idx
@@ -1767,14 +1777,19 @@ anaylsis_type={}
                 try:
                     graph.series[idx][series]
                 except IndexError, e:
+                    fit = None if grpname == 'sniff' else iso.get_fit(0)
+                    regressing = fit or regressing
                     graph.new_series(marker='circle',
                                      color=color,
                                      type='scatter',
                                      marker_size=1.25,
-                                     fit=None if grpname == 'sniff' else iso.get_fit(0),
+                                     fit=fit,
                                      plotid=idx,
                                      add_inspector=False,
                                      add_tools=False)
+
+        scnt, fcnt = (2, 1) if regressing else (1, 0)
+        self.measurement_script.increment_series_counts(scnt, fcnt)
 
         return graph
 
@@ -1940,7 +1955,7 @@ anaylsis_type={}
     def _get_runid(self):
         return self.spec.runid
         # return make_runid(self.spec.labnumber,
-        #                   self.spec.aliquot,
+        # self.spec.aliquot,
         #                   self.spec.step)
 
     def _get_collector(self):
@@ -2001,12 +2016,18 @@ anaylsis_type={}
     def _extraction_script_default(self):
         return self._load_script('extraction')
 
+    #
     def _peak_hop_collector_default(self):
+
+        from pychron.experiment.automated_run.peak_hop_collector import PeakHopCollector
+
         c = PeakHopCollector()
         c.console_bind_preferences('pychron.experiment')
         return c
 
     def _multi_collector_default(self):
+        from pychron.experiment.automated_run.multi_collector import MultiCollector
+
         c = MultiCollector()
         c.console_bind_preferences('pychron.experiment')
         return c
