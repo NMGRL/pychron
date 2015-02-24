@@ -36,3 +36,24 @@ Cancelation
 PreRunTermination
 PostRunTermination
 =================== ==========================
+
+
+Functions/Modifiers
+--------------------
+.. note:: User supplies the values contained in brackets (i.e. ``[ ]``)
+
+================================== =============================================== ====================================
+Name                               Description                                     Example
+---------------------------------- ----------------------------------------------- ====================================
+min([value])                                                                       min(Ar40)
+max([value])                                                                       max(Ar40)
+average([value])                                                                   average(Ar40)
+slope([value])                                                                     slope(Ar40)
+[name].current                     get the last measured intensity for an isotope  Ar40.current
+[name].cur                         same as current                                 Ar40.cur
+device.[name]                      get a device value
+[controller].[gauge].pressure      get a pressure from an controller               bone.ig.pressure
+[name].deflection                  get detector's deflection                       H1.deflection
+[isotope]/[isotope]                get a baseline corrected ratio                  Ar40/Ar36
+between([value], [v1],[v2])        check if a value is between v1,v2               between(max(Ar40), 10, 100)
+================================== =============================================== ====================================
