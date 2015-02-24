@@ -148,7 +148,7 @@ class MeasurementPyScript(ValvePyScript):
 
     @count_verbose_skip
     @command_register
-    def multicollect(self, ncounts=200, integration_time=1.04, calc_time=False):
+    def multicollect(self, ncounts=200, integration_time=1.04, increment_series_count = True, calc_time=False):
         """
         Do a multicollection. Measure all detectors setup using ``activate_detectors``
 
@@ -174,8 +174,9 @@ class MeasurementPyScript(ValvePyScript):
                                         series=self._series_count):
             self.cancel()
 
-        self._series_count += 2
-        self._fit_series_count += 1
+        if increment_series_count:
+            self._series_count += 2
+            self._fit_series_count += 1
 
     @count_verbose_skip
     @command_register

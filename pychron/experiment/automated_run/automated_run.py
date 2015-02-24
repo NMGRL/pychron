@@ -620,6 +620,10 @@ class AutomatedRun(Loggable):
     # ===============================================================================
     #
     # ===============================================================================
+    def show_conditionals(self, tripped=None):
+        self.experiment_executor.show_conditionals(tripped=tripped,
+                                                   show_measuring=True, kind='live')
+
     def teardown(self):
         if self.measurement_script:
             self.measurement_script.automated_run = None
@@ -1238,8 +1242,8 @@ anaylsis_type={}
     def _add_conditionals_from_file(self, p):
         d = conditionals_from_file(p)
         for k, v in d.items():
-            if k in ('actions', 'truncations', 'terminations', 'cancelations'):
-                var = getattr(self, '{}_conditionals'.format(k))
+            if k in ('actions','truncations','terminations','cancelations'):
+                var = getattr(self, '{}_conditionals'.format(k[:-1]))
                 var.extend(v)
 
                 # with open(p, 'r') as fp:

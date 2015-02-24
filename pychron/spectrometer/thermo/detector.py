@@ -95,10 +95,9 @@ class Detector(SpectrometerDevice):
         if current:
             self.read_deflection()
 
-        de = self._deflection
-
-        dev = 1
+        dev = 0
         if self._deflection_correction_factors is not None:
+            de = self._deflection
             dev = polyval(self._deflection_correction_factors, [de])[0]
 
         return self.deflection_correction_sign * dev
