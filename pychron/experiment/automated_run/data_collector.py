@@ -346,6 +346,7 @@ class DataCollector(Consoleable):
                 self.plot_panel.total_counts -= (original_counts - i)
                 return 'break'
         elif script_counts != original_counts:
+            print script_counts, original_counts, i
             if i > script_counts:
                 self.info('script termination. measurement iteration executed {}/{} counts'.format(*count_args))
                 return 'break'

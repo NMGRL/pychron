@@ -58,6 +58,9 @@ class Detector(SpectrometerDevice):
 
     isotopes = Property
     #color_square = None
+    def __init__(self, *args, **kw):
+        super(Detector, self).__init__(*args, **kw)
+        self.intensities = array([])
 
     def load(self):
         self.read_deflection()

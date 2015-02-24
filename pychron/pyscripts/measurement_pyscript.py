@@ -340,6 +340,7 @@ class MeasurementPyScript(ValvePyScript):
         :param conditionals: list of dicts
 
         """
+        self.ncounts = ncounts
         ret = self._automated_run_call('py_whiff', ncounts, conditionals,
                                        self._time_zero, self._time_zero_offset,
                                        fit_series=self._fit_series_count,
@@ -366,13 +367,14 @@ class MeasurementPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def post_equilibration(self):
+    def post_equilibration(self, block=False):
         """
         Run the post equilibration script.
 
         """
-        self._automated_run_call('py_post_equilibration')
-
+    
+        self._automated_run_call('py_post_equilibration', block=block)
+        
     @verbose_skip
     @command_register
     def equilibrate(self, eqtime=20, inlet=None, outlet=None,
