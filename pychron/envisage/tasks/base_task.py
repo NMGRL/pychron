@@ -42,7 +42,7 @@ from pychron.envisage.tasks.actions import GenericSaveAction, GenericSaveAsActio
     GenericFindAction, RaiseAction, RaiseUIAction, ResetLayoutAction, \
     MinimizeAction, PositionAction, IssueAction, CloseAction, CloseOthersAction, AboutAction, OpenAdditionalWindow, \
     NoteAction, RestartAction, DocumentationAction, CopyPreferencesAction, SwitchUserAction, KeyBindingsAction, \
-    ChangeLogAction, StartupTestsAction
+    ChangeLogAction, StartupTestsAction, DemoAction
 from pychron.loggable import Loggable
 
 
@@ -413,6 +413,7 @@ class BaseTask(Task, Loggable, PreferenceMixin):
             KeyBindingsAction(),
             SwitchUserAction(),
             StartupTestsAction(),
+            DemoAction(),
             id='help.menu',
             name='Help')
         return menu
