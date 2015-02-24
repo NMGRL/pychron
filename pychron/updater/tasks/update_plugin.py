@@ -18,18 +18,9 @@
 from envisage.ui.tasks.task_extension import TaskExtension
 from pyface.tasks.action.schema_addition import SchemaAddition
 from traits.api import List
-from envisage.plugin import Plugin
 # ============= standard library imports ========================
-import sys
-import stat
-import os
 # ============= local library imports  ==========================
-from pychron.core.helpers.filetools import to_bool
-from pychron.core.helpers.logger_setup import new_logger
-from pychron.core.ui.progress_dialog import myProgressDialog
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
-from pychron.loggable import confirmation_dialog
-from pychron.paths import paths, r_mkdir
 from pychron.updater.tasks.actions import CheckForUpdatesAction, ManageVersionAction
 from pychron.updater.tasks.update_preferences import UpdatePreferencesPane
 from pychron.updater.updater import Updater
