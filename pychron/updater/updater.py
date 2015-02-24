@@ -80,7 +80,9 @@ class Updater(Loggable):
                 if hexsha:
                     origin = self._repo.remotes.origin
                     self.debug('pulling changes from {} to {}'.format(origin.url, branch))
-                    origin.pull(hexsha)
+
+                    self._repo.git.pull(origin, hexsha)
+                    # origin.pull(hexsha)
 
                     self._build(branch, rc)
                     if self.confirmation_dialog('Restart?'):
@@ -174,11 +176,12 @@ class Updater(Loggable):
     def _get_local_remote_commits(self):
 
         repo = self._get_working_repo()
+
         branchname = self.branch
         origin = repo.remotes.origin
-        origin.fetch(branchname)
-        oref = origin.refs[branchname]
+        repo.git.fetch(origin, branchname)
 
+        oref = origin.refs[branchname]
         remote_commit = oref.commit
 
         try:
