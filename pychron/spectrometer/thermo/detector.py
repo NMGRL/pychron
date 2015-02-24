@@ -16,12 +16,12 @@
 
 # ============= enthought library imports =======================
 from traits.api import Float, Str, Bool, Property, Color, \
-    Int, Array
+    Int
 from traitsui.api import View, Item, HGroup, \
     spring
 # ============= standard library imports ========================
 import os
-from numpy import loadtxt, polyfit, polyval, hstack, poly1d
+from numpy import loadtxt, polyfit, polyval, hstack, poly1d, array
 from scipy import optimize
 # ============= local library imports  ==========================
 from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
@@ -44,12 +44,12 @@ class Detector(SpectrometerDevice):
     deflection_correction_sign = Int(1)
 
     _deflection_correction_factors = None
-    # intensity = Property(depends_on='spectrometer:intensity_dirty')
-    #    intensity = Float
-    #    std = Float
+    # # intensity = Property(depends_on='spectrometer:intensity_dirty')
+    # #    intensity = Float
+    # #    std = Float
     intensity = Str
     std = Str
-    intensities = Array
+    intensities = None
     nstd = Int(10)
     active = Bool(True)
     gain = Float
@@ -60,6 +60,9 @@ class Detector(SpectrometerDevice):
 
     isotopes = Property
     #color_square = None
+    def __init__(self, *args, **kw):
+        super(Detector, self).__init__(*args, **kw)
+        self.intensities = array([])
 
     def load(self):
         self.read_deflection()
@@ -171,4 +174,4 @@ class Detector(SpectrometerDevice):
     def __repr__(self):
         return self.name
 
-        # ============= EOF =============================================
+#============= EOF =============================================

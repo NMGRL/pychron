@@ -260,8 +260,8 @@ class AutomatedRun(Loggable):
                                check_conditionals, sc, obj)
         return result
 
-    def py_post_equilibration(self):
-        self.do_post_equilibration()
+    def py_post_equilibration(self, **kw):
+        self.do_post_equilibration(**kw)
 
     def py_equilibration(self, eqtime=None, inlet=None, outlet=None,
                          do_post_equilibration=True,
@@ -992,7 +992,14 @@ class AutomatedRun(Loggable):
             self.heading('Post Measurement Finished unsuccessfully')
             return False
 
-    def do_post_equilibration(self):
+    def do_post_equilibration(self, block=False):
+        if block:
+            self._post_equilibration()
+        else:
+            t = Thread(target = self._post_equilibration)
+            t.start()
+
+    def _post_equilibration(self):
         if self._equilibration_done:
             return
 

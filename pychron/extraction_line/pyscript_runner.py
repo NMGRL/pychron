@@ -116,6 +116,7 @@ class RemotePyScriptRunner(PyScriptRunner):
     def reset_connection(self):
         if self.handle.error:
             self.handle = self._handle_factory()
+            self._resource.handle = self.handle
             return self.connect()
         else:
             return True
@@ -131,6 +132,7 @@ class RemotePyScriptRunner(PyScriptRunner):
         r = RemoteResource()
         r.name = name
         r.handle = self.handle
+        self._resource = r
         return r
 
     def connect(self):

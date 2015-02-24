@@ -261,6 +261,7 @@ class MeasurementPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def whiff(self, ncounts=0, conditionals=None):
+        self.ncounts = ncounts
         ret = self._automated_run_call('py_whiff', ncounts, conditionals,
                                        self._time_zero, self._time_zero_offset,
                                        fit_series=self._fit_series_count,
@@ -287,8 +288,8 @@ class MeasurementPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def post_equilibration(self):
-        self._automated_run_call('py_post_equilibration')
+    def post_equilibration(self, block=False):
+        self._automated_run_call('py_post_equilibration', block=block)
 
     @verbose_skip
     @command_register

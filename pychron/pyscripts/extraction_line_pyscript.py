@@ -497,7 +497,7 @@ class ExtractionPyScript(ValvePyScript):
                     break
                 self._sleep(1)
 
-                if not r.reset_connection():
+                if not self.runner.reset_connection():
                     self.cancel()
                     break
 
