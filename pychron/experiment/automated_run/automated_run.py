@@ -1049,7 +1049,7 @@ class AutomatedRun(Loggable):
         if block:
             self._post_equilibration()
         else:
-            t = Thread(target = self._post_equilibration)
+            t = Thread(target=self._post_equilibration)
             t.start()
 
     def _post_equilibration(self):
@@ -1131,6 +1131,7 @@ anaylsis_type={}
             if self.arar_age is None:
                 # load arar_age object for age calculation
                 from pychron.processing.arar_age import ArArAge
+
                 self.arar_age = ArArAge()
 
             es = self.extraction_script
@@ -1242,7 +1243,7 @@ anaylsis_type={}
     def _add_conditionals_from_file(self, p):
         d = conditionals_from_file(p)
         for k, v in d.items():
-            if k in ('actions','truncations','terminations','cancelations'):
+            if k in ('actions', 'truncations', 'terminations', 'cancelations'):
                 var = getattr(self, '{}_conditionals'.format(k[:-1]))
                 var.extend(v)
 
@@ -1526,6 +1527,7 @@ anaylsis_type={}
 
         if plot_panel is None:
             from pychron.experiment.plot_panel import PlotPanel
+
             plot_panel = PlotPanel(
                 stack_order=stack_order,
                 info_func=self.info,
@@ -1777,6 +1779,7 @@ anaylsis_type={}
             self.plot_panel._ncounts = ncounts
             self.plot_panel.total_counts += ncounts
             from pychron.core.ui.gui import invoke_in_main_thread
+
             invoke_in_main_thread(self._setup_isotope_graph, starttime_offset, color, grpname)
 
         with self.persister.writer_ctx():
@@ -1813,6 +1816,8 @@ anaylsis_type={}
         graph.set_x_limits(min_=min_, max_=max_)
 
         series = self.collector.series_idx
+
+        regressing = False
         for k, iso in self.arar_age.isotopes.iteritems():
             idx = graph.get_plotid_by_ytitle(k)
             # print 'ff', k, iso.name, idx
@@ -1820,14 +1825,19 @@ anaylsis_type={}
                 try:
                     graph.series[idx][series]
                 except IndexError, e:
+                    fit = None if grpname == 'sniff' else iso.get_fit(0)
+                    regressing = fit or regressing
                     graph.new_series(marker='circle',
                                      color=color,
                                      type='scatter',
                                      marker_size=1.25,
-                                     fit=None if grpname == 'sniff' else iso.get_fit(0),
+                                     fit=fit,
                                      plotid=idx,
                                      add_inspector=False,
                                      add_tools=False)
+
+        scnt, fcnt = (2, 1) if regressing else (1, 0)
+        self.measurement_script.increment_series_counts(scnt, fcnt)
 
         return graph
 
@@ -2057,16 +2067,19 @@ anaylsis_type={}
 
     def _extraction_script_default(self):
         return self._load_script('extraction')
-#
+
+    #
     def _peak_hop_collector_default(self):
 
         from pychron.experiment.automated_run.peak_hop_collector import PeakHopCollector
+
         c = PeakHopCollector()
         c.console_bind_preferences('pychron.experiment')
         return c
 
     def _multi_collector_default(self):
         from pychron.experiment.automated_run.multi_collector import MultiCollector
+
         c = MultiCollector()
         c.console_bind_preferences('pychron.experiment')
         return c
