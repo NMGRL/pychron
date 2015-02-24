@@ -125,7 +125,7 @@ class MeasurementPyScript(ValvePyScript):
 
     @count_verbose_skip
     @command_register
-    def multicollect(self, ncounts=200, integration_time=1.04, calc_time=False):
+    def multicollect(self, ncounts=200, integration_time=1.04, increment_series_count = True, calc_time=False):
         if calc_time:
             self._estimated_duration += (ncounts * integration_time * ESTIMATED_DURATION_FF)
             return
@@ -143,8 +143,9 @@ class MeasurementPyScript(ValvePyScript):
                                         series=self._series_count):
             self.cancel()
 
-        self._series_count += 2
-        self._fit_series_count += 1
+        if increment_series_count:
+            self._series_count += 2
+            self._fit_series_count += 1
 
     @count_verbose_skip
     @command_register

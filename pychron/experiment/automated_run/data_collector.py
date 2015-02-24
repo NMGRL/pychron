@@ -373,6 +373,7 @@ class DataCollector(Consoleable):
             if cancelation_conditional:
                 self.info('cancelation conditional {}. measurement iteration executed {}/{} counts'.format(
                     cancelation_conditional.message, j, original_counts), color='red')
+                self.automated_run.show_conditionals(tripped=cancelation_conditional)
                 return 'cancel'
 
             truncation_conditional = self._check_conditionals(self.truncation_conditionals, i)
@@ -381,7 +382,7 @@ class DataCollector(Consoleable):
                     truncation_conditional.message, j, original_counts), color='red')
                 self.state = 'truncated'
                 self.measurement_script.abbreviated_count_ratio = truncation_conditional.abbreviated_count_ratio
-
+                self.automated_run.show_conditionals(tripped=truncation_conditional)
                 #                self.condition_truncated = True
                 return 'break'
 
@@ -391,6 +392,7 @@ class DataCollector(Consoleable):
                     'action conditional {}. measurement iteration executed {}/{} counts'.format(
                         action_conditional.message,
                         j, original_counts), color='red')
+                self.automated_run.show_conditionals(tripped=action_conditional)
                 action_conditional.perform(self.measurement_script)
                 if not action_conditional.resume:
                     return 'break'
