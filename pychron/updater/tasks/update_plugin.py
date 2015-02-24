@@ -116,7 +116,7 @@ class UpdatePlugin(BaseTaskPlugin):
         ex = [TaskExtension(actions=[SchemaAddition(id='check_for_updates',
                                                     factory=CheckForUpdatesAction,
                                                     path='MenuBar/help.menu'),
-                                     SchemaAddition(id='manager_version',
+                                     SchemaAddition(id='manage_version',
                                                     factory=ManageVersionAction,
                                                     path='MenuBar/help.menu')])]
         return ex

@@ -83,7 +83,8 @@ class Updater(Loggable):
                     origin.pull(hexsha)
 
                     self._build(branch, rc)
-                    os.execl(sys.executable, *([sys.executable] + sys.argv))
+                    if self.confirmation_dialog('Restart?'):
+                        os.execl(sys.executable, *([sys.executable] + sys.argv))
                 else:
                     if inform:
                         self.information_dialog('Application is up-to-date')
@@ -103,7 +104,10 @@ class Updater(Loggable):
         return p
 
     def _build(self, branch, commit):
+
+        # get the version number from version.py
         version = self._extract_version()
+
         pd = myProgressDialog(max=5200,
                               title='Builing Application. '
                                     'Version={} Branch={} ({})'.format(version, branch, commit.hexsha[:7]),
@@ -111,13 +115,13 @@ class Updater(Loggable):
         pd.open()
         pd.change_message('Building application')
 
-        from pychron.updater.packager import make_egg, copy_resources
-        # get the version number from version.py
-        dest = self._get_dest_root()
         self.info('building application. version={}'.format(version))
         self.debug('building egg from {}'.format(self._repo.working_dir))
+
+        dest = self._get_dest_root()
         self.debug('moving egg to {}'.format(dest))
 
+        from pychron.updater.packager import make_egg, copy_resources
         pd.change_message('Building Application')
         with pd.stdout():
             make_egg(self._repo.working_dir, dest, 'pychron', version)

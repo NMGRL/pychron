@@ -28,3 +28,4 @@ Pychron Develop Guide
   remote_hardware
   errors/el_errors
   errors/laser_errors
+  updater
