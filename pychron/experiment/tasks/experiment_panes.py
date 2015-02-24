@@ -424,7 +424,7 @@ class IsotopeEvolutionPane(TraitsDockPane):
                            Item('object.plot_panel.ncounts', label='Counts',
                                 tooltip='Set the number of measurement points'),
                            Spring(springy=False, width=-10),
-                           CustomLabel('object.plot_panel.counts',
+                           CustomLabel('object.plot_panel.display_counts',
                                        color='red',
                                        size=14,
                                        width=100),
