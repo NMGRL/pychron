@@ -98,7 +98,10 @@ def make_egg(root, dest, pkg_name, version):
     for di in ('build', 'dist','pychron.egg-info'):
         p = os.path.join(root, di)
         print 'removing entire {} dir {}'.format(di, p)
-        shutil.rmtree(p)
+        if os.path.isdir(p):
+            shutil.rmtree(p)
+        else:
+            print 'not a directory {}'.format(p)
 
 
 def resource_path(dest, name):
