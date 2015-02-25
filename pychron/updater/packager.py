@@ -111,7 +111,7 @@ def resource_path(dest, name):
 def copy_resource_dir(dest, src, name=None):
     if os.path.exists(src):
         if name is None:
-            name = os.path.basename(dest, src)
+            name = os.path.basename(src)
         shutil.copytree(src, resource_path(dest, name))
     else:
         print '++++++++++++++++++++++ Not a valid Resource {} +++++++++++++++++++++++'.format(src)
