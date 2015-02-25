@@ -78,14 +78,14 @@ def make_egg(root, dest, pkg_name, version):
     try:
         setup(name=pkg_name,
               script_args=('bdist_egg',),
-              version=version,
               packages=pkgs)
     except BaseException, e:
         import traceback
         traceback.print_exc()
 
-    eggname = '{}-{}-py2.7.egg'.format(pkg_name, version)
+    eggname = '{}-0.0.0-py2.7.egg'.format(pkg_name)
     # make the .pth file
+
     if dest.endswith('Contents'):
         rdest = os.path.join(dest, 'Resources')
         with open(os.path.join(rdest,
