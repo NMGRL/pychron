@@ -135,7 +135,7 @@ class Updater(Loggable):
 
             pd.change_message('Copying Resources')
             if dest.endswith('Contents'):
-                copy_resources()
+                copy_resources(self._repo.working_dir, dest, self.application.shortname)
             self.debug('------------- copy resources complete -----------')
 
     def _extract_version(self):
