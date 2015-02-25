@@ -103,7 +103,7 @@ class DemoAction(Action):
 
     def perform(self, event):
         app = event.task.application
-        app.info('Demo message: {}'.format('Hello version 1.8'))
+        app.info('Demo message: {}'.format('Hello version 1.9'))
 
 
 class StartupTestsAction(Action):

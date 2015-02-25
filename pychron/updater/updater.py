@@ -102,7 +102,9 @@ class Updater(Loggable):
     # private
     def _get_dest_root(self):
         p = os.path.abspath(__file__)
+        self.debug(p)
         while 1:
+            self.debug(p)
             if os.path.basename(p) == 'Contents':
                 break
             else:

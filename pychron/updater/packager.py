@@ -31,7 +31,8 @@ def copy_resources(root, dest, app_name):
 
     # copy icons
     iroot = os.path.join(root, 'resources', 'icons')
-    idest = os.path.join(dest, 'Resources', 'icons')
+    rdest = os.path.join(dest, 'Resources')
+    idest = os.path.join(rdest, 'icons')
     if not os.path.isdir(idest):
         os.mkdir(idest)
 
@@ -56,14 +57,14 @@ def copy_resources(root, dest, app_name):
     # copy helper mod
     for a in ('helpers', ):
         m = os.path.join(root, 'launchers', '{}.py'.format(a))
-        copy_resource(dest, m)
+        copy_resource(rdest, m)
 
     # copy qt_menu.nib
     p = '/anaconda/python.app/Contents/Resources/qt_menu.nib'
     if not os.path.isdir(p):
         p = '{}/{}'.format(os.path.expanduser('~'),
                            'anaconda/python.app/Contents/Resources/qt_menu.nib')
-    copy_resource_dir(dest, p)
+    copy_resource_dir(rdest, p)
 
 
 def make_egg(root, dest, pkg_name, version):
@@ -86,13 +87,13 @@ def make_egg(root, dest, pkg_name, version):
     eggname = '{}-{}-py2.7.egg'.format(pkg_name, version)
     # make the .pth file
     if dest.endswith('Contents'):
-        with open(os.path.join(dest,
-                               'Resources',
+        rdest = os.path.join(dest, 'Resources')
+        with open(os.path.join(rdest,
                                '{}.pth'.format(pkg_name)), 'w') as fp:
             fp.write('{}\n'.format(eggname))
 
         egg_root = os.path.join(root, 'dist', eggname)
-        copy_resource(dest, egg_root)
+        copy_resource(rdest, egg_root)
 
     # remove build dir
     for di in ('build', 'dist','pychron.egg-info'):
