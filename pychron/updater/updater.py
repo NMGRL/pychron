@@ -20,6 +20,7 @@ import os
 import urllib2
 from apptools.preferences.preference_binding import bind_preference
 import sys
+from git import GitCommandError
 from traits.api import HasTraits, Button, Bool, Str, Property
 from traitsui.api import View, Item
 # ============= standard library imports ========================
@@ -68,30 +69,35 @@ class Updater(Loggable):
                                   tags=repo.tags,
 
                                   # pass to model
-                                  show_behind=False,)
+                                  show_behind=False, )
 
     def check_for_updates(self, inform=False):
         branch = self.branch
         remote = self.remote
         if remote and branch:
             if self._validate_origin(remote):
-                lc, rc = self._check_for_updates()
-                hexsha = self._out_of_date(lc, rc)
-                if hexsha:
-                    origin = self._repo.remotes.origin
-                    self.debug('pulling changes from {} to {}'.format(origin.url, branch))
+                if self._validate_branch(branch):
+                    lc, rc = self._check_for_updates()
+                    hexsha = self._out_of_date(lc, rc)
+                    if hexsha:
+                        origin = self._repo.remotes.origin
+                        self.debug('pulling changes from {} to {}'.format(origin.url, branch))
 
-                    self._repo.git.pull(origin, hexsha)
-                    # origin.pull(hexsha)
+                        self._repo.git.pull(origin, hexsha)
+                        # origin.pull(hexsha)
 
-                    self._build(branch, rc)
-                    if self.confirmation_dialog('Restart?'):
-                        os.execl(sys.executable, *([sys.executable] + sys.argv))
-                else:
-                    if inform:
-                        self.information_dialog('Application is up-to-date')
+                        self._build(branch, rc)
+                        if self.confirmation_dialog('Restart?'):
+                            os.execl(sys.executable, *([sys.executable] + sys.argv))
+                    else:
+                        if inform:
+                            self.information_dialog('Application is up-to-date')
             else:
                 self.warning_dialog('{} not a valid Github Repository. Unable to check for updates'.format(remote))
+
+    def build(self):
+        lc = self._get_local_commit()
+        self._build(self.branch, lc)
 
     # private
     def _get_dest_root(self):
@@ -124,6 +130,7 @@ class Updater(Loggable):
         self.debug('moving egg to {}'.format(dest))
 
         from pychron.updater.packager import make_egg, copy_resources
+
         pd.change_message('Building Application')
         with pd.stdout():
             make_egg(self._repo.working_dir, dest, 'pychron', version)
@@ -144,6 +151,44 @@ class Updater(Loggable):
         p = os.path.join(self._repo.working_dir, 'pychron', 'version.py')
         ver = imp.load_source('version', p)
         return ver.__version__
+
+    def _fetch(self, branch):
+        repo = self._get_working_repo()
+        origin = repo.remotes.origin
+        try:
+            repo.git.fetch(origin, branch)
+        except GitCommandError, e:
+            self.warning('Failed to fetch. {}'.format(e))
+
+    def _validate_branch(self, name):
+        """
+        check that the repo's branch is name
+
+        if not ask user if its ok to checkout branch
+        :param name:
+        :return:
+        """
+
+        repo = self._get_working_repo()
+        active_branch_name = repo.active_branch.name
+        if active_branch_name != name:
+            self.warning('branches do not match')
+            if self.confirmation_dialog(
+                    'The branch specified in Preferences does not match the branch in the build directory.\n'
+                    'Preferences branch: {}\n'
+                    'Build branch: {}\n'
+                    'Do you want to proceed?'.format(name, active_branch_name)):
+
+                self.info('switching from branch: {} to branch: {}'.format(active_branch_name, name))
+                self._fetch(name)
+                branch = self._get_branch(name)
+
+                branch.checkout()
+
+                return True
+        else:
+            self._fetch(name)
+            return True
 
     def _validate_origin(self, name):
         try:
@@ -173,26 +218,36 @@ class Updater(Loggable):
             commits = [ci[1:] for ci in txt.split('\n')]
             return self._get_selected_hexsha(commits, lc, rc)
 
+    def _get_branch(self, name):
+        repo = self._get_working_repo()
+        try:
+            branch = getattr(repo.heads, name)
+        except AttributeError:
+            oref = repo.remotes.origin.refs[name]
+            branch = repo.create_head(name, commit=oref.commit)
+        return branch
+
     def _get_local_remote_commits(self):
 
         repo = self._get_working_repo()
 
         branchname = self.branch
+
         origin = repo.remotes.origin
-        repo.git.fetch(origin, branchname)
 
         oref = origin.refs[branchname]
         remote_commit = oref.commit
 
-        try:
-            branch = getattr(repo.heads, branchname)
-        except AttributeError:
-            branch = repo.create_head(branchname, commit=oref.commit)
-
-        branch.checkout()
+        branch = self._get_branch(branchname)
 
         local_commit = branch.commit
         return local_commit, remote_commit
+
+    def _get_local_commit(self):
+        repo = self._get_working_repo()
+        branchname = self.branch
+        branch = getattr(repo.heads, branchname)
+        return branch.commit
 
     def _get_selected_hexsha(self, commits, lc, rc, view_klass=None, auto_select=True,
                              tags=None, **kw):
@@ -220,7 +275,8 @@ class Updater(Loggable):
         cv = view_klass(model=h)
         info = cv.edit_traits()
         if info.result:
-            return h.selected.hexsha
+            if h.selected:
+                return h.selected.hexsha
 
     def _get_working_repo(self):
         if not self._repo:

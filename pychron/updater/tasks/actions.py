@@ -23,6 +23,15 @@ from traitsui.menu import Action
 from pychron.envisage.resources import icon
 
 
+class BuildApplicationAction(Action):
+    name = 'Build'
+
+    def perform(self, event):
+        app = event.task.window.application
+        up = app.get_service('pychron.updater.updater.Updater')
+        up.build()
+
+
 class CheckForUpdatesAction(Action):
     name = 'Check For Updates'
     image = icon('update-product')

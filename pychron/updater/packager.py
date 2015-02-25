@@ -31,7 +31,7 @@ def copy_resources(root, dest, app_name):
 
     # copy icons
     iroot = os.path.join(root, 'resources', 'icons')
-    idest = os.path.join(dest, 'icons')
+    idest = os.path.join(dest, 'Resources', 'icons')
     if not os.path.isdir(idest):
         os.mkdir(idest)
 
@@ -63,7 +63,7 @@ def copy_resources(root, dest, app_name):
     if not os.path.isdir(p):
         p = '{}/{}'.format(os.path.expanduser('~'),
                            'anaconda/python.app/Contents/Resources/qt_menu.nib')
-    copy_resource_dir(p)
+    copy_resource_dir(dest, p)
 
 
 def make_egg(root, dest, pkg_name, version):
@@ -105,14 +105,14 @@ def make_egg(root, dest, pkg_name, version):
 
 
 def resource_path(dest, name):
-    return os.path.join(dest, 'Resources', name)
+    return os.path.join(dest, name)
 
 
-def copy_resource_dir(src, name=None):
+def copy_resource_dir(dest, src, name=None):
     if os.path.exists(src):
         if name is None:
-            name = os.path.basename(src)
-        shutil.copytree(src, resource_path(name))
+            name = os.path.basename(dest, src)
+        shutil.copytree(src, resource_path(dest, name))
     else:
         print '++++++++++++++++++++++ Not a valid Resource {} +++++++++++++++++++++++'.format(src)
 
