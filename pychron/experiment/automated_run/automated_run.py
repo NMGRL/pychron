@@ -925,6 +925,7 @@ class AutomatedRun(Loggable):
 
                 if os.path.isfile(p):
                     from pychron.experiment.automated_run.syn_extraction import SynExtractionCollector
+
                     dur = self.extraction_script.calculate_estimated_duration(force=True)
                     syn_extractor = SynExtractionCollector(arun=weakref.ref(self)(),
                                                            path=p,
@@ -1131,7 +1132,6 @@ anaylsis_type={}
             if self.arar_age is None:
                 # load arar_age object for age calculation
                 from pychron.processing.arar_age import ArArAge
-
                 self.arar_age = ArArAge()
 
             es = self.extraction_script
@@ -1527,7 +1527,6 @@ anaylsis_type={}
 
         if plot_panel is None:
             from pychron.experiment.plot_panel import PlotPanel
-
             plot_panel = PlotPanel(
                 stack_order=stack_order,
                 info_func=self.info,
@@ -2067,19 +2066,15 @@ anaylsis_type={}
 
     def _extraction_script_default(self):
         return self._load_script('extraction')
-
-    #
+#
     def _peak_hop_collector_default(self):
-
         from pychron.experiment.automated_run.peak_hop_collector import PeakHopCollector
-
         c = PeakHopCollector()
         c.console_bind_preferences('pychron.experiment')
         return c
 
     def _multi_collector_default(self):
         from pychron.experiment.automated_run.multi_collector import MultiCollector
-
         c = MultiCollector()
         c.console_bind_preferences('pychron.experiment')
         return c

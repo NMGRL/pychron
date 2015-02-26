@@ -1372,13 +1372,14 @@ post_equilibration_script:name''')
     def _edit_template_fired(self):
         temp = self._new_template()
         temp.on_trait_change(self._template_closed, 'close_event')
-
-        self.open_view(temp)
+        self.application.open_view(temp)
+        # self.open_view(temp)
 
     def _edit_pattern_fired(self):
         pat = self._new_pattern()
         pat.on_trait_change(self._pattern_closed, 'close_event')
-        self.open_view(pat)
+        self.application.open_view(pat)
+        # self.open_view(pat)
 
     def _edit_mode_button_fired(self):
         self.edit_mode = not self.edit_mode
