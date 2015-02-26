@@ -178,10 +178,6 @@ class MeasurementPyScript(ValvePyScript):
                                         series=self._series_count):
             self.cancel()
 
-            # if increment_series_count:
-            # self._series_count += 2
-            #     self._fit_series_count += 1
-
     @count_verbose_skip
     @command_register
     def baselines(self, ncounts=1, mass=None, detector='',

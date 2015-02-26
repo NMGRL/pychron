@@ -115,3 +115,5 @@ control_pause_blue
 media-record
 media-playback-stop
 pipette
+package-green
+update-product

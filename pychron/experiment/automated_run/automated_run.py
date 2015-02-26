@@ -1778,6 +1778,7 @@ anaylsis_type={}
             self.plot_panel._ncounts = ncounts
             self.plot_panel.total_counts += ncounts
             from pychron.core.ui.gui import invoke_in_main_thread
+
             invoke_in_main_thread(self._setup_isotope_graph, starttime_offset, color, grpname)
 
         with self.persister.writer_ctx():
@@ -2067,7 +2068,6 @@ anaylsis_type={}
         return self._load_script('extraction')
 #
     def _peak_hop_collector_default(self):
-
         from pychron.experiment.automated_run.peak_hop_collector import PeakHopCollector
         c = PeakHopCollector()
         c.console_bind_preferences('pychron.experiment')

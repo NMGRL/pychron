@@ -97,6 +97,15 @@ class PTaskAction(TaskAction):
         self.accelerator = acc or self.accelerator
 
 
+class DemoAction(Action):
+    name = 'Demo'
+    accelerator = 'Shift+Ctrl+0'
+
+    def perform(self, event):
+        app = event.task.application
+        app.info('Demo message: {}'.format('Hello version 2.0'))
+
+
 class StartupTestsAction(Action):
     name = 'Run Startup Tests'
     def perform(self, event):

@@ -285,10 +285,11 @@ class Maker(object):
               script_args=('bdist_egg',),
               py_modules=modules,
               #                           '-b','/Users/argonlab2/Sandbox'),
-              version=self.version,
+              # version=self.version,
               packages=pkgs)
 
-        eggname = 'pychron-{}-py2.7.egg'.format(self.version)
+        # eggname = 'pychron-{}-py2.7.egg'.format(self.version)
+        eggname = 'pychron-0.0.0-py2.7.egg'
         # make the .pth file
         with open(os.path.join(self.dest,
                                'Resources',
