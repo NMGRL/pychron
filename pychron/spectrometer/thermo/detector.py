@@ -94,7 +94,6 @@ class Detector(SpectrometerDevice):
     def get_deflection_correction(self, current=False):
         if current:
             self.read_deflection()
-        
 
         dev = 0
         if self._deflection_correction_factors is not None:
