@@ -25,7 +25,7 @@ from pychron.envisage.resources import icon
 
 class BuildApplicationAction(Action):
     name = 'Build'
-
+    image = icon('bricks')
     def perform(self, event):
         app = event.task.window.application
         up = app.get_service('pychron.updater.updater.Updater')
