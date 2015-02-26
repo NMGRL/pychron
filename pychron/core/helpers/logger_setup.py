@@ -141,7 +141,7 @@ def logging_setup(name, use_archiver=True, **kw):
     logpath = os.path.join(bdir, logname)
 
     if os.path.isfile(logpath):
-        backup_logpath, _cnt = unique_path2(bdir, name, delimiter='-', extension='.log')
+        backup_logpath, _cnt = unique_path2(bdir, name, delimiter='-', extension='.log', width=5)
 
         shutil.copyfile(logpath, backup_logpath)
         os.remove(logpath)

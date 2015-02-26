@@ -169,7 +169,7 @@ def unique_date_path(root, base, extension='.txt'):
     return p
 
 
-def unique_path2(root, base, delimiter='-', extension='.txt'):
+def unique_path2(root, base, delimiter='-', extension='.txt', width=3):
     """
         unique_path suffers from the fact that it starts at 001.
         this is a problem for log files because the logs are periodically archived which means
@@ -187,7 +187,7 @@ def unique_path2(root, base, delimiter='-', extension='.txt'):
     #
     # cnt += 1
     cnt = max_path_cnt(root, '{}-'.format(base), delimiter=delimiter, extension=extension)
-    p = os.path.join(root, '{}-{:03n}{}'.format(base, cnt, extension))
+    p = os.path.join(root, '{{}}-{{:0{}n}}{{}}'.format(width).format(base, cnt, extension))
     return p, cnt
 
 
