@@ -90,6 +90,10 @@ class MeasurementPyScript(ValvePyScript):
     def get_variables(self):
         return ['truncated', 'eqtime', 'use_cdd_warming']
 
+    def increment_series_counts(self, s, f):
+        self._series_count += s
+        self._fit_series_count += f
+
     # ===============================================================================
     # commands
     # ===============================================================================
@@ -144,7 +148,7 @@ class MeasurementPyScript(ValvePyScript):
                                         self._time_zero, self._time_zero_offset,
                                         series=self._series_count, block=block):
             self.cancel()
-        self._series_count += 1
+            # self._series_count += 1
 
     @count_verbose_skip
     @command_register
@@ -174,8 +178,9 @@ class MeasurementPyScript(ValvePyScript):
                                         series=self._series_count):
             self.cancel()
 
-        self._series_count += 2
-        self._fit_series_count += 1
+            # if increment_series_count:
+            # self._series_count += 2
+            #     self._fit_series_count += 1
 
     @count_verbose_skip
     @command_register
@@ -222,8 +227,8 @@ class MeasurementPyScript(ValvePyScript):
                                         series=series):
             self.cancel()
         self._baseline_series = series
-        self._series_count += 2
-        self._fit_series_count += 1
+        # self._series_count += 2
+        # self._fit_series_count += 1
 
     @count_verbose_skip
     @command_register
@@ -294,8 +299,8 @@ class MeasurementPyScript(ValvePyScript):
                                         fit_series=self._fit_series_count,
                                         group=group):
             self.cancel()
-        self._series_count += 2
-        self._fit_series_count += 1
+            # self._series_count += 2
+            # self._fit_series_count += 1
 
     @count_verbose_skip
     @command_register

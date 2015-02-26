@@ -242,10 +242,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             msg = 'Starting Execution "{}"'.format(name)
             self.heading(msg)
 
-            # if self.stats:
-            #     self.stats.reset()
-            #     self.stats.start_timer()
-
             self._canceled = False
             self.extraction_state_label = ''
 
@@ -428,15 +424,21 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 if not self.is_alive():
                     break
 
-                if self._pre_run_check():
-                    self.warning('pre run check failed')
-                    break
-
                 if self.queue_modified:
                     self.debug('Queue modified. making new run generator')
                     rgen, nruns = exp.new_runs_generator()
                     cnt = 0
                     self.queue_modified = False
+
+                try:
+                    spec = rgen.next()
+                except StopIteration:
+                    self.debug('stop iteration')
+                    break
+
+                if self._pre_run_check():
+                    self.warning('pre run check failed')
+                    break
 
                 self.ms_pumptime_start = None
                 # overlapping = self.current_run and self.current_run.isAlive()
@@ -454,11 +456,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                                    'cnts<nruns={}, is_first_analysis={}'.format(self.is_alive(),
                                                                                 cnt < nruns, is_first_analysis))
 
-                try:
-                    spec = rgen.next()
-                except StopIteration:
-                    self.debug('stop iteration')
-                    break
 
                 run = self._make_run(spec)
                 if run is None:
@@ -750,6 +747,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         msg = '{} {}'.format(n, msg)
         self._set_message(msg, c)
 
+    def show_conditionals(self, *args, **kw):
+        invoke_in_main_thread(self._show_conditionals, *args, **kw)
+
     def _show_conditionals(self, show_measuring=False, tripped=None, kind='livemodal'):
         try:
             if self._cv_info:
@@ -797,7 +797,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     v.title = '{} ({})'.format(v.title, run.spec.runid)
 
             if tripped:
-                v.select_conditional(tripped)
+                v.select_conditional(tripped, tripped=True)
 
             self._cv_info = self.application.open_view(v, kind=kind)
 

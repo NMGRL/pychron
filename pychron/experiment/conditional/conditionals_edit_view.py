@@ -515,12 +515,16 @@ class ConditionalsViewable(HasTraits):
         if new:
             self.help_str = new.help_str
 
-    def select_conditional(self, cond):
+    def select_conditional(self, cond, tripped=False):
+        tcond = type(cond)
         for gi in self.groups:
             for ci in gi.conditionals:
-                if ci == cond:
-                    self.selected_group = gi
-                    return
+                if type(ci) is tcond:
+                    # print '"{}" "{}", {}, {}'.format(ci, cond, id(ci), id(cond))
+                    if ci == cond or ci.teststr == cond.teststr:
+                        self.selected_group = gi
+                        ci.tripped = tripped
+                        return
 
     def _view_tabs(self):
         return UItem('groups', style='custom',

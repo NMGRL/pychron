@@ -232,6 +232,7 @@ class AutomatedRunConditional(BaseConditional):
             if self.trips >= self.ntrips:
                 self.tripped = True
                 self.message = 'condition {} is True'.format(teststr)
+                self.trips = 0
                 return True
         else:
             self.trips = 0
@@ -314,7 +315,11 @@ class ActionConditional(AutomatedRunConditional):
         """
         action = self.action
         if isinstance(action, str):
-            script.execute_snippet(action)
+            try:
+                script.execute_snippet(action)
+            except BaseException:
+                self.warning('Invalid action: "{}"'.format(action))
+
         elif hasattr(action, '__call__'):
             action()
 

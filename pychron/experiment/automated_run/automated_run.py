@@ -620,6 +620,10 @@ class AutomatedRun(Loggable):
     # ===============================================================================
     #
     # ===============================================================================
+    def show_conditionals(self, tripped=None):
+        self.experiment_executor.show_conditionals(tripped=tripped,
+                                                   show_measuring=True, kind='live')
+
     def teardown(self):
         if self.measurement_script:
             self.measurement_script.automated_run = None
@@ -921,6 +925,7 @@ class AutomatedRun(Loggable):
 
                 if os.path.isfile(p):
                     from pychron.experiment.automated_run.syn_extraction import SynExtractionCollector
+
                     dur = self.extraction_script.calculate_estimated_duration(force=True)
                     syn_extractor = SynExtractionCollector(arun=weakref.ref(self)(),
                                                            path=p,
@@ -1045,7 +1050,7 @@ class AutomatedRun(Loggable):
         if block:
             self._post_equilibration()
         else:
-            t = Thread(target = self._post_equilibration)
+            t = Thread(target=self._post_equilibration)
             t.start()
 
     def _post_equilibration(self):
@@ -1239,7 +1244,7 @@ anaylsis_type={}
         d = conditionals_from_file(p)
         for k, v in d.items():
             if k in ('actions', 'truncations', 'terminations', 'cancelations'):
-                var = getattr(self, '{}_conditionals'.format(k))
+                var = getattr(self, '{}_conditionals'.format(k[:-1]))
                 var.extend(v)
 
                 # with open(p, 'r') as fp:
@@ -1809,6 +1814,8 @@ anaylsis_type={}
         graph.set_x_limits(min_=min_, max_=max_)
 
         series = self.collector.series_idx
+
+        regressing = False
         for k, iso in self.arar_age.isotopes.iteritems():
             idx = graph.get_plotid_by_ytitle(k)
             # print 'ff', k, iso.name, idx
@@ -1816,14 +1823,19 @@ anaylsis_type={}
                 try:
                     graph.series[idx][series]
                 except IndexError, e:
+                    fit = None if grpname == 'sniff' else iso.get_fit(0)
+                    regressing = fit or regressing
                     graph.new_series(marker='circle',
                                      color=color,
                                      type='scatter',
                                      marker_size=1.25,
-                                     fit=None if grpname == 'sniff' else iso.get_fit(0),
+                                     fit=fit,
                                      plotid=idx,
                                      add_inspector=False,
                                      add_tools=False)
+
+        scnt, fcnt = (2, 1) if regressing else (1, 0)
+        self.measurement_script.increment_series_counts(scnt, fcnt)
 
         return graph
 

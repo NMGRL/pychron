@@ -827,10 +827,10 @@ class AutomatedRunPersister(Loggable):
     def _assemble_extraction_parameters(self, edict):
         spec = self.run_spec
 
-        edict.update(beam_diameter=spec.beam_diameter,
+        edict.update(beam_diameter=spec.beam_diameter or 0,
                      pattern=spec.pattern,
-                     ramp_duration=spec.ramp_duration,
-                     ramp_rate=spec.ramp_rate)
+                     ramp_duration=spec.ramp_duration or 0,
+                     ramp_rate=spec.ramp_rate or 0)
 
     def _set_table_attr(self, name, grp, attr, value):
         dm = self.data_manager
