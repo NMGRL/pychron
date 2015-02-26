@@ -33,6 +33,11 @@ CHANGELOG
 * added task switching to Browser pane
 * added Import Sample Data action. import samples from xls file.
 
+### Bug Fixes###
+
+#### 2/24/15 ####
+* fixed step heat template editing
+
 <!---
 .. * fully implemented import irradiation from XLS file
 .. * added ability to export irradiations from Pychron to MassSpec
