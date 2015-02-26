@@ -189,7 +189,7 @@ class ZoomCalibration(HasTraits):
             zs = []
             root = '/Users/ross/Pychrondata_demo/data/snapshots/scan{}'.format(scan_i)
             for  zi, idx in zip(z, idxs):
-                pn = os.path.join(root, '{:03n}.jpg'.format(idx))
+                pn = os.path.join(root, '{:03d}.jpg'.format(idx))
                 d = load_image(pn)
 
                 dx = self._calculate_spacing(d)

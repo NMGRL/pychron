@@ -685,7 +685,7 @@ class AutomatedRunFactory(PersistenceLoggable):
             mod = script.get_parameter('modifier')
             if mod is not None:
                 if isinstance(mod, int):
-                    mod = '{:02n}'.format(mod)
+                    mod = '{:02d}'.format(mod)
 
                 self.labnumber = self.labnumber.replace('##', str(mod))
 

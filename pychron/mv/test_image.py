@@ -43,7 +43,7 @@ class TestImage(Viewable):
         for i in range(n):
             plot = Plot(plotdata, padding=0, default_origin="top left")
 
-            name = 'imagedata{:03n}'.format(i)
+            name = 'imagedata{:03d}'.format(i)
             plotdata.set_data(name, ones(wh))
 
             plot.img_plot(name,
@@ -56,7 +56,7 @@ class TestImage(Viewable):
     def set_image(self, arr, idx=0):
         arr = asarray(grayspace(arr))
 
-        self.plotdata.set_data('imagedata{:03n}'.format(idx), arr)
+        self.plotdata.set_data('imagedata{:03d}'.format(idx), arr)
         invoke_in_main_thread(self.container.invalidate_and_redraw)
 #         self.container.invalidate_and_redraw()
 #         self.container.request_redraw()

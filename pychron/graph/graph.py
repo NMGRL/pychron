@@ -301,7 +301,7 @@ class Graph(Viewable, ContextMenuMixin):
     def get_aux_data(self, plotid=0, series=1):
         plot = self.plots[plotid]
 
-        si = plot.plots['aux{:03n}'.format(series)][0]
+        si = plot.plots['aux{:03d}'.format(series)][0]
 
         oi = si.index.get_data()
         ov = si.value.get_data()
@@ -471,7 +471,7 @@ class Graph(Viewable, ContextMenuMixin):
             setattr(ax, '{}_color'.format(a), color)
 
     def set_aux_data(self, x, y, plotid=0, series=1):
-        p = self.plots[plotid].plots['aux{:03n}'.format(series)][0]
+        p = self.plots[plotid].plots['aux{:03d}'.format(series)][0]
         p.index.set_data(x)
         p.value.set_data(y)
 
@@ -518,7 +518,7 @@ class Graph(Viewable, ContextMenuMixin):
 
     def get_series_color(self, plotid=0, series=0):
         if isinstance(series, int):
-            series = 'plot{:03n}'.format(series)
+            series = 'plot{:03d}'.format(series)
 
         p = self.plots[plotid].plots[series][0]
         return p.color
@@ -982,7 +982,7 @@ class Graph(Viewable, ContextMenuMixin):
         def add():
             plot = self.plots[plotid]
 
-            si = plot.plots['aux{:03n}'.format(series)][0]
+            si = plot.plots['aux{:03d}'.format(series)][0]
 
             oi = si.index.get_data()
             ov = si.value.get_data()

@@ -208,7 +208,7 @@ class GraphicModel(HasTraits):
             xs = x + r * sin(thetas)
             ys = y + r * cos(thetas)
 
-            xn, yn = 'px{:03n}'.format(i), 'py{:03n}'.format(i)
+            xn, yn = 'px{:03d}'.format(i), 'py{:03d}'.format(i)
             data.set_data(xn, xs)
             data.set_data(yn, ys)
 

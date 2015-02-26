@@ -120,7 +120,7 @@ class Archiver(HasTraits):
         if not os.path.isdir(yarch):
             os.mkdir(yarch)
 
-        mname = '{:02n}-{}'.format(month_idx, month)
+        mname = '{:02d}-{}'.format(month_idx, month)
         march = os.path.join(yarch, mname)
         if not os.path.isdir(march):
             os.mkdir(march)

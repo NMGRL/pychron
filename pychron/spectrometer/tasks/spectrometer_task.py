@@ -42,7 +42,7 @@ class SpectrometerTask(EditorTask):
 
         i = max(es) + 1 if es else 1
         man = self.scan_manager.ion_optics_manager
-        name = 'Coincidence {:02n}'.format(i)
+        name = 'Coincidence {:02d}'.format(i)
 
         if man.setup_coincidence():
             self._open_editor(CoincidenceEditor(model=man.coincidence, name=name))
@@ -64,7 +64,7 @@ class SpectrometerTask(EditorTask):
         i = max(es) + 1 if es else 1
 
         man = self.scan_manager.ion_optics_manager
-        name = 'Peak Center {:02n}'.format(i)
+        name = 'Peak Center {:02d}'.format(i)
         if man.setup_peak_center(new=True, standalone_graph=False):
             def func():
                 setattr(self.scan_manager, 'log_events_enabled', True)

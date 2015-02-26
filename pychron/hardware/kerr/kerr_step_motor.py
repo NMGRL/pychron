@@ -91,7 +91,7 @@ class KerrStepMotor(KerrMotor):
                 dp = DiscretePosition(name=option, position=pos + off, value=float(v))
 #                dp = DiscretePosition(name=option, position=pos, value=float(v))
 #                self.discrete_positions[str(value + off)] = '{:02n}:{}'.format(i + 1, option)
-                self.discrete_positions[dp] = '{:02n}:{}'.format(i + 1, option)
+                self.discrete_positions[dp] = '{:02d}:{}'.format(i + 1, option)
 
     def _get_io_bits(self):
         return ['0',  # bit 4

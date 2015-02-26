@@ -153,7 +153,7 @@ if __name__ == '__main__':
                 self.spec = Spec(*args, **kw)
 
         for i in range(6):
-            c.add_run(Run('20016-{:02n}'.format(i + 1)), e)
+            c.add_run(Run('20016-{:02d}'.format(i + 1)), e)
 
     def add_experiment(c):
         class Exp():

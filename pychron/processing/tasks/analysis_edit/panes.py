@@ -198,7 +198,7 @@ class HistoryTablePane(TablePane, ColumnSorterMixin):
             keys = sorted(d.keys())
             next_key = '001'
             if keys:
-                next_key = '{:03n}'.format(int(keys[-1]) + 1)
+                next_key = '{:03d}'.format(int(keys[-1]) + 1)
 
             # records = filter(lambda ri: not isinstance(ri, Marker), records)
 

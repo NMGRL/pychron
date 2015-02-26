@@ -237,7 +237,7 @@ class AnalysisEditTask(BaseBrowserTask):
         from pychron.processing.tasks.detector_calibration.intercalibration_factor_editor import \
             IntercalibrationFactorEditor
 
-        editor = IntercalibrationFactorEditor(name='ICFactor {:03n}'.format(self.ic_factor_editor_count),
+        editor = IntercalibrationFactorEditor(name='ICFactor {:03d}'.format(self.ic_factor_editor_count),
                                               processor=self.manager)
         self._open_editor(editor)
         self.ic_factor_editor_count += 1

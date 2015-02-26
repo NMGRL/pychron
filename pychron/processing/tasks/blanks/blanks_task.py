@@ -53,7 +53,7 @@ class BlanksTask(InterpolationTask):
     def new_blank(self):
         from pychron.processing.tasks.blanks.blanks_editor import BlanksEditor
 
-        editor = BlanksEditor(name='Blanks {:03n}'.format(self.blank_editor_count),
+        editor = BlanksEditor(name='Blanks {:03d}'.format(self.blank_editor_count),
                               processor=self.manager,
                               task=self,
                               default_reference_analysis_type=self.default_reference_analysis_type)
@@ -103,7 +103,7 @@ class BlanksTask(InterpolationTask):
                 elif prog.accepted:
                     break
                 l, a, s = ai.labnumber.identifier, ai.aliquot, ai.step
-                prog.change_message('Save preceding blank for {}-{:02n}{}'.format(l, a, s))
+                prog.change_message('Save preceding blank for {}-{:02d}{}'.format(l, a, s))
                 hist = db.add_history(ai, 'blanks')
                 ai.selected_histories.selected_blanks = hist
                 for fi in preceding_fits:
@@ -172,7 +172,7 @@ class BlanksTask(InterpolationTask):
                 self.warning('{} does not have iso {}'.format(an_pa.record_id, iso))
 
         else:
-            self.warning('No preceding analyses for {}-{:02n}{}'.format(ai.labnumber.identifier,
+            self.warning('No preceding analyses for {}-{:02d}{}'.format(ai.labnumber.identifier,
                                                                         ai.aliquot, ai.step))
 
 

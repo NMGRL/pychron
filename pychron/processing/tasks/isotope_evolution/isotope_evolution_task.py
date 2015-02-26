@@ -86,7 +86,7 @@ class IsotopeEvolutionTask(AnalysisEditTask):
     def new_isotope_evolution(self):
 
 
-        editor = IsotopeEvolutionEditor(name='Iso Evo {:03n}'.format(self.iso_evo_editor_count),
+        editor = IsotopeEvolutionEditor(name='Iso Evo {:03d}'.format(self.iso_evo_editor_count),
                                         processor=self.manager)
         #selector = self.manager.db.selector
 

@@ -394,7 +394,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             execute experiment queue ``exp``
         """
         self.experiment_queue = exp
-        self.info('Starting automated runs set={:02n} {}'.format(i, exp.name))
+        self.info('Starting automated runs set={:02d} {}'.format(i, exp.name))
 
         # save experiment to database
         self.info('saving experiment "{}" to database'.format(exp.name))

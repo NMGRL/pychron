@@ -35,7 +35,7 @@ def _print_error_table(errors, loc):
         v = loc[k]
         a = v(None, None, None, None)
         if a.code is not None:
-            print '{:<30s} {:03n}    {}'.format(k, int(a.code), a.msg)
+            print '{:<30s} {:03d}    {}'.format(k, int(a.code), a.msg)
 
 def print_error_table():
 

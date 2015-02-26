@@ -215,7 +215,7 @@ class PlotPanel(Loggable):
             self._ncounts = counts
 
     def _get_display_counts(self):
-        return 'Current: {:03n}'.format(self.counts)
+        return 'Current: {:03d}'.format(self.counts)
 
     def _graph_factory(self):
         return StackedRegressionGraph(container_dict=dict(padding=5, bgcolor='gray',

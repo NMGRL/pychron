@@ -113,7 +113,7 @@ class SampleImageTask(BaseEditorTask, BaseBrowserModel):
                                                 identifier=sample.identifier)
                 cnt += 1
 
-            name = '{}{:03n}'.format(sample.name, cnt)
+            name = '{}{:03d}'.format(sample.name, cnt)
 
         v = DBSaveView(name=name)
         info = v.edit_traits()

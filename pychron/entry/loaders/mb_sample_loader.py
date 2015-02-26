@@ -41,7 +41,7 @@ class SampleLoader(Loggable):
             # progress = manager.open_progress(xp.nrows)
             for args in xp.itervalues():
                 sample = args['sample']
-                sample = '{}-{:03n}'.format(tag, int(sample))
+                sample = '{}-{:03d}'.format(tag, int(sample))
 
                 # progress.change_message('Setting environment for {}'.format(sample))
                 dbsample = db.get_sample(sample, project='Minna Bluff', verbose=False)
@@ -184,8 +184,8 @@ class SampleLoader(Loggable):
                     head, tail = alt_name.split('-')
                     try:
                         itail = int(tail)
-                        padded_alt_name = '{}-{:03n}'.format(head, itail)
-                        non_padded_alt_name = '{}-{:01n}'.format(head, itail)
+                        padded_alt_name = '{}-{:03d}'.format(head, itail)
+                        non_padded_alt_name = '{}-{:01d}'.format(head, itail)
                     except ValueError:
                         padded_alt_name, non_padded_alt_name = '', ''
 

@@ -167,10 +167,10 @@ class LabBookTask(BaseEditorTask):
             # offset = max_path_cnt(root, 'Note ', delimiter=' ', extension='')
 
         offset = max_file_cnt(root, excludes=['README.md'])
-        name = 'Note {:03n}'.format(offset)
+        name = 'Note {:03d}'.format(offset)
         while name in names:
             offset += 1
-            name = 'Note {:03n}'.format(offset)
+            name = 'Note {:03d}'.format(offset)
 
         name = nfunc(name)
         editor = NoteEditor(default_name=name, root=root)

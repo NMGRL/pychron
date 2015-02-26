@@ -71,7 +71,7 @@ class WaitGroup(HasTraits):
 
     def add_control(self, **kw):
         if 'page_name' not in kw:
-            kw['page_name'] = 'Wait {:02n}'.format(len(self.controls))
+            kw['page_name'] = 'Wait {:02d}'.format(len(self.controls))
         w = WaitControl(**kw)
 
         self.controls.append(w)

@@ -182,7 +182,7 @@ def make_interpreted_age_shape_file(dbname, group=False):
             cbin = int(ps[0].age)
             for po in pts[1:]:
                 if int(po.age) != cbin:
-                    p = os.path.join(root, 'ages_{:02n}'.format(cbin))
+                    p = os.path.join(root, 'ages_{:02d}'.format(cbin))
                     write_shape_file(ps, attrs, p)
                     ps = [po]
                     cbin = int(po.age)
@@ -190,7 +190,7 @@ def make_interpreted_age_shape_file(dbname, group=False):
                     ps.append(po)
 
             if ps:
-                p = os.path.join(root, 'ages_{:02n}'.format(cbin))
+                p = os.path.join(root, 'ages_{:02d}'.format(cbin))
                 write_shape_file(ps, attrs, p)
 
         else:

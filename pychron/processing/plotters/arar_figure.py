@@ -410,7 +410,7 @@ class BaseArArFigure(HasTraits):
         f = self.options.analysis_label_format
 
         if not f:
-            f = '{aliquot:02n}{step:}'
+            f = '{aliquot:02d}{step:}'
 
         for si in self.sorted_analyses:
             ctx = {'aliquot': si.aliquot,

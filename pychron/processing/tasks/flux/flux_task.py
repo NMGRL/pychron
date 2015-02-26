@@ -102,7 +102,7 @@ class FluxTask(InterpolationTask):
 
     def new_flux(self):
         from pychron.processing.tasks.flux.flux_editor import FluxEditor
-        editor = FluxEditor(name='Flux {:03n}'.format(self.flux_editor_count),
+        editor = FluxEditor(name='Flux {:03d}'.format(self.flux_editor_count),
                             processor=self.manager)
 
         self._open_editor(editor)

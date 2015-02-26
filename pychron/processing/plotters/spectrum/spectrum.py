@@ -60,7 +60,7 @@ class Spectrum(BaseArArFigure):
 
                 key = self.options.make_legend_key(ident, sample)
                 if key in legend.plots:
-                    ident = '{}-{:02n}'.format(ident, ag.aliquot)
+                    ident = '{}-{:02d}'.format(ident, ag.aliquot)
                     key = self.options.make_legend_key(ident, sample)
 
                 legend.plots[key] = plot

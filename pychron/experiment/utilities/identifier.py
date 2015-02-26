@@ -204,7 +204,7 @@ def make_step(s):
 
 def make_aliquot_step(a, s):
     if not isinstance(a, str):
-        a = '{:02n}'.format(int(a))
+        a = '{:02d}'.format(int(a))
     s = make_step(s)
     return '{}{}'.format(a, s)
 
@@ -225,15 +225,15 @@ def make_standard_identifier(ln, modifier, ms, aliquot=None):
         ms: int or str
     """
     if isinstance(ms, int):
-        ms = '{:02n}'.format(ms)
+        ms = '{:02d}'.format(ms)
     try:
-        modifier = '{:02n}'.format(modifier)
+        modifier = '{:02d}'.format(modifier)
     except ValueError:
         pass
 
     d = '{}-{}-{}'.format(ln, modifier, ms)
     if aliquot:
-        d = '{}-{:02n}'.format(d, aliquot)
+        d = '{}-{:02d}'.format(d, aliquot)
     return d
 
 
@@ -245,14 +245,14 @@ def make_special_identifier(ln, ed, ms, aliquot=None):
         ed: int extract device id
     """
     if isinstance(ed, int):
-        ed = '{:02n}'.format(ed)
+        ed = '{:02d}'.format(ed)
     if isinstance(ms, int):
-        ms = '{:02n}'.format(ms)
+        ms = '{:02d}'.format(ms)
 
     d = '{}-{}-{}'.format(ln, ed, ms)
     if aliquot:
         if not isinstance(aliquot, str):
-            aliquot = '{:02n}'.format(aliquot)
+            aliquot = '{:02d}'.format(aliquot)
 
         d = '{}-{}'.format(d, aliquot)
     return d
@@ -268,7 +268,7 @@ def make_rid(ln, a, step=''):
         return make_runid(ln, a, step)
     except ValueError:
         if not isinstance(a, str):
-            a = '{:02n}'.format(a)
+            a = '{:02d}'.format(a)
         return '{}-{}'.format(ln, a)
 
 

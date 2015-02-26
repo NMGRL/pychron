@@ -484,7 +484,7 @@ class LabnumberEntry(IsotopeDatabaseManager):
                     last = last[1:]
 
         try:
-            return j.join((head, '{:03n}'.format(int(last) + 1)))
+            return j.join((head, '{:03d}'.format(int(last) + 1)))
         except ValueError:
             return name
 

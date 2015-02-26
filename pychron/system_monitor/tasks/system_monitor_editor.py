@@ -360,12 +360,12 @@ class SystemMonitorEditor(SeriesEditor):
                                      step=ALPHAS[i],
                                      k39=2 + random.random() * 10,
                                      k39_err=0,
-                                     labnumber='{:04n}'.format(2000 + i // 4),
+                                     labnumber='{:04d}'.format(2000 + i // 4),
                                      age_err=random.random()) for i in range(self._cnt - 4)]
             else:
                 return [FileAnalysis(age=2 * random.random() + 10,
                                      aliquot=i,
-                                     labnumber='{:04n}'.format(1000 + i // 4),
+                                     labnumber='{:04d}'.format(1000 + i // 4),
                                      age_err=random.random()) for i in range(self._cnt)]
         else:
             db = self.processor.db

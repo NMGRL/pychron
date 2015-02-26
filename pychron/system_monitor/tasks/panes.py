@@ -49,7 +49,7 @@ class AnalysisPane(TablePane):
     n = Property(depends_on='items')
 
     def _get_n(self):
-        return 'N Runs = {:02n}'.format(len(self.items))
+        return 'N Runs = {:02d}'.format(len(self.items))
 
     def traits_view(self):
         v = View(

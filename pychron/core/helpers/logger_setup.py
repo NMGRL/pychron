@@ -131,8 +131,8 @@ def logging_setup(name, use_archiver=True, **kw):
         # lazy load Archive because of circular dependency
         from pychron.core.helpers.archiver import Archiver
 
-        a = Archiver(archive_days=30,
-                     archive_months=6,
+        a = Archiver(archive_days=14,
+                     archive_months=1,
                      root=bdir)
         a.clean()
 

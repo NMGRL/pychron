@@ -178,7 +178,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
                 #       'ORDER BY `AnalysesTable`.`AnalysisID` DESC LIMIT 1'.format(labnumber, aliquot)
                 sql = 'SELECT AnalysesTable.Aliquot_pychron, AnalysesTable.Increment ' \
                       'FROM AnalysesTable ' \
-                      'WHERE AnalysesTable.RID LIKE "{}-{:02n}%" ' \
+                      'WHERE AnalysesTable.RID LIKE "{}-{:02d}%" ' \
                       'ORDER BY AnalysesTable.AnalysisID DESC LIMIT 1'.format(labnumber, aliquot)
                 v = sess.execute(sql)
                 if v is not None:
@@ -421,7 +421,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 
     def add_analysis(self, rid, aliquot, step, irradpos, runtype, **kw):
         if isinstance(aliquot, int):
-            aliquot = '{:02n}'.format(aliquot)
+            aliquot = '{:02d}'.format(aliquot)
 
         # query the IrradiationPositionTable
         irradpos = self.get_irradiation_position(irradpos, )

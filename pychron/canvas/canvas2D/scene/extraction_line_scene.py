@@ -377,7 +377,7 @@ class ExtractionLineScene(Scene):
                 miny = min(miny, rect.y)
 
             for i, label in enumerate(legend.findall('llabel')):
-                name = '{:03n}label'.format(i)
+                name = '{:03d}label'.format(i)
                 ll = self._new_label(label, name, c,
                                      layer='legend',
                                      origin=(ox + lox, oy + loy))
@@ -387,7 +387,7 @@ class ExtractionLineScene(Scene):
                 miny = min(miny, ll.y)
 
             for i, line in enumerate(legend.findall('lline')):
-                name = '{:03n}line'.format(i)
+                name = '{:03d}line'.format(i)
                 self._new_line(line, name,
                                layer='legend',
                                origin=(ox + lox, oy + loy))

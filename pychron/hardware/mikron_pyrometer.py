@@ -91,8 +91,8 @@ class MikronGA140Pyrometer(CoreDevice):
         """
 
         """
-        fmt = '{}{}' if value is None else '{}{}{:04n}' if per_mil else \
-            '{}{}{:n}' if single_digit else '{}{}{:02n}'
+        fmt = '{}{}' if value is None else '{}{}{:04d}' if per_mil else \
+            '{}{}{:d}' if single_digit else '{}{}{:02d}'
         args = (self.device_address, cmd)
 
         if value is not None:

@@ -151,7 +151,7 @@ def unique_dir(root, base):
     p = os.path.join(root, '{}001'.format(base))
     i = 2
     while os.path.exists(p):
-        p = os.path.join(root, '{}{:03n}'.format(base, i))
+        p = os.path.join(root, '{}{:03d}'.format(base, i))
         i += 1
 
     os.mkdir(p)
@@ -187,7 +187,7 @@ def unique_path2(root, base, delimiter='-', extension='.txt', width=3):
     #
     # cnt += 1
     cnt = max_path_cnt(root, '{}-'.format(base), delimiter=delimiter, extension=extension)
-    p = os.path.join(root, '{{}}-{{:0{}n}}{{}}'.format(width).format(base, cnt, extension))
+    p = os.path.join(root, '{{}}-{{:0{}d}}{{}}'.format(width).format(base, cnt, extension))
     return p, cnt
 
 
@@ -239,7 +239,7 @@ def unique_path(root, base, extension='.txt'):
     cnt = 1
     i = 2
     while os.path.isfile(p):
-        p = os.path.join(root, '{}-{:03n}{}'.format(base, i, extension))
+        p = os.path.join(root, '{}-{:03d}{}'.format(base, i, extension))
         i += 1
         cnt += 1
 

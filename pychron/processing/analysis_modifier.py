@@ -237,7 +237,7 @@ class AnalysisModifier(Loggable):
                     if dbirradpos:
                         dban.RID = make_runid(ident, ni.aliquot, ni.step)
                         self.debug('setting {} to {}'.format(ident, dban.RID))
-                        dban.Aliquot = '{:02n}'.format(int(ni.aliquot))
+                        dban.Aliquot = '{:02d}'.format(int(ni.aliquot))
                         dban.Increment = ni.step
                         dban.Aliquot_pychron = ni.aliquot
 

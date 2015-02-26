@@ -295,9 +295,9 @@ class RemoteCommandServer(ConfigLoadable):
         t, h, m, s = diff_timestamp(datetime.datetime.now(), self.start_time)
 
 
-        rt = '{:02n}:{:02n}:{:02n}'.format(h, m, s)
+        rt = '{:02d}:{:02d}:{:02d}'.format(h, m, s)
         if t.days:
-            rt = '{} {:02n}:{:02n}:{:02n}' .format(t.days, h, m, s)
+            rt = '{} {:02d}:{:02d}:{:02d}' .format(t.days, h, m, s)
         self.run_time = rt
 
     def __running_changed(self):

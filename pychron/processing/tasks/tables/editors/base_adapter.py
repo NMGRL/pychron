@@ -134,7 +134,7 @@ class BaseAdapter(TabularAdapter):
         item = self.item
         r = ''
         if not isinstance(item, (TableBlank, TableSeparator)):
-            r = '{:02n}{}'.format(item.aliquot, item.step)
+            r = '{:02d}{}'.format(item.aliquot, item.step)
         return r
 
     def _get_extract_value_text(self):
