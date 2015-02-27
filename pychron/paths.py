@@ -69,6 +69,7 @@ class Paths(object):
     labspy_dir = None
     labspy_context_dir = None
     # users_file = None
+    build_repo = None
     login_file = None
     preferences_dir = None
     comment_templates_dir = None
@@ -243,18 +244,19 @@ class Paths(object):
         self.backup_experiment_dir = join(self.experiment_dir, 'backup')
 
         self.hidden_dir = join(root, '.hidden')
-        # self.users_file = join(self.hidden_dir, 'users')
-        # self.login_file = join(self.hidden_dir, 'login')
+
+        self.preferences_dir = join(root, 'preferences')
+        self.template_dir = join(root, 'templates')
+        self.queue_conditionals_dir = join(root, 'queue_conditionals')
+        # ==============================================================================
+        # hidden
+        # ==============================================================================
         self.labspy_dir = join(self.hidden_dir, 'labspy')
         self.labspy_context_dir = join(self.labspy_dir, 'context')
-        self.preferences_dir = join(root, 'preferences')
+
         self.plotter_options_dir = join(self.hidden_dir, 'plotter_options')
         self.comment_templates_dir = join(self.hidden_dir, 'comment_templates')
-        # self.test_dir = join(root, 'testing')
-        # self.custom_queries_dir = join(root, 'custom_queries')
-        self.template_dir = join(root, 'templates')
-
-        self.queue_conditionals_dir = join(root, 'queue_conditionals')
+        self.build_repo = join(self.hidden_dir, 'updates', 'pychron')
         # ==============================================================================
         # setup
         # ==============================================================================

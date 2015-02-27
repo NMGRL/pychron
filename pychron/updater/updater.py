@@ -21,7 +21,7 @@ import urllib2
 from apptools.preferences.preference_binding import bind_preference
 import sys
 from git import GitCommandError
-from traits.api import HasTraits, Button, Bool, Str, Property
+from traits.api import HasTraits, Button, Bool, Str, Property, List
 from traitsui.api import View, Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -30,6 +30,7 @@ from pychron.core.ui.progress_dialog import myProgressDialog
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.paths import r_mkdir
+from pychron.updater.branch_view import ManageBranchView
 from pychron.updater.commit_view import CommitView, UpdateGitHistory, ManageCommitsView
 
 
@@ -38,6 +39,15 @@ class Updater(Loggable):
     branch = Str
     remote = Str
     _repo = None
+    _editable = False
+
+    all_branches = List
+    branches = List
+    delete_enabled = Property(depends_on='edit_branch')
+    edit_branch = Str
+    delete_button = Button('Delete')
+    build_button = Button
+    checkout_branch_button = Button
 
     def bind_preferences(self):
         for a in ('check_on_startup', 'branch', 'remote'):
@@ -47,29 +57,38 @@ class Updater(Loggable):
         if self.remote:
             return self._validate_origin(self.remote)
 
+    def manage_branches(self):
+        self._refresh_branches()
+        v = ManageBranchView(model=self)
+        v.edit_traits(kind='livemodal')
+
     def manage_version(self):
         repo = self._get_working_repo()
 
-        # b = repo.branches[self.branch]
-        # b = repo.heads[self.branch]
-        # origin
-        # oref = origin.refs[branchname]
-        # remote_commit = oref.commit
+        txt = ''
+        try:
+            txt = repo.git.rev_list('origin/{}'.format(self.branch),
+                                    since=datetime.now() - timedelta(weeks=30),
+                                    branches=self.branch)
+        except GitCommandError:
+            try:
+                txt = repo.git.rev_list(self.branch,
+                                        since=datetime.now() - timedelta(weeks=30),
+                                        branches=self.branch)
+            except GitCommandError:
+                pass
 
-        txt = repo.git.rev_list('origin/{}'.format(self.branch),
-                                since=datetime.now() - timedelta(weeks=30),
-                                branches=self.branch)
         commits = txt.split('\n')
-
         local_commit, remote_commit = self._get_local_remote_commits()
 
-        self._get_selected_hexsha(commits, local_commit, remote_commit,
-                                  view_klass=ManageCommitsView,
-                                  auto_select=False,
-                                  tags=repo.tags,
-
-                                  # pass to model
-                                  show_behind=False, )
+        hexsha = self._get_selected_hexsha(commits, local_commit, remote_commit,
+                                           view_klass=ManageCommitsView,
+                                           auto_select=False,
+                                           tags=repo.tags,
+                                           # pass to model
+                                           show_behind=False, )
+        if hexsha:
+            self._checkout(hexsha)
 
     def check_for_updates(self, inform=False):
         branch = self.branch
@@ -100,6 +119,49 @@ class Updater(Loggable):
         self._build(self.branch, lc)
 
     # private
+    # handlers
+    def _checkout_branch_button_fired(self):
+        self._checkout(self.branch)
+        self._refresh_branches()
+
+    def _build_button_fired(self):
+        b = self.branch
+        repo = self._get_working_repo()
+        branch = getattr(repo.branches, b)
+        branch.checkout()
+        self.debug('Build button branch name={}, commit={}'.format(b, branch.commit))
+        # self._build(b, branch.commit)
+
+    def _delete_button_fired(self):
+        repo = self._get_working_repo()
+        repo.delete_head(self.edit_branch)
+        self._refresh_branches()
+
+    def _refresh_branches(self):
+        repo = self._get_working_repo()
+        rnames = [ri.name for ri in repo.remotes.origin.refs]
+        rnames = filter(lambda x: x.startswith('origin/release'), rnames)
+        branches = [bi.name for bi in repo.branches] + ['origin/master', 'origin/develop'] + rnames
+        self.all_branches = branches
+
+        branches = [bi for bi in branches if bi != self.branch]
+        self.branches = branches
+
+    def _checkout(self, branch_name, hexsha=None):
+        if hexsha is None:
+            hexsha = 'HEAD'
+        else:
+            branch_name = '{}-{}'.format(branch_name, hexsha[:7])
+
+        repo = self._get_working_repo()
+        try:
+            branch = getattr(repo.branches, branch_name)
+        except AttributeError:
+            branch = repo.create_head(branch_name, commit=hexsha)
+
+        branch.checkout()
+        self.branch = branch_name
+
     def _get_dest_root(self):
         p = os.path.abspath(__file__)
         self.debug(p)
@@ -180,7 +242,6 @@ class Updater(Loggable):
                     'Preferences branch: {}\n'
                     'Build branch: {}\n'
                     'Do you want to proceed?'.format(name, active_branch_name)):
-
                 self.info('switching from branch: {} to branch: {}'.format(active_branch_name, name))
                 self._fetch(name)
                 branch = self._get_branch(name)
@@ -211,7 +272,7 @@ class Updater(Loggable):
         return local_commit, remote_commit
 
     def _out_of_date(self, lc, rc):
-        if lc != rc:
+        if rc and lc != rc:
             self.info('updates are available')
             if not self.confirmation_dialog('Updates are available. Install and Restart?'):
                 return
@@ -236,9 +297,11 @@ class Updater(Loggable):
         branchname = self.branch
 
         origin = repo.remotes.origin
-
-        oref = origin.refs[branchname]
-        remote_commit = oref.commit
+        try:
+            oref = origin.refs[branchname]
+            remote_commit = oref.commit
+        except IndexError:
+            remote_commit = None
 
         branch = self._get_branch(branchname)
 
@@ -256,10 +319,11 @@ class Updater(Loggable):
         if view_klass is None:
             view_klass = CommitView
 
-        lha = lc.hexsha[:7]
-        rha = rc.hexsha[:7]
+        lha = lc.hexsha[:7] if lc else ''
+        rha = rc.hexsha[:7] if rc else ''
         ld = get_datetime(float(lc.committed_date)).strftime('%m-%d-%Y')
-        rd = get_datetime(float(rc.committed_date)).strftime('%m-%d-%Y')
+
+        rd = get_datetime(float(rc.committed_date)).strftime('%m-%d-%Y') if rc else ''
 
         n = len(commits)
         h = UpdateGitHistory(n=n, branchname=self.branch,
@@ -284,7 +348,7 @@ class Updater(Loggable):
         if not self._repo:
             from git import Repo
 
-            p = os.path.join(paths.hidden_dir, 'updates', 'pychron')
+            p = paths.build_repo
             if not os.path.isdir(p):
                 r_mkdir(p)
                 url = 'https://github.com/{}.git'.format(self.remote)
@@ -293,6 +357,9 @@ class Updater(Loggable):
                 repo = Repo(p)
             self._repo = repo
         return self._repo
+
+    def _get_delete_enabled(self):
+        return not (self.branch == self.edit_branch or self.edit_branch.startswith('origin'))
 
 # ============= EOF =============================================
 

@@ -21,7 +21,8 @@ from traits.api import List
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
-from pychron.updater.tasks.actions import CheckForUpdatesAction, ManageVersionAction, BuildApplicationAction
+from pychron.updater.tasks.actions import CheckForUpdatesAction, ManageVersionAction, BuildApplicationAction, \
+    ManageBranchAction
 from pychron.updater.tasks.update_preferences import UpdatePreferencesPane
 from pychron.updater.updater import Updater
 
@@ -109,6 +110,9 @@ class UpdatePlugin(BaseTaskPlugin):
                                                     path='MenuBar/help.menu'),
                                      SchemaAddition(id='build_app',
                                                     factory=BuildApplicationAction,
+                                                    path='MenuBar/help.menu'),
+                                     SchemaAddition(id='manage_branch',
+                                                    factory=ManageBranchAction,
                                                     path='MenuBar/help.menu'),
                                      SchemaAddition(id='manage_version',
                                                     factory=ManageVersionAction,

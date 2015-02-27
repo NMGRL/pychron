@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 import json
+import os
 import urllib2
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Str, Bool, List
@@ -43,7 +44,20 @@ class UpdatePreferencesHelper(GitRepoPreferencesHelper):
             cmd = 'https://api.github.com/repos/{}/branches'.format(new)
             doc = urllib2.urlopen(cmd)
             bs = [branch['name'] for branch in json.load(doc)]
-            return [bi for bi in bs if bi.startswith('release') or bi in ('develop', 'master')]
+
+            from git import Repo
+            from pychron.paths import paths
+
+            remotes = [bi for bi in bs if bi.startswith('release') or bi in ('develop', 'master')]
+
+            localbranches = []
+            if os.path.isdir(os.path.join(paths.build_repo, '.git')):
+                repo = Repo(paths.build_repo)
+                localbranches = [b.name for b in repo.branches if b.name not in remotes]
+
+            remotes.extend(localbranches)
+            return remotes
+
         except BaseException:
             return []
 
