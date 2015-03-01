@@ -25,6 +25,7 @@ from pychron.envisage.icon_button_editor import icon_button_editor
 
 
 class ManageBranchView(Controller):
+    @property
     def traits_view(self):
         v = View(
             VGroup(
@@ -36,8 +37,8 @@ class ManageBranchView(Controller):
                 VGroup(UItem('edit_branch', editor=EnumEditor(name='branches')),
                        UItem('delete_button', enabled_when='delete_enabled'),
                        show_border=True)),
-            buttons=['OK', 'Cancel']
-        )
+            title='Manage Branch View',
+            buttons=['OK', 'Cancel'])
         return v
 
 # ============= EOF =============================================

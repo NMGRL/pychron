@@ -20,6 +20,8 @@ import os
 import shutil
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.globals import globalv
+
 
 def copy_resources(root, dest, app_name):
     icon_name = 'py{}_icon.icns'.format(app_name)
@@ -90,19 +92,22 @@ def make_egg(root, dest, pkg_name, version):
         rdest = os.path.join(dest, 'Resources')
         with open(os.path.join(rdest,
                                '{}.pth'.format(pkg_name)), 'w') as fp:
-            fp.write('{}\n'.format(eggname))
+            if not globalv.debug:
+                fp.write('{}\n'.format(eggname))
 
-        egg_root = os.path.join(root, 'dist', eggname)
-        copy_resource(rdest, egg_root)
+        if not globalv.debug:
+            egg_root = os.path.join(root, 'dist', eggname)
+            copy_resource(rdest, egg_root)
 
-    # remove build dir
-    for di in ('build', 'dist','pychron.egg-info'):
-        p = os.path.join(root, di)
-        print 'removing entire {} dir {}'.format(di, p)
-        if os.path.isdir(p):
-            shutil.rmtree(p)
-        else:
-            print 'not a directory {}'.format(p)
+    if not globalv.debug:
+        # remove build dir
+        for di in ('build', 'dist','pychron.egg-info'):
+            p = os.path.join(root, di)
+            print 'removing entire {} dir {}'.format(di, p)
+            if os.path.isdir(p):
+                shutil.rmtree(p)
+            else:
+                print 'not a directory {}'.format(p)
 
 
 def resource_path(dest, name):

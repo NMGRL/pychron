@@ -130,7 +130,7 @@ class Updater(Loggable):
         branch = getattr(repo.branches, b)
         branch.checkout()
         self.debug('Build button branch name={}, commit={}'.format(b, branch.commit))
-        # self._build(b, branch.commit)
+        self._build(b, branch.commit)
 
     def _delete_button_fired(self):
         repo = self._get_working_repo()
