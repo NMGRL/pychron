@@ -24,6 +24,7 @@ from traits.api import Array, List, Instance
 from numpy import hstack, array
 # ============= local library imports  ==========================
 from uncertainties import nominal_value
+from pychron.graph.ml_label import MPlotAxis
 from pychron.processing.analyses.analysis_group import StepHeatAnalysisGroup
 from pychron.processing.plotters.arar_figure import BaseArArFigure
 from pychron.processing.plotters.flow_label import FlowPlotLabel
@@ -65,7 +66,19 @@ class Spectrum(BaseArArFigure):
 
                 legend.plots[key] = plot
 
-        self.graph.set_x_title('Cumulative %39ArK', plotid=0)
+        # self.graph.set_x_title('Cumulative %39ArK', plotid=0)
+        self.set_x_title('Cumulative %<sup>39</sup>Ar<sub>K</sub>')
+
+    def set_x_title(self, text):
+        plot = self.graph.plots[0]
+        xa = plot.x_axis
+        nxa = MPlotAxis()
+        nxa.title = text
+        nxa.clone(xa)
+
+        # for attr in ('mapper', 'origin', 'orientation'):
+        #     setattr(nxa, attr, getattr(xa, attr))
+        plot.x_axis = nxa
 
     def max_x(self, attr):
         return max([ai.nominal_value for ai in self._unpack_attr(attr)])
