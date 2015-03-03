@@ -35,6 +35,7 @@ class SystemMonitorControls(HasTraits):
     limit = EInt(5)
     update = Event
     refresh_button = Button
+    low = None
 
     def _refresh_button_fired(self):
         self.update = True

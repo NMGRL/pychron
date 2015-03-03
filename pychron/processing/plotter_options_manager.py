@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from traits.api import Property, List, Event, Instance, Button, cached_property, Str, \
     HasTraits, Enum
+from traits.trait_errors import TraitError
 from traitsui.api import View, Item, EnumEditor, HGroup, UItem, VGroup
 import apptools.sweet_pickle as pickle
 # ============= standard library imports ========================
@@ -59,6 +60,28 @@ class PlotterOptionsManager(HasTraits):
 
     formatting_option = Enum('Screen', 'Presentation', NULL_STR)
 
+    def __init__(self, *args, **kw):
+        super(PlotterOptionsManager, self).__init__(*args, **kw)
+        self._load()
+
+    def _load(self):
+        p = paths.plotter_options
+        if os.path.isfile(p):
+            with open(p, 'r') as rfile:
+                try:
+                    pd = pickle.load(rfile)
+                    self.trait_set(**pd)
+                except (pickle.PickleError, TraitError):
+                    pass
+
+    def _dump(self):
+        with open(paths.plotter_options, 'w') as wfile:
+            d = {'formatting_option': self.formatting_option or NULL_STR}
+            try:
+                pickle.dump(d, wfile)
+            except pickle.PickleError:
+                pass
+
     def deinitialize(self):
         if self.plotter_options:
             self.plotter_options.deinitialize()
@@ -100,6 +123,7 @@ class PlotterOptionsManager(HasTraits):
         self._plotter_options_list_dirty = True
 
         self.plotter_options = next((pp for pp in self.plotter_options_list if pp.name == name), None)
+        self._dump()
 
     def set_plotter_options(self, name):
         self.plotter_options = next((pi for pi in self.plotter_options_list

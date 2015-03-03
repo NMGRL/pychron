@@ -165,6 +165,7 @@ class Paths(object):
     system_health = None
     screen_formatting_options = None
     presentation_formatting_options = None
+    plotter_options = None
 
     def set_search_paths(self, app_rec=None):
         self.app_resources = app_rec
@@ -334,6 +335,7 @@ class Paths(object):
         self.system_health = join(self.setup_dir, 'system_health.yaml')
         self.screen_formatting_options = join(self.formatting_dir, 'screen.yaml')
         self.presentation_formatting_options = join(self.formatting_dir, 'presentation.yaml')
+        self.plotter_options = join(self.plotter_options_dir, 'plotter_options')
 
     def write_defaults(self):
         if os.environ.get('TRAVIS_CI', 'False') == 'False' and \

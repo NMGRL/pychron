@@ -67,8 +67,10 @@ class SystemMonitorEditor(SeriesEditor):
     _polling = False
 
     console_display = Instance(DisplayController)
-    _ideogram_editor = None
-    _spectrum_editor = None
+    # _ideogram_editor = None
+    # _spectrum_editor = None
+    _ideogram_editors = List
+    _spectrum_editors = List
 
     _air_editor = None
     _blank_air_editor = None
@@ -79,6 +81,8 @@ class SystemMonitorEditor(SeriesEditor):
 
     task = Any
     _pause = False
+
+    _flag = False
 
     def __init__(self, *args, **kw):
         super(SystemMonitorEditor, self).__init__(*args, **kw)
@@ -92,19 +96,22 @@ class SystemMonitorEditor(SeriesEditor):
         :param kind: i
         :return:
         """
-        self._ideogram_editor = None
-        self._spectrum_editor = None
+        # self._ideogram_editor = None
+        # self._spectrum_editor = None
         self._cnt = 0
 
     def prepare_destroy(self):
         self.stop()
         self.dump_tool()
-        for e in ('ideogram', 'spectrum',
-                  'air', 'blank_air',
+        for e in ('air', 'blank_air',
                   'cocktail', 'blank_cocktail',
                   'background'):
             e = getattr(self, '_{}_editor'.format(e))
             if e is not None:
+                e.dump_tool()
+
+        for es in (self._spectrum_editors, self._ideogram_editors):
+            for e in es:
                 e.dump_tool()
 
     def stop(self):
@@ -250,10 +257,13 @@ class SystemMonitorEditor(SeriesEditor):
     def _refresh_figures(self, an):
         if an.analysis_type == 'unknown':
             if globalv.system_monitor_debug:
-                if self._cnt > 3:
-                    self._refresh_spectrum(an.labnumber, an.aliquot)
+                if self._cnt > 40:
+                    self._refresh_spectrum('2000', 1)
                 else:
-                    self._refresh_ideogram(an.labnumber)
+                    if self._cnt%5==0:
+                        self._flag = not self._flag
+
+                    self._refresh_ideogram('1000' if self._flag else '2000')
 
             else:
 
@@ -302,23 +312,56 @@ class SystemMonitorEditor(SeriesEditor):
                                      use_date_range=True)
         setattr(self, name, editor)
 
+        # def _new_ideogram_needed(self, cid):
+        # for ei in self._ideogram_editors:
+        # ed = self._ideogram_editor
+        # if ed is not None:
+        #     print ed.analyses[0].identifier, cid
+        #     return ed.analyses[0].identifier != cid
+
+    def close_editor(self, ei):
+        if ei in self._ideogram_editors:
+            self._ideogram_editors.remove(ei)
+        elif ei in self._spectrum_editors:
+            self._spectrum_editors.remove(ei)
+
+    def _get_editor(self, editors, identifier):
+        editor = next((ei for ei in editors if ei.identifier == identifier), None)
+        if editor:
+            self.task.activate_editor(editor)
+        return editor
+
     def _refresh_ideogram(self, identifier):
         """
-            open a ideogram editor if one is not already open
+            open a ideogram editor for this identifier if one is not already open.
+            if an editor with this identifier exists activate it.
+
         """
-        editor = self._ideogram_editor
+        editor = self._get_editor(self._ideogram_editors, identifier)
+
         f = lambda: self.task.new_ideogram(add_table=False, add_iso=False)
         editor = self._update_editor(editor, f, identifier, None,
                                      calculate_age=True)
-        self._ideogram_editor = editor
+
+        if editor not in self._ideogram_editors:
+            self._ideogram_editors.append(editor)
+
         self._reset_ideogram = False
 
     def _refresh_spectrum(self, identifier, aliquot):
-        editor = self._spectrum_editor
+        """
+            open a spectrum editor for this identifier if one is not already open.
+            if an editor with this identifier exists activate it.
+
+        """
+        editor = self._get_editor(self._spectrum_editors, identifier)
         f = lambda: self.task.new_spectrum(add_table=False, add_iso=False)
         editor = self._update_editor(editor, f, identifier, aliquot,
                                      calculate_age=True)
-        self._spectrum_editor = editor
+
+        if editor not in self._spectrum_editors:
+            self._spectrum_editors.append(editor)
+
         self._reset_spectrum = False
 
     def _update_editor(self, editor, editor_factory,
@@ -326,6 +369,11 @@ class SystemMonitorEditor(SeriesEditor):
                        use_date_range=False, calculate_age=False):
         if editor is None:
             editor = editor_factory()
+
+        if not hasattr(editor, 'starttime'):
+            editor.starttime = datetime.now()
+
+        editor.identifier = identifier
 
         # gather analyses
         tool = None
@@ -340,9 +388,9 @@ class SystemMonitorEditor(SeriesEditor):
             for ai in ans:
                 ai.calculate_age()
         editor.set_items(ans, update_graph=False)
-        group_analyses_by_key(editor.analyses, 'labnumber')
+        # group_analyses_by_key(editor.analyses, 'labnumber')
 
-        editor.clear_aux_plot_limits()
+        # editor.clear_aux_plot_limits()
         do_later(editor.rebuild)
         return editor
 
@@ -354,18 +402,19 @@ class SystemMonitorEditor(SeriesEditor):
     def _get_analyses(self, tool, identifier, aliquot=None, use_date_range=False):
         if globalv.system_monitor_debug:
             self._cnt += 1
-            if self._cnt > 4:
+            if self._cnt > 40:
                 return [FileAnalysis(age=2 * random.random() + 10,
                                      aliquot=1,
                                      step=ALPHAS[i],
                                      k39=2 + random.random() * 10,
                                      k39_err=0,
-                                     labnumber='{:04d}'.format(2000 + i // 4),
+                                     labnumber='{:04d}'.format(2000),
                                      age_err=random.random()) for i in range(self._cnt - 4)]
             else:
+
                 return [FileAnalysis(age=2 * random.random() + 10,
                                      aliquot=i,
-                                     labnumber='{:04d}'.format(1000 + i // 4),
+                                     labnumber='{:04d}'.format(1000 if self._flag else 2000),
                                      age_err=random.random()) for i in range(self._cnt)]
         else:
             db = self.processor.db
@@ -376,16 +425,20 @@ class SystemMonitorEditor(SeriesEditor):
 
                     ans = db.get_analyses(func=func)
                 elif use_date_range:
-                    end = datetime.now()
-                    start = end - timedelta(hours=tool.hours,
-                                            weeks=tool.weeks,
-                                            days=tool.days)
 
-                    ans = db.get_date_range_analyses(start, end,
+                    high = datetime.now()
+                    low = tool.low
+                    if low is None:
+                        low = high - timedelta(hours=tool.hours,
+                                               weeks=tool.weeks,
+                                               days=tool.days)
+                        tool.low = low
+
+                    ans = db.get_date_range_analyses(low, high,
                                                      labnumber=identifier,
                                                      limit=tool.limit)
                 else:
-                    ans, tc = db.get_labnumber_analyses(identifier, limit=25)
+                    ans, tc = db.get_labnumber_analyses(identifier, limit=tool.limit)
 
                 return self.processor.make_analyses(ans)
 

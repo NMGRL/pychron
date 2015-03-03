@@ -865,7 +865,7 @@ class FigureTask(AnalysisEditTask):
         if editor:
             if isinstance(editor, (FigureEditor, XYScatterEditor)):
                 self.plotter_options_pane.pom = pom = editor.plotter_options_manager
-
+                print 'active editor change'
                 colors = pom.plotter_options.get_group_colors()
                 if colors:
                     self.unknowns_pane.adapter.colors = colors

@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from PySide.QtCore import Qt
+from datetime import datetime
 from traits.api import Instance, List, on_trait_change
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, Splitter, PaneItem, Tabbed, VSplitter
@@ -165,6 +166,15 @@ class SystemMonitorTask(FigureTask):
     #             func(control, a, b)
     #         except IndexError:
     #             pass
+    def _open_editor(self, editor, **kw):
+        super(SystemMonitorTask, self)._open_editor(editor, **kw)
+        for ei in self.editor_area.editors:
+            if hasattr(ei, 'starttime'):
+                print 'difff', (datetime.now()-ei.starttime).total_seconds()
+                if (datetime.now()-ei.starttime).total_seconds() > 30:
+                    self.close_editor(ei)
+                    for si in self.get_editors(SystemMonitorEditor):
+                        si.close_editor(ei)
 
     def _editor_factory(self):
         if globalv.system_monitor_debug:
