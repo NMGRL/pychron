@@ -25,13 +25,13 @@ from pychron.envisage.icon_button_editor import icon_button_editor
 
 
 class ManageBranchView(Controller):
-    @property
     def traits_view(self):
         v = View(
             VGroup(
                 VGroup(HGroup(UItem('branch', editor=EnumEditor(name='all_branches')),
-                              icon_button_editor('build_button', 'bricks'),
-                              icon_button_editor('checkout_branch_button', 'foo'),
+                              icon_button_editor('build_button', 'bricks',
+                                                 tooltip='Build selected branch and set as current application'),
+                              icon_button_editor('checkout_branch_button', 'foo', tooltip='Checkout selected branch'),
                               show_border=True,
                               label='Current Branch')),
                 VGroup(UItem('edit_branch', editor=EnumEditor(name='branches')),

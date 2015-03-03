@@ -77,7 +77,7 @@ class FigureTask(AnalysisEditTask):
                  BrowseInterpretedAgeTBAction()),
         # SToolBar(GroupSelectedAction(name='Selected'),
         # GroupbyAliquotAction(name='by Aliquot'),
-        #          GroupbyLabnumberAction(name='by Labnumber'),
+        # GroupbyLabnumberAction(name='by Labnumber'),
         #          GroupbySampleAction(name='by Sample'),
         #          ClearGroupAction(name='Clear'))
     ]
@@ -167,7 +167,7 @@ class FigureTask(AnalysisEditTask):
             oauto_group1 = ac.auto_group
             oauto_group2 = pane.auto_group
 
-            #turn off auto grouping
+            # turn off auto grouping
             ac.auto_group = False
             pane.auto_group = False
 
@@ -236,6 +236,7 @@ class FigureTask(AnalysisEditTask):
     # ===============================================================================
     def _debug_add(self):
         from pychron.globals import globalv
+
         self.debug('debug add figure_debug: {}'.format(globalv.figure_debug))
         if globalv.figure_debug:
             if self.browser_model:
@@ -260,7 +261,7 @@ class FigureTask(AnalysisEditTask):
             return self._new_table(ans, name, klass)
             # # new figure editor
             # editor = klass(
-            #         name=name,
+            # name=name,
             #         processor=self.manager)
             #
             #     if ans is None:
@@ -465,7 +466,7 @@ class FigureTask(AnalysisEditTask):
     # def tb_new_ideogram(self):
     # self.new_ideogram()
     #
-    #     # if isinstance(self.active_editor, IdeogramEditor) and \
+    # # if isinstance(self.active_editor, IdeogramEditor) and \
     #     #         not self.unknowns_pane.items:
     #     #     self.append_ideogram()
     #     # else:
@@ -863,10 +864,11 @@ class FigureTask(AnalysisEditTask):
         editor = self.active_editor
         if editor:
             if isinstance(editor, (FigureEditor, XYScatterEditor)):
-                self.plotter_options_pane.pom =pom= editor.plotter_options_manager
+                self.plotter_options_pane.pom = pom = editor.plotter_options_manager
 
                 colors = pom.plotter_options.get_group_colors()
-                self.unknowns_pane.adapter.colors = colors
+                if colors:
+                    self.unknowns_pane.adapter.colors = colors
 
             self._set_current_task()
 
@@ -877,7 +879,7 @@ class FigureTask(AnalysisEditTask):
         pom = self.plotter_options_pane.pom
         colors = pom.plotter_options.get_group_colors()
         self.unknowns_pane.adapter.colors = colors
-        self.unknowns_pane.refresh_needed=True
+        self.unknowns_pane.refresh_needed = True
 
     @on_trait_change('active_editor:refresh_unknowns_table')
     def _ac_refresh_table(self):

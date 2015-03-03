@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -74,11 +74,12 @@ def validate_mswd(mswd, n, k=1):
          http://en.wikipedia.org/wiki/Goodness_of_fit
          http://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.chi2.html#scipy.stats.chi2
     """
-    if n < 2:
-        return
+    if n - k + 1 < 2:
+        return False
 
-    low,high=get_mswd_limits(n,k)
+    low, high = get_mswd_limits(n, k)
     return bool(low <= mswd <= high)
+
 
 def get_mswd_limits(n, k=1):
     dof = n - k
@@ -88,6 +89,7 @@ def get_mswd_limits(n, k=1):
 
     rv = chi2(dof, scale=1 / float(dof))
     return rv.interval(0.95)
+
 
 def chi_squared(x, y, sx, sy, a, b, corrcoeffs=None):
     """
@@ -113,7 +115,7 @@ def chi_squared(x, y, sx, sy, a, b, corrcoeffs=None):
     sx = asarray(sx)
     sy = asarray(sy)
 
-    k=0
+    k = 0
     if corrcoeffs is not None:
         # p=((1+(sy/y)**2)*(1+(sx/x)**2))**-2
         k = 2 * b * corrcoeffs * sx * sy

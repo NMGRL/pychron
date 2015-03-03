@@ -88,8 +88,12 @@ class UnknownsAdapter(TabularAdapter):
         colors = self.colors
         n = len(colors)
         gid = obj.items[row].group_id
-        cid = gid % n
-        return colors[cid]
+
+        cid = gid % n if n else 0
+        try:
+            return colors[cid]
+        except IndexError:
+            return 'black'
         # return colornames[cid]
 
 
