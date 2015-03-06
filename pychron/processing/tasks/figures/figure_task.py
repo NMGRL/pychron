@@ -27,6 +27,8 @@ import weakref
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.envisage.tasks.actions import ToggleFullWindowAction
+from pychron.file_defaults import IDEOGRAM_DEFAULTS, SPECTRUM_DEFAULTS, INVERSE_ISOCHRON_DEFAULTS, COMPOSITE_DEFAULTS, \
+    SCREEN_FORMATTING_DEFAULTS, PRESENTATION_FORMATTING_DEFAULTS
 from pychron.paths import paths
 from pychron.processing.plotters.xy.xy_scatter import XYScatterEditor
 from pychron.processing.tasks.actions.edit_actions import TagAction
@@ -78,7 +80,7 @@ class FigureTask(AnalysisEditTask):
         # SToolBar(GroupSelectedAction(name='Selected'),
         # GroupbyAliquotAction(name='by Aliquot'),
         # GroupbyLabnumberAction(name='by Labnumber'),
-        #          GroupbySampleAction(name='by Sample'),
+        # GroupbySampleAction(name='by Sample'),
         #          ClearGroupAction(name='Clear'))
     ]
 
@@ -174,7 +176,7 @@ class FigureTask(AnalysisEditTask):
             self._clear_group()
             self._append_replace_unknowns(False, self.browser_model.analysis_table.analyses)
 
-            #return to original settings
+            # return to original settings
             ac.auto_group = oauto_group1
             pane.auto_group = oauto_group2
 
@@ -262,7 +264,7 @@ class FigureTask(AnalysisEditTask):
             # # new figure editor
             # editor = klass(
             # name=name,
-            #         processor=self.manager)
+            # processor=self.manager)
             #
             #     if ans is None:
             #         ans = self.unknowns_pane.items
@@ -467,7 +469,7 @@ class FigureTask(AnalysisEditTask):
     # self.new_ideogram()
     #
     # # if isinstance(self.active_editor, IdeogramEditor) and \
-    #     #         not self.unknowns_pane.items:
+    # #         not self.unknowns_pane.items:
     #     #     self.append_ideogram()
     #     # else:
     #     #     self.new_ideogram()
@@ -905,6 +907,14 @@ class FigureTask(AnalysisEditTask):
     # ===============================================================================
     # defaults
     # ===============================================================================
+    def _file_defaults_defaults(self):
+        return [(paths.ideogram_defaults, IDEOGRAM_DEFAULTS, True),
+                (paths.spectrum_defaults, SPECTRUM_DEFAULTS, True),
+                (paths.inverse_isochron_defaults, INVERSE_ISOCHRON_DEFAULTS, True),
+                (paths.composites_defaults, COMPOSITE_DEFAULTS, True),
+                (paths.screen_formatting_options, SCREEN_FORMATTING_DEFAULTS, True),
+                (paths.presentation_formatting_options, PRESENTATION_FORMATTING_DEFAULTS, True)]
+
     def _default_layout_default(self):
 
         return TaskLayout(id='pychron.processing',

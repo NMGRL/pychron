@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.task_factory import TaskFactory
+from traits.api import List
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -27,6 +28,7 @@ from pychron.system_monitor.tasks.system_monitor_task import SystemMonitorTask
 
 
 class SystemMonitorPlugin(ProcessingPlugin):
+
     def start(self):
         pass
 
@@ -45,6 +47,8 @@ class SystemMonitorPlugin(ProcessingPlugin):
     def _preferences_panes_default(self):
         return [SystemMonitorPreferencesPane,
                 ConsolePreferencesPane,
-                DashboardClientPreferencesPane,]
+                DashboardClientPreferencesPane]
 
+    def _file_defaults_default(self):
+        return [('foo','bar',True)]
         # ============= EOF =============================================

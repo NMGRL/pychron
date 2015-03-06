@@ -15,8 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import hashlib
-
+from traits.api import List,Tuple, HasTraits, Password
+from traitsui.api import View, Item
 from envisage.extension_point import ExtensionPoint
 from envisage.plugin import Plugin
 from envisage.ui.tasks.action.exit_action import ExitAction
@@ -27,19 +27,17 @@ from pyface.confirmation_dialog import confirm
 from pyface.constant import NO
 from pyface.tasks.action.dock_pane_toggle_group import DockPaneToggleGroup
 from pyface.tasks.action.schema_addition import SchemaAddition
-from traits.api import List
-
 # ============= standard library imports ========================
+import hashlib
 # ============= local library imports  ==========================
-from traits.has_traits import HasTraits
-from traits.trait_types import Password
-from traitsui.item import Item
-from traitsui.view import View
+from pychron.core.helpers.logger_setup import new_logger
+from pychron.paths import paths
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import ToggleFullWindowAction, EditInitializationAction
 from pychron.envisage.tasks.preferences import GeneralPreferencesPane
 from pychron.globals import globalv
 
+logger = new_logger('PychronTasksPlugin')
 
 class PychronTasksPlugin(Plugin):
     id = 'pychron.tasks.plugin'
@@ -49,6 +47,12 @@ class PychronTasksPlugin(Plugin):
     task_extensions = List(contributes_to='envisage.ui.tasks.task_extensions')
 
     actions = ExtensionPoint(List, id='pychron.actions')
+    file_defaults = ExtensionPoint(List(Tuple), id='pychron.plugin.file_defaults')
+    def start(self):
+        logger.info('Writing plugin file defaults')
+        for p,d,o in self.file_defaults:
+            if paths.write_default_file(p,d,o):
+                logger.info('Wrote default file {} (overwrite: {})'.format(p, o))
 
     def _preferences_panes_default(self):
         return [GeneralPreferencesPane]

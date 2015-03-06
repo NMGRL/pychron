@@ -30,6 +30,7 @@ TASKS = 'envisage.ui.tasks.tasks'
 
 class BaseTaskPlugin(Plugin, Loggable):
     actions = List(contributes_to='pychron.actions')
+    file_defaults = List(contributes_to='pychron.plugin.file_defaults')
 
     tasks = List(contributes_to=TASKS)
     service_offers = List(contributes_to=SERVICE_OFFERS)

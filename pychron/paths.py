@@ -167,6 +167,9 @@ class Paths(object):
     presentation_formatting_options = None
     plotter_options = None
 
+    def write_default_file(self, p, default, overwrite=False):
+        return self._write_default_file(p, default, overwrite)
+
     def set_search_paths(self, app_rec=None):
         self.app_resources = app_rec
         self.set_icon_search_path()
@@ -350,13 +353,14 @@ class Paths(object):
         for p, d in ((path.join(self.setup_dir, 'initialization.xml'), DEFAULT_INITIALIZATION),
                      (self.startup_tests, DEFAULT_STARTUP_TESTS),
                      (self.experiment_defaults, EXPERIMENT_DEFAULTS),
-                     (self.ideogram_defaults, IDEOGRAM_DEFAULTS),
-                     (self.spectrum_defaults, SPECTRUM_DEFAULTS),
-                     (self.inverse_isochron_defaults, INVERSE_ISOCHRON_DEFAULTS),
-                     (self.composites_defaults, COMPOSITE_DEFAULTS),
+                     # (self.ideogram_defaults, IDEOGRAM_DEFAULTS),
+                     # (self.spectrum_defaults, SPECTRUM_DEFAULTS),
+                     # (self.inverse_isochron_defaults, INVERSE_ISOCHRON_DEFAULTS),
+                     # (self.composites_defaults, COMPOSITE_DEFAULTS),
                      (self.system_health, SYSTEM_HEALTH),
-                     (self.screen_formatting_options, SCREEN_FORMATTING_DEFAULTS),
-                     (self.presentation_formatting_options, PRESENTATION_FORMATTING_DEFAULTS)):
+                     # (self.screen_formatting_options, SCREEN_FORMATTING_DEFAULTS),
+                     # (self.presentation_formatting_options, PRESENTATION_FORMATTING_DEFAULTS)
+                    ):
             overwrite = d in (IDEOGRAM_DEFAULTS, SPECTRUM_DEFAULTS,
                               INVERSE_ISOCHRON_DEFAULTS, SYSTEM_HEALTH,
                               SCREEN_FORMATTING_DEFAULTS,PRESENTATION_FORMATTING_DEFAULTS)
@@ -366,6 +370,7 @@ class Paths(object):
         if not path.isfile(p) or overwrite:
             with open(p, 'w') as fp:
                 fp.write(default)
+                return True
 
 def r_mkdir(p):
     if p and not path.isdir(p):
