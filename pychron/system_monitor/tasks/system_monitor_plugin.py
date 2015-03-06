@@ -49,6 +49,6 @@ class SystemMonitorPlugin(ProcessingPlugin):
                 ConsolePreferencesPane,
                 DashboardClientPreferencesPane]
 
-    def _file_defaults_default(self):
-        return [('foo','bar',True)]
+    # def _file_defaults_default(self):
+    #     return [('foo','bar',True)]
         # ============= EOF =============================================

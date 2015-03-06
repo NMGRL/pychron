@@ -591,7 +591,6 @@ class Ideogram(BaseArArFigure):
         else:
             graph.set_y_title(title, plotid=pid)
         # graph.set_y_title(title, plotid=pid)
-
         graph.set_series_label('{}-{}'.format(title, self.group_id + 1),
                                plotid=pid)
         return s

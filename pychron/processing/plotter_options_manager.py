@@ -226,6 +226,15 @@ class PlotterOptionsManager(HasTraits):
         return ps
 
     def _plotter_options_default(self):
+
+        n = self._load_selected_po()
+        po = next((pi for pi in self.plotter_options_list if pi.name == n), None)
+        if not po:
+            po = self.plotter_options_list[0]
+        self._plotter_options_changed(po)
+        return po
+
+    def _load_selected_po(self):
         p = os.path.join(self.persistence_root, '{}.default'.format(self.plotter_options_name))
 
         n = 'Default'
@@ -235,12 +244,7 @@ class PlotterOptionsManager(HasTraits):
                     n = pickle.load(fp)
                 except (pickle.PickleError, EOFError):
                     n = 'Default'
-
-        po = next((pi for pi in self.plotter_options_list if pi.name == n), None)
-        if not po:
-            po = self.plotter_options_list[0]
-        self._plotter_options_changed(po)
-        return po
+        return n
 
 
 class IdeogramOptionsManager(PlotterOptionsManager):
@@ -269,6 +273,11 @@ class SeriesOptionsManager(PlotterOptionsManager):
 class SystemMonitorOptionsManager(PlotterOptionsManager):
     plotter_options_klass = SystemMonitorOptions
     persistence_name = 'system_monitor'
+
+
+class SysMonIdeogramOptionsManager(IdeogramOptionsManager):
+    persistence_name = 'sys_mon_ideogram'
+    _defaults_path = paths.sys_mon_ideogram_defaults
 
 
 class DashboardOptionsManager(PlotterOptionsManager):

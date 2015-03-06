@@ -32,7 +32,7 @@ from pychron.processing.plotters.options.base import FigurePlotterOptions
 from pychron.processing.plotters.options.option import AuxPlotOptions
 from pychron.pychron_constants import ALPHAS
 
-FONTS = ['Helvetica',] #'Courier','Times-Roman']#['modern', 'arial']
+FONTS = ['Helvetica', ]  # 'Courier','Times-Roman']#['modern', 'arial']
 SIZES = [10, 6, 8, 9, 10, 11, 12, 14, 15, 18, 24, 36]
 
 
@@ -247,6 +247,14 @@ class PlotterOptions(FigurePlotterOptions):
     def _get_groups(self):
         pass
 
+    def _get_axes_group(self):
+        axis_grp = Group(self._get_x_axis_group(),
+                         self._get_y_axis_group(),
+                         layout='tabbed',
+                         show_border=True,
+                         label='Axes')
+        return axis_grp
+
     def _get_x_axis_group(self):
         v = VGroup(
             self._create_axis_group('x', 'title'),
@@ -255,7 +263,7 @@ class PlotterOptions(FigurePlotterOptions):
                                                       'the ticks extend into the plot area.'),
             Item('xtick_out', label='Tick Out', tooltip='The number of pixels by which '
                                                         'the ticks extend into the label area.'),
-            show_border=True,
+            # show_border=True,
             label='X')
         return v
 
@@ -267,7 +275,7 @@ class PlotterOptions(FigurePlotterOptions):
                                                       'the ticks extend into the plot area.'),
             Item('ytick_out', label='Tick Out', tooltip='The number of pixels by which '
                                                         'the ticks extend into the label area.'),
-            show_border=True,
+            # show_border=True,
             label='Y')
         return v
 
@@ -286,7 +294,7 @@ class PlotterOptions(FigurePlotterOptions):
     def _get_main_group(self):
         main_grp = VGroup(self._get_aux_plots_group(),
                           HGroup(Item('plot_spacing', label='Spacing',
-                                      tooltip = 'Spacing between stacked plots')),
+                                      tooltip='Spacing between stacked plots')),
                           label='Plots')
         return main_grp
 
@@ -331,20 +339,28 @@ class PlotterOptions(FigurePlotterOptions):
     def _get_bg_group(self):
         grp = Group(Item('bgcolor', label='Figure'),
                     Item('plot_bgcolor', label='Plot'),
+                    show_border=True,
                     label='Background')
         return grp
 
     def traits_view(self):
         main_grp = self._get_main_group()
         bg_grp = self._get_bg_group()
+        pd_grp = self._get_padding_group()
+        a_grp = self._get_axes_group()
         grps = self._get_groups()
         if grps:
+            a_grp = VGroup(bg_grp, pd_grp,
+                           a_grp,
+                           label='Appearance',
+                           show_border=True)
             g = Group(main_grp,
-                      bg_grp,
-                      self._get_padding_group(),
+                      a_grp,
+                      # bg_grp,
+                      # self._get_padding_group(),
                       layout='fold', *grps)
         else:
-            g = Group(main_grp, bg_grp)
+            g = Group(main_grp, bg_grp, pd_grp)
 
         v = View(VGroup(self._get_refresh_group(), g),
                  scrollable=True)

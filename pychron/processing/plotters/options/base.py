@@ -90,7 +90,7 @@ class BasePlotterOptions(HasTraits):
                 v = getattr(self, oattr)
             else:
                 v = getattr(self.formatting_options, attr)
-            self.set_hash()
+
         return v
 
     def get_hash(self):

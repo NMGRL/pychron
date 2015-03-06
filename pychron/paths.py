@@ -158,11 +158,13 @@ class Paths(object):
     ic_mftable = None
     system_conditionals = None
     experiment_defaults = None
+    system_health = None
+
     ideogram_defaults = None
     spectrum_defaults = None
     inverse_isochron_defaults = None
     composites_defaults = None
-    system_health = None
+    sys_mon_ideogram_defaults = None
     screen_formatting_options = None
     presentation_formatting_options = None
     plotter_options = None

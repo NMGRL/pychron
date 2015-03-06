@@ -90,8 +90,12 @@ class MPlotAxis(PlotAxis):
                      'ensure_labels_bounded',
                      'ensure_ticks_bounded',
                      'bgcolor',
-                     'resizable'):
-            setattr(self, attr, getattr(ax, attr))
+                     'resizable',
+                     'tag'):
+            try:
+                setattr(self, attr, getattr(ax, attr))
+            except AttributeError:
+                pass
 
     def _draw_title(self, gc, label=None, axis_offset=None):
         if label is None:

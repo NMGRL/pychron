@@ -103,6 +103,7 @@ class AgeOptions(GroupablePlotterOptions):
 
     def _get_label_font(self):
         return '{} {}'.format(self.label_fontname, self.label_fontsize)
+
     def _get_error_info_font(self):
         return '{} {}'.format(self.error_info_fontname,
                               self.error_info_fontsize)

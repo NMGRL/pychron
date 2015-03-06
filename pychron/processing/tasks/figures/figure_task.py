@@ -81,7 +81,7 @@ class FigureTask(AnalysisEditTask):
         # GroupbyAliquotAction(name='by Aliquot'),
         # GroupbyLabnumberAction(name='by Labnumber'),
         # GroupbySampleAction(name='by Sample'),
-        #          ClearGroupAction(name='Clear'))
+        # ClearGroupAction(name='Clear'))
     ]
 
     # auto_select_analysis = False
@@ -266,7 +266,7 @@ class FigureTask(AnalysisEditTask):
             # name=name,
             # processor=self.manager)
             #
-            #     if ans is None:
+            # if ans is None:
             #         ans = self.unknowns_pane.items
             #
             #     if ans:
@@ -470,7 +470,7 @@ class FigureTask(AnalysisEditTask):
     #
     # # if isinstance(self.active_editor, IdeogramEditor) and \
     # #         not self.unknowns_pane.items:
-    #     #     self.append_ideogram()
+    # #     self.append_ideogram()
     #     # else:
     #     #     self.new_ideogram()
     #
@@ -916,66 +916,72 @@ class FigureTask(AnalysisEditTask):
                 (paths.presentation_formatting_options, PRESENTATION_FORMATTING_DEFAULTS, True)]
 
     def _default_layout_default(self):
+        a = Tabbed(browser_pane_item(),
+                   PaneItem('pychron.processing.figures.plotter_options'))
+        b = PaneItem('pychron.processing.unknowns')
+        left = HSplitter(a, b)
+
+        # HSplitter(VSplitter(
+        #                       Tabbed(browser_pane_item(),
+        #                              PaneItem('pychron.processing.figures.plotter_options'),
+        #                              PaneItem('pychron.plot_editor'))),
+        #                              PaneItem('pychron.processing.unknowns'))
 
         return TaskLayout(id='pychron.processing',
-                          left=HSplitter(VSplitter(
-                              Tabbed(browser_pane_item(),
-                                     PaneItem('pychron.processing.figures.plotter_options'),
-                                     PaneItem('pychron.plot_editor'))),
-                                         PaneItem('pychron.processing.unknowns')))
+                          left=left)
 
-        # return TaskLayout(
-        #     id='pychron.processing',
-        # left=HSplitter(
-        #     browser_pane_item(),
-        #     Tabbed(
-        #         # PaneItem('pychron.processing.figures.saved_figures'),
-        #         PaneItem('pychron.processing.unknowns'),
-        #         PaneItem('pychron.processing.figures.plotter_options'),
-        #         PaneItem('pychron.plot_editor'))))
-        # ============= EOF =============================================
-        #@classmethod
-        # def group_by(cls, editor, items, key):
-        #     ids = []
-        #     for it in items:
-        #         v = key(it)
-        #         if not v in ids:
-        #             ids.append(v)
-        #
-        #     sitems = sorted(items, key=key)
-        #     for k, analyses in groupby(sitems, key=key):
-        #         gid = ids.index(k)
-        #         idxs = [items.index(ai) for ai in analyses]
-        #         editor.set_group(idxs, gid, refresh=False)
-        # def _append_figure(self, klass):
-        #     """
-        #         if selected_samples append all analyses
-        #         else append selected analyses
-        #
-        #     """
-        #     return
-        #
-        #     if isinstance(self.active_editor, klass):
-        #         sa = self.analysis_table.selected
-        #         if sa:
-        #             ts = self.manager.make_analyses(sa)
-        #         else:
-        #             ts = [ai for si in self.selected_sample
-        #                   for ai in self._get_sample_analyses(si)]
-        #
-        #         ans = self.manager.make_analyses(ts)
-        #         if ans:
-        #             pans = self.active_editor.analyses
-        #             uuids = [p.uuid for p in pans]
-        #             fans = [ai for ai in ans if ai.uuid not in uuids]
-        #
-        #             pans.extend(fans)
-        #             self.active_editor.trait_set(unknowns=pans)
-        #
-        #         gid = 0
-        #         for _, gans in groupby(self.active_editor.unknowns, key=lambda x: x.sample):
-        #             for ai in gans:
-        #                 ai.group_id = gid
-        #             gid += 1
-        #
-        #         self.active_editor.rebuild(compress_groups=False)
+# return TaskLayout(
+#     id='pychron.processing',
+# left=HSplitter(
+#     browser_pane_item(),
+#     Tabbed(
+#         # PaneItem('pychron.processing.figures.saved_figures'),
+#         PaneItem('pychron.processing.unknowns'),
+#         PaneItem('pychron.processing.figures.plotter_options'),
+#         PaneItem('pychron.plot_editor'))))
+# ============= EOF =============================================
+#@classmethod
+# def group_by(cls, editor, items, key):
+#     ids = []
+#     for it in items:
+#         v = key(it)
+#         if not v in ids:
+#             ids.append(v)
+#
+#     sitems = sorted(items, key=key)
+#     for k, analyses in groupby(sitems, key=key):
+#         gid = ids.index(k)
+#         idxs = [items.index(ai) for ai in analyses]
+#         editor.set_group(idxs, gid, refresh=False)
+# def _append_figure(self, klass):
+#     """
+#         if selected_samples append all analyses
+#         else append selected analyses
+#
+#     """
+#     return
+#
+#     if isinstance(self.active_editor, klass):
+#         sa = self.analysis_table.selected
+#         if sa:
+#             ts = self.manager.make_analyses(sa)
+#         else:
+#             ts = [ai for si in self.selected_sample
+#                   for ai in self._get_sample_analyses(si)]
+#
+#         ans = self.manager.make_analyses(ts)
+#         if ans:
+#             pans = self.active_editor.analyses
+#             uuids = [p.uuid for p in pans]
+#             fans = [ai for ai in ans if ai.uuid not in uuids]
+#
+#             pans.extend(fans)
+#             self.active_editor.trait_set(unknowns=pans)
+#
+#         gid = 0
+#         for _, gans in groupby(self.active_editor.unknowns, key=lambda x: x.sample):
+#             for ai in gans:
+#                 ai.group_id = gid
+#             gid += 1
+#
+#         self.active_editor.rebuild(compress_groups=False)
