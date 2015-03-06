@@ -314,9 +314,8 @@ class Ideogram(BaseArArFigure):
             if self.group_id > 0:
                 for ov in plot.overlays:
                     if isinstance(ov, IdeogramPointsInset):
-
-                        print self.group_id, startidx, ov.value.get_bounds()[1]+1
-                        startidx = max(startidx, ov.value.get_bounds()[1]+1)
+                        print self.group_id, startidx, ov.value.get_bounds()[1] + 1
+                        startidx = max(startidx, ov.value.get_bounds()[1] + 1)
             else:
                 startidx = 1
 
@@ -325,7 +324,7 @@ class Ideogram(BaseArArFigure):
             else:
                 ys = arange(startidx + n - 1, startidx - 1, -1)
 
-            yma2 = max(ys)+1
+            yma2 = max(ys) + 1
             h = self.options.inset_height / 2.0
             if self.group_id == 0:
                 bgcolor = self.options.get_formatting_value('plot_bgcolor')
@@ -335,7 +334,7 @@ class Ideogram(BaseArArFigure):
             d = self.options.get_plot_dict(ogid)
             o = IdeogramPointsInset(self.xs, ys,
                                     color=d['color'],
-                                    outline_color = d['color'],
+                                    outline_color=d['color'],
                                     bgcolor=bgcolor,
                                     width=self.options.inset_width,
                                     height=h,
@@ -587,8 +586,11 @@ class Ideogram(BaseArArFigure):
         if not po.ytitle_visible:
             title = ''
 
-        graph.set_y_title(title,
-                          plotid=pid)
+        if '<sup>' in title or '<sub>' in title:
+            self._set_ml_title(title, pid, 'y')
+        else:
+            graph.set_y_title(title, plotid=pid)
+        # graph.set_y_title(title, plotid=pid)
 
         graph.set_series_label('{}-{}'.format(title, self.group_id + 1),
                                plotid=pid)
@@ -738,7 +740,7 @@ class Ideogram(BaseArArFigure):
 
 
         # ============= EOF =============================================
-        #def _add_mean_indicator2(self, g, scatter, bins, probs, pid):
+        # def _add_mean_indicator2(self, g, scatter, bins, probs, pid):
         #        offset = 0
         #        percentH = 1 - 0.954  # 2sigma
         #

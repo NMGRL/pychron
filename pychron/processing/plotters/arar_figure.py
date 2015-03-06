@@ -27,6 +27,7 @@ import re
 from uncertainties import std_dev, nominal_value, ufloat
 # ============= local library imports  ==========================
 from pychron.graph.error_bar_overlay import ErrorBarOverlay
+from pychron.graph.ml_label import MPlotAxis
 from pychron.graph.tools.axis_tool import AxisTool
 from pychron.graph.tools.limits_tool import LimitsTool, LimitOverlay
 from pychron.processing.analyses.analysis_group import AnalysisGroup
@@ -367,7 +368,7 @@ class BaseArArFigure(HasTraits):
     def _plot_radiogenic_yield(self, po, plot, pid, **kw):
         k = 'rad40_percent'
         ys, es = self._get_aux_plot_data(k)
-        return self._plot_aux('%40Ar*', k, ys, po, plot, pid, es, **kw)
+        return self._plot_aux('%<sup>40</sup>Ar*', k, ys, po, plot, pid, es, **kw)
 
     def _plot_kcl(self, po, plot, pid, **kw):
         k = 'kcl'
@@ -387,6 +388,16 @@ class BaseArArFigure(HasTraits):
     def _get_aux_plot_data(self, k):
         vs = self._unpack_attr(k)
         return [nominal_value(vi) for vi in vs], [std_dev(vi) for vi in vs]
+
+    def _set_ml_title(self, text, plotid, ax):
+        plot = self.graph.plots[plotid]
+        tag = '{}_axis'.format(ax)
+        xa = getattr(plot, tag)
+        nxa = MPlotAxis()
+        nxa.title = text
+        nxa.clone(xa)
+
+        setattr(plot, tag, nxa)
 
     # ===============================================================================
     #
