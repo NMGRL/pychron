@@ -64,6 +64,7 @@ DEFAULT_STARTUP_TESTS = '''
 - plugin: ArgusSpectrometer
   tests:
     - test_communication
+    - test_intensity
 - plugin: ExtractionLine
   tests:
     - test_valve_communication

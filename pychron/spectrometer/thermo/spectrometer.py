@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import time
 from traits.api import Instance, Int, Property, List, \
     Any, Enum, Str, DelegatesTo, Bool, TraitError, cached_property
 # ============= standard library imports ========================
@@ -96,7 +97,24 @@ class Spectrometer(SpectrometerDevice):
     use_deflection_correction = Bool(True)
     max_deflection = Int(500)
 
-    def test_connection(self):
+    _connection_status = False
+
+    def test_intensity(self):
+        """
+        test if intensity is changing. make 2 measurements if exactlly the same for all
+        detectors make third measurement if same as 1,2 make fourth measurement if same
+        all four measurements same then test fails
+        :return:
+        """
+        keys, prev = self.get_intensities()
+        it = 0.1 if self.simulation else self.integration_time
+        for i in range(4):
+            time.sleep(it)
+            _, cur = self.get_intensities()
+            if all(prev == cur):
+                return True
+
+    def test_connection(self, force=True):
         """
             if not in simulation mode send a GetIntegrationTime to the spectrometer
             if in simulation mode and the globalv.communication_simulation is disabled
@@ -106,9 +124,14 @@ class Spectrometer(SpectrometerDevice):
         """
         ret = False
         if not self.simulation:
-            ret = self.ask('GetIntegrationTime', verbose=True) is not None
+            if force:
+                ret = self.ask('GetIntegrationTime', verbose=True) is not None
+            else:
+                ret = self._connection_status
         elif globalv.communication_simulation:
             ret = True
+
+        self._connection_status = ret
         return ret
 
     def set_gains(self, history=None):
@@ -343,13 +366,13 @@ class Spectrometer(SpectrometerDevice):
             pt = self.config_get(config, name, 'protection_threshold', default=None, optional=True)
 
             self._add_detector(name=name,
-                              # relative_position=relative_position,
-                              protection_threshold=pt,
-                              deflection_corrrection_sign=deflection_corrrection_sign,
-                              color=color,
-                              active=default_state,
-                              isotope=isotope,
-                              kind=kind)
+                               # relative_position=relative_position,
+                               protection_threshold=pt,
+                               deflection_corrrection_sign=deflection_corrrection_sign,
+                               color=color,
+                               active=default_state,
+                               isotope=isotope,
+                               kind=kind)
 
     # ===============================================================================
     # signals
@@ -565,9 +588,9 @@ class Spectrometer(SpectrometerDevice):
 
 # if __name__ == '__main__':
 # s = Spectrometer()
-#     ss = ArgusSource()
-#     ss.current_hv = 4505
-#     s.source = ss
+# ss = ArgusSource()
+# ss.current_hv = 4505
+# s.source = ss
 #     corrected = s.get_hv_correction(100,current=False)
 #     uncorrected = s.get_hv_correction(corrected, uncorrect=True, current=False)
 #

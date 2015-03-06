@@ -37,9 +37,16 @@ class ArgusSpectrometerPlugin(BaseSpectrometerPlugin):
     # tests
     # ===============================================================================
     def test_communication(self):
-        task = self._task_factory()
-        t = task.manager.test_connection()
+        manager = self.spectrometer_manager
+        t = manager.test_connection()
         return 'Passed' if t else 'Failed'
+
+    def test_intensity(self):
+        manager = self.spectrometer_manager
+        t = manager.test_connection(force=False)
+        if t:
+            tt = manager.test_intensity()
+            return 'Passed' if tt else 'Failed'
     # ===============================================================================
     # defaults
     # ===============================================================================

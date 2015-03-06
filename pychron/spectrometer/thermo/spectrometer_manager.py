@@ -43,8 +43,11 @@ class ArgusSpectrometerManager(BaseSpectrometerManager):
     spectrometer_microcontroller = Any
     name = Property(depends_on='spectrometer_microcontroller')
 
-    def test_connection(self):
-        return self.spectrometer.test_connection()
+    def test_connection(self, **kw):
+        return self.spectrometer.test_connection(**kw)
+
+    def test_intensity(self, **kw):
+        return self.spectrometer.test_intensity(**kw)
 
     def open_parameters(self):
         p = SpectrometerParameters(spectrometer=self.spectrometer)
