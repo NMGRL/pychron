@@ -15,11 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-# from chaco.label import Label
-
 from traits.api import Instance, Bool, Any, Event
 from traitsui.api import View, UItem, InstanceEditor
-
 # ============= standard library imports ========================
 import time
 from numpy import Inf, polyfit
@@ -28,7 +25,6 @@ from pychron.graph.graph import Graph
 from pychron.core.helpers.fits import convert_fit
 from pychron.processing.fits.iso_evo_fit_selector import IsoEvoFitSelector
 from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
-# from pychron.core.ui.thread import Thread
 
 
 def fits_equal(dbfit, fit, fod):
@@ -50,22 +46,22 @@ class IsoEvoGraph(Graph):
     _eq_only_dict = None
     replot_needed = Event
 
-    def _get_selected_plotid(self):
-        r = 0
-        # if self.selected_plot is not None:
-        #     for ci in self.plotcontainer.components:
-        #         for i, cii in enumerate(ci.components):
-        #             if cii == self.selected_plot:
-        #                 r = i
-        #                 break
-                        # print ci, cii
-                        # for gi in self.graphs:
-                        # for pp in gi.plots:
-                        # pp == self.selected_plot
-
-                        # r = self.plots.index(self.selected_plot)
-        # print 'get selected plotid', r, self.selected_plot
-        return r
+    # def _get_selected_plotid(self):
+    #     r = 0
+    #     # if self.selected_plot is not None:
+    #     #     for ci in self.plotcontainer.components:
+    #     #         for i, cii in enumerate(ci.components):
+    #     #             if cii == self.selected_plot:
+    #     #                 r = i
+    #     #                 break
+    #                     # print ci, cii
+    #                     # for gi in self.graphs:
+    #                     # for pp in gi.plots:
+    #                     # pp == self.selected_plot
+    #
+    #                     # r = self.plots.index(self.selected_plot)
+    #     # print 'get selected plotid', r, self.selected_plot
+    #     return r
 
     def get_child_context_menu_actions(self):
         sid = self.selected_plotid
@@ -147,31 +143,24 @@ class IsoEvoGraph(Graph):
 
 class IsotopeEvolutionEditor(GraphEditor):
     component = Any
-    # component = Instance(Container)
-    # component = Instance(VPlotContainer)
-    #component = Instance(HPlotContainer)
-    #component = Instance(GridPlotContainer)
-    # graphs = Dict
-    _suppress_update = Bool
-
-    #tool = Instance(IsoEvoFitSelector, ())
     tool = Instance(IsoEvoFitSelector)
+
     pickle_path = 'iso_fits'
     unpack_peaktime = True
-    # update_on_analyses = False
     calculate_age = False
 
-    def _set_name(self):
-        if not self.name:
-            super(IsotopeEvolutionEditor, self)._set_name()
-
-    def _tool_default(self):
-        t = IsoEvoFitSelector(auto_update=False)
-        return t
+    def simple_rebuild_graph(self):
+        # self._new_container = False
+        self.rebuild_graph()
+        # self._new_container = True
 
     def save(self):
         self._save(None, None, None)
 
+    def save_fits(self, fits, filters, progress=None):
+        self._save(fits, filters, progress)
+
+    # private
     def _save(self, fits, filters, progress):
         proc = self.processor
 
@@ -206,9 +195,6 @@ class IsotopeEvolutionEditor(GraphEditor):
                 proc.remove_from_cache(unk)
 
         progress.soft_close()
-
-    def save_fits(self, fits, filters, progress=None):
-        self._save(fits, filters, progress)
 
     def _save_fit_dict(self, unk, meas_analysis, fits, filters, dbaction):
         fit_hist = None
@@ -270,7 +256,7 @@ class IsotopeEvolutionEditor(GraphEditor):
             for dbfi in dbfits:
                 tf = in_tool_fits(dbfi)
                 if tf:
-                    #use tool fit
+                    # use tool fit
                     fd = dict(filter_outliers=tf.filter_outliers,
                               iterations=tf.filter_iterations,
                               std_devs=tf.filter_std_devs)
@@ -360,7 +346,7 @@ class IsotopeEvolutionEditor(GraphEditor):
                    include_baseline_error=include_baseline_error,
                    time_zero_offset=time_zero_offset)
 
-        #update isotoperesults
+        # update isotoperesults
         v, e = float(iso.value), float(iso.error)
         db.add_isotope_result(dbiso, fit_hist,
                               signal_=v, signal_err=e)
@@ -407,7 +393,6 @@ class IsotopeEvolutionEditor(GraphEditor):
 
     def _get_sniff_visible(self, fit, i):
         v = self.component.get_eq_visible(i)
-        print 'get sniff', fit.use_sniff, v
         return fit.use_sniff or v
 
     def _plot_signal(self, add_tools, fd, fit, trunc, g, i, isok, unk):
@@ -459,29 +444,11 @@ class IsotopeEvolutionEditor(GraphEditor):
                 iso.dirty = True
             return xs
 
+    def _set_name(self):
+        if not self.name:
+            super(IsotopeEvolutionEditor, self)._set_name()
+
     def _rebuild_graph(self):
-        self.__rebuild_graph()
-        # n = len(self.unknowns)
-        # prog = None
-        # if n > 1:
-        #     prog = self.processor.open_progress(n)
-        #     prog.change_message('Loading Plots')
-        #
-        # t = Thread(target=self.__rebuild_graph)
-        # t.start()
-        # t.join()
-        #
-        # if prog:
-        #     prog.close()
-
-    _new_container = True
-
-    def simple_rebuild_graph(self):
-        self._new_container = False
-        self.rebuild_graph()
-        self._new_container = True
-
-    def __rebuild_graph(self):
         fits = list(self._graph_generator())
         if not fits:
             return
@@ -496,7 +463,6 @@ class IsotopeEvolutionEditor(GraphEditor):
                 if c >= 7:
                     r += 1
 
-        # if self._new_container:
         cg = self._container_factory((r, c))
         if self.component:
             self.component.on_trait_change(self.rebuild_graph, 'replot_needed', remove=True)
@@ -504,11 +470,7 @@ class IsotopeEvolutionEditor(GraphEditor):
 
         self.component = cg
         cg.on_trait_change(self._rebuild_graph, 'replot_needed')
-        # else:
-        #     self.component.plotcontainer.remove(self.component.plotcontainer.components)
-        #     self.graphs=[]
 
-        # add_tools = not self.tool.auto_update or n == 1
         add_tools = n == 1
         for j, unk in enumerate(self.analyses):
             set_ytitle = j % c == 0
@@ -520,7 +482,6 @@ class IsotopeEvolutionEditor(GraphEditor):
 
             plot_kw = dict(padding=padding,
                            title=unk.record_id)
-            override_limits={}
             with g.no_regression(refresh=False):
                 ma = -Inf
                 set_x_flag = False
@@ -545,9 +506,6 @@ class IsotopeEvolutionEditor(GraphEditor):
                     else:
                         xs = self._plot_signal(add_tools, fd, fit, trunc, g, i, isok, unk)
 
-                            # print 'setting max',max(xs)*1.1, i
-                            # g.set_x_limits(0, max(xs)*1.1, plotid=i)
-
                     if len(xs):
                         ma = max(max(xs), ma)
                     else:
@@ -567,21 +525,25 @@ class IsotopeEvolutionEditor(GraphEditor):
             self.component.plotcontainer.add(g.plotcontainer)
             self.component.plotcontainer.on_trait_change(lambda x: g.plotcontainer.trait_set(bounds=x), 'bounds')
 
-            #need to store g in self.graphs to ensure bounds are updated
+            # need to store g in self.graphs to ensure bounds are updated
             self.graphs.append(g)
 
     def traits_view(self):
         v = View(UItem('component', style='custom', editor=InstanceEditor()))
         return v
 
+    def _container_factory(self, shape):
+        g = IsoEvoGraph(container_dict=dict(kind='g', shape=shape, spacing=(1, 1)))
+        return g
+
     def _component_default(self):
         g = self._container_factory((1, 1))
 
         return g
 
-    def _container_factory(self, shape):
-        g = IsoEvoGraph(container_dict=dict(kind='g', shape=shape, spacing=(1, 1)))
-        return g
+    def _tool_default(self):
+        t = IsoEvoFitSelector(auto_update=False)
+        return t
 
     # ============= deprecated =============================================
     def calculate_optimal_eqtime(self):
@@ -615,36 +577,35 @@ class IsotopeEvolutionEditor(GraphEditor):
 
         self.info('========================================')
         self.component.invalidate_and_redraw()
-
-        # ============= EOF =============================================
-        #
-        # fitted=[]
-        # for fi in self.tool.fits:
-        #     if not fi.save:
-        #         continue
-        #
-        #     fd = dict(filter_outliers=fi.filter_outliers,
-        #               iterations=fi.filter_iterations,
-        #               std_devs=fi.filter_std_devs)
-        #
-        #     fit_hist, isoname, kind, added= self._save_db_fit(unk, meas_analysis, fit_hist,
-        #                                  fi.name, fi.fit, fi.error_type, fd)
-        #     if added:
-        #         fitted.append((isoname, kind))
-        #
-        # added=False
-        # for dbfi in dbfits:
-        #     if not next(((f,k) for f,k in fitted
-        #                  if dbfi.isotope.molecular_weight.name==f and dbfi.isotope.kind==k), None):
-        #         fd = dict(filter_outliers=dbfi.filter_outliers,
-        #                   iterations=dbfi.filter_iterations,
-        #                   std_devs=dbfi.filter_std_devs)
-        #
-        #         fit_hist=self._save_db_fit(unk, meas_analysis, fit_hist,
-        #                           dbfi.isotope.name , dbfi.fit, dbfi.error_type, fd)
-        #         print 'adding old fit for'.format(dbfi.isotope.name)
-        #         added=True
-        #
-        # if not added:
-        #     sess = self.processor.db.get_session()
-        #     sess.delete(fit_hist)
+# ============= EOF =============================================
+#
+# fitted=[]
+# for fi in self.tool.fits:
+#     if not fi.save:
+#         continue
+#
+#     fd = dict(filter_outliers=fi.filter_outliers,
+#               iterations=fi.filter_iterations,
+#               std_devs=fi.filter_std_devs)
+#
+#     fit_hist, isoname, kind, added= self._save_db_fit(unk, meas_analysis, fit_hist,
+#                                  fi.name, fi.fit, fi.error_type, fd)
+#     if added:
+#         fitted.append((isoname, kind))
+#
+# added=False
+# for dbfi in dbfits:
+#     if not next(((f,k) for f,k in fitted
+#                  if dbfi.isotope.molecular_weight.name==f and dbfi.isotope.kind==k), None):
+#         fd = dict(filter_outliers=dbfi.filter_outliers,
+#                   iterations=dbfi.filter_iterations,
+#                   std_devs=dbfi.filter_std_devs)
+#
+#         fit_hist=self._save_db_fit(unk, meas_analysis, fit_hist,
+#                           dbfi.isotope.name , dbfi.fit, dbfi.error_type, fd)
+#         print 'adding old fit for'.format(dbfi.isotope.name)
+#         added=True
+#
+# if not added:
+#     sess = self.processor.db.get_session()
+#     sess.delete(fit_hist)
