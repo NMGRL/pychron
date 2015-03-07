@@ -92,8 +92,9 @@ class ArgusSpectrometerManager(BaseSpectrometerManager):
         self.debug('******************************* LOAD Spec')
         if db_mol_weights:
             # get the molecular weights from the database
-            dbm = IsotopeDatabaseManager(application=self.application,
-                                         warn=False)
+            # dbm = IsotopeDatabaseManager(application=self.application,
+            #                              warn=False)
+            dbm = self.application.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
             if dbm.is_connected():
                 self.info('loading molecular_weights from database')
                 mws = dbm.db.get_molecular_weights()

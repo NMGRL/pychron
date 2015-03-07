@@ -26,9 +26,10 @@ from pychron.experiment.stats import StatsGroup
 from pychron.experiment.experiment_executor import ExperimentExecutor
 from pychron.experiment.utilities.identifier import convert_identifier
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
+from pychron.loggable import Loggable
 
 
-class Experimentor(IsotopeDatabaseManager):
+class Experimentor(Loggable):
     experiment_factory = Instance(ExperimentFactory)
     experiment_queue = Instance(ExperimentQueue)
     executor = Instance(ExperimentExecutor)
@@ -140,7 +141,7 @@ class Experimentor(IsotopeDatabaseManager):
         """
            return gen_labtable object
         """
-        db = self.db
+        db = self.manager.db
         ln = convert_identifier(ln)
         dbln = db.get_labnumber(ln)
 
@@ -158,7 +159,7 @@ class Experimentor(IsotopeDatabaseManager):
                 if ln not in exclude)
 
     def _get_analysis_info(self, li):
-        dbln = self.db.get_labnumber(li)
+        dbln = self.manager.db.get_labnumber(li)
         if not dbln:
             return None
         else:
@@ -182,7 +183,7 @@ class Experimentor(IsotopeDatabaseManager):
 
     def _set_analysis_metatata(self):
         cache = dict()
-        db = self.db
+        db = self.manager.db
         aruns = self._get_all_automated_runs()
 
         with db.session_ctx():
@@ -333,7 +334,7 @@ class Experimentor(IsotopeDatabaseManager):
                 dms = spec.name.capitalize()
 
         e = ExperimentFactory(application=self.application,
-                              db=self.db,
+                              db=self.manager.db,
                               default_mass_spectrometer=dms)
 
         return e

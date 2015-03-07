@@ -14,11 +14,6 @@
 # limitations under the License.
 # ===============================================================================
 from traitsui.view import View
-from pychron.core.ui import set_qt
-from pychron.experiment.utilities.conditionals import CONDITIONAL_GROUP_TAGS
-
-set_qt()
-
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -35,7 +30,7 @@ class ConditionalsView(ConditionalsViewable):
         self._add_pre_post('PostRunTerminations', items, PostRunGroup)
 
     def add_pre_run_terminations(self, items):
-        self._add_pre_post( 'PreRunTerminations', items, PreRunGroup)
+        self._add_pre_post('PreRunTerminations', items, PreRunGroup)
 
     def _add_pre_post(self, label, items, klass):
         if not items:
@@ -72,16 +67,16 @@ class ConditionalsView(ConditionalsViewable):
                 else:
                     grp.conditionals.extend(items)
 
-        # for tag in CONDITIONAL_GROUP_TAGS:
-        #     tag = '{}s'.format(tag)
-        #     print tag, [gi.label for gi in self.groups]
-        #     # grp = getattr(self, '{}s_group'.format(tag))
-        #     items = ditems.get(tag)
-        #     if items:
-        #         grp = next((gi for gi in self.groups if gi.label == tag.capitalize()), None)
-        #         if grp:
-        #             grp.conditionals.extend(items)
-        #         else:
+                    # for tag in CONDITIONAL_GROUP_TAGS:
+                    # tag = '{}s'.format(tag)
+                    #     print tag, [gi.label for gi in self.groups]
+                    #     # grp = getattr(self, '{}s_group'.format(tag))
+                    #     items = ditems.get(tag)
+                    #     if items:
+                    #         grp = next((gi for gi in self.groups if gi.label == tag.capitalize()), None)
+                    #         if grp:
+                    #             grp.conditionals.extend(items)
+                    #         else:
 
 
     def traits_view(self):

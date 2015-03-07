@@ -102,7 +102,7 @@ class ExperimentPlugin(BaseTaskPlugin):
             protocol=SensitivitySelector,
             factory=self._sens_selector_factory)
         # so_ex = self.service_offer_factory(protocol=Experimentor,
-        #                                    factory=self._experimentor_factory)
+        # factory=self._experimentor_factory)
         return [so_signal_calculator,
                 so_image_browser,
                 so_sens_selector,
@@ -110,7 +110,7 @@ class ExperimentPlugin(BaseTaskPlugin):
         ]
 
     # def _experimentor_factory(self):
-    #     return self.experimentor
+    # return self.experimentor
 
     def _experimentor_default(self):
         # from pychron.experiment.experimentor import Experimentor
@@ -124,8 +124,10 @@ class ExperimentPlugin(BaseTaskPlugin):
         # app = None
         # if self.window:
         #     app = self.window.application
+        manager = self.application.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
 
         exp = Experimentor(application=self.application,
+                           manager=manager,
                            mode=mode)
 
         return exp
