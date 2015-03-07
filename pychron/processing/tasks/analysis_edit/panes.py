@@ -245,7 +245,8 @@ class HistoryTablePane(TablePane, ColumnSorterMixin):
                                       tooltip=self._replace_tooltip),
                    icon_button_editor('clear_button', 'delete',
                                       tooltip=self._clear_tooltip)),
-            HGroup(Item('auto_group'),
+            HGroup(Item('auto_group', tooltip='Automatically group by labnumber when'
+                                              '"appending" analyses. Note: Does not apply when drag-n-dropping analyses'),
                    icon_button_editor('configure_filter_button', 'filter',
                                       tooltip='Configure/Apply a filter',
                                       enabled_when='items')),

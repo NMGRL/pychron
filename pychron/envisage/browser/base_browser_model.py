@@ -159,6 +159,9 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
                    'use_named_date_range', 'named_date_range',
                    'low_post', 'high_post')
 
+    def make_records(self, ans):
+        return self._make_records(ans)
+
     def dump_browser(self):
         self.dump()
         self.dump_browser_selection()

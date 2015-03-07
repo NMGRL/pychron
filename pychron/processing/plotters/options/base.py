@@ -18,7 +18,7 @@
 import hashlib
 from traits.api import HasTraits, List, Str, TraitError, \
     Button, Bool, Event, Color, Range, String, Float, Int
-from traitsui.api import View, HGroup, spring, VGroup, Item
+from traitsui.api import View, HGroup, spring, VGroup, Item, Group, Spring
 
 import apptools.sweet_pickle as pickle
 # ============= standard library imports ========================
@@ -35,7 +35,7 @@ class BasePlotterOptions(HasTraits):
     name = Str
     initialized = True
     refresh_plot_needed = Event
-    _hash  = None
+    _hash = None
     formatting_options = None
 
     def __init__(self, root, clean=False, *args, **kw):
@@ -228,11 +228,21 @@ class FigurePlotterOptions(BasePlotterOptions):
                                          tooltip='Refresh plot'))
 
     def _get_padding_group(self):
-        return VGroup(Item('padding_left', label='Left'),
-                      Item('padding_right', label='Right'),
-                      Item('padding_top', label='Top'),
-                      Item('padding_bottom', label='Bottom'),
+        return VGroup(HGroup(Spring(springy=False, width=100),
+                             Item('padding_top', label='Top'),
+                             spring,),
+                      HGroup(Item('padding_left', label='Left'),
+                             Item('padding_right', label='Right')),
+                      HGroup(Spring(springy=False, width=100), Item('padding_bottom', label='Bottom'),
+                             spring),
                       label='Padding', show_border=True)
+
+    def _get_bg_group(self):
+        grp = Group(Item('bgcolor', label='Figure'),
+                    Item('plot_bgcolor', label='Plot'),
+                    show_border=True,
+                    label='Background')
+        return grp
 
     # ==============================================================================
     # persistence

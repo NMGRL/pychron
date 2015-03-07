@@ -551,7 +551,8 @@ class AnalysisEditTask(BaseBrowserTask):
 
     def _set_previous_selection(self, pane, new):
         if new and new.name != 'Previous Selection':
-            db = self.manager.db
+            man = self.manager
+            db = man.db
             with db.session_ctx():
                 lns = set([si.labnumber for si in new.analysis_ids])
                 ids = [si.uuid for si in new.analysis_ids]
@@ -560,13 +561,15 @@ class AnalysisEditTask(BaseBrowserTask):
                         return t2.identifier.in_(lns), t.uuid.in_(ids)
 
                     ans = db.get_analyses(uuid=f)
-                    func = self._record_view_factory
-                    ans = [func(si) for si in ans]
-
+                    # func = self._record_view_factory
+                    # ans = [func(si) for si in ans]
+                    ans = self.browser_model.make_records(ans)
                     for ti in new.analysis_ids:
                         a = next((ai for ai in ans if ai.uuid == ti.uuid), None)
                         if a:
-                            a.trait_set(group_id=ti.group_id, graph_id=ti.graph_id)
+                            a.group_id = ti.group_id
+                            a.graph_id = ti.graph_id
+                            # (group_id=ti.group_id, graph_id=ti.graph_id)
 
                     pane.items = ans
 

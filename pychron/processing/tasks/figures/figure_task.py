@@ -61,22 +61,25 @@ class FigureTask(AnalysisEditTask):
     default_task_name = 'Ideogram'
     id = 'pychron.processing.figures'
     plotter_options_pane = Instance(PlotterOptionsPane)
+    figure_selector_pane = Instance(FigureSelectorPane)
+
     tool_bars = [
         SToolBar(ToggleFullWindowAction()),
         SToolBar(RefreshActiveEditorAction(),
-                 AddIsoEvoAction(),
-                 TagAction()),
+                 # AddIsoEvoAction(),
+                 # TagAction()
+                ),
         SToolBar(
             SavePDFFigureAction(),
-            SaveFigureAction(),
-            SaveAsFigureAction(),
+            # SaveFigureAction(),
+            # SaveAsFigureAction(),
             name='Figure'),
-        SToolBar(NewIdeogramAction(),
-                 NewSpectrumAction(),
-                 NewIsochronAction(),
-                 NewTableAction()),
-        SToolBar(SetInterpretedAgeTBAction(),
-                 BrowseInterpretedAgeTBAction()),
+        # SToolBar(NewIdeogramAction(),
+        #          NewSpectrumAction(),
+        #          NewIsochronAction(),
+        #          NewTableAction()),
+        # SToolBar(SetInterpretedAgeTBAction(),
+        #          BrowseInterpretedAgeTBAction()),
         # SToolBar(GroupSelectedAction(name='Selected'),
         # GroupbyAliquotAction(name='by Aliquot'),
         # GroupbyLabnumberAction(name='by Labnumber'),
@@ -802,7 +805,7 @@ class FigureTask(AnalysisEditTask):
             return
 
         sf = self.selected_figures
-        if sf:  #and isinstance(self.active_editor, FigureEditor):
+        if sf:  # and isinstance(self.active_editor, FigureEditor):
             db = self.manager.db
             with db.session_ctx():
                 sf = sf[0]
@@ -817,7 +820,7 @@ class FigureTask(AnalysisEditTask):
                     open_editor_needed = editor.basename != kind
 
                 if open_editor_needed:
-                    #open new editor of this kind
+                    # open new editor of this kind
                     if kind == 'spec':
                         if editor:
                             editor.close()
@@ -867,7 +870,6 @@ class FigureTask(AnalysisEditTask):
         if editor:
             if isinstance(editor, (FigureEditor, XYScatterEditor)):
                 self.plotter_options_pane.pom = pom = editor.plotter_options_manager
-                print 'active editor change'
                 colors = pom.plotter_options.get_group_colors()
                 if colors:
                     self.unknowns_pane.adapter.colors = colors

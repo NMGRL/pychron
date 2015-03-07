@@ -15,17 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from datetime import datetime, timedelta
-import os
-import pickle
-from pyface.action.menu_manager import MenuManager
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change, List, Event, Button, Date
-from traitsui.api import View, UItem, Item, HGroup, VGroup, TabularEditor, EnumEditor
+from traits.api import HasTraits, Str, Int, Any, on_trait_change, List, Event, Button, Date
+from traitsui.api import View, UItem, Item, HGroup, VGroup, EnumEditor, spring
 from traitsui.editors import DateEditor
 from traitsui.handler import Controller, Handler
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
+from pyface.action.menu_manager import MenuManager
 # ============= standard library imports ========================
+from datetime import datetime, timedelta
+import os
+import pickle
 # ============= local library imports  ==========================
 from pychron.core.progress import progress_loader
 from pychron.core.ui.tabular_editor import myTabularEditor
@@ -97,9 +97,11 @@ ATimeView = View(VGroup(icon_button_editor('clear_filter_button', 'clear'),
                             HGroup(Item('lowdays', label='Greater Than'),
                                    UItem('lowdate', editor=DateEditor(strftime='%m/%d/%Y'),
                                          style='readonly'),
+                                   spring,
                                    Item('highdays', label='Less Than'),
                                    UItem('highdate', editor=DateEditor(strftime='%m/%d/%Y'),
                                          style='readonly'),
+                                   spring,
                                    Item('limit')),
                             label='Filter', show_border=True),
                         UItem('analyses', editor=myTabularEditor(adapter=TimeViewAdapter(),

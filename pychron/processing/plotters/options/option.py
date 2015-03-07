@@ -113,7 +113,6 @@ class AuxPlotOptions(HasTraits):
         if self.initialized:
             if self.name != NULL_STR:
                 self.use = True
-                print 'setting use true', self.name
 
     def _get_plot_name(self):
         if self.name in self.names:

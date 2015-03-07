@@ -311,7 +311,8 @@ class PlotterOptions(FigurePlotterOptions):
                 checkbox_column(name='y_error', label='Y Err.'),
                 checkbox_column(name='ytick_visible', label='Y Tick'),
                 checkbox_column(name='ytitle_visible', label='Y Title'),
-                object_column(name='filter_str', label='Filter')]
+                # object_column(name='filter_str', label='Filter')
+                ]
 
         v = View(VGroup(Item('name', editor=EnumEditor(name='names')),
                         Item('marker', editor=EnumEditor(values=marker_names)),
@@ -335,13 +336,6 @@ class PlotterOptions(FigurePlotterOptions):
                                                   edit_view=v,
                                                   reorderable=False))
         return aux_plots_grp
-
-    def _get_bg_group(self):
-        grp = Group(Item('bgcolor', label='Figure'),
-                    Item('plot_bgcolor', label='Plot'),
-                    show_border=True,
-                    label='Background')
-        return grp
 
     def traits_view(self):
         main_grp = self._get_main_group()
