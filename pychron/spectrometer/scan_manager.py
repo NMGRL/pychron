@@ -79,8 +79,8 @@ class ScanManager(Manager):
     clear_button = Event
     # record_button = Event
     # record_button = ToggleButton(image_on=icon('media-record'),
-    #                              image_off=icon('media-playback-stop'),
-    #                              tooltip_on='Start recording scan',
+    # image_off=icon('media-playback-stop'),
+    # tooltip_on='Start recording scan',
     #                              tooltip_off='Stop recording scan',
     #                              # height=22,
     #                              # width=45
@@ -111,6 +111,8 @@ class ScanManager(Manager):
     use_log_events = Bool
     log_events_enabled = False
     _valve_event_list = List
+    _prev_signals = None
+    _no_intensity_change_cnt = 0
 
     def _bind_listeners(self, remove=False):
         self.on_trait_change(self._update_magnet, 'magnet:dac_changed', remove=remove)
@@ -303,9 +305,33 @@ class ScanManager(Manager):
 
             self.trait_setq(isotope=iso)
 
+    def _check_intensity_no_change(self, signals):
+        if self._no_intensity_change_cnt > 4:
+            self.warning_dialog('Something appears to be wrong.\n\n'
+                                'The detector intensities have not changed in 5 iterations. '
+                                'Check Qtegra and RemoteControlServer.\n\n'
+                                'Scan is stopped! Close and reopen window to restart')
+            self._stop_timer()
+            self._no_intensity_change_cnt = 0
+            self._prev_signals = None
+            return True
+
+        if self._prev_signals is not None:
+
+            if any(signals == self._prev_signals):
+                self._no_intensity_change_cnt += 1
+            else:
+                self._no_intensity_change_cnt = 0
+                self._prev_signals = None
+
+        self._prev_signals = signals
+
     def _update(self, data):
         keys, signals = data
         if keys:
+            if self._check_intensity_no_change(signals):
+                return
+
             x = self.graph.record_multiple(signals,
                                            track_y=False)
 
@@ -721,8 +747,8 @@ if __name__ == '__main__':
     # ============= EOF =============================================
     # def _check_detector_protection1(self, prev):
     # """
-    #         used when detector changes
-    #         return True if magnet move should be aborted
+    # used when detector changes
+    # return True if magnet move should be aborted
     #     """
     #     return self._check_detector_protection(prev, True)
     #

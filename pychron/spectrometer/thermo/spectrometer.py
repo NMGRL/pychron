@@ -416,7 +416,7 @@ class Spectrometer(SpectrometerDevice):
             det = self.get_detector(k)
             det.set_intensity(v)
 
-        return keys, signals
+        return keys, array(signals)
 
     def get_intensity(self, dkeys):
         """
@@ -511,7 +511,7 @@ class Spectrometer(SpectrometerDevice):
     def _get_simulation_data(self):
         from numpy.random import random
 
-        signals = [1, 100, 3, 0.01, 0.01, 0.01] + random(6)
+        signals = [1, 100, 3, 0.01, 0.01, 0.01] #+ random(6)
         keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
         return keys, signals
 
