@@ -311,9 +311,10 @@ class Spectrometer(SpectrometerDevice):
                                                                   cast='boolean', default=False)
             self.magnet.beam_blank_threshold = self.config_get(config, pd,
                                                                'beam_blank_threshold', cast='float', default=0.1)
-            self.magnet.detector_protection_threshold = self.config_get(config, pd,
-                                                                        'detector_protection_threshold',
-                                                                        cast='float', default=0.1)
+
+            # self.magnet.detector_protection_threshold = self.config_get(config, pd,
+            #                                                             'detector_protection_threshold',
+            #                                                             cast='float', default=0.1)
             ds = self.config_get(config, pd, 'detectors')
             if ds:
                 ds = ds.split(',')

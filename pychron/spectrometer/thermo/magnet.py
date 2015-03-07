@@ -35,7 +35,7 @@ class ArgusMagnet(BaseMagnet, SpectrometerDevice):
     use_detector_protection = Bool
     use_beam_blank = Bool
 
-    detector_protection_threshold = Float(0.1)  # DAC units
+    # detector_protection_threshold = Float(0.1)  # DAC units
     beam_blank_threshold = Float(0.1)  # DAC units
 
     # ===============================================================================
@@ -48,10 +48,17 @@ class ArgusMagnet(BaseMagnet, SpectrometerDevice):
         unblank = False
         if micro:
             if self.use_detector_protection:
-                if abs(self._dac - v) > self.detector_protection_threshold:
-                    for pd in self.protected_detectors:
+                dv = abs(self._dac - v)
+                for pd in self.protected_detectors:
+                    pd = self.spectrometer.get_detector(pd)
+                    if dv > pd.protection_threshold:
                         micro.ask('ProtectDetector {},On'.format(pd), verbose=verbose)
-                    unprotect = True
+                        unprotect = True
+
+                # if abs(self._dac - v) > self.detector_protection_threshold:
+                #     for pd in self.protected_detectors:
+                #         micro.ask('ProtectDetector {},On'.format(pd), verbose=verbose)
+                #     unprotect = True
 
             elif self.use_beam_blank:
                 if abs(self._dac - v) > self.beam_blank_threshold:

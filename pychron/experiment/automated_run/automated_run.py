@@ -715,6 +715,10 @@ class AutomatedRun(Loggable):
     def set_deflection(self, det, defl):
         self.py_set_spectrometer_parameter('SetDeflection', '{},{}'.format(det, defl))
 
+    def protect_detector(self, det, protect):
+        protect = 'On' if protect else 'Off'
+        self.py_set_spectrometer_parameter('ProtectDetector', '{},{}'.format(det,protect))
+
     def wait(self, t, msg=''):
         if self.experiment_executor:
             self.experiment_executor.wait(t, msg)
