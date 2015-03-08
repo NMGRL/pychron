@@ -47,6 +47,15 @@ CHANGELOG
 #### 2/20/2015 ####
 * added a new Magnet Scanner. Use rulers to set limits. 
 
+#### 3/8/2015 ####
+* added Display to formatting modes
+* updated system monitor
+* added separate figure options for system monitor
+* cleaned up Figure UI
+* added No Intensity change check to startup tests and scan manager
+* added superscript/subscript plot labels
+* added manual entry load name. A load name is now required now if an extraction device is set. 
+
 ### Bug Fixes ###
 * fixed plotting ideograms of attributes other than age
 * improved database startup tests

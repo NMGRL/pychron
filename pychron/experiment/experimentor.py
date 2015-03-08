@@ -58,7 +58,7 @@ class Experimentor(Loggable):
     save_event = Event
 
     def load(self):
-        super(Experimentor, self).load()
+        self.manager.load()
         self.experiment_factory.queue_factory.db_refresh_needed=True
         self.experiment_factory.run_factory.db_refresh_needed=True
 
@@ -222,6 +222,15 @@ class Experimentor(Loggable):
 
         return self.executor.execute()
 
+    def verify_database_connection(self, inform=True):
+        db = self.manager.db
+        if db is not None:
+            if db.connect(force=True):
+                return True
+                #                 self.db.flush()
+                #                 self.db.reset()
+        elif inform:
+            self.warning_dialog('Not Database available')
     # ===============================================================================
     # handlers
     # ===============================================================================

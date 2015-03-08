@@ -98,15 +98,6 @@ class BaseIsotopeDatabaseManager(Loggable):
                 self.debug('defaults finished')
                 return True
 
-    def verify_database_connection(self, inform=True):
-        if self.db is not None:
-            if self.db.connect(force=True):
-                return True
-                #                 self.db.flush()
-                #                 self.db.reset()
-        elif inform:
-            self.warning_dialog('Not Database available')
-
     def bind_preferences(self):
         if self.db is None:
             self.db = self._db_factory()

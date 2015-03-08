@@ -49,12 +49,13 @@ class ExperimentFactory(Loggable, ConsumerMixin):
 
     queue = Instance(ExperimentQueue, ())
 
-    ok_add = Property(depends_on='_mass_spectrometer, _extract_device, _labnumber, _username')
+    ok_add = Property(depends_on='mass_spectrometer, extract_device, labnumber, username, load_name')
 
-    _username = String
-    _mass_spectrometer = String
-    extract_device = String
-    _labnumber = String
+    labnumber = DelegatesTo('run_factory')
+    load_name = DelegatesTo('queue_factory')
+    username = DelegatesTo('queue_factory')
+    mass_spectrometer = DelegatesTo('queue_factory')
+    extract_device = DelegatesTo('queue_factory')
 
     selected_positions = List
     default_mass_spectrometer = Str
@@ -63,7 +64,7 @@ class ExperimentFactory(Loggable, ConsumerMixin):
     # ===========================================================================
     # permisions
     # ===========================================================================
-    #    max_allowable_runs = Int(10000)
+    # max_allowable_runs = Int(10000)
     #    can_edit_scripts = Bool(True)
 
     def __init__(self, *args, **kw):
@@ -79,7 +80,7 @@ class ExperimentFactory(Loggable, ConsumerMixin):
         eq = self.queue
         qf = self.queue_factory
         for a in ('username', 'mass_spectrometer', 'extract_device',
-                  'email','use_email',
+                  'email', 'use_email',
                   'use_group_email',
                   'load_name',
                   'delay_before_analyses', 'delay_between_analyses',
@@ -88,8 +89,8 @@ class ExperimentFactory(Loggable, ConsumerMixin):
             if not self._sync_queue_to_factory(eq, qf, a):
                 self._sync_factory_to_queue(eq, qf, a)
 
-        self.debug('run factory set mass spec {}'.format(self._mass_spectrometer))
-        self.run_factory.set_mass_spectrometer(self._mass_spectrometer)
+        self.debug('run factory set mass spec {}'.format(self.mass_spectrometer))
+        self.run_factory.set_mass_spectrometer(self.mass_spectrometer)
 
     def _sync_queue_to_factory(self, eq, qf, a):
         v = getattr(eq, a)
@@ -195,15 +196,15 @@ queue_conditionals_name]''')
         self.debug('update queue {}={}'.format(name, new))
         if name == 'mass_spectrometer':
             self.debug('_update_queue "{}"'.format(new))
-            self._mass_spectrometer = new
+            self.mass_spectrometer = new
             self.run_factory.set_mass_spectrometer(new)
 
         elif name == 'extract_device':
             # self._set_extract_device(new)
-            do_later(self._set_extract_device,new)
+            do_later(self._set_extract_device, new)
 
-        elif name == 'username':
-            self._username = new
+        # elif name == 'username':
+        #     self._username = new
             # elif name=='email':
             #     self.email=new
             #            self.queue.username = new
@@ -221,21 +222,21 @@ queue_conditionals_name]''')
     # private
     # ===============================================================================
     def _set_extract_device(self, ed):
-        self.debug('setting extract dev="{}" mass spec="{}"'.format(ed, self._mass_spectrometer))
+        self.debug('setting extract dev="{}" mass spec="{}"'.format(ed, self.mass_spectrometer))
         self.extract_device = ed
         self.run_factory = self._run_factory_factory()
 
         self.run_factory.remote_patterns = self._get_patterns(ed)
         self.run_factory.setup_files()
-        self.run_factory.set_mass_spectrometer(self._mass_spectrometer)
+        self.run_factory.set_mass_spectrometer(self.mass_spectrometer)
 
         if self._load_persistence_flag:
             self.run_factory.load()
 
         if self.queue:
             self.queue.set_extract_device(ed)
-            self.queue.username = self._username
-            self.queue.mass_spectrometer = self._mass_spectrometer
+            self.queue.username = self.username
+            self.queue.mass_spectrometer = self.mass_spectrometer
 
     def _get_patterns(self, ed):
         ps = []
@@ -255,11 +256,15 @@ queue_conditionals_name]''')
     def _get_ok_add(self):
         """
         """
-        uflag = bool(self._username)
-        msflag = not self._mass_spectrometer in ('', 'Spectrometer', LINE_STR)
-        ret = uflag and msflag
+        uflag = bool(self.username)
+        msflag = self.mass_spectrometer not in ('', 'Spectrometer', LINE_STR)
+        lflag = True
+        if self.extract_device not in ('','Extract Device', LINE_STR):
+            lflag = bool(self.queue_factory.load_name)
+
+        ret = uflag and msflag and lflag
         if self.run_factory.run_block in ('RunBlock', LINE_STR):
-            ret = ret and self._labnumber
+            ret = ret and self.labnumber
         return ret
 
     # ===============================================================================
@@ -277,7 +282,7 @@ queue_conditionals_name]''')
                    mass_spectrometer=self.default_mass_spectrometer)
 
         # rf.activate()
-        rf.on_trait_change(lambda x: self.trait_set(_labnumber=x), 'labnumber')
+        # rf.on_trait_change(lambda x: self.trait_set(_labnumber=x), 'labnumber')
         rf.on_trait_change(self._update_end_after, 'end_after')
         rf.on_trait_change(self._auto_save, 'auto_save_needed')
 
@@ -314,6 +319,6 @@ queue_conditionals_name]''')
         self.debug('default mass spec changed "{}"'.format(self.default_mass_spectrometer))
         self.run_factory.set_mass_spectrometer(self.default_mass_spectrometer)
         self.queue_factory.mass_spectrometer = self.default_mass_spectrometer
-        self._mass_spectrometer = self.default_mass_spectrometer
+        self.mass_spectrometer = self.default_mass_spectrometer
 
 # ============= EOF =============================================
