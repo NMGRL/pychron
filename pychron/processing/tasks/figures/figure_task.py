@@ -874,7 +874,7 @@ class FigureTask(AnalysisEditTask):
                 if colors:
                     self.unknowns_pane.adapter.colors = colors
 
-            self._set_current_task()
+            # self._set_current_task()
 
         super(FigureTask, self)._active_editor_changed(new)
 
@@ -909,13 +909,6 @@ class FigureTask(AnalysisEditTask):
     # ===============================================================================
     # defaults
     # ===============================================================================
-    def _file_defaults_defaults(self):
-        return [(paths.ideogram_defaults, IDEOGRAM_DEFAULTS, True),
-                (paths.spectrum_defaults, SPECTRUM_DEFAULTS, True),
-                (paths.inverse_isochron_defaults, INVERSE_ISOCHRON_DEFAULTS, True),
-                (paths.composites_defaults, COMPOSITE_DEFAULTS, True),
-                (paths.screen_formatting_options, SCREEN_FORMATTING_DEFAULTS, True),
-                (paths.presentation_formatting_options, PRESENTATION_FORMATTING_DEFAULTS, True)]
 
     def _default_layout_default(self):
         a = Tabbed(browser_pane_item(),

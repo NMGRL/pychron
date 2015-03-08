@@ -22,6 +22,7 @@ from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, Splitter, PaneItem, Tabbed, VSplitter
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.ctx_managers import no_update
 from pychron.dashboard.client import DashboardClient
 from pychron.envisage.tasks.pane_helpers import ConsolePane
 from pychron.globals import globalv
@@ -77,9 +78,9 @@ class SystemMonitorTask(FigureTask):
 
         # if editor:
         # ideo = self.new_ideogram(add_table=False, add_iso=False)
-        #    editor._ideogram_editor = ideo
-        #    #self.active_editor.unknowns=[]
-        #    self.activate_editor(self.editor_area.editors[0])
+        # editor._ideogram_editor = ideo
+        # #self.active_editor.unknowns=[]
+        # self.activate_editor(self.editor_area.editors[0])
 
     def prepare_destroy(self):
         for e in self.editor_area.editors:
@@ -133,14 +134,14 @@ class SystemMonitorTask(FigureTask):
 
         # def tab_editors(self, *args):
         # def func(control, a, b):
-        #         control.tabifyDockWidget(a, b)
+        # control.tabifyDockWidget(a, b)
 
         # self._layout_editors(func, *args)
         #
         # def split_editors(self, a, b, orientation='h'):
         #
-        #     def func(control, aa, bb):
-        #         print aa, bb
+        # def func(control, aa, bb):
+        # print aa, bb
         #         control.splitDockWidget(aa, bb, Qt.Horizontal if orientation == 'h' else Qt.Vertical)
 
         # self._layout_editors(func, a, b)
@@ -158,9 +159,9 @@ class SystemMonitorTask(FigureTask):
 
     # def _layout_editors(self, func, aidx, bidx):
     # ea = self.editor_area
-    #     control = ea.control
-    #     widgets = control.get_dock_widgets()
-    #     if widgets:
+    # control = ea.control
+    # widgets = control.get_dock_widgets()
+    # if widgets:
     #         try:
     #             a, b = widgets[aidx], widgets[bidx]
     #             func(control, a, b)
@@ -170,8 +171,8 @@ class SystemMonitorTask(FigureTask):
         super(SystemMonitorTask, self)._open_editor(editor, **kw)
         for ei in self.editor_area.editors:
             if hasattr(ei, 'starttime'):
-                print 'difff', (datetime.now()-ei.starttime).total_seconds()
-                if (datetime.now()-ei.starttime).total_seconds() > 30:
+                print 'difff', (datetime.now() - ei.starttime).total_seconds()
+                if (datetime.now() - ei.starttime).total_seconds() > 300:
                     self.close_editor(ei)
                     for si in self.get_editors(SystemMonitorEditor):
                         si.close_editor(ei)
@@ -219,12 +220,10 @@ class SystemMonitorTask(FigureTask):
                 self.console_pane.console_display = new.console_display
                 self.connection_pane.conn_spec = new.conn_spec
 
-            if self.unknowns_pane:
-                if hasattr(new, 'analyses'):
-                    # print new, len(new.unknowns)
-                    #self.unknowns_pane._no_update=True
-                    self.unknowns_pane.items = new.analyses
-                    #self.unknowns_pane._no_update=False
+                if self.unknowns_pane:
+                    if hasattr(new, 'analyses'):
+                        with no_update(self):
+                            self.unknowns_pane.trait_set(items=new.analyses)
 
     def _prompt_for_save(self):
         """
@@ -274,30 +273,29 @@ class SystemMonitorTask(FigureTask):
         editor = self.add_system_monitor()
         # self.add_dashboard_editor()
 
-        # if editor:
-        #    ideo = self.new_ideogram(add_table=False, add_iso=False)
-        #    editor._ideogram_editor = ideo
-        #self.active_editor.unknowns=[]
-        #self.split_editors(0, 1, orientation='v')
-        #self.activate_editor(self.editor_area.editors[0])
-
     def _handle_dashboard(self, obj, name, old, new):
         self.debug('dashboard_client value change {} {}'.format(obj.name, new))
         if self.dashboard_editor:
             self.dashboard_editor.update_measurements(obj.name, new)
 
     def _default_layout_default(self):
-        return TaskLayout(
-            left=Splitter(
-                Splitter(
-                    PaneItem('pychron.sys_mon.connection'),
-                    PaneItem('pychron.processing.controls'),
-                    orientation='vertical'),
-                PaneItem('pychron.sys_mon.analyses'),
-                orientation='horizontal'),
-            right=VSplitter(Tabbed(PaneItem('pychron.console'),
-                                   PaneItem('pychron.plot_editor'),
-                                   PaneItem('pychron.processing.figures.plotter_options')),
-                            PaneItem('pychron.dashboard.client')))
+        left = VSplitter(PaneItem('pychron.sys_mon.analyses'),
+                         PaneItem('pychron.processing.controls'))
+        right = Tabbed(PaneItem('pychron.processing.figures.plotter_options'),
+                       PaneItem('pychron.console'))
+
+        return TaskLayout(left=left, right=right)
+        # return TaskLayout(
+        #     left=Splitter(
+        #         Splitter(
+        #             PaneItem('pychron.sys_mon.connection'),
+        #             PaneItem('pychron.processing.controls'),
+        #             orientation='vertical'),
+        #         PaneItem('pychron.sys_mon.analyses'),
+        #         orientation='horizontal'),
+        #     right=VSplitter(Tabbed(PaneItem('pychron.console'),
+        #                            # PaneItem('pychron.plot_editor'),
+        #                            PaneItem('pychron.processing.figures.plotter_options')),
+        #                     PaneItem('pychron.dashboard.client')))
 
 # ============= EOF =============================================

@@ -26,6 +26,9 @@ from pyface.tasks.action.schema import SMenu
 from pychron.core.helpers.filetools import to_bool
 
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
+from pychron.file_defaults import IDEOGRAM_DEFAULTS, SPECTRUM_DEFAULTS, INVERSE_ISOCHRON_DEFAULTS, COMPOSITE_DEFAULTS, \
+    SCREEN_FORMATTING_DEFAULTS, PRESENTATION_FORMATTING_DEFAULTS, DISPLAY_FORMATTING_DEFAULTS
+from pychron.paths import paths
 from pychron.processing.processor import Processor
 from pychron.processing.tasks.actions.import_actions import EasyImportAction
 from pychron.processing.tasks.actions.easy_actions import EasyFitAction, EasyBlanksAction, EasyDiscriminationAction, \
@@ -379,6 +382,15 @@ class ProcessingPlugin(BaseTaskPlugin):
                 ('pychron.ic_factor', 'Ctrl+Shift+I', 'IC Factors'),
                 ('pychron.refresh_plot', 'Ctrl+Shift+R', 'Refresh Plot'),
                 ('pychron.recall', 'Ctrl+R', 'Open Recall')]
+
+    def _file_defaults_default(self):
+        return [('ideogram_defaults', 'IDEOGRAM_DEFAULTS', True),
+                ('spectrum_defaults', 'SPECTRUM_DEFAULTS', True),
+                ('inverse_isochron_defaults', 'INVERSE_ISOCHRON_DEFAULTS', True),
+                ('composites_defaults', 'COMPOSITE_DEFAULTS', True),
+                ('screen_formatting_options', 'SCREEN_FORMATTING_DEFAULTS', True),
+                ('presentation_formatting_options', 'PRESENTATION_FORMATTING_DEFAULTS', True),
+                ('display_formatting_options', 'DISPLAY_FORMATTING_DEFAULTS', True)]
 
     # ============= EOF =============================================
 

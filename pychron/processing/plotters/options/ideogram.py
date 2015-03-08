@@ -345,7 +345,7 @@ class IdeogramOptions(AgeOptions):
             'mean_indicator_fontsize',
             'mean_sig_figs',
             'display_inset', 'inset_location', 'inset_width', 'inset_height',
-            'fill_groups',
+            # 'fill_groups',
             'label_fontsize'
             # 'use_filled_line', 'fill_color', 'fill_alpha'
         ]

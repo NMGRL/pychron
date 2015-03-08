@@ -36,6 +36,8 @@ from pychron.experiment.tasks.experiment_actions import NewExperimentQueueAction
     DeselectAction, SendTestNotificationAction, \
     NewPatternAction, OpenPatternAction, ResetQueuesAction, OpenLastExperimentQueueAction, UndoAction, \
     QueueConditionalsAction, ConfigureEditorTableAction, SystemConditionalsAction, ResetSystemHealthAction
+from pychron.file_defaults import EXPERIMENT_DEFAULTS
+from pychron.paths import paths
 
 
 class ExperimentPlugin(BaseTaskPlugin):
@@ -162,4 +164,6 @@ class ExperimentPlugin(BaseTaskPlugin):
                 ConsolePreferencesPane,
                 UserNotifierPreferencesPane]
 
+    def _file_defaults_default(self):
+        return [('experiment_defaults', 'EXPERIMENT_DEFAULTS', False)]
         # ============= EOF =============================================

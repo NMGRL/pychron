@@ -29,7 +29,8 @@ from pychron.displays.display import DisplayController
 from pychron.globals import globalv
 from pychron.messaging.notify.subscriber import Subscriber
 from pychron.processing.analyses.file_analysis import FileAnalysis
-from pychron.processing.plotter_options_manager import SystemMonitorOptionsManager
+from pychron.processing.plotter_options_manager import SystemMonitorOptionsManager, SysMonIdeogramOptionsManager
+from pychron.processing.tasks.figures.editors.ideogram_editor import IdeogramEditor
 from pychron.processing.tasks.figures.editors.series_editor import SeriesEditor
 from pychron.pychron_constants import ALPHAS
 from pychron.system_monitor.tasks.connection_spec import ConnectionSpec
@@ -51,6 +52,10 @@ from pychron.core.ui.preference_binding import color_bind_preference
 def camel_case(name):
     args = name.split('_')
     return ''.join(map(str.capitalize, args))
+
+
+class SysMonIdeogramEditor(IdeogramEditor):
+    plotter_options_manager = Instance(SysMonIdeogramOptionsManager, ())
 
 
 class SystemMonitorEditor(SeriesEditor):
@@ -166,7 +171,7 @@ class SystemMonitorEditor(SeriesEditor):
         sub = self.subscriber
 
         db_poll_interval = self._db_poll_interval
-        poll_interval = 3 if globalv.system_monitor_debug else self._poll_interval
+        poll_interval = 10 if globalv.system_monitor_debug else self._poll_interval
 
         st = time.time()
         while 1:
@@ -339,7 +344,9 @@ class SystemMonitorEditor(SeriesEditor):
         """
         editor = self._get_editor(self._ideogram_editors, identifier)
 
-        f = lambda: self.task.new_ideogram(add_table=False, add_iso=False)
+        f = lambda: self.task.new_ideogram(add_table=False,
+                                           klass = SysMonIdeogramEditor,
+                                           add_iso=False)
         editor = self._update_editor(editor, f, identifier, None,
                                      calculate_age=True)
 

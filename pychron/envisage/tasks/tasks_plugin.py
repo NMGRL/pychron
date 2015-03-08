@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import List,Tuple, HasTraits, Password
+from traits.api import List, Tuple, HasTraits, Password
 from traitsui.api import View, Item
 from envisage.extension_point import ExtensionPoint
 from envisage.plugin import Plugin
@@ -39,6 +39,7 @@ from pychron.globals import globalv
 
 logger = new_logger('PychronTasksPlugin')
 
+
 class PychronTasksPlugin(Plugin):
     id = 'pychron.tasks.plugin'
     name = 'Tasks'
@@ -48,10 +49,22 @@ class PychronTasksPlugin(Plugin):
 
     actions = ExtensionPoint(List, id='pychron.actions')
     file_defaults = ExtensionPoint(List(Tuple), id='pychron.plugin.file_defaults')
+
     def start(self):
         logger.info('Writing plugin file defaults')
-        for p,d,o in self.file_defaults:
-            if paths.write_default_file(p,d,o):
+        for p, d, o in self.file_defaults:
+            try:
+                mod = __import__('pychron.file_defaults', fromlist=[d])
+                d = getattr(mod, d)
+            except BaseException, e:
+                print p, e
+                pass
+            try:
+                p = getattr(paths, p)
+            except AttributeError:
+                pass
+
+            if paths.write_default_file(p, d, o):
                 logger.info('Wrote default file {} (overwrite: {})'.format(p, o))
 
     def _preferences_panes_default(self):

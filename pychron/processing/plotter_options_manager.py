@@ -58,7 +58,7 @@ class PlotterOptionsManager(HasTraits):
     persistence_root = Property
     _defaults_path = Str
 
-    formatting_option = Enum('Screen', 'Presentation', NULL_STR)
+    formatting_option = Enum('Screen', 'Presentation', 'Display', NULL_STR)
 
     def __init__(self, *args, **kw):
         super(PlotterOptionsManager, self).__init__(*args, **kw)
@@ -147,6 +147,7 @@ class PlotterOptionsManager(HasTraits):
     def _formatting_option_changed(self, new):
         if self.plotter_options:
             fmt = None if new == NULL_STR else self._formatting_option_factory()
+            print new, fmt
             self.plotter_options.formatting_options = fmt
             self.plotter_options.refresh_plot_needed = True
 

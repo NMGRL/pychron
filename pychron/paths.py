@@ -167,6 +167,7 @@ class Paths(object):
     sys_mon_ideogram_defaults = None
     screen_formatting_options = None
     presentation_formatting_options = None
+    display_formatting_options = None
     plotter_options = None
 
     def write_default_file(self, p, default, overwrite=False):
@@ -340,6 +341,7 @@ class Paths(object):
         self.system_health = join(self.setup_dir, 'system_health.yaml')
         self.screen_formatting_options = join(self.formatting_dir, 'screen.yaml')
         self.presentation_formatting_options = join(self.formatting_dir, 'presentation.yaml')
+        self.display_formatting_options = join(self.formatting_dir, 'display.yaml')
         self.plotter_options = join(self.plotter_options_dir, 'plotter_options')
 
     def write_defaults(self):
@@ -349,23 +351,13 @@ class Paths(object):
 
     def _write_default_files(self):
         from pychron.file_defaults import DEFAULT_INITIALIZATION, DEFAULT_STARTUP_TESTS, EXPERIMENT_DEFAULTS, \
-            IDEOGRAM_DEFAULTS, ISOCHRON_DEFAULTS, COMPOSITE_DEFAULTS, SPECTRUM_DEFAULTS, INVERSE_ISOCHRON_DEFAULTS,\
-            SYSTEM_HEALTH, SCREEN_FORMATTING_DEFAULTS, PRESENTATION_FORMATTING_DEFAULTS
+            SYSTEM_HEALTH
 
         for p, d in ((path.join(self.setup_dir, 'initialization.xml'), DEFAULT_INITIALIZATION),
                      (self.startup_tests, DEFAULT_STARTUP_TESTS),
-                     (self.experiment_defaults, EXPERIMENT_DEFAULTS),
-                     # (self.ideogram_defaults, IDEOGRAM_DEFAULTS),
-                     # (self.spectrum_defaults, SPECTRUM_DEFAULTS),
-                     # (self.inverse_isochron_defaults, INVERSE_ISOCHRON_DEFAULTS),
-                     # (self.composites_defaults, COMPOSITE_DEFAULTS),
-                     (self.system_health, SYSTEM_HEALTH),
-                     # (self.screen_formatting_options, SCREEN_FORMATTING_DEFAULTS),
-                     # (self.presentation_formatting_options, PRESENTATION_FORMATTING_DEFAULTS)
-                    ):
-            overwrite = d in (IDEOGRAM_DEFAULTS, SPECTRUM_DEFAULTS,
-                              INVERSE_ISOCHRON_DEFAULTS, SYSTEM_HEALTH,
-                              SCREEN_FORMATTING_DEFAULTS,PRESENTATION_FORMATTING_DEFAULTS)
+                     # (self.experiment_defaults, EXPERIMENT_DEFAULTS),
+                     (self.system_health, SYSTEM_HEALTH),):
+            overwrite = d in (SYSTEM_HEALTH,)
             self._write_default_file(p, d, overwrite)
 
     def _write_default_file(self, p, default, overwrite=False):
