@@ -29,7 +29,7 @@ from pychron.pyscripts.pyscript import verbose_skip, count_verbose_skip, \
     makeRegistry, CTXObject
 from pychron.pyscripts.valve_pyscript import ValvePyScript
 
-ESTIMATED_DURATION_FF = 1.045
+ESTIMATED_DURATION_FF = 1.0
 
 command_register = makeRegistry()
 
@@ -97,6 +97,16 @@ class MeasurementPyScript(ValvePyScript):
     # ===============================================================================
     # commands
     # ===============================================================================
+    @count_verbose_skip
+    @command_register
+    def measurement_delay(self, duration, message=None):
+        try:
+            self.automated_run.plot_panel.total_counts += round(duration)
+        except AttributeError:
+            pass
+
+        self.sleep(duration, message=message)
+
     @verbose_skip
     @command_register
     def generate_ic_mftable(self, detectors, refiso='Ar40', calc_time=False):
@@ -373,9 +383,9 @@ class MeasurementPyScript(ValvePyScript):
         Run the post equilibration script.
 
         """
-    
+
         self._automated_run_call('py_post_equilibration', block=block)
-        
+
     @verbose_skip
     @command_register
     def equilibrate(self, eqtime=20, inlet=None, outlet=None,
@@ -851,7 +861,6 @@ class MeasurementPyScript(ValvePyScript):
 
         self.abbreviated_count_ratio = None
         self.ncounts = 0
-
 
 
 # ============= EOF =============================================

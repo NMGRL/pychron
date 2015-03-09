@@ -47,7 +47,7 @@ class MultiCollector(DataCollector):
 
     def _iter_step(self, data):
         x, data, i = data
-        #print 'iterstep', x,data, i
+        # print 'iterstep', x,data, i
 
         # save the data
         self._save_data(x, *data)

@@ -257,6 +257,7 @@ class AutomatedRunSpec(HasTraits):
             self._estimated_duration = s + db_save_time
 
         self._changed = False
+        logger.debug('Run total estimated duration= {:0.3f}'.format(self._estimated_duration))
         return self._estimated_duration
 
     def make_run(self, new_uuid=True, run=None):

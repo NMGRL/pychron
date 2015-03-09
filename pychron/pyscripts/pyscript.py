@@ -64,7 +64,7 @@ class IntervalContext(object):
 
 
 def verbose_skip(func):
-    if os.environ.get('RTD', 'False')=='True':
+    if os.environ.get('RTD', 'False') == 'True':
         return func
     else:
         def decorator(obj, *args, **kw):
@@ -96,6 +96,16 @@ def skip(func):
     def decorator(obj, *args, **kw):
         if obj.testing_syntax or obj.is_canceled() or obj.is_truncated():
             return
+        return func(obj, *args, **kw)
+
+    return decorator
+
+
+def calculate_duration(func):
+    def decorator(obj, *args, **kw):
+        if obj.testing_syntax:
+            func(obj, calc_time=True, *args, **kw)
+            return 0
         return func(obj, *args, **kw)
 
     return decorator
@@ -200,7 +210,6 @@ class PyScript(Loggable):
     interpolation_path = Str
 
     _interpolation_context = None
-
     # def __init__(self, *args, **kw):
     # super(PyScript, self).__init__(*args, **kw)
     # self._block_lock = Lock()
@@ -224,12 +233,15 @@ class PyScript(Loggable):
 
         """
 
+        if ctx is None:
+            ctx = self._ctx
+
         def calc_dur():
             self.setup_context(**ctx)
             self.syntax_checked = False
             self.debug('calculate_estimated duration. syntax requires testing')
             self.test()
-            self.debug('estimated duration= {}'.format(self._estimated_duration))
+            self.debug('pyscript estimated duration= {}'.format(self._estimated_duration))
 
         if not ctx:
             calc_dur()
@@ -304,6 +316,7 @@ class PyScript(Loggable):
             if r is not None:
                 self.console_info('invalid syntax')
                 ee = PyscriptError(self.filename, r)
+                print self.text
                 raise ee
 
             elif not self._interval_stack.empty():
@@ -489,8 +502,10 @@ class PyScript(Loggable):
     # ==============================================================================
     # commands
     # ==============================================================================
+
+    @calculate_duration
     @command_register
-    def gosub(self, name=None, root=None, klass=None, argv=None, **kw):
+    def gosub(self, name=None, root=None, klass=None, argv=None, calc_time=False, **kw):
 
         if not name.endswith('.py'):
             name += '.py'
@@ -532,6 +547,12 @@ class PyScript(Loggable):
                   syntax_checked=self.syntax_checked,
                   _ctx=self._ctx,
                   **kw)
+
+        if calc_time:
+            s.bootstrap()
+            s.calculate_estimated_duration()
+            self._estimated_duration += s.get_estimated_duration()
+            return
 
         if self.testing_syntax:
             s.bootstrap()
@@ -619,8 +640,8 @@ class PyScript(Loggable):
         # dont add to duration if within an interval
         if not self._interval_stack.qsize() % 2:
             self._estimated_duration += duration
-            if self.parent_script is not None:
-                self.parent_script._estimated_duration += self._estimated_duration
+            # if self.parent_script is not None:
+            # self.parent_script._estimated_duration += self._estimated_duration
 
         if self.testing_syntax or self._cancel:
             return
@@ -676,6 +697,7 @@ class PyScript(Loggable):
     def _cancel_flag_changed(self, v):
         if v:
             from pyface.confirmation_dialog import confirm
+
             result = confirm(None,
                              'Are you sure you want to cancel {}'.format(self.logger_name),
                              title='Cancel Script')

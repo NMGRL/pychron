@@ -277,7 +277,7 @@ class DataCollector(Consoleable):
             if is_baseline than use detector to get isotope
         """
 
-        #get fit and name
+        # get fit and name
         fit, name = self._get_fit(cnt, det, iso)
         # print fit, name, det, iso
         graph = self.plot_panel.isotope_graph
