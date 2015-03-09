@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import random
 from traits.api import List, Tuple, HasTraits, Password
 from traitsui.api import View, Item
 from envisage.extension_point import ExtensionPoint
@@ -49,6 +50,8 @@ class PychronTasksPlugin(Plugin):
 
     actions = ExtensionPoint(List, id='pychron.actions')
     file_defaults = ExtensionPoint(List(Tuple), id='pychron.plugin.file_defaults')
+    help_tips = ExtensionPoint(List, id='pychron.plugin.help_tips')
+    my_tips = List(contributes_to='pychron.plugin.help_tips')
 
     def start(self):
         logger.info('Writing plugin file defaults')
@@ -66,6 +69,22 @@ class PychronTasksPlugin(Plugin):
 
             if paths.write_default_file(p, d, o):
                 logger.info('Wrote default file {} (overwrite: {})'.format(p, o))
+
+        self._random_tip()
+
+    def _random_tip(self):
+        if globalv.random_tip_enabled and self.application.preferences.get('pychron.general.show_random_tip'):
+            from pychron.envisage.tasks.tip_view import TipView
+
+            t = random.choice(self.help_tips)
+
+            tv = TipView(text=t)
+            tv.edit_traits()
+
+    def _my_tips_default(self):
+        return ["Use <b>Help>What's New</b> to view the official ChangeLog for the current version",
+                'Turn Off Random Tip two ways:<br><b>1. Preferences>General></b> Uncheck "Random Tip".</b><br>'
+                '<b>2.</b> Set the flag <i>random_tip_enabled</i> to False in the initialization file']
 
     def _preferences_panes_default(self):
         return [GeneralPreferencesPane]

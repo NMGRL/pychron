@@ -392,6 +392,10 @@ class ProcessingPlugin(BaseTaskPlugin):
                 ('presentation_formatting_options', 'PRESENTATION_FORMATTING_DEFAULTS', True),
                 ('display_formatting_options', 'DISPLAY_FORMATTING_DEFAULTS', True)]
 
+    # def _help_tips_default(self):
+    #     return ['Use <b>Data>Ideogram</b> to plot an Ideogram',
+    #             'Use <b>Data>Spectrum</b> to plot a Spectrum',
+    #             'Use <b>Data>Recall</b> or <b>File/Recall</b> to view analytical data for individual analyses']
     # ============= EOF =============================================
 
     # def _dataset_factory(self):

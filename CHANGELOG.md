@@ -55,6 +55,8 @@ CHANGELOG
 * added No Intensity change check to startup tests and scan manager
 * added superscript/subscript plot labels
 * added manual entry load name. A load name is now required now if an extraction device is set. 
+* updated estimated duration calculation
+* added Random Tip on startup
 
 ### Bug Fixes ###
 * fixed plotting ideograms of attributes other than age

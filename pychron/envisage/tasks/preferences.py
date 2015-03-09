@@ -30,6 +30,7 @@ class GeneralPreferences(GitRepoPreferencesHelper):
     use_login = Bool
     multi_user = Bool
     confirm_quit = Bool
+    show_random_tip = Bool
 
 
 class GeneralPreferencesPane(PreferencesPane):
@@ -43,6 +44,8 @@ class GeneralPreferencesPane(PreferencesPane):
                            label='Login', show_border=True)
         v = View(VGroup(Item('confirm_quit', label='Confirm Quit',
                              tooltip='Ask user for confirmation when quitting application'),
+                        Item('show_random_tip', label='Random Tip',
+                             tooltip='Display a Random Tip whe the application starts'),
                         root_grp,
                         login_grp,
                         remote_status_item('Laboratory Repo'),

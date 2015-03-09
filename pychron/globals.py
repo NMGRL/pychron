@@ -84,6 +84,7 @@ class Globals(object):
     use_startup_tests = True
     dashboard_simulation = False
     use_testbot = False
+    random_tip_enabled = True
 
     def build(self, ip):
 
@@ -107,10 +108,10 @@ class Globals(object):
                            ('use_startup_tests', to_bool),
                            ('use_testbot', to_bool),
                            ('dev_confirm_exit', to_bool),
+                           ('random_tip_enabled', to_bool),
                            ('test_experiment_set', str),
                            ('system_monitor_debug', to_bool)]:
             a = ip.get_global(attr)
-
             if a:
                 setattr(globalv, attr, func(a))
 
