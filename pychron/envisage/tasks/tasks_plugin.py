@@ -35,7 +35,7 @@ from pychron.core.helpers.logger_setup import new_logger
 from pychron.envisage.tasks.base_plugin import BasePlugin
 from pychron.paths import paths
 from pychron.envisage.resources import icon
-from pychron.envisage.tasks.actions import ToggleFullWindowAction, EditInitializationAction
+from pychron.envisage.tasks.actions import ToggleFullWindowAction, EditInitializationAction, EditTaskExtensionsAction
 from pychron.envisage.tasks.preferences import GeneralPreferencesPane
 from pychron.globals import globalv
 
@@ -52,10 +52,13 @@ class PychronTasksPlugin(BasePlugin):
     actions = ExtensionPoint(List, id='pychron.actions')
     file_defaults = ExtensionPoint(List(Tuple), id='pychron.plugin.file_defaults')
     help_tips = ExtensionPoint(List, id='pychron.plugin.help_tips')
+    available_task_extensions = ExtensionPoint(List, id='pychron.available.task_extensions')
+
     my_tips = List(contributes_to='pychron.plugin.help_tips')
 
     def _application_changed(self):
-        defaults = (('use_advanced_ui', False), ('show_random_tip', True))
+        # defaults = (('use_advanced_ui', False), ('show_random_tip', True))
+        defaults = (('show_random_tip', True),)
         try:
             self._set_preference_defaults(defaults, 'pychron.general')
         except AttributeError, e:
@@ -155,7 +158,10 @@ class myTasksPlugin(TasksPlugin):
                                   path='MenuBar/view.menu'),
                    SchemaAddition(factory=ToggleFullWindowAction,
                                   id='toggle_full_window',
-                                  path='MenuBar/window.menu')]
+                                  path='MenuBar/window.menu'),
+                   SchemaAddition(factory=EditTaskExtensionsAction,
+                                  id='edit_task_extensions',
+                                  path='MenuBar/help.menu')]
 
         return [TaskExtension(actions=actions)]
 

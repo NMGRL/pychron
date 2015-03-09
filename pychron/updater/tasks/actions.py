@@ -25,6 +25,7 @@ from pychron.envisage.resources import icon
 
 class BuildApplicationAction(Action):
     name = 'Build'
+    dname = 'Build'
     image = icon('bricks')
     def perform(self, event):
         app = event.task.window.application
@@ -34,6 +35,7 @@ class BuildApplicationAction(Action):
 
 class CheckForUpdatesAction(Action):
     name = 'Check For Updates'
+    dname = 'Check For Updates'
     image = icon('update-product')
 
     def perform(self, event):
@@ -44,6 +46,7 @@ class CheckForUpdatesAction(Action):
 
 class ManageVersionAction(Action):
     name = 'Manage Version'
+    dname = 'Manage Version'
     image = icon('update-product')
     accelerator = 'Ctrl+;'
 
@@ -55,6 +58,7 @@ class ManageVersionAction(Action):
 
 class ManageBranchAction(Action):
     name = 'Manage Branch'
+    dname = 'Manage Branch'
     image = icon('update-product')
     accelerator = 'Ctrl+.'
 

@@ -620,7 +620,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
             f = getattr(self, step)
             if not f(run):
-                self.warning('{} returned false'.format(step[1:]))
+                self.warning('{} did not complete successfully'.format(step[1:]))
                 run.state = 'failed'
                 break
         else:

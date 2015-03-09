@@ -31,7 +31,7 @@ class GeneralPreferences(GitRepoPreferencesHelper):
     multi_user = Bool
     confirm_quit = Bool
     show_random_tip = Bool
-    use_advanced_ui = Bool
+    # use_advanced_ui = Bool
 
 
 class GeneralPreferencesPane(PreferencesPane):
@@ -47,8 +47,8 @@ class GeneralPreferencesPane(PreferencesPane):
                              tooltip='Ask user for confirmation when quitting application'),
                         Item('show_random_tip', label='Random Tip',
                              tooltip='Display a Random Tip whe the application starts'),
-                        Item('use_advanced_ui', label='Advanced UI',
-                             tooltip='Display the advanced UI'),
+                        # Item('use_advanced_ui', label='Advanced UI',
+                        #      tooltip='Display the advanced UI'),
                         root_grp,
                         login_grp,
                         remote_status_item('Laboratory Repo'),

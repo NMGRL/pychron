@@ -22,21 +22,16 @@ from envisage.service_offer import ServiceOffer
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_plugin import BasePlugin
 from pychron.globals import globalv
-from pychron.loggable import Loggable
-
-SERVICE_OFFERS = 'envisage.service_offers'
-TASK_EXTENSIONS = 'envisage.ui.tasks.task_extensions'
-TASKS = 'envisage.ui.tasks.tasks'
 
 
 class BaseTaskPlugin(BasePlugin):
     actions = List(contributes_to='pychron.actions')
     file_defaults = List(contributes_to='pychron.plugin.file_defaults')
     help_tips = List(contributes_to='pychron.plugin.help_tips')
-    tasks = List(contributes_to=TASKS)
-    service_offers = List(contributes_to=SERVICE_OFFERS)
-
-    task_extensions = List(contributes_to=TASK_EXTENSIONS)
+    tasks = List(contributes_to='envisage.ui.tasks.tasks')
+    service_offers = List(contributes_to='envisage.service_offers')
+    available_task_extensions = List(contributes_to='pychron.available.task_extensions')
+    task_extensions = List(contributes_to='envisage.ui.tasks.task_extensions')
     # my_task_extensions = List(contributes_to=TASK_EXTENSIONS)
     # base_task_extensions = List(contributes_to=TASK_EXTENSIONS)
 

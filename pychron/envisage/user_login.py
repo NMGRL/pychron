@@ -30,6 +30,7 @@ enthought = os.path.join(os.path.expanduser('~'), '.enthought')
 users_file = os.path.join(enthought, 'users')
 login_file = os.path.join(enthought, 'login')
 
+
 class LoginHandler(Handler):
     def closed(self, info, is_ok):
         if is_ok:
@@ -41,10 +42,9 @@ def load_user_file():
     users = []
     last_login = ''
     path = users_file
-    isfile=False
-    print path
+    isfile = False
     if os.path.isfile(path):
-        isfile=True
+        isfile = True
         with open(path, 'r') as fp:
             users, last_login = pickle.load(fp)
 
@@ -59,7 +59,7 @@ def dump_user_file(names, last_login_name):
         names = [names, ]
 
     # for name in names:
-    #     if name not in users:
+    # if name not in users:
     #         users.append(name)
     with open(users_file, 'w') as fp:
         pickle.dump((names, last_login_name), fp)
@@ -178,7 +178,7 @@ def get_user(current=None):
 
 
 def get_src_dest_user(cuser):
-    users, _,_ = load_user_file()
+    users, _, _ = load_user_file()
     login = SrcDestUsers(users=users)
     login.src_user = cuser
     s, d = None, None

@@ -22,6 +22,7 @@ make sure directory exists and build if not
 """
 from os import path, mkdir
 import os
+from pychron.file_defaults import TASK_EXTENSION_DEFAULT
 
 
 class Paths(object):
@@ -169,6 +170,7 @@ class Paths(object):
     presentation_formatting_options = None
     display_formatting_options = None
     plotter_options = None
+    task_extensions_file = None
 
     def write_default_file(self, p, default, overwrite=False):
         return self._write_default_file(p, default, overwrite)
@@ -343,6 +345,7 @@ class Paths(object):
         self.presentation_formatting_options = join(self.formatting_dir, 'presentation.yaml')
         self.display_formatting_options = join(self.formatting_dir, 'display.yaml')
         self.plotter_options = join(self.plotter_options_dir, 'plotter_options')
+        self.task_extensions_file = join(self.hidden_dir, 'task_extensions')
 
     def write_defaults(self):
         if os.environ.get('TRAVIS_CI', 'False') == 'False' and \
@@ -355,9 +358,9 @@ class Paths(object):
 
         for p, d in ((path.join(self.setup_dir, 'initialization.xml'), DEFAULT_INITIALIZATION),
                      (self.startup_tests, DEFAULT_STARTUP_TESTS),
-                     # (self.experiment_defaults, EXPERIMENT_DEFAULTS),
-                     (self.system_health, SYSTEM_HEALTH),):
-            overwrite = d in (SYSTEM_HEALTH,)
+                     (self.system_health, SYSTEM_HEALTH),
+                     (self.task_extensions_file, TASK_EXTENSION_DEFAULT)):
+            overwrite = d in (SYSTEM_HEALTH,TASK_EXTENSION_DEFAULT)
             self._write_default_file(p, d, overwrite)
 
     def _write_default_file(self, p, default, overwrite=False):

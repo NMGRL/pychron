@@ -164,10 +164,11 @@ class ProcessingPlugin(BaseTaskPlugin):
                                       for args in actions], **kw)
 
     def _task_extensions_default(self):
-        if self.application.use_advanced_ui():
-            exts = self._advanced_ui_task_extensions()
-        else:
-            exts = self._simple_ui_task_extensions()
+        # exts = self._advanced_ui_task_extensions()
+        # if self.application.use_advanced_ui():
+        #     exts = self._advanced_ui_task_extensions()
+        # else:
+        exts = self._simple_ui_task_extensions()
         return exts
 
     def _simple_ui_task_extensions(self):

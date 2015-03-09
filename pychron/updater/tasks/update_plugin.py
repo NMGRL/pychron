@@ -107,40 +107,64 @@ class UpdatePlugin(BaseTaskPlugin):
         return [UpdatePreferencesPane]
 
     def _task_extensions_default(self):
-        if self.application.use_advanced_ui():
-            actions = [SchemaAddition(id='check_for_updates',
-                                      factory=CheckForUpdatesAction,
-                                      path='MenuBar/help.menu'),
-                       SchemaAddition(id='build_app',
-                                      factory=BuildApplicationAction,
-                                      path='MenuBar/help.menu'),
-                       SchemaAddition(id='manage_branch',
-                                      factory=ManageBranchAction,
-                                      path='MenuBar/help.menu'),
-                       SchemaAddition(id='manage_version',
-                                      factory=ManageVersionAction,
-                                      path='MenuBar/help.menu')]
-        else:
-            actions = [SchemaAddition(id='check_for_updates',
-                                      factory=CheckForUpdatesAction,
-                                      path='MenuBar/help.menu')]
-        extensions = [TaskExtension(actions=actions)]
+
+        # if self.application.use_advanced_ui():
+        # actions = [SchemaAddition(id='check_for_updates',
+        # factory=CheckForUpdatesAction,
+        # path='MenuBar/help.menu'),
+        # SchemaAddition(id='build_app',
+        #                               factory=BuildApplicationAction,
+        #                               path='MenuBar/help.menu'),
+        #                SchemaAddition(id='manage_branch',
+        #                               factory=ManageBranchAction,
+        #                               path='MenuBar/help.menu'),
+        #                SchemaAddition(id='manage_version',
+        #                               factory=ManageVersionAction,
+        #                               path='MenuBar/help.menu')]
+        # else:
+        #     actions = [SchemaAddition(id='check_for_updates',
+        #                               factory=CheckForUpdatesAction,
+        #                               path='MenuBar/help.menu')]
+        # extensions = [TaskExtension(actions=actions)]
+
+        extensions = [TaskExtension(actions=actions, task_id=eid) for eid, actions in self._get_extensions()]
         return extensions
 
-        # ============= EOF =============================================
-        # def stop(self):
-        # self.debug('stopping update plugin')
-        # if self._build_required:
-        #         self.debug('building new version')
-        #         dest = self._build_update()
-        #         if dest:
-        #             # get executable
-        #             mos = os.path.join(dest, 'MacOS')
-        #             for p in os.listdir(mos):
-        #                 if p != 'python':
-        #                     pp = os.path.join(mos, p)
-        #                     if stat.S_IXUSR & os.stat(pp)[stat.ST_MODE]:
-        #                         os.execl(pp)
+    def _available_task_extensions_default(self):
+        return [SchemaAddition(id='pychron.update.check_for_updates',
+                               factory=CheckForUpdatesAction,
+                               path='MenuBar/help.menu'),
+                SchemaAddition(id='build_app',
+                               factory=BuildApplicationAction,
+                               path='MenuBar/help.menu'),
+                SchemaAddition(id='manage_branch',
+                               factory=ManageBranchAction,
+                               path='MenuBar/help.menu'),
+                SchemaAddition(id='manage_version',
+                               factory=ManageVersionAction,
+                               path='MenuBar/help.menu')]
+
+    def _get_extensions(self):
+        sadditions = []
+        for eid in self.application.get_task_extensions(self.id):
+            sa = next((av for av in self.available_task_extensions if av.id == eid))
+            sadditions.append(sa)
+
+        return [('', sadditions)]
+            # ============= EOF =============================================
+            # def stop(self):
+            # self.debug('stopping update plugin')
+            # if self._build_required:
+            # self.debug('building new version')
+            # dest = self._build_update()
+            #         if dest:
+            #             # get executable
+            #             mos = os.path.join(dest, 'MacOS')
+            #             for p in os.listdir(mos):
+            #                 if p != 'python':
+            #                     pp = os.path.join(mos, p)
+            #                     if stat.S_IXUSR & os.stat(pp)[stat.ST_MODE]:
+            #                         os.execl(pp)
 
 # pref = self.application.preferences
 # if to_bool(pref.get('pychron.update.check_on_startup')):
@@ -148,10 +172,10 @@ class UpdatePlugin(BaseTaskPlugin):
 # branch = pref.get('pychron.update.branch')
 # if url and branch:
 #
-#         lc, rc = self._check_for_updates(url, branch)
-#         if lc != rc:
-#             if self._out_of_date():
-#                 origin = self._repo.remotes.origin
+# lc, rc = self._check_for_updates(url, branch)
+# if lc != rc:
+# if self._out_of_date():
+# origin = self._repo.remotes.origin
 #                 self.debug('pulling changes from {} to {}'.format(origin.url, branch))
 #                 origin.pull(branch)
 #                 self._build(branch, rc)

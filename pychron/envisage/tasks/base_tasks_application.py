@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from envisage.extension_point import ExtensionPoint
 from pyface.dialog import Dialog
 from traits.api import List, Instance
 from envisage.ui.tasks.tasks_application import TasksApplication
@@ -25,6 +26,7 @@ import weakref
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.hardware.core.i_core_device import ICoreDevice
+from pychron.paths import paths
 from pychron.startup_test.results_view import ResultsView
 from pychron.startup_test.tester import StartupTester
 
@@ -33,6 +35,7 @@ class BaseTasksApplication(TasksApplication, Loggable):
     about_dialog = Instance(Dialog)
     startup_tester = Instance(StartupTester)
     uis = List
+    available_task_extensions = ExtensionPoint(id='pychron.available.task_extensions')
 
     def _started_fired(self):
         st = self.startup_tester
@@ -42,13 +45,23 @@ class BaseTasksApplication(TasksApplication, Loggable):
 
         if globalv.use_testbot:
             from pychron.testbot.testbot import TestBot
+
             testbot = TestBot(application=self)
             testbot.run()
 
-    def use_advanced_ui(self):
-        from pychron.core.helpers.filetools import to_bool
+    def get_task_extensions(self, pid):
+        import yaml
 
-        return to_bool(self.preferences.get('pychron.general.use_advanced_ui'))
+        p = paths.task_extensions_file
+        with open(p, 'r') as rfile:
+            yl = yaml.load(rfile)
+            yd = next((yi for yi in yl if yi['plugin_id'] == pid))
+            return yd['actions']
+
+    # def use_advanced_ui(self):
+    #     from pychron.core.helpers.filetools import to_bool
+    #
+    #     return to_bool(self.preferences.get('pychron.general.use_advanced_ui'))
 
     def about(self):
         self.about_dialog.open()
@@ -111,7 +124,7 @@ class BaseTasksApplication(TasksApplication, Loggable):
         self._cleanup_services()
 
         uis = self.uis
-        #         uis = copy.copy(self.uis)
+        # uis = copy.copy(self.uis)
         for ui in uis:
             try:
                 ui.dispose(abort=True)

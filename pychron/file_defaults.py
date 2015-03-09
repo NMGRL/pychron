@@ -23,6 +23,16 @@ This file defines the text for various default files.
 Values are used in pychron.paths when building directory structure
 """
 
+TASK_EXTENSION_DEFAULT = """
+-
+ plugin_id: pychron.update
+ actions:
+  - pychron.update.check_for_updates
+-
+ plugin_id: pychron.recall
+ actions:
+  - pychron.recall.recall
+"""
 
 DEFAULT_INITIALIZATION = '''<root>
     <globals>
