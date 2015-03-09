@@ -57,6 +57,7 @@ CHANGELOG
 * added manual entry load name. A load name is now required now if an extraction device is set. 
 * updated estimated duration calculation
 * added Random Tip on startup
+* added use_advanced_ui option.  if false displays a stripped down ui (currently just displays a subset of the Menubar actions)
 
 ### Bug Fixes ###
 * fixed plotting ideograms of attributes other than age

@@ -45,6 +45,11 @@ class BaseTasksApplication(TasksApplication, Loggable):
             testbot = TestBot(application=self)
             testbot.run()
 
+    def use_advanced_ui(self):
+        from pychron.core.helpers.filetools import to_bool
+
+        return to_bool(self.preferences.get('pychron.general.use_advanced_ui'))
+
     def about(self):
         self.about_dialog.open()
 

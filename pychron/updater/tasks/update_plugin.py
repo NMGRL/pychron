@@ -20,6 +20,7 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 from traits.api import List
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.filetools import to_bool
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.updater.tasks.actions import CheckForUpdatesAction, ManageVersionAction, BuildApplicationAction, \
     ManageBranchAction
@@ -81,12 +82,13 @@ class UpdatePlugin(BaseTaskPlugin):
     def check(self):
         try:
             from git import Repo
+
             return True
         except ImportError:
             return False
 
     def set_preference_defaults(self):
-        defaults = (('remote', 'NMGRL/pychron'),('branch','master'))
+        defaults = (('remote', 'NMGRL/pychron'), ('branch', 'master'))
         self._set_preference_defaults(defaults, 'pychron.update')
 
     # private
@@ -105,39 +107,46 @@ class UpdatePlugin(BaseTaskPlugin):
         return [UpdatePreferencesPane]
 
     def _task_extensions_default(self):
-        ex = [TaskExtension(actions=[SchemaAddition(id='check_for_updates',
-                                                    factory=CheckForUpdatesAction,
-                                                    path='MenuBar/help.menu'),
-                                     SchemaAddition(id='build_app',
-                                                    factory=BuildApplicationAction,
-                                                    path='MenuBar/help.menu'),
-                                     SchemaAddition(id='manage_branch',
-                                                    factory=ManageBranchAction,
-                                                    path='MenuBar/help.menu'),
-                                     SchemaAddition(id='manage_version',
-                                                    factory=ManageVersionAction,
-                                                    path='MenuBar/help.menu')])]
-        return ex
+        if self.application.use_advanced_ui():
+            actions = [SchemaAddition(id='check_for_updates',
+                                      factory=CheckForUpdatesAction,
+                                      path='MenuBar/help.menu'),
+                       SchemaAddition(id='build_app',
+                                      factory=BuildApplicationAction,
+                                      path='MenuBar/help.menu'),
+                       SchemaAddition(id='manage_branch',
+                                      factory=ManageBranchAction,
+                                      path='MenuBar/help.menu'),
+                       SchemaAddition(id='manage_version',
+                                      factory=ManageVersionAction,
+                                      path='MenuBar/help.menu')]
+        else:
+            actions = [SchemaAddition(id='check_for_updates',
+                                      factory=CheckForUpdatesAction,
+                                      path='MenuBar/help.menu')]
+        extensions = [TaskExtension(actions=actions)]
+        return extensions
 
-# ============= EOF =============================================
-# def stop(self):
-    #     self.debug('stopping update plugin')
-    #     if self._build_required:
-    #         self.debug('building new version')
-    #         dest = self._build_update()
-    #         if dest:
-    #             # get executable
-    #             mos = os.path.join(dest, 'MacOS')
-    #             for p in os.listdir(mos):
-    #                 if p != 'python':
-    #                     pp = os.path.join(mos, p)
-    #                     if stat.S_IXUSR & os.stat(pp)[stat.ST_MODE]:
-    #                         os.execl(pp)
+        # ============= EOF =============================================
+        # def stop(self):
+        # self.debug('stopping update plugin')
+        # if self._build_required:
+        #         self.debug('building new version')
+        #         dest = self._build_update()
+        #         if dest:
+        #             # get executable
+        #             mos = os.path.join(dest, 'MacOS')
+        #             for p in os.listdir(mos):
+        #                 if p != 'python':
+        #                     pp = os.path.join(mos, p)
+        #                     if stat.S_IXUSR & os.stat(pp)[stat.ST_MODE]:
+        #                         os.execl(pp)
+
 # pref = self.application.preferences
 # if to_bool(pref.get('pychron.update.check_on_startup')):
 # url = pref.get('pychron.update.remote')
-#     branch = pref.get('pychron.update.branch')
-#     if url and branch:
+# branch = pref.get('pychron.update.branch')
+# if url and branch:
 #
 #         lc, rc = self._check_for_updates(url, branch)
 #         if lc != rc:

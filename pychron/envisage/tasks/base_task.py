@@ -413,7 +413,7 @@ class BaseTask(Task, Loggable, PreferenceMixin):
             KeyBindingsAction(),
             SwitchUserAction(),
             StartupTestsAction(),
-            DemoAction(),
+            # DemoAction(),
             id='help.menu',
             name='Help')
         return menu

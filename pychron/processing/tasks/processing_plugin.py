@@ -26,9 +26,6 @@ from pyface.tasks.action.schema import SMenu
 from pychron.core.helpers.filetools import to_bool
 
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
-from pychron.file_defaults import IDEOGRAM_DEFAULTS, SPECTRUM_DEFAULTS, INVERSE_ISOCHRON_DEFAULTS, COMPOSITE_DEFAULTS, \
-    SCREEN_FORMATTING_DEFAULTS, PRESENTATION_FORMATTING_DEFAULTS, DISPLAY_FORMATTING_DEFAULTS
-from pychron.paths import paths
 from pychron.processing.processor import Processor
 from pychron.processing.tasks.actions.import_actions import EasyImportAction
 from pychron.processing.tasks.actions.easy_actions import EasyFitAction, EasyBlanksAction, EasyDiscriminationAction, \
@@ -43,7 +40,7 @@ from pychron.processing.tasks.actions.processing_actions import IdeogramAction, 
     GraphGroupSelectedAction, IdeogramFromFile, SpectrumFromFile, MakeAnalysisGroupAction, GraphGroupbySampleAction, \
     DeleteAnalysisGroupAction, XYScatterAction, ModifyK3739Action, GroupbySampleAction, \
     SplitEditorActionVert, ConfigureRecallAction, ActivateBlankAction, ActivateRecallAction, ActivateIdeogramAction, \
-    ModifyIdentifierAction, CompositeAction, SetSQLiteAction, TimeViewAction
+    ModifyIdentifierAction, CompositeAction, SetSQLiteAction, TimeViewAction, SplitEditorActionHor
 
 from pychron.processing.tasks.actions.edit_actions import BlankEditAction, \
     FluxAction, IsotopeEvolutionAction, ICFactorAction, \
@@ -58,7 +55,90 @@ from pychron.processing.tasks.isotope_evolution.actions import CalcOptimalEquili
 from pychron.processing.tasks.preferences.offline_preferences import OfflinePreferencesPane
 from pychron.processing.tasks.preferences.processing_preferences import BrowsingPreferencesPane, EasyPreferencesPane
 # from pychron.processing.tasks.browser.browser_task import BrowserTask
-from pyface.message_dialog import warning
+
+
+def figure_group():
+    return Group(
+        SpectrumAction(),
+        IdeogramAction(),
+        InverseIsochronAction(),
+        SeriesAction(),
+        CompositeAction(),
+        XYScatterAction(),
+        MenuManager(IdeogramFromFile(),
+                    SpectrumFromFile(),
+                    name='From File'),
+        RefreshActiveEditorAction(),
+        name='Figures')
+
+
+def data_menu():
+    return SMenu(id='data.menu', name='Data')
+
+
+# def vcs_menu():
+# return SMenu(id='vcs.menu', name='VCS')
+
+def grouping_group():
+    return SMenu(Group(GroupSelectedAction(),
+                       GroupbyAliquotAction(),
+                       GroupbyLabnumberAction(),
+                       GroupbySampleAction(),
+                       ClearGroupAction()),
+                 Group(GraphGroupSelectedAction(),
+                       GraphGroupbySampleAction()),
+                 name='Grouping')
+
+
+def reduction_group():
+    return Group(IsotopeEvolutionAction(),
+                 BlankEditAction(),
+                 ICFactorAction(),
+                 DiscriminationAction(),
+                 FluxAction(),
+                 name='Reduction')
+
+
+def interpreted_group():
+    return SMenu(SetInterpretedAgeAction(),
+                 OpenInterpretedAgeAction(),
+                 OpenInterpretedAgeGroupAction(),
+                 DeleteInterpretedAgeGroupAction(),
+                 MakeGroupFromFileAction(),
+                 name='Interpreted Ages')
+
+
+def analysis_group():
+    return SMenu(MakeAnalysisGroupAction(),
+                 DeleteAnalysisGroupAction(),
+                 name='Analysis Grouping')
+
+
+def recall_group():
+    return Group(RecallAction(),
+                 # OpenAdvancedQueryAction(),
+                 ConfigureRecallAction(),
+                 TimeViewAction())
+
+
+def misc_group():
+    return Group(TagAction(),
+                 DataReductionTagAction(),
+                 SelectDataReductionTagAction(),
+                 DatabaseSaveAction(),
+                 ClearAnalysisCacheAction(),
+                 MakeTASAction(),
+                 ModifyK3739Action(),
+                 CalculationViewAction(),
+                 SummaryLabnumberAction(),
+                 ModifyIdentifierAction(),
+                 name='misc')
+
+
+def activate_group():
+    return Group(ActivateBlankAction(),
+                 ActivateRecallAction(),
+                 ActivateIdeogramAction())
 
 
 class ProcessingPlugin(BaseTaskPlugin):
@@ -84,119 +164,61 @@ class ProcessingPlugin(BaseTaskPlugin):
                                       for args in actions], **kw)
 
     def _task_extensions_default(self):
-        def figure_group():
-            return Group(
-                SpectrumAction(),
-                IdeogramAction(),
-                InverseIsochronAction(),
-                SeriesAction(),
-                CompositeAction(),
-                XYScatterAction(),
-                MenuManager(IdeogramFromFile(),
-                            SpectrumFromFile(),
-                            name='From File'),
-                RefreshActiveEditorAction(),
-                name='Figures')
+        if self.application.use_advanced_ui():
+            exts = self._advanced_ui_task_extensions()
+        else:
+            exts = self._simple_ui_task_extensions()
+        return exts
 
-        def data_menu():
-            return SMenu(id='data.menu', name='Data')
+    def _simple_ui_task_extensions(self):
+        actions = [('recall_action', RecallAction, 'MenuBar/file.menu'),
+                   ('recall_group', recall_group, 'MenuBar/data.menu', {'absolute_position': 'first'}),
+                   ('data', data_menu, 'MenuBar', {'before': 'tools.menu', 'after': 'view.menu'}),
+                   ('activate_group', activate_group, 'MenuBar/view.menu'),
+                   ('reduction_group', reduction_group, 'MenuBar/data.menu'),
+                   ('figure_group', figure_group, 'MenuBar/data.menu')]
+        exts = [self._make_task_extension(actions)]
+        return exts
 
-        # def vcs_menu():
-        #     return SMenu(id='vcs.menu', name='VCS')
+    def _advanced_ui_task_extensions(self):
+        actions = [('recall_action', RecallAction, 'MenuBar/file.menu'),
+                   # ('find_action', OpenAdvancedQueryAction, 'MenuBar/file.menu'),
+                   ('export_analyses', ExportAnalysesAction, 'MenuBar/file.menu'),
+                   ('set_sqlite_dataset', SetSQLiteAction, 'MenuBar/file.menu'),
 
-        def grouping_group():
-            return SMenu(Group(GroupSelectedAction(),
-                               GroupbyAliquotAction(),
-                               GroupbyLabnumberAction(),
-                               GroupbySampleAction(),
-                               ClearGroupAction()),
-                         Group(GraphGroupSelectedAction(),
-                               GraphGroupbySampleAction()),
-                         name='Grouping')
+                   ('batch_edit', BatchEditAction, 'MenuBar/Edit'),
 
-        def reduction_group():
-            return Group(IsotopeEvolutionAction(),
-                         BlankEditAction(),
-                         ICFactorAction(),
-                         DiscriminationAction(),
-                         FluxAction(),
-                         name='Reduction')
-
-        def interpreted_group():
-            return SMenu(SetInterpretedAgeAction(),
-                         OpenInterpretedAgeAction(),
-                         OpenInterpretedAgeGroupAction(),
-                         DeleteInterpretedAgeGroupAction(),
-                         MakeGroupFromFileAction(),
-                         name='Interpreted Ages')
-
-        def analysis_group():
-            return SMenu(MakeAnalysisGroupAction(),
-                         DeleteAnalysisGroupAction(),
-                         name='Analysis Grouping')
-
-        def recall_group():
-            return Group(RecallAction(),
-                         # OpenAdvancedQueryAction(),
-                         ConfigureRecallAction(),
-                         TimeViewAction())
-
-        def misc_group():
-            return Group(TagAction(),
-                         DataReductionTagAction(),
-                         SelectDataReductionTagAction(),
-                         DatabaseSaveAction(),
-                         ClearAnalysisCacheAction(),
-                         MakeTASAction(),
-                         ModifyK3739Action(),
-                         CalculationViewAction(),
-                         SummaryLabnumberAction(),
-                         ModifyIdentifierAction(),
-                         name='misc')
-
-        def activate_group():
-            return Group(ActivateBlankAction(),
-                         ActivateRecallAction(),
-                         ActivateIdeogramAction())
-
-        default_actions = [('recall_action', RecallAction, 'MenuBar/file.menu'),
-                           #('find_action', OpenAdvancedQueryAction, 'MenuBar/file.menu'),
-                           ('export_analyses', ExportAnalysesAction, 'MenuBar/file.menu'),
-                           ('set_sqlite_dataset', SetSQLiteAction, 'MenuBar/file.menu'),
-
-                           ('batch_edit', BatchEditAction, 'MenuBar/Edit'),
-
-                           ('recall_group', recall_group, 'MenuBar/data.menu', {'absolute_position': 'first'}),
-                           ('data', data_menu, 'MenuBar', {'before': 'tools.menu', 'after': 'view.menu'}),
+                   ('recall_group', recall_group, 'MenuBar/data.menu', {'absolute_position': 'first'}),
+                   ('data', data_menu, 'MenuBar', {'before': 'tools.menu', 'after': 'view.menu'}),
 
 
-                           ('activate_group', activate_group, 'MenuBar/view.menu'),
-                           ('reduction_group', reduction_group, 'MenuBar/data.menu'),
-                           ('figure_group', figure_group, 'MenuBar/data.menu'),
-                           ('interpreted_group', interpreted_group, 'MenuBar/data.menu'),
-                           ('grouping_group', grouping_group, 'MenuBar/data.menu'),
+                   ('activate_group', activate_group, 'MenuBar/view.menu'),
+                   ('reduction_group', reduction_group, 'MenuBar/data.menu'),
+                   ('figure_group', figure_group, 'MenuBar/data.menu'),
+                   ('interpreted_group', interpreted_group, 'MenuBar/data.menu'),
+                   ('grouping_group', grouping_group, 'MenuBar/data.menu'),
 
-                           ('misc_group', misc_group, 'MenuBar/data.menu'),
-                           # ('tag', TagAction, 'MenuBar/data.menu'),
-                           # ('database_save', DatabaseSaveAction, 'MenuBar/data.menu'),
+                   ('misc_group', misc_group, 'MenuBar/data.menu'),
+                   # ('tag', TagAction, 'MenuBar/data.menu'),
+                   # ('database_save', DatabaseSaveAction, 'MenuBar/data.menu'),
 
-                           # ('graph_grouping_group', graph_grouping_group, 'MenuBar/data.menu'),
-                           # ('clear_cache', ClearAnalysisCacheAction, 'MenuBar/data.menu'),
-                           ('make_analysis_group', analysis_group, 'MenuBar/data.menu'),
-                           ('make_data_tables', MakeDataTablesAction, 'MenuBar/data.menu',
-                            {'absolute_position': 'last'}),
-                           # ('make_tas', MakeTASAction, 'MenuBar/data.menu'),
-                           # ('modify_k3739', ModifyK3739Action, 'MenuBar/data.menu'),
+                   # ('graph_grouping_group', graph_grouping_group, 'MenuBar/data.menu'),
+                   # ('clear_cache', ClearAnalysisCacheAction, 'MenuBar/data.menu'),
+                   ('make_analysis_group', analysis_group, 'MenuBar/data.menu'),
+                   ('make_data_tables', MakeDataTablesAction, 'MenuBar/data.menu',
+                    {'absolute_position': 'last'}),
+                   # ('make_tas', MakeTASAction, 'MenuBar/data.menu'),
+                   # ('modify_k3739', ModifyK3739Action, 'MenuBar/data.menu'),
 
-                           ('equil_inspector', EquilibrationInspectorAction, 'MenuBar/tools.menu'),
-                           # ('split_editor_area', SplitEditorActionHor, 'MenuBar/window.menu'),
-                           ('split_editor_area', SplitEditorActionVert, 'MenuBar/window.menu')]
+                   ('equil_inspector', EquilibrationInspectorAction, 'MenuBar/tools.menu'),
+                   ('split_editor_area', SplitEditorActionHor, 'MenuBar/window.menu'),
+                   ('split_editor_area', SplitEditorActionVert, 'MenuBar/window.menu')]
 
-        exts = [self._make_task_extension(default_actions)]
+        exts = [self._make_task_extension(actions)]
 
         # use_vcs = to_bool(self.application.preferences.get('pychron.vcs.use_vcs'))
         # if use_vcs:
-        #     exts.append(self._make_task_extension([('vcs', vcs_menu, 'MenuBar', {'after': 'view.menu'}),
+        # exts.append(self._make_task_extension([('vcs', vcs_menu, 'MenuBar', {'after': 'view.menu'}),
         #                                            ('vcs_pull', PullVCSAction, 'MenuBar/vcs.menu'),
         #                                            ('vcs_push', PushVCSAction, 'MenuBar/vcs.menu')]))
 
@@ -270,7 +292,7 @@ class ProcessingPlugin(BaseTaskPlugin):
              self._interpreted_age_task_factory, 'Interpeted Age'),
 
             # ('pychron.processing.publisher',
-            #  self._table_task_factory, 'Table', '', 'Ctrl+t'),
+            # self._table_task_factory, 'Table', '', 'Ctrl+t'),
             ('pychron.processing.respository',
              self._repository_task_factory, 'Repository', '', 'Ctrl+Shift+R', '', 'irc-server'),
 
@@ -344,7 +366,7 @@ class ProcessingPlugin(BaseTaskPlugin):
         return RepositoryTask(manager=self._processor_factory())
 
     # def _table_task_factory(self):
-    #     from pychron.processing.tasks.tables.table_task import TableTask
+    # from pychron.processing.tasks.tables.table_task import TableTask
     #
     #     return TableTask(manager=self._processor_factory())
 
@@ -392,20 +414,20 @@ class ProcessingPlugin(BaseTaskPlugin):
                 ('presentation_formatting_options', 'PRESENTATION_FORMATTING_DEFAULTS', True),
                 ('display_formatting_options', 'DISPLAY_FORMATTING_DEFAULTS', True)]
 
-    # def _help_tips_default(self):
-    #     return ['Use <b>Data>Ideogram</b> to plot an Ideogram',
-    #             'Use <b>Data>Spectrum</b> to plot a Spectrum',
-    #             'Use <b>Data>Recall</b> or <b>File/Recall</b> to view analytical data for individual analyses']
-    # ============= EOF =============================================
+        # def _help_tips_default(self):
+        #     return ['Use <b>Data>Ideogram</b> to plot an Ideogram',
+        #             'Use <b>Data>Spectrum</b> to plot a Spectrum',
+        #             'Use <b>Data>Recall</b> or <b>File/Recall</b> to view analytical data for individual analyses']
+        # ============= EOF =============================================
 
-    # def _dataset_factory(self):
-    #     return DataSetTask(manager=self._prcoessor_factory())
+        # def _dataset_factory(self):
+        #     return DataSetTask(manager=self._prcoessor_factory())
 
-    # def _vcs_data_task_factory(self):
-    #     from pychron.processing.tasks.vcs_data.vcs_data_task import VCSDataTask
-    #     return VCSDataTask(manager=self._processor_factory())
+        # def _vcs_data_task_factory(self):
+        #     from pychron.processing.tasks.vcs_data.vcs_data_task import VCSDataTask
+        #     return VCSDataTask(manager=self._processor_factory())
 
-    # def _advanced_query_task_factory(self):
-    #     from pychron.processing.tasks.query.advanced_query_task import AdvancedQueryTask
-    #
-    #     return AdvancedQueryTask(manager=self._processor_factory())
+        # def _advanced_query_task_factory(self):
+        #     from pychron.processing.tasks.query.advanced_query_task import AdvancedQueryTask
+        #
+        #     return AdvancedQueryTask(manager=self._processor_factory())

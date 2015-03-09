@@ -32,16 +32,17 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 import hashlib
 # ============= local library imports  ==========================
 from pychron.core.helpers.logger_setup import new_logger
+from pychron.envisage.tasks.base_plugin import BasePlugin
 from pychron.paths import paths
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import ToggleFullWindowAction, EditInitializationAction
 from pychron.envisage.tasks.preferences import GeneralPreferencesPane
 from pychron.globals import globalv
 
-logger = new_logger('PychronTasksPlugin')
+# logger = new_logger('PychronTasksPlugin')
 
 
-class PychronTasksPlugin(Plugin):
+class PychronTasksPlugin(BasePlugin):
     id = 'pychron.tasks.plugin'
     name = 'Tasks'
     preferences_panes = List(
@@ -53,8 +54,15 @@ class PychronTasksPlugin(Plugin):
     help_tips = ExtensionPoint(List, id='pychron.plugin.help_tips')
     my_tips = List(contributes_to='pychron.plugin.help_tips')
 
+    def _application_changed(self):
+        defaults = (('use_advanced_ui', False), ('show_random_tip', True))
+        try:
+            self._set_preference_defaults(defaults, 'pychron.general')
+        except AttributeError, e:
+            print e
+
     def start(self):
-        logger.info('Writing plugin file defaults')
+        self.info('Writing plugin file defaults')
         for p, d, o in self.file_defaults:
             try:
                 mod = __import__('pychron.file_defaults', fromlist=[d])
@@ -68,7 +76,7 @@ class PychronTasksPlugin(Plugin):
                 pass
 
             if paths.write_default_file(p, d, o):
-                logger.info('Wrote default file {} (overwrite: {})'.format(p, o))
+                self.info('Wrote default file {} (overwrite: {})'.format(p, o))
 
         self._random_tip()
 
