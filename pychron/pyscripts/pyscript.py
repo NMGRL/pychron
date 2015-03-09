@@ -404,7 +404,7 @@ class PyScript(Loggable):
         return self.text
 
     def get_estimated_duration(self):
-        return self._estimated_duration
+        return round(self._estimated_duration)
 
     def set_default_context(self):
         pass

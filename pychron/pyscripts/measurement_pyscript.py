@@ -97,15 +97,15 @@ class MeasurementPyScript(ValvePyScript):
     # ===============================================================================
     # commands
     # ===============================================================================
-    @count_verbose_skip
     @command_register
-    def measurement_delay(self, duration, message=None):
-        try:
-            self.automated_run.plot_panel.total_counts += round(duration)
-        except AttributeError:
-            pass
+    def measurement_delay(self, duration=None, message=None):
+        if duration:
+            try:
+                self.automated_run.plot_panel.total_counts += round(duration)
+            except AttributeError:
+                pass
 
-        self.sleep(duration, message=message)
+            self.sleep(duration, message=message)
 
     @verbose_skip
     @command_register
