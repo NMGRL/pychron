@@ -13,14 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from pychron.core.helpers.filetools import to_bool
+import os
+import pickle
 from pychron.core.ui import set_qt
 
 set_qt()
-
-from pychron.paths import paths
-from pychron.processing.tasks.actions.processing_actions import RecallAction
-
 
 # ============= enthought library imports =======================
 from pyface.action.menu_manager import MenuManager
@@ -28,13 +25,14 @@ from traitsui.menu import Action
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
 from pyface.tasks.action.schema_addition import SchemaAddition
-from traits.api import HasTraits, Str, Instance, Event, Int, Bool, Any, Float, Property, on_trait_change, List
-from traitsui.api import View, UItem, Item, HGroup, VGroup, TreeNode, Handler
+from traits.api import HasTraits, Str, Instance, Event, Bool, List, Enum
+from traitsui.api import View, UItem, VGroup, TreeNode, Handler
 # ============= standard library imports ========================
 import yaml
 # ============= local library imports  ==========================
-from pychron.updater.tasks.actions import CheckForUpdatesAction, ManageBranchAction
+from pychron.paths import paths
 from pychron.envisage.resources import icon
+from pychron.core.helpers.filetools import to_bool
 from pychron.core.ui.tree_editor import TreeEditor
 
 
@@ -51,20 +49,54 @@ class TETreeNode(TreeNode):
 class ViewModel(HasTraits):
     task_extensions = List
     enabled = True
+    # pychron.update.check_for_updates',
+
+    def set_states(self, modename):
+        if modename == 'simple':
+            enables = []
+            p = paths.simple_ui_file
+            try:
+                with open(p, 'r') as rfile:
+                    enables = yaml.load(rfile)
+            except BaseException, e:
+                print 'ViewModel.set states', e
+        elif modename == 'advanced':
+            enables = None
+        else:
+            enables = None
+
+        if enables is None:
+            # enable all
+            for t in self.task_extensions:
+                t.enable_all(True)
+        else:
+            # disable all
+            for t in self.task_extensions:
+                t.enable_all(False)
+
+            # enable specified ids
+            for ei in enables:
+                te = next((a for t in self.task_extensions
+                           for a in t.additions if a.model.id == ei), None)
+                if not te:
+                    print 'asdfsdf', ei
+                else:
+                    te.enabled = True
 
     def load(self):
         p = paths.task_extensions_file
-        with open(p, 'r') as rfile:
-            yl = yaml.load(rfile)
-            for te in self.task_extensions:
-                yd = next((d for d in yl if d['plugin_id'] == te.id), None)
-                # print yd, te.id, te
-                if yd:
-                    for ai in yd['actions']:
-                        action, enabled = ai.split(',')
-                        tt = next((ta for ta in te.additions if ta.model.id == action), None)
-                        if tt:
-                            tt.enabled = to_bool(enabled)
+        if os.path.isfile(p):
+            with open(p, 'r') as rfile:
+                yl = yaml.load(rfile)
+                for te in self.task_extensions:
+                    yd = next((d for d in yl if d['plugin_id'] == te.id), None)
+                    # print yd, te.id, te
+                    if yd:
+                        for ai in yd['actions']:
+                            action, enabled = ai.split(',')
+                            tt = next((ta for ta in te.additions if ta.model.id == action), None)
+                            if tt:
+                                tt.enabled = to_bool(enabled)
 
     def dump(self):
         p = paths.task_extensions_file
@@ -84,6 +116,10 @@ class TaskExtensionModel(HasTraits):
 
     def dump(self):
         return {'plugin_id': self.id, 'actions': ['{}, {}'.format(a.model.id, a.enabled) for a in self.additions]}
+
+    def enable_all(self, v):
+        for a in self.additions:
+            a.enabled = v
 
 
 class AdditionModel(HasTraits):
@@ -118,21 +154,45 @@ class EEHandler(Handler):
         info.object.refresh_all_needed = True
 
     def _set_all(self, te, v):
-        for a in te.additions:
-            a.enabled = v
+        te.enable_all(v)
         te.all_enabled = v
 
 
 class EditExtensionsView(HasTraits):
     view_model = Instance(ViewModel, ())
+    predefined = Enum('', 'Simple', 'Advanced')
     refresh_all_needed = Event
     selected = List
     dclicked = Event
+
+    def _predefined_changed(self, new):
+        if new:
+            self.view_model.set_states(new.lower())
+            self.refresh_all_needed = True
 
     def _dclicked_fired(self):
         s = self.selected[0]
         s.enabled = not s.enabled
         self.refresh_all_needed = True
+
+    def load(self):
+        self.view_model.load()
+        if os.path.isfile(paths.edit_ui_defaults):
+            with open(paths.edit_ui_defaults, 'r') as rfile:
+                try:
+                    d = yaml.load(rfile)
+                    self.trait_set(**d)
+                except BaseException,e:
+                    print e
+
+    def dump(self):
+        self.view_model.dump()
+        self._dump()
+
+    def _dump(self):
+        with open(paths.edit_ui_defaults, 'w') as wfile:
+            d = {k: getattr(self, k) for k in ('predefined',)}
+            pickle.yaml(d, wfile)
 
     def add_additions(self, tid, name, a):
         adds = []
@@ -153,13 +213,13 @@ def edit_task_extensions(ts):
     e = EditExtensionsView()
     for args in ts:
         e.add_additions(*args)
-    e.view_model.load()
+    e.load()
 
     nodes = [TreeNode(node_for=[ViewModel],
                       icon_open='',
                       children='task_extensions'),
              TETreeNode(node_for=[TaskExtensionModel],
-                        # auto_open=True,
+                        auto_open=True,
                         children='additions',
                         label='name',
                         menu=MenuManager(Action(name='Enable All',
@@ -176,31 +236,34 @@ def edit_task_extensions(ts):
                                                Action(name='Disable',
                                                       visible_when='object.enabled',
                                                       action='set_disabled')))]
-    AView = View(UItem('view_model',
-                       editor=TreeEditor(nodes=nodes,
-                                         selection_mode='extended',
-                                         selected='selected',
-                                         dclick='dclicked',
-                                         show_disabled=True,
-                                         refresh_all_icons='refresh_all_needed',
-                                         editable=False)),
-                 title='Edit UI',
-                 width=500,
-                 height=700,
-                 resizable=True,
-                 handler=EEHandler(),
-                 buttons=['OK', 'Cancel'],
-                 kind='livemodal')
+    av = View(VGroup(UItem('predefined'),
+                     UItem('view_model',
+                           editor=TreeEditor(nodes=nodes,
+                                             selection_mode='extended',
+                                             selected='selected',
+                                             dclick='dclicked',
+                                             show_disabled=True,
+                                             refresh_all_icons='refresh_all_needed',
+                                             editable=False))),
+              title='Edit UI',
+              width=500,
+              height=700,
+              resizable=True,
+              handler=EEHandler(),
+              buttons=['OK', 'Cancel'],
+              kind='livemodal')
 
     # info = e.configure_traits(view=AView)
-    info = e.edit_traits(view=AView)
+    info = e.edit_traits(view=av)
     if info.result:
-        e.view_model.dump()
+        e.dump()
         return confirm(None, 'Restart?') == YES
 
 
 if __name__ == '__main__':
     from traits.api import Button
+    from pychron.processing.tasks.actions.processing_actions import RecallAction
+    from pychron.updater.tasks.actions import CheckForUpdatesAction, ManageBranchAction
 
     class Demo(HasTraits):
         test = Button

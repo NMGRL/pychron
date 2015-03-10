@@ -59,6 +59,10 @@ CHANGELOG
 * added Random Tip on startup
 * added use_advanced_ui option.  if false displays a stripped down ui (currently just displays a subset of the Menubar actions)
 
+#### 3/10/2015 ####
+* changed use_advanced_ui to EditUI... Use this menu action to configure the plugins visible menu actions. Predefined
+  settings are included, Simple, Advanced. (Advanced enables all actions)
+
 ### Bug Fixes ###
 * fixed plotting ideograms of attributes other than age
 * improved database startup tests

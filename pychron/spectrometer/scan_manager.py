@@ -186,7 +186,7 @@ class ScanManager(Manager):
         self.info('load scan settings')
         spec = self.spectrometer
 
-        p = os.path.join(paths.hidden_dir, 'scan_settings')
+        p = os.path.join(paths.hidden_dir, 'scan_settings.p')
         if os.path.isfile(p):
             with open(p, 'rb') as f:
                 try:
@@ -212,7 +212,7 @@ class ScanManager(Manager):
 
     def dump_settings(self):
         self.info('dump scan settings')
-        p = os.path.join(paths.hidden_dir, 'scan_settings')
+        p = os.path.join(paths.hidden_dir, 'scan_settings.p')
         with open(p, 'wb') as f:
             iso = self.isotope
             if not iso:

@@ -40,7 +40,7 @@ def browser_pane_item(width=300):
 
 # ===============================================================
 def get_pad(low, high):
-    p=os.path.join(paths.hidden_dir, 'pad_entry')
+    p=os.path.join(paths.hidden_dir, 'pad_entry.p')
     pe =None
     if os.path.isfile(p):
         try:

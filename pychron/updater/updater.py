@@ -103,14 +103,15 @@ class Updater(Loggable):
                         self.debug('pulling changes from {} to {}'.format(origin.url, branch))
 
                         self._repo.git.pull(origin, hexsha)
-                        # origin.pull(hexsha)
 
                         self._build(branch, rc)
                         if self.confirmation_dialog('Restart?'):
                             os.execl(sys.executable, *([sys.executable] + sys.argv))
-                    else:
+                    elif hexsha is None:
                         if inform:
                             self.information_dialog('Application is up-to-date')
+                    else:
+                        self.info('User chose not to update at this time')
             else:
                 self.warning_dialog('{} not a valid Github Repository. Unable to check for updates'.format(remote))
 
@@ -275,7 +276,7 @@ class Updater(Loggable):
         if rc and lc != rc:
             self.info('updates are available')
             if not self.confirmation_dialog('Updates are available. Install and Restart?'):
-                return
+                return False
 
             txt = self._repo.git.rev_list('--left-right', '{}...{}'.format(lc, rc))
             commits = [ci[1:] for ci in txt.split('\n')]

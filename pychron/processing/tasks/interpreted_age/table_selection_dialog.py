@@ -43,7 +43,7 @@ class TableSelectionDialog(Controller):
     def __init__(self, *args, **kw):
         super(TableSelectionDialog, self).__init__(*args, **kw)
 
-        p = os.path.join(paths.hidden_dir, 'table_selection_dialog')
+        p = os.path.join(paths.hidden_dir, 'table_selection_dialog.p')
         if os.path.isfile(p):
             with open(p, 'r') as fp:
                 try:
@@ -55,7 +55,7 @@ class TableSelectionDialog(Controller):
 
     def closed(self, info, is_ok):
         if is_ok:
-            p = os.path.join(paths.hidden_dir, 'table_selection_dialog')
+            p = os.path.join(paths.hidden_dir, 'table_selection_dialog.p')
             with open(p, 'w') as fp:
                 try:
                     pickle.dump(self.model, fp)

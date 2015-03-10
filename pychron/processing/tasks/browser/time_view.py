@@ -167,7 +167,7 @@ class TimeViewModel(HasTraits):
         self.lowdate = datetime.now().date() - timedelta(days=self.lowdays)
 
     def dump_filter(self):
-        p = os.path.join(paths.hidden_dir, 'time_view')
+        p = os.path.join(paths.hidden_dir, 'time_view.p')
         with open(p, 'w') as fp:
             obj = {k: getattr(self, k) for k in
                    ('mass_spectrometer', 'analysis_type', 'extract_device',
@@ -175,7 +175,7 @@ class TimeViewModel(HasTraits):
             pickle.dump(obj, fp)
 
     def load_filter(self):
-        p = os.path.join(paths.hidden_dir, 'time_view')
+        p = os.path.join(paths.hidden_dir, 'time_view.p')
         if os.path.isfile(p):
             with open(p, 'r') as fp:
                 obj = pickle.load(fp)

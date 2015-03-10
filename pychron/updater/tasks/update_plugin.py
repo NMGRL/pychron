@@ -106,30 +106,6 @@ class UpdatePlugin(BaseTaskPlugin):
     def _preferences_panes_default(self):
         return [UpdatePreferencesPane]
 
-    # def _task_extensions_default(self):
-    #
-    #     # if self.application.use_advanced_ui():
-    #     # actions = [SchemaAddition(id='check_for_updates',
-    #     # factory=CheckForUpdatesAction,
-    #     # path='MenuBar/help.menu'),
-    #     # SchemaAddition(id='build_app',
-    #     # factory=BuildApplicationAction,
-    #     # path='MenuBar/help.menu'),
-    #     #                SchemaAddition(id='manage_branch',
-    #     #                               factory=ManageBranchAction,
-    #     #                               path='MenuBar/help.menu'),
-    #     #                SchemaAddition(id='manage_version',
-    #     #                               factory=ManageVersionAction,
-    #     #                               path='MenuBar/help.menu')]
-    #     # else:
-    #     #     actions = [SchemaAddition(id='check_for_updates',
-    #     #                               factory=CheckForUpdatesAction,
-    #     #                               path='MenuBar/help.menu')]
-    #     # extensions = [TaskExtension(actions=actions)]
-    #
-    #     extensions = [TaskExtension(actions=actions, task_id=eid) for eid, actions in self._get_extensions()]
-    #     return extensions
-
     def _available_task_extensions_default(self):
         return [(self.id, self.name, [SchemaAddition(id='pychron.update.check_for_updates',
                                                      factory=CheckForUpdatesAction,

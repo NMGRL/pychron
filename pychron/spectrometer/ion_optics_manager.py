@@ -57,7 +57,7 @@ class PeakCenterConfig(HasTraits):
         return QTEGRA_INTEGRATION_TIMES[4]  # 1.048576
 
     def dump(self):
-        p = os.path.join(paths.hidden_dir, 'peak_center_config')
+        p = os.path.join(paths.hidden_dir, 'peak_center_config.p')
         with open(p, 'wb') as fp:
             pickle.dump(self, fp)
 
@@ -374,7 +374,7 @@ class IonOpticsManager(Manager):
     # ===============================================================================
     def _peak_center_config_default(self):
         config = None
-        p = os.path.join(paths.hidden_dir, 'peak_center_config')
+        p = os.path.join(paths.hidden_dir, 'peak_center_config.p')
         if os.path.isfile(p):
             try:
                 with open(p) as fp:

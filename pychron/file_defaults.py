@@ -22,7 +22,29 @@ This file defines the text for various default files.
 
 Values are used in pychron.paths when building directory structure
 """
+EDIT_UI_DEFAULT = """
+predefined: Simple
+"""
 
+SIMPLE_UI_DEFAULT = """
+- pychron.update.check_for_updates
+- pychron.figure.spectrum
+- pychron.figure.ideogram
+- pychron.figure.inv_isochron
+- pychron.figure.series
+- pychron.figure.composite
+- pychron.figure.xyscatter
+- pychron.figure.file_ideogram
+- pychron.figure.file_spectrum
+- pychron.figure.refresh
+- pychron.reduction.iso_evo
+- pychron.reduction.blanks
+- pychron.reduction.ic_factor
+- pychron.reduction.flux
+- pychron.misc.tag
+- pychron.misc.db_save
+- pychron.misc.clear_cache
+"""
 TASK_EXTENSION_DEFAULT = """
 -
  plugin_id: pychron.update.plugin
@@ -78,7 +100,7 @@ TASK_EXTENSION_DEFAULT = """
   - pychron.agroup.delete, False
 """
 # -
-#  plugin_id: pychron.recall
+# plugin_id: pychron.recall
 #  actions:
 #   - pychron.recall.recall, True
 
@@ -276,7 +298,6 @@ conditionals:
    - air
 
 '''
-
 
 SCREEN_FORMATTING_DEFAULTS = '''
 x_tick_in: 2

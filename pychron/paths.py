@@ -22,7 +22,7 @@ make sure directory exists and build if not
 """
 from os import path, mkdir
 import os
-from pychron.file_defaults import TASK_EXTENSION_DEFAULT
+from pychron.file_defaults import TASK_EXTENSION_DEFAULT, SIMPLE_UI_DEFAULT, EDIT_UI_DEFAULT
 
 
 class Paths(object):
@@ -171,6 +171,8 @@ class Paths(object):
     display_formatting_options = None
     plotter_options = None
     task_extensions_file = None
+    simple_ui_file = None
+    edit_ui_defaults = None
 
     def write_default_file(self, p, default, overwrite=False):
         return self._write_default_file(p, default, overwrite)
@@ -344,8 +346,10 @@ class Paths(object):
         self.screen_formatting_options = join(self.formatting_dir, 'screen.yaml')
         self.presentation_formatting_options = join(self.formatting_dir, 'presentation.yaml')
         self.display_formatting_options = join(self.formatting_dir, 'display.yaml')
-        self.plotter_options = join(self.plotter_options_dir, 'plotter_options')
-        self.task_extensions_file = join(self.hidden_dir, 'task_extensions')
+        self.plotter_options = join(self.plotter_options_dir, 'plotter_options.p')
+        self.task_extensions_file = join(self.hidden_dir, 'task_extensions.yaml')
+        self.simple_ui_file = join(self.hidden_dir, 'simple_ui.yaml')
+        self.edit_ui_defaults =join(self.hidden_dir, 'edit_ui.yaml')
 
     def write_defaults(self):
         if os.environ.get('TRAVIS_CI', 'False') == 'False' and \
@@ -359,9 +363,11 @@ class Paths(object):
         for p, d in ((path.join(self.setup_dir, 'initialization.xml'), DEFAULT_INITIALIZATION),
                      (self.startup_tests, DEFAULT_STARTUP_TESTS),
                      (self.system_health, SYSTEM_HEALTH),
+                     (self.simple_ui_file, SIMPLE_UI_DEFAULT),
+                     (self.edit_ui_defaults, EDIT_UI_DEFAULT),
                      (self.task_extensions_file, TASK_EXTENSION_DEFAULT)):
-            overwrite = d in (SYSTEM_HEALTH,TASK_EXTENSION_DEFAULT)
-            overwrite = d in (SYSTEM_HEALTH,)
+            overwrite = d in (SYSTEM_HEALTH, SIMPLE_UI_DEFAULT, EDIT_UI_DEFAULT,TASK_EXTENSION_DEFAULT)
+            overwrite = d in (SYSTEM_HEALTH, SIMPLE_UI_DEFAULT, EDIT_UI_DEFAULT,)
             self._write_default_file(p, d, overwrite)
 
     def _write_default_file(self, p, default, overwrite=False):
@@ -369,6 +375,7 @@ class Paths(object):
             with open(p, 'w') as fp:
                 fp.write(default)
                 return True
+
 
 def r_mkdir(p):
     if p and not path.isdir(p):
@@ -386,6 +393,7 @@ def build_directories():
     for l in dir(paths):
         if l.endswith('_dir'):
             r_mkdir(getattr(paths, l))
+
 
 paths = Paths()
 paths.build('_dev')
