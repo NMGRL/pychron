@@ -50,11 +50,13 @@ class FigureTaskAction(myTaskAction):
 
 class GraphGroupSelectedAction(FigureTaskAction):
     name = 'Graph Group Selected'
+    dname = 'Graph Group Selected'
     method = 'graph_group_selected'
 
 
 class GraphGroupbySampleAction(FigureTaskAction):
     name = 'Graph Group by Sample'
+    dname = 'Graph Group by Sample'
     method = 'graph_group_by_sample'
 
 
@@ -64,6 +66,7 @@ class GroupAction(FigureTaskAction):
 
 class GroupSelectedAction(GroupAction):
     name = 'Group Selected'
+    dname = 'Group Selected'
     method = 'group_selected'
     # image = icon('placeholder')
 
@@ -75,24 +78,28 @@ class GroupSelectedAction(GroupAction):
 
 class GroupbySampleAction(GroupAction):
     name = 'Group by Sample'
+    dname = 'Group by Sample'
     method = 'group_by_sample'
     # image = icon('placeholder')
 
 
 class GroupbyLabnumberAction(GroupAction):
     name = 'Group by Labnumber'
+    dname = 'Group by Labnumber'
     method = 'group_by_labnumber'
     # image = icon('placeholder')
 
 
 class GroupbyAliquotAction(GroupAction):
     name = 'Group by Aliquot'
+    dname = 'Group by Aliquot'
     method = 'group_by_aliquot'
     # image = icon('placeholder')
 
 
 class ClearGroupAction(GroupAction):
     name = 'Clear Grouping'
+    dname = 'Clear Grouping'
     method = 'clear_grouping'
     # image = icon('placeholder')
 
@@ -109,12 +116,14 @@ class AnalysisAction(myTaskAction):
 
 class MakeAnalysisGroupAction(AnalysisAction):
     name = 'Make Analysis Group'
+    dname = 'Make Analysis Group'
     method = 'make_analysis_group'
     image = icon('database_add')
 
 
 class DeleteAnalysisGroupAction(AnalysisAction):
     name = 'Delete Analysis Group'
+    dname = 'Delete Analysis Group'
     method = 'delete_analysis_group'
     image = icon('database_delete')
 
@@ -280,6 +289,7 @@ class BrowseInterpretedAgeTBAction(FigureTaskAction):
 
 class ClearAnalysisCacheAction(Action):
     name = 'Clear Analysis Cache'
+    dname = 'Clear Analysis Cache'
     image = icon('clear')
 
     def perform(self, event=None):
@@ -307,12 +317,14 @@ class SetSQLiteAction(Action):
 
 class ModifyK3739Action(myTaskAction):
     name = 'Modify (37/39)K...'
+    dname = 'Modify (37/39)K'
     method = 'modify_k3739'
     task_ids = ('pychron.processing.figures', 'pychron.recall', 'pychron.processing.isotope_evolution')
 
 
 class ModifyIdentifierAction(myTaskAction):
     name = 'Modify Labnumber...'
+    dname = 'Modify Labnumber'
     method = 'modify_analysis_identifier'
     task_ids = ('pychron.recall',)
 

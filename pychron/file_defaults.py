@@ -51,6 +51,31 @@ TASK_EXTENSION_DEFAULT = """
   - pychron.reduction.ic_factor, True
   - pychron.reduction.discrimination, True
   - pychron.reduction.flux, True
+-
+ plugin_id: pychron.processing.plugin.grouping
+ actions:
+  - pychron.grouping.selected, True
+  - pychron.grouping.aliquot, True
+  - pychron.grouping.lnumber, True
+  - pychron.grouping.sample, True
+  - pychron.grouping.clear, True
+  - pychron.grouping.gselected, True
+  - pychron.grouping.gsample, True
+-
+ plugin_id: pychron.processing.plugin.misc
+ actions:
+  - pychron.misc.tag, True
+  - pychron.misc.drtag, False
+  - pychron.misc.select_drtag, False
+  - pychron.misc.db_save, True
+  - pychron.misc.clear_cache, True
+  - pychron.misc.modify_k, False
+  - pychron.misc.modify_identifier, False
+-
+ plugin_id: pychron.processing.plugin.agroup
+ actions:
+  - pychron.agroup.make, False
+  - pychron.agroup.delete, False
 """
 # -
 #  plugin_id: pychron.recall

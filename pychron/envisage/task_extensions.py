@@ -43,6 +43,11 @@ class AdditionTreeNode(TreeNode):
         return icon('tick' if obj.enabled else 'cancel')
 
 
+class TETreeNode(TreeNode):
+    def get_icon(self, obj, is_expanded):
+        return icon('package-green')
+
+
 class ViewModel(HasTraits):
     task_extensions = List
     enabled = True
@@ -153,16 +158,16 @@ def edit_task_extensions(ts):
     nodes = [TreeNode(node_for=[ViewModel],
                       icon_open='',
                       children='task_extensions'),
-             TreeNode(node_for=[TaskExtensionModel],
-                      auto_open=True,
-                      children='additions',
-                      label='name',
-                      menu=MenuManager(Action(name='Enable All',
-                                              visible_when='not object.all_enabled',
-                                              action='set_all_enabled'),
-                                       Action(name='Disable All',
-                                              visible_when='object.all_enabled',
-                                              action='set_all_disabled'))),
+             TETreeNode(node_for=[TaskExtensionModel],
+                        # auto_open=True,
+                        children='additions',
+                        label='name',
+                        menu=MenuManager(Action(name='Enable All',
+                                                visible_when='not object.all_enabled',
+                                                action='set_all_enabled'),
+                                         Action(name='Disable All',
+                                                visible_when='object.all_enabled',
+                                                action='set_all_disabled'))),
              AdditionTreeNode(node_for=[AdditionModel],
                               label='name',
                               menu=MenuManager(Action(name='Enable',
@@ -179,8 +184,9 @@ def edit_task_extensions(ts):
                                          show_disabled=True,
                                          refresh_all_icons='refresh_all_needed',
                                          editable=False)),
+                 title='Edit UI',
                  width=500,
-                 height=800,
+                 height=700,
                  resizable=True,
                  handler=EEHandler(),
                  buttons=['OK', 'Cancel'],

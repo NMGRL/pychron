@@ -453,7 +453,7 @@ class EditInitializationAction(Action):
 
 
 class EditTaskExtensionsAction(Action):
-    name = 'Edit UI'
+    name = 'Edit UI...'
     def perform(self, event):
         app = event.task.window.application
         from pychron.envisage.task_extensions import edit_task_extensions

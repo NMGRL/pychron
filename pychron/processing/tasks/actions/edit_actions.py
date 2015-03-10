@@ -40,6 +40,7 @@ class AnalysisEditAction(TaskAction):
 
 class DatabaseSaveAction(TaskAction):
     name = 'Database Save'
+    dname = 'Database Save'
     description = 'Save current changes to the database'
     method = 'save_to_db'
     image = icon('database_save')
@@ -61,18 +62,22 @@ class FindAssociatedAction(TaskAction):
 
 class TagAction(TaskAction):
     name = 'Tag...'
+    dname = 'Tag'
     # accelerator = 'Ctrl+Shift+t'
     method = 'set_tag'
     image = icon('tag-blue-add')
     id = 'pychron.tag'
 
+
 class DataReductionTagAction(TaskAction):
     name = 'Data Reduction Tag...'
+    dname = 'Data Reduction Tag'
     method = 'set_data_reduction_tag'
 
 
 class SelectDataReductionTagAction(TaskAction):
     name = 'Select Data Reduction Tag...'
+    dname = 'Select Data Reduction Tag'
     method ='select_data_reduction_tag'
 
 
