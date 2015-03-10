@@ -27,10 +27,11 @@ from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
 from pyface.tasks.action.schema_addition import SchemaAddition
 from traits.api import HasTraits, Str, Instance, Event, Bool, List, Enum
-from traitsui.api import View, UItem, VGroup, TreeNode, Handler
+from traitsui.api import View, UItem, VGroup, TreeNode, Handler, HGroup
 # ============= standard library imports ========================
 import yaml
 # ============= local library imports  ==========================
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.paths import paths
 from pychron.envisage.resources import icon
 from pychron.core.helpers.filetools import to_bool
@@ -48,9 +49,27 @@ class TETreeNode(TreeNode):
 
 
 class ViewModel(HasTraits):
+    otask_extensions = List
     task_extensions = List
     enabled = True
     # pychron.update.check_for_updates',
+
+    def filter(self, new):
+        if new:
+            exs = []
+            for te in self.otask_extensions:
+                adds = []
+                for a in te.additions:
+                    if a.name.lower().startswith(new):
+                        adds.append(a)
+                if adds:
+                    tt = te.clone_traits()
+                    tt.additions = adds
+                    exs.append(tt)
+        else:
+            exs = self.otask_extensions[:]
+
+        self.task_extensions = exs
 
     def set_states(self, modename):
         if modename == 'simple':
@@ -80,7 +99,8 @@ class ViewModel(HasTraits):
                 te = next((a for t in self.task_extensions
                            for a in t.additions if a.model.id == ei), None)
                 if not te:
-                    print 'asdfsdf', ei
+                    pass
+                    # print 'aaaaaasdfsdf', ei
                 else:
                     te.enabled = True
 
@@ -114,6 +134,7 @@ class ViewModel(HasTraits):
             for a in te.additions:
                 h.update('{}{}'.format(a.model.id, a.enabled))
         return h.hexdigest()
+
 
 class TaskExtensionModel(HasTraits):
     additions = List
@@ -165,15 +186,76 @@ class EEHandler(Handler):
 class EditExtensionsView(HasTraits):
     view_model = Instance(ViewModel, ())
     predefined = Enum('', 'Simple', 'Advanced')
-    refresh_all_needed = Event
     selected = List
+    filter_value = Str
+
+    collapse_all = Event
+    expand_all = Event
+
     dclicked = Event
+    refresh_all_needed = Event
+    refresh_needed = Event
+
     _predefined_hash = None
 
     def update(self):
         self.refresh_all_needed = True
         if self._predefined_hash != self.view_model.calc_hash():
             self.predefined = ''
+
+    def load(self):
+        self.view_model.load()
+        if os.path.isfile(paths.edit_ui_defaults):
+            with open(paths.edit_ui_defaults, 'r') as rfile:
+                try:
+                    d = yaml.load(rfile)
+                    self.trait_set(**d)
+                except BaseException, e:
+                    print e
+
+    def dump(self):
+        self.view_model.dump()
+        self._dump()
+
+    def add_additions(self, tid, task_id, name, a):
+        adds = []
+        for ai in a:
+            adds.append(AdditionModel(model=ai,
+                                      name=ai.factory.dname))
+        te = self.view_model.get_te_model(tid)
+        if te is None:
+            te = TaskExtensionModel(name=name,
+                                    task_id=task_id,
+                                    id=tid,
+                                    additions=adds)
+            self.view_model.otask_extensions.append(te)
+            self.view_model.task_extensions.append(te)
+        else:
+            ids = [a.model.id for a in te.additions]
+            adds = [ai for ai in adds if ai.model.id not in ids]
+            te.additions.extend(adds)
+
+    # private
+    def _dump(self):
+        if self._predefined_hash != self.view_model.calc_hash():
+            self.predefined = ''
+
+        with open(paths.edit_ui_defaults, 'w') as wfile:
+            d = {k: getattr(self, k) for k in ('predefined',)}
+            yaml.dump(d, wfile)
+
+    # handlers
+    # def _collapse_button_fired(self):
+    #     print 'collapse'
+    #     self.collapse_all = True
+
+    # def _expand_button_fired(self):
+    #     self.collapse_all = True
+    #     print 'expand'
+
+    def _filter_value_changed(self, new):
+        self.view_model.filter(new)
+        self.refresh_needed = True
 
     def _predefined_changed(self, new):
         if new:
@@ -187,45 +269,6 @@ class EditExtensionsView(HasTraits):
         s.enabled = not s.enabled
         self.update()
 
-    def load(self):
-        self.view_model.load()
-        if os.path.isfile(paths.edit_ui_defaults):
-            with open(paths.edit_ui_defaults, 'r') as rfile:
-                try:
-                    d = yaml.load(rfile)
-                    self.trait_set(**d)
-                except BaseException,e:
-                    print e
-
-    def dump(self):
-        self.view_model.dump()
-        self._dump()
-
-    def _dump(self):
-        if self._predefined_hash != self.view_model.calc_hash():
-            self.predefined = ''
-
-        with open(paths.edit_ui_defaults, 'w') as wfile:
-            d = {k: getattr(self, k) for k in ('predefined',)}
-            yaml.dump(d, wfile)
-
-    def add_additions(self, tid, task_id, name, a):
-        adds = []
-        for ai in a:
-            adds.append(AdditionModel(model=ai,
-                                      name=ai.factory.dname))
-        te = self.view_model.get_te_model(tid)
-        if te is None:
-            te = TaskExtensionModel(name=name,
-                                    task_id=task_id,
-                                    id=tid,
-                                    additions=adds)
-            self.view_model.task_extensions.append(te)
-        else:
-            ids = [a.model.id for a in te.additions]
-            adds = [ai for ai in adds if ai.model.id not in ids]
-            te.additions.extend(adds)
-
 
 def edit_task_extensions(ts):
     e = EditExtensionsView()
@@ -237,7 +280,7 @@ def edit_task_extensions(ts):
                       icon_open='',
                       children='task_extensions'),
              TETreeNode(node_for=[TaskExtensionModel],
-                        # auto_open=True,
+                        auto_open=False,
                         children='additions',
                         label='name',
                         menu=MenuManager(Action(name='Enable All',
@@ -254,13 +297,22 @@ def edit_task_extensions(ts):
                                                Action(name='Disable',
                                                       visible_when='object.enabled',
                                                       action='set_disabled')))]
-    av = View(VGroup(UItem('predefined'),
+    av = View(VGroup(UItem('predefined', tooltip='List of Predefined UI configurations'),
+                     UItem('filter_value',
+                           tooltip='Filter items by name. Show only items where NAME starts with the specified value'),
+
+                     HGroup(icon_button_editor('collapse_all', 'collapse'),
+                            icon_button_editor('expand_all', 'collapse'),),
+
                      UItem('view_model',
                            editor=TreeEditor(nodes=nodes,
                                              selection_mode='extended',
                                              selected='selected',
                                              dclick='dclicked',
                                              show_disabled=True,
+                                             collapse_all = 'collapse_all',
+                                             expand_all = 'expand_all',
+                                             refresh='refresh_needed',
                                              refresh_all_icons='refresh_all_needed',
                                              editable=False))),
               title='Edit UI',
@@ -288,12 +340,14 @@ if __name__ == '__main__':
         traits_view = View('test')
 
         def _test_fired(self):
-            a = [('pychron.update', 'Update', [SchemaAddition(id='pychron.update.check_for_updates',
-                                                              factory=CheckForUpdatesAction),
-                                               SchemaAddition(id='pychron.update.manage_branch',
-                                                              factory=ManageBranchAction)]),
-                 ('pychron.recall', 'Recall', [SchemaAddition(id='pychron.recall',
-                                                              factory=RecallAction)])]
+            a = [('pychron.update', '', 'Update', [SchemaAddition(id='pychron.update.check_for_updates',
+                                                                  factory=CheckForUpdatesAction),
+                                                   SchemaAddition(id='pychron.update.manage_branch',
+                                                                  factory=ManageBranchAction)]),
+                 ('pychron.recall', '', 'Recall', [SchemaAddition(id='pychron.recall',
+                                                                  factory=RecallAction),
+                                                   SchemaAddition(id='pychron.update.manage_branch',
+                                                                  factory=ManageBranchAction)])]
             edit_task_extensions(a)
 
     d = Demo()
