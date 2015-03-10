@@ -58,8 +58,8 @@ class PeakCenterConfig(HasTraits):
 
     def dump(self):
         p = os.path.join(paths.hidden_dir, 'peak_center_config.p')
-        with open(p, 'wb') as fp:
-            pickle.dump(self, fp)
+        with open(p, 'wb') as wfile:
+            pickle.dump(self, wfile)
 
     def _detector_changed(self):
         if self.detector:
@@ -377,8 +377,8 @@ class IonOpticsManager(Manager):
         p = os.path.join(paths.hidden_dir, 'peak_center_config.p')
         if os.path.isfile(p):
             try:
-                with open(p) as fp:
-                    config = pickle.load(fp)
+                with open(p) as rfile:
+                    config = pickle.load(rfile)
                     config.detectors = dets = self.spectrometer.detectors
                     config.detector = next((di for di in dets if di.name == config.detector_name), None)
 

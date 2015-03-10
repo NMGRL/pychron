@@ -61,8 +61,8 @@ def migrate_file(p, srcroot, destroot, clean):
 
     has_default_fits = False
     #examine docstr
-    with open(src, 'r') as fp:
-        srctxt = fp.read()
+    with open(src, 'r') as rfile:
+        srctxt = rfile.read()
         m = ast.parse(srctxt)
         docstr = ast.get_docstring(m)
         if docstr is not None:
@@ -73,8 +73,8 @@ def migrate_file(p, srcroot, destroot, clean):
 
     if not has_default_fits:
         doc_updated = False
-        with open(src, 'r') as fp, open(dest, 'w') as dfp:
-            for li in fp:
+        with open(src, 'r') as rfile, open(dest, 'w') as dfp:
+            for li in rfile:
                 sli = li.strip()
                 if not doc_updated:
                     #search for start of docstr

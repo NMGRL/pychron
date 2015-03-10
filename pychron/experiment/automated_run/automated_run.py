@@ -1251,8 +1251,8 @@ anaylsis_type={}
                 var = getattr(self, '{}_conditionals'.format(k[:-1]))
                 var.extend(v)
 
-                # with open(p, 'r') as fp:
-                # yd = yaml.load(fp)
+                # with open(p, 'r') as rfile:
+                # yd = yaml.load(rfile)
                 # cs = (('TruncationConditional', 'truncation', 'truncations'),
                 #           ('ActionConditional', 'action', 'actions'),
                 #           ('TerminationConditional', 'termination', 'terminations'),
@@ -1331,8 +1331,8 @@ anaylsis_type={}
         dfp = self._get_default_fits_file()
         if dfp:
             self.debug('using default fits file={}'.format(dfp))
-            with open(dfp, 'r') as fp:
-                yd = yaml.load(fp)
+            with open(dfp, 'r') as rfile:
+                yd = yaml.load(rfile)
                 key = 'baseline' if is_baseline else 'signal'
                 fd = {yi['name']: (yi['fit'], yi['error_type']) for yi in yd[key]}
         else:
@@ -1352,8 +1352,8 @@ anaylsis_type={}
         sfods, bsfods = {}, {}
         dfp = self._get_default_fits_file()
         if dfp:
-            with open(dfp, 'r') as fp:
-                ys = yaml.load(fp)
+            with open(dfp, 'r') as rfile:
+                ys = yaml.load(rfile)
                 extract_fit_dict(sfods, ys['signal'])
                 extract_fit_dict(bsfods, ys['baseline'])
 
@@ -1463,8 +1463,8 @@ anaylsis_type={}
             p = os.path.join(paths.conditionals_dir, add_extension(t, '.yaml'))
             if os.path.isfile(p):
                 self.debug('extract conditionals from file. {}'.format(p))
-                with open(p, 'r') as fp:
-                    yd = yaml.load(fp)
+                with open(p, 'r') as rfile:
+                    yd = yaml.load(rfile)
                     for kind, items in yd.iteritems():
                         try:
                             klass = klass_dict[kind]

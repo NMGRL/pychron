@@ -326,8 +326,8 @@ class ExperimentEditorTask(EditorTask):
         return txt, is_uv
 
     def _open_txt(self, path):
-        with open(path, 'r') as fp:
-            txt = fp.read()
+        with open(path, 'r') as rfile:
+            txt = rfile.read()
 
             f = (l for l in txt.split('\n'))
             meta, metastr = extract_meta(f)
@@ -341,8 +341,8 @@ class ExperimentEditorTask(EditorTask):
         return next((e for e in self.editor_area.editors if e.path == path), None)
 
     def _set_last_experiment(self, p):
-        with open(paths.last_experiment, 'w') as fp:
-            fp.write(p)
+        with open(paths.last_experiment, 'w') as wfile:
+            wfile.write(p)
         self.last_experiment_changed = True
 
     def _save_file(self, path):

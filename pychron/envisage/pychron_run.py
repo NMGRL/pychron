@@ -203,7 +203,7 @@ def launch(klass, user):
     # from pychron.login.login import check_login
     # from pychron.paths import paths
     # import os
-    # with open(os.path.join(paths.hidden_dir, 'login_pwd'), 'r') as fp:
+    # with open(os.path.join(paths.hidden_dir, 'login_pwd'), 'r') as rfile:
     #     if not check_login(fp.read()):
     #         logger.critical('Login failed')
     #         return

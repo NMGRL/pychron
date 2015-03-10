@@ -44,8 +44,8 @@ def get_log_text(n):
     root = logging.getLogger()
     for h in root.handlers:
         if isinstance(h, RotatingFileHandler):
-            with open(h.baseFilename) as fp:
-                return tail(fp, n)
+            with open(h.baseFilename) as rfile:
+                return tail(rfile, n)
 
 
 def tail(f, lines=20):

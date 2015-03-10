@@ -28,7 +28,7 @@ import yaml
 
 # ============= local library imports  ==========================
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
-from pychron.paths import paths, rec_make
+from pychron.paths import paths, r_mkdir
 from pychron.entry.tasks.importer import ImporterModel
 
 # from pychron.database.orms.isotope_orm import meas_AnalysisTable, \
@@ -57,8 +57,8 @@ class SmartProjectTask(AnalysisEditTask):
     def process_project_file(self):
 
         p = os.path.join(paths.processed_dir, 'miller.yaml')
-        with open(p, 'r') as fp:
-            md = yaml.load_all(fp)
+        with open(p, 'r') as rfile:
+            md = yaml.load_all(rfile)
 
             setup = md.next()
 
@@ -389,7 +389,7 @@ class SmartProjectTask(AnalysisEditTask):
                                 project,
                                 path[2:])
             #             print path, project, paths.processed_dir
-        rec_make(path)
+        r_mkdir(path)
         return path
 
 # ============= EOF =============================================

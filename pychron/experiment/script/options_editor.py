@@ -42,9 +42,9 @@ class OptionsEditor(HasTraits):
 
     def _path_changed(self):
         if self.path and os.path.isfile(self.path):
-            with open(self.path, 'r') as fp:
+            with open(self.path, 'r') as rfile:
                 try:
-                    d = yaml.load(fp)
+                    d = yaml.load(rfile)
                 except yaml.YAMLError:
                     return
 

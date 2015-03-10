@@ -54,8 +54,8 @@ class MassSpecPychronInverseIsochron(unittest.TestCase):
 
         cls.R=1/0.155
         cls.Rerr=12
-        with open(p, 'r') as fp:
-            lines = fp.read().split('\r')
+        with open(p, 'r') as rfile:
+            lines = rfile.read().split('\r')
             header = lines[0].split('\t')
             xidx = header.index('X')
             xeidx = header.index('X Er')
@@ -114,7 +114,7 @@ class MassSpecPychronInverseIsochron(unittest.TestCase):
 if __name__ == '__main__':
     unittest.main()
     # p = '../data/isochron_data'
-    # with open(p, 'r') as fp:
+    # with open(p, 'r') as rfile:
     #     lines = fp.read().split('\r')
     #     header = lines[0].split('\t')
     #     xidx = header.index('X')

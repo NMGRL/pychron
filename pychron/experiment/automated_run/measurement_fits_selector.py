@@ -55,8 +55,8 @@ class MeasurementFitsSelector(FilterFitSelector):
             self.load(os.path.join(paths.fits_dir, add_extension(dfp, '.yaml')))
 
     def _extract_default_fits_file(self, path):
-        with open(path, 'r') as fp:
-            m = ast.parse(fp.read())
+        with open(path, 'r') as rfile:
+            m = ast.parse(rfile.read())
             docstr = ast.get_docstring(m)
             yd = yaml.load(docstr)
             return yd.get('default_fits')
@@ -74,12 +74,12 @@ class MeasurementFitsSelector(FilterFitSelector):
               'baseline': self._dump(bfs)}
 
         p = os.path.join(paths.fits_dir, '{}.yaml'.format(self.name))
-        with open(p, 'w') as fp:
-            yaml.dump(yd, fp, default_flow_style=False)
+        with open(p, 'w') as wfile:
+            yaml.dump(yd, wfile, default_flow_style=False)
 
     def load(self, p):
-        with open(p, 'r') as fp:
-            yd = yaml.load(fp)
+        with open(p, 'r') as rfile:
+            yd = yaml.load(rfile)
             fits = self._load_fits(yd['signal'])
             fits.extend(self._load_fits(yd['baseline'], is_baseline=True))
             self.fits = fits

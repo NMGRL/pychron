@@ -120,7 +120,7 @@ class UVLaserOpticsClient(Controller):
     #     p = os.path.join(paths.device_dir, 'fusions_uv', '{}.txt'.format(name))
     #     values = []
     #     if os.path.isfile(p):
-    #         with open(p, 'r') as fp:
+    #         with open(p, 'r') as rfile:
     #             for lin in fp:
     #                 lin = lin.strip()
     #                 if not lin or lin.startswith('#'):

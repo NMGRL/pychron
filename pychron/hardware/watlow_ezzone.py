@@ -250,8 +250,8 @@ class WatlowEZZone(CoreDevice):
             config.add_section('Calibration')
 
         config.set('Calibration', 'coefficients', self.calibration.dump_coeffs())
-        with open(self.config_path, 'w') as fp:
-            config.write(fp)
+        with open(self.config_path, 'w') as wfile:
+            config.write(wfile)
 
     def map_temperature(self, te, verbose=True):
         if self.use_calibrated_temperature:

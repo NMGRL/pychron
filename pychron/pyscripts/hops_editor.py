@@ -248,8 +248,8 @@ class HopEditorModel(Loggable):
                 self.path = p
 
     def _load(self, p):
-        with open(p, 'r') as fp:
-            hops = [eval(l) for l in fileiter(fp)]
+        with open(p, 'r') as rfile:
+            hops = [eval(l) for l in fileiter(rfile)]
             self.hop_sequence = hs = HopSequence()
             for i, (hopstr, cnt, settle) in enumerate(hops):
                 h = Hop(name=str(i + 1),
@@ -260,8 +260,8 @@ class HopEditorModel(Loggable):
 
         self.selected = hs.hops[0]
 
-        with open(p, 'r') as fp:
-            self.text = fp.read()
+        with open(p, 'r') as rfile:
+            self.text = rfile.read()
 
     def _validate_sequence(self):
         hs = []
@@ -278,14 +278,14 @@ class HopEditorModel(Loggable):
         header = '#hopstr e.i iso:det[:defl][,iso:det....], count, settle\n'
         txt = self.hop_sequence.to_string()
         self.info('saving hop to {}'.format(p))
-        with open(p, 'w') as fp:
-            fp.write(header)
-            fp.write(txt)
+        with open(p, 'w') as wfile:
+            wfile.write(header)
+            wfile.write(txt)
 
         # self.saveable = True
 
-        with open(p, 'r') as fp:
-            self.text = fp.read()
+        with open(p, 'r') as rfile:
+            self.text = rfile.read()
         self.dirty=False
 
     def _add_hop_button_fired(self):

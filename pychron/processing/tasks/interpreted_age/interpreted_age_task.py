@@ -105,8 +105,8 @@ class InterpretedAgeTask(BaseBrowserTask):
             if not os.path.isfile(p):
                 p = self.open_file_dialog()
             if p:
-                with open(p, 'r') as fp:
-                    d = yaml.load(fp)
+                with open(p, 'r') as rfile:
+                    d = yaml.load(rfile)
 
                 project = d['project']
                 name = d['name']

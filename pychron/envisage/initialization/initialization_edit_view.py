@@ -74,9 +74,9 @@ class InitializationEditView(HasTraits):
         nominal_defaults = NOMINAL_DEFAULTS[:]
         p = os.path.join(paths.hidden_dir, 'initialization_defaults')
         if os.path.isfile(p):
-            with open(p, 'r') as fp:
+            with open(p, 'r') as rfile:
                 try:
-                    ds = pickle.load(fp)
+                    ds = pickle.load(rfile)
                     nominal_defaults.extend(ds)
                 except (pickle.PickleError, OSError, EOFError):
                     pass

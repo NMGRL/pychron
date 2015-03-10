@@ -67,8 +67,8 @@ class StratScene(Scene):
 
     def _get_dict(self, p):
         if isinstance(p, (str, unicode)):
-            with open(p, 'r') as fp:
-                p = yaml.load(fp)
+            with open(p, 'r') as rfile:
+                p = yaml.load(rfile)
 
         return p
 

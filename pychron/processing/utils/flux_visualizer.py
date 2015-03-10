@@ -32,8 +32,8 @@ from pychron.core.regression.flux_regressor import PlaneFluxRegressor
 # ============= local library imports  ==========================
 def load_holder(holder):
     holes = []
-    with open(holder, 'r') as fp:
-        reader = csv.reader(fp, delimiter=',')
+    with open(holder, 'r') as rfile:
+        reader = csv.reader(rfile, delimiter=',')
         reader.next()  # pop header
 
         for i, line in enumerate(reader):

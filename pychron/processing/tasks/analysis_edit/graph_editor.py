@@ -81,9 +81,9 @@ class GraphEditor(BaseUnknownsEditor):
         if self.tool:
             p = os.path.join(paths.hidden_dir, self.pickle_path)
             self.debug('dumping tool {}, {}'.format(self.tool, p))
-            with open(p, 'w') as fp:
+            with open(p, 'w') as wfile:
                 tool = self._get_dump_tool()
-                pickle.dump(tool, fp)
+                pickle.dump(tool, wfile)
 
     def _get_dump_tool(self):
         return dict(fits=self.tool.fits, auto_update=self.tool.auto_update)
@@ -92,9 +92,9 @@ class GraphEditor(BaseUnknownsEditor):
         p = os.path.join(paths.hidden_dir, self.pickle_path)
         if os.path.isfile(p):
             self.debug('loading tool at {}'.format(p))
-            with open(p, 'r') as fp:
+            with open(p, 'r') as rfile:
                 try:
-                    obj = pickle.load(fp)
+                    obj = pickle.load(rfile)
                     if not obj:
                         os.unlink(p)
                     else:

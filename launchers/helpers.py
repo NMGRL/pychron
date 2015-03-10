@@ -155,8 +155,8 @@ def add_eggs(root):
     egg_path = os.path.join(root, 'pychron.pth')
     if os.path.isfile(egg_path):
         # use a pychron.pth to get additional egg paths
-        with open(egg_path, 'r') as fp:
-            eggs = [ei.strip() for ei in fp.read().split('\n')]
+        with open(egg_path, 'r') as rfile:
+            eggs = [ei.strip() for ei in rfile.read().split('\n')]
             eggs = [ei for ei in eggs if ei]
 
             for egg_name in eggs:

@@ -285,8 +285,8 @@ class MagnetFieldTable(Loggable):
         return self._mftable_hash != current_hash
 
     def _make_hash(self, p):
-        with open(p, 'U') as fp:
-            return hashlib.md5(fp.read())
+        with open(p, 'U') as rfile:
+            return hashlib.md5(rfile.read())
 
     def _set_mftable_hash(self, p):
         self._mftable_hash = self._make_hash(p)
@@ -295,8 +295,8 @@ class MagnetFieldTable(Loggable):
         if self.use_db_archive:
             if self.db:
                 self.info('db archiving mftable')
-                with open(p, 'r') as fp:
-                    self.db.add_mftable(self.spectrometer_name, fp.read())
+                with open(p, 'r') as rfile:
+                    self.db.add_mftable(self.spectrometer_name, rfile.read())
             else:
                 self.debug('no db instance available for archiving')
 

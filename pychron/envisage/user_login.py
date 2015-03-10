@@ -45,8 +45,8 @@ def load_user_file():
     isfile = False
     if os.path.isfile(path):
         isfile = True
-        with open(path, 'r') as fp:
-            users, last_login = pickle.load(fp)
+        with open(path, 'r') as rfile:
+            users, last_login = pickle.load(rfile)
 
     return users, last_login, isfile
 
@@ -61,8 +61,8 @@ def dump_user_file(names, last_login_name):
     # for name in names:
     # if name not in users:
     #         users.append(name)
-    with open(users_file, 'w') as fp:
-        pickle.dump((names, last_login_name), fp)
+    with open(users_file, 'w') as wfile:
+        pickle.dump((names, last_login_name), wfile)
 
 
 class Login(HasTraits):
@@ -111,8 +111,8 @@ class SrcDestUsers(HasTraits):
 
 def get_last_login(last_login):
     try:
-        with open(os.path.join(enthought, 'last_login'), 'r') as fp:
-            obj = pickle.load(fp)
+        with open(os.path.join(enthought, 'last_login'), 'r') as rfile:
+            obj = pickle.load(rfile)
             return obj[last_login]
     except BaseException:
         return True, True
@@ -120,15 +120,15 @@ def get_last_login(last_login):
 
 def set_last_login(name, use_login, multi_user):
     try:
-        with open(os.path.join(enthought, 'last_login'), 'r') as fp:
-            obj = pickle.load(fp)
+        with open(os.path.join(enthought, 'last_login'), 'r') as rfile:
+            obj = pickle.load(rfile)
     except BaseException:
         obj = {}
 
     obj[name] = (use_login, multi_user)
     # print 'set last login', obj
-    with open(os.path.join(enthought, 'last_login'), 'w') as fp:
-        pickle.dump(obj, fp)
+    with open(os.path.join(enthought, 'last_login'), 'w') as wfile:
+        pickle.dump(obj, wfile)
 
     dump_user_file(names=None, last_login_name=name)
 
@@ -138,8 +138,8 @@ def get_user(current=None):
         current: str, current user. if supplied omit from available list
     """
     if os.path.isfile(login_file):
-        with open(login_file, 'r') as fp:
-            u = fp.read()
+        with open(login_file, 'r') as rfile:
+            u = rfile.read()
         os.remove(login_file)
         return u
 

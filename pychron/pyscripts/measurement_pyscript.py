@@ -250,8 +250,8 @@ class MeasurementPyScript(ValvePyScript):
             p = os.path.join(self.root, p)
 
         if os.path.isfile(p):
-            with open(p, 'r') as fp:
-                hops = [eval(li) for li in fileiter(fp)]
+            with open(p, 'r') as rfile:
+                hops = [eval(li) for li in fileiter(rfile)]
                 return hops
 
         else:

@@ -33,8 +33,8 @@ class TASWriter(Loggable):
         root = os.path.join(paths.dissertation, 'data', 'minnabluff', 'interpreted_ages')
         p, _ = unique_path(root, 'tas.csv')
 
-        with open(p, 'w') as fp:
-            writer = csv.writer(fp)
+        with open(p, 'w') as wfile:
+            writer = csv.writer(wfile)
 
             header = ['sample', 'sio2', 'total_alk', 'age']
             writer.writerow(header)

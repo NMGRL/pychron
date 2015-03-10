@@ -41,8 +41,8 @@ class RunBlock(Loggable):
         pass
 
     def make_runs(self, path):
-        with open(path, 'r') as fp:
-            line_gen = self._get_line_generator(fp)
+        with open(path, 'r') as rfile:
+            line_gen = self._get_line_generator(rfile)
             return self._load_runs(line_gen)
 
     def _get_line_generator(self, txt):

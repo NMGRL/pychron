@@ -71,8 +71,8 @@ def make_items(isotopes):
 
 def save_csv(record_id, items):
     path = os.path.join(paths.data_det_ic_dir, add_extension(record_id, '.csv'))
-    with open(path, 'w') as fp:
-        wrt = csv.writer(fp, delimiter='\t')
+    with open(path, 'w') as wfile:
+        wrt = csv.writer(wfile, delimiter='\t')
         wrt.writerow(['#det', 'intensity', 'err'] + DETECTOR_ORDER)
         for i in items:
             wrt.writerow(i.to_row())

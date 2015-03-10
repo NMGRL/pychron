@@ -177,16 +177,16 @@ class SummaryPDFTableWriter(BasePDFTableWriter):
         p = os.path.join(paths.template_dir, self.notes_template)
 
         if os.path.isfile(p):
-            with open(p, 'r') as fp:
+            with open(p, 'r') as rfile:
                 meta = ''
-                for li in fp:
+                for li in rfile:
                     if li.startswith('#-----------'):
                         break
 
                     meta += li
                 meta = yaml.load(meta)
                 txt = ''
-                for li in fp:
+                for li in rfile:
                     txt += li
 
             size = meta.get('fontsize', 5)

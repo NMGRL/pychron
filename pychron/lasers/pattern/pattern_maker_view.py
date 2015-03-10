@@ -51,8 +51,8 @@ class PatternMakerView(Saveable, Patternable):
             path = os.path.join(paths.pattern_dir, path)
 
         if path and os.path.isfile(path):
-            with open(path, 'r') as fp:
-                pattern = self._load_pattern(fp, path)
+            with open(path, 'r') as rfile:
+                pattern = self._load_pattern(rfile, path)
                 if pattern:
                     self._kind = pattern.__class__.__name__.replace('Pattern', '')
                     return True

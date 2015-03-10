@@ -33,7 +33,7 @@ import yaml
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
 from pychron.pychron_constants import SCRIPT_NAMES
-from pychron.repo.repository import SFTPRepository
+from pychron.repo.sftp_repository import SFTPRepository
 
 EXPERIMENT_ATTRS = ('username', 'mass_spectrometer',
                     'extract_device', 'name')
@@ -88,10 +88,10 @@ class LabspyUpdater(Loggable):
         except KeyError,e:
             print 'key error {}'.format(e)
             txt='<html>Error</html>'
-            with open(self.ans_ctx_path, 'w') as fp:
-                yaml.dump([], fp)
-            with open(self.exp_ctx_path, 'w') as fp:
-                yaml.dump([], fp)
+            with open(self.ans_ctx_path, 'w') as wfile:
+                yaml.dump([], wfile)
+            with open(self.exp_ctx_path, 'w') as wfile:
+                yaml.dump([], wfile)
 
             self.repo.add_file(self.ans_ctx_path)
             self.repo.add_file(self.exp_ctx_path)
@@ -101,8 +101,8 @@ class LabspyUpdater(Loggable):
         #     os.mkdir(root)
 
         path = os.path.join(paths.labspy_dir, 'index.html')
-        with open(path, 'w') as fp:
-            fp.write(txt)
+        with open(path, 'w') as wfile:
+            wfile.write(txt)
 
         self.repo.add_file(path)
 
@@ -119,8 +119,8 @@ class LabspyUpdater(Loggable):
         yl.insert(0, d)
         yl = yl[:4]
 
-        with open(path, 'w') as fp:
-            yaml.dump(yl, fp, default_flow_style=False)
+        with open(path, 'w') as wfile:
+            yaml.dump(yl, wfile, default_flow_style=False)
 
         self.experiment_name = exp.name
 
@@ -148,16 +148,16 @@ class LabspyUpdater(Loggable):
         path = self.ans_ctx_path
         yl = None
         if os.path.isfile(path):
-            with open(path, 'r') as fp:
-                yl = yaml.load(fp)
+            with open(path, 'r') as rfile:
+                yl = yaml.load(rfile)
 
         if not yl:
             yl = []
         yl.insert(0, self._make_analysis(run))
         yl = yl[:50]
 
-        with open(path, 'w') as fp:
-            yaml.dump(yl, fp, default_flow_style=False)
+        with open(path, 'w') as wfile:
+            yaml.dump(yl, wfile, default_flow_style=False)
 
         self.repo.add_file(self.ans_ctx_path)
         self.push()
@@ -185,8 +185,8 @@ class LabspyUpdater(Loggable):
 
         yl = None
         if os.path.isfile(path):
-            with open(path, 'r') as fp:
-                yl = yaml.load(fp)
+            with open(path, 'r') as rfile:
+                yl = yaml.load(rfile)
 
         return path, yl or []
 
@@ -198,17 +198,17 @@ class LabspyUpdater(Loggable):
 
         yl = []
         if os.path.isfile(path):
-            with open(path, 'r') as fp:
-                yl = yaml.load(fp)
+            with open(path, 'r') as rfile:
+                yl = yaml.load(rfile)
         return path, yl or []
 
     def _dump_experiment(self, d):
-        with open(self.exp_ctx_path, 'w') as fp:
-            yaml.dump(d, fp, default_flow_style=False)
+        with open(self.exp_ctx_path, 'w') as wfile:
+            yaml.dump(d, wfile, default_flow_style=False)
 
     def _load_template(self):
-        with open(self.template_path) as fp:
-            return fp.read()
+        with open(self.template_path) as rfile:
+            return rfile.read()
 
     @property
     def template_path(self):
@@ -439,8 +439,8 @@ if __name__ == '__main__':
 #         path = self.ans_ctx_path
 #         yl = None
 #         if os.path.isfile(path):
-#             with open(path, 'r') as fp:
-#                 yl = yaml.load(fp)
+#             with open(path, 'r') as rfile:
+#                 yl = yaml.load(rfile)
 #
 #         if not yl:
 #             yl = []
@@ -459,8 +459,8 @@ if __name__ == '__main__':
 #         path = self.ans_ctx_path
 #         yl = None
 #         if os.path.isfile(path):
-#             with open(path, 'r') as fp:
-#                 yl = yaml.load(fp)
+#             with open(path, 'r') as rfile:
+#                 yl = yaml.load(rfile)
 #
 #         return path, yl or []
 #
@@ -468,8 +468,8 @@ if __name__ == '__main__':
 #         path = self.exp_ctx_path
 #         yl = []
 #         if os.path.isfile(path):
-#             with open(path, 'r') as fp:
-#                 yl = yaml.load(fp)
+#             with open(path, 'r') as rfile:
+#                 yl = yaml.load(rfile)
 #         return path, yl
 #
 #     def _dump_experiment(self, d):

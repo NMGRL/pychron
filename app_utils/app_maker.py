@@ -186,8 +186,8 @@ class Template(object):
         includes = []
         icon_req = os.path.join(root, 'resources', 'icon_req.txt')
         if os.path.isfile(icon_req):
-            with open(icon_req, 'r') as fp:
-                includes = [ri.strip() for ri in fp.read().split('\n')]
+            with open(icon_req, 'r') as rfile:
+                includes = [ri.strip() for ri in rfile.read().split('\n')]
 
         cnt, total = 0, 0
         for di in os.listdir(iroot):
@@ -293,8 +293,8 @@ class Maker(object):
         # make the .pth file
         with open(os.path.join(self.dest,
                                'Resources',
-                               'pychron.pth'), 'w') as fp:
-            fp.write('{}\n'.format(eggname))
+                               'pychron.pth'), 'w') as rfile:
+            rfile.write('{}\n'.format(eggname))
 
         egg_root = os.path.join(self.root, 'dist', eggname)
         shutil.copyfile(egg_root,
@@ -313,8 +313,8 @@ execfile(os.path.join(os.path.split(__file__)[0], "{}.py"))
 '''.format(self.name)
 
         p = self._resource_path('__argvemulator_{}.py'.format(self.name))
-        with open(p, 'w') as fp:
-            fp.write(argv)
+        with open(p, 'w') as rfile:
+            rfile.write(argv)
 
     def set_plist(self, dest, bundle_name, icon_name):
         info_plist = os.path.join(dest, 'Info.plist')

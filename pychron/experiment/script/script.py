@@ -81,8 +81,8 @@ class Script(Loggable):
     def get_parameter(self, key, default=None):
         p = self.script_path()
         if os.path.isfile(p):
-            with open(p, 'r') as fp:
-                text = fp.read()
+            with open(p, 'r') as rfile:
+                text = rfile.read()
                 m = ast.parse(text)
             docstr = ast.get_docstring(m)
             if docstr is not None:

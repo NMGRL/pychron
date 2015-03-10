@@ -550,8 +550,8 @@ class UVStageMap(StageMap):
 
 
     def load(self):
-        with open(self.file_path, 'r') as fp:
-            d = yaml.load(fp.read())
+        with open(self.file_path, 'r') as rfile:
+            d = yaml.load(rfile.read())
             for attr in ('points', 'lines', 'polygons', 'transects'):
                 if d.has_key(attr):
                     setattr(self, attr, d[attr])

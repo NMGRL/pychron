@@ -161,9 +161,9 @@ class SamplePDFTableWriter(BasePDFTableWriter):
     def _load_yaml_options(self):
         if self.yaml_options_path:
             if os.path.isfile(self.yaml_options_path):
-                with open(self.yaml_options_path, 'r') as fp:
+                with open(self.yaml_options_path, 'r') as rfile:
                     try:
-                        self._yaml_options = yaml.load(fp)
+                        self._yaml_options = yaml.load(rfile)
                     except yaml.YAMLError:
                         pass
 

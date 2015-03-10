@@ -299,8 +299,8 @@ def parse_file(p, delimiter=None, cast=None):
 
     """
     if os.path.exists(p) and os.path.isfile(p):
-        with open(p, 'U') as fp:
-            r = filetolist(fp)
+        with open(p, 'U') as rfile:
+            r = filetolist(rfile)
             if delimiter:
                 if cast is None:
                     cast = str
@@ -313,8 +313,8 @@ def parse_setupfile(p):
     """
     """
 
-    fp = parse_file(p)
-    if fp:
+    rfile = parse_file(p)
+    if rfile:
         return [line.split(',') for line in file]
 
 
@@ -325,10 +325,10 @@ def parse_canvasfile(p, kw):
     # kw=['origin','valvexy','valvewh','opencolor','closecolor']
 
     if os.path.exists(p) and os.path.isfile(p):
-        with open(p, 'r') as fp:
+        with open(p, 'r') as rfile:
             indices = {}
             i = 0
-            f = filetolist(fp)
+            f = filetolist(rfile)
             count = 1
             for i in range(len(f)):
                 if f[i][:1] == '!':
@@ -354,8 +354,8 @@ def pathtolist(p, **kw):
         kw: same keyword arguments accepted by filetolist
         return: list
     """
-    with open(p, 'r') as fp:
-        return filetolist(fp, **kw)
+    with open(p, 'r') as rfile:
+        return filetolist(rfile, **kw)
 
 
 def filetolist(f, commentchar='#'):
@@ -385,7 +385,7 @@ def filetolist(f, commentchar='#'):
     return r
 
 
-def fileiter(fp, commentchar='#', strip=False):
+def fileiter(rfile, commentchar='#', strip=False):
     def isNewLine(c):
         return c in ('\r', '\n')
 
@@ -393,7 +393,7 @@ def fileiter(fp, commentchar='#', strip=False):
         cc = li[:1]
         return not (cc == commentchar or isNewLine(cc))
 
-    for line in fp:
+    for line in rfile:
         if test(line):
             if strip:
                 line = line.strip()

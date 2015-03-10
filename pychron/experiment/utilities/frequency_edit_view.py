@@ -81,14 +81,14 @@ class FrequencyEditView(Controller):
 
     def _dump(self):
         p = os.path.join(paths.hidden_dir, 'frequency_edit_view')
-        with open(p, 'w') as fp:
-            pickle.dump(self.templates, fp)
+        with open(p, 'w') as wfile:
+            pickle.dump(self.templates, wfile)
 
     def _load(self):
         p = os.path.join(paths.hidden_dir, 'frequency_edit_view')
         if os.path.isfile(p):
-            with open(p, 'r') as fp:
-                self.templates = pickle.load(fp)
+            with open(p, 'r') as rfile:
+                self.templates = pickle.load(rfile)
 
     def traits_view(self):
         v = View(Item('_frequency'),

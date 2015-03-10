@@ -50,8 +50,8 @@ def load_key_map():
     # if not os.path.isfile(p):
     # dump_key_bindings(default_key_map)
     if os.path.isfile(p):
-        with open(p, 'r') as fp:
-            return yaml.load(fp)
+        with open(p, 'r') as rfile:
+            return yaml.load(rfile)
     else:
         return {}
 
@@ -69,8 +69,8 @@ def update_key_bindings(actions):
 
 def dump_key_bindings(obj):
     p = key_bindings_path()
-    with open(p, 'w') as fp:
-        yaml.dump(obj, fp)
+    with open(p, 'w') as wfile:
+        yaml.dump(obj, wfile)
 
 
 def keybinding_exists(key):

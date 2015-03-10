@@ -17,8 +17,8 @@ class DocstrContextTestCase(unittest.TestCase):
         if not os.path.isfile(p):
             p = './data/measurement_script.txt'
 
-        with open(p, 'r') as fp:
-            cls.script.text = fp.read()
+        with open(p, 'r') as rfile:
+            cls.script.text = rfile.read()
 
         cls.script.bootstrap()
         cls.script.setup_context()

@@ -82,13 +82,13 @@ class PatternExecutor(Patternable):
             path = self.is_local_pattern(name_or_pickle)
 
         if path:
-            fp = open(path, 'rb')
+            rfile = open(path, 'rb')
         else:
             # convert name_or_pickle into a file like obj
-            fp = cStringIO.StringIO(name_or_pickle)
+            wfile = cStringIO.StringIO(name_or_pickle)
 
         # self._load_pattern sets self.pattern
-        pattern = self._load_pattern(fp, path)
+        pattern = self._load_pattern(wfile, path)
         self.on_trait_change(self.stop, 'canceled')
         return pattern
 

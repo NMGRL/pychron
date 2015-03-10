@@ -154,8 +154,8 @@ class XMLParser(object):
             path.close()
             return True
 
-    def load(self, fp):
-        return self._parse_file(fp)
+    def load(self, rfile):
+        return self._parse_file(rfile)
 
     def add(self, tag, value, root, **kw):
         if root is None:

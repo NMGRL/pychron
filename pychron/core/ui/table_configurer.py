@@ -114,8 +114,8 @@ class TableConfigurer(HasTraits):
         p = os.path.join(paths.hidden_dir, self.id)
         if os.path.isfile(p):
             try:
-                with open(p, 'rb') as fp:
-                    state = pickle.load(fp)
+                with open(p, 'rb') as rfile:
+                    state = pickle.load(rfile)
 
             except (pickle.PickleError, OSError, EOFError, TraitError):
                 return
@@ -145,9 +145,9 @@ class TableConfigurer(HasTraits):
         p = os.path.join(paths.hidden_dir, self.id)
         obj = self._get_dump()
 
-        with open(p, 'wb') as fp:
+        with open(p, 'wb') as wfile:
             try:
-                pickle.dump(obj, fp)
+                pickle.dump(obj, wfile)
             except pickle.PickleError:
                 pass
 
@@ -172,8 +172,8 @@ class TableConfigurer(HasTraits):
         if os.path.isfile(p):
             import yaml
 
-            with open(p, 'r') as fp:
-                yd = yaml.load(fp)
+            with open(p, 'r') as rfile:
+                yd = yaml.load(rfile)
                 try:
                     self.columns = yd['columns']
                 except KeyError:

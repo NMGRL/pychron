@@ -148,8 +148,8 @@ class IncrementalHeatTemplate(Viewable):
 
         self.path = path
         self.steps = []
-        with open(path, 'r') as fp:
-            reader = csv.reader(fp)
+        with open(path, 'r') as rfile:
+            reader = csv.reader(rfile)
             header = reader.next()
             cnt = 1
             for row in reader:
@@ -166,8 +166,8 @@ class IncrementalHeatTemplate(Viewable):
                     cnt += 1
 
     def dump(self, path):
-        with open(path, 'w') as fp:
-            writer = csv.writer(fp)
+        with open(path, 'w') as wfile:
+            writer = csv.writer(wfile)
             header = ('value', 'units', 'duration', 'cleanup')
             writer.writerow(header)
             for step in self.steps:

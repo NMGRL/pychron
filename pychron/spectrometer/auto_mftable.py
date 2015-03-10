@@ -120,8 +120,8 @@ class AutoMFTable(Loggable):
     def _update_deflection(self, di, defl, dac):
         self.debug('Update deflection det={},defl={} dac={}'.format(di, defl, dac))
         p = paths.deflection
-        with open(p, 'r') as fp:
-            yd = yaml.load(fp)
+        with open(p, 'r') as rfile:
+            yd = yaml.load(rfile)
 
         dd = yd[di]
 
@@ -134,8 +134,8 @@ class AutoMFTable(Loggable):
         yd['deflections'] = ','.join(defls)
         yd['dacs'] = ','.join(dacs)
 
-        with open(p, 'w') as fp:
-            yaml.dump(yd, fp, default_flow_style=False)
+        with open(p, 'w') as wfile:
+            yaml.dump(yd, wfile, default_flow_style=False)
 
     def _backup_mftable(self):
         src = paths.mftable
@@ -153,18 +153,18 @@ class AutoMFTable(Loggable):
             shutil.copyfile(src, dst)
 
             if reset:
-                with open(src, 'r') as fp:
-                    yd = yaml.load(fp)
+                with open(src, 'r') as rfile:
+                    yd = yaml.load(rfile)
                     nd = {}
                     for k in yd:
                         nd[k] = {'deflections': '', 'dacs': ''}
 
-                with open(src, 'w') as fp:
-                    yaml.dump(nd, fp, default_flow_style=False)
+                with open(src, 'w') as wfile:
+                    yaml.dump(nd, wfile, default_flow_style=False)
 
     def _load_config(self, path):
-        with open(path, 'r') as fp:
-            yd = yaml.load(fp)
+        with open(path, 'r') as rfile:
+            yd = yaml.load(rfile)
 
         try:
             yd['detectors'] = [di.strip() for di in yd['detectors'].split(',')]

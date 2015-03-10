@@ -2,11 +2,11 @@ import os
 
 from pylab import *
 def plot_mem(p, use_histogram=True):
-    with open(p, 'r') as fp:
+    with open(p, 'r') as rfile:
         ms = []
         started = False
         mx, mn = -Inf, Inf
-        for line in fp:
+        for line in rfile:
 
             # print line
             msg, mem = map(str.strip, line.split(':'))
@@ -52,7 +52,7 @@ def plot_file(p, normalize=False, stacked=False,
 
     mxs = []
     mys = []
-    with open(p, 'r') as fp:
+    with open(p, 'r') as rfile:
         xi = 0
         ticked = False
 #         for line in fp:
@@ -60,7 +60,7 @@ def plot_file(p, normalize=False, stacked=False,
 #             if msg.startswith('exp start'):
 #                 break
 
-        for line in fp:
+        for line in rfile:
 
             # print line
             msg, mem = map(str.strip, line.split(':'))

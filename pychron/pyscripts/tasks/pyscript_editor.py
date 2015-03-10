@@ -90,15 +90,15 @@ class PyScriptEdit(HasTraits):
 
     def open_script(self, p):
         self.path = p
-        with open(p, 'r') as fp:
-            self.text = fp.read()
+        with open(p, 'r') as rfile:
+            self.text = rfile.read()
         self.context_editor.load(self.get_text())
 
     def update_docstr(self):
         docstr = self.context_editor.generate_docstr()
         self._set_docstr(docstr)
-        with open(self.path, 'w') as fp:
-            fp.write(self.get_text())
+        with open(self.path, 'w') as wfile:
+            wfile.write(self.get_text())
 
     def get_text(self):
         return self.text
@@ -175,13 +175,13 @@ class PyScriptEditor(Editor, PyScriptEdit):
         if p:
             p = add_extension(p, '.py')
             # p='/Users/ross/Desktop/foosub.py'
-            with open(p, 'w') as fp:
-                fp.write('# Extracted Gosub\n')
-                fp.write('# Source: from {}\n'.format(self.path))
-                fp.write('# Date: {}\n'.format(datetime.now().strftime('%m-%d-%Y %H:%M')))
-                fp.write('def main():\n')
+            with open(p, 'w') as wfile:
+                wfile.write('# Extracted Gosub\n')
+                wfile.write('# Source: from {}\n'.format(self.path))
+                wfile.write('# Date: {}\n'.format(datetime.now().strftime('%m-%d-%Y %H:%M')))
+                wfile.write('def main():\n')
                 for li in selection.split(u'\u2029'):
-                    fp.write(u'    {}\n'.format(li.lstrip()))
+                    wfile.write(u'    {}\n'.format(li.lstrip()))
 
             p = remove_extension(p)
             rp = os.path.relpath(p, self.path)
@@ -311,8 +311,8 @@ class PyScriptEditor(Editor, PyScriptEdit):
         paths = new.split(':')
         p = os.path.join(root, *paths)
         if os.path.isfile(p):
-            with open(p, 'r') as fp:
-                return fp.read()
+            with open(p, 'r') as rfile:
+                return rfile.read()
 
     def _on_modified_select(self, line):
         if line:
@@ -392,8 +392,8 @@ class PyScriptEditor(Editor, PyScriptEdit):
         if txt is None:
             txt = self.get_text()
         if txt:
-            with open(path, 'w') as fp:
-                fp.write(txt)
+            with open(path, 'w') as wfile:
+                wfile.write(txt)
 
     save = dump
 

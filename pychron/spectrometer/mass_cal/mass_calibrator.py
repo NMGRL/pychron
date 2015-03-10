@@ -152,8 +152,8 @@ class MassCalibratorScan(MagnetScan):
             save calibration peaks as mag field table
         """
         p = os.path.join(paths.spectrometer_dir, 'mftable.csv')
-        with open(p, 'w') as fp:
-            writer = csv.writer(fp, delimiter=',')
+        with open(p, 'w') as wfile:
+            writer = csv.writer(wfile, delimiter=',')
             for cp in self.calibration_peaks:
                 if cp.isotope:
                     writer.writerow([cp.isotope, cp.dac])

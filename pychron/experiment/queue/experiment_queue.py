@@ -88,8 +88,8 @@ class ExperimentQueue(BaseExperimentQueue):
             bk = os.path.join(paths.auto_save_experiment_dir, 'Untitled.bak')
 
         self.debug('Autosaving to {}'.format(bk))
-        with open(bk, 'w') as fp:
-            self.dump(fp)
+        with open(bk, 'w') as wfile:
+            self.dump(wfile)
 
     def toggle_skip(self):
         for si in self.selected:
@@ -119,8 +119,8 @@ class ExperimentQueue(BaseExperimentQueue):
         info = nrbv.edit_traits()
         if info.result:
             p = os.path.join(paths.run_block_dir, '{}.txt'.format(nrbv.name))
-            with open(p, 'w') as fp:
-                self.dump(fp, runs=self.selected, include_meta=False)
+            with open(p, 'w') as wfile:
+                self.dump(wfile, runs=self.selected, include_meta=False)
             self.refresh_blocks_needed = True
 
     def move_selected_to_row(self):

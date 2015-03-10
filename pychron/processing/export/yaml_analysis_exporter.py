@@ -56,8 +56,8 @@ class YAMLAnalysisExporter(Exporter):
     def export(self, *args, **kw):
         p = self.destination.destination
         if os.path.isdir(os.path.dirname(p)):
-            with open(p, 'w') as fp:
-                fp.write(yaml.dump(self._ctx, default_flow_style=False))
+            with open(p, 'w') as wfile:
+                wfile.write(yaml.dump(self._ctx, default_flow_style=False))
 
     def _generate_analysis_dict(self, ai):
         """

@@ -116,8 +116,8 @@ class PlotterOptionsManager(HasTraits):
         p = os.path.join(self.persistence_root,
                          '{}.default'.format(self.plotter_options_name))
         name = self.plotter_options.name
-        with open(p, 'w') as fp:
-            pickle.dump(name, fp)
+        with open(p, 'w') as wfile:
+            pickle.dump(name, wfile)
 
         self.plotter_options.dump(self.persistence_root)
         self._plotter_options_list_dirty = True
@@ -240,9 +240,9 @@ class PlotterOptionsManager(HasTraits):
 
         n = 'Default'
         if os.path.isfile(p):
-            with open(p, 'r') as fp:
+            with open(p, 'r') as rfile:
                 try:
-                    n = pickle.load(fp)
+                    n = pickle.load(rfile)
                 except (pickle.PickleError, EOFError):
                     n = 'Default'
         return n

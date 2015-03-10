@@ -122,9 +122,9 @@ class FindAssociatedParametersDialog(Controller):
         super(FindAssociatedParametersDialog, self).__init__(*args, **kw)
         p = os.path.join(paths.hidden_dir, 'find_associated_parameters_dialog.p')
         if os.path.isfile(p):
-            with open(p, 'r') as fp:
+            with open(p, 'r') as rfile:
                 try:
-                    self.model = pickle.load(fp)
+                    self.model = pickle.load(rfile)
                 except (pickle.PickleError, AttributeError, OSError, EOFError):
                     pass
         if not self.model:
@@ -133,9 +133,9 @@ class FindAssociatedParametersDialog(Controller):
     def closed(self, info, is_ok):
         if is_ok:
             p = os.path.join(paths.hidden_dir, 'find_associated_parameters_dialog.p')
-            with open(p, 'w') as fp:
+            with open(p, 'w') as wfile:
                 try:
-                    pickle.dump(self.model, fp)
+                    pickle.dump(self.model, wfile)
                 except pickle.PickleError:
                     pass
 

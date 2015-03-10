@@ -123,8 +123,8 @@ class GitRepoManager(Loggable):
         sha = logs.next()
 
         gpath = os.path.join(self.path, '.git', 'info', 'grafts')
-        with open(gpath, 'w') as fp:
-            fp.write(sha)
+        with open(gpath, 'w') as wfile:
+            wfile.write(sha)
 
         repo.git.filter_branch('--tag-name-filter', 'cat', '--', '--all')
         repo.git.gc('--prune=now')
@@ -219,15 +219,15 @@ class GitRepoManager(Loggable):
         # mode = 'a' if os.path.isfile(p) else 'w'
         args = list(args)
         if os.path.isfile(p):
-            with open(p, 'r') as fp:
-                for line in fileiter(fp, strip=True):
+            with open(p, 'r') as rfile:
+                for line in fileiter(rfile, strip=True):
                     for i, ai in enumerate(args):
                         if line == ai:
                             args.pop(i)
         if args:
-            with open(p, 'a') as fp:
+            with open(p, 'a') as wfile:
                 for ai in args:
-                    fp.write('{}\n'.format(ai))
+                    wfile.write('{}\n'.format(ai))
             self._add_to_repo(p, msg='updated .gitignore')
 
     def get_commit(self, hexsha):
@@ -411,8 +411,8 @@ class GitRepoManager(Loggable):
 
     def _set_active_commit(self):
         p = self.selected
-        with open(p, 'r') as fp:
-            chexsha = hashlib.sha1(fp.read()).hexdigest()
+        with open(p, 'r') as rfile:
+            chexsha = hashlib.sha1(rfile.read()).hexdigest()
 
         for c in self.selected_path_commits:
             blob = self.unpack_blob(c.hexsha, p)

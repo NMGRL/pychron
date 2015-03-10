@@ -44,8 +44,8 @@ class CompositeOptions(BasePlotterOptions):
     def _load(self, root):
         p = os.path.join(root, '{}.options'.format(self.name))
         if os.path.isfile(p):
-            with open(p, 'r') as fp:
-                suboptions = pickle.load(fp)
+            with open(p, 'r') as rfile:
+                suboptions = pickle.load(rfile)
                 for si in suboptions:
                     si.load(os.path.join(root, si.name))
                 self.suboptions = suboptions
@@ -55,8 +55,8 @@ class CompositeOptions(BasePlotterOptions):
         for option in self.suboptions:
             option.dump(droot)
 
-        with open(os.path.join(root, '{}.options'.format(self.name)), 'w') as fp:
-            pickle.dump(self.suboptions, fp)
+        with open(os.path.join(root, '{}.options'.format(self.name)), 'w') as wfile:
+            pickle.dump(self.suboptions, wfile)
 
 
     def get_options(self, kind):

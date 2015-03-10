@@ -77,8 +77,8 @@ Do you want to send these parameters to the spectrometer?
         for gn, pn, v in self.itervalues():
             cfp.set(gn, pn, v)
 
-        with open(p, 'w') as fp:
-            cfp.write(fp)
+        with open(p, 'w') as wfile:
+            cfp.write(wfile)
 
         return p
 

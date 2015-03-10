@@ -151,13 +151,13 @@ class ScanManager(Manager):
                 if self.confirmation_dialog('No scan.yaml file found. '
                                             'Required to configure which valves trigger adding a marker.\n'
                                             'Would you like to add a blank scan.yaml file?'):
-                    with open(p, 'w') as fp:
-                        yaml.dump({'valves': []}, fp,
+                    with open(p, 'w') as wfile:
+                        yaml.dump({'valves': []}, wfile,
                                   default_flow_style=False)
 
             if os.path.isfile(p):
-                with open(p, 'r') as fp:
-                    yd = yaml.load(fp)
+                with open(p, 'r') as rfile:
+                    yd = yaml.load(rfile)
                     self._valve_event_list = yd['valves']
 
     def bind_preferences(self):

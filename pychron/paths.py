@@ -372,8 +372,8 @@ class Paths(object):
 
     def _write_default_file(self, p, default, overwrite=False):
         if not path.isfile(p) or overwrite:
-            with open(p, 'w') as fp:
-                fp.write(default)
+            with open(p, 'w') as wfile:
+                wfile.write(default)
                 return True
 
 

@@ -32,9 +32,9 @@ if USE_MEM_LOG:
     p, _ = unique_path(root, 'mem')
 
 def write_mem(msg, m, verbose):
-    with open(os.path.join(root, p), 'a') as fp:
+    with open(os.path.join(root, p), 'a') as wfile:
         msg = '{:<50s}:{}\n'.format(msg, m)
-        fp.write(msg)
+        wfile.write(msg)
         if verbose:
             print msg.strip()
 
@@ -67,7 +67,7 @@ def mem_available():
 
 def mem_dump(path):
     dump = open(os.path.join(root, path), 'w')
-    with dump as fp:
+    with dump as wfile:
         for obj in gc.get_objects():
             i = id(obj)
             size = sys.getsizeof(obj, 0)
@@ -82,7 +82,7 @@ def mem_dump(path):
                     else:
                         name = obj.__class__.__name__
 
-                    fp.write('id: {:<10s} name: {:<10s} class: {:<50s} size: {:<10s} referents:{}\n'.format(str(i), name,
+                    wfile.write('id: {:<10s} name: {:<10s} class: {:<50s} size: {:<10s} referents:{}\n'.format(str(i), name,
                                                                                                             cls,
                                                                                                             str(size),
                                                                                                             len(referents),
@@ -90,7 +90,7 @@ def mem_dump(path):
                              )
                     if isinstance(obj, dict):
                         keys = ','.join(map(str, obj.keys()))
-                        fp.write('keys: {}'.format(keys))
+                        wfile.write('keys: {}'.format(keys))
 
 #                 cPickle.dump({'id': i, 'class': cls, 'size': size, 'referents': referents, 'name':name}, dump)
 
@@ -109,9 +109,9 @@ def mem_sort():
 #             break
 
         i += 1
-    with open(os.path.join(root, 'gcmem.pickle.sorted'), 'w') as fp:
+    with open(os.path.join(root, 'gcmem.pickle.sorted'), 'w') as wfile:
         for oi in sorted(objs, key=lambda x: x['size'], reverse=True):
-            fp.write('{name} {size} {referents}\n'.format(**oi))
+            wfile.write('{name} {size} {referents}\n'.format(**oi))
 
 #     with open(os.path.join(root, 'gcmem.txt'), 'w') as fp:
 

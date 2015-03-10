@@ -256,9 +256,9 @@ class XLSAnalysisLoader(BaseAnalysisLoader):
 
 class YAMLAnalysisLoader(BaseAnalysisLoader):
     def load_analyses(self, p):
-        with open(p, 'r') as fp:
+        with open(p, 'r') as rfile:
             try:
-                for d in yaml.load_all(fp.read()):
+                for d in yaml.load_all(rfile.read()):
                     self._import_analysis(d)
             except yaml.YAMLError, e:
                 print e

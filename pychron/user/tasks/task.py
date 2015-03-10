@@ -73,8 +73,8 @@ class UsersTask(BaseTask):
 
     def _sync(self, users):
         path = os.path.join(paths.setup_dir, 'users.yaml')
-        with open(path, 'r') as fp:
-            yl = yaml.load(fp)
+        with open(path, 'r') as rfile:
+            yl = yaml.load(rfile)
             for yi in yl:
                 uu = next((i for i in users if i.name == yi.get('name')), None)
                 if uu:
@@ -105,9 +105,9 @@ class UsersTask(BaseTask):
 
         # dump to users.yaml
         path = os.path.join(paths.setup_dir, 'users.yaml')
-        with open(path, 'w') as fp:
+        with open(path, 'w') as wfile:
             yl = [{'name': i.name, 'email': i.email, 'enabled': i.enabled} for i in self.ousers]
-            yaml.dump(yl, fp, default_flow_style=False)
+            yaml.dump(yl, wfile, default_flow_style=False)
 
         self._hash = self._generate_hash(self.ousers)
         return True

@@ -77,8 +77,8 @@ class WorkspaceAnalysis(FileAnalysis):
 
     def _load_yaml(self, path):
         runid = os.path.splitext(os.path.basename(path))[0]
-        with open(path, 'r') as fp:
-            return yaml.load(fp)[runid]
+        with open(path, 'r') as rfile:
+            return yaml.load(rfile)[runid]
 
 
 # ============= EOF =============================================

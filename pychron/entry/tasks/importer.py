@@ -140,8 +140,8 @@ class ImporterModel(Loggable):
     def _open_button_fired(self):
         p = self.open_file_dialog()
         if p:
-            with open(p, 'r') as fp:
-                rids = [records(ri.strip()) for ri in fp.read().split('\n')]
+            with open(p, 'r') as rfile:
+                rids = [records(ri.strip()) for ri in rfile.read().split('\n')]
                 self.names = rids
 
     _import_thread = None

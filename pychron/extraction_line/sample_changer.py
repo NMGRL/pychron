@@ -189,8 +189,8 @@ class SampleChanger(Loggable):
     def _get_rules(self):
         path = os.path.join(paths.scripts_dir, 'sample_change_rules.yaml')
         if os.path.isfile(path):
-            with open(path, 'r') as fp:
-                return yaml.load(fp)
+            with open(path, 'r') as rfile:
+                return yaml.load(rfile)
 
     def chamber_select_view(self):
         v = View(Item('chamber', editor=EnumEditor(name='chambers')),

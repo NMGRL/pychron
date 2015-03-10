@@ -53,8 +53,8 @@ class SnapshotView(HasTraits):
 
 if __name__ == '__main__':
     sv=SnapshotView()
-    with open('/Users/ross/Pychrondata_dev/data/snapshots/snapshot-001.jpg', 'rb') as fp:
-        sv.set_image('a','b', fp.read())
+    with open('/Users/ross/Pychrondata_dev/data/snapshots/snapshot-001.jpg', 'rb') as rfile:
+        sv.set_image('a','b', rfile.read())
     sv.configure_traits()
 # ============= EOF =============================================
 

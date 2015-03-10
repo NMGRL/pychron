@@ -122,8 +122,8 @@ class GitArchiveHistory(BaseGitHistory):
         self.load_history()
 
     def _checkout_button_fired(self):
-        with open(self._path, 'w') as fp:
-            fp.write(self.selected_commit.blob)
+        with open(self._path, 'w') as wfile:
+            wfile.write(self.selected_commit.blob)
 
         if self.auto_commit_checkouts:
             self.repo_man.add(self._path,

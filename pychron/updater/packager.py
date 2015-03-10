@@ -41,8 +41,8 @@ def copy_resources(root, dest, app_name):
     includes = []
     icon_req = os.path.join(root, 'resources','icon_req.txt')
     if os.path.isfile(icon_req):
-        with open(icon_req, 'r') as fp:
-            includes = [ri.strip() for ri in fp.read().split('\n')]
+        with open(icon_req, 'r') as rfile:
+            includes = [ri.strip() for ri in rfile.read().split('\n')]
 
     for di in os.listdir(iroot):
         head,_ = os.path.splitext(di)
@@ -91,9 +91,9 @@ def make_egg(root, dest, pkg_name, version):
     if dest.endswith('Contents'):
         rdest = os.path.join(dest, 'Resources')
         with open(os.path.join(rdest,
-                               '{}.pth'.format(pkg_name)), 'w') as fp:
+                               '{}.pth'.format(pkg_name)), 'w') as wfile:
             if not globalv.debug:
-                fp.write('{}\n'.format(eggname))
+                wfile.write('{}\n'.format(eggname))
 
         if not globalv.debug:
             egg_root = os.path.join(root, 'dist', eggname)

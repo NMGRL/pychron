@@ -230,14 +230,14 @@ class ExperimentEditor(BaseTraitsEditor):
         p = add_extension(p)
 
         self.info('saving experiment to {}'.format(p))
-        with open(p, 'wb') as fp:
+        with open(p, 'wb') as wfile:
             n = len(queues)
             for i, exp in enumerate(queues):
                 exp.path = p
-                exp.dump(fp)
+                exp.dump(wfile)
                 if i < (n - 1):
-                    fp.write('\n')
-                    fp.write('*' * 80)
+                    wfile.write('\n')
+                    wfile.write('*' * 80)
 
         return p
 

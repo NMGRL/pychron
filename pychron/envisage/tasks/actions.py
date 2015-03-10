@@ -160,8 +160,8 @@ class SwitchUserAction(UserAction):
         if user:
             # from pychron.paths import paths
             # set login file
-            with open(login_file, 'w') as fp:
-                fp.write(user)
+            with open(login_file, 'w') as wfile:
+                wfile.write(user)
             restart()
 
 

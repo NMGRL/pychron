@@ -199,8 +199,8 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         # p = os.path.join(paths.hidden_dir, 'browser_selection')
 
         try:
-            with open(self.selection_persistence_path, 'wb') as fp:
-                pickle.dump(obj, fp)
+            with open(self.selection_persistence_path, 'wb') as wfile:
+                pickle.dump(obj, wfile)
         except (pickle.PickleError, EOFError, OSError), e:
             # self.debug('Failed dumping previous browser selection. {}'.format(e))
             return
@@ -658,8 +658,8 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         # p = os.path.join(paths.hidden_dir, 'browser_selection')
         if os.path.isfile(p):
             try:
-                with open(p, 'rb') as fp:
-                    return pickle.load(fp)
+                with open(p, 'rb') as rfile:
+                    return pickle.load(rfile)
             except (pickle.PickleError, EOFError, OSError), e:
                 # self.debug('Failed loaded previous browser selection. {}'.format(e))
                 pass

@@ -152,8 +152,8 @@ class CoincidenceScan(BasePeakCenter):
                     det = next((d for d in self.detectors if d.name.lower()==v.name.lower()))
                     det.deflection = v.new_deflection
 
-                with open(p, 'w') as fp:
-                    config.write(fp)
+                with open(p, 'w') as wfile:
+                    config.write(wfile)
 
 # ============= EOF =============================================
 

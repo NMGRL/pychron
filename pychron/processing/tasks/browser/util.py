@@ -44,8 +44,8 @@ def get_pad(low, high):
     pe =None
     if os.path.isfile(p):
         try:
-            with open(p, 'r') as fp:
-                pe = pickle.load(fp)
+            with open(p, 'r') as rfile:
+                pe = pickle.load(rfile)
         except (pickle.PickleError, OSError, EOFError):
             pass
 
@@ -61,8 +61,8 @@ def get_pad(low, high):
 
     info=pe.edit_traits()
     if info.result:
-        with open(p, 'w') as fp:
-            pickle.dump(pe, fp)
+        with open(p, 'w') as wfile:
+            pickle.dump(pe, wfile)
         return pe
 
 

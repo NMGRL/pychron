@@ -42,11 +42,11 @@ class Isotope(MeasurementObject):
 
 
 class MassSpecBinaryExtractor(Extractor):
-    def _get_next_str(self, fp):
+    def _get_next_str(self, rfile):
         def _gen():
             t = ''
             while 1:
-                a = fp.read(1)
+                a = rfile.read(1)
                 if a == '\t':
                     yield t.strip()
                     t = ''
@@ -55,30 +55,30 @@ class MassSpecBinaryExtractor(Extractor):
         g = _gen()
         return lambda: g.next()
 
-    def _get_single(self, fp):
+    def _get_single(self, rfile):
         def _gen():
-            t = struct.unpack('>f', fp.read(4))[0]
+            t = struct.unpack('>f', rfile.read(4))[0]
             return t
 
         return _gen
 
-    def _get_short(self, fp):
+    def _get_short(self, rfile):
         def _gen():
-            t = struct.unpack('>h', fp.read(2))[0]
+            t = struct.unpack('>h', rfile.read(2))[0]
             return t
 
         return _gen
 
-    def _get_long(self, fp):
+    def _get_long(self, rfile):
         def _gen():
-            t = struct.unpack('>l', fp.read(4))[0]
+            t = struct.unpack('>l', rfile.read(4))[0]
             return t
 
         return _gen
 
-    def _get_double(self, fp):
+    def _get_double(self, rfile):
         def _gen():
-            t = struct.unpack('>d', fp.read(8))[0]
+            t = struct.unpack('>d', rfile.read(8))[0]
             return t
 
         return _gen
@@ -91,28 +91,28 @@ class MassSpecBinaryExtractor(Extractor):
             return
 
         bs = []
-        with open(p, 'r') as fp:
+        with open(p, 'r') as rfile:
             while 1:
                 try:
-                    bs.append(self._import_analysis(fp))
+                    bs.append(self._import_analysis(rfile))
                 except EOFError:
                     pass
                 break
 
         return bs
 
-    def _import_analysis(self, fp):
+    def _import_analysis(self, rfile):
         isref, isblank = False, False
 
         bspec = BinarySpec()
 
         # use big-endian
-        gns = self._get_next_str(fp)
+        gns = self._get_next_str(rfile)
 
-        gshort = self._get_short(fp)
-        gsingle = self._get_single(fp)
-        glong = self._get_long(fp)
-        gdouble = self._get_double(fp)
+        gshort = self._get_short(rfile)
+        gsingle = self._get_single(rfile)
+        glong = self._get_long(rfile)
+        gdouble = self._get_double(rfile)
 
         bspec.runid = gns()
 

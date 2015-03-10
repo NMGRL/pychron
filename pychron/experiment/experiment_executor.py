@@ -303,9 +303,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         path = self.experiment_queue.path
         path = add_extension(path, '.txt')
         if os.path.isfile(path):
-            with open(path, 'r') as fp:
+            with open(path, 'r') as rfile:
                 return '{}\n{}'.format(path,
-                                       fp.read())
+                                       rfile.read())
         else:
             self.warning('{} is not a valid file'.format(path))
 
@@ -536,8 +536,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         names, addrs = None, None
         path = os.path.join(paths.setup_dir, 'users.yaml')
         if os.path.isfile(path):
-            with open(path, 'r') as fp:
-                yl = yaml.load(fp)
+            with open(path, 'r') as rfile:
+                yl = yaml.load(rfile)
 
                 items = [(i['name'], i['email']) for i in yl if i['enabled'] and i['email'] != email]
 
@@ -1144,19 +1144,19 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             add uuid to backup recovery file
         """
 
-        with open(paths.backup_recovery_file, 'a') as fp:
-            fp.write('{}\n'.format(uuid_str))
+        with open(paths.backup_recovery_file, 'a') as rfile:
+            rfile.write('{}\n'.format(uuid_str))
 
     def _remove_backup(self, uuid_str):
         """
             remove uuid from backup recovery file
         """
-        with open(paths.backup_recovery_file, 'r') as fp:
-            r = fp.read()
+        with open(paths.backup_recovery_file, 'r') as rfile:
+            r = rfile.read()
 
         r = r.replace('{}\n'.format(uuid_str), '')
-        with open(paths.backup_recovery_file, 'w') as fp:
-            fp.write(r)
+        with open(paths.backup_recovery_file, 'w') as wfile:
+            wfile.write(r)
 
     # ===============================================================================
     # checks

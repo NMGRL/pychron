@@ -168,17 +168,17 @@ class TimeViewModel(HasTraits):
 
     def dump_filter(self):
         p = os.path.join(paths.hidden_dir, 'time_view.p')
-        with open(p, 'w') as fp:
+        with open(p, 'w') as wfile:
             obj = {k: getattr(self, k) for k in
                    ('mass_spectrometer', 'analysis_type', 'extract_device',
                     'lowdays', 'highdays', 'limit')}
-            pickle.dump(obj, fp)
+            pickle.dump(obj, wfile)
 
     def load_filter(self):
         p = os.path.join(paths.hidden_dir, 'time_view.p')
         if os.path.isfile(p):
-            with open(p, 'r') as fp:
-                obj = pickle.load(fp)
+            with open(p, 'r') as rfile:
+                obj = pickle.load(rfile)
                 self._suppress_load_analyses = True
                 self.trait_set(**obj)
                 self._suppress_load_analyses = False

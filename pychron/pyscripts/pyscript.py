@@ -848,8 +848,8 @@ class PyScript(Loggable):
         if self.interpolation_path:
             if os.path.isfile(self.interpolation_path):
                 try:
-                    with open(self.interpolation_path, 'r') as fp:
-                        d = yaml.load(fp)
+                    with open(self.interpolation_path, 'r') as rfile:
+                        d = yaml.load(rfile)
                 except yaml.YAMLError, e:
                     self.debug(e)
             else:

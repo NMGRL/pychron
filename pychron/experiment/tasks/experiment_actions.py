@@ -207,7 +207,7 @@ class OpenLastExperimentQueueAction(QueueAction):
         else:
             warning(None, 'No last experiment available')
             # if os.path.isfile(paths.last_experiment):
-            # with open(paths.last_experiment, 'r') as fp:
+            # with open(paths.last_experiment, 'r') as rfile:
             #         path = fp.readline()
             #         if os.path.isfile(path):
             #             self._open_experiment(event, path)
@@ -218,8 +218,8 @@ class OpenLastExperimentQueueAction(QueueAction):
 
     def _get_last_experiment(self):
         if os.path.isfile(paths.last_experiment):
-            with open(paths.last_experiment, 'r') as fp:
-                path = fp.readline()
+            with open(paths.last_experiment, 'r') as rfile:
+                path = rfile.readline()
                 if os.path.isfile(path):
                     return path
 

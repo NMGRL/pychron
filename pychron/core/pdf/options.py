@@ -48,8 +48,8 @@ class BasePDFOptions(HasTraits):
 
     def dump_yaml(self):
         p = self.persistence_path
-        with open(p, 'w') as fp:
-            yaml.dump(self.get_dump_dict(), fp)
+        with open(p, 'w') as wfile:
+            yaml.dump(self.get_dump_dict(), wfile)
 
     def get_dump_dict(self):
         d = dict(orientation=self.orientation,
@@ -64,9 +64,9 @@ class BasePDFOptions(HasTraits):
         d = {}
         p = self.persistence_path
         if os.path.isfile(p):
-            with open(p, 'r') as fp:
+            with open(p, 'r') as rfile:
                 try:
-                    d = yaml.load(fp)
+                    d = yaml.load(rfile)
                 except yaml.YAMLError:
                     pass
         return d

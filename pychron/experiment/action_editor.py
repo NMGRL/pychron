@@ -150,14 +150,14 @@ class ActionEditor(Controller):
             self.model = ActionModel()
 
         self.model.path = p
-        with open(p, 'r') as fp:
-            yd = yaml.load(fp)
+        with open(p, 'r') as rfile:
+            yd = yaml.load(rfile)
             self.model.load_yaml(yd)
 
     def _dump(self, p):
         d = self.model.dump_yaml()
-        with open(p, 'w') as fp:
-            yaml.dump(d, fp, default_flow_style=False)
+        with open(p, 'w') as wfile:
+            yaml.dump(d, wfile, default_flow_style=False)
             self.model.path = p
 
     def _get_path(self):

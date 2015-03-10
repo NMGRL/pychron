@@ -53,8 +53,8 @@ class BasePlotterOptions(HasTraits):
         self._load(root)
 
     def load_factory_defaults(self, path):
-        with open(path, 'r') as fp:
-            yd = yaml.load(fp)
+        with open(path, 'r') as rfile:
+            yd = yaml.load(rfile)
             self._load_factory_defaults(yd)
 
     def _load_factory_defaults(self, yd):
@@ -115,23 +115,23 @@ class BasePlotterOptions(HasTraits):
         p = os.path.join(root, self.name)
         # print root, self.name
         self._make_dir(root)
-        with open(p, 'w') as fp:
+        with open(p, 'w') as wfile:
             d = dict()
             attrs = self._get_dump_attrs()
             for t in attrs:
                 d[t] = v = getattr(self, t)
 
             try:
-                pickle.dump(d, fp)
+                pickle.dump(d, wfile)
             except (pickle.PickleError, TypeError, EOFError, TraitError), e:
                 print 'error dumping {}'.format(self.name), e
 
     def _load(self, root):
         p = os.path.join(root, self.name)
         if os.path.isfile(p):
-            with open(p, 'r') as fp:
+            with open(p, 'r') as rfile:
                 try:
-                    obj = pickle.load(fp)
+                    obj = pickle.load(rfile)
                     self.trait_set(**obj)
                 except (pickle.PickleError, TypeError, EOFError, TraitError), e:
                     print 'error loading {}'.format(self.name), e

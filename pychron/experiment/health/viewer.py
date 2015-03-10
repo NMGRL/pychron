@@ -43,8 +43,8 @@ class AnalysisHealthViewer(HasTraits):
         series = None
         p = os.path.join(paths.hidden_dir, 'health_series.yaml')
         if os.path.isfile(p):
-            with open(p,'r') as fp:
-                series = yaml.load(fp)
+            with open(p,'r') as rfile:
+                series = yaml.load(rfile)
         return series
 
     def traits_view(self):

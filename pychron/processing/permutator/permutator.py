@@ -148,8 +148,8 @@ class Permutator(Loggable):
     @cached_property
     def _get_configuration_dict(self):
         try:
-            with open(self.path, 'r') as fp:
-                return yaml.load(fp)
+            with open(self.path, 'r') as rfile:
+                return yaml.load(rfile)
         except yaml.YAMLError, e:
             self.warning('Invalid configuration file {}. error: {}'.format(self.path, e))
 

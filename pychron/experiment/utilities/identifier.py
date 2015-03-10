@@ -58,8 +58,8 @@ SPECIAL_MAPPING = dict(background='bg',
 p = os.path.join(paths.setup_dir, 'identifiers.yaml')
 differed = []
 if os.path.isfile(p):
-    with open(p, 'r') as fp:
-        yd = yaml.load(fp)
+    with open(p, 'r') as rfile:
+        yd = yaml.load(rfile)
         for i, (k, v) in enumerate(yd.items()):
             ANALYSIS_MAPPING[k] = v
 

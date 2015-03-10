@@ -44,8 +44,8 @@ def dictgetter(d, attrs, default=None):
 
 
 def conditionals_from_file(p, name=None, level=SYSTEM):
-    with open(p, 'r') as fp:
-        yd = yaml.load(fp)
+    with open(p, 'r') as rfile:
+        yd = yaml.load(rfile)
         cs = (('TruncationConditional', 'truncation', 'truncations'),
               ('ActionConditional', 'action', 'actions'),
               ('ActionConditional', 'action', 'post_run_actions'),

@@ -261,8 +261,8 @@ class PyScriptTask(EditorTask, ExecuteMixin):
         return self._open_editor(path, **kw)
 
     def _extract_kind(self, path):
-        with open(path, 'r') as fp:
-            for line in fp:
+        with open(path, 'r') as rfile:
+            for line in rfile:
                 if line.startswith('#!'):
                     return line.strip()[2:]
 

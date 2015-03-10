@@ -295,8 +295,8 @@ class FigureEditor(GraphEditor):
             captext = ''
             if self.caption_path:
                 if os.path.isfile(self.caption_path):
-                    with open(self.caption_path, 'r') as fp:
-                        captext = fp.read()
+                    with open(self.caption_path, 'r') as rfile:
+                        captext = rfile.read()
 
             elif self.caption_text:
                 captext = self.caption_text

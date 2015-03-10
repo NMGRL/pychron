@@ -39,8 +39,8 @@ def locate_used_icons(root):
 
                 cnt += 1
                 p = os.path.join(r, fi)
-                with open(p, 'r') as fp:
-                    for li in fp:
+                with open(p, 'r') as rfile:
+                    for li in rfile:
                         lcnt += 1
                         li = li.strip()
                         if li.startswith('#'):
@@ -65,11 +65,11 @@ def locate_used_icons(root):
         # do a last yield to pass counts
         yield dcnt, cnt, lcnt, None, None
 
-    with open(os.path.join(os.path.dirname(root), 'resources','icon_req.txt'), 'w') as fp:
+    with open(os.path.join(os.path.dirname(root), 'resources','icon_req.txt'), 'w') as wfile:
         for di, ci, lcnt, m,name in func():
             if m and name:
                 print '{:<40s}{}'.format(name, m)
-                fp.write('{}\n'.format(name))
+                wfile.write('{}\n'.format(name))
 
     print 'examined {} files from {} directories {}'.format(ci, di, lcnt)
 

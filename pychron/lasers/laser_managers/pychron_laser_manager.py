@@ -654,8 +654,8 @@ class PychronUVLaserManager(PychronLaserManager):
         p = os.path.join(paths.device_dir, 'fusions_uv', '{}.txt'.format(name))
         values = []
         if os.path.isfile(p):
-            with open(p, 'r') as fp:
-                for lin in fp:
+            with open(p, 'r') as rfile:
+                for lin in rfile:
                     lin = lin.strip()
                     if not lin or lin.startswith('#'):
                         continue

@@ -46,8 +46,8 @@ class FormattingOptions(HasTraits):
     def _load(self, p):
         print 'ff', p, os.path.isfile(p)
         if os.path.isfile(p):
-            with open(p, 'r') as fp:
-                yd = yaml.load(fp)
+            with open(p, 'r') as rfile:
+                yd = yaml.load(rfile)
                 print p, yd
                 self.trait_set(**yd)
 

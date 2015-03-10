@@ -359,7 +359,7 @@ class AutomatedRunFactory(PersistenceLoggable):
     #     p = os.path.join(paths.hidden_dir, 'run_factory_defaults')
     #     if os.path.isfile(p):
     #         d = None
-    #         with open(p, 'r') as fp:
+    #         with open(p, 'r') as rfile:
     #             try:
     #                 d = pickle.load(fp)
     #             except BaseException, e:
@@ -848,8 +848,8 @@ class AutomatedRunFactory(PersistenceLoggable):
             self.warning('Script defaults file does not exist {}'.format(p))
             return
 
-        with open(p, 'r') as fp:
-            defaults = yaml.load(fp)
+        with open(p, 'r') as rfile:
+            defaults = yaml.load(rfile)
 
         # convert keys to lowercase
         defaults = dict([(k.lower(), v) for k, v in defaults.iteritems()])

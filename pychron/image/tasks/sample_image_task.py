@@ -83,8 +83,8 @@ class SampleImageTask(BaseEditorTask, BaseBrowserModel):
 
         path = self.open_file_dialog(default_directory=os.path.expanduser('~'), wildcard='*.jpg|*.jpeg')
         if path is not None:
-            with open(path, 'rb') as fp:
-                self.save_db_snapshot(fp.read())
+            with open(path, 'rb') as rfile:
+                self.save_db_snapshot(rfile.read())
 
         self._load_associated_images(self.selected_samples)
 

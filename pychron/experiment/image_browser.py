@@ -193,8 +193,8 @@ class ImageBrowser(IsotopeDatabaseManager):
     def _get_cached(self, name):
         self.info('retrieve {} from cache directory'.format(name))
         p = os.path.join(self.cache_dir, name)
-        with open(p, 'r') as fp:
-            im = Image.open(fp)
+        with open(p, 'r') as rfile:
+            im = Image.open(rfile)
             im = im.convert('RGB')
             return array(im)
 

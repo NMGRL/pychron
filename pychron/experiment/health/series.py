@@ -83,8 +83,8 @@ class SystemHealthSeries(Loggable):
     def _add_yaml(self, an):
         p = os.path.join(paths.hidden_dir, 'health_series.yaml')
         if os.path.isfile(p):
-            with open(p, 'r') as fp:
-                series = yaml.load(fp)
+            with open(p, 'r') as rfile:
+                series = yaml.load(rfile)
         else:
             series = []
 
@@ -92,8 +92,8 @@ class SystemHealthSeries(Loggable):
         if d:
             series.append(d)
             series = series[-self._limit:]
-            with open(p, 'w') as fp:
-                yaml.dump(series, fp)
+            with open(p, 'w') as wfile:
+                yaml.dump(series, wfile)
 
         return series
 
@@ -187,8 +187,8 @@ class SystemHealthSeries(Loggable):
         :return:
         """
         p = os.path.join(paths.setup_dir, 'system_health.yaml')
-        with open(p, 'r') as fp:
-            config = yaml.load(fp)
+        with open(p, 'r') as rfile:
+            config = yaml.load(rfile)
             self._values = config['values']
             self._conditionals = config['conditionals']
 
