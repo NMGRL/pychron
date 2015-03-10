@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+import hashlib
 import os
 import pickle
 from pychron.core.ui import set_qt
@@ -107,6 +108,12 @@ class ViewModel(HasTraits):
     def get_te_model(self, tid):
         return next((te for te in self.task_extensions if te.id == tid), None)
 
+    def calc_hash(self):
+        h = hashlib.md5()
+        for te in self.task_extensions:
+            for a in te.additions:
+                h.update('{}{}'.format(a.model.id, a.enabled))
+        return h.hexdigest()
 
 class TaskExtensionModel(HasTraits):
     additions = List
@@ -132,26 +139,20 @@ class EEHandler(Handler):
     def set_enabled(self, info, obj):
         for si in info.object.selected:
             si.enabled = True
-        info.object.refresh_all_needed = True
-        self._finish_toggle_enable(info)
+        info.object.update()
 
     def set_disabled(self, info, obj):
         for si in info.object.selected:
             si.enabled = False
-        info.object.refresh_all_needed = True
-        self._finish_toggle_enable(info)
+        info.object.update()
 
     def set_all_enabled(self, info, obj):
         self._set_all(obj, True)
-        info.object.refresh_all_needed = True
-        self._finish_toggle_enable(info)
+        info.object.update()
 
     def set_all_disabled(self, info, obj):
         self._set_all(obj, False)
-        self._finish_toggle_enable(info)
-
-    def _finish_toggle_enable(self, info):
-        info.object.refresh_all_needed = True
+        info.object.update()
 
     def _set_all(self, te, v):
         te.enable_all(v)
@@ -164,16 +165,24 @@ class EditExtensionsView(HasTraits):
     refresh_all_needed = Event
     selected = List
     dclicked = Event
+    _predefined_hash = None
+
+    def update(self):
+        self.refresh_all_needed = True
+        if self._predefined_hash != self.view_model.calc_hash():
+            self.predefined = ''
 
     def _predefined_changed(self, new):
         if new:
             self.view_model.set_states(new.lower())
+
+            self._predefined_hash = self.view_model.calc_hash()
             self.refresh_all_needed = True
 
     def _dclicked_fired(self):
         s = self.selected[0]
         s.enabled = not s.enabled
-        self.refresh_all_needed = True
+        self.update()
 
     def load(self):
         self.view_model.load()
@@ -190,9 +199,12 @@ class EditExtensionsView(HasTraits):
         self._dump()
 
     def _dump(self):
+        if self._predefined_hash != self.view_model.calc_hash():
+            self.predefined = ''
+
         with open(paths.edit_ui_defaults, 'w') as wfile:
             d = {k: getattr(self, k) for k in ('predefined',)}
-            pickle.yaml(d, wfile)
+            yaml.dump(d, wfile)
 
     def add_additions(self, tid, name, a):
         adds = []
