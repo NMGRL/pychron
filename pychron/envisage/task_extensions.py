@@ -120,9 +120,12 @@ class TaskExtensionModel(HasTraits):
     id = Str
     all_enabled = Bool
     enabled = True
+    task_id = Str
 
     def dump(self):
-        return {'plugin_id': self.id, 'actions': ['{}, {}'.format(a.model.id, a.enabled) for a in self.additions]}
+        return {'plugin_id': self.id,
+                'task_id': self.task_id,
+                'actions': ['{}, {}'.format(a.model.id, a.enabled) for a in self.additions]}
 
     def enable_all(self, v):
         for a in self.additions:
@@ -206,14 +209,17 @@ class EditExtensionsView(HasTraits):
             d = {k: getattr(self, k) for k in ('predefined',)}
             yaml.dump(d, wfile)
 
-    def add_additions(self, tid, name, a):
+    def add_additions(self, tid, task_id, name, a):
         adds = []
         for ai in a:
             adds.append(AdditionModel(model=ai,
                                       name=ai.factory.dname))
         te = self.view_model.get_te_model(tid)
         if te is None:
-            te = TaskExtensionModel(name=name, id=tid, additions=adds)
+            te = TaskExtensionModel(name=name,
+                                    task_id=task_id,
+                                    id=tid,
+                                    additions=adds)
             self.view_model.task_extensions.append(te)
         else:
             ids = [a.model.id for a in te.additions]
@@ -231,7 +237,7 @@ def edit_task_extensions(ts):
                       icon_open='',
                       children='task_extensions'),
              TETreeNode(node_for=[TaskExtensionModel],
-                        auto_open=True,
+                        # auto_open=True,
                         children='additions',
                         label='name',
                         menu=MenuManager(Action(name='Enable All',

@@ -107,7 +107,7 @@ class UpdatePlugin(BaseTaskPlugin):
         return [UpdatePreferencesPane]
 
     def _available_task_extensions_default(self):
-        return [(self.id, self.name, [SchemaAddition(id='pychron.update.check_for_updates',
+        return [(self.id, '', self.name, [SchemaAddition(id='pychron.update.check_for_updates',
                                                      factory=CheckForUpdatesAction,
                                                      path='MenuBar/help.menu'),
                                       SchemaAddition(id='pychron.update.build_app',

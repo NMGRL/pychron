@@ -44,7 +44,7 @@ class ProcedureAction(Action):
     def __init__(self, *args, **kw):
         super(ProcedureAction, self).__init__(*args, **kw)
 
-        ex = self.application.get_plugin('pychron.experiment')
+        ex = self.application.get_plugin('pychron.experiment.plugin')
         if ex:
             ex = ex.experimentor.executor
             ex.on_trait_change(self._update_alive, 'alive')

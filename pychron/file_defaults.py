@@ -44,6 +44,12 @@ SIMPLE_UI_DEFAULT = """
 - pychron.misc.tag
 - pychron.misc.db_save
 - pychron.misc.clear_cache
+- pychron.experiment.edit.reset
+- pychron.experiment.open_queue_conditionals
+- pychron.experiment.open_system_conditionals
+- pychron.experiment.open_experiment
+- pychron.experiment.open_last_experiment
+- pychron.experiment.new_experiment
 """
 TASK_EXTENSION_DEFAULT = """
 -
@@ -98,6 +104,27 @@ TASK_EXTENSION_DEFAULT = """
  actions:
   - pychron.agroup.make, False
   - pychron.agroup.delete, False
+-
+ plugin_id: pychron.experiment.plugin.edit
+ task_id: pychron.experiment.plugin
+ actions:
+  - pychron.experiment.edit.deselect, False
+  - pychron.experiment.edit.reset, True
+  - pychron.experiment.edit.undo, False
+  - pychron.experiment.edit.configure, False
+-
+ plugin_id: pychron.experiment.plugin
+ actions:
+  - pychron.experiment.reset_system_health, False
+  - pychron.experiment.open_system_conditionals, True
+  - pychron.experiment.open_queue_conditionals, True
+  - pychron.experiment.open_experiment, True
+  - pychron.experiment.open_last_experiment, True
+  - pychron.experiment.test_notify, False
+  - pychron.experiment.new_experiment, True
+  - pychron.experiment.signal_calculator, False
+  - pychron.experiment.new_pattern, False
+  - pychron.experiment.open_pattern, False
 """
 # -
 # plugin_id: pychron.recall

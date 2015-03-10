@@ -96,22 +96,57 @@ class BaseTaskPlugin(BasePlugin):
     # return []
     #
     # def _preferences_default(self):
-    #     return []
+    # return []
     def _task_extensions_default(self):
         extensions = [TaskExtension(actions=actions, task_id=eid) for eid, actions in self._get_extensions()]
+
         return extensions
 
     def _get_extensions(self):
+        # xx = []
+        ctid = None
         xx = []
-        exs = self.application.get_task_extensions(self.id)
-        if exs:
-            sadditions = []
-            for eid in exs:
-                sa = next((av for _, _, actions in self.available_task_extensions
-                           for av in actions if av.id == eid))
-                sadditions.append(sa)
+        sadditions = []
+        # print self.id, self.name
+        for tid, action in self.application.get_task_extensions(self.id):
+            # if self.name == 'Update':
+            # if self.name == 'Experiment Plugin':
+            #     print 'c={} t={} {}'.format(ctid, tid, action)
 
-            xx = [('', sadditions)]
+            action = next((av for _, _, _, actions in self.available_task_extensions
+                                   for av in actions if av.id == action))
+
+            if ctid is None:
+                ctid = tid
+
+                sadditions.append(action)
+
+            else:
+                if ctid != tid:
+                    xx.append((ctid, sadditions))
+                    sadditions = [action]
+                    ctid = None
+                else:
+                    sadditions.append(action)
+
+        if sadditions:
+            xx.append((tid, sadditions))
+        # if self.name == 'Update':
+        # if self.name == 'Experiment Plugin':
+        #     print 'adsfasfdasd'
+        #     for xi in xx:
+        #         print xi
+        # print 'fffff', self.name, len(xx)
         return xx
+        # if exs:
+        # sadditions = []
+        # tid=''
+        # for tid, eid in exs:
+        #     sa = next((av for _, _, actions in self.available_task_extensions
+        #                for av in actions if av.id == eid))
+        #     sadditions.append(sa)
+        #
+        # xx = [(tid, sadditions)]
+        # return xx
 
 # ============= EOF =============================================

@@ -357,7 +357,7 @@ class Paths(object):
             self._write_default_files()
 
     def _write_default_files(self):
-        from pychron.file_defaults import DEFAULT_INITIALIZATION, DEFAULT_STARTUP_TESTS, EXPERIMENT_DEFAULTS, \
+        from pychron.file_defaults import DEFAULT_INITIALIZATION, DEFAULT_STARTUP_TESTS, \
             SYSTEM_HEALTH
 
         for p, d in ((path.join(self.setup_dir, 'initialization.xml'), DEFAULT_INITIALIZATION),
@@ -366,7 +366,7 @@ class Paths(object):
                      (self.simple_ui_file, SIMPLE_UI_DEFAULT),
                      (self.edit_ui_defaults, EDIT_UI_DEFAULT),
                      (self.task_extensions_file, TASK_EXTENSION_DEFAULT)):
-            overwrite = d in (SYSTEM_HEALTH, SIMPLE_UI_DEFAULT, EDIT_UI_DEFAULT,TASK_EXTENSION_DEFAULT)
+            overwrite = d in (SYSTEM_HEALTH, SIMPLE_UI_DEFAULT,TASK_EXTENSION_DEFAULT)
             overwrite = d in (SYSTEM_HEALTH, SIMPLE_UI_DEFAULT,)
             self._write_default_file(p, d, overwrite)
 

@@ -57,11 +57,13 @@ class BaseTasksApplication(TasksApplication, Loggable):
         with open(p, 'r') as rfile:
             yl = yaml.load(rfile)
             for yi in yl:
+                # print yi['plugin_id'], pid
                 if yi['plugin_id'].startswith(pid):
+                    tid = yi.get('task_id', '')
                     for ai in yi['actions']:
                         a, e = ai.split(',')
                         if to_bool(e):
-                            yield a
+                            yield tid, a
 
     def about(self):
         self.about_dialog.open()
