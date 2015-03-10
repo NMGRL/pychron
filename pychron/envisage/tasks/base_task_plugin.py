@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from envisage.ui.tasks.task_extension import TaskExtension
 from traits.api import List
 from envisage.plugin import Plugin
 from envisage.service_offer import ServiceOffer
@@ -30,7 +31,7 @@ class BaseTaskPlugin(BasePlugin):
     help_tips = List(contributes_to='pychron.plugin.help_tips')
     tasks = List(contributes_to='envisage.ui.tasks.tasks')
     service_offers = List(contributes_to='envisage.service_offers')
-    available_task_extensions = List(contributes_to='pychron.available.task_extensions')
+    available_task_extensions = List(contributes_to='pychron.available_task_extensions')
     task_extensions = List(contributes_to='envisage.ui.tasks.task_extensions')
     # my_task_extensions = List(contributes_to=TASK_EXTENSIONS)
     # base_task_extensions = List(contributes_to=TASK_EXTENSIONS)
@@ -89,12 +90,28 @@ class BaseTaskPlugin(BasePlugin):
             prefs.flush()
         else:
             self.debug('defaults already set')
+
     # # defaults
     # def _preferences_panes_default(self):
-    #     return []
+    # return []
     #
     # def _preferences_default(self):
     #     return []
+    def _task_extensions_default(self):
+        extensions = [TaskExtension(actions=actions, task_id=eid) for eid, actions in self._get_extensions()]
+        return extensions
 
+    def _get_extensions(self):
+        xx = []
+        exs = self.application.get_task_extensions(self.id)
+        if exs:
+            sadditions = []
+            for eid in exs:
+                sa = next((av for _, _, actions in self.available_task_extensions
+                           for av in actions if av.id == eid))
+                sadditions.append(sa)
+
+            xx = [('', sadditions)]
+        return xx
 
 # ============= EOF =============================================

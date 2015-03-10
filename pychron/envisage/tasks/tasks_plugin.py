@@ -52,7 +52,7 @@ class PychronTasksPlugin(BasePlugin):
     actions = ExtensionPoint(List, id='pychron.actions')
     file_defaults = ExtensionPoint(List(Tuple), id='pychron.plugin.file_defaults')
     help_tips = ExtensionPoint(List, id='pychron.plugin.help_tips')
-    available_task_extensions = ExtensionPoint(List, id='pychron.available.task_extensions')
+    available_task_extensions = ExtensionPoint(List, id='pychron.available_task_extensions')
 
     my_tips = List(contributes_to='pychron.plugin.help_tips')
 

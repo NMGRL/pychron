@@ -75,6 +75,7 @@ class NewSpectrumAction(TaskAction):
 
 class RefreshActiveEditorAction(TaskAction):
     name = 'Refresh Plot'
+    dname = 'Refresh Plot'
     method = 'refresh_active_editor'
     image = icon('refresh')
     # accelerator = 'Ctrl+Shift+R'

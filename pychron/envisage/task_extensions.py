@@ -13,9 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from pychron.core.helpers.filetools import to_bool
 from pychron.core.ui import set_qt
 
 set_qt()
+
+from pychron.paths import paths
+from pychron.processing.tasks.actions.processing_actions import RecallAction
+
 
 # ============= enthought library imports =======================
 from pyface.action.menu_manager import MenuManager
@@ -26,6 +31,7 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 from traits.api import HasTraits, Str, Instance, Event, Int, Bool, Any, Float, Property, on_trait_change, List
 from traitsui.api import View, UItem, Item, HGroup, VGroup, TreeNode, Handler
 # ============= standard library imports ========================
+import yaml
 # ============= local library imports  ==========================
 from pychron.updater.tasks.actions import CheckForUpdatesAction, ManageBranchAction
 from pychron.envisage.resources import icon
@@ -41,8 +47,25 @@ class ViewModel(HasTraits):
     task_extensions = List
     enabled = True
 
-    def update(self):
-        pass
+    def load(self):
+        p = paths.task_extensions_file
+        with open(p, 'r') as rfile:
+            yl = yaml.load(rfile)
+            for te in self.task_extensions:
+                yd = next((d for d in yl if d['plugin_id'] == te.id), None)
+                # print yd, te.id, te
+                if yd:
+                    for ai in yd['actions']:
+                        action, enabled = ai.split(',')
+                        tt = next((ta for ta in te.additions if ta.model.id == action), None)
+                        if tt:
+                            tt.enabled = to_bool(enabled)
+
+    def dump(self):
+        p = paths.task_extensions_file
+        obj = [te.dump() for te in self.task_extensions]
+        with open(p, 'w') as wfile:
+            yaml.dump(obj, wfile)
 
     def get_te_model(self, tid):
         return next((te for te in self.task_extensions if te.id == tid), None)
@@ -53,6 +76,9 @@ class TaskExtensionModel(HasTraits):
     id = Str
     all_enabled = Bool
     enabled = True
+
+    def dump(self):
+        return {'plugin_id': self.id, 'actions': ['{}, {}'.format(a.model.id, a.enabled) for a in self.additions]}
 
 
 class AdditionModel(HasTraits):
@@ -85,7 +111,6 @@ class EEHandler(Handler):
 
     def _finish_toggle_enable(self, info):
         info.object.refresh_all_needed = True
-        info.object.update()
 
     def _set_all(self, te, v):
         for a in te.additions:
@@ -99,8 +124,10 @@ class EditExtensionsView(HasTraits):
     selected = List
     dclicked = Event
 
-    def update(self):
-        self.view_model.update()
+    def _dclicked_fired(self):
+        s = self.selected[0]
+        s.enabled = not s.enabled
+        self.refresh_all_needed = True
 
     def add_additions(self, tid, name, a):
         adds = []
@@ -112,12 +139,16 @@ class EditExtensionsView(HasTraits):
             te = TaskExtensionModel(name=name, id=tid, additions=adds)
             self.view_model.task_extensions.append(te)
         else:
+            ids = [a.model.id for a in te.additions]
+            adds = [ai for ai in adds if ai.model.id not in ids]
             te.additions.extend(adds)
 
 
-def edit_task_extensions(available_additions):
+def edit_task_extensions(ts):
     e = EditExtensionsView()
-    e.add_additions('pychron.update', 'Update', available_additions)
+    for args in ts:
+        e.add_additions(*args)
+    e.view_model.load()
 
     nodes = [TreeNode(node_for=[ViewModel],
                       icon_open='',
@@ -148,22 +179,38 @@ def edit_task_extensions(available_additions):
                                          show_disabled=True,
                                          refresh_all_icons='refresh_all_needed',
                                          editable=False)),
+                 width=500,
+                 height=800,
+                 resizable=True,
                  handler=EEHandler(),
+                 buttons=['OK', 'Cancel'],
                  kind='livemodal')
 
-    info = e.configure_traits(view=AView)
-    # info = e.edit_traits(view=AView)
+    # info = e.configure_traits(view=AView)
+    info = e.edit_traits(view=AView)
     if info.result:
-        return confirm() == YES
+        e.view_model.dump()
+        return confirm(None, 'Restart?') == YES
 
 
 if __name__ == '__main__':
-    a = [SchemaAddition(id='pychron.update.check',
-                        factory=CheckForUpdatesAction),
-         SchemaAddition(id='pychron.update.check',
-                        factory=ManageBranchAction)
-    ]
-    edit_task_extensions(a)
+    from traits.api import Button
+
+    class Demo(HasTraits):
+        test = Button
+        traits_view = View('test')
+
+        def _test_fired(self):
+            a = [('pychron.update', 'Update', [SchemaAddition(id='pychron.update.check_for_updates',
+                                                              factory=CheckForUpdatesAction),
+                                               SchemaAddition(id='pychron.update.manage_branch',
+                                                              factory=ManageBranchAction)]),
+                 ('pychron.recall', 'Recall', [SchemaAddition(id='pychron.recall',
+                                                              factory=RecallAction)])]
+            edit_task_extensions(a)
+
+    d = Demo()
+    d.configure_traits()
 # ============= EOF =============================================
 
 

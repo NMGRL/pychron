@@ -20,7 +20,7 @@ from envisage.ui.tasks.task_extension import TaskExtension
 from pyface.action.menu_manager import MenuManager
 from pyface.tasks.action.schema_addition import SchemaAddition
 from pyface.action.group import Group
-from pyface.tasks.action.schema import SMenu
+from pyface.tasks.action.schema import SMenu, SGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import to_bool
@@ -57,19 +57,30 @@ from pychron.processing.tasks.preferences.processing_preferences import Browsing
 # from pychron.processing.tasks.browser.browser_task import BrowserTask
 
 
+# def figure_group():
+# return Group(
+# SpectrumAction(),
+# IdeogramAction(),
+# InverseIsochronAction(),
+# SeriesAction(),
+# CompositeAction(),
+#         XYScatterAction(),
+#         MenuManager(IdeogramFromFile(),
+#                     SpectrumFromFile(),
+#                     name='From File'),
+#         RefreshActiveEditorAction(),
+#         name='Figures')
+
 def figure_group():
-    return Group(
-        SpectrumAction(),
-        IdeogramAction(),
-        InverseIsochronAction(),
-        SeriesAction(),
-        CompositeAction(),
-        XYScatterAction(),
-        MenuManager(IdeogramFromFile(),
-                    SpectrumFromFile(),
-                    name='From File'),
-        RefreshActiveEditorAction(),
-        name='Figures')
+    return SGroup(id='figures.group', name='Figures')
+
+
+def files_menu():
+    return SMenu(id='figure.files.menu', name='From File')
+
+
+def reduction_group():
+    return SGroup(id='reduction.group', name='Reduction')
 
 
 def data_menu():
@@ -90,13 +101,13 @@ def grouping_group():
                  name='Grouping')
 
 
-def reduction_group():
-    return Group(IsotopeEvolutionAction(),
-                 BlankEditAction(),
-                 ICFactorAction(),
-                 DiscriminationAction(),
-                 FluxAction(),
-                 name='Reduction')
+# def reduction_group():
+#     return Group(IsotopeEvolutionAction(),
+#                  BlankEditAction(),
+#                  ICFactorAction(),
+#                  DiscriminationAction(),
+#                  FluxAction(),
+#                  name='Reduction')
 
 
 def interpreted_group():
@@ -163,99 +174,91 @@ class ProcessingPlugin(BaseTaskPlugin):
         return TaskExtension(actions=[make_schema(args)
                                       for args in actions], **kw)
 
-    def _task_extensions_default(self):
-        # exts = self._advanced_ui_task_extensions()
-        # if self.application.use_advanced_ui():
-        #     exts = self._advanced_ui_task_extensions()
-        # else:
-        exts = self._simple_ui_task_extensions()
-        return exts
+    # def _simple_ui_task_extensions(self):
+    # actions = [('recall_action', RecallAction, 'MenuBar/file.menu'),
+    #                ('recall_group', recall_group, 'MenuBar/data.menu', {'absolute_position': 'first'}),
+    #                ('data', data_menu, 'MenuBar', {'before': 'tools.menu', 'after': 'view.menu'}),
+    #                ('activate_group', activate_group, 'MenuBar/view.menu'),
+    #                ('reduction_group', reduction_group, 'MenuBar/data.menu'),
+    #                ('figure_group', figure_group, 'MenuBar/data.menu')]
+    #     exts = [self._make_task_extension(actions)]
+    #     return exts
 
-    def _simple_ui_task_extensions(self):
-        actions = [('recall_action', RecallAction, 'MenuBar/file.menu'),
-                   ('recall_group', recall_group, 'MenuBar/data.menu', {'absolute_position': 'first'}),
-                   ('data', data_menu, 'MenuBar', {'before': 'tools.menu', 'after': 'view.menu'}),
-                   ('activate_group', activate_group, 'MenuBar/view.menu'),
-                   ('reduction_group', reduction_group, 'MenuBar/data.menu'),
-                   ('figure_group', figure_group, 'MenuBar/data.menu')]
-        exts = [self._make_task_extension(actions)]
-        return exts
-
-    def _advanced_ui_task_extensions(self):
-        actions = [('recall_action', RecallAction, 'MenuBar/file.menu'),
-                   # ('find_action', OpenAdvancedQueryAction, 'MenuBar/file.menu'),
-                   ('export_analyses', ExportAnalysesAction, 'MenuBar/file.menu'),
-                   ('set_sqlite_dataset', SetSQLiteAction, 'MenuBar/file.menu'),
-
-                   ('batch_edit', BatchEditAction, 'MenuBar/Edit'),
-
-                   ('recall_group', recall_group, 'MenuBar/data.menu', {'absolute_position': 'first'}),
-                   ('data', data_menu, 'MenuBar', {'before': 'tools.menu', 'after': 'view.menu'}),
-
-
-                   ('activate_group', activate_group, 'MenuBar/view.menu'),
-                   ('reduction_group', reduction_group, 'MenuBar/data.menu'),
-                   ('figure_group', figure_group, 'MenuBar/data.menu'),
-                   ('interpreted_group', interpreted_group, 'MenuBar/data.menu'),
-                   ('grouping_group', grouping_group, 'MenuBar/data.menu'),
-
-                   ('misc_group', misc_group, 'MenuBar/data.menu'),
-                   # ('tag', TagAction, 'MenuBar/data.menu'),
-                   # ('database_save', DatabaseSaveAction, 'MenuBar/data.menu'),
-
-                   # ('graph_grouping_group', graph_grouping_group, 'MenuBar/data.menu'),
-                   # ('clear_cache', ClearAnalysisCacheAction, 'MenuBar/data.menu'),
-                   ('make_analysis_group', analysis_group, 'MenuBar/data.menu'),
-                   ('make_data_tables', MakeDataTablesAction, 'MenuBar/data.menu',
-                    {'absolute_position': 'last'}),
-                   # ('make_tas', MakeTASAction, 'MenuBar/data.menu'),
-                   # ('modify_k3739', ModifyK3739Action, 'MenuBar/data.menu'),
-
-                   ('equil_inspector', EquilibrationInspectorAction, 'MenuBar/tools.menu'),
-                   ('split_editor_area', SplitEditorActionHor, 'MenuBar/window.menu'),
-                   ('split_editor_area', SplitEditorActionVert, 'MenuBar/window.menu')]
-
-        exts = [self._make_task_extension(actions)]
-
-        # use_vcs = to_bool(self.application.preferences.get('pychron.vcs.use_vcs'))
-        # if use_vcs:
-        # exts.append(self._make_task_extension([('vcs', vcs_menu, 'MenuBar', {'after': 'view.menu'}),
-        #                                            ('vcs_pull', PullVCSAction, 'MenuBar/vcs.menu'),
-        #                                            ('vcs_push', PushVCSAction, 'MenuBar/vcs.menu')]))
-
-        use_easy = to_bool(self.application.preferences.get('pychron.processing.use_easy'))
-        if use_easy:
-            def easy_group():
-                return Group(EasyImportAction(),
-                             EasyFiguresAction(),
-                             EasyCompareAction(),
-                             EasyTablesAction(),
-                             EasySensitivityAction(),
-                             EasyFaradayICAction(),
-                             EasyAverageBlanksAction(),
-                             id='easy.group')
-
-            grp = self._make_task_extension([('easy_group', easy_group, 'MenuBar/tools.menu')])
-            a = self._make_task_extension(
-                [('optimal_equilibration', CalcOptimalEquilibrationAction, 'MenuBar/tools.menu'),
-                 ('easy_fit', EasyFitAction, 'MenuBar/tools.menu')],
-                task_id='pychron.processing.isotope_evolution')
-
-            b = self._make_task_extension([('easy_blanks', EasyBlanksAction, 'MenuBar/tools.menu')],
-                                          task_id='pychron.processing.blanks')
-
-            c = self._make_task_extension([('easy_disc', EasyDiscriminationAction, 'MenuBar/tools.menu')],
-                                          task_id='pychron.processing.discrimination')
-
-            d = self._make_task_extension([('easy_ic', EasyICAction, 'MenuBar/tools.menu')],
-                                          task_id='pychron.processing.ic_factor')
-
-            e = self._make_task_extension([('easy_flux', EasyFluxAction, 'MenuBar/tools.menu')],
-                                          task_id='pychron.processing.flux')
-
-            exts.extend((grp, a, b, c, d, e))
-
-        return exts
+    # def _advanced_ui_task_extensions(self):
+    #     actions = [('recall_action', RecallAction, 'MenuBar/file.menu'),
+    #                # ('find_action', OpenAdvancedQueryAction, 'MenuBar/file.menu'),
+    #                ('export_analyses', ExportAnalysesAction, 'MenuBar/file.menu'),
+    #                ('set_sqlite_dataset', SetSQLiteAction, 'MenuBar/file.menu'),
+    #
+    #                ('batch_edit', BatchEditAction, 'MenuBar/Edit'),
+    #
+    #                ('recall_group', recall_group, 'MenuBar/data.menu', {'absolute_position': 'first'}),
+    #                ('data', data_menu, 'MenuBar', {'before': 'tools.menu', 'after': 'view.menu'}),
+    #
+    #
+    #                ('activate_group', activate_group, 'MenuBar/view.menu'),
+    #                ('reduction_group', reduction_group, 'MenuBar/data.menu'),
+    #                ('figure_group', figure_group, 'MenuBar/data.menu'),
+    #                ('interpreted_group', interpreted_group, 'MenuBar/data.menu'),
+    #                ('grouping_group', grouping_group, 'MenuBar/data.menu'),
+    #
+    #                ('misc_group', misc_group, 'MenuBar/data.menu'),
+    #                # ('tag', TagAction, 'MenuBar/data.menu'),
+    #                # ('database_save', DatabaseSaveAction, 'MenuBar/data.menu'),
+    #
+    #                # ('graph_grouping_group', graph_grouping_group, 'MenuBar/data.menu'),
+    #                # ('clear_cache', ClearAnalysisCacheAction, 'MenuBar/data.menu'),
+    #                ('make_analysis_group', analysis_group, 'MenuBar/data.menu'),
+    #                ('make_data_tables', MakeDataTablesAction, 'MenuBar/data.menu',
+    #                 {'absolute_position': 'last'}),
+    #                # ('make_tas', MakeTASAction, 'MenuBar/data.menu'),
+    #                # ('modify_k3739', ModifyK3739Action, 'MenuBar/data.menu'),
+    #
+    #                ('equil_inspector', EquilibrationInspectorAction, 'MenuBar/tools.menu'),
+    #                ('split_editor_area', SplitEditorActionHor, 'MenuBar/window.menu'),
+    #                ('split_editor_area', SplitEditorActionVert, 'MenuBar/window.menu')]
+    #
+    #     exts = [self._make_task_extension(actions)]
+    #
+    #     # use_vcs = to_bool(self.application.preferences.get('pychron.vcs.use_vcs'))
+    #     # if use_vcs:
+    #     # exts.append(self._make_task_extension([('vcs', vcs_menu, 'MenuBar', {'after': 'view.menu'}),
+    #     #                                            ('vcs_pull', PullVCSAction, 'MenuBar/vcs.menu'),
+    #     #                                            ('vcs_push', PushVCSAction, 'MenuBar/vcs.menu')]))
+    #
+    #     use_easy = to_bool(self.application.preferences.get('pychron.processing.use_easy'))
+    #     if use_easy:
+    #         def easy_group():
+    #             return Group(EasyImportAction(),
+    #                          EasyFiguresAction(),
+    #                          EasyCompareAction(),
+    #                          EasyTablesAction(),
+    #                          EasySensitivityAction(),
+    #                          EasyFaradayICAction(),
+    #                          EasyAverageBlanksAction(),
+    #                          id='easy.group')
+    #
+    #         grp = self._make_task_extension([('easy_group', easy_group, 'MenuBar/tools.menu')])
+    #         a = self._make_task_extension(
+    #             [('optimal_equilibration', CalcOptimalEquilibrationAction, 'MenuBar/tools.menu'),
+    #              ('easy_fit', EasyFitAction, 'MenuBar/tools.menu')],
+    #             task_id='pychron.processing.isotope_evolution')
+    #
+    #         b = self._make_task_extension([('easy_blanks', EasyBlanksAction, 'MenuBar/tools.menu')],
+    #                                       task_id='pychron.processing.blanks')
+    #
+    #         c = self._make_task_extension([('easy_disc', EasyDiscriminationAction, 'MenuBar/tools.menu')],
+    #                                       task_id='pychron.processing.discrimination')
+    #
+    #         d = self._make_task_extension([('easy_ic', EasyICAction, 'MenuBar/tools.menu')],
+    #                                       task_id='pychron.processing.ic_factor')
+    #
+    #         e = self._make_task_extension([('easy_flux', EasyFluxAction, 'MenuBar/tools.menu')],
+    #                                       task_id='pychron.processing.flux')
+    #
+    #         exts.extend((grp, a, b, c, d, e))
+    #
+    #     return exts
 
     def _meta_task_factory(self, i, f, n, task_group=None,
                            accelerator='', include_view_menu=False,
@@ -415,10 +418,68 @@ class ProcessingPlugin(BaseTaskPlugin):
                 ('presentation_formatting_options', 'PRESENTATION_FORMATTING_DEFAULTS', True),
                 ('display_formatting_options', 'DISPLAY_FORMATTING_DEFAULTS', True)]
 
-        # def _help_tips_default(self):
-        #     return ['Use <b>Data>Ideogram</b> to plot an Ideogram',
-        #             'Use <b>Data>Spectrum</b> to plot a Spectrum',
-        #             'Use <b>Data>Recall</b> or <b>File/Recall</b> to view analytical data for individual analyses']
+    def _help_tips_default(self):
+        return ['Use <b>Data>Ideogram</b> to plot an Ideogram',
+                'Use <b>Data>Spectrum</b> to plot a Spectrum',
+                'Use <b>Data>Recall</b> or <b>File/Recall</b> to view analytical data for individual analyses']
+
+    def _task_extensions_default(self):
+        extensions = [TaskExtension(actions=actions, task_id=eid) for eid, actions in self._get_extensions()]
+        extensions.append(TaskExtension(actions=[SchemaAddition(id='data',
+                                                                before='tools.menu',
+                                                                after='view.menu',
+                                                                factory=data_menu,
+                                                                path='MenuBar'),
+                                                 SchemaAddition(id='file_menu',
+                                                                factory=files_menu,
+                                                                path='MenuBar/data.menu/figures.group'),
+                                                 SchemaAddition(id='figure_group',
+                                                                factory=figure_group,
+                                                                path='MenuBar/data.menu')]))
+        return extensions
+
+    def _available_task_extensions_default(self):
+        # ('recall_action', RecallAction, 'MenuBar/file.menu'),
+        #                ('recall_group', recall_group, 'MenuBar/data.menu', {'absolute_position': 'first'}),
+        #                ('data', data_menu, 'MenuBar', {'before': 'tools.menu', 'after': 'view.menu'}),
+        #                ('activate_group', activate_group, 'MenuBar/view.menu'),
+        #                ('reduction_group', reduction_group, 'MenuBar/data.menu'),
+        #                ('figure_group', figure_group, 'MenuBar/data.menu')
+        fgpath = 'MenuBar/data.menu/figures.group'
+        rgpath = 'MenuBar/data.menu/reduction.group'
+        ffpath = 'MenuBar/data.menu/figures.group/figure.files.menu'
+        return [('{}.figures'.format(self.id), 'Figures',
+                 [SchemaAddition(id='pychron.figure.spectrum', factory=SpectrumAction,
+                                 path=fgpath),
+                  SchemaAddition(id='pychron.figure.ideogram', factory=IdeogramAction,
+                                 path=fgpath),
+                  SchemaAddition(id='pychron.figure.inv_isochron', factory=InverseIsochronAction,
+                                 path=fgpath),
+                  SchemaAddition(id='pychron.figure.series', factory=SeriesAction,
+                                 path=fgpath),
+                  SchemaAddition(id='pychron.figure.composite', factory=CompositeAction,
+                                 path=fgpath),
+                  SchemaAddition(id='pychron.figure.xyscatter', factory=XYScatterAction,
+                                 path=fgpath),
+                  SchemaAddition(id='pychron.figure.file_ideogram', factory=IdeogramFromFile,
+                                 path=ffpath),
+                  SchemaAddition(id='pychron.figure.file_spectrum', factory=SpectrumFromFile,
+                                 path=ffpath),
+                  SchemaAddition(id='pychron.figure.refresh', factory=RefreshActiveEditorAction,
+                                 path=fgpath)]),
+                ('{}.reduction'.format(self.id), 'Reduction',
+                 [SchemaAddition(id='pychron.reduction.iso_evo', factory=IsotopeEvolutionAction,
+                                 path=rgpath),
+                  SchemaAddition(id='pychron.reduction.blanks', factory=BlankEditAction,
+                                 path=rgpath),
+                  SchemaAddition(id='pychron.reduction.ic_factor', factory=ICFactorAction,
+                                 path=rgpath),
+                  SchemaAddition(id='pychron.reduction.discrimination', factory=DiscriminationAction,
+                                 path=rgpath),
+                  SchemaAddition(id='pychron.reduction.flux', factory=FluxAction,
+                                 path=rgpath), ])]
+
+
         # ============= EOF =============================================
 
         # def _dataset_factory(self):

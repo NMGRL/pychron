@@ -149,12 +149,14 @@ class FigureAction(Action):
 
 class XYScatterAction(FigureAction):
     name = 'XY Scatter'
+    dname = 'XY Scatter'
     method = 'new_xy_scatter'
     accelerator = 'Ctrl+Shift+x'
 
 
 class IdeogramAction(FigureAction):
     name = 'Ideogram'
+    dname = 'Ideogram'
     method = 'new_ideogram'
     image = icon('histogram')
     id = 'pychron.ideogram'
@@ -162,35 +164,42 @@ class IdeogramAction(FigureAction):
 
 class CompositeAction(FigureAction):
     name = 'Composite'
+    dname = 'Composite'
     method = 'new_composite'
     id = 'pychron.composite'
 
 
 class SpectrumAction(FigureAction):
     name = 'Spectrum'
+    dname = 'Spectrum'
     method = 'new_spectrum'
     id = 'pychron.spectrum'
 
 
 class SeriesAction(FigureAction):
     name = 'Series'
+    dname = 'Series'
     method = 'new_series'
     id = 'pychron.series'
 
 
 class InverseIsochronAction(FigureAction):
     name = 'Inverse Isochron'
+    dname = 'Inverse Isochron'
     method = 'new_inverse_isochron'
     id = 'pychron.inverse_isochron'
 
+
 class IdeogramFromFile(FigureAction):
     name = 'Ideogram'
+    dname = 'Ideogram From File'
     method = 'new_ideogram_from_file'
     accelerator = 'Ctrl+shift+j'
 
 
 class SpectrumFromFile(FigureAction):
     name = 'Spectrum'
+    dname = 'Spectrum From File'
     method = 'new_spectrum_from_file'
 
 
@@ -215,6 +224,7 @@ class TimeViewAction(Action):
 
 class RecallAction(Action):
     name = 'Recall'
+    dname = 'Recall'
     id = 'pychron.recall'
 
     def perform(self, event):

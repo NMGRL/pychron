@@ -360,7 +360,8 @@ class Paths(object):
                      (self.startup_tests, DEFAULT_STARTUP_TESTS),
                      (self.system_health, SYSTEM_HEALTH),
                      (self.task_extensions_file, TASK_EXTENSION_DEFAULT)):
-            overwrite = d in (SYSTEM_HEALTH,TASK_EXTENSION_DEFAULT)
+            # overwrite = d in (SYSTEM_HEALTH,TASK_EXTENSION_DEFAULT)
+            overwrite = d in (SYSTEM_HEALTH,)
             self._write_default_file(p, d, overwrite)
 
     def _write_default_file(self, p, default, overwrite=False):

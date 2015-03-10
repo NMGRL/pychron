@@ -457,7 +457,6 @@ class EditTaskExtensionsAction(Action):
     def perform(self, event):
         app = event.task.window.application
         from pychron.envisage.task_extensions import edit_task_extensions
-
         if edit_task_extensions(app.available_task_extensions):
             restart()
 # ============= EOF =============================================

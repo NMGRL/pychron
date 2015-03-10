@@ -25,14 +25,37 @@ Values are used in pychron.paths when building directory structure
 
 TASK_EXTENSION_DEFAULT = """
 -
- plugin_id: pychron.update
+ plugin_id: pychron.update.plugin
  actions:
-  - pychron.update.check_for_updates
+  - pychron.update.check_for_updates, True
+  - pychron.update.manage_version, False
+  - pychron.update.manage_branch, False
+  - pychron.update.build_app, False
 -
- plugin_id: pychron.recall
+ plugin_id: pychron.processing.plugin.figures
  actions:
-  - pychron.recall.recall
+  - pychron.figure.spectrum, True
+  - pychron.figure.ideogram, True
+  - pychron.figure.inv_isochron, True
+  - pychron.figure.series, True
+  - pychron.figure.composite, True
+  - pychron.figure.xyscatter, True
+  - pychron.figure.file_ideogram, True
+  - pychron.figure.file_spectrum, True
+  - pychron.figure.refresh, True
+-
+ plugin_id: pychron.processing.plugin.reduction
+ actions:
+  - pychron.reduction.iso_evo, True
+  - pychron.reduction.blanks, True
+  - pychron.reduction.ic_factor, True
+  - pychron.reduction.discrimination, True
+  - pychron.reduction.flux, True
 """
+# -
+#  plugin_id: pychron.recall
+#  actions:
+#   - pychron.recall.recall, True
 
 DEFAULT_INITIALIZATION = '''<root>
     <globals>

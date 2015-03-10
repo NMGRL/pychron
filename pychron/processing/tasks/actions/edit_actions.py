@@ -78,13 +78,16 @@ class SelectDataReductionTagAction(TaskAction):
 
 class FluxAction(AnalysisEditAction):
     name = 'Flux...'
+    dname = 'Flux'
     # accelerator = 'Ctrl+g'
     method = 'new_flux'
     task_id = 'pychron.processing.flux'
     id = 'pychron.flux'
 
+
 class BlankEditAction(AnalysisEditAction):
     name = 'Blanks...'
+    dname = 'Blanks'
     # accelerator = 'Ctrl+B'
     method = 'new_blank'
     task_id = 'pychron.processing.blanks'
@@ -98,6 +101,7 @@ class BlankEditAction(AnalysisEditAction):
 
 class IsotopeEvolutionAction(AnalysisEditAction):
     name = 'Isotope Evolution...'
+    dname = 'Isotope Evolution'
     # accelerator = 'Ctrl+k'
     method = 'new_isotope_evolution'
     task_id = 'pychron.processing.isotope_evolution'
@@ -112,13 +116,16 @@ class RefitIsotopeEvolutionAction(AnalysisEditAction):
 
 class ICFactorAction(AnalysisEditAction):
     name = 'IC Factor...'
+    dname = 'IC Factor'
     # accelerator = 'Ctrl+shift+i'
     method = 'new_ic_factor'
     task_id = 'pychron.processing.ic_factor'
     id = 'pychron.ic_factor'
 
+
 class DiscriminationAction(AnalysisEditAction):
     name = 'Discrimination...'
+    dname = 'Discrimination'
     accelerator = 'Ctrl+shift+d'
     #method = 'new_ic_factor'
     task_id = 'pychron.processing.discrimination'
