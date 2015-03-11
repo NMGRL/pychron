@@ -93,7 +93,7 @@ class BasePeakCenter(MagnetScan):
                               max_=max([start, end]))
 
         # move to start position
-        delay = 1
+        delay = 3
         self.info('moving to starting dac {}. delay {} before continuing'.format(start, delay))
         self.spectrometer.magnet.set_dac(start)
         time.sleep(delay)

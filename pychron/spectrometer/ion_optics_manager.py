@@ -321,14 +321,6 @@ class IonOpticsManager(Manager):
 
             det = spec.get_detector(ref)
 
-            ## correct for hv
-            #dac_d /= spec.get_hv_correction(current=True)
-            #
-            ## correct for deflection
-            #dac_d = dac_d - det.get_deflection_correction(current=True)
-            #
-            ## convert dac to axial units
-            #dac_a = dac_d / det.relative_position
             dac_a = spec.uncorrect_dac(det, dac_d)
             self.info('converted to axial units {}'.format(dac_a))
 
@@ -339,7 +331,7 @@ class IonOpticsManager(Manager):
                     save = self.confirmation_dialog(msg)
                 if save:
                     spec.magnet.update_field_table(det, isotope, dac_a, message)
-                    spec.magnet.set_dac(self.peak_center_result)
+                    spec.magnet.set_dac(dac_d)
 
         elif not self.canceled:
             msg = 'centering failed'

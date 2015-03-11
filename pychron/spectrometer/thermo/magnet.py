@@ -42,52 +42,70 @@ class ArgusMagnet(BaseMagnet, SpectrometerDevice):
     # ##positioning
     # ===============================================================================
     def set_dac(self, v, verbose=False):
-        self.debug('setting dac {}'.format(v))
-        micro = self.microcontroller
-        unprotect = False
+        self.debug('setting magnet DAC')
+        self.debug('current  : {:0.6f}'.format(self._dac))
+        self.debug('requested: {:0.6f}'.format(v))
+
+        dv = abs(self._dac - v)
+        self.debug('Delta Dac: {:0.6f}'.format(dv))
+
+        unprotect = []
         unblank = False
-        if micro:
-            if self.use_detector_protection:
-                dv = abs(self._dac - v)
-                for pd in self.protected_detectors:
-                    pd = self.spectrometer.get_detector(pd)
-                    if dv > pd.protection_threshold:
-                        micro.ask('ProtectDetector {},On'.format(pd), verbose=verbose)
-                        unprotect = True
 
-                # if abs(self._dac - v) > self.detector_protection_threshold:
-                #     for pd in self.protected_detectors:
-                #         micro.ask('ProtectDetector {},On'.format(pd), verbose=verbose)
-                #     unprotect = True
+        if self.use_detector_protection:
 
-            elif self.use_beam_blank:
-                if abs(self._dac - v) > self.beam_blank_threshold:
-                    micro.ask('BlankBeam True', verbose=verbose)
-                    unblank = True
+            self.debug('Checking detector protection. dv={:0.5f}'.format(dv))
+            for pd in self.protected_detectors:
+                det = self.spectrometer.get_detector(pd)
+                self.debug('Checking detector "{}". Protection Threshold: {}'.format(pd, det.protection_threshold))
+                if dv > det.protection_threshold:
+                    self.ask('ProtectDetector {},On'.format(pd), verbose=verbose)
+                    unprotect.append(pd)
 
-            micro.ask('SetMagnetDAC {}'.format(v), verbose=verbose)
-            if not micro.simulation:
-                time.sleep(self.settling_time)
+                    # if abs(self._dac - v) > self.detector_protection_threshold:
+                    # for pd in self.protected_detectors:
+                    # micro.ask('ProtectDetector {},On'.format(pd), verbose=verbose)
+                    #     unprotect = True
 
-            #only block if move is large and was made slowly.
-            #this should be more explicit. get MAGNET_MOVE_THRESHOLD from RCS
-            # and use it as to test whether to GetMagnetMoving
-            if unprotect or unblank:
-                for i in xrange(50):
-                    if not to_bool(micro.ask('GetMagnetMoving')):
-                        break
-                    time.sleep(0.25)
+        if self.use_beam_blank:
+            if dv > self.beam_blank_threshold:
+                self.ask('BlankBeam True', verbose=verbose)
+                unblank = True
 
-                if unprotect:
-                    for pd in self.protected_detectors:
-                        micro.ask('ProtectDetector {},Off'.format(pd), verbose=verbose)
-                if unblank:
-                    micro.ask('BlankBeam False', verbose=verbose)
+        self.ask('SetMagnetDAC {}'.format(v), verbose=verbose)
 
-        change = v != self._dac
+        st = time.time()
+        # only block if move is large and was made slowly.
+        # this should be more explicit. get MAGNET_MOVE_THRESHOLD from RCS
+        # and use it as to test whether to GetMagnetMoving
+        if unprotect or unblank:
+            for i in xrange(50):
+                if not to_bool(self.ask('GetMagnetMoving')):
+                    break
+                time.sleep(0.25)
+
+            if unprotect:
+                for d in unprotect:
+                    self.ask('ProtectDetector {},Off'.format(d), verbose=v)
+                    # for pd in self.protected_detectors:
+                    # det = self.spectrometer.get_detector(pd)
+                    #     if dv > det.protection_threshold:
+                    #         micro.ask('ProtectDetector {},Off'.format(pd), verbose=verbose)
+            if unblank:
+                self.ask('BlankBeam False', verbose=verbose)
+
+        change = dv > 1e-7
         if change:
             self._dac = v
             self.dac_changed = True
+
+            et = time.time() - st
+            if not self.simulation:
+                st = self.settling_time - et
+                self.debug('Magnet settling time: {:0.3f}, actual time: {:0.3f}'.format(self.settling_time, st))
+                if st > 0:
+                    time.sleep(st)
+
         return change
 
     @get_float
