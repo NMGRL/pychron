@@ -29,7 +29,7 @@ def get_float(func):
         try:
             return float(func(*args, **kw))
         except (TypeError, ValueError):
-            pass
+            return 0.0
 
     return dec
 

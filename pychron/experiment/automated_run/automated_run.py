@@ -494,7 +494,7 @@ class AutomatedRun(Loggable):
                                        **kw)
             self.peak_center = pc
 
-            ion.do_peak_center(new_thread=False, save=save, message='automated run peakcenter')
+            ion.do_peak_center(new_thread=False, save=save, message='automated run peakcenter', timeout=300)
 
             if pc.result:
                 self.persister.save_peak_center_to_file(pc)

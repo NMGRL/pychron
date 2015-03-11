@@ -401,6 +401,7 @@ class ExperimentEditorTask(EditorTask):
         windows = []
         names = []
         # print self.window, self.application
+        self.debug('{} calling close_external_windows'.format(id(self)))
         if self.application:
             for wi in self.application.windows:
                 wid = wi.active_task.id
@@ -606,7 +607,11 @@ class ExperimentEditorTask(EditorTask):
     @on_trait_change('manager:execute_event')
     def _execute(self):
         if self.editor_area.editors:
-            self._close_external_windows()
+            try:
+                # this method is error prone. just wrap in a try statement for now
+                self._close_external_windows()
+            except AttributeError:
+                pass
 
             # bind the window control to the notification manager
             if self.window:

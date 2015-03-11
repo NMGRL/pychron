@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from threading import Event
+import time
 from traits.api import Range, Instance, Bool, \
     Button, Any, Str, Float, Enum, HasTraits, List
 from traitsui.api import View, Item, EnumEditor, Handler, HGroup
@@ -150,7 +152,7 @@ class IonOpticsManager(Manager):
 
             # else:
             # #get nearst isotope
-            #     self.debug('rounding mass {} to {}'.format(pos, '  {:n}'.format(round(pos))))
+            # self.debug('rounding mass {} to {}'.format(pos, '  {:n}'.format(round(pos))))
             #     spec.update_isotopes('  {:n}'.format(round(pos)), detector)
 
             # pos is mass i.e 39.962
@@ -173,7 +175,7 @@ class IonOpticsManager(Manager):
         print self.coincidence.get_peak_center()
 
     # cs = CoincidenceScan(spectrometer=self.spectrometer,
-    #                          ion_optics_manager=self)
+    # ion_optics_manager=self)
     #     self.open_view(cs.graph)
 
     def setup_coincidence(self):
@@ -199,14 +201,15 @@ class IonOpticsManager(Manager):
                        warn=False,
                        new_thread=True,
                        message='',
-                       on_end=None):
+                       on_end=None,
+                       timeout=None):
         self.debug('doing pc')
 
         self.canceled = False
         self.alive = True
         self.peak_center_result = None
 
-        args = (save, confirm_save, warn, message, on_end)
+        args = (save, confirm_save, warn, message, on_end, timeout)
         if new_thread:
             t = Thread(name='ion_optics.peak_center', target=self._peak_center,
                        args=args)
@@ -305,12 +308,30 @@ class IonOpticsManager(Manager):
                 graph.window_height = 250
                 self.open_view(graph)
 
-    def _peak_center(self, save, confirm_save, warn, message, on_end):
+    def _timeout_func(self, timeout, evt):
+        st = time.time()
+        while not evt.is_set():
+            if not self.alive:
+                break
+
+            if time.time() - st > timeout:
+                self.warning('Peak Centering timed out after {}s'.format(timeout))
+                self.cancel_peak_center()
+                break
+
+            time.sleep(0.01)
+
+    def _peak_center(self, save, confirm_save, warn, message, on_end, timeout):
 
         pc = self.peak_center
         spec = self.spectrometer
         ref = self.reference_detector
         isotope = self.reference_isotope
+
+        if timeout:
+            evt = Event()
+            timeout_thread = Thread(target=self._timeout_func, args=(timeout,evt))
+            timeout_thread.start()
 
         dac_d = pc.get_peak_center()
 
@@ -348,6 +369,10 @@ class IonOpticsManager(Manager):
             on_end()
 
         self.trait_set(alive=False)
+
+        if timeout:
+            evt.set()
+
         if self._ointegration_time:
             self.spectrometer.set_integration_time(self._ointegration_time)
 
@@ -394,7 +419,7 @@ if __name__ == '__main__':
 
 # ============= EOF =============================================
 # def _graph_factory(self):
-#        g = Graph(
+# g = Graph(
 #                  container_dict=dict(padding=5, bgcolor='gray'))
 #        g.new_plot()
 #        return g

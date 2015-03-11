@@ -110,10 +110,7 @@ class ArgusMagnet(BaseMagnet, SpectrometerDevice):
 
     @get_float
     def read_dac(self):
-        if self.microcontroller is None:
-            r = 0
-        else:
-            r = self.microcontroller.ask('GetMagnetDAC')
-        return r
+        return self.ask('GetMagnetDAC')
+
 
 # ============= EOF =============================================
