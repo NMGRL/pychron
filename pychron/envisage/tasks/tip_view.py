@@ -13,7 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from pychron.core.ui import set_qt
 
+set_qt()
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change
 from traitsui.api import View, UItem, Item, HGroup, VGroup, TextEditor
@@ -23,9 +25,11 @@ from traitsui.api import View, UItem, Item, HGroup, VGroup, TextEditor
 
 class TipView(HasTraits):
     text = Str
+    message = Str('<h1><font color=orange>Did you know?</font></h1>')
 
     def traits_view(self):
-        v = View(UItem('text',
+        v = View(UItem('message', style='readonly'),
+                 UItem('text',
                        style='custom',
                        editor=TextEditor(read_only=True)),
                  buttons=['OK'],
@@ -35,6 +39,10 @@ class TipView(HasTraits):
                  kind='livemodal')
         return v
 
+
+if __name__ == '__main__':
+    t = TipView()
+    t.configure_traits()
 # ============= EOF =============================================
 
 
