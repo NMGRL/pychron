@@ -582,8 +582,8 @@ class AutomatedRun(Loggable):
             if script is not None:
                 script.cancel()
 
-        self.debug('peak center {}'.format(self.peak_center))
         if self.peak_center:
+            self.debug('cancel peak center')
             self.peak_center.cancel()
 
         self.do_post_termination(do_post_equilibration=do_post_equilibration)

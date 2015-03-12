@@ -99,6 +99,20 @@ class Spectrometer(SpectrometerDevice):
 
     _connection_status = False
 
+    def get_detector_active(self, dname):
+        """
+        return True if dname in the list of intensity keys
+        e.g.
+
+        keys, signals = get_intensities
+        return dname in keys
+
+        :param dname:
+        :return:
+        """
+        keys, prev = self.get_intensities()
+        return dname in keys
+
     def test_intensity(self):
         """
         test if intensity is changing. make 2 measurements if exactlly the same for all
@@ -313,7 +327,7 @@ class Spectrometer(SpectrometerDevice):
                                                                'beam_blank_threshold', cast='float', default=0.1)
 
             # self.magnet.detector_protection_threshold = self.config_get(config, pd,
-            #                                                             'detector_protection_threshold',
+            # 'detector_protection_threshold',
             #                                                             cast='float', default=0.1)
             ds = self.config_get(config, pd, 'detectors')
             if ds:
@@ -512,7 +526,7 @@ class Spectrometer(SpectrometerDevice):
     def _get_simulation_data(self):
         from numpy.random import random
 
-        signals = [1, 100, 3, 0.01, 0.01, 0.01] #+ random(6)
+        signals = [1, 100, 3, 0.01, 0.01, 0.01]  # + random(6)
         keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
         return keys, signals
 
@@ -592,7 +606,7 @@ class Spectrometer(SpectrometerDevice):
 # ss = ArgusSource()
 # ss.current_hv = 4505
 # s.source = ss
-#     corrected = s.get_hv_correction(100,current=False)
+# corrected = s.get_hv_correction(100,current=False)
 #     uncorrected = s.get_hv_correction(corrected, uncorrect=True, current=False)
 #
 #     print corrected, uncorrected
