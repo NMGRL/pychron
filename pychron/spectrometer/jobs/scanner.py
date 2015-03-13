@@ -236,7 +236,7 @@ class Scanner(Loggable):
         spec = self.spectrometer
         magnet = spec.magnet
 
-        period = spec.integration_time
+        period = spec.integration_time - magnet.settling_time
         # period = 0.1
         st = time.time()
         self.debug('scan limits: low={}, high={}'.format(self.tool.low, self.tool.high))
@@ -244,14 +244,19 @@ class Scanner(Loggable):
             if self._cancel_event.is_set():
                 self.debug('exiting scan. dac={}'.format(dac))
                 break
+
             magnet.set_dac(dac, verbose=False)
+            time.sleep(period)
+            if i == 0:
+                time.sleep(3)
+
             v = spec.get_intensity(self.spectrometer.reference_detector)
 
             xs = hstack((xs, [dac]))
             ys = hstack((ys, [v]))
             line.index.set_data(xs)
             line.value.set_data(ys)
-            time.sleep(period)
+
 
         self.plotid += 1
         self.debug('duration={:0.3f}'.format(time.time() - st))

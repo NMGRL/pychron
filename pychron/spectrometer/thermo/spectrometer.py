@@ -378,7 +378,7 @@ class Spectrometer(SpectrometerDevice):
             default_state = self.config_get(config, name, 'default_state', default=True, cast='boolean')
             isotope = self.config_get(config, name, 'isotope')
             kind = self.config_get(config, name, 'kind', default='Faraday', optional=True)
-            pt = self.config_get(config, name, 'protection_threshold', default=None, optional=True)
+            pt = self.config_get(config, name, 'protection_threshold', default=None, optional=True, cast='float')
 
             self._add_detector(name=name,
                                # relative_position=relative_position,

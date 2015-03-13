@@ -58,7 +58,7 @@ class ArgusMagnet(BaseMagnet, SpectrometerDevice):
             for pd in self.protected_detectors:
                 det = self.spectrometer.get_detector(pd)
                 self.debug('Checking detector "{}". Protection Threshold: {}'.format(pd, det.protection_threshold))
-                if dv > det.protection_threshold:
+                if det.protection_threshold and dv > det.protection_threshold:
                     self.ask('ProtectDetector {},On'.format(pd), verbose=verbose)
                     unprotect.append(pd)
 
