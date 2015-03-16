@@ -23,7 +23,7 @@ from logging.handlers import RotatingFileHandler
 import shutil
 # =============local library imports  =========================
 from pychron.paths import paths
-from pychron.core.helpers.filetools import list_directory, add_extension
+from pychron.core.helpers.filetools import list_directory
 from filetools import unique_path2
 
 NAME_WIDTH = 40
