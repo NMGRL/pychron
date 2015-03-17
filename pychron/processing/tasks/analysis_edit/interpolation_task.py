@@ -100,9 +100,15 @@ class InterpolationTask(AnalysisEditTask):
     days_pad = Int(0)
     hours_pad = Int(18)
 
+    # def _dclicked_analysis_group_hook(self, unks, b):
+    #     self.active_editor.set_references([bi.analysis for bi in b
+    #                                        if bi.analysis_type.name == self.default_reference_analysis_type])
+
     def _dclicked_analysis_group_hook(self, unks, b):
-        self.active_editor.set_references([bi.analysis for bi in b
-                                           if bi.analysis_type.name == self.default_reference_analysis_type])
+        refs = [bi.analysis for bi in b
+                if bi.analysis_type.name == self.active_editor.default_reference_analysis_type]
+
+        self.active_editor.set_references(refs)
 
     def _get_analyses_to_group(self):
         sitems = super(InterpolationTask, self)._get_analyses_to_group()

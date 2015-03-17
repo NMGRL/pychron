@@ -95,8 +95,18 @@ class BlankEditAction(AnalysisEditAction):
     dname = 'Blanks'
     # accelerator = 'Ctrl+B'
     method = 'new_blank'
-    task_id = 'pychron.processing.blanks'
+    # task_id = 'pychron.processing.blanks'
+    task_id = 'pychron.processing.reduction'
     id = 'pychron.blank'
+
+
+class ICFactorAction(AnalysisEditAction):
+    name = 'IC Factor...'
+    dname = 'IC Factor'
+    # accelerator = 'Ctrl+shift+i'
+    method = 'new_ic_factor'
+    task_id = 'pychron.processing.reduction'
+    id = 'pychron.ic_factor'
 
 # class SeriesAction(AnalysisEditAction):
 #     name = 'Series...'
@@ -119,13 +129,7 @@ class RefitIsotopeEvolutionAction(AnalysisEditAction):
     task_id = 'pychron.processing.isotope_evolution'
 
 
-class ICFactorAction(AnalysisEditAction):
-    name = 'IC Factor...'
-    dname = 'IC Factor'
-    # accelerator = 'Ctrl+shift+i'
-    method = 'new_ic_factor'
-    task_id = 'pychron.processing.ic_factor'
-    id = 'pychron.ic_factor'
+
 
 
 class DiscriminationAction(AnalysisEditAction):

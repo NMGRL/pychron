@@ -22,35 +22,12 @@ This file defines the text for various default files.
 
 Values are used in pychron.paths when building directory structure
 """
+from pychron.core.helpers.filetools import to_bool
+
 EDIT_UI_DEFAULT = """
 predefined: Simple
 """
 
-SIMPLE_UI_DEFAULT = """
-- pychron.update.check_for_updates
-- pychron.figure.ideogram
-- pychron.figure.spectrum
-- pychron.figure.inv_isochron
-- pychron.figure.series
-- pychron.figure.composite
-- pychron.figure.xyscatter
-- pychron.figure.file_ideogram
-- pychron.figure.file_spectrum
-- pychron.figure.refresh
-- pychron.reduction.iso_evo
-- pychron.reduction.blanks
-- pychron.reduction.ic_factor
-- pychron.reduction.flux
-- pychron.misc.tag
-- pychron.misc.db_save
-- pychron.misc.clear_cache
-- pychron.experiment.edit.reset
-- pychron.experiment.open_queue_conditionals
-- pychron.experiment.open_system_conditionals
-- pychron.experiment.open_experiment
-- pychron.experiment.open_last_experiment
-- pychron.experiment.new_experiment
-"""
 TASK_EXTENSION_DEFAULT = """
 -
  plugin_id: pychron.update.plugin
@@ -77,7 +54,7 @@ TASK_EXTENSION_DEFAULT = """
   - pychron.reduction.iso_evo, True
   - pychron.reduction.blanks, True
   - pychron.reduction.ic_factor, True
-  - pychron.reduction.discrimination, True
+  - pychron.reduction.discrimination, False
   - pychron.reduction.flux, True
 -
  plugin_id: pychron.processing.plugin.grouping
@@ -126,10 +103,15 @@ TASK_EXTENSION_DEFAULT = """
   - pychron.experiment.new_pattern, False
   - pychron.experiment.open_pattern, False
 """
-# -
-# plugin_id: pychron.recall
-#  actions:
-#   - pychron.recall.recall, True
+actions = []
+for line in TASK_EXTENSION_DEFAULT.split('\n'):
+    line = line.strip()
+    if line.startswith('- pychron.'):
+        a,b = line.split(',')
+        if to_bool(b):
+            actions.append(a)
+
+SIMPLE_UI_DEFAULT = '\n'.join(actions)
 
 DEFAULT_INITIALIZATION = '''<root>
     <globals>

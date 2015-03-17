@@ -349,7 +349,7 @@ class Paths(object):
         self.plotter_options = join(self.plotter_options_dir, 'plotter_options.p')
         self.task_extensions_file = join(self.hidden_dir, 'task_extensions.yaml')
         self.simple_ui_file = join(self.hidden_dir, 'simple_ui.yaml')
-        self.edit_ui_defaults =join(self.hidden_dir, 'edit_ui.yaml')
+        self.edit_ui_defaults = join(self.hidden_dir, 'edit_ui.yaml')
 
     def write_defaults(self):
         if os.environ.get('TRAVIS_CI', 'False') == 'False' and \
@@ -365,9 +365,11 @@ class Paths(object):
                      (self.system_health, SYSTEM_HEALTH),
                      (self.simple_ui_file, SIMPLE_UI_DEFAULT),
                      (self.edit_ui_defaults, EDIT_UI_DEFAULT),
-                     (self.task_extensions_file, TASK_EXTENSION_DEFAULT)):
+                     (self.task_extensions_file, TASK_EXTENSION_DEFAULT)
+                     ):
             overwrite = d in (SYSTEM_HEALTH, SIMPLE_UI_DEFAULT,TASK_EXTENSION_DEFAULT)
-            overwrite = d in (SYSTEM_HEALTH, SIMPLE_UI_DEFAULT,)
+            # overwrite = d in (SYSTEM_HEALTH, SIMPLE_UI_DEFAULT,)
+            # print p
             self._write_default_file(p, d, overwrite)
 
     def _write_default_file(self, p, default, overwrite=False):

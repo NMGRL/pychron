@@ -125,11 +125,11 @@ def analysis_group():
 #                  ModifyIdentifierAction(),
 #                  name='misc')
 
-
-def activate_group():
-    return Group(ActivateBlankAction(),
-        ActivateRecallAction(),
-        ActivateIdeogramAction())
+#
+# def activate_group():
+#     return Group(ActivateBlankAction(),
+#         ActivateRecallAction(),
+#         ActivateIdeogramAction())
 
 
 class ProcessingPlugin(BaseTaskPlugin):
@@ -158,14 +158,18 @@ class ProcessingPlugin(BaseTaskPlugin):
             ('pychron.export',
              self._export_task_factory, 'Export'),
 
-            ('pychron.processing.blanks',
-             self._blanks_edit_task_factory, 'Blanks'),
+            ('pychron.processing.reduction',
+             self._reduction_task_factory, 'Reduction'),
+            # ('pychron.processing.blanks',
+            #  self._blanks_edit_task_factory, 'Blanks'),
+            # ('pychron.processing.ic_factor',
+            #  self._ic_factor_task_factory, 'IC Factor'),
+
             ('pychron.processing.flux',
              self._flux_task_factory, 'Flux'),
             ('pychron.processing.isotope_evolution',
              self._iso_evo_task_factory, 'Isotope Evolution'),
-            ('pychron.processing.ic_factor',
-             self._ic_factor_task_factory, 'IC Factor'),
+
             ('pychron.processing.discrimination',
              self._discrimination_task_factory, 'Discrimination'),
 
@@ -205,10 +209,19 @@ class ProcessingPlugin(BaseTaskPlugin):
 
         return ExportTask(manager=self._processor_factory())
 
-    def _blanks_edit_task_factory(self):
-        from pychron.processing.tasks.blanks.blanks_task import BlanksTask
-
-        return BlanksTask(manager=self._processor_factory())
+    def _reduction_task_factory(self):
+        from pychron.processing.tasks.reduction.reduction_task import ReductionTask
+        return ReductionTask(manager=self._processor_factory())
+    # def _blanks_edit_task_factory(self):
+    #     from pychron.processing.tasks.blanks.blanks_task import BlanksTask
+    #
+    #     return BlanksTask(manager=self._processor_factory())
+    #
+    # def _ic_factor_task_factory(self):
+    #     from pychron.processing.tasks.detector_calibration.intercalibration_factor_task import \
+    #         IntercalibrationFactorTask
+    #
+    #     return IntercalibrationFactorTask(manager=self._processor_factory())
 
     def _flux_task_factory(self):
         from pychron.processing.tasks.flux.flux_task import FluxTask
@@ -225,11 +238,6 @@ class ProcessingPlugin(BaseTaskPlugin):
 
         return IsotopeEvolutionTask(manager=self._processor_factory())
 
-    def _ic_factor_task_factory(self):
-        from pychron.processing.tasks.detector_calibration.intercalibration_factor_task import \
-            IntercalibrationFactorTask
-
-        return IntercalibrationFactorTask(manager=self._processor_factory())
 
     def _discrimination_task_factory(self):
         from pychron.processing.tasks.detector_calibration.discrimination_task import DiscrimintationTask
