@@ -40,7 +40,8 @@ from pychron.processing.tasks.actions.processing_actions import IdeogramAction, 
     GraphGroupSelectedAction, IdeogramFromFile, SpectrumFromFile, MakeAnalysisGroupAction, GraphGroupbySampleAction, \
     DeleteAnalysisGroupAction, XYScatterAction, ModifyK3739Action, GroupbySampleAction, \
     SplitEditorActionVert, ConfigureRecallAction, ActivateBlankAction, ActivateRecallAction, ActivateIdeogramAction, \
-    ModifyIdentifierAction, CompositeAction, SetSQLiteAction, TimeViewAction, SplitEditorActionHor
+    ModifyIdentifierAction, CompositeAction, SetSQLiteAction, TimeViewAction, SplitEditorActionHor, SpectrumFileTemplate, \
+    IdeogramFileTemplate
 
 from pychron.processing.tasks.actions.edit_actions import BlankEditAction, \
     FluxAction, IsotopeEvolutionAction, ICFactorAction, \
@@ -386,8 +387,12 @@ class ProcessingPlugin(BaseTaskPlugin):
                   SchemaAddition(id='pychron.figure.series', factory=SeriesAction, path=fgpath),
                   SchemaAddition(id='pychron.figure.composite', factory=CompositeAction, path=fgpath),
                   SchemaAddition(id='pychron.figure.xyscatter', factory=XYScatterAction, path=fgpath),
+
                   SchemaAddition(id='pychron.figure.file_ideogram', factory=IdeogramFromFile, path=ffpath),
                   SchemaAddition(id='pychron.figure.file_spectrum', factory=SpectrumFromFile, path=ffpath),
+                  SchemaAddition(id='pychron.figure.ideogram_file_template', factory=IdeogramFileTemplate, path=ffpath),
+                  SchemaAddition(id='pychron.figure.spectrum_file_template', factory=SpectrumFileTemplate, path=ffpath),
+
                   SchemaAddition(id='pychron.figure.refresh', factory=RefreshActiveEditorAction, path=fgpath)]),
 
                  ('{}.agroup'.format(self.id), '', 'Analysis Grouping',

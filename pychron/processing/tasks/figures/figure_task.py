@@ -105,21 +105,6 @@ class FigureTask(AnalysisEditTask):
     def activate_ideogram_editor(self):
         self._activate_editor('ideogram')
 
-    def _activate_editor(self, kind):
-        func = getattr(self, 'new_{}'.format(kind))
-        klass = globals()['{}Editor'.format(kind.capitalize())]
-        if self.active_editor is None:
-            print 'new editor'
-            func()
-        else:
-            for editor in self.editor_area.editors:
-                if isinstance(editor, klass):
-                    self.activate_editor(editor)
-                    break
-            else:
-                print 'new editor'
-                func()
-
     # ===============================================================================
     # task protocol
     # ===============================================================================
@@ -142,20 +127,6 @@ class FigureTask(AnalysisEditTask):
     # ===============================================================================
     # context menu handler
     # ===============================================================================
-    def _clear_group(self):
-        for i in self.unknowns_pane.items:
-            i.group_id = 0
-            i.graph_id = 0
-
-        self.unknowns_pane.refresh_needed = True
-
-    @on_trait_change('browser_model:plot_selected')
-    def _handle_plot_selected(self, new):
-        if new:
-            self.plot_selected_grouped()
-        else:
-            self.plot_selected()
-
     def plot_selected_grouped(self):
         self.debug('plot selected grouped')
         if self.has_active_editor():
@@ -239,69 +210,6 @@ class FigureTask(AnalysisEditTask):
     # ===============================================================================
     # figures
     # ===============================================================================
-    def _debug_add(self):
-        from pychron.globals import globalv
-
-        self.debug('debug add figure_debug: {}'.format(globalv.figure_debug))
-        if globalv.figure_debug:
-            if self.browser_model:
-                ans = self.browser_model.analysis_table.analyses
-                if ans:
-                    self.unknowns_pane.items = ans
-
-    def new_table(self, ans=None):
-        if self.has_active_editor():
-            if isinstance(self.active_editor, IdeogramEditor):
-                from pychron.processing.tasks.tables.editors.fusion.fusion_table_editor import FusionTableEditor
-
-                klass = FusionTableEditor
-            elif isinstance(self.active_editor, SpectrumEditor):
-                from pychron.processing.tasks.tables.editors.step_heat.step_heat_table_editor import StepHeatTableEditor
-
-                klass = StepHeatTableEditor
-            else:
-                return
-
-            name = self.active_editor.name.replace(self.active_editor.basename, '')
-            return self._new_table(ans, name, klass)
-            # # new figure editor
-            # editor = klass(
-            # name=name,
-            # processor=self.manager)
-            #
-            # if ans is None:
-            #         ans = self.unknowns_pane.items
-            #
-            #     if ans:
-            #         editor.analyses = ans
-            #         editor.set_name()
-            #         editor.rebuild()
-            #         # if set_ans:
-            #         #     self.unknowns_pane.items = ans
-            #
-            #     self._open_editor(editor)
-            #
-            #     # add_associated = False
-            #     # if not add_associated:
-            #     #     self.debug('Not adding associated editors')
-            #     # else:
-            #     #     if tklass and add_table:
-            #     #         # open table
-            #     #         teditor = self._new_table(ans, name, tklass)
-            #     #         if teditor:
-            #     #             editor.associated_editors.append(weakref.ref(teditor)())
-            #     #
-            #     #     if add_iso:
-            #     #         # open associated isochron
-            #     #         ieditor = self._new_associated_isochron(ans, name)
-            #     #         if ieditor:
-            #     #             editor.associated_editors.append(weakref.ref(ieditor)())
-            #     #             ieditor.parent_editor = editor
-            #
-            #     # activate figure editor
-            #     # self.editor_area.activate_editor(editor)
-            #     return editor
-
     def new_ideogram(self, ans=None, klass=None, tklass=None,
                      name='Ideo', set_ans=True,
                      add_table=True, add_iso=True):
@@ -402,6 +310,7 @@ class FigureTask(AnalysisEditTask):
         p = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages/gee_sample_ages7.txt'
         p = '/Users/ross/Programming/git/dissertation/data/minnabluff/dryvalleys_comp.txt'
         p = '/Users/ross/Programming/git/dissertation/data/minnabluff/dryvalleys_comp2.txt'
+        p = os.path.join(paths.data_dir, 'ideogram_template.txt')
         if not os.path.isfile(p):
             self.open_file_dialog(default_directory=paths.data_dir)
 
@@ -421,6 +330,23 @@ class FigureTask(AnalysisEditTask):
     # ===============================================================================
     # actions
     # ===============================================================================
+
+    def new_table(self, ans=None):
+        if self.has_active_editor():
+            if isinstance(self.active_editor, IdeogramEditor):
+                from pychron.processing.tasks.tables.editors.fusion.fusion_table_editor import FusionTableEditor
+
+                klass = FusionTableEditor
+            elif isinstance(self.active_editor, SpectrumEditor):
+                from pychron.processing.tasks.tables.editors.step_heat.step_heat_table_editor import StepHeatTableEditor
+
+                klass = StepHeatTableEditor
+            else:
+                return
+
+            name = self.active_editor.name.replace(self.active_editor.basename, '')
+            return self._new_table(ans, name, klass)
+
     def refresh_active_editor(self):
         if self.has_active_editor():
             self.active_editor.rebuild()
@@ -497,6 +423,38 @@ class FigureTask(AnalysisEditTask):
     # ===============================================================================
     # private
     # ===============================================================================
+    def _clear_group(self):
+        for i in self.unknowns_pane.items:
+            i.group_id = 0
+            i.graph_id = 0
+
+        self.unknowns_pane.refresh_needed = True
+
+    def _debug_add(self):
+        from pychron.globals import globalv
+
+        self.debug('debug add figure_debug: {}'.format(globalv.figure_debug))
+        if globalv.figure_debug:
+            if self.browser_model:
+                ans = self.browser_model.analysis_table.analyses
+                if ans:
+                    self.unknowns_pane.items = ans
+
+    def _activate_editor(self, kind):
+        func = getattr(self, 'new_{}'.format(kind))
+        klass = globals()['{}Editor'.format(kind.capitalize())]
+        if self.active_editor is None:
+            print 'new editor'
+            func()
+        else:
+            for editor in self.editor_area.editors:
+                if isinstance(editor, klass):
+                    self.activate_editor(editor)
+                    break
+            else:
+                print 'new editor'
+                func()
+
     def _new_figure(self, ans, name, klass, tklass=None,
                     add_table=True,
                     add_iso=True,
@@ -761,6 +719,12 @@ class FigureTask(AnalysisEditTask):
     # def _selected_projects_changed(self, old, new):
     #     # self._load_project_figures(new)
     #     super(FigureTask, self)._selected_projects_changed(new)
+    @on_trait_change('browser_model:plot_selected')
+    def _handle_plot_selected(self, new):
+        if new:
+            self.plot_selected_grouped()
+        else:
+            self.plot_selected()
 
     @on_trait_change('browser_model:selected_samples')
     def _selected_samples_changed(self, new):
@@ -980,3 +944,40 @@ class FigureTask(AnalysisEditTask):
 #             gid += 1
 #
 #         self.active_editor.rebuild(compress_groups=False)
+# # new figure editor
+# editor = klass(
+# name=name,
+# processor=self.manager)
+#
+# if ans is None:
+#         ans = self.unknowns_pane.items
+#
+#     if ans:
+#         editor.analyses = ans
+#         editor.set_name()
+#         editor.rebuild()
+#         # if set_ans:
+#         #     self.unknowns_pane.items = ans
+#
+#     self._open_editor(editor)
+#
+#     # add_associated = False
+#     # if not add_associated:
+#     #     self.debug('Not adding associated editors')
+#     # else:
+#     #     if tklass and add_table:
+#     #         # open table
+#     #         teditor = self._new_table(ans, name, tklass)
+#     #         if teditor:
+#     #             editor.associated_editors.append(weakref.ref(teditor)())
+#     #
+#     #     if add_iso:
+#     #         # open associated isochron
+#     #         ieditor = self._new_associated_isochron(ans, name)
+#     #         if ieditor:
+#     #             editor.associated_editors.append(weakref.ref(ieditor)())
+#     #             ieditor.parent_editor = editor
+#
+#     # activate figure editor
+#     # self.editor_area.activate_editor(editor)
+#     return editor

@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.file_dialog import FileDialog
+from pyface.message_dialog import information
 from traits.api import Str, List
 # from pyface.action.action import Action
 # from pyface.tasks.action.task_action import TaskAction
@@ -72,9 +74,9 @@ class GroupSelectedAction(GroupAction):
 
 
 # def perform(self, event):
-#         task = event.task
-#         if task.id == 'pychron.processing.figures':
-#             task.group_selected()
+# task = event.task
+# if task.id == 'pychron.processing.figures':
+# task.group_selected()
 
 class GroupbySampleAction(GroupAction):
     name = 'Group by Sample'
@@ -199,6 +201,65 @@ class InverseIsochronAction(FigureAction):
     id = 'pychron.inverse_isochron'
 
 
+class TemplateAction(Action):
+    template = ''
+    fname = ''
+
+    def perform(self, event):
+        import os
+        from pychron.globals import globalv
+        from pychron.paths import paths
+
+        name = self.fname
+        if globalv.debug:
+            p = os.path.join(paths.data_dir, '{}_template.txt'.format(name.lower()))
+        else:
+            p = None
+            dlg = FileDialog(action='save as', default_directory=paths.data_dir)
+            if dlg.open():
+                p = dlg.path
+
+        if p is not None:
+            with open(p, 'w') as wfile:
+                wfile.write(self.template)
+            information(event.task.window.control, 'An example {} template was written to {}\n\n'
+                                                   'Replace the placeholder data in the file with your data\n'
+                                                   'Make sure to use "TABS" to deliminate columns'.format(name, p))
+
+
+class IdeogramFileTemplate(TemplateAction):
+    name = 'Make Ideogram File Template'
+    dname = 'Make Ideogram File Template'
+    fname = 'Ideogram'
+    template = '''group\trunid\taliquot\tsample\tage\tage_err
+0\t12345-01\t01\tFC-2\t10.1\t0.6
+0\t12345-02\t02\tFC-2\t10.2\t0.1
+0\t12345-03\t03\tFC-2\t10.3\t0.3
+0\t12345-04\t04\tFC-2\t10.4\t0.4
+0\t12345-05\t05\tFC-2\t10.1\t0.2
+1\t12346-01\t01\tJR-2\t11.1\t0.6
+1\t12346-02\t02\tJR-2\t11.2\t0.1
+1\t12346-03\t03\tJR-2\t11.3\t0.3
+1\t12346-04\t04\tJR-2\t11.4\t0.4
+1\t12346-05\t05\tJR-2\t11.1\t0.2
+'''
+
+
+class SpectrumFileTemplate(TemplateAction):
+    name = 'Make Spectrum File Template'
+    dname = 'Make Spectrum File Template'
+    fname = 'Spectrum'
+    template = '''age\tage_err\tk39
+1\t0.1\t1
+1\t0.2\t1
+1\t0.3\t1
+1\t0.1\t1
+1\t0.4\t1
+1\t0.2\t1
+1\t0.1\t1
+'''
+
+
 class IdeogramFromFile(FigureAction):
     name = 'Ideogram'
     dname = 'Ideogram From File'
@@ -218,13 +279,15 @@ class SpectrumFromFile(FigureAction):
 class TimeViewAction(Action):
     name = 'Time View'
     accelerator = 'Ctrl+t'
+
     def perform(self, event):
         app = event.task.window.application
         from pychron.processing.tasks.browser.time_view import TimeViewModel
         from pychron.processing.tasks.browser.time_view import TimeView
+
         manager = app.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
 
-        m = TimeViewModel(db = manager.db,
+        m = TimeViewModel(db=manager.db,
                           context_menu_enabled=False)
         m.load()
         v = TimeView(model=m)
@@ -309,6 +372,7 @@ class ExportAnalysesAction(Action):
 
 class SetSQLiteAction(Action):
     name = 'Set SQLite Dataset...'
+
     def perform(self, event):
         app = event.task.window.application
         man = app.get_service('pychron.processing.processor.Processor')

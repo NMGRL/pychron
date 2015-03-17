@@ -47,6 +47,8 @@ TASK_EXTENSION_DEFAULT = """
   - pychron.figure.xyscatter, True
   - pychron.figure.file_ideogram, True
   - pychron.figure.file_spectrum, True
+  - pychron.figure.ideogram_file_template, True
+  - pychron.figure.spectrum_file_template, True
   - pychron.figure.refresh, True
 -
  plugin_id: pychron.processing.plugin.reduction

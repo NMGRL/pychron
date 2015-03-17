@@ -80,11 +80,12 @@ class IdeogramEditor(FigureEditor):
             plotter_options = pom.plotter_options
 
         from pychron.processing.plotters.ideogram.ideogram_model import IdeogramModel
+
         model, component = self._make_component(IdeogramModel, ans, plotter_options)
         return model, component
 
     # def get_component(self, ans, plotter_options):
-    #     # meta = None
+    # # meta = None
     #     # if self.figure_model:
     #     #     meta = self.figure_model.dump_metadata()
     #
@@ -139,8 +140,9 @@ class IdeogramEditor(FigureEditor):
                     f = FileAnalysis(age=float(d['age']),
                                      age_err=float(d['age_err']),
                                      record_id=d['runid'],
-                                     sample=d['sample'],
-                                     group_id=int(d['group']))
+                                     sample=d.get('sample', ''),
+                                     aliquot=int(d.get('aliquot', 0)),
+                                     group_id=int(d.get('group',0)))
                     yield f
 
         ans = list(gen())

@@ -94,9 +94,11 @@ class BaseColumnParser(HasTraits):
 
 
 class CSVColumnParser(BaseColumnParser):
+    delimiter = ','
+
     def _load(self, p, header_idx):
         with open(p, 'U') as rfile:
-            reader = csv.reader(rfile)
+            reader = csv.reader(rfile, delimiter=self.delimiter)
             self._lines = list(reader)
             self._header = map(str.strip, self._lines[header_idx])
             self._nrows = len(self._lines)

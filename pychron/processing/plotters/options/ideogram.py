@@ -168,6 +168,7 @@ class IdeogramOptions(AgeOptions):
         if info.result:
             self.analysis_label_format = lm.formatter
             self.analysis_label_display = lm.label
+            self.refresh_plot_needed = True
 
     def _get_groups(self):
         xgrp = VGroup(Item('index_attr',

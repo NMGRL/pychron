@@ -83,7 +83,7 @@ class FigureEditor(GraphEditor):
             if p.endswith('.xls'):
                 self.information_dialog('Plotting Spectra from Excel file not yet implemented')
             else:
-                par = CSVColumnParser()
+                par = CSVColumnParser(delimiter='\t')
                 par.load(p)
                 self.analyses = self._get_items_from_file(par)
                 self._update_analyses()
