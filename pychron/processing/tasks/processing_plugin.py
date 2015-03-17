@@ -93,7 +93,7 @@ def analysis_group():
 # return SMenu(SetInterpretedAgeAction(),
 # OpenInterpretedAgeAction(),
 # OpenInterpretedAgeGroupAction(),
-#                  DeleteInterpretedAgeGroupAction(),
+# DeleteInterpretedAgeGroupAction(),
 #                  MakeGroupFromFileAction(),
 #                  name='Interpreted Ages')
 #
@@ -128,8 +128,8 @@ def analysis_group():
 
 def activate_group():
     return Group(ActivateBlankAction(),
-                 ActivateRecallAction(),
-                 ActivateIdeogramAction())
+        ActivateRecallAction(),
+        ActivateIdeogramAction())
 
 
 class ProcessingPlugin(BaseTaskPlugin):
@@ -318,7 +318,7 @@ class ProcessingPlugin(BaseTaskPlugin):
         fflag = False
         mflag = False
         gflag = False
-
+        rflag = False
         for eid, actions in self._get_extensions():
             for ai in actions:
                 if not aflag and ai.id.startswith('pychron.agroup'):
@@ -341,11 +341,17 @@ class ProcessingPlugin(BaseTaskPlugin):
                     gflag = True
                     additions.append(SchemaAddition(id='grouping_group',
                                                     factory=grouping_group,
+                                                    before='reduction_group',
                                                     path='MenuBar/data.menu'))
                 elif not mflag and ai.id.startswith('pychron.misc'):
                     mflag = True
                     additions.append(SchemaAddition(id='misc_Group',
                                                     factory=misc_group,
+                                                    path='MenuBar/data.menu'))
+                elif not rflag and ai.id.startswith('pychron.reduction'):
+                    rflag = True
+                    additions.append(SchemaAddition(id='reduction_group',
+                                                    factory=reduction_group,
                                                     path='MenuBar/data.menu'))
 
         extensions.append(TaskExtension(actions=additions))
@@ -365,7 +371,7 @@ class ProcessingPlugin(BaseTaskPlugin):
         gggpath = 'MenuBar/data.menu/grouping.menu/graph.grouping'
         ffpath = 'MenuBar/data.menu/figures.group/figure.files.menu'
         apath = 'MenuBar/data.menu/analysis_grouping.menu'
-        return [('{}.figures'.format(self.id),'', 'Figures',
+        return [('{}.figures'.format(self.id), '', 'Figures',
                  [SchemaAddition(id='pychron.figure.spectrum', factory=SpectrumAction, path=fgpath),
                   SchemaAddition(id='pychron.figure.ideogram', factory=IdeogramAction, path=fgpath),
                   SchemaAddition(id='pychron.figure.inv_isochron', factory=InverseIsochronAction, path=fgpath),
@@ -376,146 +382,146 @@ class ProcessingPlugin(BaseTaskPlugin):
                   SchemaAddition(id='pychron.figure.file_spectrum', factory=SpectrumFromFile, path=ffpath),
                   SchemaAddition(id='pychron.figure.refresh', factory=RefreshActiveEditorAction, path=fgpath)]),
 
-                ('{}.agroup'.format(self.id), '', 'Analysis Grouping',
-                 [SchemaAddition(id='pychron.agroup.make', factory=MakeAnalysisGroupAction, path=apath),
-                  SchemaAddition(id='pychron.agroup.delete', factory=DeleteAnalysisGroupAction, path=apath)]),
-                ('{}.grouping'.format(self.id), '', 'Grouping',
-                 [SchemaAddition(id='pychron.grouping.selected', factory=GroupSelectedAction, path=ggpath),
-                  SchemaAddition(id='pychron.grouping.aliquot', factory=GroupbyAliquotAction, path=ggpath),
-                  SchemaAddition(id='pychron.grouping.lnumber', factory=GroupbyLabnumberAction, path=ggpath),
-                  SchemaAddition(id='pychron.grouping.sample', factory=GroupbySampleAction, path=ggpath),
-                  SchemaAddition(id='pychron.grouping.clear', factory=ClearGroupAction, path=ggpath),
+                 ('{}.agroup'.format(self.id), '', 'Analysis Grouping',
+                  [SchemaAddition(id='pychron.agroup.make', factory=MakeAnalysisGroupAction, path=apath),
+                   SchemaAddition(id='pychron.agroup.delete', factory=DeleteAnalysisGroupAction, path=apath)]),
+                 ('{}.grouping'.format(self.id), '', 'Grouping',
+                  [SchemaAddition(id='pychron.grouping.selected', factory=GroupSelectedAction, path=ggpath),
+                   SchemaAddition(id='pychron.grouping.aliquot', factory=GroupbyAliquotAction, path=ggpath),
+                   SchemaAddition(id='pychron.grouping.lnumber', factory=GroupbyLabnumberAction, path=ggpath),
+                   SchemaAddition(id='pychron.grouping.sample', factory=GroupbySampleAction, path=ggpath),
+                   SchemaAddition(id='pychron.grouping.clear', factory=ClearGroupAction, path=ggpath),
 
-                  SchemaAddition(id='pychron.grouping.gselected', factory=GraphGroupSelectedAction, path=gggpath),
-                  SchemaAddition(id='pychron.grouping.gsample', factory=GraphGroupbySampleAction, path=gggpath)]),
+                   SchemaAddition(id='pychron.grouping.gselected', factory=GraphGroupSelectedAction, path=gggpath),
+                   SchemaAddition(id='pychron.grouping.gsample', factory=GraphGroupbySampleAction, path=gggpath)]),
 
-                ('{}.misc'.format(self.id),'', 'Misc',
-                 [SchemaAddition(id='pychron.misc.tag', factory=TagAction, path=mpath),
-                  SchemaAddition(id='pychron.misc.drtag', factory=DataReductionTagAction, path=mpath),
-                  SchemaAddition(id='pychron.misc.select_drtag', factory=SelectDataReductionTagAction, path=mpath),
-                  SchemaAddition(id='pychron.misc.db_save', factory=DatabaseSaveAction, path=mpath),
-                  SchemaAddition(id='pychron.misc.clear_cache', factory=ClearAnalysisCacheAction, path=mpath),
-                  # SchemaAddition(id='pychron.misc', factory=MakeTASAction, path=mpath),
-                  SchemaAddition(id='pychron.misc.modify_k', factory=ModifyK3739Action, path=mpath),
-                  # SchemaAddition(id='pychron.misc', factory=CalculationViewAction, path=mpath),
-                  # SchemaAddition(id='pychron.misc', factory=SummaryLabnumberAction, path=mpath),
-                  SchemaAddition(id='pychron.misc.modify_identifier', factory=ModifyIdentifierAction, path=mpath)]),
+                 ('{}.misc'.format(self.id), '', 'Misc',
+                  [SchemaAddition(id='pychron.misc.tag', factory=TagAction, path=mpath),
+                   SchemaAddition(id='pychron.misc.drtag', factory=DataReductionTagAction, path=mpath),
+                   SchemaAddition(id='pychron.misc.select_drtag', factory=SelectDataReductionTagAction, path=mpath),
+                   SchemaAddition(id='pychron.misc.db_save', factory=DatabaseSaveAction, path=mpath),
+                   SchemaAddition(id='pychron.misc.clear_cache', factory=ClearAnalysisCacheAction, path=mpath),
+                   # SchemaAddition(id='pychron.misc', factory=MakeTASAction, path=mpath),
+                   SchemaAddition(id='pychron.misc.modify_k', factory=ModifyK3739Action, path=mpath),
+                   # SchemaAddition(id='pychron.misc', factory=CalculationViewAction, path=mpath),
+                   # SchemaAddition(id='pychron.misc', factory=SummaryLabnumberAction, path=mpath),
+                   SchemaAddition(id='pychron.misc.modify_identifier', factory=ModifyIdentifierAction, path=mpath)]),
 
-                ('{}.reduction'.format(self.id), '', 'Reduction',
-                 [SchemaAddition(id='pychron.reduction.iso_evo', factory=IsotopeEvolutionAction, path=rgpath),
-                  SchemaAddition(id='pychron.reduction.blanks', factory=BlankEditAction, path=rgpath),
-                  SchemaAddition(id='pychron.reduction.ic_factor', factory=ICFactorAction, path=rgpath),
-                  SchemaAddition(id='pychron.reduction.discrimination', factory=DiscriminationAction, path=rgpath),
-                  SchemaAddition(id='pychron.reduction.flux', factory=FluxAction, path=rgpath), ])]
+                 ('{}.reduction'.format(self.id), '', 'Reduction',
+                  [SchemaAddition(id='pychron.reduction.iso_evo', factory=IsotopeEvolutionAction, path=rgpath),
+                   SchemaAddition(id='pychron.reduction.blanks', factory=BlankEditAction, path=rgpath),
+                   SchemaAddition(id='pychron.reduction.ic_factor', factory=ICFactorAction, path=rgpath),
+                   SchemaAddition(id='pychron.reduction.discrimination', factory=DiscriminationAction, path=rgpath),
+                   SchemaAddition(id='pychron.reduction.flux', factory=FluxAction, path=rgpath), ])]
 
-# ============= EOF =============================================
+        # ============= EOF =============================================
 
-# def _dataset_factory(self):
-#     return DataSetTask(manager=self._prcoessor_factory())
+        # def _dataset_factory(self):
+        #     return DataSetTask(manager=self._prcoessor_factory())
 
-# def _vcs_data_task_factory(self):
-#     from pychron.processing.tasks.vcs_data.vcs_data_task import VCSDataTask
-#     return VCSDataTask(manager=self._processor_factory())
+        # def _vcs_data_task_factory(self):
+        #     from pychron.processing.tasks.vcs_data.vcs_data_task import VCSDataTask
+        #     return VCSDataTask(manager=self._processor_factory())
 
-# def _advanced_query_task_factory(self):
-#     from pychron.processing.tasks.query.advanced_query_task import AdvancedQueryTask
-#
-#     return AdvancedQueryTask(manager=self._processor_factory())
+        # def _advanced_query_task_factory(self):
+        #     from pychron.processing.tasks.query.advanced_query_task import AdvancedQueryTask
+        #
+        #     return AdvancedQueryTask(manager=self._processor_factory())
 
-# def _make_task_extension(self, actions, **kw):
-#     def make_schema(args):
-#         if len(args) == 3:
-#             mkw = {}
-#             i, f, p = args
-#         else:
-#             i, f, p, mkw = args
-#         return SchemaAddition(id=i, factory=f, path=p, **mkw)
-#
-#     return TaskExtension(actions=[make_schema(args)
-#                                   for args in actions], **kw)
-#
-# def _simple_ui_task_extensions(self):
-# actions = [('recall_action', RecallAction, 'MenuBar/file.menu'),
-#                ('recall_group', recall_group, 'MenuBar/data.menu', {'absolute_position': 'first'}),
-#                ('data', data_menu, 'MenuBar', {'before': 'tools.menu', 'after': 'view.menu'}),
-#                ('activate_group', activate_group, 'MenuBar/view.menu'),
-#                ('reduction_group', reduction_group, 'MenuBar/data.menu'),
-#                ('figure_group', figure_group, 'MenuBar/data.menu')]
-#     exts = [self._make_task_extension(actions)]
-#     return exts
-#
-# def _advanced_ui_task_extensions(self):
-#     actions = [('recall_action', RecallAction, 'MenuBar/file.menu'),
-#                # ('find_action', OpenAdvancedQueryAction, 'MenuBar/file.menu'),
-#                ('export_analyses', ExportAnalysesAction, 'MenuBar/file.menu'),
-#                ('set_sqlite_dataset', SetSQLiteAction, 'MenuBar/file.menu'),
-#
-#                ('batch_edit', BatchEditAction, 'MenuBar/Edit'),
-#
-#                ('recall_group', recall_group, 'MenuBar/data.menu', {'absolute_position': 'first'}),
-#                ('data', data_menu, 'MenuBar', {'before': 'tools.menu', 'after': 'view.menu'}),
-#
-#
-#                ('activate_group', activate_group, 'MenuBar/view.menu'),
-#                ('reduction_group', reduction_group, 'MenuBar/data.menu'),
-#                ('figure_group', figure_group, 'MenuBar/data.menu'),
-#                ('interpreted_group', interpreted_group, 'MenuBar/data.menu'),
-#                ('grouping_group', grouping_group, 'MenuBar/data.menu'),
-#
-#                ('misc_group', misc_group, 'MenuBar/data.menu'),
-#                # ('tag', TagAction, 'MenuBar/data.menu'),
-#                # ('database_save', DatabaseSaveAction, 'MenuBar/data.menu'),
-#
-#                # ('graph_grouping_group', graph_grouping_group, 'MenuBar/data.menu'),
-#                # ('clear_cache', ClearAnalysisCacheAction, 'MenuBar/data.menu'),
-#                ('make_analysis_group', analysis_group, 'MenuBar/data.menu'),
-#                ('make_data_tables', MakeDataTablesAction, 'MenuBar/data.menu',
-#                 {'absolute_position': 'last'}),
-#                # ('make_tas', MakeTASAction, 'MenuBar/data.menu'),
-#                # ('modify_k3739', ModifyK3739Action, 'MenuBar/data.menu'),
-#
-#                ('equil_inspector', EquilibrationInspectorAction, 'MenuBar/tools.menu'),
-#                ('split_editor_area', SplitEditorActionHor, 'MenuBar/window.menu'),
-#                ('split_editor_area', SplitEditorActionVert, 'MenuBar/window.menu')]
-#
-#     exts = [self._make_task_extension(actions)]
-#
-#     # use_vcs = to_bool(self.application.preferences.get('pychron.vcs.use_vcs'))
-#     # if use_vcs:
-#     # exts.append(self._make_task_extension([('vcs', vcs_menu, 'MenuBar', {'after': 'view.menu'}),
-#     #                                            ('vcs_pull', PullVCSAction, 'MenuBar/vcs.menu'),
-#     #                                            ('vcs_push', PushVCSAction, 'MenuBar/vcs.menu')]))
-#
-#     use_easy = to_bool(self.application.preferences.get('pychron.processing.use_easy'))
-#     if use_easy:
-#         def easy_group():
-#             return Group(EasyImportAction(),
-#                          EasyFiguresAction(),
-#                          EasyCompareAction(),
-#                          EasyTablesAction(),
-#                          EasySensitivityAction(),
-#                          EasyFaradayICAction(),
-#                          EasyAverageBlanksAction(),
-#                          id='easy.group')
-#
-#         grp = self._make_task_extension([('easy_group', easy_group, 'MenuBar/tools.menu')])
-#         a = self._make_task_extension(
-#             [('optimal_equilibration', CalcOptimalEquilibrationAction, 'MenuBar/tools.menu'),
-#              ('easy_fit', EasyFitAction, 'MenuBar/tools.menu')],
-#             task_id='pychron.processing.isotope_evolution')
-#
-#         b = self._make_task_extension([('easy_blanks', EasyBlanksAction, 'MenuBar/tools.menu')],
-#                                       task_id='pychron.processing.blanks')
-#
-#         c = self._make_task_extension([('easy_disc', EasyDiscriminationAction, 'MenuBar/tools.menu')],
-#                                       task_id='pychron.processing.discrimination')
-#
-#         d = self._make_task_extension([('easy_ic', EasyICAction, 'MenuBar/tools.menu')],
-#                                       task_id='pychron.processing.ic_factor')
-#
-#         e = self._make_task_extension([('easy_flux', EasyFluxAction, 'MenuBar/tools.menu')],
-#                                       task_id='pychron.processing.flux')
-#
-#         exts.extend((grp, a, b, c, d, e))
-#
-#     return exts
+        # def _make_task_extension(self, actions, **kw):
+        #     def make_schema(args):
+        #         if len(args) == 3:
+        #             mkw = {}
+        #             i, f, p = args
+        #         else:
+        #             i, f, p, mkw = args
+        #         return SchemaAddition(id=i, factory=f, path=p, **mkw)
+        #
+        #     return TaskExtension(actions=[make_schema(args)
+        #                                   for args in actions], **kw)
+        #
+        # def _simple_ui_task_extensions(self):
+        # actions = [('recall_action', RecallAction, 'MenuBar/file.menu'),
+        #                ('recall_group', recall_group, 'MenuBar/data.menu', {'absolute_position': 'first'}),
+        #                ('data', data_menu, 'MenuBar', {'before': 'tools.menu', 'after': 'view.menu'}),
+        #                ('activate_group', activate_group, 'MenuBar/view.menu'),
+        #                ('reduction_group', reduction_group, 'MenuBar/data.menu'),
+        #                ('figure_group', figure_group, 'MenuBar/data.menu')]
+        #     exts = [self._make_task_extension(actions)]
+        #     return exts
+        #
+        # def _advanced_ui_task_extensions(self):
+        #     actions = [('recall_action', RecallAction, 'MenuBar/file.menu'),
+        #                # ('find_action', OpenAdvancedQueryAction, 'MenuBar/file.menu'),
+        #                ('export_analyses', ExportAnalysesAction, 'MenuBar/file.menu'),
+        #                ('set_sqlite_dataset', SetSQLiteAction, 'MenuBar/file.menu'),
+        #
+        #                ('batch_edit', BatchEditAction, 'MenuBar/Edit'),
+        #
+        #                ('recall_group', recall_group, 'MenuBar/data.menu', {'absolute_position': 'first'}),
+        #                ('data', data_menu, 'MenuBar', {'before': 'tools.menu', 'after': 'view.menu'}),
+        #
+        #
+        #                ('activate_group', activate_group, 'MenuBar/view.menu'),
+        #                ('reduction_group', reduction_group, 'MenuBar/data.menu'),
+        #                ('figure_group', figure_group, 'MenuBar/data.menu'),
+        #                ('interpreted_group', interpreted_group, 'MenuBar/data.menu'),
+        #                ('grouping_group', grouping_group, 'MenuBar/data.menu'),
+        #
+        #                ('misc_group', misc_group, 'MenuBar/data.menu'),
+        #                # ('tag', TagAction, 'MenuBar/data.menu'),
+        #                # ('database_save', DatabaseSaveAction, 'MenuBar/data.menu'),
+        #
+        #                # ('graph_grouping_group', graph_grouping_group, 'MenuBar/data.menu'),
+        #                # ('clear_cache', ClearAnalysisCacheAction, 'MenuBar/data.menu'),
+        #                ('make_analysis_group', analysis_group, 'MenuBar/data.menu'),
+        #                ('make_data_tables', MakeDataTablesAction, 'MenuBar/data.menu',
+        #                 {'absolute_position': 'last'}),
+        #                # ('make_tas', MakeTASAction, 'MenuBar/data.menu'),
+        #                # ('modify_k3739', ModifyK3739Action, 'MenuBar/data.menu'),
+        #
+        #                ('equil_inspector', EquilibrationInspectorAction, 'MenuBar/tools.menu'),
+        #                ('split_editor_area', SplitEditorActionHor, 'MenuBar/window.menu'),
+        #                ('split_editor_area', SplitEditorActionVert, 'MenuBar/window.menu')]
+        #
+        #     exts = [self._make_task_extension(actions)]
+        #
+        #     # use_vcs = to_bool(self.application.preferences.get('pychron.vcs.use_vcs'))
+        #     # if use_vcs:
+        #     # exts.append(self._make_task_extension([('vcs', vcs_menu, 'MenuBar', {'after': 'view.menu'}),
+        #     #                                            ('vcs_pull', PullVCSAction, 'MenuBar/vcs.menu'),
+        #     #                                            ('vcs_push', PushVCSAction, 'MenuBar/vcs.menu')]))
+        #
+        #     use_easy = to_bool(self.application.preferences.get('pychron.processing.use_easy'))
+        #     if use_easy:
+        #         def easy_group():
+        #             return Group(EasyImportAction(),
+        #                          EasyFiguresAction(),
+        #                          EasyCompareAction(),
+        #                          EasyTablesAction(),
+        #                          EasySensitivityAction(),
+        #                          EasyFaradayICAction(),
+        #                          EasyAverageBlanksAction(),
+        #                          id='easy.group')
+        #
+        #         grp = self._make_task_extension([('easy_group', easy_group, 'MenuBar/tools.menu')])
+        #         a = self._make_task_extension(
+        #             [('optimal_equilibration', CalcOptimalEquilibrationAction, 'MenuBar/tools.menu'),
+        #              ('easy_fit', EasyFitAction, 'MenuBar/tools.menu')],
+        #             task_id='pychron.processing.isotope_evolution')
+        #
+        #         b = self._make_task_extension([('easy_blanks', EasyBlanksAction, 'MenuBar/tools.menu')],
+        #                                       task_id='pychron.processing.blanks')
+        #
+        #         c = self._make_task_extension([('easy_disc', EasyDiscriminationAction, 'MenuBar/tools.menu')],
+        #                                       task_id='pychron.processing.discrimination')
+        #
+        #         d = self._make_task_extension([('easy_ic', EasyICAction, 'MenuBar/tools.menu')],
+        #                                       task_id='pychron.processing.ic_factor')
+        #
+        #         e = self._make_task_extension([('easy_flux', EasyFluxAction, 'MenuBar/tools.menu')],
+        #                                       task_id='pychron.processing.flux')
+        #
+        #         exts.extend((grp, a, b, c, d, e))
+        #
+        #     return exts

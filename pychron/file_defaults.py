@@ -28,8 +28,8 @@ predefined: Simple
 
 SIMPLE_UI_DEFAULT = """
 - pychron.update.check_for_updates
-- pychron.figure.spectrum
 - pychron.figure.ideogram
+- pychron.figure.spectrum
 - pychron.figure.inv_isochron
 - pychron.figure.series
 - pychron.figure.composite
