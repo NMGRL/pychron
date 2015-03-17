@@ -371,7 +371,11 @@ class BrowserModel(BaseBrowserModel):
                 else:
                     return
 
-            ans = db.get_date_range_analyses(lpost, hpost, ordering='asc', spectrometer=ms)
+            ans = db.get_analyses_date_range(lpost, hpost, order='asc',
+                                             mass_spectrometers=ms)
+            # ans = db.get_date_range_analyses(lpost, hpost,
+            #                                  ordering='asc',
+            #                                  spectrometer=ms)
 
             def func(xi, prog, i, n):
                 if prog:
