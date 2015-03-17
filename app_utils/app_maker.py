@@ -57,6 +57,10 @@ def make():
         if name in flavors:
             template = Template()
             template.root = args.root[0]
+            print template.root
+            import sys
+            sys.exit()
+
             template.version = args.version[0]
             template.name = name
             template.use_egg = not args.egg

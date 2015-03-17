@@ -63,6 +63,9 @@ CHANGELOG
 * changed use_advanced_ui to EditUI... Use this menu action to configure the plugins visible menu actions. Predefined
   settings are included, Simple, Advanced. (Advanced enables all actions)
 
+#### 3/17/2015 ####
+* updated install.sh. this should be the only required file to install pychron. this downloads/installs git,conda and pychron
+
 ### Bug Fixes ###
 * fixed plotting ideograms of attributes other than age
 * improved database startup tests

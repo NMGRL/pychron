@@ -1,28 +1,146 @@
 #!/bin/sh
 
+
+#this script will install pychron and all dependencies including git and an anaconda environment
+#
+#1. install git, conda
+#2. make default support files directories
+#3. write a default xml initialization file
+#4. clone repo to .hidden/updates
+#5. create conda env
+#6. install dependencies
+#7. checkout branch
+#8. build application
+#9. move app to root
+#10. move app to /Applications
+
+
 #CONFIGURATION
 #--------------------------------------------------
-APP_PREFIX=experiment
-CONDA_ENV=pychron_env
-APP_NAME=experiment
-VERSION=2.0.5
-PYCHRONDATA_PREFIX=~/Pychrondata
+GIT_VERSION=1.9.5
+AUTOCONF_VERSION=2.68
+
+APP_PREFIX=view
+CONDA_ENV=pychron_env_install
+APP_NAME=view
+VERSION=dev
+PYCHRONDATA_PREFIX=~/Pychron_install
 URL=https://github.com/NMGRL/pychron.git
-ANACONDA_PREFIX=
+ANACONDA_PREFIX=$HOME/anaconda
+BRANCH=develop
+
+#--------------------------------------------------
+echo $APP_NAME
+if [ "${APP_NAME}" == "view" ]
+then
+echo $APP_NAME
+#Requirements
+CONDA_REQ="statsmodels>=0.5.0\n
+PyYAML>=3\n
+traits>=4.4\n
+traitsui>=4.4\n
+chaco>=4.4\n
+enable>=4.3\n
+pyface>=4.4\n
+envisage\n
+sqlalchemy\n
+Reportlab\n
+lxml\n
+xlrd\n
+xlwt\n
+pip\n
+PySide\n
+pil"
+
+PIP_REQ="uncertainties\n
+PyMySQL\n
+pint\n"
+fi
+
 #--------------------------------------------------
 
-#make root
-if [ -d $PYCHRONDATA_PREFIX ]
+# note the launching directory
+LDIR=`pwd`
+
+#install dependencies
+# install git
+
+
+cd
+if ! [ -d gitsrc ]
 then
-    echo $PYCHRONDATA_PREFIX already exists
+ echo making build directory at ${HOME}/gitsrc
+ mkdir gitsrc
+fi
+
+cd gitsrc
+
+if type "autoconf" > /dev/null
+then
+ echo autoconf already installed
 else
-    mkdir $PYCHRONDATA_PREFIX
-    mkdir $PYCHRONDATA_PREFIX/.hidden
-    mkdir $PYCHRONDATA_PREFIX/.hidden/updates
-    mkdir $PYCHRONDATA_PREFIX/setupfiles
+ echo Downloading autoconf
+ # install autoconf
+ curl -OL http://ftpmirror.gnu.org/autoconf/autoconf-${AUTOCONF_VERSION}.tar.gz
+ tar xzf autoconf-${AUTOCONF_VERSION}.tar.gz
+ cd autoconf-${AUTOCONF_VERSION}
+ ./configure --prefix=/usr/local
+ make
+ make install
+ echo Autoconf Installed
+fi
+
+if type "git" > /dev/null
+then
+ echo git already installed
+else
+ echo Downloading git
+ curl -LO https://github.com/git/git/archive/v${GIT_VERSION}.tar.gz
+ #curl -LO https://github.com/git/git/releases/tag/v${GIT_VERSION}
+ tar -xzf v${GIT_VERSION}.tar.gz
+ cd git-${GIT_VERSION}
+ make configure
+ ./configure --prefix=/usr/local
+ make
+ make install
+ echo Git Installed
+fi
+
+if type ${ANACONDA_PREFIX}/bin/conda > /dev/null
+then
+
+ echo conda already installed
+ ${ANACONDA_PREFIX}/bin/conda update --yes conda
+ echo Conda Updated
+else
+ # install conda
+
+ if ! [ -e ./Anaconda-2.1.0-MacOSX-x86_64.sh ]
+ then
+  echo Downloading conda
+  curl -LO http://09c8d0b2229f813c1b93-c95ac804525aac4b6dba79b00b39d1d3.r79.cf1.rackcdn.com/Anaconda-2.1.0-MacOSX-x86_64.sh
+ fi
+
+ chmod +x ./Anaconda-2.1.0-MacOSX-x86_64.sh
+ echo Installing conda. This may take a few minutes. Please be patient
+ ./Anaconda-2.1.0-MacOSX-x86_64.sh -b
+ echo Conda Installed
+ ${ANACONDA_PREFIX}/bin/conda update --yes conda
+ echo Conda Updated
+fi
+
+#make root
+if [ -d ${PYCHRONDATA_PREFIX} ]
+then
+    echo ${PYCHRONDATA_PREFIX} already exists
+else
+    mkdir ${PYCHRONDATA_PREFIX}
+    mkdir ${PYCHRONDATA_PREFIX}/.hidden
+    mkdir ${PYCHRONDATA_PREFIX}/.hidden/updates
+    mkdir ${PYCHRONDATA_PREFIX}/setupfiles
 
     #write boiler plate xml file
-    cat <<EOT >> $PYCHRONDATA_PREFIX/setupfiles/initialization.xml
+    cat <<EOT >> ${PYCHRONDATA_PREFIX}/setupfiles/initialization.xml
 <root>
   <globals>
   </globals>
@@ -49,19 +167,45 @@ else
 </root>
 EOT
 
-    git clone $URL $PYCHRONDATA_PREFIX/.hidden/updates/pychron
+git clone ${URL} ${PYCHRONDATA_PREFIX}/.hidden/updates/pychron
 fi
 
-#install dependencies
-$ANACONDA_PREFIX/anaconda/bin/conda create --yes -n $CONDA_ENV python
-source $ANACONDA_PREFIX/anaconda/bin/activate $CONDA_ENV
+#update source
+cd ${PYCHRONDATA_PREFIX}/.hidden/updates/pychron
+git checkout ${BRANCH}
+git pull
 
-$ANACONDA_PREFIX/anaconda/envs/$CONDA_ENV/bin/conda install --yes --file ./${APP_PREFIX}_conda_requirements.txt
-$ANACONDA_PREFIX/anaconda/envs/$CONDA_ENV/bin/pip install -r ./${APP_PREFIX}_pip_requirements.txt
+#install python dependencies
+${ANACONDA_PREFIX}/bin/conda create --yes -n $CONDA_ENV python
+
+#write the requirements file
+CREQ=./conda_requirements.txt
+PREQ=./pip_requirements.txt
+if [ -e  ${CREQ} ]
+then
+ rm ${CREQ}
+fi
+
+if [ -e ${PREQ} ]
+then
+ rm ${PREQ}
+fi
+
+echo ${CONDA_REQ} >> ${CREQ}
+echo ${PIP_REQ} >> ${PREQ}
+
+cat ${CREQ}
+cat ${PREQ}
+
+${ANACONDA_PREFIX}/envs/${CONDA_ENV}/bin/conda install -n${CONDA_ENV} --yes --file ./conda_requirements.txt
+${ANACONDA_PREFIX}/envs/${CONDA_ENV}/bin/pip install -r ./pip_requirements.txt
 
 #build application
-cd ${PYCHRONDATA_PREFIX}/.hidden/updates/pychron
-$ANACONDA_PREFIX/anaconda/envs/$CONDA_ENV/bin/python app_utils/app_maker.py -A$APP_NAME -v$VERSION
+${ANACONDA_PREFIX}/envs/${CONDA_ENV}/bin/python app_utils/app_maker.py -A$APP_NAME -v$VERSION
 
-#move application to Pychrondata
-mv ./launchers/py${APP_NAME}_${VERSION}.app ${PYCHRONDATA_PREFIX}/py${APP_NAME}_${VERSION}.app
+#move application to Applications
+if [ -e /Applications/py${APP_NAME}_${VERSION}.app ]
+then
+rm -rf /Applications/py${APP_NAME}_${VERSION}.app
+fi
+mv ./launchers/py${APP_NAME}_${VERSION}.app /Applications
