@@ -16,12 +16,13 @@
 
 # ============= enthought library imports =======================
 from datetime import timedelta
-from pyface.timer.do_later import do_later
 
-from traits.api import Instance, on_trait_change, Enum
+from pyface.timer.do_later import do_later
+from traits.api import Instance, on_trait_change
 from enable.component import Component
 from pyface.tasks.action.schema import SToolBar
 from pyface.qt.QtGui import QTabBar
+
 
 # ============= standard library imports ========================
 import binascii
@@ -233,14 +234,14 @@ class AnalysisEditTask(BaseBrowserTask):
             ans = self.manager.make_analyses(records, use_cache=False, calculate_age=True, load_aux=True)
             self._open_recall_editors(ans)
 
-    def new_ic_factor(self):
-        from pychron.processing.tasks.detector_calibration.intercalibration_factor_editor import \
-            IntercalibrationFactorEditor
-
-        editor = IntercalibrationFactorEditor(name='ICFactor {:03d}'.format(self.ic_factor_editor_count),
-                                              processor=self.manager)
-        self._open_editor(editor)
-        self.ic_factor_editor_count += 1
+    # def new_ic_factor(self):
+    #     from pychron.processing.tasks.detector_calibration.intercalibration_factor_editor import \
+    #         IntercalibrationFactorEditor
+    #
+    #     editor = IntercalibrationFactorEditor(name='ICFactor {:03d}'.format(self.ic_factor_editor_count),
+    #                                           processor=self.manager)
+    #     self._open_editor(editor)
+    #     self.ic_factor_editor_count += 1
 
     def save_as(self):
         self.save()
@@ -881,8 +882,9 @@ class AnalysisEditTask(BaseBrowserTask):
 
     @on_trait_change('active_editor:analyses')
     def _ac_unknowns_changed(self):
-        with no_update(self.unknowns_pane):
-            self.unknowns_pane.items = self.active_editor.analyses
+        if self.unknowns_pane:
+            with no_update(self.unknowns_pane):
+                self.unknowns_pane.items = self.active_editor.analyses
 
         # self.unknowns_pane._no_update = True
         # self.unknowns_pane.trait_set(items=self.active_editor.analyses, trait_change_notify=True)

@@ -15,20 +15,20 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import List
-from traitsui.api import View, Item, TableEditor, VGroup
+from traitsui.api import View, Item, VGroup
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.table_editor import myTableEditor
-from pychron.processing.plotters.options.base import FigurePlotterOptions
+from pychron.processing.plotters.options.age import GroupablePlotterOptions
+# from pychron.processing.plotters.options.base import FigurePlotterOptions
 from pychron.processing.plotters.options.option import FitPlotterOptions
 
 
-class SeriesOptions(FigurePlotterOptions):
-    groups = List
+class SeriesOptions(GroupablePlotterOptions):
+    # groups = List
 
     def load_aux_plots(self, ref):
         def f(kii):
