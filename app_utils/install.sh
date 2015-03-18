@@ -204,7 +204,7 @@ ${ANACONDA_PREFIX}/bin/conda create --yes -n $CONDA_ENV python
 #write the requirements file
 CREQ=./conda_requirements.txt
 PREQ=./pip_requirements.txt
-if [ -e  ${CREQ} ]
+if [ -e ${CREQ} ]
 then
  rm ${CREQ}
 fi
@@ -222,6 +222,9 @@ cat ${PREQ}
 
 ${ANACONDA_PREFIX}/envs/${CONDA_ENV}/bin/conda install -n${CONDA_ENV} --yes --file ./conda_requirements.txt
 ${ANACONDA_PREFIX}/envs/${CONDA_ENV}/bin/pip install -r ./pip_requirements.txt
+
+rm ${CREQ}
+rm ${PREQ}
 
 #build application
 ${ANACONDA_PREFIX}/envs/${CONDA_ENV}/bin/python ./app_utils/app_maker.py -A$APP_NAME -v$VERSION
