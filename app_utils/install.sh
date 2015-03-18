@@ -31,7 +31,6 @@ BRANCH=develop
 #--------------------------------------------------
 if [ "${APP_NAME}" == "view" ]
 then
-echo $APP_NAME
 #Requirements
 CONDA_REQ="statsmodels>=0.5.0\n
 PyYAML>=3\n
@@ -52,7 +51,8 @@ pil"
 
 PIP_REQ="uncertainties\n
 PyMySQL\n
-pint\n"
+pint\n
+GitPython"
 fi
 
 #--------------------------------------------------
@@ -65,68 +65,76 @@ LDIR=`pwd`
 
 
 cd
-if ! [ -d gitsrc ]
+if ! [ -d pychron_build ]
 then
- echo making build directory at ${HOME}/gitsrc
- mkdir gitsrc
+ echo making build directory at ${HOME}/pychron_build
+ mkdir pychron_build
 fi
 
-cd gitsrc
+cd pychron_build
 
-if type "autoconf" > /dev/null
+if ! hash git >/dev/null
 then
- echo autoconf already installed
-else
- if type "gcc" > /dev/null
- then
-    echo
-    echo
-    echo You need to install Xcode !!!!
-    exit
- else
-     echo Downloading autoconf
-     # install autoconf
-     curl -OL http://ftpmirror.gnu.org/autoconf/autoconf-${AUTOCONF_VERSION}.tar.gz
-     tar xzf autoconf-${AUTOCONF_VERSION}.tar.gz
-     cd autoconf-${AUTOCONF_VERSION}
-     ./configure --prefix=/usr/local
-     make
-     make install
-     echo Autoconf Installed
- fi
+ echo Please install git. Goto http://git-scm.com/downloads
+ exit
 fi
 
-if type "git" > /dev/null
-then
- echo git already installed
-else
-    if type "gcc" > /dev/null
-     then
-        echo
-        echo
-        echo You need to install Xcode !!!!
-        exit
-     else
-         echo Downloading git
-         curl -LO https://github.com/git/git/archive/v${GIT_VERSION}.tar.gz
-         #curl -LO https://github.com/git/git/releases/tag/v${GIT_VERSION}
-         tar -xzf v${GIT_VERSION}.tar.gz
-         cd git-${GIT_VERSION}
-         make configure
-         ./configure --prefix=/usr/local
-         make
-         make install
-         echo Git Installed
-     fi
-fi
+#if type "autoconf" > /dev/null
+#then
+# echo autoconf already installed
+#else
+# if type "gcc" > /dev/null
+# then
+#    echo
+#    echo
+#    echo You need to install Xcode !!!!
+#    #exit
+# else
+#     echo Downloading autoconf
+#     # install autoconf
+#     curl -OL http://ftpmirror.gnu.org/autoconf/autoconf-${AUTOCONF_VERSION}.tar.gz
+#     tar xzf autoconf-${AUTOCONF_VERSION}.tar.gz
+#     cd autoconf-${AUTOCONF_VERSION}
+#     ./configure --prefix=/usr/local
+#     make
+#     make install
+#     echo Autoconf Installed
+# fi
+#fi
+#
+#if type "git" > /dev/null
+#then
+# echo git already installed
+#else
+#    if type "gcc" > /dev/null
+#     then
+#        echo
+#        echo
+#        echo You need to install Xcode !!!!
+#        exit
+#     else
+#         echo Downloading git
+#         curl -LO https://github.com/git/git/archive/v${GIT_VERSION}.tar.gz
+#         #curl -LO https://github.com/git/git/releases/tag/v${GIT_VERSION}
+#         tar -xzf v${GIT_VERSION}.tar.gz
+#         cd git-${GIT_VERSION}
+#         make configure
+#         ./configure --prefix=/usr/local
+#         make
+#         make install
+#         echo Git Installed
+#     fi
+#fi
 
-if type ${ANACONDA_PREFIX}/bin/conda > /dev/null
+if type ${ANACONDA_PREFIX}/bin/conda >/dev/null
 then
 
  echo conda already installed
- ${ANACONDA_PREFIX}/bin/conda update --yes conda
+ {ANACONDA_PREFIX}/bin/conda update --yes conda
  echo Conda Updated
+
 else
+ echo conda doesnt exist
  # install conda
 
  if ! [ -e ./Anaconda-2.1.0-MacOSX-x86_64.sh ]
@@ -215,7 +223,6 @@ cat ${PREQ}
 ${ANACONDA_PREFIX}/envs/${CONDA_ENV}/bin/conda install -n${CONDA_ENV} --yes --file ./conda_requirements.txt
 ${ANACONDA_PREFIX}/envs/${CONDA_ENV}/bin/pip install -r ./pip_requirements.txt
 
-pwd
 #build application
 ${ANACONDA_PREFIX}/envs/${CONDA_ENV}/bin/python ./app_utils/app_maker.py -A$APP_NAME -v$VERSION
 
