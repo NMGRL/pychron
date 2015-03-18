@@ -98,6 +98,9 @@ CHANGELOG
 #### 2/13/2015 ####
 * fixed ErrorBarOverlay. trigger layout_needed when component changes
  
+#### 3/18/2015 ####
+*  fixed j transfer
+
 2.0.6
 ------------------
 * added StartupTester. use setupfiles/startup_tests.yaml to configure
