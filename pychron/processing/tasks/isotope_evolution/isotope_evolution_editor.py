@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance, Bool, Any, Event
+from traits.api import Instance, Any, Event
 from traitsui.api import View, UItem, InstanceEditor
 # ============= standard library imports ========================
 import time
@@ -48,17 +48,17 @@ class IsoEvoGraph(Graph):
 
     # def _get_selected_plotid(self):
     #     r = 0
-    #     # if self.selected_plot is not None:
-    #     #     for ci in self.plotcontainer.components:
-    #     #         for i, cii in enumerate(ci.components):
-    #     #             if cii == self.selected_plot:
-    #     #                 r = i
-    #     #                 break
+    #     if self.selected_plot is not None:
+    #         for ci in self.plotcontainer.components:
+    #             for i, cii in enumerate(ci.components):
+    #                 if cii == self.selected_plot:
+    #                     r = i
+    #                     break
     #                     # print ci, cii
     #                     # for gi in self.graphs:
     #                     # for pp in gi.plots:
     #                     # pp == self.selected_plot
-    #
+    #                     #
     #                     # r = self.plots.index(self.selected_plot)
     #     # print 'get selected plotid', r, self.selected_plot
     #     return r

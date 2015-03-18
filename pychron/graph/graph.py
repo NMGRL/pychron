@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -642,7 +642,7 @@ class Graph(Viewable, ContextMenuMixin):
         #         invoke_in_main_thread(self._set_limits,
         #                               min_, max_, 'index', plotid, pad, **kw)
         if self._set_limits(min_, max_, 'index', plotid, pad, **kw):
-            self.x_limits_changed =True
+            self.x_limits_changed = True
 
     def set_x_tracking(self, track, plotid=0):
         '''
@@ -1452,7 +1452,7 @@ class Graph(Viewable, ContextMenuMixin):
         if filename:
             # if not filename.endswith('.pdf'):
             #     filename += '.pdf'
-            filename=add_extension(filename, ext='.pdf')
+            filename = add_extension(filename, ext='.pdf')
 
         gc = PdfPlotGraphicsContext(filename=filename,
                                     pdf_canvas=canvas,
@@ -1529,7 +1529,7 @@ class Graph(Viewable, ContextMenuMixin):
         if plotid is None:
             plotid = len(self.plots) - 1
 
-        p=self.plots[plotid]
+        p = self.plots[plotid]
         p.x_axis.tick_generator = ScalesTickGenerator(scale=CalendarScaleSystem())
 
     def _set_title(self, axis, title, plotid, font=None, size=None):
@@ -1636,9 +1636,9 @@ class Graph(Viewable, ContextMenuMixin):
                     if pad_style in ('symmetric', 'lower'):
                         mi -= pad
 
-        change=False
+        change = False
         if mi is not None:
-            change = ra.low!=mi
+            change = ra.low != mi
             if isinstance(mi, (int, float)):
                 if mi < ra.high:
                     ra.low = mi
@@ -1646,7 +1646,7 @@ class Graph(Viewable, ContextMenuMixin):
                 ra.low = mi
 
         if ma is not None:
-            change = change or ra.high!=ma
+            change = change or ra.high != ma
             if isinstance(ma, (int, float)):
                 if ma > ra.low:
                     ra.high = ma
@@ -1657,15 +1657,18 @@ class Graph(Viewable, ContextMenuMixin):
             self.redraw(force=force)
         return change
 
-    # def _get_selected_plotid(self):
-    #     r = 0
-    #     if self.selected_plot is not None:
-    #         print self, self.plots
-    #         for pp in self.plots:
-    #             print pp, self.selected_plot
-    #         # r = self.plots.index(self.selected_plot)
-    #     print 'get selected plotid', r, self.selected_plot
-    #     return r
+    def _get_selected_plotid(self):
+        r = 0
+        if self.selected_plot is not None:
+            # r = next((i for i, p in enumerate(self.plots) if p == self.s))
+            r = self.plots.index(self.selected_plot)
+    #     # if self.selected_plot is not None:
+    #     #     print self, self.plots
+    #     #     for pp in self.plots:
+    #     #         print pp, self.selected_plot
+    #     #     r = self.plots.index(self.selected_plot)
+    #     # print 'get selected plotid', r, self.selected_plot
+        return r
 
     def show(self):
         do_after_timer(1, self.edit_traits)

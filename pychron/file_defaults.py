@@ -36,6 +36,13 @@ TASK_EXTENSION_DEFAULT = """
   - pychron.update.manage_version, False
   - pychron.update.manage_branch, False
   - pychron.update.build_app, False
+
+-
+ plugin_id: pychron.processing.plugin.recall
+ actions:
+  - pychron.recall.recall, True
+  - pychron.recall.configure, True
+  - pychron.recall.time_view, True
 -
  plugin_id: pychron.processing.plugin.figures
  actions:

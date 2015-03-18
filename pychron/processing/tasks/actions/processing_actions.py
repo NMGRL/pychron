@@ -278,6 +278,7 @@ class SpectrumFromFile(FigureAction):
 # ===============================================================================
 class TimeViewAction(Action):
     name = 'Time View'
+    dname = 'Time View'
     accelerator = 'Ctrl+t'
 
     def perform(self, event):
@@ -306,6 +307,7 @@ class RecallAction(Action):
 
 class ConfigureRecallAction(myTaskAction):
     name = 'Configure Recall'
+    dname = 'Configure Recall'
     method = 'configure_recall'
     image = icon('cog')
     task_ids = ('pychron.recall', 'pychron.processing.figures',
