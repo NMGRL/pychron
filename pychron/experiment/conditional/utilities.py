@@ -24,6 +24,9 @@ from pychron.experiment.conditional.regexes import COMP_REGEX, ARGS_REGEX, DEFLE
     RATIO_REGEX, BETWEEN_REGEX, PRESSURE_REGEX, DEVICE_REGEX
 
 
+def interpolate_teststr():
+    pass
+
 def get_teststr_attr_func(token):
     for args in (
             (DEVICE_REGEX, 'obj.get_device_value(attr)', wrapper, device_teststr),

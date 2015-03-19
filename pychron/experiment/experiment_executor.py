@@ -1265,9 +1265,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         if self.monitor:
             if not self.monitor.check():
-                self._err_message = 'Automated Run Monitor failed'
+                self._err_message = 'Automated Run Monitor Failed'
                 self.warning('automated run monitor failed')
-                return True
+            return True
 
         # if the experiment queue has been modified wait until saved or
         # timed out. if timed out autosave.

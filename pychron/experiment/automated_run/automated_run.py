@@ -691,6 +691,32 @@ class AutomatedRun(Loggable):
 
             self.experiment_executor.info(msg, color=color, log=False)
 
+    def get_interpolation_value(self, value):
+        """
+        value is a string in the format of $VALUE. Search for VALUE first in the options file
+        then in the extraction scripts metadata
+
+        :param value:
+        :return:
+        """
+        v = None
+        if self.extraction_script:
+            for vv in (value, value.upper(), value.lower()):
+                try:
+                    v = getattr(self.extraction_script, vv)
+                except AttributeError:
+                    v = self._get_extraction_parameter(vv, None)
+                    if v is None:
+                        continue
+                break
+
+        if v is None:
+            self.warning('Could not interpolate {}. Make sure value is defined in either the options file'
+                         'or embedded in the extraction scripts metadata. Defaulting to 0'.format(value))
+            v = 0
+
+        return v
+
     def get_device_value(self, dev_name):
         return self.extraction_line_manager.get_device_value(dev_name)
 
@@ -1222,7 +1248,7 @@ anaylsis_type={}
 
     def _add_default_conditionals(self):
         self.debug('add default conditionals')
-        p = get_path(paths.spectrometer_dir, 'default_conditionals', ('.yaml', '.yml'))
+        p = get_path(paths.spectrometer_dir, '.*conditionals', ('.yaml', '.yml'))
         if p is not None:
             self.info('adding default conditionals from {}'.format(p))
             self._add_conditionals_from_file(p)

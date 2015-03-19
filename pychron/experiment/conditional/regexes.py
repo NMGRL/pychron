@@ -68,6 +68,8 @@ ARGS_REGEX = re.compile(r'\(.+\)')
 
 PRESSURE_REGEX = re.compile(r'\w+\.\w+\.pressure')
 DEVICE_REGEX = re.compile(r'device\.\w+')
+
+INTERPOLATE_REGEX = re.compile(r'\$\w+')
 # ============= EOF =============================================
 
 

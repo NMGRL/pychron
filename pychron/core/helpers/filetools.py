@@ -20,6 +20,7 @@ import os
 import subprocess
 from datetime import datetime
 import shutil
+import re
 
 
 def backup(p, backupdir, **kw):
@@ -411,7 +412,13 @@ def get_path(root, name, extensions):
 
     """
     for ext in extensions:
-        p = os.path.join(root, add_extension(name, ext))
-        if os.path.isfile(p):
-            return p
+        for f in os.listdir(root):
+            name = add_extension(name, ext)
+            print name, re.match(name, f)
+            if re.match(name, f):
+                return os.path.join(root, f)
+
+        # p = os.path.join(root, add_extension(name, ext))
+        # if os.path.isfile(p):
+        #     return p
 

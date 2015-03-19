@@ -19,6 +19,7 @@
 
 from pyface.message_dialog import warning
 from pyface.tasks.task_window_layout import TaskWindowLayout
+from pychron.core.helpers.filetools import get_path
 
 from pychron.envisage.tasks.actions import PAction as Action, PTaskAction as TaskAction
 
@@ -164,8 +165,8 @@ class SystemConditionalsAction(Action):
         if spec:
             dnames = spec.spectrometer.detector_names
 
-        p = paths.system_conditionals
-        if os.path.isfile(p):
+        p = get_path(paths.spectrometer_dir, '.*conditionals', ('.yaml','.yml'))
+        if p:
             edit_conditionals(p, detectors=dnames, app=task.application)
         else:
             warning(None, 'No system conditionals file at {}'.format(p))

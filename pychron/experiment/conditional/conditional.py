@@ -23,8 +23,8 @@ import pprint
 # ============= local library imports  ==========================
 import yaml
 from pychron.experiment.conditional.regexes import MAPPER_KEY_REGEX, \
-    STD_REGEX
-from pychron.experiment.conditional.utilities import tokenize, get_teststr_attr_func, extract_attr
+    STD_REGEX, INTERPOLATE_REGEX
+from pychron.experiment.conditional.utilities import tokenize, get_teststr_attr_func, extract_attr, interpolate_teststr
 from pychron.experiment.utilities.conditionals import RUN, QUEUE, SYSTEM
 from pychron.loggable import Loggable
 from pychron.paths import paths
@@ -200,19 +200,20 @@ class AutomatedRunConditional(BaseConditional):
             if run.analysis_type not in self.analysis_types:
                 return
 
-        d = False
-        if isinstance(cnt, bool):
-            d = True
+        if self.active:
+            if isinstance(cnt, bool):
+                return cnt
+            else:
 
-        ocnt = cnt - self.start_count
+                ocnt = cnt - self.start_count
 
-        # "a" flag not necessary cnt>scnt == cnt-scnt>0
-        # a = cnt > self.start_count
-        b = ocnt > 0
-        c = ocnt % self.frequency == 0
-        cnt_flag = b and c
-        # print ocnt, self.frequency, b, c
-        return self.active and (cnt_flag or d)
+                # "a" flag not necessary cnt>scnt == cnt-scnt>0
+                # a = cnt > self.start_count
+                b = ocnt > 0
+                c = ocnt % self.frequency == 0
+                cnt_flag = b and c
+                # print ocnt, self.frequency, b, c
+                return cnt_flag
 
     def _check(self, run, data):
         """
@@ -250,6 +251,7 @@ class AutomatedRunConditional(BaseConditional):
             vv = self._map_value(vv)
             ctx[attr] = vv
 
+            ts = self._interpolate_teststr(ts, obj, data)
             tt.append(ts)
             if oper:
                 tt.append(oper)
@@ -263,6 +265,14 @@ class AutomatedRunConditional(BaseConditional):
                 key = m.group(0)
                 vv = eval(self.mapper, {key: vv})
         return vv
+
+    def _interpolate_teststr(self, ts, obj, data):
+        nts = ts
+        for temp in INTERPOLATE_REGEX.finditer(ts):
+            temp = temp.group(0)
+            new = obj.get_interpolated_value(temp)
+            nts = nts.replace(temp, str(new))
+        return nts
 
 
 class TruncationConditional(AutomatedRunConditional):
@@ -322,6 +332,7 @@ class ActionConditional(AutomatedRunConditional):
 
         elif hasattr(action, '__call__'):
             action()
+
 
 # ============= EOF =============================================
 # attr = extract_attr(token)

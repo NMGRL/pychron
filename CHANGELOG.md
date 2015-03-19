@@ -66,6 +66,11 @@ CHANGELOG
 #### 3/17/2015 ####
 * updated install.sh. this should be the only required file to install pychron. this downloads/installs git,conda and pychron
 
+#### 3/19/2015 ####
+* added interpolation functionality to conditionals. For example "Ar40 < $MIN_INTENSITY". The value "MIN_INTENSITY" needs to be defined
+  either in the options file or in the extraction scripts metadata. 
+
+
 ### Bug Fixes ###
 * fixed plotting ideograms of attributes other than age
 * improved database startup tests
@@ -100,6 +105,8 @@ CHANGELOG
  
 #### 3/18/2015 ####
 *  fixed j transfer
+
+
 
 2.0.6
 ------------------

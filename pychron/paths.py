@@ -337,7 +337,7 @@ class Paths(object):
         self.deflection = join(self.spectrometer_dir, 'deflection.yaml')
         self.startup_tests = join(self.setup_dir, 'startup_tests.yaml')
         self.set_search_paths()
-        self.system_conditionals = join(self.spectrometer_dir, 'default_conditionals.yaml')
+        self.system_conditionals = join(self.spectrometer_dir, 'system_conditionals.yaml')
         self.experiment_defaults = join(setup_dir, 'experiment_defaults.yaml')
         self.ideogram_defaults = join(self.hidden_dir, 'ideogram_defaults.yaml')
         self.spectrum_defaults = join(self.hidden_dir, 'spectrum_defaults.yaml')
