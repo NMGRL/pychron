@@ -1176,7 +1176,10 @@ anaylsis_type={}
                 self.debug('failed load analysis backend')
                 return
 
-        self.info('Start automated run {}'.format(self.runid))
+        self.py_clear_conditionals()
+        # setup default/queue conditionals
+        # clear the conditionals for good measure.
+        # conditionals should be cleared during teardown.
 
         try:
             self._add_conditionals()
@@ -1184,6 +1187,13 @@ anaylsis_type={}
             self.warning('Failed adding conditionals {}'.format(e))
             return
 
+        # add queue conditionals
+        self._add_queue_conditionals()
+
+        # add default conditionals
+        self._add_default_conditionals()
+
+        self.info('Start automated run {}'.format(self.runid))
         self.measuring = False
         self.truncated = False
 
@@ -1223,17 +1233,6 @@ anaylsis_type={}
 
         # setup persister. mirror a few of AutomatedRunsAttributes
         self.setup_persister()
-
-        # setup default/queue conditionals
-        # clear the conditionals for good measure.
-        # conditionals should be cleared during teardown.
-        self.py_clear_conditionals()
-
-        # add default conditionals
-        self._add_default_conditionals()
-
-        # add queue conditionals
-        self._add_queue_conditionals()
 
         return True
 

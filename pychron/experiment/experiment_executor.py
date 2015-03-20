@@ -1348,18 +1348,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             return
         self.heading('Post Run Check')
 
-        # check user defined terminations
-        conditionals = self._load_queue_conditionals('post_run_terminations')
-        if self._test_conditionals(run, conditionals, 'Checking user defined post run terminations',
-                                   'Post Run Termination'):
-            return True
-
-        # check default terminations
-        conditionals = self._load_system_conditionals('post_run_terminations')
-        if self._test_conditionals(run, conditionals, 'Checking default post run terminations',
-                                   'Post Run Termination'):
-            return True
-
         # check user defined post run actions
         # conditionals = self._load_queue_conditionals('post_run_actions', klass='ActionConditional')
         conditionals = self._load_queue_conditionals('post_run_actions')
@@ -1374,11 +1362,17 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                                      'Post Run Action'):
             return True
 
-            # #check queue actions
-            # exp = self.experiment_queue
-            # if self._action_conditionals(run, exp.queue_actions, 'Checking queue actions',
-            # 'Queue Action'):
-            # return True
+        # check queue defined terminations
+        conditionals = self._load_queue_conditionals('post_run_terminations')
+        if self._test_conditionals(run, conditionals, 'Checking user defined post run terminations',
+                                   'Post Run Termination'):
+            return True
+
+        # check default terminations
+        conditionals = self._load_system_conditionals('post_run_terminations')
+        if self._test_conditionals(run, conditionals, 'Checking default post run terminations',
+                                   'Post Run Termination'):
+            return True
 
     def _load_system_conditionals(self, term_name, **kw):
         self.debug('loading system conditionals {}'.format(term_name))
