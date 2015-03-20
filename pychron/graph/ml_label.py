@@ -15,19 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from chaco.array_data_source import ArrayDataSource
-from chaco.array_plot_data import ArrayPlotData
+import math
+
 from chaco.axis import PlotAxis
-from chaco.plot import Plot
-from chaco.plot_label import PlotLabel
 from enable.component_editor import ComponentEditor
 from enable.label import Label
-import math
-from mock import MagicMock
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change
-from traitsui.api import View, UItem, Item, HGroup, VGroup
+from traits.api import HasTraits, Str
+from traitsui.api import View, UItem
+
 # ============= standard library imports ========================
-from numpy import array, float64, asarray
+from numpy import array, float64
 # ============= local library imports  ==========================
 
 # http://stackoverflow.com/questions/2358890/python-lexical-analysis-and-tokenization
@@ -255,7 +252,6 @@ if __name__ == '__main__':
     # d.plot.data['x'] = [1, 2, 3, 4]
     # d.plot.data['y'] = [1, 2, 3, 4]
     # d.plot.plot(('x', 'y'))
-    from pychron.graph.graph import Graph
     from pychron.graph.stacked_graph import StackedGraph
 
     g = StackedGraph()

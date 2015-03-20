@@ -16,14 +16,11 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.task_factory import TaskFactory
-from traits.api import List
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
 #from pychron.processing.tasks.browser.browser_task import BrowserTask
 from pychron.dashboard.tasks.client.preferences import DashboardClientPreferencesPane
-from pychron.file_defaults import DISPLAY_FORMATTING_DEFAULTS
-from pychron.paths import paths
 from pychron.processing.tasks.processing_plugin import ProcessingPlugin
 from pychron.system_monitor.tasks.preferences import SystemMonitorPreferencesPane, ConsolePreferencesPane
 from pychron.system_monitor.tasks.system_monitor_task import SystemMonitorTask

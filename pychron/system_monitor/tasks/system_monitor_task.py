@@ -15,11 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from PySide.QtCore import Qt
 from datetime import datetime
+
 from traits.api import Instance, List, on_trait_change
 from pyface.tasks.action.schema import SToolBar
-from pyface.tasks.task_layout import TaskLayout, Splitter, PaneItem, Tabbed, VSplitter
+from pyface.tasks.task_layout import TaskLayout, PaneItem, Tabbed, VSplitter
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
@@ -28,8 +29,6 @@ from pychron.envisage.tasks.pane_helpers import ConsolePane
 from pychron.globals import globalv
 from pychron.processing.tasks.analysis_edit.panes import ControlsPane
 from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPane
-from pychron.processing.tasks.figures.editors.ideogram_editor import IdeogramEditor
-from pychron.processing.tasks.figures.editors.spectrum_editor import SpectrumEditor
 from pychron.processing.tasks.figures.figure_editor import FigureEditor
 from pychron.processing.tasks.figures.figure_task import FigureTask
 from pychron.processing.tasks.figures.panes import PlotterOptionsPane
