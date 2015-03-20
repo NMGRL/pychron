@@ -107,11 +107,13 @@ def conditional_from_dict(cd, klass, level=None, location=None):
     mapper = cd.get('mapper', '')
     action = cd.get('action', '')
     ntrips = cd.get('ntrips', 1)
-
+    analysis_types = cd.get('analysis_types')
+    if analysis_types:
+        analysis_types = [a.lower() for a in analysis_types]
     attr = extract_attr(teststr)
     cx = klass(teststr, start_count=start, frequency=freq,
                attr=attr,
-               window=win, mapper=mapper, action=action, ntrips=ntrips)
+               window=win, mapper=mapper, action=action, ntrips=ntrips, analysis_types=analysis_types)
     if level:
         cx.level = level
     if location:
@@ -197,7 +199,7 @@ class AutomatedRunConditional(BaseConditional):
 
     def _should_check(self, run, data, cnt):
         if self.analysis_types:
-            if run.analysis_type not in self.analysis_types:
+            if run.analysis_type.lower() not in self.analysis_types:
                 return
 
         if self.active:

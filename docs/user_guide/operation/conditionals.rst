@@ -51,9 +51,54 @@ average([value])                                                                
 slope([value])                                                                     slope(Ar40)
 [name].current                     get the last measured intensity for an isotope  Ar40.current
 [name].cur                         same as current                                 Ar40.cur
-device.[name]                      get a device value
+device.[name]                      get a device value                              device.pneumatics
 [controller].[gauge].pressure      get a pressure from an controller               bone.ig.pressure
 [name].deflection                  get detector's deflection                       H1.deflection
 [isotope]/[isotope]                get a baseline corrected ratio                  Ar40/Ar36
 between([value], [v1],[v2])        check if a value is between v1,v2               between(max(Ar40), 10, 100)
+not                                invert logic                                    not Ar40<100
 ================================== =============================================== ====================================
+
+Writing Conditionals
+----------------------
+There is a primitive GUI for editing AutomatedRun Conditionals. You can probably get away with using the GUI 95% of the time,
+however, there are a few cases that are not currently implemened in the GUI, but nevertheless maybe used by editing the specific
+conditionals file. All conditional files use standard yaml syntax. Here is an example system_conditionals.yaml
+
+.. code-block:: YAML
+
+    actions: []
+    pre_run_terminations:
+     - check: CDD.inactive
+     - check: CDD.deflection==2000
+     - check: bone.ig.pressure > 1e-8
+     - check: microbone.ig.pressure > 1e-8
+     - check: device.pneumatics < 10
+    post_run_terminations:
+     - check: Ar40 < $MIN_INTENSITY
+       analysis_types:
+        - air
+        - cocktail
+    terminations: []
+    truncations: []
+
+
+Notice the special syntax used for the only Post Run Termination (Ar40 < $MIN_INTENSITY). This is the interpolation/templating syntax.
+The interpolation syntax ($VARIABLE_NAME) is used to define the conditional's sentinel values at runtime. For instance
+the above post run termination conditional terminates the experiment if an Air's Ar40 intensity is below a certain threshold.
+The reason for interpolating the minimum intensity is that this value is dependent on the extraction script, e.i. either a
+full air shot or a sniff air. To specify an interpolatable value simply assign the variable in the extraction scripts metadata
+docstring.
+
+.. code-block:: Python
+
+    '''
+    sensitivity_multiplier: 0.5
+    modifier: 1
+    MIN_INTENSITY: 10
+    '''
+    def main():
+        info('Jan Air Script')
+
+
+In this case, the Post Run termination conditional would trip if the Ar40 intensity was less the 10 fA.
