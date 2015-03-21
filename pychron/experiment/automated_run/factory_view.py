@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Instance
 from traitsui.api import View, Item, VGroup, Spring, HGroup, ButtonEditor, EnumEditor
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 POSITION_TOOLTIP = '''Set the position for this analysis or group of analyses.
 Examples:
@@ -103,4 +103,4 @@ class FactoryView(HasTraits):
                  editor=ButtonEditor(label_value='edit_template_label')))
         return grp
 
-        #============= EOF =============================================
+        # ============= EOF =============================================

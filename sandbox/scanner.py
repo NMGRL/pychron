@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 import time
 import subprocess
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 def write_stats(stats):
     '''
@@ -114,7 +114,7 @@ if __name__ == '__main__':
     root = os.getcwd()
     scan(root)
     # plot_stats(root)
-#============= EOF ====================================
+# ============= EOF ====================================
 # def get_num_lines(file):
 #    '''
 #    '''

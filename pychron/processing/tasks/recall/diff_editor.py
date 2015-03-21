@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from traits.api import Property, Instance, List, Either, Int, Float, HasTraits, \
     Str, Dict, Bool
-from traitsui.api import View, Item, UItem, HSplit, TabularEditor, VGroup, HGroup
+from traitsui.api import View, Item, UItem, VGroup, HGroup
 from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -26,7 +26,6 @@ from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.core.helpers.formatting import floatfmt
 from pychron.processing.tasks.recall.mass_spec_recaller import MassSpecRecaller
-from pychron.pychron_constants import LIGHT_GREEN, LIGHT_RED_COLOR
 
 
 class ValueTabularAdapter(TabularAdapter):
@@ -207,4 +206,4 @@ class DiffEditor(BaseTraitsEditor):
                                                       selected_row='selected_row'))))
         return v
 
-#============= EOF =============================================
+# ============= EOF =============================================

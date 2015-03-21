@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,12 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from apptools.preferences.preference_binding import PreferenceBinding
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 # from apptools.preferences.api import PreferenceBinding as TPreferenceBinding
 #
 class ColorPreferenceBinding(PreferenceBinding):
@@ -71,4 +71,4 @@ def bind_preference(obj, trait_name, preference_path,
     else:
         return PreferenceBinding(**traits)
 
-#============= EOF =============================================
+# ============= EOF =============================================

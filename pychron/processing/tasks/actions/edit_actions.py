@@ -12,12 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 # from pyface.tasks.action.task_action import TaskAction
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import PTaskAction as TaskAction
 
@@ -42,21 +42,21 @@ class DatabaseSaveAction(TaskAction):
     name = 'Database Save'
     description = 'Save current changes to the database'
     method = 'save_to_db'
-    image = icon('database_save.png')
+    image = icon('database_save')
 
 
 class BinAnalysesAction(TaskAction):
     name = 'Bin'
     description = ''
     method = 'bin_analyses'
-    image = icon('database_save.png')
+    image = icon('database_save')
 
 
 class FindAssociatedAction(TaskAction):
     name = 'Find Associated'
     description = 'Find associated analyses'
     method = 'find_associated_analyses'
-    image = icon('find.png')
+    image = icon('find')
 
 
 class TagAction(TaskAction):
@@ -143,4 +143,4 @@ class SCLFTableAction(AnalysisEditAction):
     task_id = 'pychron.processing.publisher'
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

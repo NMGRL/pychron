@@ -6,7 +6,7 @@ rotate_ctm is the cause, other transforms (at least translate) work fine
 
 '''
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.etsconfig.etsconfig import ETSConfig
 ETSConfig.toolkit = 'qt4'
 from traits.api import HasTraits, Instance, Float
@@ -16,11 +16,11 @@ from enable.component_editor import ComponentEditor
 from chaco.plot import Plot
 from chaco.array_plot_data import ArrayPlotData
 
-#============= standard library imports ========================
-from numpy import linspace, cos, sin, pi
+# ============= standard library imports ========================
+from numpy import linspace, cos, pi
 import math
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 class RotatingContainer(OverlayPlotContainer):
     rotation = Float(45)
@@ -70,4 +70,4 @@ if __name__ == '__main__':
 
     gcc.configure_traits()
 
-#============= EOF =============================================
+# ============= EOF =============================================

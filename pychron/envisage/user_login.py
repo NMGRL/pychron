@@ -22,6 +22,7 @@ from pyface.message_dialog import information
 from traits.api import HasTraits, List, Str, Bool
 from traitsui.api import View, Item, HGroup, UItem, Label, Handler, VGroup
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.combobox_editor import ComboboxEditor
@@ -192,7 +193,7 @@ def get_src_dest_user(cuser):
 
     return s, d
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

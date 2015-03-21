@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Float, Instance, Str, Tuple
 from chaco.abstract_overlay import AbstractOverlay
 from enable.base_tool import BaseTool
 from enable.colors import ColorTrait
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import string
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
 from pychron.processing.plotters.ideogram.mean_indicator_overlay import XYPlotLabel
 
@@ -201,4 +201,4 @@ class LimitOverlay(AbstractOverlay):
             self.label.text = '{}: {}'.format(tool.orientation.upper(), v)
             self.label.overlay(other_component, gc, view_bounds=None, mode="normal")
 
-#============= EOF =============================================
+# ============= EOF =============================================

@@ -15,15 +15,15 @@
 # ===============================================================================
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Dict, Property, Instance, Float, Str, List, Either, cached_property
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
 from numpy import hstack
 from ConfigParser import ConfigParser
 from copy import copy
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.processing.argon_calculations import calculate_F, abundance_sensitivity_correction, age_equation, \
     calculate_decay_factor
 from pychron.processing.arar_constants import ArArConstants
@@ -97,14 +97,14 @@ class ArArAge(Loggable):
     logger = logger
 
     moles_Ar40 = Property
-    sensitivity = Float  #moles/pA
+    sensitivity = Float  # moles/pA
 
     _missing_isotope_warned = False
     _kca_warning = False
     _kcl_warning = False
 
     # def __init__(self, *args, **kw):
-    #     HasTraits.__init__(self, *args, **kw)
+    # HasTraits.__init__(self, *args, **kw)
     #     self.logger = logger
 
     def set_j(self, s, e):
@@ -130,6 +130,16 @@ class ArArAge(Loggable):
             return True
         elif hasattr(self, attr):
             return True
+
+    def get_corrected_ratio(self, n, d):
+        isos = self.isotopes
+        if n in isos and d in isos:
+            try:
+                nn = isos[n].get_interference_corrected_value()
+                dd = isos[d].get_interference_corrected_value()
+                return nn / dd
+            except ZeroDivisionError:
+                pass
 
     def get_ratio(self, r, non_ic_cor=False):
         n, d = r.split('/')
@@ -200,10 +210,10 @@ class ArArAge(Loggable):
         elif '/' in attr:
             non_ic_cor = attr.startswith('u')
             if non_ic_cor:
-                attr=attr[1:]
-
+                attr = attr[1:]
             r = self.get_ratio(attr, non_ic_cor)
-
+        elif attr == 'icf_40_36':
+            r = self.get_corrected_ratio('Ar40', 'Ar36')
         elif attr.endswith('ic'):
             # ex. attr='Ar40ic'
             isok = attr[:-2]
@@ -639,9 +649,9 @@ class ArArAge(Loggable):
                 return self.get_value(n) / self.get_value(d)
             except (ZeroDivisionError, TypeError):
                 return ufloat(0, 1e-20)
-                #===============================================================================
+                # ===============================================================================
                 #
-                #===============================================================================
+                # ===============================================================================
 
                 # def _arar_constants_default(self):
                 #     """
@@ -669,4 +679,4 @@ class ArArAge(Loggable):
                 #         #return ArArConstants()
                 #     return arar_constants
 
-                #============= EOF =============================================
+                # ============= EOF =============================================

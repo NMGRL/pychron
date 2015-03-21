@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 from traits.api import Array, Property, Float
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from numpy import linspace, Inf, identity
 from scipy.optimize import fsolve
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.regression.ols_regressor import OLSRegressor
 from pychron.core.stats import calculate_mswd2
 from pychron.core.stats.core import validate_mswd
@@ -409,4 +409,4 @@ if __name__ == '__main__':
     xs = linspace(0, 8)
     plot(xs, polyval((m, b), xs))
     show()
-#============= EOF =============================================
+# ============= EOF =============================================

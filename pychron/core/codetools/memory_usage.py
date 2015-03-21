@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 import os
 import gc
 import sys
@@ -25,11 +25,12 @@ from pychron.core.helpers.filetools import unique_path
 
 # import objgraph
 USE_MEM_LOG = False
-root = os.path.join(os.path.expanduser('~'), 'Desktop', 'memtest')
-if not os.path.isdir(root):
-    os.mkdir(root)
+if USE_MEM_LOG:
+    root = os.path.join(os.path.expanduser('~'), 'Desktop', 'memtest')
+    if not os.path.isdir(root):
+        os.mkdir(root)
+    p, _ = unique_path(root, 'mem')
 
-p, _ = unique_path(root, 'mem')
 def write_mem(msg, m, verbose):
     with open(os.path.join(root, p), 'a') as fp:
         msg = '{:<50s}:{}\n'.format(msg, m)

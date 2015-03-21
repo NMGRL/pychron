@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 import os
 
 import yaml
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.pychron_constants import LINE_STR, ALPHAS
 from pychron.paths import paths
 
@@ -280,9 +280,9 @@ def is_special(ln):
 
 
 #        return make_special_identifier(ln, ed, ms, aliquot=a)
-#===============================================================================
+# ===============================================================================
 # deprecated
-#===============================================================================
+# ===============================================================================
 # SPECIAL_IDS = {1: 'Blank Air', 2: 'Blank Cocktail', 3: 'Blank Unknown',
 #                4: 'Background', 5: 'Air', 6: 'Cocktail'
 # }
@@ -318,11 +318,11 @@ def is_special(ln):
 
 def convert_extract_device(name):
     """
-        change Fusions UV to fusions_uv, etc
+        change Fusions UV to FusionsUV, etc
     """
     n = ''
     if name:
-        n = name.lower().replace(' ', '_')
+        n = name.replace(' ', '')
     return n
 
 
@@ -341,4 +341,4 @@ def pretty_extract_device(ident):
             #n=ident.replace(' ', '_')
     return n
 
-#============= EOF =============================================
+# ============= EOF =============================================

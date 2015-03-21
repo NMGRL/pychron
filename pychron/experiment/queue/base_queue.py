@@ -12,15 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance, Str, Property, Event, Bool, String, List, CInt
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import yaml
 import os
 import datetime
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.experiment.queue.run_block import RunBlock
 from pychron.experiment.utilities.frequency_generator import frequency_index_gen
 from pychron.pychron_constants import NULL_STR, LINE_STR
@@ -42,8 +42,9 @@ def extract_meta(line_gen):
 
 __METASTR__ = '''
 username: {}
+use_email: {}
 email: {}
-uss_group_email: {}
+use_group_email: {}
 date: {}
 queue_conditionals_name: {}
 mass_spectrometer: {}
@@ -64,6 +65,7 @@ class BaseExperimentQueue(RunBlock):
     username = String
     email = String
     use_group_email = Bool
+    use_email = Bool
 
     tray = Str
     delay_before_analyses = CInt(5)
@@ -88,9 +90,9 @@ class BaseExperimentQueue(RunBlock):
     _no_update = False
     _frequency_group_counter = 0
 
-    #===============================================================================
+    # ===============================================================================
     # persistence
-    #===============================================================================
+    # ===============================================================================
     def load(self, txt):
         self.initialized = False
         self.stats.delay_between_analyses = self.delay_between_analyses
@@ -266,10 +268,16 @@ class BaseExperimentQueue(RunBlock):
         self._set_meta_param('delay_between_analyses', meta, default_int)
         self._set_meta_param('delay_before_analyses', meta, default_int)
         self._set_meta_param('username', meta, default)
+        self._set_meta_param('use_email', meta, bool_default)
         self._set_meta_param('email', meta, default)
         self._set_meta_param('use_group_email', meta, bool_default)
         self._set_meta_param('load_name', meta, default, metaname='load')
         self._set_meta_param('queue_conditionals_name', meta, default)
+
+        self._load_meta_hook(meta)
+
+    def _load_meta_hook(self, meta):
+        pass
 
     def _load_map(self, meta):
         from pychron.lasers.stage_managers.stage_map import StageMap
@@ -339,6 +347,7 @@ class BaseExperimentQueue(RunBlock):
 
         s = __METASTR__.format(
             self.username,
+            self.use_email,
             self.email,
             self.use_group_email,
             datetime.datetime.today(),
@@ -355,9 +364,9 @@ class BaseExperimentQueue(RunBlock):
         else:
             return s
 
-    #===============================================================================
+    # ===============================================================================
     # handlers
-    #===============================================================================
+    # ===============================================================================
     def _delay_between_analyses_changed(self, new):
         self.stats.delay_between_analyses = new
 
@@ -369,9 +378,9 @@ class BaseExperimentQueue(RunBlock):
         for ai in self.automated_runs:
             ai.mass_spectrometer = ms
 
-    #===============================================================================
+    # ===============================================================================
     # property get/set
-    #===============================================================================
+    # ===============================================================================
     def _get_cleaned_automated_runs(self):
         return [ci for ci in self.automated_runs
                 if not ci.skip and ci.state == 'not run']
@@ -383,4 +392,4 @@ class BaseExperimentQueue(RunBlock):
             return ''
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

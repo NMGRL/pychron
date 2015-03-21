@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,12 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-from traits.api import Bool
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.database.core.database_selector import DatabaseSelector
 from pychron.database.orms.hardware_orm import ScanTable
 from pychron.database.core.query import compile_query, DeviceScanQuery
@@ -38,4 +37,4 @@ class DeviceScanSelector(DatabaseSelector):
         return records, compile_query(q)
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,11 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import PTaskAction as TaskAction
 
@@ -24,31 +24,31 @@ from pychron.envisage.tasks.actions import PTaskAction as TaskAction
 class AddTextBoxAction(TaskAction):
     method = 'add_text_box'
     name = 'Annotate'
-    image = icon('annotate.png')
+    image = icon('annotate')
 
 
 class SaveFigureAction(TaskAction):
     method = 'save_figure'
     name = 'Save Figure'
-    image = icon('database_save.png')
+    image = icon('database_save')
 
 
 class SaveAsFigureAction(TaskAction):
     method = 'save_as_figure'
     name = 'Save As Figure'
-    image = icon('database_save.png')
+    image = icon('database_save')
 
 
 class SavePDFFigureAction(TaskAction):
     method = 'save_pdf_figure'
     name = 'Save PDF Figure'
-    image = icon('file_pdf.png')
+    image = icon('file_pdf')
 
 
 class OpenFigureAction(TaskAction):
     method = 'open_figure'
     name = 'Open Figure'
-    image = icon('page_white_database.png')
+    image = icon('page_white_database')
 
 
 class NewXYScatterAction(TaskAction):
@@ -70,7 +70,7 @@ class NewIdeogramAction(TaskAction):
 class NewSpectrumAction(TaskAction):
     name = 'New Spectrum'
     method = 'tb_new_spectrum'
-    image = icon('chart_curve.png')
+    image = icon('chart_curve')
 
 
 class RefreshActiveEditorAction(TaskAction):
@@ -79,7 +79,7 @@ class RefreshActiveEditorAction(TaskAction):
     image = icon('refresh')
     # accelerator = 'Ctrl+Shift+R'
     id = 'pychron.refresh_plot'
-#============= EOF =============================================
+# ============= EOF =============================================
 # class AppendSpectrumAction(TaskAction):
 #     name = 'Append Spectrum'
 #     method = 'append_spectrum'

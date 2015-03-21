@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,15 +13,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pychron.paths import paths
 from loggable import Loggable
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 import ConfigParser
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 class ConfigMixin(Loggable):
     configuration_dir_name = None
@@ -176,5 +176,5 @@ class ConfigLoadable(ConfigMixin):
             nname = name
         return nname
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

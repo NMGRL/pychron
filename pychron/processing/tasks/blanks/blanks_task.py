@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 # from traits.api import HasTraits
 import os
 
@@ -26,8 +26,8 @@ from pychron.paths import r_mkdir
 from pychron.processing.tasks.analysis_edit.interpolation_editor import bin_analyses
 from pychron.processing.tasks.analysis_edit.interpolation_task import InterpolationTask, no_auto_ctx
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.processing.tasks.browser.util import browser_pane_item
 
 
@@ -175,4 +175,4 @@ class BlanksTask(InterpolationTask):
                                                                         ai.aliquot, ai.step))
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

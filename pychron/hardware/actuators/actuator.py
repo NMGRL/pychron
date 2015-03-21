@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 # from traits.api import HasTraits, on_trait_change, Str, Int, Float, Button
 # from traitsui.api import View, Item, Group, HGroup, VGroup
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 # from agilent_gp_actuator import AgilentGPActuator
 # from pychron.hardware.arduino.arduino_gp_actuator import ArduinoGPActuator
 # from argus_gp_actuator import ArgusGPActuator
@@ -107,4 +107,4 @@ class Actuator(AbstractDevice):
                 time.sleep(0.005)
             return r
 
-#============= EOF ====================================
+# ============= EOF ====================================

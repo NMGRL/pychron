@@ -18,7 +18,7 @@
 from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
 # ============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pyface.tasks.action.schema import SMenu
 from pyface.tasks.action.schema_addition import SchemaAddition
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
@@ -28,7 +28,7 @@ from pychron.workspace.workspace_manager import WorkspaceManager
 
 class WorkspacePlugin(BaseTaskPlugin):
 
-    def _my_task_extensions_default(self):
+    def _task_extensions_default(self):
 
         def make_actions(args):
             if len(args) == 3:
@@ -79,7 +79,7 @@ class WorkspacePlugin(BaseTaskPlugin):
     def _preferences_panes_default(self):
         return []
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

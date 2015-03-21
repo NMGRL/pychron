@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pychron.envisage.tasks.base_task import BaseManagerTask
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 from pychron.entry.tasks.sensitivity_entry_panes import SensitivityPane
-from pychron.entry.sensitivity_entry import SensitivityEntry
+from pychron.entry.entry_views.sensitivity_entry import SensitivityEntry
 from pyface.tasks.action.schema import SToolBar
 from pychron.entry.tasks.actions import SaveSensitivityAction, \
     AddSensitivityAction
@@ -54,9 +54,9 @@ class SensitivityEntryTask(BaseManagerTask):
     #     @on_trait_change('extractor:update_irradiations_needed')
     #     def _update_irradiations(self):
     #         self.manager.updated = True
-    #===========================================================================
+    # ===========================================================================
     # GenericActon Handlers
-    #===========================================================================
+    # ===========================================================================
     def save_as(self):
         self.debug('sensitivity entry save as')
         self.save()
@@ -69,11 +69,12 @@ class SensitivityEntryTask(BaseManagerTask):
         self.debug('sensitivity entry add')
         self.manager.add()
 
-    #===============================================================================
+    # ===============================================================================
     # defaults
-    #===============================================================================
+    # ===============================================================================
     def _manager_default(self):
-        return SensitivityEntry()
+        man = self.application.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManage')
+        return SensitivityEntry(db=man.db)
 
         #
         #     def _default_layout_default(self):
@@ -89,4 +90,4 @@ class SensitivityEntryTask(BaseManagerTask):
 #                                         )
 #                           )
 
-#============= EOF =============================================
+# ============= EOF =============================================

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from reportlab.platypus.flowables import PageBreak
 
 from pychron.loading.component_flowable import ComponentFlowable
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from itertools import groupby
 from pychron.core.pdf.base_table_pdf_writer import BasePDFTableWriter
 from pychron.core.pdf.items import Row, Superscript, Subscript
@@ -133,4 +133,4 @@ class FluxPDFWriter(BasePDFTableWriter):
         return self._new_row(analysis, attrs)
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

@@ -1,0 +1,14 @@
+digraph G{
+node [shape=square]; FigureEditor; FigureModel;
+     FigureContainer; FigurePanelA; FigurePanelB; BaseArArFigureA; BaseArArFigureB;
+node [shape=rect]; figure_container; figure_model;
+node [shape=oval]; get_component; _make_panels; make_graph; build;
+
+FigureEditor -> get_component;
+get_component ->figure_container -> FigureContainer;
+get_component ->figure_model -> FigureModel;
+FigureModel -> _make_panels -> FigurePanelA;
+_make_panels -> FigurePanelB;
+FigurePanelA -> make_graph -> BaseArArFigureA -> build;
+make_graph -> BaseArArFigureB;
+}

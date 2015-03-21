@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,18 +12,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
+from apptools.preferences.preference_binding import bind_preference
+
 from pychron.modeling.modeler_manager import ModelerManager
 from pychron.envisage.core.core_plugin import CorePlugin
-from apptools.preferences.preference_binding import bind_preference
+
 
 class MDDModelerPlugin(CorePlugin):
     '''
@@ -50,4 +52,4 @@ class MDDModelerPlugin(CorePlugin):
 
 
 
-#============= EOF ====================================
+# ============= EOF ====================================

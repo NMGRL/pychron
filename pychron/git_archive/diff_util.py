@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 import difflib
 # ============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 # def extract_line_changes(a, b):
 #     diff_iter =difflib.context_diff(a,b)
@@ -129,7 +129,7 @@ d=1'''
     b = '''a=12
 b=1'''
     print extract_line_numbers(a,b)
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

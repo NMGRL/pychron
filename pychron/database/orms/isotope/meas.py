@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 from time import mktime
 import uuid
+
 from sqlalchemy import Column, Integer, String, \
     ForeignKey, BLOB, Float, Time, Boolean, DateTime
 from sqlalchemy.orm import relationship, deferred
 from sqlalchemy.sql.expression import func
-#============= local library imports  ==========================
+
+
+# ============= local library imports  ==========================
 from pychron.database.orms.isotope.util import foreignkey, stringcolumn
 from pychron.database.core.base_orm import BaseMixin, NameMixin, UserMixin
 from pychron.experiment.utilities.identifier import make_runid
@@ -93,8 +96,9 @@ class meas_AnalysisTable(Base, BaseMixin):
     #     figure_analyses = relationship('proc_FigureAnalysisTable', backref='analysis')
     notes = relationship('proc_NotesTable', backref='analysis')
     group_sets = relationship('proc_AnalysisGroupSetTable', backref='analysis')
-    monitors = relationship('meas_MonitorTable', backref='analysis')
     dr_sets = relationship('proc_DataReductionTagSetTable', backref='analysis')
+
+    monitors = relationship('meas_MonitorTable', backref='analysis')
 
     whiff_result = ''
 
@@ -110,25 +114,32 @@ class meas_AnalysisTable(Base, BaseMixin):
     def project_name(self):
         return self.labnumber.sample.project.name
 
+
 class meas_ExperimentTable(Base, NameMixin):
     analyses = relationship('meas_AnalysisTable', backref='experiment')
 
 
 class meas_ExtractionTable(Base, BaseMixin):
-    extract_value = deferred(Column(Float))
-    extract_duration = deferred(Column(Float))
-    cleanup_duration = deferred(Column(Float))
+    # extract_value = deferred(Column(Float))
+    # extract_duration = deferred(Column(Float))
+    # cleanup_duration = deferred(Column(Float))
 
-    extract_units = deferred(stringcolumn(5))
+    # extract_units = deferred(stringcolumn(5))
+
+    extract_value = Column(Float)
+    extract_duration = Column(Float)
+    cleanup_duration = Column(Float)
+
+    extract_units = stringcolumn(5)
 
     weight = deferred(Column(Float))
     sensitivity_multiplier = deferred(Column(Float))
     is_degas = deferred(Column(Boolean))
 
     beam_diameter = Column(Float)
-    pattern = deferred(stringcolumn(100))
-    ramp_rate = deferred(Column(Float))
-    ramp_duration = deferred(Column(Float))
+    pattern = stringcolumn(100)
+    ramp_rate = Column(Float)
+    ramp_duration = Column(Float)
 
     mask_position = deferred(Column(Float))
     mask_name = deferred(stringcolumn(100))
@@ -155,7 +166,8 @@ class meas_GainHistoryTable(Base, UserMixin):
     applied_date = Column(DateTime, default=func.now())
     hash = stringcolumn(32)
     gains = relationship('meas_GainTable')
-    save_type=Column(String(20), default=1)
+    save_type = Column(String(20), default=1)
+
 
 class meas_GainTable(Base, BaseMixin):
     value = Column(Float(32))
@@ -257,4 +269,4 @@ class meas_MonitorTable(Base, NameMixin):
 #     extraction_id = foreignkey('meas_ExtractionTable')
 #     is_degas = Column(Boolean)
 #     position = Column(Integer)
-#============= EOF =============================================
+# ============= EOF =============================================

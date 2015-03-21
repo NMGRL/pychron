@@ -20,7 +20,8 @@ from traits.api import Instance, Int, Property, List, \
 # ============= standard library imports ========================
 import os
 from numpy import array, argmin
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
+from pychron.globals import globalv
 from pychron.spectrometer.thermo.source import ArgusSource
 from pychron.spectrometer.thermo.magnet import ArgusMagnet
 from pychron.spectrometer.thermo.detector import Detector
@@ -83,9 +84,23 @@ class Spectrometer(SpectrometerDevice):
     dc_npeak_centers = Int(3)
 
     send_config_on_startup = Bool
+    use_deflection_correction = Bool(True)
+    max_deflection = Int(500)
 
     def test_connection(self):
-        return self.ask('GetIntegrationTime') is not None
+        """
+            if not in simulation mode send a GetIntegrationTime to the spectrometer
+            if in simulation mode and the globalv.communication_simulation is disabled
+            then return False
+
+        :return: bool
+        """
+        ret = False
+        if not self.simulation:
+            ret = self.ask('GetIntegrationTime', verbose=True) is not None
+        elif globalv.communication_simulation:
+            ret = True
+        return ret
 
     def set_gains(self, history=None):
         if history:
@@ -146,10 +161,6 @@ class Spectrometer(SpectrometerDevice):
             d.microcontroller = m
             d.load()
 
-    @property
-    def detector_names(self):
-        return [di.name for di in self.detectors]
-
     def get_deflection(self, name, current=False):
         deflection = 0
         det = self.get_detector(name)
@@ -181,25 +192,9 @@ class Spectrometer(SpectrometerDevice):
                     mass = nmass - (i - index)
                     di.isotope = 'Ar{}'.format(mass)
 
-    #===============================================================================
-    # property get/set
-    #===============================================================================
-    def _get_detectors(self):
-        ds = []
-        for di in DETECTOR_ORDER:
-            ds.append(self._detectors[di])
-        return ds
-
-    def _get_sub_cup_configuration(self):
-        return self._sub_cup_configuration
-
-    def _set_sub_cup_configuration(self, v):
-        self._sub_cup_configuration = v
-        self.ask('SetSubCupConfiguration {}'.format(v))
-
-    #===============================================================================
+    # ===============================================================================
     # load
-    #===============================================================================
+    # ===============================================================================
     def load_configurations(self):
         self.sub_cup_configurations = ['A', 'B', 'C']
         self._sub_cup_configuration = 'B'
@@ -243,6 +238,12 @@ class Spectrometer(SpectrometerDevice):
                 for di in ds:
                     self.info('Making protection available for detector "{}"'.format(di))
 
+        if config.has_section('Deflections'):
+            if config.has_option('Deflections', 'max'):
+                v = config.getint('Deflections', 'max')
+                if v:
+                    self.max_deflection = v
+
         self.magnet.load()
 
         self.debug('Detectors {}'.format(self.detectors))
@@ -262,7 +263,7 @@ class Spectrometer(SpectrometerDevice):
     def load_detectors(self):
         config = self.get_configuration(path=os.path.join(paths.spectrometer_dir, 'detectors.cfg'))
         for name in config.sections():
-            #relative_position = self.config_get(config, name, 'relative_position', cast='float')
+            # relative_position = self.config_get(config, name, 'relative_position', cast='float')
             deflection_corrrection_sign = self.config_get(config, name, 'deflection_correction_sign', cast='int')
 
             color = self.config_get(config, name, 'color', default='black')
@@ -284,42 +285,35 @@ class Spectrometer(SpectrometerDevice):
         d = Detector(spectrometer=self, **kw)
         self.detectors.append(d)
 
-    #===============================================================================
+    # ===============================================================================
     # signals
-    #===============================================================================
-    def _get_simulation_data(self):
-        from numpy.random import random
-
-        signals = [1, 100, 3, 0.01, 0.01, 0.01] + random(6)
-        keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
-        return keys, signals
-
+    # ===============================================================================
     def get_intensities(self, tagged=True):
+        keys = []
+        signals = []
+        if self.microcontroller and not self.microcontroller.simulation:
+            # if self.microcontroller.simulation and globalv.communication_simulation:
+            # keys, signals = self._get_simulation_data()
+            # else:
+            datastr = self.ask('GetData', verbose=False, quiet=True)
+            if datastr:
+                if not 'ERROR' in datastr:
+                    data = datastr.split(',')
+                    if tagged:
+                        keys = data[::2]
+                        signals = data[1::2]
+                    else:
+                        keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
+                        signals = data
 
-        if self.microcontroller:
-            if self.microcontroller.simulation:
-                keys, signals = self._get_simulation_data()
-            else:
-                datastr = self.ask('GetData', verbose=False, quiet=True)
-                keys = []
-                signals = []
-                if datastr:
-                    if not 'ERROR' in datastr:
-                        data = datastr.split(',')
-                        if tagged:
-                            keys = data[::2]
-                            signals = data[1::2]
-                        else:
-                            keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
-                            signals = data
+                signals = map(float, signals)
 
-                    signals = map(float, signals)
-
-            for k, v in zip(keys, signals):
-                det = self.get_detector(k)
-                det.set_intensity(v)
-        else:
+        if not keys and globalv.communication_simulation:
             keys, signals = self._get_simulation_data()
+
+        for k, v in zip(keys, signals):
+            det = self.get_detector(k)
+            det.set_intensity(v)
 
         return keys, signals
 
@@ -336,28 +330,29 @@ class Spectrometer(SpectrometerDevice):
             else:
                 return signals[keys.index(dkeys)]
 
+
     def get_hv_correction(self, dac, uncorrect=False, current=False):
         """
-        ion optics correction
+            ion optics correction
 
-        r=M*v_o/(q*B_o)
-        r=M*v_c/(q*B_c)
+            r=M*v_o/(q*B_o)
+            r=M*v_c/(q*B_c)
 
-        E=m*v^2/2
-        v=(2*E/m)^0.5
+            E=m*v^2/2
+            v=(2*E/m)^0.5
 
-        v_o/B_o = v_c/B_c
-        B_c = B_o*v_c/v_o
+            v_o/B_o = v_c/B_c
+            B_c = B_o*v_c/v_o
 
-        B_c = B_o*(E_c/E_o)^0.5
+            B_c = B_o*(E_c/E_o)^0.5
 
-        B_o = B_c*(E_o/E_c)^0.5
+            B_o = B_c*(E_o/E_c)^0.5
 
-        E_o = nominal hv
-        E_c = current hv
-        B_o = nominal dac
-        B_c = corrected dac
-        """
+            E_o = nominal hv
+            E_c = current hv
+            B_o = nominal dac
+            B_c = corrected dac
+            """
         source = self.source
         cur = source.current_hv
         if current:
@@ -381,36 +376,43 @@ class Spectrometer(SpectrometerDevice):
         dac *= cor
         return dac
 
+
     def correct_dac(self, det, dac, current=True):
         """
             correct for deflection
             correct for hv
         """
-        #correct for deflection
-        dev = det.get_deflection_correction(current=current)
-        dac += dev
+        # correct for deflection
+        if self.use_deflection_correction:
+            dev = det.get_deflection_correction(current=current)
+            dac += dev
 
-        #correct for hv
+        # correct for hv
         # dac *= self.get_hv_correction(current=current)
         dac = self.get_hv_correction(dac, current=current)
         return dac
 
+
     def uncorrect_dac(self, det, dac, current=True):
         """
-            inverse of correct_dac
+                inverse of correct_dac
         """
         dac = self.get_hv_correction(dac, uncorrect=True, current=current)
-        dac -= det.get_deflection_correction(current=current)
+        if self.use_deflection_correction:
+            dac -= det.get_deflection_correction(current=current)
         return dac
 
-    def send_configuration(self):
-        self._send_configuration()
-    #===============================================================================
+
+    # ===============================================================================
     # private
-    #===============================================================================
-    @cached_property
-    def _get_isotopes(self):
-        return sorted(self.molecular_weights.keys(), key=lambda x: int(x[2:]))
+    # ===============================================================================
+    def _get_simulation_data(self):
+        from numpy.random import random
+
+        signals = [1, 100, 3, 0.01, 0.01, 0.01] + random(6)
+        keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
+        return keys, signals
+
 
     def _send_configuration(self):
         command_map = dict(ionrepeller='IonRepeller',
@@ -447,16 +449,47 @@ class Spectrometer(SpectrometerDevice):
 
                         self.set_parameter(cmd, v)
 
-    #===============================================================================
+
+    # ===============================================================================
     # defaults
-    #===============================================================================
+    # ===============================================================================
     def _magnet_default(self):
         return ArgusMagnet(spectrometer=self)
+
 
     def _source_default(self):
         return ArgusSource(spectrometer=self)
 
+
     def _integration_time_default(self):
         return DEFAULT_INTEGRATION_TIME
 
-#============= EOF =============================================
+
+    # ===============================================================================
+    # property get/set
+    # ===============================================================================
+    def _get_detectors(self):
+        ds = []
+        for di in DETECTOR_ORDER:
+            ds.append(self._detectors[di])
+        return ds
+
+
+    def _get_sub_cup_configuration(self):
+        return self._sub_cup_configuration
+
+
+    def _set_sub_cup_configuration(self, v):
+        self._sub_cup_configuration = v
+        self.ask('SetSubCupConfiguration {}'.format(v))
+
+
+    @cached_property
+    def _get_isotopes(self):
+        return sorted(self.molecular_weights.keys(), key=lambda x: int(x[2:]))
+
+
+    @property
+    def detector_names(self):
+        return [di.name for di in self.detectors]
+# ============= EOF =============================================

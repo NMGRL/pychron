@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 # from traits.api import HasTraits
 # from traitsui.api import View, Item
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 # from pychron.core.pdf.base_pdf_writer import BasePDFWriter
 # from pychron.loading.component_flowable import ComponentFlowable
 # from reportlab.platypus.flowables import PageBreak
@@ -35,4 +35,4 @@ class DetectorIntercalibrationPDFWriter(InterpolationPDFWriter):
 #         templates = [self._new_page_template(frames=[self._default_frame(doc)])]
 #
 #         return flowables, templates
-#============= EOF =============================================
+# ============= EOF =============================================

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,25 +12,24 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
 from traits.api import on_trait_change, Instance, List, Event, Any, Enum, Button
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Tabbed, \
     HSplitter
 from pyface.tasks.action.schema import SToolBar
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from itertools import groupby
 import os
 import weakref
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.envisage.tasks.actions import ToggleFullWindowAction
 from pychron.paths import paths
 from pychron.processing.plotters.xy.xy_scatter import XYScatterEditor
 from pychron.processing.tasks.actions.edit_actions import TagAction
-from pychron.processing.tasks.actions.processing_actions import SetInterpretedAgeTBAction, BrowseInterpretedAgeTBAction, \
-    GroupSelectedAction, GroupbyAliquotAction, GroupbyLabnumberAction, ClearGroupAction, GroupbySampleAction
+from pychron.processing.tasks.actions.processing_actions import SetInterpretedAgeTBAction, BrowseInterpretedAgeTBAction
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
 from pychron.processing.tagging.analysis_tags import Tag
 from pychron.processing.tasks.browser.util import browser_pane_item
@@ -173,9 +172,9 @@ class FigureTask(AnalysisEditTask):
         # self.active_editor.compress_analyses()
         self.active_editor.rebuild()
 
-    #===============================================================================
+    # ===============================================================================
     # grouping
-    #===============================================================================
+    # ===============================================================================
     def group_by_aliquot(self):
         if self.unknowns_pane and self.unknowns_pane.items:
             self.unknowns_pane.group_by_aliquot()
@@ -198,9 +197,9 @@ class FigureTask(AnalysisEditTask):
         if self.unknowns_pane and self.unknowns_pane.items:
             self.unknowns_pane.clear_grouping(refresh_plot=refresh,
                                               idxs=selection_idxs)
-    #===============================================================================
+    # ===============================================================================
     # figures
-    #===============================================================================
+    # ===============================================================================
     def new_ideogram(self, ans=None, klass=None, tklass=None,
                      name='Ideo', set_ans=True,
                      add_table=True, add_iso=True):
@@ -293,9 +292,9 @@ class FigureTask(AnalysisEditTask):
         self.active_editor.set_items_from_file(p)
         self.active_editor.rebuild()
 
-    #===============================================================================
+    # ===============================================================================
     # actions
-    #===============================================================================
+    # ===============================================================================
     def refresh_active_editor(self):
         if self.has_active_editor():
             self.active_editor.rebuild()
@@ -365,14 +364,14 @@ class FigureTask(AnalysisEditTask):
 
     def tb_new_isochron(self):
         self.new_inverse_isochron()
-    #===============================================================================
+    # ===============================================================================
     #
-    #===============================================================================
+    # ===============================================================================
 
 
-    #===============================================================================
+    # ===============================================================================
     # private
-    #===============================================================================
+    # ===============================================================================
     def _new_figure(self, ans, name, klass, tklass=None,
                     add_table=True,
                     add_iso=True,
@@ -621,9 +620,9 @@ class FigureTask(AnalysisEditTask):
 
                 sess.delete(dbfig)
 
-    #===============================================================================
+    # ===============================================================================
     # handlers
-    #===============================================================================
+    # ===============================================================================
     # def _selected_projects_changed(self, old, new):
     #     # self._load_project_figures(new)
     #     super(FigureTask, self)._selected_projects_changed(new)
@@ -741,13 +740,13 @@ class FigureTask(AnalysisEditTask):
     def _handle_invalid(self):
         self.set_tag(Tag(name='invalid'))
 
-    #===========================================================================
+    # ===========================================================================
     # browser protocol
-    #===========================================================================
+    # ===========================================================================
 
-    #===============================================================================
+    # ===============================================================================
     # defaults
-    #===============================================================================
+    # ===============================================================================
     def _default_layout_default(self):
         return TaskLayout(
             id='pychron.processing',
@@ -758,7 +757,7 @@ class FigureTask(AnalysisEditTask):
                     PaneItem('pychron.processing.unknowns'),
                     PaneItem('pychron.processing.figures.plotter_options'),
                     PaneItem('pychron.plot_editor'))))
-        #============= EOF =============================================
+        # ============= EOF =============================================
         #@classmethod
         # def group_by(cls, editor, items, key):
         #     ids = []

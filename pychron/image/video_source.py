@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,22 +12,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, File, Str, Int
-from traitsui.api import View, Item
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import zmq
 from cStringIO import StringIO
 import Image as PILImage
 import os
 from numpy import asarray, array
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.image.image import Image
 from pychron.image.cv_wrapper import resize
-import time
 
 
 def parse_url(url):
@@ -64,9 +62,9 @@ class VideoSource(HasTraits):
         self.poller = zmq.Poller()
         self.reset_connection()
 
-#===============================================================================
+# ===============================================================================
 # capture protocol
-#===============================================================================
+# ===============================================================================
     def release(self):
         pass
 
@@ -171,4 +169,4 @@ class VideoSource(HasTraits):
             self._image_path_changed()
 
         return self._cached_image
-#============= EOF =============================================
+# ============= EOF =============================================

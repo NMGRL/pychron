@@ -1,20 +1,20 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Any, File, String, Int, Enum, Instance, Dict, \
     on_trait_change, Bool, Range
 from traitsui.api import View, Item, UItem, EnumEditor
@@ -24,32 +24,36 @@ from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pychron.canvas.canvas2D.video_canvas import VideoCanvas
 from pychron.core.ui.stage_component_editor import VideoComponentEditor
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 class Source(HasTraits):
     def url(self):
         return
 
+
 class LocalSource(Source):
     path = File
+
     def traits_view(self):
         return View(UItem('path'))
 
     def url(self):
         return 'file://{}'.format(self.path)
 
+
 class RemoteSource(Source):
     host = String('localhost', enter_set=True, auto_set=False)
     port = Int(1084, enter_set=True, auto_set=False)
+
     def traits_view(self):
         return View(
-                    Item('host'),
-                    Item('port'),
-
-                    )
+            Item('host'),
+            Item('port'))
 
     def url(self):
         return 'pvs://{}:{}'.format(self.host, self.port)
+
 
 class ControlsPane(TraitsDockPane):
     name = 'Controls'
@@ -57,13 +61,14 @@ class ControlsPane(TraitsDockPane):
     show_grids = Bool(False)
     fps = Range(1, 12, 10)
     quality = Range(1, 75, 10)
+
     def traits_view(self):
         v = View(
-                 Item('show_grids', label='Grid'),
-                 Item('fps'),
-                 Item('quality')
-                 )
+            Item('show_grids', label='Grid'),
+            Item('fps'),
+            Item('quality'))
         return v
+
 
 class SourcePane(TraitsDockPane):
     name = 'Source'
@@ -75,14 +80,12 @@ class SourcePane(TraitsDockPane):
 
     def traits_view(self):
         v = View(
-                 UItem('kind'),
-                 UItem('source',
-                       style='custom'),
-                 UItem('selected_connection',
-                       editor=EnumEditor(name='connections'),
-                       style='custom'
-                       ),
-                 )
+            UItem('kind'),
+            UItem('source',
+                  style='custom'),
+            UItem('selected_connection',
+                  editor=EnumEditor(name='connections'),
+                  style='custom'))
         return v
 
     def _kind_changed(self):
@@ -94,9 +97,11 @@ class SourcePane(TraitsDockPane):
     def _source_default(self):
         return RemoteSource()
 
+
 class BaseVideoPane(HasTraits):
     component = Any
     video = Any
+
     @on_trait_change('video:fps')
     def _update_fps(self):
         print 'set component fps', self.video.fps
@@ -109,25 +114,22 @@ class BaseVideoPane(HasTraits):
         c = VideoCanvas(video=self.video,
                         show_axes=False,
                         show_grids=False,
-                        padding=5
-
-
-                        )
+                        padding=5)
         return c
 
     def traits_view(self):
-        v = View(
-                 UItem('component',
+        v = View(UItem('component',
                        style='custom',
-                       editor=VideoComponentEditor()
-                       )
-                 )
+                       editor=VideoComponentEditor()))
         return v
+
 
 class VideoPane(TraitsTaskPane, BaseVideoPane):
     pass
 
+
 class VideoDockPane(TraitsDockPane, BaseVideoPane):
     id = 'pychron.video'
     name = 'Video'
-#============= EOF =============================================
+
+# ============= EOF =============================================

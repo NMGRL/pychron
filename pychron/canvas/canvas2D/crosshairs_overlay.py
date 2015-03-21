@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-from traits.api import HasTraits, Tuple, Float, Enum
-from traitsui.api import View, Item, TableEditor
+# ============= enthought library imports =======================
 from chaco.abstract_overlay import AbstractOverlay
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class CrosshairsOverlay(AbstractOverlay):
     def overlay(self, component, gc, *args, **kw):
@@ -98,4 +96,4 @@ class CrosshairsOverlay(AbstractOverlay):
 
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

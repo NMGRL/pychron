@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 # import xmlrpclib
 # import hmac
 # import Pyro4 as pyro
 # pyro.configuration.HMAC_KEY = bytes(hmac.new('pychronjjj.rpc.hmac').digest())
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.hardware.core.communicators.communicator import Communicator
 
 # return to xml-rpc ?
@@ -80,4 +80,4 @@ class RpcCommunicator(Communicator):
         return self._rpc_backend.handle
 
     handle = property(fget=_get_handle)
-#============= EOF =============================================
+# ============= EOF =============================================

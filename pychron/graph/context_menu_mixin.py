@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,20 +12,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits
 from traitsui.menu import Action, Menu as MenuManager
 
 from pychron.pychron_constants import PLUSMINUS
 
 
+
 # from pyface.action.group import Group
 # from pyface.action.api import Group, MenuManager
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class ContextMenuMixin(HasTraits):
     use_context_menu = True
@@ -162,4 +163,4 @@ class RegressionContextMenuMixin(ContextMenuMixin):
         contents.append(menu)
         return contents
 
-#============= EOF =============================================
+# ============= EOF =============================================

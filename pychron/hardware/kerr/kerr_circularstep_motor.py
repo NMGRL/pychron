@@ -1,4 +1,4 @@
-#==============================================================================
+# ==============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,12 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#==============================================================================
+# ==============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import CInt
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.hardware.kerr.kerr_step_motor import KerrStepMotor
 import time
 from pychron.hardware.core.data_helper import make_bitarray
@@ -65,32 +65,32 @@ class KerrCircularStepMotor(KerrStepMotor):
 #         t = Thread(target=self.progress_update, args=(progress, signal))
 #         t.start()
 
-        #======================================================================
+        # ======================================================================
         # step 1. move positive until prox switch is on
-        #======================================================================
+        # ======================================================================
         # set to max pos
         self._set_motor_position_(self.max, velocity=self.home_velocity)
         # wait until prox switch is on
         self._proximity_move(True, n=1, progress=progress)
-        #======================================================================
+        # ======================================================================
         # step 2.  reset pos, move positive 55
-        #======================================================================
+        # ======================================================================
         self.reset_position(motor_off=False)
         moffset = 55
         self._set_motor_position_(moffset, velocity=self.home_velocity)
 
-        #=====================================================================
+        # =====================================================================
         # step 3. move 1 step incrementally until home switch set (and proximity not set)
-        #=====================================================================
+        # =====================================================================
         for i in range(10):
             self._set_motor_position_(i + 1 + moffset, velocity=1)
             time.sleep(0.1)
             lim = self._read_limits()
             if not int(lim[4]) and int(lim[2]):
                 break
-        #======================================================================
+        # ======================================================================
         # step 4. set current position as 0
-        #======================================================================
+        # ======================================================================
         self.reset_position(motor_off=False)
 #         signal.set()
         progress.change_message('{} homing complete'.format(self.name), auto_increment=False)
@@ -152,7 +152,7 @@ class KerrCircularStepMotor(KerrStepMotor):
 
 
 
-#============= EOF =============================================
+# ============= EOF =============================================
 #
 #    def _load_trajectory_controlbyte(self):
 #        '''

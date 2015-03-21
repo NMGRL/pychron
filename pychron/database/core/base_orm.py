@@ -12,16 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from sqlalchemy.ext.declarative import declared_attr, declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy import Column, Integer, String, BLOB, DateTime
 from sqlalchemy.sql.expression import func
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.database.orms.isotope.util import foreignkey
 
 Base = declarative_base()
@@ -83,4 +83,4 @@ class ScriptTable(BaseMixin):
     hash = Column(String(32))
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

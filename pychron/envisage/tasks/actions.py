@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 import shutil
 import sys
@@ -25,16 +25,18 @@ from pyface.action.action import Action
 from pyface.tasks.action.task_action import TaskAction
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 import webbrowser
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
 
-#===============================================================================
+# ===============================================================================
 # help
-#===============================================================================
+# ===============================================================================
 from pychron.envisage.resources import icon
 # from pychron.processing.tasks.actions.processing_actions import myTaskAction
 
@@ -205,13 +207,28 @@ class NoteAction(WebAction):
 
 class DocumentationAction(WebAction):
     name = 'View Documentation'
-    image = icon('document-properties')
+    image = icon('documentation')
 
     def perform(self, event):
         """
             goto issues page add an request or report bug
         """
         url = 'http://pychron.readthedocs.org/en/latest/index.html'
+        self._open_url(url)
+
+
+class ChangeLogAction(WebAction):
+    name = "What's New"
+    image = icon('documentation')
+    description = 'View changelog'
+
+
+    def perform(self, event):
+        """
+            goto issues page add an request or report bug
+        """
+        from pychron.version import __version__
+        url = 'https://github.com/NMGRL/pychron/blob/release/v{}/CHANGELOG.md'.format(__version__)
         self._open_url(url)
 
 
@@ -379,7 +396,8 @@ class NewAction(PAction):
 class ToggleFullWindowAction(myTaskAction):
     name = 'Toggle Full Window'
     method = 'toggle_full_window'
-    task_ids = ['pychron.recall', 'pychron.labbook']
+    image = icon('view-fullscreen-8')
+    task_ids = ['pychron.recall', 'pychron.labbook', 'pychron.processing.figures']
 
 
 class EditInitializationAction(Action):
@@ -392,4 +410,4 @@ class EditInitializationAction(Action):
         if edit_initialization():
             restart()
 
-#============= EOF =============================================
+# ============= EOF =============================================

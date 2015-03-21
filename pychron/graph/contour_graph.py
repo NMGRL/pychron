@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from chaco.api import ColorBar, LinearMapper
 from chaco.data_range_1d import DataRange1D
 from chaco.default_colormaps import color_map_name_dict, gray
-#=============standard library imports ========================
+# =============standard library imports ========================
 from numpy import array
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 from graph import Graph
 from graph import name_generator
 
@@ -150,4 +150,4 @@ class ContourGraph(Graph):
 
         return colorbar
 
-#============= EOF =============================================
+# ============= EOF =============================================

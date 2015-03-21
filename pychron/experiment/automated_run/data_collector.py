@@ -21,7 +21,7 @@ from traits.api import Any, List, CInt, Int, Bool, Enum, Str
 # ============= standard library imports ========================
 import time
 from threading import Event, Timer
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.envisage.consoleable import Consoleable
 # from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.experiment.utilities.conditionals_results import check_conditional_results
@@ -303,13 +303,13 @@ class DataCollector(Consoleable):
         graph = self.plot_panel.isotope_graph
         graph.refresh()
 
-    #===============================================================================
+    # ===============================================================================
     #
-    #===============================================================================
+    # ===============================================================================
 
-    #===============================================================================
+    # ===============================================================================
     # checks
-    #===============================================================================
+    # ===============================================================================
     def _check_conditionals(self, conditionals, cnt):
         for ti in conditionals:
             if ti.check(self.automated_run, self._data, cnt):
@@ -343,6 +343,7 @@ class DataCollector(Consoleable):
                 self.plot_panel.total_counts -= (original_counts - i)
                 return 'break'
         elif script_counts != original_counts:
+            print script_counts, original_counts, i
             if i > script_counts:
                 self.info('script termination. measurement iteration executed {}/{} counts'.format(*count_args))
                 return 'break'
@@ -372,6 +373,7 @@ class DataCollector(Consoleable):
             if cancelation_conditional:
                 self.info('cancelation conditional {}. measurement iteration executed {}/{} counts'.format(
                     cancelation_conditional.message, j, original_counts), color='red')
+                self.automated_run.show_conditionals(tripped=cancelation_conditional)
                 return 'cancel'
 
             truncation_conditional = self._check_conditionals(self.truncation_conditionals, i)
@@ -380,7 +382,7 @@ class DataCollector(Consoleable):
                     truncation_conditional.message, j, original_counts), color='red')
                 self.state = 'truncated'
                 self.measurement_script.abbreviated_count_ratio = truncation_conditional.abbreviated_count_ratio
-
+                self.automated_run.show_conditionals(tripped=truncation_conditional)
                 #                self.condition_truncated = True
                 return 'break'
 
@@ -390,6 +392,7 @@ class DataCollector(Consoleable):
                     'action conditional {}. measurement iteration executed {}/{} counts'.format(
                         action_conditional.message,
                         j, original_counts), color='red')
+                self.automated_run.show_conditionals(tripped=action_conditional)
                 action_conditional.perform(self.measurement_script)
                 if not action_conditional.resume:
                     return 'break'
@@ -418,4 +421,4 @@ class DataCollector(Consoleable):
     def cancelation_conditionals(self):
         return self.automated_run.cancelation_conditionals
 
-#============= EOF =============================================
+# ============= EOF =============================================

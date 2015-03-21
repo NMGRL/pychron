@@ -18,7 +18,7 @@
 
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import List, Str, Bool, Any, String, \
-    on_trait_change, Date, Int, Time, Instance, Button, Property
+    on_trait_change, Date, Int, Time, Instance, Button, Property, Enum
 # ============= standard library imports ========================
 from datetime import datetime, timedelta
 import re
@@ -111,86 +111,9 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         super(BaseBrowserTask, self).__init__(*args, **kw)
         self.pattributes += ('irradiation_enabled', 'use_focus_switching')
 
-    def _get_filter_label(self):
-        ss = []
-        if self.identifier:
-            ss.append('Identifier={}'.format(self.identifier))
-
-        if self.use_mass_spectrometers:
-            ss.append('MS={}'.format(','.join(self.mass_spectrometer_includes)))
-
-        if self.project_enabled:
-            if self.selected_projects:
-                s = 'Project= {}'.format(','.join([s.name for s in self.selected_projects]))
-                ss.append(s)
-
-        if self.irradiation_enabled:
-            if self.irradiation:
-                s = 'Irradiation= {}'.format(self.irradiation)
-                ss.append(s)
-
-        if self.use_analysis_type_filtering:
-            if self.analysis_include_types:
-                s = 'Types= {}'.format(self.analysis_include_types)
-                ss.append(s)
-
-        if self.use_low_post:
-            # s='>={}'.format(self.low_post.strftime('%m-%d-%Y %H:%M'))
-            s = '>={}'.format(self.low_post)
-            ss.append(s)
-
-        if self.use_high_post:
-            s = '<={}'.format(self.high_post)
-            ss.append(s)
-
-        if self.use_named_date_range:
-            ss.append(self.named_date_range)
-
-        txt = ''
-        if ss:
-            txt = ' + '.join(ss)
-
-        n = len(txt)
-        if n > NCHARS:
-            lines = REG.findall(txt)
-            nn = NCHARS * len(lines)
-            if nn < n:
-                lines.append(txt[nn:])
-            return '\n'.join(lines)
-
-        return txt
-
-    def _identifier_change_hook(self, db, new, lns):
-        if len(new) > 2:
-            if self.project_enabled:
-                def get_projects():
-                    for li in lns:
-                        try:
-                            yield li.sample.project
-                        except AttributeError, e:
-                            print e
-
-                ps = sorted(list(set(get_projects())))
-                ps = [ProjectRecordView(p) for p in ps]
-                self.projects = ps
-                self.selected_projects = []
-
-            if self.irradiation_enabled:
-                def get_irradiations():
-                    for li in lns:
-                        try:
-                            yield li.irradiation_position.level.irradiation.name
-                        except AttributeError:
-                            pass
-
-                irrads = sorted(list(set(get_irradiations())))
-                self.irradiations = irrads
-                if irrads:
-                    self.irradiation = irrads[0]
-
     def refresh_samples(self):
         self.debug('refresh samples')
-        self.set_samples(self._retrieve_samples())
+        self.set_samples(self._retrieve_labnumbers())
 
     def load_time_view(self):
         self.debug('load time view')
@@ -329,9 +252,9 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
                 selector.add_query('Analysis Type', '=', at, chain_rule='Or')
 
         if self.use_low_post:
-            selector.add_query('Run Date/Time', '>', self.low_post)
+            selector.add_query('Run Date/Time', '>', self.low_post.strftime('%m/%d/%Y %H:%M:%S'))
         if self.use_high_post:
-            selector.add_query('Run Date/Time', '<', self.high_post)
+            selector.add_query('Run Date/Time', '<', self.high_post.strftime('%m/%d/%Y %H:%M:%S'))
 
         if not selector.queries:
             if not psel.active:
@@ -385,9 +308,10 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
     def _load_mass_spectrometers(self):
         db = self.db
-        ms = [mi.name for mi in db.get_mass_spectrometers()]
-        self.available_mass_spectrometers = ms
-        # self.mass_spectrometers = ['Spectrometer', 'None'] + ms
+        ms = db.get_mass_spectrometers()
+        if ms:
+            ms = [mi.name for mi in ms]
+            self.available_mass_spectrometers = ms
 
     def _load_analysis_types(self):
         db = self.db
@@ -402,7 +326,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     def _create_browser_pane(self, **kw):
         self.browser_pane = BrowserPane(model=self, **kw)
         self.analysis_table.tabular_adapter = self.browser_pane.analysis_tabular_adapter
-        self.sample_tabular_adapter = self.browser_pane.sample_tabular_adapter
+        self.labnumber_tabular_adapter = self.browser_pane.labnumber_tabular_adapter
         return self.browser_pane
 
     def _ok_ed(self):
@@ -427,7 +351,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
                     irrads = db.get_irradiations(project_names=names)
                     self.irradiations = [i.name for i in irrads]
 
-    def _retrieve_samples_hook(self, db):
+    def _retrieve_labnumbers_hook(self, db):
         low_post = self.low_post
         high_post = self.high_post
         ms = None
@@ -457,7 +381,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
         if self.project_enabled:
             if not self.irradiation_enabled:
-                ls = super(BaseBrowserTask, self)._retrieve_samples_hook(db)
+                ls = super(BaseBrowserTask, self)._retrieve_labnumbers_hook(db)
             else:
                 if self.selected_projects and self.irradiation_enabled and self.irradiation:
                     ls = db.get_project_irradiation_labnumbers([si.name for si in self.selected_projects],
@@ -501,6 +425,34 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
         return ls
 
+    def _identifier_change_hook(self, db, new, lns):
+        if len(new) > 2:
+            if self.project_enabled:
+                def get_projects():
+                    for li in lns:
+                        try:
+                            yield li.sample.project
+                        except AttributeError, e:
+                            print e
+
+                ps = sorted(list(set(get_projects())))
+                ps = [ProjectRecordView(p) for p in ps]
+                self.projects = ps
+                self.selected_projects = []
+
+            if self.irradiation_enabled:
+                def get_irradiations():
+                    for li in lns:
+                        try:
+                            yield li.irradiation_position.level.irradiation.name
+                        except AttributeError:
+                            pass
+
+                irrads = sorted(list(set(get_irradiations())))
+                self.irradiations = irrads
+                if irrads:
+                    self.irradiation = irrads[0]
+
     # handlers
     def _filter_by_button_fired(self):
         self.debug('filter by button fired low_post={}, high_post={}'.format(self.low_post, self.high_post))
@@ -522,6 +474,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         self.dump()
 
     def _graphical_filter_button_fired(self):
+        print 'ffffassdf'
         self.debug('doing graphical filter')
         from pychron.processing.tasks.browser.graphical_filter import GraphicalFilterModel, GraphicalFilterView
 
@@ -622,7 +575,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         if name == 'irradiation':
             self.levels = obj.levels
         elif name == 'level':
-            self.set_samples(self._retrieve_samples())
+            self.set_samples(self._retrieve_labnumbers())
 
     def _use_analysis_type_filtering_changed(self):
         self.refresh_samples()
@@ -659,6 +612,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         with db.session_ctx():
             for pp in self.selected_projects:
                 bins = db.get_project_date_bins(identifier, pp.name, hours)
+                print bins
                 if bins:
                     for li, hi in bins:
                         yield li, hi
@@ -673,28 +627,36 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
             ss = self.selected_samples
             xx = ss[:]
-            reftypes = ('blank_unknown',)
-            if any((si.analysis_type in reftypes
-                    for si in ss)):
-                with self.db.session_ctx():
-                    ans = []
-                    for si in ss:
-                        if si.analysis_type in reftypes:
-                            xx.remove(si)
-                            dates = list(self._project_date_bins(si.identifier))
-                            progress = open_progress(len(dates))
-                            for lp, hp in dates:
-                                progress.change_message('Loading Date Range '
-                                                        '{} to {}'.format(lp.strftime('%m-%d-%Y %H:%M:%S'),
-                                                                          hp.strftime('%m-%d-%Y %H:%M:%S')))
-                                ais = self._retrieve_sample_analyses([si],
-                                                                     make_records=False,
-                                                                     low_post=lp,
-                                                                     high_post=hp, **kw)
-                                ans.extend(ais)
-                            progress.close()
+            # if not any(['RECENT' in p for p in self.selected_projects]):
+            # sp=self.selected_projects
+            # if not hasattr(sp, '__iter__'):
+            #     sp = (sp, )
 
-                    ans = self._make_records(ans)
+            if not any(['RECENT' in p.name for p in self.selected_projects]):
+                reftypes = ('blank_unknown',)
+                if any((si.analysis_type in reftypes
+                        for si in ss)):
+                    with self.db.session_ctx():
+                        ans = []
+                        for si in ss:
+                            if si.analysis_type in reftypes:
+                                xx.remove(si)
+                                dates = list(self._project_date_bins(si.identifier))
+                                print dates
+                                progress = open_progress(len(dates))
+                                for lp, hp in dates:
+
+                                    progress.change_message('Loading Date Range '
+                                                            '{} to {}'.format(lp.strftime('%m-%d-%Y %H:%M:%S'),
+                                                                              hp.strftime('%m-%d-%Y %H:%M:%S')))
+                                    ais = self._retrieve_sample_analyses([si],
+                                                                         make_records=False,
+                                                                         low_post=lp,
+                                                                         high_post=hp, **kw)
+                                    ans.extend(ais)
+                                progress.close()
+
+                        ans = self._make_records(ans)
                     # print len(ans), len(set([si.record_id for si in ans]))
             if xx:
                 lp, hp = self.low_post, self.high_post
@@ -710,7 +672,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
         self.filter_focus = not bool(new)
 
-    @on_trait_change('data_selector.database_selector.dclicked')
+    @on_trait_change('data_selector:database_selector:dclicked')
     def _handle_selector_dclick(self, new):
         self._selector_dclick(new.item)
 
@@ -737,6 +699,57 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         if self.use_focus_switching and not self.filter_focus:
             ret = False  # default
         return ret
+
+    def _get_filter_label(self):
+        ss = []
+        if self.identifier:
+            ss.append('Identifier={}'.format(self.identifier))
+
+        if self.use_mass_spectrometers:
+            ss.append('MS={}'.format(','.join(self.mass_spectrometer_includes)))
+
+        if self.project_enabled:
+            if self.selected_projects:
+                s = 'Project= {}'.format(','.join([s.name for s in self.selected_projects]))
+                ss.append(s)
+
+        if self.irradiation_enabled:
+            if self.irradiation:
+                s = 'Irradiation= {}'.format(self.irradiation)
+                ss.append(s)
+
+        if self.use_analysis_type_filtering:
+            if self.analysis_include_types:
+                s = 'Types= {}'.format(self.analysis_include_types)
+                ss.append(s)
+
+        if self.use_low_post:
+            # s='>={}'.format(self.low_post.strftime('%m-%d-%Y %H:%M'))
+            s = '>={}'.format(self.low_post)
+            ss.append(s)
+
+        if self.use_high_post:
+            s = '<={}'.format(self.high_post)
+            ss.append(s)
+
+        if self.use_named_date_range:
+            ss.append(self.named_date_range)
+
+        txt = ''
+        if ss:
+            txt = ' + '.join(ss)
+
+        n = len(txt)
+        if n > NCHARS:
+            lines = REG.findall(txt)
+            nn = NCHARS * len(lines)
+            if nn < n:
+                lines.append(txt[nn:])
+            return '\n'.join(lines)
+
+        return txt
+
+
 
     def _analysis_table_default(self):
         at = AnalysisTable(db=self.db,

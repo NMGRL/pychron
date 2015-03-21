@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from itertools import groupby
 
 from kiva.fonttools import str_to_font
@@ -23,8 +23,8 @@ from traitsui.api import View, Item, HGroup, VGroup, Group, \
     EnumEditor, TableEditor
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 from pychron.envisage.icon_button_editor import icon_button_editor
@@ -32,7 +32,7 @@ from pychron.processing.plotters.options.base import FigurePlotterOptions
 from pychron.pychron_constants import ALPHAS
 
 FONTS = ['modern', 'arial']
-SIZES = [6, 8, 9, 10, 11, 12, 14, 15, 18, 24, 36]
+SIZES = [10, 6, 8, 9, 10, 11, 12, 14, 15, 18, 24, 36]
 
 
 def _table_column(klass, *args, **kw):
@@ -185,9 +185,9 @@ class PlotterOptions(FigurePlotterOptions):
 
         return attrs
 
-    #===============================================================================
+    # ===============================================================================
     # property get/set
-    #===============================================================================
+    # ===============================================================================
     def _get_xtick_font(self):
         return self._get_font('xtick', default_size=10)
 
@@ -209,9 +209,9 @@ class PlotterOptions(FigurePlotterOptions):
             xs = default_size
         return str_to_font('{} {}'.format(xn, xs))
 
-    #===============================================================================
+    # ===============================================================================
     # defaults
-    #===============================================================================
+    # ===============================================================================
     def _xtitle_font_size_default(self):
         return 12
 
@@ -227,9 +227,9 @@ class PlotterOptions(FigurePlotterOptions):
     def _aux_plots_default(self):
         return [self.plot_option_klass() for _ in range(5)]
 
-    #===============================================================================
+    # ===============================================================================
     # views
-    #===============================================================================
+    # ===============================================================================
     def _get_groups(self):
         pass
 
@@ -314,4 +314,4 @@ class PlotterOptions(FigurePlotterOptions):
         # v = View(VGroup(self._get_refresh_group(),g))
         return v
 
-#============= EOF =============================================
+# ============= EOF =============================================

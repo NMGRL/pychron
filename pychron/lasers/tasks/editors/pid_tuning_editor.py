@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 import time
 
@@ -22,8 +22,9 @@ from enable.component_editor import ComponentEditor
 from traits.api import Instance
 from traitsui.api import View, UItem
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.lasers.scanner import Scanner
 from pychron.lasers.tasks.editors.laser_editor import LaserEditor
 from pychron.managers.data_managers.csv_data_manager import CSVDataManager
@@ -185,4 +186,4 @@ class PIDTuningEditor(LaserEditor):
                        editor=ComponentEditor()))
         return v
 
-#============= EOF =============================================
+# ============= EOF =============================================

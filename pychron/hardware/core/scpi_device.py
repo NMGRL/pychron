@@ -15,8 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.hardware.core.core_device import CoreDevice
 
 
@@ -57,7 +57,7 @@ class SCPIDevice(CoreDevice):
         v = self._parse_response(v)
         self.debug('get_measurment. value = {}'.format(v))
         return v
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

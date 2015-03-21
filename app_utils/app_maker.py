@@ -5,14 +5,14 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 import argparse
 import buildtools
@@ -46,6 +46,10 @@ def make():
         default='.',
         help='set the root directory')
 
+    parser.add_argument('-e', '--egg', action='store_true',
+                        help='Do not make a python egg')
+    parser.add_argument('-d', '--debug', action='store_true',
+                        help='Do not make a python egg')
     args = parser.parse_args()
     apps = args.applications
     for name in apps:
@@ -55,6 +59,9 @@ def make():
             template.root = args.root[0]
             template.version = args.version[0]
             template.name = name
+            template.use_egg = not args.egg
+            template.debug = args.debug
+
             if name in ('bakedpy',):
                 template.root = args.root[0]
                 #                template.version = args.version[0]
@@ -70,7 +77,7 @@ def make():
                                      'pychron.remote_hardware.errors',
                                      'pychron.core',
                                      'pychron.core.helpers',
-                                     'pychron.core.ui','pychron.core.ui.qt',
+                                     'pychron.core.ui', 'pychron.core.ui.qt',
                                      'pychron.core.xml',
                                      'pychron.displays']
                 template.modules = ['pychron.managers.remote_hardware_server_manager',
@@ -107,6 +114,9 @@ class Template(object):
     version = None
     packages = None
     modules = None
+    use_egg = True
+    debug = False
+
     def build(self):
         root = os.path.realpath(self.root)
 
@@ -123,18 +133,22 @@ class Template(object):
 
         op = os.path.join(root, 'launchers',
                           '{}.py'.format(self.bundle_name))
-        #=======================================================================
+        # =======================================================================
         # build
-        #=======================================================================
+        # =======================================================================
+
         ins.build_app(op)
-        ins.make_egg(self.packages, self.modules)
+        if not self.debug:
+            if self.use_egg:
+                ins.make_egg(self.packages, self.modules)
+            else:
+                ins.copy_source()
         # ins.make_migrate_repos()
         ins.make_argv()
 
-
-        #=======================================================================
+        # =======================================================================
         # copy
-        #=======================================================================
+        # =======================================================================
         icon_name = self.icon_name
         if icon_name is None:
             icon_name = ''
@@ -149,22 +163,50 @@ class Template(object):
             shutil.copyfile(icon_file,
                             os.path.join(dest, 'Resources', icon_name))
 
-        for ni, nd in (('splash', 'splashes'), ('about', 'abouts')):
-            sname = '{}_{}.png'.format(ni, self.name)
-            ins.copy_resource(os.path.join(root, 'resources', nd, sname), name='{}.png'.format(ni))
 
         #        for pn in ('start', 'stop'):
         #            ins.copy_resource(os.path.join(root,
         #                                           'resources', 'icons',
         #                                           '{}.png'.format(pn)))
         #copy entire icons dir
+        # iroot = os.path.join(root, 'resources', 'icons')
+        # for di in os.listdir(iroot):
+        #     #            print di
+        #     ins.copy_resource(os.path.join(iroot, di))
+
+        # copy entire icons dir
         iroot = os.path.join(root, 'resources', 'icons')
+
+        # make resource dirs
+        for d in ('icons',):
+            idest = os.path.join(dest, 'Resources', d)
+            if not os.path.isdir(idest):
+                os.mkdir(idest)
+
+        includes = []
+        icon_req = os.path.join(root, 'resources', 'icon_req.txt')
+        if os.path.isfile(icon_req):
+            with open(icon_req, 'r') as fp:
+                includes = [ri.strip() for ri in fp.read().split('\n')]
+
+        cnt, total = 0, 0
         for di in os.listdir(iroot):
-            #            print di
-            ins.copy_resource(os.path.join(iroot, di))
+            total += 1
+            head,tail=os.path.splitext(di)
+            if includes and head not in includes:
+                continue
+
+            cnt += 1
+            ins.copy_resource(os.path.join(iroot, di), name='icons/{}'.format(di))
+
+        print 'copied {}/{} icons'.format(cnt, total)
+        # copy splashes and abouts
+        for ni, nd in (('splash', 'splashes'), ('about', 'abouts')):
+            sname = '{}_{}.png'.format(ni, self.name)
+            ins.copy_resource(os.path.join(root, 'resources', nd, sname), name='icons/{}.png'.format(ni))
 
         # copy helper mod
-        for a in ('helpers', 'version'):
+        for a in ('helpers', ):
             m = os.path.join(self.root, 'launchers', '{}.py'.format(a))
             ins.copy_resource(m)
 
@@ -177,9 +219,9 @@ class Template(object):
 
         ins.copy_resource_dir(p)
 
-        #=======================================================================
+        # =======================================================================
         # rename
-        #=======================================================================
+        # =======================================================================
         ins.rename_app()
 
 
@@ -219,21 +261,25 @@ class Maker(object):
         p = os.path.join(root, 'pychron', 'database', 'migrate')
         shutil.copytree(p, self._resource_path('migrate_repositories'))
 
+    def copy_source(self):
+        shutil.copytree(os.path.join(self.root, 'pychron'), self._resource_path('pychron'))
+
     def make_egg(self, pkgs=None, modules=None):
 
         from setuptools import setup, find_packages
+
         if pkgs is None:
             pkgs = find_packages(self.root,
-                             exclude=('launchers',
-                                      'tests',
-                                      'test',
-                                      'test.*',
-                                      'sandbox',
-                                      'sandbox.*',
-                                      '*.sandbox',
-                                      'app_utils'))
+                                 exclude=('launchers',
+                                          'tests',
+                                          'test',
+                                          'test.*',
+                                          'sandbox',
+                                          'sandbox.*',
+                                          '*.sandbox',
+                                          'app_utils'))
         if modules is None:
-            modules=[]
+            modules = []
 
         setup(name='pychron',
               script_args=('bdist_egg',),
@@ -253,10 +299,11 @@ class Maker(object):
         shutil.copyfile(egg_root,
                         self._resource_path(eggname))
 
-        # remove build dir
-        p = os.path.join(self.root, 'build')
-        print 'removing entire build dir ', p
-        shutil.rmtree(p)
+        # remove build dir/dist
+        for di in ('build', 'dist', 'pychron.egg-info'):
+            p = os.path.join(self.root, di)
+            print 'removing entire {} dir {}'.format(di, p)
+            shutil.rmtree(p)
 
     def make_argv(self):
         argv = '''

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Any, on_trait_change, DelegatesTo, List
 from pyface.tasks.task_layout import TaskLayout, HSplitter
 
@@ -27,8 +27,9 @@ from pychron.processing.repository.igsn import IGSN
 
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class RepositoryTask(AnalysisEditTask):
     name = 'Repository'
@@ -90,9 +91,9 @@ class RepositoryTask(AnalysisEditTask):
                                                                    p.name,
                                                                    s.igsn))
 
-    #===============================================================================
+    # ===============================================================================
     # handlers
-    #===============================================================================
+    # ===============================================================================
     @on_trait_change('igsn:new_igsn')
     def _new_igsn(self, new):
         """
@@ -115,9 +116,9 @@ class RepositoryTask(AnalysisEditTask):
     #     def _update_repo(self):
     #         self.repo_enabled = all([getattr(self.repository, a)
     #                                  for a in ('username', 'password')])
-    #===============================================================================
+    # ===============================================================================
     # defaults
-    #===============================================================================
+    # ===============================================================================
     def _default_layout_default(self):
         return TaskLayout(id='pychron.repository',
                           left=HSplitter(
@@ -141,4 +142,4 @@ class RepositoryTask(AnalysisEditTask):
 
         )
 
-        #============= EOF =============================================
+        # ============= EOF =============================================

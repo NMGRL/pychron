@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Any
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.envisage.initialization.initialization_parser import InitializationParser
 from pychron.loggable import Loggable
 from pychron.paths import paths
@@ -113,7 +113,7 @@ class Initializer(Loggable):
         mp, name = self._get_plugin(name, plugin_name)
 
         if mp is not None:
-            if not globalv.ignore_required:
+            if not globalv.ignore_initialization_required:
                 if not self._check_required(mp):
                     return False
 

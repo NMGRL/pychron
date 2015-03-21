@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import copy
 
 from chaco.axis import DEFAULT_TICK_FORMATTER
@@ -32,8 +32,8 @@ from traitsui.api import View, Item, Group, VGroup, UItem, Heading, HGroup, Enum
 # from traitsui.editors.range_editor import RangeEditor
 # from numpy.core.numeric import Inf
 # from pychron.core.ui.double_spinner import DoubleSpinnerEditor
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 class EFloat(Float):
     enter_set = True
     auto_set = False
@@ -550,4 +550,4 @@ class AnnotationEditor(HasTraits):
         )
         return v
 
-        #============= EOF =============================================
+        # ============= EOF =============================================

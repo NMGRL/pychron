@@ -12,12 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 import inspect
 import traceback
 
@@ -27,16 +27,19 @@ logger=logging.getLogger('Inspection')
 
 def caller(func):
     def dec(*args, **kw):
-        stack = inspect.stack()
+        try:
+            stack = inspect.stack()
 
-        cstack = stack[0]
-        rstack = stack[1]
+            cstack = stack[0]
+            rstack = stack[1]
 
-        msg = '{} called by {}. parent call={} {}'.format(func.func_name, rstack[3],
-                                                          cstack[0].f_back.f_locals['self'],
-                                                          ''.join(map(str.strip, rstack[4])))
+            msg = '{} called by {}. parent call={} {}'.format(func.func_name, rstack[3],
+                                                              cstack[0].f_back.f_locals['self'],
+                                                              ''.join(map(str.strip, rstack[4])))
 
-        logger.debug(msg)
+            logger.debug(msg)
+        except BaseException:
+            pass
         return func(*args, **kw)
 
     return dec
@@ -88,4 +91,4 @@ def caller_stack(func):
     return dec
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

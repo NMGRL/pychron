@@ -5,25 +5,25 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Float, Str, Bool, Property, Color, \
-    Int, Array
+    Int
 from traitsui.api import View, Item, HGroup, \
     spring
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
-from numpy import loadtxt, polyfit, polyval, hstack, poly1d
+from numpy import loadtxt, polyfit, polyval, hstack, poly1d, array
 from scipy import optimize
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
 from pychron.paths import paths
 from pychron.core.ui.qt.color_square_editor import ColorSquareEditor
@@ -44,12 +44,12 @@ class Detector(SpectrometerDevice):
     deflection_correction_sign = Int(1)
 
     _deflection_correction_factors = None
-    #    intensity = Property(depends_on='spectrometer:intensity_dirty')
-    #    intensity = Float
-    #    std = Float
+    # # intensity = Property(depends_on='spectrometer:intensity_dirty')
+    # #    intensity = Float
+    # #    std = Float
     intensity = Str
     std = Str
-    intensities = Array
+    intensities = None
     nstd = Int(10)
     active = Bool(True)
     gain = Float
@@ -60,6 +60,9 @@ class Detector(SpectrometerDevice):
 
     isotopes = Property
     #color_square = None
+    def __init__(self, *args, **kw):
+        super(Detector, self).__init__(*args, **kw)
+        self.intensities = array([])
 
     def load(self):
         self.read_deflection()
@@ -93,9 +96,10 @@ class Detector(SpectrometerDevice):
     def get_deflection_correction(self, current=False):
         if current:
             self.read_deflection()
-
-        de = self._deflection
-        dev = polyval(self._deflection_correction_factors, [de])[0]
+        dev = 0
+        if self._deflection_correction_factors is not None:
+            de = self._deflection
+            dev = polyval(self._deflection_correction_factors, [de])[0]
 
         return self.deflection_correction_sign * dev
 
@@ -106,7 +110,7 @@ class Detector(SpectrometerDevice):
 
     @property
     def gain_outdated(self):
-        return abs(self.get_gain()-self.gain)<1e-7
+        return abs(self.get_gain() - self.gain) < 1e-7
 
     def get_gain(self):
         v = self.ask('GetGain {}'.format(self.name))
@@ -114,7 +118,7 @@ class Detector(SpectrometerDevice):
             v = float(v)
         except (TypeError, ValueError):
             v = 0
-        self.gain=v
+        self.gain = v
         return v
 
     def set_gain(self):
@@ -137,6 +141,13 @@ class Detector(SpectrometerDevice):
             self.intensities = hstack((self.intensities[-n:], [v]))
             self.std = '{:0.5f}'.format(self.intensities.std())
             self.intensity = '{:0.5f}'.format(v)
+
+    def _active_changed(self, new):
+        self.debug('active changed {}'.format(new))
+        if self.name == 'CDD':
+            self.debug('{} Ion Counter'.format('Activate' if new else 'Deactivate'))
+            self.info('De/Activating CDD disabled')
+            # self.ask('ActivateIonCounter' if new else 'DeactivateIonCounter')
 
     #def intensity_view(self):
     #    v = View(HGroup(
@@ -163,4 +174,5 @@ class Detector(SpectrometerDevice):
 
     def __repr__(self):
         return self.name
-        #============= EOF =============================================
+
+#============= EOF =============================================

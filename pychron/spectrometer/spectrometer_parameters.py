@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,18 +12,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 from traits.etsconfig.etsconfig import ETSConfig
 ETSConfig.toolkit = 'qt4'
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, List, Instance, Str, Float, Any
 from traitsui.api import View, UItem, TableEditor, ListEditor, Handler
 from traitsui.table_column import ObjectColumn
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from ConfigParser import ConfigParser
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.loggable import Loggable
 from pychron.paths import paths
 
@@ -143,4 +143,4 @@ if __name__ == '__main__':
     s.load()
     v = SpectrometerParametersView(model=s)
     v.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================

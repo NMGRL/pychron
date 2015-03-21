@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Str, Property, cached_property, Int, \
     Any, String, Event, Bool, Dict, List, Button
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 from ConfigParser import ConfigParser
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_directory2
-from pychron.entry.user_entry import UserEntry
+from pychron.entry.entry_views.user_entry import UserEntry
 from pychron.persistence_loggable import PersistenceLoggable
 from pychron.globals import globalv
 from pychron.pychron_constants import NULL_STR, LINE_STR
@@ -34,12 +34,13 @@ class ExperimentQueueFactory(PersistenceLoggable):
     application = Any
 
     username = String
-    email = Property(depends_on='username, use_email_notifier, _email')
+    email = Property(depends_on='username, use_email, _email')
     _email = Str
     _emails = Dict
 
     use_group_email = Bool
-    use_email_notifier = Bool(True)
+    use_email = Bool
+    # use_email_notifier = Bool
     edit_emails = Button
 
     usernames = Property(depends_on='users_dirty, db_refresh_needed')
@@ -73,8 +74,8 @@ class ExperimentQueueFactory(PersistenceLoggable):
                    'delay_before_analyses',
                    'queue_conditionals_name')
     # def _add_user_fired(self):
-    #     a=UserEntry()
-    #     a.edit_user(self.username)
+    # a=UserEntry()
+    # a.    edit_user(self.username)
     #     self.users_dirty=True
     def activate(self, load_persistence):
         """
@@ -83,7 +84,7 @@ class ExperimentQueueFactory(PersistenceLoggable):
         self._load_queue_conditionals()
         if load_persistence:
             self.load()
-            self.username=globalv.username
+            self.username = globalv.username
 
     def deactivate(self):
         """
@@ -97,8 +98,8 @@ class ExperimentQueueFactory(PersistenceLoggable):
         self.available_conditionals = [NULL_STR] + cs
 
     def _edit_user_fired(self):
-        a = UserEntry()
-        nuser = a.add_user(self.username)
+        a = UserEntry(db=self.db)
+        nuser = a.edit(self.username)
         if nuser:
             self.users_dirty = True
             self.username = nuser
@@ -108,12 +109,12 @@ class ExperimentQueueFactory(PersistenceLoggable):
     def persistence_path(self):
         return os.path.join(paths.hidden_dir, 'queue_factory')
 
-    #===============================================================================
+    # ===============================================================================
     # property get/set
-    #===============================================================================
+    # ===============================================================================
     def _get_email(self):
         email = ''
-        if self.use_email_notifier:
+        if self.use_email:
             if self._email:
                 email = self._email
             else:
@@ -126,8 +127,8 @@ class ExperimentQueueFactory(PersistenceLoggable):
 
     # @cached_property
     def _get_load_names(self):
-        db=self.db
-        if not db.connected:
+        db = self.db
+        if not self.db.connected:
             return []
 
         with db.session_ctx():
@@ -154,7 +155,8 @@ class ExperimentQueueFactory(PersistenceLoggable):
         with db.session_ctx():
             dbus = db.get_users()
             us = [ui.name for ui in dbus]
-            self._emails = dict([(ui.name, ui.email or '') for ui in dbus])
+            # self._emails = dict([(ui.name, ui.email or '') for ui in dbus])
+            self._emails = {ui.name: ui.email or '' for ui in dbus}
 
             return [''] + us
 
@@ -165,7 +167,7 @@ class ExperimentQueueFactory(PersistenceLoggable):
             then look for a config file
             then use hardcorded defaults
         """
-        db=self.db
+        db = self.db
         cp = os.path.join(paths.setup_dir, 'names')
         if db:
             if not db.connected:
@@ -185,7 +187,7 @@ class ExperimentQueueFactory(PersistenceLoggable):
             then look for a config file
             then use hardcorded defaults
         """
-        db=self.db
+        db = self.db
         cp = os.path.join(paths.setup_dir, 'names')
         if db:
             if not db.connected:
@@ -209,17 +211,23 @@ class ExperimentQueueFactory(PersistenceLoggable):
         self.debug('mass spectrometer ="{}"'.format(new))
 
     def _edit_emails_fired(self):
-        from pychron.experiment.utilities.email_selection_view import EmailSelectionView, boiler_plate
-        path = os.path.join(paths.setup_dir, 'users.yaml')
-        if not os.path.isfile(path):
-            boiler_plate(path)
-
-        esv = EmailSelectionView(path=path,
-                                 emails=self._emails)
-        esv.edit_traits(kind='livemodal')
+        # todo: use user task insted
+        task = self.application.open_task('pychron.users')
+        task.auto_save = True
+        # pychron.experiment.utilities.email_selection_view import EmailSelectionView, boiler_plate
+        # path = os.path.join(paths.setup_dir, 'users.yaml')
+        # if not os.path.isfile(path):
+        #     boiler_plate(path)
+        #
+        # esv = EmailSelectionView(path=path,
+        #                          emails=self._emails)
+        # from pychron.user.tasks.panes import UsersPane
+        # esv = UsersPane()
+        # esv.edit_traits(kind='livemodal')
+        # task.edit_traits(kind='livemodal')
 
 
 if __name__ == '__main__':
     g = ExperimentQueueFactory()
     g.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================

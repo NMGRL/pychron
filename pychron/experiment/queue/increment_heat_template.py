@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Float, Enum, List, Int, \
     File, Property, Button, on_trait_change, Any, Event, cached_property
 from traits.trait_errors import TraitError
@@ -22,10 +22,10 @@ from traitsui.api import View, UItem, HGroup, Item, spring
 from pyface.file_dialog import FileDialog
 from pyface.constant import OK
 from traitsui.tabular_adapter import TabularAdapter
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import csv
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.paths import paths
 from pychron.viewable import Viewable
@@ -141,9 +141,9 @@ class IncrementalHeatTemplate(Viewable):
     def _get_name(self):
         return os.path.basename(self.path)
 
-    #===============================================================================
+    # ===============================================================================
     # persistence
-    #===============================================================================
+    # ===============================================================================
     def load(self, path):
 
         self.path = path
@@ -172,9 +172,9 @@ class IncrementalHeatTemplate(Viewable):
             writer.writerow(header)
             for step in self.steps:
                 writer.writerow(step.make_row())
-                #===============================================================================
+                # ===============================================================================
                 # handlers
-                #===============================================================================
+                # ===============================================================================
 
     @on_trait_change('steps[]')
     def _steps_updated(self):
@@ -255,4 +255,4 @@ if __name__ == '__main__':
     #    for i in range(10):
     #        im.steps.append(IncrementalHeatStep(step_id=i + 1))
     im.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================

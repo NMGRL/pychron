@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, String, Property, Str, List, Any, \
     Bool, cached_property, Event, Enum
 from traitsui.api import View, Item, EnumEditor
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from datetime import datetime, timedelta
 from sqlalchemy import cast, Date
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 now = datetime.now()
 one_year = timedelta(days=365)
 
@@ -65,7 +65,7 @@ class TableSelector(HasTraits):
             'Material',
             'Sample',
             'Detector',
-            'IrradiationPosition',]
+            'IrradiationPosition', ]
         self.parameter = params[0]
         return params
 
@@ -127,13 +127,13 @@ class Query(HasTraits):
                     c = '%' + c + '%'
 
             comp = self._convert_comparator(comp)
-            ret=getattr(attr, comp)(c)
+            ret = getattr(attr, comp)(c)
 
         print self.parameter, self.chain_rule
-        return ret, self.chain_rule=='Or'
-            # if self.chain_rule=='Or':
-            #     f = or_(f)
-            # query = query.filter(f)
+        return ret, self.chain_rule == 'Or'
+        # if self.chain_rule=='Or':
+        #     f = or_(f)
+        # query = query.filter(f)
 
         # return query
 
@@ -216,11 +216,11 @@ class Query(HasTraits):
             attr = cast(attr, Date)
             # q = q.filter(getattr(attr, comp)(*d))
             return getattr(attr, comp)(*d)
-        # return q
+            # return q
 
-    #===============================================================================
+    # ===============================================================================
     # private
-    #===============================================================================
+    # ===============================================================================
     def _convert_comparator(self, c):
         if c == '=':
             c = '__eq__'
@@ -242,9 +242,9 @@ class Query(HasTraits):
 
         return params
 
-    #===============================================================================
+    # ===============================================================================
     # handlers
-    #===============================================================================
+    # ===============================================================================
     # def _add_fired(self):
     #     self.selector.add_query(self, self.parameter, self.criterion)
     #
@@ -272,9 +272,9 @@ class Query(HasTraits):
         self.parent_comparators.append(new)
         self.criteria_dirty = True
 
-    #===============================================================================
+    # ===============================================================================
     # property get/set
-    #===============================================================================
+    # ===============================================================================
     @cached_property
     def _get_criteria(self):
         cs = []
@@ -312,10 +312,7 @@ class Query(HasTraits):
                 cj = self._cumulate_joins()
                 cf = self._cumulate_filters()
                 cs = getattr(db, funcname)(joins=cj,
-                                           filters=cf,
-                                           # distinct_=True,
-                                           # debug_query=True,
-                                           **kw)
+                                           filters=cf, **kw)
                 if func is None:
                     func = getattr
                 # cs = list(set([getattr(ci, display_name) for ci in cs]))
@@ -361,35 +358,35 @@ class Query(HasTraits):
                     tfs.append(f)
             return tfs
 
-            #===============================================================================
+            # ===============================================================================
             # views
-            #===============================================================================
+            # ===============================================================================
 
-    # def traits_view(self):
-    #
-    #     top = HGroup(
-    #
-    #         Item('parameter', editor=EnumEditor(name='parameters')),
-    #         Item('comparator',
-    #              editor=EnumEditor(name='comparisons')),
-    #         show_labels=False)
-    #
-    #     bottom = HGroup(
-    #         Item('add', ),
-    #         Item('remove',
-    #              visible_when='removable'),
-    #         Item('criterion', ),
-    #         Item('criterion', width=-30,
-    #              editor=CheckListEditor(name='criteria')),
-    #         Item('rcriterion', visible_when='comparator=="between"'),
-    #         Item('rcriterion', width=-30,
-    #              visible_when='comparator=="between"',
-    #              editor=CheckListEditor(name='criteria')),
-    #         show_labels=False)
-    #
-    #     v = View(VGroup(top, bottom,
-    #                     show_border=True))
-    #     return vs
+            # def traits_view(self):
+            #
+            #     top = HGroup(
+            #
+            #         Item('parameter', editor=EnumEditor(name='parameters')),
+            #         Item('comparator',
+            #              editor=EnumEditor(name='comparisons')),
+            #         show_labels=False)
+            #
+            #     bottom = HGroup(
+            #         Item('add', ),
+            #         Item('remove',
+            #              visible_when='removable'),
+            #         Item('criterion', ),
+            #         Item('criterion', width=-30,
+            #              editor=CheckListEditor(name='criteria')),
+            #         Item('rcriterion', visible_when='comparator=="between"'),
+            #         Item('rcriterion', width=-30,
+            #              visible_when='comparator=="between"',
+            #              editor=CheckListEditor(name='criteria')),
+            #         show_labels=False)
+            #
+            #     v = View(VGroup(top, bottom,
+            #                     show_border=True))
+            #     return vs
 
 
 class IsotopeQuery(Query):
@@ -431,7 +428,7 @@ class VideoQuery(DateQuery):
     pass
 
 
-#============= EOF =============================================
+# ============= EOF =============================================
 #        elif 'runtime' in param:
 #    def time_query(self):
 #        args = criteria.split(':')

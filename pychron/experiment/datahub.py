@@ -12,16 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
 from apptools.preferences.preference_binding import bind_preference
-from traits.api import Instance
-#============= standard library imports ========================
+from traits.api import Instance, Bool
+# ============= standard library imports ========================
 from datetime import datetime
 import time
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.database.adapters.massspec_database_adapter import MissingAliquotPychronException
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.experiment.utilities.identifier import make_aliquot_step, make_step, get_analysis_type
@@ -56,21 +56,26 @@ class Datahub(Loggable):
     secondarystore = Instance(MassSpecDatabaseImporter, ())
 
     bind_mainstore = True
+    massspec_enabled = Bool
 
     def bind_preferences(self):
         prefid = 'pychron.massspec.database'
 
-        bind_preference(self.secondarystore.db, 'name', '{}.name'.format(prefid))
-        bind_preference(self.secondarystore.db, 'host', '{}.host'.format(prefid))
-        bind_preference(self.secondarystore.db, 'username', '{}.username'.format(prefid))
-        bind_preference(self.secondarystore.db, 'password', '{}.password'.format(prefid))
+        bind_preference(self, 'massspec_enabled', '{}.enabled'.format(prefid))
+        if self.massspec_enabled:
+            bind_preference(self.secondarystore.db, 'name', '{}.name'.format(prefid))
+            bind_preference(self.secondarystore.db, 'host', '{}.host'.format(prefid))
+            bind_preference(self.secondarystore.db, 'username', '{}.username'.format(prefid))
+            bind_preference(self.secondarystore.db, 'password', '{}.password'.format(prefid))
 
     def secondary_connect(self):
-        if self.secondarystore:
-            return self.secondarystore.connect()
+        if self.massspec_enabled:
+            if self.secondarystore:
+                return self.secondarystore.connect()
 
     def has_secondary_store(self):
-        return self.secondarystore and self.secondarystore.db.connected
+        if self.massspec_enabled:
+            return self.secondarystore and self.secondarystore.db.connected
 
     def is_conflict(self, spec):
         """
@@ -100,7 +105,7 @@ class Datahub(Loggable):
             try:
                 ps, ns, vs = self._get_greatest_aliquots(spec.identifier)
 
-                # print 'b', ps, ns, vs, spec.identifier
+                print 'b', ps, ns, vs, spec.identifier
                 mv = max(vs)
                 self._new_runid = make_aliquot_step(mv + 1, '')
                 self._new_aliquot = mv + 1
@@ -217,5 +222,5 @@ class Datahub(Loggable):
             self._sorted_stores = r
             return r
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-from traits.api import HasTraits, Str, List, Instance, Any
+# ============= enthought library imports =======================
+from traits.api import HasTraits, Instance, Any
 from traitsui.api import View, Item
 from traitsui.tree_node import TreeNode
 from traitsui.editors.tree_editor import TreeEditor
 # from xml.etree.ElementTree import XMLParser
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.hierarchy import Hierarchy, FilePath
 from pychron.regex import make_image_regex
 # from pychron.core.xml.xml_parser import XMLParser
@@ -133,4 +133,4 @@ if __name__ == '__main__':
 #                            children=fs + hs
                             )
     f.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================

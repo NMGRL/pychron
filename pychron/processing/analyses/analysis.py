@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
 from traits.api import Instance, Int, Str, Bool, \
     Event, Property, Float, Date
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from collections import namedtuple
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.formatting import format_percent_error, floatfmt
 from pychron.core.helpers.logger_setup import new_logger
 from pychron.processing.analyses.analysis_view import AnalysisView
@@ -196,7 +196,7 @@ class Analysis(ArArAge):
 
 if __name__ == '__main__':
     pass
-    #============= EOF =============================================
+    # ============= EOF =============================================
     #def _sync_irradiation(self, meas_analysis):
     #    ln = meas_analysis.labnumber
     #    self.irradiation_info = self._get_irradiation_info(ln)

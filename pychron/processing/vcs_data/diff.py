@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
 from traits.api import HasTraits, Str, Bool, Either, Float, List, Int
 from traitsui.api import View, UItem, VSplit, TabularEditor
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 import yaml
 from pychron.core.ui.patch_editor import PatchEditor
@@ -96,5 +96,5 @@ class Diff(HasTraits):
                 #             # self._set_diff(idx - 1, i, QColor(0, 200, 0))
         self.changes = cs
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

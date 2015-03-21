@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, List, Button
 from traitsui.api import View, Item, TabularEditor, HGroup, spring
 from traitsui.tabular_adapter import TabularAdapter
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class ProcessAdapter(TabularAdapter):
     columns = [('Name', 'name'), ('RunID', 'rid'),
@@ -52,4 +52,4 @@ class ProcessView(HasTraits):
         else:
             self.processes.remove(old[0])
 
-#============= EOF =============================================
+# ============= EOF =============================================

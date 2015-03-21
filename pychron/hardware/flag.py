@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Bool, Property, Float, CInt, List, Str, Any
 from traitsui.api import View, Item, HGroup, spring
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from threading import Timer as OneShotTimer
 from time import time
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.timer import Timer as PTimer
 from pychron.loggable import Loggable
 
@@ -54,7 +54,7 @@ class Flag(Loggable):
         self.name = name
         super(Flag, self).__init__(*args, **kw)
 
-    def get(self):
+    def get(self, *args, **kw):
         return int(self._set)
 
     def set(self, value):
@@ -130,7 +130,7 @@ class TimedFlag(Flag):
     def isStarted(self):
         return self._start_time is not None
 
-    def get(self):
+    def get(self, *args, **kw):
         t = 0
         if self.isSet() and self.isStarted():
             t = max(0, self.duration - (time() - self._start_time))
@@ -172,4 +172,4 @@ class ValveFlag(Flag):
 
     def _get_valves_str(self):
         return ','.join(self.valves)
-#============= EOF =============================================
+# ============= EOF =============================================

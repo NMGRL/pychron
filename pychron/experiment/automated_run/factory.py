@@ -21,7 +21,8 @@ from traits.api import String, Str, Property, Any, Float, Instance, Int, List, \
 from traits.trait_errors import TraitError
 import yaml
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
+from pychron.core.codetools.inspection import caller
 from pychron.experiment.conditional.conditionals_edit_view import edit_conditionals
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.queue.run_block import RunBlock
@@ -118,7 +119,7 @@ class AutomatedRunFactory(PersistenceLoggable):
     undoer = Any
     edit_event = Event
 
-    #============== scripts =============
+    # ============== scripts =============
     extraction_script = Instance(Script)
     measurement_script = Instance(Script)
     post_measurement_script = Instance(Script)
@@ -129,7 +130,7 @@ class AutomatedRunFactory(PersistenceLoggable):
 
     default_fits_button = Button
     default_fits_enabled = Property(depends_on='measurement_script.name')
-    #===================================
+    # ===================================
 
     human_error_checker = Instance(HumanErrorChecker, ())
     factory_view = Instance(FactoryView)
@@ -145,6 +146,7 @@ class AutomatedRunFactory(PersistenceLoggable):
     special_labnumber = Str('Special Labnumber')
 
     db_refresh_needed = Event
+    auto_save_needed = Event
 
     _labnumber = String
     labnumbers = Property(depends_on='project, selected_level')
@@ -178,18 +180,18 @@ class AutomatedRunFactory(PersistenceLoggable):
     position = Property(depends_on='_position')
     _position = String
 
-    #===========================================================================
+    # ===========================================================================
     # measurement
-    #===========================================================================
+    # ===========================================================================
     use_cdd_warming = Bool
     collection_time_zero_offset = Float(0)
 
-    #===========================================================================
+    # ===========================================================================
     # extract
-    #===========================================================================
+    # ===========================================================================
     # extract_value = Property(
-    #     EKlass(Float),
-    #     depends_on='_extract_value')
+    # EKlass(Float),
+    # depends_on='_extract_value')
     # _extract_value = Float
     extract_value = EKlass(Float)
     extract_units = Str(NULL_STR)
@@ -210,18 +212,18 @@ class AutomatedRunFactory(PersistenceLoggable):
 
     edit_pattern = Event
     edit_pattern_label = Property(depends_on='pattern')
-    #===========================================================================
+    # ===========================================================================
     # templates
-    #===========================================================================
+    # ===========================================================================
     template = String('Step Heat Template')
     templates = List
 
     edit_template = Event
     edit_template_label = Property(depends_on='template')
 
-    #===========================================================================
+    # ===========================================================================
     # conditionals
-    #===========================================================================
+    # ===========================================================================
     trunc_attr = String('age')
     trunc_attrs = List(['age',
                         'kca',
@@ -243,38 +245,33 @@ class AutomatedRunFactory(PersistenceLoggable):
     edit_conditionals_button = Button
     new_conditionals_button = Button
 
-    #===========================================================================
+    # ===========================================================================
     # blocks
-    #===========================================================================
+    # ===========================================================================
     run_block = Str('RunBlock')
     run_blocks = List
     edit_run_blocks = Button
 
-    #===========================================================================
+    # ===========================================================================
     # frequency
-    #===========================================================================
+    # ===========================================================================
     # frequency = Int
     # freq_before = Bool(True)
     # freq_after = Bool(False)
     # freq_template = Str
     frequency_model = Instance(FrequencyModel, ())
     edit_frequency_button = Button
-    #===========================================================================
+    # ===========================================================================
     # readonly
-    #===========================================================================
+    # ===========================================================================
     sample = Str
     irradiation = Str
     irrad_level = Str
     irrad_hole = Str
 
     info_label = Property(depends_on='labnumber')
-    #===========================================================================
-    # private
-    #===========================================================================
-    _selected_runs = List
-    _spec_klass = AutomatedRunSpec
-
     extractable = Property(depends_on='labnumber')
+
     update_info_needed = Event
     refresh_table_needed = Event
     changed = Event
@@ -294,7 +291,12 @@ class AutomatedRunFactory(PersistenceLoggable):
                    'pattern', 'labnumber', 'position',
                    'weight', 'comment', 'template',
                    'use_simple_truncation', 'conditionals_path')
-
+    # ===========================================================================
+    # private
+    # ===========================================================================
+    _selected_runs = List
+    _spec_klass = AutomatedRunSpec
+    _set_defaults = True
     _no_clear_labnumber = False
 
     def setup_files(self):
@@ -310,6 +312,8 @@ class AutomatedRunFactory(PersistenceLoggable):
         self.conditionals_path = NULL_STR
         if load_persistence:
             self.load()
+
+        self.setup_files()
 
     def deactivate(self):
         self.dump(verbose=True)
@@ -337,7 +341,7 @@ class AutomatedRunFactory(PersistenceLoggable):
         return True
 
     # def load_comment_templates(self):
-    #     self.comment_templates = self._get_comment_templates()
+    # self.comment_templates = self._get_comment_templates()
 
     def load_run_blocks(self):
         self.run_blocks = self._get_run_blocks()
@@ -389,8 +393,10 @@ class AutomatedRunFactory(PersistenceLoggable):
         self.debug('len selected runs {}'.format(len(runs)))
         if runs:
             run = runs[0]
+            self._set_defaults = False
             self._clone_run(run, set_labnumber=self.set_labnumber,
                             set_position=self.set_position)
+            self._set_defaults = True
 
         self._selected_runs = runs
         self.suppress_update = False
@@ -424,6 +430,8 @@ class AutomatedRunFactory(PersistenceLoggable):
             returns a list of runs even if its only one run
             also returns self.frequency if using special labnumber else None
         """
+        self._auto_save()
+
         if self.run_block not in ('RunBlock', LINE_STR):
             arvs, freq = self._new_run_block()
         else:
@@ -431,22 +439,29 @@ class AutomatedRunFactory(PersistenceLoggable):
 
         if auto_increment_id:
             v = increment_value(self.labnumber)
-            invoke_in_main_thread(self.trait_set, _labnumber=v)
+            # invoke_in_main_thread(self.trait_set, _labnumber=v)
+            invoke_in_main_thread(self.trait_set, labnumber=v)
 
         if auto_increment_position:
             pos = self.position
             if pos:
                 self.position = increment_position(pos)
 
+        self._auto_save()
         return arvs, freq
 
     def refresh(self):
         self.changed = True
         self.refresh_table_needed = True
+        self._auto_save()
 
-    #===============================================================================
+    # ===============================================================================
     # private
-    #===============================================================================
+    # ===============================================================================
+
+    def _auto_save(self):
+        self.auto_save_needed = True
+
     # def _new_runs(self, positions, extract_group_cnt=0):
     def _new_run_block(self):
         p = os.path.join(paths.run_block_dir, add_extension(self.run_block, '.txt'))
@@ -495,8 +510,8 @@ class AutomatedRunFactory(PersistenceLoggable):
             self.irrad_level = str(level.name)
 
             self._no_clear_labnumber = True
-            self.selected_level = self.irrad_level
             self.selected_irradiation = irrad.name
+            self.selected_level = self.irrad_level
             self._no_clear_labnumber = False
 
             # self.trait_setq(selected_level=self.irrad_level, selected_irradiation=irrad.name)
@@ -677,7 +692,6 @@ class AutomatedRunFactory(PersistenceLoggable):
     def _clear_labnumber(self):
         if not self._no_clear_labnumber:
             self.labnumber = ''
-            self._labnumber = NULL_STR
 
     def _template_closed(self):
         invoke_in_main_thread(self.load_templates)
@@ -699,6 +713,8 @@ class AutomatedRunFactory(PersistenceLoggable):
         if self.edit_mode and \
                 self._selected_runs and \
                 not self.suppress_update:
+
+            self._auto_save()
 
             self.edit_event = dict(attribute=attr, value=v,
                                    previous_state=[(ri, getattr(ri, attr)) for ri in self._selected_runs])
@@ -732,18 +748,31 @@ class AutomatedRunFactory(PersistenceLoggable):
             #         dbln.selected_flux_history = dbhist
             #         self.information_dialog(u'Flux for {} {} \u00b1{} saved to database'.format(self.labnumber, v, e))
 
-    #===============================================================================
+    # ===============================================================================
     #
-    #===============================================================================
-    def _load_extraction_defaults(self, ln):
+    # ===============================================================================
+    def _load_defaults(self, ln, attrs=None):
+        if attrs is None:
+            attrs = ('extract_value', 'extract_units',
+                     'cleanup', 'duration', 'beam_diameter')
+
+        self.debug('loading defaults for {}. ed={} attrs={}'.format(ln, self.extract_device, attrs))
         defaults = self._load_default_file()
         if defaults:
             if ln in defaults:
                 grp = defaults[ln]
-                for attr in ('extract_value', 'extract_units'):
+                ed = self.extract_device.replace(' ', '')
+                if ed in grp:
+                    grp = grp[ed]
+
+                for attr in attrs:
                     v = grp.get(attr)
                     if v is not None:
                         setattr(self, attr, v)
+            else:
+                self.unique_warning('L# {} not in defaults.yaml'.format(ln))
+        else:
+            self.unique_warning('No defaults.yaml')
 
     def _load_scripts(self, old, new):
         """
@@ -762,6 +791,7 @@ class AutomatedRunFactory(PersistenceLoggable):
 
         if new in ANALYSIS_MAPPING or \
                         old in ANALYSIS_MAPPING or not old and new:
+
             # set default scripts
             self._load_default_scripts(new)
 
@@ -825,9 +855,54 @@ class AutomatedRunFactory(PersistenceLoggable):
         defaults = dict([(k.lower(), v) for k, v in defaults.iteritems()])
         return defaults
 
-    #===============================================================================
+    def _load_labnumber_meta(self, labnumber):
+        if '-##-' in labnumber:
+            return True
+
+        db = self.db
+        self._aliquot = 0
+        with db.session_ctx():
+            # convert labnumber (a, bg, or 10034 etc)
+            ln = db.get_labnumber(labnumber)
+            if ln:
+                # set sample and irrad info
+                try:
+                    self.sample = ln.sample.name
+                except AttributeError:
+                    pass
+
+                try:
+                    a = int(ln.analyses[-1].aliquot + 1)
+                except IndexError, e:
+                    a = 1
+
+                self._aliquot = a
+
+                self.irradiation = self._make_irrad_level(ln)
+
+                if self.auto_fill_comment:
+                    self._set_auto_comment()
+                return True
+            else:
+                self.warning_dialog(
+                    '{} does not exist. Add using "Labnumber Entry" or "Utilities>>Import"'.format(labnumber))
+
+    def _load_labnumber_defaults(self, old, labnumber, special):
+
+        if special:
+            ln = labnumber[:2]
+            if ln == 'dg':
+                # self._load_extraction_defaults(ln)
+                self._load_defaults(ln, attrs=('extract_value', 'extract_units'))
+        else:
+            self._load_defaults(labnumber if special else 'u')
+
+        self._load_scripts(old, labnumber)
+        self._load_extraction_info()
+
+    # ===============================================================================
     # property get/set
-    #===============================================================================
+    # ===============================================================================
     def _get_default_fits_enabled(self):
         return self.measurement_script.name not in ('None', '')
 
@@ -899,10 +974,12 @@ class AutomatedRunFactory(PersistenceLoggable):
                     level = db.get_irradiation_level(self.selected_irradiation,
                                                      self.selected_level)
                     if level:
-                        lns = [str(pi.labnumber.identifier)
+                        lns = [str(pi.labnumber.identifier).strip()
                                for pi in level.positions if pi.labnumber]
+                        lns = [li for li in lns if li]
+                        lns = sorted(lns)
 
-        return sorted(lns)
+        return lns
 
     def _get_position(self):
         return self._position
@@ -1001,6 +1078,8 @@ class AutomatedRunFactory(PersistenceLoggable):
         p = paths.conditionals_dir
         extension = '.yaml'
         temps = list_directory(p, extension, remove_extension=True)
+        self.debug('loading conditionals from {}'.format(p))
+
         return [NULL_STR] + temps
 
     def _get_beam_diameter(self):
@@ -1080,9 +1159,9 @@ class AutomatedRunFactory(PersistenceLoggable):
         self.changed = True
         self.refresh_table_needed = True
 
-    #===============================================================================
+    # ===============================================================================
     # handlers
-    #===============================================================================
+    # ===============================================================================
     def _edit_run_blocks(self):
         from pychron.experiment.queue.run_block import RunBlockEditView
 
@@ -1096,9 +1175,11 @@ class AutomatedRunFactory(PersistenceLoggable):
         fev.edit_traits(kind='modal')
 
     def _edit_comment_template_fired(self):
-        from pychron.experiment.utilities.comment_template import CommentTemplater, CommentTemplateView
+        from pychron.experiment.utilities.comment_template import CommentTemplater
+        from pychron.experiment.utilities.template_view import CommentTemplateView
 
         ct = CommentTemplater()
+
         ctv = CommentTemplateView(model=ct)
         info = ctv.edit_traits()
         if info.result:
@@ -1115,6 +1196,8 @@ class AutomatedRunFactory(PersistenceLoggable):
     @on_trait_change('[measurement_script, post_measurement_script, '
                      'post_equilibration_script, extraction_script]:edit_event')
     def _handle_edit_script(self, new):
+        self._auto_save()
+
         app = self.application
         task = app.open_task('pychron.pyscript.task')
         path, kind = new
@@ -1145,7 +1228,7 @@ class AutomatedRunFactory(PersistenceLoggable):
         f = MeasurementFitsSelectorView(model=m)
         info = f.edit_traits(kind='livemodal')
         if info.result:
-            #update the default_fits entry in the docstr
+            # update the default_fits entry in the docstr
             ed = PyScriptEdit()
             ed.context_editor = MeasurementContextEditor()
             ed.open_script(sp)
@@ -1153,36 +1236,20 @@ class AutomatedRunFactory(PersistenceLoggable):
             ed.update_docstr()
 
     def _new_conditionals_button_fired(self):
-        edit_conditionals(self.conditionals_path,
+        name = edit_conditionals(self.conditionals_path,
                           app=self.application, root=paths.conditionals_dir,
                           save_as=True,
                           title='Edit Run Conditionals',
                           kinds=('actions', 'cancelations', 'terminations', 'truncations'))
-        # edit_conditionals(p)
-        # # e = ActionEditor()
-        # if os.path.isfile(p):
-        #     # e.load(p)
-        #     e.model.path = ''
-        # else:
-        #     e.model = ActionModel()
-        #
-        # info = e.edit_traits(kind='livemodal')
-        # if info.result:
-        #     self.load_truncations()
-        #     p = e.model.path
-        #     d = os.path.splitext(os.path.basename(p))[0]
-        #
-        #     self.conditionals_path = d
+        if name:
+            self.load_conditionals()
+            self.conditionals_path = os.path.splitext(name)[0]
 
     def _edit_conditionals_button_fired(self):
         edit_conditionals(self.conditionals_path,
                           app=self.application, root=paths.conditionals_dir,
                           title='Edit Run Conditionals',
                           kinds=('actions', 'cancelations', 'terminations', 'truncations'))
-        # e = ActionEditor()
-        # e.load(p)
-
-        # e.edit_traits(kind='livemodal')
 
     @on_trait_change('trunc_+, conditionals_path')
     def _handle_conditionals(self, obj, name, old, new):
@@ -1193,6 +1260,7 @@ class AutomatedRunFactory(PersistenceLoggable):
             #     t = new
             # t = add_extension(new, '.yaml') if new else None
             # else:
+            self._auto_save()
             t = self.conditionals_str
             self._set_conditionals(t)
 
@@ -1204,6 +1272,8 @@ pattern,
 position,
 weight, comment, skip, overlap''')
     def _edit_handler(self, name, new):
+        # self._auto_save()
+
         if name == 'pattern':
             if not self._use_pattern():
                 new = ''
@@ -1215,7 +1285,9 @@ extraction_script:name,
 post_measurement_script:name,
 post_equilibration_script:name''')
     def _edit_script_handler(self, obj, name, new):
+
         if self.edit_mode and not self.suppress_update:
+            self._auto_save()
             if obj.label == 'Extraction':
                 self._load_extraction_info(obj)
 
@@ -1225,9 +1297,9 @@ post_equilibration_script:name''')
                     setattr(si, name, new)
                 self.refresh()
 
-
     @on_trait_change('script_options:name')
     def _edit_script_options_handler(self, new):
+        self._auto_save()
         if self.edit_mode and not self.suppress_update:
             if self._selected_runs:
                 for si in self._selected_runs:
@@ -1238,13 +1310,17 @@ post_equilibration_script:name''')
     def _skip_changed(self):
         self.update_info_needed = True
 
-    def __labnumber_changed(self):
-        if self._labnumber != NULL_STR:
-            self.labnumber = self._labnumber
+    def _labnumber_changed(self, old, new):
+        if new:
+            special = False
+            try:
+                _ = int(new)
+            except ValueError:
+                special = True
 
-            #do go into edit mode if a run is selected
-            if not self._selected_runs:
-                self.edit_mode = True
+            if self._load_labnumber_meta(new):
+                if self._set_defaults:
+                    self._load_labnumber_defaults(old, new, special)
 
     def _project_changed(self):
         self._clear_labnumber()
@@ -1279,87 +1355,13 @@ post_equilibration_script:name''')
                             ln = make_special_identifier(ln, edname, msname)
 
                 self.labnumber = ln
-                self._load_extraction_info()
 
-                # self._labnumber = NULL_STR
             self._frequency_enabled = True
 
             if not self._selected_runs:
                 self.edit_mode = True
         else:
             self._frequency_enabled = False
-
-    def _labnumber_changed(self, old, labnumber):
-        self.debug('old={}, new={}. {}'.format(old, labnumber, not labnumber or labnumber == NULL_STR))
-        if not labnumber or labnumber == NULL_STR:
-            return
-
-        db = self.db
-        if not db:
-            return
-        # self.update_labnumber = labnumber
-
-        special = False
-        try:
-            _ = int(labnumber)
-        except ValueError:
-            special = True
-
-        # if labnumber has a place holder load default script and return
-        if '##' in labnumber:
-            self._load_scripts(old, labnumber)
-            return
-
-        self.irradiation = ''
-        self.sample = ''
-
-        self._aliquot = 0
-        if labnumber:
-            with db.session_ctx():
-                # convert labnumber (a, bg, or 10034 etc)
-                ln = db.get_labnumber(labnumber)
-                if ln:
-                    # set sample and irrad info
-                    try:
-                        self.sample = ln.sample.name
-                    except AttributeError:
-                        pass
-
-                    try:
-                        a = int(ln.analyses[-1].aliquot + 1)
-                    except IndexError, e:
-                        a = 1
-
-                    self._aliquot = a
-
-                    self.irradiation = self._make_irrad_level(ln)
-
-                    if self.auto_fill_comment:
-                        self._set_auto_comment()
-
-                    self._load_scripts(old, labnumber)
-
-                elif special:
-                    ln = labnumber[:2]
-                    if ln == 'dg':
-                        self._load_extraction_defaults(ln)
-
-                    if not (ln in ('pa', 'dg')):
-                        '''
-                            don't add pause or degas to database
-                        '''
-                        if self.confirmation_dialog(
-                                'Lab Identifer {} does not exist. Would you like to add it?'.format(labnumber)):
-                            db.add_labnumber(labnumber)
-                            self._aliquot = 1
-                            self._load_scripts(old, labnumber)
-                        else:
-                            self.labnumber = ''
-                    else:
-                        self._load_scripts(old, labnumber)
-                else:
-                    self.warning_dialog(
-                        '{} does not exist. Add using "Labnumber Entry" or "Utilities>>Import"'.format(labnumber))
 
     def _auto_fill_comment_changed(self):
         if self.auto_fill_comment:
@@ -1370,13 +1372,14 @@ post_equilibration_script:name''')
     def _edit_template_fired(self):
         temp = self._new_template()
         temp.on_trait_change(self._template_closed, 'close_event')
-
-        self.open_view(temp)
+        self.application.open_view(temp)
+        # self.open_view(temp)
 
     def _edit_pattern_fired(self):
         pat = self._new_pattern()
         pat.on_trait_change(self._pattern_closed, 'close_event')
-        self.open_view(pat)
+        self.application.open_view(pat)
+        # self.open_view(pat)
 
     def _edit_mode_button_fired(self):
         self.edit_mode = not self.edit_mode
@@ -1409,9 +1412,9 @@ post_equilibration_script:name''')
             script = getattr(self, si)
             setattr(script, name, new)
 
-    #===============================================================================
+    # ===============================================================================
     # defaults
-    #================================================================================
+    # ================================================================================
     def _script_factory(self, label, name, kind='ExtractionLine'):
         return Script(label=label,
                       mass_spectrometer=self.mass_spectrometer,
@@ -1467,11 +1470,86 @@ post_equilibration_script:name''')
     def persistence_path(self):
         return os.path.join(paths.hidden_dir, 'run_factory')
 
-#============= EOF =============================================
+    # ============= EOF =============================================
+    # def _labnumber_changed(self, old, labnumber):
+    # def _load_labnumber_defaults(self, old, labnumber):
+    #     # self.debug('old={}, new={}. {}'.format(old, labnumber, not labnumber or labnumber == NULL_STR))
+    #     self.debug('load labnumber defaults L#={}'.format(labnumber))
+    #     if not labnumber or labnumber == NULL_STR:
+    #         return
+    #
+    #     db = self.db
+    #     if not db:
+    #         return
+    #     # self.update_labnumber = labnumber
+    #
+    #     special = False
+    #     try:
+    #         _ = int(labnumber)
+    #     except ValueError:
+    #         special = True
+    #
+    #     # if labnumber has a place holder load default script and return
+    #     if '##' in labnumber:
+    #         self._load_scripts(old, labnumber)
+    #         return
+    #
+    #     self.irradiation = ''
+    #     self.sample = ''
+    #
+    #     self._aliquot = 0
+    #     if labnumber:
+    #         with db.session_ctx():
+    #             # convert labnumber (a, bg, or 10034 etc)
+    #             ln = db.get_labnumber(labnumber)
+    #             if ln:
+    #                 # set sample and irrad info
+    #                 try:
+    #                     self.sample = ln.sample.name
+    #                 except AttributeError:
+    #                     pass
+    #
+    #                 try:
+    #                     a = int(ln.analyses[-1].aliquot + 1)
+    #                 except IndexError, e:
+    #                     a = 1
+    #
+    #                 self._aliquot = a
+    #
+    #                 self.irradiation = self._make_irrad_level(ln)
+    #
+    #                 if self.auto_fill_comment:
+    #                     self._set_auto_comment()
+    #
+    #                 self._load_scripts(old, labnumber)
+    #                 self._load_defaults(labnumber if special else 'u')
+    #             elif special:
+    #                 ln = labnumber[:2]
+    #                 if ln == 'dg':
+    #                     # self._load_extraction_defaults(ln)
+    #                     self._load_defaults(ln, attrs=('extract_value', 'extract_units'))
+    #
+    #                 if not (ln in ('pa', 'dg')):
+    #                     '''
+    #                         don't add pause or degas to database
+    #                     '''
+    #                     if self.confirmation_dialog(
+    #                             'Lab Identifer {} does not exist. Would you like to add it?'.format(labnumber)):
+    #                         db.add_labnumber(labnumber)
+    #                         self._aliquot = 1
+    #                         self._load_scripts(old, labnumber)
+    #                     else:
+    #                         self.labnumber = ''
+    #                 else:
+    #                     self._load_scripts(old, labnumber)
+    #             else:
+    #                 self.warning_dialog(
+    #                     '{} does not exist. Add using "Labnumber Entry" or "Utilities>>Import"'.format(labnumber))
+
 #
-#def _generate_positions(pos):
-#        s = None
-#        e = None
+# def _generate_positions(pos):
+# s = None
+# e = None
 #        #(SLICE_REGEX, SSLICE_REGEX, PSLICE_REGEX,
 #        #          TRANSECT_REGEX, POSITION_REGEX)
 #

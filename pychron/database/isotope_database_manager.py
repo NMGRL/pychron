@@ -15,25 +15,19 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from itertools import groupby
 
 from traits.api import String, Property, Event, \
     cached_property, Any, Int
-from apptools.preferences.preference_binding import bind_preference
-
-
-
-#============= standard library imports ========================
-import weakref
-#============= local library imports  ==========================
 from traits.has_traits import provides
+from apptools.preferences.preference_binding import bind_preference
+# ============= standard library imports ========================
+from itertools import groupby
+import weakref
+# ============= local library imports  ==========================
 from pychron.core.i_datastore import IDatastore
 from pychron.core.progress import progress_loader, CancelLoadingError
 from pychron.database.adapters.isotope_adapter import IsotopeAdapter
 from pychron.core.helpers.iterfuncs import partition
-from pychron.core.ui.progress_dialog import myProgressDialog
-from pychron.globals import globalv
-
 from pychron.loggable import Loggable
 from pychron.database.orms.isotope.meas import meas_AnalysisTable
 from pychron.experiment.utilities.identifier import make_runid
@@ -71,7 +65,7 @@ class BaseIsotopeDatabaseManager(Loggable):
         ret = 0
         if self.db:
             ret = self.db.get_greatest_aliquot(identifier)
-        return ret
+        return ret or 0
 
     def get_greatest_step(self, identifier, aliquot):
         ret = 0
@@ -131,7 +125,7 @@ class BaseIsotopeDatabaseManager(Loggable):
         return self._open_progress(n, **kw)
 
     def _open_progress(self, n, close_at_end=True):
-
+        from pychron.core.ui.progress_dialog import myProgressDialog
         pd = myProgressDialog(max=n - 1,
                               #dialog_size=(0,0, 550, 15),
                               close_at_end=close_at_end,
@@ -154,9 +148,9 @@ class BaseIsotopeDatabaseManager(Loggable):
         if self.db:
             return self.db.datasource_url
 
-    #===============================================================================
+    # ===============================================================================
     # defaults
-    #===============================================================================
+    # ===============================================================================
     def _db_default(self):
         return self._db_factory()
 
@@ -436,16 +430,17 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                 ANALYSIS_CACHE.pop(uuid)
                 ANALYSIS_CACHE_COUNT.pop(uuid)
 
-    #===============================================================================
+    # ===============================================================================
     # private
-    #===============================================================================
+    # ===============================================================================
     def _construct_analyses(self, no_db_ans, db_ans, progress, calculate_age, calculate_F,
                             unpack, use_cache, **kw):
+
         uuids = [ri.uuid for ri in no_db_ans]
         # for ui in uuids:
         #     self.debug('loading uuid={}'.format(ui))
 
-        #get all dbrecords with one call
+        # get all dbrecords with one call
         ms = self.db.get_analyses_uuid(uuids)
         # ms = timethis(self.db.get_analyses_uuid, args=(uuids,))
 
@@ -461,6 +456,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             a = construct(x, gi, prog, unpack=unpack,
                           calculate_age=calculate_age,
                           calculate_F=calculate_F, **kw)
+
             if use_cache:
                 add_to_cache(a)
             return a
@@ -549,13 +545,13 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             self.debug('cannot add None to cache')
 
         if not rec.uuid in ANALYSIS_CACHE:
-            #self.debug('Adding {} to cache'.format(rec.record_id))
+            # self.debug('Adding {} to cache'.format(rec.record_id))
             ANALYSIS_CACHE[rec.uuid] = weakref.ref(rec)()
             ANALYSIS_CACHE_COUNT[rec.uuid] = 1
         else:
             ANALYSIS_CACHE_COUNT[rec.uuid] += 1
 
-        #remove items from cached based on frequency of use
+        # remove items from cached based on frequency of use
         if len(ANALYSIS_CACHE) > CACHE_LIMIT:
             s = sorted(ANALYSIS_CACHE_COUNT.iteritems(), key=lambda x: x[1])
             k, v = s[0]
@@ -563,9 +559,9 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             ANALYSIS_CACHE_COUNT.pop(k)
             self.debug('Cache limit exceeded {}. removing {} n uses={}'.format(CACHE_LIMIT, k, v))
 
-    #===============================================================================
+    # ===============================================================================
     # property get/set
-    #===============================================================================
+    # ===============================================================================
     @cached_property
     def _get_irradiations(self):
         r = []
@@ -595,40 +591,38 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
 
         return r
 
-    #===============================================================================
+    # ===============================================================================
     # handlers
-    #===============================================================================
+    # ===============================================================================
     def _irradiation_changed(self):
         self.level = ''
-
-
-        #============= EOF =============================================
-        # def _add_arar(self, meas_analysis, analysis):
-        #
-        #         db = self.db
-        #         with db.session_ctx() as sess:
-        #             hist = db.add_arar_history(meas_analysis)
-        #             #a, e=age.nominal_value, age.std_dev
-        #             d = dict()
-        #             attrs = ['k39', 'ca37', 'cl36', 'rad40',
-        #                      'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36']
-        #
-        #             for a in attrs:
-        #                 v = getattr(analysis, a)
-        #                 ek = '{}_err'.format(a)
-        #                 d[a] = float(v.nominal_value)
-        #                 d[ek] = float(v.std_dev)
-        #
-        #             age_scalar = analysis.arar_constants.age_scalar
-        #             d['age_err_wo_j'] = analysis.age_error_wo_j * age_scalar
-        #
-        #             age = analysis.age
-        #             d['age'] = age.nominal_value * age_scalar
-        #             d['age_err'] = age.std_dev * age_scalar
-        #
-        #             db.add_arar(hist, **d)
-        #
-        #             meas_analysis.selected_histories.selected_arar = hist
-        #             sess.commit()
-        #             #hist.selected=analysis.selected_histories
-        #             #analysis.selected_histories.selected_arar=hist
+# ============= EOF =============================================
+# def _add_arar(self, meas_analysis, analysis):
+#
+#         db = self.db
+#         with db.session_ctx() as sess:
+#             hist = db.add_arar_history(meas_analysis)
+#             #a, e=age.nominal_value, age.std_dev
+#             d = dict()
+#             attrs = ['k39', 'ca37', 'cl36', 'rad40',
+#                      'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36']
+#
+#             for a in attrs:
+#                 v = getattr(analysis, a)
+#                 ek = '{}_err'.format(a)
+#                 d[a] = float(v.nominal_value)
+#                 d[ek] = float(v.std_dev)
+#
+#             age_scalar = analysis.arar_constants.age_scalar
+#             d['age_err_wo_j'] = analysis.age_error_wo_j * age_scalar
+#
+#             age = analysis.age
+#             d['age'] = age.nominal_value * age_scalar
+#             d['age_err'] = age.std_dev * age_scalar
+#
+#             db.add_arar(hist, **d)
+#
+#             meas_analysis.selected_histories.selected_arar = hist
+#             sess.commit()
+#             #hist.selected=analysis.selected_histories
+#             #analysis.selected_histories.selected_arar=hist

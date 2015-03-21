@@ -20,8 +20,8 @@ import os
 from pyface.tasks.action.schema import SToolBar
 from traits.api import Instance
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 import yaml
 from pychron.core.progress import progress_iterator
 from pychron.processing.export.yaml_analysis_exporter import YAMLAnalysisExporter
@@ -183,6 +183,6 @@ class WorkspaceTask(BaseBrowserTask):
     def _workspace_default(self):
         w = ArArWorkspaceManager(application=self.application)
         return w
-#============= EOF =============================================
+# ============= EOF =============================================
 
 

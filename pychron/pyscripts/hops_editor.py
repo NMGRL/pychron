@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 from pychron.core.ui import set_qt
 from pychron.envisage.icon_button_editor import icon_button_editor
 
@@ -20,7 +20,7 @@ set_qt()
 
 from pyface.confirmation_dialog import ConfirmationDialog
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traitsui.handler import Controller
 from traitsui.table_column import ObjectColumn
 from pyface.constant import OK, CANCEL, YES
@@ -29,9 +29,9 @@ from traits.api import HasTraits, Str, List, Int, Any, Button, Bool, on_trait_ch
 from traitsui.menu import Action
 from traitsui.api import View, Item, UItem, HGroup, InstanceEditor, HSplit, VGroup, EnumEditor, Tabbed
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.ui.text_editor import myTextEditor
 from pychron.paths import paths
 from pychron.envisage.resources import icon
@@ -416,5 +416,5 @@ if __name__ == '__main__':
     h.configure_traits()
 
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

@@ -5,29 +5,29 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 
-#=============standard library imports ========================
+# =============standard library imports ========================
 import os
 import logging
 from logging.handlers import RotatingFileHandler
 import shutil
-#=============local library imports  =========================
+# =============local library imports  =========================
 from pychron.paths import paths
-from pychron.core.helpers.filetools import list_directory
+from pychron.core.helpers.filetools import list_directory, add_extension
 from filetools import unique_path2
 
 NAME_WIDTH = 40
-gFORMAT = '%(name)-{}s: %(asctime)s %(levelname)-7s (%(threadName)-10s) %(message)s'.format(NAME_WIDTH)
+gFORMAT = '%(name)-{}s: %(asctime)s %(levelname)-9s (%(threadName)-10s) %(message)s'.format(NAME_WIDTH)
 gLEVEL = logging.DEBUG
 
 
@@ -79,17 +79,52 @@ def tail(f, lines=20):
     return '\n'.join(all_read_text.splitlines()[-total_lines_wanted:])
 
 
+def set_exception_handler(func=None):
+    """
+        set sys.excepthook to func.  if func is None use a default handler
+
+        default handler formats and logs the traceback as critical and calls sys.__excepthook__
+        for normal exception handling
+
+    :return:
+    """
+    import sys
+    import traceback
+
+    root = logging.getLogger()
+    if func is None:
+        def func(exctype, value, tb):
+            for ti in traceback.format_tb(tb):
+                root.critical(ti.strip())
+            sys.__excepthook__(exctype, value, tb)
+
+    sys.excepthook = func
+
+
+# def anomaly_setup(name):
+#     ld = logging.Logger.manager.loggerDict
+#     print 'anomaly setup ld={}'.format(ld)
+#     if name not in ld:
+#         bdir = paths.log_dir
+#         name = add_extension(name, '.anomaly')
+#         apath, _cnt = unique_path2(bdir, name, delimiter='-', extension='.log')
+#         logger = logging.getLogger('anomalizer')
+#         h = logging.FileHandler(apath)
+#         logger.addHandler(h)
+
+
 def logging_setup(name, use_archiver=True, **kw):
     """
     """
     # set up deprecation warnings
-    #     import warnings
+    # import warnings
     #     warnings.simplefilter('default')
 
-    # make sure we have a log directory
     bdir = paths.log_dir
-    if not os.path.isdir(bdir):
-        os.mkdir(bdir)
+
+    # make sure we have a log directory
+    # if not os.path.isdir(bdir):
+    #     os.mkdir(bdir)
 
     if use_archiver:
         # archive logs older than 1 month
@@ -166,4 +201,4 @@ def wrap(items, width=40, indent=90, delimiter=','):
 
     return ',\n{}'.format(' ' * indent).join(rs)
 
-    #============================== EOF ===================================
+    # ============================== EOF ===================================

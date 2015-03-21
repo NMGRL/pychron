@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance
 from traitsui.api import View, UItem
 from chaco.plot_containers import HPlotContainer
@@ -23,11 +23,15 @@ from chaco.plot import Plot
 from chaco.array_plot_data import ArrayPlotData
 from numpy import ones, asarray
 from chaco.default_colormaps import hot
+
 from pychron.image.cv_wrapper import grayspace
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.viewable import Viewable
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class TestImage(Viewable):
     container = Instance(HPlotContainer)
@@ -67,4 +71,4 @@ class TestImage(Viewable):
                  handler=self.handler_klass
                  )
         return v
-#============= EOF =============================================
+# ============= EOF =============================================

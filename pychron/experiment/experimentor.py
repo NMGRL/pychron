@@ -12,13 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance, List, on_trait_change, Bool, Event
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from itertools import groupby
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.experiment.queue.experiment_queue import ExperimentQueue
 from pychron.experiment.factory import ExperimentFactory
 from pychron.experiment.utilities.aliquot_numbering import renumber_aliquots
@@ -40,17 +40,17 @@ class Experimentor(IsotopeDatabaseManager):
 
     save_enabled = Bool
 
-    #===========================================================================
+    # ===========================================================================
     # permissions
-    #===========================================================================
+    # ===========================================================================
     #    max_allowable_runs = 10000
     #    can_edit_scripts = True
     #    _last_ver_time = None
     #    _ver_timeout = 10
 
-    #===========================================================================
+    # ===========================================================================
     # task events
-    #===========================================================================
+    # ===========================================================================
     execute_event = Event
 
     activate_editor_event = Event
@@ -85,9 +85,9 @@ class Experimentor(IsotopeDatabaseManager):
     def update_info(self):
         self._update()
 
-    #===============================================================================
+    # ===============================================================================
     # info update
-    #===============================================================================
+    # ===============================================================================
     def _get_all_runs(self, queues=None):
         if queues is None:
             queues = self.experiment_queues
@@ -221,9 +221,9 @@ class Experimentor(IsotopeDatabaseManager):
 
         return self.executor.execute()
 
-    #===============================================================================
+    # ===============================================================================
     # handlers
-    #===============================================================================
+    # ===============================================================================
     def _experiment_queue_changed(self, eq):
         if eq:
             self.experiment_factory.queue = eq
@@ -318,9 +318,9 @@ class Experimentor(IsotopeDatabaseManager):
 
         return e
 
-    #===============================================================================
+    # ===============================================================================
     # defaults
-    #===============================================================================
+    # ===============================================================================
     def _executor_default(self):
         return self._executor_factory()
 
@@ -338,4 +338,4 @@ class Experimentor(IsotopeDatabaseManager):
 
         return e
 
-#============= EOF =============================================
+# ============= EOF =============================================

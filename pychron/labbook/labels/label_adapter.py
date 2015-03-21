@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.database.core.database_adapter import SQLiteDatabaseAdapter
 from pychron.labbook.labels.orm import LabelTable, PathTable
 
@@ -65,7 +65,7 @@ if __name__ == '__main__':
     db = LabelAdapter(path='/Users/ross/Sandbox/label.db')
     db.build_database()
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

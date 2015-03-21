@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Any, Instance
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import shlex
-#============= local library imports  ==========================
-from dummies import DummyDevice, DummyLM
+# ============= local library imports  ==========================
+# from dummies import DummyDevice, DummyLM
 from error_handler import ErrorHandler
 from pychron.loggable import Loggable
 from pychron.remote_hardware.errors import DeviceConnectionErrorCode
@@ -75,7 +75,7 @@ class BaseRemoteHardwareHandler(Loggable):
             pass
 
     def get_device(self, name, protocol=None, owner=None):
-
+        dev  = None
         if self.application is not None:
             if protocol is None:
                 protocol = 'pychron.hardware.core.i_core_device.ICoreDevice'
@@ -90,20 +90,21 @@ class BaseRemoteHardwareHandler(Loggable):
                     else:
                         dev.set_owner(owner)
 
-                else:
-                    dev = DummyDevice()
-        else:
-            dev = DummyDevice()
+        #         else:
+        #             dev = DummyDevice()
+        # else:
+        #     dev = DummyDevice()
         return dev
 
     def get_laser_manager(self, name=None):
+        lm = None
         if name is None:
             name = self.manager_name
 
         if self.application is not None:
             lm = self.application.get_service(ILaserManager, 'name=="{}"'.format(name))
-        else:
-            lm = DummyLM()
+        # else:
+        #     lm = DummyLM()
 
         return lm
 
@@ -124,7 +125,7 @@ class BaseRemoteHardwareHandler(Loggable):
     def Read(self, manager, dname, sender, *args):
         d = self.get_device(dname, owner=sender)
         if d is not None:
-            result = d.get()
+            result = d.get(current=True)
             self.debug('Read owner={}'.format(sender))
             self.info('Get {} = {}'.format(d.name, result))
         else:
@@ -141,9 +142,9 @@ class BaseRemoteHardwareHandler(Loggable):
 #    def RemoteLaunch(self, *args, **kw):
 #        return False
 
-#===============================================================================
+# ===============================================================================
 # ##testing interface
-#===============================================================================
+# ===============================================================================
 
     def ReadTest(self, *args, **kw):
         global cnt
@@ -173,4 +174,4 @@ class BaseRemoteHardwareHandler(Loggable):
         eh.logger = self
         return eh
 
-#============= EOF ====================================
+# ============= EOF ====================================

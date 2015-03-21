@@ -16,9 +16,9 @@
 
 # ============= enthought library imports =======================
 from traits.api import HasTraits, List, Str, Any, Array, Bool, Float
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import vstack, array
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.monitors.monitor import Monitor
 from pychron.hardware.core.communicators.ethernet_communicator import EthernetCommunicator
 import time
@@ -205,4 +205,4 @@ class RemoteAutomatedRunMonitor(AutomatedRunMonitor):
             p = default
         return p
 
-#============= EOF =============================================
+# ============= EOF =============================================

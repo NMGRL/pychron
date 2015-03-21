@@ -16,10 +16,13 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
+import os
+
 from pychron.core.helpers.filetools import to_bool
 from pychron.envisage.initialization.initialization_parser import InitializationParser
 from pychron.envisage.initialization.nodes import Plugin, PluginTree, GlobalTree, GlobalValue, InitializationModel
+
 
 DESCRIPTION_MAP = {'Experiment': 'Execute sets of automated runs',
                    'PyScript': "Edit PyScripts; pychron's internal scripting language",
@@ -33,7 +36,12 @@ DESCRIPTION_MAP = {'Experiment': 'Execute sets of automated runs',
                    'MediaServer': 'Image server/client',
                    'LabBook': 'Git-enabled labbook repository',
                    'Video': 'Video server/client',
-
+                   'DashboardServer': 'Publish various laboratory values',
+                   'DashboardClient': 'Listen to the Dashboard server',
+                   'LabspyClient': 'Labspy client. push updates to the labspy database',
+                   'Update': 'Update plugin',
+                   'Image': 'Use to take snapshots with a connected camera\n'
+                            'and save to file or database',
                    'ExtractionLine': 'Control extraction line components',
                    'ArgusSpectrometer': 'Thermo ArgusVI plugin',
                    'FusionsCO2': 'Photon Machines Fusions CO2',
@@ -41,24 +49,84 @@ DESCRIPTION_MAP = {'Experiment': 'Execute sets of automated runs',
                    'FusionsUV': "NMGRL's custom Fusions UV",
                    'ExternalPipette': 'Interface with the APIS pipette system',
 
+                   'Email': 'Allows pychron to send emails',
+
                    'Use IPC': 'use Inter Process Communication e.g. use RemotHardwareServer',
                    'Ignore Initialization Warnings': 'Ignore initialization warnings',
                    'Ignore Initialization Questions': 'Ignore initialization questions',
-                   'Communication Simulation': 'Simulation communication.\nSet Ethernet timeout to 0'}
+                   'Ignore Initializaiton Required': 'Ignore hen initialization "required" tag',
+                   'Communication Simulation': 'Simulate communication.\nSet Ethernet timeout to 0',
+                   'Dashboard Simulation': 'Use a dummy device if none available'}
 
-DEFAULT_PLUGINS = (('General', ('Experiment', 'PyScript',
-                                'ArArConstants', 'Loading',
-                                'Processing', 'Database',
-                                'Entry', 'SystemMonitor',
-                                'Workspace', 'LabBook', 'MediaServer','Video')),
-                   ('Hardware', ('ArgusSpectrometer', 'ExtractionLine',
-                                 'FusionsCO2', 'FusionsDiode', 'FusionsUV',
+DEFAULT_PLUGINS = (('General', ('Experiment',
+                                'PyScript',
+                                'ArArConstants',
+                                'Loading',
+                                'Processing',
+                                'Database',
+                                'Entry',
+                                'SystemMonitor',
+                                'DashboardServer',
+                                'DashboardClient',
+                                'LabspyClient',
+                                'Workspace',
+                                'LabBook',
+                                'MediaServer',
+                                'Update',
+                                'Video',
+                                'Image')),
+                   ('Hardware', ('ArgusSpectrometer',
+                                 'ExtractionLine',
+                                 'FusionsCO2',
+                                 'FusionsDiode',
+                                 'FusionsUV',
                                  'ExternalPipette')),
-                   ('Social', (),))
+                   ('Social', ('Email',)))
+
 DEFAULT_GLOBALS = (('Use IPC', 'use_ipc'),
+                   ('Use Startup Tests', 'use_startup_tests'),
                    ('Ignore Initialization Warnings', 'ignore_initialization_warnings'),
                    ('Ignore Initialization Questions', 'ignore_initialization_questions'),
-                   ('Communication Simulation', 'communication_simulation'))
+                   ('Ignore Initialization Required', 'ignore_initialization_required'),
+                   ('Communication Simulation', 'communication_simulation'),
+                   ('Dashboard Simulation', 'dashboard_simulation'),)
+
+DEFAULTS_MAP = {'Ar Data Reduction': {'globals': ('Use Startup Tests',),
+                                      'general': ('Processing', 'Database', 'Entry', 'ArArConstants'),
+                                      'hardware': None,
+                                      'social': None},
+                'Extraction Line': {'globals': ('Use IPC', 'Use Startup Tests',),
+                                    'general': None,
+                                    'hardware': ('ExtractionLine', ),
+                                    'social': ('Email',)},
+                'Loading': {'globals': None,
+                            'general': ('Database', 'Loading', 'Image', 'Entry'),
+                            'hardware': None,
+                            'social': None},
+                'Experiment': {'globals': ('Use Startup Tests',),
+                               'general': ('Experiment', 'Database', 'ArArConstants', 'PyScript', 'Entry',),
+                               'hardware': ('ArgusSpectrometer', 'ExtractionLine'),
+                               'social': ('Email',)},
+                'Experiment CO2': {'globals': ('Use Startup Tests',),
+                                   'general': ('Experiment', 'Database', 'ArArConstants', 'PyScript'),
+                                   'hardware': ('ArgusSpectrometer', 'ExtractionLine', 'FusionsCO2'),
+                                   'social': ('Email',)},
+                'Experiment Diode': {'globals': ('Use Startup Tests',),
+                                     'general': ('Experiment', 'Database', 'ArArConstants', 'PyScript'),
+                                     'hardware': ('ArgusSpectrometer', 'ExtractionLine', 'FusionsDiode'),
+                                     'social': ('Email',)},
+                'Experiment UV': {'globals': ('Use Startup Tests',),
+                                  'general': ('Experiment', 'Database', 'ArArConstants', 'PyScript'),
+                                  'hardware': ('ArgusSpectrometer', 'ExtractionLine', 'FusionsUV'),
+                                  'social': ('Email',)}}
+
+NOMINAL_DEFAULTS = ['Ar Data Reduction',
+                    'Loading',
+                    'Experiment',
+                    'Experiment CO2',
+                    'Experiment Diode',
+                    'Experiment UV',
+                    'Extraction Line']
 
 
 def load_plugin_tree():
@@ -87,7 +155,9 @@ def get_tree(gi, tree):
             if plugin.name.lower() == gi.lower():
                 return plugin
             else:
-                return get_tree(gi, plugin)
+                t = get_tree(gi, plugin)
+                if t:
+                    return t
 
 
 def get_plugin(name, tree):
@@ -98,7 +168,7 @@ def get_plugin(name, tree):
 
 
 def get_initialization_model():
-    ip=InitializationParser()
+    ip = InitializationParser()
     rtree = load_plugin_tree()
     gtree = load_global_tree()
     for gi in ip.get_plugin_groups():
@@ -115,11 +185,12 @@ def get_initialization_model():
             gv.enabled = to_bool(gi.text.strip())
 
     model = InitializationModel(trees=[gtree, rtree],
+                                path_name=os.path.basename(ip.path),
                                 parser=ip)
     model.init_hash()
 
     return model
-#============= EOF =============================================
 
+# ============= EOF =============================================
 
 

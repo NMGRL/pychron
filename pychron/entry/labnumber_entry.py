@@ -1,30 +1,30 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
 from pyface.constant import YES, CANCEL
 from traits.api import Property, Str, cached_property, \
-    List, Event, Any, Button, Instance, Bool, on_trait_change
+    List, Event, Any, Button, Instance, Bool, on_trait_change, Float
 from traitsui.api import Image
 from pyface.image_resource import ImageResource
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.database.defaults import load_irradiation_map
@@ -33,7 +33,7 @@ from pychron.entry.editors.level_editor import LevelEditor, load_holder_canvas, 
 from pychron.entry.loaders.irradiation_loader import XLSIrradiationLoader
 from pychron.entry.irradiation_pdf_writer import IrradiationPDFWriter, LabbookPDFWriter
 from pychron.entry.irradiation_table_view import IrradiationTableView
-from pychron.entry.labnumber_generator import LabnumberGenerator
+from pychron.entry.identifier_generator import IdentifierGenerator
 from pychron.paths import paths
 # from pychron.entry.irradiation import Irradiation
 # from pychron.entry.level import Level, load_holder_canvas, iter_geom
@@ -45,13 +45,13 @@ from pychron.database.orms.isotope.gen import gen_ProjectTable, gen_SampleTable
 
 # class save_ctx(object):
 # def __init__(self, p):
-#         self._p = p
+# self._p = p
 #
-#     def __enter__(self):
-#         pass
+# def __enter__(self):
+# pass
 #
-#     def __exit__(self, exc_type, exc_val, exc_tb):
-#         self._p.information_dialog('Changes saved to database')
+# def __exit__(self, exc_type, exc_val, exc_tb):
+# self._p.information_dialog('Changes saved to database')
 
 
 class dirty_ctx(object):
@@ -83,15 +83,15 @@ class LabnumberEntry(IsotopeDatabaseManager):
 
     load_file_button = Button('Load File')
     generate_labnumbers_button = Button('Generate Labnumbers')
-    #===========================================================================
+    # ===========================================================================
     # irradiation positions table events
-    #===========================================================================
+    # ===========================================================================
     selected = Any
     refresh_table = Event
 
-    #===========================================================================
+    # ===========================================================================
     #
-    #===========================================================================
+    # ===========================================================================
     canvas = Instance(IrradiationCanvas, ())
     show_canvas = Bool(True)
 
@@ -102,35 +102,89 @@ class LabnumberEntry(IsotopeDatabaseManager):
     suppress_dirty = Bool
     _no_update = Bool
 
-    #labnumber_generator = Instance(LabnumberGenerator)
+    # labnumber_generator = Instance(LabnumberGenerator)
     monitor_name = Str
 
     _level_editor = None
     _irradiation_editor = None
 
+    j_multiplier = Float(1e-4)  # j units per hour
+
     def __init__(self, *args, **kw):
         super(LabnumberEntry, self).__init__(*args, **kw)
 
-        #self.labnumber_generator = LabnumberGenerator(db=self.db)
+        # self.labnumber_generator = LabnumberGenerator(db=self.db)
 
         bind_preference(self, 'irradiation_prefix',
-                        'pychron.experiment.irradiation_prefix')
+                        'pychron.entry.irradiation_prefix')
         bind_preference(self, 'monitor_name',
-                        'pychron.experiment.monitor_name')
+                        'pychron.entry.monitor_name')
+        bind_preference(self, 'j_multiplier',
+                        'pychron.entry.j_multiplier')
 
-    #    self.populate_default_tables()
+    def transfer_j(self):
+        items = self.selected
+        if not items:
+            items = self.irradiated_positions
+
+        self.info('Transferring Js for Irradiation={}, Level={}'.format(self.irradiation,
+                                                                        self.level))
+        from pychron.entry.j_transfer import JTransferer
+
+        ms = self.application.get_service('pychron.database.adapters.massspec_database_adapter.MassSpecDatabaseAdapter')
+        if ms:
+            ms.bind_preferences()
+            if ms.connect():
+                jt = JTransferer(pychrondb=self.db,
+                                 massspecdb=ms)
+                if jt.do_transfer(self.irradiation, self.level, items):
+                    self._save_to_db()
+
+                self.refresh_table = True
+        else:
+            self.warning_dialog('Unable to Transfer Js. Mass Spec database not configured properly. '
+                                'Check Preferences>Database')
+
+
     def save_tray_to_db(self, p, name):
         with self.db.session_ctx():
             load_irradiation_map(self.db, p, name, overwrite_geometry=True)
         self._inform_save()
 
-    def set_selected_sample(self, new):
-        self.selected_sample = new
-        #self.canvas.selected_samples=new
+    def estimate_j(self):
+        j, je = self._estimate_j()
+        for ip in self.irradiated_positions:
+            ip.trait_set(j=j, j_err=je)
+        self.refresh_table = True
+
+    def _estimate_j(self):
+        self.debug('estimate J. irradiation={}'.format(self.irradiation))
+        db = self.db
+        with db.session_ctx():
+            dbirrad = db.get_irradiation(self.irradiation)
+            j = dbirrad.chronology.duration
+            j *= self.j_multiplier
+            return j, j * 0.001
+
+    # def set_selected_sample(self, new):
+    # self.selected_sample = new
+    #     self.set_selected_attr(new.name, 'sample')
+    #     #self.canvas.selected_samples=new
+
+    def select_positions(self, freq, eoflag):
+        positions = self.irradiated_positions
+        ss = [irrad for i, irrad in enumerate(positions) if (i % freq != 0 if eoflag else i % freq == 0)]
+        self.selected = ss
+
+    def set_selected_attr(self, v, attr):
+        if self.selected:
+            for si in self.selected:
+                setattr(si, attr, v)
+            self.refresh_table = True
 
     def import_sample_metadata(self, p):
         try:
-            from pychron.entry.loaders.sample_loader import SampleLoader
+            from pychron.entry.loaders.mb_sample_loader import SampleLoader
         except ImportError, e:
             self.warning_dialog(str(e))
             return
@@ -176,7 +230,13 @@ class LabnumberEntry(IsotopeDatabaseManager):
             self._inform_save()
             return True
 
-    def generate_labnumbers(self):
+    def generate_identifiers(self):
+        self.warning('GENERATE LABNUMBERS DISABLED')
+        # return
+
+        if self.check_monitor_name():
+            return
+
         ok = True
         ok = self.confirmation_dialog('Are you sure you want to generate the labnumbers for this irradiation?')
         if ok:
@@ -184,11 +244,32 @@ class LabnumberEntry(IsotopeDatabaseManager):
             ret = self.confirmation_dialog('Overwrite existing labnumbers?', return_retval=True, cancel=True)
             if ret != CANCEL:
                 overwrite = ret == YES
-                lg = LabnumberGenerator(monitor_name=self.monitor_name,
-                                        db=self.db)
-                prog = self.open_progress()
-                lg.generate_labnumbers(self.irradiation, prog, overwrite)
-                self._update_level()
+                lg = IdentifierGenerator(monitor_name=self.monitor_name,
+                                         irradiation=self.irradiation,
+                                         overwrite=overwrite,
+                                         db=self.db)
+                if lg.setup():
+                    prog = self.open_progress()
+                    lg.generate_identifiers(prog, overwrite)
+                    self._update_level()
+
+    def preview_generate_identifiers(self):
+        if self.check_monitor_name():
+            return
+
+        lg = IdentifierGenerator(monitor_name=self.monitor_name,
+                                 overwrite=True,
+                                 db=self.db)
+        if lg.setup():
+            prog = self.open_progress()
+            lg.preview(prog, self.irradiated_positions, self.irradiation, self.level)
+            self.refresh_table = True
+
+    def check_monitor_name(self):
+        if not self.monitor_name.strip():
+            self.warning_dialog('No monitor name set in Preferences.'
+                                ' Set before trying to generate identifiers. e.g "FC-2"')
+            return True
 
     def make_irradiation_load_template(self, p):
         loader = XLSIrradiationLoader()
@@ -202,8 +283,8 @@ class LabnumberEntry(IsotopeDatabaseManager):
         loader.progress = prog
         loader.canvas = self.canvas
 
-        loader.load(p, self.irradiated_positions,
-                    self.irradiation, self.level)
+        # loader.load_level(p, self.irradiated_positions,
+        #             self.irradiation, self.level)
 
         self.refresh_table = True
 
@@ -357,7 +438,7 @@ class LabnumberEntry(IsotopeDatabaseManager):
                                                                         irs.hole,
                                                                         dbln.identifier))
         self.dirty = False
-        self._level_changed()
+        self._level_changed(self.level)
 
         # self.info('Changes saved to database')
 
@@ -398,7 +479,7 @@ class LabnumberEntry(IsotopeDatabaseManager):
 
     # ===============================================================================
     # handlers
-    #===============================================================================
+    # ===============================================================================
     @on_trait_change('irradiated_positions:sample')
     def _handle_entry(self, obj, name, old, new):
         if not self._no_update:
@@ -482,7 +563,7 @@ THIS CHANGE CANNOT BE UNDONE')
             self.level = new_level
 
         self.updated = True
-        self._level_changed()
+        self._level_changed(self.level)
 
     def _add_level_button_fired(self):
         editor = self._get_level_editor(irradiation=self.irradiation)
@@ -494,9 +575,10 @@ THIS CHANGE CANNOT BE UNDONE')
     def _level_changed(self, new):
         self.debug('level changed "{}"'.format(new))
         self.irradiated_positions = []
-        self.canvas = IrradiationCanvas()
         if new:
             self._update_level(debug=True)
+        # else:
+        #     self.canvas = IrradiationCanvas()
 
     def _auto_increment_irradiation(self):
         lastname = self.irradiations[0]
@@ -551,6 +633,7 @@ THIS CHANGE CANNOT BE UNDONE')
             except:
                 self.warning_dialog('Failed loading Irradiation level="{}"'.format(name))
                 sess.rollback()
+
     # @simple_timer()
     def _make_positions(self, n, positions):
         with no_update(self):
@@ -612,9 +695,9 @@ THIS CHANGE CANNOT BE UNDONE')
         ie.trait_set(**kw)
         return ie
 
-    #===============================================================================
+    # ===============================================================================
     # property get/set
-    #===============================================================================
+    # ===============================================================================
     @cached_property
     def _get_projects(self):
         order = gen_ProjectTable.name.asc()
@@ -695,12 +778,12 @@ if __name__ == '__main__':
     logging_setup('runid')
     m = LabnumberEntry()
     m.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================
 # _prev_tray = self.tray_name
 # irradiation = self.irradiation
 # level = Level(db=self.db,
-#               name=self.level,
-#               trays=self.trays)
+# name=self.level,
+# trays=self.trays)
 # level.load(irradiation)
 # info = level.edit_traits(kind='livemodal')
 # if info.result:

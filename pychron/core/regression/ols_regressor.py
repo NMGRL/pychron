@@ -12,11 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
-#============= enthought library imports =======================
+# ===============================================================================
+# ============= enthought library imports =======================
 
 from traits.api import Int, Property
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import asarray, column_stack, ones, \
     matrix, sqrt, dot, linalg
 
@@ -35,7 +35,7 @@ import logging
 
 logger = logging.getLogger('Regressor')
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from base_regressor import BaseRegressor
 
 
@@ -441,7 +441,7 @@ if __name__ == '__main__':
     print r.predict([(0, 1)])
     print r.predict_error([(0, 2)])
     print r.predict_error([(0.1, 1)])
-#============= EOF =============================================
+# ============= EOF =============================================
 # def predict_error_al(self, x, error_calc='sem'):
 #        result = self._result
 #        cov_varM = result.cov_params()

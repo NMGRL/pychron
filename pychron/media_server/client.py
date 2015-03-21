@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Str, Int, Bool
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import httplib
 import os
 from cStringIO import StringIO
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.loggable import Loggable
 from apptools.preferences.preference_binding import bind_preference
 from pychron.paths import paths
@@ -39,9 +39,9 @@ class MediaClient(Loggable):
         super(MediaClient, self).__init__(*args, **kw)
         self.bind_preferences()
 
-#===============================================================================
+# ===============================================================================
 # filesystem
-#===============================================================================
+# ===============================================================================
     def _parse_propfind(self, resp):
         parser = XMLParser()
 
@@ -192,4 +192,4 @@ if __name__ == '__main__':
 #    print c.get_media('foo.txt', kind='txt')
 #    print c.upload(p)
     c.retrieve('figure_export.pdf', 'mo3o.pdf')
-#============= EOF =============================================
+# ============= EOF =============================================

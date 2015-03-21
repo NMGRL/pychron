@@ -12,24 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 import ast
 import time
 import os
 from ConfigParser import ConfigParser
-
 import yaml
-
-
-
-
-
-
-
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import fileiter
 from pychron.paths import paths
 from pychron.pychron_constants import MEASUREMENT_COLOR
@@ -89,9 +81,23 @@ class MeasurementPyScript(ValvePyScript):
     def get_variables(self):
         return ['truncated', 'eqtime', 'use_cdd_warming']
 
-    #===============================================================================
+    def increment_series_counts(self, s, f):
+        self._series_count += s
+        self._fit_series_count += f
+
+    # ===============================================================================
     # commands
-    #===============================================================================
+    # ===============================================================================
+    @verbose_skip
+    @command_register
+    def generate_ic_mftable(self, detectors, refiso='Ar40', calc_time=False):
+        if calc_time:
+            self._estimated_duration += len(detectors) * 30
+            return
+
+        if not self._automated_run_call('py_generate_ic_mftable', detectors, refiso):
+            self.cancel()
+
     @verbose_skip
     @command_register
     def extraction_gosub(self, *args, **kw):
@@ -110,11 +116,11 @@ class MeasurementPyScript(ValvePyScript):
                                         self._time_zero, self._time_zero_offset,
                                         series=self._series_count, block=block):
             self.cancel()
-        self._series_count += 1
+            # self._series_count += 1
 
     @count_verbose_skip
     @command_register
-    def multicollect(self, ncounts=200, integration_time=1.04, calc_time=False):
+    def multicollect(self, ncounts=200, integration_time=1.04, increment_series_count=True, calc_time=False):
         if calc_time:
             self._estimated_duration += (ncounts * integration_time * ESTIMATED_DURATION_FF)
             return
@@ -132,8 +138,9 @@ class MeasurementPyScript(ValvePyScript):
                                         series=self._series_count):
             self.cancel()
 
-        self._series_count += 2
-        self._fit_series_count += 1
+            # if increment_series_count:
+            # self._series_count += 2
+            #     self._fit_series_count += 1
 
     @count_verbose_skip
     @command_register
@@ -168,8 +175,8 @@ class MeasurementPyScript(ValvePyScript):
                                         series=series):
             self.cancel()
         self._baseline_series = series
-        self._series_count += 2
-        self._fit_series_count += 1
+        # self._series_count += 2
+        # self._fit_series_count += 1
 
     @count_verbose_skip
     @command_register
@@ -200,7 +207,7 @@ class MeasurementPyScript(ValvePyScript):
 
     @count_verbose_skip
     @command_register
-    def peak_hop(self, ncycles=5, hops=None, calc_time=False):
+    def peak_hop(self, ncycles=5, hops=None, mftable='mftable', calc_time=False):
         if not hops:
             return
 
@@ -217,14 +224,15 @@ class MeasurementPyScript(ValvePyScript):
         if not self._automated_run_call('py_peak_hop', ncycles,
                                         counts,
                                         hops,
+                                        mftable,
                                         self._time_zero,
                                         self._time_zero_offset,
                                         self._series_count,
                                         fit_series=self._fit_series_count,
                                         group=group):
             self.cancel()
-        self._series_count += 2
-        self._fit_series_count += 1
+            # self._series_count += 2
+            # self._fit_series_count += 1
 
     @count_verbose_skip
     @command_register
@@ -249,6 +257,7 @@ class MeasurementPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def whiff(self, ncounts=0, conditionals=None):
+        self.ncounts = ncounts
         ret = self._automated_run_call('py_whiff', ncounts, conditionals,
                                        self._time_zero, self._time_zero_offset,
                                        fit_series=self._fit_series_count,
@@ -275,8 +284,8 @@ class MeasurementPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def post_equilibration(self):
-        self._automated_run_call('py_post_equilibration')
+    def post_equilibration(self, block=False):
+        self._automated_run_call('py_post_equilibration', block=block)
 
     @verbose_skip
     @command_register
@@ -338,13 +347,13 @@ class MeasurementPyScript(ValvePyScript):
     def coincidence(self):
         self._automated_run_call('py_coincidence_scan')
 
-    #===============================================================================
+    # ===============================================================================
     #
-    #===============================================================================
+    # ===============================================================================
 
     # ===============================================================================
     # set commands
-    #===============================================================================
+    # ===============================================================================
 
     @verbose_skip
     @command_register
@@ -373,48 +382,47 @@ class MeasurementPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def add_termination(self, attr, teststr, start_count=0, frequency=10, window=0, mapper=''):
+    def add_termination(self, attr, teststr, start_count=0, frequency=10, window=0, mapper='', ntrips=1):
         self._automated_run_call('py_add_termination',
                                  attr=attr,
                                  teststr=teststr,
                                  start_count=start_count,
                                  frequency=frequency, window=window,
-                                 mapper=mapper)
+                                 mapper=mapper, ntrips=ntrips)
 
     @verbose_skip
     @command_register
-    def add_cancelation(self, attr, teststr, start_count=0, frequency=10, window=0, mapper=''):
+    def add_cancelation(self, attr, teststr, start_count=0, frequency=10, window=0, mapper='', ntrips=1):
         self._automated_run_call('py_add_cancelation',
                                  attr=attr,
                                  teststr=teststr,
                                  start_count=start_count,
                                  frequency=frequency, window=window,
-                                 mapper=mapper)
+                                 mapper=mapper, ntrips=ntrips)
 
     @verbose_skip
     @command_register
-    def add_truncation(self, attr, teststr, start_count=0, frequency=10,
+    def add_truncation(self, attr, teststr, start_count=0, frequency=10, ntrips=1,
                        abbreviated_count_ratio=1.0):
         self._automated_run_call('py_add_truncation',
                                  attr=attr,
                                  teststr=teststr,
                                  start_count=start_count,
                                  frequency=frequency,
-                                 abbreviated_count_ratio=abbreviated_count_ratio)
+                                 abbreviated_count_ratio=abbreviated_count_ratio, ntrips=ntrips)
 
     @verbose_skip
     @command_register
-    def add_action(self, attr, teststr, start_count=0, frequency=10,
+    def add_action(self, attr, teststr, start_count=0, frequency=10, ntrips=1,
                    action=None,
                    resume=False):
-
 
         self._automated_run_call('py_add_action',
                                  attr=attr, teststr=teststr,
                                  start_count=start_count,
                                  frequency=frequency,
                                  action=action,
-                                 resume=resume)
+                                 resume=resume, ntrips=ntrips)
 
     @verbose_skip
     @command_register
@@ -636,4 +644,4 @@ class MeasurementPyScript(ValvePyScript):
         return self._automated_run_call(lambda: self.automated_run.spec.use_cdd_warming)
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

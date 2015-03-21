@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Date, Str, List, Long, Any, Float, Bool, Event
 # ============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 
 class Change(HasTraits):
@@ -105,5 +105,5 @@ class FitChange(Change):
         self.fits = [FitRecord(isotope=fi.isotope_label, fit=fi.fit) for fi in dbrecord.fits]
 
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 import math
 from unittest import TestCase
 from ConfigParser import ConfigParser
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.processing.argon_calculations import calculate_arar_age
 from pychron.processing import constants
 
@@ -102,7 +102,7 @@ class AgeCalcTest(TestCase):
     def test_plateau_error(self):
         pass
 
-#============= EOF =============================================
+# ============= EOF =============================================
 #        self.ca37k39 = 0.0062869
 #        self.age = 28.0625
 #        self.rad4039 = 7.0039026

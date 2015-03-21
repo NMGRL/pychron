@@ -12,40 +12,69 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
-
-#============= enthought library imports =======================
-from pyface.timer.do_later import do_later
+# ===============================================================================
+# ============= enthought library imports =======================
+from pyface.message_dialog import warning
+from pyface.timer.do_later import do_later, do_after
 from traits.api import Str, Password, Enum, Button, Bool, \
-    on_trait_change, Color, String, Event
+    on_trait_change, Color, String, List, Event
 from traits.has_traits import HasTraits
 from traitsui.api import View, Item, Group, VGroup, HGroup, ListStrEditor, spring, Label, Spring
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from pychron.database.adapters.massspec_database_adapter import MassSpecDatabaseAdapter
+from traitsui.editors import TextEditor
+from traitsui.item import UItem
 
-from pychron.database.core.database_adapter import DatabaseAdapter
+from pychron.core.pychron_traits import IPAddress
+from pychron.core.ui.animated_png_editor import AnimatedPNGEditor
+from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper, \
     FavoritesPreferencesHelper, FavoritesAdapter
-
-
-
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
+
+# IPREGEX = re.compile(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$')
+
+
+def show_databases(host, user, password):
+    import pymysql
+
+    names = []
+    try:
+        conn = pymysql.connect(host=host, port=3306, user=user,
+                               connect_timeout=0.25,
+                               passwd=password, db='mysql')
+        cur = conn.cursor()
+        cur.execute("SHOW DATABASES")
+        names = [di[0] for di in cur if di[0] not in ('information_schema',
+                                                      'performance_schema', 'mysql')]
+
+    except BaseException:
+        pass
+
+    return names
 
 
 class ConnectionMixin(HasTraits):
-    test_connection = Button
+    test_connection_button = Button
+    # _test_connection_button = Button
 
-    connected_label = String('Not Tested')
-    connected_color = Color('orange')
-    adapter_klass = 'pychron.database.core.database_adapter.DatabaseAdapter'
+    _connected_label = String('Not Tested')
+    _connected_color = Color('orange')
+    _adapter_klass = 'pychron.database.core.database_adapter.DatabaseAdapter'
+    _names = List
+    # def __init__(self, *args, **kw):
+    # super(ConnectionMixin, self).__init__(*args, **kw)
+    #
+    # self.names = show_databases()
+    #
+
 
     def _reset_connection_label(self, d):
         def func():
-            self.connected_label = 'Not Tested'
-            self.connected_color = 'orange'
+            self._connected_label = 'Not Tested'
+            self._connected_color = 'orange'
 
         if d:
             do_later(func)
@@ -56,37 +85,57 @@ class ConnectionMixin(HasTraits):
         raise NotImplementedError
 
     def _get_adapter(self):
-        args = self.adapter_klass.split('.')
+        args = self._adapter_klass.split('.')
         mod, klass = '.'.join(args[:-1]), args[-1]
         mod = __import__(mod, fromlist=[klass])
         return getattr(mod, klass)
 
-    def _test_connection_fired(self):
+    def _test_connection_button_fired(self):
         kw = self._get_connection_dict()
         klass = self._get_adapter()
         db = klass(**kw)
-        self.connected_label = ''
+        self._connected_label = ''
         c = db.connect(warn=False)
         if c:
-            self.connected_color = 'green'
-            self.connected_label = 'Connected'
+            self._connected_color = 'green'
+            self._connected_label = 'Connected'
         else:
-            self.connected_label = 'Not Connected'
-            self.connected_color = 'red'
+            self._connected_label = 'Not Connected'
+            self._connected_color = 'red'
 
 
 class ConnectionPreferences(FavoritesPreferencesHelper, ConnectionMixin):
     preferences_path = 'pychron.database'
-    #id = 'pychron.database.preferences_page'
-
-    #fav_name = Str
-    # save_username = Str
 
     db_name = Str
+
     username = Str
     password = Password
-    host = Str
+    host = IPAddress
     kind = Enum('---', 'mysql', 'sqlite')
+    progress_icon = Str('process-working-2')
+    progress_state = Event
+
+    def __init__(self, *args, **kw):
+        super(ConnectionPreferences, self).__init__(*args, **kw)
+        self._load_names()
+
+    def _load_names(self):
+        if self.username and self.password and self.host:
+            if self.host:
+                def func():
+                    self.progress_state = True
+                do_after(50, func)
+
+                self._names = show_databases(self.host, self.username, self.password)
+
+                def func():
+                    self.progress_state = True
+
+                do_after(50, func)
+
+            else:
+                warning(None, 'Invalid IP address format. "{}" e.g 129.255.12.255'.format(self.host))
 
     def _get_connection_dict(self):
         return dict(username=self.username,
@@ -100,6 +149,8 @@ class ConnectionPreferences(FavoritesPreferencesHelper, ConnectionMixin):
 
     @on_trait_change('db_name, kind, username, host, password')
     def db_attribute_changed(self, obj, name, old, new):
+        if name in ('username', 'host', 'password'):
+            self._load_names()
 
         if self.favorites:
             idx = ['', 'kind',
@@ -137,9 +188,13 @@ class ConnectionPreferencesPane(PreferencesPane):
 
     def traits_view(self):
         db_auth_grp = Group(
-            Item('host', width=125, label='Host'),
-            Item('username', label='User'),
-            Item('password', label='Password'),
+            Item('host',
+                 editor=TextEditor(enter_set=True, auto_set=False),
+                 width=125, label='Host'),
+            Item('username', label='User',
+                 editor=TextEditor(enter_set=True, auto_set=False)),
+            Item('password', label='Password',
+                 editor=TextEditor(enter_set=True, auto_set=False, password=True)),
             enabled_when='kind=="mysql"',
             show_border=True,
             label='Authentication')
@@ -158,21 +213,26 @@ class ConnectionPreferencesPane(PreferencesPane):
                                                 tooltip='Add saved connection'),
                              icon_button_editor('delete_favorite', 'delete',
                                                 tooltip='Delete saved connection'),
-                             icon_button_editor('test_connection', 'database_connect',
+                             icon_button_editor('test_connection_button', 'database_connect',
                                                 tooltip='Test connection'),
                              Spring(width=10, springy=False),
                              Label('Status:'),
-                             CustomLabel('connected_label',
+                             CustomLabel('_connected_label',
                                          label='Status',
                                          weight='bold',
-                                         color_name='connected_color'),
+                                         color_name='_connected_color'),
                              spring,
                              show_labels=False))
 
         db_grp = Group(HGroup(Item('kind', show_label=False),
-                              Item('db_name', label='Name')),
+                              Item('db_name',
+                                   label='Database Name',
+                                   editor=ComboboxEditor(name='_names')),
+                              # UItem('progress_icon', editor=AnimatedPNGEditor(state='progress_state'))
+                              ),
                        # Item('save_username', label='User'),
                        HGroup(fav_grp, db_auth_grp),
+                       show_border=True,
                        label='Pychron DB')
 
         return View(db_grp)
@@ -184,11 +244,12 @@ class MassSpecConnectionPreferences(BasePreferencesHelper, ConnectionMixin):
     username = Str
     password = Password
     host = Str
-    adapter_klass = 'pychron.database.adapters.massspec_database_adapter.MassSpecDatabaseAdapter'
+    _adapter_klass = 'pychron.database.adapters.massspec_database_adapter.MassSpecDatabaseAdapter'
+    enabled = Bool
 
     def _anytrait_changed(self, name, old, new):
-        if name not in ('connected_label', 'connected_color',
-                        'connected_color_',
+        if name not in ('_connected_label', '_connected_color',
+                        '_connected_color_',
                         'test_connection'):
             self._reset_connection_label(False)
         super(MassSpecConnectionPreferences, self)._anytrait_changed(name, old, new)
@@ -206,25 +267,29 @@ class MassSpecConnectionPane(PreferencesPane):
     category = 'Database'
 
     def traits_view(self):
-        cgrp = HGroup(icon_button_editor('test_connection', 'database_connect',
+        cgrp = HGroup(Spring(width=10, springy=False),
+                      icon_button_editor('test_connection_button', 'database_connect',
                                          tooltip='Test connection'),
                       Spring(width=10, springy=False),
                       Label('Status:'),
-                      CustomLabel('connected_label',
+                      CustomLabel('_connected_label',
                                   label='Status',
                                   weight='bold',
-                                  color_name='connected_color'))
-        massspec_grp = Group(
-            VGroup(
-                cgrp,
-                Item('name', label='Database'),
-                Item('host', label='Host'),
-                Item('username', label='Name'),
-                Item('password', label='Password'),
-                show_border=True,
-                label='Authentication'),
-            label='MassSpec DB')
+                                  color_name='_connected_color'))
+
+        massspec_grp = VGroup(Item('enabled', label='Use MassSpec'),
+                              VGroup(
+                                  cgrp,
+                                  Item('name', label='Database'),
+                                  Item('host', label='Host'),
+                                  Item('username', label='Name'),
+                                  Item('password', label='Password'),
+                                  enabled_when='enabled',
+                                  show_border=True,
+                                  label='Authentication'),
+                              label='MassSpec DB',
+                              show_border=True)
 
         return View(massspec_grp)
 
-        #============= EOF =============================================
+# ============= EOF =============================================

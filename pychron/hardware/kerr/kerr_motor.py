@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,18 +12,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import Float, Property, Bool, Int, CInt, Button
 from traitsui.api import View, Item, HGroup, VGroup, EnumEditor, RangeEditor, \
     spring
 # from pyface.timer.api import Timer
 
-#=============standard library imports ========================
+# =============standard library imports ========================
 import struct
 import binascii
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 from kerr_device import KerrDevice
 from pychron.hardware.core.data_helper import make_bitarray
 import time
@@ -738,7 +738,7 @@ class KerrMotor(KerrDevice, ConsumerMixin):
     def _set_velocity(self, v):
         self._velocity = v
 
-    #============= EOF ====================================
+    # ============= EOF ====================================
 
 #    def _check_status_byte(self, check_bit):
 #        '''

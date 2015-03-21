@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-from traits.api import String, Float, Enum, Str
+# ============= enthought library imports =======================
+from traits.api import Float, Enum, Str
 from traitsui.api import Item, HGroup, VGroup
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 from numpy import linspace, polyval, polyfit, array
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.database.core.database_selector import DatabaseSelector
 from pychron.managers.data_managers.h5_data_manager import H5DataManager
 from pychron.database.orms.power_calibration_orm import PowerCalibrationTable
@@ -156,4 +156,4 @@ if __name__ == '__main__':
     p.initialize()
     p.load_graph()
     p.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================

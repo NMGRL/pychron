@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Instance
 from traitsui.api import View, Item, HGroup, Group
+
 from pychron.loggable import Loggable
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from enable.component_editor import ComponentEditor
 from pychron.canvas.canvas2D.scene.scene_canvas import SceneCanvas
 from pychron.core.geometry.geometry import sort_clockwise
@@ -212,4 +214,4 @@ if __name__ == '__main__':
     sv = LaserMineViewer()
     sv.configure_traits()
 
-#============= EOF =============================================
+# ============= EOF =============================================

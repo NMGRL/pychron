@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Bool, Enum, String, Property
 from traitsui.api import VGroup, UItem
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.processing.plotters.options.plotter import PlotterOptions, FONTS, SIZES
 from pychron.pychron_constants import ERROR_TYPES
 
@@ -36,7 +36,7 @@ class AgeOptions(PlotterOptions):
     show_error_type_info = Bool(True)
     label_box = Bool(False)
 
-    index_attr = None
+    index_attr = String('uage')
     use_static_limits = False
 
     analysis_label_format = String
@@ -47,6 +47,7 @@ class AgeOptions(PlotterOptions):
     error_info_fontsize = Enum(*SIZES)
 
     label_fontsize = Enum(*SIZES)
+    use_centered_range = Bool
 
     def _include_j_error_changed(self, new):
         if new:
@@ -73,9 +74,8 @@ class AgeOptions(PlotterOptions):
                   'analysis_label_display',
                   'analysis_label_format',
                   'error_info_fontname',
-                  'error_info_fontsize','label_fontsize'
-        ]
+                  'error_info_fontsize','label_fontsize']
         return attrs
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

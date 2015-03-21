@@ -12,13 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Float, HasTraits
 from traitsui.api import View, Item
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
 class MapSource(HasTraits):
@@ -50,7 +50,7 @@ class MapSource(HasTraits):
                  Item('current_hv', style='readonly'))
         return v
 
-    #===============================================================================
+    # ===============================================================================
     # property get/set
-    #===============================================================================
-#============= EOF =============================================
+    # ===============================================================================
+# ============= EOF =============================================

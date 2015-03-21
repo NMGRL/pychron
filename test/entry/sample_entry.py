@@ -5,7 +5,7 @@ from pychron.core.ui import set_toolkit
 set_toolkit('qt4')
 import unittest
 
-from pychron.entry.loaders.sample_loader import SampleLoader, XLSParser
+from pychron.entry.loaders.mb_sample_loader import SampleLoader, XLSParser
 
 
 class SampleLoaderTestCase(unittest.TestCase):

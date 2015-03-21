@@ -2,9 +2,23 @@
 __author__ = 'ross'
 import unittest
 
+use_logger = False
+
 
 def suite():
+    if use_logger:
+        from pychron.core.helpers.logger_setup import logging_setup
+        logging_setup('unittests')
+
+    from pychron.entry.tests.sample_loader import SampleLoaderTestCase
+    from pychron.core.helpers.tests.floatfmt import FloatfmtTestCase
+    from pychron.processing.tests.analysis_modifier import AnalysisModifierTestCase
+    from pychron.experiment.tests.backup import BackupTestCase
+    from pychron.core.xml.tests.xml_parser import XMLParserTestCase
     from pychron.entry.tests.analysis_loader import XLSAnalysisLoaderTestCase
+    from pychron.entry.tests.irradiation_loader import XLSIrradiationLoaderParseTestCase, \
+        XLSIrradiationLoaderLoadTestCase
+    from pychron.entry.tests.massspec_irrad_export import MassSpecIrradExportTestCase
     from pychron.core.regression.tests.regression import OLSRegressionTest, MeanRegressionTest, \
         FilterOLSRegressionTest, OLSRegressionTest2
     from pychron.experiment.tests.frequency_test import FrequencyTestCase, FrequencyTemplateTestCase
@@ -23,7 +37,14 @@ def suite():
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
 
-    tests = (XLSAnalysisLoaderTestCase,
+    tests = (SampleLoaderTestCase,
+             AnalysisModifierTestCase,
+             BackupTestCase,
+             MassSpecIrradExportTestCase,
+             XMLParserTestCase,
+             XLSIrradiationLoaderLoadTestCase,
+             XLSIrradiationLoaderParseTestCase,
+             XLSAnalysisLoaderTestCase,
              RatioTestCase,
              InterpolationTestCase,
              DocstrContextTestCase,
@@ -40,8 +61,9 @@ def suite():
              RenumberAliquotTestCase,
              ConditionalsTestCase,
              ParseConditionalsTestCase,
-             IdentifierTestCase, 
-             CommentTemplaterTestCase)
+             IdentifierTestCase,
+             CommentTemplaterTestCase,
+             FloatfmtTestCase)
 
     for t in tests:
         suite.addTest(loader.loadTestsFromTestCase(t))

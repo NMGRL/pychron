@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import time
 
 from traits.api import Property, provides
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.hardware.actuators.iactuator import IActuator
 from pychron.hardware.core.core_device import CoreDevice
 
@@ -172,5 +172,5 @@ class ApisController(CoreDevice):
     def _get_connection_url(self):
         return '{}:{}'.format(self._communicator.host, self._communicator.port)
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

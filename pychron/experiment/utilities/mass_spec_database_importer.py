@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,18 +12,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from datetime import datetime
 
 from traits.api import Instance, Button, Int
 from traits.has_traits import provides
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import struct
 from numpy import array
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.i_datastore import IDatastore
 from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.experiment.utilities.identifier import make_runid
@@ -239,9 +239,9 @@ class MassSpecDatabaseImporter(Loggable):
 
         pipetted_isotopes = self._make_pipetted_isotopes(runtype)
 
-        #=======================================================================
+        # =======================================================================
         # add analysis
-        #=======================================================================
+        # =======================================================================
         # get the sample_id
         sample_id = 0
         if runtype == 'Air':
@@ -294,9 +294,9 @@ class MassSpecDatabaseImporter(Loggable):
             analysis.LastSaved = d
 
         db.add_analysis_positions(analysis, spec.position)
-        #=======================================================================
+        # =======================================================================
         # add changeable items
-        #=======================================================================
+        # =======================================================================
         item = db.add_changeable_items(analysis, self.data_reduction_session_id)
 
         self.debug('%%%%%%%%%%%%%%%%%%%% Comment: {} %%%%%%%%%%%%%%%%%%%'.format(spec.comment))
@@ -356,9 +356,9 @@ class MassSpecDatabaseImporter(Loggable):
         return db.add_isotope(analysis, dbdet, iso, NumCnts=n), dbdet
 
     def _add_signal(self, spec, dbiso, dbdet, odet, runtype):
-        #===================================================================
+        # ===================================================================
         # peak time
-        #===================================================================
+        # ===================================================================
         """
             build two blobs
             blob 1 PeakTimeBlob
@@ -466,9 +466,9 @@ class MassSpecDatabaseImporter(Loggable):
 
         return db
 
-        #===========================================================================
+        # ===========================================================================
         # debugging
-        #===========================================================================
+        # ===========================================================================
         # def _test_fired(self):
         #     import numpy as np
         #
@@ -597,14 +597,14 @@ if __name__ == '__main__':
 
     d.configure_traits()
 
-    #============= EOF ====================================
+    # ============= EOF ====================================
     #        from pychron.core.codetools.simple_timeit import timethis
     #        for ((det, isok), si, bi, ublank, signal, baseline, sfit, bfit) in spec.iter():
     #            self.debug('msi {} {} {} {} {} {}'.format(det, isok, signal.nominal_value,
     #                                                      baseline.nominal_value, sfit, bfit))
-    #            #===================================================================
+    #            # ===================================================================
     #            # isotopes
-    #            #===================================================================
+    #            # ===================================================================
     #
     ##            db_iso = timethis(db.add_isotope, args=(analysis, det, isok),
     ##                              msg='add_isotope', log=self.debug, decorate='^')
@@ -620,9 +620,9 @@ if __name__ == '__main__':
     #                    sess.flush()
     #
     #            db_iso = db.add_isotope(analysis, dbdet, isok)
-    #            #===================================================================
+    #            # ===================================================================
     #            # baselines
-    #            #===================================================================
+    #            # ===================================================================
     #            self.debug(bi)
     #            tb, vb = zip(*bi)
     #            blob = self._build_timeblob(tb, vb)
@@ -639,9 +639,9 @@ if __name__ == '__main__':
     #
     #            # baseline and baseline changeable items need matching BslnID
     #            db_changeable.BslnID = db_baseline.BslnID
-    #            #===================================================================
+    #            # ===================================================================
     #            # peak time
-    #            #===================================================================
+    #            # ===================================================================
     #            '''
     #                build two blobs
     #                blob 1 PeakTimeBlob

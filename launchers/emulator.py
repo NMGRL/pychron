@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,21 +12,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 version_id = '_test'
 from helpers import build_version
 build_version(version_id)
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Int, Bool, Event, Property
 from traitsui.api import View, Item, ButtonEditor
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import SocketServer
 import shlex
 import socket
 from threading import Thread
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 cnt = 0
 gErrorSet = False
@@ -117,9 +117,9 @@ def verbose_all(cls):
 #
 @verbose_all
 class QtegraEmulator(Loggable):
-    #===========================================================================
+    # ===========================================================================
     # Qtegra Protocol
-    #===========================================================================
+    # ===========================================================================
     def handleSetMass(self, mass):
         mass = float(mass)
 #        print 'setting mass %f' % mass
@@ -298,9 +298,9 @@ class ExtractionLineEmulator(Loggable):
 
 class EmulatorHandler(SocketServer.BaseRequestHandler):
 
-    #===========================================================================
+    # ===========================================================================
     # BaseRequestHandler protocol
-    #===========================================================================
+    # ===========================================================================
 #    def __init__(self, *args, **kw):
 #        super(EmulatorHandler, self).__init__(*args, **kw)
 #        QtegraEmulator.__init__(self, **kw)
@@ -387,11 +387,11 @@ if __name__ == '__main__':
 #    ls.start_server('129.138.12.138', 1070)
 
 #    s.start_server('localhost', portn)
-#============= EOF =============================================
+# ============= EOF =============================================
 
-#===============================================================================
+# ===============================================================================
 # link
-#===============================================================================
+# ===============================================================================
 # class LinkServer(Loggable):
 #    def start_server(self, host, port):
 #        self.info('Link Starting server {} {}'.format(host, port))

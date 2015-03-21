@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,26 +12,27 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 
 from traits.api import HasTraits, Str, Any, List, \
     Bool, Enum, provides
 
 # from pyface.timer.api import Timer
-#=============standard library imports ========================
+# =============standard library imports ========================
 import random
 # from threading import Lock
 from datetime import datetime
 import inspect
 import time
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 # from traits.has_traits import provides
 from i_core_device import ICoreDevice
 # from pychron.core.helpers.timer import Timer
 # from pychron.managers.data_managers.csv_data_manager import CSVDataManager
 # from pychron.core.helpers.datetime_tools import generate_datetimestamp
+from pychron.globals import globalv
 from pychron.hardware.core.exceptions import TimeoutError, CRCError
 from pychron.hardware.core.scanable_device import ScanableDevice
 from pychron.rpc.rpcable import RPCable
@@ -118,7 +119,7 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
         if self._communicator:
             self._communicator.close()
 
-    def get(self):
+    def get(self, *args, **kw):
         return self.current_scan_value
 
     def set(self, v):
@@ -135,7 +136,7 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
     def set_simulation(self, tf):
         if self._communicator:
             self._communicator.simulation=tf
-    #==============================================================================================================
+    # ==============================================================================================================
     def _communicate_hook(self, cmd, r):
         self.last_command = cmd
         self.last_response = r if r else ''
@@ -274,7 +275,7 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
                 max=10
 
         """
-        return random.randint(mi, ma)
+        return random.randint(mi, ma) if globalv.communication_simulation else None
 
     def setup_scheduler(self, name=None):
 
@@ -335,9 +336,9 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
 
         return resp
 
-    #===============================================================================
+    # ===============================================================================
     # scanable interface
-    #===============================================================================
+    # ===============================================================================
     def _scan_hook(self, v):
         for a in self.alarms:
             if a.test_condition(v):
@@ -349,4 +350,4 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
                 break
 
 
-#========================= EOF ============================================
+# ========================= EOF ============================================

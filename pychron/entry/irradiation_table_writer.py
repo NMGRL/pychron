@@ -12,19 +12,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 from pychron.core.ui import set_qt
 
 set_qt()
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 
 from reportlab.lib import colors
 from traits.api import HasTraits, Str, Float
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 import yaml
 from pychron.core.helpers.filetools import view_file
 from pychron.core.pdf.base_table_pdf_writer import BasePDFTableWriter
@@ -127,4 +127,4 @@ if __name__ == '__main__':
     i.connect()
     i.make()
 
-    #============= EOF =============================================
+    # ============= EOF =============================================

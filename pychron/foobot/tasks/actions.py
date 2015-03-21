@@ -15,10 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Button, Str, Int, Bool
-from traitsui.api import View, Item, UItem, HGroup, VGroup
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from traitsui.menu import Action
 
 
@@ -30,7 +28,7 @@ class OpenFoobotAction(Action):
         app = event.task.window.application
         app.open_task('pychron.foobot.task')
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

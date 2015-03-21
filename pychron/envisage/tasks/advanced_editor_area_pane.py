@@ -15,21 +15,54 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from PySide import QtCore
-from PySide.QtGui import QAction, QCursor
 from pyface.qt import QtGui
-import sys
-from pyface.ui.qt4.tasks.advanced_editor_area_pane import EditorAreaWidget
+from pyface.ui.qt4.tasks.advanced_editor_area_pane import EditorAreaWidget, EditorWidget
 from pyface.ui.qt4.tasks.editor_area_pane import EditorAreaDropFilter
-from traits.api import HasTraits, Button, Str, Int, Bool
-from traitsui.api import View, Item, UItem, HGroup, VGroup
 from pyface import confirmation_dialog
 from pyface.constant import NO
 from pyface.tasks.advanced_editor_area_pane import AdvancedEditorAreaPane
 # ============= standard library imports ========================
-#============= local library imports  ==========================
+import sys
+from PySide import QtCore
+from PySide.QtGui import QAction, QCursor
+# ============= local library imports  ==========================
+
+# class myEditorWidget(EditorWidget):
+#     def __init__(self, editor, parent=None):
+#         super(EditorWidget, self).__init__(parent)
+#         self.editor = editor
+#         self.editor.create(self)
+#         self.setAllowedAreas(QtCore.Qt.LeftDockWidgetArea)
+#         self.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
+#         self.setWidget(editor.control)
+#         self.update_title()
+#
+#         # Update the minimum size.
+#         contents_minsize = editor.control.minimumSize()
+#         style = self.style()
+#         contents_minsize.setHeight(contents_minsize.height()
+#             + style.pixelMetric(style.PM_DockWidgetHandleExtent))
+#         self.setMinimumSize(contents_minsize)
+#
+#         self.dockLocationChanged.connect(self.update_title_bar)
+#         self.visibilityChanged.connect(self.update_title_bar)
+#
+#         # print self.setTitleBarWidget()
+#         # print self.titleBarWidget()
+#     def update_title_bar(self):
+#         if self not in self.parent()._tear_widgets:
+#             tabbed = self.parent().tabifiedDockWidgets(self)
+#             self.set_title_bar(not tabbed)
+#             current = self.titleBarWidget()
+#             current.setTabsClosable(False)
+
 class myEditorAreaWidget(EditorAreaWidget):
     def contextMenuEvent(self, event):
+        epos = event.pos()
+
+        if epos.y()>25:
+            return
+
         menu = QtGui.QMenu(self)
 
         for name, func in (('Close', 'close_action'),
@@ -66,6 +99,15 @@ class myEditorAreaWidget(EditorAreaWidget):
 
 
 class myAdvancedEditorAreaPane(AdvancedEditorAreaPane):
+
+    # def add_editor(self, editor):
+    #     """ Adds an editor to the pane.
+    #     """
+    #     editor.editor_area = self
+    #     editor_widget = EditorWidget(editor, self.control)
+    #     self.control.add_editor_widget(editor_widget)
+    #     self.editors.append(editor)
+
     def create(self, parent):
         """ Create and set the toolkit-specific control that represents the
             pane.
@@ -113,5 +155,5 @@ class myAdvancedEditorAreaPane(AdvancedEditorAreaPane):
         if not self.editors:
             self.active_editor = None
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

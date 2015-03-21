@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 from threading import Thread
 import socket
 from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 try:
     import Pyro4 as pyro
 except ImportError:
@@ -26,7 +26,7 @@ except ImportError:
 
 import subprocess
 import xmlrpclib
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 
 class RPCBackend():
@@ -108,4 +108,4 @@ class XMLBackend(RPCBackend):
         server.register_instance(self.manager)
         server.serve_forever()
 
-#============= EOF =============================================
+# ============= EOF =============================================

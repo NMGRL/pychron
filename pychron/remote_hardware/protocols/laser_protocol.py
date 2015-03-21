@@ -14,9 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 '''
 
-#=============enthought library imports=======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# =============enthought library imports=======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
 class LaserProtocol:
@@ -51,4 +51,4 @@ class LaserProtocol:
         'SetLaserPower': '1'
         }
 
-#============= EOF =====================================
+# ============= EOF =====================================

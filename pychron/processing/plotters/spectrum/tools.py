@@ -5,27 +5,27 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from chaco.label import Label
 from chaco.plot_label import PlotLabel
 from enable.colors import color_table, convert_from_pyqt_color
 from enable.font_metrics_provider import font_metrics_provider
-from traits.api import Array, Int, Float, Str, Color, Event, Bool
+from traits.api import Array, Int, Float, Str, Color, Event, Bool, List
 from chaco.abstract_overlay import AbstractOverlay
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import where, array
 from enable.base_tool import BaseTool
 from enable.tools.drag_tool import DragTool
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
 from pychron.graph.tools.info_inspector import InfoOverlay
 from pychron.pychron_constants import ALPHAS
@@ -50,6 +50,7 @@ class SpectrumTool(BaseTool, BasePlateauOverlay):
     metadata_changed = Event
     current_position = None
     current_screen = None
+    analyses = List
 
     def hittest(self, screen_pt, threshold=20):
         comp = self.component
@@ -65,7 +66,7 @@ class SpectrumTool(BaseTool, BasePlateauOverlay):
                 return ndx
 
     # def normal_mouse_move(self, event):
-    #     xy=event.x, event.y
+    # xy=event.x, event.y
     #     pos=self.hittest(xy)
     #     if pos is not None:
     #     # if isinstance(pos, tuple):
@@ -85,10 +86,9 @@ class SpectrumTool(BaseTool, BasePlateauOverlay):
         ndx = self.hittest(pt)
         if ndx is not None:
             sels = self.component.index.metadata['selections']
-            self.component.index.metadata['selections'] = list(set(sels) ^ set([ndx]))
+            self.component.index.metadata['selections'] = mm = list(set(sels) ^ set([ndx]))
             self.component.request_redraw()
-
-        event.handled = True
+            event.handled = True
 
     def assemble_lines(self):
         idx = self.current_position
@@ -100,10 +100,12 @@ class SpectrumTool(BaseTool, BasePlateauOverlay):
 
         low_c = 0 if idx == 0 else self.cumulative39s[idx - 1]
 
-        return ['Step={}'.format(ALPHAS[idx]),
+        an = self.analyses[idx]
+        return ['RunID={}'.format(an.record_id),
+                'Tag={}'.format(an.tag),
+                'Status={}'.format(an.status_text),
                 '{}={} +/- {} (1s)'.format(comp.container.y_axis.title, floatfmt(v),
-                                           floatfmt(e)
-                ),
+                                           floatfmt(e)),
                 'Cumulative. Ar39={}-{}'.format(floatfmt(low_c),
                                                 floatfmt(self.cumulative39s[idx]))]
 
@@ -129,7 +131,7 @@ class SpectrumInspectorOverlay(InfoOverlay):
     pass
     # @on_trait_change('tool:metadata_changed')
     # def _update_(self, new):
-    #     print 'asdf', new
+    # print 'asdf', new
     # tool =Any
     # @on_trait_change('tool:current_section')
     # def handle(self, new):
@@ -147,6 +149,7 @@ class SpectrumErrorOverlay(AbstractOverlay):
     nsigma = Int(1)
     alpha = Float
     use_fill = Bool(False)
+    selections = List
 
     def overlay(self, component, gc, *args, **kw):
         comp = self.component
@@ -156,8 +159,8 @@ class SpectrumErrorOverlay(AbstractOverlay):
             xs = comp.index.get_data()
             ys = comp.value.get_data()
             es = comp.errors
-            sels = comp.index.metadata['selections']
-
+            # sels = comp.index.metadata['selections']
+            sels = self.selections
             n = len(xs)
             xs = xs.reshape(n / 2, 2)
             ys = ys.reshape(n / 2, 2)
@@ -194,14 +197,14 @@ class SpectrumErrorOverlay(AbstractOverlay):
                     gc.set_fill_color(c)
                     gc.set_stroke_color(c)
 
-                gc.rect(x, y, w + 1, h)
+                gc.rect(x, y, w, h)
                 func()
                 # gc.fill_path()
 
 
 class PlateauTool(DragTool):
     # def normal_mouse_move(self, event):
-    #     if self.is_draggable(event.x, event.y):
+    # if self.is_draggable(event.x, event.y):
     #         event.handled = True
     #
     # def normal_left_down(self, event):
@@ -246,6 +249,7 @@ class PlateauOverlay(BasePlateauOverlay):
     nsigma = Int(2)
     line_color = Color('red')
     line_width = Float(1.0)
+    selections = List
 
     def hittest(self, pt, threshold=7):
         x, y = pt
@@ -266,7 +270,17 @@ class PlateauOverlay(BasePlateauOverlay):
             return
 
         sidx = ps[0]
-        eidx = ps[1] + 1
+        eidx = ps[1]
+        sels = self.selections
+        # sels = self.component.index.metadata['selections']
+        while sidx in sels:
+            sidx += 1
+
+        while eidx in sels:
+            eidx -= 1
+
+        eidx += 1
+
         cstart = cs[sidx]
         cend = cs[eidx]
 
@@ -306,7 +320,7 @@ class PlateauOverlay(BasePlateauOverlay):
             gc.lines([(x2, y + 10), (x2, y2 + 5)])
 
             # if y1 < y and y2<y:
-            #     gc.lines([(x1, y1+5), (x1, y + 10)])
+            # gc.lines([(x1, y1+5), (x1, y + 10)])
             #     gc.lines([(x2, y2+5), (x2, y + 10)])
             # elif y1> y and y2>y:
             #     gc.lines([(x1, y - 10),(x1, y1 + 5)])
@@ -378,4 +392,4 @@ class PlateauOverlay(BasePlateauOverlay):
 
         return p
 
-#============= EOF =============================================
+# ============= EOF =============================================

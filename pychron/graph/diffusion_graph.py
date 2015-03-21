@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from graph import Graph
 
 from pychron.graph.graph import name_generator
@@ -363,7 +363,7 @@ class DiffusionGraph(Graph):
                 plots.append(a)
             return plots
 
-#============= EOF ====================================
+# ============= EOF ====================================
 
 #    def set_group_color(self, gid=0, series=None):
 #        '''

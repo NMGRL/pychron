@@ -12,19 +12,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Password
-from traitsui.api import View, Item, VGroup, VFold
-#============= standard library imports ========================
-#============= local library imports  ==========================
+from traitsui.api import View, Item, VGroup
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+
 
 class DBConnectionSpec(HasTraits):
     # database = Str('massspecdata_import')
     _database = Str
-    username = Str('root')
-    password = Password('Argon')
+    username = Str
+    password = Password
     #    host = Str('129.138.12.131')
     host = Str('localhost')
 
@@ -56,4 +57,4 @@ class DBConnectionSpec(HasTraits):
         )
         )
 
-#============= EOF =============================================
+# ============= EOF =============================================

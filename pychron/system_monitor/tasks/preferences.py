@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import CInt, Str, on_trait_change, Int
 from traitsui.api import View, Item, VGroup, ListStrEditor, HGroup
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_preferences_helper import FavoritesPreferencesHelper, FavoritesAdapter, \
     BaseConsolePreferences, BaseConsolePreferencesPane, BasePreferencesHelper
@@ -74,8 +74,7 @@ class SystemMonitorPreferencesPane(PreferencesPane):
                               editor=ListStrEditor(
                                   editable=False,
                                   adapter=FavoritesAdapter(),
-                                  selected='object.selected',
-                              )),
+                                  selected='object.selected')),
                          HGroup(
                              icon_button_editor('add_favorite', 'add',
                                                 tooltip='Add saved connection'),
@@ -83,11 +82,9 @@ class SystemMonitorPreferencesPane(PreferencesPane):
                                                 tooltip='Delete saved connection')))
         conn_grp = VGroup(Item('system_name'),
                           Item('host'),
-                          Item('port'),
-        )
+                          Item('port'))
         v = View(VGroup(HGroup(fav_grp, conn_grp),
-                        label='Connections',
-        ))
+                        label='Connections'))
         return v
 
 
@@ -99,21 +96,4 @@ class ConsolePreferencesPane(BaseConsolePreferencesPane):
     model_factory = ConsolePreferences
     label = 'System Monitor'
 
-
-class DashboardPreferences(BasePreferencesHelper):
-    preferences_path = 'pychron.dashboard'
-    host = Str
-    port = Int
-
-
-class DashboardPreferencesPane(PreferencesPane):
-    model_factory = DashboardPreferences
-    category = 'SystemMonitor'
-
-    def traits_view(self):
-        v = View(VGroup(Item('host'),
-                        Item('port'),
-                        label='Dashboard'))
-        return v
-
-#============= EOF =============================================
+# ============= EOF =============================================

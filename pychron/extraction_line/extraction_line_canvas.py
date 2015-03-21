@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Any
 from traitsui.api import View, Item
 from enable.component_editor import ComponentEditor
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 # from canvas.canvas3D.extraction_line_canvas3D import ExtractionLineCanvas3D
 # from pychron.canvas.canvas3D.canvas3D_editor import Canvas3DEditor
 
@@ -102,7 +102,7 @@ class ExtractionLineCanvas(HasTraits):
         v = View(c)
         return v
 
-#============= EOF ====================================
+# ============= EOF ====================================
 # class ExtractionLineCanvas3DDummy(HasTraits):
 #    '''
 #    '''

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from Queue import Empty
 
 from traits.api import Color, Str, Event, Int
@@ -23,8 +23,8 @@ from traitsui.basic_editor_factory import BasicEditorFactory
 from pyface.qt.QtGui import QPlainTextEdit, QTextCursor, QPalette, QColor, QFont
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
 class _DisplayEditor(Editor):
@@ -96,11 +96,10 @@ class _DisplayEditor(Editor):
 
     def update_editor(self, *args, **kw):
         ctrl = self.control
-
         if self.value:
             while 1:
                 try:
-                    v, c, force, is_marker = self.value.get(timeout=0.0001)
+                    v, c, force, is_marker = self.value.get(timeout=0.01)
                 except Empty:
                     return
                 fmt = ctrl.currentCharFormat()
@@ -140,4 +139,4 @@ class DisplayEditor(BasicEditorFactory):
 class LoggerEditor(DisplayEditor):
     pass
 
-#============= EOF =============================================
+# ============= EOF =============================================

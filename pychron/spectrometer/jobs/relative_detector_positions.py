@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
+import os
+import ConfigParser
+
 from traits.api import Any
 from traitsui.api import View, Item, ButtonEditor
+
 from pychron.spectrometer.jobs.spectrometer_task import SpectrometerTask
-import os
 from pychron.paths import paths
-import ConfigParser
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
 class RelativeDetectorPositions(SpectrometerTask):
@@ -97,4 +100,4 @@ class RelativeDetectorPositions(SpectrometerTask):
         return View(Item('execute', editor=ButtonEditor(label_value='execute_label')),
                     resizable=True
                     )
-#============= EOF =============================================
+# ============= EOF =============================================

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import time
 
 from traits.api import Any, Int, Instance, Event
 
 from pychron.loggable import Loggable
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from numpy import exp, mgrid, linspace, hstack, array, rot90
 from pychron.core.helpers.datetime_tools import generate_datestamp
 from pychron.managers.data_managers.h5_data_manager import H5DataManager
@@ -316,9 +316,9 @@ class PowerMapper(Loggable, ConsumerMixin):
 
     def _measure_properties(self):
         pass
-#===============================================================================
+# ===============================================================================
 # data
-#===============================================================================
+# ===============================================================================
     def _new_data_table(self, padding):
         dm = self.data_manager
 #        root = '/usr/local/pychron/powermaps'
@@ -344,9 +344,9 @@ class PowerMapper(Loggable, ConsumerMixin):
         nr['power'] = mag
         nr.append()
         tab.flush()
-#===============================================================================
+# ===============================================================================
 # discrete
-#===============================================================================
+# ===============================================================================
 def _discrete_scan(self, cx, cy, padding, step_len):
         self.info('doing discrete scan')
         nsteps, step_gen = self._step_generator(cx, cy, padding, step_len)
@@ -387,6 +387,6 @@ def _discrete_scan(self, cx, cy, padding, step_len):
             self._write_datum(tab, nx, ny, col, row, mag)
             self.canvas.set_cell_value(col, row, mag)
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 

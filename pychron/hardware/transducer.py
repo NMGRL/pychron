@@ -12,11 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.hardware.adc.adc_device import ADCDevice
 
 
@@ -25,6 +25,12 @@ class Transducer(ADCDevice):
         abstract device the reads an input voltage and maps to an output value
     """
     pass
+
+
+class AirTransducer(ADCDevice):
+    def get_pressure(self, force=True):
+        v=self.get_output(force=force)
+        return v
 
 
 class ThermocoupleTransducer(Transducer):
@@ -94,4 +100,4 @@ if __name__ == '__main__':
     #     setattr(self, self.mapped_name, v)
     #     return v
 
-#============= EOF =============================================
+# ============= EOF =============================================

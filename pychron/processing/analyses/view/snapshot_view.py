@@ -21,7 +21,7 @@ from traitsui.api import View, UItem, VGroup, TabularEditor, HSplit, Item
 import StringIO
 import Image
 from numpy import array
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.ui.image_editor import ImageEditor
 
@@ -78,7 +78,7 @@ class SnapshotView(HasTraits):
                                      editor=ImageEditor())))))
         return v
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

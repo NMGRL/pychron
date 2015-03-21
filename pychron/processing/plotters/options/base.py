@@ -12,18 +12,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, List, Str, TraitError, \
-    Button, Bool, Event, Color, Range
+    Button, Bool, Event, Color, Range, String
 from traitsui.api import View, HGroup, spring
 
 import apptools.sweet_pickle as pickle
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 import yaml
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.plotters.options.option import AuxPlotOptions
 from pychron.pychron_constants import NULL_STR
@@ -104,7 +104,7 @@ class FigurePlotterOptions(BasePlotterOptions):
     auto_refresh = Bool(False)
     initialized = True
     auto_generate_title = Bool(False)
-    index_attr = Str
+    index_attr = String
 
     bgcolor = Color
     plot_bgcolor = Color
@@ -177,7 +177,7 @@ class FigurePlotterOptions(BasePlotterOptions):
 
     # ==============================================================================
     # persistence
-    #===============================================================================
+    # ===============================================================================
     def _get_dump_attrs(self):
         return ['auto_refresh', 'aux_plots',
                 'bgcolor', 'plot_bgcolor',
@@ -199,4 +199,4 @@ class FigurePlotterOptions(BasePlotterOptions):
         self.initialize()
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

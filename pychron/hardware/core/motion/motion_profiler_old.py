@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Float, Bool, on_trait_change
 from traitsui.api import View, Item, Group, HGroup, spring
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import math
 from pychron.config_loadable import ConfigLoadable
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 ATTRS = ['max_velocity', 'max_transit_time',
 'min_acceleration_time', 'velocity_tol',
@@ -30,9 +30,9 @@ ATTRS = ['max_velocity', 'max_transit_time',
 
 
 class MotionProfiler(ConfigLoadable):
-#===========================================================================
+# ===========================================================================
 # configable parameters
-#===========================================================================
+# ===========================================================================
     velocity_tol = Float(0.5, enter_set=True, auto_set=False)
     acceleration_tol = Float(0.5, enter_set=True, auto_set=False)
     deceleration_tol = Float(0.05, enter_set=True, auto_set=False)
@@ -45,9 +45,9 @@ class MotionProfiler(ConfigLoadable):
 
     min_acceleration_time = Float(0.2, enter_set=True, auto_set=False)
     max_transit_time = Float(5, enter_set=True, auto_set=False)
-#===============================================================================
+# ===============================================================================
 # computed parameters
-#===============================================================================
+# ===============================================================================
     atime = Float
     dtime = Float
     cvtime = Float
@@ -56,9 +56,9 @@ class MotionProfiler(ConfigLoadable):
     ddisp = Float
     cvdisp = Float
 
-#===============================================================================
+# ===============================================================================
 # error flags
-#===============================================================================
+# ===============================================================================
     max_transit_err = Bool
     velocity_err = Bool
     min_acceleration_err = Bool
@@ -287,4 +287,4 @@ if __name__ == '__main__':
     disp = 0.01
     print 'calc parameters', m.calculate_corrected_parameters(disp, v, a, d)
 
-#============= EOF ====================================
+# ============= EOF ====================================

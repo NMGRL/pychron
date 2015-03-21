@@ -1,7 +1,51 @@
 CHANGELOG
 ============
-2.0.5
+2.0.6
 ------------------
+* added StartupTester. use setupfiles/startup_tests.yaml to configure
+* added Next and Previous buttons to Recall
+* added Select Same/Select Same Attribute... to Experiment Editor
+* updated Dashboard and Labspy
+* updated Email plugin
+* updated Labnumber Entry
+* refactored irradiation import. moved to standalone dialog
+* changed spectrometer task to an EditorTask. 
+* updated coincidence
+* added transfer j from mass spec to pychron
+* added toggle full window
+* added detector intercalibration
+* added UsersPlugin
+* added extraction defaults to defaults.yaml
+* added NotificationManager. a simple class for managing NotificationWidgets, modeless, always on top, 
+ rounded message windows pinned to the upper right hand corner of a parent window
+* improved ConditionalsView. Display active conditionals in a modal window if condition trips
+* updated UpdatePlugin
+* added ability to edit device configuration from Hardware task
+* updated PreferencesDialog. Display categories in a TabularEditor instead of as Group tabs.
+* added ReplicationTask for interacting with a replication db
+* added predefined initializations
+* added "Whats New" action. brings user to this doc.
+* added Experiment Columns defaults. [root]/setupfiles/experiment_defaults.yaml
+* fixed displaying irradiation holder
+* added auto saving of experiment queues. Auto saves to a .bak file whenever values change or run added
+* added SampleImageTask
+* added notes to irradiation levels
+* added task switching to Browser pane
+* added Import Sample Data action. import samples from xls file.
+
+### Bug Fixes###
+
+#### 2/24/15 ####
+* fixed step heat template editing
+
+<!---
+.. * fully implemented import irradiation from XLS file
+.. * added ability to export irradiations from Pychron to MassSpec
+-->
+
+
+2.0.5 Released 11/2014
+-----------------------
 * added switching between blank histories
 * added BlankDiffView
 * started Workspace
@@ -29,11 +73,11 @@ CHANGELOG
 * added database version checking
 * updated conditionals. can do and/or with multiple variables e.g Ar40>10 and age<10.0
 * added wake command to ExtractionLinePyScript. jitters mouse to wake from screen saver
-* added Edit Initialiation action and view
+* added Edit Initialization action and view
 * added Labeling to LabBook
 * changed Pychrondata to Pychron. 
 * added ability to set Pychron root directory in the preferences. Uses ~/Pychron as default
-* moved use_login,multi_user from initializtion file to preferences.
+* moved use_login,multi_user from initialization file to preferences.
 
 2.0.4
 ------------------

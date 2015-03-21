@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pyface.tasks.traits_dock_pane import TraitsDockPane
-from traits.api import HasTraits
-from traitsui.api import View, Item, UItem, EnumEditor, TableEditor
+from traitsui.api import View, UItem, EnumEditor, TableEditor
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from traitsui.table_column import ObjectColumn
 
 
@@ -57,4 +56,4 @@ class MassCalibrationControlPane(TraitsDockPane):
         v = View(UItem('scanner', style='custom'))
         return v
 
-        #============= EOF =============================================
+        # ============= EOF =============================================

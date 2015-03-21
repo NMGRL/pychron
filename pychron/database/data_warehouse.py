@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
 import os
-from pychron.loggable import Loggable
 from datetime import datetime
+
+from pychron.loggable import Loggable
+
 
 MONTH_NAMES = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', \
                'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
@@ -89,7 +91,6 @@ class DataWarehouse(Loggable):
         return d
 
     def _lock_path(self, p):
-        import stat
         os.chown(p, 0, -1)
 #        os.chmod(p, stat.S_IROTH | stat.S_IRGRP | stat.S_IREAD)
 

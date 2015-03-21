@@ -1,5 +1,5 @@
 
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,14 +13,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Float, Bool, List
 # from traitsui.api import View, Item
 from pychron.monitors.monitor import Monitor
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class VacuumSection(HasTraits):
     gauge_controller = Str
@@ -72,9 +72,9 @@ class SystemMonitor(Monitor):
                         man.disable_valve(vi)
                     section.tripped = False
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -88,7 +88,7 @@ class SystemMonitor(Monitor):
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
@@ -97,18 +97,18 @@ class SystemMonitor(Monitor):
 # @copyright: 2009
 # @license: Educational Community License 1.0
 # '''
-##=============enthought library imports=======================
+## =============enthought library imports=======================
 # from traits.api import HasTraits, Instance, on_trait_change, Any, Str, Int, Float, Button, List, Bool
 # from traitsui.api import View, Item, Group, HGroup, VGroup, ListStrEditor
 # from pyface.api import warning, information, confirm
 # from pyface.api import ProgressDialog
-##=============standard library imports ========================
+## =============standard library imports ========================
 # import time
 # import datetime
 # #from thread import *
 # from threading import Thread
 # import logging
-##=============local library imports  ==========================
+## =============local library imports  ==========================
 # #from globals import ghome, gpressuredelay
 # #from filetools import parse_setupfile
 # #from logger_setup import add_console

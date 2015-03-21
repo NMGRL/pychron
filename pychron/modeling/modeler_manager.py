@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance, DelegatesTo, List, Property
 from traitsui.api import View, Item
-#============= standard library imports ========================
+# ============= standard library imports ========================
 # import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from modeler import Modeler
 from pychron.envisage.core.envisage_manager import EnvisageManager
 from pychron.envisage.core.envisage_editor import EnvisageEditor
@@ -119,5 +119,5 @@ class ModelerManager(EnvisageManager):
 
     def data_select_view(self):
         return View(Item('_modeler', style='custom', show_label=False))
-#============= views ===================================
-#============= EOF ====================================
+# ============= views ===================================
+# ============= EOF ====================================

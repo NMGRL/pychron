@@ -12,18 +12,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Any, List, on_trait_change, Property, Event, File
 from traits.trait_errors import TraitError
 from traitsui.api import View, UItem, InstanceEditor
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import asarray
 import os
 from itertools import groupby
 import pickle
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.paths import paths
 from pychron.processing.fits.fit_selector import FitSelector
 from pychron.processing.tasks.editor import BaseUnknownsEditor
@@ -355,7 +355,7 @@ class GraphEditor(BaseUnknownsEditor):
         t = self.tool_klass()
         self.load_tool(t)
         return t
-        #============= EOF =============================================
+        # ============= EOF =============================================
         # def _gather_unknowns(self, refresh_data,
         #                      exclude='invalid',
         #                      compress_groups=True):

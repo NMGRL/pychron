@@ -20,10 +20,7 @@ fileConfig(config.config_file_name)
 # target_metadata = None
 import sys, os
 
-root = os.path.join(os.path.expanduser('~'), 'Programming/git/pychron_dev')
-if not os.path.isdir(root):
-    root = os.path.join(os.path.expanduser('~'), 'Programming/git/pychron')
-
+root = os.path.join(os.path.expanduser('~'), 'Programming/github/pychron_dev')
 sys.path.append(root)
 
 from pychron.database.orms.isotope.util import Base
@@ -115,7 +112,7 @@ def update_pychron_version(nver):
 __version__ = '{}'
 __commit__ = '{}'
 __alembic__ = '{}'
-#============= EOF =============================================
+# ============= EOF =============================================
 '''.format(version.__version__,
            version.__commit__, nver)
 

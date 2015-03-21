@@ -4,11 +4,11 @@ __author__ = 'argonlab2'
 
 
 class IBrowser(Interface):
-    def get_mass_spectrometers(self):
+    def get_mass_spectrometers(self, **kw):
         pass
-    def get_analysis_types(self):
+    def get_analysis_types(self, **kw):
         pass
-    def get_get_extraction_devices(self):
+    def get_extraction_devices(self,**kw):
         pass
     def get_project_labnumbers(self, project_names, filter_non_run, low_post=None, high_post=None,
                                analysis_types=None, mass_spectrometers=None):

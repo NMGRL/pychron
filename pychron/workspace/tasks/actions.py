@@ -92,7 +92,7 @@ class CommitChangesAction(TaskAction):
     method = 'commit_changes'
     # image = icon('arrow_up')
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

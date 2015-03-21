@@ -12,35 +12,31 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
-#============= enthought library imports =======================
-import os
+# ===============================================================================
+# ============= enthought library imports =======================
 
 from envisage.core_plugin import CorePlugin
 from envisage.api import Plugin
-#============= standard library imports ========================
-#============= local library imports  ==========================
+from pyface.message_dialog import warning
+# ============= standard library imports ========================
+import os
+import logging
+# ============= local library imports  ==========================
 from pychron.displays.gdisplays import gTraceDisplay
 from pychron.envisage.key_bindings import update_key_bindings
 from pychron.envisage.tasks.tasks_plugin import PychronTasksPlugin, myTasksPlugin
-# from pychron.core.helpers.logger_setup import new_logger
 from pychron.logger.tasks.logger_plugin import LoggerPlugin
 from pychron.envisage.initialization.initialization_parser import InitializationParser
-
-import logging
+from pychron.user.tasks.plugin import UsersPlugin
 
 logger = logging.getLogger()
 
-try:
-    from pychron.updater.tasks.update_plugin import UpdatePlugin
-except ImportError:
-    logger.warning('Git is required to use UpdatePlugin')
-    UpdatePlugin = None
 
 PACKAGE_DICT = dict(
     CanvasDesignerPlugin='pychron.canvas.tasks.canvas_plugin',
     ArArConstantsPlugin='pychron.constants.tasks.arar_constants_plugin',
     DashboardServerPlugin='pychron.dashboard.tasks.server.plugin',
+    DashboardClientPlugin='pychron.dashboard.tasks.client.plugin',
     DatabasePlugin='pychron.database.tasks.database_plugin',
     EntryPlugin='pychron.entry.tasks.entry_plugin',
     ExperimentPlugin='pychron.experiment.tasks.experiment_plugin',
@@ -58,10 +54,13 @@ PACKAGE_DICT = dict(
     PyScriptPlugin='pychron.pyscripts.tasks.pyscript_plugin',
     ArgusSpectrometerPlugin='pychron.spectrometer.tasks.argus_spectrometer_plugin',
     MapSpectrometerPlugin='pychron.spectrometer.tasks.map_spectrometer_plugin',
-    EmailPlugin='pychron.social.tasks.email_plugin',
+    EmailPlugin='pychron.social.email.tasks.plugin',
     SystemMonitorPlugin='pychron.system_monitor.tasks.system_monitor_plugin',
     WorkspacePlugin='pychron.workspace.tasks.workspace_plugin',
-    LabBookPlugin='pychron.labbook.tasks.labbook_plugin')
+    LabBookPlugin='pychron.labbook.tasks.labbook_plugin',
+    LabspyClientPlugin='pychron.labspy.tasks.plugin',
+    UpdatePlugin='pychron.updater.tasks.update_plugin',
+    ImagePlugin='pychron.image.tasks.image_plugin')
 
 
 def get_module_name(klass):
@@ -114,8 +113,8 @@ def get_plugin(pname):
     if pname in PACKAGE_DICT:
         package = PACKAGE_DICT[pname]
         klass = get_klass(package, pname)
-    elif pname == 'Update':
-        klass = UpdatePlugin
+    # elif pname == 'Update':
+    #     klass = UpdatePlugin
 
     else:
         logger.warning('****** {} not a valid plugin name******'.format(pname),
@@ -130,6 +129,8 @@ def get_plugin(pname):
             else:
                 logger.warning('****** {} not available {}******'.format(klass, check),
                                extra={'threadName_': 'Launcher'})
+                warning(None, 'Failed loading plugin.\n    {}'.format(plugin.name))
+
         else:
             logger.warning('***** Invalid {} needs to be a subclass of Plugin ******'.format(klass),
                            extra={'threadName_': 'Launcher'})
@@ -166,12 +167,14 @@ def app_factory(klass, user):
         return a Pychron TaskApplication
     """
     pychron_plugin = PychronTasksPlugin()
+
     plugins = [
         CorePlugin(),
         myTasksPlugin(),
         pychron_plugin,
         # FoobotPlugin(),
-        LoggerPlugin()]
+        LoggerPlugin(),
+        UsersPlugin()]
 
     # if UpdatePlugin is not None:
     #     plugins.append(UpdatePlugin())
@@ -181,36 +184,13 @@ def app_factory(klass, user):
 
     app = klass(username=user, plugins=plugins)
 
-    #set key bindings
+    # set key bindings
     update_key_bindings(pychron_plugin.actions)
 
     return app
 
 
-def check_dependencies():
-    """
-        check the dependencies and
-    """
-    from pyface.api import warning
 
-    for mod, req in (('uncertainties', '2.1'),
-                     ('pint', '0.5')):
-        try:
-            mod = __import__(mod)
-            ver = mod.__version__
-        except ImportError:
-            warning(None, 'Install "{}" package. required version>={} '.format(mod, req))
-            return
-
-        vargs = ver.split('.')
-        maj = int(vargs[0])
-        if maj < int(float(req)):
-            warning(None, 'Update "{}" package. your version={}. required version>={} '.format(mod,
-                                                                                               maj,
-                                                                                               req))
-            return
-
-    return True
 
 
 def launch(klass, user):
@@ -227,11 +207,6 @@ def launch(klass, user):
     #     if not check_login(fp.read()):
     #         logger.critical('Login failed')
     #         return
-
-    if not check_dependencies():
-        logger.info('check dependencies failed')
-        os._exit(0)
-
 
     app = app_factory(klass, user)
 
@@ -253,4 +228,4 @@ def launch(klass, user):
     return
 
 
-#============= EOF ====================================
+# ============= EOF ====================================

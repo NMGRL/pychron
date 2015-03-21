@@ -1,20 +1,20 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from datetime import datetime
 import os
 
@@ -29,8 +29,11 @@ from traitsui.api import View, Item, TabularEditor, HGroup, UItem, VSplit, Group
 
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
 from pychron.canvas.utils import load_holder_canvas, iter_geom
@@ -41,7 +44,6 @@ from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pychron_constants import ALPHAS
-
 
 
 class NewProduction(HasTraits):
@@ -94,6 +96,7 @@ class EditView(ModelView):
                           label='Tray')
 
         v = View(Item('name'),
+                 VGroup(UItem('level_note', style='custom'), label='Level Note', show_border=True),
                  Group(
                      pr_group,
                      tray_grp,
@@ -114,6 +117,7 @@ class AddView(EditView):
 class LevelEditor(Loggable):
     db = Any
 
+    level_note = Str
     name = Str
     selected_tray = Str
     z = Float
@@ -149,7 +153,12 @@ class LevelEditor(Loggable):
             original_tray = None
             if level.holder:
                 self.selected_tray = next((t for t in self.trays if t == level.holder.name), None)
-                original_tray=self.selected_tray
+                original_tray = self.selected_tray
+
+            if level.note:
+                self.level_note = level.note
+            else:
+                self.level_note = ''
 
             ev = EditView(model=self)
             info = ev.edit_traits()
@@ -171,10 +180,11 @@ class LevelEditor(Loggable):
 
                     self._save_production()
 
+                    level.note = self.level_note
                     pr = db.get_irradiation_production(self.selected_production.name)
                     level.production = pr
 
-                    if original_tray!=self.selected_tray:
+                    if original_tray != self.selected_tray:
                         self._save_tray(level, original_tray)
 
                     break
@@ -184,27 +194,27 @@ class LevelEditor(Loggable):
         return self.name
 
     def _save_tray(self, level, original_tray):
-        db=self.db
+        db = self.db
         tr = db.get_irradiation_holder(self.selected_tray)
-        n=len(tuple(iter_geom(tr.geometry)))
-        on=len(level.positions)
-        if n<on:
+        n = len(tuple(iter_geom(tr.geometry)))
+        on = len(level.positions)
+        if n < on:
             if any([p.labnumber.analyses for p in level.positions[n:]]):
                 self.warning_dialog('Cannot change tray from "{}" to "{}" '
                                     'This change would orphan irradiation identifiers '
                                     'that have associated analyses'.format(original_tray, self.selected_tray))
             elif self.confirmation_dialog('You are about to orphan {} irradiation identifiers. '
-                                     'Are you sure you want to continue?'.format(on-n)):
+                                          'Are you sure you want to continue?'.format(on - n)):
 
-                level.holder=tr
+                level.holder = tr
                 for p in level.positions[n:]:
                     self.debug('deleting {} {} {} {}'.format(level.irradiation.name,
                                                              level.name,
-                                                          p.position,
-                                                          p.labnumber.identifier))
+                                                             p.position,
+                                                             p.labnumber.identifier))
                     db.delete_irradiation_position(p)
         else:
-            level.holder=tr
+            level.holder = tr
 
     def _add_level(self):
         irrad = self.irradiation
@@ -295,7 +305,7 @@ class LevelEditor(Loggable):
                         setattr(ip, k, v)
 
                     ip.note = prod.note
-                    ip.last_modified = datetime.now()
+                    # ip.last_modified = datetime.now()
 
     def _add_production(self):
         pr = NewProduction()
@@ -311,16 +321,16 @@ class LevelEditor(Loggable):
                             continue
                     else:
                         if self.selected_production:
-                            pp=self.selected_production.clone_traits()
+                            pp = self.selected_production.clone_traits()
                         else:
-                            pp=IrradiationProduction()
+                            pp = IrradiationProduction()
 
                         db.add_irradiation_production(name=pr.name, last_modified=datetime.now())
-                        pp.name=pr.name
+                        pp.name = pr.name
                         self.productions.append(pp)
 
-                        self.selected_production=next((pp for pp in self.productions if pp.name==pr.name), None)
-                        self.selected_production.editable=True
+                        self.selected_production = next((pp for pp in self.productions if pp.name == pr.name), None)
+                        self.selected_production.editable = True
 
                 break
 
@@ -348,5 +358,5 @@ class LevelEditor(Loggable):
                                              os.path.basename(dlg.path), overwrite_geometry=True)
 
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

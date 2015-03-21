@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import time
 
 from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
 from pychron.pyscripts.pyscript import makeRegistry, verbose_skip
 from pychron.core.ui.gui import invoke_in_main_thread
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 command_register = makeRegistry()
 
 class LaserPyScript(ExtractionPyScript):
@@ -62,4 +62,4 @@ class LaserPyScript(ExtractionPyScript):
 #         self._manager_action([('do_power_map', (cx, cy, padding, bd, power), {})],
 #                              name=self.extract_device,
 #                              protocol=ILaserManager)
-#============= EOF =============================================
+# ============= EOF =============================================

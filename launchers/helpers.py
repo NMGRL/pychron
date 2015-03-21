@@ -13,14 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from traits.etsconfig.api import ETSConfig
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+ETSConfig.toolkit = "qt4"
+
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 import os
 import sys
 import logging
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
+from pyface.message_dialog import information, warning
 
 logger = logging.getLogger()
 
@@ -29,26 +33,50 @@ def entry_point(modname, klass, setup_version_id='', debug=False):
     """
         entry point
     """
-    from traits.etsconfig.api import ETSConfig
 
-    ETSConfig.toolkit = "qt4"
-
-    # build_version('', setup_version_id, debug=debug)
     user = initialize_version(modname, debug)
-    # from pychron.core.helpers.logger_setup import logging_setup
-    # from pychron.paths import build_directories
-    #
-    # # build directories
-    # build_directories()
-    #
-    # # setup logging. set a basename for log files and logging level
-    # logging_setup('pychron', level='DEBUG')
+    set_commandline_args()
 
-    #import app klass and pass to launch function
-    mod = __import__('pychron.applications.{}'.format(modname), fromlist=[klass])
-    from pychron.envisage.pychron_run import launch
+    # import app klass and pass to launch function
+    if check_dependencies():
+        mod = __import__('pychron.applications.{}'.format(modname), fromlist=[klass])
+        app = getattr(mod, klass)
+        from pychron.envisage.pychron_run import launch
+        launch(app, user)
 
-    launch(getattr(mod, klass), user)
+
+def check_dependencies():
+    """
+        check the dependencies and
+    """
+    for mod, req in (('uncertainties', '2.1'),
+                     ('pint', '0.5')):
+        try:
+            mod = __import__(mod)
+            ver = mod.__version__
+        except ImportError:
+            warning(None, 'Install "{}" package. required version>={} '.format(mod, req))
+            return
+
+        vargs = ver.split('.')
+        maj = int(vargs[0])
+        if maj < int(float(req)):
+            warning(None, 'Update "{}" package. your version={}. required version>={} '.format(mod,
+                                                                                               maj,
+                                                                                               req))
+            return
+
+    return True
+
+def set_commandline_args():
+    from pychron.globals import globalv
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Generate a password')
+    parser.add_argument('-t', '--testbot',
+                        action='store')
+    args = parser.parse_args()
+    globalv.use_testbot = args.testbot
 
 
 def initialize_version(appname, debug):
@@ -60,12 +88,6 @@ def initialize_version(appname, debug):
         build_sys_path()
 
     # can now use pychron.
-    from pychron.paths import paths
-
-    # paths.bundle_root = root
-    # if '-' in setup_ver:
-    # setup_ver = setup_ver.split('-')[0]
-
     from pychron.envisage.user_login import get_user
 
     user = get_user()
@@ -75,6 +97,8 @@ def initialize_version(appname, debug):
 
     if appname.startswith('py'):
         appname = appname[2:]
+
+    from pychron.paths import paths
 
     pref_path = os.path.join(paths.base, '.enthought',
                              'pychron.{}.application.{}'.format(appname, user),
@@ -87,15 +111,24 @@ def initialize_version(appname, debug):
 
     try:
         proot = cp.get('pychron.general', 'root_dir')
-    except BaseException:
-        proot = '/Users/ross/Pychron'
+    except BaseException, e:
+        print 'root_dir exception={}'.format(e)
+        proot = None
+        information(None, 'Pychron root directory not set in Preferences/General. Defaulting to "Pychron"')
+
+    if proot and not os.path.isdir(proot):
+        information(None, 'Pychron root directory "{}" is not a valid location. Defaulting to "Pychron"'.format(proot))
+        proot = None
+
+    if proot is None:
+        proot = os.path.join(os.path.expanduser('~'), 'Pychron')
 
     paths.build(proot)
 
     # build globals
     build_globals(debug)
 
-    from pychron.core.helpers.logger_setup import logging_setup
+    from pychron.core.helpers.logger_setup import logging_setup, set_exception_handler
     from pychron.paths import build_directories
 
     # build directories
@@ -103,38 +136,10 @@ def initialize_version(appname, debug):
 
     # setup logging. set a basename for log files and logging level
     logging_setup('pychron', level='DEBUG')
+    if not debug:
+        set_exception_handler()
 
     return user
-
-
-# def build_version(ver=None, setup_ver=None, debug=False):
-# """
-#         set the python path and build/setup Pychrondata for support files
-#     """
-#
-#     if ver is None:
-#         ver = ''
-#
-#     # if setup_ver is None:
-#     #     setup_ver = ''
-#
-#     root = os.path.dirname(__file__)
-#
-#     if not debug:
-#         add_eggs(root)
-#     else:
-#         build_sys_path()
-#
-#         # can now use pychron.
-#         # from pychron.paths import paths
-#         #
-#         # paths.bundle_root = root
-#         # if '-' in setup_ver:
-#         #     setup_ver = setup_ver.split('-')[0]
-#         # paths.build(setup_ver)
-#
-#         # build globals
-#         # build_globals(debug)
 
 
 def build_sys_path():
@@ -174,4 +179,4 @@ def build_globals(debug):
     globalv.debug = debug
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

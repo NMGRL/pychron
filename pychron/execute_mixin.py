@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from threading import Thread
 
 from traits.api import HasTraits, Event, Property, Bool
 
 # from pychron.core.ui.thread import Thread
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class ExecuteMixin(HasTraits):
     execute = Event
@@ -54,4 +54,4 @@ class ExecuteMixin(HasTraits):
     def isAlive(self):
         return self.executing
 
-#============= EOF =============================================
+# ============= EOF =============================================

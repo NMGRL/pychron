@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pyface.action.menu_manager import MenuManager
 from traits.api import Int, Property
 from traitsui.menu import Action
@@ -28,8 +28,9 @@ from pychron.database.records.isotope_record import IsotopeRecordView
 
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class UnknownsAdapter(TabularAdapter):
     columns = [('Run ID', 'record_id'),
@@ -113,4 +114,4 @@ class ReferencesAdapter(TabularAdapter):
 
 #     font = 'modern 10'
 #    record_id_width = Int(50)
-#============= EOF =============================================
+# ============= EOF =============================================

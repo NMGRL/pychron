@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 import ast
 
 from pychron.core.helpers.filetools import add_extension
@@ -21,7 +21,7 @@ from pychron.core.ui import set_qt
 
 set_qt()
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 
@@ -29,10 +29,10 @@ from traits.api import Str
 from traitsui.api import View, HGroup, UItem, VGroup, EnumEditor
 from traitsui.handler import Controller
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 import yaml
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.paths import paths, build_directories
 from pychron.core.ui.table_editor import myTableEditor
 from pychron.processing.fits.filter_fit_selector import FilterFitSelector, FilterFit
@@ -164,5 +164,5 @@ if __name__ == '__main__':
 
 
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

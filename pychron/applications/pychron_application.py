@@ -1,20 +1,20 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from datetime import datetime
 
 from apptools.preferences.preference_binding import bind_preference
@@ -23,9 +23,10 @@ from pyface.api import SplashScreen
 from pyface.image_resource import ImageResource
 
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
+from pychron.envisage.resources import splash_icon
 from pychron.globals import globalv
 
 from pychron.paths import paths
@@ -62,13 +63,14 @@ class PychronApplication(BaseTasksApplication):
     username = Str
     use_login = Bool
     multi_user = Bool
+    shortname = ''
 
     def __init__(self, username=None, *args, **kw):
         if username:
-            self.id='{}.{}'.format(self.id, username)
-            self.name='{} - {}'.format(self.name, username)
-            self.username=username
-            globalv.username=username
+            self.id = '{}.{}'.format(self.id, username)
+            self.name = '{} - {}'.format(self.name, username)
+            self.username = username
+            globalv.username = username
 
         super(PychronApplication, self).__init__(*args, **kw)
 
@@ -96,9 +98,10 @@ class PychronApplication(BaseTasksApplication):
     def dump_user_file(self):
         self.debug('dumping user file')
         from pychron.envisage.user_login import dump_user_file
-        man=self.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
+
+        man = self.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
         if man:
-            names=man.db.get_usernames()
+            names = man.db.get_usernames()
             dump_user_file(names=names, last_login_name=self.username)
 
     def set_changes(self, changelist):
@@ -114,16 +117,14 @@ class PychronApplication(BaseTasksApplication):
     def _about_dialog_default(self):
         about_dialog = myAboutDialog(
             image=ImageResource(name='about.png',
-                                search_path=paths.icon_search_path))
+                                search_path=paths.about_search_path))
 
         about_dialog.version_info = self.get_version_info()
         about_dialog.additions = self.about_additions
         return about_dialog
 
     def _splash_screen_default(self):
-        sp = SplashScreen(
-            image=ImageResource(name='splash.png',
-                                search_path=paths.icon_search_path))
+        sp = SplashScreen(image=splash_icon(self.shortname))
         return sp
 
     def get_version_info(self):
@@ -134,5 +135,5 @@ class PychronApplication(BaseTasksApplication):
     def get_service_by_name(self, protocol, name):
         return self.get_service(protocol, 'name=="{}"'.format(name))
 
-#============= views ===================================
-#============= EOF ====================================
+# ============= views ===================================
+# ============= EOF ====================================

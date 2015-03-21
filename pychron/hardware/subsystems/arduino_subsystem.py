@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,20 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 # from traitsui.api import View,Item,Group,HGroup,VGroup
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
-from pychron.hardware.arduino.arduino_gp_actuator import ArduinoGPActuator
-from pychron.hardware.arduino.arduino_valve_actuator import ArduinoValveActuator
-from pychron.hardware.arduino.arduino_fiber_light_module import ArduinoFiberLightModule
 from subsystem import Subsystem
 
 class ArduinoSubsystem(Subsystem):
@@ -51,4 +48,4 @@ class ArduinoSubsystem(Subsystem):
                     self.modules[m] = module
         return True
 
-#============= EOF ====================================
+# ============= EOF ====================================

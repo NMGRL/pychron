@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Int, Str, Bool, List, Event, Property, Enum, Float
 from traitsui.api import Item, CheckListEditor, VGroup, HGroup, ButtonEditor, EnumEditor
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.pyscripts.commands.core import Command
 
 from pychron.paths import paths
@@ -28,9 +28,9 @@ from pychron.pychron_constants import NULL_STR
 
 DETS = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
 
-#===============================================================================
+# ===============================================================================
 # super commands
-#===============================================================================
+# ===============================================================================
 class ValueCommand(Command):
     value = Float
 
@@ -63,9 +63,9 @@ class ConditionalCommand(Command):
                                                                      self.start_count,
                                                                      self.frequency)
 
-#===============================================================================
+# ===============================================================================
 # condition commands
-#===============================================================================
+# ===============================================================================
 class AddTermination(ConditionalCommand):
     description = 'Add termination conditional'
     example = ''' '''
@@ -113,9 +113,9 @@ class ClearTerminations(Command):
     description = 'Clear terminations'
     example = ''' '''
 
-#===============================================================================
+# ===============================================================================
 #
-#===============================================================================
+# ===============================================================================
 
 class Equilibrate(ValveCommand):
     description = 'Equilibrate'
@@ -400,9 +400,9 @@ however all peak centers for all activated detectors are determined'''
         pass
 
 
-#===============================================================================
+# ===============================================================================
 # set commands
-#===============================================================================
+# ===============================================================================
 class SetDeflection(ValueCommand):
     description = 'Set deflection of a detector'
     example = 'set_deflection("AX", 100)'
@@ -506,4 +506,4 @@ class SetAcceleratingVoltage(Command):
     description = 'Set the source accelerating voltage in volts'
     example = 'set_accelerating_voltage(4500)'
 
-#============= EOF =============================================
+# ============= EOF =============================================

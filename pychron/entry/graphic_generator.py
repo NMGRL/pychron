@@ -12,12 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 from pychron.core.ui import set_qt
 
 set_qt()
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from chaco.abstract_overlay import AbstractOverlay
 from enable.base import str_to_font
 from traits.api import HasTraits, Instance, Any, Float, File, Property, Str
@@ -25,7 +25,7 @@ from traitsui.api import View, Controller, UItem, Item
 from chaco.api import OverlayPlotContainer
 from enable.component_editor import ComponentEditor
 from pyface.api import FileDialog, OK
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from lxml.etree import ElementTree, Element
 from chaco.plot import Plot
 from chaco.array_plot_data import ArrayPlotData
@@ -38,7 +38,7 @@ from chaco.plot_graphics_context import PlotGraphicsContext
 from traitsui.menu import Action
 import math
 from pychron.core.helpers.filetools import to_bool
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 class myDataLabel(DataLabel):
     label_position = Any
     show_label_coords = False
@@ -435,4 +435,4 @@ if __name__ == '__main__':
 
     gcc.configure_traits()
 
-#============= EOF =============================================
+# ============= EOF =============================================

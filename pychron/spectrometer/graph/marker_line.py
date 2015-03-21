@@ -18,8 +18,8 @@
 from enable.colors import ColorTrait
 from traits.has_traits import HasTraits
 from traits.trait_types import Float
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
 
@@ -41,4 +41,4 @@ class MarkerLine(HasTraits):
 
     def set_x(self, new):
         self.x=new
-#============= EOF =============================================
+# ============= EOF =============================================

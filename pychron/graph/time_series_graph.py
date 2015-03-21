@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,18 +12,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from chaco.api import PlotAxis as ScalesPlotAxis
 from chaco.scales.api import CalendarScaleSystem, TimeScale
 from chaco.scales_tick_generator import ScalesTickGenerator
-#=============standard library imports ========================
+# =============standard library imports ========================
 import time
 from numpy import array
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 from pychron.core.time_series.time_series import smooth, \
     seasonal_subseries, autocorrelation, downsample_1d
 
@@ -231,7 +231,7 @@ class TimeSeriesStreamStackedGraph(TimeSeriesGraph, StreamStackedGraph):
     '''
     '''
     pass
-#============= EOF ============================================
+# ============= EOF ============================================
 # def create_dates(numpoints, units = "days"):
 #    '''
 #            @type units: C{str}

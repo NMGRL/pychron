@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
@@ -21,14 +21,14 @@
 @copyright: 2009
 @license: Educational Community License 1.0
 '''
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import List, Str, Bool, Float, Int
 from traitsui.api import View, Item, ListEditor
-#=============standard library imports ========================
+# =============standard library imports ========================
 
 # from numpy import random
 import time
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 from setpoint import Setpoint
 
 from pychron.hardware.core.core_device import CoreDevice
@@ -224,7 +224,7 @@ class BaseGauge(CoreDevice):
 #
 #        self.data_buffer.add_datum(self._pressure)
 
-#===================listeners=====================
+# ===================listeners=====================
 #    @on_trait_change('_pressure')
 #    def pressure_change(self, o, n, oo, nn):
 #

@@ -15,12 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.ui.factory import toolkit_factory
 ComboboxEditor= toolkit_factory('combobox_editor','ComboboxEditor')
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

@@ -12,15 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.label import Label
 from traits.api import Instance
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.processing.analyses.file_analysis import InterpretedAgeAnalysis, FileAnalysis
 from pychron.processing.tasks.figures.figure_editor import FigureEditor
 from pychron.processing.plotter_options_manager import IdeogramOptionsManager
@@ -142,4 +142,4 @@ class IdeogramEditor(FigureEditor):
                 ap.enabled = True
         return ans
 
-#============= EOF =============================================
+# ============= EOF =============================================

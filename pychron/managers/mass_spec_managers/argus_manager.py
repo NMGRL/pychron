@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,21 +12,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Property, \
     Str, Float, Button, Color, Int, Instance, Bool, List
 from traitsui.api import View, Item, HGroup, VGroup, spring
 # from pyface.timer.timer import Timer
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
-#============= views ===================================
+# ============= views ===================================
 
 from pychron.managers.manager import Manager
 import random
@@ -238,9 +238,9 @@ class ArgusManager(Manager):
         return v
 
 
-#===============================================================================
+# ===============================================================================
 # property methods
-#===============================================================================
+# ===============================================================================
     def _get_magnet_position(self):
         '''
         '''
@@ -264,4 +264,4 @@ class ArgusManager(Manager):
         except ValueError:
             nv = self._magnet_position
         return nv
-#============= EOF ====================================
+# ============= EOF ====================================

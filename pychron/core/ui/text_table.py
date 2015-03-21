@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, List, \
     on_trait_change, Callable, Bool, Int, Property
+
 from pychron.core.helpers.formatting import floatfmt
 from pychron.pychron_constants import PLUSMINUS
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 # def fixed_width(m, i):
 #    return '{{:<{}s}}'.format(i).format(m)
 # def floatfmt(m, i=6):
@@ -238,4 +240,4 @@ class RatiosAdapter(ValueErrorAdapter):
     ]
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

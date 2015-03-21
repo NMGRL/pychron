@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,18 +12,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from math import isinf
 
 from numpy import Inf, inf
 from traits.api import HasTraits, Any, on_trait_change, List, Int, Str
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from itertools import groupby
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.processing.analysis_graph import AnalysisStackedGraph
 
 
@@ -58,15 +58,8 @@ class FigurePanel(HasTraits):
     # def load_metadata(self, md):
     #     self.graph.load_metadata(md)
 
-    def make_graph(self):
+    def _get_init_xlimits(self):
         po = self.plot_options
-        g = self.graph_klass(panel_height=200,
-                             equi_stack=self.equi_stack,
-                             container_dict=dict(padding=0,
-                                                 spacing=self.plot_spacing or po.plot_spacing,
-                                                 bgcolor=po.bgcolor))
-
-
         attr = po.index_attr
         center = None
         mi, ma = Inf, -Inf
@@ -84,6 +77,16 @@ class FigurePanel(HasTraits):
                     w2 = po.centered_range / 2.0
                     mi, ma = center - w2, center + w2
 
+        return center, mi, ma
+
+    def make_graph(self):
+        po = self.plot_options
+        g = self.graph_klass(panel_height=200,
+                             equi_stack=self.equi_stack,
+                             container_dict=dict(padding=0,
+                                                 spacing=self.plot_spacing or po.plot_spacing,
+                                                 bgcolor=po.bgcolor))
+        center, mi, ma = self._get_init_xlimits()
         plots = list(po.get_aux_plots())
         if plots:
             for i, fig in enumerate(self.figures):
@@ -101,6 +104,7 @@ class FigurePanel(HasTraits):
                 fig.plot(plots)
                 fig.suppress_ylimits_update = False
                 fig.suppress_xlimits_update = False
+                # print fig.xma, fig.xmi
                 ma, mi = max(fig.xma, ma), min(fig.xmi, mi)
 
             if self.use_previous_limits:
@@ -125,4 +129,4 @@ class FigurePanel(HasTraits):
         self.graph = g
         return g.plotcontainer
 
-        #============= EOF =============================================
+        # ============= EOF =============================================

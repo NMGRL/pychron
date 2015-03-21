@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.core.data_helper import make_bitarray
 
@@ -46,21 +46,17 @@ class ThermoRack(CoreDevice):
 
     scan_func = 'get_coolant_out_temperature'
 
-    #===========================================================================
+    # ===========================================================================
     # icore device interface
-    #===========================================================================
+    # ===========================================================================
     def set(self, v):
         pass
 
-    def get(self):
-        v = super(ThermoRack, self).get()
-#        v = CoreDevice.get(self)
-        if v is None:
-            if self._scanning:
-                v = self.current_scan_value
-            else:
-                v = self.get_coolant_out_temperature()
-
+    def get(self, current=False, *args, **kw):
+        if current:
+            v = self.get_coolant_out_temperature()
+        else:
+            v = super(ThermoRack, self).get(*args, **kw)
         return v
 
     def write(self, *args, **kw):
@@ -167,4 +163,4 @@ class ThermoRack(CoreDevice):
 
         return resp
 
-#============= EOF ====================================
+# ============= EOF ====================================

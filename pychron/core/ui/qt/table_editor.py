@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from PySide.QtGui import QFont, QFontMetrics
 from traits.api import Event, Callable, Bool
 from traitsui.qt4.table_editor import TableView
 from traitsui.editors.table_editor import TableEditor
 from PySide.QtCore import Qt
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
 class myTableView(TableView):
@@ -71,4 +71,4 @@ class myTableEditor(TableEditor):
             self.on_command_key(new)
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

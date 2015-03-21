@@ -12,21 +12,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Int, Bool, Property
-from traitsui.api import View, Item, Group
+from traitsui.api import View, Item, Group, VGroup
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 
 class BrowsingPreferences(BasePreferencesHelper):
-    recent_hours = Property(Int, depends_on='_recent_hours')
     preferences_path = 'pychron.browsing'
+    recent_hours = Property(Int, depends_on='_recent_hours')
     _recent_hours = Int
 
     reference_hours_padding = Int
@@ -61,10 +61,12 @@ class BrowsingPreferencesPane(PreferencesPane):
                                      show_border=True,
                                      label='Graphical Filter')
 
-        v = View(Item('reference_hours_padding',
+        v = View(VGroup(Item('reference_hours_padding',
                       tooltip='Split analysis series when consecutive analyses are greater than X hours',
                       label='References Window (hrs)'),
-                 recent_grp, graphical_filter_grp)
+                 recent_grp, graphical_filter_grp,
+                 show_border=True,
+                 label='Processing'))
         return v
 
 
@@ -82,4 +84,4 @@ class EasyPreferencesPane(PreferencesPane):
         v = View(easy_grp)
         return v
 
-#============= EOF =============================================
+# ============= EOF =============================================

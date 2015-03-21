@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 from pychron.core.ui import set_qt
 
 set_qt()
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
 import csv
 import os
 import yaml
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import unique_path
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.paths import paths
@@ -94,5 +94,5 @@ class RawExporter(IsotopeDatabaseManager):
         return gen()
 
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

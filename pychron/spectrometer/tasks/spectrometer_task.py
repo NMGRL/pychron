@@ -1,58 +1,93 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-from traits.api import Any
+# ============= enthought library imports =======================
+from pyface.qt import QtGui
+from pyface.ui.qt4.tasks.advanced_editor_area_pane import EditorWidget
+from traits.api import Any, Instance, on_trait_change
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, Tabbed
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+
 
 from pychron.envisage.tasks.base_task import BaseExtractionLineTask
-from pychron.spectrometer.tasks.spectrometer_panes import ScanPane, ControlsPane, \
+from pychron.envisage.tasks.editor_task import EditorTask
+from pychron.spectrometer.tasks.editor import PeakCenterEditor, ScanEditor, CoincidenceEditor
+from pychron.spectrometer.tasks.spectrometer_panes import ControlsPane, \
     ReadoutPane, IntensitiesPane
 
 
-class SpectrometerTask(BaseExtractionLineTask):
+class SpectrometerTask(EditorTask):
     scan_manager = Any
     name = 'Scan'
     id = 'pychron.spectrometer'
+    _scan_editor = Instance(ScanEditor)
+
+    def do_coincidence(self):
+        es = [int(e.name.split(' '))
+              for e in self.editor_area.editors
+              if isinstance(e, CoincidenceEditor)]
+
+        i = max(es) + 1 if es else 1
+        man = self.scan_manager.ion_optics_manager
+        name = 'Coincidence {:02n}'.format(i)
+
+        if man.setup_coincidence():
+            self._open_editor(CoincidenceEditor(model=man.coincidence, name=name))
+            man.do_coincidence_scan()
+
+    def do_peak_center(self):
+        # man = self.ion_optics_manager
+        # if len(self.graphs) > 1:
+        # i = int(self.graphs[-1].split(' ')[2]) + 1
+        # else:
+        #     i = 1
+
+        # i = 1
+        self.scan_manager.log_events_enabled = False
+        es = [int(e.name.split(' '))
+              for e in self.editor_area.editors
+              if isinstance(e, PeakCenterEditor)]
+
+        i = max(es) + 1 if es else 1
+
+        man = self.scan_manager.ion_optics_manager
+        name = 'Peak Center {:02n}'.format(i)
+        if man.setup_peak_center(new=True, standalone_graph=False):
+            def func():
+                setattr(self.scan_manager, 'log_events_enabled', True)
+
+            self._open_editor(PeakCenterEditor(model=man.peak_center,
+                                               name=name))
+
+            man.do_peak_center(confirm_save=True, warn=True,
+                               message='manual peakcenter',
+                               on_end=func)
+
+    def send_configuration(self):
+        self.scan_manager.spectrometer.send_configuration()
 
     def prepare_destroy(self):
         self.scan_manager.prepare_destroy()
         super(SpectrometerTask, self).prepare_destroy()
 
-    def activated(self):
-
-        self.scan_manager.activate()
-        sim = self.scan_manager.spectrometer.simulation
-        self.name = 'Scan (Simulation)' if sim else 'Scan'
-
-        super(SpectrometerTask, self).activated()
-
-    def _default_layout_default(self):
-        return TaskLayout(
-            left=Splitter(
-                PaneItem('pychron.spectrometer.controls'),
-                Tabbed(PaneItem('pychron.spectrometer.intensities'),
-                       PaneItem('pychron.spectrometer.readout')),
-                orientation='vertical'))
-
-    def create_central_pane(self):
-        g = ScanPane(model=self.scan_manager)
-        return g
+    # def activated(self):
+    #     self.scan_manager.activate()
+    #     self._scan_factory()
+    #     super(SpectrometerTask, self).activated()
 
     def create_dock_panes(self):
         panes = [
@@ -63,5 +98,45 @@ class SpectrometerTask(BaseExtractionLineTask):
         panes = self._add_canvas_pane(panes)
         return panes
 
+    # def _active_editor_changed(self, new):
+    #     if not new:
+    #         try:
+    #             self._scan_factory()
+    #         except AttributeError:
+    #             pass
 
-#============= EOF =============================================
+    def _scan_factory(self):
+        sim = self.scan_manager.spectrometer.simulation
+        name = 'Scan (Simulation)' if sim else 'Scan'
+        # self._open_editor(ScanEditor(model=self.scan_manager, name=name))
+        # print 'asdfas', self.editor_area.control
+        # print [e for e in self.editor_area.control.children() if isinstance(e, EditorWidget)]
+        # super(SpectrometerTask, self).activated()
+
+        se = ScanEditor(model=self.scan_manager, name=name)
+        self._open_editor(se)
+
+    def _default_layout_default(self):
+        return TaskLayout(
+            left=Splitter(
+                PaneItem('pychron.spectrometer.controls'),
+                Tabbed(PaneItem('pychron.spectrometer.intensities'),
+                       PaneItem('pychron.spectrometer.readout')),
+                orientation='vertical'))
+
+        # def create_central_pane(self):
+
+        # g = ScanPane(model=self.scan_manager)
+        # return g
+
+    @on_trait_change('window:opened')
+    def _opened(self):
+        self.scan_manager.activate()
+
+        self._scan_factory()
+        ee = [e for e in self.editor_area.control.children() if isinstance(e, EditorWidget)][0]
+        # print int(ee.features())
+        # ee.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
+        # print int(ee.features())
+        # ee.update_title()
+# ============= EOF =============================================

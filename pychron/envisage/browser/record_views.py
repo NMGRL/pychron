@@ -5,19 +5,19 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Date, Float, Property, Long
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.experiment.utilities.identifier import get_analysis_type
 
 
@@ -30,6 +30,16 @@ class RecordView(HasTraits):
         pass
 
 
+class SampleImageRecordView(RecordView):
+    name = Str
+    record_id = Long
+    crete_date = Date
+    def _create(self, dbrecord):
+        self.name = dbrecord.name
+        self.record_id = dbrecord.id
+        self.create_date = dbrecord.create_date
+
+
 class SampleRecordView(RecordView):
     name = Str
     material = Str
@@ -39,6 +49,7 @@ class SampleRecordView(RecordView):
     elevation = Float
     lithology = Str
     rock_type = Str
+    identifier = Str
 
     def _create(self, dbrecord):
         if dbrecord.material:
@@ -95,7 +106,7 @@ class LabnumberRecordView(RecordView):
         sample = dbrecord.sample
         if sample:
             if sample.material:
-                if isinstance(sample.material,(str, unicode)):
+                if isinstance(sample.material, (str, unicode)):
                     self.material = sample.material
                 else:
                     self.material = sample.material.name
@@ -165,4 +176,4 @@ class AnalysisRecordView(RecordView):
         for attr in ('record_id', 'tag'):
             setattr(self, attr, getattr(dbrecord, attr))
 
-#============= EOF =============================================
+# ============= EOF =============================================

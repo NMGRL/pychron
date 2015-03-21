@@ -12,21 +12,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import binascii
 
 from traits.api import Instance, Bool, Int, Float, Str, \
     Dict, List, Time, Date, Any, Long
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 import struct
 import time
 import math
 from uncertainties import nominal_value, std_dev
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.codetools.file_log import file_log
 from pychron.core.codetools.memory_usage import mem_log
 from pychron.core.helpers.datetime_tools import get_datetime
@@ -45,20 +45,16 @@ DEBUG = False
 
 
 class AutomatedRunPersister(Loggable):
-    # db = Instance(IsotopeAdapter)
     local_lab_db = Instance(LocalLabAdapter)
-    # massspec_importer = Instance(MassSpecDatabaseImporter)
     datahub = Instance(Datahub)
     run_spec = Instance('pychron.experiment.automated_run.spec.AutomatedRunSpec')
     data_manager = Instance(H5DataManager, ())
     monitor = Any
+    arar_age = Any
 
+    auto_save_detector_ic = Bool
     signal_fods = Dict
     baseline_fods = Dict
-    # default_outlier_filtering = Property(depends_on='filter_outliers, fo_+')
-    # filter_outliers = Bool(False)
-    # fo_iterations = Int(1)
-    # fo_std_dev = Int(2)
 
     save_as_peak_hop = Bool(False)
     save_enabled = Bool(False)
@@ -72,9 +68,9 @@ class AutomatedRunPersister(Loggable):
     measurement_name = Str
     measurement_blob = Str
     positions = List  # list of position names
-    extraction_positions = List  #list of x,y or x,y,z tuples
+    extraction_positions = List  # list of x,y or x,y,z tuples
 
-    #for saving to mass spec
+    # for saving to mass spec
     runscript_name = Str
     runscript_blob = Str
 
@@ -104,6 +100,7 @@ class AutomatedRunPersister(Loggable):
 
     _db_extraction_id = None
     _temp_analysis_buffer = None
+    _current_data_frame = None
 
     def __init__(self, *args, **kw):
         super(AutomatedRunPersister, self).__init__(*args, **kw)
@@ -116,13 +113,9 @@ class AutomatedRunPersister(Loggable):
         bind_preference(self, 'grouping_threshold', '{}.grouping_threshold'.format(prefid))
         bind_preference(self, 'grouping_suffix', '{}.grouping_suffix'.format(prefid))
 
-        # bind_preference(self, 'filter_outliers', '{}.filter_outliers'.format(prefid))
-        # bind_preference(self, 'fo_iterations', '{}.fo_iterations'.format(prefid))
-        # bind_preference(self, 'fo_std_dev', '{}.fo_std_dev'.format(prefid))
-
-    #===============================================================================
+    # ===============================================================================
     # data writing
-    #===============================================================================
+    # ===============================================================================
     def save_peak_center_to_file(self, pc):
         dm = self.data_manager
         with dm.open_file(self._current_data_frame):
@@ -148,6 +141,10 @@ class AutomatedRunPersister(Loggable):
 
     def get_data_writer(self, grpname):
         def write_data(dets, x, keys, signals):
+            # todo: test whether saving data to h5 in real time is expansive
+            # self.unique_warning('NOT Writing data to H5 in real time')
+            # return
+
             dm = self.data_manager
             for det in dets:
                 k = det.name
@@ -157,12 +154,11 @@ class AutomatedRunPersister(Loggable):
                             grp = '/{}'.format(grpname)
                         else:
                             grp = '/{}/{}'.format(grpname, det.isotope)
-                        #self.debug('get table {} /{}/{}'.format(k,grpname, det.isotope))
+                        # self.debug('get table {} /{}/{}'.format(k,grpname, det.isotope))
                         # self.debug('get table {}/{}'.format(grp,k))
                         t = dm.get_table(k, grp)
 
                         nrow = t.row
-                        #                        self.debug('x={}'.format(x))
                         nrow['time'] = x
                         nrow['value'] = signals[keys.index(k)]
                         nrow.append()
@@ -180,7 +176,6 @@ class AutomatedRunPersister(Loggable):
             for i, d in enumerate(detectors):
                 iso = d.isotope
                 name = d.name
-                # self._save_isotopes.append((iso, name, gn))
                 if gn == 'baseline':
                     dm.new_table('/{}'.format(gn), name)
                     self.debug('add group {} table {}'.format(gn, name))
@@ -199,9 +194,8 @@ class AutomatedRunPersister(Loggable):
             for iso, det, is_baseline in parse_hops(hops, ret='iso,det,is_baseline'):
                 if is_baseline:
                     continue
-                # self._save_isotopes.append((iso, det, gn))
                 isogrp = dm.new_group(iso, parent='/{}'.format(gn))
-                _t = dm.new_table(isogrp, det)
+                dm.new_table(isogrp, det)
                 self.debug('add group {} table {}'.format(isogrp, det))
 
     def get_last_aliquot(self, identifier):
@@ -232,7 +226,6 @@ class AutomatedRunPersister(Loggable):
                 loadtable = db.get_loadtable(self.load_name)
                 if loadtable is None:
                     loadtable = db.add_load(self.load_name)
-                    #             db.flush()
 
                 ext = self._save_extraction(db, loadtable=loadtable,
                                             response_blob=rblob,
@@ -251,7 +244,6 @@ class AutomatedRunPersister(Loggable):
 
         name = self.uuid
         path = os.path.join(paths.isotope_dir, '{}.h5'.format(name))
-        #        path = '/Users/ross/Sandbox/aaaa_multicollect_isotope.h5'
 
         self._current_data_frame = path
         frame = dm.new_frame(path)
@@ -268,13 +260,12 @@ class AutomatedRunPersister(Loggable):
             return
 
         self.info('post measurement save')
-        #         mem_log('pre post measurement save')
         if not self.save_enabled:
             self.info('Database saving disabled')
             return
 
-        #check for conflicts immediately before saving
-        #automatically update if there is an issue
+        # check for conflicts immediately before saving
+        # automatically update if there is an issue
         conflict = self.datahub.is_conflict(self.run_spec)
         if conflict:
             self.debug('post measurement datastore conflict found. Automatically updating the aliquot and step')
@@ -290,7 +281,6 @@ class AutomatedRunPersister(Loggable):
 
         # save to a database
         db = self.datahub.mainstore.db
-        #         if db and db.connect(force=True):
         if not db or not db.connected:
             self.warning('No database instanc. Not saving post measurement to primary database')
         else:
@@ -310,8 +300,8 @@ class AutomatedRunPersister(Loggable):
 
                 self.debug('adding analysis identifier={}, aliquot={}, '
                            'step={}, increment={}'.format(ln, aliquot,
-                                                       self.run_spec.step,
-                                                       self.run_spec.increment))
+                                                          self.run_spec.step,
+                                                          self.run_spec.increment))
                 a = db.add_analysis(lab,
                                     user=dbuser,
                                     uuid=self.uuid,
@@ -376,10 +366,17 @@ class AutomatedRunPersister(Loggable):
                 self.debug('pychron save time= {:0.3f} '.format(pt))
                 file_log(pt)
 
+        self.debug('$$$$$$$$$$$$$$$ auto_save_detector_ic={}'.format(self.auto_save_detector_ic))
+        if self.auto_save_detector_ic:
+            try:
+                self._save_detector_ic_csv()
+            except BaseException, e:
+                self.debug('Failed auto saving detector ic. {}'.format(e))
+
         # don't save detector_ic runs to mass spec
         # measurement of an isotope on multiple detectors likely possible with mass spec but at this point
         # not worth trying.
-        if self.use_secondary_database and check_secondary_database_save(ln):#not self.run_spec.analysis_type in ('detector_ic',):
+        if self.use_secondary_database and check_secondary_database_save(ln):
             if not self.datahub.secondary_connect():
                 # if not self.massspec_importer or not self.massspec_importer.db.connected:
                 self.debug('Secondary database is not available')
@@ -391,22 +388,27 @@ class AutomatedRunPersister(Loggable):
                 self.debug('mass spec save time= {:0.3f}'.format(time.time() - mt))
                 mem_log('post mass spec save')
 
-                #clear is_peak hop flag
-                # self.is_peak_hop = False
-                # self.plot_panel.is_peak_hop = False
-                # return True
+    def _save_detector_ic_csv(self):
+
+        from pychron.experiment.utilities.detector_ic import make_items, save_csv
+        from pychron.experiment.utilities.identifier import get_analysis_type
+
+        if get_analysis_type(self.run_spec.identifier) == 'detector_ic':
+            items = make_items(self.arar_age.isotopes)
+
+            save_csv(self.run_spec.record_id, items)
 
     def _save_gains(self, db, analysis):
+        self.debug('saving gains')
         ha = db.make_gains_hash(self.gains)
         dbhist = db.get_gain_history(ha)
         if not dbhist:
             dbhist = db.add_gain_history(ha, save_type='arun')
-            for d,v in self.gains:
-                db.add_gain(d,v, dbhist)
+            for d, v in self.gains:
+                db.add_gain(d, v, dbhist)
             db.commit()
 
         analysis.gain_history_id = dbhist.id
-
 
     def _save_analysis_group(self, db, analysis):
         """
@@ -416,14 +418,12 @@ class AutomatedRunPersister(Loggable):
             if project is reference then find and associate with the unknown's project
             if the next analysis is not from the same project then need to associate this analysis
             with that project as well.
-
-
         """
         self.debug('save analysis_group')
         rs = self.run_spec
         prj = rs.project
         if prj == 'references':
-            #get the most recent unknown analysis
+            # get the most recent unknown analysis
             lan = db.get_last_analysis(spectrometer=rs.mass_spectrometer,
                                        analysis_type=rs.analysis_type,
                                        hours_limit=self.grouping_threshold)
@@ -433,15 +433,15 @@ class AutomatedRunPersister(Loggable):
                     prj = lan.project_name
                     self._add_to_project_group(db, prj, analysis)
 
-                    #add this analysis to a temporary buffer. this is used when a following
-                    #analysis is associated with a different project
+                    # add this analysis to a temporary buffer. this is used when a following
+                    # analysis is associated with a different project
                     self._temp_analysis_buffer.append((prj, analysis.uuid))
 
                 except AttributeError:
                     pass
             else:
-                #this maybe the first reference in the queue, so it should be associated with
-                #the first subsequent unknown.
+                # this maybe the first reference in the queue, so it should be associated with
+                # the first subsequent unknown.
                 self._temp_analysis_buffer.append((None, analysis.uuid))
 
         else:
@@ -463,7 +463,7 @@ class AutomatedRunPersister(Loggable):
         if ag is None:
             ag = db.add_analysis_group(prj)
 
-        #modify ag's id to reflect addition of another analysis
+        # modify ag's id to reflect addition of another analysis
         aa = ag.analyses[:]
         aa.append(analysis)
         ag.id = binascii.crc32(''.join([ai.uuid for ai in aa]))
@@ -775,10 +775,10 @@ class AutomatedRunPersister(Loggable):
     def _assemble_extraction_parameters(self, edict):
         spec = self.run_spec
 
-        edict.update(beam_diameter=spec.beam_diameter,
+        edict.update(beam_diameter=spec.beam_diameter or 0,
                      pattern=spec.pattern,
-                     ramp_duration=spec.ramp_duration,
-                     ramp_rate=spec.ramp_rate)
+                     ramp_duration=spec.ramp_duration or 0,
+                     ramp_rate=spec.ramp_rate or 0)
 
     def _set_table_attr(self, name, grp, attr, value):
         dm = self.data_manager
@@ -818,5 +818,5 @@ class AutomatedRunPersister(Loggable):
         #     return dict(filter_outliers=self.filter_outliers, iterations=self.fo_iterations,
         #                 std_dev=self.fo_std_dev)
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

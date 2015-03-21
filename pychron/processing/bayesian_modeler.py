@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,12 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import  vstack, histogram, array
 from numpy.random import normal
 from multiprocessing import Pool
@@ -31,7 +31,7 @@ from numpy.core.fromnumeric import argmax
 from pychron.core.time_series.time_series import smooth
 
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 '''
     Bayesian stratigraphic modeler
@@ -149,4 +149,4 @@ if __name__ == '__main__':
 #     show()
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

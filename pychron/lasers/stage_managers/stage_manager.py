@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,20 +12,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import DelegatesTo, Property, Instance, \
     Button, List, String, Event, Bool
 from traitsui.api import View, Item, HGroup, VGroup, spring, \
     EnumEditor
 # from apptools.preferences.preference_binding import bind_preference
-#=============standard library imports =======================
+# =============standard library imports =======================
 import os
 # from threading import Thread
 import time
 from numpy import array, asarray
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 from pychron.experiment.utilities.position_regex import POINT_REGEX, XY_REGEX, TRANSECT_REGEX
 from pychron.managers.manager import Manager
 from pychron.canvas.canvas2D.laser_tray_canvas import LaserTrayCanvas
@@ -71,9 +71,9 @@ class StageManager(Manager):
     stage_maps = Property(depends_on='_stage_maps')
 
     _stage_maps = List
-    #===========================================================================
+    # ===========================================================================
     # buttons
-    #===========================================================================
+    # ===========================================================================
     home = Button('home')
     home_option = String('Home All')
     home_options = List
@@ -490,9 +490,9 @@ class StageManager(Manager):
         sm = self._stage_map
         return sm.get_hole(key)
 
-    #===============================================================================
+    # ===============================================================================
     # special move
-    #===============================================================================
+    # ===============================================================================
     def _stop(self, ax_key=None, verbose=False):
         self.stage_controller.stop(ax_key=ax_key, verbose=verbose)
         if self.parent.pattern_executor:
@@ -862,9 +862,9 @@ class StageManager(Manager):
         pass
 
 
-    #===============================================================================
+    # ===============================================================================
     # Views
-    #===============================================================================
+    # ===============================================================================
     #    def edit_traits(self, *args, **kw):
     #        self.initialize_stage()
     #        return super(StageManager, self).edit_traits(*args, **kw)
@@ -872,11 +872,11 @@ class StageManager(Manager):
 
 
 
-    #===============================================================================
+    # ===============================================================================
 
-    #===============================================================================
+    # ===============================================================================
     # Property Get / Set
-    #===============================================================================
+    # ===============================================================================
 
     def _get_stage_maps(self):
         if self._stage_maps:
@@ -1014,9 +1014,9 @@ class StageManager(Manager):
     def _get_point(self):
         return self._point
 
-    #===============================================================================
+    # ===============================================================================
     # handlers
-    #===============================================================================
+    # ===============================================================================
     def _stop_button_fired(self):
         self._stop()
 
@@ -1059,9 +1059,9 @@ class StageManager(Manager):
     #        self.do_pattern('testpattern')
         self.do_pattern('pattern003')
 
-    #===============================================================================
+    # ===============================================================================
     # factories
-    #===============================================================================
+    # ===============================================================================
     def motion_configure_factory(self, **kw):
         return MotionControllerManager(motion_controller=self.stage_controller,
                                        application=self.application,
@@ -1100,9 +1100,9 @@ class StageManager(Manager):
     def _canvas_editor_factory(self):
         return self.canvas_editor_klass(keyboard_focus='keyboard_focus')
 
-    #===============================================================================
+    # ===============================================================================
     # defaults
-    #===============================================================================
+    # ===============================================================================
     def _canvas_default(self):
         return self._canvas_factory()
 
@@ -1156,9 +1156,9 @@ class StageManager(Manager):
                     #                    handler=self.handler_klass
         )
 
-#===============================================================================
+# ===============================================================================
 # mass spec hacks
-#===============================================================================
+# ===============================================================================
 #    _temp_position = None
 #    def _get_temp_position(self):
 #        return self._temp_position
@@ -1194,10 +1194,10 @@ if __name__ == '__main__':
     s.load()
     s.stage_controller.bootstrap()
     s.configure_traits()
-#========================EOF============================
+# ========================EOF============================
 
 # view groups
-    #===============================================================================
+    # ===============================================================================
     #    def _hole__group__(self):
     #        g = Group(HGroup(Item('hole'), spring))
     #        return g

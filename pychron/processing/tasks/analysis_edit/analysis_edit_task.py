@@ -17,18 +17,19 @@
 # ============= enthought library imports =======================
 from datetime import timedelta
 
-from traits.api import Instance, on_trait_change
+from traits.api import Instance, on_trait_change, Enum
 from enable.component import Component
 from pyface.tasks.action.schema import SToolBar
 from pyface.qt.QtGui import QTabBar
 
 # ============= standard library imports ========================
 import binascii
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
+from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.helpers.iterfuncs import partition
 from pychron.core.progress import progress_iterator
 from pychron.easy_parser import EasyParser
-from pychron.envisage.browser.table_configurer import RecallTableConfigurer
+from pychron.core.ui.table_configurer import RecallTableConfigurer
 from pychron.envisage.tasks.actions import ToggleFullWindowAction
 from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter, IntermediateTabularAdapter
 from pychron.processing.k3739_edit import K3739EditModel, K3739EditView
@@ -55,6 +56,7 @@ class AnalysisEditTask(BaseBrowserTask):
     unknowns_adapter = UnknownsAdapter
     unknowns_pane_klass = UnknownsPane
 
+    current_task_name = Enum('Recall', 'IsoEvo', 'Blanks', 'ICFactor', 'Ideogram', 'Spectrum')
     ic_factor_editor_count = 0
 
     tool_bars = [SToolBar(DatabaseSaveAction(),
@@ -72,21 +74,50 @@ class AnalysisEditTask(BaseBrowserTask):
     intermediate_adapter = Instance(IntermediateTabularAdapter, ())
     recall_configurer = Instance(RecallTableConfigurer)
 
-    def activate_blank_task(self):
+    _no_update = False
+
+    def activate_isoevo_task(self):
+        tid = 'pychron.processing.isotope_evolution'
+        self._activate_task(tid, 'IsoEvo')
+        # with no_update(self):
+        # self.current_task_name = 'Blanks'
+
+    def activate_blanks_task(self):
         tid = 'pychron.processing.blanks'
-        self._activate_task(tid)
+        self._activate_task(tid, 'Blanks')
+        # with no_update(self):
+        # self.current_task_name = 'Blanks'
+
+    def activate_icfactor_task(self):
+        tid = 'pychron.processing.ic_factor'
+        self._activate_task(tid, 'ICFactor')
+        # with no_update(self):
+        # self.current_task_name = 'ICFactor'
 
     def activate_recall_task(self):
         tid = 'pychron.recall'
-        self._activate_task(tid)
+        self._activate_task(tid, 'Recall')
+        # with no_update(self):
+        # self.current_task_name = 'Recall'
 
     def activate_ideogram_task(self):
-        tid = 'pychron.processing.figures'
-        task = self._activate_task(tid)
+        task = self._activate_figure_task('Ideogram')
         task.new_ideogram()
 
-    def _activate_task(self, tid):
+    def activate_spectrum_task(self):
+        task = self._activate_figure_task('Spectrum')
+        task.new_spectrum()
+
+    def _activate_figure_task(self, name):
+        tid = 'pychron.processing.figures'
+        task = self._activate_task(tid, name)
+        return task
+
+    def _activate_task(self, tid, name):
         task = self.application.create_task(tid)
+        with no_update(task):
+            task.current_task_name = name
+
         self.window.add_task(task)
         self.window.activate_task(task)
         return task
@@ -192,7 +223,7 @@ class AnalysisEditTask(BaseBrowserTask):
                     e.close()
                     self.recall(e.model)
 
-            for e in self.editor_area.editors:
+            for e in self.get_recall_editors():
                 tc.set_fonts(e.analysis_view)
 
     def recall(self, records, open_copy=False):
@@ -227,7 +258,7 @@ class AnalysisEditTask(BaseBrowserTask):
 
     def _open_existing_recall_editors(self, records):
         editor = None
-        #check if record already is open
+        # check if record already is open
         for r in records:
             editor = self._get_editor_by_uuid(r.uuid)
             if editor:
@@ -295,7 +326,7 @@ class AnalysisEditTask(BaseBrowserTask):
                 gc = PdfPlotGraphicsContext(filename=p,
                                             dest_box=(1.5, 1, 6, 9))
 
-                #pc.do_layout(force=True)
+                # pc.do_layout(force=True)
                 # pc.use_backbuffer=False
                 comp = self.active_editor.component
                 if not issubclass(type(comp), Component):
@@ -334,7 +365,7 @@ class AnalysisEditTask(BaseBrowserTask):
 
                 # for ai in dbtag.analyses:
                 # dban = ai.analysis
-                #     dban.data_reduction_tag = dbtag
+                # dban.data_reduction_tag = dbtag
 
     def set_data_reduction_tag(self):
         items = self._get_analyses_to_tag()
@@ -443,7 +474,7 @@ class AnalysisEditTask(BaseBrowserTask):
 
         self.unknowns_pane = self._create_unknowns_pane()
 
-        #         self.controls_pane = ControlsPane()
+        # self.controls_pane = ControlsPane()
         self.plot_editor_pane = PlotEditorPane()
         panes = [
             self.unknowns_pane,
@@ -693,7 +724,7 @@ class AnalysisEditTask(BaseBrowserTask):
                     if asv.selected:
                         self._recall_item(asv.selected)
 
-    #hooks
+    # hooks
     def _dclicked_analysis_group_hook(self, unks, b):
         pass
 
@@ -707,9 +738,16 @@ class AnalysisEditTask(BaseBrowserTask):
         if self.active_editor:
             self.active_editor.set_items(ans, is_append)
 
-    #===============================================================================
+    # ===============================================================================
     # handlers
-    #===============================================================================
+    # ===============================================================================
+    def _current_task_name_changed(self, new):
+        if self._no_update:
+            return
+
+        func = getattr(self, 'activate_{}_task'.format(new.lower()))
+        func()
+
     def _dclicked_analysis_group_changed(self):
         if self.active_editor:
             if self.selected_analysis_groups:
@@ -873,4 +911,4 @@ class AnalysisEditTask(BaseBrowserTask):
         return rc
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

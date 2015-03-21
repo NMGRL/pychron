@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import Float, Property, Button, Bool, Str, String
 from traitsui.api import Item, spring, Group, HGroup, \
     RangeEditor, ButtonEditor, UItem, EnumEditor
-#=============standard library imports ========================
+# =============standard library imports ========================
 
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 from core.core_device import CoreDevice
 from pychron.core import Q_
 from pychron.core.ui.color_map_bar_editor import BarGaugeEditor
@@ -260,7 +260,7 @@ class MikronGA140Pyrometer(CoreDevice):
                                                          high_name='emmax')))
         return cg
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 #    def scan(self, *args):
 #        '''

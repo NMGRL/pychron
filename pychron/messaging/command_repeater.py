@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Button, Instance, String, Property
 from traitsui.api import View, HGroup, Item, Handler
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import socket
 import os
 from random import random
 from threading import Lock
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.config_loadable import ConfigLoadable
 from pychron.remote_hardware.errors import PychronCommErrorCode
 from pychron.globals import globalv
@@ -120,9 +120,9 @@ class CommandRepeater(ConfigLoadable):
 
             return result
 
-    #===============================================================================
+    # ===============================================================================
     # commands
-    #===============================================================================
+    # ===============================================================================
     def test_connection(self, verbose=True):
         """
         """
@@ -155,9 +155,9 @@ class CommandRepeater(ConfigLoadable):
 
         return result
 
-    #===============================================================================
+    # ===============================================================================
     # response helpers
-    #===============================================================================
+    # ===============================================================================
     def _send_(self, s, verbose=True):
         success = True
         e = None
@@ -244,9 +244,9 @@ class CommandRepeater(ConfigLoadable):
 
         return False, e
 
-    #==============================================================================
+    # ==============================================================================
     # View
-    #==============================================================================
+    # ==============================================================================
     def _path_changed(self, old, new):
         """
         """
@@ -277,7 +277,7 @@ class CommandRepeater(ConfigLoadable):
                      Item('test', show_label=False)),
                  handler=CRHandler)
         return v
-#============= EOF ====================================
+# ============= EOF ====================================
 
 #
 # if __name__ == '__main__':
@@ -297,9 +297,9 @@ class CommandRepeater(ConfigLoadable):
 #     logging_setup('profile_repeator')
 #     profiling()
 
-#===============================================================================
+# ===============================================================================
 # SHMCommandRepeater
-#===============================================================================
+# ===============================================================================
 
 # class SHMCommandRepeater(SHMClient):
 #    '''

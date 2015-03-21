@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Property, Dict, Float, Any, Instance
 from traitsui.api import View, VGroup, Item, RangeEditor
 # from pyface.timer.api import Timer
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 import time
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.timer import Timer
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.core.motion.motion_profiler import MotionProfiler
@@ -141,9 +141,9 @@ class MotionController(CoreDevice):
 
             self.axes[a] = na
 
-#===============================================================================
+# ===============================================================================
 # define in subclass
-#===============================================================================
+# ===============================================================================
     def save_axes_parameters(self):
         pass
 
@@ -179,9 +179,9 @@ class MotionController(CoreDevice):
     def set_single_axis_motion_parameters(self, *args, **kw):
         pass
 
-#===============================================================================
+# ===============================================================================
 # private
-#===============================================================================
+# ===============================================================================
     def _set_axis(self, name, v, **kw):
         if v is None:
             return
@@ -282,9 +282,9 @@ class MotionController(CoreDevice):
         if event is not None:
             event.set()
 
-#===============================================================================
+# ===============================================================================
 # property get/set
-#===============================================================================
+# ===============================================================================
     def _get_x(self):
         return self._x_position
 
@@ -356,9 +356,9 @@ class MotionController(CoreDevice):
     def _get_negative_limit(self, key):
         return self.axes[key].negative_limit if self.axes.has_key(key) else 0
 
-#===============================================================================
+# ===============================================================================
 # view
-#===============================================================================
+# ===============================================================================
     def traits_view(self):
         grp = self.get_control_group()
         grp.label = ''
@@ -385,13 +385,13 @@ class MotionController(CoreDevice):
                                       enabled_when='0'
                                       ))
         return g
-#===============================================================================
+# ===============================================================================
 # defaults
-#===============================================================================
+# ===============================================================================
     def _motion_profiler_default(self):
         mp = MotionProfiler()
         if self.configuration_dir_path:
             p = os.path.join(self.configuration_dir_path, 'motion_profiler.cfg')
             mp.load(p)
         return mp
-#============= EOF ====================================
+# ============= EOF ====================================

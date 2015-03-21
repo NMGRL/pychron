@@ -20,7 +20,7 @@ from PySide.QtGui import QLabel, QPainter, QColor, QWidget, QHBoxLayout
 from traits.api import Str
 from traits.trait_types import Event
 # ============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from traitsui.qt4.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
 
@@ -114,7 +114,7 @@ class LabelEditor(BasicEditorFactory):
     refresh = Str
 
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

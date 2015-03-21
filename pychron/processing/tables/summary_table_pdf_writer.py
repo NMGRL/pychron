@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,12 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Int, Str
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.pdf.base_table_pdf_writer import BasePDFTableWriter
 from pychron.core.pdf.items import Row, FootNoteRow, FooterRow
@@ -169,9 +169,9 @@ class SummaryPDFTableWriter(BasePDFTableWriter):
             if v.height:
                 table._argH[i] = v.height * inch
 
-            #===============================================================================
+            # ===============================================================================
             # summary
-            #===============================================================================
+            # ===============================================================================
 
     def _make_notes(self, data, style):
         p = os.path.join(paths.template_dir, self.notes_template)
@@ -204,9 +204,9 @@ class SummaryPDFTableWriter(BasePDFTableWriter):
                     style.add('BACKGROUND', (0, idx), (-1, idx),
                               getattr(colors, bgcolor))
 
-#===============================================================================
+# ===============================================================================
 # footnotes
-#===============================================================================
+# ===============================================================================
 #     def _make_footnote_rows(self, data, style):
 #         return
 #
@@ -227,11 +227,11 @@ class SummaryPDFTableWriter(BasePDFTableWriter):
 #             style.add('SPAN', (0, idx), (-1, idx))
 # #            style.add('VALIGN', (1, idx), (-1, idx), 'MIDDLE')
 
-#===============================================================================
+# ===============================================================================
 #
-#===============================================================================
+# ===============================================================================
 
-#============= EOF =============================================
+# ============= EOF =============================================
 # class TableSpec(HasTraits):
 #     status_width = Int(5)
 #     id_width = Int(20)

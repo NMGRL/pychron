@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Bool, Property, Int, Enum, List, String, Tuple, Float, Dict
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.pychron_constants import NULL_STR, FIT_TYPES
 
 
@@ -112,9 +112,13 @@ class FitPlotterOptions(AuxPlotOptions):
 
 
 class SpectrumPlotOptions(AuxPlotOptions):
-    names = List([NULL_STR, '%40Ar*', 'K/Ca', 'K/Cl', 'Mol K39', 'Age'])
+    names = List([NULL_STR,
+                  '40/36', '(40/36)ic', '(40/36)if',
+                  '%40Ar*', 'K/Ca', 'K/Cl', 'Mol K39', 'Age'])
 
-    _plot_names = List(['', 'radiogenic_yield', 'kca', 'kcl', 'moles_k39', 'age_spectrum'])
+    _plot_names = List(['',
+                        'raw_40_36', 'ic_40_36', 'icf_40_36',
+                        'radiogenic_yield', 'kca', 'kcl', 'moles_k39', 'age_spectrum'])
     #def _get_plot_names(self):
     #    return {NULL_STR: NULL_STR,
     #            'radiogenic_yield': 'Radiogenic 40Ar',
@@ -145,4 +149,4 @@ class SystemMonitorPlotOptions(AuxPlotOptions):
     def _name_changed(self):
         pass
 
-#============= EOF =============================================
+# ============= EOF =============================================

@@ -349,4 +349,4 @@ class ArArConstantsPreferencesPane(PreferencesPane):
 
         v = View(general, decay, ratios, spectrometer)
         return v
-        #============= EOF =============================================
+        # ============= EOF =============================================

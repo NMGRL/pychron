@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance, List, Bool, Event, \
     Property, Float, Tuple, File, Int
 from traitsui.api import View, Item, UItem, ButtonEditor
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import time
 import os
 import yaml
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.managers.data_managers.csv_data_manager import CSVDataManager
 from pychron.graph.stream_graph import StreamStackedGraph
 from pychron.core.helpers.timer import Timer
@@ -311,9 +311,9 @@ class Scanner(Loggable):
             self.warning_dialog('No Scanner Control file found at {}'.format(self.control_path))
             self._warned = True
 
-#===============================================================================
+# ===============================================================================
 # defaults
-#===============================================================================
+# ===============================================================================
 #    def _graph_default(self):
 #        g = StreamStackedGraph(window_x=50,
 #                               window_y=100)
@@ -388,4 +388,4 @@ if __name__ == '__main__':
     s.new_static_value('Setpoint', 10, plotid=1)
     sc = ScannerController(model=s)
     sc.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================

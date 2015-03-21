@@ -12,23 +12,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import List, Button, Any, Int, Str, Enum, Color
-from traits.trait_types import String
-from traits.traits import Property
-from traitsui.api import View, VGroup, UItem, HGroup
+from traits.api import List, Button, Any, Int, Str, Enum, Color, String, Property
+from traitsui.api import View, VGroup, UItem, HGroup, Item, spring
 from apptools.preferences.api import PreferencesHelper
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import re
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from traitsui.list_str_adapter import ListStrAdapter
 
 
-#def button_editor(trait, name, editor_kw=None, **kw):
-#    if editor_kw is None:
+# def button_editor(trait, name, editor_kw=None, **kw):
+# if editor_kw is None:
 #        editor_kw = {}
 #
 #    image = ImageResource(name=name,
@@ -73,27 +71,46 @@ def test_connection_item():
                               tooltip='Test connection to Github Repo')
 
 
+def remote_status_item(label=None):
+    grp = HGroup(Item('remote',
+                      label='Name'),
+                 test_connection_item(),
+                 CustomLabel('_remote_status',
+                             width=50,
+                             color_name='_remote_status_color'))
+    if label:
+        grp.label = label
+        grp.show_border = True
+    return grp
+
+
 class GitRepoPreferencesHelper(BasePreferencesHelper):
     remote = Property(String, depends_on='_remote')
     _remote = String
     test_connection = Button
-    remote_status = Str
-    remote_status_color = Color
+    _remote_status = Str
+    _remote_status_color = Color
 
     def _test_connection_fired(self):
         import urllib2
 
         if self.remote.strip():
             try:
-                urllib2.urlopen('https://github.com/{}'.format(self.remote))
-                self.remote_status = 'Valid'
-                self.remote_status_color = 'green'
+                cmd = 'https://github.com/{}'.format(self.remote)
+                urllib2.urlopen(cmd)
+                self._remote_status = 'Valid'
+                self._remote_status_color = 'green'
+                self._connection_hook()
                 return
-            except:
-                pass
+            except BaseException, e:
+                print e, cmd
 
-        self.remote_status_color = 'red'
-        self.remote_status = 'Invalid'
+        self._remote_status_color = 'red'
+        self._remote_status = 'Invalid'
+
+
+    def _connection_hook(self):
+        pass
 
     def _set_remote(self, v):
         self._remote = v
@@ -187,7 +204,8 @@ class BaseConsolePreferencesPane(PreferencesPane):
                                UItem('textcolor'),
                                UItem('bgcolor')),
                         preview,
+                        show_border=True,
                         label=self.label))
         return v
 
-        #============= EOF =============================================
+        # ============= EOF =============================================

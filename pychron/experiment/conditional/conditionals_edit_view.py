@@ -15,20 +15,22 @@
 # ===============================================================================
 from pychron.core.ui import set_qt
 from pychron.envisage.icon_button_editor import icon_button_editor
+from pychron.envisage.resources import icon, image
 from pychron.experiment.conditional.conditional import conditional_from_dict, ActionConditional, TruncationConditional, \
-    CancelationConditional, TerminationConditional
+    CancelationConditional, TerminationConditional, BaseConditional
 from pychron.experiment.conditional.regexes import CP_REGEX, STD_REGEX, ACTIVE_REGEX, BASELINECOR_REGEX, BASELINE_REGEX, \
     MAX_REGEX, MIN_REGEX, AVG_REGEX, COMP_REGEX, ARGS_REGEX, BETWEEN_REGEX, SLOPE_REGEX
+from pychron.experiment.utilities.conditionals import level_text, level_color
 
 set_qt()
 # ============= enthought library imports =======================
 from traitsui.menu import Action
 from traits.api import HasTraits, List, Instance, Any, \
-    Enum, Float, on_trait_change, Str, Int, Property, Button, Bool
+    Enum, Float, on_trait_change, Str, Int, Property, Button, Bool, CStr
 
 from pyface.file_dialog import FileDialog
 from traitsui.api import View, Tabbed, Group, UItem, \
-    TabularEditor, VGroup, EnumEditor, Item, HGroup, spring, Label, Handler, HSplit
+    TabularEditor, VGroup, EnumEditor, Item, HGroup, spring, Label, Handler, HSplit, ListEditor
 from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 import os
@@ -39,24 +41,71 @@ from pychron.core.helpers.filetools import get_path
 from pychron.paths import paths
 
 
-class PRConditionalsAdapter(TabularAdapter):
-    columns = [('Attribute', 'attr'),
-               ('Check', 'teststr'), ]
+class BaseConditionalsAdapter(TabularAdapter):
+    level_text = Property
+    tripped_text = Property
+    tripped_image = Property
+
+    def get_bg_color(self, obj, trait, row, column=0):
+        item = getattr(obj, trait)[row]
+        return level_color(item.level)
+
+    def _get_level_text(self):
+        return level_text(self.item.level)
+
+    def _get_tripped_text(self):
+        return ''
+
+    def _get_tripped_image(self):
+        return icon('gray_ball' if not self.item.tripped else 'green_ball')
+
+
+class PRConditionalsAdapter(BaseConditionalsAdapter):
+    columns = [('Tripped', 'tripped'),
+               ('Level', 'level'),
+               ('Attribute', 'attr'),
+               ('Check', 'teststr'),
+               ('Value', 'value'),
+               ('Location', 'location')]
 
     attr_width = Int(100)
     teststr_width = Int(200)
 
 
-class ConditionalsAdapter(TabularAdapter):
-    columns = [('Attribute', 'attr'),
+class ConditionalsAdapter(BaseConditionalsAdapter):
+    columns = [('Tripped', 'tripped'),
+               ('Level', 'level'),
+               ('Attribute', 'attr'),
                ('Start', 'start_count'),
                ('Frequency', 'frequency'),
-               ('Check', 'teststr'), ]
+               ('Check', 'teststr'),
+               ('Value', 'value'),
+               ('Location', 'location')]
 
     attr_width = Int(100)
     teststr_width = Int(200)
     start_width = Int(50)
     frequency_width = Int(100)
+
+
+class EPRConditionalsAdapter(PRConditionalsAdapter):
+    columns = [('Attribute', 'attr'),
+               ('Check', 'teststr')]
+
+
+class EConditionalsAdapter(ConditionalsAdapter):
+    columns = [('Attribute', 'attr'),
+               ('Start', 'start_count'),
+               ('Frequency', 'frequency'),
+               ('Check', 'teststr')]
+
+
+class EActionConditionalsAdapter(ConditionalsAdapter):
+    columns = [('Attribute', 'attr'),
+               ('Start', 'start_count'),
+               ('Frequency', 'frequency'),
+               ('Check', 'teststr'),
+               ('Action', 'action')]
 
 
 FUNCTIONS = ['', 'Max', 'Min', 'Slope', 'Average', 'Between']
@@ -66,12 +115,15 @@ MOD_DICT = {'Current': '{}.cur', 'StdDev': '{}.std', 'Baseline': '{}.bs',
             'BaselineCorrected': '{}.bs_corrected',
             'Between': '{}.between'}
 
+TAGS = 'start_count,frequency,attr,window,mapper,ntrips,action'
+
 
 class ConditionalGroup(HasTraits):
-    editable = True
-
+    editable = False
+    label = Str
     conditionals = List
     selected = Any
+    help_str = Str
 
     attr = Str
     available_attrs = List
@@ -88,53 +140,37 @@ class ConditionalGroup(HasTraits):
     value = Float
     start_count = Int
     frequency = Int
+    ntrips = Int
     _no_update = False
 
     add_button = Button
     delete_button = Button
 
-    dump_attrs = [('attr', ''), ('frequency', ''),
-                  ('window', ''), ('mapper', ''),
-                  ('start', 'start_count'),
-                  ('teststr', 'teststr')]
+    dump_attrs = List([('attr', ''), ('frequency', ''),
+                       ('window', ''), ('mapper', ''),
+                       ('start_count', ''),
+                       ('teststr', ''),
+                       ('ntrips', '')])
+
     tabular_adapter_klass = ConditionalsAdapter
 
     _conditional_klass = None
 
-    def _add_button_fired(self):
-        if self.selected:
-            idx = self.conditionals.index(self.selected)
-
-            k = self.selected.clone_traits()
-            self.conditionals.insert(idx, k)
-        else:
-            k = self._conditional_klass('', '')
-            self.conditionals.append()
-
-    def _delete_button_fired(self):
-        idx = self.conditionals.index(self.selected)
-        self.conditionals.remove(self.selected)
-        if not self.conditionals:
-            sel = self._conditional_klass('', '')
-        else:
-            sel = self.conditionals[idx - 1]
-        self.selected = sel
-
-    def __init__(self, conditionals, klass, *args, **kw):
+    def __init__(self, conditionals, klass, auto_select=True, *args, **kw):
         if not klass:
             raise NotImplementedError
 
         if conditionals:
             for ci in conditionals:
-                cx = conditional_from_dict(ci, klass)
+                cx = ci if isinstance(ci, BaseConditional) else conditional_from_dict(ci, klass)
                 if cx:
                     self.conditionals.append(cx)
-
-        if self.conditionals:
-            self.selected = self.conditionals[0]
-        else:
-            self.selected = klass('', '')
-            self.conditionals = [self.selected]
+        if auto_select:
+            if self.conditionals:
+                self.selected = self.conditionals[0]
+            else:
+                self.selected = klass('', 0)
+                self.conditionals = [self.selected]
 
         self._conditional_klass = klass
         super(ConditionalGroup, self).__init__(*args, **kw)
@@ -150,6 +186,25 @@ class ConditionalGroup(HasTraits):
 
             cs.append(d)
         return cs
+
+    def _add_button_fired(self):
+        if self.selected:
+            idx = self.conditionals.index(self.selected)
+
+            k = self.selected.clone_traits()
+            self.conditionals.insert(idx, k)
+        else:
+            k = self._conditional_klass('', '')
+            self.conditionals.append(k)
+
+    def _delete_button_fired(self):
+        idx = self.conditionals.index(self.selected)
+        self.conditionals.remove(self.selected)
+        if not self.conditionals:
+            sel = self._conditional_klass('', '')
+        else:
+            sel = self.conditionals[idx - 1]
+        self.selected = sel
 
     @on_trait_change('function, modifier, comparator, value, attr, use_invert, '
                      'use_between, secondary_value')
@@ -192,18 +247,24 @@ class ConditionalGroup(HasTraits):
 
             self.selected.teststr = comp
 
-    @on_trait_change('start_count, frequency, attr, window, mapper')
+    @on_trait_change(TAGS)
     def _update_selected(self, name, new):
-        setattr(self.selected, name, new)
+        try:
+            setattr(self.selected, name, new)
+        except AttributeError:
+            pass
 
     def _selected_changed(self, new):
         if new:
             teststr = new.teststr
             with no_update(self):
-                for a in ('start_count', 'frequency', 'attr', 'window', 'mapper'):
-                    setattr(self, a, getattr(new, a))
+                for a in TAGS.split(','):
+                    try:
+                        setattr(self, a, getattr(new, a))
+                    except AttributeError:
+                        continue
 
-                self.function=''
+                self.function = ''
                 self.secondary_value = 0
                 self.value = 0
                 self.modifier = ''
@@ -261,6 +322,105 @@ class ConditionalGroup(HasTraits):
                                           selected='selected'))
         return item
 
+    def _get_opt_grp(self):
+        opt_grp = VGroup(Item('function',
+                              editor=EnumEditor(values=FUNCTIONS),
+                              tooltip='Optional. Apply a predefined function to this attribute. '
+                                      'Functions include {}'.format(','.join(FUNCTIONS[1:]))),
+                         Item('modifier',
+                              enabled_when='modifier_enabled',
+                              tooltip='Optional. Apply a modifier to this attribute.'
+                                      'For example to check if CDD is active use '
+                                      'Atttribute=CDD, Modifier=Inactive',
+                              editor=EnumEditor(values=['', 'StdDev', 'Current', 'Inactive',
+                                                        'Baseline', 'BaselineCorrected'])),
+                         show_border=True,
+                         label='Optional')
+        return opt_grp
+
+    def _get_cmp_grp(self):
+        cmp_grp = VGroup(Item('comparator', label='Operation',
+                              enabled_when='not function=="Between"',
+                              tooltip='Numeric and logical comparisons. Conditional trips when it '
+                                      'evaluates to True'),
+                         Item('value'),
+                         Item('secondary_value', enabled_when='function=="Between"'),
+                         Item('use_invert', label='Invert'),
+                         show_border=True,
+                         label='Comparison')
+        return cmp_grp
+
+    def _get_cnt_grp(self):
+        cnt_grp = VGroup(Item('start_count',
+                              tooltip='Number of counts to wait until performing check',
+                              label='Start'),
+                         Item('frequency',
+                              tooltip='Number of counts between each check'),
+                         Item('ntrips',
+                              label='N Trips',
+                              tooltip='Number of trips (conditional evaluates True) '
+                                      'before action is taken. Default=1'),
+                         show_border=True, label='Counts')
+        return cnt_grp
+
+    def _get_edit_group(self):
+
+        cnt_grp = self._get_cnt_grp()
+        cmp_grp = self._get_cmp_grp()
+        opt_grp = self._get_opt_grp()
+
+        edit_grp = VGroup(Item('attr',
+                               label='Attribute',
+                               editor=EnumEditor(name='available_attrs')),
+                          opt_grp,
+                          VGroup(cmp_grp,
+                                 cnt_grp,
+                                 enabled_when='attr'))
+        return edit_grp
+
+    def traits_view(self):
+        if self.editable:
+            v = View(HSplit(self._get_edit_group(),
+                            VGroup(self._get_conditionals_grp(),
+                                   self._get_tool_group())))
+        else:
+            v = View(self._get_conditionals_grp())
+        return v
+
+
+class ActionConditionalGroup(ConditionalGroup):
+    action = CStr
+
+    def __init__(self, *args, **kw):
+        super(ActionConditionalGroup, self).__init__(*args, **kw)
+        self.dump_attrs.append(('action', ''))
+
+    def _get_edit_group(self):
+        cnt_grp = self._get_cnt_grp()
+        cmp_grp = self._get_cmp_grp()
+        opt_grp = self._get_opt_grp()
+
+        act_grp = VGroup(Item('action'),
+                         show_border=True,
+                         label='Action')
+        edit_grp = VGroup(Item('attr',
+                               label='Attribute',
+                               editor=EnumEditor(name='available_attrs')),
+                          opt_grp,
+                          VGroup(cmp_grp,
+                                 cnt_grp,
+                                 act_grp,
+                                 enabled_when='attr'))
+        return edit_grp
+
+
+class PostRunGroup(ConditionalGroup):
+    dump_attrs = [('attr', ''),
+                  ('window', ''),
+                  ('mapper', ''),
+                  ('teststr', 'teststr')]
+    tabular_adapter_klass = PRConditionalsAdapter
+
     def _get_edit_group(self):
         edit_grp = VGroup(Item('attr',
                                label='Attribute',
@@ -276,43 +436,7 @@ class ConditionalGroup(HasTraits):
                                  Item('value'),
                                  Item('secondary_value', enabled_when='function=="Between"'),
                                  Item('use_invert', label='Invert'),
-                                 Item('start_count',
-                                      tooltip='Number of counts to wait until performing check',
-                                      label='Start'),
-                                 Item('frequency',
-                                      tooltip='Number of counts between each check'),
                                  enabled_when='attr'))
-        return edit_grp
-
-    def traits_view(self):
-        if self.editable:
-            v = View(HSplit(self._get_edit_group(),
-                            VGroup(self._get_conditionals_grp(),
-                                   self._get_tool_group())))
-        else:
-            v = View(self._get_conditionals_grp())
-        return v
-
-
-class PostRunGroup(ConditionalGroup):
-    dump_attrs = [('attr', ''),
-                  ('window', ''),
-                  ('mapper', ''),
-                  ('teststr', 'teststr')]
-    tabular_adapter_klass = PRConditionalsAdapter
-
-    def _get_edit_group(self):
-        edit_grp = VGroup(HGroup(spring, UItem('object.selected.teststr', style='readonly'), spring),
-                          HGroup(UItem('attr',
-                                       editor=EnumEditor(name='available_attrs')),
-                                 Item('function',
-                                      editor=EnumEditor(values=FUNCTIONS)),
-                                 Item('modifier',
-                                      enabled_when='modifier_enabled',
-                                      editor=EnumEditor(values=['', 'StdDev', 'Current', 'Inactive',
-                                                                'Baseline', 'BaselineCorrected']))),
-                          HGroup(UItem('comparator', enabled_when='attr'),
-                                 Item('value', enabled_when='attr and comparator')))
         return edit_grp
 
 
@@ -321,18 +445,48 @@ class PreRunGroup(ConditionalGroup):
     tabular_adapter_klass = PRConditionalsAdapter
 
     def _get_edit_group(self):
-        edit_grp = VGroup(HGroup(spring, UItem('object.selected.teststr', style='readonly'), spring),
-                          HGroup(UItem('attr',
-                                       editor=EnumEditor(name='available_attrs')),
-                                 Item('modifier',
-                                      enabled_when='modifier_enabled',
-                                      editor=EnumEditor(values=['', 'Inactive']))))
+        edit_grp = VGroup(UItem('attr',
+                                editor=EnumEditor(name='available_attrs')),
+                          Item('modifier',
+                               enabled_when='modifier_enabled',
+                               editor=EnumEditor(values=['', 'Inactive'])))
         return edit_grp
+
+
+class EConditionalGroup(ConditionalGroup):
+    tabular_adapter_klass = EConditionalsAdapter
+
+
+class ActionGroup(ActionConditionalGroup):
+    tabular_adapter_klass = EActionConditionalsAdapter
+    help_str = 'Action:  Perform a specified action'
+
+
+class TerminationGroup(EConditionalGroup):
+    help_str = 'Termination: STOP this run and CONTINUE to next'
+
+
+class CancelationGroup(EConditionalGroup):
+    help_str = 'Cancelation: STOP this run and STOP experiment'
+
+
+class TruncationGroup(EConditionalGroup):
+    help_str = 'Truncation: Stop current measurement and CONTINUE run'
+
+
+class EPostRunGroup(PreRunGroup):
+    tabular_adapter_klass = EPRConditionalsAdapter
+    help_str = 'PostRunTermination: Checked after run is completed. Cancels experiment.'
+
+
+class EPreRunGroup(PreRunGroup):
+    tabular_adapter_klass = EPRConditionalsAdapter
+    help_str = 'PreRunTermination: Checked before run is started. Cancels experiment.'
 
 
 class CEHandler(Handler):
     def object_path_changed(self, info):
-        info.ui.title = 'Edit Default Conditionals - [{}]'.format(info.object.name)
+        info.ui.title = '{} - [{}]'.format(info.object.title, info.object.name)
 
     def save_as(self, info):
         dlg = FileDialog(default_directory=paths.queue_conditionals_dir, action='save as')
@@ -342,33 +496,68 @@ class CEHandler(Handler):
 
 
 class ConditionalsViewable(HasTraits):
-    actions_group = Instance(ConditionalGroup)
-    cancelations_group = Instance(ConditionalGroup)
-    terminations_group = Instance(ConditionalGroup)
-    truncations_group = Instance(ConditionalGroup)
-    post_run_terminations_group = Instance(ConditionalGroup)
-    pre_run_terminations_group = Instance(ConditionalGroup)
+    # actions_group = Instance(ConditionalGroup)
+    # cancelations_group = Instance(ConditionalGroup)
+    # terminations_group = Instance(ConditionalGroup)
+    # truncations_group = Instance(ConditionalGroup)
+    # post_run_terminations_group = Instance(ConditionalGroup)
+    # pre_run_terminations_group = Instance(ConditionalGroup)
 
     group_names = ('actions', 'truncations', 'cancelations', 'terminations',
                    'post_run_terminations', 'pre_run_terminations')
     title = Str
+    available_attrs = List
+    groups = List
+    selected_group = Instance(ConditionalGroup)
+    help_str = Str
 
-    def traits_view(self):
-        vs = []
-        for name in self.group_names:
-            gname = '{}_group'.format(name)
-            uname = ' '.join([ni.capitalize() for ni in name.split('_')])
-            grp = Group(UItem(gname, style='custom'), label=uname)
-            vs.append(grp)
+    def _selected_group_changed(self, new):
+        if new:
+            self.help_str = new.help_str
 
-        v = View(Tabbed(*vs),
-                 width=800,
-                 resizable=True,
-                 handler=CEHandler(),
-                 buttons=['OK', 'Cancel', Action(name='Save As', action='save_as')],
-                 title=self.title)
+    def select_conditional(self, cond, tripped=False):
+        tcond = type(cond)
+        for gi in self.groups:
+            for ci in gi.conditionals:
+                if type(ci) is tcond:
+                    # print '"{}" "{}", {}, {}'.format(ci, cond, id(ci), id(cond))
+                    if ci == cond or ci.teststr == cond.teststr:
+                        self.selected_group = gi
+                        ci.tripped = tripped
+                        return
 
-        return v
+    def _view_tabs(self):
+        return UItem('groups', style='custom',
+                     editor=ListEditor(use_notebook=True,
+                                       style='custom',
+                                       selected='selected_group',
+                                       page_name='.label'))
+
+
+    # def _view_tabs2(self):
+    # vs = []
+    # for name in self.group_names:
+    # gname = '{}_group'.format(name)
+    # uname = ' '.join([ni.capitalize() for ni in name.split('_')])
+    # grp = Group(UItem(gname, style='custom'), label=uname)
+    # vs.append(grp)
+    # return Tabbed(*vs)
+
+    def _group_factory(self, items, klass, name=None, conditional_klass=None, label='', **kw):
+        if conditional_klass is None:
+            conditional_klass = TerminationConditional
+
+        if name:
+            items = items.get(name, []) if items else []
+
+        group = klass(items, conditional_klass,
+                      name=name,
+                      label=label or name,
+                      available_attrs=self.available_attrs,
+                      **kw)
+
+        self.groups.append(group)
+        return group
 
 
 class ConditionalsEditView(ConditionalsViewable):
@@ -376,12 +565,13 @@ class ConditionalsEditView(ConditionalsViewable):
     root = Str
     detectors = List
     title = 'Edit Default Conditionals'
+    # pre_run_terminations_group = Any
 
     def __init__(self, detectors=None, *args, **kw):
         attrs = ['', 'age', 'kca', 'kcl', 'cak', 'clk', 'rad40_percent',
                  'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36']
 
-        ratio_matrix = ['{}/{}'.format(i, j) for i in ('40', '39', '38', '37', '36')
+        ratio_matrix = ['Ar{}/Ar{}'.format(i, j) for i in ('40', '39', '38', '37', '36')
                         for j in ('40', '39', '38', '37', '36') if i != j]
         attrs.extend(ratio_matrix)
         if detectors:
@@ -413,27 +603,26 @@ class ConditionalsEditView(ConditionalsViewable):
             with open(p, 'r') as fp:
                 yd = yaml.load(fp)
 
-        for name, klass, cklass in (('actions', ConditionalGroup, ActionConditional),
-                                    ('truncations', ConditionalGroup, TruncationConditional),
-                                    ('cancelations', ConditionalGroup, CancelationConditional),
-                                    ('terminations', ConditionalGroup, TerminationConditional),
-                                    ('post_run_terminations', PostRunGroup, TerminationConditional)):
-            if name in self.group_names:
-                grp = self._group_factory(yd, name, klass, cklass)
-                setattr(self, '{}_group'.format(name), grp)
-
         if 'pre_run_terminations' in self.group_names:
-            grp = self._group_factory(yd, 'pre_run_terminations', PreRunGroup)
+            grp = self._group_factory(yd, EPreRunGroup, name='pre_run_terminations',
+                                      label='PreRunTerminations',
+                                      editable=True)
             grp.available_attrs = self.detectors
-            self.pre_run_terminations_group = grp
 
-    def _group_factory(self, yd, name, klass, conditional_klass=None):
-        if conditional_klass is None:
-            conditional_klass = TerminationConditional
+        for name, klass, cklass, label in (('actions', ActionGroup, ActionConditional, 'Actions'),
+                                           ('truncations', TruncationGroup, TruncationConditional, 'Truncations'),
+                                           ('cancelations', CancelationGroup, CancelationConditional, 'Cancelations'),
+                                           ('terminations', TerminationGroup, TerminationConditional, 'Terminations'),
+                                           ('post_run_terminations', EPostRunGroup, TerminationConditional,
+                                            'PostRunTerminations')):
+            if name in self.group_names:
+                grp = self._group_factory(yd, klass, conditional_klass=cklass, name=name, label=label, editable=True)
+                if name == 'post_run_terminations':
+                    grp.available_attrs = self.detectors
+                    # setattr(self, '{}_group'.format(name), grp)
+                    # self.pre_run_terminations_group = grp
 
-        items = yd.get(name, []) if yd else []
-        group = klass(items, conditional_klass, available_attrs=self.available_attrs)
-        return group
+        self.selected_group = self.groups[0]
 
     def dump(self, path=None):
         if path is None:
@@ -445,10 +634,24 @@ class ConditionalsEditView(ConditionalsViewable):
             path = get_file_path(self.root, action='save as')
 
         if path:
+            self.path = path
             with open(path, 'w') as fp:
-                d = {k: getattr(self, '{}_group'.format(k)).dump() for k in self.group_names}
-
+                # d = {k: getattr(self, '{}_group'.format(k)).dump() for k in self.group_names}
+                d = {g.name: g.dump() for g in self.groups}
                 yaml.dump(d, fp, default_flow_style=False)
+
+    def traits_view(self):
+        v = View(VGroup(self._view_tabs(),
+                        VGroup(UItem('help_str', style='readonly'),
+                               label='Description',
+                               show_border=True)),
+                 width=900,
+                 resizable=True,
+                 handler=CEHandler(),
+                 buttons=['OK', 'Cancel', Action(name='Save As', action='save_as')],
+                 title=self.title)
+
+        return v
 
 
 def get_file_path(root, action='open'):
@@ -490,6 +693,7 @@ def edit_conditionals(name, detectors=None, app=None, root=None, save_as=False,
 
     if info.result:
         cev.dump()
+        return cev.name
 
 
 if __name__ == '__main__':
@@ -501,7 +705,7 @@ if __name__ == '__main__':
         test = Button
 
         def _test_fired(self):
-            edit_conditionals('foo', save_as=False)
+            edit_conditionals('normal', save_as=False)
 
     D().configure_traits(view=View('test'))
 # ============= EOF =============================================

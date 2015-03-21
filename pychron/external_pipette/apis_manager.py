@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance, Button, Bool, Str, List, provides, Property
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.external_pipette.protocol import IPipetteManager
 from pychron.hardware.apis_controller import ApisController
 from pychron.managers.manager import Manager
@@ -314,5 +314,5 @@ class SimpleApisManager(Manager):
         #     self._load_canvas(c)
         #     return c
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

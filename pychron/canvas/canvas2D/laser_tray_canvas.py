@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,20 +12,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import Color, Property, Tuple, Float, Any, Bool, Range, on_trait_change, \
     Enum, List, Int, File, Instance
 # from traitsui.api import View, Item, VGroup, HGroup, ColorEditor
 from chaco.api import AbstractOverlay
 from kiva import constants
 from kiva.agg.agg import GraphicsContextArray
-#=============standard library imports ========================
+# =============standard library imports ========================
 from numpy import array
 from PIL import Image
 # import math
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 from pychron.canvas.canvas2D.map_canvas import MapCanvas
 
 from pychron.canvas.canvas2D.scene.primitives.laser_primitives import Transect, \
@@ -451,9 +451,9 @@ class LaserTrayCanvas(MapCanvas):
 
         self.set_mapper_limits(mapper, (nmi, nma))
 
-    #===============================================================================
+    # ===============================================================================
     # interactor
-    #===============================================================================
+    # ===============================================================================
     def normal_left_down(self, event):
         """
         """
@@ -533,9 +533,9 @@ class LaserTrayCanvas(MapCanvas):
         self.request_redraw()
         event.handled = True
 
-    #===============================================================================
+    # ===============================================================================
     # private
-    #===============================================================================
+    # ===============================================================================
     def _calc_relative_move_direction(self, char, direction):
         return direction
 
@@ -548,9 +548,9 @@ class LaserTrayCanvas(MapCanvas):
         #self.overlays.append(ch)
         self.crosshairs_overlay = ch
 
-    #===============================================================================
+    # ===============================================================================
     # handlers
-    #===============================================================================
+    # ===============================================================================
     @on_trait_change('''show_laser_position, show_desired_position,
                          desired_position_color,
                          crosshairs_+
@@ -567,9 +567,9 @@ class LaserTrayCanvas(MapCanvas):
 
         self.request_redraw()
 
-    #===============================================================================
+    # ===============================================================================
     # property get/set
-    #===============================================================================
+    # ===============================================================================
     def _get_crosshairs_color(self):
         return self._crosshairs_color
 
@@ -592,18 +592,18 @@ class LaserTrayCanvas(MapCanvas):
             x, y = self.map_screen([self._desired_position])[0]
             return x, y
 
-    #===============================================================================
+    # ===============================================================================
     # defaults
-    #===============================================================================
+    # ===============================================================================
     def _scene_default(self):
         from pychron.canvas.canvas2D.scene.laser_mine_scene import LaserMineScene
 
         s = LaserMineScene(canvas=self)
         return s
 
-    #===============================================================================
+    # ===============================================================================
     # draw
-    #===============================================================================
+    # ===============================================================================
     def draw(self, gc, *args, **kw):
         """
 
@@ -621,7 +621,7 @@ class LaserTrayCanvas(MapCanvas):
                 #for o in self.crosshairs_overlays:
                 #if o.visible:
                 #o.overlay(self, gc, *args, **kw)
-                #========================EOF====================================================
+                # ========================EOF====================================================
                 #    def _set_transect_points(self, tran, step, line_color=(1, 0, 0), point_color=(1, 0, 0), **ptargs):
                 #        for pi in tran.step_points:
                 #            self.remove_point(pi)
@@ -749,7 +749,7 @@ class LaserTrayCanvas(MapCanvas):
                 #        gc.stroke_path()
                 #
                 #        gc.restore_state()
-                #===============================================================================
+                # ===============================================================================
                 #
                 #           1 |
                 #             |
@@ -760,7 +760,7 @@ class LaserTrayCanvas(MapCanvas):
                 #        kind 1 with circle
                 #        kind 2 with out circle
                 #        kind 3 +
-                #===============================================================================
+                # ===============================================================================
 
                 #        if kind is None:
                 #            kind = self.crosshairs_kind
@@ -825,7 +825,7 @@ class LaserTrayCanvas(MapCanvas):
                 #        gc.restore_state()
 
 
-                #========================EOF============================
+                # ========================EOF============================
                 #    def clear_points(self):
                 #        popkeys = []
                 #        self.point_counter = 0

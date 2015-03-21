@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import provides, Property, Str, cached_property
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from sqlalchemy import Column, String, Integer, Float, distinct, DateTime
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.database.i_browser import IBrowser
 from pychron.experiment.utilities.identifier import make_step
@@ -209,7 +209,7 @@ class IndexAdapter(DatabaseAdapter):
             self._add_item(obj)
 
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

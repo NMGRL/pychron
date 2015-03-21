@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 
 from traits.api import Instance, Button, Bool, Float
 from traitsui.api import VGroup, Item, InstanceEditor
 
-#=============standard library imports ========================
+# =============standard library imports ========================
 from threading import Timer
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 
 from pychron.hardware.fusions.fusions_diode_logic_board import FusionsDiodeLogicBoard
 # from pychron.hardware.fusions.vue_diode_control_module import VueDiodeControlModule
@@ -132,9 +132,9 @@ class FusionsDiodeManager(FusionsLaserManager):
     def get_output_blob(self):
         return self.response_recorder.get_output_blob() if self.response_recorder else ''
 
-    #===============================================================================
+    # ===============================================================================
     # private
-    #===============================================================================
+    # ===============================================================================
     def _set_laser_power_hook(self, power, mode='open', set_pid=True, **kw):
         tc = self.temperature_controller
         if tc.control_mode != mode:
@@ -188,9 +188,9 @@ class FusionsDiodeManager(FusionsLaserManager):
         except AttributeError:
             pass
 
-    #===============================================================================
+    # ===============================================================================
     # views
-    #===============================================================================
+    # ===============================================================================
     def get_additional_controls(self):
     #        v = Group(
         gs = [VGroup(Item('temperature_controller', style='custom',
@@ -205,9 +205,9 @@ class FusionsDiodeManager(FusionsLaserManager):
                      label='FiberLight')]
         return gs
 
-    #===============================================================================
+    # ===============================================================================
     # defaults
-    #===============================================================================
+    # ===============================================================================
 
     def _response_recorder_default(self):
         r = ResponseRecorder(response_device=self.temperature_controller,
@@ -275,7 +275,7 @@ if __name__ == '__main__':
     #    f.bootstrap()
     f.configure_traits()
 
-#======================= EOF ============================
+# ======================= EOF ============================
 #    def finish_loading(self):
 #        super(FusionsDiodeManager, self).finish_loading()
 #

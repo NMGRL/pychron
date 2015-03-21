@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from functools import partial
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 class memoized(object):
     def __init__(self, func):
         self.func = func
@@ -42,4 +42,4 @@ class memoized(object):
         except KeyError:
             res = cache[key] = self.func(*args, **kw)
         return res
-#============= EOF =============================================
+# ============= EOF =============================================

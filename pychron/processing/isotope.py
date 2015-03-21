@@ -12,19 +12,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Float, Property, Instance, \
     Array, String, Either, Dict, cached_property, Event, List, Bool, Int
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
 from numpy import array, Inf, polyfit
 from binascii import hexlify
 from itertools import izip
 import struct
 import re
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.fits import natural_name_fit
 
 
@@ -359,9 +359,9 @@ class IsotopicMeasurement(BaseMeasurement):
     def _error_type_changed(self):
         self.regressor.error_calc_type = self.error_type
 
-    #===============================================================================
+    # ===============================================================================
     # arthmetic
-    #===============================================================================
+    # ===============================================================================
     def __add__(self, a):
         return self.uvalue + a
 
@@ -542,4 +542,4 @@ class Isotope(BaseIsotope):
         except (OverflowError, ValueError, AttributeError, TypeError), e:
             return '{} {}'.format(self.name, e)
 
-#============= EOF =============================================
+# ============= EOF =============================================

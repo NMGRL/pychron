@@ -12,17 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 # from lxml.etree import Element
-from lxml import etree
 from pyface.message_dialog import warning
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 import sys
 import inspect
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import to_bool
 from pychron.core.xml.xml_parser import XMLParser
 from pychron.paths import paths
@@ -69,8 +68,8 @@ class InitializationParser(XMLParser):
         # ver= '_spec'
         # ver = '_diode'
         # ver = '_dash'
-        #ver = '_dash_client'
-        #ver = ''
+        # ver = '_dash_client'
+        # ver = ''
         p = os.path.join(paths.setup_dir, 'initialization{}.xml'.format(ver))
         if not os.path.isfile(p):
             p = os.path.join(paths.setup_dir, 'initialization.xml')
@@ -79,16 +78,15 @@ class InitializationParser(XMLParser):
                 sys.exit()
 
         super(InitializationParser, self).__init__(p, *args, **kw)
-        print 'using Initialization={}'.format(p)
 
     def get_globals(self):
         tree = self.get_root()
-        tree =tree.find('globals')
+        tree = tree.find('globals')
         return tree.iter()
 
     def set_bool_tag(self, tag, v):
         tree = self.get_root()
-        tree =tree.find('globals')
+        tree = tree.find('globals')
         elem = tree.find(tag)
         if elem is not None:
             elem.text = v
@@ -188,6 +186,7 @@ class InitializationParser(XMLParser):
 
     def disable_plugin(self, name, category=None, save=True):
         plugin = self.get_plugin(name, category)
+
         if plugin is not None:
             plugin.set('enabled', 'false')
             if save:
@@ -293,7 +292,16 @@ class InitializationParser(XMLParser):
         else:
             name = name[0].upper() + name[1:]
 
-        return self._get_element(category, name)
+        if not category:
+            category = self.get_categories()
+
+        if not isinstance(category, (list, tuple)):
+            category = (category, )
+
+        for cat in category:
+            elem = self._get_element(cat, name)
+            if elem is not None:
+                return elem
 
     def get_manager(self, name, plugin):
 
@@ -305,12 +313,13 @@ class InitializationParser(XMLParser):
         return man
 
     def get_categories(self):
-        root = self.get_root()
-        tree = root.find('plugins')
-        s = lambda x: x.tag
-
-        cats = map(s, [c for c in tree.iter(etree.Element)])
-        return list(set(cats))
+        return ['general', 'data', 'hardware', 'social']
+        # root = self.get_root()
+        # tree = root.find('plugins')
+        # s = lambda x: x.tag
+        #
+        # cats = map(s, [c for c in tree.iter(etree.Element)])
+        # return list(set(cats))
         #return map(s, set([c for c in tree.iter()]))
 
     def _get_element(self, category, name, tag='plugin'):
@@ -357,4 +366,4 @@ class InitializationParser(XMLParser):
 #            pi = cat.findall('processor')
 #
 #        return [pii.text.strip() for pii in (pi if pi else [])]
-#============= EOF =============================================
+# ============= EOF =============================================

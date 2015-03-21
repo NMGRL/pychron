@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 
 from traits.api import on_trait_change
 from pyface.tasks.task_layout import TaskLayout, VSplitter, PaneItem, \
     HSplitter, Tabbed
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import add_extension
 from pychron.paths import r_mkdir
 from pychron.processing.tasks.analysis_edit.interpolation_editor import bin_analyses
@@ -157,4 +157,4 @@ class IntercalibrationFactorTask(InterpolationTask):
 
         return True
 
-#============= EOF =============================================
+# ============= EOF =============================================

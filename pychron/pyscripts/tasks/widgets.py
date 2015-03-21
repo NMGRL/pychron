@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from PySide import QtGui, QtCore
 from PySide.QtCore import Qt
 from PySide.QtGui import QTextCursor, QTextEdit, QTextFormat, QCursor, QApplication, QTextCharFormat
@@ -22,8 +22,8 @@ from pyface.ui.qt4.code_editor.code_widget import AdvancedCodeWidget, CodeWidget
 from pyface.ui.qt4.code_editor.find_widget import FindWidget
 from pyface.ui.qt4.code_editor.replace_widget import ReplaceWidget
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.pyscripts.tasks.pyscript_lexer import PyScriptLexer
 
 
@@ -137,7 +137,7 @@ class myAdvancedCodeWidget(AdvancedCodeWidget):
         self.code.setMouseTracking(True)
 
         #AdvanceCodeWidget
-        #=====================================
+        # =====================================
         self.find = FindWidget(self)
         self.find.hide()
         self.replace = ReplaceWidget(self)
@@ -172,7 +172,7 @@ class myAdvancedCodeWidget(AdvancedCodeWidget):
         self.setLayout(layout)
 
         self.edit_color = QtGui.QColor('blue').lighter(175)
-        #=====================================
+        # =====================================
 
     def insert_command(self, cmd):
         cur = self.code.textCursor()
@@ -234,5 +234,5 @@ class myAdvancedCodeWidget(AdvancedCodeWidget):
             selection.cursor.clearSelection()
         self.code.setExtraSelections([selection])
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, List, Property, Any, Instance
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from itertools import groupby
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 
 class FigureModel(HasTraits):
@@ -78,4 +78,4 @@ class FigureModel(HasTraits):
     def next_panel(self):
         return self.panel_gen.next()
 
-        #============= EOF =============================================
+        # ============= EOF =============================================

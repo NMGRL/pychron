@@ -16,12 +16,12 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.ui.factory import toolkit_factory
 
 LabelEditor = toolkit_factory('label_editor', 'LabelEditor')
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

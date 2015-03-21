@@ -15,9 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import re
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 # match .current_point
 CP_REGEX = re.compile(r'[\w\d]+\.(current|cur)')
 # match .std_dev
@@ -65,7 +65,10 @@ DEFLECTION_REGEX = re.compile(r'[\w\d]+\.deflection')
 RATIO_REGEX = re.compile(r'[A-Za-z]{1,2}\d{1,2}/[A-Za-z]{1,2}\d{1,2}')
 
 ARGS_REGEX = re.compile(r'\(.+\)')
-#============= EOF =============================================
+
+PRESSURE_REGEX = re.compile(r'\w+\.\w+\.pressure')
+DEVICE_REGEX = re.compile(r'device\.\w+')
+# ============= EOF =============================================
 
 
 

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem
 # from pyface.tasks.action.schema import SMenu
 # from pychron.extraction_line.tasks.extraction_line_actions import RefreshCanvasAction
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.envisage.tasks.pane_helpers import ConsolePane
 from pychron.extraction_line.tasks.extraction_line_actions import FinishChamberChangeAction, \
     EvacuateChamberAction, IsolateChamberAction
@@ -64,9 +64,9 @@ class ExtractionLineTask(BaseHardwareTask):
                  ConsolePane(model=self.manager)]
         return panes
 
-    #=======================================================================
+    # =======================================================================
     # toolbar actions
-    #=======================================================================
+    # =======================================================================
     def isolate_chamber(self):
         self.manager.isolate_chamber()
 
@@ -76,4 +76,4 @@ class ExtractionLineTask(BaseHardwareTask):
     def finish_chamber_change(self):
         self.manager.finish_chamber_change()
 
-#============= EOF =============================================
+# ============= EOF =============================================

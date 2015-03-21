@@ -12,16 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 
 from reportlab.lib import colors
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from reportlab.lib.units import inch
 import yaml
 from pychron.core.pdf.base_table_pdf_writer import BasePDFTableWriter
@@ -167,5 +167,5 @@ class SamplePDFTableWriter(BasePDFTableWriter):
                     except yaml.YAMLError:
                         pass
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

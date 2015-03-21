@@ -12,12 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pychron.core.helpers.filetools import to_bool
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.loggable import Loggable
 from pychron.regex import ALIQUOT_REGEX
 
@@ -166,4 +166,4 @@ class UVRunParser(RunParser):
 
         return script_info, params
 
-        #============= EOF =============================================
+        # ============= EOF =============================================

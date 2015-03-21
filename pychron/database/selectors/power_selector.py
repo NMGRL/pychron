@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,19 +12,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-from traits.api import String, Float
-#============= standard library imports ========================
+# ============= enthought library imports =======================
+from traits.api import Float
+# ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.database.core.database_selector import DatabaseSelector
 from pychron.database.orms.power_orm import PowerTable
 from pychron.managers.data_managers.h5_data_manager import H5DataManager
 from pychron.database.core.base_db_result import RIDDBResult
-from pychron.database.core.base_results_adapter import RIDResultsAdapter
-from pychron.database.core.query import Query, PowerRecordQuery
+from pychron.database.core.query import PowerRecordQuery
 
 
 class PowerResult(RIDDBResult):
@@ -75,4 +74,4 @@ class PowerSelector(DatabaseSelector):
         return self._db.get_power_records(**kw)
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

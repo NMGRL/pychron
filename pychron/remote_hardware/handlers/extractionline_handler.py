@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from threading import Thread
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.remote_hardware.errors import InvalidArgumentsErrorCode, InvalidValveErrorCode, \
     InvalidIPAddressErrorCode, ValveSoftwareLockErrorCode, ValveActuationErrorCode
 from base_remote_hardware_handler import BaseRemoteHardwareHandler
@@ -28,7 +28,7 @@ from pychron.remote_hardware.errors.extraction_line_errors import InvalidGaugeEr
 
 EL_PROTOCOL = 'pychron.extraction_line.extraction_line_manager.ExtractionLineManager'
 TM_PROTOCOL = 'pychron.social.twitter_manager.TwitterManager'
-RHM_PROTOCOL = 'pychron.remote_hardware.remote_hardware_manager.RemoteHardwareManager'
+# RHM_PROTOCOL = 'pychron.remote_hardware.remote_hardware_manager.RemoteHardwareManager'
 
 
 class ExtractionlineHandler(BaseRemoteHardwareHandler):
@@ -185,62 +185,62 @@ class ExtractionlineHandler(BaseRemoteHardwareHandler):
 
         return 'OK'
 
-    def StartMultRuns(self, manager, *args):
-        '''
-            data should be str of form:
-            NSamples,
-        '''
-        sender_addr = args[-1]
-        data = ' '.join(args[:-1])
-        if self.application is not None:
-
-            rhm = self.application.get_service(RHM_PROTOCOL)
-            if rhm.lock_by_address(sender_addr, lock=True):
-
-                if manager.multruns_report_manager is not None:
-                    manager.multruns_report_manager.start_new_report(data)
-
-                tm = self.application.get_service(TM_PROTOCOL)
-                if tm is not None:
-                    tm.post('Mult runs start {}'.format(data))
-            else:
-                return InvalidIPAddressErrorCode(sender_addr)
-        return 'OK'
-
-    def CompleteMultRuns(self, manager, *args):
-
-        sender_addr = args[-1]
-        data = ' '.join(args[:-1])
-
-        if self.application is not None:
-
-            rhm = self.application.get_service(RHM_PROTOCOL)
-            if rhm.lock_by_address(sender_addr, lock=False):
-                if manager.multruns_report_manager is not None:
-                    tar = manager.multruns_report_manager.complete_report
-                    t = Thread(target=tar)
-                    t.start()
-
-                tm = self.application.get_service(TM_PROTOCOL)
-                if tm is not None:
-                    tm.post('Mult runs completed {}'.format(data))
-            else:
-                return InvalidIPAddressErrorCode(sender_addr)
-
-        return 'OK'
-
-    def SystemLock(self, manager, name, onoff, sender_addr, *args):
-
-        cp = manager.remote_hardware_manager.command_processor
-        rhm = self.application.get_service(RHM_PROTOCOL)
-        if rhm.validate_address(sender_addr):
-            cp.system_lock = onoff in ['On', 'on', 'ON']
-            if onoff:
-                cp.system_lock_address = sender_addr
-        else:
-            return InvalidIPAddressErrorCode(sender_addr)
-
-        return 'OK'
+    # def StartMultRuns(self, manager, *args):
+    #     '''
+    #         data should be str of form:
+    #         NSamples,
+    #     '''
+    #     sender_addr = args[-1]
+    #     data = ' '.join(args[:-1])
+    #     if self.application is not None:
+    #
+    #         rhm = self.application.get_service(RHM_PROTOCOL)
+    #         if rhm.lock_by_address(sender_addr, lock=True):
+    #
+    #             if manager.multruns_report_manager is not None:
+    #                 manager.multruns_report_manager.start_new_report(data)
+    #
+    #             tm = self.application.get_service(TM_PROTOCOL)
+    #             if tm is not None:
+    #                 tm.post('Mult runs start {}'.format(data))
+    #         else:
+    #             return InvalidIPAddressErrorCode(sender_addr)
+    #     return 'OK'
+    #
+    # def CompleteMultRuns(self, manager, *args):
+    #
+    #     sender_addr = args[-1]
+    #     data = ' '.join(args[:-1])
+    #
+    #     if self.application is not None:
+    #
+    #         rhm = self.application.get_service(RHM_PROTOCOL)
+    #         if rhm.lock_by_address(sender_addr, lock=False):
+    #             if manager.multruns_report_manager is not None:
+    #                 tar = manager.multruns_report_manager.complete_report
+    #                 t = Thread(target=tar)
+    #                 t.start()
+    #
+    #             tm = self.application.get_service(TM_PROTOCOL)
+    #             if tm is not None:
+    #                 tm.post('Mult runs completed {}'.format(data))
+    #         else:
+    #             return InvalidIPAddressErrorCode(sender_addr)
+    #
+    #     return 'OK'
+    #
+    # def SystemLock(self, manager, name, onoff, sender_addr, *args):
+    #
+    #     cp = manager.remote_hardware_manager.command_processor
+    #     rhm = self.application.get_service(RHM_PROTOCOL)
+    #     if rhm.validate_address(sender_addr):
+    #         cp.system_lock = onoff in ['On', 'on', 'ON']
+    #         if onoff:
+    #             cp.system_lock_address = sender_addr
+    #     else:
+    #         return InvalidIPAddressErrorCode(sender_addr)
+    #
+    #     return 'OK'
 
     def PychronScript(self, manager, name, *args):
         result = manager.execute_pyscript(name)
@@ -264,9 +264,9 @@ class ExtractionlineHandler(BaseRemoteHardwareHandler):
 
         return str(p)
 
-#===============================================================================
+# ===============================================================================
 # not current used
-#===============================================================================
+# ===============================================================================
 #     def ClaimGroup(self, manager, grp, sender_addr, *args):
 #         rhm = self.application.get_service(RHM_PROTOCOL)
 #         if rhm.validate_address(sender_addr):
@@ -291,4 +291,4 @@ class ExtractionlineHandler(BaseRemoteHardwareHandler):
 #
 #
 
-#============= EOF ====================================
+# ============= EOF ====================================

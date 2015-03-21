@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from chaco.tools.cursor_tool import CursorTool
 from traits.api import HasTraits, Instance
 from traitsui.api import View, UItem
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.graph.graph import Graph
 from pychron.graph.tools.cursor_tool_overlay import CursorToolOverlay
 
@@ -63,5 +63,5 @@ class PeakCenterView(HasTraits):
         return v
 
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

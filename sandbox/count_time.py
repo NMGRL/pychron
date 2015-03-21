@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,22 +12,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
+
+import csv
+from threading import Thread
+from multiprocessing import Pool
 
 from traits.api import HasTraits, Instance, Button
 from traitsui.api import View, Item
-
-from numpy import array, polyfit, polyval, ones, zeros, hstack, sum
+from numpy import array, polyval, zeros, hstack, sum
 from numpy.ma import masked_array
-import csv
+
 from pychron.graph.graph import Graph
 from pychron.data_processing.regression.regressor import Regressor
-from threading import Thread
 from pychron.graph.stacked_graph import StackedGraph
-
-from multiprocessing import Pool
 from pychron.data_processing.regression.ols import OLS
 from pychron.core.stats import calculate_mswd
 

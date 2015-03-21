@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from chaco.plot_label import PlotLabel
 from traits.api import Bool, Str
 from chaco.data_label import DataLabel
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import max
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 class FlowPlotLabel(PlotLabel):
     def overlay(self, component, gc, *args, **kw):
@@ -86,4 +86,4 @@ class FlowDataLabel(DataLabel):
 
             yd = self.component.y2 - h - 2 * self.border_padding - self.line_spacing
             self.y = min((self.y, yd))
-#============= EOF =============================================
+# ============= EOF =============================================

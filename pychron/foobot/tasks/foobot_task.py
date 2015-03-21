@@ -17,8 +17,8 @@
 # ============= enthought library imports =======================
 from pyface.tasks.task_layout import TaskLayout
 from traits.api import Instance
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task import BaseTask
 from pychron.foobot.foobot import Foobot
 from pychron.foobot.tasks.panes import FoobotPane
@@ -36,7 +36,7 @@ class FoobotTask(BaseTask):
 
     def _default_layout_default(self):
         return TaskLayout()
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

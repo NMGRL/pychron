@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,20 +12,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 
-#=============standard library imports ========================
+# =============standard library imports ========================
 from sqlalchemy import Column, Integer, Float, String, \
     ForeignKey, DateTime, Date, BLOB
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relation, relationship
 from sqlalchemy.sql.expression import func
 
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 Base = declarative_base()
 
 
@@ -220,7 +220,7 @@ class IrradiationPositionTable(Base):
     Size = Column(String(40), default='NULL')
     Weight = Column(Float, default=0)
     Note = Column(String(40), nullable=True)
-    LabActivation = Column(Date, default='NULL')
+    LabActivation = Column(Date, default=func.now())
     J = Column(Float, nullable=True)
     JEr = Column(Float, nullable=True)
 
@@ -229,10 +229,12 @@ class IrradiationPositionTable(Base):
 
 class IrradiationLevelTable(Base):
     __tablename__ = 'IrradiationLevelTable'
-    IrradBaseID = Column(String(80))
-    Level = Column(String(80), primary_key=True)
+    IrradBaseID = Column(String(80), index=True, unique=False, primary_key=True)
+    Level = Column(String(80), index=True, unique=False, primary_key=True)
+
     SampleHolder = Column(String(40))
     ProductionRatiosID = Column(Integer, ForeignKey('IrradiationProductionTable.ProductionRatiosID'))
+    ExperimentType = Column(Integer, default=1)
 
 
 class IrradiationProductionTable(Base):
@@ -265,6 +267,7 @@ class IrradiationProductionTable(Base):
     @property
     def Cl3638(self):
         return self.P36Cl38Cl
+
 
 class IrradiationChronologyTable(Base):
     __tablename__ = 'irradiationchronologytable'
@@ -424,7 +427,7 @@ class SampleTable(Base):
     ProjectID = Column(Integer, ForeignKey('projecttable.ProjectID'))
     Note = Column(String(40), default='NULL')
     AlternateUserID = Column(String(40), default='NULL')
-    CollectionDateTime = Column(DateTime, default='')
+    CollectionDateTime = Column(DateTime, default=func.now())
     Coordinates = Column(BLOB, default='NULL')
     Latitude = Column(String(40), default='NULL')
     Longitude = Column(String(40), default='NULL')

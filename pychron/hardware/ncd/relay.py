@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 from pychron.hardware.core.data_helper import make_bitarray
 '''
     National Control Devices
@@ -30,9 +30,9 @@ from pychron.core.helpers.logger_setup import logging_setup
 logging_setup('prox')
 paths.build('_prox')
 
-#============= enthought library imports =======================
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.hardware.ncd import ON_MAP, OFF_MAP, STATE_MAP
 from pychron.hardware.ncd.ncd_device import NCDDevice
 
@@ -101,14 +101,14 @@ class ProXR(NCDDevice):
         return self.ask(cmdstr, nchars=1) == 'U'
 
 
-#=====================================    ==========================================
+# =====================================    ==========================================
 # configuration
-#===============================================================================
+# ===============================================================================
 
 
-#===============================================================================
+# ===============================================================================
 # private
-#===============================================================================
+# ===============================================================================
     def _set_bank(self, channel):
         idx, bank = self._get_bank_idx(channel)
 #        cmdstr = self._make_cmdstr(254, 49, bank)
@@ -139,4 +139,4 @@ if __name__ == '__main__':
     print a.get_contact_state(6, bank=11)
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

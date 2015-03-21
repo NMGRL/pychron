@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import unique_path
 from pychron.core.helpers.formatting import calc_percent_error
 from pychron.core.helpers.iterfuncs import partition
@@ -102,5 +102,5 @@ class CompareIsochronSpec(BaseEasy):
         stepheat, fusion = map(list, partition(ans, pred))
         return stepheat
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

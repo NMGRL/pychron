@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance, on_trait_change, List
 
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter
-#============= standard library imports ========================
-#============= local library imports  ==========================
-from pychron.envisage.tasks.base_task import BaseTask, BaseManagerTask
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+from pychron.envisage.tasks.base_task import BaseManagerTask
 from pychron.image.tasks.video_pane import VideoPane, SourcePane, ControlsPane
 from pychron.image.video_source import VideoSource, parse_url
 
@@ -105,4 +105,4 @@ class VideoTask(BaseManagerTask):
 #     @on_trait_change('video_source:fps')
 #     def _update_fps(self):
 #         self.video_pane.set_fps(self.video_source.fps)
-#============= EOF =============================================
+# ============= EOF =============================================

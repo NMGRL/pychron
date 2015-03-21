@@ -18,9 +18,37 @@
 import os
 # ============= standard library imports ========================
 import pickle
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.globals import globalv
 from pychron.loggable import Loggable
+
+
+def load_persistence_dict(p):
+    if os.path.isfile(p):
+        with open(p, 'r') as fp:
+            try:
+                return pickle.load(fp)
+            except (pickle.PickleError, EOFError):
+                pass
+
+
+def dump_persistence_dict(p, d):
+    with open(p, 'w') as fp:
+        pickle.dump(d, fp)
+
+
+def load_persistence_values(obj, p, attrs):
+    d = load_persistence_dict(p)
+    for ai in attrs:
+        try:
+            setattr(obj, ai, d[ai])
+        except:
+            pass
+
+
+def dump_persistence_values(obj, p, attrs):
+    d = {ai: getattr(obj, ai) for ai in attrs}
+    dump_persistence_dict(p, d)
 
 
 class PersistenceMixin(object):
@@ -92,5 +120,5 @@ class PersistenceMixin(object):
 class PersistenceLoggable(Loggable, PersistenceMixin):
     pass
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

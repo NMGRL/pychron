@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
-#============= enthought library imports =======================
-from traits.api import HasTraits, Bool, Float, Int, Str
+# ============= enthought library imports =======================
+from traits.api import HasTraits, Bool, Float, Str
 
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.monitors.laser_monitor import LaserMonitor
 
 class MonitorSeries(HasTraits):
@@ -39,4 +39,4 @@ class FusionsUVLaserMonitor(LaserMonitor):
         man = self.manager
         man.update_parameters()
 
-#============= EOF ====================================
+# ============= EOF ====================================

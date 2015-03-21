@@ -1,26 +1,26 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Str, Int, Property, Bool, Enum, Float, Color, Range
 from traitsui.api import Item, Group, HGroup, UItem, EnumEditor, spring, VGroup
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import re
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 
 from pychron.processing.plotters.options.age import AgeOptions
 from pychron.processing.plotters.options.option import SpectrumPlotOptions
@@ -44,6 +44,7 @@ class SpectrumOptions(AgeOptions):
     display_plateau_info = Bool(True)
     display_integrated_info = Bool(True)
     plateau_sig_figs = Int
+    integrated_sig_figs = Int
 
     plateau_font_size = Enum(6, 7, 8, 10, 11, 12, 14, 15, 18, 24, 28, 32)
     integrated_font_size = Enum(6, 7, 8, 10, 11, 12, 14, 15, 18, 24, 28, 32)
@@ -108,8 +109,8 @@ class SpectrumOptions(AgeOptions):
                         'include_j_error_in_plateau',
                         'plateau_age_error_kind',
                         'plateau_sig_figs',
+                        'integrated_sig_figs',
                         'use_error_envelope_fill',
-                        # 'plateau_error_sig_figs',
                         'plateau_method']
 
     def _get_groups(self):
@@ -138,7 +139,7 @@ class SpectrumOptions(AgeOptions):
                                       editor=EnumEditor(values=[1, 2, 3]),
                                       tooltip='Set the size of the error envelope in standard deviations',
                                       label='N. Sigma'),
-                                 Item('use_error_envelope_fill',label='Fill'),
+                                 Item('use_error_envelope_fill', label='Fill'),
                                  Item('envelope_alpha',
                                       label='Opacity',
                                       enabled_when='use_error_envelope_fill',
@@ -153,21 +154,21 @@ class SpectrumOptions(AgeOptions):
                                    Item('display_extract_value', label='Power/Temp'),
                                    spring,
                                    Item('step_label_font_size', label='Size'),
+                                   show_border=True,
                                    label='Labels'),
-                            VGroup(HGroup(UItem('display_plateau_info',
-                                                tooltip='Display plateau info'),
-                                          spring,
-                                          Item('plateau_font_size', label='Size',
-                                               enabled_when='display_plateau_info')),
-                                   HGroup(Item('plateau_sig_figs', label='Age'),
-                                          # Item('plateau_error_sig_figs', label='Error'),
-                                          show_border=True, label='SigFigs'),
+                            HGroup(UItem('display_plateau_info',
+                                         tooltip='Display plateau info'),
+                                   Item('plateau_font_size', label='Size',
+                                        enabled_when='display_plateau_info'),
+                                   Item('plateau_sig_figs', label='SigFigs'),
+                                   show_border=True,
                                    label='Plateau'),
                             HGroup(UItem('display_integrated_info',
                                          tooltip='Display integrated age info'),
-                                   spring,
                                    Item('integrated_font_size', label='Size',
                                         enabled_when='display_integrated_info'),
+                                   Item('integrated_sig_figs', label='SigFigs'),
+                                   show_border=True,
                                    label='Integrated'),
                             show_border=True,
                             label='Display')
@@ -185,4 +186,4 @@ class SpectrumOptions(AgeOptions):
         return g, label_grp
 
 
-#============= EOF =============================================
+# ============= EOF =============================================

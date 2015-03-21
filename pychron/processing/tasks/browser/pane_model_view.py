@@ -16,8 +16,8 @@
 
 # ============= enthought library imports =======================
 from traits.api import Any
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from traitsui.handler import Controller
 
 
@@ -30,7 +30,7 @@ class PaneModelView(Controller):
         return { 'object': self.model, 'controller': self,
                  'handler': self, 'pane':self.pane}
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

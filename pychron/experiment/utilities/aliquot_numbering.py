@@ -16,8 +16,8 @@
 
 # ============= enthought library imports =======================
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from itertools import groupby
 
 from pychron.core.helpers.iterfuncs import partition
@@ -41,4 +41,4 @@ def renumber_aliquots(aruns):
                 for ai in ans:
                     ai.user_defined_aliquot = minaliquot + i
 
-#============= EOF =============================================
+# ============= EOF =============================================

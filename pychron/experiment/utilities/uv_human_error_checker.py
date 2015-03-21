@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pychron.experiment.utilities.human_error_checker import HumanErrorChecker
-from pychron.loggable import Loggable
 from pychron.experiment.utilities.identifier import get_analysis_type
-from pychron.pychron_constants import LINE_STR
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 class UVHumanErrorChecker(HumanErrorChecker):
     _extraction_line_required = False
@@ -61,4 +59,4 @@ class UVHumanErrorChecker(HumanErrorChecker):
                 self.warning_dialog(msg)
             return 'no {}'.format(attr)
 
-#============= EOF =============================================
+# ============= EOF =============================================

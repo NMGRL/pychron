@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import csv
 from datetime import datetime
 
 from pychron.processing.tasks.analysis_edit.adapters import ReferencesAdapter
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.processing.tasks.analysis_edit.interpolation_task import InterpolationTask
 
 
@@ -154,4 +155,4 @@ class DiscrimintationTask(InterpolationTask):
         #    self.unknowns_pane.items = selector.records[156:159]
         #    self.references_pane.items = selector.records[150:155]
 
-#============= EOF =============================================
+# ============= EOF =============================================

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Instance
 from traitsui.api import View, Item
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.managers.manager import Manager
 from pychron.hardware.fusions.vue_diode_control_module import VueDiodeControlModule
 
@@ -73,7 +73,7 @@ class VueMetrixManager(Manager):
                                       )
         return b
 
-#============= views ===================================
+# ============= views ===================================
     def traits_view(self):
         v = View(
                  Item('control', show_label=False, style='custom'),
@@ -100,4 +100,4 @@ if __name__ == '__main__':
     v.control.bootstrap()
     v.configure_traits()
 
-#============= EOF ====================================
+# ============= EOF ====================================

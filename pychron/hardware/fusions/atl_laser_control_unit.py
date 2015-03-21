@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Float, Int, Str, Bool, Property, Array
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import array, hstack
 import time
 from threading import Lock
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.core.checksum_helper import computeBCC
 from pychron.hardware.core.data_helper import make_bitarray
@@ -297,9 +297,9 @@ class ATLLaserControlUnit(CoreDevice):
         r = self._send_query(11, 1, verbose=verbose)
         return self._parse_response(r, 1)[0]
 
-    #===============================================================================
+    # ===============================================================================
     # gas handling
-    #===============================================================================
+    # ===============================================================================
     def do_auto_vac(self):
     #        self.start_auto_vac()
         # wait until idle
@@ -552,4 +552,4 @@ if __name__ == '__main__':
                             configuration_dir_name='fusions_uv')
     a.bootstrap()
     a.laser_off()
-#============= EOF ====================================
+# ============= EOF ====================================

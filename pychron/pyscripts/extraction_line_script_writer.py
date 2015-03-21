@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 import os
 import re
 
@@ -24,13 +24,13 @@ from pychron.core.ui import set_qt
 set_qt()
 
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Instance, List, Button, Float, \
     on_trait_change, Str, Event, Bool
 from pyface.file_dialog import FileDialog
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import add_extension, fileiter
 from pychron.loggable import Loggable
 from pychron.paths import paths
@@ -294,7 +294,7 @@ def main():
     def _canvas_default(self):
         elc = ExtractionLineCanvas2D(manager=self,
                                      confirm_open=False)
-        elc.load_canvas_file('canvas_config.xml')
+        elc.load_canvas_file()
         return elc
 
     def _network_default(self):
@@ -374,5 +374,5 @@ if __name__ == '__main__':
     ew.set_default_states()
     e = ExtractionLineScriptWriterView(model=ew)
     e.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================
 

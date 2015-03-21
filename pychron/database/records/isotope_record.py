@@ -22,6 +22,7 @@ import time
 # import re
 # ============= local library imports  ==========================
 from pychron.experiment.utilities.identifier import make_runid
+from pychron.pychron_constants import ALPHAS
 
 
 class GraphicalRecordView(object):
@@ -66,10 +67,12 @@ def get_selected_history_item(sh, key):
 
 
 class IsotopeRecordView(object):
-    __slots__ = ('sample', 'project', 'labnumber', 'identifier', 'aliquot', 'step', 'record_id', 'uuid', 'rundate',
+    __slots__ = ('sample', 'project', 'labnumber', 'identifier', 'aliquot', 'step',
+                 '_increment',
+                 'uuid', 'rundate',
                  'timestamp', 'tag', 'irradiation_info', 'mass_spectrometer', 'analysis_type',
                  'meas_script_name', 'extract_script_name', 'extract_device', 'flux_fit_status',
-                 'extract_value','cleanup','duration',
+                 'extract_value', 'cleanup', 'duration',
                  'blank_fit_status',
                  'ic_fit_status',
                  'iso_fit_status', 'is_plateau_step', 'group_id', 'graph_id')
@@ -86,11 +89,12 @@ class IsotopeRecordView(object):
         self.labnumber = ''
         self.aliquot = 0
         self.step = ''
+        self._increment = -1
         self.tag = ''
         self.uuid = ''
         self.rundate = ''
         self.timestamp = ''
-        self.record_id = ''
+        # self.record_id = ''
         self.sample = ''
         self.project = ''
         self.irradiation_info = ''
@@ -127,7 +131,14 @@ class IsotopeRecordView(object):
 
             self.aliquot = dbrecord.aliquot
             self.step = dbrecord.step
-            self.record_id = make_runid(self.labnumber, self.aliquot, self.step)
+            self._increment = dbrecord.increment
+            # temporary hack to handle increment
+            # todo: change database so all increment=-1 where step=''
+            # change how automated run persister sets increment
+            if not self.step:
+                self._increment = -1
+
+            # self.record_id = make_runid(self.labnumber, self.aliquot, self.step)
 
             self.uuid = dbrecord.uuid
             self.tag = dbrecord.tag or ''
@@ -216,6 +227,23 @@ class IsotopeRecordView(object):
         return n
 
     def to_string(self):
-        return '{} {} {} {}'.format(self.labnumber, self.aliquot, self.timestamp, self.uuid)
+        return '{} {} {} {}'.format(self.identifier, self.aliquot, self.timestamp, self.uuid)
+
+    @property
+    def record_id(self):
+        return make_runid(self.identifier, self.aliquot, self.step)
+
+    @property
+    def increment(self):
+        return self._increment
+
+    @increment.setter
+    def increment(self, v):
+        if v >= 0:
+            self._increment = v
+            self.step = ALPHAS[v]
+        else:
+            self._increment = -1
+            self.step = ''
 
 # ============= EOF =============================================

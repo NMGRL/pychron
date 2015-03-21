@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,20 +12,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 from traits.etsconfig.etsconfig import ETSConfig
 ETSConfig.toolkit = 'qt4'
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Int, Float, Instance
 from traitsui.api import View, Item, UItem, ButtonEditor, HGroup
 
 from pychron.mv.machine_vision_manager import MachineVisionManager
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import random
 import time
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.mv.lumen_detector import LumenDetector
-from pychron.graph.stream_graph import StreamStackedGraph
 from pychron.graph.stacked_graph import StackedGraph
 from pychron.execute_mixin import ExecuteMixin
 from pychron.mv.test_image import TestImage
@@ -192,10 +191,8 @@ class Degasser(MachineVisionManager, ExecuteMixin):
 
 if __name__ == '__main__':
 
-    from pychron.image.video import Video
-
     d = Degasser(
 
                  )
     d.configure_traits()
-#============= EOF =============================================
+# ============= EOF =============================================

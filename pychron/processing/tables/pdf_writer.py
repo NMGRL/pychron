@@ -12,17 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import os
 
 from reportlab.lib import colors
 from traits.api import Str
 
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 import yaml
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.pdf.base_table_pdf_writer import BasePDFTableWriter
@@ -374,4 +374,4 @@ class IsotopePDFTableWriter(BasePDFTableWriter):
                 ydf[k] = v * 1e-16 * 1.0e18
             ydf['sens_exp'] = 18
             return ydc, ydf
-            #============= EOF =============================================
+            # ============= EOF =============================================

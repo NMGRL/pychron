@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Float, Event, String, Any, Enum, Property, cached_property
 from traitsui.api import View, Item, VGroup, HGroup
 import apptools.sweet_pickle as pickle
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.managers.manager import Manager
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.lasers.stage_managers.calibration.free_calibrator import FreeCalibrator
@@ -124,9 +124,9 @@ class TrayCalibrationManager(Manager):
                 )
         return v
 
-#===============================================================================
+# ===============================================================================
 # handlers
-#===============================================================================
+# ===============================================================================
     def _style_changed(self):
         if self.style in HELP_DICT:
             self.calibration_help = HELP_DICT[self.style]
@@ -148,9 +148,9 @@ class TrayCalibrationManager(Manager):
                     if a == 'rotation':
                         self.save_calibration()
 
-#===============================================================================
+# ===============================================================================
 # property get/set
-#===============================================================================
+# ===============================================================================
 
     @cached_property
     def _get_calibrator(self):
@@ -166,4 +166,4 @@ class TrayCalibrationManager(Manager):
             kw['stage_map'] = self.parent._stage_map
 
         return klass(**kw)
-#============= EOF =============================================
+# ============= EOF =============================================

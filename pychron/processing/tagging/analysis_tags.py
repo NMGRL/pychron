@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Str, List, Any, Button, Date, Bool
 from traitsui.api import View, Item, HGroup, VGroup
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.processing.tagging.base_tags import BaseTagModel
 
 
@@ -154,4 +154,4 @@ class AnalysisTagModel(BaseTagModel):
 #     t.model.tags = [Tag(name='foo') for i in range(10)]
 #     t.configure_traits()
 
-#============= EOF =============================================
+# ============= EOF =============================================

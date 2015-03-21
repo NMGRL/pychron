@@ -20,7 +20,7 @@ from traits.has_traits import HasTraits
 from traits.trait_types import Any, Str
 from traitsui.api import View, UItem, InstanceEditor
 # ============= standard library imports ========================
-#============= local library imports  ===========================
+# ============= local library imports  ===========================
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.processing.plotter_options_manager import IdeogramOptionsManager
 from pychron.processing.plotters.ideogram.ideogram_model import IdeogramModel
@@ -82,7 +82,7 @@ class BaseSummaryEditor(BaseTraitsEditor):
     def _ideogram_options_update(self, new):
         self.ideogram_model.plot_options = new
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

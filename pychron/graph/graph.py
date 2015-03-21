@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 
 from chaco.scales.time_scale import CalendarScaleSystem
 from chaco.scales_tick_generator import ScalesTickGenerator
@@ -32,13 +32,13 @@ from pyface.api import FileDialog, OK
 from pyface.timer.api import do_after as do_after_timer
 
 
-#=============standard library imports ========================
+# =============standard library imports ========================
 import os
 # import numpy as np
 from numpy import array, hstack, Inf
 import csv
 import math
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 from pychron.core.helpers.color_generators import colorname_generator as color_generator
 from pychron.core.helpers.filetools import add_extension
 from pychron.graph.minor_tick_overlay import MinorTicksOverlay
@@ -734,22 +734,18 @@ class Graph(Viewable, ContextMenuMixin):
         """
         self._set_title('y_axis', title, plotid, **font)
 
-    def add_plot_label(self, txt, plotid=0, **kw):
+    def add_plot_label(self, txt, plotid=0, overlay_position='inside top', hjustify='left', **kw):
         """
         """
 
-        #        print x, y
-        # #        x, y = .map_screen([(x, y)])[0]
-        #        x, y = self.plots[plotid].map_screen([(x, y)])[0]
-        #        print x, y
         c = self.plots[plotid]
 
-        pl = PlotLabel(txt, overlay_position='inside top', hjustify='left',
+        pl = PlotLabel(txt,
                        component=c,
+                       overlay_position=overlay_position, hjustify=hjustify,
                        **kw)
         c.overlays.append(pl)
         return pl
-
 
     def add_data_label(self, x, y, plotid=0):
         """
@@ -1692,9 +1688,7 @@ class Graph(Viewable, ContextMenuMixin):
                     show_label=False,
                     editor=ComponentEditor(
                         size=(self.width,
-                              self.height)
-                    ),
-        )
+                              self.height)))
 
         v = View(plot,
                  resizable=self.resizable,
@@ -1703,11 +1697,10 @@ class Graph(Viewable, ContextMenuMixin):
                  height=self.window_height,
                  x=self.window_x,
                  y=self.window_y,
-                 handler=self.handler_klass
-        )
+                 handler=self.handler_klass)
 
         if self.view_identifier:
             v.id = self.view_identifier
         return v
 
-        #============= EOF ====================================
+        # ============= EOF ====================================

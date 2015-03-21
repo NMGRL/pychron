@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
-#=============enthought library imports=======================
+# =============enthought library imports=======================
 from traits.api import Float, Property, Str
 from traitsui.api import Item, EnumEditor, VGroup
-#=============standard library imports ========================
+# =============standard library imports ========================
 # import time
-#=============local library imports  ==========================
+# =============local library imports  ==========================
 from core.core_device import CoreDevice
 from pychron.hardware.core.data_helper import make_bitarray
 # from modbus.modbus_device import ModbusDevice
@@ -234,4 +234,4 @@ class DPi32TemperatureMonitor(ISeriesDevice):
 #                                        )
 #                                 )
 #        return v
-#============= EOF ============================================
+# ============= EOF ============================================

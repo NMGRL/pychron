@@ -12,16 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 import cPickle as pickle
 
 from traits.api import Str, Int
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.core.helpers.datetime_tools import generate_datetimestamp
@@ -57,9 +57,9 @@ class PipetteTracker(Loggable):
         self.debug('increment shot count {}'.format(self.counts))
         self.dump()
 
-    #===============================================================================
+    # ===============================================================================
     # persistence
-    #===============================================================================
+    # ===============================================================================
     def load(self):
         p = self._get_path_id()
         if os.path.isfile(p):
@@ -103,4 +103,4 @@ class PipetteTracker(Loggable):
 
         return p
 
-#============= EOF =============================================
+# ============= EOF =============================================
