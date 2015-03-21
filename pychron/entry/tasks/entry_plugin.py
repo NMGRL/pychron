@@ -19,14 +19,13 @@ from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
 from pyface.tasks.action.schema import SMenu, SGroup
 from pyface.tasks.action.schema_addition import SchemaAddition
-from pyface.action.group import Group
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.entry.editors.flux_monitor_editor import FluxMonitorEditor
 from pychron.entry.preferences import LabnumberEntryPreferencesPane
 from pychron.entry.tasks.actions import SaveLabbookPDFAction, MakeIrradiationTemplateAction, LabnumberEntryAction, \
-    SensitivityEntryAction, AddMolecularWeightAction, ImportSampleMetadataAction, AddFluxMonitorAction, \
+    SensitivityEntryAction, AddMolecularWeightAction, AddFluxMonitorAction, \
     GenerateTrayAction, \
     GenerateIrradiationTableAction, ImportIrradiationHolderAction, ExportIrradiationAction, ImportIrradiationAction, \
     TransferJAction, ImportSamplesAction
@@ -35,7 +34,7 @@ from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 
 
 class EntryPlugin(BaseTaskPlugin):
-    id = 'pychron.entry'
+    id = 'pychron.entry.plugin'
 
     def _actions_default(self):
         return [('pychron.labnumber_entry', 'Ctrl+Shift+l', 'Open Labnumber Entry Window'),
@@ -49,68 +48,65 @@ class EntryPlugin(BaseTaskPlugin):
         return [so1, so2]
 
     def _task_extensions_default(self):
-        return [TaskExtension(task_id='pychron.entry.labnumber',
-                              actions=[SchemaAddition(id='transfer_j',
-                                                      factory=TransferJAction,
-                                                      path='MenuBar/entry.menu/entry.group2'),
-                                       SchemaAddition(id='import_irradiation',
-                                                      factory=ImportIrradiationAction,
-                                                      path='MenuBar/entry.menu/entry.group2'),
-                                       SchemaAddition(id='export_irradiation',
-                                                      factory=ExportIrradiationAction,
-                                                      path='MenuBar/entry.menu/entry.group2'),
-                                       # SchemaAddition(id='import_sample_metadata',
-                                       # factory=ImportSampleMetadataAction,
-                                       # path='MenuBar/tools.menu', ),
+        extensions = [TaskExtension(actions=actions, task_id=eid) for eid, actions in self._get_extensions()]
+        additions = [SchemaAddition(id='entry', factory=lambda: SMenu(id='entry.menu', name='Entry'), path='MenuBar',
+                                    before='tools.menu', after='view.menu')]
 
-                                       SchemaAddition(id='import_samples_from_file',
-                                                      factory=ImportSamplesAction,
-                                                      path='MenuBar/entry.menu/entry.group2', ),
+        eflag = False
+        eeflag = False
+        for eid, actions in self._get_extensions():
+            # print 'b', eid, len(actions)
+            for ai in actions:
+                # print 'c',ai,ai.id
+                if not eflag and ai.id.startswith('pychron.entry1'):
+                    eflag = True
+                    additions.append(SchemaAddition(id='entry_group', factory=lambda: SGroup(id='entry.group'),
+                                                    path='MenuBar/entry.menu'))
+                elif not eeflag and ai.id.startswith('pychron.entry2'):
+                    eeflag = True
+                    additions.append(SchemaAddition(id='entry_group2', factory=lambda: SGroup(id='entry.group2'),
+                                                    after='entry_group',
+                                                    path='MenuBar/entry.menu'),)
 
-                                       SchemaAddition(id='generate_tray',
-                                                      factory=GenerateTrayAction,
-                                                      path='MenuBar/entry.menu/entry.group2', ),
-                                       SchemaAddition(id='save_labbook',
-                                                      factory=SaveLabbookPDFAction,
-                                                      path='MenuBar/entry.menu/entry.group2'),
-                                       SchemaAddition(id='make_template',
-                                                      factory=MakeIrradiationTemplateAction,
-                                                      path='MenuBar/entry.menu/entry.group2')]),
-                TaskExtension(actions=[SchemaAddition(id='entry',
-                                                      factory=lambda: SMenu(id='entry.menu', name='Entry'),
-                                                      path='MenuBar',
-                                                      before='tools.menu',
-                                                      after='view.menu'),
-                                       SchemaAddition(id='entry_group',
-                                                      factory=lambda: SGroup(id='entry.group'),
-                                                      path='MenuBar/entry.menu'),
-                                       SchemaAddition(id='entry_group2',
-                                                      factory=lambda: SGroup(id='entry.group2'),
-                                                      path='MenuBar/entry.menu'),
-                                       SchemaAddition(id='labnumber_entry',
-                                                      factory=LabnumberEntryAction,
-                                                      path='MenuBar/entry.menu/entry.group', absolute_position='first'),
-                                       SchemaAddition(id='generate_irradiation_table',
-                                                      factory=GenerateIrradiationTableAction,
-                                                      path='MenuBar/entry.menu/entry.group'),
-                                       SchemaAddition(id='import_irradiation_holder',
-                                                      factory=ImportIrradiationHolderAction,
-                                                      path='MenuBar/entry.menu/entry.group'),
-                                       SchemaAddition(id='sensitivity_entry',
-                                                      factory=SensitivityEntryAction,
-                                                      path='MenuBar/entry.menu/entry.group'),
-                                       SchemaAddition(id='molecular_weight_entry',
-                                                      factory=AddMolecularWeightAction,
-                                                      path='MenuBar/entry.menu/entry.group'),
-                                       SchemaAddition(id='molecular_weight_entry',
-                                                      factory=AddFluxMonitorAction,
-                                                      path='MenuBar/entry.menu/entry.group')])]
+        extensions.append(TaskExtension(actions=additions))
+
+        return extensions
+
+    def _available_task_extensions_default(self):
+        g2path = 'MenuBar/entry.menu/entry.group2'
+        gpath = 'MenuBar/entry.menu/entry.group'
+
+        return [('{}.entry2'.format(self.id),
+                 'pychron.entry.irradiation.task',
+                 'Entry',
+                 [SchemaAddition(id='pychron.entry2.transfer_j', factory=TransferJAction, path=g2path),
+                  SchemaAddition(id='pychron.entry2.import_irradiation', factory=ImportIrradiationAction, path=g2path),
+                  SchemaAddition(id='pychron.entry2.export_irradiation', factory=ExportIrradiationAction, path=g2path),
+                  SchemaAddition(id='pychron.entry2.import_samples_from_file', factory=ImportSamplesAction,
+                                 path=g2path),
+                  SchemaAddition(id='pychron.entry2.generate_tray', factory=GenerateTrayAction, path=g2path, ),
+                  SchemaAddition(id='pychron.entry2.save_labbook', factory=SaveLabbookPDFAction, path=g2path),
+                  SchemaAddition(id='pychron.entry2.make_template', factory=MakeIrradiationTemplateAction,
+                                 path=g2path)]),
+                (self.id, '', 'Entry',
+                 [SchemaAddition(id='pychron.entry1.labnumber_entry', factory=LabnumberEntryAction,
+                                 path=gpath, absolute_position='first'),
+                  SchemaAddition(id='pychron.entry1.generate_irradiation_table', factory=GenerateIrradiationTableAction,
+                                 path=gpath),
+                  SchemaAddition(id='pychron.entry1.import_irradiation_holder', factory=ImportIrradiationHolderAction,
+                                 path=gpath),
+                  SchemaAddition(id='pychron.entry1.sensitivity_entry', factory=SensitivityEntryAction,
+                                 path=gpath),
+                  SchemaAddition(id='pychron.entry1.molecular_weight_entry', factory=AddMolecularWeightAction,
+                                 path=gpath),
+                  SchemaAddition(id='pychron.entry1.flux_monitor', factory=AddFluxMonitorAction,
+                                 path=gpath)])]
 
     def _tasks_default(self):
-        return [TaskFactory(id='pychron.entry.labnumber',
+        return [TaskFactory(id='pychron.entry.irradiation.task',
                             factory=self._labnumber_entry_task_factory,
                             include_view_menu=False),
-                TaskFactory(id='pychron.entry.sensitivity',
+                TaskFactory(id='pychron.entry.sensitivity.task',
                             factory=self._sensitivity_entry_task_factory,
                             include_view_menu=False)]
 
@@ -128,3 +124,60 @@ class EntryPlugin(BaseTaskPlugin):
         return [LabnumberEntryPreferencesPane]
 
 # ============= EOF =============================================
+# def _task_extensions_default(self):
+# return [TaskExtension(task_id='pychron.entry.labnumber',
+# actions=[SchemaAddition(id='transfer_j',
+# factory=TransferJAction,
+# path='MenuBar/entry.menu/entry.group2'),
+# SchemaAddition(id='import_irradiation',
+# factory=ImportIrradiationAction,
+# path='MenuBar/entry.menu/entry.group2'),
+# SchemaAddition(id='export_irradiation',
+#                                                   factory=ExportIrradiationAction,
+#                                                   path='MenuBar/entry.menu/entry.group2'),
+#                                    # SchemaAddition(id='import_sample_metadata',
+#                                    # factory=ImportSampleMetadataAction,
+#                                    # path='MenuBar/tools.menu', ),
+#
+#                                    SchemaAddition(id='import_samples_from_file',
+#                                                   factory=ImportSamplesAction,
+#                                                   path='MenuBar/entry.menu/entry.group2', ),
+#
+#                                    SchemaAddition(id='generate_tray',
+#                                                   factory=GenerateTrayAction,
+#                                                   path='MenuBar/entry.menu/entry.group2', ),
+#                                    SchemaAddition(id='save_labbook',
+#                                                   factory=SaveLabbookPDFAction,
+#                                                   path='MenuBar/entry.menu/entry.group2'),
+#                                    SchemaAddition(id='make_template',
+#                                                   factory=MakeIrradiationTemplateAction,
+#                                                   path='MenuBar/entry.menu/entry.group2')]),
+#             TaskExtension(actions=[SchemaAddition(id='entry',
+#                                                   factory=lambda: SMenu(id='entry.menu', name='Entry'),
+#                                                   path='MenuBar',
+#                                                   before='tools.menu',
+#                                                   after='view.menu'),
+#                                    SchemaAddition(id='entry_group',
+#                                                   factory=lambda: SGroup(id='entry.group'),
+#                                                   path='MenuBar/entry.menu'),
+#                                    SchemaAddition(id='entry_group2',
+#                                                   factory=lambda: SGroup(id='entry.group2'),
+#                                                   path='MenuBar/entry.menu'),
+#                                    SchemaAddition(id='labnumber_entry',
+#                                                   factory=LabnumberEntryAction,
+#                                                   path='MenuBar/entry.menu/entry.group', absolute_position='first'),
+#                                    SchemaAddition(id='generate_irradiation_table',
+#                                                   factory=GenerateIrradiationTableAction,
+#                                                   path='MenuBar/entry.menu/entry.group'),
+#                                    SchemaAddition(id='import_irradiation_holder',
+#                                                   factory=ImportIrradiationHolderAction,
+#                                                   path='MenuBar/entry.menu/entry.group'),
+#                                    SchemaAddition(id='sensitivity_entry',
+#                                                   factory=SensitivityEntryAction,
+#                                                   path='MenuBar/entry.menu/entry.group'),
+#                                    SchemaAddition(id='molecular_weight_entry',
+#                                                   factory=AddMolecularWeightAction,
+#                                                   path='MenuBar/entry.menu/entry.group'),
+#                                    SchemaAddition(id='molecular_weight_entry',
+#                                                   factory=AddFluxMonitorAction,
+#                                                   path='MenuBar/entry.menu/entry.group')])]

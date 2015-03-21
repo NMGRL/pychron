@@ -92,7 +92,7 @@ TASK_EXTENSION_DEFAULT = """
   - pychron.agroup.delete, False
 -
  plugin_id: pychron.experiment.plugin.edit
- task_id: pychron.experiment.plugin
+ task_id: pychron.experiment.task
  actions:
   - pychron.experiment.edit.deselect, False
   - pychron.experiment.edit.reset, True
@@ -111,6 +111,28 @@ TASK_EXTENSION_DEFAULT = """
   - pychron.experiment.signal_calculator, False
   - pychron.experiment.new_pattern, False
   - pychron.experiment.open_pattern, False
+
+-
+ plugin_id: pychron.entry.plugin
+ task_id: pychron.entry.irradiation.task
+ actions:
+  - pychron.entry2.transfer_j, True
+  - pychron.entry2.import_irradiation, True
+  - pychron.entry2.export_irradiation, False
+  - pychron.entry2.import_samples_from_file, False
+  - pychron.entry2.generate_tray, False
+  - pychron.entry2.save_labbook, False
+  - pychron.entry2.make_template, False
+
+-
+ plugin_id: pychron.entry.plugin
+ actions:
+  - pychron.entry1.labnumber_entry, True
+  - pychron.entry1.generate_irradiation_table, False
+  - pychron.entry1.import_irradiation_holder, False
+  - pychron.entry1.sensitivity_entry, True
+  - pychron.entry1.molecular_weight_entry, False
+  - pychron.entry1.flux_monitor, False
 """
 actions = []
 for line in TASK_EXTENSION_DEFAULT.split('\n'):

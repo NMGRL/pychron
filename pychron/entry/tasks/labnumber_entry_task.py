@@ -21,7 +21,6 @@ from traits.api import on_trait_change, Button, Float, Str, Int, Bool
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, Tabbed
 
 # ============= standard library imports ========================
-import os
 # ============= local library imports  ==========================
 
 from pychron.entry.graphic_generator import GraphicModel, GraphicGeneratorController
@@ -36,13 +35,13 @@ from pychron.entry.tasks.actions import SavePDFAction
 # from pychron.entry.tasks.importer_panes import ImporterPane
 from pychron.entry.tasks.labnumber_entry_panes import LabnumbersPane, \
     IrradiationPane, IrradiationEditorPane, IrradiationCanvasPane, LevelInfoPane, ChronologyPane
-from pychron.paths import paths
 from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction
 from pychron.envisage.tasks.base_task import BaseManagerTask
 
 
 class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     name = 'Labnumber'
+    id = 'pychron.entry.irradiation.task'
     # importer = Instance(ImportManager)
 
     add_sample_button = Button
