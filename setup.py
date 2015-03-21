@@ -14,7 +14,7 @@ import os
 os.environ['TRAVIS_CI'] = 'True'
 
 setup(name='pychron',
-      version='2.1.0',
+      version='2.1.1',
       setup_requires=['nose>=1.0'],
       py_modules=['pychron.pychron_constants',
                   'pychron.paths',
