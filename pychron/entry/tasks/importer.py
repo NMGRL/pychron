@@ -21,7 +21,7 @@ from collections import namedtuple
 import time
 
 # ============= local library imports  ==========================
-from pychron.experiment.importer.mass_spec_extractor import Extractor, \
+from pychron.entry.loaders.mass_spec_extractor import Extractor, \
     MassSpecExtractor
 from pychron.loggable import Loggable
 from pychron.pychron_constants import NULL_STR
