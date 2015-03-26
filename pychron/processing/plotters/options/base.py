@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 import hashlib
 from traits.api import HasTraits, List, Str, TraitError, \
-    Button, Bool, Event, Color, Range, String, Float, Int
+    Button, Bool, Event, Color, Range, String, Float, Int, on_trait_change
 from traitsui.api import View, HGroup, spring, VGroup, Item, Group, Spring
 
 import apptools.sweet_pickle as pickle
@@ -164,10 +164,10 @@ class FigurePlotterOptions(BasePlotterOptions):
     plot_bgcolor = Color
     plot_spacing = Range(0, 50)
 
-    padding_left = Int(100)
-    padding_right = Int(100)
-    padding_top = Int(100)
-    padding_bottom = Int(100)
+    padding_left = Int(100, enter_set=True, auto_set=False)
+    padding_right = Int(100, enter_set=True, auto_set=False)
+    padding_top = Int(100, enter_set=True, auto_set=False)
+    padding_bottom = Int(100, enter_set=True, auto_set=False)
 
     use_xgrid = Bool(True)
     use_ygrid = Bool(True)
@@ -242,12 +242,14 @@ class FigurePlotterOptions(BasePlotterOptions):
                              Item('padding_right', label='Right')),
                       HGroup(Spring(springy=False, width=100), Item('padding_bottom', label='Bottom'),
                              spring),
+                      enabled_when='not formatting_options',
                       label='Padding', show_border=True)
 
     def _get_bg_group(self):
         grp = Group(Item('bgcolor', label='Figure'),
                     Item('plot_bgcolor', label='Plot'),
                     show_border=True,
+                    enabled_when='not formatting_options',
                     label='Background')
         return grp
 
@@ -286,7 +288,7 @@ class FigurePlotterOptions(BasePlotterOptions):
 
         self._set_defaults(yd, 'axes', ('xtick_in', 'xtick_out',
                                         'ytick_in', 'ytick_out',
-                                        'use_xgrid','use_ygrid'))
+                                        'use_xgrid', 'use_ygrid'))
 
         self._set_defaults(yd, 'background', ('bgcolor',
                                               'plot_bgcolor'))
@@ -299,5 +301,9 @@ class FigurePlotterOptions(BasePlotterOptions):
                     setattr(self, attr, d[attr])
                 except KeyError, e:
                     print d, attr
+
+    @on_trait_change('use_xgrid, use_ygrid, padding+, bgcolor, plot_bgcolor')
+    def _refresh_handler(self):
+        self.refresh_plot_needed = True
 
 # ============= EOF =============================================
