@@ -686,10 +686,10 @@ class _TabularEditor(qtTabularEditor):
         self._auto_scroll(new)
 
     def _auto_scroll(self, row):
-        if self.factory.autoscroll:
+        if self.factory.autoscroll and row:
             print 'scroll to row', row
-            # do_after(3000, self.trait_set, scroll_to_row=row)
-            # self._scroll_to_row_changed(row)
+            if not isinstance(row, int):
+                row = self.value.index(row)
             self.scroll_to_row = row
 
     def _scroll_to_row_changed(self, row):
