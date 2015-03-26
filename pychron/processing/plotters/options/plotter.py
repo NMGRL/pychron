@@ -254,14 +254,21 @@ class PlotterOptions(FigurePlotterOptions):
 
     def _get_axes_group(self):
         axis_grp = Group(self._get_x_axis_group(), self._get_y_axis_group(),
-            enabled_when='not formatting_options',
-            layout='tabbed', show_border=True, label='Axes')
-        return axis_grp
+                         enabled_when='not formatting_options',
+                         layout='tabbed', show_border=True, label='Axes')
+        grid_grp = VGroup(Item('use_xgrid',
+                               label='XGrid Visible'),
+                          Item('use_ygrid', label='YGrid Visible'),
+                          show_border=True,
+                          label='Grid')
+        grp = VGroup(axis_grp, grid_grp)
+        return grp
 
     def _get_x_axis_group(self):
         v = VGroup(
             self._create_axis_group('x', 'title'),
             self._create_axis_group('x', 'tick'),
+
             Item('xtick_in', label='Tick In', tooltip='The number of pixels by which '
                                                       'the ticks extend into the plot area.'),
             Item('xtick_out', label='Tick Out', tooltip='The number of pixels by which '

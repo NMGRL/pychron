@@ -169,6 +169,9 @@ class FigurePlotterOptions(BasePlotterOptions):
     padding_top = Int(100)
     padding_bottom = Int(100)
 
+    use_xgrid = Bool(True)
+    use_ygrid = Bool(True)
+
     def deinitialize(self):
         for po in self.aux_plots:
             po.initialized = False
@@ -234,7 +237,7 @@ class FigurePlotterOptions(BasePlotterOptions):
     def _get_padding_group(self):
         return VGroup(HGroup(Spring(springy=False, width=100),
                              Item('padding_top', label='Top'),
-                             spring,),
+                             spring, ),
                       HGroup(Item('padding_left', label='Left'),
                              Item('padding_right', label='Right')),
                       HGroup(Spring(springy=False, width=100), Item('padding_bottom', label='Bottom'),
@@ -258,7 +261,8 @@ class FigurePlotterOptions(BasePlotterOptions):
                 'padding_left',
                 'padding_right',
                 'padding_top',
-                'padding_bottom']
+                'padding_bottom',
+                'use_xgrid', 'use_ygrid']
 
     def _load_hook(self):
         klass = self.plot_option_klass
@@ -281,7 +285,8 @@ class FigurePlotterOptions(BasePlotterOptions):
             self.trait_set(**padding)
 
         self._set_defaults(yd, 'axes', ('xtick_in', 'xtick_out',
-                                        'ytick_in', 'ytick_out'))
+                                        'ytick_in', 'ytick_out',
+                                        'use_xgrid','use_ygrid'))
 
         self._set_defaults(yd, 'background', ('bgcolor',
                                               'plot_bgcolor'))

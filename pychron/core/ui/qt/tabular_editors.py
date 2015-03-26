@@ -155,7 +155,8 @@ class _FilterTabularEditor(_TabularEditor):
 
     def _scroll_to_row_changed(self, row):
         scroll_hint = self.scroll_to_row_hint_map.get(self.factory.scroll_to_row_hint, self.control.PositionAtCenter)
-        self.control.scrollTo(self.proxyModel.index(row, 0), scroll_hint)
+        if self.proxyModel:
+            self.control.scrollTo(self.proxyModel.index(row, 0), scroll_hint)
 
     def on_action(self):
         self.control.text.setText('')
