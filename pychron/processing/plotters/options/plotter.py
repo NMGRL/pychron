@@ -199,6 +199,11 @@ class PlotterOptions(FigurePlotterOptions):
 
         return attrs
 
+    def _get_change_attrs(self):
+        return ['xtick_in', 'ytick_in', 'xtick_out', 'ytick_out', 'xtick_font_size', 'xtick_font_name',
+                'xtitle_font_size', 'xtitle_font_name', 'ytick_font_size', 'ytick_font_name', 'ytitle_font_size',
+                'ytitle_font_name', ]
+
     # ===============================================================================
     # property get/set
     # ===============================================================================
@@ -249,8 +254,8 @@ class PlotterOptions(FigurePlotterOptions):
 
     def _get_axes_group(self):
         axis_grp = Group(self._get_x_axis_group(), self._get_y_axis_group(),
-                         enabled_when='not formatting_options',
-                         layout='tabbed', show_border=True, label='Axes')
+            enabled_when='not formatting_options',
+            layout='tabbed', show_border=True, label='Axes')
         return axis_grp
 
     def _get_x_axis_group(self):

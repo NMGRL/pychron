@@ -94,7 +94,8 @@ class BasePlotterOptions(HasTraits):
         return v
 
     def get_hash(self):
-        attrs = self._get_dump_attrs()
+        attrs = self._get_change_attrs()
+
         h = hashlib.md5()
         for ai in attrs:
             h.update('{}{}'.format(ai, (getattr(self, ai))))
@@ -105,6 +106,9 @@ class BasePlotterOptions(HasTraits):
 
     def has_changes(self):
         return self._hash and self._hash != self.get_hash()
+
+    def _get_change_attrs(self):
+        raise NotImplementedError
 
     def _get_dump_attrs(self):
         raise NotImplementedError
