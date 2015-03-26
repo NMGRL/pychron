@@ -44,11 +44,11 @@ class FormattingOptions(HasTraits):
         self._load(path)
 
     def _load(self, p):
-        print 'ff', p, os.path.isfile(p)
+        # print 'ff', p, os.path.isfile(p)
         if os.path.isfile(p):
             with open(p, 'r') as rfile:
                 yd = yaml.load(rfile)
-                print p, yd
+                # print p, yd
                 self.trait_set(**yd)
 
     def get_value(self, axis, attr):

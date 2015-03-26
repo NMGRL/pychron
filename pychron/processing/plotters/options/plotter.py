@@ -248,11 +248,9 @@ class PlotterOptions(FigurePlotterOptions):
         pass
 
     def _get_axes_group(self):
-        axis_grp = Group(self._get_x_axis_group(),
-                         self._get_y_axis_group(),
-                         layout='tabbed',
-                         show_border=True,
-                         label='Axes')
+        axis_grp = Group(self._get_x_axis_group(), self._get_y_axis_group(),
+                         enabled_when='not formatting_options',
+                         layout='tabbed', show_border=True, label='Axes')
         return axis_grp
 
     def _get_x_axis_group(self):
@@ -293,9 +291,9 @@ class PlotterOptions(FigurePlotterOptions):
 
     def _get_main_group(self):
         main_grp = VGroup(self._get_aux_plots_group(),
-                          HGroup(Item('plot_spacing', label='Spacing',
-                                      tooltip='Spacing between stacked plots')),
-                          label='Plots')
+            HGroup(Item('plot_spacing', label='Spacing',
+                        tooltip='Spacing between stacked plots')),
+            label='Plots')
         return main_grp
 
     def _get_aux_plots_group(self):
@@ -357,7 +355,7 @@ class PlotterOptions(FigurePlotterOptions):
             g = Group(main_grp, bg_grp, pd_grp)
 
         v = View(VGroup(self._get_refresh_group(), g),
-                 scrollable=True)
+            scrollable=True)
         # v = View(VGroup(self._get_refresh_group(),g))
         return v
 

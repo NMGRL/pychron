@@ -305,10 +305,10 @@ class SpectrumOptions(AgeOptions):
             # self._get_info_group(),
             label='Options')
 
-        label_grp = VGroup(self._get_x_axis_group(),
-                           self._get_y_axis_group(),
-                           label='Fonts')
-        return g, label_grp
+        # label_grp = VGroup(self._get_x_axis_group(),
+        #                    self._get_y_axis_group(),
+        #                    label='Fonts')
+        return g,
 
     def _load_factory_defaults(self, yd):
         super(SpectrumOptions, self)._load_factory_defaults(yd)

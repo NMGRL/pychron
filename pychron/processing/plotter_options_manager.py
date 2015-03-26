@@ -16,14 +16,13 @@
 
 # ============= enthought library imports =======================
 from traits.api import Property, List, Event, Instance, Button, cached_property, Str, \
-    HasTraits, Enum
+    HasTraits, Enum, Bool
 from traits.trait_errors import TraitError
 from traitsui.api import View, Item, EnumEditor, HGroup, UItem, VGroup
 import apptools.sweet_pickle as pickle
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================
-import yaml
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.globals import globalv
 from pychron.processing.plotters.formatting_options import FormattingOptions
@@ -59,6 +58,7 @@ class PlotterOptionsManager(HasTraits):
     _defaults_path = Str
 
     formatting_option = Enum('Screen', 'Presentation', 'Display', NULL_STR)
+    use_formatting_options = Bool
 
     def __init__(self, *args, **kw):
         super(PlotterOptionsManager, self).__init__(*args, **kw)
@@ -76,7 +76,8 @@ class PlotterOptionsManager(HasTraits):
 
     def _dump(self):
         with open(paths.plotter_options, 'w') as wfile:
-            d = {'formatting_option': self.formatting_option or NULL_STR}
+            d = {'formatting_option': self.formatting_option or NULL_STR,
+                 'use_formatting_options': self.use_formatting_options}
             try:
                 pickle.dump(d, wfile)
             except pickle.PickleError:
@@ -144,17 +145,28 @@ class PlotterOptionsManager(HasTraits):
         fmt = FormattingOptions(p)
         return fmt
 
+    def _use_formatting_options_changed(self, new):
+        print new
+        if not new:
+            if self.plotter_options:
+                self.plotter_options.formatting_options = None
+                self.plotter_options.refresh_plot_needed = True
+        else:
+            self._formatting_option_changed(self.formatting_option)
+
     def _formatting_option_changed(self, new):
         if self.plotter_options:
             fmt = None if new == NULL_STR else self._formatting_option_factory()
             print new, fmt
-            self.plotter_options.formatting_options = fmt
-            self.plotter_options.refresh_plot_needed = True
+            if self.use_formatting_options:
+                self.plotter_options.formatting_options = fmt
+                self.plotter_options.refresh_plot_needed = True
 
     def _plotter_options_changed(self, new):
         if new:
-            fmt = self._formatting_option_factory()
-            new.formatting_options = fmt
+            if self.use_formatting_options:
+                fmt = self._formatting_option_factory()
+                new.formatting_options = fmt
 
     def _factory_default_fired(self):
         self._factory_default()
@@ -206,10 +218,12 @@ class PlotterOptionsManager(HasTraits):
                                    tooltip='Save changes to options'),
                 icon_button_editor('factory_default', 'edit-bomb',
                                    tooltip='Apply factory defaults')),
-                   UItem('formatting_option'),
-                   Item('plotter_options',
-                        show_label=False,
-                        style='custom')),
+                HGroup(UItem('use_formatting_options'),
+                       UItem('formatting_option', enabled_when='use_formatting_options')),
+
+                Item('plotter_options',
+                     show_label=False,
+                     style='custom')),
             resizable=True)
         return v
 
