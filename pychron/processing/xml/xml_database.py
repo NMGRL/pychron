@@ -16,12 +16,15 @@
 
 # ============= enthought library imports =======================
 import os
+from datetime import datetime
 from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change, List, Instance
 from traitsui.api import View, UItem, Item, HGroup, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.xml.xml_parser import XMLParser
 from pychron.loggable import Loggable
+from pychron.processing.xml.primitives import XMLLabnumber, XMLProjectRecordView, \
+    XMLSpectrometerRecord, XMLIrradiationRecordView, XMLAnalysis
 
 
 class MockSession(object):
@@ -32,30 +35,13 @@ class MockSession(object):
         pass
 
 
-class BaseRecordView(object):
-    def __init__(self, name):
-        self.name = name
-
-
-class XMLProjectRecordView(BaseRecordView):
-    pass
-
-
-class XMLSpectrometerRecord(BaseRecordView):
-    pass
-
-
-class XMLIrradiationRecordView(BaseRecordView):
-    pass
-
-
 class XMLDatabase(Loggable):
     kind = None
     path = Str
 
     projects = List
     samples = List
-    irradiations =List
+    irradiations = List
     mass_spectrometers = List
 
     _parser = Instance(XMLParser)
@@ -74,6 +60,7 @@ class XMLDatabase(Loggable):
 
                 self._load_sample_meta()
 
+    # DatabaseAdapter interface
     def session_ctx(self, *args, **kw):
         return MockSession()
 
@@ -86,6 +73,36 @@ class XMLDatabase(Loggable):
     def get_irradiations(self, *args, **kw):
         return self.irradiations
 
+    def get_project_date_range(self, names):
+        dt = datetime.now()
+        return dt, dt
+
+    def get_project_labnumbers(self, projects, filter_non_run_samples=None, lp=None, hp=None,
+                               analysis_types=None,
+                               mass_spectrometers=None):
+        elems = self._parser.get_elements('Sample')
+
+        return [XMLLabnumber(i) for i in elems]
+
+    def get_labnumber_analyses(self, lns, **kw):
+        for li in lns:
+            elems = self._parser.get_elements('Sample')
+            for e in elems:
+                if e.get('igsn') == li:
+                    ms = e.xpath('Parameters/Experiment/Measurement')
+                    ans = [XMLAnalysis(mi) for mi in ms]
+                    return ans, len(ans)
+
+    def get_analysis_groups(self, *args, **kw):
+        return []
+
+    def get_analyses_uuid(self, uuids):
+        print 'asdasdf', uuids
+        for u in uuids:
+            pass
+        return []
+
+    # private
     def _load_projects(self):
         elem = self._parser.get_elements('Parameters/Experiment')
         self.projects = [XMLProjectRecordView(i.get('projectName')) for i in elem]

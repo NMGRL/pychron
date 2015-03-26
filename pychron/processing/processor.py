@@ -32,7 +32,7 @@ from pychron.database.orms.isotope.gen import gen_AnalysisTypeTable, gen_MassSpe
 from pychron.database.orms.isotope.meas import meas_AnalysisTable, meas_MeasurementTable, meas_ExtractionTable
 from pychron.core.helpers.iterfuncs import partition
 from pychron.paths import paths
-from pychron.processing.xml_database import XMLDatabase
+from pychron.processing.xml.xml_database import XMLDatabase
 
 
 def unique_id(vs, *args):
