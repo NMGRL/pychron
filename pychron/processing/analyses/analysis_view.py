@@ -24,6 +24,7 @@ from traitsui.tabular_adapter import TabularAdapter
 from pychron.processing.analyses.view.detector_ic_view import DetectorICView
 from pychron.processing.analyses.view.error_components_view import ErrorComponentsView
 from pychron.processing.analyses.view.snapshot_view import SnapshotView
+from pychron.processing.analyses.view.spectrometer_view import SpectrometerView
 from pychron.processing.analyses.view.text_view import ExperimentView, ExtractionView, MeasurementView
 from pychron.processing.analyses.view.history_view import HistoryView
 from pychron.processing.analyses.view.interferences_view import InterferencesView
@@ -65,6 +66,7 @@ class AnalysisView(HasTraits):
     _extraction_view = None
     _snapshot_view = None
     _detector_ic_view = None
+    _spectrometer_view = None
 
     def update_fontsize(self, view, size):
         if 'main' in view:
@@ -117,7 +119,8 @@ class AnalysisView(HasTraits):
         for vname, klass in (('experiment', ExperimentView),
                              ('extraction', ExtractionView),
                              ('measurement', MeasurementView),
-                             ('interference', InterferencesView)):
+                             ('interference', InterferencesView),
+                             ('spectrometer', SpectrometerView)):
             name = '_{}_view'.format(vname)
             view = getattr(self, name)
             if view is None:
