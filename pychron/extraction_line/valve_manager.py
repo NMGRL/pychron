@@ -183,15 +183,29 @@ class ValveManager(Manager):
         # self.debug('valve lock word= {}'.format(word))
         changed = False
         if word is not None:
-            for k in self.valves.keys():
-                if word.has_key(k):
+
+            for k in self.valves:
+                try:
                     v = self.get_valve_by_name(k)
                     s = word[k]
-                    if v.software_lock != s:
-                        changed = True
+                except KeyError:
+                    continue
 
-                        v.software_lock = s
-                        elm.update_valve_lock_state(k, s)
+                if v.software_lock != s:
+                    changed = True
+
+                    v.software_lock = s
+                    elm.update_valve_lock_state(k, s)
+
+            # for k in self.valves.keys():
+            #     if word.has_key(k):
+            #         v = self.get_valve_by_name(k)
+            #         s = word[k]
+            #         if v.software_lock != s:
+            #             changed = True
+            #
+            #             v.software_lock = s
+            #             elm.update_valve_lock_state(k, s)
 
         if refresh and changed:
             elm.refresh_canvas()
