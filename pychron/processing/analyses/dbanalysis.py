@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.has_traits import HasTraits
 from traits.trait_types import Str, Float, Either, Date, Any, Dict, List, Long
 # ============= standard library imports ========================
 import os
@@ -25,6 +26,7 @@ import time
 from uncertainties import ufloat
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import remove_extension
+from pychron.core.helpers.isotope_utils import sort_detectors
 from pychron.database.orms.isotope.meas import meas_AnalysisTable
 from pychron.processing.analyses.analysis import Analysis, Fit
 # from pychron.processing.analyses.analysis_view import DBAnalysisView
@@ -33,6 +35,15 @@ from pychron.processing.analyses.exceptions import NoProductionError
 from pychron.processing.analyses.view.snapshot_view import Snapshot
 from pychron.processing.isotope import Blank, Baseline, Sniff, Isotope
 from pychron.pychron_constants import INTERFERENCE_KEYS
+
+
+class DValue(HasTraits):
+    key = Str
+    value = Any
+
+    def __init__(self, key, value):
+        self.key = key
+        self.value = value
 
 
 def get_xyz_position(extraction):
@@ -101,6 +112,9 @@ class DBAnalysis(Analysis):
 
     selected_blanks_id = Long
 
+    source_parameters = List
+    deflections = List
+
     def set_ic_factor(self, det, v, e):
         for iso in self.get_isotopes(det):
             iso.ic_factor = ufloat(v, e)
@@ -132,9 +146,9 @@ class DBAnalysis(Analysis):
             r = ufloat(1, 0)
 
         # if det in self.ic_factors:
-        #     r = self.ic_factors[det]
+        # r = self.ic_factors[det]
         # else:
-        #     r = ufloat(1, 1e-20)
+        # r = ufloat(1, 1e-20)
 
         return r
 
@@ -183,16 +197,16 @@ class DBAnalysis(Analysis):
         self._sync_detector_info(meas_analysis, **kw)
 
     # def sync_arar(self, meas_analysis):
-    #     # self.debug('not using db arar')
-    #     return
+    # # self.debug('not using db arar')
+    # return
     #
-    #     hist = meas_analysis.selected_histories.selected_arar
-    #     if hist:
-    #         result = hist.arar_result
-    #         self.persisted_age = ufloat(result.age, result.age_err)
-    #         self.age = self.persisted_age / self.arar_constants.age_scalar
+    # hist = meas_analysis.selected_histories.selected_arar
+    # if hist:
+    # result = hist.arar_result
+    # self.persisted_age = ufloat(result.age, result.age_err)
+    # self.age = self.persisted_age / self.arar_constants.age_scalar
     #
-    #         attrs = ['k39', 'ca37', 'cl36',
+    # attrs = ['k39', 'ca37', 'cl36',
     #                  'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36', 'rad40']
     #         d = dict()
     #         f = lambda k: getattr(result, k)
@@ -245,7 +259,7 @@ class DBAnalysis(Analysis):
         # sync the dr tag first so we can set selected_histories
         sh = self._sync_data_reduction_tag(meas_analysis)
         # print 'pre isotopes'
-        #this is the dominant time sink
+        # this is the dominant time sink
         self._sync_isotopes(meas_analysis, isos,
                             unpack, load_peak_center=load_aux, selected_histories=sh)
         # timethis(self._sync_isotopes, args=(meas_analysis, isos, unpack),
@@ -259,14 +273,14 @@ class DBAnalysis(Analysis):
         # print 'pre ext'
         self._sync_extraction(meas_analysis)
         # print 'pre meas'
-        self._sync_measurement(meas_analysis)
+        self._sync_measurement(meas_analysis, load_aux=load_aux)
 
     def _sync_data_reduction_tag(self, meas_analysis):
         tag = meas_analysis.data_reduction_tag
         if tag:
             self.data_reduction_tag = tag.name
 
-            #get the data_reduction_tag_set entry associated with this analysis
+            # get the data_reduction_tag_set entry associated with this analysis
             drentry = next((ai for ai in tag.analyses if ai.analysis_id == meas_analysis.id), None)
             print drentry.selected_histories
             return drentry.selected_histories
@@ -333,7 +347,7 @@ class DBAnalysis(Analysis):
                                            remote_path=si.remote_path,
                                            image=si.image) for si in snapshots]
 
-    def _sync_measurement(self, meas_analysis):
+    def _sync_measurement(self, meas_analysis, load_aux):
         if meas_analysis:
             meas = meas_analysis.measurement
             if meas:
@@ -343,6 +357,30 @@ class DBAnalysis(Analysis):
                 self.analysis_type = meas.analysis_type.name
                 self.mass_spectrometer = meas.mass_spectrometer.name.lower()
                 self.collection_time_zero_offset = meas.time_zero_offset or 0
+
+                if load_aux:
+                    try:
+                        sp = meas.spectrometer_parameters
+
+                        keys = ('extraction_lens', 'ysymmetry', 'zsymmetry', 'zfocus')
+                        names = ('ExtractionLens', 'Y-Symmetry', 'Z-Symmetry', 'Z-Focus')
+                        sd = [DValue(n, getattr(sp, k)) for n, k in zip(names, keys)]
+
+                        self.source_parameters = sd
+
+                    except AttributeError, e:
+                        self.source_parameters = [DValue(str(i), i) for i in range(10)]
+                        self.debug('No source parameters available')
+
+                    defls = meas.deflections
+
+                    try:
+                        names = sort_detectors([di.detector.name for di in meas.deflections])
+
+                        self.deflections = [DValue(ni, defls[i]) for i, ni in enumerate(names)]
+                    except AttributeError, e:
+                        self.deflections = [DValue(str(i), i * 34) for i in range(10)]
+                        self.debug('No deflection available')
 
     def _sync_meas_analysis_attributes(self, meas_analysis):
         # copy meas_analysis attrs
