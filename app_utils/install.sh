@@ -47,6 +47,7 @@ xlrd\n
 xlwt\n
 pip\n
 PySide\n
+matplotlib\n
 pil"
 
 PIP_REQ="uncertainties\n

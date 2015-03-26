@@ -90,6 +90,7 @@ class Detector(SpectrometerDevice):
         except (ValueError, TypeError), e:
             self.warning('Failed reading {} deflection. Error={}. Using previous value {}'.format(self.name, e,
                                                                                                   self._deflection))
+        return self._deflection
 
     def get_deflection_correction(self, current=False):
         if current:

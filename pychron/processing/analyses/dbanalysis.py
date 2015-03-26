@@ -369,17 +369,16 @@ class DBAnalysis(Analysis):
                         self.source_parameters = sd
 
                     except AttributeError, e:
-                        self.source_parameters = [DValue(str(i), i) for i in range(10)]
+                        # self.source_parameters = [DValue(str(i), i) for i in range(10)]
                         self.debug('No source parameters available')
 
                     defls = meas.deflections
 
                     try:
                         names = sort_detectors([di.detector.name for di in meas.deflections])
-
-                        self.deflections = [DValue(ni, defls[i]) for i, ni in enumerate(names)]
+                        self.deflections = [DValue(ni, defls[i].deflection or '---') for i, ni in enumerate(names)]
                     except AttributeError, e:
-                        self.deflections = [DValue(str(i), i * 34) for i in range(10)]
+                        # self.deflections = [DValue(str(i), i * 34) for i in range(10)]
                         self.debug('No deflection available')
 
     def _sync_meas_analysis_attributes(self, meas_analysis):

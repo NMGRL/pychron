@@ -20,12 +20,19 @@ from traitsui.api import View, UItem, Item, HGroup, VGroup, TabularEditor, Group
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
+from pychron.core.helpers.formatting import floatfmt
 
 
 class DictTabularAdapter(TabularAdapter):
     columns = [('', 'key'), ('Value', 'value')]
     key_width = Int(200)
+    value_text = Property
 
+    def _get_value_text(self):
+        try:
+            return floatfmt(self.item.value)
+        except:
+            return 'Not Recorded'
 
 class Value(HasTraits):
     name = Str
@@ -45,12 +52,14 @@ class SpectrometerView(HasTraits):
 
     def traits_view(self):
         g1 = Group(UItem('source_parameters',
-                         editor=TabularEditor(adapter=DictTabularAdapter())),
+                         editor=TabularEditor(adapter=DictTabularAdapter(),
+                                              editable=False)),
                    show_border=True,
                    label='Source')
 
         g2 = Group(UItem('deflections',
-                         editor=TabularEditor(adapter=DictTabularAdapter())),
+                         editor=TabularEditor(adapter=DictTabularAdapter(),
+                                              editable=False)),
                    show_border=True,
                    label='Deflections')
         v = View(VGroup(g1, g2))
