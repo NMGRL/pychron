@@ -66,6 +66,11 @@ TASK_EXTENSION_DEFAULT = """
   - pychron.reduction.discrimination, False
   - pychron.reduction.flux, True
 -
+ plugin_id: pychron.processing.plugin.dataset
+ actions:
+  - pychron.reduction.sqlite_dataset, True
+  - pychron.reduction.xml_dataset, True
+-
  plugin_id: pychron.processing.plugin.grouping
  actions:
   - pychron.grouping.selected, True

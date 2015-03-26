@@ -32,7 +32,7 @@ from pychron.processing.tasks.actions.processing_actions import IdeogramAction, 
     GraphGroupSelectedAction, IdeogramFromFile, SpectrumFromFile, MakeAnalysisGroupAction, GraphGroupbySampleAction, \
     DeleteAnalysisGroupAction, XYScatterAction, ModifyK3739Action, GroupbySampleAction, \
     ConfigureRecallAction, ModifyIdentifierAction, CompositeAction, TimeViewAction, SpectrumFileTemplate, \
-    IdeogramFileTemplate
+    IdeogramFileTemplate, SetSQLiteAction, SetXMLAction
 
 from pychron.processing.tasks.actions.edit_actions import BlankEditAction, \
     FluxAction, IsotopeEvolutionAction, ICFactorAction, \
@@ -381,6 +381,7 @@ class ProcessingPlugin(BaseTaskPlugin):
         ffpath = 'MenuBar/data.menu/figures.group/figure.files.menu'
         apath = 'MenuBar/data.menu/analysis_grouping.menu'
         rpath = 'MenuBar/data.menu/recall.group'
+        fpath = 'MenuBar/file.menu'
 
         return [('{}.recall'.format(self.id), '', 'Recall',
                  [SchemaAddition(id='pychron.recall.recall', factory=RecallAction, path=rpath),
@@ -431,7 +432,11 @@ class ProcessingPlugin(BaseTaskPlugin):
                   SchemaAddition(id='pychron.reduction.blanks', factory=BlankEditAction, path=rgpath),
                   SchemaAddition(id='pychron.reduction.ic_factor', factory=ICFactorAction, path=rgpath),
                   SchemaAddition(id='pychron.reduction.discrimination', factory=DiscriminationAction, path=rgpath),
-                  SchemaAddition(id='pychron.reduction.flux', factory=FluxAction, path=rgpath), ])]
+                  SchemaAddition(id='pychron.reduction.flux', factory=FluxAction, path=rgpath), ]),
+            ('{}.dataset'.format(self.id), '', 'Dataset',
+             [SchemaAddition(id='pychron.reduction.sqlite_dataset', factory=SetSQLiteAction, path=fpath),
+              SchemaAddition(id='pychron.reduction.xml_dataset', factory=SetXMLAction, path=fpath)])
+                ]
 
         # ============= EOF =============================================
 
