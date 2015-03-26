@@ -70,6 +70,8 @@ CHANGELOG
 * added interpolation functionality to conditionals. For example "Ar40 < $MIN_INTENSITY". The value "MIN_INTENSITY" needs to be defined
   either in the options file or in the extraction scripts metadata. 
 
+#### 3/25/2015 ####
+* added ability to view source/deflection parameters for individual analyses
 
 ### Bug Fixes ###
 * fixed plotting ideograms of attributes other than age
