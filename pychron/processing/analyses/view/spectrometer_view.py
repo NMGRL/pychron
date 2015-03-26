@@ -34,6 +34,7 @@ class DictTabularAdapter(TabularAdapter):
         except:
             return 'Not Recorded'
 
+
 class Value(HasTraits):
     name = Str
     value = Any
