@@ -56,7 +56,7 @@ class DirectionOverlay(AbstractOverlay):
             if self.use_x:
                 theta = abs(math.atan(w / (2. * l)))
                 o = l * 0.5
-                #draw 2-3
+                # draw 2-3
                 with gc:
                     gc.translate_ctm(o, 0)
                     gc.translate_ctm(l - o, 0)
@@ -79,7 +79,7 @@ class DirectionOverlay(AbstractOverlay):
 
             else:
                 if w > 8:
-                    #draw verticals
+                    # draw verticals
                     #draw 2-3
                     with gc:
                         gc.translate_ctm(l, -w / 2.)
@@ -89,7 +89,7 @@ class DirectionOverlay(AbstractOverlay):
                         gc.translate_ctm(-l, -w / 2.)
                         self._draw_indicator(gc, False, False)
 
-                #draw 3-4
+                # draw 3-4
                 gc.translate_ctm(0, -w)
                 self._draw_indicator(gc, True)
 
@@ -136,26 +136,41 @@ class OverlapOverlay(AbstractOverlay):
     beam_radius = Float(1)
 
     def overlay(self, component, gc, *args, **kw):
-        gc.save_state()
-        gc.clip_to_rect(component.x,
-                        component.y,
-                        component.width, component.height)
+        # gc.save_state()
+        with gc:
+            gc.clip_to_rect(component.x,
+                            component.y,
+                            component.width, component.height)
 
-        xs = component.index.get_data()
-        ys = component.value.get_data()
-        gc.set_stroke_color((0, 0, 0, 0))
+            xs = component.index.get_data()
+            ys = component.value.get_data()
+            gc.set_stroke_color((0, 0, 0, 0.5))
 
-        pts = component.map_screen([(0, 0), (self.beam_radius, 0)])
-        rad = abs(pts[0][0] - pts[1][0])
-        i = 0
-        for xi, yi in component.map_screen(zip(xs, ys)):
-            gc.set_fill_color((0, 0, 1, 1.0 / (0.75 * i + 1) * 0.5))
-            gc.begin_path()
-            gc.arc(xi, yi, rad, 0, 360)
-            gc.draw_path()
-            i += 1
+            pts = component.map_screen([(0, 0), (self.beam_radius, 0)])
+            rad = abs(pts[0][0] - pts[1][0])
 
-        gc.restore_state()
+            pts = component.map_screen(zip(xs, ys))
+
+            # for i, (xi, yi) in enumerate(pts):
+            #     # gc.set_fill_color((0, 0, 1, 1.0 / (0.75 * i + 1) * 0.5))
+            #     gc.begin_path()
+            #     gc.arc(xi, yi, rad, 0, 360)
+            #     gc.draw_path()
+            #     i += 1
+
+            with gc:
+                gc.set_line_join(0)
+                gc.set_line_width(rad*2)
+
+                gc.move_to(*pts[0])
+
+                for xi, yi in pts[1:]:
+                    gc.line_to(xi, yi)
+
+                gc.line_to(*pts[0])
+                gc.line_to(*pts[1])
+                gc.stroke_path()
+                # gc.restore_state()
 
 
 class Pattern(HasTraits):
@@ -170,8 +185,8 @@ class Pattern(HasTraits):
     path = Str
     name = Property(depends_on='path')
 
-    xbounds = (-3, 3)
-    ybounds = (-3, 3)
+    xbounds = (-5, 5)
+    ybounds = (-5, 5)
 
     velocity = Float(1)
     calculated_transit_time = Float
@@ -196,19 +211,10 @@ class Pattern(HasTraits):
     def calculate_transit_time(self):
         n = self.niterations
 
-        self.calculated_transit_time = self.velocity * self._get_path_length() * n
-
-        # c = -self._get_path_length()
-        # b = self.velocity
-
-        # acceleration = 1
-        # a = 0.5 * acceleration
-        #         0 = -c+ b * t + 0.5 * a * t ** 2
-
-        # t1 = -b + (b ** 2 - 4 * a * c) / (2.0 * a)
-        # t2 = -b - (b ** 2 - 4 * a * c) / (2.0 * a)
-
-        # self.calculated_transit_time = (max(t1, t2) + self._get_delay()) * n
+        try:
+            self.calculated_transit_time = (self._get_path_length() * n) / self.velocity
+        except ZeroDivisionError:
+            pass
 
     def _get_path_length(self):
         pts = self.points_factory()
@@ -345,14 +351,14 @@ class Pattern(HasTraits):
             self.maker_group(),
             Item('graph',
                  show_label=False, style='custom')),
-                 resizable=True)
+            resizable=True)
         return v
 
     def traits_view(self):
         v = View(self.maker_group(),
-                 buttons=['OK', 'Cancel'],
-                 title=self.name,
-                 resizable=True)
+            buttons=['OK', 'Cancel'],
+            title=self.name,
+            resizable=True)
         return v
 
     def get_parameter_group(self):
@@ -494,9 +500,9 @@ class PolygonPattern(Pattern):
     nsides = Range(3, 200)
     radius = Range(0.0, 4.0, 0.5)
     rotation = Range(0.0, 360.0, 0.0)
-
+    show_overlap = True
     # def _get_path_length(self):
-    #     return (self.nsides * self.radius *
+    # return (self.nsides * self.radius *
     #             math.sin(math.radians(360 / self.nsides)) + 2 * self.radius)
 
     #     def _get_delay(self):
@@ -558,7 +564,7 @@ class SpiralPattern(CircularPattern):
         xs, ys = transpose(data_in)
 
 
-#        self.graph.set_data(xs, series=1)
+# self.graph.set_data(xs, series=1)
 #        self.graph.set_data(ys, axis=1, series=1)
 
 
