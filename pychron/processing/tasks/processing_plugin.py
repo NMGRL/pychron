@@ -148,7 +148,7 @@ class ProcessingPlugin(BaseTaskPlugin):
             ('pychron.recall',
              self._recall_task_factory, 'Recall'),
             ('pychron.export',
-             self._export_task_factory, 'Export'),
+             self._export_task_factory, 'Export', '','',True),
 
             ('pychron.processing.reduction',
              self._reduction_task_factory, 'Reduction'),
