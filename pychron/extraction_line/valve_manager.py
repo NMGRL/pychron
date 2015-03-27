@@ -47,6 +47,7 @@ class ValveManager(Manager):
     Manager to interface with the UHV and HV pneumatic valves
 
     """
+
     valves = Dict
     explanable_items = List
     extraction_line_manager = Any
@@ -65,6 +66,10 @@ class ValveManager(Manager):
     mode = None
 
     _prev_keys = None
+
+
+    def _name_changed(self):
+        print 'asdf'
 
     def actuate_children(self, name, action, mode):
         """
@@ -226,6 +231,35 @@ class ValveManager(Manager):
 
     def get_valve_names(self):
         return self.valves.keys()
+
+    def get_owners_word(self):
+        """
+         eg.
+                1. 129.128.12.141-A,B,C:D,E,F
+                2. A,B,C,D,E,F
+                3. 129.128.12.141-A,B,C:129.138.12.150-D,E:F
+                    A,B,C owned by 141,
+                    D,E owned by 150
+                    F free
+        """
+        if self.actuators:
+            rs = []
+            actuator = self.actuators[0]
+            word = actuator.get_owners_word()
+            if word:
+                groups = word.split(':')
+                if len(groups) > 1:
+                    for gi in groups:
+                        if '-' in gi:
+                            owner, vs = gi.split('-')
+                        else:
+                            owner, vs = '', gi
+
+                        rs.append((owner, vs.split(',')))
+
+                else:
+                    rs = [('', groups[0].split(',')), ]
+            return rs
 
     def get_owners(self):
         """
@@ -473,7 +507,7 @@ class ValveManager(Manager):
                     packets = word.split(',')
                     n, nn = len(packets), len(self.valves)
                     if n < nn:
-                        self.warning('Valve lock word length is too short. All valve states will not be updated!'
+                        self.warning('Valve word length is too short. All valve states will not be updated!'
                                      ' Word:{}, Num Valves: {}'.format(n, nn))
 
                     for packet in packets:
@@ -486,31 +520,34 @@ class ValveManager(Manager):
                         packet = word[i:i + 2]
                         try:
                             key, state = packet[0], packet[1]
+                            d[key] = bool(int(state))
                         except IndexError:
                             return d
-
-                        if key.upper() in ALPHAS:
-                            if state in ('0', '1'):
-                                d[key] = bool(int(state))
+                        # if key.upper() in ALPHAS:
+                        # if state in ('0', '1'):
                 return d
             except ValueError:
                 pass
 
     def _load_states(self):
-        # elm = self.extraction_line_manager
-        for k, v in self.valves.iteritems():
-            s = v.get_hardware_state()
-            self.refresh_state = (k, s, False)
-            # elm.update_valve_state(k, s, refresh=False)
-            # time.sleep(0.025)
+        self.load_valve_states(refresh=False)
+
+        # # elm = self.extraction_line_manager
+        # for k, v in self.valves.iteritems():
+        #     s = v.get_hardware_state()
+        #     self.refresh_state = (k, s, False)
+        #     # elm.update_valve_state(k, s, refresh=False)
+        #     # time.sleep(0.025)
 
     def _load_soft_lock_states(self):
         if self.mode == 'client':
-            for k, v in self.valves.iteritems():
-                s = v.get_lock_state()
-                func = self.lock if s else self.unlock
-                func(k, save=False)
-                # time.sleep(0.025)
+            self.load_valve_lock_states()
+
+            # for k, v in self.valves.iteritems():
+            #     s = v.get_lock_state()
+            #     func = self.lock if s else self.unlock
+            #     func(k, save=False)
+            #     time.sleep(0.025)
 
         else:
             p = os.path.join(paths.hidden_dir, '{}_soft_lock_state'.format(self.name))
@@ -531,13 +568,15 @@ class ValveManager(Manager):
                             self.unlock(v, save=False)
 
     def _save_soft_lock_states(self):
+        if self.mode != 'client':
+            p = os.path.join(paths.hidden_dir, '{}_soft_lock_state'.format(self.name))
+            self.info('saving soft lock state to {}'.format(p))
+            with open(p, 'wb') as f:
+                obj = dict([(k, v.software_lock) for k, v in self.valves.iteritems()])
 
-        p = os.path.join(paths.hidden_dir, '{}_soft_lock_state'.format(self.name))
-        self.info('saving soft lock state to {}'.format(p))
-        with open(p, 'wb') as f:
-            obj = dict([(k, v.software_lock) for k, v in self.valves.iteritems()])
-
-            pickle.dump(obj, f)
+                pickle.dump(obj, f)
+        else:
+            self.debug('Client Mode. Not saving lock states')
 
     def _open_(self, name, mode):
         """
@@ -710,98 +749,98 @@ class ValveManager(Manager):
     def _get_simulation(self):
         return any([act.simulation for act in self.actuators])
 
-    #
-    # if __name__ == '__main__':
-    # from pychron.loggable import Loggable
-    # from threading import Timer, Thread, Event
-    # from Queue import Queue
-    # import random
-    #     class Foo(Loggable):
-    #         def get_state_by_name(self, m):
-    #             b = random.randint(1, 5) / 50.0
-    #             r = 0.1 + b
-    #             #        r = 3
-    #             self.info('sleep {}'.format(r))
-    #             time.sleep(r)
-    #             return True
-    #
-    #         def _get_states(self, times_up_event, sq):
-    #             #        self.states = []
-    #             for k in ['A', 'B', 'Ca', 'Dn', 'Es', 'F', 'G', 'H', 'I']:
-    #                 if times_up_event.isSet():
-    #                     break
-    #
-    #                 sq.put(k)
-    #                 #            self.info('geting state for {}'.format(k))
-    #                 s = self.get_state_by_name(k)
-    #                 #            self.info('got {} for {}'.format(s, k))
-    #                 if times_up_event.isSet():
-    #                     break
-    #                 sq.put('1' if s else '0')
-    #
-    #                 # return ''.join(states)
-    #
-    #         def get_states(self):
-    #             """
-    #                 with this method you need to ensure the communicators timeout
-    #                 is sufficiently low. the communicator will block until a response
-    #                 or a timeout. the times up event only breaks between state queries.
-    #
-    #             """
-    #             states_queue = Queue()
-    #             times_up_event = Event()
-    #             t = Timer(1, lambda: times_up_event.set())
-    #             t.start()
-    #             #        states = self._get_states(times_up_event)
-    #             #        return states
-    #             t = Thread(target=self._get_states, args=(times_up_event, states_queue))
-    #             t.start()
-    #             t.join(timeout=1.1)
-    #             s = ''
-    #
-    #             n = states_queue.qsize()
-    #             if n % 2 != 0:
-    #                 c = n / 2 * 2
-    #             else:
-    #                 c = n
-    #
-    #             i = 0
-    #             while not states_queue.empty() and i < c:
-    #                 s += states_queue.get_nowait()
-    #                 i += 1
-    #
-    #                 #        n = len(s)
-    #                 #        if n % 2 != 0:
-    #                 #            sn = s[:n / 2 * 2]
-    #                 #        else:
-    #                 #            sn = s
-    #                 #        s = ''.join(self.states)
-    #             self.info('states = {}'.format(s))
-    #             return s
-    #
-    #             #    v = ValveManager()
-    #             #    p = os.path.join(paths.extraction_line_dir, 'valves.xml')
-    #             #    v._load_valves_from_file(p)
-    #
-    #     from pychron.core.helpers.logger_setup import logging_setup
-    #
-    #     logging_setup('foo')
-    #     f = Foo()
-    #     for i in range(10):
-    #         r = f.get_states()
-    #         time.sleep(2)
-    #         # print r, len(r)
+        #
+        # if __name__ == '__main__':
+        # from pychron.loggable import Loggable
+        # from threading import Timer, Thread, Event
+        # from Queue import Queue
+        # import random
+        # class Foo(Loggable):
+        #         def get_state_by_name(self, m):
+        #             b = random.randint(1, 5) / 50.0
+        #             r = 0.1 + b
+        #             #        r = 3
+        #             self.info('sleep {}'.format(r))
+        #             time.sleep(r)
+        #             return True
+        #
+        #         def _get_states(self, times_up_event, sq):
+        #             #        self.states = []
+        #             for k in ['A', 'B', 'Ca', 'Dn', 'Es', 'F', 'G', 'H', 'I']:
+        #                 if times_up_event.isSet():
+        #                     break
+        #
+        #                 sq.put(k)
+        #                 #            self.info('geting state for {}'.format(k))
+        #                 s = self.get_state_by_name(k)
+        #                 #            self.info('got {} for {}'.format(s, k))
+        #                 if times_up_event.isSet():
+        #                     break
+        #                 sq.put('1' if s else '0')
+        #
+        #                 # return ''.join(states)
+        #
+        #         def get_states(self):
+        #             """
+        #                 with this method you need to ensure the communicators timeout
+        #                 is sufficiently low. the communicator will block until a response
+        #                 or a timeout. the times up event only breaks between state queries.
+        #
+        #             """
+        #             states_queue = Queue()
+        #             times_up_event = Event()
+        #             t = Timer(1, lambda: times_up_event.set())
+        #             t.start()
+        #             #        states = self._get_states(times_up_event)
+        #             #        return states
+        #             t = Thread(target=self._get_states, args=(times_up_event, states_queue))
+        #             t.start()
+        #             t.join(timeout=1.1)
+        #             s = ''
+        #
+        #             n = states_queue.qsize()
+        #             if n % 2 != 0:
+        #                 c = n / 2 * 2
+        #             else:
+        #                 c = n
+        #
+        #             i = 0
+        #             while not states_queue.empty() and i < c:
+        #                 s += states_queue.get_nowait()
+        #                 i += 1
+        #
+        #                 #        n = len(s)
+        #                 #        if n % 2 != 0:
+        #                 #            sn = s[:n / 2 * 2]
+        #                 #        else:
+        #                 #            sn = s
+        #                 #        s = ''.join(self.states)
+        #             self.info('states = {}'.format(s))
+        #             return s
+        #
+        #             #    v = ValveManager()
+        #             #    p = os.path.join(paths.extraction_line_dir, 'valves.xml')
+        #             #    v._load_valves_from_file(p)
+        #
+        #     from pychron.core.helpers.logger_setup import logging_setup
+        #
+        #     logging_setup('foo')
+        #     f = Foo()
+        #     for i in range(10):
+        #         r = f.get_states()
+        #         time.sleep(2)
+        #         # print r, len(r)
 
-    # ==================== EOF ==================================
+        # ==================== EOF ==================================
 
-    # ===============================================================================
-    # deprecated
-    # ===============================================================================
-    # def claim_section(self, section, addr=None, name=None):
+        # ===============================================================================
+        # deprecated
+        # ===============================================================================
+        # def claim_section(self, section, addr=None, name=None):
 
 # try:
 # vg = self.valve_groups[section]
-#         except KeyError:
+# except KeyError:
 #             return True
 #
 #         if addr is None:
