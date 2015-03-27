@@ -472,11 +472,11 @@ class ExtractionPyScript(ValvePyScript):
         ed = self.extract_device
         ed = ed.replace('_', ' ')
 
-        #get current position and add as an extraction position
+        # get current position and add as an extraction position
         pos = self._extraction_action([('get_position', (), {})])
         self._extraction_positions.append(pos)
 
-        #set an experiment message
+        # set an experiment message
         if self.manager:
             self.manager.set_extract_state('{} ON! {}({})'.format(ed, power, units), color='red')
 

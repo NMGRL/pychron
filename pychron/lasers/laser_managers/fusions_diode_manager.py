@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -120,7 +120,7 @@ class FusionsDiodeManager(FusionsLaserManager):
         if units == 'temp':
             self.set_laser_temperature(value)
         else:
-            self.set_laser_power(value)
+            self.set_laser_power(value, units)
 
     def set_laser_temperature(self, temp, set_pid=True):
         return self._set_laser_power_hook(temp, mode='closed', set_pid=set_pid)
@@ -140,7 +140,7 @@ class FusionsDiodeManager(FusionsLaserManager):
         if tc.control_mode != mode:
             tc.set_control_mode(mode)
 
-        power=float(power)
+        power = float(power)
         if mode == 'closed' and set_pid and power:
             tc.set_pid(power)
 
@@ -192,7 +192,7 @@ class FusionsDiodeManager(FusionsLaserManager):
     # views
     # ===============================================================================
     def get_additional_controls(self):
-    #        v = Group(
+        #        v = Group(
         gs = [VGroup(Item('temperature_controller', style='custom',
                           editor=InstanceEditor(view='control_view'),
                           show_label=False, ),
