@@ -45,10 +45,10 @@ class ExtractionLineManager(Manager, Consoleable):
     _canvases = List
 
     explanation = Instance(ExtractionLineExplanation, ())
-    gauge_manager = Instance(Manager)
     monitor = Instance(SystemMonitor)
 
     valve_manager = Any
+    gauge_manager = Any
     status_monitor = Any
     multiplexer_manager = Any
     network = Instance(ExtractionLineGraph)
@@ -194,7 +194,7 @@ class ExtractionLineManager(Manager, Consoleable):
 
     def test_valve_communication(self):
         # if self.simulation:
-        #     return globalv.communication_simulation
+        # return globalv.communication_simulation
         # else:
         if self.valve_manager:
             if self.valve_manager.simulation:
@@ -490,23 +490,25 @@ class ExtractionLineManager(Manager, Consoleable):
             # check if specified valve is in the valves.xml file
             if not name:
                 self.warning('Invalid valve name={}, description={}'.format(oname, description))
-                return False
+                return False, False
 
             result = self._change_valve_state(name, mode, action, **kw)
+
             if result:
-                description = vm.get_valve_by_name(name).description
-                self._log_spec_event(name, action)
-                self.info('{:<6s} Valve-{} ({})'.format(action.upper(), name, description),
-                          color='red' if action == 'close' else 'green')
-                vm.actuate_children(name, action, mode)
-                ld = self.link_valve_actuation_dict
-                if ld:
-                    try:
-                        func = ld[name]
-                        func(name, action)
-                    except KeyError:
-                        self.debug('name="{}" not in '
-                                   'link_valve_actuation_dict. keys={}'.format(name, ','.join(ld.keys())))
+                if all(result):
+                    description = vm.get_valve_by_name(name).description
+                    self._log_spec_event(name, action)
+                    self.info('{:<6s} Valve-{} ({})'.format(action.upper(), name, description),
+                              color='red' if action == 'close' else 'green')
+                    vm.actuate_children(name, action, mode)
+                    ld = self.link_valve_actuation_dict
+                    if ld:
+                        try:
+                            func = ld[name]
+                            func(name, action)
+                        except KeyError:
+                            self.debug('name="{}" not in '
+                                       'link_valve_actuation_dict. keys={}'.format(name, ','.join(ld.keys())))
 
             return result
 
@@ -570,31 +572,28 @@ class ExtractionLineManager(Manager, Consoleable):
     def _create_manager(self, klass, manager, params, **kw):
         # try a lazy load of the required module
         # if 'fusions' in manager:
-        #     package = 'pychron.managers.laser_managers.{}'.format(manager)
-        #     self.laser_manager_id = manager
+        # package = 'pychron.managers.laser_managers.{}'.format(manager)
+        # self.laser_manager_id = manager
         if 'rpc' in manager:
             package = 'pychron.rpc.manager'
         else:
             package = 'pychron.managers.{}'.format(manager)
+        print manager, manager in ('valve_manager', 'gauge_manager', 'multiplexer_manager')
+        if manager in ('valve_manager', 'gauge_manager', 'multiplexer_manager'):
+            return getattr(self, manager)
+        else:
+            class_factory = self.get_manager_factory(package, klass, warn=False)
+            if class_factory is None:
+                package = 'pychron.extraction_line.{}'.format(manager)
+                class_factory = self.get_manager_factory(package, klass)
 
-        class_factory = self.get_manager_factory(package, klass, warn=False)
-        if class_factory is None:
-            package = 'pychron.extraction_line.{}'.format(manager)
-            class_factory = self.get_manager_factory(package, klass)
-
-        if class_factory:
-            m = class_factory(**params)
-
-            if manager in ['gauge_manager',
-                           'valve_manager',
-                           'multiplexer_manager']:
-                self.trait_set(**{manager: m})
-            else:
+            if class_factory:
+                m = class_factory(**params)
                 self.add_trait(manager, m)
 
-            return m
-        else:
-            self.debug('could not create manager {}, {},{},{}'.format(klass, manager, params, kw))
+                return m
+            else:
+                self.debug('could not create manager {}, {},{},{}'.format(klass, manager, params, kw))
 
     # ===============================================================================
     # handlers
@@ -613,14 +612,6 @@ class ExtractionLineManager(Manager, Consoleable):
             else:
                 if self.status_monitor.isAlive():
                     self.status_monitor.stop()
-
-    def _valve_manager_changed(self):
-        if self.valve_manager is not None:
-            self.status_monitor.valve_manager = self.valve_manager
-            e = self.explanation
-            if e is not None:
-                e.load(self.valve_manager.explanable_items)
-                self.valve_manager.on_trait_change(e.load_item, 'explanable_items[]')
 
     @on_trait_change('valve_manager:pipette_trackers:counts')
     def _update_pipette_counts(self, obj, name, old, new):
@@ -649,6 +640,31 @@ class ExtractionLineManager(Manager, Consoleable):
         for c in self._canvases:
             c.canvas2D.trait_set(**{name: new})
 
+    def _handle_state(self, new):
+        self.update_valve_state(*new)
+
+    def _handle_lock_state(self, new):
+        self.update_valve_lock_state(*new)
+
+    def _handle_owned_state(self, new):
+        self.update_valve_owned_state(*new)
+
+    def _handle_refresh_canvas(self, new):
+        self.refresh_canvas()
+
+    def _handle_console_message(self, new):
+        color = None
+        if isinstance(new, tuple):
+            msg, color = new
+        else:
+            msg = new
+
+        if color is None:
+            color = self.console_default_color
+
+        if self.console_display:
+            self.console_display.add_text(msg, color=color)
+
     # ===============================================================================
     # defaults
     # ===============================================================================
@@ -658,8 +674,14 @@ class ExtractionLineManager(Manager, Consoleable):
 
     def _valve_manager_default(self):
         from pychron.extraction_line.valve_manager import ValveManager
-
-        return ValveManager(extraction_line_manager=self)
+        # vm = ValveManager(extraction_line_manager=self)
+        vm = ValveManager(mode=self.mode, application=self.application)
+        vm.on_trait_change(self._handle_state, 'refresh_state')
+        vm.on_trait_change(self._handle_lock_state, 'refresh_lock_state')
+        vm.on_trait_change(self._handle_owned_state, 'refresh_owned_state')
+        vm.on_trait_change(self._handle_refresh_canvas, 'refresh_canvas_needed')
+        vm.on_trait_change(self._handle_console_message, 'console_message')
+        return vm
 
     def _explanation_default(self):
         e = ExtractionLineExplanation()
@@ -677,6 +699,7 @@ class ExtractionLineManager(Manager, Consoleable):
     def _network_default(self):
         return ExtractionLineGraph()
 
+
 if __name__ == '__main__':
     elm = ExtractionLineManager()
     elm.bootstrap()
@@ -684,10 +707,18 @@ if __name__ == '__main__':
     elm.configure_traits()
 
 # =================== EOF ================================
-#    def _pumping_monitor_default(self):
-#        '''
-#        '''
-#        return PumpingMonitor(gauge_manager=self.gauge_manager,
+# def _valve_manager_changed(self):
+# if self.valve_manager is not None:
+# self.status_monitor.valve_manager = self.valve_manager
+#         e = self.explanation
+#         if e is not None:
+#             e.load(self.valve_manager.explanable_items)
+#             self.valve_manager.on_trait_change(e.load_item, 'explanable_items[]')
+
+# def _pumping_monitor_default(self):
+# '''
+# '''
+# return PumpingMonitor(gauge_manager=self.gauge_manager,
 #                              parent=self)
 
 #    def _multruns_report_manager_default(self):

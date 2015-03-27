@@ -15,17 +15,14 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-from traits.api import Any, Dict, List, Bool
+from traits.api import Any, Dict, List, Bool, Event
 # =============standard library imports ========================
-import os
-import pickle
 from pickle import PickleError
-from Queue import Queue
-from threading import Timer, Thread, Event
-import time
-import random
 from itertools import groupby
 from socket import gethostname, gethostbyname
+import os
+import pickle
+import time
 # =============local library imports  ==========================
 from pychron.core.helpers.filetools import to_bool
 from pychron.globals import globalv
@@ -35,7 +32,6 @@ from pychron.managers.manager import Manager
 from pychron.extraction_line.explanation.explanable_item import ExplanableValve
 from pychron.hardware.valve import HardwareValve
 from pychron.paths import paths
-from pychron.loggable import Loggable
 from pychron.pychron_constants import ALPHAS
 from pychron.extraction_line.pipettes.tracking import PipetteTracker
 from valve_parser import ValveParser
@@ -51,26 +47,26 @@ class ValveManager(Manager):
     Manager to interface with the UHV and HV pneumatic valves
 
     """
+
     valves = Dict
     explanable_items = List
     extraction_line_manager = Any
-    sampletime = 0.1
-    # actuator = Any
-    actuators = List
-    canvas3D = Any
-    sections = List
+    pipette_trackers = List(PipetteTracker)
 
-    sample_gas_type = None  # valid values None,sample,air
-    sector_inlet_valve = None
-    quad_inlet_valve = None
+    actuators = List
 
     query_valve_state = Bool(True)
 
     use_explanation = True
 
-    _prev_keys = None
+    refresh_state = Event
+    refresh_lock_state = Event
+    refresh_canvas_needed = Event
+    refresh_owned_state = Event
+    console_message = Event
+    mode = None
 
-    pipette_trackers = List(PipetteTracker)
+    _prev_keys = None
 
     def actuate_children(self, name, action, mode):
         """
@@ -102,8 +98,7 @@ class ValveManager(Manager):
         if 'actuator' in name or 'controller' in name:
             if dev is not None:
                 self.actuators.append(dev)
-                #        if name in ['valve_actuator', 'valve_controller']:
-            #            self.actuator = dev
+
             return dev
 
     def finish_loading(self, update=False):
@@ -112,8 +107,7 @@ class ValveManager(Manager):
         if self.actuators:
             for a in self.actuators:
                 self.info('setting actuator {}'.format(a.name))
-
-                self.info('comm. device = {} '.format(a._cdevice.__class__.__name__))
+                self.info('comm. device = {} '.format(a.com_device_name))
 
         # open config file
         setup_file = os.path.join(paths.extraction_line_dir, 'valves.xml')
@@ -124,38 +118,20 @@ class ValveManager(Manager):
         if globalv.load_soft_locks:
             self._load_soft_lock_states()
 
-            # load the pipette trackers
-            #         for p in self.pipette_trackers:
-            #             p.load()
-
-            #         self._load_system_dict()
-            # self.info('loading section definitions file')
-            # open config file
-            # setup_file = os.path.join(paths.extraction_line_dir, 'section_definitions.cfg')
-            # self._load_sections_from_file(setup_file)
-
-    def _save_soft_lock_states(self):
-
-        p = os.path.join(paths.hidden_dir, '{}_soft_lock_state'.format(self.name))
-        self.info('saving soft lock state to {}'.format(p))
-        with open(p, 'wb') as f:
-            obj = dict([(k, v.software_lock) for k, v in self.valves.iteritems()])
-
-            pickle.dump(obj, f)
-
     def set_child_state(self, name, state):
         self.debug('set states for children of {}. state={}'.format(name, state))
-        elm = self.extraction_line_manager
+        # elm = self.extraction_line_manager
         for k, v in self.valves.iteritems():
             if v.parent == name:
                 v.set_state(state)
-                elm.update_valve_state(k, state)
+                self.refresh_state = (k, state)
+                # elm.update_valve_state(k, state)
 
     def load_valve_states(self, refresh=True, force_network_change=False):
-        elm = self.extraction_line_manager
+        # elm = self.extraction_line_manager
         word = self.get_state_word()
         changed = False
-        # self.debug('valve state word= {}'.format(word))
+
         if word is not None:
             for k, v in self.valves.iteritems():
                 try:
@@ -163,7 +139,8 @@ class ValveManager(Manager):
                     if s != v.state or force_network_change:
                         changed = True
                         v.set_state(s)
-                        elm.update_valve_state(k, s)
+                        self.refresh_state = (k, s)
+                        # elm.update_valve_state(k, s)
                         self.set_child_state(k, s)
 
                 except KeyError:
@@ -172,41 +149,44 @@ class ValveManager(Manager):
         elif force_network_change:
             changed = True
             for k, v in self.valves.iteritems():
-                elm.update_valve_state(k, v.state)
+                self.refresh_state = (k, v.state)
+                # elm.update_valve_state(k, v.state)
 
         if refresh and changed:
-            elm.refresh_canvas()
+            self.refresh_canvas_needed = True
+            # elm.refresh_canvas()
 
     def load_valve_lock_states(self, refresh=True):
-        elm = self.extraction_line_manager
+        # elm = self.extraction_line_manager
         word = self.get_lock_word()
+
         changed = False
         if word is not None:
             for k in self.valves:
-                if word.has_key(k):
+                if k in word:
                     v = self.get_valve_by_name(k)
                     s = word[k]
                     if v.software_lock != s:
                         changed = True
     
                         v.software_lock = s
-                        elm.update_valve_lock_state(k, s)
+                        self.refresh_lock_state = (k, s)
+                        # elm.update_valve_lock_state(k, s)
 
         if refresh and changed:
-            elm.refresh_canvas()
+            self.refresh_canvas_needed = True
+            # elm.refresh_canvas()
 
     def load_valve_owners(self, refresh=True):
-        elm = self.extraction_line_manager
-
-        '''
+        """
             needs to return all valves
             not just ones that are owned
-        '''
+        """
+        # elm = self.extraction_line_manager
         owners = self.get_owners_word()
         if not owners:
-            #self.debug('didnt not parse owners word')
             return
-            #         print owners
+
         changed = False
         ip = gethostbyname(gethostname())
         for owner, valves in owners:
@@ -216,11 +196,38 @@ class ValveManager(Manager):
                     if v is not None:
                         if v.owner != owner:
                             v.owner = owner
-                            elm.update_valve_owned_state(k, owner)
+                            self.refresh_owned_state = (k, owner)
+                            # elm.update_valve_owned_state(k, owner)
                             changed = True
 
         if refresh and changed:
-            elm.refresh_canvas()
+            self.refresh_canvas_needed = True
+            # elm.refresh_canvas()
+
+    def get_state_word(self):
+        if self.actuators:
+            actuator = self.actuators[0]
+            word = actuator.get_state_word()
+            d = self._parse_word(word)
+
+            self.debug('Get State Word: {}'.format(word))
+            self.debug('Parsed State Word: {}'.format(d))
+
+            return d
+
+    def get_lock_word(self):
+        if self.actuators:
+            actuator = self.actuators[0]
+            word = actuator.get_lock_word()
+            d = self._parse_word(word)
+
+            self.debug('Get Lock Word: {}'.format(word))
+            self.debug('Parsed Lock Word: {}'.format(d))
+
+            return d
+
+    def get_valve_names(self):
+        return self.valves.keys()
 
     def get_owners_word(self):
         """
@@ -251,106 +258,21 @@ class ValveManager(Manager):
                     rs = [('', groups[0].split(',')), ]
             return rs
 
-    def get_state_word(self):
-        if self.actuators:
-            actuator = self.actuators[0]
-            word = actuator.get_state_word()
-            return self._parse_word(word)
-
-    def get_lock_word(self):
-        if self.actuators:
-            actuator = self.actuators[0]
-            word = actuator.get_lock_word()
-            d = self._parse_word(word)
-
-            self.debug('Get Lock Word: {}'.format(word))
-            self.debug('Parsed Lock Word: {}'.format(d))
-
-            return d
-
-    def get_valve_names(self):
-        return self.valves.keys()
-
-    def _parse_word(self, word):
-        if word is not None:
-            try:
-                d = dict()
-                if ',' in word:
-                    packets = word.split(',')
-                    n, nn = len(packets), len(self.valves)
-                    if n < nn:
-                        self.warning('Valve lock word length is too short. All valve states will not be updated!'
-                                     ' Word:{}, Num Valves: {}'.format(n, nn))
-
-                    for packet in packets:
-                        key = packet[:-1]
-                        state = packet[-1:].strip()
-                        d[key] = bool(int(state))
-                        # if key[0] in ALPHAS \
-                        #         and state in ('0', '1'):
-                        #     d[key] = bool(int(state))
-                else:
-                    for i in xrange(0, len(word), 2):
-                        packet = word[i:i + 2]
-                        try:
-                            key, state = packet[0], packet[1]
-                        except IndexError:
-                            return d
-
-                        if key.upper() in ALPHAS:
-                            if state in ('0', '1'):
-                                d[key] = bool(int(state))
-
-                                #                    d = dict([(word[i:i + 2][0], bool(int(word[i:i + 2][1]))) for i in xrange(0, len(word), 2)])
-                return d
-            except ValueError:
-                pass
-
-    def _load_states(self):
-        elm = self.extraction_line_manager
-        for k, v in self.valves.iteritems():
-            s = v.get_hardware_state()
-            elm.update_valve_state(k, s, refresh=False)
-            #             time.sleep(0.025)
-
-    def _load_soft_lock_states(self):
-        if self.extraction_line_manager.mode == 'client':
-            for k, v in self.valves.iteritems():
-                s = v.get_lock_state()
-                func = self.lock if s else self.unlock
-                func(k, save=False)
-                #                 time.sleep(0.025)
-
-        else:
-            p = os.path.join(paths.hidden_dir, '{}_soft_lock_state'.format(self.name))
-            if os.path.isfile(p):
-                self.info('loading soft lock state from {}'.format(p))
-
-                with open(p, 'rb') as f:
-                    try:
-                        sls = pickle.load(f)
-                    except PickleError:
-                        pass
-
-                    for v in self.valves:
-
-                        if v in sls and sls[v]:
-                            self.lock(v, save=False)
-                        else:
-                            self.unlock(v, save=False)
-
     def get_owners(self):
         """
             eg.
                 1. 129.128.12.141-A,B,C:D,E,F
+                   A,B,C owned by 141
+                   D,E,F free
                 2. A,B,C,D,E,F
+                   All free
                 3. 129.128.12.141-A,B,C:129.138.12.150-D,E:F
                     A,B,C owned by 141,
                     D,E owned by 150
                     F free
         """
-        #self.valves['C'].owner = '129.138.12.135'
-        #self.valves['X'].owner = '129.138.12.135'
+        # self.valves['C'].owner = '129.138.12.135'
+        # self.valves['X'].owner = '129.138.12.135'
 
         vs = [(v.name.split('-')[1], v.owner) for v in self.valves.itervalues()]
         key = lambda x: x[1]
@@ -426,10 +348,6 @@ class ValveManager(Manager):
         """
         return self._get_valve_by(a, 'description')
 
-    def _get_valve_by(self, a, attr):
-        return next((valve for valve in self.valves.itervalues() \
-                     if getattr(valve, attr) == a), None)
-
     def get_valve_by_name(self, n):
         """
         """
@@ -447,7 +365,6 @@ class ValveManager(Manager):
         v = self.get_valve_by_description(d)
         if v is not None:
             return v.name.split('-')[-1]
-
 
     def get_evalve_by_name(self, n):
         """
@@ -474,20 +391,6 @@ class ValveManager(Manager):
 
         return state
 
-    def _get_state_by(self, v):
-        """
-        """
-        state = None
-        if self.query_valve_state and v.query_state:
-            state = v.get_hardware_state()  # actuator.get_channel_state(v)
-
-        if state is None:
-            state = v.state
-        else:
-            v.state = state
-
-        return state
-
     def get_actuator_by_name(self, name):
         act = None
         if self.actuators:
@@ -508,7 +411,7 @@ class ValveManager(Manager):
         if v is not None:
             return v.software_lock
 
-    def check_soft_interlocks(self, name):
+    def _check_soft_interlocks(self, name):
         """
         """
         cv = self.get_valve_by_name(name)
@@ -518,9 +421,10 @@ class ValveManager(Manager):
             valves = self.valves
             for interlock in interlocks:
                 if interlock in valves:
-                    if valves[interlock].state:
+                    v = valves[interlock]
+                    if v.state:
                         self.debug('interlocked {}'.format(interlock))
-                        return True
+                        return v
 
     def open_by_name(self, name, mode='normal'):
         """
@@ -548,10 +452,6 @@ class ValveManager(Manager):
         """
         v = self.get_valve_by_name(name)
         if v is not None:
-            #            ev = self.get_evalve_by_name(name)
-            #            if ev is not None:
-            #                ev.soft_lock = True
-
             v.lock()
             if save:
                 self._save_soft_lock_states()
@@ -561,10 +461,6 @@ class ValveManager(Manager):
         """
         v = self.get_valve_by_name(name)
         if v is not None:
-            #            ev = self.get_evalve_by_name(name)
-            #            if ev is not None:
-            #                ev.soft_lock = False
-
             v.unlock()
             if save:
                 self._save_soft_lock_states()
@@ -582,13 +478,114 @@ class ValveManager(Manager):
 
         return next((False for vi in v.interlocks if self.get_valve_by_name(vi).state), True)
 
+    # private
+    def _get_state_by(self, v):
+        """
+        """
+        state = None
+        if self.query_valve_state and v.query_state:
+            state = v.get_hardware_state()
+
+        if state is None:
+            state = v.state
+        else:
+            v.state = state
+
+        return state
+
+    def _get_valve_by(self, a, attr):
+        return next((valve for valve in self.valves.itervalues() \
+                     if getattr(valve, attr) == a), None)
+
+    def _parse_word(self, word):
+        if word is not None:
+            try:
+                d = dict()
+                if ',' in word:
+                    packets = word.split(',')
+                    n, nn = len(packets), len(self.valves)
+                    if n < nn:
+                        self.warning('Valve word length is too short. All valve states will not be updated!'
+                                     ' Word:{}, Num Valves: {}'.format(n, nn))
+
+                    for packet in packets:
+                        key = packet[:-1]
+                        state = packet[-1:].strip()
+                        d[key] = bool(int(state))
+
+                else:
+                    for i in xrange(0, len(word), 2):
+                        packet = word[i:i + 2]
+                        try:
+                            key, state = packet[0], packet[1]
+                            d[key] = bool(int(state))
+                        except IndexError:
+                            return d
+                            # if key.upper() in ALPHAS:
+                            # if state in ('0', '1'):
+                return d
+            except ValueError:
+                pass
+
+    def _load_states(self):
+        self.load_valve_states(refresh=False)
+
+        # # elm = self.extraction_line_manager
+        # for k, v in self.valves.iteritems():
+        # s = v.get_hardware_state()
+        #     self.refresh_state = (k, s, False)
+        #     # elm.update_valve_state(k, s, refresh=False)
+        #     # time.sleep(0.025)
+
+    def _load_soft_lock_states(self):
+        if self.mode == 'client':
+            self.load_valve_lock_states()
+
+            # for k, v in self.valves.iteritems():
+            # s = v.get_lock_state()
+            #     func = self.lock if s else self.unlock
+            #     func(k, save=False)
+            #     time.sleep(0.025)
+
+        else:
+            p = os.path.join(paths.hidden_dir, '{}_soft_lock_state'.format(self.name))
+            if os.path.isfile(p):
+                self.info('loading soft lock state from {}'.format(p))
+
+                with open(p, 'rb') as f:
+                    try:
+                        sls = pickle.load(f)
+                    except PickleError:
+                        pass
+
+                    for v in self.valves:
+
+                        if v in sls and sls[v]:
+                            self.lock(v, save=False)
+                        else:
+                            self.unlock(v, save=False)
+
+    def _save_soft_lock_states(self):
+        if self.mode != 'client':
+            p = os.path.join(paths.hidden_dir, '{}_soft_lock_state'.format(self.name))
+            self.info('saving soft lock state to {}'.format(p))
+            with open(p, 'wb') as f:
+                obj = dict([(k, v.software_lock) for k, v in self.valves.iteritems()])
+
+                pickle.dump(obj, f)
+        else:
+            self.debug('Client Mode. Not saving lock states')
+
     def _open_(self, name, mode):
         """
         """
         action = 'set_open'
         # check software interlocks and return None if True
-        if self.check_soft_interlocks(name):
-            self.warning('Software Interlock')
+        interlocked_valve = self._check_soft_interlocks(name)
+        if interlocked_valve:
+            msg = 'Software Interlock. {} is OPEN!. Will not open {}'.format(interlocked_valve.name, name)
+            self.console_message = (msg, 'red')
+            self.warning(msg)
             return
 
         r, c = self._actuate_(name, action, mode)
@@ -606,10 +603,9 @@ class ValveManager(Manager):
         """
         """
         action = 'set_closed'
-        if self.check_soft_interlocks(name):
-            self.warning('Software Interlock')
-            return
-
+        # if self._check_soft_interlocks(name):
+        # self.warning('Software Interlock')
+        #     return
         return self._actuate_(name, action, mode)
 
     def _actuate_(self, name, action, mode, address=None):
@@ -626,14 +622,18 @@ class ValveManager(Manager):
         result = None
         if v is not None:
             if not v.enabled:
-                self.warning_dialog('{} {} not enabled'.format(v.name, v.description))
+                msg = '{} {} not enabled'.format(v.name, v.description)
+                self.console_message = (msg, 'red')
+                self.warning_dialog(msg)
             else:
                 act = getattr(v, action)
 
-                result, changed = act(mode='{}-{}'.format(self.extraction_line_manager.mode, mode))
+                result, changed = act(mode='{}-{}'.format(self.mode, mode))
 
         else:
-            self.warning('Valve {} not available'.format(vid))
+            msg = 'Valve {} not available'.format(vid)
+            self.console_message = msg, 'red'
+            self.warning(msg)
             # result = 'Valve %s not available' % id
 
         return result, changed
@@ -742,36 +742,110 @@ class ValveManager(Manager):
         return name, hv
 
     def _load_explanation_valve(self, v):
-        #        s = v.get_hardware_state()
-        # update the extraction line managers canvas
-        #            self.extraction_line_manager.canvas.update_valve_state(v.name[-1], s)
         name = v.name.split('-')[1]
-        #        self.extraction_line_manager.update_valve_state(name, s)
-        #        args = dict(
-        #                    )
         ev = ExplanableValve(name=name,
                              address=v.address,
-                             description=v.description,
-                             #                    canvas=self.extraction_line_manager.canvas,
-                             )
-        #        ev.state = s if s is not None else False
-        #        ev=weakref.ref(ev)()
+                             description=v.description)
+
         v.evalve = ev
-        #        v.evalve = weakref.ref(ev)()
         self.explanable_items.append(ev)
 
     def _get_simulation(self):
         return any([act.simulation for act in self.actuators])
 
+        #
+        # if __name__ == '__main__':
+        # from pychron.loggable import Loggable
+        # from threading import Timer, Thread, Event
+        # from Queue import Queue
+        # import random
+        # class Foo(Loggable):
+        # def get_state_by_name(self, m):
+        #             b = random.randint(1, 5) / 50.0
+        #             r = 0.1 + b
+        #             #        r = 3
+        #             self.info('sleep {}'.format(r))
+        #             time.sleep(r)
+        #             return True
+        #
+        #         def _get_states(self, times_up_event, sq):
+        #             #        self.states = []
+        #             for k in ['A', 'B', 'Ca', 'Dn', 'Es', 'F', 'G', 'H', 'I']:
+        #                 if times_up_event.isSet():
+        #                     break
+        #
+        #                 sq.put(k)
+        #                 #            self.info('geting state for {}'.format(k))
+        #                 s = self.get_state_by_name(k)
+        #                 #            self.info('got {} for {}'.format(s, k))
+        #                 if times_up_event.isSet():
+        #                     break
+        #                 sq.put('1' if s else '0')
+        #
+        #                 # return ''.join(states)
+        #
+        #         def get_states(self):
+        #             """
+        #                 with this method you need to ensure the communicators timeout
+        #                 is sufficiently low. the communicator will block until a response
+        #                 or a timeout. the times up event only breaks between state queries.
+        #
+        #             """
+        #             states_queue = Queue()
+        #             times_up_event = Event()
+        #             t = Timer(1, lambda: times_up_event.set())
+        #             t.start()
+        #             #        states = self._get_states(times_up_event)
+        #             #        return states
+        #             t = Thread(target=self._get_states, args=(times_up_event, states_queue))
+        #             t.start()
+        #             t.join(timeout=1.1)
+        #             s = ''
+        #
+        #             n = states_queue.qsize()
+        #             if n % 2 != 0:
+        #                 c = n / 2 * 2
+        #             else:
+        #                 c = n
+        #
+        #             i = 0
+        #             while not states_queue.empty() and i < c:
+        #                 s += states_queue.get_nowait()
+        #                 i += 1
+        #
+        #                 #        n = len(s)
+        #                 #        if n % 2 != 0:
+        #                 #            sn = s[:n / 2 * 2]
+        #                 #        else:
+        #                 #            sn = s
+        #                 #        s = ''.join(self.states)
+        #             self.info('states = {}'.format(s))
+        #             return s
+        #
+        #             #    v = ValveManager()
+        #             #    p = os.path.join(paths.extraction_line_dir, 'valves.xml')
+        #             #    v._load_valves_from_file(p)
+        #
+        #     from pychron.core.helpers.logger_setup import logging_setup
+        #
+        #     logging_setup('foo')
+        #     f = Foo()
+        #     for i in range(10):
+        #         r = f.get_states()
+        #         time.sleep(2)
+        #         # print r, len(r)
+
+        # ==================== EOF ==================================
+
         # ===============================================================================
         # deprecated
         # ===============================================================================
-        #     def claim_section(self, section, addr=None, name=None):
+        # def claim_section(self, section, addr=None, name=None):
 
-#         try:
-#             vg = self.valve_groups[section]
-#         except KeyError:
-#             return True
+# try:
+# vg = self.valve_groups[section]
+# except KeyError:
+# return True
 #
 #         if addr is None:
 #             addr = self._get_system_address(name)
@@ -801,88 +875,35 @@ class ValveManager(Manager):
 # #        print name, claimer,grp, r
 #         return r
 
+# def get_owners_word(self):
+#         """
+#          eg.
+#                 1. 129.128.12.141-A,B,C:D,E,F
+#                 2. A,B,C,D,E,F
+#                 3. 129.128.12.141-A,B,C:129.138.12.150-D,E:F
+#                     A,B,C owned by 141,
+#                     D,E owned by 150
+#                     F free
+#         """
+#         if self.actuators:
+#             rs = []
+#             actuator = self.actuators[0]
+#             word = actuator.get_owners_word()
+#             if word:
+#                 groups = word.split(':')
+#                 if len(groups) > 1:
+#                     for gi in groups:
+#                         if '-' in gi:
+#                             owner, vs = gi.split('-')
+#                         else:
+#                             owner, vs = '', gi
+#
+#                         rs.append((owner, vs.split(',')))
+#
+#                 else:
+#                     rs = [('', groups[0].split(',')), ]
+#             return rs
 
-
-
-if __name__ == '__main__':
-
-    class Foo(Loggable):
-        def get_state_by_name(self, m):
-            b = random.randint(1, 5) / 50.0
-            r = 0.1 + b
-            #        r = 3
-            self.info('sleep {}'.format(r))
-            time.sleep(r)
-            return True
-
-        def _get_states(self, times_up_event, sq):
-            #        self.states = []
-            for k in ['A', 'B', 'Ca', 'Dn', 'Es', 'F', 'G', 'H', 'I']:
-                if times_up_event.isSet():
-                    break
-
-                sq.put(k)
-                #            self.info('geting state for {}'.format(k))
-                s = self.get_state_by_name(k)
-                #            self.info('got {} for {}'.format(s, k))
-                if times_up_event.isSet():
-                    break
-                sq.put('1' if s else '0')
-
-                # return ''.join(states)
-
-        def get_states(self):
-            '''
-                with this method you need to ensure the communicators timeout
-                is sufficiently low. the communicator will block until a response
-                or a timeout. the times up event only breaks between state queries.
-            
-            '''
-            states_queue = Queue()
-            times_up_event = Event()
-            t = Timer(1, lambda: times_up_event.set())
-            t.start()
-            #        states = self._get_states(times_up_event)
-            #        return states
-            t = Thread(target=self._get_states, args=(times_up_event, states_queue))
-            t.start()
-            t.join(timeout=1.1)
-            s = ''
-
-            n = states_queue.qsize()
-            if n % 2 != 0:
-                c = n / 2 * 2
-            else:
-                c = n
-
-            i = 0
-            while not states_queue.empty() and i < c:
-                s += states_queue.get_nowait()
-                i += 1
-
-                #        n = len(s)
-                #        if n % 2 != 0:
-                #            sn = s[:n / 2 * 2]
-                #        else:
-                #            sn = s
-                #        s = ''.join(self.states)
-            self.info('states = {}'.format(s))
-            return s
-
-            #    v = ValveManager()
-            #    p = os.path.join(paths.extraction_line_dir, 'valves.xml')
-            #    v._load_valves_from_file(p)
-
-    from pychron.core.helpers.logger_setup import logging_setup
-
-    logging_setup('foo')
-    f = Foo()
-    for i in range(10):
-        r = f.get_states()
-        time.sleep(2)
-        # print r, len(r)
-
-# ==================== EOF ==================================
 #     def _get_system_address(self, name):
 #         return next((h for k, h in self.systems.iteritems() if k == name), None)
 #

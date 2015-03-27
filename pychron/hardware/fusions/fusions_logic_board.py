@@ -67,16 +67,19 @@ class FusionsLogicBoard(CoreDevice):
 
     def _calibration_factory(self, calibration):
         coeffs = None
+        nmapping = False
         if calibration == 'watts':
             config = self.get_configuration()
-            coeffs = self._get_watt_calibration_coefficients(config)
+            coeffs, nmapping = self._get_watt_calibration(config)
 
         if coeffs is None:
             coeffs = [1, 0]
-        return MeterCalibration(coeffs)
 
-    def _get_watt_calibration_coefficients(self, config):
+        return MeterCalibration(coeffs, normal_mapping=bool(nmapping))
+
+    def _get_watt_calibration(self, config):
         coeffs = [1, 0]
+        nmapping = False
         section = 'PowerOutput'
         if config.has_section(section):
             cs = config.get(section, 'coefficients')
@@ -86,7 +89,10 @@ class FusionsLogicBoard(CoreDevice):
                 self.warning_dialog('Invalid power calibration {}'.format(cs))
                 return
 
-        return coeffs
+            if config.has_option(section, 'normal_mapping'):
+                nmapping = config.getboolean(section, 'normal_mapping')
+
+        return coeffs, nmapping
 
     def get_calibrated_power(self, request, calibration='watts', verbose=True):
     #        coeffs = [1, 0]
