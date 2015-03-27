@@ -194,7 +194,7 @@ class ExtractionLineManager(Manager, Consoleable):
 
     def test_valve_communication(self):
         # if self.simulation:
-        #     return globalv.communication_simulation
+        # return globalv.communication_simulation
         # else:
         if self.valve_manager:
             if self.valve_manager.simulation:
@@ -497,7 +497,7 @@ class ExtractionLineManager(Manager, Consoleable):
                 description = vm.get_valve_by_name(name).description
                 self._log_spec_event(name, action)
                 self.info('{:<6s} Valve-{} ({})'.format(action.upper(), name, description),
-                          color='red' if action == 'close' else 'green')
+                    color='red' if action == 'close' else 'green')
                 vm.actuate_children(name, action, mode)
                 ld = self.link_valve_actuation_dict
                 if ld:
@@ -570,7 +570,7 @@ class ExtractionLineManager(Manager, Consoleable):
     def _create_manager(self, klass, manager, params, **kw):
         # try a lazy load of the required module
         # if 'fusions' in manager:
-        #     package = 'pychron.managers.laser_managers.{}'.format(manager)
+        # package = 'pychron.managers.laser_managers.{}'.format(manager)
         #     self.laser_manager_id = manager
         if 'rpc' in manager:
             package = 'pychron.rpc.manager'
@@ -649,6 +649,18 @@ class ExtractionLineManager(Manager, Consoleable):
         for c in self._canvases:
             c.canvas2D.trait_set(**{name: new})
 
+    def _handle_state(self, new):
+        self.update_valve_state(*new)
+
+    def _handle_lock_state(self, new):
+        self.update_valve_lock_state(*new)
+
+    def _handle_owned_state(self, new):
+        self.update_valve_owned_state(*new)
+
+    def _handle_refresh_canvas(self, new):
+        self.refresh_canvas()
+
     # ===============================================================================
     # defaults
     # ===============================================================================
@@ -658,8 +670,13 @@ class ExtractionLineManager(Manager, Consoleable):
 
     def _valve_manager_default(self):
         from pychron.extraction_line.valve_manager import ValveManager
-
-        return ValveManager(extraction_line_manager=self)
+        # vm = ValveManager(extraction_line_manager=self)
+        vm = ValveManager(mode=self.mode)
+        vm.on_trait_change(self._handle_state, 'refresh_state')
+        vm.on_trait_change(self._handle_lock_state, 'refresh_lock_state')
+        vm.on_trait_change(self._handle_owned_state, 'refresh_owned_state')
+        vm.on_trait_change(self._handle_refresh_canvas, 'refresh_canvas_needed')
+        return
 
     def _explanation_default(self):
         e = ExtractionLineExplanation()
@@ -677,6 +694,7 @@ class ExtractionLineManager(Manager, Consoleable):
     def _network_default(self):
         return ExtractionLineGraph()
 
+
 if __name__ == '__main__':
     elm = ExtractionLineManager()
     elm.bootstrap()
@@ -684,7 +702,7 @@ if __name__ == '__main__':
     elm.configure_traits()
 
 # =================== EOF ================================
-#    def _pumping_monitor_default(self):
+# def _pumping_monitor_default(self):
 #        '''
 #        '''
 #        return PumpingMonitor(gauge_manager=self.gauge_manager,

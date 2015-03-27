@@ -33,6 +33,10 @@ class AbstractDevice(ScanableDevice, RPCable, HasCommunicator):
     dev_klass = Property(depends_on='_cdevice')
     graph = DelegatesTo('_cdevice')
 
+    @property
+    def com_device_name(self):
+        return self._cdevice.__class__.__name__
+
     def get_factory(self, package, klass):
         try:
             module = __import__(package, fromlist=[klass])
