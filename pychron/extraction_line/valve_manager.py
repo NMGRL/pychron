@@ -63,13 +63,10 @@ class ValveManager(Manager):
     refresh_lock_state = Event
     refresh_canvas_needed = Event
     refresh_owned_state = Event
+    console_message = Event
     mode = None
 
     _prev_keys = None
-
-
-    def _name_changed(self):
-        print 'asdf'
 
     def actuate_children(self, name, action, mode):
         """
@@ -414,7 +411,7 @@ class ValveManager(Manager):
         if v is not None:
             return v.software_lock
 
-    def check_soft_interlocks(self, name):
+    def _check_soft_interlocks(self, name):
         """
         """
         cv = self.get_valve_by_name(name)
@@ -424,9 +421,10 @@ class ValveManager(Manager):
             valves = self.valves
             for interlock in interlocks:
                 if interlock in valves:
-                    if valves[interlock].state:
+                    v = valves[interlock]
+                    if v.state:
                         self.debug('interlocked {}'.format(interlock))
-                        return True
+                        return v
 
     def open_by_name(self, name, mode='normal'):
         """
@@ -523,8 +521,8 @@ class ValveManager(Manager):
                             d[key] = bool(int(state))
                         except IndexError:
                             return d
-                        # if key.upper() in ALPHAS:
-                        # if state in ('0', '1'):
+                            # if key.upper() in ALPHAS:
+                            # if state in ('0', '1'):
                 return d
             except ValueError:
                 pass
@@ -534,7 +532,7 @@ class ValveManager(Manager):
 
         # # elm = self.extraction_line_manager
         # for k, v in self.valves.iteritems():
-        #     s = v.get_hardware_state()
+        # s = v.get_hardware_state()
         #     self.refresh_state = (k, s, False)
         #     # elm.update_valve_state(k, s, refresh=False)
         #     # time.sleep(0.025)
@@ -544,7 +542,7 @@ class ValveManager(Manager):
             self.load_valve_lock_states()
 
             # for k, v in self.valves.iteritems():
-            #     s = v.get_lock_state()
+            # s = v.get_lock_state()
             #     func = self.lock if s else self.unlock
             #     func(k, save=False)
             #     time.sleep(0.025)
@@ -583,8 +581,11 @@ class ValveManager(Manager):
         """
         action = 'set_open'
         # check software interlocks and return None if True
-        if self.check_soft_interlocks(name):
-            self.warning('Software Interlock')
+        interlocked_valve = self._check_soft_interlocks(name)
+        if interlocked_valve:
+            msg = 'Software Interlock. {} is OPEN!. Will not open {}'.format(interlocked_valve.name, name)
+            self.console_message = (msg, 'red')
+            self.warning(msg)
             return
 
         r, c = self._actuate_(name, action, mode)
@@ -602,10 +603,9 @@ class ValveManager(Manager):
         """
         """
         action = 'set_closed'
-        if self.check_soft_interlocks(name):
-            self.warning('Software Interlock')
-            return
-
+        # if self._check_soft_interlocks(name):
+        # self.warning('Software Interlock')
+        #     return
         return self._actuate_(name, action, mode)
 
     def _actuate_(self, name, action, mode, address=None):
@@ -622,14 +622,18 @@ class ValveManager(Manager):
         result = None
         if v is not None:
             if not v.enabled:
-                self.warning_dialog('{} {} not enabled'.format(v.name, v.description))
+                msg = '{} {} not enabled'.format(v.name, v.description)
+                self.console_message = (msg, 'red')
+                self.warning_dialog(msg)
             else:
                 act = getattr(v, action)
 
                 result, changed = act(mode='{}-{}'.format(self.mode, mode))
 
         else:
-            self.warning('Valve {} not available'.format(vid))
+            msg = 'Valve {} not available'.format(vid)
+            self.console_message = msg, 'red'
+            self.warning(msg)
             # result = 'Valve %s not available' % id
 
         return result, changed
@@ -756,7 +760,7 @@ class ValveManager(Manager):
         # from Queue import Queue
         # import random
         # class Foo(Loggable):
-        #         def get_state_by_name(self, m):
+        # def get_state_by_name(self, m):
         #             b = random.randint(1, 5) / 50.0
         #             r = 0.1 + b
         #             #        r = 3
@@ -841,7 +845,7 @@ class ValveManager(Manager):
 # try:
 # vg = self.valve_groups[section]
 # except KeyError:
-#             return True
+# return True
 #
 #         if addr is None:
 #             addr = self._get_system_address(name)

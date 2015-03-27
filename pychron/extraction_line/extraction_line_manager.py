@@ -490,23 +490,25 @@ class ExtractionLineManager(Manager, Consoleable):
             # check if specified valve is in the valves.xml file
             if not name:
                 self.warning('Invalid valve name={}, description={}'.format(oname, description))
-                return False
+                return False, False
 
             result = self._change_valve_state(name, mode, action, **kw)
+
             if result:
-                description = vm.get_valve_by_name(name).description
-                self._log_spec_event(name, action)
-                self.info('{:<6s} Valve-{} ({})'.format(action.upper(), name, description),
-                    color='red' if action == 'close' else 'green')
-                vm.actuate_children(name, action, mode)
-                ld = self.link_valve_actuation_dict
-                if ld:
-                    try:
-                        func = ld[name]
-                        func(name, action)
-                    except KeyError:
-                        self.debug('name="{}" not in '
-                                   'link_valve_actuation_dict. keys={}'.format(name, ','.join(ld.keys())))
+                if all(result):
+                    description = vm.get_valve_by_name(name).description
+                    self._log_spec_event(name, action)
+                    self.info('{:<6s} Valve-{} ({})'.format(action.upper(), name, description),
+                              color='red' if action == 'close' else 'green')
+                    vm.actuate_children(name, action, mode)
+                    ld = self.link_valve_actuation_dict
+                    if ld:
+                        try:
+                            func = ld[name]
+                            func(name, action)
+                        except KeyError:
+                            self.debug('name="{}" not in '
+                                       'link_valve_actuation_dict. keys={}'.format(name, ','.join(ld.keys())))
 
             return result
 
@@ -650,6 +652,19 @@ class ExtractionLineManager(Manager, Consoleable):
     def _handle_refresh_canvas(self, new):
         self.refresh_canvas()
 
+    def _handle_console_message(self, new):
+        color = None
+        if isinstance(new, tuple):
+            msg, color = new
+        else:
+            msg = new
+
+        if color is None:
+            color = self.console_default_color
+
+        if self.console_display:
+            self.console_display.add_text(msg, color=color)
+
     # ===============================================================================
     # defaults
     # ===============================================================================
@@ -665,6 +680,7 @@ class ExtractionLineManager(Manager, Consoleable):
         vm.on_trait_change(self._handle_lock_state, 'refresh_lock_state')
         vm.on_trait_change(self._handle_owned_state, 'refresh_owned_state')
         vm.on_trait_change(self._handle_refresh_canvas, 'refresh_canvas_needed')
+        vm.on_trait_change(self._handle_console_message, 'console_message')
         return vm
 
     def _explanation_default(self):
@@ -692,17 +708,17 @@ if __name__ == '__main__':
 
 # =================== EOF ================================
 # def _valve_manager_changed(self):
-    #     if self.valve_manager is not None:
-    #         self.status_monitor.valve_manager = self.valve_manager
-    #         e = self.explanation
-    #         if e is not None:
-    #             e.load(self.valve_manager.explanable_items)
-    #             self.valve_manager.on_trait_change(e.load_item, 'explanable_items[]')
+# if self.valve_manager is not None:
+# self.status_monitor.valve_manager = self.valve_manager
+#         e = self.explanation
+#         if e is not None:
+#             e.load(self.valve_manager.explanable_items)
+#             self.valve_manager.on_trait_change(e.load_item, 'explanable_items[]')
 
 # def _pumping_monitor_default(self):
 # '''
 # '''
-#        return PumpingMonitor(gauge_manager=self.gauge_manager,
+# return PumpingMonitor(gauge_manager=self.gauge_manager,
 #                              parent=self)
 
 #    def _multruns_report_manager_default(self):
