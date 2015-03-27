@@ -61,9 +61,8 @@ class XMLAnalysisView(HasTraits):
 
     def __init__(self, *args, **kw):
         super(XMLAnalysisView, self).__init__(*args, **kw)
-        self.main_view = XMLMainView()
-        self.main_view.load(self.model)
-        print self.main_view
+        # self.main_view = XMLMainView(analysis_id=self.model.uuid)
+        # self.main_view.load(self.model)
 
     def update_fontsize(self, a, s):
         pass
@@ -73,7 +72,7 @@ class XMLAnalysisView(HasTraits):
         return v
 
     def _main_view_default(self):
-        mv = XMLMainView(model=self.model)
+        mv = XMLMainView(self.model, analysis_id=self.model.uuid)
         return mv
 
 
@@ -93,7 +92,6 @@ class XMLBlank(XMLBaseValue):
         super(XMLBlank, self).__init__(key, meas_elem)
         self.value = float(meas_elem.get('blank{}'.format(key)))
         self.error = float(meas_elem.get('blank{}Sigma'.format(key)))
-        print key, self.value
 
 
 class XMLBaseline(XMLBaseValue):
@@ -117,10 +115,6 @@ class XMLIsotope(XMLBaseValue):
     def get_baseline_corrected_value(self):
         return ufloat(self.value, self.error) - self.baseline.uvalue
 
-    def __getattr__(self, item):
-        print item
-        return 0
-
 
 class XMLAnalysis(HasTraits):
     selected_histories = None
@@ -141,25 +135,30 @@ class XMLAnalysis(HasTraits):
         self.analysis_timestamp = datetime.strptime(ds, '%Y:%m:%d:%H:%M:%S.00')
         self.rundate = self.analysis_timestamp
 
-        # self.isotope_keys = ARGON_KEYS
-        self.isotope_keys = ['Ar40']
-        self.isotopes = {'Ar40': XMLIsotope('40Ar', meas_elem)}
+        self._make_isotopes(meas_elem)
+
+        ex = XMLExtraction(meas_elem)
+        exp = XMLExperiment(elem)
+
         self.mass_spectrometer = self.measurement.mass_spectrometer.name
         self.extraction_script_name = '---'
         self.measurement_script_name = '---'
         self.extract_device = '---'
         self.position = '---'
         self.xyz_position = '---'
-        self.extract_value = '---'
-        self.extract_units = '---'
-        self.duration = '---'
-        self.cleanup = '---'
-        self.collection_time_zero_offset = '---'
-        self.extract_device = '---'
+
+        self.extract_value = ex.extract_value
+        self.extract_units = ex.extract_units
+        self.duration = ex.extract_duration
+        self.cleanup = ex.cleanup_duration
         self.beam_diameter = '---'
         self.pattern = '---'
         self.ramp_duration = '---'
         self.ramp_rate = '---'
+
+        self.collection_time_zero_offset = '---'
+
+        self.extract_device = exp.extract_device
 
         parm = elem.find('Parameters')
         self.j = ufloat(parm.get('jValue'), parm.get('jValueSigma'))
@@ -169,10 +168,13 @@ class XMLAnalysis(HasTraits):
 
         self.data_reduction_tag = ''
 
-        self.irradiation_label = ''
-        self.project = ''
-        self.sample = ''
-        self.material = ''
+        ix = XMLIrradiationPosition(elem)
+        self.irradiation_label = ix.level.irradiation.name
+
+        sx = XMLSample(elem)
+        self.project = sx.project.name
+        self.sample = sx.name
+        self.material = sx.material.name
         self.comment = ''
         self.sensitivity = 0
 
@@ -183,39 +185,42 @@ class XMLAnalysis(HasTraits):
     def record_id(self):
         return make_runid(self.uuid, self.aliquot, self.step)
 
-    def __getattr__(self, item):
-        if item != 'analysis_view':
-            print 'define {}'.format(item)
+    def _make_isotopes(self, m):
+        isokeys = []
+        isos = {}
+        for k, kk in (('Ar40', '40Ar'), ('Ar39', '39Ar'), ('Ar38', '38Ar'), ('Ar37', '37Ar'), ('Ar36', '36Ar')):
+            if m.get('intercept{}'.format(kk)):
+                isokeys.append(k)
+                isos[k] = XMLIsotope(kk, m)
+        self.isotopes = isos
+        self.isotope_keys = isokeys
 
-            return '---'
-        else:
-            return XMLAnalysisView(model=self, analysis_id=self.uuid)
+    # def __getattr__(self, item):
+    #     if item != 'analysis_view':
+    #         print 'define {}'.format(item)
+    #
+    #         return '---'
+    #     else:
+    #         return XMLAnalysisView(model=self, analysis_id=self.uuid)
+
+
+class XMLExperiment(object):
+    def __init__(self, elem):
+        exp = elem.xpath('Parameters/Experiment')[0]
+        self.extract_device = exp.get('extractionMethod')
 
 
 class XMLExtraction(object):
     def __init__(self, meas_elem):
         self.extract_value = meas_elem.get('temperature')
+        self.extract_units = meas_elem.get('temperatureUnit')
         self.cleanup_duration = meas_elem.get('isolationDuration')
         self.extract_duration = 0
 
 
 class XMLMeasurement(object):
     def __init__(self, elem, meas_elem):
-        exp = elem
         self.mass_spectrometer = XMLMassSpectrometer(elem)
-
-
-# class XMLDummySample(object):
-# def __init__(self, elem):
-# self.name = 'fooboar'
-# self.project = 'asdfasfd'
-
-
-# class XMLDummyLabnumber(object):
-# def __init__(self, elem):
-# self.identifier = elem
-# self.sample = XMLDummySample(elem)
-# self.irradiation_position = XMLIrradiationPosition(elem)
 
 
 class XMLLabnumber(object):
@@ -264,7 +269,8 @@ class XMLIrradiationLevel(object):
 
 class XMLIrradiation(object):
     def __init__(self, elem):
-        self.name = 'Foo'
+        irrad = elem.xpath('Parameters/Experiment/Irradiation')[0]
+        self.name = irrad.get('irradiationName')
 
 # ============= EOF =============================================
 
