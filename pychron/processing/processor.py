@@ -73,6 +73,9 @@ class Processor(IsotopeDatabaseManager):
         self.info('Setting analysis backend to {}'.format(p))
         self.db = XMLDatabase(path=p)
 
+        # monkey patch make_analyses
+        self.make_analyses = self.db.make_analyses
+
         # self.db.trait_set(kind='sqlite',
         # path=get_path())
         # self.db.connect()

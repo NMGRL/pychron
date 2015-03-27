@@ -60,6 +60,9 @@ class XMLDatabase(Loggable):
 
                 self._load_sample_meta()
 
+    def make_analyses(self, ans, **kw):
+        return self.get_analyses_uuid([ai.identifier for ai in ans])
+
     # DatabaseAdapter interface
     def session_ctx(self, *args, **kw):
         return MockSession()
@@ -90,7 +93,7 @@ class XMLDatabase(Loggable):
             for e in elems:
                 if e.get('igsn') == li:
                     ms = e.xpath('Parameters/Experiment/Measurement')
-                    ans = [XMLAnalysis(mi) for mi in ms]
+                    ans = [XMLAnalysis(e, mi) for mi in ms]
                     return ans, len(ans)
 
     def get_analysis_groups(self, *args, **kw):
@@ -98,9 +101,24 @@ class XMLDatabase(Loggable):
 
     def get_analyses_uuid(self, uuids):
         print 'asdasdf', uuids
-        for u in uuids:
-            pass
-        return []
+        ms = self._parser.get_elements('Parameters/Experiment/Measurement')
+        # elems = self._parser.get_elements('Sample')
+        ans = []
+
+        for ui in uuids:
+            mi = next((mi for mi in ms if mi.get('measurementNumber') == ui))
+
+            cur = mi
+            while 1:
+                elem = cur.getparent()
+                if elem.tag == 'Sample':
+                    break
+                else:
+                    cur = elem
+            # elem = next((ei for ei in elems if ei.get('')))
+            ans.append(XMLAnalysis(elem, mi))
+
+        return ans
 
     # private
     def _load_projects(self):

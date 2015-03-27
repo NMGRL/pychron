@@ -209,9 +209,10 @@ class IsotopeRecordView(object):
                 self.flux_fit_status = get_flux_fit_status(dbrecord)
 
                 sh = dbrecord.selected_histories
-                self.blank_fit_status = get_selected_history_item(sh, 'selected_blanks_id')
-                self.ic_fit_status = get_selected_history_item(sh, 'selected_det_intercal_id')
-                self.iso_fit_status = get_selected_history_item(sh, 'selected_fits_id')
+                if sh:
+                    self.blank_fit_status = get_selected_history_item(sh, 'selected_blanks_id')
+                    self.ic_fit_status = get_selected_history_item(sh, 'selected_det_intercal_id')
+                    self.iso_fit_status = get_selected_history_item(sh, 'selected_fits_id')
 
             return True
         except Exception, e:

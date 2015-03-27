@@ -16,10 +16,12 @@
 
 # ============= enthought library imports =======================
 from datetime import datetime
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change
+from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change, Instance
 from traitsui.api import View, UItem, Item, HGroup, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.experiment.utilities.identifier import make_runid
+
 
 class BaseRecordView(object):
     def __init__(self, name):
@@ -38,42 +40,102 @@ class XMLIrradiationRecordView(BaseRecordView):
     pass
 
 
-class XMLAnalysis(object):
+# -------------------------------------------------
+class XMLMassSpectrometer(object):
     def __init__(self, elem):
-        self.labnumber = XMLDummyLabnumber(elem.get('measurementNumber'))
-        self.measurement = XMLMeasurement(elem)
+        exp = elem.xpath('Parameters/Experiment')[0]
 
-        self.record_id = ''
+        self.name = exp.get('massSpectrometer')
+
+
+class XMLMainView(HasTraits):
+    def trait_context(self):
+        return {'object': self.model}
+
+    def traits_view(self):
+        v = View(UItem('uuid'), UItem('analysis_timestamp'))
+        return v
+
+
+class XMLAnalysisView(HasTraits):
+    main_view = Instance(XMLMainView)
+    selection_tool = None
+
+    def __init__(self, *args, **kw):
+        super(XMLAnalysisView, self).__init__(*args, **kw)
+        self.main_view=XMLMainView(model=self.model)
+        print self.main_view
+
+    def update_fontsize(self, a, s):
+        pass
+
+    def traits_view(self):
+        v = View(UItem('main_view', style='custom'))
+        return v
+
+    def _main_view_default(self):
+        mv = XMLMainView(model=self.model)
+        return mv
+
+
+class XMLAnalysis(HasTraits):
+    selected_histories = None
+    analysis_view = Instance(XMLAnalysisView)
+
+    def __init__(self, elem, meas_elem):
+        self.uuid = meas_elem.get('measurementNumber')
+        self.labnumber = XMLLabnumber(elem)
+        self.labnumber.identifier = self.uuid
+
+        self.measurement = XMLMeasurement(elem, meas_elem)
+        self.extraction = XMLExtraction(meas_elem)
+        # self.record_id = ''
         self.aliquot = 0
         self.step = ''
         self.increment = 0
-        self.uuid = self.labnumber
         self.tag = ''
-        ds = elem.get('measurementDateTime')
+        ds = meas_elem.get('measurementDateTime')
         self.analysis_timestamp = datetime.strptime(ds, '%Y:%m:%d:%H:%M:%S.00')
 
+    def _analysis_view_default(self):
+        return XMLAnalysisView(model=self, analysis_id=self.uuid)
+
+    @property
+    def record_id(self):
+        return make_runid(self.uuid, self.aliquot, self.step)
+
+
+class XMLExtraction(object):
+    def __init__(self, meas_elem):
+        self.extract_value = meas_elem.get('temperature')
+        self.cleanup_duration = meas_elem.get('isolationDuration')
+        self.extract_duration = 0
+
+
 class XMLMeasurement(object):
-    def __init__(self, elem):
-        pass
+    def __init__(self, elem, meas_elem):
+        exp = elem
+        self.mass_spectrometer = XMLMassSpectrometer(elem)
 
 
-class XMLDummySample(object):
-    def __init__(self, elem):
-        self.name = 'fooboar'
-        self.project = 'asdfasfd'
+# class XMLDummySample(object):
+# def __init__(self, elem):
+# self.name = 'fooboar'
+# self.project = 'asdfasfd'
 
 
-class XMLDummyLabnumber(object):
-    def __init__(self, elem):
-        self.identifier = elem
-        self.sample = XMLDummySample(elem)
-        self.irradiation_position = XMLIrradiationPosition(elem)
+# class XMLDummyLabnumber(object):
+# def __init__(self, elem):
+# self.identifier = elem
+# self.sample = XMLDummySample(elem)
+#         self.irradiation_position = XMLIrradiationPosition(elem)
 
 
 class XMLLabnumber(object):
+    selected_flux_id = None
+
     def __init__(self, elem):
         self.identifier = elem.get('igsn')
-
         pos = XMLIrradiationPosition(elem)
         self.irradiation_position = pos
         self.sample = XMLSample(elem)
@@ -82,9 +144,10 @@ class XMLLabnumber(object):
 class XMLSample(object):
     def __init__(self, elem):
         self.name = elem.get('sampleID')
+        self.igsn = elem.get('igsn')
+
         self.lon = float(elem.get('longitude'))
         self.lat = float(elem.get('latitude'))
-
         exp = elem.xpath('Parameters/Experiment')[0]
         self.material = XMLMaterial(exp)
         self.project = XMLProject(exp)
