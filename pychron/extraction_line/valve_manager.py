@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -180,32 +180,17 @@ class ValveManager(Manager):
     def load_valve_lock_states(self, refresh=True):
         elm = self.extraction_line_manager
         word = self.get_lock_word()
-        # self.debug('valve lock word= {}'.format(word))
         changed = False
         if word is not None:
-
             for k in self.valves:
-                try:
+                if word.has_key(k):
                     v = self.get_valve_by_name(k)
                     s = word[k]
-                except KeyError:
-                    continue
-
-                if v.software_lock != s:
-                    changed = True
-
-                    v.software_lock = s
-                    elm.update_valve_lock_state(k, s)
-
-            # for k in self.valves.keys():
-            #     if word.has_key(k):
-            #         v = self.get_valve_by_name(k)
-            #         s = word[k]
-            #         if v.software_lock != s:
-            #             changed = True
-            #
-            #             v.software_lock = s
-            #             elm.update_valve_lock_state(k, s)
+                    if v.software_lock != s:
+                        changed = True
+    
+                        v.software_lock = s
+                        elm.update_valve_lock_state(k, s)
 
         if refresh and changed:
             elm.refresh_canvas()
@@ -276,7 +261,12 @@ class ValveManager(Manager):
         if self.actuators:
             actuator = self.actuators[0]
             word = actuator.get_lock_word()
-            return self._parse_word(word)
+            d = self._parse_word(word)
+
+            self.debug('Get Lock Word: {}'.format(word))
+            self.debug('Parsed Lock Word: {}'.format(d))
+
+            return d
 
     def get_valve_names(self):
         return self.valves.keys()
@@ -286,12 +276,19 @@ class ValveManager(Manager):
             try:
                 d = dict()
                 if ',' in word:
-                    for packet in word.split(','):
+                    packets = word.split(',')
+                    n, nn = len(packets), len(self.valves)
+                    if n < nn:
+                        self.warning('Valve lock word length is too short. All valve states will not be updated!'
+                                     ' Word:{}, Num Valves: {}'.format(n, nn))
+
+                    for packet in packets:
                         key = packet[:-1]
                         state = packet[-1:].strip()
-                        if key[0] in ALPHAS \
-                                and state in ('0', '1'):
-                            d[key] = bool(int(state))
+                        d[key] = bool(int(state))
+                        # if key[0] in ALPHAS \
+                        #         and state in ('0', '1'):
+                        #     d[key] = bool(int(state))
                 else:
                     for i in xrange(0, len(word), 2):
                         packet = word[i:i + 2]
@@ -756,7 +753,7 @@ class ValveManager(Manager):
                              address=v.address,
                              description=v.description,
                              #                    canvas=self.extraction_line_manager.canvas,
-        )
+                             )
         #        ev.state = s if s is not None else False
         #        ev=weakref.ref(ev)()
         v.evalve = ev
