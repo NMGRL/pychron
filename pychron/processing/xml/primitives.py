@@ -72,7 +72,9 @@ class XMLAnalysisView(HasTraits):
         return v
 
     def _main_view_default(self):
-        mv = XMLMainView(self.model, analysis_id=self.model.uuid)
+        mv = XMLMainView(self.model,
+                         analysis_type=self.model.analysis_type,
+                         analysis_id=self.model.uuid)
         return mv
 
 
@@ -119,6 +121,7 @@ class XMLIsotope(XMLBaseValue):
 class XMLAnalysis(HasTraits):
     selected_histories = None
     analysis_view = Instance(XMLAnalysisView)
+    analysis_type = 'unknown'
 
     def __init__(self, elem, meas_elem):
         self.uuid = meas_elem.get('measurementNumber')
@@ -178,6 +181,25 @@ class XMLAnalysis(HasTraits):
         self.comment = ''
         self.sensitivity = 0
 
+        self.uage = self._make_ufloat(meas_elem, 'measuredAge')
+        self.kca = self._make_ufloat(meas_elem, 'measuredKCaRatio')
+        self.uF = self._make_ufloat(meas_elem, 'corrected40ArRad39ArKRatio')
+
+        self.age_err_wo_j = 0
+        self.kcl = 0
+        self.rad40_percent = float(meas_elem.get('fraction40ArRadiogenic'))
+
+        self.F_err_wo_irrad = 0
+        # self.Ar40/Ar39_decay_corrected=0
+        # self.Ar40/Ar37_decay_corrected=0
+        # self.Ar40/Ar36=0
+        # self.Ar38/Ar39_decay_corrected=0
+        # self.Ar37_decay_corrected/Ar39_decay_corrected=0
+        # self.Ar36/Ar39_decay_corrected=0
+
+    def _make_ufloat(self, meas_elem, key):
+        return ufloat(meas_elem.get(key), meas_elem.get('{}Sigma'.format(key)))
+
     def _analysis_view_default(self):
         return XMLAnalysisView(model=self, analysis_id=self.uuid)
 
@@ -195,13 +217,14 @@ class XMLAnalysis(HasTraits):
         self.isotopes = isos
         self.isotope_keys = isokeys
 
-    # def __getattr__(self, item):
-    #     if item != 'analysis_view':
-    #         print 'define {}'.format(item)
-    #
-    #         return '---'
-    #     else:
-    #         return XMLAnalysisView(model=self, analysis_id=self.uuid)
+    def __getattr__(self, item):
+        if '/' in item:
+            return ufloat(0, 0)
+        elif item != 'analysis_view':
+            print 'define {}'.format(item)
+            return '---'
+        else:
+            return XMLAnalysisView(model=self, analysis_id=self.uuid)
 
 
 class XMLExperiment(object):
