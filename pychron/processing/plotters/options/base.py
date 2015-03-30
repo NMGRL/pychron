@@ -57,18 +57,8 @@ class BasePlotterOptions(HasTraits):
             yd = yaml.load(rfile)
             self._load_factory_defaults(yd)
 
-    def _load_factory_defaults(self, yd):
-        print 'prrrr', yd
-
     def dump(self, root):
         self._dump(root)
-
-    def _make_dir(self, root):
-        if os.path.isdir(root):
-            return
-        else:
-            self._make_dir(os.path.dirname(root))
-            os.mkdir(root)
 
     def get_formatting_value(self, attr, oattr=None):
         """
@@ -107,6 +97,27 @@ class BasePlotterOptions(HasTraits):
     def has_changes(self):
         return self._hash and self._hash != self.get_hash()
 
+    # handlers
+    def _anytrait_changed(self, name, new):
+        print name, new
+        if name in self._get_refreshable_attrs():
+            if self._process_trait_change(name, new):
+                self.refresh_plot_needed = True
+
+    # private
+    def _process_trait_change(self, name, new):
+        return True
+
+    def _get_refreshable_attrs(self):
+        return []
+
+    def _make_dir(self, root):
+        if os.path.isdir(root):
+            return
+        else:
+            self._make_dir(os.path.dirname(root))
+            os.mkdir(root)
+
     def _get_change_attrs(self):
         raise NotImplementedError
 
@@ -143,6 +154,9 @@ class BasePlotterOptions(HasTraits):
 
     def _load_hook(self):
         pass
+
+    def _load_factory_defaults(self, yd):
+        raise NotImplementedError
 
     def __repr__(self):
         return self.name

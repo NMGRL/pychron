@@ -104,7 +104,7 @@ class IdeogramOptions(AgeOptions):
         # if fg.use_filled_line:
         # color = fg.color
         # color.setAlphaF(fg.alpha * 0.01)
-        #     return dict(fill_color=fg.color,
+        # return dict(fill_color=fg.color,
         #                 type='filled_line')
         # else:
         #     return {}
@@ -112,7 +112,7 @@ class IdeogramOptions(AgeOptions):
     # def _edit_group_fill_color_button_fired(self):
     # eg = FillGroupEditor(fill_groups=self.fill_groups)
     # info = eg.edit_traits()
-    #     if info.result:
+    # if info.result:
     #         self.refresh_plot_needed = True
 
     @on_trait_change('use_static_limits, use_centered_range')
@@ -289,9 +289,9 @@ class IdeogramOptions(AgeOptions):
                       show_border=True,
                       label='Error Bars')
         main_grp = VGroup(self._get_title_group(),
-                          xgrp,
-                          grp_grp,
-                          g, g2, egrp)
+            xgrp,
+            grp_grp,
+            g, g2, egrp)
 
         orgp = Group(main_grp,
                      # label_grp,
@@ -305,7 +305,7 @@ class IdeogramOptions(AgeOptions):
         # label_grp = VGroup(self._get_indicator_font_group(),
         #                    self._get_label_font_group(),
         #                    label='Fonts')
-        return orgp, #axis_grp, label_grp
+        return orgp,  #axis_grp, label_grp
 
     def _get_indicator_font_group(self):
         g = VGroup(HGroup(Item('mean_indicator_fontname', label='Mean Indicator'),
@@ -327,6 +327,18 @@ class IdeogramOptions(AgeOptions):
     #     return [Fill(group_id=i,
     #                  color=colornames[i + 1],
     #                  alpha=100) for i in range(10)]
+
+    def _process_trait_change(self, name, new):
+        if name in ('asymptotic_width', 'asymptotic_percent', 'use_asymptotic_limits'):
+            for ap in self.aux_plots:
+                ap.clear_xlimits()
+
+        return True
+
+    def _get_refreshable_attrs(self):
+        attrs = super(IdeogramOptions, self)._get_refreshable_attrs()
+        attrs.extend(['asymptotic_width', 'asymptotic_percent', 'use_asymptotic_limits'])
+        return attrs
 
     def _get_dump_attrs(self):
         attrs = super(IdeogramOptions, self)._get_dump_attrs()
