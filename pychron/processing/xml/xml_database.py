@@ -24,7 +24,7 @@ from traitsui.api import View, UItem, Item, HGroup, VGroup
 from pychron.core.xml.xml_parser import XMLParser
 from pychron.loggable import Loggable
 from pychron.processing.xml.primitives import XMLLabnumber, XMLProjectRecordView, \
-    XMLSpectrometerRecord, XMLIrradiationRecordView, XMLAnalysis
+    XMLSpectrometerRecord, XMLIrradiationRecordView, XMLAnalysis, XMLAnalysisRecord
 
 
 class MockSession(object):
@@ -61,7 +61,7 @@ class XMLDatabase(Loggable):
                 self._load_sample_meta()
 
     def make_analyses(self, ans, **kw):
-        return self.get_analyses_uuid([ai.identifier for ai in ans])
+        return self.get_analyses_uuid([ai.identifier for ai in ans], klass=XMLAnalysis)
 
     # DatabaseAdapter interface
     def session_ctx(self, *args, **kw):
@@ -93,16 +93,17 @@ class XMLDatabase(Loggable):
             for e in elems:
                 if e.get('igsn') == li:
                     ms = e.xpath('Parameters/Experiment/Measurement')
-                    ans = [XMLAnalysis(e, mi) for mi in ms]
+                    ans = [XMLAnalysisRecord(e, mi) for mi in ms]
                     return ans, len(ans)
 
     def get_analysis_groups(self, *args, **kw):
         return []
 
-    def get_analyses_uuid(self, uuids):
-        print 'asdasdf', uuids
+    def get_analyses_uuid(self, uuids, klass=None):
+        if klass is None:
+            klass = XMLAnalysisRecord
+
         ms = self._parser.get_elements('Parameters/Experiment/Measurement')
-        # elems = self._parser.get_elements('Sample')
         ans = []
 
         for ui in uuids:
@@ -116,9 +117,12 @@ class XMLDatabase(Loggable):
                 else:
                     cur = elem
             # elem = next((ei for ei in elems if ei.get('')))
-            ans.append(XMLAnalysis(elem, mi))
+            ans.append(klass(elem, mi))
 
         return ans
+
+    def get_labnumber_figures(self, lns):
+        return []
 
     # private
     def _load_projects(self):

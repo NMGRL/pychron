@@ -108,6 +108,14 @@ class FigureTask(AnalysisEditTask):
     # ===============================================================================
     # task protocol
     # ===============================================================================
+    def activated(self):
+        from pychron.globals import globalv
+
+        if globalv.recall_debug:
+            self.manager.set_xml_dataset()
+
+        super(FigureTask, self).activated()
+
 
     def prepare_destroy(self):
         for ed in self.editor_area.editors:
@@ -438,7 +446,9 @@ class FigureTask(AnalysisEditTask):
             if self.browser_model:
                 ans = self.browser_model.analysis_table.analyses
                 if ans:
-                    self.unknowns_pane.items = ans
+                    self.active_editor.set_items(ans)
+                    # with no_update(self.unknowns_pane):
+                    #     self.unknowns_pane.items = ans
 
     def _activate_editor(self, kind):
         func = getattr(self, 'new_{}'.format(kind))

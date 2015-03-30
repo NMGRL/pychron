@@ -883,8 +883,11 @@ class AnalysisEditTask(BaseBrowserTask):
     @on_trait_change('active_editor:analyses')
     def _ac_unknowns_changed(self):
         if self.unknowns_pane:
-            with no_update(self.unknowns_pane):
-                self.unknowns_pane.items = self.active_editor.analyses
+            # with no_update(self.unknowns_pane):
+            #     self.unknowns_pane.items = self.active_editor.analyses
+            self.unknowns_pane._no_update = True
+            self.unknowns_pane.items = self.active_editor.analyses
+            self.unknowns_pane._no_update = False
 
         # self.unknowns_pane._no_update = True
         # self.unknowns_pane.trait_set(items=self.active_editor.analyses, trait_change_notify=True)

@@ -125,7 +125,6 @@ class IsotopeRecordView(object):
                 return
 
             ln = dbrecord.labnumber
-
             self.labnumber = str(ln.identifier)
             self.identifier = self.labnumber
 

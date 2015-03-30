@@ -20,8 +20,9 @@ from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait
 from traitsui.api import View, UItem, Item, HGroup, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from uncertainties import ufloat
+from uncertainties import ufloat, nominal_value, std_dev
 from pychron.experiment.utilities.identifier import make_runid
+from pychron.processing.analyses.analysis import Analysis
 from pychron.processing.analyses.view.main_view import MainView
 from pychron.pychron_constants import ARGON_KEYS
 
@@ -118,16 +119,36 @@ class XMLIsotope(XMLBaseValue):
         return ufloat(self.value, self.error) - self.baseline.uvalue
 
 
-class XMLAnalysis(HasTraits):
+class XMLAnalysisRecord(object):
     selected_histories = None
+    def __init__(self, elem, meas_elem):
+        self.uuid = meas_elem.get('measurementNumber')
+        self.labnumber = XMLLabnumber(elem)
+        self.labnumber.identifier = self.uuid
+        self.record_id = self.uuid
+        self.aliquot = 0
+        self.step = ''
+        self.increment = 0
+        self.tag = ''
+        ds = meas_elem.get('measurementDateTime')
+        self.analysis_timestamp = datetime.strptime(ds, '%Y:%m:%d:%H:%M:%S.00')
+        self.rundate = self.analysis_timestamp
+
+        self.measurement = XMLMeasurement(elem, meas_elem)
+        self.extraction = XMLExtraction(meas_elem)
+
+
+class XMLAnalysis(Analysis):
+    # selected_histories = None
     analysis_view = Instance(XMLAnalysisView)
     analysis_type = 'unknown'
 
     def __init__(self, elem, meas_elem):
         self.uuid = meas_elem.get('measurementNumber')
-        self.labnumber = XMLLabnumber(elem)
-        self.labnumber.identifier = self.uuid
+        # self.labnumber = XMLLabnumber(elem)
+        # self.labnumber.identifier = self.uuid
 
+        self.labnumber = self.uuid
         self.measurement = XMLMeasurement(elem, meas_elem)
         self.extraction = XMLExtraction(meas_elem)
         self.aliquot = 0
@@ -172,7 +193,10 @@ class XMLAnalysis(HasTraits):
         self.data_reduction_tag = ''
 
         ix = XMLIrradiationPosition(elem)
-        self.irradiation_label = ix.level.irradiation.name
+        # self.irradiation_label = ix.level.irradiation.name
+        self.irradiation = ix.level.irradiation.name
+        self.irradiation_level = ix.level.name
+        self.irradiation_pos = ''
 
         sx = XMLSample(elem)
         self.project = sx.project.name
@@ -182,12 +206,19 @@ class XMLAnalysis(HasTraits):
         self.sensitivity = 0
 
         self.uage = self._make_ufloat(meas_elem, 'measuredAge')
+        self.uage_wo_j_err = self._make_ufloat(meas_elem, 'measuredAge')
+
+        self.age = nominal_value(self.uage)
+        self.age_err = std_dev(self.uage)
+        self.age_err_wo_j = std_dev(self.uage)
+        self.age_err_wo_j_irrad = std_dev(self.uage)
+
         self.kca = self._make_ufloat(meas_elem, 'measuredKCaRatio')
         self.uF = self._make_ufloat(meas_elem, 'corrected40ArRad39ArKRatio')
 
         self.age_err_wo_j = 0
-        self.kcl = 0
-        self.rad40_percent = float(meas_elem.get('fraction40ArRadiogenic'))
+        self.kcl = ufloat(0, 0)
+        self.rad40_percent = ufloat(meas_elem.get('fraction40ArRadiogenic'), 0)
 
         self.F_err_wo_irrad = 0
         # self.Ar40/Ar39_decay_corrected=0
@@ -196,6 +227,8 @@ class XMLAnalysis(HasTraits):
         # self.Ar38/Ar39_decay_corrected=0
         # self.Ar37_decay_corrected/Ar39_decay_corrected=0
         # self.Ar36/Ar39_decay_corrected=0
+    def calculate_age(self, force=False, **kw):
+        pass
 
     def _make_ufloat(self, meas_elem, key):
         return ufloat(meas_elem.get(key), meas_elem.get('{}Sigma'.format(key)))
@@ -208,23 +241,20 @@ class XMLAnalysis(HasTraits):
         return make_runid(self.uuid, self.aliquot, self.step)
 
     def _make_isotopes(self, m):
-        isokeys = []
         isos = {}
         for k, kk in (('Ar40', '40Ar'), ('Ar39', '39Ar'), ('Ar38', '38Ar'), ('Ar37', '37Ar'), ('Ar36', '36Ar')):
             if m.get('intercept{}'.format(kk)):
-                isokeys.append(k)
                 isos[k] = XMLIsotope(kk, m)
         self.isotopes = isos
-        self.isotope_keys = isokeys
 
-    def __getattr__(self, item):
-        if '/' in item:
-            return ufloat(0, 0)
-        elif item != 'analysis_view':
-            print 'define {}'.format(item)
-            return '---'
-        else:
-            return XMLAnalysisView(model=self, analysis_id=self.uuid)
+        # def __getattr__(self, item):
+        # if '/' in item:
+        # return ufloat(0, 0)
+        #     elif item != 'analysis_view':
+        #         print 'define {}'.format(item)
+        #         return '---'
+        #     else:
+        #         return XMLAnalysisView(model=self, analysis_id=self.uuid)
 
 
 class XMLExperiment(object):
@@ -235,10 +265,10 @@ class XMLExperiment(object):
 
 class XMLExtraction(object):
     def __init__(self, meas_elem):
-        self.extract_value = meas_elem.get('temperature')
+        self.extract_value = float(meas_elem.get('temperature'))
         self.extract_units = meas_elem.get('temperatureUnit')
-        self.cleanup_duration = meas_elem.get('isolationDuration')
-        self.extract_duration = 0
+        self.cleanup_duration = float(meas_elem.get('isolationDuration'))
+        self.extract_duration = '---'
 
 
 class XMLMeasurement(object):
