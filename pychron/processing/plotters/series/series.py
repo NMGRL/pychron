@@ -155,13 +155,15 @@ class Series(BaseArArFigure):
             print 'Series', e
 
     def _unpack_attr(self, attr):
-        if attr.endswith('bs'):
-            # f=lambda x: x.baseline.uvalue
-            return (ai.get_baseline(attr).uvalue for ai in self.sorted_analyses)
-        elif attr == 'AnalysisType':
+        # if attr.endswith('bs'):
+        #     # f=lambda x: x.baseline.uvalue
+        #     return (ai.get_baseline(attr).uvalue for ai in self.sorted_analyses)
+        if attr == 'AnalysisType':
             # amap={'unknown':1, 'blank_unknown':2, 'blank_air':3, 'blank_cocktail':4}
             f = lambda x: ANALYSIS_MAPPING_INTS[x] if x in ANALYSIS_MAPPING_INTS else -1
             return (f(ai.analysis_type) for ai in self.sorted_analyses)
+        elif attr == 'PC':
+            return (ai.peak_center for ai in self.sorted_analyses)
         else:
             return super(Series, self)._unpack_attr(attr)
 

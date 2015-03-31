@@ -94,7 +94,7 @@ def set_exception_handler(func=None):
     root = logging.getLogger()
     if func is None:
         def func(exctype, value, tb):
-            for ti in traceback.format_tb(tb):
+            for ti in traceback.format_exc():
                 root.critical(ti.strip())
             sys.__excepthook__(exctype, value, tb)
 

@@ -78,9 +78,6 @@ class MassSpecIrradiationExporter(BaseIrradiationExporter):
         """
         return self.destination.connect()
 
-    def export_production_ratio(self):
-        pass
-
     def export_chronology(self, irradname):
         with self.destination.session_ctx():
             with self.source.session_ctx():

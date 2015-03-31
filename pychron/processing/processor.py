@@ -449,42 +449,43 @@ class Processor(IsotopeDatabaseManager):
 
             traceback.print_exc()
 
-        return self.make_analyses(ans, calculate_age=True)
-        # ============= EOF =============================================
-        # def save_arar(self, analysis, meas_analysis):
-        # with self.db.session_ctx():
-        #         hist = meas_analysis.selected_histories.selected_arar
-        #         if not hist:
-        #             hist = self.db.add_arar_history(meas_analysis)
-        #             arar = self.db.add_arar(hist)
-        #         else:
-        #             arar = hist.arar_result
-        #
-        #         #force analysis to recalculate age
-        #         #potentially redundant
-        #         analysis.calculate_age(force=True)
-        #
-        #         units = analysis.arar_constants.age_scalar
-        #
-        #         attr = ('Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36',
-        #                 'rad40', 'cl36', 'ca37', 'k39')
-        #         for ai in attr:
-        #             a = getattr(analysis, ai)
-        #             v, e = float(a.nominal_value), float(a.std_dev)
-        #             setattr(arar, ai, v)
-        #             setattr(arar, '{}_err'.format(ai), e)
-        #
-        #         age = analysis.age * units
-        #         v, e = age.nominal_value, age.std_dev
-        #
-        #         je = analysis.age_error_wo_j * units
-        #
-        #         arar.age = float(v)
-        #         arar.age_err = float(e)
-        #         arar.age_err_wo_j = je
-        #
-        #         #update arar_history timestamp
-        #         arar.history.create_date = datetime.now()
+        return self.make_analyses(ans, calculate_age=True, load_aux=True)
+
+# ============= EOF =============================================
+# def save_arar(self, analysis, meas_analysis):
+#     with self.db.session_ctx():
+#         hist = meas_analysis.selected_histories.selected_arar
+#         if not hist:
+#             hist = self.db.add_arar_history(meas_analysis)
+#             arar = self.db.add_arar(hist)
+#         else:
+#             arar = hist.arar_result
+#
+#         #force analysis to recalculate age
+#         #potentially redundant
+#         analysis.calculate_age(force=True)
+#
+#         units = analysis.arar_constants.age_scalar
+#
+#         attr = ('Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36',
+#                 'rad40', 'cl36', 'ca37', 'k39')
+#         for ai in attr:
+#             a = getattr(analysis, ai)
+#             v, e = float(a.nominal_value), float(a.std_dev)
+#             setattr(arar, ai, v)
+#             setattr(arar, '{}_err'.format(ai), e)
+#
+#         age = analysis.age * units
+#         v, e = age.nominal_value, age.std_dev
+#
+#         je = analysis.age_error_wo_j * units
+#
+#         arar.age = float(v)
+#         arar.age_err = float(e)
+#         arar.age_err_wo_j = je
+#
+#         #update arar_history timestamp
+#         arar.history.create_date = datetime.now()
 
         #     def new_ideogram2(self, ans, plotter_options=None):
         #         '''

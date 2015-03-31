@@ -305,7 +305,7 @@ class ProcessingPlugin(BaseTaskPlugin):
     def _help_tips_default(self):
         return ['Use <b>Data>Ideogram</b> to plot an Ideogram',
                 'Use <b>Data>Spectrum</b> to plot a Spectrum',
-                'Use <b>Data>Recall</b> or <b>File/Recall</b> to view analytical data for individual analyses']
+                'Use <b>Data>Recall</b> to view analytical data for individual analyses']
 
     def _task_extensions_default(self):
         extensions = [TaskExtension(actions=actions, task_id=eid) for eid, actions in self._get_extensions()]
