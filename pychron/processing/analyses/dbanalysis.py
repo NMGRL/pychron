@@ -97,7 +97,7 @@ class DBAnalysis(Analysis):
 
     collection_time_zero_offset = Float
 
-    peak_center = Float
+    peak_center = Any
     peak_center_data = Any
 
     ic_factors = Dict
@@ -216,6 +216,11 @@ class DBAnalysis(Analysis):
     #
     #         d['age_err_wo_j'] = result.age_err_wo_j
     #         self.arar_result.update(d)
+    def sync_peak_center(self, meas_analysis):
+        pc, data = self._get_peak_center(meas_analysis)
+        self.peak_center = ufloat(pc,0)
+        self.peak_center_data = data
+
     def sync_aux(self, dbrecord_tuple, load_changes=True):
         if isinstance(dbrecord_tuple, meas_AnalysisTable):
             meas_analysis = dbrecord_tuple
@@ -229,6 +234,8 @@ class DBAnalysis(Analysis):
         self._sync_experiment(meas_analysis)
         self._sync_script_blobs(meas_analysis)
         self.has_changes = True
+
+        self.sync_peak_center(meas_analysis)
 
     def _sync(self, dbrecord_tuple, unpack=True, load_aux=False):
         """
@@ -261,10 +268,9 @@ class DBAnalysis(Analysis):
         # print 'pre isotopes'
         # this is the dominant time sink
         self._sync_isotopes(meas_analysis, isos,
-                            unpack, load_peak_center=load_aux, selected_histories=sh)
+                            unpack, selected_histories=sh)
         # timethis(self._sync_isotopes, args=(meas_analysis, isos, unpack),
         #          kwargs={'load_peak_center': load_aux})
-
         # print 'pre det info'
         self._sync_detector_info(meas_analysis)
         if load_aux:
@@ -541,11 +547,6 @@ class DBAnalysis(Analysis):
         #                          kwargs=dict(unpack=unpack))
 
         self._make_isotopes(meas_analysis, isos, unpack, selected_histories)
-
-        if load_peak_center:
-            pc, data = self._get_peak_center(meas_analysis)
-            self.peak_center = pc
-            self.peak_center_data = data
 
     def _get_isotope_dict(self, get):
         d = dict()

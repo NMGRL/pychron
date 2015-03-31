@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from datetime import datetime, timedelta
 import random
-from threading import Thread, Lock
+from threading import Thread
 import time
 # from apptools.preferences.preference_binding import bind_preference
 from pyface.timer.do_later import do_later
@@ -36,7 +36,6 @@ from pychron.pychron_constants import ALPHAS
 from pychron.system_monitor.tasks.connection_spec import ConnectionSpec
 from pychron.system_monitor.tasks.controls import SystemMonitorControls
 from pychron.core.ui.gui import invoke_in_main_thread
-from pychron.processing.utils.grouping import group_analyses_by_key
 from pychron.core.ui.preference_binding import color_bind_preference
 
 """
@@ -313,7 +312,7 @@ class SystemMonitorEditor(SeriesEditor):
             e.search_tool = SystemMonitorControls()
             return e
 
-        editor = self._update_editor(editor, new, identifier, None, layout=False,
+        editor = self._update_editor(editor, new, identifier, None,
                                      use_date_range=True)
         setattr(self, name, editor)
 
@@ -447,7 +446,7 @@ class SystemMonitorEditor(SeriesEditor):
                 else:
                     ans, tc = db.get_labnumber_analyses(identifier, limit=tool.limit)
 
-                return self.processor.make_analyses(ans)
+                return self.processor.make_analyses(ans, load_aux=True)
 
     @on_trait_change('search_tool:[+, refresh_button]')
     def _handle_tool_change(self):

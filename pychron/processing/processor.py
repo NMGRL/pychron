@@ -421,7 +421,7 @@ class Processor(IsotopeDatabaseManager):
 
             traceback.print_exc()
 
-        return self.make_analyses(ans, calculate_age=True)
+        return self.make_analyses(ans, calculate_age=True, load_aux=True)
 # ============= EOF =============================================
 # def save_arar(self, analysis, meas_analysis):
 #     with self.db.session_ctx():
