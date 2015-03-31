@@ -85,9 +85,10 @@ class Spectrum(BaseArArFigure):
 
     def _plot_aux(self, title, vk, ys, po, plot, pid, es=None, **kw):
         graph = self.graph
-        graph.set_y_title(title,
-                          plotid=pid)
-
+        if '<sup>' in title or '<sub>' in title:
+            self._set_ml_title(title, pid, 'y')
+        else:
+            graph.set_y_title(title, plotid=pid)
         xs, ys, es, _, _, _ = self._calculate_spectrum(value_key=vk)
         s = self._add_plot(xs, ys, es, pid, po)
         return s
