@@ -84,7 +84,7 @@ class ExperimentFactory(Loggable, ConsumerMixin):
                   'use_group_email',
                   'load_name',
                   'delay_before_analyses', 'delay_between_analyses',
-                  'queue_conditionals_name'):
+                  'queue_conditionals_name', 'username'):
 
             if not self._sync_queue_to_factory(eq, qf, a):
                 self._sync_factory_to_queue(eq, qf, a)

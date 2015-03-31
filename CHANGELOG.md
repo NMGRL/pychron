@@ -17,6 +17,7 @@ CHANGELOG
 * added forced plateau
 * added legend to Spectrum
 * added table view to Figure Task. Use "New Table" action in toolbar
+* added ranking to incremental heat templates. list top ten used templates for a user
 
 #### 2/3/2015 ####
 * removed mswd from integrated age

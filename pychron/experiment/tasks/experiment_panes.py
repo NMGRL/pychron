@@ -100,11 +100,11 @@ class ExperimentFactoryPane(TraitsDockPane):
                                    editor=EnumEditor(name=queue_factory_name('mass_spectrometers'))),
                 queue_factory_item('extract_device',
                                    show_label=False,
-                                   editor=EnumEditor(name=queue_factory_name('extract_devices')))),
-            queue_factory_item('load_name',
-                               width=150,
-                               label='Load',
-                               editor=ComboboxEditor(name=queue_factory_name('load_names'))),
+                                   editor=EnumEditor(name=queue_factory_name('extract_devices'))),
+                queue_factory_item('load_name',
+                                   width=150,
+                                   label='Load',
+                                   editor=ComboboxEditor(name=queue_factory_name('load_names')))),
             HGroup(queue_factory_item('queue_conditionals_name',
                                       label='Queue Conditionals',
                                       editor=EnumEditor(name=queue_factory_name('available_conditionals')))),
@@ -165,7 +165,7 @@ class ExperimentFactoryPane(TraitsDockPane):
                                     editor=EnumEditor(name=run_factory_name('run_blocks'))),
                    icon_button_editor(run_factory_name('edit_run_blocks'), 'cog'),
                    run_factory_item('frequency_model.frequency', width=50),
-                   icon_button_editor(run_factory_name('edit_frequency_button'),'cog'),
+                   icon_button_editor(run_factory_name('edit_frequency_button'), 'cog'),
                    # run_factory_item('freq_before', label='Before'),
                    # run_factory_item('freq_after', label='After'),
                    spring),
@@ -196,7 +196,7 @@ class ExperimentFactoryPane(TraitsDockPane):
                                  show_label=False,
                                  tooltip='Auto fill "Comment" with IrradiationLevel:Hole, e.g A:9'),
                 # run_factory_item('comment_template',
-                #                  editor=EnumEditor(name=run_factory_name('comment_templates')),
+                # editor=EnumEditor(name=run_factory_name('comment_templates')),
                 #                  show_label=False),
                 icon_button_editor(run_factory_name('edit_comment_template'), 'cog',
                                    tooltip='Edit comment template')),
@@ -207,11 +207,11 @@ class ExperimentFactoryPane(TraitsDockPane):
     def _get_truncate_group(self):
         grp = VGroup(
             HGroup(run_factory_item('use_simple_truncation', label='Use Simple'),
-                icon_button_editor(run_factory_name('clear_conditionals'),
-                                   'delete',
-                                   tooltip='Clear Conditionals from selected runs'
-                                   # enabled_when=run_factory_name('edit_mode')
-                                  )),
+                   icon_button_editor(run_factory_name('clear_conditionals'),
+                                      'delete',
+                                      tooltip='Clear Conditionals from selected runs'
+                                      # enabled_when=run_factory_name('edit_mode')
+                                      )),
             HGroup(
                 run_factory_item('trunc_attr',
                                  editor=EnumEditor(name=run_factory_name('trunc_attrs')),
@@ -221,7 +221,7 @@ class ExperimentFactoryPane(TraitsDockPane):
                 spacer(-10),
                 run_factory_item('trunc_start', label='Start Count'),
                 show_border=True,
-                #enabled_when = run_factory_name('use_simple_truncation'),
+                # enabled_when = run_factory_name('use_simple_truncation'),
                 label='Simple'),
             HGroup(
                 run_factory_item('conditionals_path',
@@ -302,7 +302,7 @@ class StatsPane(TraitsDockPane):
 
 
 class ControlsPane(TraitsDockPane):
-    #     name = 'Controls'
+    # name = 'Controls'
     id = 'pychron.experiment.controls'
 
     movable = False
@@ -351,7 +351,7 @@ Quick=   measure_iteration stopped at current step
                       tooltip=truncate_style_tt),
                 UItem('show_conditionals_button',
                       # enabled_when='measuring'
-                ),
+                      ),
                 spacer(-75),
                 CustomLabel('extraction_state_label',
                             color_name='extraction_state_color',
@@ -474,6 +474,7 @@ class LoggerPane(TraitsDockPane):
     def __init__(self, *args, **kw):
         super(LoggerPane, self).__init__(*args, **kw)
         from pychron.displays.gdisplays import gWarningDisplay, gLoggerDisplay
+
         self.loggers = [gLoggerDisplay, gWarningDisplay]
 
     def traits_view(self):
