@@ -15,8 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change, Color
-from traitsui.api import View, UItem, Item, HGroup, VGroup
+from traits.api import HasTraits, Str, Int, Color
 # ============= standard library imports ========================
 import os
 import yaml
@@ -44,11 +43,11 @@ class FormattingOptions(HasTraits):
         self._load(path)
 
     def _load(self, p):
-        print 'ff', p, os.path.isfile(p)
+        # print 'ff', p, os.path.isfile(p)
         if os.path.isfile(p):
             with open(p, 'r') as rfile:
                 yd = yaml.load(rfile)
-                print p, yd
+                # print p, yd
                 self.trait_set(**yd)
 
     def get_value(self, axis, attr):

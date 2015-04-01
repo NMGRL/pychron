@@ -15,11 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from apptools.preferences.preference_binding import bind_preference
 from datetime import datetime, timedelta
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, \
-    Property, on_trait_change, Button, Enum, List, Instance
-from traitsui.api import View, UItem, Item, HGroup, VGroup
+
+from apptools.preferences.preference_binding import bind_preference
+from traits.api import Str, Bool, Property, on_trait_change, Button, Enum, List, Instance
+
 # ============= standard library imports ========================
 import re
 # ============= local library imports  ==========================
@@ -333,7 +333,7 @@ class BrowserModel(BaseBrowserModel):
 
     # handlers
     def _graphical_filter_button_fired(self):
-        print 'ffffassdf'
+        # print 'ffffassdf'
         self.debug('doing graphical filter')
         from pychron.processing.tasks.browser.graphical_filter import GraphicalFilterModel, GraphicalFilterView
 
