@@ -87,7 +87,7 @@ class gen_LabTable(Base, BaseMixin):
                             backref='labnumber')
 
     figures = relationship('proc_FigureLabTable', backref='labnumber')
-
+    loads = relationship('loading_PositionsTable', backref='labnumber')
 
 class gen_MassSpectrometerTable(Base, NameMixin):
     #    experiments = relationship('ExperimentTable', backref='mass_spectrometer')

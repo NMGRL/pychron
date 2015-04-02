@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,7 +21,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,6 +31,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from enable.abstract_overlay import AbstractOverlay
+from kiva import Font
+from pyface.timer.do_later import do_after
 from traits.api import Any
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -58,12 +61,50 @@ def group_position(pos, func=None):
     return ss
 
 
+class LoadingOverlay(AbstractOverlay):
+    info_str = ''
+    font = Font('Arial')
+
+    def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
+        if self.info_str:
+            with gc:
+
+                lines = self.info_str.split('\n')
+
+                lws, lhs = zip(*[gc.get_full_text_extent(mi)[:2] for mi in lines])
+
+                rect_width = max(lws) + 4
+                rect_height = (max(lhs) + 2) * len(lhs)
+
+                gc.translate_ctm(self.x + 15, self.y - rect_height)
+                gc.set_fill_color((0.7, 0.7, 0.7))
+                gc.rect(-3, -3, rect_width + 6, rect_height + 6)
+                gc.draw_path()
+
+                gc.set_fill_color((0, 0, 0))
+                gc.set_font(self.font)
+                lh = max(lhs) + 2
+                for i, li in enumerate(lines[::-1]):
+                    gc.set_text_position(0, i * lh)
+                    gc.show_text(li)
+
+    def set_item(self, item):
+        if item and item.fill:
+            self.info_str = 'hole: {}\nlabnumber: {}\nweight: {}mg\nnote: {}'.format(item.name,
+                                                                                    item.labnumber_label.text,
+                                                                                    item.weight_label.text,
+                                                                                    item.note)
+
+        else:
+            self.info_str = ''
+
+
 class LoadingCanvas(SceneCanvas):
     use_pan = False
     use_zoom = False
     selected = Any
-    #     fill_padding = True
-    #     bgcolor = 'red'
+    # fill_padding = True
+    # bgcolor = 'red'
     show_axes = False
     show_grids = False
 
@@ -76,21 +117,11 @@ class LoadingCanvas(SceneCanvas):
     editable = True
     _scene_klass = LoadingScene
 
-    # def clear_spans(self):
-    #     self.scene.remove_klass(Span)
-    #
-    # def set_spans_visibility(self, v):
-    #     self.scene.set_spans_visibility(v)
-    #     self.request_redraw()
-    #
-    # def add_span_indicator(self, pos, visible):
-    #     scene=self.scene
-    #     if len(pos)>1:
-    #         for g in group_position(pos):
-    #             scene.add_span_indicator(g[0], g[-1], visible)
+    current_item = None
+    popup = None
 
     def load_scene(self, t, **kw):
-
+        self.overlays = []
         scene = self._scene_klass()
         scene.load(t, **kw)
 
@@ -98,6 +129,10 @@ class LoadingCanvas(SceneCanvas):
         self.view_y_range = scene.get_yrange()
 
         self.scene = scene
+        self.popup = LoadingOverlay()
+        self.popup.visible = False
+
+        self.overlays.append(self.popup)
 
     def normal_left_down(self, event):
         if self.editable:
@@ -112,15 +147,32 @@ class LoadingCanvas(SceneCanvas):
                     if it.is_in(event.x, event.y):
                         return it
 
+    def normal_mouse_leave(self, event):
+        self.popup.visible = False
+        self.request_redraw()
+
     def normal_mouse_move(self, event):
+        self.popup.x, self.popup.y = event.x, event.y
         if self.editable:
-            if self.hittest(event):
+            self.current_item = self.hittest(event)
+
+            if self.current_item:
                 event.window.set_pointer(self.select_pointer)
+                if not self.popup.visible:
+                    do_after(500, self._pop)
             else:
+                if self.popup.visible:
+                    self.popup.visible = False
+                    self.request_redraw()
+
                 self._set_normal_pointer(event)
 
     def _set_normal_pointer(self, event):
         event.window.set_pointer(self.normal_pointer)
 
+    def _pop(self):
+        self.popup.set_item(self.current_item)
+        self.popup.visible = True
+        self.request_redraw()
 
 # ============= EOF =============================================

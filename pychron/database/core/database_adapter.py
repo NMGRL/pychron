@@ -92,7 +92,7 @@ class SessionCTX(object):
             except Exception, e:
                 # print 'exception commiting session: {}'.format(e)
                 if self._parent:
-                    self._parent.debug('$%$%$%$%$%$%$%$ commiting changes error:\n{}'.format(str(e)[:50]))
+                    self._parent.debug('$%$%$%$%$%$%$%$ commiting changes error:\n{}'.format(str(e)))
                 self._sess.rollback()
             finally:
                 self._sess.close()

@@ -310,7 +310,7 @@ class IsotopeAdapter(DatabaseAdapter):
 
         ln = self.get_labnumber(labnumber)
         if ln:
-            lp.lab_identifier = ln.identifier
+            lp.lab_identifier = ln.id
 
         self._add_item(lp)
         return lp
@@ -1823,9 +1823,9 @@ class IsotopeAdapter(DatabaseAdapter):
             self.debug(compile_query(q))
             return self._query_all(q)
 
-    def get_labnumber(self, labnum, **kw):
+    def get_labnumber(self, labnum, key='identifier',**kw):
         return self._retrieve_item(gen_LabTable, labnum,
-                                   key='identifier',
+                                   key=key,
                                    **kw)
 
     #        if isinstance(labnum, str):

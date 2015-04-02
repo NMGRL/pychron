@@ -45,11 +45,11 @@ class PositionsAdapter(TabularAdapter):
 
     def get_text_color(self, obj, trait, row, column=0):
         item = getattr(obj, trait)[row]
-        if sum(item.color) < 1.5:
-            return 'white'
-        else:
-            return 'black'
-            # return map(lambda x: (1-x) * 255, item.color)
+        color = 'black'
+        if hasattr(item.color, '__iter__'):
+            if sum(item.color) < 1.5:
+                color = 'white'
+        return color
 
 
 class LoadTablePane(TraitsDockPane):

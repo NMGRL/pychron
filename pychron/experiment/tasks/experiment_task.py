@@ -535,7 +535,7 @@ class ExperimentEditorTask(EditorTask):
                 canvas = lm.make_canvas(new, editable=False)
                 self.load_pane.component = weakref.ref(canvas)()
 
-            lm.load_load(new, group_labnumbers=False)
+            lm.load_load_by_name(new, group_labnumbers=False)
 
             self.load_pane.load_name = new
 
