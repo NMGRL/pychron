@@ -34,10 +34,22 @@ class PositionsAdapter(TabularAdapter):
                ('Sample', 'sample'),
                ('Positions', 'position_str')]
     font = 'arial 10'
-    labnumber_width=Int(80)
-    irradiation_str_width=Int(80)
-    sample_width=Int(80)
-    position_str_width=Int(80)
+    labnumber_width = Int(80)
+    irradiation_str_width = Int(80)
+    sample_width = Int(80)
+    position_str_width = Int(80)
+
+    def get_bg_color(self, obj, trait, row, column=0):
+        item = getattr(obj, trait)[row]
+        return map(lambda x: x * 255, item.color)
+
+    def get_text_color(self, obj, trait, row, column=0):
+        item = getattr(obj, trait)[row]
+        if sum(item.color) < 1.5:
+            return 'white'
+        else:
+            return 'black'
+            # return map(lambda x: (1-x) * 255, item.color)
 
 
 class LoadTablePane(TraitsDockPane):
@@ -95,43 +107,45 @@ class LoadControlPane(TraitsDockPane):
             Item('note', style='custom', show_label=False),
             show_border=True,
             label='Note')
+
         viewgrp = VGroup(
+            HGroup(Item('use_cmap', label='Color Map'),
+                   UItem('cmap_name', enabled_when='use_cmap')),
             Item('show_hole_numbers'),
             Item('show_labnumbers'),
             Item('show_weights'),
-            Item('show_spans'),
+            # Item('show_spans'),
             show_border=True,
             label='View')
 
+        load_grp = VGroup(Item('username', editor=ComboboxEditor(name='available_user_names')),
+                          HGroup(Item('load_name',
+                                      editor=EnumEditor(name='loads'),
+                                      label='Loads'),
+                                 icon_button_editor('add_button', 'add', tooltip='Add a load'),
+                                 icon_button_editor('delete_button', 'delete', tooltip='Delete selected load'),
+                                 icon_button_editor('archive_button', 'foo', tooltip='Archive a set of loads')),
+                          label='Load',
+                          show_border=True)
         samplegrp = VGroup(
-            Item('loader_name', editor=ComboboxEditor(name='available_user_names')),
-            # Item('loader_name', label='User'),
-            HGroup(Item('load_name',
-                        editor=EnumEditor(name='loads'),
-                        label='Loads'),
-                   # Item('add_button', show_label=False),
-                   # Item('delete_button', show_label=False)),
-                   icon_button_editor('add_button', 'add', tooltip='Add a load'),
-                   icon_button_editor('delete_button', 'delete', tooltip='Delete selected load'),
-                   icon_button_editor('archive_button','foo', tooltip='Archive a set of loads')),
-            VGroup(
-                Item('irradiation',
-                     editor=EnumEditor(name='irradiations')),
-                Item('level', editor=EnumEditor(name='levels')),
-                Item('labnumber', editor=EnumEditor(name='labnumbers')),
-                Item('sample_info', style='readonly'),
-                HGroup(
-                    Item('weight', label='Weight (mg)'),
-                    Item('retain_weight', label='Lock',
-                         tooltip='Retain the Weight for the next hole')),
-                HGroup(Item('npositions', label='NPositions'),
-                       Item('auto_increment')),
-                enabled_when='load_name'),
+            Item('irradiation',
+                 editor=EnumEditor(name='irradiations')),
+            Item('level', editor=EnumEditor(name='levels')),
+            Item('labnumber', editor=EnumEditor(name='labnumbers')),
+            Item('sample_info', style='readonly'),
+            HGroup(
+                Item('weight', label='Weight (mg)'),
+                Item('retain_weight', label='Lock',
+                     tooltip='Retain the Weight for the next hole')),
+            HGroup(Item('npositions', label='NPositions'),
+                   Item('auto_increment')),
+            enabled_when='load_name',
             show_border=True,
             label='Sample')
 
         v = View(
             VGroup(
+                load_grp,
                 samplegrp,
                 notegrp,
                 viewgrp))

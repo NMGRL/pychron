@@ -23,6 +23,7 @@ from pyface.tasks.action.schema import SToolBar
 # ============= local library imports  ==========================
 
 from pychron.envisage.tasks.base_task import BaseManagerTask
+from pychron.globals import globalv
 from pychron.loading.panes import LoadPane, LoadControlPane, LoadTablePane
 from pychron.loading.actions import SaveLoadingAction
 from pychron.loading.loading_pdf_writer import LoadingPDFWriter
@@ -48,9 +49,11 @@ class LoadingTask(BaseManagerTask):
 
     def activated(self):
         # self.manager.tray = 'bat'
-        self.manager.irradiation = 'NM-264'
-        self.manager.level = 'A'
-        self.manager.labnumber = '23261'
+        # self.manager.irradiation = 'NM-256'
+        # self.manager.level = 'A'
+
+        self.manager.username = globalv.username
+        # self.manager.labnumber = '23261'
 
         if self.manager.setup():
             bind_preference(self, 'save_directory', 'pychron.loading.save_directory')
@@ -60,7 +63,7 @@ class LoadingTask(BaseManagerTask):
     def _default_layout_default(self):
         return TaskLayout(
             left=PaneItem('pychron.loading.controls'),
-            bottom=PaneItem('pychron.loading.positions'))
+            right=PaneItem('pychron.loading.positions'))
 
     def prepare_destroy(self):
         pass
@@ -87,7 +90,7 @@ class LoadingTask(BaseManagerTask):
 
         positions = self.manager.positions
         ln = self.manager.load_name
-        un = self.manager.loader_name
+        un = self.manager.username
 
         dt = datetime.now()
         date_str = dt.strftime("%Y-%m-%d %H:%M:%S")

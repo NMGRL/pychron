@@ -76,18 +76,18 @@ class LoadingCanvas(SceneCanvas):
     editable = True
     _scene_klass = LoadingScene
 
-    def clear_spans(self):
-        self.scene.remove_klass(Span)
-
-    def set_spans_visibility(self, v):
-        self.scene.set_spans_visibility(v)
-        self.request_redraw()
-
-    def add_span_indicator(self, pos, visible):
-        scene=self.scene
-        if len(pos)>1:
-            for g in group_position(pos):
-                scene.add_span_indicator(g[0], g[-1], visible)
+    # def clear_spans(self):
+    #     self.scene.remove_klass(Span)
+    #
+    # def set_spans_visibility(self, v):
+    #     self.scene.set_spans_visibility(v)
+    #     self.request_redraw()
+    #
+    # def add_span_indicator(self, pos, visible):
+    #     scene=self.scene
+    #     if len(pos)>1:
+    #         for g in group_position(pos):
+    #             scene.add_span_indicator(g[0], g[-1], visible)
 
     def load_scene(self, t, **kw):
 
