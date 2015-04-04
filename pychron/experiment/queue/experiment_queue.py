@@ -21,6 +21,7 @@ from traits.trait_types import Date
 from traitsui.api import View, Item
 from pyface.timer.do_later import do_later
 # ============= standard library imports ========================
+import time
 from itertools import groupby
 import os
 # ============= local library imports  ==========================
@@ -79,8 +80,13 @@ class ExperimentQueue(BaseExperimentQueue):
     execution_ratio = Property
 
     refresh_blocks_needed = Event
+    _auto_save_time = 0
 
     def auto_save(self):
+        if self._auto_save_time and time.time() - self._auto_save_time < 0.25:
+            return
+
+        self._auto_save_time = time.time()
         path = self.path
         if os.path.isfile(path):
             bk = os.path.join(paths.auto_save_experiment_dir, '{}.bak'.format(self.name))

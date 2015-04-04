@@ -223,7 +223,7 @@ class IrradiationPositionTable(Base):
     StandardID = Column(Integer, default=0)
     Size = Column(String(40), default='NULL')
     Weight = Column(Float, default=0)
-    Note = Column(String(40), nullable=True)
+    Note = Column(String(255), nullable=True)
     LabActivation = Column(Date, default=func.now())
     J = Column(Float, nullable=True)
     JEr = Column(Float, nullable=True)

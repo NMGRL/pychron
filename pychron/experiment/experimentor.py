@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -59,8 +59,8 @@ class Experimentor(Loggable):
 
     def load(self):
         self.manager.load()
-        self.experiment_factory.queue_factory.db_refresh_needed=True
-        self.experiment_factory.run_factory.db_refresh_needed=True
+        self.experiment_factory.queue_factory.db_refresh_needed = True
+        self.experiment_factory.run_factory.db_refresh_needed = True
 
         return True
 
@@ -196,16 +196,16 @@ class Experimentor(Loggable):
                     continue
 
                 # is run in cache
-                if not ln in cache:
+                if ln not in cache:
                     info = self._get_analysis_info(ln)
                     if not info:
                         cache[ln] = dict(identifier_error=True)
                     else:
                         project, sample, material, irrad = info
 
-                        cache[ln] = dict(project=project, sample=sample,
-                                         material=material,
-                                         irradiation=irrad, identifier_error=False)
+                        cache[ln] = dict(project=project or '', sample=sample or '',
+                                         material=material or '',
+                                         irradiation=irrad or '', identifier_error=False)
 
                 ai.trait_set(**cache[ln])
 
@@ -231,6 +231,7 @@ class Experimentor(Loggable):
                 #                 self.db.reset()
         elif inform:
             self.warning_dialog('Not Database available')
+
     # ===============================================================================
     # handlers
     # ===============================================================================

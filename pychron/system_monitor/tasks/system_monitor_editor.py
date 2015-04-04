@@ -382,9 +382,10 @@ class SystemMonitorEditor(SeriesEditor):
         editor.identifier = identifier
 
         # gather analyses
-        tool = None
         if hasattr(editor, 'search_tool'):
             tool = editor.search_tool
+        else:
+            tool = self.search_tool
 
         ans = self._get_analyses(tool, identifier,
                                  aliquot, use_date_range)

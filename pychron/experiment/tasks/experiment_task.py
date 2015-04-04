@@ -535,7 +535,7 @@ class ExperimentEditorTask(EditorTask):
                 canvas = lm.make_canvas(new, editable=False)
                 self.load_pane.component = weakref.ref(canvas)()
 
-            lm.load_load(new, group_labnumbers=False)
+            lm.load_load_by_name(new, group_labnumbers=False)
 
             self.load_pane.load_name = new
 
@@ -675,7 +675,7 @@ class ExperimentEditorTask(EditorTask):
     def _loading_manager_default(self):
         lm = self.window.application.get_service('pychron.loading.loading_manager.LoadingManager')
         if lm:
-            lm.trait_set(db=self.manager.db,
+            lm.trait_set(db=self.manager.manager.db,
                          show_group_positions=True)
             return lm
 

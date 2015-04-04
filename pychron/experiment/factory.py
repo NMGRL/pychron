@@ -20,6 +20,8 @@ from traits.api import Instance, Button, Bool, Property, \
     on_trait_change, String, Any, DelegatesTo, List, Str
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.ui.progress_dialog import myProgressDialog
+from pychron.experiment.auto_gen_config import AutoGenConfig
 from pychron.experiment.automated_run.uv.factory import UVAutomatedRunFactory
 from pychron.experiment.automated_run.factory import AutomatedRunFactory
 from pychron.experiment.queue.factory import ExperimentQueueFactory
@@ -36,7 +38,12 @@ class ExperimentFactory(Loggable, ConsumerMixin):
     db = Any
     run_factory = Instance(AutomatedRunFactory)
     queue_factory = Instance(ExperimentQueueFactory)
+
     undoer = Instance(ExperimentUndoer)
+
+    generate_queue_button = Button
+    edit_queue_config_button = Button
+    auto_gen_config = Instance(AutoGenConfig)
 
     add_button = Button('Add')
     clear_button = Button('Clear')
@@ -65,7 +72,7 @@ class ExperimentFactory(Loggable, ConsumerMixin):
     # permisions
     # ===========================================================================
     # max_allowable_runs = Int(10000)
-    #    can_edit_scripts = Bool(True)
+    # can_edit_scripts = Bool(True)
 
     def __init__(self, *args, **kw):
         super(ExperimentFactory, self).__init__(*args, **kw)
@@ -174,9 +181,9 @@ class ExperimentFactory(Loggable, ConsumerMixin):
     def _edit_mode_button_fired(self):
         self.run_factory.edit_mode = not self.run_factory.edit_mode
 
-        #@on_trait_change('run_factory:clear_end_after')
-        #def _clear_end_after(self, new):
-        #    print 'enadfas', new
+        # @on_trait_change('run_factory:clear_end_after')
+        # def _clear_end_after(self, new):
+        # print 'enadfas', new
 
     def _update_end_after(self, new):
         if new:
@@ -203,11 +210,11 @@ queue_conditionals_name]''')
             # self._set_extract_device(new)
             do_later(self._set_extract_device, new)
 
-        # elif name == 'username':
-        #     self._username = new
+            # elif name == 'username':
+            # self._username = new
             # elif name=='email':
-            #     self.email=new
-            #            self.queue.username = new
+            # self.email=new
+            # self.queue.username = new
 
         if self.queue:
             self.queue.trait_set(**{name: new})
@@ -241,7 +248,7 @@ queue_conditionals_name]''')
     def _get_patterns(self, ed):
         ps = []
         service_name = convert_extract_device(ed)
-        #service_name = ed.replace(' ', '_').lower()
+        # service_name = ed.replace(' ', '_').lower()
         man = self.application.get_service(ILaserManager, 'name=="{}"'.format(service_name))
         if man:
             ps = man.get_pattern_names()
@@ -259,7 +266,7 @@ queue_conditionals_name]''')
         uflag = bool(self.username)
         msflag = self.mass_spectrometer not in ('', 'Spectrometer', LINE_STR)
         lflag = True
-        if self.extract_device not in ('','Extract Device', LINE_STR):
+        if self.extract_device not in ('', 'Extract Device', LINE_STR):
             lflag = bool(self.queue_factory.load_name)
 
         ret = uflag and msflag and lflag
@@ -288,24 +295,117 @@ queue_conditionals_name]''')
 
         return rf
 
-    #    def _can_edit_scripts_changed(self):
-    #        self.run_factory.can_edit = self.can_edit_scripts
+    # handlers
+    def _generate_runs_from_load(self, ):
+        def gen():
+            db = self.db
+            load_name = self.load_name
+            with db.session_ctx():
+                dbload = self.db.get_loadtable(load_name)
+                for poss in dbload.loaded_positions:
+                    # print poss
+                    ln_id = poss.lab_identifier
+                    dbln = self.db.get_labnumber(ln_id, key='id')
 
-    # ===============================================================================
-    # defaults
-    # ===============================================================================
-    def _undoer_default(self):
-        return ExperimentUndoer(run_factory=self.run_factory,
-                                queue=self.queue)
+                    yield dbln.identifier, dbln.sample.name, str(poss.position)
 
-    def _run_factory_default(self):
-        return self._run_factory_factory()
+        return gen
 
-    def _queue_factory_default(self):
-        eq = ExperimentQueueFactory(db=self.db,
-                                    application=self.application)
-        # eq.activate()
-        return eq
+    def _edit_queue_config_button_fired(self):
+        self.auto_gen_config.run_blocks = self.run_factory.run_blocks
+        self.auto_gen_config.load()
+        info = self.auto_gen_config.edit_traits()
+        if info.result:
+            self.auto_gen_config.dump()
+
+    def _generate_queue_button_fired(self):
+        pd = myProgressDialog()
+        pd.open()
+
+        from threading import Thread
+        ans = list(self._generate_runs_from_load()())
+        self._gen_func(pd, ans)
+        # t=Thread(target=self._gen_func, args=(pd, ans))
+        # t.start()
+
+    def _gen_func(self, pd, ans):
+        import time
+        pd.max = 100
+        self.debug('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ generate queue')
+        auto_gen_config = self.auto_gen_config
+
+        # gen = self._generate_runs_from_load()
+        q = self.queue
+        rf = self.run_factory
+        rf.suppress_meta = True
+
+        def add_special(ln):
+            # tt = time.time()
+            pd.change_message('Add special: {}'.format(ln))
+            rf.special_labnumber = ln
+            new_runs, _ = rf.new_runs(q)
+            q.add_runs(new_runs, 0)
+            rf.special_labnumber = ''
+            # print 'add special {}, {}'.format(ln, time.time()-tt)
+
+        st = time.time()
+        rb = auto_gen_config.end_run_block
+        if rb and rb in rf.run_blocks:
+            rf.run_block = auto_gen_config.end_run_block
+            new_runs, _ = rf.new_runs(q)
+            q.add_runs(new_runs, 0, is_run_block=False)
+
+        for ln, tag in (('Air', 'air'),
+                        ('Cocktail', 'cocktail'),
+                        ('Blank Unknown', 'blank')):
+
+            if getattr(auto_gen_config, 'start_{}'.format(tag)):
+                add_special(ln)
+
+        # for i, (labnumber, sample, position) in enumerate(gen()):
+        for i, (labnumber, sample, position) in enumerate(ans):
+            if i:
+                for ln, tag in (('Blank Unknown', 'blank'),
+                                ('Air', 'air'),
+                                ('Cocktail', 'cocktail')):
+                    f = getattr(auto_gen_config, '{}_freq'.format(tag))
+                    if f and i % f == 0:
+                        add_special(ln)
+
+            pd.change_message('Adding {}. Position: {}'.format(labnumber, position))
+
+            # tt = time.time()
+            rf.labnumber = labnumber
+            rf.sample = sample
+            # print 'set ln/sample {} {}'.format(labnumber, time.time()-tt)
+
+            new_runs, _ = rf.new_runs(q, positions=position)
+            # print 'new runs {} {}'.format(labnumber, time.time()-tt)
+
+            q.add_runs(new_runs, 0, is_run_block=False)
+            # print 'add runs {} {}'.format(labnumber, time.time()-tt)
+
+        for ln, tag in (('Blank Unknown', 'blank'),
+                        ('Air', 'air'),
+                        ('Cocktail', 'cocktail')):
+
+            if getattr(auto_gen_config, 'end_{}'.format(tag)):
+                add_special(ln)
+
+        rb = auto_gen_config.end_run_block
+        if rb and rb in rf.run_blocks:
+            rf.run_block = auto_gen_config.end_run_block
+            new_runs, _ = rf.new_runs(q)
+            q.add_runs(new_runs, 0, is_run_block=False)
+
+        # print 'finished adding', time.time()-st
+        q.changed = True
+        rf.update_info_needed = True
+        rf.suppress_meta = False
+        print 'totaltime', time.time()-st
+        pd.close()
+        rf.labnumber = ''
+        rf.sample = ''
 
     def _db_changed(self):
         self.queue_factory.db = self.db
@@ -320,5 +420,26 @@ queue_conditionals_name]''')
         self.run_factory.set_mass_spectrometer(self.default_mass_spectrometer)
         self.queue_factory.mass_spectrometer = self.default_mass_spectrometer
         self.mass_spectrometer = self.default_mass_spectrometer
+
+    # ===============================================================================
+    # defaults
+    # ===============================================================================
+    def _auto_gen_config_default(self):
+        ag = AutoGenConfig()
+        ag.load()
+        return ag
+
+    def _undoer_default(self):
+        return ExperimentUndoer(run_factory=self.run_factory,
+                                queue=self.queue)
+
+    def _run_factory_default(self):
+        return self._run_factory_factory()
+
+    def _queue_factory_default(self):
+        eq = ExperimentQueueFactory(db=self.db,
+                                    application=self.application)
+        # eq.activate()
+        return eq
 
 # ============= EOF =============================================

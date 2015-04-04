@@ -1580,8 +1580,8 @@ class Graph(Viewable, ContextMenuMixin):
                 if mi <= 0:
 
                     mi = Inf
-                    data = plot.data.list_data()
-                    for di in plot.data.list_data():
+                    data = plot.data
+                    for di in data.list_data():
                         if 'y' in di:
                             ya = sorted(data.get_data[di])
                             #                             ya = np.copy(plot.data.get_data(di))
