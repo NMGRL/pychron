@@ -44,7 +44,7 @@ def source_factory():
 
     # add a production ratio
     with db.session_ctx():
-        db.add_irradiation_production(name='Triga PR')
+        db.add_irradiation_production(name='Triga PR', K4039=10)
 
     loader = XLSIrradiationLoader(db=db)
     loader.open(p)

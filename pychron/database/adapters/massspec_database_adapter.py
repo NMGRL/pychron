@@ -35,7 +35,7 @@ from pychron.database.orms.massspec_orm import IsotopeResultsTable, \
     PreferencesTable, DatabaseVersionTable, FittypeTable, \
     BaselinesChangeableItemsTable, SampleLoadingTable, MachineTable, \
     AnalysisPositionTable, LoginSessionTable, RunScriptTable, \
-    IrradiationChronologyTable, IrradiationLevelTable, IrradiationProductionTable
+    IrradiationChronologyTable, IrradiationLevelTable, IrradiationProductionTable, ProjectTable, MaterialTable
 from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.database.core.functions import delete_one
 
@@ -67,6 +67,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 
     def bind_preferences(self):
         from apptools.preferences.preference_binding import bind_preference
+
         prefid = 'pychron.massspec.database'
         bind_preference(self, 'host', '{}.host'.format(prefid))
         bind_preference(self, 'username', '{}.username'.format(prefid))
@@ -75,7 +76,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 
     # @property
     # def selector_klass(self):
-    #     # lazy load selector klass.
+    # # lazy load selector klass.
     #     from pychron.database.selectors.massspec_selector import MassSpecSelector
     #
     #     return MassSpecSelector
@@ -83,6 +84,12 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
     # ===============================================================================
     # getters
     # ===============================================================================
+    def get_material(self, name):
+        return self._retrieve_item(MaterialTable, name, 'Material')
+
+    def get_project(self, name):
+        return self._retrieve_item(ProjectTable, name, 'Project')
+
     def get_irradiation_positions(self, name, level):
         with self.session_ctx() as sess:
             q = sess.query(IrradiationPositionTable)
@@ -145,7 +152,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
     def get_irradiation_names(self):
         with self.session_ctx() as sess:
             q = sess.query(distinct(IrradiationLevelTable.IrradBaseID))
-            vs =q.all()
+            vs = q.all()
             if vs:
                 vs = [vi[0] for vi in vs]
             return vs
@@ -295,6 +302,16 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
     # ===============================================================================
     # adders
     # ===============================================================================
+    def add_project(self, name):
+        with self.session_ctx():
+            obj = ProjectTable(Project=name)
+            return self._add_item(obj)
+
+    def add_material(self, name):
+        with self.session_ctx():
+            obj = MaterialTable(Material=name)
+            return self._add_item(obj)
+
     def add_sample(self, name):
         with self.session_ctx():
             obj = SampleTable(Sample=name, ProjectID=1)
@@ -324,7 +341,8 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 
             return self._add_item(i)
 
-    def add_irradiation_position(self, identifier, irrad_level, hole, material='', sample=6, j=1e-4, jerr=1e-7):
+    def add_irradiation_position(self, identifier, irrad_level, hole,
+                                 material='', sample=6, j=1e-4, jerr=1e-7, note=''):
         """
 
         :param identifier:
@@ -340,10 +358,10 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
             q = sess.query(IrradiationPositionTable)
             q = q.filter(IrradiationPositionTable.IrradPosition == identifier)
             if not self._query_one(q):
-
                 i = IrradiationPositionTable(IrradPosition=identifier,
                                              IrradiationLevel=irrad_level,
                                              HoleNumber=hole,
+                                             Note=note,
                                              Material=material,
                                              SampleID=sample,
                                              J=j, JEr=jerr)
@@ -518,7 +536,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
                            #                           intercept, intercept_err,
                            #                           baseline, baseline_err,
                            #                           blank, blank_err
-    ):
+                           ):
         """
             intercept, baseline and blank should be ufloats
 
@@ -667,7 +685,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 # #            sess.add(det)
 # #
 # #        return det, sess
-#    def add_detector(self, args):
+# def add_detector(self, args):
 #        return self._add_tableitem(DetectorTable(**args))
 #
 #    def add_analysis_changeable(self, args, dbanalysis=None):
