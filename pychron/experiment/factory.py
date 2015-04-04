@@ -20,6 +20,7 @@ from traits.api import Instance, Button, Bool, Property, \
     on_trait_change, String, Any, DelegatesTo, List, Str
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.ui.progress_dialog import myProgressDialog
 from pychron.experiment.auto_gen_config import AutoGenConfig
 from pychron.experiment.automated_run.uv.factory import UVAutomatedRunFactory
 from pychron.experiment.automated_run.factory import AutomatedRunFactory
@@ -305,7 +306,8 @@ queue_conditionals_name]''')
                     # print poss
                     ln_id = poss.lab_identifier
                     dbln = self.db.get_labnumber(ln_id, key='id')
-                    yield dbln.identifier, str(poss.position)
+
+                    yield dbln.identifier, dbln.sample.name, str(poss.position)
 
         return gen
 
@@ -317,19 +319,36 @@ queue_conditionals_name]''')
             self.auto_gen_config.dump()
 
     def _generate_queue_button_fired(self):
-        self.debug('generate queue')
-        auto_gen_config = self.auto_gen_config
-        gen = self._generate_runs_from_load()
+        pd = myProgressDialog()
+        pd.open()
 
+        from threading import Thread
+        ans = list(self._generate_runs_from_load()())
+        self._gen_func(pd, ans)
+        # t=Thread(target=self._gen_func, args=(pd, ans))
+        # t.start()
+
+    def _gen_func(self, pd, ans):
+        import time
+        pd.max = 100
+        self.debug('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ generate queue')
+        auto_gen_config = self.auto_gen_config
+
+        # gen = self._generate_runs_from_load()
         q = self.queue
         rf = self.run_factory
+        rf.suppress_meta = True
 
         def add_special(ln):
+            # tt = time.time()
+            pd.change_message('Add special: {}'.format(ln))
             rf.special_labnumber = ln
             new_runs, _ = rf.new_runs(q)
             q.add_runs(new_runs, 0)
             rf.special_labnumber = ''
+            # print 'add special {}, {}'.format(ln, time.time()-tt)
 
+        st = time.time()
         rb = auto_gen_config.end_run_block
         if rb and rb in rf.run_blocks:
             rf.run_block = auto_gen_config.end_run_block
@@ -343,7 +362,8 @@ queue_conditionals_name]''')
             if getattr(auto_gen_config, 'start_{}'.format(tag)):
                 add_special(ln)
 
-        for i, (labnumber, positions) in enumerate(gen()):
+        # for i, (labnumber, sample, position) in enumerate(gen()):
+        for i, (labnumber, sample, position) in enumerate(ans):
             if i:
                 for ln, tag in (('Blank Unknown', 'blank'),
                                 ('Air', 'air'),
@@ -352,11 +372,18 @@ queue_conditionals_name]''')
                     if f and i % f == 0:
                         add_special(ln)
 
-            rf.labnumber = labnumber
+            pd.change_message('Adding {}. Position: {}'.format(labnumber, position))
 
-            new_runs, _ = rf.new_runs(q, positions=positions)
+            # tt = time.time()
+            rf.labnumber = labnumber
+            rf.sample = sample
+            # print 'set ln/sample {} {}'.format(labnumber, time.time()-tt)
+
+            new_runs, _ = rf.new_runs(q, positions=position)
+            # print 'new runs {} {}'.format(labnumber, time.time()-tt)
 
             q.add_runs(new_runs, 0, is_run_block=False)
+            # print 'add runs {} {}'.format(labnumber, time.time()-tt)
 
         for ln, tag in (('Blank Unknown', 'blank'),
                         ('Air', 'air'),
@@ -371,8 +398,14 @@ queue_conditionals_name]''')
             new_runs, _ = rf.new_runs(q)
             q.add_runs(new_runs, 0, is_run_block=False)
 
+        # print 'finished adding', time.time()-st
         q.changed = True
         rf.update_info_needed = True
+        rf.suppress_meta = False
+        print 'totaltime', time.time()-st
+        pd.close()
+        rf.labnumber = ''
+        rf.sample = ''
 
     def _db_changed(self):
         self.queue_factory.db = self.db
@@ -393,6 +426,7 @@ queue_conditionals_name]''')
     # ===============================================================================
     def _auto_gen_config_default(self):
         ag = AutoGenConfig()
+        ag.load()
         return ag
 
     def _undoer_default(self):
@@ -407,4 +441,5 @@ queue_conditionals_name]''')
                                     application=self.application)
         # eq.activate()
         return eq
+
 # ============= EOF =============================================

@@ -21,7 +21,7 @@ from traits.api import Password, Bool, Str, on_trait_change, Any, Property, cach
 
 # =============standard library imports ========================
 from sqlalchemy import create_engine, distinct, MetaData
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, StatementError, \
     DBAPIError, OperationalError
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
@@ -229,6 +229,7 @@ class DatabaseAdapter(Loggable):
                     #                     Session.configure(bind=engine)
 
                     self.session_factory = sessionmaker(bind=engine, autoflush=self.autoflush)
+                    # self.session_factory = scoped_session(sessionmaker(bind=engine, autoflush=self.autoflush))
                     if test:
                         if self.test_func:
                             self.connected = self._test_db_connection(version_warn)

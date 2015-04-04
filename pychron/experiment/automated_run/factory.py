@@ -294,13 +294,17 @@ class AutomatedRunFactory(PersistenceLoggable):
                    'pattern', 'labnumber', 'position',
                    'weight', 'comment', 'template',
                    'use_simple_truncation', 'conditionals_path')
+
+    suppress_meta = False
     # ===========================================================================
     # private
     # ===========================================================================
+    _current_loaded_default_scripts_key = None
     _selected_runs = List
     _spec_klass = AutomatedRunSpec
     _set_defaults = True
     _no_clear_labnumber = False
+
 
     def setup_files(self):
         self.load_templates()
@@ -317,6 +321,13 @@ class AutomatedRunFactory(PersistenceLoggable):
             self.load()
 
         self.setup_files()
+
+        # db = self.db
+        # with db.session_ctx():
+        #     ms = db.get_mass_spectrometer(self.mass_spectrometer)
+        #     ed = db.get_extraction_device(self.extract_device)
+        #     self._mass_spectrometers = ms
+        #     self._extract_devices = ed
 
     def deactivate(self):
         self.dump(verbose=True)
@@ -731,7 +742,7 @@ class AutomatedRunFactory(PersistenceLoggable):
 
             # db = self.db
             # with db.session_ctx():
-            #     dbln = db.get_labnumber(self.labnumber)
+            # dbln = db.get_labnumber(self.labnumber)
             #     if dbln:
             #         dbpos = dbln.irradiation_position
             #         dbhist = db.add_flux_history(dbpos)
@@ -788,7 +799,6 @@ class AutomatedRunFactory(PersistenceLoggable):
 
     def _load_default_scripts(self, labnumber):
 
-        self.debug('load default scripts for {}'.format(labnumber))
         # if labnumber is int use key='U'
         try:
             _ = int(labnumber)
@@ -797,6 +807,11 @@ class AutomatedRunFactory(PersistenceLoggable):
             pass
 
         labnumber = str(labnumber).lower()
+        if self._current_loaded_default_scripts_key == labnumber:
+            return
+
+        self.debug('load default scripts for {}'.format(labnumber))
+        self._current_loaded_default_default_scripts_key = labnumber
 
         defaults = self._load_default_file()
         if defaults:
@@ -806,7 +821,7 @@ class AutomatedRunFactory(PersistenceLoggable):
                 if labnumber == 'dg':
                     keys = ['extraction']
 
-                #set options
+                # set options
                 self.script_options.name = default_scripts.get('options', '')
 
                 for skey in keys:
@@ -850,10 +865,14 @@ class AutomatedRunFactory(PersistenceLoggable):
         if '-##-' in labnumber:
             return True
 
+        if self.suppress_meta:
+            return True
+
         db = self.db
         self._aliquot = 0
         with db.session_ctx():
             # convert labnumber (a, bg, or 10034 etc)
+            self.debug('load meta')
             ln = db.get_labnumber(labnumber)
             if ln:
                 # set sample and irrad info
@@ -1004,7 +1023,7 @@ class AutomatedRunFactory(PersistenceLoggable):
             return pos
 
     # def _validate_extract_value(self, d):
-    #     return self._validate_float(d)
+    # return self._validate_float(d)
     #
     # def _validate_float(self, d):
     #     try:
@@ -1147,13 +1166,15 @@ class AutomatedRunFactory(PersistenceLoggable):
 
     def _get_flux_from_db(self, attr='j'):
         j = 0
-        if self.labnumber:
-            with self.db.session_ctx():
-                dbln = self.db.get_labnumber(self.labnumber)
-                if dbln:
-                    if dbln.selected_flux_history:
-                        f = dbln.selected_flux_history.flux
-                        j = getattr(f, attr)
+        if not (self.suppress_meta or '-##-' in self.labnumber):
+            if self.labnumber:
+                with self.db.session_ctx():
+                    self.debug('load flux')
+                    dbln = self.db.get_labnumber(self.labnumber)
+                    if dbln:
+                        if dbln.selected_flux_history:
+                            f = dbln.selected_flux_history.flux
+                            j = getattr(f, attr)
         return j
 
     def _set_flux(self, a):
@@ -1340,6 +1361,7 @@ post_equilibration_script:name''')
         self.update_info_needed = True
 
     def _labnumber_changed(self, old, new):
+        self.debug('labnumber changed old:{}, new:{}'.format(old, new))
         if new:
             special = False
             try:
@@ -1361,27 +1383,26 @@ post_equilibration_script:name''')
         self._clear_labnumber()
 
     def _special_labnumber_changed(self):
-        if not self.special_labnumber in ('Special Labnumber', LINE_STR):
+        if self.special_labnumber not in ('Special Labnumber', LINE_STR, ''):
             ln = convert_special_name(self.special_labnumber)
             self.debug('special ln changed {}, {}'.format(self.special_labnumber, ln))
             if ln:
                 if ln in ('dg', 'pa'):
                     pass
                 else:
-                    db = self.db
-                    if not db:
-                        return
-                    with db.session_ctx():
-                        ms = db.get_mass_spectrometer(self.mass_spectrometer)
-                        ed = db.get_extraction_device(self.extract_device)
-                        if ln in SPECIAL_KEYS and not ln.startswith('bu'):
-                            ln = make_standard_identifier(ln, '##', ms.name[0].capitalize())
-                        else:
-                            msname = ms.name[0].capitalize()
-                            edname = ''
-                            if ed is not None:
-                                edname = ''.join(map(lambda x: x[0].capitalize(), ed.name.split(' ')))
-                            ln = make_special_identifier(ln, edname, msname)
+                    # ms,ed = self._mass_spectrometers, self._extract_devices
+                    msname = self.mass_spectrometer[0].capitalize()
+                    # edname = self.extract_device[0].capitalize()
+
+                    if ln in SPECIAL_KEYS and not ln.startswith('bu'):
+                        ln = make_standard_identifier(ln, '##', msname)
+                    else:
+                        # msname = ms.name[0].capitalize()
+                        edname = ''
+                        ed = self.extract_device
+                        if ed not in ('Extract Device', LINE_STR):
+                            edname = ''.join(map(lambda x: x[0].capitalize(), ed.split(' ')))
+                        ln = make_special_identifier(ln, edname, msname)
 
                 self.labnumber = ln
 
@@ -1589,7 +1610,7 @@ post_equilibration_script:name''')
 # s, e, inc = map(int, pos.split(':'))
 # elif PSLICE_REGEX.match(pos):
 # s, e = map(int, pos.split(':'))[:2]
-#        elif CSLICE_REGEX.match(pos):
+# elif CSLICE_REGEX.match(pos):
 #            args = pos.split(';')
 #            positions = []
 #            for ai in args:
