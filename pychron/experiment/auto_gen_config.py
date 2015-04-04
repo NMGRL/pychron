@@ -15,13 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change
-from traitsui.api import View, UItem, Item, HGroup, VGroup
+import os
+from traits.api import Str, Int, Bool, List
+from traitsui.api import View, VGroup, UItem, Item, EnumEditor, HGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.paths import paths
+from pychron.persistence_loggable import PersistenceLoggable
 
 
-class AutoGenConfig(HasTraits):
+class AutoGenConfig(PersistenceLoggable):
     start_blank = Bool(True)
     end_blank = Bool
     start_air = Bool
@@ -36,9 +39,57 @@ class AutoGenConfig(HasTraits):
     run_block_freq = Int
 
     run_block = Str
+    run_blocks = List
 
     end_run_block = Str
     start_run_block = Str
+
+    pattributes = ('start_blank',
+                   'start_air',
+                   'start_cocktail',
+                   'start_run_block',
+
+                   'end_blank',
+                   'end_air',
+                   'end_cocktail',
+                   'end_run_block',
+
+                   'blank_freq',
+                   'air_freq',
+                   'cocktail_freq',
+                   'run_block_freq',
+
+                   'run_block',
+                   'run_blocks')
+
+    def traits_view(self):
+        sgrp = VGroup(Item('start_blank', label='Blank Unknown'),
+                      Item('start_air', label='Air'),
+                      Item('start_cocktail', label='Cocktail'),
+                      label='Start', show_border=True)
+
+        egrp = VGroup(Item('end_blank', label='Blank Unknown'),
+                      Item('end_air', label='Air'),
+                      Item('end_cocktail', label='Cocktail'),
+                      label='End', show_border=True)
+        fgrp = VGroup(Item('blank_freq', label='Blank Unknown'),
+                      Item('air_freq', label='Air'),
+                      Item('cocktail_freq', label='Cocktail'),
+                      HGroup(Item('run_block',
+                                  label='Run Block',
+                                  editor=EnumEditor(name='run_blocks')),
+                             Item('run_block_freq')),
+                      label='Frequency', show_border=True)
+
+        v = View(VGroup(sgrp, fgrp, egrp),
+                 title='Edit Quene Generation Configuration',
+                 buttons=['OK', 'Cancel'],
+                 kind='livemodal')
+        return v
+
+    @property
+    def persistence_path(self):
+        return os.path.join(paths.hidden_dir, 'auto_gen_config.p')
 
 # ============= EOF =============================================
 

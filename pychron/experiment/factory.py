@@ -20,6 +20,7 @@ from traits.api import Instance, Button, Bool, Property, \
     on_trait_change, String, Any, DelegatesTo, List, Str
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.experiment.auto_gen_config import AutoGenConfig
 from pychron.experiment.automated_run.uv.factory import UVAutomatedRunFactory
 from pychron.experiment.automated_run.factory import AutomatedRunFactory
 from pychron.experiment.queue.factory import ExperimentQueueFactory
@@ -40,6 +41,8 @@ class ExperimentFactory(Loggable, ConsumerMixin):
     undoer = Instance(ExperimentUndoer)
 
     generate_queue_button = Button
+    edit_queue_config_button = Button
+    auto_gen_config = Instance(AutoGenConfig)
 
     add_button = Button('Add')
     clear_button = Button('Clear')
@@ -291,25 +294,6 @@ queue_conditionals_name]''')
 
         return rf
 
-    # def _can_edit_scripts_changed(self):
-    # self.run_factory.can_edit = self.can_edit_scripts
-
-    # ===============================================================================
-    # defaults
-    # ===============================================================================
-    def _undoer_default(self):
-        return ExperimentUndoer(run_factory=self.run_factory,
-                                queue=self.queue)
-
-    def _run_factory_default(self):
-        return self._run_factory_factory()
-
-    def _queue_factory_default(self):
-        eq = ExperimentQueueFactory(db=self.db,
-                                    application=self.application)
-        # eq.activate()
-        return eq
-
     # handlers
     def _generate_runs_from_load(self, ):
         def gen():
@@ -325,13 +309,16 @@ queue_conditionals_name]''')
 
         return gen
 
+    def _edit_queue_config_button_fired(self):
+        self.auto_gen_config.run_blocks = self.run_factory.run_blocks
+        self.auto_gen_config.load()
+        info = self.auto_gen_config.edit_traits()
+        if info.result:
+            self.auto_gen_config.dump()
+
     def _generate_queue_button_fired(self):
         self.debug('generate queue')
-
-        from pychron.experiment.auto_gen_config import AutoGenConfig
-
-        auto_gen_config = AutoGenConfig()
-
+        auto_gen_config = self.auto_gen_config
         gen = self._generate_runs_from_load()
 
         q = self.queue
@@ -401,4 +388,23 @@ queue_conditionals_name]''')
         self.queue_factory.mass_spectrometer = self.default_mass_spectrometer
         self.mass_spectrometer = self.default_mass_spectrometer
 
+    # ===============================================================================
+    # defaults
+    # ===============================================================================
+    def _auto_gen_config_default(self):
+        ag = AutoGenConfig()
+        return ag
+
+    def _undoer_default(self):
+        return ExperimentUndoer(run_factory=self.run_factory,
+                                queue=self.queue)
+
+    def _run_factory_default(self):
+        return self._run_factory_factory()
+
+    def _queue_factory_default(self):
+        eq = ExperimentQueueFactory(db=self.db,
+                                    application=self.application)
+        # eq.activate()
+        return eq
 # ============= EOF =============================================
