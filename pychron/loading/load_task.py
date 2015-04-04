@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,7 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import on_trait_change, Any, List, Str
+from copy import deepcopy
+from traits.api import on_trait_change, Any, List, Str, Instance
 # from traitsui.api import View, Item
 from pyface.tasks.task_layout import PaneItem, TaskLayout
 from pyface.tasks.action.schema import SToolBar
@@ -25,7 +26,7 @@ from pyface.tasks.action.schema import SToolBar
 from pychron.envisage.tasks.base_task import BaseManagerTask
 from pychron.globals import globalv
 from pychron.loading.panes import LoadPane, LoadControlPane, LoadTablePane
-from pychron.loading.actions import SaveLoadingAction
+from pychron.loading.actions import SaveLoadingAction, ConfigurePDFAction
 from pychron.loading.loading_pdf_writer import LoadingPDFWriter
 from apptools.preferences.preference_binding import bind_preference
 import os
@@ -34,6 +35,7 @@ from datetime import datetime
 
 
 class LoadingTask(BaseManagerTask):
+    _pdf_writer = Instance(LoadingPDFWriter)
     name = 'Loading'
     load_pane = Any
 
@@ -45,7 +47,7 @@ class LoadingTask(BaseManagerTask):
     save_directory = Str
 
     tool_bars = [SToolBar(SaveLoadingAction(),
-                          image_size=(32, 32))]
+        ConfigurePDFAction())]
 
     def activated(self):
         # self.manager.tray = 'bat'
@@ -57,8 +59,8 @@ class LoadingTask(BaseManagerTask):
 
         if self.manager.setup():
             bind_preference(self, 'save_directory', 'pychron.loading.save_directory')
-        # else:
-        #     do_later(self.window.close)
+            # else:
+            # do_later(self.window.close)
 
     def _default_layout_default(self):
         return TaskLayout(
@@ -82,28 +84,69 @@ class LoadingTask(BaseManagerTask):
     def save(self):
         self.manager.save()
 
+    # actions
+    def configure_pdf(self):
+        options = self._pdf_writer.options
+
+        options.orientation = 'portrait'
+        options.left_margin = 0.5
+        options.right_margin = 0.5
+        options.top_margin = 0.5
+        options.bottom_margin = 0.5
+
+        options.load_yaml()
+        info = options.edit_traits()
+        if info.result:
+            options.dump_yaml()
+
     def save_loading(self):
-        p = LoadingPDFWriter()
-        root = self.save_directory
-        if not root or not os.path.isdir(root):
-            root = paths.loading_dir
+        # p = LoadingPDFWriter()
+        if self.manager.load_name:
+            root = self.save_directory
+            if not root or not os.path.isdir(root):
+                root = paths.loading_dir
 
-        positions = self.manager.positions
-        ln = self.manager.load_name
-        un = self.manager.username
+            positions = self.manager.positions
+            ln = self.manager.load_name
+            un = self.manager.username
 
-        dt = datetime.now()
-        date_str = dt.strftime("%Y-%m-%d %H:%M:%S")
-        meta = dict(load_name=ln, username=un,
-                    load_date=date_str,
-                    projects='Ross, Test')
-        path = os.path.join(root, '{}.pdf'.format(ln))
-        p.build(path, positions, self.canvas, meta)
+            dt = datetime.now()
+            date_str = dt.strftime("%Y-%m-%d %H:%M:%S")
+            meta = dict(load_name=ln, username=un,
+                        load_date=date_str,
+                        projects='Ross, Test')
+            path = os.path.join(root, '{}.pdf'.format(ln))
 
-    #     @on_trait_change('manager:load_name')
-    #     def _load_changed(self, new):
-    #         if new:
-    #             self.manager.tray = ''
+            options = self._pdf_writer.options
+
+            osl = self.manager.show_labnumbers
+            osw = self.manager.show_weights
+            oshn = self.manager.show_hole_numbers
+
+            for attr in ('labnumbers','weights','hole_numbers'):
+                attr = 'show_{}'.format(attr)
+                setattr(self.manager, attr, getattr(options, attr))
+
+            # c = self.canvas.clone_traits()
+            self._pdf_writer.build(path, positions, self.canvas, meta)
+
+        else:
+            self.information_dialog('Please select a load')
+
+        on = self.manager.load_name
+        self.manager.canvas = None
+        self.manager.load_name = ''
+        self.manager.load_name = on
+
+        self.manager.show_labnumbers = osl
+        self.manager.show_weights = osw
+        self.manager.show_hole_numbers = oshn
+
+        # self.manager.canvas.invalidate_and_redraw()
+    # @on_trait_change('manager:load_name')
+    # def _load_changed(self, new):
+    # if new:
+    # self.manager.tray = ''
     #             self.manager.load_load(new)
 
     # @on_trait_change('manager:tray')
@@ -127,8 +170,8 @@ class LoadingTask(BaseManagerTask):
     def _canvas_changed(self, new):
         self.load_pane.component = new
         self.canvas = new
-            # self.manager.canvas = c
-            # self.manager.positions = []
+        # self.manager.canvas = c
+        # self.manager.positions = []
 
 
     def _prompt_for_save(self):
@@ -140,27 +183,29 @@ class LoadingTask(BaseManagerTask):
             return ret
         return True
 
-    # @on_trait_change('window:closing')
-    # def _prompt_on_close(self, event):
-    #     """
-    #         Prompt the user to save when exiting.
-    #     """
-    #     if self.dirty:
-    #
-    #         # result = self._confirmation('ffoo')
-    #
-    #         if result in (CANCEL, NO):
-    #             event.veto = True
-    #         else:
-    #             self._save()
+    def __pdf_writer_default(self):
+        return LoadingPDFWriter()
+        # @on_trait_change('window:closing')
+        # def _prompt_on_close(self, event):
+        #     """
+        #         Prompt the user to save when exiting.
+        #     """
+        #     if self.dirty:
+        #
+        #         # result = self._confirmation('ffoo')
+        #
+        #         if result in (CANCEL, NO):
+        #             event.veto = True
+        #         else:
+        #             self._save()
 
 # ============= EOF =============================================
-#     def save_loading2(self):
+# def save_loading2(self):
 # #         path = self.save_file_dialog()
-#         path = '/Users/ross/Sandbox/load_001.pdf'
-#         if path:
+# path = '/Users/ross/Sandbox/load_001.pdf'
+# if path:
 #
-#             from chaco.pdf_graphics_context import PdfPlotGraphicsContext
+# from chaco.pdf_graphics_context import PdfPlotGraphicsContext
 #
 # #             doc = SimpleDocTemplate(path)
 # #             fl = [ComponentFlowable(component=self.canvas),

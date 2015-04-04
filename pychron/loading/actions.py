@@ -26,4 +26,9 @@ class SaveLoadingAction(TaskAction):
     name = 'Save PDF'
     method = 'save_loading'
     image = icon('file_pdf')
+
+class ConfigurePDFAction(TaskAction):
+    name = 'Configure PDF'
+    method = 'configure_pdf'
+    image = icon('cog')
 # ============= EOF =============================================

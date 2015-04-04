@@ -92,7 +92,7 @@ class Primitive(HasTraits):
     label = Property
     font = Str('modern 14')
     gfont = Property(depends_on='font')
-    #     font = str_to_font('modern 14')
+    # font = str_to_font('modern 14')
 
     width = 0
     height = 0
@@ -187,7 +187,7 @@ class Primitive(HasTraits):
         (w, h), (ox, oy) = self.canvas.map_screen([(d, d), (0, 0)])
         w, h = w - ox, h - oy
         if keep_square:
-            w=min(w, h)
+            w = min(w, h)
 
         return w
 
@@ -208,7 +208,9 @@ class Primitive(HasTraits):
             self._render_textbox(gc, x, y, w, h, txt)
 
     def _render_textbox(self, gc, x, y, w, h, txt):
-        gc.set_fill_color((0, 0, 0))
+
+        c = self.text_color if self.text_color else self.default_color
+        gc.set_fill_color(self._convert_color(c))
 
         tw, th, _, _ = gc.get_full_text_extent(txt)
         x = x + w / 2. - tw / 2.
@@ -251,9 +253,10 @@ class Primitive(HasTraits):
 
 
 class QPrimitive(Primitive):
+    text_color = None
     def _convert_color(self, c):
         if not isinstance(c, (list, tuple)):
-            #            c = c.red(), c.green(), c.blue()
+            # c = c.red(), c.green(), c.blue()
             c = c.toTuple()
 
         c = map(lambda x: x / 255., c)
@@ -313,7 +316,7 @@ class Rectangle(QPrimitive):
     def _render_(self, gc):
         x, y = self.get_xy()
         w, h = self.get_wh()
-        #        gc.set_line_width(self.line_width)
+        # gc.set_line_width(self.line_width)
         gc.rect(x, y, w, h)
         if self.fill:
             gc.draw_path()
@@ -324,7 +327,7 @@ class Rectangle(QPrimitive):
 
         self._render_name(gc, x, y, w, h)
 
-    #        if self.name:
+    # if self.name:
     #            t = str(self.name)
     #            tw = gc.get_full_text_extent(t)[0]
     #            x = x + w / 2.0 - tw / 2.0
@@ -413,7 +416,7 @@ class Line(QPrimitive):
 
         super(Line, self).__init__(0, 0, *args, **kw)
 
-        #        print self.primitives
+        # print self.primitives
 
     def _get_height(self):
         x, y = self.start_point.get_xy()
@@ -450,7 +453,7 @@ class Line(QPrimitive):
             self.end_point.set_canvas(canvas)
 
     def _render_(self, gc):
-        #        gc.begin_path()
+        # gc.begin_path()
         gc.set_line_width(self.width)
         if self.start_point and self.end_point:
             x, y = self.start_point.get_xy()
@@ -515,7 +518,7 @@ class Triangle(QPrimitive):
                     gc.arc(x - 2, y - 2, 2, 0, 360)
                 gc.fill_path()
 
-                #                        if self.draw_text:
+                # if self.draw_text:
                 gc.set_font_size(9)
                 for x, y, v in points:
                     x, y = func((x, y))
@@ -525,8 +528,8 @@ class Triangle(QPrimitive):
 
 class Circle(QPrimitive):
     radius = Float
-    fill = False
-    fill_color = (1, 1, 0)
+    fill = Bool
+    fill_color = Any
 
     def __init__(self, x, y, radius=10, *args, **kw):
         super(Circle, self).__init__(x, y, *args, **kw)
@@ -534,7 +537,7 @@ class Circle(QPrimitive):
 
     def _render_(self, gc):
         x, y = self.get_xy()
-        #        print 'asaaaa', self.radius
+        # print 'asaaaa', self.radius
         r = self.radius
         if self.space == 'data':
             r = self.map_dimension(r)
@@ -564,16 +567,16 @@ class Circle(QPrimitive):
 
 class Span(Line):
     hole_dim = 1
-    hole_spacing=1
+    hole_spacing = 1
     continued_line = False
     # fill = (0.78,0.78, 0.78,1)
-    fill = None#(0.78,0.78, 0.78,1)
+    fill = None  # (0.78,0.78, 0.78,1)
 
     def _render_(self, gc):
         x, y = self.start_point.get_xy()
         x1, y1 = self.end_point.get_xy()
         hd = self.map_dimension(self.hole_dim)
-        hs = self.map_dimension(self.hole_spacing/2.0)
+        hs = self.map_dimension(self.hole_spacing / 2.0)
         w = x1 - x + 4
         x0 = x - hd
         y0 = y - hd
@@ -584,18 +587,18 @@ class Span(Line):
                 self._render_lines(gc, x0, y0, w, hd)
 
     def _render_boxes(self, gc, x, y, w, hd, hs):
-        x-=2
+        x -= 2
         gc.set_stroke_color(self.fill)
         gc.set_fill_color(self.fill)
         # v=(hs-hd)/2.0
-        if self.continued_line==1:
-            gc.rect(x, y-hd, w + 2 * hd, 2*hs)
-        elif self.continued_line==2:
-            gc.rect(x, y-hd, w + 2 * hd, 2*hs)
-        elif self.continued_line==3:
-            gc.rect(x, y-hd+4, w + 2 * hd, 2*hs-2)
+        if self.continued_line == 1:
+            gc.rect(x, y - hd, w + 2 * hd, 2 * hs)
+        elif self.continued_line == 2:
+            gc.rect(x, y - hd, w + 2 * hd, 2 * hs)
+        elif self.continued_line == 3:
+            gc.rect(x, y - hd + 4, w + 2 * hd, 2 * hs - 2)
         else:
-            gc.rect(x, y-hd+4, w + 2 * hd, 2*hs-4)
+            gc.rect(x, y - hd + 4, w + 2 * hd, 2 * hs - 4)
 
         gc.draw_path()
 
@@ -603,9 +606,10 @@ class Span(Line):
         # gc.move_to(x, y-hd)
         # gc.line_to(x+10, y-hd)
         # gc.stroke_path()
+
     def _render_lines(self, gc, x, y, w, hd):
-        x-=2
-        y-=2
+        x -= 2
+        y -= 2
         if self.continued_line:
             if self.continued_line == 1:
                 gc.move_to(x + w + 2 * hd, y + 2 * hd + 4)
@@ -632,8 +636,8 @@ class LoadIndicator(Circle):
     measured_indicator = False
     degas_color = (1, 0.5, 0)
     measured_color = (0.69, 0.77, 0.87)
-
-    #     _text = List
+    default_color = 'black'
+    # _text = List
     labnumber_label = None
     weight_label = None
     weight = None
@@ -651,6 +655,8 @@ class LoadIndicator(Circle):
             self.weight_label = None
 
     def add_labnumber_label(self, *args, **kw):
+
+
         lb = self.add_text(*args, **kw)
         self.labnumber_label = lb
 
@@ -674,6 +680,20 @@ class LoadIndicator(Circle):
     #         self._text.append((t, ox, oy))
 
     def _render_(self, gc):
+        c = (0,0,0)
+        if self.fill and sum(self.fill_color) < 2.5:
+            c = (255,255,255)
+
+        self.text_color = c
+        for p in self.primitives:
+            p.text_color = c
+
+        # print self.fill_color, sum(self.fill_color)
+        # if self.fill and sum(self.fill_color) < 2.5:
+        #     self.default_color = 'white'
+        #     for p in self.primitives:
+        #         p.default_color = 'white'
+
         super(LoadIndicator, self)._render_(gc)
         #         Circle._render_(self, gc)
 
@@ -696,7 +716,7 @@ class LoadIndicator(Circle):
             pm.render(gc)
 
 
-#         if self._text:
+# if self._text:
 #             for ti, _, oy in self._text:
 #                 w, _h, _a, _b = gc.get_full_text_extent(ti)
 #                 self._render_text(gc, ti, x - w / 2., y + oy)
@@ -787,7 +807,11 @@ class Label(QPrimitive):
                         oy + offset + self.soffset_y, mw, 5 + sh)
                 gc.draw_path()
 
-            gc.set_fill_color((0, 0, 0))
+            # gc.set_fill_color((0, 0, 0))
+
+            c = self.text_color if self.text_color else self.default_color
+            gc.set_fill_color(self._convert_color(c))
+            # gc.set_stroke_color(self._convert_color(self.default_color))
 
             gc.set_font(self.gfont)
             for i, li in enumerate(lines[::-1]):
