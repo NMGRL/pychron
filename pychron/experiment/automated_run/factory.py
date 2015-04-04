@@ -358,34 +358,6 @@ class AutomatedRunFactory(PersistenceLoggable):
     def load_conditionals(self):
         self.conditionals = self._get_conditionals()
 
-    # def load_defaults(self):
-    # p = os.path.join(paths.hidden_dir, 'run_factory_defaults')
-    # if os.path.isfile(p):
-    # d = None
-    # with open(p, 'r') as rfile:
-    # try:
-    # d = pickle.load(fp)
-    # except BaseException, e:
-    # self.debug('could not load defaults Exception: {}'.format(e))
-    #         if d:
-    #             for attr in self._default_attrs:
-    #                 try:
-    #                     setattr(self, attr, d.get(attr))
-    #                 except (KeyError, TraitError), e:
-    #                     self.debug('load automated run factory defaults err={}'.format(e))
-    #
-    # def dump_defaults(self):
-    #     d = {}
-    #     for attr in self._default_attrs:
-    #         d[attr] = getattr(self, attr)
-    #
-    #     p = os.path.join(paths.hidden_dir, 'run_factory_defaults')
-    #     with open(p, 'w') as fp:
-    #         try:
-    #             pickle.dump(d, fp)
-    #         except BaseException, e:
-    #             self.debug('failed dumping defaults Exception: {}'.format(e))
-
     def use_frequency(self):
         return self.labnumber in ANALYSIS_MAPPING and self.frequency_model.frequency
 
@@ -490,7 +462,7 @@ class AutomatedRunFactory(PersistenceLoggable):
     def _new_runs_by_position(self, exp_queue, pos, template=False):
         arvs = []
         positions = generate_positions(pos)
-
+        # print positions, 'fff'
         for i, p in enumerate(positions):
             # if set_pos:
             p = str(p)

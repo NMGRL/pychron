@@ -164,7 +164,7 @@ class LoadingManager(IsotopeDatabaseManager):
 
     def load_load_by_name(self, loadtable, group_labnumbers=True):
         with self.db.session_ctx():
-            if isinstance(loadtable, str):
+            if isinstance(loadtable, (str, unicode)):
                 loadtable = self.db.get_loadtable(loadtable)
 
             self.positions = []

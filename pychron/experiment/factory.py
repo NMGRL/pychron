@@ -36,7 +36,10 @@ class ExperimentFactory(Loggable, ConsumerMixin):
     db = Any
     run_factory = Instance(AutomatedRunFactory)
     queue_factory = Instance(ExperimentQueueFactory)
+
     undoer = Instance(ExperimentUndoer)
+
+    generate_queue_button = Button
 
     add_button = Button('Add')
     clear_button = Button('Clear')
@@ -65,7 +68,7 @@ class ExperimentFactory(Loggable, ConsumerMixin):
     # permisions
     # ===========================================================================
     # max_allowable_runs = Int(10000)
-    #    can_edit_scripts = Bool(True)
+    # can_edit_scripts = Bool(True)
 
     def __init__(self, *args, **kw):
         super(ExperimentFactory, self).__init__(*args, **kw)
@@ -174,9 +177,9 @@ class ExperimentFactory(Loggable, ConsumerMixin):
     def _edit_mode_button_fired(self):
         self.run_factory.edit_mode = not self.run_factory.edit_mode
 
-        #@on_trait_change('run_factory:clear_end_after')
-        #def _clear_end_after(self, new):
-        #    print 'enadfas', new
+        # @on_trait_change('run_factory:clear_end_after')
+        # def _clear_end_after(self, new):
+        # print 'enadfas', new
 
     def _update_end_after(self, new):
         if new:
@@ -203,11 +206,11 @@ queue_conditionals_name]''')
             # self._set_extract_device(new)
             do_later(self._set_extract_device, new)
 
-        # elif name == 'username':
-        #     self._username = new
+            # elif name == 'username':
+            # self._username = new
             # elif name=='email':
-            #     self.email=new
-            #            self.queue.username = new
+            # self.email=new
+            # self.queue.username = new
 
         if self.queue:
             self.queue.trait_set(**{name: new})
@@ -241,7 +244,7 @@ queue_conditionals_name]''')
     def _get_patterns(self, ed):
         ps = []
         service_name = convert_extract_device(ed)
-        #service_name = ed.replace(' ', '_').lower()
+        # service_name = ed.replace(' ', '_').lower()
         man = self.application.get_service(ILaserManager, 'name=="{}"'.format(service_name))
         if man:
             ps = man.get_pattern_names()
@@ -259,7 +262,7 @@ queue_conditionals_name]''')
         uflag = bool(self.username)
         msflag = self.mass_spectrometer not in ('', 'Spectrometer', LINE_STR)
         lflag = True
-        if self.extract_device not in ('','Extract Device', LINE_STR):
+        if self.extract_device not in ('', 'Extract Device', LINE_STR):
             lflag = bool(self.queue_factory.load_name)
 
         ret = uflag and msflag and lflag
@@ -288,8 +291,8 @@ queue_conditionals_name]''')
 
         return rf
 
-    #    def _can_edit_scripts_changed(self):
-    #        self.run_factory.can_edit = self.can_edit_scripts
+    # def _can_edit_scripts_changed(self):
+    # self.run_factory.can_edit = self.can_edit_scripts
 
     # ===============================================================================
     # defaults
@@ -306,6 +309,83 @@ queue_conditionals_name]''')
                                     application=self.application)
         # eq.activate()
         return eq
+
+    # handlers
+    def _generate_runs_from_load(self, ):
+        def gen():
+            db = self.db
+            load_name = self.load_name
+            with db.session_ctx():
+                dbload = self.db.get_loadtable(load_name)
+                for poss in dbload.loaded_positions:
+                    # print poss
+                    ln_id = poss.lab_identifier
+                    dbln = self.db.get_labnumber(ln_id, key='id')
+                    yield dbln.identifier, str(poss.position)
+
+        return gen
+
+    def _generate_queue_button_fired(self):
+        self.debug('generate queue')
+
+        from pychron.experiment.auto_gen_config import AutoGenConfig
+
+        auto_gen_config = AutoGenConfig()
+
+        gen = self._generate_runs_from_load()
+
+        q = self.queue
+        rf = self.run_factory
+
+        def add_special(ln):
+            rf.special_labnumber = ln
+            new_runs, _ = rf.new_runs(q)
+            q.add_runs(new_runs, 0)
+            rf.special_labnumber = ''
+
+        rb = auto_gen_config.end_run_block
+        if rb and rb in rf.run_blocks:
+            rf.run_block = auto_gen_config.end_run_block
+            new_runs, _ = rf.new_runs(q)
+            q.add_runs(new_runs, 0, is_run_block=False)
+
+        for ln, tag in (('Air', 'air'),
+                        ('Cocktail', 'cocktail'),
+                        ('Blank Unknown', 'blank')):
+
+            if getattr(auto_gen_config, 'start_{}'.format(tag)):
+                add_special(ln)
+
+        for i, (labnumber, positions) in enumerate(gen()):
+            if i:
+                for ln, tag in (('Blank Unknown', 'blank'),
+                                ('Air', 'air'),
+                                ('Cocktail', 'cocktail')):
+                    f = getattr(auto_gen_config, '{}_freq'.format(tag))
+                    if f and i % f == 0:
+                        add_special(ln)
+
+            rf.labnumber = labnumber
+
+            new_runs, _ = rf.new_runs(q, positions=positions)
+
+            q.add_runs(new_runs, 0, is_run_block=False)
+
+        for ln, tag in (('Blank Unknown', 'blank'),
+                        ('Air', 'air'),
+                        ('Cocktail', 'cocktail')):
+
+            if getattr(auto_gen_config, 'end_{}'.format(tag)):
+                add_special(ln)
+
+        rb = auto_gen_config.end_run_block
+        if rb and rb in rf.run_blocks:
+            rf.run_block = auto_gen_config.end_run_block
+            new_runs, _ = rf.new_runs(q)
+            q.add_runs(new_runs, 0, is_run_block=False)
+
+        q.changed = True
+        rf.update_info_needed = True
 
     def _db_changed(self):
         self.queue_factory.db = self.db
