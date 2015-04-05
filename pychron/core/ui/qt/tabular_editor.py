@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from PySide.QtCore import QSize, QMimeData
 from pickle import dumps
 from pyface.image_resource import ImageResource
 from pyface.timer.do_later import do_later, do_after
@@ -160,15 +159,14 @@ class _TableView(TableView):
             vheader.setFont(fnt)
             hheader = self.horizontalHeader()
             hheader.setFont(fnt)
-
-        if editor.factory.row_height:
-            height = editor.factory.row_height
+        else:
+            if editor.factory.row_height:
+                height = editor.factory.row_height
 
         if height:
             vheader.setDefaultSectionSize(height)
 
         vheader.ResizeMode(QHeaderView.ResizeToContents)
-        # hheader.setStretchLastSection(editor.factory.stretch_last_section)
 
     def set_bg_color(self, bgcolor):
         if isinstance(bgcolor, tuple):

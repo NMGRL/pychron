@@ -15,13 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Color, Instance, DelegatesTo, List, Any
+from traits.api import Color, Instance, DelegatesTo, List, Any, Property
 from traitsui.api import View, Item, UItem, VGroup, HGroup, spring, \
     EnumEditor, Group, Spring, VFold, Label, InstanceEditor, \
     VSplit, TabularEditor, UReadonly, ListEditor
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traitsui.editors import TableEditor
-from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
@@ -62,8 +61,31 @@ def run_factory_item(name, **kw):
 class ExperimentFactoryPane(TraitsDockPane):
     id = 'pychron.experiment.factory'
     name = 'Experiment Editor'
+    info_label = Property(depends_on='model.run_factory.info_label')
+
+    def _get_info_label(self):
+        return '<font size=12, color="green"><b>{}</b></font>'.format(self.model.run_factory.info_label)
 
     def traits_view(self):
+        ss = '''QLabel {font-size: 10px}
+QLineEdit {font-size: 10px}
+QGroupBox {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                      stop: 0 #E0E0E0, stop: 1 #FFFFFF);
+    border: 2px solid gray;
+    border-radius: 5px;
+    margin-top: 1ex; /* leave space at the top for the title */
+}
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left; /* position at the top center */
+    padding: 0 3px;
+    color: blue;
+}
+QComboBox {font-size: 10px}
+
+'''
+
         add_button = icon_button_editor('add_button', 'add',
                                         enabled_when='ok_add',
                                         tooltip='Add run')
@@ -105,14 +127,18 @@ class ExperimentFactoryPane(TraitsDockPane):
                                    width=150,
                                    label='Load',
                                    editor=ComboboxEditor(name=queue_factory_name('load_names'))),
-                icon_button_editor('generate_queue_button','foo',
+                icon_button_editor('generate_queue_button', 'brick-go',
+                                   tooltip='Generate a experiment queue from the selected load',
                                    enabled_when='load_name'),
-                icon_button_editor('edit_queue_config_button','cog')),
+                icon_button_editor('edit_queue_config_button', 'cog',
+                                   tooltip='Configure experiment queue generation')),
             HGroup(queue_factory_item('queue_conditionals_name',
                                       label='Queue Conditionals',
                                       editor=EnumEditor(name=queue_factory_name('available_conditionals')))),
             queue_factory_item('delay_before_analyses'),
-            queue_factory_item('delay_between_analyses'))
+            queue_factory_item('delay_between_analyses'),
+            show_border=True,
+            label='Queue')
 
         button_bar = HGroup(
             save_button,
@@ -125,7 +151,10 @@ class ExperimentFactoryPane(TraitsDockPane):
             spring,
             run_factory_item('end_after', width=30),
             run_factory_item('skip'))
+        button_bar2 = HGroup(Item('auto_increment_id', label='Auto Increment L#'),
+                             Item('auto_increment_position', label='Position'), )
         edit_grp = VFold(
+            queue_grp,
             VGroup(
                 self._get_info_group(),
                 self._get_extract_group(),
@@ -134,19 +163,23 @@ class ExperimentFactoryPane(TraitsDockPane):
             self._get_truncate_group(),
             enabled_when=queue_factory_name('ok_make'))
 
-        lower_button_bar = HGroup(
-            add_button,
-            clear_button,
-            Label('Auto Increment'),
-            Item('auto_increment_id', label='L#'),
-            Item('auto_increment_position', label='Position'))
+        # lower_button_bar = HGroup(
+        # add_button,
+        # clear_button,
+        # Label('Auto Increment'),
+        # Item('auto_increment_id', label='L#'),
+        # Item('auto_increment_position', label='Position'))
         v = View(
             VGroup(
-                queue_grp,
+                # queue_grp,
                 button_bar,
-                CustomLabel(run_factory_name('info_label'), size=14, color='green'),
+                button_bar2,
+                UItem('pane.info_label', style='readonly'),
+                # CustomLabel(run_factory_name('info_label'), size=14, color='green'),
                 edit_grp,
-                lower_button_bar),
+
+                # lower_button_bar,
+                style_sheet=ss),
             kind='live',
             width=225)
         return v
@@ -180,13 +213,6 @@ class ExperimentFactoryPane(TraitsDockPane):
                                     width=50),
                    spring),
 
-            HGroup(run_factory_item('flux'),
-                   Label(u'\u00b1'),
-                   run_factory_item('flux_error', show_label=False),
-                   icon_button_editor(run_factory_name('save_flux_button'),
-                                      'database_save',
-                                      tooltip='Save flux to database'),
-                   enabled_when=run_factory_name('labnumber')),
             HGroup(
                 run_factory_item('weight',
                                  label='Weight (mg)',
@@ -200,9 +226,17 @@ class ExperimentFactoryPane(TraitsDockPane):
                                  tooltip='Auto fill "Comment" with IrradiationLevel:Hole, e.g A:9'),
                 # run_factory_item('comment_template',
                 # editor=EnumEditor(name=run_factory_name('comment_templates')),
-                #                  show_label=False),
+                # show_label=False),
                 icon_button_editor(run_factory_name('edit_comment_template'), 'cog',
                                    tooltip='Edit comment template')),
+            HGroup(run_factory_item('flux'),
+                   Label(u'\u00b1'),
+                   run_factory_item('flux_error', show_label=False),
+                   icon_button_editor(run_factory_name('save_flux_button'),
+                                      'database_save',
+                                      tooltip='Save flux to database'),
+                   enabled_when=run_factory_name('labnumber')),
+
             show_border=True,
             label='Sample Info')
         return grp

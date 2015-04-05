@@ -75,6 +75,7 @@ class Primitive(HasTraits):
     default_color = Color('red')
     active_color = Color('(0,255,0)')
     selected_color = Color('blue')
+    text_color = None
 
     canvas = Any
 
@@ -107,7 +108,7 @@ class Primitive(HasTraits):
     def __init__(self, x, y, *args, **kw):
         self.x = x
         self.y = y
-        #        self.default_color = (1, 0, 0)
+        # self.default_color = (1, 0, 0)
         #        self.active_color = (0, 1, 0)
         super(Primitive, self).__init__(*args, **kw)
 
@@ -122,7 +123,6 @@ class Primitive(HasTraits):
                 gc.set_line_width(self.line_width)
 
                 self._render_(gc)
-
 
     def _convert_color(self, c):
         if not isinstance(c, (list, tuple)):
@@ -164,7 +164,7 @@ class Primitive(HasTraits):
         # x, y = self.x, self.y
         offset = 0
         if self.space == 'data':
-            #            if self.canvas is None:
+            # if self.canvas is None:
             #                print self
             x, y = self.canvas.map_screen([(x, y)])[0]
             #        offset = self.canvas.offset
@@ -176,7 +176,7 @@ class Primitive(HasTraits):
 
     def get_wh(self):
         w, h = self.width, self.height
-        #        w, h = 20, 20
+        # w, h = 20, 20
         if self.space == 'data':
             (w, h), (ox, oy) = self.canvas.map_screen([(self.width, self.height), (0, 0)])
             w, h = w - ox, h - oy
@@ -253,7 +253,7 @@ class Primitive(HasTraits):
 
 
 class QPrimitive(Primitive):
-    text_color = None
+
     def _convert_color(self, c):
         if not isinstance(c, (list, tuple)):
             # c = c.red(), c.green(), c.blue()
@@ -320,7 +320,7 @@ class Rectangle(QPrimitive):
         gc.rect(x, y, w, h)
         if self.fill:
             gc.draw_path()
-        #             if self.use_border:
+        # if self.use_border:
         #                 self._render_border(gc, x, y, w, h)
         else:
             gc.stroke_path()
@@ -328,7 +328,7 @@ class Rectangle(QPrimitive):
         self._render_name(gc, x, y, w, h)
 
     # if self.name:
-    #            t = str(self.name)
+    # t = str(self.name)
     #            tw = gc.get_full_text_extent(t)[0]
     #            x = x + w / 2.0 - tw / 2.0
     #            gc.set_text_position(x, y + h / 2 - 6)
@@ -546,7 +546,8 @@ class Circle(QPrimitive):
         gc.stroke_path()
 
         if self.fill:
-            gc.set_fill_color(self.fill_color)
+            if self.fill_color:
+                gc.set_fill_color(self.fill_color)
             gc.arc(x, y, r, 0, 360)
             gc.fill_path()
 
@@ -655,8 +656,6 @@ class LoadIndicator(Circle):
             self.weight_label = None
 
     def add_labnumber_label(self, *args, **kw):
-
-
         lb = self.add_text(*args, **kw)
         self.labnumber_label = lb
 
@@ -665,7 +664,7 @@ class LoadIndicator(Circle):
         self.weight_label = lb
 
     def add_text(self, t, ox=0, oy=0, **kw):
-        #         x, y = self.get_xy()
+        # x, y = self.get_xy()
         lb = Label(0, 0,
                    text=t,
                    hjustify='center',
@@ -677,28 +676,31 @@ class LoadIndicator(Circle):
         self.primitives.append(lb)
         return lb
 
-    #         self._text.append((t, ox, oy))
+    # self._text.append((t, ox, oy))
 
     def _render_(self, gc):
-        c = (0,0,0)
-        if self.fill and sum(self.fill_color) < 2.5:
-            c = (255,255,255)
+        c = (0, 0, 0)
+        if self.fill and self.fill_color and sum(self.fill_color) < 2.5:
+            c = (255, 255, 255)
 
         self.text_color = c
         for p in self.primitives:
             p.text_color = c
 
-        # print self.fill_color, sum(self.fill_color)
-        # if self.fill and sum(self.fill_color) < 2.5:
-        #     self.default_color = 'white'
-        #     for p in self.primitives:
-        #         p.default_color = 'white'
-
         super(LoadIndicator, self)._render_(gc)
-        #         Circle._render_(self, gc)
 
         x, y = self.get_xy()
-        r = self.map_dimension(self.radius)
+        r = self.radius
+        if self.space == 'data':
+            r = self.map_dimension(r)
+
+        if self.state:
+            with gc:
+                gc.set_stroke_color(self._convert_color(self.active_color))
+                gc.set_line_width(2)
+                gc.arc(x, y, r, 0, 360)
+                gc.stroke_path()
+
         nr = r * 0.25
 
         if self.degas_indicator:
@@ -717,7 +719,7 @@ class LoadIndicator(Circle):
 
 
 # if self._text:
-#             for ti, _, oy in self._text:
+# for ti, _, oy in self._text:
 #                 w, _h, _a, _b = gc.get_full_text_extent(ti)
 #                 self._render_text(gc, ti, x - w / 2., y + oy)
 
@@ -940,7 +942,7 @@ class PointIndicator(Indicator):
         #self.circle.adjust(dx, dy)
         self.label.adjust(dx, dy)
 
-    def _render_(self, gc):
+    def _render_(self, gc, *args, **kw):
         super(PointIndicator, self)._render_(gc)
 
         if not self.use_simple_render:

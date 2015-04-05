@@ -49,9 +49,10 @@ class SceneCanvas(BaseDataCanvas):
                 li.visible = False
             self.request_redraw()
 
-    def _draw_hook(self, gc, *args, **kw):
+    def _draw_underlay(self, gc, view_bounds=None, mode="normal"):
         if self.scene:
-        #             self.scene.render_components(gc, weakref.ref(self)())
             self.scene.render_components(gc, self)
+
+    # def _draw_hook(self, gc, *args, **kw):
 
 # ============= EOF =============================================

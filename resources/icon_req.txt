@@ -118,3 +118,4 @@ pipette
 package-green
 update-product
 bricks
+brick-go

@@ -16,10 +16,10 @@
 
 # ============= enthought library imports =======================
 import random
+
 from traits.api import List, Tuple, HasTraits, Password
 from traitsui.api import View, Item
 from envisage.extension_point import ExtensionPoint
-from envisage.plugin import Plugin
 from envisage.ui.tasks.action.exit_action import ExitAction
 from envisage.ui.tasks.action.preferences_action import PreferencesAction
 from envisage.ui.tasks.task_extension import TaskExtension
@@ -28,10 +28,10 @@ from pyface.confirmation_dialog import confirm
 from pyface.constant import NO
 from pyface.tasks.action.dock_pane_toggle_group import DockPaneToggleGroup
 from pyface.tasks.action.schema_addition import SchemaAddition
+
 # ============= standard library imports ========================
 import hashlib
 # ============= local library imports  ==========================
-from pychron.core.helpers.logger_setup import new_logger
 from pychron.envisage.tasks.base_plugin import BasePlugin
 from pychron.paths import paths
 from pychron.envisage.resources import icon
@@ -139,8 +139,12 @@ class mExitAction(ExitAction):
                 ret = confirm(None, 'Are you sure you want to Quit?')
                 if ret == NO:
                     return
+        try:
+            app.exit(force=True)
+        except RuntimeError:
+            import os
 
-        app.exit(force=True)
+            os._exit(0)
 
 
 class myTasksPlugin(TasksPlugin):

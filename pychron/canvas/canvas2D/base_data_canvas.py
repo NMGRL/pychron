@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-from traits.api import Tuple, Bool, on_trait_change
+from traits.api import Tuple, Bool, on_trait_change, List
 from enable.api import Pointer
 from chaco.api import LinePlot, LinearMapper, DataView, ArrayDataSource
 from chaco.tools.api import ZoomTool, PanTool
@@ -246,25 +246,11 @@ class BaseDataCanvas(DataView):
         """
         pass
 
-    def draw(self, gc, *args, **kw):
+    def draw(self, *args, **kw):
         """
         """
-        with gc:
-
-            DataView._draw(self, gc, *args, **kw)
-
-            #with gc:
-            #gc.translate_ctm(0,0.5)
-            #gc.clip_to_rect(self.x-0.5, self.y-2, self.width+1, self.height+4)
-            #gc.clip_to_rect(self.outer_x, self.outer_y, self.outer_width, self.outer_height)
-            self._draw_hook(gc, *args, **kw)
-
-            for o in self.overlays:
-                if o.visible:
-                    o.overlay(None, gc, *args, **kw)
-
-                    #DataView._draw(self, gc, *args, **kw)
-                    # super(BaseDataCanvas, self).draw(gc, *args, **kw)
-
+    
+        super(BaseDataCanvas, self).draw(*args, **kw)
+        self._draw_hook(*args, **kw)
 
 # ====================EOF==================

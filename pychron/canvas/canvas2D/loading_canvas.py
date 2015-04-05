@@ -33,11 +33,10 @@
 # ============= enthought library imports =======================
 from enable.abstract_overlay import AbstractOverlay
 from kiva import Font
-from pyface.timer.do_later import do_after
 from traits.api import Any
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.canvas.canvas2D.scene.primitives.primitives import Span
+from pychron.canvas.canvas2D.scene.primitives.primitives import LoadIndicator
 from pychron.canvas.canvas2D.scene.scene_canvas import SceneCanvas
 from pychron.canvas.canvas2D.scene.loading_scene import LoadingScene
 
@@ -68,11 +67,9 @@ class LoadingOverlay(AbstractOverlay):
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
         if self.info_str:
             with gc:
-
+                gc.set_font(self.font)
                 lines = self.info_str.split('\n')
-
                 lws, lhs = zip(*[gc.get_full_text_extent(mi)[:2] for mi in lines])
-
                 rect_width = max(lws) + 4
                 rect_height = (max(lhs) + 2) * len(lhs)
 
@@ -82,7 +79,7 @@ class LoadingOverlay(AbstractOverlay):
                 gc.draw_path()
 
                 gc.set_fill_color((0, 0, 0))
-                gc.set_font(self.font)
+
                 lh = max(lhs) + 2
                 for i, li in enumerate(lines[::-1]):
                     gc.set_text_position(0, i * lh)
@@ -134,11 +131,24 @@ class LoadingCanvas(SceneCanvas):
 
         self.overlays.append(self.popup)
 
-    def normal_left_down(self, event):
+    def get_selection(self):
+        return [item for item in self.scene.get_items(LoadIndicator) if item.state]
+
+    def edit_left_down(self, event):
         if self.editable:
             self.selected = self.hittest(event)
-            self.request_redraw()
-            self.selected = None
+
+    def normal_left_down(self, event):
+        sel = self.hittest(event)
+        if sel:
+            if self.editable:
+                self.selected = sel
+            else:
+                sel.state = not sel.state
+                self.selected = sel
+
+        self.request_redraw()
+        self.selected = None
 
     def hittest(self, event):
         if self.scene:
@@ -148,31 +158,40 @@ class LoadingCanvas(SceneCanvas):
                         return it
 
     def normal_mouse_leave(self, event):
-        self.popup.visible = False
-        self.request_redraw()
+        pass
 
     def normal_mouse_move(self, event):
-        self.popup.x, self.popup.y = event.x, event.y
+
         if self.editable:
             self.current_item = self.hittest(event)
-
             if self.current_item:
-                event.window.set_pointer(self.select_pointer)
-                if not self.popup.visible:
-                    do_after(500, self._pop)
+                event.window.set_pointer(self.cross_pointer)
             else:
-                if self.popup.visible:
-                    self.popup.visible = False
-                    self.request_redraw()
-
                 self._set_normal_pointer(event)
+
+    def info_mouse_move(self, event):
+        self.popup.x, self.popup.y = event.x, event.y
+        self.current_item = self.hittest(event)
+        if self.current_item:
+            event.window.set_pointer(self.pointer)
+            self.popup.set_item(self.current_item)
+            self.popup.visible = True
+        else:
+            self.popup.visible = False
+            self._set_normal_pointer(event)
+
+        self.request_redraw()
+
+    def info_mouse_leave(self, event):
+        self.popup.visible = False
+        self.request_redraw()
 
     def _set_normal_pointer(self, event):
         event.window.set_pointer(self.normal_pointer)
 
-    def _pop(self):
-        self.popup.set_item(self.current_item)
-        self.popup.visible = True
-        self.request_redraw()
+    # def _pop(self):
+        # self.popup.set_item(self.current_item)
+        # self.popup.visible = True
+        # self.request_redraw()
 
 # ============= EOF =============================================
