@@ -25,6 +25,7 @@ from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.combobox_editor import ComboboxEditor
+from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.icon_button_editor import icon_button_editor
 
 
@@ -70,12 +71,13 @@ class LoadTablePane(TraitsDockPane):
 
 
 class LoadPane(TraitsTaskPane):
-    component = Any
-
+    # component = Any
     def traits_view(self):
-        v = View(UItem('component',
-                       style='custom',
-                       editor=ComponentEditor()))
+        v = View(VGroup(
+            CustomLabel('interaction_mode'),
+            UItem('canvas',
+                  style='custom',
+                  editor=ComponentEditor())))
         return v
 
 

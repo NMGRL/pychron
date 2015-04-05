@@ -43,6 +43,7 @@ class LoadingPDFOptions(BasePDFOptions):
     show_labnumbers = Bool
     show_weights = Bool
     show_hole_numbers = Bool
+    view_pdf = Bool
 
     def _show_colors_changed(self, new):
         if new:
@@ -61,7 +62,8 @@ class LoadingPDFOptions(BasePDFOptions):
                                    show_border=True, label='Margins'),
                             show_border=True,
                             label='layout')
-        grp = VGroup(Item('show_labnumbers'),
+        grp = VGroup(Item('view_pdf'),
+                     Item('show_labnumbers'),
                      Item('show_weights'),
                      Item('show_hole_numbers'),
                      Item('show_colors'),
@@ -70,6 +72,7 @@ class LoadingPDFOptions(BasePDFOptions):
         v = View(VGroup(layout_grp,
                         grp,
                         ),
+                 title='Configure PDF',
                  kind='livemodal', buttons=['OK', 'Cancel'])
         return v
 

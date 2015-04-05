@@ -15,8 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+from datetime import datetime
 from matplotlib.cm import get_cmap, cmap_d
-from traits.api import HasTraits, cached_property, List, Str, \
+from traits.api import HasTraits, cached_property, List, Str, Instance,\
     Property, Int, Event, Any, Bool, Button, Float, on_trait_change, Enum, Color, RGBColor
 from traitsui.api import View, Item, EnumEditor, UItem, ListStrEditor
 # ============= standard library imports ========================
@@ -24,10 +26,13 @@ from traitsui.api import View, Item, EnumEditor, UItem, ListStrEditor
 from itertools import groupby
 # ============= local library imports  ==========================
 from pychron.canvas.utils import load_holder_canvas
+from pychron.core.helpers.filetools import view_file
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.canvas.canvas2D.loading_canvas import LoadingCanvas, group_position
 
 from pychron.canvas.canvas2D.scene.primitives.primitives import LoadIndicator
+from pychron.loading.loading_pdf_writer import LoadingPDFWriter
+from pychron.paths import paths
 
 
 def make_bound(st):
@@ -81,6 +86,7 @@ class LoadSelection(HasTraits):
 class LoadPosition(HasTraits):
     labnumber = Str
     sample = Str
+    project = Str
     positions = List
     weight = Float
     note = Str
@@ -107,6 +113,7 @@ maps = [m for m in cmap_d if not m.endswith("_r")]
 
 
 class LoadingManager(IsotopeDatabaseManager):
+    _pdf_writer = Instance(LoadingPDFWriter, ())
     dirty = Bool(False)
     username = Str
 
@@ -116,6 +123,7 @@ class LoadingManager(IsotopeDatabaseManager):
     labnumbers = Property(depends_on='level')
     weight = Float
     note = Str
+    save_directory = Str
 
     '''
         when a hole is selected npositions defines the number of 
@@ -151,6 +159,7 @@ class LoadingManager(IsotopeDatabaseManager):
 
     sample_info = Property(depends_on='labnumber')
     sample = Property(depends_on='labnumber')
+    project = Property(depends_on='labnumber')
     irradiation_hole = Property(depends_on='labnumber')
 
     retain_weight = Bool(False)
@@ -161,6 +170,7 @@ class LoadingManager(IsotopeDatabaseManager):
     show_hole_numbers = Bool(False)
     cmap_name = Enum(maps)
     use_cmap = Bool(True)
+    interaction_mode = Enum('Entry', 'Info', 'Edit')
 
     def load_load_by_name(self, loadtable, group_labnumbers=True):
         with self.db.session_ctx():
@@ -243,14 +253,6 @@ class LoadingManager(IsotopeDatabaseManager):
                             item.measured_indicator = True
         return c
 
-    def save(self):
-        self.debug('saving load to database')
-        with self.db.session_ctx():
-            self._save_load()
-            self._save_positions(self.load_name)
-            self.dirty = False
-        return True
-
     def setup(self):
         if self.db.connected:
             ls = self._get_loads()
@@ -268,6 +270,94 @@ class LoadingManager(IsotopeDatabaseManager):
             ls = self._get_last_load()
             return True
 
+    # actions
+    def configure_pdf(self):
+        options = self._pdf_writer.options
+
+        options.orientation = 'portrait'
+        options.left_margin = 0.5
+        options.right_margin = 0.5
+        options.top_margin = 0.5
+        options.bottom_margin = 0.5
+
+        options.load_yaml()
+        info = options.edit_traits()
+        if info.result:
+            options.dump_yaml()
+
+    def save_pdf(self):
+        # p = LoadingPDFWriter()
+        ln = self.load_name
+        if ln:
+            root = self.save_directory
+            if not root or not os.path.isdir(root):
+                root = paths.loading_dir
+
+            positions = self.positions
+            ps = ', '.join({p.project for p in positions})
+
+            un = self.username
+
+            dt = datetime.now()
+            date_str = dt.strftime("%Y-%m-%d %H:%M:%S")
+            meta = dict(load_name=ln, username=un,
+                        load_date=date_str,
+                        projects=ps)
+
+            path = os.path.join(root, '{}.pdf'.format(ln))
+
+            options = self._pdf_writer.options
+
+            osl = self.show_labnumbers
+            osw = self.show_weights
+            oshn = self.show_hole_numbers
+
+            for attr in ('labnumbers','weights','hole_numbers'):
+                attr = 'show_{}'.format(attr)
+                setattr(self, attr, getattr(options, attr))
+
+            # c = self.canvas.clone_traits()
+            self._pdf_writer.build(path, positions, self.canvas, meta)
+            if options.view_pdf:
+                view_file(path)
+        else:
+            self.information_dialog('Please select a load')
+
+        on = self.load_name
+        self.canvas = None
+        self.load_name = ''
+        self.load_name = on
+
+        self.show_labnumbers = osl
+        self.show_weights = osw
+        self.show_hole_numbers = oshn
+
+    def save(self):
+        self.debug('saving load to database')
+        with self.db.session_ctx():
+            self._save_load()
+            self._save_positions(self.load_name)
+            self.dirty = False
+        return True
+
+    def set_edit(self):
+        if self.canvas:
+            self.canvas.event_state = 'edit'
+        self.interaction_mode = 'Edit'
+
+    def set_entry(self):
+
+        if self.canvas:
+            self.canvas.event_state = 'normal'
+        self.interaction_mode = 'Entry'
+
+    def set_info(self):
+
+        if self.canvas:
+            self.canvas.event_state = 'info'
+        self.interaction_mode = 'Info'
+
+    # private
     def _get_users(self):
         with self.db.session_ctx():
             users = self.db.get_users()
@@ -365,6 +455,7 @@ class LoadingManager(IsotopeDatabaseManager):
                           level=self.level,
                           irrad_position=int(self.irradiation_hole),
                           sample=self.sample,
+                          project=self.project,
                           positions=[pid],
                           weight=self.weight,
                           note=self.note)
@@ -405,11 +496,16 @@ class LoadingManager(IsotopeDatabaseManager):
         ip = ln.irradiation_position
         level = ip.level
         irrad = level.irradiation
-
-        sample = ln.sample.name if ln.sample else ''
+        sample = ''
+        project = ''
+        if ln.sample:
+            sample = ln.sample.name
+            if ln.sample.project:
+                project = ln.sample.project.name
 
         lp = LoadPosition(labnumber=ln.identifier,
                           sample=sample,
+                          project = project,
                           irradiation=irrad.name,
                           level=level.name,
                           irrad_position=int(ip.position),
@@ -478,14 +574,27 @@ class LoadingManager(IsotopeDatabaseManager):
                              if pi.labnumber and pi.labnumber.identifier == self.labnumber), None)
 
     @cached_property
+    def _get_project(self):
+        project = ''
+        if self.db.connected:
+            with self.db.session_ctx():
+                pos = self._get_irradiation_position_record()
+                try:
+                    project = pos.labnumber.sample.project.name
+                except AttributeError:
+                    pass
+        return project
+
+    @cached_property
     def _get_sample(self):
         sample = ''
         if self.db.connected:
             with self.db.session_ctx():
                 pos = self._get_irradiation_position_record()
-                if pos is not None:
-                    dbsample = pos.labnumber.sample
-                    sample = dbsample.name if dbsample else ''
+                try:
+                    sample = pos.labnumber.sample.name
+                except AttributeError:
+                    pass
         return sample
 
     @cached_property
@@ -607,6 +716,23 @@ class LoadingManager(IsotopeDatabaseManager):
         self.canvas.request_redraw()
         self.refresh_table = True
 
+    def _note_changed(self):
+        if self.canvas:
+            sel = self.canvas.selected
+            if sel:
+                sel.note = self.note
+                # pos = next((p for p in self.positions if int(sel.name) in p.positions))
+                # pos.note = self.note
+
+    def _weight_changed(self):
+        if self.canvas:
+            sel = self.canvas.selected
+            if sel:
+                # pos = next((p for p in self.positions if int(sel.name) in p.positions))
+                # pos.weight = self.weight
+                sel.weight = self.weight
+                sel.weight_label.text = self.weight
+
     @on_trait_change('canvas:selected')
     def _update_selected(self, new):
         if not self.username:
@@ -616,30 +742,35 @@ class LoadingManager(IsotopeDatabaseManager):
         if not new:
             return
 
-        if new.fill:
-            self._deselect_position(new)
+        if self.canvas.event_state == 'edit':
+            self.note = new.note
+            self.weight = new.weight
+
         else:
-            if not self.labnumber:
-                self.warning_dialog('Select a Labnumber')
+            if new.fill:
+                self._deselect_position(new)
             else:
-                for i in range(self.npositions):
-                    if not new:
-                        continue
+                if not self.labnumber:
+                    self.warning_dialog('Select a Labnumber')
+                else:
+                    for i in range(self.npositions):
+                        if not new:
+                            continue
 
-                    item = self.canvas.scene.get_item(new.name)
-                    if item.fill:
-                        continue
+                        item = self.canvas.scene.get_item(new.name)
+                        if item.fill:
+                            continue
 
-                    self._set_position(new)
-                    new = self.canvas.scene.get_item(str(int(new.name) + 1))
+                        self._set_position(new)
+                        new = self.canvas.scene.get_item(str(int(new.name) + 1))
 
-                if not self.retain_weight:
-                    self.weight = 0
-                if not self.retain_note:
-                    self.note = ''
+                    if not self.retain_weight:
+                        self.weight = 0
+                    if not self.retain_note:
+                        self.note = ''
 
-                self._auto_increment_labnumber()
-                # self._update_span_indicators()
+                    self._auto_increment_labnumber()
+                    # self._update_span_indicators()
         self._set_group_colors()
         self.refresh_table = True
         self.dirty = True

@@ -123,7 +123,6 @@ class Primitive(HasTraits):
 
                 self._render_(gc)
 
-
     def _convert_color(self, c):
         if not isinstance(c, (list, tuple)):
             c = c.red, c.green, c.blue
@@ -655,8 +654,6 @@ class LoadIndicator(Circle):
             self.weight_label = None
 
     def add_labnumber_label(self, *args, **kw):
-
-
         lb = self.add_text(*args, **kw)
         self.labnumber_label = lb
 
