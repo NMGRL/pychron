@@ -15,8 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from copy import deepcopy
-from traits.api import on_trait_change, Any, List, Str, Instance
+from traits.api import on_trait_change, Any, List
 # from traitsui.api import View, Item
 from pyface.tasks.task_layout import PaneItem, TaskLayout
 from pyface.tasks.action.schema import SToolBar
@@ -27,11 +26,7 @@ from pychron.envisage.tasks.base_task import BaseManagerTask
 from pychron.globals import globalv
 from pychron.loading.panes import LoadPane, LoadControlPane, LoadTablePane
 from pychron.loading.actions import SaveLoadingAction, ConfigurePDFAction, EntryAction, InfoAction, EditAction
-from pychron.loading.loading_pdf_writer import LoadingPDFWriter
 from apptools.preferences.preference_binding import bind_preference
-import os
-from pychron.paths import paths
-from datetime import datetime
 
 
 class LoadingTask(BaseManagerTask):
@@ -59,6 +54,7 @@ class LoadingTask(BaseManagerTask):
             # else:
             # do_later(self.window.close)
         self.manager.load_name = '4'
+
 
     def _default_layout_default(self):
         return TaskLayout(

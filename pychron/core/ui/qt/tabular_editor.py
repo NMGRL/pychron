@@ -15,9 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from PySide.QtCore import QSize, QMimeData
 from pickle import dumps
-from pyface.image_resource import ImageResource
 
 from traits.api import Bool, Str, List, Any, Instance, Property, Int, HasTraits, Color
 from traits.trait_base import SequenceTypes
@@ -156,15 +154,14 @@ class _TableView(TableView, ConsumerMixin):
             vheader.setFont(fnt)
             hheader = self.horizontalHeader()
             hheader.setFont(fnt)
-
-        if editor.factory.row_height:
-            height = editor.factory.row_height
+        else:
+            if editor.factory.row_height:
+                height = editor.factory.row_height
 
         if height:
             vheader.setDefaultSectionSize(height)
 
         vheader.ResizeMode(QHeaderView.ResizeToContents)
-        # hheader.setStretchLastSection(editor.factory.stretch_last_section)
 
     def set_bg_color(self, bgcolor):
         if isinstance(bgcolor, tuple):

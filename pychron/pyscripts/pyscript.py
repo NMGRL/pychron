@@ -239,9 +239,9 @@ class PyScript(Loggable):
         def calc_dur():
             self.setup_context(**ctx)
             self.syntax_checked = False
-            self.debug('calculate_estimated duration. syntax requires testing')
+            # self.debug('calculate_estimated duration. syntax requires testing')
             self.test()
-            self.debug('pyscript estimated duration= {}'.format(self._estimated_duration))
+            # self.debug('pyscript estimated duration= {}'.format(self._estimated_duration))
 
         if not ctx:
             calc_dur()
@@ -249,14 +249,14 @@ class PyScript(Loggable):
 
         h = self._generate_ctx_hash(ctx)
 
-        self.debug('calculate estimated duration force={}, syntax_checked={}'.format(force, self.syntax_checked))
+        # self.debug('calculate estimated duration force={}, syntax_checked={}'.format(force, self.syntax_checked))
 
         if force or not self.syntax_checked:
             calc_dur()
         else:
             try:
                 self._get_cached_duration(h)
-                self.debug('current context in the cached durations')
+                # self.debug('current context in the cached durations')
             except KeyError:
                 calc_dur()
 

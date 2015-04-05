@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Any, Str, Int
+from traits.api import Int
 from traitsui.api import View, UItem, Item, EnumEditor, \
     VGroup, TabularEditor, HGroup
 from pyface.tasks.traits_task_pane import TraitsTaskPane
@@ -42,7 +42,10 @@ class PositionsAdapter(TabularAdapter):
 
     def get_bg_color(self, obj, trait, row, column=0):
         item = getattr(obj, trait)[row]
-        return map(lambda x: x * 255, item.color)
+        c = item.color
+        if hasattr(c, '__iter__'):
+            c = map(lambda x: x * 255, c)
+        return c
 
     def get_text_color(self, obj, trait, row, column=0):
         item = getattr(obj, trait)[row]
@@ -83,15 +86,15 @@ class LoadPane(TraitsTaskPane):
 
 class LoadDockPane(TraitsDockPane):
     name = 'Load'
-    load_name = Str
+    # load_name = Str
     id = 'pychron.loading.load'
-    component = Any
+    # component = Any
 
     def traits_view(self):
         v = View(
             VGroup(
                 UItem('load_name', style='readonly'),
-                UItem('component',
+                UItem('canvas',
                       style='custom',
                       editor=ComponentEditor())))
         return v

@@ -17,10 +17,15 @@
 # ============= enthought library imports =======================
 import os
 from datetime import datetime
+
 from matplotlib.cm import get_cmap, cmap_d
-from traits.api import HasTraits, cached_property, List, Str, Instance,\
-    Property, Int, Event, Any, Bool, Button, Float, on_trait_change, Enum, Color, RGBColor
+from traits.api import HasTraits, cached_property, List, Str, Instance, \
+    Property, Int, Event, Any, Bool, Button, Float, on_trait_change, Enum, RGBColor
 from traitsui.api import View, Item, EnumEditor, UItem, ListStrEditor
+
+
+
+
 # ============= standard library imports ========================
 
 from itertools import groupby
@@ -173,6 +178,9 @@ class LoadingManager(IsotopeDatabaseManager):
     interaction_mode = Enum('Entry', 'Info', 'Edit')
 
     def load_load_by_name(self, loadtable, group_labnumbers=True):
+
+        self.canvas = self.make_canvas(loadtable)
+
         with self.db.session_ctx():
             if isinstance(loadtable, (str, unicode)):
                 loadtable = self.db.get_loadtable(loadtable)
@@ -220,6 +228,7 @@ class LoadingManager(IsotopeDatabaseManager):
                 else:
                     for pi in pos:
                         self._add_position(ln, [pi])
+        self._set_group_colors()
 
     def make_canvas(self, new, editable=True):
         db = self.db
@@ -243,6 +252,7 @@ class LoadingManager(IsotopeDatabaseManager):
                     if item:
                         item.fill = True
                         item.identifier = pi.labnumber.identifier
+                        item.add_labnumber_label(item.identifier)
 
                 for pi in lt.measured_positions:
                     item = c.scene.get_item(str(pi.position))
@@ -251,6 +261,8 @@ class LoadingManager(IsotopeDatabaseManager):
                             item.degas_indicator = True
                         else:
                             item.measured_indicator = True
+
+        self._set_group_colors(c)
         return c
 
     def setup(self):
@@ -320,17 +332,17 @@ class LoadingManager(IsotopeDatabaseManager):
             self._pdf_writer.build(path, positions, self.canvas, meta)
             if options.view_pdf:
                 view_file(path)
+            on = self.load_name
+            self.canvas = None
+            self.load_name = ''
+            self.load_name = on
+
+            self.show_labnumbers = osl
+            self.show_weights = osw
+            self.show_hole_numbers = oshn
+
         else:
             self.information_dialog('Please select a load')
-
-        on = self.load_name
-        self.canvas = None
-        self.load_name = ''
-        self.load_name = on
-
-        self.show_labnumbers = osl
-        self.show_weights = osw
-        self.show_hole_numbers = oshn
 
     def save(self):
         self.debug('saving load to database')
@@ -675,10 +687,10 @@ class LoadingManager(IsotopeDatabaseManager):
         if new:
             self.tray = ''
             # print new
-            self.canvas = self.make_canvas(new)
+            # self.canvas = self.make_canvas(new)
             # print self.canvas, self.canvas.scene
             self.load_load_by_name(new)
-            self._set_group_colors()
+            # self._set_group_colors()
 
     # def _show_spans_changed(self, new):
     #     if self.canvas:
@@ -735,6 +747,9 @@ class LoadingManager(IsotopeDatabaseManager):
 
     @on_trait_change('canvas:selected')
     def _update_selected(self, new):
+        if not self.canvas.editable:
+            return
+
         if not self.username:
             self.warning_dialog('Set a username')
             return
@@ -775,17 +790,31 @@ class LoadingManager(IsotopeDatabaseManager):
         self.refresh_table = True
         self.dirty = True
 
-    def _set_group_colors(self):
+    def _set_group_colors(self, canvas=None):
+        if canvas is None:
+            canvas = self.canvas
+
         if self.use_cmap:
             c = get_cmap(self.cmap_name)
         else:
             c = lambda x: (1,1,0,1)
 
-        n = len(self.positions)
-        scene = self.canvas.scene
+        # n = len(self.positions)
+        nl = len({p.labnumber for p in self.positions})
+
+        scene = canvas.scene
+        cs = {}
+        cnt = 0
         for i, p in enumerate(self.positions):
-            color = c(i / float(n))
-            p.color = color[:-1]
+            if p.labnumber in cs:
+                color = cs[p.labnumber]
+            else:
+                color = c(cnt / float(nl))
+                color = color[:-1]
+                cs[p.labnumber] = color
+                cnt += 1
+
+            p.color = color
             for pp in p.positions:
                 pp = scene.get_item(str(pp), klass=LoadIndicator)
                 pp.fill_color = color

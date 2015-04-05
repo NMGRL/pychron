@@ -21,7 +21,6 @@ from traitsui.api import View, Item, UItem, VGroup, HGroup, spring, \
     VSplit, TabularEditor, UReadonly, ListEditor
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traitsui.editors import TableEditor
-from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
@@ -105,9 +104,11 @@ class ExperimentFactoryPane(TraitsDockPane):
                                    width=150,
                                    label='Load',
                                    editor=ComboboxEditor(name=queue_factory_name('load_names'))),
-                icon_button_editor('generate_queue_button','foo',
+                icon_button_editor('generate_queue_button', 'brick-go',
+                                   tooltip='Generate a experiment queue from the selected load',
                                    enabled_when='load_name'),
-                icon_button_editor('edit_queue_config_button','cog')),
+                icon_button_editor('edit_queue_config_button', 'cog',
+                                   tooltip='Configure experiment queue generation')),
             HGroup(queue_factory_item('queue_conditionals_name',
                                       label='Queue Conditionals',
                                       editor=EnumEditor(name=queue_factory_name('available_conditionals')))),
