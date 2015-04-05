@@ -26,6 +26,8 @@ from traitsui.api import View, Item, EnumEditor, UItem, ListStrEditor
 
 
 
+
+
 # ============= standard library imports ========================
 
 from itertools import groupby
@@ -176,6 +178,7 @@ class LoadingManager(IsotopeDatabaseManager):
     cmap_name = Enum(maps)
     use_cmap = Bool(True)
     interaction_mode = Enum('Entry', 'Info', 'Edit')
+    suppress_update = False
 
     def load_load_by_name(self, loadtable, group_labnumbers=True):
 
@@ -228,6 +231,8 @@ class LoadingManager(IsotopeDatabaseManager):
                 else:
                     for pi in pos:
                         self._add_position(ln, [pi])
+
+        self.positions = sorted(self.positions, key=lambda x: x.positions[0])
         self._set_group_colors()
 
     def make_canvas(self, new, editable=True):
@@ -684,17 +689,12 @@ class LoadingManager(IsotopeDatabaseManager):
             self.load_name = self.loads[0]
 
     def _load_name_changed(self, new):
+        if self.suppress_update:
+            return
+
         if new:
             self.tray = ''
-            # print new
-            # self.canvas = self.make_canvas(new)
-            # print self.canvas, self.canvas.scene
             self.load_load_by_name(new)
-            # self._set_group_colors()
-
-    # def _show_spans_changed(self, new):
-    #     if self.canvas:
-    #         self.canvas.set_spans_visibility(new)
 
     def _show_labnumbers_changed(self, new):
         if self.canvas:
@@ -748,6 +748,13 @@ class LoadingManager(IsotopeDatabaseManager):
     @on_trait_change('canvas:selected')
     def _update_selected(self, new):
         if not self.canvas.editable:
+            ps = self.canvas.get_selection()
+            pp = []
+            for p in ps:
+                po = next((ppp for ppp in self.positions if int(p.name) in ppp.positions))
+                pp.append(po)
+
+            self.selected_positions = pp
             return
 
         if not self.username:

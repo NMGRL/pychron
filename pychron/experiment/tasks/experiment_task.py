@@ -15,14 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-
-from traits.api import Int
-
-# from traitsui.api import View, Item
-from pyface.timer.do_later import do_after
-from traits.api import on_trait_change, Bool, Instance, Event, Color
-from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
+from traits.api import Int, on_trait_change, Bool, Instance, Event, Color
 from pyface.constant import CANCEL, NO
+from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
+from pyface.timer.do_later import do_after
 # ============= standard library imports ========================
 import os
 import xlrd
@@ -127,8 +123,6 @@ class ExperimentEditorTask(EditorTask):
         for editor in self.editor_area.editors:
             editor.queue.reset()
 
-        # reset the experimentors db session
-        # since the executor session will have made changes
         man = self.manager
         ex = man.executor
         man.update_info()
@@ -172,7 +166,7 @@ class ExperimentEditorTask(EditorTask):
 
         self._preference_binder('pychron.experiment',
                                 ('use_notifications',
-                                 # 'notifications_port',
+                                 'notifications_port',
                                  'automated_runs_editable'))
 
         # force notifier setup
@@ -246,6 +240,7 @@ class ExperimentEditorTask(EditorTask):
 
         return panes
 
+    # private
     def _open_abort(self):
         try:
             self.notifier.close()
@@ -424,50 +419,27 @@ class ExperimentEditorTask(EditorTask):
             self.manager.executor.active_editor = self.active_editor
             self._show_pane(self.experiment_factory_pane)
 
-    # def _use_syslogger_changed(self):
-    # if self.use_syslogger:
-    # from pychron.experiment.sys_log import SysLogger
-    #
-    # prefid = 'pychron.syslogger'
-    # self.syslogger = SysLogger()
-    #         for attr in ('username', 'password', 'host'):
-    #             bind_preference(self.syslogger, attr, '{}.{}'.format(prefid, attr))
-
     @on_trait_change('manager:executor:auto_save_event')
     def _auto_save(self):
         self.save()
 
-    # @on_trait_change('source_pane:[selected_connection, source:+]')
-    # def _update_source(self, name, new):
-    # from pychron.image.video_source import parse_url
-    #
-    # if name == 'selected_connection':
-    # islocal, r = parse_url(new)
-    #         if islocal:
-    #             pass
-    #         else:
-    #             self.source_pane.source.host = r[0]
-    #             self.source_pane.source.port = r[1]
-    #     else:
-    #         url = self.source_pane.source.url()
-    #
-    #         self.video_source.set_url(url)
-
     @on_trait_change('loading_manager:group_positions')
     def _update_group_positions(self, new):
-        if not new:
-            ef = self.manager.experiment_factory
-            rf = ef.run_factory
-            rf.position = ''
-        else:
-            pos = self.loading_manager.selected_positions
-            self._update_selected_positions(pos)
+        # if not new:
+        # ef = self.manager.experiment_factory
+        # rf = ef.run_factory
+        #
+        #     rf.position = ''
+        #
+        # else:
+        pos = self.loading_manager.selected_positions
+        self._update_selected_positions(pos)
 
     @on_trait_change('loading_manager:selected_positions')
     def _update_selected_positions(self, new):
         ef = self.manager.experiment_factory
-        ef.selected_positions = new
         if new:
+            ef.selected_positions = new
             rf = ef.run_factory
 
             nn = new[0]
@@ -481,9 +453,15 @@ class ExperimentEditorTask(EditorTask):
                   if ni.labnumber == nn.labnumber]
 
             group_positions = self.loading_manager.group_positions
-            #             group_positions = False
+            # group_positions = False
             if group_positions:
                 rf.position = ','.join(ns)
+            else:
+                n = len(ns)
+                if n > 1 and abs(int(ns[0]) - int(ns[-1])) == n - 1:
+                    rf.position = '{}-{}'.format(ns[0], ns[-1])
+                else:
+                    rf.position = str(ns[0])
 
     @on_trait_change('manager:experiment_factory:extract_device')
     def _handle_extract_device(self, new):
@@ -523,31 +501,17 @@ class ExperimentEditorTask(EditorTask):
     def _update_load(self, new):
         lm = self.loading_manager
         if lm is not None:
+            lm.suppress_update = True
             lm.load_name = ''
-            lm.trait_setq(load_name=new)
-            # lm.load_name = new
-            # if lm.load_name != new:
-            # lm.load_name = new
+            lm.load_name = new
+            lm.suppress_update = False
+
             lm.load_load_by_name(new, group_labnumbers=False)
             lm.canvas.editable = False
-
-            # self.load_pane.component = lm.canvas
-            # lm.show_labnumbers = True
-            # canvas = lm.make_canvas(new, editable=False)
-            # self.load_pane.component = canvas
-            # self.load_pane.component = weakref.ref(canvas)()
-
-            # self.load_pane.load_name = new
 
     @on_trait_change('active_editor:queue:refresh_blocks_needed')
     def _update_blocks(self):
         self.manager.experiment_factory.run_factory.load_run_blocks()
-
-    # @on_trait_change('active_editor:queue:update_needed')
-    # def _update_runs(self, new):
-    #     self.manager.update_info()
-    #     if self.active_editor.queue.initialized:
-    #         self.active_editor.dirty = True
 
     @on_trait_change('editor_area:editors[]')
     def _update_editors(self, new):
@@ -564,7 +528,7 @@ class ExperimentEditorTask(EditorTask):
             self.notifier.send_console_message(new)
 
             # if self.use_syslogger:
-            #     self.syslogger.executor = self.manager.executor
+            # self.syslogger.executor = self.manager.executor
             #     self.syslogger.trigger(new)
 
     @on_trait_change('manager:executor:run_completed')
@@ -652,13 +616,6 @@ class ExperimentEditorTask(EditorTask):
 
         return PatternMakerView()
 
-    # def _manager_default(self):
-    #     return self.application.get_service('pychron.experiment.experimentor.Experimentor')
-
-    # def _analysis_health_default(self):
-    #     ah = AnalysisHealth(db=self.manager.db)
-    #     return ah
-
     def _loading_manager_default(self):
         lm = self.window.application.get_service('pychron.loading.loading_manager.LoadingManager')
         if lm:
@@ -688,6 +645,30 @@ class ExperimentEditorTask(EditorTask):
             top=PaneItem('pychron.experiment.controls'))
 
         # ============= EOF =============================================
+        # def _use_syslogger_changed(self):
+        # if self.use_syslogger:
+        # from pychron.experiment.sys_log import SysLogger
+        #
+        # prefid = 'pychron.syslogger'
+        # self.syslogger = SysLogger()
+        # for attr in ('username', 'password', 'host'):
+        # bind_preference(self.syslogger, attr, '{}.{}'.format(prefid, attr))
+        # @on_trait_change('source_pane:[selected_connection, source:+]')
+        # def _update_source(self, name, new):
+        # from pychron.image.video_source import parse_url
+        #
+        # if name == 'selected_connection':
+        # islocal, r = parse_url(new)
+        # if islocal:
+        #             pass
+        #         else:
+        #             self.source_pane.source.host = r[0]
+        #             self.source_pane.source.port = r[1]
+        #     else:
+        #         url = self.source_pane.source.url()
+        #
+        #         self.video_source.set_url(url)
+
         # self._testing()
         #
         # def _testing(self):

@@ -32,13 +32,11 @@
 
 # ============= enthought library imports =======================
 from enable.abstract_overlay import AbstractOverlay
-from enable.enable_traits import Pointer
 from kiva import Font
-from pyface.timer.do_later import do_after
 from traits.api import Any
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.canvas.canvas2D.scene.primitives.primitives import Span
+from pychron.canvas.canvas2D.scene.primitives.primitives import LoadIndicator
 from pychron.canvas.canvas2D.scene.scene_canvas import SceneCanvas
 from pychron.canvas.canvas2D.scene.loading_scene import LoadingScene
 
@@ -133,15 +131,24 @@ class LoadingCanvas(SceneCanvas):
 
         self.overlays.append(self.popup)
 
+    def get_selection(self):
+        return [item for item in self.scene.get_items(LoadIndicator) if item.state]
+
     def edit_left_down(self, event):
         if self.editable:
             self.selected = self.hittest(event)
 
     def normal_left_down(self, event):
-        if self.editable:
-            self.selected = self.hittest(event)
-            self.request_redraw()
-            self.selected = None
+        sel = self.hittest(event)
+        if sel:
+            if self.editable:
+                self.selected = sel
+            else:
+                sel.state = not sel.state
+                self.selected = sel
+
+        self.request_redraw()
+        self.selected = None
 
     def hittest(self, event):
         if self.scene:

@@ -688,10 +688,19 @@ class LoadIndicator(Circle):
             p.text_color = c
 
         super(LoadIndicator, self)._render_(gc)
-        #         Circle._render_(self, gc)
-        #
+
         x, y = self.get_xy()
-        r = self.map_dimension(self.radius)
+        r = self.radius
+        if self.space == 'data':
+            r = self.map_dimension(r)
+
+        if self.state:
+            with gc:
+                gc.set_stroke_color(self._convert_color(self.active_color))
+                gc.set_line_width(2)
+                gc.arc(x, y, r, 0, 360)
+                gc.stroke_path()
+
         nr = r * 0.25
 
         if self.degas_indicator:
@@ -933,7 +942,7 @@ class PointIndicator(Indicator):
         #self.circle.adjust(dx, dy)
         self.label.adjust(dx, dy)
 
-    def _render_(self, gc):
+    def _render_(self, gc, *args, **kw):
         super(PointIndicator, self)._render_(gc)
 
         if not self.use_simple_render:

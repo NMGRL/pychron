@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from pyface.timer.do_later import do_later
 from traits.api import Instance, Button, Bool, Property, \
-    on_trait_change, String, Any, DelegatesTo, List, Str
+    on_trait_change, Any, DelegatesTo, List, Str
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.progress_dialog import myProgressDialog
@@ -133,8 +133,9 @@ class ExperimentFactory(Loggable, ConsumerMixin):
 
     def _add_run(self, *args, **kw):
         positions = [str(pi.positions[0]) for pi in self.selected_positions]
+        print positions
 
-        load_name = self.queue_factory.load_name
+        # load_name = self.queue_factory.load_name
 
         q = self.queue
         rf = self.run_factory
@@ -322,7 +323,6 @@ queue_conditionals_name]''')
         pd = myProgressDialog()
         pd.open()
 
-        from threading import Thread
         ans = list(self._generate_runs_from_load()())
         self._gen_func(pd, ans)
         # t=Thread(target=self._gen_func, args=(pd, ans))

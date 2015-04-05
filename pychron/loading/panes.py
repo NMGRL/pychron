@@ -15,9 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Int
+from traits.api import Int, Property
 from traitsui.api import View, UItem, Item, EnumEditor, \
-    VGroup, TabularEditor, HGroup
+    VGroup, TabularEditor, HGroup, spring
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from enable.component_editor import ComponentEditor
 from pyface.tasks.traits_dock_pane import TraitsDockPane
@@ -56,25 +56,38 @@ class PositionsAdapter(TabularAdapter):
         return color
 
 
-class LoadTablePane(TraitsDockPane):
+class BaseLoadPane(TraitsDockPane):
+    display_load_name = Property(depends_on='model.load_name')
+
+    def _get_display_load_name(self):
+        return '<font size=12 color="blue"><b>{}</b></font>'.format(self.model.load_name)
+
+
+class LoadTablePane(BaseLoadPane):
     name = 'Positions'
     id = 'pychron.loading.positions'
 
     def traits_view(self):
-        v = View(
-            UItem('group_positions',
-                  visible_when='show_group_positions'),
-            UItem('positions',
+        a = HGroup(Item('pane.display_load_name',
+                        style='readonly',
+                        label='Load'),
+                   spring,
+                   Item('group_positions',
+                        label='Group Positions as Single Analysis',
+                        tooltip='If this option is checked, all selected positions will '
+                                'be treated as a single analysis',
+                        visible_when='show_group_positions'))
+        b = UItem('positions',
                   editor=TabularEditor(adapter=PositionsAdapter(),
                                        refresh='refresh_table',
                                        scroll_to_row='scroll_to_row',
                                        selected='selected_positions',
-                                       multi_select=True)))
+                                       multi_select=True))
+        v = View(VGroup(a, b))
         return v
 
 
 class LoadPane(TraitsTaskPane):
-    # component = Any
     def traits_view(self):
         v = View(VGroup(
             CustomLabel('interaction_mode'),
@@ -84,19 +97,22 @@ class LoadPane(TraitsTaskPane):
         return v
 
 
-class LoadDockPane(TraitsDockPane):
+class LoadDockPane(BaseLoadPane):
     name = 'Load'
-    # load_name = Str
     id = 'pychron.loading.load'
-    # component = Any
 
     def traits_view(self):
-        v = View(
-            VGroup(
-                UItem('load_name', style='readonly'),
-                UItem('canvas',
-                      style='custom',
-                      editor=ComponentEditor())))
+        a = HGroup(Item('pane.display_load_name', style='readonly', label='Load'),
+                   spring, Item('group_positions',
+                                label='Group Positions as Single Analysis',
+                                tooltip='If this option is checked, all selected positions will '
+                                        'be treated as a single analysis',
+                                visible_when='show_group_positions'))
+        b = UItem('canvas',
+                  style='custom',
+                  editor=ComponentEditor())
+        v = View(VGroup(a, b))
+
         return v
 
 
