@@ -209,7 +209,7 @@ class ArArAge(Loggable):
         if attr.endswith('bs'):
             iso = attr[:-2]
             if iso in self.isotopes:
-                r = self.isotopes[iso].baseline.value
+                r = self.isotopes[iso].baseline.uvalue
         elif '/' in attr:
             non_ic_cor = attr.startswith('u')
             if non_ic_cor:

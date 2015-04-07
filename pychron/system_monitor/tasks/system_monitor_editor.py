@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from datetime import datetime, timedelta
 import random
-from threading import Timer
+from threading import Timer, Lock
 import time
 # from apptools.preferences.preference_binding import bind_preference
 
@@ -140,6 +140,7 @@ class SystemMonitorEditor(SeriesEditor):
 
     def start(self):
 
+        self._lock = Lock()
         self.name = '{}-{}'.format(self.conn_spec.system_name, self.conn_spec.host)
         self.oname = self.name
 
@@ -204,14 +205,16 @@ class SystemMonitorEditor(SeriesEditor):
 
                 if not sub.is_listening():
                     if time.time() - st > db_poll_interval or globalv.system_monitor_debug:
-                        st = time.time()
-                        lr = self._get_last_run_uuid()
-                        if lr != last_run_uuid and not self._pause:
-                            self.debug('current uuid {} <> {}'.format(last_run_uuid, lr))
-                            if not globalv.system_monitor_debug:
-                                last_run_uuid = lr
-                            # invoke_in_main_thread(self._run_added_handler, lr)
-                            self._consumer.add_consumable(lr)
+
+                        with self._lock:
+                            st = time.time()
+                            lr = self._get_last_run_uuid()
+                            if lr != last_run_uuid and not self._pause:
+                                self.debug('current uuid {} <> {}'.format(last_run_uuid, lr))
+                                if not globalv.system_monitor_debug:
+                                    last_run_uuid = lr
+                                # invoke_in_main_thread(self._run_added_handler, lr)
+                                self._consumer.add_consumable(lr)
 
             if self._polling:
                 t = Timer(poll_interval, func, args=(last_run_uuid, st))
@@ -237,25 +240,31 @@ class SystemMonitorEditor(SeriesEditor):
                 else
                     add to ideogram
         """
-        invoke_in_main_thread(self._refresh_sys_mon_series)
+        def func(last_run_uuid):
+            # invoke_in_main_thread(self._refresh_sys_mon_series)
+            self._refresh_sys_mon_series()
+            self.info('refresh analyses. last UUID={}'.format(last_run_uuid))
+            if last_run_uuid == 'trigger':
+                last_run_uuid = None
 
-        self.info('refresh analyses. last UUID={}'.format(last_run_uuid))
-        if last_run_uuid == 'trigger':
-            last_run_uuid = None
+            proc = self.processor
+            db = proc.db
+            with db.session_ctx():
+                if last_run_uuid is None:
+                    dbrun = db.get_last_analysis(spectrometer=self.conn_spec.system_name)
+                else:
+                    dbrun = db.get_analysis_uuid(last_run_uuid)
 
-        proc = self.processor
-        db = proc.db
-        with db.session_ctx():
-            if last_run_uuid is None:
-                dbrun = db.get_last_analysis(spectrometer=self.conn_spec.system_name)
-            else:
-                dbrun = db.get_analysis_uuid(last_run_uuid)
+                self.debug('run_added_handler dbrun={}'.format(dbrun))
+                if dbrun:
+                    self.debug('run_added_handler identifier={}'.format(dbrun.labnumber.identifier))
+                    an = proc.make_analysis(dbrun)
+                    self._refresh_figures(an)
 
-            self.debug('run_added_handler dbrun={}'.format(dbrun))
-            if dbrun:
-                self.debug('run_added_handler identifier={}'.format(dbrun.labnumber.identifier))
-                an = proc.make_analysis(dbrun)
-                invoke_in_main_thread(self._refresh_figures, an)
+                    # invoke_in_main_thread(self._refresh_figures, an)
+
+        with self._lock:
+            invoke_in_main_thread(func, last_run_uuid)
 
     def _refresh_sys_mon_series(self):
         if globalv.system_monitor_debug:
@@ -272,7 +281,9 @@ class SystemMonitorEditor(SeriesEditor):
                                                  hours=self.search_tool.hours,
                                                  limit=self.search_tool.limit)
         ans = self._sort_analyses(ans)
-        self.set_items(ans, update_graph=False)
+        self.analyses = ans
+        self.rebuild()
+        # self.set_items(ans, update_graph=False)
         # self.rebuild_graph()
 
     def _refresh_figures(self, an):
@@ -319,7 +330,6 @@ class SystemMonitorEditor(SeriesEditor):
     def _set_series(self, attr, identifier):
         name = '_{}_editor'.format(attr)
         editor = getattr(self, name)
-
         def new():
             e = self.task.new_series(ans=[],
                                      add_table=False,
@@ -486,8 +496,12 @@ class SystemMonitorEditor(SeriesEditor):
     def _load_refiso(self, ref):
         pass
 
-    # def _set_name(self, n):
-    # pass
+    def _set_name(self):
+        """
+        override SeriesMonitor._set_name
+        """
+        pass
+
     #
     # def _get_name(self):
     #     return '{}-{}'.format(self.conn_spec.system_name,
