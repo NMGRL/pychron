@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from datetime import datetime, timedelta
 import random
-from threading import Timer
+from threading import Timer, Lock
 import time
 # from apptools.preferences.preference_binding import bind_preference
 
@@ -26,7 +26,6 @@ from traits.api import Instance, Int, Bool, on_trait_change, Any, List, Str
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from uncertainties import ufloat
-from pychron.consumer_mixin import ConsumerMixin
 from pychron.displays.display import DisplayController
 from pychron.globals import globalv
 from pychron.messaging.notify.subscriber import Subscriber
@@ -90,13 +89,11 @@ class SystemMonitorEditor(SeriesEditor):
     _pause = False
 
     _flag = False
-    _consumer = None
 
     def __init__(self, *args, **kw):
         super(SystemMonitorEditor, self).__init__(*args, **kw)
         color_bind_preference(self.console_display.model, 'bgcolor', 'pychron.sys_mon.bgcolor')
         color_bind_preference(self.console_display, 'default_color', 'pychron.sys_mon.textcolor')
-
 
     def reset_editors(self):
         """
@@ -126,7 +123,6 @@ class SystemMonitorEditor(SeriesEditor):
     def stop(self):
         self._polling = False
         self.subscriber.stop()
-        self._consumer.stop()
 
     def pause(self):
         self._pause = not self._pause
@@ -140,6 +136,7 @@ class SystemMonitorEditor(SeriesEditor):
 
     def start(self):
 
+        self._lock = Lock()
         self.name = '{}-{}'.format(self.conn_spec.system_name, self.conn_spec.host)
         self.oname = self.name
 
@@ -182,10 +179,6 @@ class SystemMonitorEditor(SeriesEditor):
         db_poll_interval = self._db_poll_interval
         poll_interval = 3 if globalv.system_monitor_debug else self._poll_interval
 
-        self._consumer = ConsumerMixin(func=self._run_added_handler, auto_start=True)
-
-        # while 1:
-
         def func(last_run_uuid, st):
             # only check subscription availability if one poll_interval has elapsed
             # since the last subscription message was received
@@ -205,14 +198,15 @@ class SystemMonitorEditor(SeriesEditor):
                 if not sub.is_listening():
                     if time.time() - st > db_poll_interval or globalv.system_monitor_debug:
 
+                        self._lock.acquire()
+
                         st = time.time()
                         lr = self._get_last_run_uuid()
                         if lr != last_run_uuid and not self._pause:
                             self.debug('current uuid {} <> {}'.format(last_run_uuid, lr))
                             if not globalv.system_monitor_debug:
                                 last_run_uuid = lr
-                            # invoke_in_main_thread(self._run_added_handler, lr)
-                            self._consumer.add_consumable(lr)
+                            self._run_added_handler(lr)
 
             if self._polling:
                 t = Timer(poll_interval, func, args=(last_run_uuid, st))
@@ -240,7 +234,6 @@ class SystemMonitorEditor(SeriesEditor):
         """
 
         def func(lr):
-            # invoke_in_main_thread(self._refresh_sys_mon_series)
             self._refresh_sys_mon_series()
             self.info('refresh analyses. last UUID={}'.format(lr))
 
@@ -257,6 +250,9 @@ class SystemMonitorEditor(SeriesEditor):
                     self.debug('run_added_handler identifier={}'.format(dbrun.labnumber.identifier))
                     an = proc.make_analysis(dbrun)
                     self._refresh_figures(an)
+
+            self.rebuild()
+            self._lock.release()
 
         invoke_in_main_thread(func, last_run_uuid)
 
@@ -276,7 +272,7 @@ class SystemMonitorEditor(SeriesEditor):
                                                  limit=self.search_tool.limit)
         ans = self._sort_analyses(ans)
         self.analyses = ans
-        self.rebuild()
+        # self.rebuild()
         # self.set_items(ans, update_graph=False)
         # self.rebuild_graph()
 
@@ -326,7 +322,9 @@ class SystemMonitorEditor(SeriesEditor):
                                      add_iso=False)
             # self.task.tab_editors(0, -1)
             e.basename = '{} Series'.format(camel_case(attr))
-            e.search_tool = SystemMonitorControls()
+            e.search_tool = self.search_tool
+            self.task.controls_pane.tool = self.search_tool
+
             return e
 
         editor = self._update_editor(editor, new, identifier, None,
@@ -466,8 +464,8 @@ class SystemMonitorEditor(SeriesEditor):
     @on_trait_change('search_tool:[weeks, days, hours, limit]')
     def _handle_tool_change(self, name, new):
         self.debug('tool change name:{}, new:{}'.format(name, new))
-        self._consumer.add_consumable('trigger')
-        # self._run_added_handler()
+        with self._lock:
+            self._run_added_handler()
 
     def _load_refiso(self, ref):
         pass

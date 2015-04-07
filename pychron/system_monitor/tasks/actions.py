@@ -53,4 +53,9 @@ class PlayAction(TaskAction):
     image = icon('control_play_blue')
     visible_name = 'play_visible'
 
+
+class NewSeriesAction(TaskAction):
+    name = 'New Series'
+    method = 'new_analysis_series'
+    image= icon('add')
 # ============= EOF =============================================

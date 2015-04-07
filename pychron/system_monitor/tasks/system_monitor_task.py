@@ -23,18 +23,21 @@ from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Tabbed, VSplitter
 
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.dashboard.client import DashboardClient
 from pychron.envisage.tasks.pane_helpers import ConsolePane
+from pychron.experiment.utilities.identifier import ANALYSIS_MAPPING, SPECIAL_MAPPING
 from pychron.globals import globalv
 from pychron.processing.tasks.analysis_edit.panes import ControlsPane
 from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPane
 from pychron.processing.tasks.figures.figure_editor import FigureEditor
 from pychron.processing.tasks.figures.figure_task import FigureTask
 from pychron.processing.tasks.figures.panes import PlotterOptionsPane
-from pychron.system_monitor.tasks.actions import AddSystemMonitorAction, ClearFigureAction, PauseAction, PlayAction
+from pychron.system_monitor.tasks.actions import AddSystemMonitorAction, ClearFigureAction, PauseAction, PlayAction, \
+    NewSeriesAction
 from pychron.system_monitor.tasks.connection_spec import ConnectionSpec
 from pychron.system_monitor.tasks.dashboard_editor import DashboardEditor
 from pychron.system_monitor.tasks.panes import ConnectionPane, AnalysisPane, DashboardPane
@@ -48,8 +51,9 @@ class SystemMonitorTask(FigureTask):
     name = 'System Monitor'
 
     tool_bars = [SToolBar(AddSystemMonitorAction(),
+                          NewSeriesAction(),
                           PauseAction(),
-        PlayAction()),
+                          PlayAction()),
                  SToolBar(ClearFigureAction())]
 
     connection_pane = Instance(ConnectionPane)
@@ -111,6 +115,41 @@ class SystemMonitorTask(FigureTask):
         ac = self.has_active_editor()
         if ac:
             ac.set_items([])
+
+    def new_analysis_series(self):
+        from pychron.system_monitor.tasks.series_search_criteria import SearchCriteria
+
+
+        kw = {'mass_spectrometer': self.connection.system_name,
+              'mass_spectrometers': [ci.system_name for ci in self.connections],
+              'analysis_type': 'Air',
+              'analysis_types': ANALYSIS_MAPPING.values()}
+
+        if self.active_editor and hasattr(self.active_editor, 'search_tool'):
+            for attr in ('weeks', 'hours', 'limit', 'days'):
+                kw[attr] = getattr(self.active_editor.search_tool, attr)
+
+        sc = SearchCriteria(**kw)
+        while 1:
+            info = sc.edit_traits()
+            if not info.result:
+                break
+
+            at = next((k for k, v in ANALYSIS_MAPPING.iteritems() if v == sc.analysis_type))
+            at = next((k for k, v in SPECIAL_MAPPING.iteritems() if v == at))
+
+            ans = self.manager.analysis_series(sc.mass_spectrometer,
+                                               analysis_type=at,
+                                               weeks=sc.weeks,
+                                               days=sc.days,
+                                               hours=sc.hours,
+                                               limit=sc.limit)
+            if ans:
+                self.new_series(ans)
+                break
+            else:
+                if not self.confirmation_dialog('No analyses found given the provided search criteria. Try Again?'):
+                    break
 
     def add_system_monitor(self):
         return self._editor_factory()
