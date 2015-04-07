@@ -16,10 +16,12 @@
 
 # ============= enthought library imports =======================
 from datetime import datetime
+import time
 
-from traits.api import Instance, List, on_trait_change
+from traits.api import Instance, List, on_trait_change, Bool
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Tabbed, VSplitter
+
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -32,8 +34,7 @@ from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPa
 from pychron.processing.tasks.figures.figure_editor import FigureEditor
 from pychron.processing.tasks.figures.figure_task import FigureTask
 from pychron.processing.tasks.figures.panes import PlotterOptionsPane
-from pychron.system_monitor.tasks.actions import AddSystemMonitorAction, ClearFigureAction, ResetEditorsAction, \
-    PauseAction
+from pychron.system_monitor.tasks.actions import AddSystemMonitorAction, ClearFigureAction, PauseAction, PlayAction
 from pychron.system_monitor.tasks.connection_spec import ConnectionSpec
 from pychron.system_monitor.tasks.dashboard_editor import DashboardEditor
 from pychron.system_monitor.tasks.panes import ConnectionPane, AnalysisPane, DashboardPane
@@ -48,12 +49,8 @@ class SystemMonitorTask(FigureTask):
 
     tool_bars = [SToolBar(AddSystemMonitorAction(),
                           PauseAction(),
-                          image_size=(16, 16)),
-                 SToolBar(
-                     ResetEditorsAction(),
-                     ClearFigureAction(),
-
-                     image_size=(16, 16))]
+        PlayAction()),
+                 SToolBar(ClearFigureAction())]
 
     connection_pane = Instance(ConnectionPane)
     controls_pane = Instance(ControlsPane)
@@ -66,20 +63,20 @@ class SystemMonitorTask(FigureTask):
     dashboard_client = Instance(DashboardClient)
     dashboard_editor = Instance(DashboardEditor)
     dashboard_pane = Instance(DashboardPane)
+    last_activated = 0
+
+    _paused = Bool(False)
+    pause_visible = Bool(True)
+    play_visible = Bool(False)
 
     def activated(self):
         self._setup_dashboard()
         self._make_connections()
-        # self.browser_model =
-        # super(SystemMonitorTask, self).activated()
-        # editor = self.add_system_monitor()
-        # self._setup_dashboard_client()
 
-        # if editor:
-        # ideo = self.new_ideogram(add_table=False, add_iso=False)
-        # editor._ideogram_editor = ideo
-        # #self.active_editor.unknowns=[]
-        # self.activate_editor(self.editor_area.editors[0])
+    def activate_editor(self, editor):
+        if not self.last_activated or time.time() - self.last_activated > 15:
+            super(SystemMonitorTask, self).activate_editor(editor)
+            self.last_activated = 0
 
     def prepare_destroy(self):
         for e in self.editor_area.editors:
@@ -90,10 +87,10 @@ class SystemMonitorTask(FigureTask):
 
         super(FigureTask, self).prepare_destroy()
 
-    _paused = False
-
-    def pause(self):
+    def toggle_pause(self):
         self._paused = not self._paused
+        self.play_visible = not self.play_visible
+        self.pause_visible = not self.pause_visible
 
         for ei in self.editor_area.editors:
             if self._paused:
@@ -131,20 +128,7 @@ class SystemMonitorTask(FigureTask):
                  title='Choose System')
         return v
 
-        # def tab_editors(self, *args):
-        # def func(control, a, b):
-        # control.tabifyDockWidget(a, b)
-
-        # self._layout_editors(func, *args)
-        #
-        # def split_editors(self, a, b, orientation='h'):
-        #
-        # def func(control, aa, bb):
-        # print aa, bb
-        #         control.splitDockWidget(aa, bb, Qt.Horizontal if orientation == 'h' else Qt.Vertical)
-
-        # self._layout_editors(func, a, b)
-
+    # private
     def _setup_dashboard(self):
         self.dashboard_client = client = self.application.get_service('pychron.dashboard.client.DashboardClient')
         if client:
@@ -156,16 +140,9 @@ class SystemMonitorTask(FigureTask):
             client.load_configuration()
             client.listen()
 
-    # def _layout_editors(self, func, aidx, bidx):
-    # ea = self.editor_area
-    # control = ea.control
-    # widgets = control.get_dock_widgets()
-    # if widgets:
-    #         try:
-    #             a, b = widgets[aidx], widgets[bidx]
-    #             func(control, a, b)
-    #         except IndexError:
-    #             pass
+    def _refresh_plot_hook(self):
+        self.last_activated = time.time()
+
     def _open_editor(self, editor, **kw):
         super(SystemMonitorTask, self)._open_editor(editor, **kw)
         tol = 3600
@@ -205,6 +182,9 @@ class SystemMonitorTask(FigureTask):
 
     def _active_editor_changed(self, new):
         if new:
+
+            self.last_activated = time.time()
+
             if self.controls_pane:
                 tool = None
                 # if hasattr(new, 'tool'):
@@ -271,8 +251,9 @@ class SystemMonitorTask(FigureTask):
 
     @on_trait_change('window:opened')
     def _opened(self):
-        editor = self.add_system_monitor()
-        # self.add_dashboard_editor()
+        self.add_system_monitor()
+
+    # # self.add_dashboard_editor()
 
     def _handle_dashboard(self, obj, name, old, new):
         self.debug('dashboard_client value change {} {}'.format(obj.name, new))
@@ -286,17 +267,6 @@ class SystemMonitorTask(FigureTask):
                        PaneItem('pychron.console'))
 
         return TaskLayout(left=left, right=right)
-        # return TaskLayout(
-        #     left=Splitter(
-        #         Splitter(
-        #             PaneItem('pychron.sys_mon.connection'),
-        #             PaneItem('pychron.processing.controls'),
-        #             orientation='vertical'),
-        #         PaneItem('pychron.sys_mon.analyses'),
-        #         orientation='horizontal'),
-        #     right=VSplitter(Tabbed(PaneItem('pychron.console'),
-        #                            # PaneItem('pychron.plot_editor'),
-        #                            PaneItem('pychron.processing.figures.plotter_options')),
-        #                     PaneItem('pychron.dashboard.client')))
+
 
 # ============= EOF =============================================

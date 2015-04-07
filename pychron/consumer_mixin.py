@@ -119,7 +119,7 @@ class ConsumerMixin(object):
 
             try:
                 v = get_func()
-                if v:
+                if v is not None:
                     if cfunc:
                         if self._main:
                             from pychron.core.ui.gui import invoke_in_main_thread

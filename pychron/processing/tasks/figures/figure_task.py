@@ -811,6 +811,10 @@ class FigureTask(AnalysisEditTask):
                 if not isinstance(self.active_editor, RecallEditor):
                     self.active_editor.rebuild()
                     self.active_editor.dump_tool()
+                self._refresh_plot_hook()
+
+    def _refresh_plot_hook(self):
+        pass
 
     def _set_current_task(self):
         with no_update(self):

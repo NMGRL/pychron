@@ -20,10 +20,12 @@ import random
 from threading import Timer
 import time
 # from apptools.preferences.preference_binding import bind_preference
-from traits.api import Instance, Property, Int, Bool, on_trait_change, Any, List
+
+from traits.api import Instance, Int, Bool, on_trait_change, Any, List, Str
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from uncertainties import ufloat
 from pychron.consumer_mixin import ConsumerMixin
 from pychron.displays.display import DisplayController
 from pychron.globals import globalv
@@ -59,7 +61,8 @@ class SysMonIdeogramEditor(IdeogramEditor):
 
 class SystemMonitorEditor(SeriesEditor):
     conn_spec = Instance(ConnectionSpec, ())
-    name = Property(depends_on='conn_spec:+')
+    # name = Property(depends_on='conn_spec:+')
+    oname = Str
     search_tool = Instance(SystemMonitorControls)
     subscriber = Instance(Subscriber)
     plotter_options_manager_klass = SystemMonitorOptionsManager
@@ -93,6 +96,7 @@ class SystemMonitorEditor(SeriesEditor):
         super(SystemMonitorEditor, self).__init__(*args, **kw)
         color_bind_preference(self.console_display.model, 'bgcolor', 'pychron.sys_mon.bgcolor')
         color_bind_preference(self.console_display, 'default_color', 'pychron.sys_mon.textcolor')
+
 
     def reset_editors(self):
         """
@@ -135,6 +139,9 @@ class SystemMonitorEditor(SeriesEditor):
         self.console_display.add_text(msg, color=color)
 
     def start(self):
+
+        self.name = '{}-{}'.format(self.conn_spec.system_name, self.conn_spec.host)
+        self.oname = self.name
 
         self.load_tool()
 
@@ -230,8 +237,12 @@ class SystemMonitorEditor(SeriesEditor):
                 else
                     add to ideogram
         """
+        invoke_in_main_thread(self._refresh_sys_mon_series)
 
         self.info('refresh analyses. last UUID={}'.format(last_run_uuid))
+        if last_run_uuid == 'trigger':
+            last_run_uuid = None
+
         proc = self.processor
         db = proc.db
         with db.session_ctx():
@@ -244,25 +255,25 @@ class SystemMonitorEditor(SeriesEditor):
             if dbrun:
                 self.debug('run_added_handler identifier={}'.format(dbrun.labnumber.identifier))
                 an = proc.make_analysis(dbrun)
+                invoke_in_main_thread(self._refresh_figures, an)
 
-                def func():
-                    self._refresh_sys_mon_series(an)
-                    self._refresh_figures(an)
-
-                invoke_in_main_thread(func)
-
-    def _refresh_sys_mon_series(self, an):
-
-        ms = an.mass_spectrometer
-        kw = dict(weeks=self.search_tool.weeks,
-                  days=self.search_tool.days,
-                  hours=self.search_tool.hours,
-                  limit=self.search_tool.limit)
-
-        ans = self.processor.analysis_series(ms, **kw)
+    def _refresh_sys_mon_series(self):
+        if globalv.system_monitor_debug:
+            ans = [FileAnalysis(age=2 * random.random() + 10,
+                                aliquot=i,
+                                peak_center=ufloat(random.random(), 0.1),
+                                timestamp=time.time(),
+                                labnumber='{:04d}'.format(3000),
+                                age_err=random.random()) for i in range(min(self.search_tool.limit, 50))]
+        else:
+            ms = self.conn_spec.system_name
+            ans = self.processor.analysis_series(ms, weeks=self.search_tool.weeks,
+                                                 days=self.search_tool.days,
+                                                 hours=self.search_tool.hours,
+                                                 limit=self.search_tool.limit)
         ans = self._sort_analyses(ans)
-        self.set_items(ans)
-        self.rebuild_graph()
+        self.set_items(ans, update_graph=False)
+        # self.rebuild_graph()
 
     def _refresh_figures(self, an):
         if an.analysis_type == 'unknown':
@@ -327,7 +338,7 @@ class SystemMonitorEditor(SeriesEditor):
         # ed = self._ideogram_editor
         # if ed is not None:
         # print ed.analyses[0].identifier, cid
-        #     return ed.analyses[0].identifier != cid
+        # return ed.analyses[0].identifier != cid
 
     def close_editor(self, ei):
         if ei in self._ideogram_editors:
@@ -338,7 +349,14 @@ class SystemMonitorEditor(SeriesEditor):
     def _get_editor(self, editors, identifier):
         editor = next((ei for ei in editors if ei.identifier == identifier), None)
         if editor:
+
             self.task.activate_editor(editor)
+            # only activate the enter if the user didn't just switch editors manually
+            # if not self.last_activated or time.time() - self.last_activated > tol:
+            # self.last_activated = 0
+            #     self.task.suppress_set_time = True
+            #     self.task.suppress_set_time = False
+
         return editor
 
     def _refresh_ideogram(self, identifier):
@@ -459,20 +477,21 @@ class SystemMonitorEditor(SeriesEditor):
 
                 return self.processor.make_analyses(ans, load_aux=True)
 
-    @on_trait_change('search_tool:refresh_button')
-    def _handle_tool_change(self):
-        self._consumer.add_consumable(None)
+    @on_trait_change('search_tool:[weeks, days, hours, limit]')
+    def _handle_tool_change(self, name, new):
+        self.debug('tool change name:{}, new:{}'.format(name, new))
+        self._consumer.add_consumable('trigger')
         # self._run_added_handler()
 
     def _load_refiso(self, ref):
         pass
 
-    def _set_name(self):
-        pass
-
-    def _get_name(self):
-        return '{}-{}'.format(self.conn_spec.system_name,
-                              self.conn_spec.host)
+    # def _set_name(self, n):
+    # pass
+    #
+    # def _get_name(self):
+    #     return '{}-{}'.format(self.conn_spec.system_name,
+    #                           self.conn_spec.host)
 
     def _search_tool_default(self):
         tool = SystemMonitorControls()

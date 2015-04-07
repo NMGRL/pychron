@@ -151,7 +151,7 @@ class Series(BaseArArFigure):
                 mi, mx = min(ys - 2 * yerr), max(ys + 2 * yerr)
                 graph.set_y_limits(min_=mi, max_=mx, pad='0.1', plotid=pid)
 
-        except (KeyError, ZeroDivisionError), e:
+        except (KeyError, ZeroDivisionError, AttributeError), e:
             print 'Series', e
 
     def _unpack_attr(self, attr):
