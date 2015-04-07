@@ -142,6 +142,9 @@ class ExperimentEditorTask(EditorTask):
                 editor.new_queue()
 
                 self._open_editor(editor)
+                if self.loading_manager:
+                    self.loading_manager.clear()
+
                 if not self.manager.executor.is_alive():
                     self.manager.executor.executable = False
 

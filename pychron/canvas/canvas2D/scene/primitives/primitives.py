@@ -75,6 +75,7 @@ class Primitive(HasTraits):
     default_color = Color('red')
     active_color = Color('(0,255,0)')
     selected_color = Color('blue')
+    name_color = Color('black')
     text_color = None
 
     canvas = Any
@@ -83,6 +84,8 @@ class Primitive(HasTraits):
 
     name = Str
     name_visible = True
+    name_offsetx = 0
+    name_offsety = 0
 
     klass_name = Property
 
@@ -166,11 +169,12 @@ class Primitive(HasTraits):
         if self.space == 'data':
             # if self.canvas is None:
             #                print self
-            x, y = self.canvas.map_screen([(x, y)])[0]
-            #        offset = self.canvas.offset
-            offset = 1
-            x += self.offset_x
-            y += self.offset_y
+            if self.canvas:
+                x, y = self.canvas.map_screen([(x, y)])[0]
+                # offset = self.canvas.offset
+                offset = 1
+                x += self.offset_x
+                y += self.offset_y
 
         return x + offset, y + offset
 
@@ -204,13 +208,13 @@ class Primitive(HasTraits):
 
     def _render_name(self, gc, x, y, w, h):
         if self.name and self.name_visible:
-            txt = str(self.name)
-            self._render_textbox(gc, x, y, w, h, txt)
+            with gc:
+                # c = self.text_color if self.text_color else self.default_color
+                gc.set_fill_color(self._convert_color(self.name_color))
+                txt = str(self.name)
+                self._render_textbox(gc, x, y, w, h, txt)
 
     def _render_textbox(self, gc, x, y, w, h, txt):
-
-        c = self.text_color if self.text_color else self.default_color
-        gc.set_fill_color(self._convert_color(c))
 
         tw, th, _, _ = gc.get_full_text_extent(txt)
         x = x + w / 2. - tw / 2.
@@ -219,8 +223,11 @@ class Primitive(HasTraits):
         self._render_text(gc, txt, x, y)
 
     def _render_text(self, gc, t, x, y):
-        gc.set_text_position(x, y)
-        gc.show_text(t)
+        with gc:
+            gc.translate_ctm(x, y)
+            # gc.set_text_position(x, y)
+            gc.set_text_position(0, 0)
+            gc.show_text(t)
 
     @on_trait_change('default_color, active_color, x, y')
     def _refresh_canvas(self):
@@ -551,7 +558,7 @@ class Circle(QPrimitive):
             gc.arc(x, y, r, 0, 360)
             gc.fill_path()
 
-        self._render_name(gc, x, y, r / 4., r / 2.)
+        self._render_name(gc, x + self.name_offsetx, y + self.name_offsety, r / 4., r / 2.)
 
     def is_in(self, sx, sy):
         x, y = self.get_xy()
@@ -656,10 +663,16 @@ class LoadIndicator(Circle):
             self.weight_label = None
 
     def add_labnumber_label(self, *args, **kw):
+        if self.labnumber_label:
+            self.primitives.remove(self.labnumber_label)
+
         lb = self.add_text(*args, **kw)
         self.labnumber_label = lb
 
     def add_weight_label(self, *args, **kw):
+        if self.weight_label:
+            self.primitives.remove(self.weight_label)
+
         lb = self.add_text(*args, **kw)
         self.weight_label = lb
 
@@ -680,20 +693,22 @@ class LoadIndicator(Circle):
 
     def _render_(self, gc):
         c = (0, 0, 0)
-        if self.fill and self.fill_color and sum(self.fill_color) < 2.5:
+        if self.fill and self.fill_color and sum(self.fill_color[:3]) < 1.5:
             c = (255, 255, 255)
 
         self.text_color = c
         for p in self.primitives:
             p.text_color = c
 
-        super(LoadIndicator, self)._render_(gc)
-
         x, y = self.get_xy()
         r = self.radius
         if self.space == 'data':
             r = self.map_dimension(r)
 
+        self.name_offsetx = r - 2
+        self.name_offsety = r - 2
+
+        super(LoadIndicator, self)._render_(gc)
         if self.state:
             with gc:
                 gc.set_stroke_color(self._convert_color(self.active_color))
@@ -713,6 +728,7 @@ class LoadIndicator(Circle):
             gc.arc(x, y - 2 * nr, nr, 0, 360)
             gc.fill_path()
 
+        # print self.primitives
         for pm in self.primitives:
             pm.x, pm.y = self.x, self.y
             pm.render(gc)
