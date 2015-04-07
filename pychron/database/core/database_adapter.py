@@ -16,17 +16,18 @@
 
 # =============enthought library imports=======================
 import sys
+from threading import Lock
 
 from traits.api import Password, Bool, Str, on_trait_change, Any, Property, cached_property
 
+
 # =============standard library imports ========================
 from sqlalchemy import create_engine, distinct, MetaData
-from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, StatementError, \
     DBAPIError, OperationalError
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 import os
-import weakref
 # =============local library imports  ==========================
 from pychron.database.core.query import compile_query
 from pychron.loggable import Loggable
@@ -147,7 +148,7 @@ class DatabaseAdapter(Loggable):
     verbose_retrieve_query = False
     verbose = True
     connection_error = Str
-
+    _session_lock = None
     # def __init__(self, *args, **kw):
     #     super(DatabaseAdapter, self).__init__(*args, **kw)
 
@@ -167,9 +168,10 @@ class DatabaseAdapter(Loggable):
 
         :return: ``SessionCTX``
         """
-        if sess is None:
-            sess = self.sess
-        return SessionCTX(sess, parent=self, commit=commit)
+        with self._session_lock:
+            if sess is None:
+                sess = self.sess
+            return SessionCTX(sess, parent=self, commit=commit)
 
     @property
     def enabled(self):
@@ -200,6 +202,8 @@ class DatabaseAdapter(Loggable):
         :return: True if connected else False
         :rtype: bool
         """
+        self._session_lock = Lock()
+
         self.connection_error = ''
         if force:
             self.debug('forcing database connection')

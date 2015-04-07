@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from datetime import datetime, timedelta
 import random
-from threading import Timer, Lock
+from threading import Timer
 import time
 # from apptools.preferences.preference_binding import bind_preference
 
@@ -140,7 +140,6 @@ class SystemMonitorEditor(SeriesEditor):
 
     def start(self):
 
-        self._lock = Lock()
         self.name = '{}-{}'.format(self.conn_spec.system_name, self.conn_spec.host)
         self.oname = self.name
 
@@ -206,15 +205,14 @@ class SystemMonitorEditor(SeriesEditor):
                 if not sub.is_listening():
                     if time.time() - st > db_poll_interval or globalv.system_monitor_debug:
 
-                        with self._lock:
-                            st = time.time()
-                            lr = self._get_last_run_uuid()
-                            if lr != last_run_uuid and not self._pause:
-                                self.debug('current uuid {} <> {}'.format(last_run_uuid, lr))
-                                if not globalv.system_monitor_debug:
-                                    last_run_uuid = lr
-                                # invoke_in_main_thread(self._run_added_handler, lr)
-                                self._consumer.add_consumable(lr)
+                        st = time.time()
+                        lr = self._get_last_run_uuid()
+                        if lr != last_run_uuid and not self._pause:
+                            self.debug('current uuid {} <> {}'.format(last_run_uuid, lr))
+                            if not globalv.system_monitor_debug:
+                                last_run_uuid = lr
+                            # invoke_in_main_thread(self._run_added_handler, lr)
+                            self._consumer.add_consumable(lr)
 
             if self._polling:
                 t = Timer(poll_interval, func, args=(last_run_uuid, st))
@@ -240,17 +238,16 @@ class SystemMonitorEditor(SeriesEditor):
                 else
                     add to ideogram
         """
-        def func(last_run_uuid):
+
+        def func(lr):
             # invoke_in_main_thread(self._refresh_sys_mon_series)
             self._refresh_sys_mon_series()
-            self.info('refresh analyses. last UUID={}'.format(last_run_uuid))
-            if last_run_uuid == 'trigger':
-                last_run_uuid = None
+            self.info('refresh analyses. last UUID={}'.format(lr))
 
             proc = self.processor
             db = proc.db
             with db.session_ctx():
-                if last_run_uuid is None:
+                if last_run_uuid in (None, 'trigger'):
                     dbrun = db.get_last_analysis(spectrometer=self.conn_spec.system_name)
                 else:
                     dbrun = db.get_analysis_uuid(last_run_uuid)
@@ -261,10 +258,7 @@ class SystemMonitorEditor(SeriesEditor):
                     an = proc.make_analysis(dbrun)
                     self._refresh_figures(an)
 
-                    # invoke_in_main_thread(self._refresh_figures, an)
-
-        with self._lock:
-            invoke_in_main_thread(func, last_run_uuid)
+        invoke_in_main_thread(func, last_run_uuid)
 
     def _refresh_sys_mon_series(self):
         if globalv.system_monitor_debug:
@@ -292,9 +286,6 @@ class SystemMonitorEditor(SeriesEditor):
                 if self._cnt > 40:
                     self._refresh_spectrum('2000', 1)
                 else:
-                    # if self._cnt%5==0:
-                    # self._flag = not self._flag
-
                     self._refresh_ideogram('1000' if self._flag else '2000')
 
             else:
@@ -331,8 +322,7 @@ class SystemMonitorEditor(SeriesEditor):
         name = '_{}_editor'.format(attr)
         editor = getattr(self, name)
         def new():
-            e = self.task.new_series(ans=[],
-                                     add_table=False,
+            e = self.task.new_series(add_table=False,
                                      add_iso=False)
             # self.task.tab_editors(0, -1)
             e.basename = '{} Series'.format(camel_case(attr))
@@ -343,30 +333,16 @@ class SystemMonitorEditor(SeriesEditor):
                                      use_date_range=True)
         setattr(self, name, editor)
 
-        # def _new_ideogram_needed(self, cid):
-        # for ei in self._ideogram_editors:
-        # ed = self._ideogram_editor
-        # if ed is not None:
-        # print ed.analyses[0].identifier, cid
-        # return ed.analyses[0].identifier != cid
-
-    def close_editor(self, ei):
-        if ei in self._ideogram_editors:
-            self._ideogram_editors.remove(ei)
-        elif ei in self._spectrum_editors:
-            self._spectrum_editors.remove(ei)
+    # def close_editor(self, ei):
+    # if ei in self._ideogram_editors:
+    #         self._ideogram_editors.remove(ei)
+    #     elif ei in self._spectrum_editors:
+    #         self._spectrum_editors.remove(ei)
 
     def _get_editor(self, editors, identifier):
         editor = next((ei for ei in editors if ei.identifier == identifier), None)
         if editor:
-
             self.task.activate_editor(editor)
-            # only activate the enter if the user didn't just switch editors manually
-            # if not self.last_activated or time.time() - self.last_activated > tol:
-            # self.last_activated = 0
-            #     self.task.suppress_set_time = True
-            #     self.task.suppress_set_time = False
-
         return editor
 
     def _refresh_ideogram(self, identifier):
