@@ -107,12 +107,12 @@ class AnalysisEditTask(BaseBrowserTask):
         """
             horizontal splitting not currently working
         """
-        self.debug('spliting editor area')
+        self.debug('splitting editor area')
         self.split_editors(0, 1)
 
     def split_editor_area_vert(self):
 
-        self.debug('spliting editor area')
+        self.debug('splitting editor area')
         self.split_editors(0, 1, 'vertical')
 
     def add_iso_evo(self, name=None, rec=None):
@@ -139,11 +139,11 @@ class AnalysisEditTask(BaseBrowserTask):
 
     def delete_analysis_group(self):
         v = AnalysisGroupDelete(task=self)
-        v.projects = self.projects
-        v.selected_projects = self.selected_projects
+        v.projects = self.browser_model.projects
+        v.selected_projects = self.browser_model.selected_projects
         # v.groups=self.analysis_groups
         v.edit_traits(kind='livemodal')
-        self.analysis_groups = v.groups
+        self.browser_model.analysis_groups = v.groups
 
     def make_analysis_group(self):
         ans = self._get_analyses_to_group()
@@ -179,14 +179,14 @@ class AnalysisEditTask(BaseBrowserTask):
                 self._make_analysis_group(db, group, a.analyses)
                 self.db_save_info()
 
-                self._load_associated_groups(self.selected_projects)
+                self.browser_model.load_associated_groups(self.browser_model.selected_projects)
 
     def append_unknown_analyses(self, ans):
         pane = self.unknowns_pane
         if pane:
             pane.items.extend(ans)
 
-    def replace_unkonwn_analyses(self, ans):
+    def replace_unknown_analyses(self, ans):
         pane = self.unknowns_pane
         if pane:
             pane.items = ans
@@ -246,7 +246,7 @@ class AnalysisEditTask(BaseBrowserTask):
     def save_as(self):
         self.save()
 
-    def save(self):
+    def save(self, path=None):
         self.warning_dialog('Please use "Data -> Database Save" to save changes to the database')
 
     def save_to_db(self):
@@ -365,7 +365,7 @@ class AnalysisEditTask(BaseBrowserTask):
                         else:
                             self.active_editor.rebuild()
 
-                self.analysis_table.refresh_needed = True
+                self.browser_model.analysis_table.refresh_needed = True
                 if self.unknowns_pane:
                     self.unknowns_pane.refresh_needed = True
                 self._set_tag_hook()
@@ -376,7 +376,7 @@ class AnalysisEditTask(BaseBrowserTask):
             apply_new_value = True
         else:
             apply_new_value = False
-            ans = self.analysis_table.selected
+            ans = self.browser_model.analysis_table.selected
 
         if not ans:
             self.information_dialog('Please select a set of analyses from the Unknowns.')
@@ -539,12 +539,6 @@ class AnalysisEditTask(BaseBrowserTask):
         if info.result:
             return tv.model
 
-    def _open_ideogram_editor(self, ans, name, task=None):
-        _id = 'pychron.processing.figures'
-        task = self._open_external_task(_id)
-        task.new_ideogram(ans=ans, name=name)
-        return task
-
     def _save_to_db(self):
         if self.active_editor:
             if hasattr(self.active_editor, 'save'):
@@ -596,13 +590,13 @@ class AnalysisEditTask(BaseBrowserTask):
         else:
             win.open()
 
+        task.activated()
         task.recall(sel)
-
-        task.load_projects()
+        # task.load_projects()
 
         # print self.selected_project, 'ffff'
-        task.set_projects(self.oprojects, self.selected_projects)
-        task.set_samples(self.osamples, self.selected_samples)
+        # task.set_projects(self.oprojects, self.selected_projects)
+        # task.set_samples(self.osamples, self.selected_samples)
 
     def _append_replace_unknowns(self, is_append, items=None):
         if self.active_editor:
@@ -643,7 +637,7 @@ class AnalysisEditTask(BaseBrowserTask):
             if self.unknowns_pane:
                 items = self.unknowns_pane.items
         if not items:
-            items = self.analysis_table.selected
+            items = self.browser_model.analysis_table.selected
 
         if items:
             return ((items, 'unknown'),)  # unknown analysis type
@@ -661,7 +655,7 @@ class AnalysisEditTask(BaseBrowserTask):
                 self.debug('Temp omitted analyses {}'.format(len(items)))
 
         if not items:
-            items = self.analysis_table.selected
+            items = self.browser_model.analysis_table.selected
         return items
 
     def _get_analyses_to_tag(self):
@@ -681,7 +675,7 @@ class AnalysisEditTask(BaseBrowserTask):
         if info.result:
             rsd.dump()
             td = timedelta(hours=rsd.hours)
-            db = self.db
+            db = self.manager.db
             with db.session_ctx():
                 mi = ref.rundate - td
                 ma = ref.rundate + td
@@ -689,7 +683,7 @@ class AnalysisEditTask(BaseBrowserTask):
                                                  analysis_type=list(rsd.analysis_types),
                                                  mass_spectrometers=[ref.mass_spectrometer])
 
-                ans = self._make_records(ans)
+                ans = self.browser_model.make_records(ans)
                 ans.append(ref)
                 ans = sorted(ans, key=lambda x: x.rundate)
 
@@ -734,6 +728,7 @@ class AnalysisEditTask(BaseBrowserTask):
     # ===============================================================================
     # handlers
     # ===============================================================================
+
     @on_trait_change('browser_model:current_task_name')
     def _current_task_name_changed(self, new):
         print 'task change {} {}, no_update {}'.format(id(self), new, self._no_update)
@@ -745,8 +740,8 @@ class AnalysisEditTask(BaseBrowserTask):
 
     def _dclicked_analysis_group_changed(self):
         if self.active_editor:
-            if self.selected_analysis_groups:
-                g = self.selected_analysis_groups[0]
+            if self.browser_model.selected_analysis_groups:
+                g = self.browser_model.selected_analysis_groups[0]
                 db = self.manager.db
 
                 with db.session_ctx():
@@ -798,6 +793,8 @@ class AnalysisEditTask(BaseBrowserTask):
 
     @on_trait_change('unknowns_pane:[items, update_needed, dclicked, refresh_editor_needed]')
     def _update_unknowns_runs(self, obj, name, old, new):
+        self.debug('update_unknowns_runs: obj:{}, name:{}, new:{}'.format(obj, name, new))
+
         if name == 'dclicked':
             if new:
                 if isinstance(new.item, (IsotopeRecordView, Analysis)):
@@ -843,7 +840,6 @@ class AnalysisEditTask(BaseBrowserTask):
                 if show:
                     self._show_pane(self.unknowns_pane)
 
-
     @on_trait_change('browser_model:[analysis_table:dclicked, time_view_model:dclicked]')
     def _dclicked_analysis_changed(self, obj, name, old, new):
         if new:
@@ -856,20 +852,22 @@ class AnalysisEditTask(BaseBrowserTask):
     @on_trait_change('browser_model:[analysis_table:context_menu_event, time_view_model:context_menu_event]')
     def _handle_analysis_table_context_menu(self, new):
         if new:
+            sel = self.browser_model.analysis_table.selected
+
             action, modifiers = new
             if action in ('append', 'replace'):
                 self._append_replace_unknowns(action == 'append')
             elif action == 'open':
-                if self.analysis_table.selected:
+                if sel:
                     open_copy = False
                     if modifiers:
                         open_copy = modifiers.get('open_copy')
 
-                    for it in self.analysis_table.selected:
+                    for it in sel:
                         self._recall_item(it, open_copy=open_copy)
             elif action == 'find_refs':
-                if self.analysis_table.selected:
-                    self._find_refs(self.analysis_table.selected[-1])
+                if sel:
+                    self._find_refs(sel[-1])
 
     @on_trait_change('unknowns_pane:previous_selection')
     def _update_up_previous_selection(self, obj, name, old, new):

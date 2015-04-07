@@ -17,14 +17,14 @@
 # ============= enthought library imports =======================
 from datetime import datetime, timedelta
 import random
-from threading import Thread
+from threading import Timer
 import time
 # from apptools.preferences.preference_binding import bind_preference
-from pyface.timer.do_later import do_later
 from traits.api import Instance, Property, Int, Bool, on_trait_change, Any, List
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.consumer_mixin import ConsumerMixin
 from pychron.displays.display import DisplayController
 from pychron.globals import globalv
 from pychron.messaging.notify.subscriber import Subscriber
@@ -87,6 +87,7 @@ class SystemMonitorEditor(SeriesEditor):
     _pause = False
 
     _flag = False
+    _consumer = None
 
     def __init__(self, *args, **kw):
         super(SystemMonitorEditor, self).__init__(*args, **kw)
@@ -97,7 +98,6 @@ class SystemMonitorEditor(SeriesEditor):
         """
         Trigger a new editors to be build next update
 
-        :param kind: i
         :return:
         """
         # self._ideogram_editor = None
@@ -105,6 +105,7 @@ class SystemMonitorEditor(SeriesEditor):
         self._cnt = 0
 
     def prepare_destroy(self):
+        self.debug('destroy editor')
         self.stop()
         self.dump_tool()
         for e in ('air', 'blank_air',
@@ -121,6 +122,7 @@ class SystemMonitorEditor(SeriesEditor):
     def stop(self):
         self._polling = False
         self.subscriber.stop()
+        self._consumer.stop()
 
     def pause(self):
         self._pause = not self._pause
@@ -155,9 +157,10 @@ class SystemMonitorEditor(SeriesEditor):
                 url = self.conn_spec.url
                 self.warning('System publisher not available url={}'.format(url))
 
-        t = Thread(name='poll', target=self._poll)
-        t.setDaemon(True)
-        t.start()
+        # t = Thread(name='poll', target=self._poll)
+        # t.setDaemon(True)
+        # t.start()
+        self._poll()
 
     def _get_dump_tool(self):
         return self.search_tool
@@ -165,18 +168,22 @@ class SystemMonitorEditor(SeriesEditor):
     def _load_tool(self, obj, **kw):
         self.search_tool = obj
 
-    def _poll(self, last_run_uuid=None):
+    def _poll(self):
         self._polling = True
         sub = self.subscriber
 
         db_poll_interval = self._db_poll_interval
-        poll_interval = 10 if globalv.system_monitor_debug else self._poll_interval
+        poll_interval = 3 if globalv.system_monitor_debug else self._poll_interval
 
-        st = time.time()
-        while 1:
+        self._consumer = ConsumerMixin(func=self._run_added_handler, auto_start=True)
+
+        # while 1:
+
+        def func(last_run_uuid, st):
             # only check subscription availability if one poll_interval has elapsed
             # since the last subscription message was received
             if not self._pause:
+                self.debug('poll iteration: uuid: {}, st={}'.format(last_run_uuid, st))
                 # check subscription availability
                 if time.time() - sub.last_message_time > poll_interval:
                     if sub.check_server_availability(timeout=0.5, verbose=True):
@@ -192,23 +199,18 @@ class SystemMonitorEditor(SeriesEditor):
                     if time.time() - st > db_poll_interval or globalv.system_monitor_debug:
                         st = time.time()
                         lr = self._get_last_run_uuid()
-                        if lr != last_run_uuid:
+                        if lr != last_run_uuid and not self._pause:
                             self.debug('current uuid {} <> {}'.format(last_run_uuid, lr))
                             if not globalv.system_monitor_debug:
                                 last_run_uuid = lr
-                            invoke_in_main_thread(self._run_added_handler, lr)
+                            # invoke_in_main_thread(self._run_added_handler, lr)
+                            self._consumer.add_consumable(lr)
 
-            if not self._wait(poll_interval):
-                break
+            if self._polling:
+                t = Timer(poll_interval, func, args=(last_run_uuid, st))
+                t.start()
 
-    def _wait(self, t):
-        st = time.time()
-        while time.time() - st < t:
-            if not self._polling:
-                return
-            time.sleep(0.5)
-
-        return True
+        func(None, time.time())
 
     def _get_last_run_uuid(self):
         db = self.processor.db
@@ -242,8 +244,12 @@ class SystemMonitorEditor(SeriesEditor):
             if dbrun:
                 self.debug('run_added_handler identifier={}'.format(dbrun.labnumber.identifier))
                 an = proc.make_analysis(dbrun)
-                self._refresh_sys_mon_series(an)
-                self._refresh_figures(an)
+
+                def func():
+                    self._refresh_sys_mon_series(an)
+                    self._refresh_figures(an)
+
+                invoke_in_main_thread(func)
 
     def _refresh_sys_mon_series(self, an):
 
@@ -264,8 +270,8 @@ class SystemMonitorEditor(SeriesEditor):
                 if self._cnt > 40:
                     self._refresh_spectrum('2000', 1)
                 else:
-                    if self._cnt%5==0:
-                        self._flag = not self._flag
+                    # if self._cnt%5==0:
+                    # self._flag = not self._flag
 
                     self._refresh_ideogram('1000' if self._flag else '2000')
 
@@ -294,7 +300,7 @@ class SystemMonitorEditor(SeriesEditor):
         self._set_series('cocktail', identifier)
 
     def _refresh_blank_cocktail(self, identifier):
-        self._set_series('blank_coctkail', identifier)
+        self._set_series('blank_cocktail', identifier)
 
     def _refresh_background(self, identifier):
         self._set_series('background', identifier)
@@ -320,7 +326,7 @@ class SystemMonitorEditor(SeriesEditor):
         # for ei in self._ideogram_editors:
         # ed = self._ideogram_editor
         # if ed is not None:
-        #     print ed.analyses[0].identifier, cid
+        # print ed.analyses[0].identifier, cid
         #     return ed.analyses[0].identifier != cid
 
     def close_editor(self, ei):
@@ -344,7 +350,7 @@ class SystemMonitorEditor(SeriesEditor):
         editor = self._get_editor(self._ideogram_editors, identifier)
 
         f = lambda: self.task.new_ideogram(add_table=False,
-                                           klass = SysMonIdeogramEditor,
+                                           klass=SysMonIdeogramEditor,
                                            add_iso=False)
         editor = self._update_editor(editor, f, identifier, None,
                                      calculate_age=True)
@@ -398,7 +404,8 @@ class SystemMonitorEditor(SeriesEditor):
         # group_analyses_by_key(editor.analyses, 'labnumber')
 
         # editor.clear_aux_plot_limits()
-        do_later(editor.rebuild)
+        # do_later(editor.rebuild)
+        # editor.rebuild()
         return editor
 
     def _sort_analyses(self, ans):
@@ -415,12 +422,14 @@ class SystemMonitorEditor(SeriesEditor):
                                      step=ALPHAS[i],
                                      k39=2 + random.random() * 10,
                                      k39_err=0,
+                                     timestamp=time.time(),
                                      labnumber='{:04d}'.format(2000),
                                      age_err=random.random()) for i in range(self._cnt - 4)]
             else:
 
                 return [FileAnalysis(age=2 * random.random() + 10,
                                      aliquot=i,
+                                     timestamp=time.time(),
                                      labnumber='{:04d}'.format(1000 if self._flag else 2000),
                                      age_err=random.random()) for i in range(self._cnt)]
         else:
@@ -443,15 +452,17 @@ class SystemMonitorEditor(SeriesEditor):
 
                     ans = db.get_analyses_date_range(low, high,
                                                      labnumber=identifier,
+                                                     order='desc',
                                                      limit=tool.limit)
                 else:
-                    ans, tc = db.get_labnumber_analyses(identifier, limit=tool.limit)
+                    ans, tc = db.get_labnumber_analyses(identifier, order='desc', limit=tool.limit)
 
                 return self.processor.make_analyses(ans, load_aux=True)
 
-    @on_trait_change('search_tool:[+, refresh_button]')
+    @on_trait_change('search_tool:refresh_button')
     def _handle_tool_change(self):
-        self._run_added_handler()
+        self._consumer.add_consumable(None)
+        # self._run_added_handler()
 
     def _load_refiso(self, ref):
         pass

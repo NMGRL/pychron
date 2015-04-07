@@ -78,15 +78,16 @@ class GraphEditor(BaseUnknownsEditor):
         self.dump_tool()
 
     def dump_tool(self):
-        if self.tool:
+        tool = self._get_dump_tool()
+        if tool:
             p = os.path.join(paths.hidden_dir, self.pickle_path)
-            self.debug('dumping tool {}, {}'.format(self.tool, p))
+            self.debug('dumping tool {}, {}'.format(tool, p))
             with open(p, 'w') as wfile:
-                tool = self._get_dump_tool()
                 pickle.dump(tool, wfile)
 
     def _get_dump_tool(self):
-        return dict(fits=self.tool.fits, auto_update=self.tool.auto_update)
+        if self.tool:
+            return dict(fits=self.tool.fits, auto_update=self.tool.auto_update)
 
     def load_tool(self, tool=None):
         p = os.path.join(paths.hidden_dir, self.pickle_path)
@@ -132,7 +133,7 @@ class GraphEditor(BaseUnknownsEditor):
         xs -= start
 
         # scale to hours
-        xs = xs / (60. * 60.)
+        xs /= 60. * 60.
         return xs
 
     def filter_invalid_analyses(self):
@@ -183,7 +184,7 @@ class GraphEditor(BaseUnknownsEditor):
 
         self.analyses = ans
         self._update_analyses(update_graph=update_graph)
-        self.dump_tool()
+        # self.dump_tool()
 
     def _update_analyses(self, update_graph=False):
         ans = self.analyses
@@ -235,6 +236,7 @@ class GraphEditor(BaseUnknownsEditor):
     def rebuild(self, *args, **kw):
         pass
 
+    @caller
     def rebuild_graph(self):
         graph = self.graph
 

@@ -168,13 +168,15 @@ class SystemMonitorTask(FigureTask):
     #             pass
     def _open_editor(self, editor, **kw):
         super(SystemMonitorTask, self)._open_editor(editor, **kw)
+        tol = 3600
         for ei in self.editor_area.editors:
             if hasattr(ei, 'starttime'):
-                print 'difff', (datetime.now() - ei.starttime).total_seconds()
-                if (datetime.now() - ei.starttime).total_seconds() > 300:
+                dev = (datetime.now() - ei.starttime).total_seconds()
+                self.debug('check editor duration. close after {}s. current dur:{}'.format(tol, dev))
+                if dev > tol:
                     self.close_editor(ei)
-                    for si in self.get_editors(SystemMonitorEditor):
-                        si.close_editor(ei)
+                    # for si in self.get_editors(SystemMonitorEditor):
+                    # si.close_editor(ei)
 
     def _editor_factory(self):
         if globalv.system_monitor_debug:
@@ -219,10 +221,10 @@ class SystemMonitorTask(FigureTask):
                 self.console_pane.console_display = new.console_display
                 self.connection_pane.conn_spec = new.conn_spec
 
-                if self.unknowns_pane:
-                    if hasattr(new, 'analyses'):
-                        with no_update(self):
-                            self.unknowns_pane.trait_set(items=new.analyses)
+            if self.unknowns_pane:
+                if hasattr(new, 'analyses'):
+                    with no_update(self.unknowns_pane, fire_update_needed=False):
+                        self.unknowns_pane.trait_set(items=new.analyses)
 
     def _prompt_for_save(self):
         """

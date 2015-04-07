@@ -15,12 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from chaco.abstract_overlay import AbstractOverlay
 from chaco.array_data_source import ArrayDataSource
+from chaco.scatterplot import render_markers
+from enable.colors import ColorTrait
 from pyface.message_dialog import warning
-from traits.api import Float, Array
+from traits.api import Array
 # ============= standard library imports ========================
 from numpy import linspace, zeros, ones, array, arange, \
-    Inf
+    Inf, argmax
 from numpy.core.umath import exp
 from numpy import max as np_max
 from math import pi
@@ -35,6 +38,19 @@ from pychron.core.stats.peak_detection import find_peaks
 from pychron.processing.plotters.point_move_tool import OverlayMoveTool
 
 N = 500
+
+
+class LatestOverlay(AbstractOverlay):
+    data_position = None
+    color = ColorTrait('transparent')
+
+    # The color of the outline to draw around the marker.
+    outline_color = ColorTrait('orange')
+
+    def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
+        with gc:
+            pts = self.component.map_screen(self.data_position)
+            render_markers(gc, pts, 'circle', 5, self.color_, 2, self.outline_color_)
 
 
 class Ideogram(BaseArArFigure):
@@ -101,7 +117,6 @@ class Ideogram(BaseArArFigure):
             # opt = self.options
             # xmi, xma = self.xmi, self.xma
             # pad = '0.05'
-
 
             # if opt.use_asymptotic_limits:
             # xmi, xma = self.xmi, self.xma
@@ -223,7 +238,24 @@ class Ideogram(BaseArArFigure):
             ys = arange(startidx, startidx + n)
         else:
             ys = arange(startidx + n - 1, startidx - 1, -1)
-        scatter = self._add_aux_plot(ys, name, po, pid)
+
+        ts = array([ai.timestamp for ai in self.sorted_analyses])
+        ts -= ts[0]
+        if self.options.use_cmap_analysis_number:
+            scatter = self._add_aux_plot(ys, name, po, pid,
+                                         colors=ts,
+                                         color_map_name=self.options.cmap_analysis_number,
+                                         type='cmap_scatter')
+        else:
+            scatter = self._add_aux_plot(ys, name, po, pid)
+
+        if self.options.use_latest_overlay:
+            idx = argmax(ts)
+            dx = scatter.index.get_data()[idx]
+            dy = scatter.value.get_data()[idx]
+
+            scatter.overlays.append(LatestOverlay(component=scatter,
+                                                  data_position=array([(dx, dy)])))
 
         self._add_error_bars(scatter, self.xes, 'x', self.options.error_bar_nsigma,
                              end_caps=self.options.x_end_caps,
@@ -240,7 +272,7 @@ class Ideogram(BaseArArFigure):
         # ly, uh = po.ylimits
         # if uh < my:
         self._set_y_limits(0, my, min_=0, max_=my, pid=pid)
-        # print 'settting ylimits {}'.format(my)
+        # print 'setting ylimits {}'.format(my)
         omits = self._get_aux_plot_omits(po, ys)
 
         func = self._get_index_attr_label_func()
@@ -459,14 +491,14 @@ class Ideogram(BaseArArFigure):
             hover = obj.metadata.get('hover')
             if hover:
                 hoverid = hover[0]
-                try:
-                    self.selected_analysis = sorted_ans[hoverid]
-
-                except IndexError, e:
-                    print 'asaaaaa', e
-                    return
-            else:
-                self.selected_analysis = None
+                # try:
+                # self.selected_analysis = sorted_ans[hoverid]
+                #
+                # except IndexError, e:
+                # print 'asaaaaa', e
+                #     return
+            # else:
+            # self.selected_analysis = None
 
             sel = self._filter_metadata_changes(obj, self._rebuild_ideo, sorted_ans)
             # self._set_selected(sorted_ans, sel)
@@ -561,7 +593,7 @@ class Ideogram(BaseArArFigure):
         xs = array([ai for ai in self._unpack_attr(key)])
         return xs
 
-    def _add_aux_plot(self, ys, title, po, pid, **kw):
+    def _add_aux_plot(self, ys, title, po, pid, type='scatter', **kw):
         plot = self.graph.plots[pid]
         if plot.value_scale == 'log':
             ys = array(ys)
@@ -576,7 +608,7 @@ class Ideogram(BaseArArFigure):
         s, p = graph.new_series(
             x=self.xs, y=ys,
             color=color,
-            type='scatter',
+            type=type,
             marker=po.marker,
             marker_size=po.marker_size,
             selection_marker_size=po.marker_size,
@@ -672,7 +704,9 @@ class Ideogram(BaseArArFigure):
         """
         tol *= 0.01
         rx1, rx2 = None, None
+        xs, ys = None, None
         xmi, xma = self._calculate_nominal_xlimits()
+        x1, x2 = xmi, xma
         step = 0.01 * (xma - xmi)
         aw = int(asymptotic_width * N * 0.01)
         for i in xrange(max_iter if aw else 1):
@@ -737,14 +771,13 @@ class Ideogram(BaseArArFigure):
         # a = mswd ** 0.5
         # return we * a * n
 
-
         # ============= EOF =============================================
         # def _add_mean_indicator2(self, g, scatter, bins, probs, pid):
-        #        offset = 0
-        #        percentH = 1 - 0.954  # 2sigma
+        # offset = 0
+        # percentH = 1 - 0.954  # 2sigma
         #
-        #        maxp = max(probs)
-        #        wm, we, mswd, valid_mswd = self._calculate_stats(self.xs, self.xes,
+        # maxp = max(probs)
+        # wm, we, mswd, valid_mswd = self._calculate_stats(self.xs, self.xes,
         #                                                         bins, probs)
         #        #ym = maxp * percentH + offset
         #        #set ym in screen space
@@ -771,7 +804,8 @@ class Ideogram(BaseArArFigure):
         #        g.set_series_label('Mean-{}'.format(gid), series=sgid + 2, plotid=pid)
         #
         #        self._add_error_bars(s, [we], 'x', self.options.nsigma)
-        #        #         display_mean_indicator = self._get_plot_option(self.options, 'display_mean_indicator', default=True)
+        # #         display_mean_indicator = self._get_plot_option(self.options,
+        # 'display_mean_indicator', default=True)
         #        if not self.options.display_mean_indicator:
         #            s.visible = False
         #
