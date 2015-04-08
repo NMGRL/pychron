@@ -171,6 +171,7 @@ class GraphEditor(BaseUnknownsEditor):
         else:
             ans = self.processor.make_analyses(unks, calculate_age=self.calculate_age,
                                                unpack=self.unpack_peaktime,
+                                               load_aux=True,
                                                **kw)
         if is_append:
             pans = self.analyses
