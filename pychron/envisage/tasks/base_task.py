@@ -20,7 +20,6 @@ from itertools import groupby
 from pyface.tasks.task_layout import TaskLayout
 from traits.api import Any, on_trait_change, List, Unicode, DelegatesTo, Instance
 from pyface.directory_dialog import DirectoryDialog
-from pyface.tasks.action.dock_pane_toggle_group import DockPaneToggleGroup
 from pyface.timer.do_later import do_later, do_after
 from pyface.tasks.task import Task
 from pyface.tasks.action.schema import SMenu, SMenuBar, SGroup
@@ -42,7 +41,7 @@ from pychron.envisage.tasks.actions import GenericSaveAction, GenericSaveAsActio
     GenericFindAction, RaiseAction, RaiseUIAction, ResetLayoutAction, \
     MinimizeAction, PositionAction, IssueAction, CloseAction, CloseOthersAction, AboutAction, OpenAdditionalWindow, \
     NoteAction, RestartAction, DocumentationAction, CopyPreferencesAction, SwitchUserAction, KeyBindingsAction, \
-    ChangeLogAction, StartupTestsAction, DemoAction
+    ChangeLogAction, StartupTestsAction
 from pychron.loggable import Loggable
 
 
@@ -57,7 +56,7 @@ class WindowGroup(Group):
 
 
 
-        #         application = self.manager.controller.task.window.application
+        # application = self.manager.controller.task.window.application
 
         #         t = 'active_window, window_opened, window_closed, windows, uis[]'
         #         application.on_trait_change(self._rebuild, t)
@@ -68,7 +67,7 @@ class WindowGroup(Group):
 
         t = 'active_window, window_opened, window_closed, windows, uis[]'
         application.on_trait_change(self._rebuild, t)
-        #         application = self.manager.controller.task.window.application
+        # application = self.manager.controller.task.window.application
         #         application.on_trait_change(self._rebuild, 'window_opened, window_closed, uis[]')
         return []
 
@@ -118,12 +117,18 @@ class myTaskWindowLaunchAction(TaskWindowLaunchAction):
         now raise the window if its available else create it
     """
 
-    #style = 'toggle'
+    # style = 'toggle'
 
     def perform(self, event):
         application = event.task.window.application
-        application.open_task(self.task_id)
+        import time
 
+        print 'start open task'
+        print time.time()
+        st = time.time()
+        application.open_task(self.task_id)
+        print time.time()
+        print 'open task duration: {:0.3f}'.format(time.time() - st)
         self.checked = True
 
     @on_trait_change('task:window:opened')
@@ -144,7 +149,7 @@ class myTaskWindowLaunchAction(TaskWindowLaunchAction):
                 #    print self.checked, self.task_id
 
 
-#             window = self.task.window
+# window = self.task.window
 #             print win, window
 #             print self.task_id, self.task.id
 #             self.checked=self.task.window==win
@@ -344,7 +349,7 @@ class BaseTask(Task, Loggable, PreferenceMixin):
 
     def _edit_menu(self):
         m = SMenu(GenericFindAction(),
-                  id='Edit', name='&Edit')
+            id='Edit', name='&Edit')
         return m
 
     def _entry_menu(self):
@@ -393,8 +398,8 @@ class BaseTask(Task, Loggable, PreferenceMixin):
                 id='Close'),
             OpenAdditionalWindow(),
             Group(MinimizeAction(),
-                  ResetLayoutAction(),
-                  PositionAction()),
+                ResetLayoutAction(),
+                PositionAction()),
 
             # SplitEditorAction(),
             id='window.menu',
@@ -443,6 +448,7 @@ class BaseTask(Task, Loggable, PreferenceMixin):
 
     def _prompt_for_save(self):
         return True
+
 
 class BaseManagerTask(BaseTask):
     default_directory = Unicode

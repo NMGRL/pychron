@@ -21,6 +21,7 @@ from threading import Lock
 from traits.api import Password, Bool, Str, on_trait_change, Any, Property, cached_property
 
 
+
 # =============standard library imports ========================
 from sqlalchemy import create_engine, distinct, MetaData
 from sqlalchemy.orm import sessionmaker
@@ -244,7 +245,7 @@ class DatabaseAdapter(Loggable):
 
                     if self.connected:
                         self.info('connected to db {}'.format(self.url))
-                        self.initialize_database()
+                        # self.initialize_database()
                     else:
                         self.connection_error = 'Not Connected to Database "{}".\nAccess Denied for user= {} \
 host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
@@ -254,8 +255,8 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
         self.connection_parameters_changed = False
         return self.connected
 
-    def initialize_database(self):
-        pass
+    # def initialize_database(self):
+    # pass
 
     def flush(self):
         """
