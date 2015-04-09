@@ -66,6 +66,8 @@ class Primitive(HasTraits):
 
     x = Float
     y = Float
+    ox = Float
+    oy = Float
     offset_x = Float
     offset_y = Float
 
@@ -100,6 +102,7 @@ class Primitive(HasTraits):
 
     width = 0
     height = 0
+    _initialized = False
 
     @cached_property
     def _get_gfont(self):
@@ -111,9 +114,12 @@ class Primitive(HasTraits):
     def __init__(self, x, y, *args, **kw):
         self.x = x
         self.y = y
+        self.ox = x
+        self.oy = y
         # self.default_color = (1, 0, 0)
-        #        self.active_color = (0, 1, 0)
+        # self.active_color = (0, 1, 0)
         super(Primitive, self).__init__(*args, **kw)
+        self._initialized = True
 
     def render(self, gc):
 
@@ -168,7 +174,7 @@ class Primitive(HasTraits):
         offset = 0
         if self.space == 'data':
             # if self.canvas is None:
-            #                print self
+            # print self
             if self.canvas:
                 x, y = self.canvas.map_screen([(x, y)])[0]
                 # offset = self.canvas.offset
@@ -260,7 +266,6 @@ class Primitive(HasTraits):
 
 
 class QPrimitive(Primitive):
-
     def _convert_color(self, c):
         if not isinstance(c, (list, tuple)):
             # c = c.red(), c.green(), c.blue()
@@ -282,11 +287,23 @@ class Connectable(QPrimitive):
 
     @on_trait_change('x,y')
     def _update_xy(self):
+        if not self._initialized:
+            return
+
+        # print self.x, self.ox, self.y,self.oy, self.x != self.ox or self.y != self.oy
+
+        # print self.connections
+        cvo = self.x != self.ox
+        cho = self.y != self.oy
+
         for t, c in self.connections:
-            c.clear_orientation = True
+            c.clear_vorientation = cvo
+            c.clear_horientation = cho
+
             func = getattr(c, 'set_{}point'.format(t))
             w, h = self.width, self.height
             func((self.x + w / 2., self.y + h / 2.))
+
         self.request_redraw()
 
 
@@ -328,7 +345,7 @@ class Rectangle(QPrimitive):
         if self.fill:
             gc.draw_path()
         # if self.use_border:
-        #                 self._render_border(gc, x, y, w, h)
+        # self._render_border(gc, x, y, w, h)
         else:
             gc.stroke_path()
 
@@ -336,8 +353,8 @@ class Rectangle(QPrimitive):
 
     # if self.name:
     # t = str(self.name)
-    #            tw = gc.get_full_text_extent(t)[0]
-    #            x = x + w / 2.0 - tw / 2.0
+    # tw = gc.get_full_text_extent(t)[0]
+    # x = x + w / 2.0 - tw / 2.0
     #            gc.set_text_position(x, y + h / 2 - 6)
     #            gc.show_text(str(self.name))
     #            gc.draw_path()
@@ -384,6 +401,7 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
 
             self._render_border(gc, x, y, width, height)
 
+            gc.set_fill_color(self._convert_color(self.name_color))
             if self.display_name:
                 self._render_textbox(gc, x, y, width, height,
                                      self.display_name)
@@ -736,8 +754,8 @@ class LoadIndicator(Circle):
 
 # if self._text:
 # for ti, _, oy in self._text:
-#                 w, _h, _a, _b = gc.get_full_text_extent(ti)
-#                 self._render_text(gc, ti, x - w / 2., y + oy)
+# w, _h, _a, _b = gc.get_full_text_extent(ti)
+# self._render_text(gc, ti, x - w / 2., y + oy)
 
 
 
@@ -1053,7 +1071,9 @@ class PolyLine(QPrimitive):
 class BorderLine(Line, Bordered):
     border_width = 10
     #     border_color = (0, 0, 0.15)
-    clear_orientation = False
+    # clear_orientation = False
+    clear_vorientation = False
+    clear_horientation = False
 
     def _render_(self, gc):
         gc.save_state()

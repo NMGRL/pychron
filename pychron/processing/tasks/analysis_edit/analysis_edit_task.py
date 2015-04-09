@@ -41,6 +41,7 @@ from pychron.processing.tasks.analysis_edit.panes import UnknownsPane, ControlsP
     TablePane
 
 from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
+from pychron.processing.tasks.figures.figure_editor import FigureEditor
 from pychron.processing.tasks.recall.recall_editor import RecallEditor
 from pychron.processing.tasks.analysis_edit.adapters import UnknownsAdapter
 
@@ -358,12 +359,13 @@ class AnalysisEditTask(BaseBrowserTask):
                         ma.tag = name
                         it.set_tag(tag)
 
+                if use_filter:
+                    for e in self.editor_area.editors:
+                        if isinstance(e, FigureEditor):
+                            e.analyses = [ai for ai in e.analyses if ai.tag != 'invalid']
+
                 if self.active_editor:
-                    if not isinstance(self.active_editor, RecallEditor):
-                        if use_filter:
-                            self.active_editor.filter_invalid_analyses()
-                        else:
-                            self.active_editor.rebuild()
+                    self.active_editor.rebuild()
 
                 self.browser_model.analysis_table.refresh_needed = True
                 if self.unknowns_pane:
