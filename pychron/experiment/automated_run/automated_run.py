@@ -943,6 +943,7 @@ class AutomatedRun(Loggable):
 
         if self.use_dvc:
             self.dvc_persister.trait_set(**params)
+            self.dvc_persister.initialize()
 
         self.persister.trait_set(**params)
 

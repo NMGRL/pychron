@@ -21,12 +21,16 @@ import struct
 
 from traits.api import List, Dict, Instance
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from uncertainties import std_dev
+from uncertainties import nominal_value
 import yaml
 from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.loggable import Loggable
+from pychron.paths import paths
 
 
 class DVCDatabase(DatabaseAdapter):
@@ -40,7 +44,8 @@ def ydump(obj, p):
 
 class DVCPersister(Loggable):
     db = Instance(DVCDatabase)
-    repo = Instance(GitRepoManager)
+    project_repo = Instance(GitRepoManager)
+    meta_repo = Instance(GitRepoManager)
 
     run_spec = Instance('pychron.automated_run.automated_run_spec.AutomatedRunSpec')
     monitor = None
@@ -51,6 +56,18 @@ class DVCPersister(Loggable):
     gains = Dict
 
     active_detectors = List
+
+    def initialize(self):
+        """
+        setup git repo
+        :return:
+        """
+        self.project_repo = GitRepoManager()
+        self.project_repo.open_repo(os.path.join(paths.project_dir,
+                                                 self.run_spec.project))
+
+        self.meta_repo = GitRepoManager()
+        self.meta_repo.open_repo(paths.meta_dir)
 
     def pre_extraction_save(self):
         pass
@@ -67,7 +84,20 @@ class DVCPersister(Loggable):
         pass
 
     def save_peak_center(self, pc):
-        pass
+        p = self._make_path('.peakcenter')
+        xx, yy = pc.graph.get_data(), pc.graph.get_data(axis=1)
+
+        xs, ys, _mx, _my = pc.result
+        fmt = '>ff'
+        obj = {'low_dac': xs[0],
+               'center_dac': xs[1],
+               'high_dac': xs[2],
+               'low_signal': ys[0],
+               'center_signal': ys[1],
+               'high_signal': ys[2],
+               'fmt': fmt,
+               'data': ''.join([struct.pack(fmt, di) for di in zip(xx, yy)])}
+        ydump(obj, p)
 
     def post_measurement_save(self):
         """
@@ -80,6 +110,7 @@ class DVCPersister(Loggable):
         push changes
         :return:
         """
+        self._save_analysis()
 
         spec_md5 = self._get_spectrometer_md5()
         p = self._make_path('.spectrometer', spec_md5)
@@ -89,20 +120,54 @@ class DVCPersister(Loggable):
         self._save_monitor()
 
         for p in (self._make_path(''),
+                  self._make_path('.peakcenter'),
                   self._make_path('.extraction'),
                   self._make_path('.monitor'),):
             if os.path.isfile(p):
-                self.repo.add(p)
+                self.project_repo.add(p)
             else:
                 self.debug('not at valid file'.format(p))
-        self.repo.commit('added analysis {}'.format(self.run_spec.runid))
 
-    # privata
+        self.project_repo.commit('added analysis {}'.format(self.run_spec.runid))
+
+    # private
+    def _save_analysis(self):
+        p = self._make_path('')
+        rs = self.run_spec
+        attrs = ('sample', 'aliquot', 'increment', 'irradiation', 'weight',
+                 'comment', 'irradiation_level', 'mass_spectrometer', 'extract_device',
+                 'username', 'tray', 'queue_conditionals_name', 'extract_value',
+                 'extract_units', 'position', 'xyz_position', 'duration', 'cleanup',
+                 'pattern', 'beam_diameter', 'ramp_duration', 'ramp_rate')
+        obj = {k: getattr(rs, k) for k in attrs}
+        isos = {}
+        bs = {}
+        for iso in self.arar_age.isotopes.values():
+            sblob = ''
+            isos[iso.name] = {'detector': {'name': iso.detector,
+                                           'icFactor': nominal_value(iso.ic_factor),
+                                           'icFactorErr': std_dev(iso.ic_factor)},
+                              'fit': iso.fit,
+                              'signal': sblob,
+                              'blank': {'kind': 'previous',
+                                        'value': iso.blank.value,
+                                        'error': iso.blank.error}}
+            if iso.detector not in bs:
+                bblob = ''
+                bs[iso.detector] = {'signal': bblob,
+                                    'fit': iso.baseline.fit,
+                                    'value': iso.baseline.value,
+                                    'error': iso.baseline.error}
+        obj['isotopes'] = isos
+        obj['baselines'] = bs
+
+        ydump(obj, p)
+
     def _make_path(self, name, prefix=None, extension='.yaml'):
         if prefix is None:
             prefix = '{}'.format(self.runid)
 
-        root = self.repo.path
+        root = self.project_repo.path
         return os.path.join(root, '{}{}{}'.format(prefix, name, extension))
 
     def _get_spectrometer_md5(self):

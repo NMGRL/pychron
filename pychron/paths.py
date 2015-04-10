@@ -135,6 +135,9 @@ class Paths(object):
     data_det_ic_dir = None
     sample_image_dir = None
     sample_image_backup_dir = None
+
+    project_dir = None
+    meta_dir = None
     # vcs_dir = None
     # initialization_dir = None
     # device_creator_dir = None
@@ -316,6 +319,9 @@ class Paths(object):
         self.labbook_dir = join(self.data_dir, 'labbook')
         self.sample_image_dir = join(self.data_dir, 'sample_image_dir')
         self.sample_image_backup_dir = join(self.sample_image_dir, 'backup')
+
+        self.project_dir = join(self.data_dir, 'projects')
+        self.meta_dir = join(self.data_dir, 'meta')
         # self.vcs_dir = join(self.data_dir, 'vcs')
 
         # ==============================================================================
