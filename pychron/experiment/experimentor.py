@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance, List, on_trait_change, Bool, Event
+from traits.api import Instance, List, on_trait_change, Bool, Event, Any
 # ============= standard library imports ========================
 from itertools import groupby
 # ============= local library imports  ==========================
@@ -25,11 +25,11 @@ from pychron.experiment.utilities.aliquot_numbering import renumber_aliquots
 from pychron.experiment.stats import StatsGroup
 from pychron.experiment.experiment_executor import ExperimentExecutor
 from pychron.experiment.utilities.identifier import convert_identifier
-from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.loggable import Loggable
 
 
 class Experimentor(Loggable):
+    manager = Any
     experiment_factory = Instance(ExperimentFactory)
     experiment_queue = Instance(ExperimentQueue)
     executor = Instance(ExperimentExecutor)
@@ -223,14 +223,7 @@ class Experimentor(Loggable):
         return self.executor.execute()
 
     def verify_database_connection(self, inform=True):
-        db = self.manager.db
-        if db is not None:
-            if db.connect(force=True):
-                return True
-                #                 self.db.flush()
-                #                 self.db.reset()
-        elif inform:
-            self.warning_dialog('Not Database available')
+        return self.manager.verify_database_connection(inform)
 
     # ===============================================================================
     # handlers

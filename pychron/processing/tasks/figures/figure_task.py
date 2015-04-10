@@ -18,21 +18,18 @@
 
 from traits.api import on_trait_change, Instance, List, Event, Any, Enum, Button
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Tabbed, \
-    HSplitter, VSplitter
+    HSplitter
 from pyface.tasks.action.schema import SToolBar
 # ============= standard library imports ========================
 from itertools import groupby
 import os
-import weakref
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.envisage.tasks.actions import ToggleFullWindowAction
-# from pychron.file_defaults import IDEOGRAM_DEFAULTS, SPECTRUM_DEFAULTS, INVERSE_ISOCHRON_DEFAULTS, COMPOSITE_DEFAULTS, \
-#     SCREEN_FORMATTING_DEFAULTS, PRESENTATION_FORMATTING_DEFAULTS
+from pychron.file_defaults import IDEOGRAM_DEFAULTS, SPECTRUM_DEFAULTS, INVERSE_ISOCHRON_DEFAULTS, COMPOSITE_DEFAULTS, \
+    SCREEN_FORMATTING_DEFAULTS, PRESENTATION_FORMATTING_DEFAULTS
 from pychron.paths import paths
 from pychron.processing.plotters.xy.xy_scatter import XYScatterEditor
-from pychron.processing.tasks.actions.edit_actions import TagAction
-from pychron.processing.tasks.actions.processing_actions import SetInterpretedAgeTBAction, BrowseInterpretedAgeTBAction
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
 from pychron.processing.tagging.analysis_tags import Tag
 from pychron.processing.tasks.browser.util import browser_pane_item
@@ -40,12 +37,9 @@ from pychron.processing.tasks.figures.db_figure import DBFigure
 from pychron.processing.tasks.figures.editors.composite_editor import CompositeEditor
 from pychron.processing.tasks.figures.panes import PlotterOptionsPane, \
     FigureSelectorPane
-from pychron.processing.tasks.figures.actions import SaveFigureAction, \
-    NewIdeogramAction, NewSpectrumAction, \
-    SavePDFFigureAction, SaveAsFigureAction, RefreshActiveEditorAction, NewIsochronAction, NewTableAction
+from pychron.processing.tasks.figures.actions import SavePDFFigureAction, RefreshActiveEditorAction
 from pychron.processing.tasks.figures.figure_editor import FigureEditor
 from pychron.processing.tasks.figures.save_figure_dialog import SaveFigureDialog
-from pychron.processing.tasks.recall.actions import AddIsoEvoAction
 from pychron.processing.tasks.recall.recall_editor import RecallEditor
 
 from .editors.spectrum_editor import SpectrumEditor
@@ -617,10 +611,10 @@ class FigureTask(AnalysisEditTask):
                 self.debug('failed making dbfigure {}'.format(f.name))
 
     def _get_sample_obj(self, s):
-        return next((sr for sr in self.samples if sr.labnumber == s), None)
+        return next((sr for sr in self.browser_model.samples if sr.labnumber == s), None)
 
     def _get_project_obj(self, p):
-        return next((sr for sr in self.projects if sr.name == p), None)
+        return next((sr for sr in self.browser_model.projects if sr.name == p), None)
 
     def _save_figure(self):
         """
@@ -746,10 +740,10 @@ class FigureTask(AnalysisEditTask):
 
             if self.confirmation_dialog('Are you sure you want to delete the selected figures?'):
                 self._delete_figures(self.selected_figures)
-                if self.selected_samples:
-                    self._load_sample_figures(self.selected_samples)
+                if self.browser_model.selected_samples:
+                    self._load_sample_figures(self.browser_model.selected_samples)
                 else:
-                    self._load_project_figures(self.selected_projects)
+                    self._load_project_figures(self.browser_model.selected_projects)
 
     def _figure_kind_changed(self):
         self.selected_figures = []
@@ -829,6 +823,10 @@ class FigureTask(AnalysisEditTask):
                 if not isinstance(self.active_editor, RecallEditor):
                     self.active_editor.rebuild()
                     self.active_editor.dump_tool()
+                self._refresh_plot_hook()
+
+    def _refresh_plot_hook(self):
+        pass
 
     def _set_current_task(self):
         with no_update(self):

@@ -51,7 +51,7 @@ class PositionsAdapter(TabularAdapter):
         item = getattr(obj, trait)[row]
         color = 'black'
         if hasattr(item.color, '__iter__'):
-            if sum(item.color) < 1.5:
+            if sum(item.color[:3]) < 1.5:
                 color = 'white'
         return color
 
@@ -150,9 +150,10 @@ class LoadControlPane(TraitsDockPane):
                           show_border=True)
         samplegrp = VGroup(
             Item('irradiation',
-                 editor=EnumEditor(name='irradiations')),
-            Item('level', editor=EnumEditor(name='levels')),
-            Item('labnumber', editor=EnumEditor(name='labnumbers')),
+                 editor=ComboboxEditor(name='irradiations', refresh='refresh_irradiation')),
+            Item('level', editor=ComboboxEditor(name='levels', refresh='refresh_level')),
+            # Item('level'),
+            Item('labnumber', editor=ComboboxEditor(name='labnumbers')),
             Item('sample_info', style='readonly'),
             HGroup(
                 Item('weight', label='Weight (mg)'),

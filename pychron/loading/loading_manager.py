@@ -28,6 +28,8 @@ from traitsui.api import View, Item, EnumEditor, UItem, ListStrEditor
 
 
 
+
+
 # ============= standard library imports ========================
 
 from itertools import groupby
@@ -61,7 +63,7 @@ def make_position_str(pos):
         # ss = []
         #
         # for pi in pos[1:]:
-        #     if not pp + 1 == pi:
+        # if not pp + 1 == pi:
         #         ss.append(make_bound(stack))
         #         stack = []
         #
@@ -123,6 +125,8 @@ class LoadingManager(IsotopeDatabaseManager):
     _pdf_writer = Instance(LoadingPDFWriter, ())
     dirty = Bool(False)
     username = Str
+    refresh_level = Event
+    refresh_irradiation = Event
 
     available_user_names = List
 
@@ -138,7 +142,7 @@ class LoadingManager(IsotopeDatabaseManager):
     '''
     npositions = Int(1)
     auto_increment = Bool(False)
-    #     irradiation_hole = Str
+    # irradiation_hole = Str
     #     sample = Str
 
     positions = List
@@ -180,6 +184,17 @@ class LoadingManager(IsotopeDatabaseManager):
     interaction_mode = Enum('Entry', 'Info', 'Edit')
     suppress_update = False
 
+    def load(self):
+        if self.canvas:
+            self.canvas.editable = True
+            self.clear()
+        return super(LoadingManager, self).load()
+
+    def clear(self):
+        self.load_name = ''
+        if self.canvas:
+            self.canvas.clear_all()
+
     def load_load_by_name(self, loadtable, group_labnumbers=True):
 
         self.canvas = self.make_canvas(loadtable)
@@ -213,7 +228,8 @@ class LoadingManager(IsotopeDatabaseManager):
                     if item:
                         item.fill = True
                         item.add_labnumber_label(
-                            dbln.identifier, ox=-10, oy=-10,
+                            dbln.identifier,
+                            # ox=-10, oy=-10,
                             visible=self.show_labnumbers)
 
                         oy = -10 if not self.show_labnumbers else -20
@@ -234,6 +250,7 @@ class LoadingManager(IsotopeDatabaseManager):
 
         self.positions = sorted(self.positions, key=lambda x: x.positions[0])
         self._set_group_colors()
+        self.canvas.request_redraw()
 
     def make_canvas(self, new, editable=True):
         db = self.db
@@ -284,7 +301,7 @@ class LoadingManager(IsotopeDatabaseManager):
             if us:
                 self.available_user_names = us
 
-            ls = self._get_last_load()
+            # ls = self._get_last_load()
             return True
 
     # actions
@@ -329,7 +346,7 @@ class LoadingManager(IsotopeDatabaseManager):
             osw = self.show_weights
             oshn = self.show_hole_numbers
 
-            for attr in ('labnumbers','weights','hole_numbers'):
+            for attr in ('labnumbers', 'weights', 'hole_numbers'):
                 attr = 'show_{}'.format(attr)
                 setattr(self, attr, getattr(options, attr))
 
@@ -490,14 +507,19 @@ class LoadingManager(IsotopeDatabaseManager):
                 try:
                     self.level = self.levels[idx + 1]
                     self.labnumber = self.labnumbers[0]
+                    self.refresh_level = True
+                    # print 'increment level', self.level
                 except IndexError:
                     idx = self.irradiations.index(self.irradiation)
                     try:
                         self.irradiation = self.irradiations[idx + 1]
                         self.level = self.levels[0]
                         self.labnumber = self.labnumbers[0]
+                        self.refresh_irradiation = True
                     except IndexError:
                         pass
+
+                        # print self.level, self.levels, self.level in self.levels, self.labnumber
 
     def _set_position(self, canvas_hole):
 
@@ -522,7 +544,7 @@ class LoadingManager(IsotopeDatabaseManager):
 
         lp = LoadPosition(labnumber=ln.identifier,
                           sample=sample,
-                          project = project,
+                          project=project,
                           irradiation=irrad.name,
                           level=level.name,
                           irrad_position=int(ip.position),
@@ -580,6 +602,8 @@ class LoadingManager(IsotopeDatabaseManager):
                     #             self._positions = [str(li.position) for li in level.positions]
                     r = sorted([li.labnumber.identifier
                                 for li in level.positions if li.labnumber])
+                    if r:
+                        self.labnumber = r[0]
         return r
 
     def _get_irradiation_position_record(self):
@@ -655,7 +679,7 @@ class LoadingManager(IsotopeDatabaseManager):
         db = self.db
         with db.session_ctx():
             ln = db.get_latest_load()
-            ln = int(ln.name)
+            ln = ln.name
 
         try:
 
@@ -670,10 +694,14 @@ class LoadingManager(IsotopeDatabaseManager):
 
         if info.result:
             self.save()
+            self._refresh_loads()
 
     def _delete_button_fired(self):
         ln = self.load_name
         if ln:
+            if not self.confirmation_dialog('Are you sure you want to delete {}?'.format(ln)):
+                return
+
             with self.db.session_ctx() as sess:
                 # delete the load and any associated records
                 dbload = self.db.get_loadtable(name=ln)
@@ -685,8 +713,12 @@ class LoadingManager(IsotopeDatabaseManager):
                     sess.delete(dbload)
                     sess.commit()
 
-            self.loads = self._get_loads()
-            self.load_name = self.loads[0]
+            self._refresh_loads()
+
+
+    def _refresh_loads(self):
+        self.loads = self._get_loads()
+        self.load_name = self.loads[0]
 
     def _load_name_changed(self, new):
         if self.suppress_update:
@@ -747,6 +779,10 @@ class LoadingManager(IsotopeDatabaseManager):
 
     @on_trait_change('canvas:selected')
     def _update_selected(self, new):
+        if not self.load_name:
+            self.warning_dialog('Select a load')
+            return
+
         if not self.canvas.editable:
             ps = self.canvas.get_selection()
             pp = []
@@ -764,7 +800,7 @@ class LoadingManager(IsotopeDatabaseManager):
         if not new:
             return
 
-        if self.canvas.event_state == 'edit':
+        if self.canvas.event_state in ('edit', 'info'):
             self.note = new.note
             self.weight = new.weight
 
@@ -785,6 +821,7 @@ class LoadingManager(IsotopeDatabaseManager):
 
                         self._set_position(new)
                         new = self.canvas.scene.get_item(str(int(new.name) + 1))
+                        self.canvas.set_last_position(int(new.name))
 
                     if not self.retain_weight:
                         self.weight = 0
@@ -796,6 +833,7 @@ class LoadingManager(IsotopeDatabaseManager):
         self._set_group_colors()
         self.refresh_table = True
         self.dirty = True
+        self.canvas.request_redraw()
 
     def _set_group_colors(self, canvas=None):
         if canvas is None:
@@ -804,7 +842,7 @@ class LoadingManager(IsotopeDatabaseManager):
         if self.use_cmap:
             c = get_cmap(self.cmap_name)
         else:
-            c = lambda x: (1,1,0,1)
+            c = lambda x: (1, 1, 0, 1)
 
         # n = len(self.positions)
         nl = len({p.labnumber for p in self.positions})

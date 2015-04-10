@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,7 +19,7 @@ from datetime import datetime
 
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traits.api import Instance, Property, Int, Color, Str
-from traitsui.api import View, UItem, TabularEditor, VGroup
+from traitsui.api import View, UItem, TabularEditor, VGroup, Item
 
 
 # ============= standard library imports ========================
@@ -58,7 +58,7 @@ class AnalysisPane(TablePane):
                   editor=myTabularEditor(
                       # editable=False,
                       multi_select=True,
-                      operations=['delete',],
+                      operations=['delete', ],
                       refresh='refresh_needed',
                       adapter=AnalysisAdapter())))
         return v
@@ -68,13 +68,17 @@ class ConnectionPane(TraitsDockPane):
     name = 'Connection'
     id = 'pychron.sys_mon.connection'
 
-    conn_spec = Instance(ConnectionSpec)
+    conn_spec = Instance(ConnectionSpec, ())
 
     connection_status = Str
     connection_color = Color('red')
 
     def traits_view(self):
-        v = View(VGroup(UItem('conn_spec', style='custom'),
+        v = View(VGroup(VGroup(Item('object.conn_spec.host'),
+                               Item('object.conn_spec.port'),
+                               Item('object.conn_spec.system_name',
+                                    label='Name'),
+                               label='Parameters'),
                         UItem('_'),
                         CustomLabel('connection_status',
                                     color_name='connection_color')))
@@ -107,7 +111,7 @@ class DashboardPane(TraitsDockPane):
     name = 'Dashboard'
 
     def traits_view(self):
-        #cols=[ObjectColumn(name='name'),
+        # cols=[ObjectColumn(name='name'),
         #      ObjectColumn(name='value'),
         #      ObjectColumn(name='last_time_str', label='Time')]
         #editor=TableEditor(columns=cols, editable=False)

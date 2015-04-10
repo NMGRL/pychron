@@ -16,8 +16,8 @@
 
 # ============= enthought library imports =======================
 
-from traits.api import String, Property, Event, \
-    cached_property, Any, Int
+from traits.api import Property, Event, \
+    cached_property, Any, Int, Str
 from traits.has_traits import provides
 from apptools.preferences.preference_binding import bind_preference
 # ============= standard library imports ========================
@@ -149,8 +149,8 @@ class BaseIsotopeDatabaseManager(Loggable):
 class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
     _db_klass = IsotopeAdapter
 
-    irradiation = String
-    level = String
+    irradiation = Str
+    level = Str
 
     irradiations = Property(depends_on='saved, updated')
     levels = Property(depends_on='irradiation, saved, updated')
@@ -420,6 +420,15 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                 ANALYSIS_CACHE.pop(uuid)
                 ANALYSIS_CACHE_COUNT.pop(uuid)
 
+    def verify_database_connection(self, inform=True):
+        db = self.db
+        if db is not None:
+            if db.connect(force=True):
+                return True
+                # self.db.flush()
+                # self.db.reset()
+        elif inform:
+            self.warning_dialog('Not Database available')
     # ===============================================================================
     # private
     # ===============================================================================
@@ -562,7 +571,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
         db = self.db
         if db and db.connected:
             with db.session_ctx():
-                r = [str(ri.name) for ri in db.get_irradiations()
+                r = [ri.name for ri in db.get_irradiations()
                      if ri.name]
 
             if r and not self.irradiation:
@@ -578,7 +587,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             with self.db.session_ctx():
                 irrad = self.db.get_irradiation(self.irradiation)
                 if irrad:
-                    r = sorted([str(ri.name) for ri in irrad.levels
+                    r = sorted([ri.name for ri in irrad.levels
                                 if ri.name])
                     if r and not self.level:
                         self.level = r[0]

@@ -19,7 +19,7 @@ from traits.api import List, Str, Bool, Any, Enum, Button, \
     Int, Property, cached_property, DelegatesTo, Date, Instance, HasTraits, Event
 import apptools.sweet_pickle as pickle
 # ============= standard library imports ========================
-from datetime import timedelta, datetime, date
+from datetime import timedelta, datetime
 import os
 import re
 # ============= local library imports  ==========================
@@ -266,6 +266,9 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         self.trait_property_changed('high_post', None)
 
         self.use_low_post, self.use_high_post = ol, oh
+
+    def load_associated_groups(self, names):
+        self._load_associated_groups(names)
 
     def _load_associated_groups(self, names):
         """

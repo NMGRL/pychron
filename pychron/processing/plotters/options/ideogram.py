@@ -15,15 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Enum, Float, Bool, Button, Property, Int, on_trait_change, List
-from traitsui.api import Item, HGroup, Group, VGroup, UItem, EnumEditor, InstanceEditor, spring
+from matplotlib.cm import cmap_d
+from traits.api import Enum, Float, Bool, Button, Property, Int, on_trait_change
+from traitsui.api import Item, HGroup, Group, VGroup, UItem, EnumEditor, InstanceEditor
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.core.helpers.color_generators import colornames
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.plotters.options.age import AgeOptions
-from pychron.processing.plotters.options.fill_group_editor import Fill, FillGroupEditor
 from pychron.processing.plotters.options.ideogram_group_options import IdeogramGroupEditor, IdeogramGroupOptions
 from pychron.processing.plotters.options.plotter import FONTS, SIZES
 
@@ -82,6 +81,10 @@ class IdeogramOptions(AgeOptions):
     group_editor_klass = IdeogramGroupEditor
     options_klass = IdeogramGroupOptions
 
+    use_cmap_analysis_number = Bool(False)
+    cmap_analysis_number = Enum([m for m in cmap_d if not m.endswith("_r")])
+    use_latest_overlay = Bool(False)
+
     def get_plot_dict(self, group_id):
         # return {}
 
@@ -117,7 +120,7 @@ class IdeogramOptions(AgeOptions):
 
     @on_trait_change('use_static_limits, use_centered_range')
     def _handle_use_limits(self, new):
-        #persist use asymptotic limits
+        # persist use asymptotic limits
         self._suppress_xlimits_clear = True
         if new:
             self._use_asymptotic_limits = self.use_asymptotic_limits
@@ -128,7 +131,7 @@ class IdeogramOptions(AgeOptions):
         self._suppress_xlimits_clear = False
 
     def _use_asymptotic_limits_changed(self, new):
-        #persist use_centered range
+        # persist use_centered range
         if not self._suppress_xlimits_clear:
             if new:
                 self._use_centered_range = self.use_centered_range
@@ -259,6 +262,9 @@ class IdeogramOptions(AgeOptions):
                           label='Inset'),
                    Item('label_box'),
                    Item('analysis_number_sorting', label='Analysis# Sort'),
+                   Item('use_cmap_analysis_number'),
+                   Item('cmap_analysis_number'),
+                   Item('use_latest_overlay'),
                    HGroup(Item('analysis_label_display',
                                width=100,
                                style='readonly'),
@@ -305,7 +311,7 @@ class IdeogramOptions(AgeOptions):
         # label_grp = VGroup(self._get_indicator_font_group(),
         #                    self._get_label_font_group(),
         #                    label='Fonts')
-        return orgp,  #axis_grp, label_grp
+        return orgp,  # axis_grp, label_grp
 
     def _get_indicator_font_group(self):
         g = VGroup(HGroup(Item('mean_indicator_fontname', label='Mean Indicator'),
@@ -359,9 +365,10 @@ class IdeogramOptions(AgeOptions):
             'mean_sig_figs',
             'display_inset', 'inset_location', 'inset_width', 'inset_height',
             # 'fill_groups',
-            'label_fontsize'
-            # 'use_filled_line', 'fill_color', 'fill_alpha'
-        ]
+            'label_fontsize',
+            'use_cmap_analysis_number',
+            'cmap_analysis_number',
+            'use_latest_overlay']
 
     def _load_factory_defaults(self, yd):
         super(IdeogramOptions, self)._load_factory_defaults(yd)

@@ -119,3 +119,4 @@ package-green
 update-product
 bricks
 brick-go
+control_play_blue

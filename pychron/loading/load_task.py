@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import on_trait_change, Any, List
+from traits.api import Any, List
 # from traitsui.api import View, Item
 from pyface.tasks.task_layout import PaneItem, TaskLayout
 from pyface.tasks.action.schema import SToolBar
@@ -46,15 +46,14 @@ class LoadingTask(BaseManagerTask):
         # self.manager.tray = 'bat'
         # self.manager.irradiation = 'NM-256'
         # self.manager.level = 'A'
-        self.manager.username = globalv.username
         # self.manager.labnumber = '23261'
-
-        if self.manager.setup():
-            bind_preference(self.manager, 'save_directory', 'pychron.loading.save_directory')
-            # else:
-            # do_later(self.window.close)
-        self.manager.load_name = '4'
-
+        # self.manager.load_name = '4'
+        if self.manager.verify_database_connection(inform=True):
+            if self.manager.load():
+                self.manager.username = globalv.username
+                if self.manager.setup():
+                    bind_preference(self.manager, 'save_directory', 'pychron.loading.save_directory')
+                    # self.manager.load_name = ''
 
     def _default_layout_default(self):
         return TaskLayout(
@@ -119,13 +118,12 @@ class LoadingTask(BaseManagerTask):
     #         self.manager.canvas = c
     #         self.manager.positions = []
 
-    @on_trait_change('manager:canvas')
-    def _canvas_changed(self, new):
+        # @on_trait_change('manager:canvas')
+        # def _canvas_changed(self, new):
         # self.load_pane.component = new
-        self.canvas = new
+        # self.canvas = new
         # self.manager.canvas = c
         # self.manager.positions = []
-
 
     def _prompt_for_save(self):
         if self.manager.dirty:

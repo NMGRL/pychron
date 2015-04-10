@@ -36,6 +36,15 @@ from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 class EntryPlugin(BaseTaskPlugin):
     id = 'pychron.entry.plugin'
 
+    def _help_tips_default(self):
+        return ['Use <b>Entry>Labnumber</b> to add/edit irradiation information including '
+                'Irradiation, Level, Sample, Project, Labnumber, etc...',
+
+                'Use <b>Entry>Sensitivity</b> to add/edit the sensitivity table.',
+
+                'Once the Labnumber window is activated additional Menu actions are available including, '
+                'Transfer J and Generate Labbook.']
+
     def _actions_default(self):
         return [('pychron.labnumber_entry', 'Ctrl+Shift+l', 'Open Labnumber Entry Window'),
                 ('pychron.sensitivity', 'Ctrl+Shift+\\', 'Open Sensistivity Window'), ]

@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,10 +21,12 @@ from pyface.tasks.action.task_action import TaskAction
 # ============= local library imports  ==========================
 from pychron.envisage.resources import icon
 
+
 class ResetEditorsAction(TaskAction):
     method = 'reset_editors'
     name = 'Reset Editors'
     image = icon('arrow_refresh')
+
 
 class ClearFigureAction(TaskAction):
     name = 'Clear Figure'
@@ -37,9 +39,23 @@ class AddSystemMonitorAction(TaskAction):
     method = 'add_system_monitor'
     image = icon('add')
 
+
 class PauseAction(TaskAction):
     name = 'Pause'
-    method = 'pause'
+    method = 'toggle_pause'
     image = icon('control_pause_blue')
+    visible_name = 'pause_visible'
 
+
+class PlayAction(TaskAction):
+    name = 'Play'
+    method = 'toggle_pause'
+    image = icon('control_play_blue')
+    visible_name = 'play_visible'
+
+
+class NewSeriesAction(TaskAction):
+    name = 'New Series'
+    method = 'new_analysis_series'
+    image= icon('add')
 # ============= EOF =============================================

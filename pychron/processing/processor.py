@@ -104,6 +104,40 @@ class Processor(IsotopeDatabaseManager):
     def unique_id(self, vs, *args):
         return unique_id(vs, *args)
 
+    def find_references(self, unks):
+        ans = []
+        proc = self.processor
+        uuids = []
+
+        with proc.db.session_ctx():
+            n = len(self.analyses)
+
+            progress = None
+            if n > 1:
+                progress = proc.open_progress(n + 1)
+
+            for ui in unks:
+                if progress:
+                    progress.change_message('Finding associated analyses for {}'.format(ui.record_id))
+
+                fans = self.find_associated_analyses(ui, exclude_uuids=uuids)
+
+                nans = [ai for ai in fans if ai.uuid not in uuids]
+                ans.extend(nans)
+                nuuids = [ai.uuid for ai in nans]
+                uuids.extend(nuuids)
+
+            self.debug('find references pre make')
+
+            ans = self.processor.make_analyses(ans, progress=progress)
+            ans = sorted(ans, key=lambda x: x.analysis_timestamp)
+
+            if progress:
+                progress.soft_close()
+
+            self.debug('find references finished')
+            return ans
+
     def find_associated_analyses(self, analysis, delta=12, limit=10, atype=None, **kw):
         """
             find atype analyses +/- delta hours (12 hours default)
@@ -373,22 +407,25 @@ class Processor(IsotopeDatabaseManager):
         if self.db.kind:
             globalv.prev_db_kind = self.db.kind
 
-    def _find_analyses(self, ms, post, delta, atype, step=0.5, maxtries=10, **kw):
-        if delta < 0:
-            step = -step
-
-        if isinstance(post, float):
-            post = datetime.fromtimestamp(post)
-
-        for i in range(maxtries):
-            win = timedelta(hours=delta + i * step)
-            lpost = post - win
-            hpost = post + win
-            rs = self._filter_analyses(ms, lpost, hpost, 5, atype, **kw)
-            if rs:
-                return rs
-        else:
-            return []
+    # def _find_analyses(self, ms, post, delta, atype, step=0.5, maxtries=10, **kw):
+    #     if delta < 0:
+    #         step = -step
+    # def _find_analyses(self, ms, post, delta, atype, step=0.5, maxtries=10, **kw):
+    # if delta < 0:
+    #         step = -step
+    #
+    #     if isinstance(post, float):
+    #         post = datetime.fromtimestamp(post)
+    #
+    #     for i in range(maxtries):
+    #         win = timedelta(hours=delta + i * step)
+    #         lpost = post - win
+    #         hpost = post + win
+    #         rs = self._filter_analyses(ms, lpost, hpost, 5, atype, **kw)
+    #         if rs:
+    #             return rs
+    #     else:
+    #         return []
 
     def _filter_analyses(self, ms, lpost, hpost, lim, at, exclude_uuids=None, filter_hook=None):
         """
@@ -449,9 +486,8 @@ class Processor(IsotopeDatabaseManager):
 
             traceback.print_exc()
 
-        return self.make_analyses(ans, calculate_age=True, load_aux=True)
-
-# ============= EOF =============================================
+        return self.make_analyses(ans, calculate_age=True)
+        # ============= EOF =============================================
 # def save_arar(self, analysis, meas_analysis):
 #     with self.db.session_ctx():
 #         hist = meas_analysis.selected_histories.selected_arar

@@ -16,11 +16,15 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-import numpy as np
 import csv
 from datetime import datetime, timedelta
+
+import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+
+
+
 
 # ============= local library imports  ==========================
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
@@ -163,7 +167,7 @@ def main():
     x, y = extract_data_csv(p)
     x2, y2 = extract_data_csv(p2)
     # plot(x, y, o, ms)
-    plot2(x, y, x2, y2, o, ms, ms2)
+    plot2(x[-30:], y[-30:], x2[-30:], y2[-30:], o, ms, ms2)
 
 
 if __name__ == '__main__':

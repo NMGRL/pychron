@@ -37,6 +37,12 @@ class SystemMonitorPlugin(ProcessingPlugin):
     def _task_extensions_default(self):
         return []
 
+    def _help_tips_default(self):
+        return ['Open a System Monitor window using <b>View>System Monitor</b>. '
+                'Use this window to automatically plot Ar/Ar figures and time series '
+                'as new analyses are saved to the database.',
+                'Define the available system connections in <b>Preferences/System Monitor</b>']
+
     def _tasks_default(self):
         return [TaskFactory(name='System Monitor',
                             id='pychron.system_monitor',

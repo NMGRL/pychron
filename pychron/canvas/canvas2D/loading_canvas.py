@@ -88,9 +88,9 @@ class LoadingOverlay(AbstractOverlay):
     def set_item(self, item):
         if item and item.fill:
             self.info_str = 'hole: {}\nlabnumber: {}\nweight: {}mg\nnote: {}'.format(item.name,
-                                                                                    item.labnumber_label.text,
-                                                                                    item.weight_label.text,
-                                                                                    item.note)
+                                                                                     item.labnumber_label.text,
+                                                                                     item.weight_label.text,
+                                                                                     item.note)
 
         else:
             self.info_str = ''
@@ -117,6 +117,8 @@ class LoadingCanvas(SceneCanvas):
     current_item = None
     popup = None
 
+    _last_position = 1
+
     def load_scene(self, t, **kw):
         self.overlays = []
         scene = self._scene_klass()
@@ -137,12 +139,15 @@ class LoadingCanvas(SceneCanvas):
     def edit_left_down(self, event):
         if self.editable:
             self.selected = self.hittest(event)
+            self.selected.state = not self.selected.state
+            self.request_redraw()
 
     def normal_left_down(self, event):
         sel = self.hittest(event)
         if sel:
             if self.editable:
                 self.selected = sel
+                # self._counter = int(sel.name)+1
             else:
                 sel.state = not sel.state
                 self.selected = sel
@@ -154,6 +159,7 @@ class LoadingCanvas(SceneCanvas):
         if self.scene:
             for li in self.scene.layers:
                 for it in li.components:
+                    # it.canvas = self
                     if it.is_in(event.x, event.y):
                         return it
 
@@ -169,10 +175,22 @@ class LoadingCanvas(SceneCanvas):
             else:
                 self._set_normal_pointer(event)
 
+    def set_last_position(self, pos):
+        self._last_position = pos
+
+    def normal_key_pressed(self, event):
+        if event.character == 'Enter':
+            self.selected = self.scene.get_item(str(self._last_position), klass=LoadIndicator)
+        self.request_redraw()
+
+    def info_left_down(self, event):
+        self.edit_left_down(event)
+
     def info_mouse_move(self, event):
         self.popup.x, self.popup.y = event.x, event.y
         self.current_item = self.hittest(event)
         if self.current_item:
+
             event.window.set_pointer(self.pointer)
             self.popup.set_item(self.current_item)
             self.popup.visible = True
@@ -189,7 +207,7 @@ class LoadingCanvas(SceneCanvas):
     def _set_normal_pointer(self, event):
         event.window.set_pointer(self.normal_pointer)
 
-    # def _pop(self):
+        # def _pop(self):
         # self.popup.set_item(self.current_item)
         # self.popup.visible = True
         # self.request_redraw()

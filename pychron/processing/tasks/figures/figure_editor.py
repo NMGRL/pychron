@@ -15,18 +15,21 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from math import isnan
+
 from chaco.base_plot_container import BasePlotContainer
 from chaco.plot_label import PlotLabel
-from math import isnan
 from traits.api import Any, on_trait_change, \
     List, Event, Int
 from traitsui.api import View, UItem
 from enable.component_editor import ComponentEditor as EnableComponentEditor
+
 # ============= standard library imports ========================
 from itertools import groupby
 import os
 # ============= local library imports  ==========================
 from uncertainties import nominal_value, std_dev
+from pychron.core.codetools.inspection import caller
 from pychron.core.csv.csv_parser import CSVColumnParser
 from pychron.processing.analyses.analysis_group import InterpretedAge
 from pychron.processing.plotters.figure_container import FigureContainer
@@ -235,12 +238,13 @@ class FigureEditor(GraphEditor):
 
         self._set_group(idxs, gid, 'graph_id', **kw)
 
+    @caller
     def rebuild(self):
         # ans = self._gather_unknowns(refresh_data, compress_groups=compress_groups)
         ans = self.analyses
         if ans:
             po = self.plotter_options_manager.plotter_options
-            #model, comp = timethis(self.get_component, args=(ans, po),
+            # model, comp = timethis(self.get_component, args=(ans, po),
             #                       msg='get_component {}'.format(self.__class__.__name__))
             model, comp = self.get_component(ans, po)
             if comp:
@@ -317,7 +321,7 @@ class FigureEditor(GraphEditor):
 
     @on_trait_change('figure_model:panels:graph:[tag, save_db_figure, invalid]')
     def _handle_graph_event(self, name, new):
-        #propograte event to task
+        # propograte event to task
         setattr(self, name, new)
 
     # @on_trait_change('figure_model:panels:graph:save_db')
@@ -328,11 +332,11 @@ class FigureEditor(GraphEditor):
     @on_trait_change('figure_model:panels:figures:refresh_unknowns_table')
     def _handle_refresh(self, obj, name, old, new):
         self.refresh_unknowns_table = True
-        #if not obj.suppress_associated:
-        #print 'figure editor refresh', id(self)
+        # if not obj.suppress_associated:
+        # print 'figure editor refresh', id(self)
         for e in self.associated_editors:
             if isinstance(e, FigureEditor):
-                #e.rebuild_graph()
+                # e.rebuild_graph()
                 if e.model:
                     for p in e.model.panels:
                         for f in p.figures:
