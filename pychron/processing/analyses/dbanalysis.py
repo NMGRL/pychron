@@ -235,7 +235,6 @@ class DBAnalysis(Analysis):
         self._sync_script_blobs(meas_analysis)
         self.has_changes = True
 
-        self.sync_peak_center(meas_analysis)
 
     def _sync(self, dbrecord_tuple, unpack=True, load_aux=False):
         """
@@ -276,6 +275,7 @@ class DBAnalysis(Analysis):
         if load_aux:
             self.sync_aux(meas_analysis)
 
+        self.sync_peak_center(meas_analysis)
         # print 'pre ext'
         self._sync_extraction(meas_analysis)
         # print 'pre meas'

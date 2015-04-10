@@ -71,10 +71,6 @@ class ReductionTask(InterpolationTask):
         self._open_editor(editor)
         self.ic_factor_editor_count += 1
 
-    def find_associated_analyses(self):
-        if self.has_active_editor():
-            self.active_editor.find_references()
-
     def bin_analyses(self):
         self.debug('binning analyses')
         if self.active_editor:

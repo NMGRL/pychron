@@ -464,7 +464,7 @@ class SystemMonitorEditor(SeriesEditor):
                 else:
                     ans, tc = db.get_labnumber_analyses(identifier, order='desc', limit=tool.limit)
 
-                return self.processor.make_analyses(ans, load_aux=True)
+                return self.processor.make_analyses(ans)
 
     @on_trait_change('search_tool:[weeks, days, hours, limit]')
     def _handle_tool_change(self, name, new):
