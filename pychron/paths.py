@@ -138,6 +138,7 @@ class Paths(object):
 
     project_dir = None
     meta_dir = None
+    meta_db = None
     # vcs_dir = None
     # initialization_dir = None
     # device_creator_dir = None
@@ -322,6 +323,7 @@ class Paths(object):
 
         self.project_dir = join(self.data_dir, 'projects')
         self.meta_dir = join(self.data_dir, 'meta')
+        self.meta_db = join(self.meta_dir, 'pychronmeta.db')
         # self.vcs_dir = join(self.data_dir, 'vcs')
 
         # ==============================================================================

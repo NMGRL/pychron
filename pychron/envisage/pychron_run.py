@@ -56,6 +56,7 @@ PACKAGE_DICT = dict(
     MapSpectrometerPlugin='pychron.spectrometer.tasks.map_spectrometer_plugin',
     EmailPlugin='pychron.social.email.tasks.plugin',
     SystemMonitorPlugin='pychron.system_monitor.tasks.system_monitor_plugin',
+    DVCPlugin='pychron.dvc.tasks.dvc_plugin',
     WorkspacePlugin='pychron.workspace.tasks.workspace_plugin',
     LabBookPlugin='pychron.labbook.tasks.labbook_plugin',
     LabspyClientPlugin='pychron.labspy.tasks.plugin',

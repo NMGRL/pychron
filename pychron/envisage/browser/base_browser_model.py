@@ -27,7 +27,6 @@ from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.codetools.inspection import caller
 from pychron.core.helpers.iterfuncs import partition
 from pychron.core.progress import progress_loader
-from pychron.database.orms.isotope.gen import gen_ProjectTable
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.envisage.browser.date_selector import DateSelector
 from pychron.envisage.browser.record_views import ProjectRecordView, LabnumberRecordView, AnalysisGroupRecordView
@@ -227,7 +226,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     def load_projects(self, include_recent=True):
         db = self.db
         with db.session_ctx():
-            ps = db.get_projects(order=gen_ProjectTable.name.asc())
+            ps = db.get_projects(order='asc')
             ad = self._make_project_records(ps, include_recent=include_recent)
             self.projects = ad
             self.oprojects = ad

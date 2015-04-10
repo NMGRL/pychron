@@ -129,7 +129,6 @@ class AutomatedRun(Loggable):
     spec = Any
     runid = Property
     uuid = Str
-    extract_device = Str
     analysis_id = Long
     fits = List
     eqtime = Float
@@ -400,7 +399,7 @@ class AutomatedRun(Loggable):
         a = self.arar_age
         g = self.plot_panel.isotope_graph
 
-        pb = self.get_previous_blanks()
+        _, pb = self.get_previous_blanks()
         pbs = self.get_previous_baselines()
         correct_for_blank = (not self.spec.analysis_type.startswith('blank') and
                              not self.spec.analysis_type.startswith('background'))
@@ -655,16 +654,6 @@ class AutomatedRun(Loggable):
         self.collector.stop()
 
     def start(self):
-        if self.experiment_executor.set_integration_time_on_start:
-            dit = self.experiment_executor.default_integration_time
-            self.info('Setting default integration. t={}'.format(dit))
-            self.set_integration_time(dit)
-
-        if self.experiment_executor.send_config_before_run:
-            self.info('Sending spectrometer configuration')
-            man = self.spectrometer_manager
-            man.send_configuration()
-
         if self.monitor is None:
             return self._start()
 
@@ -849,7 +838,7 @@ class AutomatedRun(Loggable):
         blanks = None
         pid = 0
         if self.experiment_executor:
-            pid, blanks = self.experiment_executor.get_prev_blanks()
+            pid, blanks, runid = self.experiment_executor.get_prev_blanks()
 
         if not blanks:
             blanks = dict(Ar40=ufloat(0, 0),
@@ -936,6 +925,7 @@ class AutomatedRun(Loggable):
                       measurement_blob=ms_blob,
                       previous_blank_id=pb[0],
                       previous_blanks=pb[1],
+                      previous_blank_runid=pb[2],
                       runscript_name=script_name,
                       runscript_blob=script_blob,
                       signal_fods=sfods,

@@ -2149,7 +2149,9 @@ class IsotopeAdapter(DatabaseAdapter):
     def get_irradiation_productions(self, **kw):
         return self._retrieve_items(irrad_ProductionTable, **kw)
 
-    def get_projects(self, irradiation=None, level=None, mass_spectrometers=None, **kw):
+    def get_projects(self, irradiation=None, level=None, mass_spectrometers=None, order=None, **kw):
+
+
         if irradiation or mass_spectrometers:
             with self.session_ctx() as sess:
                 if irradiation:
@@ -2161,7 +2163,10 @@ class IsotopeAdapter(DatabaseAdapter):
                     q = q.filter(gen_MassSpectrometerTable.name.in_(mass_spectrometers))
                 return self._query_all(q)
         else:
-            return self._retrieve_items(gen_ProjectTable, **kw)
+            if order == 'asc':
+                order = gen_ProjectTable.name.asc()
+
+            return self._retrieve_items(gen_ProjectTable, order=order, **kw)
 
     def get_sensitivities(self, **kw):
         return self._retrieve_items(gen_SensitivityTable, **kw)

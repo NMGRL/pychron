@@ -18,28 +18,25 @@
 from apptools.preferences.preference_binding import bind_preference
 from pyface.constant import YES, CANCEL
 from traits.api import Property, Str, cached_property, \
-    List, Event, Any, Button, Instance, Bool, on_trait_change, Float, HasTraits
-from traitsui.api import Image
-from pyface.image_resource import ImageResource
+    List, Event, Button, Instance, Bool, on_trait_change, Float, HasTraits, Any
 
 # ============= standard library imports ========================
-import os
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.helpers.formatting import floatfmt
 from pychron.database.defaults import load_irradiation_map
 from pychron.entry.editors.irradiation_editor import IrradiationEditor
-from pychron.entry.editors.level_editor import LevelEditor, load_holder_canvas, iter_geom
+from pychron.entry.editors.level_editor import LevelEditor, load_holder_canvas
 from pychron.entry.loaders.irradiation_loader import XLSIrradiationLoader
 from pychron.entry.irradiation_pdf_writer import IrradiationPDFWriter, LabbookPDFWriter
 from pychron.entry.irradiation_table_view import IrradiationTableView
 from pychron.entry.identifier_generator import IdentifierGenerator
+from pychron.loggable import Loggable
 from pychron.paths import paths
 # from pychron.entry.irradiation import Irradiation
 # from pychron.entry.level import Level, load_holder_canvas, iter_geom
-from pychron.pychron_constants import NULL_STR, PLUSMINUS
-from pychron.database.isotope_database_manager import IsotopeDatabaseManager
+from pychron.pychron_constants import PLUSMINUS
 from pychron.entry.irradiated_position import IrradiatedPosition
 from pychron.database.orms.isotope.gen import gen_ProjectTable, gen_SampleTable
 
@@ -72,7 +69,24 @@ class dirty_ctx(object):
         self._p.suppress_dirty = False
 
 
-class LabnumberEntry(IsotopeDatabaseManager):
+class LabnumberEntry(Loggable):
+    db = Instance('pychron.dvc.dvc_database.DVCDatabase', ())
+    meta_repo = Instance('pychron.dvc.meta_repo.MetaRepo', ())
+    # db = Property
+
+    # level = DelegatesTo('db')
+    # levels = DelegatesTo('db')
+    # irradiation = DelegatesTo('db')
+    # irradiations = DelegatesTo('db')
+
+    level = Str
+    levels = Property(depends_on='irradiation')
+    irradiation = Str
+    irradiations = Property(depends_on='updated')
+
+    updated = Event
+    use_dvc = Bool
+
     irradiation_tray = Str
     trays = Property
 
@@ -81,7 +95,7 @@ class LabnumberEntry(IsotopeDatabaseManager):
     edit_irradiation_enabled = Property(depends_on='irradiation')
 
     tray_name = Str
-    irradiation_tray_image = Property(Image, depends_on='level, irradiation, saved')
+    # irradiation_tray_image = Property(Image, depends_on='level, irradiation, saved')
     irradiated_positions = List(IrradiatedPosition)
 
     add_irradiation_button = Button('Add Irradiation')
@@ -134,6 +148,8 @@ class LabnumberEntry(IsotopeDatabaseManager):
         bind_preference(self, 'j_multiplier',
                         'pychron.entry.j_multiplier')
 
+        bind_preference(self, 'use_dvc', 'pychron.dvc.enabled')
+
     def transfer_j(self):
         items = self.selected
         if not items:
@@ -156,7 +172,6 @@ class LabnumberEntry(IsotopeDatabaseManager):
         else:
             self.warning_dialog('Unable to Transfer Js. Mass Spec database not configured properly. '
                                 'Check Preferences>Database')
-
 
     def save_tray_to_db(self, p, name):
         with self.db.session_ctx():
@@ -324,23 +339,13 @@ class LabnumberEntry(IsotopeDatabaseManager):
 
     def _load_holder_positions(self, holder):
         self.irradiated_positions = []
-        geom = holder.geometry
-        with dirty_ctx(self):
-            if geom:
-                with no_update(self):
-                    self.irradiated_positions = [IrradiatedPosition(hole=c + 1, pos=(x, y))
-                                                 for c, (x, y, r) in iter_geom(geom)]
-            elif holder.name:
-                self._load_holder_positons_from_file(holder.name)
 
-    def _load_holder_positons_from_file(self, name):
-        p = os.path.join(self._get_map_path(), name)
-        self.irradiated_positions = []
-        with open(p, 'r') as f:
-            line = f.readline()
-            nholes, _diam = line.split(',')
-            self.irradiated_positions = [IrradiatedPosition(hole=ni + 1)
-                                         for ni in range(int(nholes))]
+        holes = self.meta_repo.get_irradiation_holder_holes(holder)
+        if holes:
+            with dirty_ctx(self):
+                with no_update(self):
+                    self.irradiated_positions = [IrradiatedPosition(hole=int(c), pos=(x, y))
+                                                 for x, y, r, c in holes]
 
     def _validate_save(self):
         """
@@ -545,71 +550,13 @@ THIS CHANGE CANNOT BE UNDONE')
                 self.refresh_table = True
                 return fill
 
-    def _load_file_button_fired(self):
-        p = self.open_file_dialog()
-        if p:
-            self._load_positions_from_file(p)
-
-    def _add_irradiation_button_fired(self):
-        name = self._auto_increment_irradiation()
-        irrad = self._get_irradiation_editor(name=name)
-
-        new_irrad = irrad.add()
-        if new_irrad:
-            self.irradiation = new_irrad
-            self.updated = True
-
-    def _edit_irradiation_button_fired(self):
-        irrad = self._get_irradiation_editor(name=self.irradiation)
-
-        new_irrad = irrad.edit()
-        if new_irrad:
-            self.irradiation = new_irrad
-        self.updated = True
-
-    def _edit_level_button_fired(self):
-        editor = self._get_level_editor(name=self.level,
-                                        irradiation=self.irradiation)
-        new_level = editor.edit()
-        if new_level:
-            self.level = new_level
-
-        self.updated = True
-        self._level_changed(self.level)
-
-    def _add_level_button_fired(self):
-        editor = self._get_level_editor(irradiation=self.irradiation)
-        new_level = editor.add()
-        if new_level:
-            self.level = new_level
-            self.updated = True
-
-    def _irradiation_changed(self):
-        super(LabnumberEntry, self)._irradiation_changed()
-        if self.irradiation:
-            db = self.db
-            with db.session_ctx():
-                irrad = db.get_irradiation(self.irradiation)
-
-                j = irrad.chronology.duration
-                j *= self.j_multiplier
-                self.estimated_j_value = u'{} {}{}'.format(floatfmt(j),
-                                                          PLUSMINUS,
-                                                          floatfmt(j*0.001))
-                items = [NeutronDose(*args) for args in irrad.chronology.get_doses()]
-                self.chronology_items = items
-
-    def _level_changed(self, new):
-        self.debug('level changed "{}"'.format(new))
-        self.irradiated_positions = []
-        if new:
-            self._update_level(debug=True)
-        # else:
-        #     self.canvas = IrradiationCanvas()
-
     def _auto_increment_irradiation(self):
-        lastname = self.irradiations[0]
-        #try to auto increment the irrad
+        if self.irradiations:
+            lastname = self.irradiations[0]
+        else:
+            lastname = '0'
+
+        # try to auto increment the irrad
         if self.irradiation_prefix:
             db = self.db
             with db.session_ctx():
@@ -642,14 +589,15 @@ THIS CHANGE CANNOT BE UNDONE')
                 return
 
             self.level_note = level.note or ''
-            self.level_production_name = level.production.name
-
-            holder = level.holder
-            if holder:
-                self.debug('holder {}'.format(holder.name))
-                self._load_holder_positions(holder)
-                self._load_holder_canvas(holder)
-                self._load_canvas_analyses(db, level)
+            # self.level_production_name = level.production.name
+            self._load_holder_positions(level.holder)
+            # self._load_holder_canvas()
+            # holder = level.holder
+            # if holder:
+            # self.debug('holder {}'.format(holder))
+            #     self._load_holder_positions(holder)
+            #     self._load_holder_canvas(holder)
+            #     self._load_canvas_analyses(db, level)
                 #if debug:
             #    return
             try:
@@ -713,7 +661,9 @@ THIS CHANGE CANNOT BE UNDONE')
     def _get_irradiation_editor(self, **kw):
         ie = self._irradiation_editor
         if ie is None:
-            self._irradiation_editor = ie = IrradiationEditor(db=self.db)
+            ie = IrradiationEditor(db=self.db,
+                                   repo=self.meta_repo)
+            self._irradiation_editor = ie
         ie.trait_set(**kw)
         return ie
 
@@ -721,6 +671,7 @@ THIS CHANGE CANNOT BE UNDONE')
         ie = self._level_editor
         if ie is None:
             self._level_editor = ie = LevelEditor(db=self.db,
+                                                  repo=self.meta_repo,
                                                   trays=self.trays)
         ie.trait_set(**kw)
         return ie
@@ -745,31 +696,31 @@ THIS CHANGE CANNOT BE UNDONE')
         materials = [''] + [mi.name for mi in self.db.get_materials()]
         return materials
 
-    def _get_irradiation_tray_image(self):
-        p = self._get_map_path()
-        db = self.db
-        with db.session_ctx():
-            level = db.get_irradiation_level(self.irradiation,
-                                             self.level)
-            holder = None
-            if level:
-                holder = level.holder
-                holder = holder.name if holder else None
-            holder = holder if holder is not None else NULL_STR
-            self.tray_name = holder
-            im = ImageResource('{}.png'.format(holder),
-                               search_path=[p]
-            )
-            return im
+    # def _get_irradiation_tray_image(self):
+    # p = self._get_map_path()
+    #     db = self.db
+    #     with db.session_ctx():
+    #         level = db.get_irradiation_level(self.irradiation,
+    #                                          self.level)
+    #         holder = None
+    #         if level:
+    #             holder = level.holder
+    #             holder = holder.name if holder else None
+    #         holder = holder if holder is not None else NULL_STR
+    #         self.tray_name = holder
+    #         im = ImageResource('{}.png'.format(holder),
+    #                            search_path=[p])
+    #         return im
 
     @cached_property
     def _get_trays(self):
-        db = self.db
-        with db.session_ctx():
-            hs = db.get_irradiation_holders()
-            ts = [h.name for h in hs]
+        return self.meta_repo.get_irradiation_holder_names()
+        # db = self.db
+        # with db.session_ctx():
+        # hs = db.get_irradiation_holders()
+        #     ts = [h.name for h in hs]
 
-            #p = os.path.join(self._get_map_path(), 'images')
+        #p = os.path.join(self._get_map_path(), 'images')
             #if not os.path.isdir(p):
             #    self.warning_dialog('{} does not exist'.format(p))
             #    return Undefined
@@ -780,12 +731,12 @@ THIS CHANGE CANNOT BE UNDONE')
             #      #                            or pi.startswith('.'))
             #]
             #if ts:
-            self.tray = ts[-1]
+        #     self.tray = ts[-1]
+        #
+        # return ts
 
-        return ts
-
-    def _get_map_path(self):
-        return os.path.join(paths.setup_dir, 'irradiation_tray_maps')
+    # def _get_map_path(self):
+    # return os.path.join(paths.setup_dir, 'irradiation_tray_maps')
 
     def _get_edit_irradiation_enabled(self):
         return self.irradiation is not None
@@ -793,11 +744,86 @@ THIS CHANGE CANNOT BE UNDONE')
     def _get_edit_level_enabled(self):
         return self.level is not None
 
+    @cached_property
+    def _get_irradiations(self):
+        with self.db.session_ctx():
+            irs = self.db.get_irradiations()
+            return [i.name for i in irs]
 
+    @cached_property
+    def _get_levels(self):
+        with self.db.session_ctx():
+            irrad = self.db.get_irradiation(self.irradiation)
+            if irrad:
+                return [li.name for li in irrad.levels]
+            else:
+                return []
+
+    # handlers
     @on_trait_change('irradiated_positions:+')
     def _set_dirty(self, name, new):
         if not self.suppress_dirty:
             self.dirty = True
+
+    def _load_file_button_fired(self):
+        p = self.open_file_dialog()
+        if p:
+            self._load_positions_from_file(p)
+
+    def _add_irradiation_button_fired(self):
+        name = self._auto_increment_irradiation()
+        irrad = self._get_irradiation_editor(name=name)
+        new_irrad = irrad.add()
+        if new_irrad:
+            self.irradiation = new_irrad
+            self.updated = True
+
+    def _edit_irradiation_button_fired(self):
+        irrad = self._get_irradiation_editor(name=self.irradiation)
+
+        new_irrad = irrad.edit()
+        if new_irrad:
+            self.irradiation = new_irrad
+        self.updated = True
+
+    def _edit_level_button_fired(self):
+        editor = self._get_level_editor(name=self.level,
+                                        irradiation=self.irradiation)
+        new_level = editor.edit()
+        if new_level:
+            self.level = new_level
+
+        self.updated = True
+        self._level_changed(self.level)
+
+    def _add_level_button_fired(self):
+        editor = self._get_level_editor(irradiation=self.irradiation)
+        new_level = editor.add()
+        if new_level:
+            self.level = new_level
+            self.updated = True
+
+    def _irradiation_changed(self):
+        # super(LabnumberEntry, self)._irradiation_changed()
+        if self.irradiation:
+            self.level = ''
+
+            chron = self.meta_repo.get_chronology(self.irradiation)
+
+            j = chron.duration * self.j_multiplier
+            self.estimated_j_value = u'{} {}{}'.format(floatfmt(j),
+                                                       PLUSMINUS,
+                                                       floatfmt(j * 0.001))
+            items = [NeutronDose(*args) for args in chron.get_doses()]
+            self.chronology_items = items
+
+    def _level_changed(self, new):
+        self.debug('level changed "{}"'.format(new))
+        self.irradiated_positions = []
+        if new:
+            self._update_level(debug=True)
+            # else:
+            # self.canvas = IrradiationCanvas()
 
 
 if __name__ == '__main__':
@@ -809,208 +835,4 @@ if __name__ == '__main__':
     m = LabnumberEntry()
     m.configure_traits()
 # ============= EOF =============================================
-# _prev_tray = self.tray_name
-# irradiation = self.irradiation
-# level = Level(db=self.db,
-# name=self.level,
-# trays=self.trays)
-# level.load(irradiation)
-# info = level.edit_traits(kind='livemodal')
-# if info.result:
-#
-#     self.info('saving level. Irradiation={}, Name={}, Tray={}, Z={}'.format(irradiation,
-#                                                                             level.name,
-#                                                                             level.tray,
-#                                                                             level.z))
-#     level.edit_db()
-#
-#     self.saved = True
-#     self.irradiation = irradiation
-#     self.level = level.name
-#
-#     if _prev_tray != level.tray:
-#         if not self.confirmation_dialog('Irradiation Tray changed. Copy labnumbers to new tray'):
-#             self._load_holder_positions(level.tray)
 
-#@on_trait_change('project, sample')
-#def _edit_handler(self, name, new):
-#    if self.selected:
-#
-#        for si in self.selected:
-#            setattr(si, name, new)
-#
-#        if name == 'sample':
-#            sample = self.db.get_sample(new)
-#            material = sample.material
-#            material = material.name if material else ''
-#
-#            for si in self.selected:
-#                setattr(si, 'material', material)
-#
-#
-#    self.refresh_table = True
-
-#     def _set_auto_params(self, s, rid):
-#         s.labnumber = rid
-#         s.sample = self.auto_sample
-#         s.project = self.auto_project
-#         s.material = self.auto_material
-#         s.j = self.auto_j
-#         s.j_err = self.auto_j_err
-#    def _save_button_fired(self):
-#        self._save_to_db()
-
-#     def _freeze_button_fired(self):
-#         for si in self.selected:
-#             si.auto_assigned = False
-#
-#     def _thaw_button_fired(self):
-#         for si in self.selected:
-#             si.auto_assigned = True
-#
-#
-#     @on_trait_change('auto+')
-#     def _auto_update(self, obj, name, old, new):
-#         cnt = 0
-# #        print name, old, new
-#         if self.auto_assign:
-#             for s in self.irradiated_positions:
-#                 rid = str(self.auto_startrid + cnt)
-#                 if s.labnumber:
-#                     if self.auto_assign_overwrite or s.auto_assigned:
-#                         self._set_auto_params(s, rid)
-#                         s.auto_assigned = True
-#                         cnt += 1
-#                 else:
-#                     self._set_auto_params(s, rid)
-#                     s.auto_assigned = True
-#                     cnt += 1
-#
-#
-# #                if self.auto_assign:
-# #                if s.labnumber:
-# #                    if self.auto_assign_overwrite or name != 'auto_assign':
-# #                        self._set_auto_params(s, rid)
-# #                        cnt += 1
-# #                else:
-# #                    self._set_auto_params(s, rid)
-# #                    cnt += 1
-#
-#         self._update_sample_table = True
-#     auto_assign = Bool
-#     auto_startrid = Int(19999)
-#     auto_assign_overwrite = Bool(False)
-#     auto_project = Str('Foo')
-#     auto_sample = Str('FC-2')
-#     auto_material = Str('sanidine')
-#     auto_j = Float(1e-4)
-#     auto_j_err = Float(1e-7)
-#     freeze_button = Button('Freeze')
-#     thaw_button = Button('Thaw')
-
-#     _update_sample_table = Event
-
-#    save_button = Button('Save')
-
-#     def traits_view(self):
-#         irradiation = Group(
-#                             HGroup(
-#                                    VGroup(HGroup(Item('irradiation',
-#                                                       editor=EnumEditor(name='irradiations')
-#                                                       ),
-#                                                  Item('edit_irradiation_button',
-#                                                       enabled_when='edit_irradiation_enabled',
-#                                                       show_label=False)
-#                                                  ),
-#                                           HGroup(Item('level', editor=EnumEditor(name='levels')),
-#                                                  spring,
-#                                                  Item('edit_level_button',
-#                                                       enabled_when='edit_level_enabled',
-#                                                       show_label=False)
-#                                                  ),
-#                                           Item('add_irradiation_button', show_label=False),
-#                                           Item('add_level_button', show_label=False),
-# #                                        Item('irradiation_tray',
-# #                                             editor=EnumEditor(name='irradiation_trays')
-# #                                             )
-#                                           ),
-#                                    spring,
-#                                    VGroup(
-#                                           Item('tray_name', style='readonly', show_label=False),
-#                                           Item('irradiation_tray_image',
-#                                                editor=ImageEditor(),
-#                                                height=200,
-#                                                width=200,
-#                                                style='custom',
-#                                                show_label=False),
-#                                           ),
-#                                         ),
-#                             label='Irradiation',
-#                             show_border=True
-#                             )
-#
-#         auto = Group(
-#                     Item('auto_assign', label='Auto-assign Labnumbers'),
-#                     Item('auto_startrid', label='Start Labnumber',
-#                          enabled_when='auto_assign'
-#                          ),
-#                     Item('auto_project', label='Project',
-#                          enabled_when='auto_assign'
-#                          ),
-#                     Item('auto_sample', label='Sample',
-#                          enabled_when='auto_assign'
-#                          ),
-#                     Item('auto_material', label='Material',
-#                          enabled_when='auto_assign'
-#                          ),
-#                      Item('auto_j', format_str='%0.2e', label='Nominal J.'),
-#                      Item('auto_j_err', format_str='%0.2e', label='Nominal J Err.'),
-#                     Item('auto_assign_overwrite', label='Overwrite exisiting Labnumbers',
-#                          enabled_when='auto_assign'
-#                          ),
-#                       HGroup(Item('freeze_button', show_label=False), Item('thaw_button', show_label=False),
-#                               enabled_when='selected'),
-#                       show_border=True,
-#                       label='Auto-Assign'
-#
-#                       )
-#
-#         samples = Group(
-#
-#                         Item('irradiated_positions',
-#                              editor=TabularEditor(adapter=IrradiatedPositionAdapter(),
-#                                                   update='_update_sample_table',
-#                                                   multi_select=True,
-#                                                   selected='selected',
-#                                                   operations=['edit']
-#                                                   ),
-#                              show_label=False
-#                              ),
-#                         label='Lab Numbers',
-#                         show_border=True
-#                         )
-# #        flux = Group(
-# #                     HGroup(
-# #                            Item('flux_monitor', show_label=False, editor=EnumEditor(name='flux_monitors')),
-# #                            Item('edit_monitor_button', show_label=False)),
-# #                     Item('flux_monitor_age', format_str='%0.3f', style='readonly', label='Monitor Age (Ma)'),
-# #                     Spring(height=50, springy=False),
-# #                     Item('calculate_flux_button',
-# #                          enabled_when='calculate_flux_enabled',
-# #                          show_label=False),
-# #                     label='Flux',
-# #                     show_border=True
-# #                     )
-#         v = View(VGroup(
-#                         HGroup(auto, irradiation,
-# #                               flux
-#                                ),
-#                         samples,
-#                         HGroup(spring, Item('save_button', show_label=False))
-#                         ),
-#                  resizable=True,
-#                  width=0.75,
-#                  height=600,
-#                  title='Labnumber Entry'
-#                  )
-#         return v

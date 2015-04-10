@@ -15,26 +15,21 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import List, Dict, Instance, Str
+# ============= standard library imports ========================
 import hashlib
 import os
 import struct
-
-from traits.api import List, Dict, Instance
-
-
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+import yaml
+from datetime import datetime
 from uncertainties import std_dev
 from uncertainties import nominal_value
-import yaml
-from pychron.database.core.database_adapter import DatabaseAdapter
+# ============= local library imports  ==========================
+from pychron.dvc.dvc_database import DVCDatabase
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.loggable import Loggable
 from pychron.paths import paths
 
-
-class DVCDatabase(DatabaseAdapter):
-    kind = 'sqlite'
 
 
 def ydump(obj, p):
@@ -56,18 +51,33 @@ class DVCPersister(Loggable):
     gains = Dict
 
     active_detectors = List
+    previous_blank_runid = Str
 
     def initialize(self):
         """
-        setup git repo
+        setup git repos.
+
+        repositories are guaranteed to exist. The automated run factory clones the required projects
+        on demand.
+         !!! note guaranteed at this point. during transition experiments written using centralized model
+
+        if project doesn't exist
+            create local
+            create remote (using github api?)
+
+        the meta repo is clone/updated at startup
         :return:
         """
+        project = self.run_spec.project
         self.project_repo = GitRepoManager()
-        self.project_repo.open_repo(os.path.join(paths.project_dir,
-                                                 self.run_spec.project))
+        self.project_repo.open_repo(os.path.join(paths.project_dir, project))
+        self.info('pulling changes from project repo: {}'.format(project))
+        self.project_repo.pull()
 
-        self.meta_repo = GitRepoManager()
+        self.info('pulling changes from meta repo')
+        # self.meta_repo = GitRepoManager()
         self.meta_repo.open_repo(paths.meta_dir)
+        self.meta_repo.pull()
 
     def pre_extraction_save(self):
         pass
@@ -110,36 +120,59 @@ class DVCPersister(Loggable):
         push changes
         :return:
         """
-        self._save_analysis()
+        # save analysis
+        t = datetime.now()
+        self._save_analysis(t)
+        self._save_analysis_db(t)
 
-        spec_md5 = self._get_spectrometer_md5()
-        p = self._make_path('.spectrometer', spec_md5)
-        if not os.path.isfile(p):
-            self._save_spectrometer_file(p)
-
+        # save monitor
         self._save_monitor()
 
-        for p in (self._make_path(''),
+        # save spectrometer
+        spec_sha = self._get_spectrometer_sha()
+        spec_path = self._make_path('.spectrometer', spec_sha)
+        if not os.path.isfile(spec_path):
+            self._save_spectrometer_file(spec_path)
+
+        # stage files
+        for p in (spec_path, self._make_path(''),
                   self._make_path('.peakcenter'),
                   self._make_path('.extraction'),
-                  self._make_path('.monitor'),):
+                  self._make_path('.monitor')):
             if os.path.isfile(p):
                 self.project_repo.add(p)
             else:
                 self.debug('not at valid file'.format(p))
 
+        # commit files
         self.project_repo.commit('added analysis {}'.format(self.run_spec.runid))
 
+        # push commit
+        self.project_repo.push()
+
     # private
-    def _save_analysis(self):
-        p = self._make_path('')
+    def _save_analysis_db(self, timestamp):
+        db = self.db
+        db.path = paths.meta_db
+        db.connect()
+
+        d = self._make_analysis_dict()
+        d['timestamp'] = timestamp
+        with db.session_ctx():
+            db.add_analysis(**d)
+
+    def _make_analysis_dict(self):
         rs = self.run_spec
         attrs = ('sample', 'aliquot', 'increment', 'irradiation', 'weight',
                  'comment', 'irradiation_level', 'mass_spectrometer', 'extract_device',
                  'username', 'tray', 'queue_conditionals_name', 'extract_value',
                  'extract_units', 'position', 'xyz_position', 'duration', 'cleanup',
                  'pattern', 'beam_diameter', 'ramp_duration', 'ramp_rate')
-        obj = {k: getattr(rs, k) for k in attrs}
+        d = {k: getattr(rs, k) for k in attrs}
+        return d
+
+    def _save_analysis(self, timestamp):
+        p = self._make_path('')
         isos = {}
         bs = {}
         for iso in self.arar_age.isotopes.values():
@@ -150,6 +183,7 @@ class DVCPersister(Loggable):
                               'fit': iso.fit,
                               'signal': sblob,
                               'blank': {'kind': 'previous',
+                                        'runids': [self.previous_blank_runid],
                                         'value': iso.blank.value,
                                         'error': iso.blank.error}}
             if iso.detector not in bs:
@@ -158,9 +192,11 @@ class DVCPersister(Loggable):
                                     'fit': iso.baseline.fit,
                                     'value': iso.baseline.value,
                                     'error': iso.baseline.error}
+
+        obj = self._make_analysis_dict()
         obj['isotopes'] = isos
         obj['baselines'] = bs
-
+        obj['timestamp'] = timestamp.isoformat()
         ydump(obj, p)
 
     def _make_path(self, name, prefix=None, extension='.yaml'):
@@ -170,12 +206,31 @@ class DVCPersister(Loggable):
         root = self.project_repo.path
         return os.path.join(root, '{}{}{}'.format(prefix, name, extension))
 
-    def _get_spectrometer_md5(self):
-        md5 = hashlib.md5()
-        for k, v in self.spec_dict.items():
-            md5.update(k)
-            md5.update(str(v))
-        return md5.hexdigest()
+    def _get_spectrometer_sha(self):
+        """
+        return a sha-1 hash.
+
+        generate using spec_dict, defl_dict, and gains
+        spec_dict: source parameters, cdd operating voltagae
+        defl_dict: detector deflections
+        gains: detector gains
+
+        make hash using
+        for key,value in dictionary:
+            sha1.update(key)
+            sha1.update(value)
+
+        to ensure consistence, dictionaries are sorted by key
+        for key,value in sorted(dictionary)
+        :return:
+        """
+        sha = hashlib.sha1()
+        for d in (self.spec_dict, self.defl_dict, self.gains):
+            for k, v in sorted(d.items()):
+                sha.update(k)
+                sha.update(str(v))
+
+        return sha.hexdigest()
 
     def _save_monitor(self):
         if self.monitor:

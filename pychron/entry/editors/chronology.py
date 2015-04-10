@@ -47,6 +47,12 @@ class IrradiationDosage(HasTraits):
     def _end_date_default(self):
         return date.today()
 
+    def start(self):
+        return '{} {}'.format(self.start_date, self.start_time)
+
+    def end(self):
+        return '{} {}'.format(self.start_date, self.start_time)
+
     def make_blob(self):
         return '{}|{} {}%{} {}'.format(self.power, self.start_date, self.start_time,
                                        self.end_date, self.end_time)

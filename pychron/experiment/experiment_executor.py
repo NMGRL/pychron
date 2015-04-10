@@ -20,7 +20,7 @@ from datetime import datetime
 from traits.api import Event, Button, String, Bool, Enum, Property, Instance, Int, List, Any, Color, Dict, \
     on_trait_change, Long, Float
 from pyface.constant import CANCEL, YES, NO
-from pyface.timer.do_later import do_after, do_later
+from pyface.timer.do_later import do_after
 from traits.trait_errors import TraitError
 
 # ============= standard library imports ========================
@@ -142,6 +142,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     use_memory_check = Bool(True)
     memory_threshold = Int
+    use_dvc = Bool(False)
 
     baseline_color = Color
     sniff_color = Color
@@ -261,7 +262,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         return self._prev_baselines
 
     def get_prev_blanks(self):
-        return self._prev_blank_id, self._prev_blanks
+        return self._prev_blank_id, self._prev_blanks, self._prev_blank_runid
 
     def is_alive(self):
         return self.alive
@@ -581,6 +582,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if spec.analysis_type.startswith('blank'):
                 pb = run.get_baseline_corrected_signals()
                 if pb is not None:
+                    self._prev_blank_runid = run.spec.runid
                     self._prev_blank_id = run.spec.analysis_dbid
                     self._prev_blanks = pb
                     self.debug('previous blanks ={}'.format(pb))
@@ -813,6 +815,16 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     def _start(self, run):
         ret = True
 
+        if self.set_integration_time_on_start:
+            dit = self.default_integration_time
+            self.info('Setting default integration. t={}'.format(dit))
+            run.set_integration_time(dit)
+
+        if self.send_config_before_run:
+            self.info('Sending spectrometer configuration')
+            man = self.spectrometer_manager
+            man.send_configuration()
+
         if not run.start():
             self.alive = False
             ret = False
@@ -908,39 +920,37 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         # reuse run if not overlap
         # run = self.current_run if not spec.overlap[0] else None
+
         run = None
         arun = spec.make_run(run=run)
+
         arun.logger_name = 'AutomatedRun {}'.format(arun.runid)
-        '''
-            save this runs uuid to a hidden file
-            used for analysis recovery
-        '''
         if spec.end_after:
             self.end_at_run_completion = True
             arun.is_last = True
 
+        '''
+            save this runs uuid to a hidden file
+            used for analysis recovery
+        '''
         self._add_backup(arun.uuid)
-
-        arun.integration_time = 1.04
-        arun.min_ms_pumptime = self.min_ms_pumptime
 
         arun.experiment_executor = weakref.ref(self)()
 
-        # print id(arun), self.spectrometer_manager
         arun.spectrometer_manager = self.spectrometer_manager
         arun.extraction_line_manager = self.extraction_line_manager
         arun.ion_optics_manager = self.ion_optics_manager
-
-        # arun.persister.db = self.db
-        # arun.persister.massspec_importer = self.massspec_importer
-        arun.persister.datahub = self.datahub
-        arun.persister.experiment_identifier = exp.database_identifier
-        arun.persister.load_name = exp.load_name
+        arun.runner = self.pyscript_runner
+        arun.min_ms_pumptime = self.min_ms_pumptime
 
         arun.use_syn_extraction = True
 
-        arun.runner = self.pyscript_runner
-        arun.extract_device = exp.extract_device
+        arun.persister.datahub = self.datahub
+        arun.persister.experiment_identifier = exp.database_identifier
+        arun.persister.load_name = exp.load_name
+        arun.use_dvc = self.use_dvc
+        if self.use_dvc:
+            arun.dvc_persister = self.application.get_service('pychron.dvc.dvc_persister.DVCPersister')
 
         mon = self.monitor
         if mon is not None:

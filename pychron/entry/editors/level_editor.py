@@ -25,6 +25,7 @@ from traits.api import List, Instance, Str, Float, Any, Button, Property, HasTra
 from traitsui.api import View, Item, TabularEditor, HGroup, UItem, VSplit, Group, VGroup, \
     HSplit
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
@@ -171,7 +172,7 @@ class LevelEditor(Loggable):
                         else:
                             return
 
-                    self._save_production()
+                    # self._save_production()
 
                     level.note = self.level_note
                     pr = db.get_irradiation_production(self.selected_production.name)
@@ -251,10 +252,10 @@ class LevelEditor(Loggable):
                     if not next((li for li in irrad.levels if li.name == self.name), None):
                         db.add_irradiation_level(self.name, irrad,
                                                  self.selected_tray,
-                                                 self.selected_production.name,
+                                                 # self.selected_production.name,
                                                  self.z)
 
-                        self._save_production()
+                        # self._save_production()
 
                         return self.name
 
@@ -276,29 +277,34 @@ class LevelEditor(Loggable):
         db = self.db
         with db.session_ctx():
             ps = []
-            for pr in db.get_irradiation_productions():
+            # for pr in db.get_irradiation_productions():
+            for pr in self.repo.get_irradiation_productions():
                 p = IrradiationProduction(name=pr.name)
                 p.create(pr)
                 ps.append(p)
 
             self.productions = ps
 
-    def _save_production(self):
-        prod = self.selected_production
-        db = self.db
-        if prod.dirty:
-            with db.session_ctx():
-                ip = db.get_irradiation_production(prod.name)
-                if ip:
-                    self.debug('saving production {}'.format(prod.name))
+            # def _save_production(self):
+            # prod = self.selected_production
+            #     if prod.dirty:
+            #         self.repo.update_production(prod, irradiation=self.irradiation)
 
-                    params = prod.get_params()
-                    for k, v in params.iteritems():
-                        self.debug('setting {}={}'.format(k, v))
-                        setattr(ip, k, v)
-
-                    ip.note = prod.note
-                    # ip.last_modified = datetime.now()
+            # prod = self.selected_production
+            # db = self.db
+            # if prod.dirty:
+            # with db.session_ctx():
+            #         ip = db.get_irradiation_production(prod.name)
+            #         if ip:
+            #             self.debug('saving production {}'.format(prod.name))
+            #
+            #             params = prod.get_params()
+            #             for k, v in params.iteritems():
+            #                 self.debug('setting {}={}'.format(k, v))
+            #                 setattr(ip, k, v)
+            #
+            #             ip.note = prod.note
+            #             # ip.last_modified = datetime.now()
 
     def _add_production(self):
         pr = NewProduction()
@@ -335,9 +341,8 @@ class LevelEditor(Loggable):
 
     def _selected_tray_changed(self):
         with self.db.session_ctx():
-            holder = self.db.get_irradiation_holder(self.selected_tray)
-            if holder:
-                load_holder_canvas(self.canvas, holder.geometry)
+            holes = self.repo.get_irradiation_holder_holes(self.selected_tray)
+            load_holder_canvas(self.canvas, holes)
 
     def _add_tray_button_fired(self):
         dlg = FileDialog(action='open', default_directory=paths.irradiation_tray_maps_dir)

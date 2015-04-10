@@ -120,9 +120,12 @@ class IrradiationEditor(BaseIrradiationEditor):
 
         db = self.db
         with db.session_ctx():
-            dbchron = db.add_irradiation_chronology(self.chronology.make_blob())
-            db.add_irradiation(self.name, dbchron)
+            # dbchron = db.add_irradiation_chronology(self.chronology.make_blob())
+            # db.add_irradiation(self.name, dbchron)
+            db.add_irradiation(self.name)
 
+        self.repo.add_irradiation(self.name)
+        self.repo.add_chronology(self.name, self.chronology)
 
 # ============= EOF =============================================
 
