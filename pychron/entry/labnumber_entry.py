@@ -25,6 +25,7 @@ from traits.api import Property, Str, cached_property, \
 from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.helpers.formatting import floatfmt
+from pychron.core.progress import open_progress
 from pychron.database.defaults import load_irradiation_map
 from pychron.entry.editors.irradiation_editor import IrradiationEditor
 from pychron.entry.editors.level_editor import LevelEditor, load_holder_canvas
@@ -38,7 +39,6 @@ from pychron.paths import paths
 # from pychron.entry.level import Level, load_holder_canvas, iter_geom
 from pychron.pychron_constants import PLUSMINUS
 from pychron.entry.irradiated_position import IrradiatedPosition
-from pychron.database.orms.isotope.gen import gen_ProjectTable, gen_SampleTable
 
 
 # class save_ctx(object):
@@ -52,7 +52,7 @@ from pychron.database.orms.isotope.gen import gen_ProjectTable, gen_SampleTable
 # self._p.information_dialog('Changes saved to database')
 
 class NeutronDose(HasTraits):
-    def __init__(self, power, start, end): 
+    def __init__(self, power, start, end):
         self.power = power
         self.start = start.strftime('%m-%d-%Y %H:%M')
         self.end = end.strftime('%m-%d-%Y %H:%M')
@@ -70,8 +70,8 @@ class dirty_ctx(object):
 
 
 class LabnumberEntry(Loggable):
-    db = Instance('pychron.dvc.dvc_database.DVCDatabase', ())
-    meta_repo = Instance('pychron.dvc.meta_repo.MetaRepo', ())
+    # db = Instance('pychron.dvc.dvc_database.DVCDatabase', ())
+    # meta_repo = Instance('pychron.dvc.meta_repo.MetaRepo', ())
     # db = Property
 
     # level = DelegatesTo('db')
@@ -79,8 +79,10 @@ class LabnumberEntry(Loggable):
     # irradiation = DelegatesTo('db')
     # irradiations = DelegatesTo('db')
 
+    dvc = Instance('pychron.dvc.dvc.DVC', ())
+
     level = Str
-    levels = Property(depends_on='irradiation')
+    levels = Property(depends_on='irradiation, updated')
     irradiation = Str
     irradiations = Property(depends_on='updated')
 
@@ -139,7 +141,7 @@ class LabnumberEntry(Loggable):
     def __init__(self, *args, **kw):
         super(LabnumberEntry, self).__init__(*args, **kw)
 
-        # self.labnumber_generator = LabnumberGenerator(db=self.db)
+        # self.labnumber_generator = LabnumberGenerator(db=self.dvc.db)
 
         bind_preference(self, 'irradiation_prefix',
                         'pychron.entry.irradiation_prefix')
@@ -163,7 +165,7 @@ class LabnumberEntry(Loggable):
         if ms:
             ms.bind_preferences()
             if ms.connect():
-                jt = JTransferer(pychrondb=self.db,
+                jt = JTransferer(pychrondb=self.dvc.db,
                                  massspecdb=ms)
                 if jt.do_transfer(self.irradiation, self.level, items):
                     self._save_to_db()
@@ -174,8 +176,8 @@ class LabnumberEntry(Loggable):
                                 'Check Preferences>Database')
 
     def save_tray_to_db(self, p, name):
-        with self.db.session_ctx():
-            load_irradiation_map(self.db, p, name, overwrite_geometry=True)
+        with self.dvc.db.session_ctx():
+            load_irradiation_map(self.dvc.db, p, name, overwrite_geometry=True)
         self._inform_save()
 
     def estimate_j(self):
@@ -186,7 +188,7 @@ class LabnumberEntry(Loggable):
 
     def _estimate_j(self):
         self.debug('estimate J. irradiation={}'.format(self.irradiation))
-        db = self.db
+        db = self.dvc.db
         with db.session_ctx():
             dbirrad = db.get_irradiation(self.irradiation)
             j = dbirrad.chronology.duration
@@ -195,7 +197,7 @@ class LabnumberEntry(Loggable):
 
     # def set_selected_sample(self, new):
     # self.selected_sample = new
-    #     self.set_selected_attr(new.name, 'sample')
+    # self.set_selected_attr(new.name, 'sample')
     #     #self.canvas.selected_samples=new
 
     def select_positions(self, freq, eoflag):
@@ -207,6 +209,13 @@ class LabnumberEntry(Loggable):
         if self.selected:
             for si in self.selected:
                 setattr(si, attr, v)
+            self.refresh_table = True
+
+    def set_selected_attrs(self, vs, attrs):
+        if self.selected:
+            for si in self.selected:
+                for v, attr in zip(vs, attrs):
+                    setattr(si, attr, v)
             self.refresh_table = True
 
     def import_sample_metadata(self, p):
@@ -225,7 +234,7 @@ class LabnumberEntry(Loggable):
             ask user for list of irradiations
         """
 
-        db = self.db
+        db = self.dvc.db
         with db.session_ctx():
             irrads = db.get_irradiations(order_func='asc')
             irrads = [irrad.name for irrad in irrads]
@@ -243,7 +252,7 @@ class LabnumberEntry(Loggable):
                     w.build(out, irrads, progress=prog)
 
     def save_pdf(self, out):
-        db = self.db
+        db = self.dvc.db
         with db.session_ctx():
             name = self.irradiation
             irrad = db.get_irradiation(name)
@@ -274,7 +283,7 @@ class LabnumberEntry(Loggable):
                 lg = IdentifierGenerator(monitor_name=self.monitor_name,
                                          irradiation=self.irradiation,
                                          overwrite=overwrite,
-                                         db=self.db)
+                                         db=self.dvc.db)
                 if lg.setup():
                     prog = self.open_progress()
                     lg.generate_identifiers(prog, overwrite)
@@ -286,7 +295,7 @@ class LabnumberEntry(Loggable):
 
         lg = IdentifierGenerator(monitor_name=self.monitor_name,
                                  overwrite=True,
-                                 db=self.db)
+                                 db=self.dvc.db)
         if lg.setup():
             prog = self.open_progress()
             lg.preview(prog, self.irradiated_positions, self.irradiation, self.level)
@@ -304,7 +313,7 @@ class LabnumberEntry(Loggable):
         loader.make_template(p, n, self.level)
 
     def import_irradiation_load_xls(self, p):
-        loader = XLSIrradiationLoader(db=self.db,
+        loader = XLSIrradiationLoader(db=self.dvc.db,
                                       monitor_name=self.monitor_name)
         prog = self.open_progress()
         loader.progress = prog
@@ -330,17 +339,14 @@ class LabnumberEntry(Loggable):
                         irp = positions[idx - 1]
                         irp.analyzed = analyzed
 
-    def _load_holder_canvas(self, holder):
-        geom = holder.geometry
-        if geom:
+    def _load_holder_canvas(self, holes):
+        if holes:
             canvas = IrradiationCanvas()
-            load_holder_canvas(canvas, geom)
+            load_holder_canvas(canvas, holes)
             self.canvas = canvas
 
-    def _load_holder_positions(self, holder):
+    def _load_holder_positions(self, holes):
         self.irradiated_positions = []
-
-        holes = self.meta_repo.get_irradiation_holder_holes(holder)
         if holes:
             with dirty_ctx(self):
                 with no_update(self):
@@ -374,14 +380,34 @@ class LabnumberEntry(Loggable):
         self.information_dialog('Changes saved to Database')
 
     def _save_to_db(self):
-        db = self.db
+        db = self.dvc.db
 
         with db.session_ctx():
             n = len(self.irradiated_positions)
-            prog = self.open_progress(n)
+            prog = open_progress(n)
 
             for irs in self.irradiated_positions:
                 ln = irs.labnumber
+
+                dbpos = db.get_irradiation_position(self.irradiation, self.level, irs.hole)
+                if not dbpos:
+                    dbpos = db.add_irradiation_position(self.irradiation, self.level, irs.hole)
+
+                if ln:
+                    dbpos2 = db.get_identifier(ln)
+                    if dbpos2:
+                        irradname = dbpos2.level.irrad.name
+                        if irradname != self.irradiation:
+                            self.warning_dialog('Labnumber {} already exists '
+                                                'in Irradiation {}'.format(ln, irradname))
+                            return
+                    else:
+                        dbpos.identifier = ln
+
+                dbpos.j = irs.j
+                dbpos.j_err = irs.j_err
+                dbpos.weight = float(irs.weight or 0)
+                dbpos.note = irs.note
 
                 sam = irs.sample
                 proj = irs.project
@@ -396,68 +422,12 @@ class LabnumberEntry(Loggable):
                     sam = db.add_sample(sam,
                                         project=proj,
                                         material=mat)
-                if ln:
-                    dbln = db.get_labnumber(ln)
-                    if dbln:
-                        pos = dbln.irradiation_position
-                        if pos is None:
-                            pos = db.add_irradiation_position(irs.hole, dbln, self.irradiation, self.level)
-                        else:
-                            lev = pos.level
-                            irrad = lev.irradiation
-                            if self.irradiation != irrad.name:
-                                self.warning_dialog(
-                                    'Labnumber {} already exists in Irradiation {}'.format(ln, irrad.name))
-                                return
-                            if irs.hole != pos.position:
-                                pos = db.add_irradiation_position(irs.hole, dbln, self.irradiation, self.level)
+                    dbpos.sample = sam
 
-                    else:
-                        dbln = db.add_labnumber(ln, sample=sam, )
-                        pos = db.add_irradiation_position(irs.hole, dbln, self.irradiation, self.level)
-
-                    def add_flux():
-                        hist = db.add_flux_history(pos)
-                        dbln.selected_flux_history = hist
-                        f = db.add_flux(irs.j, irs.j_err)
-                        f.history = hist
-                        for ai in dbln.analyses:
-                            self.remove_from_cache(ai)
-
-                    if dbln.selected_flux_history:
-                        tol = 1e-10
-                        flux = dbln.selected_flux_history.flux
-                        if flux:
-                            if abs(flux.j - irs.j) > tol or abs(flux.j_err - irs.j_err) > tol:
-                                add_flux()
-                        else:
-                            add_flux()
-                    else:
-                        add_flux()
-                else:
-                    dbpos = db.get_irradiation_position(self.irradiation, self.level, irs.hole)
-                    if not dbpos or not dbpos.labnumber:
-                        dbln = db.add_labnumber('',
-                                                unique=False,
-                                                sample=sam,
-                                                note=irs.note)
-
-                        db.add_irradiation_position(irs.hole, dbln, self.irradiation, self.level)
-                    else:
-                        dbln = dbpos.labnumber
-
-                if sam:
-                    dbln.sample = sam
-
-                dbln.note = irs.note
-                prog.change_message('Saving {}{}{} labnumber={}'.format(self.irradiation,
-                                                                        self.level,
-                                                                        irs.hole,
-                                                                        dbln.identifier))
+                prog.change_message('Saving {}{}{} identifier={}'.format(self.irradiation, self.level,
+                                                                         irs.hole, ln))
         self.dirty = False
         self._level_changed(self.level)
-
-        # self.info('Changes saved to database')
 
     def _increment(self, name):
         """
@@ -497,24 +467,24 @@ class LabnumberEntry(Loggable):
     # ===============================================================================
     # handlers
     # ===============================================================================
-    @on_trait_change('irradiated_positions:sample')
-    def _handle_entry(self, obj, name, old, new):
-        if not self._no_update:
-            if not new:
-                obj.material = ''
-                obj.project = ''
-            else:
-                db = self.db
-                with db.session_ctx():
-                    dbsam = db.get_sample(new)
-                    if dbsam:
-                        if not obj.material:
-                            if dbsam.material:
-                                obj.material = dbsam.material.name
-
-                        if not obj.project:
-                            if dbsam.project:
-                                obj.project = dbsam.project.name
+    # @on_trait_change('irradiated_positions:sample')
+    # def _handle_entry(self, obj, name, old, new):
+    # if not self._no_update:
+    # if not new:
+    # obj.material = ''
+    #             obj.project = ''
+    #         else:
+    #             db = self.dvc.db
+    #             with db.session_ctx():
+    #                 dbsam = db.get_sample(new, new.project)
+    #                 if dbsam:
+    #                     if not obj.material:
+    #                         if dbsam.material:
+    #                             obj.material = dbsam.material.name
+    #
+    #                     if not obj.project:
+    #                         if dbsam.project:
+    #                             obj.project = dbsam.project.name
 
 
     @on_trait_change('canvas:selected')
@@ -558,7 +528,7 @@ THIS CHANGE CANNOT BE UNDONE')
 
         # try to auto increment the irrad
         if self.irradiation_prefix:
-            db = self.db
+            db = self.dvc.db
             with db.session_ctx():
                 def f(table):
                     return (table.name.startswith(self.irradiation_prefix),)
@@ -580,7 +550,7 @@ THIS CHANGE CANNOT BE UNDONE')
             name = self.level
 
         self.debug('update level= "{}"'.format(name))
-        db = self.db
+        db = self.dvc.db
         with db.session_ctx() as sess:
             level = db.get_irradiation_level(self.irradiation, name)
             self.debug('retrieved level {}'.format(level))
@@ -590,16 +560,13 @@ THIS CHANGE CANNOT BE UNDONE')
 
             self.level_note = level.note or ''
             # self.level_production_name = level.production.name
-            self._load_holder_positions(level.holder)
-            # self._load_holder_canvas()
-            # holder = level.holder
-            # if holder:
-            # self.debug('holder {}'.format(holder))
-            #     self._load_holder_positions(holder)
-            #     self._load_holder_canvas(holder)
-            #     self._load_canvas_analyses(db, level)
-                #if debug:
-            #    return
+
+            holes = self.dvc.meta_repo.get_irradiation_holder_holes(level.holder)
+            self._load_holder_positions(holes)
+            self._load_holder_canvas(holes)
+
+            # self._load_canvas_analyses(db, level)
+
             try:
                 positions = level.positions
                 n = len(self.irradiated_positions)
@@ -608,7 +575,8 @@ THIS CHANGE CANNOT BE UNDONE')
                 if positions:
                     with dirty_ctx(self):
                         self._make_positions(n, positions)
-            except:
+            except BaseException, e:
+                print 'excep', e
                 self.warning_dialog('Failed loading Irradiation level="{}"'.format(name))
                 sess.rollback()
 
@@ -624,45 +592,60 @@ THIS CHANGE CANNOT BE UNDONE')
                     self.debug('extra irradiation position for this tray {}'.format(hi))
 
     def _sync_position(self, dbpos, ir):
-        ln = dbpos.labnumber
-        if ln:
-            position = int(dbpos.position)
+        if dbpos:
+            if dbpos.sample:
+                ir.sample = dbpos.sample.name
+                ir.material = dbpos.sample.material.name
+                ir.project = dbpos.sample.project.name
+                ir.labnumber = dbpos.identifier or ''
+                ir.hole = dbpos.position
 
-            labnumber = ln.identifier if ln else ''
-            ir.trait_set(labnumber=str(labnumber), hole=position)
+                item = self.canvas.scene.get_item(str(ir.hole))
+                item.fill = bool(dbpos.identifier)
+                ir.j = dbpos.j
+                ir.j_err = dbpos.j_err
+                ir.note = dbpos.note or ''
+                ir.weight = dbpos.weight or 0
 
-            item = self.canvas.scene.get_item(str(position))
-            item.fill = ln.identifier
-
-            selhist = ln.selected_flux_history
-            if selhist:
-                flux = selhist.flux
-                if flux:
-                    ir.j = flux.j
-                    ir.j_err = flux.j_err
-                    #
-            sample = ln.sample
-            if sample:
-                ir.sample = sample.name
-                material = sample.material
-                project = sample.project
-                if project:
-                    ir.project = project.name
-                if material:
-                    ir.material = material.name
-
-            if dbpos.weight:
-                ir.weight = str(dbpos.weight)
-
-            note = ln.note
-            if note:
-                ir.note = note
+                # ln = dbpos.labnumber
+                # if ln:
+                # position = int(dbpos.position)
+                #
+                # labnumber = ln.identifier if ln else ''
+                # ir.trait_set(labnumber=str(labnumber), hole=position)
+                #
+                #     item = self.canvas.scene.get_item(str(position))
+                #     item.fill = ln.identifier
+                #
+                #     selhist = ln.selected_flux_history
+                #     if selhist:
+                #         flux = selhist.flux
+                #         if flux:
+                #             ir.j = flux.j
+                #             ir.j_err = flux.j_err
+                #             #
+                #     sample = ln.sample
+                #     if sample:
+                #         ir.sample = sample.name
+                #         material = sample.material
+                #         project = sample.project
+                #         if project:
+                #             ir.project = project.name
+                #         if material:
+                #             ir.material = material.name
+                #
+                #     if dbpos.weight:
+                #         ir.weight = str(dbpos.weight)
+                #
+                #     note = ln.note
+                #     if note:
+                #         ir.note = note
 
     def _get_irradiation_editor(self, **kw):
         ie = self._irradiation_editor
         if ie is None:
-            ie = IrradiationEditor(db=self.db,
-                                   repo=self.meta_repo)
+            ie = IrradiationEditor(db=self.dvc.db,
+                                   repo=self.dvc.meta_repo)
             self._irradiation_editor = ie
         ie.trait_set(**kw)
         return ie
@@ -670,8 +653,8 @@ THIS CHANGE CANNOT BE UNDONE')
     def _get_level_editor(self, **kw):
         ie = self._level_editor
         if ie is None:
-            self._level_editor = ie = LevelEditor(db=self.db,
-                                                  repo=self.meta_repo,
+            self._level_editor = ie = LevelEditor(db=self.dvc.db,
+                                                  repo=self.dvc.meta_repo,
                                                   trays=self.trays)
         ie.trait_set(**kw)
         return ie
@@ -679,26 +662,27 @@ THIS CHANGE CANNOT BE UNDONE')
     # ===============================================================================
     # property get/set
     # ===============================================================================
-    @cached_property
-    def _get_projects(self):
-        order = gen_ProjectTable.name.asc()
-        projects = [''] + [pi.name for pi in self.db.get_projects(order=order)]
-        return projects
-
-    @cached_property
-    def _get_samples(self):
-        order = gen_SampleTable.name.asc()
-        samples = [''] + [si.name for si in self.db.get_samples(order=order)]
-        return samples
-
-    @cached_property
-    def _get_materials(self):
-        materials = [''] + [mi.name for mi in self.db.get_materials()]
-        return materials
+    # @cached_property
+    # def _get_projects(self):
+    # print 'get projects'
+    # # order = gen_ProjectTable.name.asc()
+    # projects = [''] #+ [pi.name for pi in self.dvc.db.get_projects(order=order)]
+    #     return projects
+    #
+    # @cached_property
+    # def _get_samples(self):
+    #     # order = gen_SampleTable.name.asc()
+    #     samples = [''] #+ [si.name for si in self.dvc.db.get_samples(order=order)]
+    #     return samples
+    #
+    # @cached_property
+    # def _get_materials(self):
+    #     materials = [''] #+ [mi.name for mi in self.dvc.db.get_materials()]
+    #     return materials
 
     # def _get_irradiation_tray_image(self):
     # p = self._get_map_path()
-    #     db = self.db
+    #     db = self.dvc.db
     #     with db.session_ctx():
     #         level = db.get_irradiation_level(self.irradiation,
     #                                          self.level)
@@ -714,23 +698,23 @@ THIS CHANGE CANNOT BE UNDONE')
 
     @cached_property
     def _get_trays(self):
-        return self.meta_repo.get_irradiation_holder_names()
-        # db = self.db
+        return self.dvc.meta_repo.get_irradiation_holder_names()
+        # db = self.dvc.db
         # with db.session_ctx():
         # hs = db.get_irradiation_holders()
         #     ts = [h.name for h in hs]
 
         #p = os.path.join(self._get_map_path(), 'images')
-            #if not os.path.isdir(p):
-            #    self.warning_dialog('{} does not exist'.format(p))
-            #    return Undefined
-            #
-            #ts = [os.path.splitext(pi)[0] for pi in os.listdir(p) if not pi.startswith('.')
-            #      #                    if not (pi.endswith('.png')
-            #      #                            or pi.endswith('.pct')
-            #      #                            or pi.startswith('.'))
-            #]
-            #if ts:
+        #if not os.path.isdir(p):
+        # self.warning_dialog('{} does not exist'.format(p))
+        # return Undefined
+        #
+        # ts = [os.path.splitext(pi)[0] for pi in os.listdir(p) if not pi.startswith('.')
+        #      #                    if not (pi.endswith('.png')
+        #      #                            or pi.endswith('.pct')
+        #      #                            or pi.startswith('.'))
+        #]
+        #if ts:
         #     self.tray = ts[-1]
         #
         # return ts
@@ -746,16 +730,22 @@ THIS CHANGE CANNOT BE UNDONE')
 
     @cached_property
     def _get_irradiations(self):
-        with self.db.session_ctx():
-            irs = self.db.get_irradiations()
-            return [i.name for i in irs]
+        with self.dvc.db.session_ctx():
+            irs = self.dvc.db.get_irradiations()
+            names = [i.name for i in irs]
+            if names:
+                self.irradiation = names[0]
+            return names
 
     @cached_property
     def _get_levels(self):
-        with self.db.session_ctx():
-            irrad = self.db.get_irradiation(self.irradiation)
+        with self.dvc.db.session_ctx():
+            irrad = self.dvc.db.get_irradiation(self.irradiation)
             if irrad:
-                return [li.name for li in irrad.levels]
+                names = [li.name for li in irrad.levels]
+                if names:
+                    self.level = names[0]
+                return names
             else:
                 return []
 
@@ -808,7 +798,7 @@ THIS CHANGE CANNOT BE UNDONE')
         if self.irradiation:
             self.level = ''
 
-            chron = self.meta_repo.get_chronology(self.irradiation)
+            chron = self.dvc.meta_repo.get_chronology(self.irradiation)
 
             j = chron.duration * self.j_multiplier
             self.estimated_j_value = u'{} {}{}'.format(floatfmt(j),

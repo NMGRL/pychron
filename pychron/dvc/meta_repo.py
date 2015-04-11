@@ -20,7 +20,7 @@ import os
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_directory2, ilist_directory2
-from pychron.dvc.defaults import SIXHOLE, TRIGA
+from pychron.dvc.defaults import TRIGA, HOLDER_24_SPOKES
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths
 
@@ -72,11 +72,16 @@ class Production(MetaObject):
 class IrradiationHolder(MetaObject):
     def _load_hook(self, path, rfile):
         holes = []
+
+        line = rfile.next()
+        _, radius = line.split(',')
+        radius = float(radius)
+
         for c, line in enumerate(rfile):
             args = line.split(',')
             if len(args) == 2:
                 x, y = args
-                r = 0.1
+                r = radius
             else:
                 x, y, r = args
 
@@ -122,7 +127,6 @@ class MetaRepo(GitRepoManager):
         ip.note = prod.note
         self.add(p, commit=False)
         self.commit('updated production {}'.format(prod.name))
-
 
     def add_chronology(self, irrad, chron):
         p = os.path.join(self.path, irrad, 'chronology.txt')
@@ -179,7 +183,7 @@ class MetaRepo(GitRepoManager):
     def _add_default_irradiation_holders(self):
 
         commit = False
-        for name, txt in (('6Hole.txt', SIXHOLE),):
+        for name, txt in (('24Spokes.txt', HOLDER_24_SPOKES),):
             p = os.path.join(self.path, 'irradiation_holders', name)
             if not os.path.isfile(p):
                 with open(p, 'w') as wfile:

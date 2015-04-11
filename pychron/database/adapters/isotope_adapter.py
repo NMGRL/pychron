@@ -2482,24 +2482,6 @@ class IsotopeAdapter(DatabaseAdapter):
     def _hash_factory(self, text):
         return hashlib.md5(text)
 
-    def _append_filters(self, f, kw):
-
-        filters = kw.get('filters', [])
-        if isinstance(f, (tuple, list)):
-            filters.extend(f)
-        else:
-            filters.append(f)
-        kw['filters'] = filters
-        return kw
-
-    def _append_joins(self, f, kw):
-        joins = kw.get('joins', [])
-        if isinstance(f, (tuple, list)):
-            joins.extend(f)
-        else:
-            joins.append(f)
-        kw['joins'] = joins
-        return kw
 
     def _get_date_range(self, q, hours=0):
         lan = q.order_by(meas_AnalysisTable.analysis_timestamp.asc()).first()

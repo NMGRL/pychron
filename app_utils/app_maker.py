@@ -356,7 +356,7 @@ execfile(os.path.join(os.path.split(__file__)[0], "{}.py"))
                 os.rename(old, new)
                 break
             except OSError, e:
-                #                print e
+                # print 'exception', e
                 name = new[:-4]
                 bk = '{}_{:03d}bk.app'.format(name, i)
                 print '{} already exists. backing it up as {}'.format(new, bk)

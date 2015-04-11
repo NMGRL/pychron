@@ -118,7 +118,7 @@ class PointsProgrammer(Manager):
                 self.point = canvas.get_point(v)
                 print v, self.point
             except ValueError, e:
-                print e
+                print 'exception', e
 
                 # ===============================================================================
                 # handlers

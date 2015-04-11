@@ -30,6 +30,9 @@ from traitsui.api import View, Item, EnumEditor, UItem, ListStrEditor
 
 
 
+
+
+
 # ============= standard library imports ========================
 
 from itertools import groupby
@@ -685,7 +688,7 @@ class LoadingManager(IsotopeDatabaseManager):
 
             nv = int(ln) + 1
         except (ValueError, IndexError), e:
-            print e
+            print 'exception', e
             nv = 1
 
         self.new_load_name = nv

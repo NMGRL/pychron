@@ -26,6 +26,9 @@ from traitsui.api import View, Item, TabularEditor, HGroup, UItem, VSplit, Group
     HSplit
 
 
+
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
@@ -141,12 +144,12 @@ class LevelEditor(Loggable):
             level = db.get_irradiation_level(self.irradiation, self.name)
 
             self.z = level.z or 0
-            if level.production:
-                self.selected_production = next((p for p in self.productions
-                                                 if p.name == level.production.name), None)
+            # if level.production:
+            # self.selected_production = next((p for p in self.productions
+            # if p.name == level.production.name), None)
             original_tray = None
             if level.holder:
-                self.selected_tray = next((t for t in self.trays if t == level.holder.name), None)
+                self.selected_tray = next((t for t in self.trays if t == level.holder), None)
                 original_tray = self.selected_tray
 
             if level.note:
@@ -175,8 +178,8 @@ class LevelEditor(Loggable):
                     # self._save_production()
 
                     level.note = self.level_note
-                    pr = db.get_irradiation_production(self.selected_production.name)
-                    level.production = pr
+                    # pr = db.get_irradiation_production(self.selected_production.name)
+                    # level.production = pr
 
                     if original_tray != self.selected_tray:
                         self._save_tray(level, original_tray)
@@ -220,11 +223,11 @@ class LevelEditor(Loggable):
                 level = irrad.levels[-1]
 
                 self.z = level.z
-                if level.production:
-                    self.selected_production = next((p for p in self.productions
-                                                     if p.name == level.production.name), None)
+                # if level.production:
+                # self.selected_production = next((p for p in self.productions
+                # if p.name == level.production.name), None)
                 if level.holder:
-                    self.selected_tray = next((t for t in self.trays if t == level.holder.name), None)
+                    self.selected_tray = next((t for t in self.trays if t == level.holder), None)
 
                 if level.name in ALPHAS:
                     nind = ALPHAS.index(level.name) + 1
@@ -253,7 +256,8 @@ class LevelEditor(Loggable):
                         db.add_irradiation_level(self.name, irrad,
                                                  self.selected_tray,
                                                  # self.selected_production.name,
-                                                 self.z)
+                                                 self.z,
+                                                 self.level_note)
 
                         # self._save_production()
 

@@ -26,12 +26,13 @@ from pychron.entry.entry_views.entry import BaseEntry
 class ProjectEntry(BaseEntry):
     project = Str
 
-    def _add_item(self, db):
+    def _add_item(self):
         name = self.project
+        dvc = self.dvc
         self.info('Attempting to add Project="{}"'.format(name))
-        if not db.get_project(name):
+        if not dvc.get_project(name):
             self.info('added project={}'.format(name))
-            db.add_project(name)
+            dvc.add_project(name)
             return True
         else:
             self.warning_dialog('{} already exists'.format(name))

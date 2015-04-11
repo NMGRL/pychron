@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2014 Jake Ross
+# Copyright 2015 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,41 +15,46 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+
+from git import Repo
 from traits.api import Instance
-from traitsui.api import View
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
+from pychron.paths import paths
 
 
-class BaseEntry(Loggable):
-    dvc = Instance('pychron.dvc.dvc.DVC')
-    def do(self):
-        return self._add_loop()
+class DVC(Loggable):
+    db = Instance('pychron.dvc.dvc_database.DVCDatabase', ())
+    meta_repo = Instance('pychron.dvc.meta_repo.MetaRepo', ())
 
-    def _add_loop(self):
-        while 1:
-            info = self.edit_traits()
-            if info.result:
-                db = self.dvc.db
-                with db.session_ctx():
-                    if self._add_item():
-                        return True
-            else:
-                return False
+    def get_project(self, name):
+        return self.db.get_project(name)
 
-    def _add_item(self):
-        raise NotImplementedError
+    def get_sample(self, name, project):
+        return self.db.get_sample(name, project)
 
-    def _new_view(self, *args, **kw):
-        for a, v in (('buttons', ['OK', 'Cancel']),
-                     ('resizable', True),
-                     ('kind', 'livemodal')):
-            if not kw.has_key(a):
-                kw[a] = v
+    def get_material(self, name):
+        return self.db.get_material(name)
 
-        v = View(*args, **kw)
-        return v
+    def add_material(self, name):
+        self.db.add_material(name)
+
+    def add_sample(self, name, project, material):
+        self.db.add_sample(name, project, material)
+
+    def add_project(self, name):
+        with self.db.session_ctx():
+            self.db.add_project(name)
+
+        p = os.path.join(paths.project_dir, name)
+        os.mkdir(p)
+        repo = Repo.init(p)
+
+        # setup remotes
+
 
 # ============= EOF =============================================
 

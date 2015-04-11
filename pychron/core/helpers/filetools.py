@@ -414,7 +414,7 @@ def get_path(root, name, extensions):
     for ext in extensions:
         for f in os.listdir(root):
             name = add_extension(name, ext)
-            print name, re.match(name, f)
+            print 'ger pah', name, re.match(name, f)
             if re.match(name, f):
                 return os.path.join(root, f)
 

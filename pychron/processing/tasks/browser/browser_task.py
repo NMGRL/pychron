@@ -16,8 +16,7 @@
 
 # ============= enthought library imports =======================
 
-from traits.api import Bool, Any, String, \
-    on_trait_change, Date, Time, Instance
+from traits.api import Any, on_trait_change, Date, Time, Instance
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
@@ -400,7 +399,7 @@ class BaseBrowserTask(BaseEditorTask):
     #                     try:
     #                         yield li.sample.project
     #                     except AttributeError, e:
-    #                         print e
+        # print 'exception', e
     #
     #             ps = sorted(list(set(get_projects())))
     #             ps = [ProjectRecordView(p) for p in ps]

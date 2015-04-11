@@ -18,14 +18,13 @@
 # from pyface.api import ProgressDialog
 import sys
 
-from traits.api import Property, Bool, Int, Instance, Str
+from traits.api import Property, Bool, Int
 
 # ============= standard library imports ========================
 from PySide.QtCore import Qt
 from PySide.QtGui import QLabel, QDialogButtonBox
 from pyface.ui.qt4.progress_dialog import ProgressDialog
 # ============= local library imports  ==========================
-from traits.has_traits import HasTraits
 
 
 class Stream(object):
@@ -135,7 +134,7 @@ class myProgressDialog(ProgressDialog):
             if auto_increment:
                 self.increment()
         except RuntimeError, e:
-            print e
+            print 'exception', e
 
     def _create_message(self, dialog, layout):
         label = QLabel(self.message, dialog)

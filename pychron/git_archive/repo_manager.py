@@ -80,7 +80,7 @@ class GitRepoManager(Loggable):
         if os.path.isdir(path):
             g = os.path.join(path, '.git')
             if os.path.isdir(g):
-                self.debug('initialzied repo {}'.format(path))
+                self.debug('initialized repo {}'.format(path))
                 self._repo = Repo(path)
                 return True
             else:
@@ -208,7 +208,7 @@ class GitRepoManager(Loggable):
             # ps = [diff.a_blob.path for diff in index.diff(None)]
             # func(ps, extension)
             # except IOError,e:
-            #     print e
+            # print 'exception', e
         else:
             for r, ds, fs in os.walk(root):
                 ps = [os.path.join(r, fi) for fi in fs]

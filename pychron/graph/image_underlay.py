@@ -33,7 +33,7 @@ class ImageUnderlay(AbstractOverlay):
                 im = im.convert('RGB')
                 self._cached_img = array(im)
             except IOError, e:
-                print e
+                print 'exception', e
 
 
         super(ImageUnderlay, self).__init__(component, *args, **kw)

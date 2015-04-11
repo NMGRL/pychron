@@ -218,7 +218,7 @@ class IsotopeRecordView(object):
             import traceback
 
             traceback.print_exc()
-            print e
+            print 'exception', e
 
     def _clean_script_name(self, name):
         n = name.replace('{}_'.format(self.mass_spectrometer.lower()), '')

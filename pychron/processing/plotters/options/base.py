@@ -16,11 +16,12 @@
 
 # ============= enthought library imports =======================
 import hashlib
-from traits.api import HasTraits, List, Str, TraitError, \
-    Button, Bool, Event, Color, Range, String, Float, Int, on_trait_change
-from traitsui.api import View, HGroup, spring, VGroup, Item, Group, Spring
 
+from traits.api import HasTraits, List, Str, TraitError, \
+    Button, Bool, Event, Color, Range, String, Int, on_trait_change
+from traitsui.api import View, HGroup, spring, VGroup, Item, Group, Spring
 import apptools.sweet_pickle as pickle
+
 # ============= standard library imports ========================
 import os
 import yaml
@@ -227,7 +228,7 @@ class FigurePlotterOptions(BasePlotterOptions):
                 else:
                     self.trait_set(**{k: v})
             except TraitError, e:
-                print e
+                print 'exception', e
 
     def get_aux_plots(self):
         return reversed([pi

@@ -105,7 +105,7 @@ class StageVisualizer(Manager):
 
                     self.canvas.markupcontainer = d['markup']
 #                except Exception, e:
-#                    print e
+            # print 'exception', e
 
 #        self.canvas.invalidate_and_redraw()
 

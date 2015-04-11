@@ -153,7 +153,7 @@ def calculate_rigid_transform(refpoints, points):
     scale = (a ** 2 + b ** 2) ** 0.5
     theta = math.degrees(math.acos(a / scale))
     err = (sum_residuals / len(points)) ** 0.5 / float(scale)
-#    print err
+    # print 'exception', err
 #    print scale, float(scale)
     return float(scale), theta, map(float, (tx, ty)), err
 

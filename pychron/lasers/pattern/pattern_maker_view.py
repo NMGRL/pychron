@@ -122,7 +122,7 @@ class PatternMakerView(Saveable, Patternable):
             pattern.calculate_transit_time()
             return pattern
         except ImportError, e:
-            print e
+            print 'exception', e
             # ===============================================================================
             # defaults
             # ===============================================================================

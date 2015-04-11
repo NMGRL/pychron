@@ -243,7 +243,7 @@
 #             self.graph.redraw()
 #
 #         except Exception, e:
-#             print e
+# print 'exception', e
 #             pass
 #
 #     def traits_view(self):

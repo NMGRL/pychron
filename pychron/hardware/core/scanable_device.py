@@ -92,7 +92,7 @@ class ScanableDevice(ViewableDevice):
             try:
                 v = getattr(self, self.scan_func)(verbose=False)
             except AttributeError, e:
-                print e
+                print 'exception', e
                 return
 
             if v is not None:

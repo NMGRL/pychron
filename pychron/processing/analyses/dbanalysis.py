@@ -164,7 +164,7 @@ class DBAnalysis(Analysis):
                          fi.isotope.molecular_weight.name == name), None)
 
         except AttributeError, e:
-            print e
+            print 'exception', e
 
     def set_tag(self, tag):
         if isinstance(tag, str):

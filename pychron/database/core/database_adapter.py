@@ -22,6 +22,9 @@ from traits.api import Password, Bool, Str, on_trait_change, Any, Property, cach
 
 
 
+
+
+
 # =============standard library imports ========================
 from sqlalchemy import create_engine, distinct, MetaData
 from sqlalchemy.orm import sessionmaker
@@ -608,6 +611,25 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
                 # import traceback
                 # traceback.print_exc()
                 # self.sess.rollback()
+
+    def _append_filters(self, f, kw):
+
+        filters = kw.get('filters', [])
+        if isinstance(f, (tuple, list)):
+            filters.extend(f)
+        else:
+            filters.append(f)
+        kw['filters'] = filters
+        return kw
+
+    def _append_joins(self, f, kw):
+        joins = kw.get('joins', [])
+        if isinstance(f, (tuple, list)):
+            joins.extend(f)
+        else:
+            joins.append(f)
+        kw['joins'] = joins
+        return kw
 
     def _retrieve_item(self, table, value, key='name', last=None,
                        joins=None, filters=None, options=None, verbose=True,

@@ -23,7 +23,8 @@ from traitsui.api import View, Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.database.core.database_adapter import DatabaseAdapter
-from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, Base, MassSpectrometerTbl, IrradiationTbl, LevelTbl
+from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, Base, MassSpectrometerTbl, IrradiationTbl, LevelTbl, SampleTbl, \
+    MaterialTbl, IrradiationPositionTbl
 from pychron.paths import paths
 
 
@@ -71,6 +72,22 @@ class DVCDatabase(DatabaseAdapter):
         a = AnalysisTbl(**kw)
         return self._add_item(a)
 
+    def add_material(self, name):
+        a = self.get_material(name)
+        if a is None:
+            a = MaterialTbl(name=name)
+            a = self._add_item(a)
+        return a
+
+    def add_sample(self, name, project, material):
+        a = self.get_sample(name, project)
+        if a is None:
+            a = SampleTbl(name=name)
+            a.project = self.get_project(project)
+            a.material = self.get_material(material)
+            a = self._add_item(a)
+        return a
+
     def add_mass_spectrometer(self, name, kind):
         a = MassSpectrometerTbl(name=name, kind=kind)
         return self._add_item(a)
@@ -79,28 +96,83 @@ class DVCDatabase(DatabaseAdapter):
         a = IrradiationTbl(name=name)
         return self._add_item(a)
 
-    def add_irradiation_level(self, name, irradiation, holder, z):
+    def add_irradiation_level(self, name, irradiation, holder, z, note):
         irradiation = self.get_irradiation(irradiation)
         a = LevelTbl(name=name,
                      irradiation=irradiation,
                      holder=holder,
-                     z=z)
+                     z=z,
+                     note=note)
 
         return self._add_item(a)
 
+    def add_project(self, name):
+        a = self.get_project(name)
+        if a is None:
+            a = ProjectTbl(name=name)
+            a = self._add_item(a)
+        return a
+
+    def add_irradiation_position(self, irrad, level, pos):
+        a = IrradiationPositionTbl(position=pos)
+        a.level = self.get_irradiation_level(irrad, level)
+        return self._add_item(a)
+
     # single getters
+    def get_identifier(self, identifier):
+        return self._retrieve_item(IrradiationPositionTbl, identifier, key='identifier')
+
+    def get_irradiation_position(self, irrad, level, pos):
+        with self.session_ctx() as sess:
+            q = sess.query(IrradiationPositionTbl)
+            q = q.join(LevelTbl, IrradiationTbl)
+            q = q.filter(IrradiationTbl.name == irrad)
+            q = q.filter(LevelTbl.name == level)
+            q = q.filter(IrradiationPositionTbl.position == pos)
+
+        return self._query_one(q)
+
+    def get_project(self, name):
+        return self._retrieve_item(ProjectTbl, name)
+
     def get_irradiation_level(self, irrad, name):
         with self.session_ctx() as sess:
             irrad = self.get_irradiation(irrad)
             q = sess.query(LevelTbl)
-            q.filter(LevelTbl.irradiationID == irrad.idirradiationTbl)
-            q.filter(LevelTbl.name == name)
+            q = q.filter(LevelTbl.irradiationID == irrad.idirradiationTbl)
+            q = q.filter(LevelTbl.name == name)
             return self._query_one(q)
 
     def get_irradiation(self, name):
         return self._retrieve_item(IrradiationTbl, name)
 
+    def get_material(self, name):
+        return self._retrieve_item(MaterialTbl, name)
+
+    def get_sample(self, name, project):
+        with self.session_ctx() as sess:
+            q = sess.query(SampleTbl)
+            q = q.join(ProjectTbl)
+            q = q.filter(ProjectTbl.name == project)
+            q = q.filter(SampleTbl.name == name)
+
+            return self._query_one(q)
+
     # multi getters
+    def get_material_names(self):
+        with self.session_ctx():
+            names = self._retrieve_items(MaterialTbl)
+            return [ni.name for ni in names]
+
+    def get_samples(self, project=None, **kw):
+        if project:
+            if hasattr(project, '__iter__'):
+                kw = self._append_filters(ProjectTbl.name.in_(project), kw)
+            else:
+                kw = self._append_filters(ProjectTbl.name == project, kw)
+            kw = self._append_joins(ProjectTbl, kw)
+        return self._retrieve_items(SampleTbl, **kw)
+
     def get_irradiations(self, names=None, **kw):
 
         if names is not None:

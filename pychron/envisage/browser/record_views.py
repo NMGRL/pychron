@@ -63,10 +63,12 @@ class SampleRecordView(RecordView):
                 attr, dbattr = attr
             else:
                 dbattr = attr
-
-            v = getattr(dbrecord, dbattr)
-            if v is not None:
-                setattr(self, attr, v)
+            try:
+                v = getattr(dbrecord, dbattr)
+                if v is not None:
+                    setattr(self, attr, v)
+            except AttributeError:
+                pass
 
 
 class LabnumberRecordView(RecordView):

@@ -116,7 +116,7 @@ class FerrupsUPS(CoreDevice):
         try:
             vin = float(vin)
         except ValueError, e:
-            print e
+            print 'exception', e
             return
 
         return vin

@@ -73,7 +73,7 @@ class MyPanTool(PanTool):
 #        if self.active:
 #            PanTool.normal_left_up(self, event)
 # #            event.handled = False
-#        print event.handled, 'panup'
+# print 'exception', event.handled, 'panup'
 
 #    def panning_left_up(self, event):
 #        print 'panup', event

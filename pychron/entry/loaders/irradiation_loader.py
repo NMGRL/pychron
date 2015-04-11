@@ -88,7 +88,7 @@ class XLSIrradiationLoader(Loggable):
                 self._load_irradiation_from_file(p, dry_run)
                 return True
         except BaseException, e:
-            print e
+            print 'exception', e
 
     def identifier_generator(self):
         """

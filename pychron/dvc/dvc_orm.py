@@ -20,7 +20,7 @@ from sqlalchemy.sql.schema import ForeignKey
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
-from sqlalchemy import Column, Integer, String, TIMESTAMP, Float
+from sqlalchemy import Column, Integer, String, TIMESTAMP, Float, BLOB
 
 Base = declarative_base()
 
@@ -39,6 +39,7 @@ class AnalysisTbl(Base, BaseMixin):
     idanalysisTbl = Column(Integer, primary_key=True)
     timestamp = Column(TIMESTAMP)
     tag = Column(String(45))
+    irradiation_positionID = Column(Integer, ForeignKey('IrradiationPositionTbl.idirradiationpositionTbl'))
 
     measurementName = Column(String(45))
     extractionName = Column(String(45))
@@ -70,6 +71,7 @@ class SampleTbl(Base, NameMixin):
     idsampleTbl = Column(Integer, primary_key=True)
     materialID = Column(Integer, ForeignKey('MaterialTbl.idmaterialTbl'))
     projectID = Column(Integer, ForeignKey('ProjectTbl.idprojectTbl'))
+    positions = relationship('IrradiationPositionTbl', backref='sample')
 
 
 class LevelTbl(Base, NameMixin):
@@ -80,7 +82,7 @@ class LevelTbl(Base, NameMixin):
 
     positions = relationship('IrradiationPositionTbl', backref='level')
 
-    note = ''
+    note = Column(BLOB)
 
 
 class IrradiationTbl(Base, NameMixin):
@@ -90,11 +92,16 @@ class IrradiationTbl(Base, NameMixin):
 
 
 class IrradiationPositionTbl(Base, BaseMixin):
-    idirradiationpositionTbl = Column(Integer, primary_key=True)
-    identifier = Column(String(80), primary_key=True)
+    idirradiationpositionTbl = Column(Integer, primary_key=True, autoincrement=True)
+    identifier = Column(String(80))
     sampleID = Column(Integer, ForeignKey('SampleTbl.idsampleTbl'))
     levelID = Column(Integer, ForeignKey('LevelTbl.idlevelTbl'))
-
+    position = Column(Integer)
+    analyses = relationship('AnalysisTbl', backref='irradiation_position')
+    note = Column(BLOB)
+    weight = Column(Float)
+    j = Column(Float)
+    j_err = Column(Float)
 
 class MassSpectrometerTbl(Base, BaseMixin):
     name = Column(String(45), primary_key=True)

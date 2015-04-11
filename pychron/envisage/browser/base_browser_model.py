@@ -533,7 +533,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
                     self.use_low_post = False
 
             names = [ni.name for ni in new]
-            self.debug('selected projects={}'.format(names))
+            self.debug('bbmodel selected projects={}'.format(names))
             if not isrecent:
                 self._load_project_date_range(names)
 
@@ -642,7 +642,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         if self.use_workspace:
             return self.workspace.index_db
         else:
-            return self.manager.db
+            return self.manager.dvc.db
 
     # persistence
     @property
