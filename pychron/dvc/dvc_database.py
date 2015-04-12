@@ -15,18 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import os
-
-from sqlalchemy import not_, func
 from traits.api import HasTraits, Str, List
 from traitsui.api import View, Item
-
-
 # ============= standard library imports ========================
+import os
+from sqlalchemy import not_, func
 # ============= local library imports  ==========================
 from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, Base, MassSpectrometerTbl, IrradiationTbl, LevelTbl, SampleTbl, \
     MaterialTbl, IrradiationPositionTbl, UserTbl, ExtractDeviceTbl, LoadTbl, LoadHolderTbl, LoadPositionTbl
+from pychron.dvc.rsync import rsync_push, rsync_pull
 from pychron.paths import paths
 
 
@@ -78,6 +76,14 @@ class DVCDatabase(DatabaseAdapter):
 
             if not self.get_users():
                 self.add_user('root')
+
+    def push(self):
+        remote = '129.138.12.160'
+        rsync_push(self.path, remote=remote, user=self.username)
+
+    def pull(self):
+        remote = '129.138.12.160'
+        rsync_pull(self.path, remote=remote, user=self.username)
 
     def add_load_holder(self, name):
         a = LoadHolderTbl(name=name)

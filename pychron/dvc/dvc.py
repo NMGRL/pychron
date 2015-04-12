@@ -16,7 +16,6 @@
 
 # ============= enthought library imports =======================
 import os
-import subprocess
 
 from git import Repo
 from traits.api import Instance
@@ -34,49 +33,6 @@ from pychron.loggable import Loggable
 from pychron.paths import paths
 
 
-def get_rsync_command(push, **kw):
-    remote = kw.get('remote')
-    ssh_port = kw.get('port')
-    ssh_user = kw.get('user')
-    options = kw.get('options')
-    cmd = ['rsync', '--from0', '--files-from=-']
-    rshopts = []
-    for v, f in ((ssh_user, '-l'), (ssh_port, '-p')):
-        if v:
-            rshopts.append(f)
-            rshopts.append(v)
-    if rshopts:
-        cmd.append('--rsh=ssh {}'.format(' '.join(rshopts)))
-    if options:
-        cmd.extend(options.split(' '))
-
-    src = './'
-    dest = '{}/'.format(remote)
-    if push:
-        cmd.append(src)
-        cmd.append(dest)
-    else:
-        cmd.append(dest)
-        cmd.append(src)
-
-    return cmd
-
-
-def rsync_pull(paths, **kw):
-    return _rsync(False, paths, **kw)
-
-
-def rsync_push(paths, **kw):
-    return _rsync(True, paths, **kw)
-
-
-def _rsync(paths, **kw):
-    cmd = get_rsync_command(**kw)
-
-    p = subprocess.Popen(cmd, stdin=subprocess.PIPE)
-    p.communicate(input='\x00'.join(paths))
-
-
 class DVC(Loggable):
     db = Instance('pychron.dvc.dvc_database.DVCDatabase')
     meta_repo = Instance('pychron.dvc.meta_repo.MetaRepo')
@@ -85,30 +41,25 @@ class DVC(Loggable):
 
     def __init__(self, *args, **kw):
         super(DVC, self).__init__(*args, **kw)
-        self.db.connect()
+
         self.synchronize()
 
-    def synchronize(self):
+        self.db.connect()
+        self._defaults()
+
+    def synchronize(self, pull=True):
         """
         pull meta_repo changes
 
         rsync the database
         :return:
         """
-        with self.db.session_ctx():
-            for tag, func in (('irradiation holders', self._add_default_irradiation_holders),
-                              ('productions', self._add_default_irradiation_productions),
-                              ('load holders', self._add_default_load_holders)):
-                d = os.path.join(self.meta_repo.path, tag.replace(' ', '_'))
-                if not os.path.isdir(d):
-                    os.mkdir(d)
-                    if self.auto_add:
-                        func()
-                    elif self.confirmation_dialog('You have no {}. Would you like to add some defaults?'.format(tag)):
-                        func()
-
-                        # self.meta_repo.pull()
-                        # rsync_pull()
+        if pull:
+            self.meta_repo.pull()
+            self.db.pull()
+        else:
+            self.meta_repo.push()
+            self.db.push()
 
     def commit_db(self, msg=None):
         pass
@@ -193,6 +144,19 @@ class DVC(Loggable):
         self.meta_repo.update_chronology(name, doses)
 
     # private
+    def _defaults(self):
+        with self.db.session_ctx():
+            for tag, func in (('irradiation holders', self._add_default_irradiation_holders),
+                              ('productions', self._add_default_irradiation_productions),
+                              ('load holders', self._add_default_load_holders)):
+                d = os.path.join(self.meta_repo.path, tag.replace(' ', '_'))
+                if not os.path.isdir(d):
+                    os.mkdir(d)
+                    if self.auto_add:
+                        func()
+                    elif self.confirmation_dialog('You have no {}. Would you like to add some defaults?'.format(tag)):
+                        func()
+
     def _add_default_irradiation_productions(self):
         ds = (('TRIGA.txt', TRIGA),)
         self._add_defaults(ds, 'productions')
