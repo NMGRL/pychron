@@ -26,7 +26,7 @@ from traitsui.api import View, Item
 # ============= local library imports  ==========================
 from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, Base, MassSpectrometerTbl, IrradiationTbl, LevelTbl, SampleTbl, \
-    MaterialTbl, IrradiationPositionTbl, UserTbl, ExtractDeviceTbl, LoadTbl
+    MaterialTbl, IrradiationPositionTbl, UserTbl, ExtractDeviceTbl, LoadTbl, LoadHolderTbl, LoadPositionTbl
 from pychron.paths import paths
 
 
@@ -76,6 +76,20 @@ class DVCDatabase(DatabaseAdapter):
                             self.add_mass_spectrometer(nv.name, nv.kind)
                             break
 
+            if not self.get_users():
+                self.add_user('root')
+
+    def add_load_holder(self, name):
+        a = LoadHolderTbl(name=name)
+        return self._add_item(a)
+
+    def add_load(self, name, holder):
+        a = LoadTbl(name=name, holderName=holder)
+        return self._add_item(a)
+
+    def add_user(self, name, **kw):
+        a = UserTbl(name=name, **kw)
+        return self._add_item(a)
 
     def add_analysis(self, **kw):
         a = AnalysisTbl(**kw)
@@ -127,7 +141,22 @@ class DVCDatabase(DatabaseAdapter):
         a.level = self.get_irradiation_level(irrad, level)
         return self._add_item(a)
 
+    def add_load_position(self, ln, position, weight=0, note=''):
+        a = LoadPositionTbl(identifier=ln, position=position, weight=weight, note=note)
+        return self._add_item(a)
+
     # single getters
+    def get_loadtable(self, name=None):
+        if name is not None:
+            lt = self._retrieve_item(LoadTbl, name)
+        else:
+            with self.session_ctx() as s:
+                q = s.query(LoadTbl)
+                q = q.order_by(LoadTbl.create_date.desc())
+                lt = self._query_first(q)
+
+        return lt
+
     def get_identifier(self, identifier):
         return self._retrieve_item(IrradiationPositionTbl, identifier, key='identifier')
 
@@ -147,10 +176,11 @@ class DVCDatabase(DatabaseAdapter):
     def get_irradiation_level(self, irrad, name):
         with self.session_ctx() as sess:
             irrad = self.get_irradiation(irrad)
-            q = sess.query(LevelTbl)
-            q = q.filter(LevelTbl.irradiationID == irrad.idirradiationTbl)
-            q = q.filter(LevelTbl.name == name)
-            return self._query_one(q)
+            if irrad:
+                q = sess.query(LevelTbl)
+                q = q.filter(LevelTbl.irradiationID == irrad.idirradiationTbl)
+                q = q.filter(LevelTbl.name == name)
+                return self._query_one(q)
 
     def get_irradiation(self, name):
         return self._retrieve_item(IrradiationTbl, name)
@@ -177,7 +207,14 @@ class DVCDatabase(DatabaseAdapter):
             q = q.order_by(func.abs(IrradiationPositionTbl.identifier).desc())
             return self._query_first(q)
 
+    def get_latest_load(self):
+        return self._retrieve_first(LoadTbl, order_by=LoadTbl.create_date.desc())
+
     # multi getters
+    def get_load_holders(self):
+        with self.session_ctx():
+            return [ni.name for ni in self._retrieve_items(LoadHolderTbl)]
+
     def get_last_identifiers(self, sample=None, limit=1000, excludes=None):
         with self.session_ctx() as sess:
             q = sess.query(IrradiationPositionTbl)

@@ -23,8 +23,11 @@ from traits.api import Instance
 
 
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.filetools import remove_extension
+from pychron.dvc.defaults import TRIGA, HOLDER_24_SPOKES, LASER221, LASER65
 from pychron.dvc.dvc_database import DVCDatabase
 from pychron.dvc.meta_repo import MetaRepo
 from pychron.loggable import Loggable
@@ -80,6 +83,11 @@ class DVC(Loggable):
     clear_db = False
     auto_add = False
 
+    def __init__(self, *args, **kw):
+        super(DVC, self).__init__(*args, **kw)
+        self.db.connect()
+        self.synchronize()
+
     def synchronize(self):
         """
         pull meta_repo changes
@@ -87,8 +95,20 @@ class DVC(Loggable):
         rsync the database
         :return:
         """
-        self.meta_repo.pull()
-        rsync_pull()
+        with self.db.session_ctx():
+            for tag, func in (('irradiation holders', self._add_default_irradiation_holders),
+                              ('productions', self._add_default_irradiation_productions),
+                              ('load holders', self._add_default_load_holders)):
+                d = os.path.join(self.meta_repo.path, tag.replace(' ', '_'))
+                if not os.path.isdir(d):
+                    os.mkdir(d)
+                    if self.auto_add:
+                        func()
+                    elif self.confirmation_dialog('You have no {}. Would you like to add some defaults?'.format(tag)):
+                        func()
+
+                        # self.meta_repo.pull()
+                        # rsync_pull()
 
     def commit_db(self, msg=None):
         pass
@@ -103,12 +123,13 @@ class DVC(Loggable):
         # try:
         # self.meta_repo.shell('update_index', '--assume-unchanged', path)
         # except:
-        #     self.meta_repo.add(path, commit=False)
+        # self.meta_repo.add(path, commit=False)
         #
         # self.meta_repo.commit(msg)
 
     def session_ctx(self):
         return self.db.session_ctx()
+
 
     def _db_default(self):
         return DVCDatabase(clear=self.clear_db, auto_add=self.auto_add)
@@ -128,12 +149,23 @@ class DVC(Loggable):
     def get_irradiation(self, name):
         return self.db.get_irradiation(name)
 
+    def get_load_holder_holes(self, name):
+        return self.meta_repo.get_load_holder_holes(name)
+
+    # adders db
     def add_material(self, name):
-        self.db.add_material(name)
+        with self.db.session_ctx():
+            self.db.add_material(name)
 
     def add_sample(self, name, project, material):
-        self.db.add_sample(name, project, material)
+        with self.db.session_ctx():
+            self.db.add_sample(name, project, material)
 
+    def add_irradiation_level(self, *args):
+        with self.db.session_ctx():
+            self.db.add_irradiation_level(*args)
+
+    # adders db and repo
     def add_project(self, name):
         with self.db.session_ctx():
             self.db.add_project(name)
@@ -151,12 +183,45 @@ class DVC(Loggable):
         self.meta_repo.add_irradiation(name)
         self.meta_repo.add_chronology(name, doses)
 
-    def add_irradiation_level(self, *args):
+    def add_load_holder(self, name, path_or_txt):
         with self.db.session_ctx():
-            self.db.add_irradiation_level(*args)
+            self.db.add_load_holder(name)
+        self.meta_repo.add_load_holder(name, path_or_txt)
 
+    # updaters
     def update_chronology(self, name, doses):
         self.meta_repo.update_chronology(name, doses)
+
+    # private
+    def _add_default_irradiation_productions(self):
+        ds = (('TRIGA.txt', TRIGA),)
+        self._add_defaults(ds, 'productions')
+
+    def _add_default_irradiation_holders(self):
+        ds = (('24Spokes.txt', HOLDER_24_SPOKES),)
+        self._add_defaults(ds, 'irradiation_holders', )
+
+    def _add_default_load_holders(self):
+        ds = (('221.txt', LASER221),
+              ('65.txt', LASER65))
+        self._add_defaults(ds, 'load_holders', self.db.add_load_holder)
+
+    def _add_defaults(self, defaults, root, dbfunc=None):
+        commit = False
+        repo = self.meta_repo
+        for name, txt in defaults:
+            p = os.path.join(repo.path, root, name)
+            if not os.path.isfile(p):
+                with open(p, 'w') as wfile:
+                    wfile.write(txt)
+                repo.add(p, commit=False)
+                commit = True
+                if dbfunc:
+                    name = remove_extension(name)
+                    dbfunc(name)
+
+        if commit:
+            repo.commit('added default {}'.format(root.replace('_', ' ')))
 
 # ============= EOF =============================================
 

@@ -20,7 +20,7 @@ from sqlalchemy.sql.schema import ForeignKey
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
-from sqlalchemy import Column, Integer, String, TIMESTAMP, Float, BLOB
+from sqlalchemy import Column, Integer, String, TIMESTAMP, Float, BLOB, func, Boolean
 
 Base = declarative_base()
 
@@ -119,6 +119,37 @@ class UserTbl(Base, BaseMixin):
 
 class LoadTbl(Base, BaseMixin):
     name = Column(String(45), primary_key=True)
+    create_date = Column(TIMESTAMP, default=func.now())
+    holderName = Column(String(45), ForeignKey('LoadHolderTbl.name'))
+    loaded_positions = relationship('LoadPositionTbl', backref='load')
+    measured_positions = relationship('MeasuredPositionTbl', backref='load')
+
+
+class LoadHolderTbl(Base, BaseMixin):
+    name = Column(String(45), primary_key=True)
+    loads = relationship('LoadTbl', backref='holder')
+
+
+class LoadPositionTbl(Base, BaseMixin):
+    idloadpositionTbl = Column(Integer, primary_key=True)
+    identifier = Column(String(45), ForeignKey('IrradiationPositionTbl.identifier'))
+    position = Column(Integer)
+    loadName = Column(String(45), ForeignKey('LoadTbl.name'))
+    weight = Column(Float)
+    note = Column(BLOB)
+
+
+class MeasuredPositionTbl(Base, BaseMixin):
+    idmeasuredpositionTbl = Column(Integer, primary_key=True)
+    position = Column(Integer)
+    x = Column(Float)
+    y = Column(Float)
+    z = Column(Float)
+
+    is_degas = Column(Boolean)
+    analysisID = Column(Integer, ForeignKey('AnalysisTbl.idanalysisTbl'))
+    loadName = Column(String(45), ForeignKey('LoadTbl.name'))
+
 # ============= EOF =============================================
 
 

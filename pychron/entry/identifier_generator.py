@@ -57,8 +57,8 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
 
     level_offset = Int(0)
     offset = Int(5)
-    mon_start = CInt
-    unk_start = CInt
+    mon_start = CInt(5000)
+    unk_start = CInt(1000)
 
     pattributes = ('level_offset', 'offset')
     persistence_path = 'identifier_generator'
@@ -75,7 +75,6 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
         if unklns:
             self.unk_maxs = get_maxs(unklns)
 
-        print self.unk_maxs
         info = self.edit_traits(view=View(Item('offset'), Item('level_offset'),
                                           Item('mon_start', label='Starting Monitor L#',
                                                editor=ComboboxEditor(name='mon_maxs')),

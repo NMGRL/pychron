@@ -57,16 +57,19 @@ class LoadingPlugin(BaseTaskPlugin):
                             task_group='experiment')]
 
     def _service_offers_default(self):
+
         load = self.service_offer_factory(protocol=LoadDockPane,
                                           factory=LoadDockPane)
         table = self.service_offer_factory(protocol=LoadTablePane,
                                            factory=LoadTablePane)
         man = self.service_offer_factory(protocol=LoadingManager,
-                                         factory=LoadingManager)
+                                         factory=LoadingManager,
+                                         properties={'application': self.application})
+
         return [load, table, man]
 
     def _load_task_factory(self):
-        return LoadingTask(manager=LoadingManager())
+        return LoadingTask(manager=LoadingManager(application=self.application))
 
     def _preferences_panes_default(self):
         return [LoadingPreferencesPane]

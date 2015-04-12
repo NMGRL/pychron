@@ -19,8 +19,8 @@ from datetime import datetime
 import os
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+import shutil
 from pychron.core.helpers.filetools import list_directory2, ilist_directory2
-from pychron.dvc.defaults import TRIGA, HOLDER_24_SPOKES
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths
 
@@ -78,7 +78,8 @@ class Production(MetaObject):
         self.note = rfile.read()
 
 
-class IrradiationHolder(MetaObject):
+class BaseHolder(MetaObject):
+    holes = None
     def _load_hook(self, path, rfile):
         holes = []
 
@@ -99,27 +100,19 @@ class IrradiationHolder(MetaObject):
         self.holes = holes
 
 
+class LoadHolder(BaseHolder):
+    pass
+
+
+class IrradiationHolder(BaseHolder):
+    pass
+
+
 class MetaRepo(GitRepoManager):
     def __init__(self, auto_add=False, *args, **kw):
         super(MetaRepo, self).__init__(*args, **kw)
         self.path = paths.meta_dir
         self.open_repo(self.path)
-
-        d = os.path.join(self.path, 'irradiation_holders')
-        if not os.path.isdir(d):
-            os.mkdir(d)
-            if auto_add:
-                self._add_default_irradiation_holders()
-            elif self.confirmation_dialog('You have no irradiation holders. Would you like to add some defaults?'):
-                self._add_default_irradiation_holders()
-
-        d = os.path.join(self.path, 'productions')
-        if not os.path.isdir(d):
-            os.mkdir(d)
-            if auto_add:
-                self._add_default_irradiation_productions()
-            elif self.confirmation_dialog('You have no irradiation productions. Would you like to add some defaults?'):
-                self._add_default_irradiation_productions()
 
     def update_production(self, prod, irradiation=None):
         # ip = db.get_irradiation_production(prod.name)
@@ -149,6 +142,14 @@ class MetaRepo(GitRepoManager):
 
     def add_irradiation(self, name):
         os.mkdir(os.path.join(self.path, name))
+
+    def add_load_holder(self, name, path_or_txt):
+        p = os.path.join(self.path, 'load_holders', name)
+        if os.path.isfile(path_or_txt):
+            shutil.copyfile(path_or_txt, p)
+        else:
+            with open(p, 'w') as wfile:
+                wfile.write(path_or_txt)
 
     def update_chronology(self, name, doses):
         p = self._chron_name(name)
@@ -180,33 +181,10 @@ class MetaRepo(GitRepoManager):
         holder = IrradiationHolder(p)
         return holder.holes
 
-    # private
-    def _add_default_irradiation_productions(self):
-        commit = False
-        for name, txt in (('TRIGA.txt', TRIGA),):
-            p = os.path.join(self.path, 'productions', name)
-            if not os.path.isfile(p):
-                with open(p, 'w') as wfile:
-                    wfile.write(txt)
-                self.add(p, commit=False)
-                commit = True
-
-        if commit:
-            self.commit('added default irradiation productions')
-
-    def _add_default_irradiation_holders(self):
-
-        commit = False
-        for name, txt in (('24Spokes.txt', HOLDER_24_SPOKES),):
-            p = os.path.join(self.path, 'irradiation_holders', name)
-            if not os.path.isfile(p):
-                with open(p, 'w') as wfile:
-                    wfile.write(txt)
-                self.add(p, commit=False)
-                commit = True
-
-        if commit:
-            self.commit('added default irradiation holders')
+    def get_load_holder_holes(self, name):
+        p = os.path.join(self.path, 'load_holders', '{}.txt'.format(name))
+        holder = LoadHolder(p)
+        return holder.holes
 
 # ============= EOF =============================================
 

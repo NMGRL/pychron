@@ -27,13 +27,13 @@ from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.progress import open_progress
 from pychron.database.defaults import load_irradiation_map
+from pychron.dvc.dvc_irradiationable import DVCIrradiationable
 from pychron.entry.editors.irradiation_editor import IrradiationEditor
 from pychron.entry.editors.level_editor import LevelEditor, load_holder_canvas
 from pychron.entry.loaders.irradiation_loader import XLSIrradiationLoader
 from pychron.entry.irradiation_pdf_writer import IrradiationPDFWriter, LabbookPDFWriter
 from pychron.entry.irradiation_table_view import IrradiationTableView
 from pychron.entry.identifier_generator import IdentifierGenerator
-from pychron.loggable import Loggable
 from pychron.paths import paths
 # from pychron.entry.irradiation import Irradiation
 # from pychron.entry.level import Level, load_holder_canvas, iter_geom
@@ -69,7 +69,7 @@ class dirty_ctx(object):
         self._p.suppress_dirty = False
 
 
-class LabnumberEntry(Loggable):
+class LabnumberEntry(DVCIrradiationable):
     # db = Instance('pychron.dvc.dvc_database.DVCDatabase', ())
     # meta_repo = Instance('pychron.dvc.meta_repo.MetaRepo', ())
     # db = Property
@@ -79,14 +79,7 @@ class LabnumberEntry(Loggable):
     # irradiation = DelegatesTo('db')
     # irradiations = DelegatesTo('db')
 
-    dvc = Instance('pychron.dvc.dvc.DVC')
 
-    level = Str
-    levels = Property(depends_on='irradiation, updated')
-    irradiation = Str
-    irradiations = Property(depends_on='updated')
-
-    updated = Event
     use_dvc = Bool
 
     irradiation_tray = Str
@@ -280,7 +273,7 @@ class LabnumberEntry(Loggable):
             return True
 
     def generate_identifiers(self):
-        self.warning('GENERATE LABNUMBERS DISABLED')
+        # self.warning('GENERATE LABNUMBERS DISABLED')
         # return
 
         if self.check_monitor_name():
@@ -741,27 +734,6 @@ THIS CHANGE CANNOT BE UNDONE')
 
     def _get_edit_level_enabled(self):
         return self.level is not None
-
-    @cached_property
-    def _get_irradiations(self):
-        with self.dvc.db.session_ctx():
-            irs = self.dvc.db.get_irradiations()
-            names = [i.name for i in irs]
-            if names:
-                self.irradiation = names[0]
-            return names
-
-    @cached_property
-    def _get_levels(self):
-        with self.dvc.db.session_ctx():
-            irrad = self.dvc.db.get_irradiation(self.irradiation)
-            if irrad:
-                names = [li.name for li in irrad.levels]
-                if names:
-                    self.level = names[0]
-                return names
-            else:
-                return []
 
     # handlers
     @on_trait_change('irradiated_positions:+')
