@@ -21,6 +21,8 @@ import subprocess
 from git import Repo
 from traits.api import Instance
 
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.dvc.dvc_database import DVCDatabase
@@ -76,7 +78,7 @@ class DVC(Loggable):
     db = Instance('pychron.dvc.dvc_database.DVCDatabase')
     meta_repo = Instance('pychron.dvc.meta_repo.MetaRepo')
     clear_db = False
-    auto_add = True
+    auto_add = False
 
     def synchronize(self):
         """

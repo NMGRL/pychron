@@ -92,7 +92,7 @@ class IrradiationTbl(Base, NameMixin):
 
 
 class IrradiationPositionTbl(Base, BaseMixin):
-    idirradiationpositionTbl = Column(Integer, primary_key=True, autoincrement=True)
+    idirradiationpositionTbl = Column(Integer, primary_key=True)
     identifier = Column(String(80))
     sampleID = Column(Integer, ForeignKey('SampleTbl.idsampleTbl'))
     levelID = Column(Integer, ForeignKey('LevelTbl.idlevelTbl'))
@@ -103,11 +103,22 @@ class IrradiationPositionTbl(Base, BaseMixin):
     j = Column(Float)
     j_err = Column(Float)
 
+
 class MassSpectrometerTbl(Base, BaseMixin):
     name = Column(String(45), primary_key=True)
     kind = Column(String(45))
 
 
+class ExtractDeviceTbl(Base, BaseMixin):
+    name = Column(String(45), primary_key=True)
+
+
+class UserTbl(Base, BaseMixin):
+    name = Column(String(45), primary_key=True)
+
+
+class LoadTbl(Base, BaseMixin):
+    name = Column(String(45), primary_key=True)
 # ============= EOF =============================================
 
 

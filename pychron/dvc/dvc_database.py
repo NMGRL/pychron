@@ -17,14 +17,16 @@
 # ============= enthought library imports =======================
 import os
 
+from sqlalchemy import not_, func
 from traits.api import HasTraits, Str, List
 from traitsui.api import View, Item
+
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, Base, MassSpectrometerTbl, IrradiationTbl, LevelTbl, SampleTbl, \
-    MaterialTbl, IrradiationPositionTbl
+    MaterialTbl, IrradiationPositionTbl, UserTbl, ExtractDeviceTbl, LoadTbl
 from pychron.paths import paths
 
 
@@ -165,7 +167,48 @@ class DVCDatabase(DatabaseAdapter):
 
             return self._query_one(q)
 
+    def get_last_identifier(self, sample=None):
+        with self.session_ctx() as sess:
+            q = sess.query(IrradiationPositionTbl)
+            if sample:
+                q = q.join(SampleTbl)
+                q = q.filter(SampleTbl.name == sample)
+
+            q = q.order_by(func.abs(IrradiationPositionTbl.identifier).desc())
+            return self._query_first(q)
+
     # multi getters
+    def get_last_identifiers(self, sample=None, limit=1000, excludes=None):
+        with self.session_ctx() as sess:
+            q = sess.query(IrradiationPositionTbl)
+            if sample:
+                q = q.join(SampleTbl)
+                q = q.filter(SampleTbl.name == sample)
+                if excludes:
+                    q = q.filter(not_(SampleTbl.name.in_(excludes)))
+            elif excludes:
+                q = q.join(SampleTbl)
+                q = q.filter(not_(SampleTbl.name.in_(excludes)))
+            q = q.filter(IrradiationPositionTbl.identifier.isnot(None))
+            q = q.order_by(func.abs(IrradiationPositionTbl.identifier).desc())
+            q = q.limit(limit)
+            return [ni.identifier for ni in self._query_all(q, verbose_query=True)]
+
+    def get_loads(self):
+        with self.session_ctx():
+            loads = self._retrieve_items(LoadTbl)
+            return [ui.name for ui in loads]
+
+    def get_extraction_devices(self):
+        with self.session_ctx():
+            eds = self._retrieve_items(ExtractDeviceTbl)
+            return [ui.name for ui in eds]
+
+    def get_users(self):
+        with self.session_ctx():
+            users = self._retrieve_items(UserTbl)
+            return [ui.name for ui in users]
+
     def get_material_names(self):
         with self.session_ctx():
             names = self._retrieve_items(MaterialTbl)

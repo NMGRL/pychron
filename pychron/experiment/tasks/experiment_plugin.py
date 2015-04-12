@@ -19,7 +19,6 @@ from envisage.ui.tasks.task_factory import TaskFactory
 from pyface.tasks.action.schema import SGroup
 from pyface.tasks.action.schema_addition import SchemaAddition
 from envisage.ui.tasks.task_extension import TaskExtension
-from pyface.action.group import Group
 from traits.api import Instance
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -37,8 +36,6 @@ from pychron.experiment.tasks.experiment_actions import NewExperimentQueueAction
     DeselectAction, SendTestNotificationAction, \
     NewPatternAction, OpenPatternAction, ResetQueuesAction, OpenLastExperimentQueueAction, UndoAction, \
     QueueConditionalsAction, ConfigureEditorTableAction, SystemConditionalsAction, ResetSystemHealthAction
-from pychron.file_defaults import EXPERIMENT_DEFAULTS
-from pychron.paths import paths
 
 
 class ExperimentPlugin(BaseTaskPlugin):
@@ -162,10 +159,12 @@ class ExperimentPlugin(BaseTaskPlugin):
         plugin = ip.get_plugin('Experiment', category='general')
         mode = ip.get_parameter(plugin, 'mode')
 
-        manager = self.application.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
+        # manager = self.application.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
+        dvc = self.application.get_service('pychron.dvc.dvc.DVC')
 
         exp = Experimentor(application=self.application,
-                           manager=manager,
+                           dvc=dvc,
+                           # manager=manager,
                            mode=mode)
 
         return exp

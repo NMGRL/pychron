@@ -298,8 +298,9 @@ class LabnumberEntry(Loggable):
                                          overwrite=overwrite,
                                          db=self.dvc.db)
                 if lg.setup():
-                    prog = self.open_progress()
+                    prog = open_progress(10)
                     lg.generate_identifiers(prog, overwrite)
+                    prog.close()
                     self._update_level()
 
     def preview_generate_identifiers(self):
@@ -310,8 +311,9 @@ class LabnumberEntry(Loggable):
                                  overwrite=True,
                                  db=self.dvc.db)
         if lg.setup():
-            prog = self.open_progress()
+            prog = open_progress(10)
             lg.preview(prog, self.irradiated_positions, self.irradiation, self.level)
+            prog.close()
             self.refresh_table = True
 
     def check_monitor_name(self):
@@ -409,7 +411,7 @@ class LabnumberEntry(Loggable):
                 if ln:
                     dbpos2 = db.get_identifier(ln)
                     if dbpos2:
-                        irradname = dbpos2.level.irrad.name
+                        irradname = dbpos2.level.irradiation.name
                         if irradname != self.irradiation:
                             self.warning_dialog('Labnumber {} already exists '
                                                 'in Irradiation {}'.format(ln, irradname))
