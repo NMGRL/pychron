@@ -16,16 +16,46 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import Bool
-from traitsui.api import View, Item
+from traits.api import Bool, Str, on_trait_change, CInt
+from traitsui.api import View, Item, HGroup, VGroup, ListStrEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
+from pychron.envisage.icon_button_editor import icon_button_editor
+from pychron.envisage.tasks.base_preferences_helper import FavoritesPreferencesHelper, \
+    FavoritesAdapter
 
 
-class DVCPreferences(BasePreferencesHelper):
+class DVCPreferences(FavoritesPreferencesHelper):
     preferences_path = 'pychron.dvc'
     enabled = Bool
+    rsync_user = Str
+    rsync_port = CInt(22)
+    rsync_remote = Str
+    rsync_options = Str
+
+    def _get_attrs(self):
+        return ['fav_name',
+                'rsync_user', 'rsync_remote', 'rsync_port', 'rsync_options']
+
+    def _get_values(self):
+        return [self.fav_name,
+                self.rsync_user, self.rsync_remote, self.rsync_port, self.rsync_options]
+
+    @on_trait_change('rsync+')
+    def attribute_changed(self, name, new):
+
+        if self.favorites:
+            attrs = self._get_attrs()
+            for i, fastr in enumerate(self.favorites):
+                vs = fastr.split(',')
+                if vs[0] == self.fav_name:
+                    aind = attrs.index(name)
+                    fa = fastr.split(',')
+                    fa[aind] = new
+                    fastr = ','.join(map(str, fa))
+                    self.favorites[i] = fastr
+                    self.selected = fastr
+                    break
 
 
 class DVCPreferencesPane(PreferencesPane):
@@ -33,7 +63,31 @@ class DVCPreferencesPane(PreferencesPane):
     category = 'DVC'
 
     def traits_view(self):
-        v = View(Item('enabled', tooltip='Use the DVC backend instead of the central database'))
+        fav_grp = VGroup(Item('fav_name',
+                              show_label=False),
+                         Item('favorites',
+                              show_label=False,
+                              width=100,
+                              editor=ListStrEditor(
+                                  editable=False,
+                                  adapter=FavoritesAdapter(),
+                                  selected='object.selected')),
+                         HGroup(
+                             icon_button_editor('add_favorite', 'add',
+                                                tooltip='Add saved connection'),
+                             icon_button_editor('delete_favorite', 'delete',
+                                                tooltip='Delete saved connection')))
+        conn_grp = VGroup(Item('rsync_remote'),
+                          Item('rsync_user'),
+                          Item('rsync_port'),
+                          Item('rsync_options')
+                          )
+        cgrp = VGroup(HGroup(fav_grp, conn_grp),
+                      show_border=True,
+                      label='Connections')
+        ggrp = VGroup(Item('enabled', tooltip='Use the DVC backend instead of the central database'), label='General',
+                      show_border=True)
+        v = View(VGroup(ggrp, cgrp))
         return v
 
 # ============= EOF =============================================

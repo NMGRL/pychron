@@ -70,15 +70,6 @@ class dirty_ctx(object):
 
 
 class LabnumberEntry(DVCIrradiationable):
-    # db = Instance('pychron.dvc.dvc_database.DVCDatabase', ())
-    # meta_repo = Instance('pychron.dvc.meta_repo.MetaRepo', ())
-    # db = Property
-
-    # level = DelegatesTo('db')
-    # levels = DelegatesTo('db')
-    # irradiation = DelegatesTo('db')
-    # irradiations = DelegatesTo('db')
-
 
     use_dvc = Bool
 

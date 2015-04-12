@@ -284,7 +284,12 @@ class GitRepoManager(Loggable):
             fetch and merge
         """
         repo = self._repo
-        remote = self._get_remote(remote)
+        try:
+            remote = self._get_remote(remote)
+        except AttributeError, e:
+            print 'repo man pull', e
+            return
+        
         if remote:
             try:
                 repo.git.pull(remote, branch)

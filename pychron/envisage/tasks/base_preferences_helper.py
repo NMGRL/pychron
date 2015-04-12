@@ -167,7 +167,7 @@ class FavoritesPreferencesHelper(BasePreferencesHelper):
 
     def _add_favorite_fired(self):
         if self.fav_name:
-            fv = ','.join(self._get_values())
+            fv = ','.join(map(str, self._get_values()))
             pf = next((f for f in self.favorites
                        if f.split(',')[0] == self.fav_name), None)
             if pf:

@@ -15,21 +15,42 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import HasTraits, Str, CInt
+from apptools.preferences.preference_binding import bind_preference
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 import subprocess
 
 
+class RsyncMixin(HasTraits):
+    rsync_user = Str
+    rsync_port = CInt(22)
+    rsync_remote = Str
+    rsync_options = Str
+    path = Str
+
+    def _bind_preferences(self):
+        prefid = 'pychron.dvc'
+        for r in ('rsync_user', 'rsync_remote', 'rsync_port', 'rsync_options'):
+            bind_preference(self, r, '{}.{}'.format(prefid, r))
+
+    def push(self):
+        rsync_push(self.path, remote=self.rsync_remote, user=self.rsync_user)
+
+    def pull(self):
+        rsync_pull(self.path, remote=self.rsync_remote, user=self.rsync_user)
+
+
 def rsync_pull(paths, **kw):
-    return _rsync(False, paths, **kw)
+    return _rsync(paths, False, **kw)
 
 
 def rsync_push(paths, **kw):
-    return _rsync(True, paths, **kw)
+    return _rsync(paths, True, **kw)
 
 
-def _rsync(paths, **kw):
-    cmd = _get_rsync_command(**kw)
+def _rsync(paths, push_pull, **kw):
+    cmd = _get_rsync_command(push_pull, **kw)
 
     p = subprocess.Popen(cmd, stdin=subprocess.PIPE)
     p.communicate(input='\x00'.join(paths))
