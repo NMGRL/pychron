@@ -15,16 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import json
 import os
-import urllib2
+
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Str, Bool, List
-from traitsui.api import View, Item, EnumEditor, TextEditor, VGroup
+from traitsui.api import View, Item, EnumEditor, VGroup
+
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper, remote_status_item, \
+from pychron.envisage.tasks.base_preferences_helper import remote_status_item, \
     GitRepoPreferencesHelper
 
 
@@ -41,10 +41,12 @@ class UpdatePreferencesHelper(GitRepoPreferencesHelper):
 
     def _get_branches(self, new):
         try:
-            cmd = 'https://api.github.com/repos/{}/branches'.format(new)
-            doc = urllib2.urlopen(cmd)
-            bs = [branch['name'] for branch in json.load(doc)]
+            # cmd = 'https://api.github.com/repos/{}/branches'.format(new)
+            # doc = urllib2.urlopen(cmd)
+            # bs = [branch['name'] for branch in json.load(doc)]
+            from pychron.github import get_branches
 
+            bs = get_branches(new)
             from git import Repo
             from pychron.paths import paths
 

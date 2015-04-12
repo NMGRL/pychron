@@ -15,20 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import os
-
-from git import Repo
-from traits.api import Instance
-
-
-
-
+from traits.api import Instance, Str
+from apptools.preferences.preference_binding import bind_preference
 # ============= standard library imports ========================
+import os
+from git import Repo
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import remove_extension
 from pychron.dvc.defaults import TRIGA, HOLDER_24_SPOKES, LASER221, LASER65
 from pychron.dvc.dvc_database import DVCDatabase
 from pychron.dvc.meta_repo import MetaRepo
+from pychron.github import Organization
 from pychron.loggable import Loggable
 from pychron.paths import paths
 
@@ -39,13 +36,23 @@ class DVC(Loggable):
     clear_db = False
     auto_add = False
 
+    repo_root = Str
+    repo_user = Str
+    repo_password = Str
+
     def __init__(self, *args, **kw):
         super(DVC, self).__init__(*args, **kw)
+        self._bind_preferences()
 
         self.synchronize()
 
         self.db.connect()
         self._defaults()
+
+    def _bind_preferences(self):
+        prefid = 'pychron.dvc'
+        for attr in ('repo_root', 'repo_user', 'repo_password'):
+            bind_preference(self, attr, '{}.{}'.format(prefid, attr))
 
     def synchronize(self, pull=True):
         """
@@ -80,7 +87,6 @@ class DVC(Loggable):
 
     def session_ctx(self):
         return self.db.session_ctx()
-
 
     def _db_default(self):
         return DVCDatabase(clear=self.clear_db, auto_add=self.auto_add)
@@ -118,6 +124,14 @@ class DVC(Loggable):
 
     # adders db and repo
     def add_project(self, name):
+        org = Organization(self.repo_root, usr=self.repo_user, pwd=self.repo_password)
+
+        # check if project is available
+        # repos = get_organization_repositiories(self.repo_root)
+        if name in org.repos:
+            self.warning_dialog('Project "{}" already exists'.format(name))
+            return
+
         with self.db.session_ctx():
             self.db.add_project(name)
 
@@ -125,7 +139,12 @@ class DVC(Loggable):
         os.mkdir(p)
         repo = Repo.init(p)
 
+        # add project to github
+        # org.create_repo(name, auto_init=True)
+
         # setup remotes
+        # url = 'https://github.com/{}/'.format(self.repo_root, name)
+        # repo.create_remote('origin', url)
 
     def add_irradiation(self, name, doses=None):
         with self.db.session_ctx():

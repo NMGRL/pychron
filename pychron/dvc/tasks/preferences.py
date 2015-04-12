@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import Bool, Str, on_trait_change, CInt
+from traits.api import Bool, Str, on_trait_change, CInt, Password
 from traitsui.api import View, Item, HGroup, VGroup, ListStrEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -33,15 +33,21 @@ class DVCPreferences(FavoritesPreferencesHelper):
     rsync_remote = Str
     rsync_options = Str
 
+    repo_root = Str
+    repo_user = Str
+    repo_password = Password
+
     def _get_attrs(self):
         return ['fav_name',
-                'rsync_user', 'rsync_remote', 'rsync_port', 'rsync_options']
+                'rsync_user', 'rsync_remote', 'rsync_port', 'rsync_options',
+                'repo_root', 'repo_user', 'repo_password']
 
     def _get_values(self):
         return [self.fav_name,
-                self.rsync_user, self.rsync_remote, self.rsync_port, self.rsync_options]
+                self.rsync_user, self.rsync_remote, self.rsync_port, self.rsync_options,
+                self.repo_root, self.repo_user, self.repo_password]
 
-    @on_trait_change('rsync+')
+    @on_trait_change('rsync+, repo+')
     def attribute_changed(self, name, new):
 
         if self.favorites:
@@ -87,7 +93,11 @@ class DVCPreferencesPane(PreferencesPane):
                       label='Connections')
         ggrp = VGroup(Item('enabled', tooltip='Use the DVC backend instead of the central database'), label='General',
                       show_border=True)
-        v = View(VGroup(ggrp, cgrp))
+        rgrp = VGroup(Item('repo_root'),
+                      Item('repo_user'),
+                      Item('repo_password'),
+                      label='Repo', show_border=True)
+        v = View(VGroup(ggrp, rgrp, cgrp))
         return v
 
 # ============= EOF =============================================

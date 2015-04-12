@@ -15,11 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+# ============= standard library imports ========================
 from datetime import datetime
 import os
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 import shutil
+# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_directory2, ilist_directory2
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths
@@ -80,6 +80,7 @@ class Production(MetaObject):
 
 class BaseHolder(MetaObject):
     holes = None
+
     def _load_hook(self, path, rfile):
         holes = []
 
