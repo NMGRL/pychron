@@ -79,7 +79,7 @@ class LabnumberEntry(Loggable):
     # irradiation = DelegatesTo('db')
     # irradiations = DelegatesTo('db')
 
-    dvc = Instance('pychron.dvc.dvc.DVC', ())
+    dvc = Instance('pychron.dvc.dvc.DVC')
 
     level = Str
     levels = Property(depends_on='irradiation, updated')
@@ -152,6 +152,19 @@ class LabnumberEntry(Loggable):
 
         bind_preference(self, 'use_dvc', 'pychron.dvc.enabled')
 
+    def activated(self):
+        if not self.irradiations:
+            self.dvc.add_irradiation('NM-300')
+            self.dvc.add_irradiation_level('A', 'NM-300', '24Spokes')
+
+            with self.dvc.session_ctx():
+                self.dvc.add_project('Foo')
+            with self.dvc.session_ctx():
+                self.dvc.add_material('san')
+            with self.dvc.session_ctx():
+                self.dvc.add_sample('bar01', 'Foo', 'san')
+            self.updated = True
+
     def transfer_j(self):
         items = self.selected
         if not items:
@@ -198,7 +211,7 @@ class LabnumberEntry(Loggable):
     # def set_selected_sample(self, new):
     # self.selected_sample = new
     # self.set_selected_attr(new.name, 'sample')
-    #     #self.canvas.selected_samples=new
+    # #self.canvas.selected_samples=new
 
     def select_positions(self, freq, eoflag):
         positions = self.irradiated_positions
@@ -644,8 +657,7 @@ THIS CHANGE CANNOT BE UNDONE')
     def _get_irradiation_editor(self, **kw):
         ie = self._irradiation_editor
         if ie is None:
-            ie = IrradiationEditor(db=self.dvc.db,
-                                   repo=self.dvc.meta_repo)
+            ie = IrradiationEditor(dvc=self.dvc)
             self._irradiation_editor = ie
         ie.trait_set(**kw)
         return ie

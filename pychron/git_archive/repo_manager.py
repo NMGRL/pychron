@@ -113,6 +113,12 @@ class GitRepoManager(Loggable):
 
         return blob.data_stream.read() if blob else ''
 
+    def shell(self, cmd, *args):
+        repo = self._repo
+
+        func = getattr(repo.git, cmd)
+        return func(*args)
+
     def truncate_repo(self, date='1 month'):
         repo = self._repo
         name = os.path.basename(self.path)
@@ -334,7 +340,7 @@ class GitRepoManager(Loggable):
 
     def revert_to_selected(self):
         # check for uncommitted changes
-        #warn user the uncommitted changes will be lost if revert now
+        # warn user the uncommitted changes will be lost if revert now
 
         commit = self.selected_commits[-1]
         self.revert(commit.hexsha, self.selected)
@@ -420,7 +426,7 @@ class GitRepoManager(Loggable):
 
         self.refresh_commits_table_needed = True
 
-    #handlers
+    # handlers
     def _selected_fired(self, new):
         if new:
             self._selected_hook(new)
@@ -448,7 +454,7 @@ if __name__ == '__main__':
     # ============= EOF =============================================
     # repo manager protocol
     # def get_local_changes(self, repo=None):
-    #     repo = self._get_repo(repo)
+    # repo = self._get_repo(repo)
     #     diff_str = repo.git.diff('--full-index')
     #     patches = map(str.strip, diff_str.split('diff --git'))
     #     patches = ['\n'.join(p.split('\n')[2:]) for p in patches[1:]]

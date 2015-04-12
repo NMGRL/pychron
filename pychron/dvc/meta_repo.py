@@ -37,6 +37,15 @@ class MetaObject(object):
 class Chronology(MetaObject):
     _doses = None
 
+    @classmethod
+    def dump(cls, path, doses):
+        if doses is None:
+            doses = []
+
+        with open(path, 'w') as wfile:
+            for ds in doses:
+                wfile.write('{}\n'.format(','.join(ds)))
+
     def _load_hook(self, path, rfile):
         self._doses = []
         d = 0
@@ -91,7 +100,7 @@ class IrradiationHolder(MetaObject):
 
 
 class MetaRepo(GitRepoManager):
-    def __init__(self, *args, **kw):
+    def __init__(self, auto_add=False, *args, **kw):
         super(MetaRepo, self).__init__(*args, **kw)
         self.path = paths.meta_dir
         self.open_repo(self.path)
@@ -99,13 +108,17 @@ class MetaRepo(GitRepoManager):
         d = os.path.join(self.path, 'irradiation_holders')
         if not os.path.isdir(d):
             os.mkdir(d)
-            if self.confirmation_dialog('You have no irradiation holders. Would you like to add some defaults?'):
+            if auto_add:
+                self._add_default_irradiation_holders()
+            elif self.confirmation_dialog('You have no irradiation holders. Would you like to add some defaults?'):
                 self._add_default_irradiation_holders()
 
         d = os.path.join(self.path, 'productions')
         if not os.path.isdir(d):
             os.mkdir(d)
-            if self.confirmation_dialog('You have no irradiation productions. Would you like to add some defaults?'):
+            if auto_add:
+                self._add_default_irradiation_productions()
+            elif self.confirmation_dialog('You have no irradiation productions. Would you like to add some defaults?'):
                 self._add_default_irradiation_productions()
 
     def update_production(self, prod, irradiation=None):
@@ -128,24 +141,25 @@ class MetaRepo(GitRepoManager):
         self.add(p, commit=False)
         self.commit('updated production {}'.format(prod.name))
 
-    def add_chronology(self, irrad, chron):
+    def add_chronology(self, irrad, doses):
         p = os.path.join(self.path, irrad, 'chronology.txt')
-        with open(p, 'w') as wfile:
-            for dose in chron.dosages:
-                power = str(dose.power)
-                start = dose.start()
-                end = dose.end()
-                wfile.write('{}\n'.format(','.join([power, start, end])))
-
-        self.add(p)
+        Chronology.dump(p, doses)
+        self.add(p, commit=False)
         self.commit('Added chronology to {}'.format(irrad))
 
     def add_irradiation(self, name):
         os.mkdir(os.path.join(self.path, name))
 
+    def update_chronology(self, name, doses):
+        p = self._chron_name(name)
+        Chronology.dump(p, doses)
+
     def get_chronology(self, name):
-        p = os.path.join(self.path, name, 'chronology.txt')
+        p = self._chron_name(name)
         return Chronology(p)
+
+    def _chron_name(self, name):
+        return os.path.join(self.path, name, 'chronology.txt')
 
     def get_irradiation_holder_names(self):
         return list_directory2(os.path.join(self.path, 'irradiation_holders'),

@@ -15,38 +15,38 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import os
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.dvc.dvc_persister import DVCPersister, DVCDatabase
-from pychron.dvc.meta_repo import MetaRepo
+from pychron.dvc.dvc import DVC
+from pychron.dvc.dvc_persister import DVCPersister
 from pychron.dvc.tasks.preferences import DVCPreferencesPane
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
-from pychron.paths import paths
 
 
 class DVCPlugin(BaseTaskPlugin):
     def _service_offers_default(self):
         so = self.service_offer_factory(protocol=DVCPersister,
                                         factory=DVCPersister)
-        so1 = self.service_offer_factory(protocol=DVCDatabase,
-                                         factory=DVCDatabase)
-        so2 = self.service_offer_factory(protocol=MetaRepo,
-                                         factory=MetaRepo)
-        return [so, so1, so2]
+        # so1 = self.service_offer_factory(protocol=DVCDatabase,
+        # factory=DVCDatabase)
+        # so2 = self.service_offer_factory(protocol=MetaRepo,
+        #                                  factory=MetaRepo)
+        so2 = self.service_offer_factory(protocol=DVC,
+                                         factory=DVC)
+        return [so, so2]
 
     def _preferences_panes_default(self):
         return [DVCPreferencesPane]
 
-    def start(self):
-        add = not os.path.isfile(paths.meta_db)
-
-        db = DVCDatabase()
-        repo = MetaRepo()
-
-        if add:
-            repo.add(db.path, commit=False)
-            repo.commit('added {}'.format(db.path))
+    # def start(self):
+    #     add = not os.path.isfile(paths.meta_db)
+        #
+        # db = DVCDatabase()
+        #     repo = MetaRepo()
+        #
+        #     if add:
+        #         repo.add(db.path, commit=False)
+        #         repo.commit('added {}'.format(db.path))
 
 # ============= EOF =============================================
 

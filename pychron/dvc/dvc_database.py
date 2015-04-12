@@ -49,24 +49,31 @@ class DVCDatabase(DatabaseAdapter):
     level = Str
     levels = List
 
-    def __init__(self, *args, **kw):
+    def __init__(self, clear=False, auto_add=False, *args, **kw):
         super(DVCDatabase, self).__init__(*args, **kw)
 
         self.path = paths.meta_db
         self.connect()
+
+        if clear and os.path.isfile(self.path):
+            os.remove(self.path)
 
         if not os.path.isfile(self.path):
             self.create_all(Base.metadata)
 
         with self.session_ctx():
             if not self.get_mass_spectrometers():
-                while 1:
-                    self.information_dialog('No Mass spectrometer in the database. Add one now')
-                    nv = NewMassSpectrometerView()
-                    info = nv.edit_traits()
-                    if info.result:
-                        self.add_mass_spectrometer(nv.name, nv.kind)
-                        break
+                if auto_add:
+                    self.add_mass_spectrometer('Jan', 'ArgusVI')
+                else:
+                    while 1:
+                        self.information_dialog('No Mass spectrometer in the database. Add one now')
+                        nv = NewMassSpectrometerView(name='Jan', kind='ArgusVI')
+                        info = nv.edit_traits()
+                        if info.result:
+                            self.add_mass_spectrometer(nv.name, nv.kind)
+                            break
+
 
     def add_analysis(self, **kw):
         a = AnalysisTbl(**kw)
@@ -96,7 +103,7 @@ class DVCDatabase(DatabaseAdapter):
         a = IrradiationTbl(name=name)
         return self._add_item(a)
 
-    def add_irradiation_level(self, name, irradiation, holder, z, note):
+    def add_irradiation_level(self, name, irradiation, holder, z=0, note=''):
         irradiation = self.get_irradiation(irradiation)
         a = LevelTbl(name=name,
                      irradiation=irradiation,
@@ -171,7 +178,7 @@ class DVCDatabase(DatabaseAdapter):
             else:
                 kw = self._append_filters(ProjectTbl.name == project, kw)
             kw = self._append_joins(ProjectTbl, kw)
-        return self._retrieve_items(SampleTbl, **kw)
+        return self._retrieve_items(SampleTbl, verbose_query=False, **kw)
 
     def get_irradiations(self, names=None, **kw):
 

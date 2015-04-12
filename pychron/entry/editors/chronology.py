@@ -56,6 +56,10 @@ class IrradiationDosage(HasTraits):
     def make_blob(self):
         return '{}|{} {}%{} {}'.format(self.power, self.start_date, self.start_time,
                                        self.end_date, self.end_time)
+
+    def to_tuple(self):
+        return str(self.power), self.start(), self.end()
+
         # def validate_dosage(self, prev_dose):
         #     if self.start_date is None:
         #         return 'Start date not set'
@@ -94,6 +98,9 @@ class IrradiationChronology(HasTraits):
                                      end_time=e.time(), power=p)
 
         self.dosages = map(dose_factory, ds)
+
+    def get_doses(self):
+        return [ci.to_tuple() for ci in self.dosages]
 
     def make_blob(self):
         chronblob = '$\n'.join([ci.make_blob() for ci in self.dosages])
