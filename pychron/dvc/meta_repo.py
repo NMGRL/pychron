@@ -110,10 +110,36 @@ class IrradiationHolder(BaseHolder):
 
 
 class MetaRepo(GitRepoManager):
-    def __init__(self, auto_add=False, *args, **kw):
+    def __init__(self, *args, **kw):
         super(MetaRepo, self).__init__(*args, **kw)
         self.path = paths.meta_dir
         self.open_repo(self.path)
+
+    def update_script(self, name, path_or_blob):
+        self._update_text('scripts', name, path_or_blob)
+
+    def update_experiment_queue(self, name, path_or_blob):
+        self._update_text('experiments', name, path_or_blob)
+
+    def _update_text(self, tag, name, path_or_blob):
+        root = os.path.join(self.path, tag)
+        if not os.path.isdir(root):
+            os.mkdir(root)
+
+        p = os.path.join(root, name)
+        # action = 'updated' if os.path.isfile(p) else 'added'
+        if os.path.isfile(path_or_blob):
+            shutil.copyfile(path_or_blob, p)
+        else:
+            with open(p, 'w') as wfile:
+                wfile.write(path_or_blob)
+
+        self.add(p, commit=False)
+        # if self.has_staged():
+        # self.commit('updated {} {}'.format(tag, action, name))
+
+        # hexsha = self.shell('hash-object', '--path', p)
+        # return hexsha
 
     def update_production(self, prod, irradiation=None):
         # ip = db.get_irradiation_production(prod.name)

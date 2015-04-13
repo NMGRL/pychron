@@ -127,7 +127,6 @@ class DVC(Loggable):
         org = Organization(self.repo_root, usr=self.repo_user, pwd=self.repo_password)
 
         # check if project is available
-        # repos = get_organization_repositiories(self.repo_root)
         if name in org.repos:
             self.warning_dialog('Project "{}" already exists'.format(name))
             return
@@ -146,6 +145,8 @@ class DVC(Loggable):
         # url = 'https://github.com/{}/'.format(self.repo_root, name)
         # repo.create_remote('origin', url)
 
+        return True
+
     def add_irradiation(self, name, doses=None):
         with self.db.session_ctx():
             self.db.add_irradiation(name)
@@ -161,6 +162,21 @@ class DVC(Loggable):
     # updaters
     def update_chronology(self, name, doses):
         self.meta_repo.update_chronology(name, doses)
+
+    def update_scripts(self, name, path):
+        self.meta_repo.update_scripts(name, path)
+
+    def update_scripts(self, name, path):
+        self.meta_repo.update_experiment_queue(name, path)
+
+    def meta_commit(self, msg):
+        if self.meta_repo.has_staged():
+            self.debug('meta repo has changes')
+            self.meta_repo.report_status()
+            self.meta_repo.commit(msg)
+
+    def get_meta_head(self):
+        return self.meta_repo.get_head()
 
     # private
     def _defaults(self):

@@ -25,11 +25,9 @@ from datetime import datetime
 from uncertainties import std_dev
 from uncertainties import nominal_value
 # ============= local library imports  ==========================
-from pychron.dvc.dvc_database import DVCDatabase
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.loggable import Loggable
 from pychron.paths import paths
-
 
 
 def ydump(obj, p):
@@ -38,9 +36,10 @@ def ydump(obj, p):
 
 
 class DVCPersister(Loggable):
-    db = Instance(DVCDatabase)
+    # db = Instance(DVCDatabase)
     project_repo = Instance(GitRepoManager)
-    meta_repo = Instance(GitRepoManager)
+    # meta_repo = Instance(GitRepoManager)
+    dvc = Instance('pychron.dvc.dvc.DVC')
 
     run_spec = Instance('pychron.automated_run.automated_run_spec.AutomatedRunSpec')
     monitor = None
@@ -53,19 +52,18 @@ class DVCPersister(Loggable):
     active_detectors = List
     previous_blank_runid = Str
 
+    def __init__(self, *args, **kw):
+        super(DVCPersister, self).__init__(*args, **kw)
+        self.dvc = self.application.get_service('pychron.dvc.dvc.DVC')
+
     def initialize(self):
         """
         setup git repos.
 
         repositories are guaranteed to exist. The automated run factory clones the required projects
         on demand.
-         !!! note guaranteed at this point. during transition experiments written using centralized model
 
-        if project doesn't exist
-            create local
-            create remote (using github api?)
-
-        the meta repo is clone/updated at startup
+        synchronize the database
         :return:
         """
         project = self.run_spec.project
@@ -74,10 +72,11 @@ class DVCPersister(Loggable):
         self.info('pulling changes from project repo: {}'.format(project))
         self.project_repo.pull()
 
-        self.info('pulling changes from meta repo')
+        self.info('synchronize dvc')
+        self.dvc.synchronize()
         # self.meta_repo = GitRepoManager()
-        self.meta_repo.open_repo(paths.meta_dir)
-        self.meta_repo.pull()
+        # self.meta_repo.open_repo(paths.meta_dir)
+        # self.meta_repo.pull()
 
     def pre_extraction_save(self):
         pass
@@ -120,6 +119,8 @@ class DVCPersister(Loggable):
         push changes
         :return:
         """
+        # save meta repo
+
         # save analysis
         t = datetime.now()
         self._save_analysis(t)
@@ -148,18 +149,19 @@ class DVCPersister(Loggable):
         self.project_repo.commit('added analysis {}'.format(self.run_spec.runid))
 
         # push commit
-        self.project_repo.push()
+        # self.project_repo.push()
+        self.dvc.synchronize(pull=False)
 
     # private
     def _save_analysis_db(self, timestamp):
-        db = self.db
-        db.path = paths.meta_db
-        db.connect()
+        # db = self.db
+        # db.path = paths.meta_db
+        # db.connect()
 
         d = self._make_analysis_dict()
         d['timestamp'] = timestamp
-        with db.session_ctx():
-            db.add_analysis(**d)
+        with self.dvc.db.session_ctx():
+            self.dvc.db.add_analysis(**d)
 
     def _make_analysis_dict(self):
         rs = self.run_spec
@@ -197,6 +199,21 @@ class DVCPersister(Loggable):
         obj['isotopes'] = isos
         obj['baselines'] = bs
         obj['timestamp'] = timestamp.isoformat()
+
+        # save the scripts
+        for si in ('measurement', 'extraction'):
+            # s = getattr(self.run_spec, si)
+            name = getattr(self, '{}_name'.format(si))
+            blob = getattr(self, '{}_blob'.format(si))
+            self.dvc.update_scripts(name, blob)
+
+        # save experiment
+        self.dvc.update_experiment(self.experiment_queue_name, self.experiment_queue_blob)
+        self.dvc.meta_commit('repo updated for analysis {}'.format(self.run_spec.runid))
+
+        hexsha = self.dvc.get_meta_head()
+        obj['commit'] = hexsha
+
         ydump(obj, p)
 
     def _make_path(self, name, prefix=None, extension='.yaml'):

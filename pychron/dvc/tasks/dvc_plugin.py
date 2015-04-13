@@ -30,7 +30,7 @@ class DVCPlugin(BaseTaskPlugin):
         # so1 = self.service_offer_factory(protocol=DVCDatabase,
         # factory=DVCDatabase)
         # so2 = self.service_offer_factory(protocol=MetaRepo,
-        #                                  factory=MetaRepo)
+        # factory=MetaRepo)
         so2 = self.service_offer_factory(protocol=DVC,
                                          factory=DVC)
         return [so, so2]
@@ -38,8 +38,8 @@ class DVCPlugin(BaseTaskPlugin):
     def _preferences_panes_default(self):
         return [DVCPreferencesPane]
 
-    # def start(self):
-    #     add = not os.path.isfile(paths.meta_db)
+        # def start(self):
+        # add = not os.path.isfile(paths.meta_db)
         #
         # db = DVCDatabase()
         #     repo = MetaRepo()

@@ -32,8 +32,8 @@ class ProjectEntry(BaseEntry):
         self.info('Attempting to add Project="{}"'.format(name))
         if not dvc.get_project(name):
             self.info('added project={}'.format(name))
-            dvc.add_project(name)
-            return True
+            if dvc.add_project(name):
+                return True
         else:
             self.warning_dialog('{} already exists'.format(name))
 

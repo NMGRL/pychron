@@ -155,6 +155,11 @@ class GitRepoManager(Loggable):
         repo = self._repo
         return repo.git.diff(a, b, )
 
+    def report_status(self):
+        self.debug('Local Changes to {}'.format(self.path))
+        for p in self.get_local_changes():
+            self.debug('\t{}'.format(p))
+
     def commit_dialog(self):
         from pychron.git_archive.commit_dialog import CommitDialog
 
@@ -185,6 +190,16 @@ class GitRepoManager(Loggable):
         #
         # return index, patches
         #
+
+    def get_head(self, commit=True, hexsha=True):
+        head = self._repo
+        if commit:
+            head = head.commit
+
+        if hexsha:
+            head = head.hexsha
+        return head
+        # return self._repo.head.commit.hexsha
 
     def cmd(self, cmd, *args):
         return getattr(self._repo.git, cmd)(*args)
