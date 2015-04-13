@@ -27,7 +27,8 @@ class RsyncMixin(HasTraits):
     rsync_port = CInt(22)
     rsync_remote = Str
     rsync_options = Str
-    path = Str
+    lpath = Str
+    rpath = Str
 
     def _bind_preferences(self):
         prefid = 'pychron.dvc'
@@ -35,51 +36,72 @@ class RsyncMixin(HasTraits):
             bind_preference(self, r, '{}.{}'.format(prefid, r))
 
     def push(self):
-        rsync_push(self.path, remote=self.rsync_remote, user=self.rsync_user)
+        rsync_push(self.lpath, self.rpath,
+                   True,
+                   remote=self.rsync_remote, user=self.rsync_user)
 
     def pull(self):
-        rsync_pull(self.path, remote=self.rsync_remote, user=self.rsync_user)
+        rsync_pull(self.lpath, self.rpath,
+                   False,
+                   remote=self.rsync_remote, user=self.rsync_user)
 
 
-def rsync_pull(paths, **kw):
-    return _rsync(paths, False, **kw)
+def rsync_pull(lpath, rpath, **kw):
+    """
+    return true if successful
+
+    :param lpath:
+    :param rpath:
+    :param kw:
+    :return:
+    """
+    return _rsync(lpath, rpath, False, **kw)
 
 
-def rsync_push(paths, **kw):
-    return _rsync(paths, True, **kw)
+def rsync_push(lpath, rpath, **kw):
+    """
+    return true if successful
+
+    :param lpath:
+    :param rpath:
+    :param kw:
+    :return:
+    """
+    return _rsync(lpath, rpath, True, **kw)
 
 
-def _rsync(paths, push_pull, **kw):
-    cmd = _get_rsync_command(push_pull, **kw)
+def _rsync(lpath, rpath, push_pull, **kw):
+    cmd = _get_rsync_command(lpath, rpath, push_pull, **kw)
+    r = subprocess.check_call(cmd)
+    return not r
 
-    p = subprocess.Popen(cmd, stdin=subprocess.PIPE)
-    p.communicate(input='\x00'.join(paths))
 
+def _get_rsync_command(lpath, rpath, push, remote=None, port=None, user=None, options=None):
+    if remote:
+        if port:
+            rpath = '{}@{}:{}'.format(user, remote, rpath)
+        else:
+            rpath = '{}@{}:{}/{}'.format(user, remote, port, rpath)
 
-def _get_rsync_command(push, remote=None, port=None, user=None, options=None):
-    cmd = ['rsync', '--from0', '--files-from=-']
-    rshopts = []
-    for v, f in ((user, '-l'), (port, '-p')):
-        if v:
-            rshopts.append(f)
-            rshopts.append(v)
-    if rshopts:
-        cmd.append('--rsh=ssh {}'.format(' '.join(rshopts)))
-    if options:
-        cmd.extend(options.split(' '))
-
-    src = './'
-    dest = '{}/'.format(remote)
     if push:
-        cmd.append(src)
-        cmd.append(dest)
+        cmd = ['rsync', '-a', lpath, rpath]
     else:
-        cmd.append(dest)
-        cmd.append(src)
+        cmd = ['rsync', '-a', rpath, lpath]
 
     return cmd
 
 
+if __name__ == '__main__':
+    lpath = '/Users/ross/Sandbox/payload.txt'
+    rpath = '/Users/ross/Sandbox/payload.dropoff.txt'
+    with open(lpath, 'w') as wfile:
+        wfile.write('This it the paylasdfasdfoad')
+
+    rsync_push(lpath, rpath)
+
+    with open(rpath, 'w') as wfile:
+        wfile.write('Nooooooooo this is the payload')
+    rsync_pull(lpath, rpath)
 # ============= EOF =============================================
 
 

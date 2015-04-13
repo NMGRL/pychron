@@ -63,10 +63,9 @@ class DVC(Loggable):
         """
         if pull:
             self.meta_repo.pull()
-            self.db.pull()
+            self.db.connect(force=True)
         else:
             self.meta_repo.push()
-            self.db.push()
 
     def commit_db(self, msg=None):
         pass
@@ -110,6 +109,14 @@ class DVC(Loggable):
         return self.meta_repo.get_load_holder_holes(name)
 
     # adders db
+    def add_analysis(self, **kw):
+        with self.db.session_ctx():
+            self.db.add_material(**kw)
+
+    def add_measured_position(self, *args, **kw):
+        with self.db.session_ctx():
+            self.db.add_measured_position(*args, **kw)
+
     def add_material(self, name):
         with self.db.session_ctx():
             self.db.add_material(name)

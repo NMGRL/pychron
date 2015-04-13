@@ -948,9 +948,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         arun.persister.datahub = self.datahub
         arun.persister.experiment_identifier = exp.database_identifier
         arun.persister.load_name = exp.load_name
+
         arun.use_dvc = self.use_dvc
         if self.use_dvc:
             arun.dvc_persister = self.application.get_service('pychron.dvc.dvc_persister.DVCPersister')
+            arun.dvc_persister.load_name = exp.load_name
 
         mon = self.monitor
         if mon is not None:

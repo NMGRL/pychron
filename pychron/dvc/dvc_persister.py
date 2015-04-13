@@ -43,7 +43,6 @@ class DVCPersister(Loggable):
 
     run_spec = Instance('pychron.automated_run.automated_run_spec.AutomatedRunSpec')
     monitor = None
-
     save_enabled = False
     spec_dict = Dict
     defl_dict = Dict
@@ -51,6 +50,7 @@ class DVCPersister(Loggable):
 
     active_detectors = List
     previous_blank_runid = Str
+    load_name = Str
 
     def __init__(self, *args, **kw):
         super(DVCPersister, self).__init__(*args, **kw)
@@ -119,11 +119,11 @@ class DVCPersister(Loggable):
         push changes
         :return:
         """
-        # save meta repo
 
         # save analysis
         t = datetime.now()
         self._save_analysis(t)
+
         self._save_analysis_db(t)
 
         # save monitor
@@ -149,19 +149,41 @@ class DVCPersister(Loggable):
         self.project_repo.commit('added analysis {}'.format(self.run_spec.runid))
 
         # push commit
-        # self.project_repo.push()
         self.dvc.synchronize(pull=False)
 
     # private
     def _save_analysis_db(self, timestamp):
-        # db = self.db
-        # db.path = paths.meta_db
-        # db.connect()
 
         d = self._make_analysis_dict()
         d['timestamp'] = timestamp
-        with self.dvc.db.session_ctx():
-            self.dvc.db.add_analysis(**d)
+
+        dvc = self.dvc
+        with dvc.session_ctx():
+            dvc.add_analysis(**d)
+            self._save_measured_positions()
+
+    def _save_measured_positions(self):
+        dvc = self.dvc
+        for i, pp in enumerate(self.positions):
+            if isinstance(pp, tuple):
+                if len(pp) > 1:
+                    if len(pp) == 3:
+                        dvc.add_measured_position('', self.load_name, x=pp[0], y=pp[1], z=pp[2])
+                    else:
+                        dvc.add_measured_position('', self.load_name, x=pp[0], y=pp[1])
+                else:
+                    dvc.add_measured_position(pp[0], self.load_name)
+
+            else:
+                dbpos = dvc.add_measured_position(pp, self.load_name)
+                try:
+                    ep = self.extraction_positions[i]
+                    dbpos.x = ep[0]
+                    dbpos.y = ep[1]
+                    if len(ep) == 3:
+                        dbpos.z = ep[2]
+                except IndexError:
+                    self.debug('no extraction position for {}'.format(pp))
 
     def _make_analysis_dict(self):
         rs = self.run_spec
@@ -202,14 +224,13 @@ class DVCPersister(Loggable):
 
         # save the scripts
         for si in ('measurement', 'extraction'):
-            # s = getattr(self.run_spec, si)
             name = getattr(self, '{}_name'.format(si))
             blob = getattr(self, '{}_blob'.format(si))
             self.dvc.update_scripts(name, blob)
 
         # save experiment
         self.dvc.update_experiment(self.experiment_queue_name, self.experiment_queue_blob)
-        self.dvc.meta_commit('repo updated for analysis {}'.format(self.run_spec.runid))
+        self.dvc.meta_commit('repo updated for analysis {}'.format(self.runid))
 
         hexsha = self.dvc.get_meta_head()
         obj['commit'] = hexsha

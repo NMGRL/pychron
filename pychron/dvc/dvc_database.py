@@ -23,8 +23,8 @@ from sqlalchemy import not_, func
 # ============= local library imports  ==========================
 from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, Base, MassSpectrometerTbl, IrradiationTbl, LevelTbl, SampleTbl, \
-    MaterialTbl, IrradiationPositionTbl, UserTbl, ExtractDeviceTbl, LoadTbl, LoadHolderTbl, LoadPositionTbl
-from pychron.dvc.rsync import RsyncMixin
+    MaterialTbl, IrradiationPositionTbl, UserTbl, ExtractDeviceTbl, LoadTbl, LoadHolderTbl, LoadPositionTbl, \
+    MeasuredPositionTbl
 from pychron.paths import paths
 
 
@@ -41,7 +41,23 @@ class NewMassSpectrometerView(HasTraits):
         return v
 
 
-class DVCDatabase(DatabaseAdapter, RsyncMixin):
+class DVCDatabase(DatabaseAdapter):
+    """
+    mysql2sqlite
+    https://gist.github.com/esperlu/943776
+
+
+    update local database
+    when pushing
+    1. pull remote database file and merge with local
+       a. pull remote to path.remote (rsync remote path.remote)
+       b. create merged database at path.merge
+       c. rsync path.merge path
+    2. push local to remote
+       a. rsync lpath remote
+
+
+    """
     kind = 'sqlite'
 
     irradiation = Str
@@ -54,6 +70,9 @@ class DVCDatabase(DatabaseAdapter, RsyncMixin):
 
         self._bind_preferences()
         self.path = paths.meta_db
+        # self.synced_path = '{}.sync'.format(paths.meta_db)
+        # self.merge_path = '{}.merge'.format(paths.meta_db)
+        # self.remote_path = '/var/pychronmeta.sqlite'
         self.connect()
 
         if clear and os.path.isfile(self.path):
@@ -77,6 +96,14 @@ class DVCDatabase(DatabaseAdapter, RsyncMixin):
 
             if not self.get_users():
                 self.add_user('root')
+
+    def add_measured_position(self, position=None, load=None, **kw):
+        a = MeasuredPositionTbl(**kw)
+        if position:
+            a.position = position
+        if load:
+            a.loadName = load
+        return self._add_item(a)
 
     def add_load_holder(self, name):
         a = LoadHolderTbl(name=name)
