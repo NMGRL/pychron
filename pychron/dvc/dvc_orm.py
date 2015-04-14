@@ -34,6 +34,9 @@ class BaseMixin(object):
 class NameMixin(BaseMixin):
     name = Column(String(80))
 
+    def __repr__(self):
+        return '{}<{}>'.format(self.__class__.__name__, self.name)
+
 
 class AnalysisTbl(Base, BaseMixin):
     idanalysisTbl = Column(Integer, primary_key=True)
@@ -102,6 +105,11 @@ class IrradiationPositionTbl(Base, BaseMixin):
     weight = Column(Float)
     j = Column(Float)
     j_err = Column(Float)
+
+
+    @property
+    def irradiation_position(self):
+        return self
 
 
 class MassSpectrometerTbl(Base, BaseMixin):

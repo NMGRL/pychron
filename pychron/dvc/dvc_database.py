@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from sqlalchemy.sql.functions import count
 from traits.api import HasTraits, Str, List
 from traitsui.api import View, Item
 # ============= standard library imports ========================
@@ -22,6 +23,7 @@ import os
 from sqlalchemy import not_, func
 # ============= local library imports  ==========================
 from pychron.database.core.database_adapter import DatabaseAdapter
+from pychron.database.core.query import compile_query
 from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, Base, MassSpectrometerTbl, IrradiationTbl, LevelTbl, SampleTbl, \
     MaterialTbl, IrradiationPositionTbl, UserTbl, ExtractDeviceTbl, LoadTbl, LoadHolderTbl, LoadPositionTbl, \
     MeasuredPositionTbl
@@ -68,7 +70,7 @@ class DVCDatabase(DatabaseAdapter):
     def __init__(self, clear=False, auto_add=False, *args, **kw):
         super(DVCDatabase, self).__init__(*args, **kw)
 
-        self._bind_preferences()
+        # self._bind_preferences()
         self.path = paths.meta_db
         # self.synced_path = '{}.sync'.format(paths.meta_db)
         # self.merge_path = '{}.merge'.format(paths.meta_db)
@@ -129,12 +131,15 @@ class DVCDatabase(DatabaseAdapter):
         return a
 
     def add_sample(self, name, project, material):
+        # self.debug('ADDING SAMPLE {},{},{}'.format(name,project,material))
         a = self.get_sample(name, project)
         if a is None:
             a = SampleTbl(name=name)
             a.project = self.get_project(project)
             a.material = self.get_material(material)
             a = self._add_item(a)
+        # else:
+        # self.debug('SAMPLE {},{} ALREADY EXISTS'.format(name,project))
         return a
 
     def add_mass_spectrometer(self, name, kind):
@@ -170,6 +175,53 @@ class DVCDatabase(DatabaseAdapter):
     def add_load_position(self, ln, position, weight=0, note=''):
         a = LoadPositionTbl(identifier=ln, position=position, weight=weight, note=note)
         return self._add_item(a)
+
+    # special getters
+    def get_labnumber_analyses(self, *args, **kw):
+        return [], 0
+
+    def get_project_date_range(self, names):
+        with self.session_ctx() as sess:
+            q = sess.query(AnalysisTbl.timestamp)
+            q = q.join(IrradiationPositionTbl, SampleTbl, ProjectTbl)
+            q = q.filter(ProjectTbl.name.in_(names))
+
+            asc = AnalysisTbl.timestamp.asc()
+            desc = AnalysisTbl.timestamp.desc()
+            return self._get_date_range(q, asc, desc)
+
+    def get_project_labnumbers(self, project_names, filter_non_run, low_post=None, high_post=None,
+                               analysis_types=None, mass_spectrometers=None):
+        with self.session_ctx() as sess:
+            q = sess.query(IrradiationPositionTbl)
+            q = q.join(SampleTbl, ProjectTbl)
+            # filter_non_run = False
+            if filter_non_run:
+                if mass_spectrometers or analysis_types or low_post or high_post:
+                    q = q.join(AnalysisTbl)
+
+                if mass_spectrometers:
+                    if not hasattr(mass_spectrometers, '__iter__'):
+                        mass_spectrometers = (mass_spectrometers,)
+                    q = q.filter(AnalysisTbl.mass_spectrometer.name.in_(mass_spectrometers))
+
+                if analysis_types:
+                    q = q.filter(AnalysisTbl.analysistype.in_(analysis_types))
+                    project_names.append('references')
+
+                q = q.group_by(IrradiationPositionTbl.identifier)
+                q = q.having(count(AnalysisTbl.idanalysisTbl) > 0)
+                if low_post:
+                    q = q.filter(AnalysisTbl.timestamp > low_post)
+                if high_post:
+                    q = q.filter(AnalysisTbl.timestamp < high_post)
+
+            q = q.filter(ProjectTbl.name.in_(project_names))
+            self.debug(compile_query(q))
+            return self._query_all(q)
+
+    def get_analysis_groups(self, **kw):
+        return []
 
     # single getters
     def get_loadtable(self, name=None):
@@ -218,7 +270,10 @@ class DVCDatabase(DatabaseAdapter):
         with self.session_ctx() as sess:
             q = sess.query(SampleTbl)
             q = q.join(ProjectTbl)
-            q = q.filter(ProjectTbl.name == project)
+
+            project = self.get_project(project)
+
+            q = q.filter(SampleTbl.project == project)
             q = q.filter(SampleTbl.name == name)
 
             return self._query_one(q)
@@ -286,7 +341,9 @@ class DVCDatabase(DatabaseAdapter):
             kw = self._append_joins(ProjectTbl, kw)
         return self._retrieve_items(SampleTbl, verbose_query=False, **kw)
 
-    def get_irradiations(self, names=None, **kw):
+    def get_irradiations(self, names=None, order_func='desc',
+                         project_names=None,
+                         mass_spectrometers=None, **kw):
 
         if names is not None:
             if hasattr(names, '__call__'):
@@ -294,19 +351,52 @@ class DVCDatabase(DatabaseAdapter):
             else:
                 f = (IrradiationTbl.name.in_(names),)
             kw = self._append_filters(f, kw)
+        if project_names:
+            kw = self._append_filters(ProjectTbl.name.in_(project_names), kw)
+            kw = self._append_joins((LevelTbl, IrradiationPositionTbl, SampleTbl), kw)
 
-        return self._retrieve_items(IrradiationTbl, **kw)
+        if mass_spectrometers:
+            kw = self._append_filters(AnalysisTbl.mass_spectrometer.name.in_(mass_spectrometers), kw)
+            kw = self._append_joins(LevelTbl, IrradiationPositionTbl, AnalysisTbl, kw)
 
-    def get_projects(self, order=None):
-        if order == 'asc':
-            order = ProjectTbl.name.asc()
-        elif order == 'desc':
-            order = ProjectTbl.name.desc()
+        order = None
+        if order_func:
+            order = getattr(IrradiationTbl.name, order_func)()
 
-        return self._retrieve_items(ProjectTbl, order=order)
+        return self._retrieve_items(IrradiationTbl, order=order, **kw)
+
+    def get_projects(self, irradiation=None, level=None, mass_spectrometers=None, order=None):
+
+        if order:
+            order = getattr(ProjectTbl.name, order)()
+
+        if irradiation or mass_spectrometers:
+            with self.session_ctx() as sess:
+                q = sess.query(ProjectTbl)
+                q = q.join(SampleTbl, IrradiationPositionTbl)
+                if irradiation:
+                    q = q.join(LevelTbl, IrradiationPositionTbl)
+                    q = q.filter(LevelTbl.name == level)
+                    q = q.filter(IrradiationTbl.name == irradiation)
+
+                else:
+                    if not hasattr(mass_spectrometers, '__iter__'):
+                        mass_spectrometers = (mass_spectrometers, )
+
+                    q = q.join(AnalysisTbl)
+
+                    q = q.filter(AnalysisTbl.mass_spectrometer.in_(mass_spectrometers))
+                    if order:
+                        q = q.order_by(order)
+                ps = self._query_all(q)
+        else:
+            ps = self._retrieve_items(ProjectTbl, order=order)
+        return ps
 
     def get_mass_spectrometers(self):
         return self._retrieve_items(MassSpectrometerTbl)
+
+        # private
 
 # ============= EOF =============================================
 

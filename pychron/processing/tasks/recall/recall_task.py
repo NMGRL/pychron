@@ -246,8 +246,8 @@ class RecallTask(AnalysisEditTask):
         return panes
 
     def activated(self):
-        if globalv.recall_debug:
-            self.manager.set_xml_dataset()
+        # if globalv.recall_debug:
+        # self.manager.set_xml_dataset()
 
         super(RecallTask, self).activated()
 

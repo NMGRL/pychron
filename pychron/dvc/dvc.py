@@ -30,6 +30,17 @@ from pychron.loggable import Loggable
 from pychron.paths import paths
 
 
+class DVCException(BaseException):
+    def __init__(self, attr):
+        self._attr = attr
+
+    def __repr__(self):
+        return 'DVCException: neither DVCDatbase or MetaRepo have {}'.format(self._attr)
+
+    def __str__(self):
+        return self.__repr__()
+
+
 class DVC(Loggable):
     db = Instance('pychron.dvc.dvc_database.DVCDatabase')
     meta_repo = Instance('pychron.dvc.meta_repo.MetaRepo')
@@ -49,10 +60,8 @@ class DVC(Loggable):
         self.db.connect()
         self._defaults()
 
-    def _bind_preferences(self):
-        prefid = 'pychron.dvc'
-        for attr in ('repo_root', 'repo_user', 'repo_password'):
-            bind_preference(self, attr, '{}.{}'.format(prefid, attr))
+    def make_analyses(self, records):
+        print records
 
     def synchronize(self, pull=True):
         """
@@ -87,26 +96,36 @@ class DVC(Loggable):
     def session_ctx(self):
         return self.db.session_ctx()
 
-    def _db_default(self):
-        return DVCDatabase(clear=self.clear_db, auto_add=self.auto_add)
+    def __getattr__(self, item):
+        try:
+            return getattr(self.db, item)
+        except AttributeError:
+            try:
+                return getattr(self.meta_repo, item)
+            except AttributeError, e:
+                # print e, item
+                raise DVCException(item)
 
-    def _meta_repo_default(self):
-        return MetaRepo(auto_add=self.auto_add)
-
-    def get_project(self, name):
-        return self.db.get_project(name)
-
-    def get_sample(self, name, project):
-        return self.db.get_sample(name, project)
-
-    def get_material(self, name):
-        return self.db.get_material(name)
-
-    def get_irradiation(self, name):
-        return self.db.get_irradiation(name)
-
-    def get_load_holder_holes(self, name):
-        return self.meta_repo.get_load_holder_holes(name)
+    # def get_mass_spectrometers(self):
+    # return self.db.get_mass_spectrometers()
+    #
+    # def get_projects(self, **kw):
+    # return self.db.get_projects(**kw)
+    #
+    # def get_project(self, name):
+    #     return self.db.get_project(name)
+    #
+    # def get_sample(self, name, project):
+    #     return self.db.get_sample(name, project)
+    #
+    # def get_material(self, name):
+    #     return self.db.get_material(name)
+    #
+    # def get_irradiation(self, name):
+    #     return self.db.get_irradiation(name)
+    #
+    # def get_load_holder_holes(self, name):
+    #     return self.meta_repo.get_load_holder_holes(name)
 
     # adders db
     def add_analysis(self, **kw):
@@ -186,6 +205,11 @@ class DVC(Loggable):
         return self.meta_repo.get_head()
 
     # private
+    def _bind_preferences(self):
+        prefid = 'pychron.dvc'
+        for attr in ('repo_root', 'repo_user', 'repo_password'):
+            bind_preference(self, attr, '{}.{}'.format(prefid, attr))
+
     def _defaults(self):
         with self.db.session_ctx():
             for tag, func in (('irradiation holders', self._add_default_irradiation_holders),
@@ -228,6 +252,12 @@ class DVC(Loggable):
 
         if commit:
             repo.commit('added default {}'.format(root.replace('_', ' ')))
+
+    def _db_default(self):
+        return DVCDatabase(clear=self.clear_db, auto_add=self.auto_add)
+
+    def _meta_repo_default(self):
+        return MetaRepo(auto_add=self.auto_add)
 
 # ============= EOF =============================================
 

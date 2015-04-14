@@ -25,6 +25,7 @@ import re
 # ============= local library imports  ==========================
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.codetools.inspection import caller
+from pychron.core.helpers.filetools import to_bool
 from pychron.core.helpers.iterfuncs import partition
 from pychron.core.progress import progress_loader
 from pychron.database.records.isotope_record import IsotopeRecordView
@@ -641,8 +642,10 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     def _get_db(self):
         if self.use_workspace:
             return self.workspace.index_db
+        elif to_bool(self.application.preferences.get('pychron.dvc.enabled')):
+            return self.application.get_service('pychron.dvc.dvc.DVC')
         else:
-            return self.manager.dvc.db
+            return self.manager.db
 
     # persistence
     @property

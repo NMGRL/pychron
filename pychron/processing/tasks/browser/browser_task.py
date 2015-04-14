@@ -20,6 +20,7 @@ from traits.api import Any, on_trait_change, Date, Time, Instance
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
+from pychron.core.helpers.filetools import to_bool
 from pychron.envisage.tasks.editor_task import BaseEditorTask
 # from pychron.processing.selection.data_selector import DataSelector
 from pychron.processing.tasks.browser.panes import BrowserPane
@@ -63,6 +64,7 @@ class BaseBrowserTask(BaseEditorTask):
     # project_visible = Property(depends_on='filter_focus')
     default_task_name = 'Recall'
     browser_model = Instance('pychron.processing.tasks.browser.browser_model.BrowserModel')
+    dvc = Instance('pychron.dvc.dvc.DVC')
     # analysis_filter = String(enter_set=True, auto_set=False)
 
     # irradiations = List  # Property #DelegatesTo('manager')
@@ -129,6 +131,8 @@ class BaseBrowserTask(BaseEditorTask):
 
         self.browser_model.activated()
 
+        if to_bool(self.application.preferences.get('pychron.dvc.enabled')):
+            self.dvc = self.application.get_service('pychron.dvc.dvc.DVC')
         # if self.browser_model.sample_view_active:
         # self._activate_sample_browser()
         # else:

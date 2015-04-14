@@ -264,7 +264,8 @@ class ProcessingPlugin(BaseTaskPlugin):
         return InterpretedAgeTask(manager=self._processor_factory())
 
     def _browser_model_factory(self):
-        return BrowserModel(manager=self._processor_factory())
+        return BrowserModel(manager=self._processor_factory(),
+                            application=self.application)
 
     # defaults
     def _service_offers_default(self):

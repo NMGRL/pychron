@@ -93,7 +93,7 @@ class LabnumberRecordView(RecordView):
     irradiation_pos = Str
 
     def _create(self, dbrecord):
-        self.labnumber = dbrecord.identifier
+        self.labnumber = dbrecord.identifier or ''
 
         pos = dbrecord.irradiation_position
         if pos:

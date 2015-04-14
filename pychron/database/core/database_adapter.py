@@ -17,8 +17,10 @@
 # =============enthought library imports=======================
 import sys
 from threading import Lock
+from datetime import datetime, timedelta
 
 from traits.api import Password, Bool, Str, on_trait_change, Any, Property, cached_property
+
 
 
 
@@ -474,6 +476,15 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
         args['root'] = r
         args['filename'] = n
         return args
+
+    def _get_date_range(self, q, asc, desc, hours=0):
+        lan = q.order_by(asc).first()
+        han = q.order_by(desc).first()
+
+        lan = datetime.now() if not lan else lan[0]
+        han = datetime.now() if not han else han[0]
+        td = timedelta(hours=hours)
+        return lan - td, han + td
 
     def _delete_item(self, value, name=None):
         # sess = self.sess
