@@ -82,6 +82,10 @@ class DVCDatabase(DatabaseAdapter):
 
         if not os.path.isfile(self.path):
             self.create_all(Base.metadata)
+            # else:
+            # with self.session_ctx() as sess:
+            # print sess
+        # Base.metadata.init(sess.bind)
 
         with self.session_ctx():
             if not self.get_mass_spectrometers():
@@ -177,14 +181,43 @@ class DVCDatabase(DatabaseAdapter):
         return self._add_item(a)
 
     # special getters
-    def get_labnumber_analyses(self, *args, **kw):
-        return [], 0
+    def get_labnumber_analyses(self, lns,
+                               low_post=None, high_post=None,
+                               omit_key=None, exclude_uuids=None,
+                               mass_spectrometers=None, **kw):
+        with self.session_ctx() as sess:
+            q = sess.query(AnalysisTbl)
+            q = q.join(IrradiationPositionTbl)
+
+            if not hasattr(lns, '__iter__'):
+                lns = (lns, )
+            q = q.filter(IrradiationPositionTbl.identifier.in_(lns))
+
+            if low_post:
+                q = q.filter(AnalysisTbl.timestamp >= low_post)
+
+            if high_post:
+                q = q.filter(AnalysisTbl.timestamp <= high_post)
+
+            if omit_key:
+                q = q.filter(AnalysisTbl.tag != omit_key)
+
+            if exclude_uuids:
+                q = q.filter(not_(AnalysisTbl.uuid.in_(exclude_uuids)))
+
+            if mass_spectrometers:
+                if not hasattr(mass_spectrometers, '__iter__'):
+                    mass_spectrometers = (mass_spectrometers, )
+                q = q.filter(AnalysisTbl.mass_spectrometer.in_(mass_spectrometers))
+            tc = q.count()
+            return self._query_all(q), tc
 
     def get_project_date_range(self, names):
         with self.session_ctx() as sess:
             q = sess.query(AnalysisTbl.timestamp)
             q = q.join(IrradiationPositionTbl, SampleTbl, ProjectTbl)
-            q = q.filter(ProjectTbl.name.in_(names))
+            if names:
+                q = q.filter(ProjectTbl.name.in_(names))
 
             asc = AnalysisTbl.timestamp.asc()
             desc = AnalysisTbl.timestamp.desc()
@@ -203,7 +236,7 @@ class DVCDatabase(DatabaseAdapter):
                 if mass_spectrometers:
                     if not hasattr(mass_spectrometers, '__iter__'):
                         mass_spectrometers = (mass_spectrometers,)
-                    q = q.filter(AnalysisTbl.mass_spectrometer.name.in_(mass_spectrometers))
+                    q = q.filter(AnalysisTbl.mass_spectrometer.in_(mass_spectrometers))
 
                 if analysis_types:
                     q = q.filter(AnalysisTbl.analysistype.in_(analysis_types))
@@ -212,11 +245,13 @@ class DVCDatabase(DatabaseAdapter):
                 q = q.group_by(IrradiationPositionTbl.identifier)
                 q = q.having(count(AnalysisTbl.idanalysisTbl) > 0)
                 if low_post:
-                    q = q.filter(AnalysisTbl.timestamp > low_post)
+                    q = q.filter(AnalysisTbl.timestamp >= low_post)
                 if high_post:
-                    q = q.filter(AnalysisTbl.timestamp < high_post)
+                    q = q.filter(AnalysisTbl.timestamp <= high_post)
 
-            q = q.filter(ProjectTbl.name.in_(project_names))
+            if project_names:
+                q = q.filter(ProjectTbl.name.in_(project_names))
+
             self.debug(compile_query(q))
             return self._query_all(q)
 

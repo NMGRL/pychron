@@ -62,6 +62,7 @@ class DVC(Loggable):
 
     def make_analyses(self, records):
         print records
+        return records
 
     def synchronize(self, pull=True):
         """

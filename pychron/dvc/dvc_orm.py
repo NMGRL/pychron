@@ -21,6 +21,7 @@ from sqlalchemy.sql.schema import ForeignKey
 # ============= local library imports  ==========================
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy import Column, Integer, String, TIMESTAMP, Float, BLOB, func, Boolean
+from pychron.database.records.isotope_record import IsotopeRecordView
 
 Base = declarative_base()
 
@@ -42,6 +43,11 @@ class AnalysisTbl(Base, BaseMixin):
     idanalysisTbl = Column(Integer, primary_key=True)
     timestamp = Column(TIMESTAMP)
     tag = Column(String(45))
+    uuid = Column(String(32))
+    analysis_type = Column(String(45))
+    aliquot = Column(Integer)
+    increment = Column(Integer)
+
     irradiation_positionID = Column(Integer, ForeignKey('IrradiationPositionTbl.idirradiationpositionTbl'))
 
     measurementName = Column(String(45))
@@ -58,6 +64,35 @@ class AnalysisTbl(Base, BaseMixin):
 
     weight = Column(Float)
     comment = Column(String(80))
+
+    @property
+    def labnumber(self):
+        return self.irradiation_position
+
+    @property
+    def analysis_timestamp(self):
+        return self.timestamp
+
+    def record_view(self):
+        iv = IsotopeRecordView()
+        iv.extract_script_name = self.extractionName
+        iv.meas_script_name = self.measurementName
+
+        iv.identifier = self.irradiation_position.identifier
+        iv.labnumber = iv.identifier
+
+        for tag in ('aliquot', 'increment', 'tag', 'uuid',
+                    'extract_value', 'cleanup', 'duration',
+                    'mass_spectrometer',
+                    'extract_device', 'analysis_type'):
+            setattr(iv, tag, getattr(self, tag))
+
+        if self.irradiation_position.sample:
+            iv.sample = self.irradiation_position.sample.name
+            if self.irradiation_position.sample.project:
+                iv.project = self.irradiation_position.sample.project.name
+
+        return iv
 
 
 class ProjectTbl(Base, NameMixin):

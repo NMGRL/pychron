@@ -28,7 +28,6 @@ from pychron.core.codetools.inspection import caller
 from pychron.core.helpers.filetools import to_bool
 from pychron.core.helpers.iterfuncs import partition
 from pychron.core.progress import progress_loader
-from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.envisage.browser.date_selector import DateSelector
 from pychron.envisage.browser.record_views import ProjectRecordView, LabnumberRecordView, AnalysisGroupRecordView
 from pychron.core.ui.table_configurer import SampleTableConfigurer
@@ -467,7 +466,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         def func(xi, prog, i, n):
             if prog:
                 prog.change_message('Loading {}'.format(xi.record_id))
-            return IsotopeRecordView(xi)
+            return xi.record_view()
 
         return progress_loader(ans, func, threshold=25)
 

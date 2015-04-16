@@ -27,6 +27,7 @@ from traits.api import Password, Bool, Str, on_trait_change, Any, Property, cach
 
 
 
+
 # =============standard library imports ========================
 from sqlalchemy import create_engine, distinct, MetaData
 from sqlalchemy.orm import sessionmaker
@@ -484,6 +485,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
         lan = datetime.now() if not lan else lan[0]
         han = datetime.now() if not han else han[0]
         td = timedelta(hours=hours)
+
         return lan - td, han + td
 
     def _delete_item(self, value, name=None):
