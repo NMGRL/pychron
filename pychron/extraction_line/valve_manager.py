@@ -32,7 +32,6 @@ from pychron.managers.manager import Manager
 from pychron.extraction_line.explanation.explanable_item import ExplanableValve
 from pychron.hardware.valve import HardwareValve
 from pychron.paths import paths
-from pychron.pychron_constants import ALPHAS
 from pychron.extraction_line.pipettes.tracking import PipetteTracker
 from valve_parser import ValveParser
 
@@ -729,6 +728,10 @@ class ValveManager(Manager):
         if cad is not None:
             check_actuation_delay = float(cad.text.strip())
 
+        st = v_elem.find('settling_time')
+        if st is not None:
+            st = float(st.txt.strip())
+
         hv = klass(name,
                    address=address.text.strip() if address is not None else '',
                    parent=parent_name,
@@ -738,7 +741,8 @@ class ValveManager(Manager):
                    actuator=actuator,
                    description=description,
                    query_state=qs,
-                   interlocks=interlocks)
+                   interlocks=interlocks,
+                   settling_time=st or 0)
         return name, hv
 
     def _load_explanation_valve(self, v):

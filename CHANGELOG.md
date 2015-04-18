@@ -109,6 +109,9 @@ CHANGELOG
 #### 3/18/2015 ####
 *  fixed j transfer
 
+### 4/17/2015 ####
+* added settling_time option to switches/valves 
+
 
 
 2.0.6
