@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -38,18 +38,16 @@ class ReferencePoint(HasTraits):
         super(ReferencePoint, self).__init__(*args, **kw)
 
     def traits_view(self):
-        v = View(
-                 CustomLabel('help_tag',
+        v = View(CustomLabel('help_tag',
                              top_padding=10,
                              left_padding=10,
-#                             align='center',
                              color='maroon'),
                  HGroup('x', 'y'),
                  buttons=['OK', 'Cancel'],
                  kind='modal',
-                 title='Reference Point'
-                 )
+                 title='Reference Point')
         return v
+
 
 class ReferenceHole(ReferencePoint):
     hole = Property
@@ -66,18 +64,17 @@ class ReferenceHole(ReferencePoint):
     def _validate_hole(self, v):
         if v in self.valid_holes:
             return v
+
     def traits_view(self):
         v = View(
-                 CustomLabel('help_tag',
-                             top_padding=10,
-                             left_padding=10,
-#                             align='center',
-                             color='maroon'),
-                 Item('hole'),
-                 buttons=['OK', 'Cancel'],
-                 kind='modal',
-                 title='Reference Hole'
-                 )
+            CustomLabel('help_tag',
+                        top_padding=10,
+                        left_padding=10,
+                        color='maroon'),
+            Item('hole'),
+            buttons=['OK', 'Cancel'],
+            kind='modal',
+            title='Reference Hole')
         return v
 
 # ============= EOF =============================================
