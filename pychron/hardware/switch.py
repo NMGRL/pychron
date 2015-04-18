@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,9 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str, Any, Bool, Property
-
+from traits.api import Str, Any, Bool, Property, Float
 # ============= standard library imports ========================
+import time
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
 
@@ -36,6 +36,8 @@ class Switch(Loggable):
     prefix_name = 'SWITCH'
     parent = Str
     parent_inverted = Bool(False)
+
+    settling_time = Float(0)
 
     def __init__(self, name, *args, **kw):
         """
@@ -65,38 +67,10 @@ class Switch(Loggable):
         self.state = state
 
     def set_open(self, mode='normal'):
-        self.info('open mode={}'.format(mode))
-        #        current_state = copy(self.state)
-        state_change = False
-        success = True
-        if self.software_lock:
-            self._software_locked()
-        else:
-            success = self._open_()
-            if success:
-                if not self.state:
-                    state_change = True
-                self.state = True
-
-        return success, state_change
+        return self._actuate_state(self._open, mode, not self.state, True)
 
     def set_closed(self, mode='normal'):
-        self.info('close mode={}'.format(mode))
-        #        current_state = copy(self.state)
-        state_change = False
-        success = True
-        if self.software_lock:
-            self._software_locked()
-        else:
-            #            print 'pre state', self.state, current_state
-            success = self._close_()
-            if success:
-                #                print 'self.state',self.state, current_state
-                if self.state == True:
-                    state_change = True
-                self.state = False
-
-        return success, state_change
+        return self._actuate_state(self._close, mode, self.state, False)
 
     def lock(self):
         self.software_lock = True
@@ -104,30 +78,44 @@ class Switch(Loggable):
     def unlock(self):
         self.software_lock = False
 
-    def _open_(self, mode='normal'):
+    def _actuate_state(self, func, mode, cur, set_value):
         """
+            func: self._close, self._open
+            mode: normal, client
+            cur: bool, not self.state if open, self.state if close
+            set_value: open-True, close-False
         """
-        actuator = self.actuator
-        r = True
-        if mode == 'debug':
-            r = True
-        elif self.actuator is not None:
-            if mode.startswith('client'):
-                # always actuate if mode is client
-                r = True if actuator.open_channel(self) else False
-            else:
-                # dont actuate if already open
-                if self.state:
-                    r = True
-                else:
-                    r = True if actuator.open_channel(self) else False
+        self.info('close mode={}'.format(mode))
+        state_change = False
+        success = True
+        if self.software_lock:
+            self._software_locked()
+        else:
+            success = func(mode)
+            if success:
+                if cur:
+                    state_change = True
+                self.state = set_value
 
-            if actuator.simulation:
-                r = True
-        return r
+        return success, state_change
 
-    def _close_(self, mode='normal'):
+    def _open(self, mode='normal'):
         """
+        """
+        return self._act(mode, 'open_channel', not self.state)
+
+    def _close(self, mode='normal'):
+        """
+        """
+        return self._act(mode, 'close_channel', self.state)
+
+    def _act(self, mode, func, do_actuation):
+        """
+
+        :param mode:
+        :param func:
+        :param do_actuation:
+        :return:
         """
         r = True
         actuator = self.actuator
@@ -135,18 +123,18 @@ class Switch(Loggable):
             r = True
 
         elif actuator is not None:
+            func = getattr(actuator, func)
             if mode.startswith('client'):
-                print 'close', self.state
-                r = True if actuator.close_channel(self) else False
+                r = func(self)
             else:
-                # dont actuate if already closed
-                if not self.state:
-                    r = True
+                if do_actuation:
+                    r = func(self)
                 else:
-                    r = True if actuator.close_channel(self) else False
+                    r = True
 
-            if actuator.simulation:
-                r = True
+        if self.settling_time:
+            time.sleep(self.settling_time)
+
         return r
 
     def _get_actuator_name(self):
