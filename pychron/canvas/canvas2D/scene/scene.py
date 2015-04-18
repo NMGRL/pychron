@@ -31,8 +31,6 @@ from canvas_parser import CanvasParser
 #        print obj, 'asdf'
 
 
-
-
 class Scene(HasTraits):
     layers = List
     parser = None
@@ -76,7 +74,7 @@ class Scene(HasTraits):
         for li in self.layers:
             if li.visible:
                 for ci in li.components:
-                    if ci.is_in_region(x1, y1, x2, y2):
+                    if ci.is_in_region(x1, x2, y1, y2):
                         if self.font:
                             ci.font = self.font
                         ci.set_canvas(canvas)

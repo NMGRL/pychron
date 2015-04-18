@@ -217,9 +217,12 @@ class Primitive(HasTraits):
 
         return w
 
+    bounds = None
     def set_canvas(self, canvas):
-        self._layout_needed = canvas != self.canvas
+        self._layout_needed = canvas != self.canvas or self.bounds != canvas.bounds
+
         self.canvas = canvas
+        self.bounds = canvas.bounds
         for pi in self.primitives:
             pi.set_canvas(canvas)
 
@@ -283,10 +286,13 @@ class Primitive(HasTraits):
 
     def is_in_region(self, x1, x2, y1, y2):
         """
+
           |------------- x2,y2
+          |       T      |
           |              |
-          |              |
-        x1,y1------------|
+        x1,y1------------|    F
+
+
         check to see if self.x and self.y within region
         :param x1: float
         :param x2: float
@@ -295,6 +301,7 @@ class Primitive(HasTraits):
         :return: bool
 
         """
+
         return x1 <= self.x <= x2 and y1 <= self.y <= y2
 
 
@@ -393,7 +400,7 @@ class Rectangle(QPrimitive):
     # gc.draw_path()
 
     def _render_border(self, gc, x, y, w, h):
-        #        gc.set_stroke_color((0, 0, 0))
+        # gc.set_stroke_color((0, 0, 0))
         gc.rect(x - self.line_width, y - self.line_width,
                 w + self.line_width, h + self.line_width)
         gc.stroke_path()
@@ -914,7 +921,7 @@ class Indicator(QPrimitive):
 
     def __init__(self, x, y, *args, **kw):
         super(Indicator, self).__init__(x, y, *args, **kw)
-        #print self.x, self.offset_x
+        # print self.x, self.offset_x
         #self.x=x=self.x+self.offset_x
         #self.y=y=self.y+self.offset_y
 
@@ -936,7 +943,7 @@ class Indicator(QPrimitive):
                 gc.set_stroke_color(sc)
 
             x, y = self.get_xy()
-            #if self.use_simple_render:
+            # if self.use_simple_render:
             # render a simple square at the current location
             #gc = args[0]
             l = self.spot_size
@@ -959,7 +966,7 @@ class Indicator(QPrimitive):
 
 
 # def set_canvas(self, canvas):
-#        super(Indicator, self).set_canvas(canvas)
+# super(Indicator, self).set_canvas(canvas)
 #        self.hline.set_canvas(canvas)
 #        self.vline.set_canvas(canvas)
 
@@ -980,12 +987,6 @@ class PointIndicator(Indicator):
                                     font=self.font,
                                     *args, **kw)
             self.primitives.append(self.label_item)
-
-    def set_canvas(self, canvas):
-        super(PointIndicator, self).set_canvas(canvas)
-
-        if self.label_item and self.show_label:
-            self.label_item.set_canvas(canvas)
 
     def set_state(self, state):
         self.state = state

@@ -256,12 +256,12 @@ class VideoStageManager(StageManager):
     def is_auto_correcting(self):
         return self._auto_correcting
 
-    def get_video_database(self):
-        from pychron.database.adapters.video_adapter import VideoAdapter
-
-        db = VideoAdapter(name=self.parent.dbname,
-                          kind='sqlite')
-        return db
+    # def get_video_database(self):
+    # from pychron.database.adapters.video_adapter import VideoAdapter
+    #
+    #     db = VideoAdapter(name=self.parent.dbname,
+    #                       kind='sqlite')
+    #     return db
 
     def _upload(self, path):
         if self.use_media_server and self.auto_upload:
@@ -325,14 +325,14 @@ class VideoStageManager(StageManager):
 
         self.info('saving recording to path {}'.format(path))
 
-        if self.use_db:
-            db = self.get_video_database()
-            db.connect()
-
-            v = db.add_video_record(rid=basename)
-            db.add_path(v, path)
-            self.info('saving {} to database'.format(basename))
-            db.commit()
+        # if self.use_db:
+        # db = self.get_video_database()
+        #     db.connect()
+        #
+        #     v = db.add_video_record(rid=basename)
+        #     db.add_path(v, path)
+        #     self.info('saving {} to database'.format(basename))
+        #     db.commit()
 
         renderer = None
         if self.render_with_markup:
