@@ -285,8 +285,7 @@ class PointsProgrammer(Manager):
                                           z=pi['z'],
                                           step=step,
                                           point_color=point_color,
-                                          **ptargs
-                )
+                                          **ptargs)
 
     def _get_program_points_label(self):
         return 'End Program' if self.is_programming else 'Program Positions'

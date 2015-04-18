@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,7 +23,7 @@ from pychron.canvas.canvas2D.scene.layer import Layer
 from canvas_parser import CanvasParser
 
 
-#class PrimitiveNode(TreeNode):
+# class PrimitiveNode(TreeNode):
 #    add = List([Primitive])
 #    move = List([Primitive])
 
@@ -68,14 +68,19 @@ class Scene(HasTraits):
         pass
 
     def render_components(self, gc, canvas):
+        # only render components within the current bounds.
+
+        x1, x2 = canvas.get_mapper_limits('index')
+        y1, y2 = canvas.get_mapper_limits('value')
+
         for li in self.layers:
             if li.visible:
                 for ci in li.components:
-                    if self.font:
-                        ci.font = self.font
-
-                    ci.set_canvas(canvas)
-                    ci.render(gc)
+                    if ci.is_in_region(x1, y1, x2, y2):
+                        if self.font:
+                            ci.font = self.font
+                        ci.set_canvas(canvas)
+                        ci.render(gc)
 
     def iteritems(self, exclude=None, klass=None):
         if exclude is None:
