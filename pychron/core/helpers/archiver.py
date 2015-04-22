@@ -128,7 +128,7 @@ class Archiver(HasTraits):
         src = os.path.join(root, p)
         dst = os.path.join(march, p)
 
-        self.info('Archiving {:30s} to ./archive/{}/{}'.format(p, year, mname))
+        self.info('Archiving {:15s} to ./archive/{}/{}'.format(p, year, mname))
         try:
             shutil.move(src, dst)
         except Exception, e:

@@ -22,7 +22,6 @@ from stage_component_editor import _LaserComponentEditor, LaserComponentEditor
 # ============= local library imports  ==========================
 
 
-
 class _VideoComponentEditor(_LaserComponentEditor):
     """
     """
@@ -60,8 +59,9 @@ class _VideoComponentEditor(_LaserComponentEditor):
 
     def update(self):
         if self.control:
-            self.value.draw_valid = False
-            self.control.repaint()
+            self.value.request_video_redraw()
+            # self.value.draw_valid = False
+            # self.control.repaint()
 
     def _stop_timer_fired(self):
         print 'VideoComponentEditor stopping playTimer'

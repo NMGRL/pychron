@@ -22,8 +22,7 @@ from pyface.tasks.task_layout import TaskLayout, PaneItem
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.pane_helpers import ConsolePane
-from pychron.extraction_line.tasks.extraction_line_actions import FinishChamberChangeAction, \
-    EvacuateChamberAction, IsolateChamberAction
+from pychron.extraction_line.tasks.extraction_line_actions import SampleLoadingAction
 from pychron.extraction_line.tasks.extraction_line_pane import CanvasPane, GaugePane, \
     ExplanationPane
 from pychron.envisage.tasks.base_task import BaseHardwareTask
@@ -35,9 +34,10 @@ class ExtractionLineTask(BaseHardwareTask):
 
     def _tool_bars_default(self):
         tb = SToolBar(
-            IsolateChamberAction(),
-            EvacuateChamberAction(),
-            FinishChamberChangeAction(),
+            SampleLoadingAction(),
+            # IsolateChamberAction(),
+            # EvacuateChamberAction(),
+            # FinishChamberChangeAction(),
             image_size=(16, 16))
         return [tb, ]
 
@@ -67,6 +67,9 @@ class ExtractionLineTask(BaseHardwareTask):
     # =======================================================================
     # toolbar actions
     # =======================================================================
+    def do_sample_loading(self):
+        self.manager.do_sample_loading()
+
     def isolate_chamber(self):
         self.manager.isolate_chamber()
 

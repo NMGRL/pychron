@@ -85,7 +85,7 @@ class Switch(Loggable):
             cur: bool, not self.state if open, self.state if close
             set_value: open-True, close-False
         """
-        self.info('close mode={}'.format(mode))
+        self.info('actuate state mode={}'.format(mode))
         state_change = False
         success = True
         if self.software_lock:

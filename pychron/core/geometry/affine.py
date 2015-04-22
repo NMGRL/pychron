@@ -148,7 +148,7 @@ def calculate_rigid_transform(refpoints, points):
     # print A
     #    print y
     soln = linalg.lstsq(A, y)
-    #    print soln
+#    print soln
     a, b, tx, ty = soln[0]
     tx = float(tx[0])
     ty = float(ty[0])

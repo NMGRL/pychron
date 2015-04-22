@@ -33,14 +33,13 @@ from pychron.lasers.laser_managers.uv_gas_handler_manager import UVGasHandlerMan
 from pychron.lasers.stage_managers.stage_map import UVStageMap
 from pychron.lasers.laser_managers.laser_script_executor import UVLaserScriptExecutor
 from pychron.core.geometry.geometry import calc_point_along_line
-from pychron.paths import paths
 from threading import Thread
 
 
 class FusionsUVManager(FusionsLaserManager):
     """
     """
-    name = 'fusions_uv'
+    name = 'FusionsUV'
     monitor_name = 'uv_laser_monitor'
     monitor_klass = FusionsUVLaserMonitor
 
@@ -71,8 +70,8 @@ class FusionsUVManager(FusionsLaserManager):
     _is_tracing = False
     _cancel_tracing = False
 
-    dbname = paths.uvlaser_db
-    db_root = paths.uvlaser_db_root
+    # dbname = paths.uvlaser_db
+    # db_root = paths.uvlaser_db_root
 
     def get_achieved_output(self):
         return self.atl_controller.get_mean_energy()

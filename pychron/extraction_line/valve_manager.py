@@ -626,7 +626,6 @@ class ValveManager(Manager):
                 self.warning_dialog(msg)
             else:
                 act = getattr(v, action)
-
                 result, changed = act(mode='{}-{}'.format(self.mode, mode))
 
         else:

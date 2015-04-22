@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import Float, Event, String, Any, Enum, Property, cached_property
-from traitsui.api import View, Item, VGroup, HGroup
+from traitsui.api import View, Item, VGroup, HGroup, InstanceEditor
 import apptools.sweet_pickle as pickle
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -100,8 +100,8 @@ class TrayCalibrationManager(Manager):
             with open(p, 'wb') as f:
                 pickle.dump(ca, f)
 
-    def get_additional_controls(self):
-        return self.calibrator.get_controls()
+    # def get_additional_controls(self):
+    # return self.calibrator.get_controls()
 
     def traits_view(self):
         cg = VGroup(
@@ -111,11 +111,12 @@ class TrayCalibrationManager(Manager):
                            Item('y', format_str='%0.3f', style='readonly')),
                     Item('rotation', format_str='%0.3f', style='readonly'),
                     Item('scale', format_str='%0.4f', style='readonly'),
-                    Item('error', format_str='%0.2f', style='readonly')
-                    )
-        ad = self.get_additional_controls()
-        if ad is not None:
-            cg.content.append(ad)
+            Item('error', format_str='%0.2f', style='readonly'),
+            Item('object.calibrator', style='custom', editor=InstanceEditor())
+        )
+        # ad = self.get_additional_controls()
+        # if ad is not None:
+        # cg.content.append(ad)
 
         v = View(cg,
                  CustomLabel('calibration_help',

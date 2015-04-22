@@ -26,6 +26,12 @@ from pyface.tasks.action.task_action import TaskAction
 from pychron.envisage.resources import icon
 
 
+class SampleLoadingAction(TaskAction):
+    name = 'Load Samples'
+    method = 'do_sample_loading'
+    image = icon('arrow_out')
+
+
 # sample change actions
 class IsolateChamberAction(TaskAction):
     name = 'Isolate Chamber'

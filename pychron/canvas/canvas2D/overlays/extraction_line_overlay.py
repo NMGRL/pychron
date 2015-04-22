@@ -38,7 +38,7 @@ class ExtractionLineInfoTool(InfoInspector):
         return [self.name, 'volume= {}'.format(self.volume)]
 
     def normal_mouse_move(self, event):
-        if self.active and self.display_volume:
+        if self.active:
             x, y = event.x, event.y
             item = self.scene.get_is_in(x, y)
             if not item:
@@ -47,11 +47,7 @@ class ExtractionLineInfoTool(InfoInspector):
                 self.metadata_changed = True
 
     def normal_key_pressed(self, event):
-        if not self.display_volume:
-            return
-
         ok = event.character == self.volume_key and not self.active
-        #self.active = False
 
         if self.manager.use_network and ok:
             x, y = event.x, event.y

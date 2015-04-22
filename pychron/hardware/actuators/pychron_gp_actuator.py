@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -92,7 +92,10 @@ class PychronGPActuator(GPActuator):
             obj: valve object
             action: str,  "Open" or "Close"
         """
-        state=action=='Open'
+        if self.simulation:
+            return True
+
+        state = action == 'Open'
         cmd = '{} {}'.format(action, get_valve_name(obj))
         resp = self.ask(cmd)
         if resp:
@@ -100,4 +103,5 @@ class PychronGPActuator(GPActuator):
                 time.sleep(0.05)
                 resp = self.get_channel_state(obj) == state
         return resp
+
 # ============= EOF =====================================

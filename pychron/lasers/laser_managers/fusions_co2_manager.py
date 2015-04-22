@@ -29,7 +29,7 @@ from fusions_laser_manager import FusionsLaserManager
 class FusionsCO2Manager(FusionsLaserManager):
     '''
     '''
-    name = 'fusions_co2'
+    name = 'FusionsCO2'
     id = 'pychron.fusions.co2'
 
     launch_profile = Button

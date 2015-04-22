@@ -15,12 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from envisage.ui.tasks.task_extension import TaskExtension
 from pyface.tasks.action.schema_addition import SchemaAddition
-from traits.api import List
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.core.helpers.filetools import to_bool
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.updater.tasks.actions import CheckForUpdatesAction, ManageVersionAction, BuildApplicationAction, \
     ManageBranchAction
@@ -63,8 +60,8 @@ class UpdatePlugin(BaseTaskPlugin):
     name = 'Update'
     id = 'pychron.update.plugin'
 
-    preferences = List(contributes_to='envisage.preferences')
-    preferences_panes = List(contributes_to='envisage.ui.tasks.preferences_panes')
+    # preferences = List(contributes_to='envisage.preferences')
+    # preferences_panes = List(contributes_to='envisage.ui.tasks.preferences_panes')
 
     # plugin interface
     def test_repository(self):
@@ -75,6 +72,7 @@ class UpdatePlugin(BaseTaskPlugin):
         super(UpdatePlugin, self).start()
 
         updater = self.application.get_service('pychron.updater.updater.Updater')
+        # if updater:
         if updater.check_on_startup:
             updater.check_for_updates()
 
@@ -99,7 +97,7 @@ class UpdatePlugin(BaseTaskPlugin):
 
     # defaults
     def _service_offers_default(self):
-        so = self.service_offer_factory(protocol='pychron.updater.updater.Updater',
+        so = self.service_offer_factory(protocol=Updater,
                                         factory=self._updater_factory)
         return [so]
 
@@ -108,17 +106,17 @@ class UpdatePlugin(BaseTaskPlugin):
 
     def _available_task_extensions_default(self):
         return [(self.id, '', self.name, [SchemaAddition(id='pychron.update.check_for_updates',
-                                                     factory=CheckForUpdatesAction,
-                                                     path='MenuBar/help.menu'),
-                                      SchemaAddition(id='pychron.update.build_app',
-                                                     factory=BuildApplicationAction,
-                                                     path='MenuBar/help.menu'),
-                                      SchemaAddition(id='pychron.update.manage_branch',
-                                                     factory=ManageBranchAction,
-                                                     path='MenuBar/help.menu'),
-                                      SchemaAddition(id='pychron.update.manage_version',
-                                                     factory=ManageVersionAction,
-                                                     path='MenuBar/help.menu')]), ]
+                                                         factory=CheckForUpdatesAction,
+                                                         path='MenuBar/help.menu'),
+                                          SchemaAddition(id='pychron.update.build_app',
+                                                         factory=BuildApplicationAction,
+                                                         path='MenuBar/help.menu'),
+                                          SchemaAddition(id='pychron.update.manage_branch',
+                                                         factory=ManageBranchAction,
+                                                         path='MenuBar/help.menu'),
+                                          SchemaAddition(id='pychron.update.manage_version',
+                                                         factory=ManageVersionAction,
+                                                         path='MenuBar/help.menu')]), ]
 
 
         # ============= EOF =============================================
@@ -129,7 +127,7 @@ class UpdatePlugin(BaseTaskPlugin):
         # dest = self._build_update()
         # if dest:
         # # get executable
-        #             mos = os.path.join(dest, 'MacOS')
+        # mos = os.path.join(dest, 'MacOS')
         #             for p in os.listdir(mos):
         #                 if p != 'python':
         #                     pp = os.path.join(mos, p)
@@ -148,7 +146,7 @@ class UpdatePlugin(BaseTaskPlugin):
 # origin = self._repo.remotes.origin
 # self.debug('pulling changes from {} to {}'.format(origin.url, branch))
 # origin.pull(branch)
-#                 self._build(branch, rc)
+# self._build(branch, rc)
 #                 os.execl(sys.executable, *([sys.executable] + sys.argv))
 
 # def _load_local_revision(self):

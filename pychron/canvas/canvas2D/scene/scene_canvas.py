@@ -22,6 +22,8 @@ from pychron.canvas.canvas2D.scene.scene import Scene
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+
+
 class SceneCanvas(BaseDataCanvas):
     scene = Instance(Scene)
 
@@ -52,6 +54,7 @@ class SceneCanvas(BaseDataCanvas):
     def _draw_underlay(self, gc, view_bounds=None, mode="normal"):
         if self.scene:
             self.scene.render_components(gc, self)
+        super(SceneCanvas, self)._draw_underlay(gc, view_bounds, mode)
 
     # def _draw_hook(self, gc, *args, **kw):
 
