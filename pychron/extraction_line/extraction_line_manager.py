@@ -18,7 +18,6 @@
 from traits.api import Instance, List, Any, Bool, on_trait_change, Str, Int, Dict, File
 from apptools.preferences.preference_binding import bind_preference
 # =============standard library imports ========================
-import os
 import time
 from threading import Thread
 from socket import gethostbyname, gethostname
@@ -28,11 +27,11 @@ from pychron.extraction_line.explanation.extraction_line_explanation import Extr
 from pychron.extraction_line.extraction_line_canvas import ExtractionLineCanvas
 from pychron.extraction_line.sample_changer import SampleChanger
 from pychron.globals import globalv
-from pychron.paths import paths
 from pychron.managers.manager import Manager
 from pychron.monitors.system_monitor import SystemMonitor
 from pychron.extraction_line.status_monitor import StatusMonitor
 from pychron.extraction_line.graph.extraction_line_graph import ExtractionLineGraph
+from pychron.pychron_constants import NULL_STR
 
 
 class ExtractionLineManager(Manager, Consoleable):
@@ -134,46 +133,79 @@ class ExtractionLineManager(Manager, Consoleable):
             self.debug('adding name="{}", func="{}" to link_valve_actuation_dict'.format(name, func.func_name))
             self.link_valve_actuation_dict[name] = func
 
-    def isolate_chamber(self):
-        # get chamber name
+    def do_sample_loading(self):
+        """
+        1. isolate chamber
+        2.
+        :return:
+        """
         sc = self._sample_changer_factory()
         if sc:
-            sc.isolate_chamber()
+            if self.confirmation_dialog('Ready to Isolate Chamber'):
+                if not sc.isolate_chamber():
+                    return
+            else:
+                return
 
-    def evacuate_chamber(self):
-        sc = self.sample_changer
-        # confirm evacuation if sample chamber is not (not isolated)
-        # or check for evacuation fails
-        msg = None
-        if sc is None:
-            msg = 'Are you sure you want to evacuate a chamber. No chamber has been isolated'
-        else:
-            err = sc.check_evacuation()
-            if err:
-                name = sc.chamber
-                msg = 'Are you sure you want to evacuate the {} chamber. {}'.format(name, err)
+            if self.confirmation_dialog('Ready to Evacuate Chamber'):
 
-        if msg:
-            if self.confirmation_dialog(msg):
-                sc = self._sample_changer_factory()
+                err = sc.check_evacuation()
+                if err:
+                    name = sc.chamber
+                    msg = 'Are you sure you want to evacuate the {} chamber. {}'.format(name, err)
+                    if not self.confirmation_dialog(msg):
+                        return
 
-        if sc:
-            sc.evacuate_chamber()
+                self.information_dialog('Chamber will open to the roughing stage')
+                if not sc.evacuate_chamber():
+                    return
 
-    def finish_chamber_change(self):
-        sc = self.sample_changer
-        if sc is None:
-            msg = 'Sample change procedure was not started for any chamber'
-        else:
-            msg = sc.check_finish()
+            else:
+                return
 
-        if msg:
-            if self.confirmation_dialog('{}. Are sure you want to finish?'.format(msg)):
-                sc = self._sample_changer_factory()
-        if sc:
-            sc.finish_chamber_change()
+            if self.confirmation_dialog('Ready to Finish Sample Change'):
+                sc.finish_chamber_change()
 
-        self.sample_changer = None
+    # def isolate_chamber(self):
+    # # get chamber name
+    #     sc = self._sample_changer_factory()
+    #     if sc:
+    #         sc.isolate_chamber()
+    #
+    # def evacuate_chamber(self):
+    #     sc = self.sample_changer
+    #     # confirm evacuation if sample chamber is not (not isolated)
+    #     # or check for evacuation fails
+    #     msg = None
+    #     if sc is None:
+    #         msg = 'Are you sure you want to evacuate a chamber. No chamber has been isolated'
+    #     else:
+    #         err = sc.check_evacuation()
+    #         if err:
+    #             name = sc.chamber
+    #             msg = 'Are you sure you want to evacuate the {} chamber. {}'.format(name, err)
+    #
+    #     if msg:
+    #         if self.confirmation_dialog(msg):
+    #             sc = self._sample_changer_factory()
+    #
+    #     if sc:
+    #         sc.evacuate_chamber()
+    #
+    # def finish_chamber_change(self):
+    #     sc = self.sample_changer
+    #     if sc is None:
+    #         msg = 'Sample change procedure was not started for any chamber'
+    #     else:
+    #         msg = sc.check_finish()
+    #
+    #     if msg:
+    #         if self.confirmation_dialog('{}. Are sure you want to finish?'.format(msg)):
+    #             sc = self._sample_changer_factory()
+    #     if sc:
+    #         sc.finish_chamber_change()
+    #
+    #     self.sample_changer = None
 
     def get_volume(self, node_name):
         v = 0
@@ -560,14 +592,14 @@ class ExtractionLineManager(Manager, Consoleable):
     def _sample_changer_factory(self):
         sc = self.sample_changer
         if sc is None:
-            sc = SampleChanger(manager=self,
-                               chamber='CO2')
+            sc = SampleChanger(manager=self)
 
-        result = sc.edit_traits(view='chamber_select_view')
-        if result:
-            if sc.chamber and sc.chamber != 'None':
-                self.sample_changer = sc
-                return sc
+        if sc.setup():
+            result = sc.edit_traits(view='chamber_select_view')
+            if result:
+                if sc.chamber and sc.chamber != NULL_STR:
+                    self.sample_changer = sc
+                    return sc
 
     def _create_manager(self, klass, manager, params, **kw):
         # try a lazy load of the required module
