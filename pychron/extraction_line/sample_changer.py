@@ -24,6 +24,7 @@ from traitsui.api import View, Item, EnumEditor
 
 
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 import yaml
@@ -53,7 +54,7 @@ class SampleChanger(Loggable):
             return True
 
     def _chamber_changed(self, new):
-        if new:
+        if new and new != NULL_STR:
             # load chamber rules
             self._load_chamber_rules(new)
 

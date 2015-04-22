@@ -169,7 +169,7 @@ class Primitive(HasTraits):
         self.x += dx
         self.y += dy
 
-    def get_xy(self, x=None, y=None):
+    def get_xy(self, x=None, y=None, clear_layout_needed=True):
         if self._layout_needed or not self._cached_xy:
 
             if x is None:
@@ -189,7 +189,8 @@ class Primitive(HasTraits):
                     y += self.offset_y
 
             rx, ry = x + offset, y + offset
-            self._layout_needed = False
+            if clear_layout_needed:
+                self._layout_needed = False
         else:
             rx, ry = self._cached_xy
         self._cached_xy = rx, ry
@@ -378,8 +379,10 @@ class Rectangle(QPrimitive):
     use_border = True
 
     def _render_(self, gc):
-        x, y = self.get_xy()
+
+        x, y = self.get_xy(clear_layout_needed=False)
         w, h = self.get_wh()
+
         # gc.set_line_width(self.line_width)
         gc.rect(x, y, w, h)
         if self.fill:
@@ -390,14 +393,6 @@ class Rectangle(QPrimitive):
             gc.stroke_path()
 
         self._render_name(gc, x, y, w, h)
-
-    # if self.name:
-    # t = str(self.name)
-    # tw = gc.get_full_text_extent(t)[0]
-    # x = x + w / 2.0 - tw / 2.0
-    # gc.set_text_position(x, y + h / 2 - 6)
-    # gc.show_text(str(self.name))
-    # gc.draw_path()
 
     def _render_border(self, gc, x, y, w, h):
         # gc.set_stroke_color((0, 0, 0))
@@ -447,7 +442,6 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
                                      self.display_name)
             elif not self.display_name == '':
                 self._render_name(gc, x, y, width, height)
-
 
     def _render_border(self, gc, x, y, width, height):
         if self.use_border:
@@ -509,13 +503,6 @@ class Line(QPrimitive):
                 self.primitives[0] = self.start_point
             else:
                 self.primitives.append(self.start_point)
-
-    def set_canvas(self, canvas):
-        super(Line, self).set_canvas(canvas)
-
-        self.start_point.set_canvas(canvas)
-        if self.end_point:
-            self.end_point.set_canvas(canvas)
 
     def _render_(self, gc):
         # gc.begin_path()

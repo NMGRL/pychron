@@ -121,6 +121,10 @@ class ExtractionLineManager(Manager, Consoleable):
             bind_preference(self.gauge_manager, 'use_update',
                             '{}.use_gauge_update'.format(prefid))
 
+        if self.canvas:
+            bind_preference(self.canvas.canvas2D, 'display_volume', '{}.display_volume'.format(prefid))
+            bind_preference(self.canvas.canvas2D, 'volume_key', '{}.volume_key'.format(prefid))
+
     def link_valve_actuation(self, name, func, remove=False):
         if remove:
             try:

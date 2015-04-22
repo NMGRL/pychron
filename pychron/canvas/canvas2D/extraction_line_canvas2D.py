@@ -30,7 +30,6 @@ from pychron.canvas.canvas2D.scene.extraction_line_scene import ExtractionLineSc
 from pychron.canvas.canvas2D.scene.primitives.valves import RoughValve, \
     BaseValve
 import weakref
-from pychron.paths import paths
 
 W = 2
 H = 2
@@ -43,6 +42,7 @@ class ExtractionLineAction(Action):
 class ExtractionLineCanvas2D(SceneCanvas):
     """
     """
+    border_visible = False
     #     valves = Dict
     active_item = Any
 

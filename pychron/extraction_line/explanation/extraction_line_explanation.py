@@ -17,7 +17,7 @@
 # =============enthought library imports=======================
 import weakref
 
-from traits.api import HasTraits, Any, Event, List, Bool, Property
+from traits.api import HasTraits, Any, Event, List, Bool, Property, Int
 from traitsui.api import View, Item, Handler, TabularEditor
 from traitsui.tabular_adapter import TabularAdapter
 
@@ -30,6 +30,7 @@ from traitsui.tabular_adapter import TabularAdapter
 
 # from explanable_item import ExplanableTurbo
 
+
 class ELEHandler(Handler):
     def init(self, info):
         if not info.initialized:
@@ -38,10 +39,15 @@ class ELEHandler(Handler):
 
 class ExplanationAdapter(TabularAdapter):
     columns = [('Name', 'name'), ('Description', 'description'),
-               ('State', 'state'), ('Lock', 'lock')]
+               ('State', 'state'), ('Lock', 'lock'), ('Last', 'last_actuation')]
 
     lock_text = Property
     state_text = Property
+    font = '10'
+    name_width = Int(40)
+    description_width = Int(130)
+    state_width = Int(50)
+    lock_width = Int(40)
 
     def get_bg_color(self, obj, trait, row, column):
         item = self.item
@@ -49,6 +55,8 @@ class ExplanationAdapter(TabularAdapter):
         #         color='#0000FF'
         if item.soft_lock:
             color = '#CCE5FF'
+        elif item.state:
+            color = 'lightgreen'
 
         return color
 
@@ -119,7 +127,7 @@ class ExtractionLineExplanation(HasTraits):
                      selected='selected'),
                  style='custom',
                  show_label=False),
-            width=300,
+            width=500,
             height=500,
             id='pychron.explanation',
             resizable=True,
