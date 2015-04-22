@@ -22,6 +22,7 @@ import os
 from numpy.core.numeric import Inf
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.scene.canvas_parser import get_volume
+from pychron.canvas.canvas2D.scene.primitives.pumps import Turbo
 from pychron.canvas.canvas2D.scene.scene import Scene
 from pychron.canvas.canvas2D.scene.primitives.primitives import RoundedRectangle, \
     Label, BorderLine, Rectangle, Line, Image, ValueLabel
@@ -81,8 +82,12 @@ class ExtractionLineScene(Scene):
                 c = cobj.default_color
         else:
             c = self._make_color(c)
+        if type_tag == 'turbo':
+            klass = Turbo
+        else:
+            klass = RoundedRectangle
 
-        rect = RoundedRectangle(x + ox, y + oy, width=w, height=h,
+        rect = klass(x + ox, y + oy, width=w, height=h,
                                 name=key,
                                 border_width=bw,
                                 display_name=display_name,

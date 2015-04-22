@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from pyface.timer.do_later import do_after
 from traits.api import Instance, List, Any, Bool, on_trait_change, Str, Int, Dict, File
 from apptools.preferences.preference_binding import bind_preference
 # =============standard library imports ========================
@@ -77,6 +78,7 @@ class ExtractionLineManager(Manager, Consoleable):
     valves_path = File
 
     def activate(self):
+        self._active = True
         if self.mode == 'client':
             self.start_status_monitor()
         else:
@@ -91,6 +93,13 @@ class ExtractionLineManager(Manager, Consoleable):
         for p in self.valve_manager.pipette_trackers:
             p.load()
 
+        do_after(100, self._refresh_canvas)
+
+    def _refresh_canvas(self):
+        self.refresh_canvas()
+        if self._active:
+            do_after(100, self._refresh_canvas)
+
     def deactivate(self):
         self.stop_status_monitor()
         if self.gauge_manager:
@@ -98,7 +107,7 @@ class ExtractionLineManager(Manager, Consoleable):
 
         if self.monitor:
             self.monitor.stop()
-
+        self._active = False
     def bind_preferences(self):
 
         prefid = 'pychron.extraction_line'
@@ -173,7 +182,7 @@ class ExtractionLineManager(Manager, Consoleable):
 
     # def isolate_chamber(self):
     # # get chamber name
-    #     sc = self._sample_changer_factory()
+    # sc = self._sample_changer_factory()
     #     if sc:
     #         sc.isolate_chamber()
     #
@@ -536,7 +545,7 @@ class ExtractionLineManager(Manager, Consoleable):
                     description = vm.get_valve_by_name(name).description
                     self._log_spec_event(name, action)
                     self.info('{:<6s} Valve-{} ({})'.format(action.upper(), name, description),
-                              color='red' if action == 'close' else 'green')
+                        color='red' if action == 'close' else 'green')
                     vm.actuate_children(name, action, mode)
                     ld = self.link_valve_actuation_dict
                     if ld:
@@ -747,7 +756,7 @@ if __name__ == '__main__':
 # def _valve_manager_changed(self):
 # if self.valve_manager is not None:
 # self.status_monitor.valve_manager = self.valve_manager
-#         e = self.explanation
+# e = self.explanation
 #         if e is not None:
 #             e.load(self.valve_manager.explanable_items)
 #             self.valve_manager.on_trait_change(e.load_item, 'explanable_items[]')
