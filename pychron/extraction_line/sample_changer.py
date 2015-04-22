@@ -23,6 +23,7 @@ from traitsui.api import View, Item, EnumEditor
 
 
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 import yaml
@@ -166,7 +167,8 @@ class SampleChanger(Loggable):
         v = []
         if rules.has_key(key):
             valves = rules[key]
-            v = valves.split(',')
+            if valves:
+                v = valves.split(',')
         return v
 
     def _get_chambers(self, rules=None):

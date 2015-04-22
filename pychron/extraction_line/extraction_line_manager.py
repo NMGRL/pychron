@@ -142,13 +142,14 @@ class ExtractionLineManager(Manager, Consoleable):
         sc = self._sample_changer_factory()
         if sc:
             if self.confirmation_dialog('Ready to Isolate Chamber'):
+                self._handle_console_message(('===== Isolate Chamber =====', 'maroon'))
                 if not sc.isolate_chamber():
                     return
             else:
                 return
 
             if self.confirmation_dialog('Ready to Evacuate Chamber'):
-
+                self._handle_console_message(('===== Evacuate Chamber =====', 'maroon'))
                 err = sc.check_evacuation()
                 if err:
                     name = sc.chamber
@@ -156,7 +157,6 @@ class ExtractionLineManager(Manager, Consoleable):
                     if not self.confirmation_dialog(msg):
                         return
 
-                self.information_dialog('Chamber will open to the roughing stage')
                 if not sc.evacuate_chamber():
                     return
 
@@ -164,6 +164,7 @@ class ExtractionLineManager(Manager, Consoleable):
                 return
 
             if self.confirmation_dialog('Ready to Finish Sample Change'):
+                self._handle_console_message(('===== Finish Sample Change =====', 'maroon'))
                 sc.finish_chamber_change()
 
     # def isolate_chamber(self):
