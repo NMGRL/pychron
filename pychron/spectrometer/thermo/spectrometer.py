@@ -21,6 +21,7 @@ import time
 from traits.api import Instance, Int, Property, List, \
     Any, Enum, Str, DelegatesTo, Bool, TraitError, cached_property
 
+
 # ============= standard library imports ========================
 import os
 from numpy import array, argmin
@@ -101,6 +102,8 @@ class Spectrometer(SpectrometerDevice):
     max_deflection = Int(500)
 
     _connection_status = False
+    _config = None
+    _debug_values = None
 
     def get_detector_active(self, dname):
         """
@@ -284,11 +287,31 @@ class Spectrometer(SpectrometerDevice):
 
     def get_parameter_word(self, keys):
         if self.simulation:
-            x = [random.random() for i in keys]
+            if self._debug_values:
+                x = self._debug_values
+            else:
+                x = [random.random() for i in keys]
         else:
             x = self.ask('GetParameters {}'.format(','.join(keys)))
             x = [float(v) for v in x.split(',')]
         return x
+
+    def get_configuration_value(self, key):
+        for d in self._get_cached_config():
+            try:
+                return d[key]
+            except KeyError:
+                pass
+        else:
+            return 0
+
+    def set_debug_configuration_values(self):
+        if self.simulation:
+            d, _ = self._get_cached_config()
+            keys = ('ElectronEnergy', 'YSymmetry', 'ZSymmetry',
+                    'ZFocus', 'IonRepeller', 'ExtractionLens')
+            ds = [0] + [d[k.lower()] for k in keys]
+            self._debug_values = ds
 
     # ===============================================================================
     # load
@@ -339,7 +362,7 @@ class Spectrometer(SpectrometerDevice):
 
             # self.magnet.detector_protection_threshold = self.config_get(config, pd,
             # 'detector_protection_threshold',
-            #                                                             cast='float', default=0.1)
+            # cast='float', default=0.1)
             ds = self.config_get(config, pd, 'detectors')
             if ds:
                 ds = ds.split(',')
@@ -530,6 +553,32 @@ class Spectrometer(SpectrometerDevice):
     # ===============================================================================
     # private
     # ===============================================================================
+    def _get_cached_config(self):
+        if self._config is None:
+            p = os.path.join(paths.spectrometer_dir, 'config.cfg')
+            if not os.path.isfile(p):
+                self.warning('Spectrometer configuration file {} not found'.format(p))
+                return
+
+            config = self.get_configuration_writer(p)
+            d = {}
+            defl = {}
+            for section in config.sections():
+                if section in ['Default', 'Protection', 'General']:
+                    continue
+
+                for attr in config.options(section):
+                    v = config.getfloat(section, attr)
+                    if v is not None:
+                        if section == 'Deflection':
+                            defl[attr] = v
+                        else:
+                            d[attr] = v
+
+            self._config = (d, defl)
+
+        return self._config
+
     def _add_detector(self, **kw):
         d = Detector(spectrometer=self, **kw)
         self.detectors.append(d)
@@ -547,33 +596,44 @@ class Spectrometer(SpectrometerDevice):
                            zsymmetry='ZSymmetry',
                            zfocus='ZFocus',
                            extractionlens='ExtractionLens',
-                           ioncountervoltage='IonCounterVoltage')
+                           ioncountervoltage='IonCounterVoltage', )
 
         if self.microcontroller:
+            specparams, defl = self._get_cached_config()
+            for k, v in defl.items():
+                cmd = 'SetDeflection'
+                v = '{},{}'.format(k, v)
+                self.set_parameter(cmd, v)
+            for k, v in specparams.items():
+                try:
+                    cmd = 'Set{}'.format(command_map[k])
+                    self.set_parameter(cmd, v)
+                except KeyError:
+                    self.debug('$$$$$$$$$$ Not setting {}. Not in command_map'.format(k))
 
-            p = os.path.join(paths.spectrometer_dir, 'config.cfg')
-            if not os.path.isfile(p):
-                self.warning('Spectrometer configuration file {} not found'.format(p))
-                return
-
-            self.info('Sending configuration "{}" to spectrometer'.format(p))
-            config = self.get_configuration_writer(p)
-
-            for section in config.sections():
-                if section in ['Default', 'Protection']:
-                    continue
-
-                for attr in config.options(section):
-                    v = config.getfloat(section, attr)
-                    if v is not None:
-
-                        if section == 'Deflections':
-                            cmd = 'SetDeflection'
-                            v = '{},{}'.format(attr.upper(), v)
-                        else:
-                            cmd = 'Set{}'.format(command_map[attr])
-
-                        self.set_parameter(cmd, v)
+                    # p = os.path.join(paths.spectrometer_dir, 'config.cfg')
+                    # if not os.path.isfile(p):
+                    # self.warning('Spectrometer configuration file {} not found'.format(p))
+                    # return
+                    #
+                    # self.info('Sending configuration "{}" to spectrometer'.format(p))
+                    # config = self.get_configuration_writer(p)
+                    #
+                    # for section in config.sections():
+                    # if section in ['Default', 'Protection']:
+                    #         continue
+                    #
+                    #     for attr in config.options(section):
+                    #         v = config.getfloat(section, attr)
+                    #         if v is not None:
+                    #
+                    #             if section == 'Deflections':
+                    #                 cmd = 'SetDeflection'
+                    #                 v = '{},{}'.format(attr.upper(), v)
+                    #             else:
+                    #                 cmd = 'Set{}'.format(command_map[attr])
+                    #
+                    #             self.set_parameter(cmd, v)
 
     # ===============================================================================
     # defaults
@@ -617,8 +677,8 @@ class Spectrometer(SpectrometerDevice):
 # ss.current_hv = 4505
 # s.source = ss
 # corrected = s.get_hv_correction(100,current=False)
-#     uncorrected = s.get_hv_correction(corrected, uncorrect=True, current=False)
+# uncorrected = s.get_hv_correction(corrected, uncorrect=True, current=False)
 #
-#     print corrected, uncorrected
+# print corrected, uncorrected
 
 # ============= EOF =============================================

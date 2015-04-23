@@ -28,6 +28,7 @@ from pychron.core.helpers.traitsui_shortcuts import listeditor
 
 
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
@@ -36,30 +37,38 @@ from pychron.paths import paths
 DEFAULT_CONFIG = '''- name: HighVoltage
   min: 0
   max: 5000
+  compare: False
 - name: ElectronEnergy
   min: 0
   max: 10
+  compare: True
 - name: YSymmetry
   min: 0
   max: 10
+  compare: True
 - name: ZSymmetry
   min: 0
   max: 10
+  compare: True
 - name: ZFocus
   min: 0
   max: 10
+  compare: True
 - name: IonRepeller
   min: 0
   max: 10
+  compare: True
 - name: ExtractionLens
   min: 0
   max: 10
+  compare: True
 '''
 
 
 class Readout(HasTraits):
     name = Str
     value = Str
+    fvalue = Float
     # value = Property(depends_on='refresh')
     format = Str('{:0.3f}')
     # refresh = Event
@@ -67,6 +76,7 @@ class Readout(HasTraits):
 
     min_value = Float(0)
     max_value = Float(100)
+    compare = Bool(True)
 
     def traits_view(self):
         v = View(HGroup(Item('value', style='readonly', label=self.name)))
@@ -83,8 +93,8 @@ class Readout(HasTraits):
     def _set_value(self, v):
         if v is not None:
             try:
-                self._value = float(v)
-                v = self.format.format(self._value)
+                self.fvalue = float(v)
+                v = self.format.format(self.fvalue)
             except ValueError:
                 pass
         else:
@@ -93,7 +103,7 @@ class Readout(HasTraits):
         self.value = v
 
     def get_percent_value(self):
-        return (self._value - self.min_value) / self.max_value
+        return (self.fvalue - self.min_value) / self.max_value
 
 
 class ReadoutHandler(Handler):
@@ -132,7 +142,7 @@ class ReadoutView(Loggable):
         else:
             self._load_yaml(ypath)
 
-        self._refresh()
+            # self._refresh()
 
     def _load_cfg(self, path):
         config = ConfigParser.ConfigParser()
@@ -150,7 +160,8 @@ class ReadoutView(Loggable):
                     rr = Readout(spectrometer=self.spectrometer,
                                  name=rd['name'],
                                  min_value=rd.get('min', 0),
-                                 max_value=rd.get('max', 1))
+                                 max_value=rd.get('max', 1),
+                                 compare=rd.get('compare', True))
                     self.readouts.append(rr)
 
             except yaml.YAMLError:
@@ -189,7 +200,32 @@ class ReadoutView(Loggable):
         else:
             for rd in self.readouts:
                 rd.query_value()
+
         self.refresh_needed = True
+        # compare to configuration values
+        ne = []
+        tol = 0.001
+
+        spec = self.spectrometer
+        for r in self.readouts:
+            if not r.compare:
+                continue
+
+            name = r.name
+            rv = r.fvalue
+            cv = spec.get_configuration_value(name.lower())
+            if abs(rv - cv) > tol:
+                ne.append((r.name, rv, cv))
+                self.debug('{} does not match. Current:{:0.3f}, Config: {:0.3f}'.format(name, rv, cv))
+
+        if ne:
+            ns = '\n'.join(map(lambda n: '{:<16s}\t{:0.3f}\t{:0.3f}'.format(*n), ne))
+            msg = 'There is a mismatch between the current spectrometer values and the configuration. ' \
+                  'Would you like to set the spectrometer to the configuration values?\n\n' \
+                  'Name\t\tCurrent\tConfig\n{}'.format(ns)
+            if self.confirmation_dialog(msg):
+                self.spectrometer.send_configuration()
+                self.spectrometer.set_debug_configuration_values()
 
     def traits_view(self):
         v = View(listeditor('readouts'),
@@ -225,4 +261,5 @@ def new_readout_view(spectrometer):
              width=500,
              resizable=True)
     return rv, v
+
 # ============= EOF =============================================

@@ -96,7 +96,6 @@ class ViewReadoutAction(Action):
         from pychron.spectrometer.readout_view import new_readout_view
 
         rv, v = new_readout_view(spec_man.spectrometer)
-
         app.open_view(rv, view=v)
 
 
