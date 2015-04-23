@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -34,6 +34,8 @@ class SpectrometerPreferences(BasePreferencesHelper):
     use_detector_safety = Bool
     use_log_events = Bool
     use_vertical_markers = Bool
+    auto_open_readout = Bool
+
 
 class SpectrometerPreferencesPane(PreferencesPane):
     model_factory = SpectrometerPreferences
@@ -53,13 +55,15 @@ class SpectrometerPreferencesPane(PreferencesPane):
                              label='DB Archive'),
                         show_border=True,
                         label='MFTable')
-        gen_grp = Item('send_config_on_startup',
-                       tooltip='Load the spectrometer parameters on startup')
+        gen_grp = VGroup(Item('send_config_on_startup',
+                              tooltip='Load the spectrometer parameters on startup', ),
+                         Item('auto_open_readout',
+                              tooltip='Open readout view when Spectrometer plugin starts'))
         scan_grp = VGroup(Item('use_detector_safety',
                                label='Detector Safety',
                                tooltip='Abort magnet moves '
                                        'if move will place an intensity greater than X on the current detector'),
-                          Item('use_log_events',label='Event Logging',
+                          Item('use_log_events', label='Event Logging',
                                tooltip='Display events such as valve open/close, magnet moves on Scan graph'),
                           Item('use_vertical_markers', label='Vertical Markers'),
                           label='Scan',

@@ -20,11 +20,12 @@ from envisage.ui.tasks.task_extension import TaskExtension
 from pyface.tasks.action.schema import SMenu
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.filetools import to_bool
 from pychron.spectrometer.tasks.base_spectrometer_plugin import BaseSpectrometerPlugin
 from pychron.spectrometer.thermo.spectrometer_manager import ArgusSpectrometerManager
 from pychron.spectrometer.tasks.spectrometer_actions import PeakCenterAction, \
     CoincidenceScanAction, SpectrometerParametersAction, MagnetFieldTableAction, MagnetFieldTableHistoryAction, \
-    DBMagnetFieldTableHistoryAction, ToggleSpectrometerTask, EditGainsAction, SendConfigAction
+    ToggleSpectrometerTask, EditGainsAction, SendConfigAction, ViewReadoutAction
 from pychron.spectrometer.tasks.spectrometer_preferences import SpectrometerPreferencesPane
 
 
@@ -33,6 +34,18 @@ class ArgusSpectrometerPlugin(BaseSpectrometerPlugin):
     spectrometer_manager_klass = ArgusSpectrometerManager
     manager_name = 'argus_spectrometer_manager'
     name = 'ArgusSpectrometer'
+
+    def start(self):
+        super(ArgusSpectrometerPlugin, self).start()
+
+        if to_bool(self.application.preferences.get('pychron.spectrometer.auto_open_readout')):
+            from pychron.spectrometer.readout_view import new_readout_view
+
+            spec = self.application.get_service(
+                'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager')
+            ro, v = new_readout_view(spectrometer=spec.spectrometer)
+            self.application.open_view(ro, view=v)
+
     # ===============================================================================
     # tests
     # ===============================================================================
@@ -67,6 +80,10 @@ class ArgusSpectrometerPlugin(BaseSpectrometerPlugin):
                     SchemaAddition(id='send_config',
                                    factory=SendConfigAction,
                                    path='MenuBar/spectrometer.menu'),
+                    SchemaAddition(id='view_readout',
+                                   factory=ViewReadoutAction,
+                                   path='MenuBar/spectrometer.menu'),
+
                     SchemaAddition(id='edit_gains',
                                    factory=EditGainsAction,
                                    path='MenuBar/spectrometer.menu'),

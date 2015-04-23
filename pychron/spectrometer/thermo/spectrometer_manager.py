@@ -19,12 +19,10 @@ from traits.api import Any, Property
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================
-from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.spectrometer.base_spectrometer_manager import BaseSpectrometerManager
 from pychron.spectrometer.thermo.spectrometer import Spectrometer
 from pychron.paths import paths
 from pychron.spectrometer.jobs.relative_detector_positions import RelativeDetectorPositions
-from pychron.spectrometer.jobs.coincidence_scan import CoincidenceScan
 from pychron.spectrometer.jobs.cdd_operating_voltage_scan import CDDOperatingVoltageScan
 from apptools.preferences.preference_binding import bind_preference
 from pychron.spectrometer.spectrometer_parameters import SpectrometerParameters, \
@@ -95,7 +93,7 @@ class ArgusSpectrometerManager(BaseSpectrometerManager):
             # dbm = IsotopeDatabaseManager(application=self.application,
             #                              warn=False)
             dbm = self.application.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
-            if dbm.is_connected():
+            if dbm and dbm.is_connected():
                 self.info('loading molecular_weights from database')
                 mws = dbm.db.get_molecular_weights()
                 # convert to a dictionary

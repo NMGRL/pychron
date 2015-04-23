@@ -15,9 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import random
 import time
+
 from traits.api import Instance, Int, Property, List, \
     Any, Enum, Str, DelegatesTo, Bool, TraitError, cached_property
+
 # ============= standard library imports ========================
 import os
 from numpy import array, argmin
@@ -279,6 +282,14 @@ class Spectrometer(SpectrometerDevice):
                     mass = nmass - (i - index)
                     di.isotope = 'Ar{}'.format(mass)
 
+    def get_parameter_word(self, keys):
+        if self.simulation:
+            x = [random.random() for i in keys]
+        else:
+            x = self.ask('GetParameters {}'.format(','.join(keys)))
+            x = [float(v) for v in x.split(',')]
+        return x
+
     # ===============================================================================
     # load
     # ===============================================================================
@@ -524,7 +535,6 @@ class Spectrometer(SpectrometerDevice):
         self.detectors.append(d)
 
     def _get_simulation_data(self):
-        from numpy.random import random
 
         signals = [1, 100, 3, 0.01, 0.01, 0.01]  # + random(6)
         keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']

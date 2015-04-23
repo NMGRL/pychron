@@ -23,10 +23,11 @@ from pyface.tasks.action.task_action import TaskAction
 # ============= standard library imports ========================
 
 # ============= local library imports  ==========================
+from traitsui.tabular_adapter import TabularAdapter
 from pychron.envisage.tasks.actions import myTaskAction
 from pychron.paths import paths
 
-from pychron.pychron_constants import SPECTROMETER_PROTOCOL, SCAN_PROTOCOL, EL_PROTOCOL, ION_OPTICS_PROTOCOL
+from pychron.pychron_constants import SPECTROMETER_PROTOCOL, EL_PROTOCOL, ION_OPTICS_PROTOCOL
 
 
 def get_manager(event, protocol):
@@ -37,11 +38,11 @@ def get_manager(event, protocol):
 
 # class OpenIonOpticsAction(Action):
 # def perform(self, event):
-#         man = get_manager(event, ION_OPTICS_PROTOCOL)
-#         open_manager(event.window.application, man)
+# man = get_manager(event, ION_OPTICS_PROTOCOL)
+# open_manager(event.window.application, man)
 
 # class OpenScanManagerAction(Action):
-#     accelerator = 'Ctrl+D'
+# accelerator = 'Ctrl+D'
 #     def perform(self, event):
 #         man = get_manager(event, SCAN_PROTOCOL)
 #         open_manager(event.window.application, man)
@@ -79,6 +80,24 @@ class AutoMFTableAction(Action):
         a = AutoMFTable(pyscript_task=pyscript_task, **kw)
 
         do_later(a.do_auto_mftable)
+
+
+class RVAdapter(TabularAdapter):
+    columns = [('Name', 'name'), ('Value', 'value')]
+
+
+class ViewReadoutAction(Action):
+    name = 'View Readout'
+
+    def perform(self, event):
+        app = event.task.window.application
+        spec_man = app.get_service(SPECTROMETER_PROTOCOL)
+
+        from pychron.spectrometer.readout_view import new_readout_view
+
+        rv, v = new_readout_view(spec_man.spectrometer)
+
+        app.open_view(rv, view=v)
 
 
 class SendConfigAction(myTaskAction):
@@ -145,11 +164,11 @@ class PeakCenterAction(TaskAction):
     name = 'Peak Center...'
     method = 'do_peak_center'
     # def perform(self, event):
-        # man = get_manager(event, SCAN_PROTOCOL)
-        # man.peak_center()
+    # man = get_manager(event, SCAN_PROTOCOL)
+    # man.peak_center()
 
-        # if man.setup_peak_center(new=True):
-        #     man.do_peak_center(confirm_save=True, warn=True, message='manual peakcenter')
+    # if man.setup_peak_center(new=True):
+    # man.do_peak_center(confirm_save=True, warn=True, message='manual peakcenter')
 
 
 class CoincidenceScanAction(TaskAction):
@@ -158,7 +177,7 @@ class CoincidenceScanAction(TaskAction):
     # def perform(self, event):
     #     man = get_manager(event, ION_OPTICS_PROTOCOL)
     #     man.do_coincidence_scan()
-        # man.coincidence_scan_task_factory()
+    # man.coincidence_scan_task_factory()
 
 
 class RelativePositionsAction(Action):
