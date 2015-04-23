@@ -292,8 +292,12 @@ class Spectrometer(SpectrometerDevice):
             else:
                 x = [random.random() for i in keys]
         else:
-            x = self.ask('GetParameters {}'.format(','.join(keys)))
-            x = [float(v) for v in x.split(',')]
+            x = self.ask('GetParameters {}'.format(','.join(keys)), verbose=False)
+            try:
+                x = [float(v) for v in x.split(',')]
+            except (AttributeError, ValueError):
+                x = []
+
         return x
 
     def get_configuration_value(self, key):
@@ -570,8 +574,8 @@ class Spectrometer(SpectrometerDevice):
                 for attr in config.options(section):
                     v = config.getfloat(section, attr)
                     if v is not None:
-                        if section == 'Deflection':
-                            defl[attr] = v
+                        if section == 'Deflections':
+                            defl[attr.upper()] = v
                         else:
                             d[attr] = v
 
@@ -604,6 +608,7 @@ class Spectrometer(SpectrometerDevice):
                 cmd = 'SetDeflection'
                 v = '{},{}'.format(k, v)
                 self.set_parameter(cmd, v)
+
             for k, v in specparams.items():
                 try:
                     cmd = 'Set{}'.format(command_map[k])

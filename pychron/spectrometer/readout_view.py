@@ -103,7 +103,7 @@ class Readout(HasTraits):
         self.value = v
 
     def get_percent_value(self):
-        return (self.fvalue - self.min_value) / self.max_value
+        return (self.fvalue - self.min_value) / (self.max_value-self.min_value)
 
 
 class ReadoutHandler(Handler):
@@ -176,8 +176,9 @@ class ReadoutView(Loggable):
         return self.refresh_period * 1000
 
     def start(self):
-        self._alive = True
-        self._refresh_loop()
+        if not self._alive:
+            self._alive = True
+            self._refresh_loop()
 
     def stop(self):
         self._alive = False
@@ -233,8 +234,7 @@ class ReadoutView(Loggable):
         return v
 
 
-def new_readout_view(spectrometer):
-    rv = ReadoutView(spectrometer=spectrometer)
+def new_readout_view(rv):
     rv.start()
 
     from traitsui.view import View
@@ -260,6 +260,6 @@ def new_readout_view(spectrometer):
              title='Spectrometer Readout',
              width=500,
              resizable=True)
-    return rv, v
+    return v
 
 # ============= EOF =============================================

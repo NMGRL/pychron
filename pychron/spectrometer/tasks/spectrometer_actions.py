@@ -91,11 +91,12 @@ class ViewReadoutAction(Action):
 
     def perform(self, event):
         app = event.task.window.application
-        spec_man = app.get_service(SPECTROMETER_PROTOCOL)
+        # spec_man = app.get_service(SPECTROMETER_PROTOCOL)
 
         from pychron.spectrometer.readout_view import new_readout_view
 
-        rv, v = new_readout_view(spec_man.spectrometer)
+        rv = app.get_service('pychron.spectrometer.readout_view.ReadoutView')
+        v = new_readout_view(rv)
         app.open_view(rv, view=v)
 
 
