@@ -22,6 +22,7 @@ from traits.api import Instance, Int, Property, List, \
     Any, Enum, Str, DelegatesTo, Bool, TraitError, cached_property
 
 
+
 # ============= standard library imports ========================
 import os
 from numpy import array, argmin
@@ -285,6 +286,14 @@ class Spectrometer(SpectrometerDevice):
                     mass = nmass - (i - index)
                     di.isotope = 'Ar{}'.format(mass)
 
+    def get_deflection_word(self, keys):
+        if self.simulation:
+            x = [random.random() for i in keys]
+        else:
+            x = self.ask('GetDeflections {}'.format(','.join(keys)), verbose=True)
+            x = self._parse_word(x)
+        return x
+
     def get_parameter_word(self, keys):
         if self.simulation:
             if self._debug_values:
@@ -293,11 +302,15 @@ class Spectrometer(SpectrometerDevice):
                 x = [random.random() for i in keys]
         else:
             x = self.ask('GetParameters {}'.format(','.join(keys)), verbose=False)
-            try:
-                x = [float(v) for v in x.split(',')]
-            except (AttributeError, ValueError):
-                x = []
+            x = self._parse_word(x)
 
+        return x
+
+    def _parse_word(self, word):
+        try:
+            x = [float(v) for v in word.split(',')]
+        except (AttributeError, ValueError):
+            x = []
         return x
 
     def get_configuration_value(self, key):
@@ -305,7 +318,10 @@ class Spectrometer(SpectrometerDevice):
             try:
                 return d[key]
             except KeyError:
-                pass
+                try:
+                    return d[key.lower()]
+                except KeyError:
+                    pass
         else:
             return 0
 
