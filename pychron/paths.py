@@ -135,6 +135,8 @@ class Paths(object):
     data_det_ic_dir = None
     sample_image_dir = None
     sample_image_backup_dir = None
+    device_scan_dir = None
+    isotope_dir = None
     # vcs_dir = None
     # initialization_dir = None
     # device_creator_dir = None
@@ -302,7 +304,7 @@ class Paths(object):
         self.stage_visualizer_dir = join(data_dir, 'stage_visualizer')
         self.data_det_ic_dir = join(data_dir, 'det_ic')
         # self.arar_dir = join(data_dir, 'arar')
-
+        self.device_scan_dir = join(data_dir, 'device_scans')
         self.isotope_dir = join(self.data_dir, 'isotopes')
         self.workspace_root_dir = join(self.data_dir, 'workspaces')
         self.default_workspace_dir = join(self.workspace_root_dir, 'collection')
