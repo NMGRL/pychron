@@ -38,32 +38,33 @@ from pychron.paths import paths
 DEFAULT_CONFIG = '''-
   - name: HighVoltage
     min: 0
-    max: 5000
+    max: 5
     compare: False
   - name: ElectronEnergy
-    min: 0
-    max: 10
-    compare: True
+    min: 53
+    max: 153
+    compare: False
   - name: YSymmetry
-    min: 0
-    max: 10
+    min: -100
+    max: 100
     compare: True
   - name: ZSymmetry
-    min: 0
-    max: 10
+    min: -100
+    max: 100
     compare: True
   - name: ZFocus
     min: 0
-    max: 10
+    max: 100
     compare: True
   - name: IonRepeller
-    min: 0
-    max: 10
+    min: -22.5
+    max: 53.4
     compare: True
   - name: ExtractionLens
     min: 0
-    max: 10
+    max: 100
     compare: True
+
 -
   - name: H2
     compare: True
@@ -298,12 +299,14 @@ def new_readout_view(rv):
             MagnitudeColumn(name='value',
                             label='',
                             width=200), ]
-    dcols = [ObjectColumn(name='name', label='Name'),
-             ObjectColumn(name='value', label='Value')]
+    dcols = [ObjectColumn(name='name', label='Name', width=100),
+             ObjectColumn(name='value', label='Value', width=100)]
 
     a = HGroup(Item('refresh_period', label='Period (s)'))
     b = VGroup(UItem('readouts', editor=TableEditor(columns=cols, editable=False)), label='General')
-    c = VGroup(UItem('deflections', editor=TableEditor(columns=dcols, editable=False)), label='Deflections')
+    c = VGroup(UItem('deflections', editor=TableEditor(columns=dcols,
+                                                       sortable=False,
+                                                       editable=False)), label='Deflections')
     from pychron.spectrometer.readout_view import ReadoutHandler
 
     v = View(VGroup(a, Tabbed(b, c)),

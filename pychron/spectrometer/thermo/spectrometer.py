@@ -290,7 +290,7 @@ class Spectrometer(SpectrometerDevice):
         if self.simulation:
             x = [random.random() for i in keys]
         else:
-            x = self.ask('GetDeflections {}'.format(','.join(keys)), verbose=True)
+            x = self.ask('GetDeflections {}'.format(','.join(keys)), verbose=False)
             x = self._parse_word(x)
         return x
 
