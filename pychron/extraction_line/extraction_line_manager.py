@@ -356,6 +356,10 @@ class ExtractionLineManager(Manager, Consoleable):
                       color='blue' if lock else 'black')
             self.update_valve_lock_state(name, lock)
 
+    def get_state_checksum(self, vkeys):
+        if self.valve_manager is not None:
+            return self.valve_manager.calculate_checksum(vkeys)
+
     def get_valve_owners(self):
         if self.valve_manager is not None:
             return self.valve_manager.get_owners()
@@ -647,14 +651,17 @@ class ExtractionLineManager(Manager, Consoleable):
     def _use_status_monitor_changed(self):
         if self.mode == 'client':
             if self.use_status_monitor:
+                prefid = 'pychron.extraction_line'
                 bind_preference(self.status_monitor, 'state_freq',
-                                'pychron.extraction_line.valve_state_frequency')
+                                '{}.valve_state_frequency'.format(prefid))
+                bind_preference(self.status_monitor, 'checksum_freq',
+                                '{}.checksum_frequency'.format(prefid))
                 bind_preference(self.status_monitor, 'lock_freq',
-                                'pychron.extraction_line.valve_lock_frequency')
+                                '{}.valve_lock_frequency'.format(prefid))
                 bind_preference(self.status_monitor, 'owner_freq',
-                                'pychron.extraction_line.valve_owner_frequency')
+                                '{}.valve_owner_frequency'.format(prefid))
                 bind_preference(self.status_monitor, 'update_period',
-                                'pychron.extraction_line.update_period')
+                                '{}.update_period'.format(prefid))
             else:
                 if self.status_monitor.isAlive():
                     self.status_monitor.stop()

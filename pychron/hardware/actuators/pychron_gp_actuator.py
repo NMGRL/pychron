@@ -35,6 +35,11 @@ class PychronGPActuator(GPActuator):
         Used to communicate with PyValve valves
     """
 
+    def get_state_checksum(self, vkeys, verbose=False):
+        cmd = 'GetStateChecksum {}'.format(','.join(vkeys))
+        resp = self.ask(cmd, verbose=verbose)
+        return resp
+
     def get_lock_state(self, obj):
         cmd = 'GetValveLockState {}'.format(get_valve_name(obj))
         resp = self.ask(cmd)

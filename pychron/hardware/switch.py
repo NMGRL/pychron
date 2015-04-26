@@ -39,12 +39,17 @@ class Switch(Loggable):
 
     settling_time = Float(0)
 
+    owner = Str
+
     def __init__(self, name, *args, **kw):
         """
         """
         self.display_name = name
         kw['name'] = '{}-{}'.format(self.prefix_name, name)
         super(Switch, self).__init__(*args, **kw)
+
+    def state_str(self):
+        return '{}{}{}'.format(self.name, self.state, self.software_lock)
 
     def get_hardware_state(self):
         """
