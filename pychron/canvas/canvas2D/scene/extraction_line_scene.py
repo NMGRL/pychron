@@ -98,8 +98,11 @@ class ExtractionLineScene(Scene):
         font = elem.find('font')
         if font is not None:
             rect.font = font.text.strip()
+        if type_tag == 'turbo':
+            self.overlays.append(rect)
+        else:
+            self.add_item(rect, layer=layer)
 
-        self.add_item(rect, layer=layer)
         return rect
 
     def _new_connection(self, conn, key, start, end):
@@ -412,6 +415,7 @@ class ExtractionLineScene(Scene):
 
     def _load_config(self, p, canvas):
         color_dict = dict()
+        ox, oy = 0, 0
 
         if os.path.isfile(p):
             cp = self._get_canvas_parser(p)
@@ -440,8 +444,7 @@ class ExtractionLineScene(Scene):
                         color_dict[k] = t
 
                 # get an origin offset
-                ox = 0
-                oy = 0
+
                 o = tree.find('origin')
                 if o is not None:
                     ox, oy = map(float, o.text.split(','))

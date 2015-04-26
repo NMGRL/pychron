@@ -15,46 +15,55 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import math
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.scene.primitives.primitives import RoundedRectangle, Animation
 
 
-class Turbo(RoundedRectangle, Animation):
+class Laser(RoundedRectangle, Animation):
+    cnt_tol = 6
     animate = False
 
     def _render_(self, gc):
-        super(Turbo, self)._render_(gc)
+        super(Laser, self)._render_(gc)
         if self.animate:
-            self._draw_impeller(gc)
+            self._draw_firing(gc)
 
-    def _draw_impeller(self, gc):
-        with gc:
-            x, y = self.get_xy(clear_layout_needed=False)
-            w, h = self.get_wh()
+    def _draw_firing(self, gc):
+        """
+        draw an led stream
 
-            cx = x + w / 2.
-            cy = y + h / 2. - 20
-            gc.translate_ctm(cx, cy)
+        0 X X X X X
+        X 0 X X X X
+        X X 0 X X X
+        X X X 0 X X
+        X X X X 0 X
+        X X X X X 0
+        0 X X X X X
 
-            gc.set_stroke_color((0, 0, 0))
+        :param gc:
+        :return:
+        """
+        nleds = 6
+        x, y = self.get_xy()
+        gc.translate_ctm(x, y)
+        radius = 5
+        diam = radius * 2
+        for i in range(nleds):
+            gc.translate_ctm(0, -diam)
+            with gc:
+                if i == self.cnt:
+                    color = (1, 0, 0, 1)
+                else:
+                    color = (1, 0.65, 0, 0.6)
 
-            l = 10
-            w = 3
-            gc.rotate_ctm(math.radians(self.cnt))
-            for i in (0, 1, 2):
-                with gc:
-                    gc.rotate_ctm(math.radians(i * 120))
-                    gc.move_to(0, 0)
-                    gc.line_to(l, -w)
-                    gc.line_to(l, w)
-                    gc.line_to(0, 0)
-                    gc.stroke_path()
+                gc.set_fill_color(color)
+                gc.set_stroke_color(color)
 
-        self.increment_cnt(15)
-        # if self.refresh_required():
+                gc.arc(0, 0, radius, 0, 360)
+                gc.draw_path()
 
+        self.increment_cnt()
 
 # ============= EOF =============================================
 

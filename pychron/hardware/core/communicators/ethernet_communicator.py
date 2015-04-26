@@ -27,6 +27,7 @@ from pychron.loggable import Loggable
 class Handler(Loggable):
     sock = None
     datasize = 2 ** 12
+    address = None
 
     use_message_len_checking = False
     use_checksum = False
@@ -77,32 +78,16 @@ class Handler(Loggable):
 
 
 class TCPHandler(Handler):
-    # datasize = 2 ** 10
-
     def open_socket(self, addr, timeout=2.0):
         self.address = addr
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        if globalv.communication_simulation:
+            timeout = 0.01
         self.sock.settimeout(timeout)
         self.sock.connect(addr)
 
     def get_packet(self, cmd):
         try:
-            # ss=[]
-            # sum = 0
-            # msg_len=0
-            # while 1:
-            # s = self._sock.recv(2048)
-            #     if not msg_len:
-            #         msg_len = int(s[:4],16)
-            #
-            #     sum+=len(s)
-            #     ss.append(s)
-            #     if sum==msg_len:
-            #         break
-            # data = ''.join(ss)
-            #
-            # #trim off header
-            # return data[4:]
             return self._recvall(self.sock.recv)
         except socket.timeout:
             return
@@ -116,12 +101,9 @@ class TCPHandler(Handler):
 
 
 class UDPHandler(Handler):
-    # datasize = 2 ** 10
-
     def open_socket(self, addr, timeout=3.0):
         self.address = addr
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        # self.sock.connect(addr)
         if globalv.communication_simulation:
             timeout = 0.01
         self.sock.settimeout(timeout)

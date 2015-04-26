@@ -56,6 +56,10 @@ class SceneCanvas(BaseDataCanvas):
             self.scene.render_components(gc, self)
         super(SceneCanvas, self)._draw_underlay(gc, view_bounds, mode)
 
+    def _draw_overlay(self, gc, *args, **kw):
+        super(SceneCanvas, self)._draw_overlay(gc, *args, **kw)
+        if self.scene:
+            self.scene.render_overlays(gc, self)
     # def _draw_hook(self, gc, *args, **kw):
 
 # ============= EOF =============================================

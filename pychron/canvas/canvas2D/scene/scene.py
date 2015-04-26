@@ -33,6 +33,7 @@ from canvas_parser import CanvasParser
 
 class Scene(HasTraits):
     layers = List
+    overlays = List
     parser = None
     #     parser = Instance(CanvasParser)
     #     scene_browser = Instance(SceneBrowser)
@@ -65,21 +66,39 @@ class Scene(HasTraits):
         '''
         pass
 
+    def render_overlays(self, gc, canvas):
+        x1, x2 = canvas.get_mapper_limits('index')
+        y1, y2 = canvas.get_mapper_limits('value')
+
+        bounds = x1, x2, y1, y2
+        self._render(gc, canvas, self.overlays, bounds)
+
     def render_components(self, gc, canvas):
         # only render components within the current bounds.
 
         x1, x2 = canvas.get_mapper_limits('index')
         y1, y2 = canvas.get_mapper_limits('value')
 
-        for li in self.layers:
-            if li.visible:
-                for ci in li.components:
-                    if ci.is_in_region(x1, x2, y1, y2):
-                        if self.font:
-                            ci.font = self.font
-                        ci.set_canvas(canvas)
-                        ci.render(gc)
+        bounds = x1, x2, y1, y2
+        self._render(gc, canvas, (ci for li in self.layers if li.visible for ci in li.components), bounds)
 
+        # for li in self.layers:
+        # if li.visible:
+
+        # for ci in li.components:
+        # if ci.is_in_region(x1, x2, y1, y2):
+        #         if self.font:
+        #             ci.font = self.font
+        #         ci.set_canvas(canvas)
+        #         ci.render(gc)
+
+    def _render(self, gc, canvas, components, bounds):
+        for ci in components:
+            if ci.is_in_region(*bounds):
+                if self.font:
+                    ci.font = self.font
+                ci.set_canvas(canvas)
+                ci.render(gc)
     def iteritems(self, exclude=None, klass=None):
         if exclude is None:
             exclude = tuple()
@@ -131,6 +150,10 @@ class Scene(HasTraits):
             nn = next((ll for ll in li.components if test(ll)), None)
             if nn is not None:
                 return nn
+        else:
+            for o in self.overlays:
+                if test(o):
+                    return o
 
     def add_item(self, v, layer=None):
         if layer is None:
