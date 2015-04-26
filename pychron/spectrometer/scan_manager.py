@@ -18,9 +18,8 @@
 from pyface.timer.do_later import do_later
 from traits.api import Instance, Enum, Any, DelegatesTo, List, Property, \
     Bool, Button, String, cached_property, \
-    HasTraits, Range, Float, Event
+    Float, Event
 # ============= standard library imports ========================
-import random
 import os
 import pickle
 import time
@@ -30,14 +29,11 @@ from Queue import Queue
 import yaml
 # ============= local library imports  ==========================
 from pychron.core.ui.preference_binding import bind_preference
-from pychron.core.ui.toggle_button import ToggleButton
-from pychron.envisage.resources import icon
 from pychron.managers.manager import Manager
 from pychron.graph.time_series_graph import TimeSeriesStreamGraph
 from pychron.spectrometer.graph.spectrometer_scan_graph import SpectrometerScanGraph
 from pychron.spectrometer.jobs.scanner import Scanner
 from pychron.spectrometer.thermo.detector import Detector
-from pychron.spectrometer.jobs.magnet_scan import MagnetScan
 from pychron.spectrometer.jobs.rise_rate import RiseRate
 from pychron.paths import paths
 from pychron.managers.data_managers.csv_data_manager import CSVDataManager
@@ -143,6 +139,7 @@ class ScanManager(Manager):
 
         self.load_event_marker_config()
         self.setup_scan()
+        self.readout_view.start()
 
     def load_event_marker_config(self):
         if self.use_log_events:
@@ -683,67 +680,61 @@ class ScanManager(Manager):
 
     def _readout_view_default(self):
         rd = ReadoutView(spectrometer=self.spectrometer)
-        p = os.path.join(paths.spectrometer_dir, 'readout.cfg')
-        if os.path.isfile(p):
-            config = self.get_configuration(path=p)
-            rd.load(config)
-        else:
-            self.warning('no readout configuration file. add one at {}'.format(p))
         return rd
 
 
-if __name__ == '__main__':
-    from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS
-
-    class Magnet(HasTraits):
-        dac = Range(0.0, 6.0)
-
-        def map_mass_to_dac(self, d):
-            return d
-
-    class Source(HasTraits):
-        y_symmetry = Float
-
-    class DummySpectrometer(HasTraits):
-        detectors = List
-        magnet = Instance(Magnet, ())
-        source = Instance(Source, ())
-        molecular_weights = MOLECULAR_WEIGHTS
-
-        def get_intensities(self):
-            return [d.name for d in self.detectors], [random.random() + (i * 12.3) for i in range(len(self.detectors))]
-
-        def get_intensity(self, *args, **kw):
-            return 1
-
-    detectors = [
-        Detector(name='H2',
-                 color='black',
-                 isheader=True
-        ),
-        Detector(name='H1',
-                 color='red'
-        ),
-        Detector(name='AX',
-                 color='violet'
-        ),
-        Detector(name='L1',
-                 color='maroon'
-        ),
-        Detector(name='L2',
-                 color='yellow'
-        ),
-        Detector(name='CDD',
-                 color='lime green',
-                 active=False
-        ),
-
-    ]
-    sm = ScanManager(
-        # detectors=detectors,
-        spectrometer=DummySpectrometer(detectors=detectors))
-    # sm.load_detectors()
-    sm.configure_traits()
+        # if __name__ == '__main__':
+        # from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS
+        #
+        #     class Magnet(HasTraits):
+        #         dac = Range(0.0, 6.0)
+        #
+        #         def map_mass_to_dac(self, d):
+        #             return d
+        #
+        #     class Source(HasTraits):
+        #         y_symmetry = Float
+        #
+        #     class DummySpectrometer(HasTraits):
+        #         detectors = List
+        #         magnet = Instance(Magnet, ())
+        #         source = Instance(Source, ())
+        #         molecular_weights = MOLECULAR_WEIGHTS
+        #
+        #         def get_intensities(self):
+        #             return [d.name for d in self.detectors], [random.random() + (i * 12.3) for i in range(len(self.detectors))]
+        #
+        #         def get_intensity(self, *args, **kw):
+        #             return 1
+        #
+        #     detectors = [
+        #         Detector(name='H2',
+        #                  color='black',
+        #                  isheader=True
+        #         ),
+        #         Detector(name='H1',
+        #                  color='red'
+        #         ),
+        #         Detector(name='AX',
+        #                  color='violet'
+        #         ),
+        #         Detector(name='L1',
+        #                  color='maroon'
+        #         ),
+        #         Detector(name='L2',
+        #                  color='yellow'
+        #         ),
+        #         Detector(name='CDD',
+        #                  color='lime green',
+        #                  active=False
+        #         ),
+        #
+        #     ]
+        #     sm = ScanManager(
+        #         # detectors=detectors,
+        #         spectrometer=DummySpectrometer(detectors=detectors))
+        #     # sm.load_detectors()
+        #     sm.configure_traits()
     # ============= EOF =============================================
     # def _check_detector_protection1(self, prev):
     # """

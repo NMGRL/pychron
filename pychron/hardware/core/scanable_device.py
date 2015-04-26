@@ -175,7 +175,7 @@ class ScanableDevice(ViewableDevice):
             if dm is None:
                 self.data_manager = dm = klass()
 
-            dw = DataWarehouse(root=paths.device_scan_root)
+            dw = DataWarehouse(root=paths.device_scan_dir)
             dw.build_warehouse()
 
             self.frame_name = dm.new_frame(base_frame_name=self.name,

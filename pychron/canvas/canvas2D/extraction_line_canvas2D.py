@@ -42,6 +42,7 @@ class ExtractionLineAction(Action):
 class ExtractionLineCanvas2D(SceneCanvas):
     """
     """
+    use_backbuffer = True
     border_visible = False
     #     valves = Dict
     active_item = Any
@@ -91,17 +92,20 @@ class ExtractionLineCanvas2D(SceneCanvas):
         valve = self._get_valve_by_name(name)
         if valve is not None:
             valve.state = nstate
+        self.draw_valid = False
 
     def update_valve_owned_state(self, name, owned):
         valve = self._get_valve_by_name(name)
         if valve is not None:
             valve.owned = owned
+        self.draw_valid = False
 
     def update_valve_lock_state(self, name, lockstate):
         valve = self._get_valve_by_name(name)
         if valve is not None:
             valve.soft_lock = lockstate
-            self.request_redraw()
+            # self.request_redraw()
+        self.draw_valid = False
 
     # def load_canvas_file(self, cname, setup_name='canvas', valve_name='valves'):
     #

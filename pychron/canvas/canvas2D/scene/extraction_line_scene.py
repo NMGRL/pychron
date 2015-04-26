@@ -22,6 +22,7 @@ import os
 from numpy.core.numeric import Inf
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.scene.canvas_parser import get_volume
+from pychron.canvas.canvas2D.scene.primitives.pumps import Turbo
 from pychron.canvas.canvas2D.scene.scene import Scene
 from pychron.canvas.canvas2D.scene.primitives.primitives import RoundedRectangle, \
     Label, BorderLine, Rectangle, Line, Image, ValueLabel
@@ -81,8 +82,12 @@ class ExtractionLineScene(Scene):
                 c = cobj.default_color
         else:
             c = self._make_color(c)
+        if type_tag == 'turbo':
+            klass = Turbo
+        else:
+            klass = RoundedRectangle
 
-        rect = RoundedRectangle(x + ox, y + oy, width=w, height=h,
+        rect = klass(x + ox, y + oy, width=w, height=h,
                                 name=key,
                                 border_width=bw,
                                 display_name=display_name,
@@ -93,8 +98,11 @@ class ExtractionLineScene(Scene):
         font = elem.find('font')
         if font is not None:
             rect.font = font.text.strip()
+        if type_tag == 'turbo':
+            self.overlays.append(rect)
+        else:
+            self.add_item(rect, layer=layer)
 
-        self.add_item(rect, layer=layer)
         return rect
 
     def _new_connection(self, conn, key, start, end):
@@ -407,6 +415,7 @@ class ExtractionLineScene(Scene):
 
     def _load_config(self, p, canvas):
         color_dict = dict()
+        ox, oy = 0, 0
 
         if os.path.isfile(p):
             cp = self._get_canvas_parser(p)
@@ -435,8 +444,7 @@ class ExtractionLineScene(Scene):
                         color_dict[k] = t
 
                 # get an origin offset
-                ox = 0
-                oy = 0
+
                 o = tree.find('origin')
                 if o is not None:
                     ox, oy = map(float, o.text.split(','))

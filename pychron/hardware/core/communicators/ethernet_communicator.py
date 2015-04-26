@@ -20,20 +20,23 @@ import socket
 # ============= local library imports  ==========================
 from communicator import Communicator
 from pychron.globals import globalv
+from pychron.hardware.core.checksum_helper import computeCRC
 from pychron.loggable import Loggable
 
 
 class Handler(Loggable):
     sock = None
     datasize = 2 ** 12
+    address = None
 
     use_message_len_checking = False
+    use_checksum = False
 
-    def get_packet(self):
-        pass
+    def get_packet(self, cmd):
+        raise NotImplementedError
 
     def send_packet(self, p):
-        pass
+        raise NotImplementedError
 
     def end(self):
         pass
@@ -42,13 +45,13 @@ class Handler(Loggable):
         ss = []
         sum = 0
 
-        #disable message len checking
+        # disable message len checking
         msg_len = 1
         if self.use_message_len_checking:
             msg_len = 0
 
         while 1:
-            s = recv(self.datasize)  #self._sock.recv(2048)
+            s = recv(self.datasize)  # self._sock.recv(2048)
             if not s:
                 break
 
@@ -62,38 +65,29 @@ class Handler(Loggable):
         data = ''.join(ss)
 
         if self.use_message_len_checking:
-            #trim off header
+            # trim off header
             data = data[4:]
+
+        if self.use_checksum:
+            checksum = data[-4:]
+            data = data[:-4]
+            if computeCRC(data) != checksum:
+                return
+
         return data
 
 
 class TCPHandler(Handler):
-    # datasize = 2 ** 10
-
     def open_socket(self, addr, timeout=2.0):
         self.address = addr
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        if globalv.communication_simulation:
+            timeout = 0.01
         self.sock.settimeout(timeout)
         self.sock.connect(addr)
 
     def get_packet(self, cmd):
         try:
-            # ss=[]
-            # sum = 0
-            # msg_len=0
-            # while 1:
-            #     s = self._sock.recv(2048)
-            #     if not msg_len:
-            #         msg_len = int(s[:4],16)
-            #
-            #     sum+=len(s)
-            #     ss.append(s)
-            #     if sum==msg_len:
-            #         break
-            # data = ''.join(ss)
-            #
-            # #trim off header
-            # return data[4:]
             return self._recvall(self.sock.recv)
         except socket.timeout:
             return
@@ -107,19 +101,16 @@ class TCPHandler(Handler):
 
 
 class UDPHandler(Handler):
-    # datasize = 2 ** 10
-
     def open_socket(self, addr, timeout=3.0):
         self.address = addr
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        # self.sock.connect(addr)
         if globalv.communication_simulation:
             timeout = 0.01
         self.sock.settimeout(timeout)
 
     def get_packet(self, cmd):
         r = None
-        #        cnt = 3
+        # cnt = 3
         cnt = 1
 
         def recv(ds):
@@ -139,7 +130,7 @@ class UDPHandler(Handler):
         return r
 
     def send_packet(self, p):
-        #        self.sock.sendto(p, self.address)
+        # self.sock.sendto(p, self.address)
         ok = False
         try:
             self.sock.sendto(p, self.address)
@@ -259,7 +250,7 @@ class EthernetCommunicator(Communicator):
         with self._lock:
             re = 'ERROR: Connection refused {}:{}'.format(self.host, self.port)
             # if self.simulation:
-            #     return 'simulation'
+            # return 'simulation'
 
             for _ in range(retries):
                 r = _ask()

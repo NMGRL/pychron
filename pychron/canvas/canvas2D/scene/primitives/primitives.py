@@ -15,12 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import time
+
 from traits.api import HasTraits, Float, Any, Dict, Bool, Str, Property, List, Int, \
     Color, on_trait_change, String, cached_property, Either
 from traitsui.api import View, VGroup, HGroup, Item, Group
 from chaco.default_colormaps import color_map_name_dict
 from chaco.data_range_1d import DataRange1D
 from kiva.fonttools import str_to_font
+
 
 # ============= standard library imports ========================
 import math
@@ -1229,6 +1232,31 @@ class Image(QPrimitive):
 
         self._cached_image = GraphicsContextArray(data, pix_format=kiva_depth)
         self._image_cache_valid = True
+
+
+class Animation(object):
+    cnt = 0
+    tol = 0.05
+    _last_refresh = None
+    _animate = True
+    cnt_tol = 360
+
+    @property
+    def animate(self):
+        return self._animate and self.refresh_required()
+
+    def reset_cnt(self):
+        self.cnt = 0
+
+    def increment_cnt(self, inc=1):
+        self.cnt += inc
+        if self.cnt >= self.cnt_tol:
+            self.cnt -= self.cnt_tol
+
+    def refresh_required(self):
+        if not self._last_refresh or time.time() - self._last_refresh > self.tol:
+            self._last_refresh = time.time()
+            return True
 
 # ============= EOF ====================================
 # class CalibrationItem(QPrimitive, CalibrationObject):
