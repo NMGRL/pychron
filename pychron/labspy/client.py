@@ -28,6 +28,9 @@ from pychron.pychron_constants import SCRIPT_NAMES
 
 
 class LabspyClient(Loggable):
+    """
+    Used to add experiments and runs to the database. Used in conjunction with ExperimentPlugin
+    """
     # db = Property
     db = Instance(LabspyDatabaseAdapter)
 

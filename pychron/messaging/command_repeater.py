@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -98,6 +98,7 @@ class CommandRepeater(ConfigLoadable):
 
             s = '{}|{}|{}'.format(rid, data, sender_address)
 
+            read_success = False
             send_success, rd = self._send_(s, verbose=verbose)
             if send_success:
                 read_success, rd = self._read_(verbose=verbose)
@@ -109,7 +110,7 @@ class CommandRepeater(ConfigLoadable):
                     rd = 'OK'
 
                 result = rd
-                #result = rd.split('|')[1] if '|' in rd else rd
+                # result = rd.split('|')[1] if '|' in rd else rd
 
             else:
                 self.led.state = 'red'
@@ -177,22 +178,22 @@ class CommandRepeater(ConfigLoadable):
 
     def _read_(self, count=0, verbose=True):
         try:
-            ss=[]
-            sum = 0
-            msg_len=0
+            ss = []
+            n = 0
+            msg_len = 0
             while 1:
                 s = self._sock.recv(2048)
                 if not msg_len:
-                    msg_len = int(s[:4],16)
+                    msg_len = int(s[:4], 16)
 
-                sum+=len(s)
+                n += len(s)
                 ss.append(s)
-                #self.debug('msg_len={} sum={}'.format(msg_len, sum))
-                if sum==msg_len:
+                # self.debug('msg_len={} sum={}'.format(msg_len, sum))
+                if n == msg_len:
                     break
 
-            rd=''.join(ss)
-            #self.debug('processor response len {}'.format(len(rd)))
+            rd = ''.join(ss)
+            # self.debug('processor response len {}'.format(len(rd)))
             success = True
         except socket.error, e:
             success, rd = self._handle_socket_read_error(e, count, verbose)
@@ -277,6 +278,7 @@ class CommandRepeater(ConfigLoadable):
                      Item('test', show_label=False)),
                  handler=CRHandler)
         return v
+
 # ============= EOF ====================================
 
 #

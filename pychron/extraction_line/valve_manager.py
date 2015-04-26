@@ -26,6 +26,7 @@ import time
 # =============local library imports  ==========================
 from pychron.core.helpers.filetools import to_bool
 from pychron.globals import globalv
+from pychron.hardware.core.checksum_helper import computeCRC
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.hardware.switch import Switch
 from pychron.managers.manager import Manager
@@ -34,6 +35,14 @@ from pychron.hardware.valve import HardwareValve
 from pychron.paths import paths
 from pychron.extraction_line.pipettes.tracking import PipetteTracker
 from valve_parser import ValveParser
+
+
+def add_checksum(func):
+    def wrapper(*args, **kw):
+        d = func(*args, **kw)
+        return '{}{}'.format(d, computeCRC(d))
+
+    return wrapper
 
 
 class ValveGroup(object):
@@ -218,12 +227,13 @@ class ValveManager(Manager):
         if self.actuators:
             actuator = self.actuators[0]
             word = actuator.get_lock_word()
-            d = self._parse_word(word)
+            if self._validate_checksum(word):
+                d = self._parse_word(word)
 
-            self.debug('Get Lock Word: {}'.format(word))
-            self.debug('Parsed Lock Word: {}'.format(d))
+                self.debug('Get Lock Word: {}'.format(word))
+                self.debug('Parsed Lock Word: {}'.format(d))
 
-            return d
+                return d
 
     def get_valve_names(self):
         return self.valves.keys()
@@ -257,6 +267,7 @@ class ValveManager(Manager):
                     rs = [('', groups[0].split(',')), ]
             return rs
 
+    @add_checksum
     def get_owners(self):
         """
             eg.
@@ -289,10 +300,12 @@ class ValveManager(Manager):
 
         return ':'.join(owners)
 
+    @add_checksum
     def get_software_locks(self):
         return ','.join(['{}{}'.format(k, int(v.software_lock))
                          for k, v in self.valves.iteritems()])
 
+    @add_checksum
     def get_states(self, timeout=1):
         """
             get as many valves states before time expires
@@ -496,6 +509,17 @@ class ValveManager(Manager):
         return next((valve for valve in self.valves.itervalues() \
                      if getattr(valve, attr) == a), None)
 
+    def _validate_checksum(self, word):
+        if word is not None:
+            checksum = word[-4:]
+            data = word[:-4]
+            expected = computeCRC(data)
+            if expected != checksum:
+                self.warning('The checksum is not correct for this message. Expected: {}, Actual: {}'.format(expected,
+                                                                                                             checksum))
+            else:
+                return True
+
     def _parse_word(self, word):
         if word is not None:
             try:
@@ -684,7 +708,10 @@ class ValveManager(Manager):
                     inner=innerk,
                     outer=outerk)
 
-    def _switch_factory(self, v_elem, klass=HardwareValve):
+    def _switch_factory(self, v_elem, klass=None):
+        if klass is None:
+            klass = HardwareValve
+
         name = v_elem.text.strip()
         address = v_elem.find('address')
         act_elem = v_elem.find('actuator')

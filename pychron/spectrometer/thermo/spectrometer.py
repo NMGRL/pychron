@@ -23,6 +23,8 @@ from traits.api import Instance, Int, Property, List, \
 
 
 
+
+
 # ============= standard library imports ========================
 import os
 from numpy import array, argmin
@@ -32,7 +34,7 @@ from pychron.spectrometer.thermo.source import ArgusSource
 from pychron.spectrometer.thermo.magnet import ArgusMagnet
 from pychron.spectrometer.thermo.detector import Detector
 from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
-from pychron.pychron_constants import NULL_STR, DETECTOR_ORDER, QTEGRA_INTEGRATION_TIMES, DEFAULT_INTEGRATION_TIME
+from pychron.pychron_constants import NULL_STR, QTEGRA_INTEGRATION_TIMES, DEFAULT_INTEGRATION_TIME
 from pychron.paths import paths
 
 
@@ -306,13 +308,6 @@ class Spectrometer(SpectrometerDevice):
 
         return x
 
-    def _parse_word(self, word):
-        try:
-            x = [float(v) for v in word.split(',')]
-        except (AttributeError, ValueError):
-            x = []
-        return x
-
     def get_configuration_value(self, key):
         for d in self._get_cached_config():
             try:
@@ -573,6 +568,13 @@ class Spectrometer(SpectrometerDevice):
     # ===============================================================================
     # private
     # ===============================================================================
+    def _parse_word(self, word):
+        try:
+            x = [float(v) for v in word.split(',')]
+        except (AttributeError, ValueError):
+            x = []
+        return x
+
     def _get_cached_config(self):
         if self._config is None:
             p = os.path.join(paths.spectrometer_dir, 'config.cfg')
@@ -671,11 +673,11 @@ class Spectrometer(SpectrometerDevice):
     # ===============================================================================
     # property get/set
     # ===============================================================================
-    def _get_detectors(self):
-        ds = []
-        for di in DETECTOR_ORDER:
-            ds.append(self._detectors[di])
-        return ds
+    # def _get_detectors(self):
+    # ds = []
+    #     for di in DETECTOR_ORDER:
+    #         ds.append(self._detectors[di])
+    #     return ds
 
     def _get_sub_cup_configuration(self):
         return self._sub_cup_configuration
