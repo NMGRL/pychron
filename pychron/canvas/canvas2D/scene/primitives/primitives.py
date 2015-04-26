@@ -66,6 +66,7 @@ class Primitive(HasTraits):
     identifier = Str
     identifier_visible = True
     type_tag = Str
+    scene_visible = True
 
     x = Float
     y = Float
@@ -222,6 +223,7 @@ class Primitive(HasTraits):
         return w
 
     bounds = None
+
     def set_canvas(self, canvas):
         self._layout_needed = canvas != self.canvas or self.bounds != canvas.bounds
 
@@ -912,7 +914,7 @@ class Indicator(QPrimitive):
     def __init__(self, x, y, *args, **kw):
         super(Indicator, self).__init__(x, y, *args, **kw)
         # print self.x, self.offset_x
-        #self.x=x=self.x+self.offset_x
+        # self.x=x=self.x+self.offset_x
         #self.y=y=self.y+self.offset_y
 
         w = self.hline_length
@@ -935,7 +937,7 @@ class Indicator(QPrimitive):
             x, y = self.get_xy()
             # if self.use_simple_render:
             # render a simple square at the current location
-            #gc = args[0]
+            # gc = args[0]
             l = self.spot_size
             hl = l / 2.
             x, y = x - hl, y - hl
@@ -957,7 +959,7 @@ class Indicator(QPrimitive):
 
 # def set_canvas(self, canvas):
 # super(Indicator, self).set_canvas(canvas)
-#        self.hline.set_canvas(canvas)
+# self.hline.set_canvas(canvas)
 #        self.vline.set_canvas(canvas)
 
 class PointIndicator(Indicator):
@@ -1238,12 +1240,20 @@ class Animation(object):
     cnt = 0
     tol = 0.05
     _last_refresh = None
-    _animate = True
+    _animate = False
     cnt_tol = 360
+
+    def toggle_animate(self):
+        self._animate = not self._animate
+        self.cnt = 0
 
     @property
     def animate(self):
         return self._animate and self.refresh_required()
+
+    @animate.setter
+    def set_animate(self, v):
+        self._animate = v
 
     def reset_cnt(self):
         self.cnt = 0

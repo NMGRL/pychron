@@ -155,25 +155,25 @@ class ValveManager(Manager):
         if local == remote:
             return True
         else:
-            self.warning('State checksums do not match. Remote:{} Local:{}'.format(remote, local))
+            self.warning('State checksums do not match. Local:{} Remote:{}'.format(local, remote))
             if self.actuators:
 
                 state_word = self.get_state_word()
                 lock_word = self.get_lock_word()
                 act = self.actuators[0]
                 # report valves stats
-                self.debug('=================== Valve Stats ===================')
-                tmpl = '{:<8s}{:<8s}{:<8s}{:<8s}{:<8s}{:<8s}{:<8s}'
+                self.debug('========================= Valve Stats =========================')
+                tmpl = '{:<8s}{:<8s}{:<8s}{:<8s}{:<10s}{:<10s}{:<10s}'
                 self.debug(tmpl.format('Key', 'State', 'Lock', 'Failure', 'StateWord', 'LockWord', 'FailureWord'))
                 for vi in vkeys:
                     v = valves[vi]
                     rvstate = act.get_channel_state(v)
-                    s1, s2, s3 = int(v.state), int(rvstate), int(state_word[vi])
+                    s1, s2, s3 = int(v.state), int(rvstate), int(state_word.get(vi, -1))
                     state = '{}{}'.format(s1, s2)
                     statew = '{}{}'.format(s1, s3)
 
                     rvlock = act.get_lock_state(v)
-                    l1, l2, l3 = int(v.software_lock), int(rvlock), int(lock_word[vi])
+                    l1, l2, l3 = int(v.software_lock), int(rvlock), int(lock_word.get(vi, -1))
                     lock = '{}{}'.format(l1, l2)
                     lockw = '{}{}'.format(l1, l3)
 
@@ -181,7 +181,7 @@ class ValveManager(Manager):
                     failw = 'X' if s1 != s3 or l1 != l3 else ''
 
                     self.debug(tmpl.format(vi, state, lock, fail, statew, lockw, failw))
-                self.debug('===================================================')
+                self.debug('===============================================================')
 
     def calculate_checksum(self, vkeys):
         vs = self.valves
@@ -272,6 +272,7 @@ class ValveManager(Manager):
             # elm.refresh_canvas()
 
     def get_state_word(self):
+        d = {}
         if self.actuators:
             actuator = self.actuators[0]
             word = actuator.get_state_word()
@@ -280,9 +281,10 @@ class ValveManager(Manager):
             self.debug('Get State Word: {}'.format(word))
             self.debug('Parsed State Word: {}'.format(d))
 
-            return d
+        return d
 
     def get_lock_word(self):
+        d = {}
         if self.actuators:
             actuator = self.actuators[0]
             word = actuator.get_lock_word()
@@ -292,7 +294,7 @@ class ValveManager(Manager):
                 self.debug('Get Lock Word: {}'.format(word))
                 self.debug('Parsed Lock Word: {}'.format(d))
 
-                return d
+        return d
 
     def get_valve_names(self):
         return self.valves.keys()
@@ -580,9 +582,9 @@ class ValveManager(Manager):
                 return True
 
     def _parse_word(self, word):
+        d = {}
         if word is not None:
             try:
-                d = dict()
                 if ',' in word:
                     packets = word.split(',')
                     n, nn = len(packets), len(self.valves)
@@ -605,9 +607,10 @@ class ValveManager(Manager):
                             return d
                             # if key.upper() in ALPHAS:
                             # if state in ('0', '1'):
-                return d
             except ValueError:
                 pass
+
+        return d
 
     def _load_states(self):
         self.load_valve_states(refresh=False)
@@ -617,7 +620,7 @@ class ValveManager(Manager):
         # s = v.get_hardware_state()
         # self.refresh_state = (k, s, False)
         # # elm.update_valve_state(k, s, refresh=False)
-        #     # time.sleep(0.025)
+        # # time.sleep(0.025)
 
     def _load_soft_lock_states(self):
         if self.mode == 'client':
@@ -627,7 +630,7 @@ class ValveManager(Manager):
             # s = v.get_lock_state()
             # func = self.lock if s else self.unlock
             # func(k, save=False)
-            #     time.sleep(0.025)
+            # time.sleep(0.025)
 
         else:
             p = os.path.join(paths.hidden_dir, '{}_soft_lock_state'.format(self.name))
@@ -852,7 +855,7 @@ class ValveManager(Manager):
         # def get_state_by_name(self, m):
         # b = random.randint(1, 5) / 50.0
         # r = 0.1 + b
-        #             #        r = 3
+        # #        r = 3
         #             self.info('sleep {}'.format(r))
         #             time.sleep(r)
         #             return True
@@ -939,7 +942,7 @@ class ValveManager(Manager):
 # if addr is None:
 # addr = self._get_system_address(name)
 #
-#         vg.owner = addr
+# vg.owner = addr
 #
 #     def release_section(self, section):
 #         try:

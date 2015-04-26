@@ -93,12 +93,12 @@ class ExtractionLineManager(Manager, Consoleable):
         for p in self.valve_manager.pipette_trackers:
             p.load()
 
-        do_after(100, self._refresh_canvas)
+        do_after(200, self._refresh_canvas)
 
     def _refresh_canvas(self):
         self.refresh_canvas()
         if self._active:
-            do_after(100, self._refresh_canvas)
+            do_after(200, self._refresh_canvas)
 
     def deactivate(self):
         self.stop_status_monitor()

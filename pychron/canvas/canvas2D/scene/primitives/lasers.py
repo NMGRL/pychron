@@ -21,8 +21,8 @@ from pychron.canvas.canvas2D.scene.primitives.primitives import RoundedRectangle
 
 
 class Laser(RoundedRectangle, Animation):
-    cnt_tol = 6
-    animate = False
+    cnt_tol = 5
+    radius = 4
 
     def _render_(self, gc):
         super(Laser, self)._render_(gc)
@@ -44,13 +44,13 @@ class Laser(RoundedRectangle, Animation):
         :param gc:
         :return:
         """
-        nleds = 6
+        nleds = self.cnt_tol
         x, y = self.get_xy()
         gc.translate_ctm(x, y)
-        radius = 5
+        radius = self.radius
         diam = radius * 2
         for i in range(nleds):
-            gc.translate_ctm(0, -diam)
+            gc.translate_ctm(0, -diam - 1)
             with gc:
                 if i == self.cnt:
                     color = (1, 0, 0, 1)

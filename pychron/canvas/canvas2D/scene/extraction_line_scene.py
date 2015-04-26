@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,18 +22,52 @@ import os
 from numpy.core.numeric import Inf
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.scene.canvas_parser import get_volume
+from pychron.canvas.canvas2D.scene.primitives.lasers import Laser
 from pychron.canvas.canvas2D.scene.primitives.pumps import Turbo
 from pychron.canvas.canvas2D.scene.scene import Scene
 from pychron.canvas.canvas2D.scene.primitives.primitives import RoundedRectangle, \
-    Label, BorderLine, Rectangle, Line, Image, ValueLabel
+    Label, BorderLine, Line, Image, ValueLabel
 from pychron.core.helpers.filetools import to_bool
 from pychron.canvas.canvas2D.scene.primitives.valves import RoughValve, Valve
 from pychron.extraction_line.valve_parser import ValveParser
 from pychron.paths import paths
 
+KLASS_MAP = {'turbo': Turbo, 'laser': Laser}
+
 
 class ExtractionLineScene(Scene):
     valves = Dict
+
+    def load(self, pathname, configpath, valvepath, canvas):
+        self.reset_layers()
+
+        origin, color_dict = self._load_config(configpath, canvas)
+
+        cp = self._get_canvas_parser(pathname)
+
+        self._load_valves(cp, origin, valvepath)
+        self._load_rects(cp, origin, color_dict)
+
+        # xv = canvas.view_x_range
+        # yv = canvas.view_y_range
+        # x, y = xv[0], yv[0]
+        # w = xv[1] - xv[0]
+        # h = yv[1] - yv[0]
+
+        # brect = Rectangle(x, y, width=w-0.1, height=h-0.1,
+        # identifier='bounds_rect',
+        #                   fill=False, line_width=20, default_color=(0, 0, 102))
+        # self.add_item(brect)
+
+        self._load_pipettes(cp, origin, color_dict)
+
+        self._load_markup(cp, origin, color_dict)
+
+        #    need to load all components that will be connected
+        #    before loading connections
+
+        self._load_connections(cp, origin, color_dict)
+        self._load_legend(cp, origin, color_dict)
 
     def get_is_in(self, px, py, exclude=None):
         if exclude is None:
@@ -82,26 +116,32 @@ class ExtractionLineScene(Scene):
                 c = cobj.default_color
         else:
             c = self._make_color(c)
-        if type_tag == 'turbo':
-            klass = Turbo
-        else:
-            klass = RoundedRectangle
+        # if type_tag == 'turbo':
+        # klass = Turbo
+        # elif
+        # else:
+        #     klass = RoundedRectangle
+
+        klass = KLASS_MAP.get(type_tag, RoundedRectangle)
 
         rect = klass(x + ox, y + oy, width=w, height=h,
-                                name=key,
-                                border_width=bw,
-                                display_name=display_name,
-                                volume=get_volume(elem),
-                                default_color=c,
-                                type_tag=type_tag,
-                                fill=fill)
+                     name=key,
+                     border_width=bw,
+                     display_name=display_name,
+                     volume=get_volume(elem),
+                     default_color=c,
+                     type_tag=type_tag,
+                     fill=fill)
         font = elem.find('font')
         if font is not None:
             rect.font = font.text.strip()
-        if type_tag == 'turbo':
+
+        if type_tag in ('turbo', 'laser'):
             self.overlays.append(rect)
-        else:
-            self.add_item(rect, layer=layer)
+            rect.scene_visible = False
+        # else:
+
+        self.add_item(rect, layer=layer)
 
         return rect
 
@@ -159,7 +199,6 @@ class ExtractionLineScene(Scene):
             eanchor.connections.append(('end', ref()))
 
         self.add_item(l, layer=0)
-
 
     def _new_line(self, line, name,
                   color=(0, 0, 0), width=2,
@@ -269,37 +308,6 @@ class ExtractionLineScene(Scene):
             ndict[key] = v
 
         self.valves = ndict
-
-    def load(self, pathname, configpath, valvepath, canvas):
-        self.reset_layers()
-
-        origin, color_dict = self._load_config(configpath, canvas)
-
-        cp = self._get_canvas_parser(pathname)
-
-        self._load_valves(cp, origin, valvepath)
-        self._load_rects(cp, origin, color_dict)
-
-        xv = canvas.view_x_range
-        yv = canvas.view_y_range
-        x, y = xv[0], yv[0]
-        w = xv[1] - xv[0]
-        h = yv[1] - yv[0]
-
-        brect = Rectangle(x, y, width=w, height=h,
-                          identifier='bounds_rect',
-                          fill=False, line_width=20, default_color=(0, 0, 102))
-        self.add_item(brect)
-
-        self._load_pipettes(cp, origin, color_dict)
-
-        self._load_markup(cp, origin, color_dict)
-
-        #    need to load all components that will be connected
-        #    before loading connections
-
-        self._load_connections(cp, origin, color_dict)
-        self._load_legend(cp, origin, color_dict)
 
     def _load_markup(self, cp, origin, color_dict):
         """
