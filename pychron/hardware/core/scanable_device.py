@@ -44,6 +44,7 @@ class ScanableDevice(ViewableDevice):
     scan_lock = None
     timer = None
     scan_period = Float(1000, enter_set=True, auto_set=False)
+    scan_width = Float(5, enter_set=True, auto_set=False)
     scan_units = 'ms'
     record_scan_data = Bool(False)
     graph_scan_data = Bool(False)
@@ -78,6 +79,7 @@ class ScanableDevice(ViewableDevice):
             if enabled:
                 self.set_attribute(config, 'auto_start', 'Scan', 'auto_start', cast='boolean', default=False)
                 self.set_attribute(config, 'scan_period', 'Scan', 'period', cast='float')
+                self.set_attribute(config, 'scan_width', 'Scan', 'width', cast='float')
                 self.set_attribute(config, 'scan_units', 'Scan', 'units')
                 self.set_attribute(config, 'record_scan_data', 'Scan', 'record', cast='boolean')
                 self.set_attribute(config, 'graph_scan_data', 'Scan', 'graph', cast='boolean')
@@ -127,7 +129,8 @@ class ScanableDevice(ViewableDevice):
 
                     if self.dm_kind == 'csv':
                         ts = generate_datetimestamp()
-                        self.data_manager.write_to_frame((ts, x) + v)
+
+                        self.data_manager.write_to_frame((ts, '{:<8s}'.format('{:0.2f}'.format(x))) + v)
                     else:
                         tab = self.data_manager.get_table('scan1', '/scans')
                         if tab is not None:
@@ -171,6 +174,9 @@ class ScanableDevice(ViewableDevice):
             self.timer.Stop()
             self.timer.wait_for_completion()
 
+        d = self.scan_width * 60 #* 1000/self.scan_period
+        # print self.scan_width, self.scan_period
+        self.graph.set_scan_width(d)
         self._scanning = True
         self.info('Starting scan')
         if self.record_scan_data:
@@ -184,6 +190,8 @@ class ScanableDevice(ViewableDevice):
             dm = self.data_manager
             if dm is None:
                 self.data_manager = dm = klass()
+
+            dm.delimiter = '\t'
 
             dw = DataWarehouse(root=paths.device_scan_dir)
             dw.build_warehouse()
