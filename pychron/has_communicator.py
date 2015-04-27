@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,9 +19,10 @@
 # from traitsui.api import View, Item, TableEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.config_loadable import ConfigLoadable
 
-class HasCommunicator(ConfigLoadable):
+
+# class HasCommunicator(ConfigLoadable):
+class HasCommunicator(object):
     _communicator = None
     id_query = ''
     id_response = ''
@@ -34,15 +35,14 @@ class HasCommunicator(ConfigLoadable):
 
     def _communicator_factory(self, communicator_type):
         if communicator_type is not None:
-
             class_key = '{}Communicator'.format(communicator_type.capitalize())
             module_path = 'pychron.hardware.core.communicators.{}_communicator'.format(communicator_type.lower())
             classlist = [class_key]
 
             class_factory = __import__(module_path, fromlist=classlist)
             return getattr(class_factory, class_key)(name='_'.join((self.name, communicator_type.lower())),
-                          id_query=self.id_query,
-                          id_response=self.id_response)
+                                                     id_query=self.id_query,
+                                                     id_response=self.id_response)
 
     def open(self, **kw):
         """
@@ -65,4 +65,5 @@ class HasCommunicator(ConfigLoadable):
                 communicator.id_query = getattr(self, 'id_query')
             self._communicator = communicator
             return True
+
 # ============= EOF =============================================
