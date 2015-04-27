@@ -82,7 +82,7 @@ class Primitive(HasTraits):
     active_color = Color('(0,255,0)')
     selected_color = Color('blue')
     name_color = Color('black')
-    text_color = None
+    text_color = Color('black')
 
     canvas = Any
 
@@ -258,6 +258,7 @@ class Primitive(HasTraits):
         with gc:
             gc.translate_ctm(x, y)
             # gc.set_text_position(x, y)
+            gc.set_fill_color((0,0,0))
             gc.set_text_position(0, 0)
             gc.show_text(t)
 
@@ -839,6 +840,9 @@ class Label(QPrimitive):
     soffset_x = Float
     soffset_y = Float
     label_offsety = Float
+    # def __init__(self, *args, **kw):
+    #     super(Label, self).__init__(*args, **kw)
+    #     self.text_color = 'black'
 
     def _text_changed(self):
         self.request_redraw()

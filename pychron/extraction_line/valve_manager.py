@@ -275,11 +275,15 @@ class ValveManager(Manager):
         d = {}
         if self.actuators:
             actuator = self.actuators[0]
-            word = actuator.get_state_word()
-            d = self._parse_word(word)
+            try:
+                word = actuator.get_state_word()
 
-            self.debug('Get State Word: {}'.format(word))
-            self.debug('Parsed State Word: {}'.format(d))
+                d = self._parse_word(word)
+
+                self.debug('Get State Word: {}'.format(word))
+                self.debug('Parsed State Word: {}'.format(d))
+            except:
+                pass
 
         return d
 
