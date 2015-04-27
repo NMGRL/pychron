@@ -54,22 +54,11 @@ class FerrupsUPS(CoreDevice):
 
         if vin < self.min_voltage_in:
             self._power_out = True
-            if self.application:
-                tm = self.application.get_service('pychron.social.emailer.Emailer')
-                if tm:
-                    tm.broadcast('Power Outage {} Vin= {}'.format(datetime.strftime(datetime.today(),
-                                                                                    '%Y-%m-%d %H:%M:%S')), vin)
-                else:
-                    self.warning('No emailer available. Power out')
+            self.send_email_notification('{} Power Outage. Vin= {}'.format(datetime.isoformat(), vin))
+
         elif self._power_out:
             self._power_out = False
-            if self.application:
-                tm = self.application.get_service('pychron.social.emailer.Emailer')
-                if tm:
-                    tm.broadcast('Power Returned {} Vin= {}'.format(datetime.strftime(datetime.today(),
-                                                                                      '%Y-%m-%d %H:%M:%S')), vin)
-                else:
-                    self.warning('No emailer available. Power returned')
+            self.send_email_notification('{} Power Returned. Vin= {}'.format(datetime.isoformat(), vin))
 
         return vin
 
@@ -79,7 +68,7 @@ class FerrupsUPS(CoreDevice):
         resp = self.ask(qry)
         return self._parse_response(resp)
 
-    @DeviceProperty()
+    @DeviceProperty(float)
     def voltage_in(self):
         _query, resp = self.get_parameter(1, verbose=False)
         vin = resp.split(' ')[-1]
