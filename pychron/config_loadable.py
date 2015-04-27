@@ -137,7 +137,6 @@ class ConfigLoadable(ConfigMixin):
         else:
             self.warning('failed loading')
 
-
     def open(self, *args, **kw):
         """
         """
