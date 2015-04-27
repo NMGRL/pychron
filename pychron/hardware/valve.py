@@ -47,7 +47,6 @@ class HardwareValve(Switch):
     sample_period = Float(1)
 
     evalve = Any
-    owner = Str
     prefix_name = 'VALVE'
 
     def is_name(self, name):

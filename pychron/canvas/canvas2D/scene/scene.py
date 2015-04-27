@@ -80,7 +80,9 @@ class Scene(HasTraits):
         y1, y2 = canvas.get_mapper_limits('value')
 
         bounds = x1, x2, y1, y2
-        self._render(gc, canvas, (ci for li in self.layers if li.visible for ci in li.components), bounds)
+        self._render(gc, canvas, (ci for li in self.layers if li.visible
+                                  for ci in li.components
+                                  if ci.scene_visible and ci.visible), bounds)
 
         # for li in self.layers:
         # if li.visible:
@@ -99,6 +101,7 @@ class Scene(HasTraits):
                     ci.font = self.font
                 ci.set_canvas(canvas)
                 ci.render(gc)
+
     def iteritems(self, exclude=None, klass=None):
         if exclude is None:
             exclude = tuple()

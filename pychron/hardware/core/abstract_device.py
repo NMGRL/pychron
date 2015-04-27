@@ -20,13 +20,12 @@ from traits.api import Property, DelegatesTo, Instance, provides, CStr
 # =============local library imports  ==========================
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.has_communicator import HasCommunicator
-from pychron.rpc.rpcable import RPCable
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.core.scanable_device import ScanableDevice
 
 
 @provides(ICoreDevice)
-class AbstractDevice(ScanableDevice, RPCable, HasCommunicator):
+class AbstractDevice(ScanableDevice, HasCommunicator):
     _cdevice = Instance(CoreDevice)
     _communicator = DelegatesTo('_cdevice')
 

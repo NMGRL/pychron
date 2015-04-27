@@ -16,12 +16,14 @@
 
 # ============= enthought library imports =======================
 import os
-from traits.api import Str, Bool, Int, File
+
+from traits.api import Str, Bool, Int
 from traitsui.api import View, Item, VGroup, HGroup, spring
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traitsui.editors import FileEditor
 from traitsui.group import Tabbed
 from traitsui.item import UItem
+
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -105,11 +107,16 @@ Hover over section and hit the defined volume key (default="v")'),
             label='Network')
 
         s_grp = VGroup(Item('use_status_monitor'),
-                       VGroup(Item('update_period'),
+                       VGroup(Item('update_period', tooltip='Delay between iterations in seconds'),
                               VGroup(
-                                  Item('valve_state_frequency', label='State'),
-                                  Item('valve_lock_frequency', label='Lock'),
-                                  Item('valve_owner_frequency', label='Owner'),
+                                  Item('valve_state_frequency', label='State',
+                                       tooltip='Check Valve State, i.e Open or Closed every N iterations'),
+                                  Item('checksum_frequency', label='Checksum',
+                                       tooltip='Check the entire extraction line state every N iterations'),
+                                  Item('valve_lock_frequency', label='Lock',
+                                       tooltip='Check Valve Software Lock. i.e Locked or unlocked every N iterations'),
+                                  Item('valve_owner_frequency', label='Owner',
+                                       tooltip='Check Valve Owner every N iterations'),
                                   label='Frequencies'),
                               enabled_when='use_status_monitor'),
                        label='Status Monitor')

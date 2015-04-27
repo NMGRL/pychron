@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#========== standard library imports ==========
+# ========== standard library imports ==========
 import time
 
 #========== local library imports =============
@@ -35,12 +35,18 @@ class PychronGPActuator(GPActuator):
         Used to communicate with PyValve valves
     """
 
-    def get_lock_state(self, obj):
+    def get_state_checksum(self, vkeys, verbose=False):
+        cmd = 'GetStateChecksum {}'.format(','.join(vkeys))
+        resp = self.ask(cmd, verbose=verbose)
+        return resp
+
+    def get_lock_state(self, obj, verbose=False):
         cmd = 'GetValveLockState {}'.format(get_valve_name(obj))
-        resp = self.ask(cmd)
+        resp = self.ask(cmd, verbose=verbose)
         if resp is not None:
             resp = resp.strip()
-            return to_bool(resp)
+
+        return to_bool(resp)
 
     def get_owners_word(self, verbose=False):
         cmd = 'GetValveOwners'
@@ -57,14 +63,15 @@ class PychronGPActuator(GPActuator):
         resp = self.ask(cmd, verbose=verbose)
         return resp
 
-    def get_channel_state(self, obj):
+    def get_channel_state(self, obj, verbose=False):
         """
             Query the hardware for the channel state
         """
         cmd = 'GetValveState {}'.format(get_valve_name(obj))
-        resp = self.ask(cmd)
+        resp = self.ask(cmd, verbose=verbose)
         if resp is not None:
-            resp = to_bool(resp.strip())
+            resp = resp.strip()
+        resp = to_bool(resp)
 
         return resp
 

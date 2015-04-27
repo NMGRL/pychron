@@ -129,7 +129,7 @@ class RoughValve(BaseValve, Bordered):
     border_width = 3
 
     def _render_(self, gc):
-        cx, cy = self.get_xy()
+        cx, cy = self.get_xy(clear_layout_needed=False)
         #         cx, cy = 200, 50
         width, height = self.get_wh()
         #         width += 10
