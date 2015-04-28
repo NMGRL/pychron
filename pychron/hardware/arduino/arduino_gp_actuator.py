@@ -42,8 +42,8 @@ class ArduinoGPActuator(GPActuator):
     compatible with valvebox3.pde/Messenger.h
     """
 
-    def open(self, **kw):
-        super(ArduinoGPActuator, self).open(**kw)
+    # def open(self, **kw):
+    #     super(ArduinoGPActuator, self).open(**kw)
 
     def _parse_response(self, resp):
         if resp is not None:

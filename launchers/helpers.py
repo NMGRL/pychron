@@ -714,8 +714,6 @@ class _GroupPanel(object):
 # # monkey patch ui_panel
 ui_panel._GroupPanel = _GroupPanel
 
-
-
 from traits.etsconfig.api import ETSConfig
 
 ETSConfig.toolkit = "qt4"
@@ -725,9 +723,10 @@ ETSConfig.toolkit = "qt4"
 import os
 import sys
 import logging
-
+import subprocess
 # ============= local library imports  ==========================
 from pyface.message_dialog import information, warning
+from pyface.confirmation_dialog import confirm
 
 logger = logging.getLogger()
 
@@ -741,35 +740,82 @@ def entry_point(modname, klass, setup_version_id='', debug=False):
     set_commandline_args()
 
     # import app klass and pass to launch function
-    if check_dependencies():
+    if check_dependencies(debug):
         mod = __import__('pychron.applications.{}'.format(modname), fromlist=[klass])
         app = getattr(mod, klass)
         from pychron.envisage.pychron_run import launch
+
         launch(app, user)
 
 
-def check_dependencies():
+def check_dependencies(debug):
     """
-        check the dependencies and
+        check the dependencies and install if possible/required
     """
-    for mod, req in (('uncertainties', '2.1'),
-                     ('pint', '0.5')):
+    with open('ENV.txt', 'r') as fp:
+        env = fp.read().strip()
+
+    ret = False
+    logger.info('================ Checking Dependencies ================')
+    for npkg, req in (('uncertainties', '2.1'),
+                      ('pint', '0.5'),
+                      # ('fant', '0.1')
+                      ):
         try:
-            mod = __import__(mod)
-            ver = mod.__version__
+            pkg = __import__(npkg)
+            ver = pkg.__version__
         except ImportError:
-            warning(None, 'Install "{}" package. required version>={} '.format(mod, req))
-            return
+            if confirm(None, '"{}" is required. Attempt to automatically install?'.format(npkg)):
+                if not install_package(pkg, env, debug):
+                    warning(None, 'Failed installing "{}". Try to install manually'.format(npkg))
+                    break
+
+            else:
+                warning(None, 'Install "{}" package. required version>={} '.format(npkg, req))
+                break
 
         vargs = ver.split('.')
         maj = int(vargs[0])
         if maj < int(float(req)):
-            warning(None, 'Update "{}" package. your version={}. required version>={} '.format(mod,
-                                                                                               maj,
-                                                                                               req))
-            return
+            warning(None, 'Update "{}" package. your version={}. required version>={} '.format(npkg, maj, req))
+            break
+        logger.info('{:<15s} >={:<5s} satisfied. Current ver: {}'.format(npkg, req, ver))
+    else:
+        ret = True
 
-    return True
+    logger.info('=======================================================')
+    return ret
+
+
+def install_package(pkg, env, debug):
+    # this may not work when using conda environments
+    # use absolute path to pip /anaconda/envs/.../bin/pip
+    # use -n to specify environment
+
+    if not subprocess.check_call(['conda', 'search', '{}'.format(pkg)], stdout=subprocess.PIPE):
+
+        try:
+            subprocess.check_call(['pip', 'install', '{}'.format(pkg)], stdout=subprocess.PIPE)
+        except subprocess.CalledProcessError:
+            return
+    else:
+        if debug:
+            cmd = ['conda', 'install', '-yq', '{}'.format(pkg)]
+        else:
+            cmd = ['conda', 'install', '-yq', '-n', env, '{}'.format(pkg)]
+        subprocess.check_call(cmd, stdout=subprocess.PIPE)
+
+    if debug:
+        cmd = ['conda', 'list']
+    else:
+        cmd = ['conda', 'list', '-n', env]
+
+    deps = subprocess.check_output(cmd)
+    for dep in deps.split('\n'):
+        if dep.split(' ')[0] == pkg:
+            logger.info('"{}" installed successfully'.format(pkg))
+            return True
+
 
 def set_commandline_args():
     from pychron.globals import globalv
