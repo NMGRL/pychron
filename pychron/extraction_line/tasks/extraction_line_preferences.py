@@ -77,6 +77,7 @@ class ExtractionLinePreferences(BasePreferencesHelper):
     canvas_path = Str
     canvas_config_path = Str
     valves_path = Str
+    checksum_frequency = Int
 
 
 class ExtractionLinePreferencesPane(PreferencesPane):

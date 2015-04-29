@@ -58,8 +58,8 @@ class Globals(object):
     #    test_experiment_set = '/Users/ross/Pychrondata_experiment/experiments/bar.txt'
     # use_ipc = False == embed the remote hardware servers into pychron
     # = True == an instance of RemoteHardwareServer must be launched
-
-    use_ipc = False
+    use_message_len_checking = False
+    use_ipc = True
 
     _test = False  # set test to 'true' when running tests
 

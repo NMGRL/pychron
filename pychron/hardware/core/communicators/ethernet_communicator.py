@@ -29,7 +29,7 @@ class Handler(Loggable):
     datasize = 2 ** 12
     address = None
 
-    use_message_len_checking = False
+    # use_message_len_checking = False
     use_checksum = False
 
     def get_packet(self, cmd):
@@ -47,7 +47,7 @@ class Handler(Loggable):
 
         # disable message len checking
         msg_len = 1
-        if self.use_message_len_checking:
+        if globalv.use_message_len_checking:
             msg_len = 0
 
         while 1:
@@ -64,7 +64,7 @@ class Handler(Loggable):
                 break
         data = ''.join(ss)
 
-        if self.use_message_len_checking:
+        if globalv.use_message_len_checking:
             # trim off header
             data = data[4:]
 
