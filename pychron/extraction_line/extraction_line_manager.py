@@ -90,8 +90,9 @@ class ExtractionLineManager(Manager, Consoleable):
 
         # need to wait until now to load the ptrackers
         # this way our canvases are created
-        for p in self.valve_manager.pipette_trackers:
-            p.load()
+        if self.valve_manager:
+            for p in self.valve_manager.pipette_trackers:
+                p.load()
 
         do_after(200, self._refresh_canvas)
 
@@ -285,7 +286,7 @@ class ExtractionLineManager(Manager, Consoleable):
         if net:
             net.suppress_changes = False
 
-        vm.load_valve_states(refresh=False, force_network_change=True)
+        # vm.load_valve_states(refresh=False, force_network_change=True)
 
         for p in vm.pipette_trackers:
             self._set_pipette_counts(p.name, p.counts)

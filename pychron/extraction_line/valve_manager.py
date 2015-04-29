@@ -617,14 +617,19 @@ class ValveManager(Manager):
         return d
 
     def _load_states(self):
-        self.load_valve_states(refresh=False)
+        if self.mode == 'client':
+            self.load_valve_states(refresh=False)
+        else:
+            for k, v in self.valves.iteritems():
+                s = v.get_hardware_state()
+                self.refresh_state = (k, s, False)
 
-        # # elm = self.extraction_line_manager
-        # for k, v in self.valves.iteritems():
-        # s = v.get_hardware_state()
-        # self.refresh_state = (k, s, False)
-        # # elm.update_valve_state(k, s, refresh=False)
-        # # time.sleep(0.025)
+                # # elm = self.extraction_line_manager
+                # for k, v in self.valves.iteritems():
+                # s = v.get_hardware_state()
+                # self.refresh_state = (k, s, False)
+                # # elm.update_valve_state(k, s, refresh=False)
+                # # time.sleep(0.025)
 
     def _load_soft_lock_states(self):
         if self.mode == 'client':
@@ -860,7 +865,7 @@ class ValveManager(Manager):
         # b = random.randint(1, 5) / 50.0
         # r = 0.1 + b
         # #        r = 3
-        #             self.info('sleep {}'.format(r))
+        # self.info('sleep {}'.format(r))
         #             time.sleep(r)
         #             return True
         #
@@ -948,7 +953,7 @@ class ValveManager(Manager):
 #
 # vg.owner = addr
 #
-#     def release_section(self, section):
+# def release_section(self, section):
 #         try:
 #             vg = self.valve_groups[section]
 #         except KeyError:
