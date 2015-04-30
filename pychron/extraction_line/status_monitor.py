@@ -81,11 +81,11 @@ class StatusMonitor(Loggable):
         if not i % self.owner_freq:
             vm.load_valve_owners()
 
-        if not i % self.checksum_freq:
-            if not vm.state_checksum:
-                vm.load_valve_states()
-                vm.load_valve_lock_states()
-                vm.load_valve_owners()
+        # if not i % self.checksum_freq:
+        #     if not vm.state_checksum:
+        #         vm.load_valve_states()
+        #         vm.load_valve_lock_states()
+        #         vm.load_valve_owners()
 
         if i > 100:
             i = 0

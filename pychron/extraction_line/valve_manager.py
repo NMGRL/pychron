@@ -280,7 +280,7 @@ class ValveManager(Manager):
 
                 d = self._parse_word(word)
 
-                self.debug('Get State Word: {}'.format(word))
+                self.debug('Get State Word: {}'.format(word.strip()))
                 self.debug('Parsed State Word: {}'.format(d))
             except:
                 pass
@@ -575,9 +575,12 @@ class ValveManager(Manager):
                      if getattr(valve, attr) == a), None)
 
     def _validate_checksum(self, word):
+        # return True
+
         if word is not None:
             checksum = word[-4:]
             data = word[:-4]
+
             expected = computeCRC(data)
             if expected != checksum:
                 self.warning('The checksum is not correct for this message. Expected: {}, Actual: {}'.format(expected,

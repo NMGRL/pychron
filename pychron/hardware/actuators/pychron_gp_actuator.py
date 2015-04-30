@@ -17,7 +17,7 @@
 # ========== standard library imports ==========
 import time
 
-#========== local library imports =============
+# ========== local library imports =============
 from gp_actuator import GPActuator
 from pychron.core.helpers.filetools import to_bool
 
@@ -30,16 +30,27 @@ def get_valve_name(obj):
     return addr
 
 
+def trim(func):
+    def wrapper(*args, **kw):
+        r = func(*args, **kw)
+        if r:
+            r = r[4:-4]
+        return r
+
+    return wrapper
+
+
 class PychronGPActuator(GPActuator):
     """
         Used to communicate with PyValve valves
     """
-
+    @trim
     def get_state_checksum(self, vkeys, verbose=False):
         cmd = 'GetStateChecksum {}'.format(','.join(vkeys))
         resp = self.ask(cmd, verbose=verbose)
         return resp
 
+    @trim
     def get_lock_state(self, obj, verbose=False):
         cmd = 'GetValveLockState {}'.format(get_valve_name(obj))
         resp = self.ask(cmd, verbose=verbose)
@@ -47,22 +58,23 @@ class PychronGPActuator(GPActuator):
             resp = resp.strip()
 
         return to_bool(resp)
-
+    @trim
     def get_owners_word(self, verbose=False):
         cmd = 'GetValveOwners'
         resp = self.ask(cmd, verbose=verbose)
         return resp
-
+    @trim
     def get_state_word(self, verbose=False):
         cmd = 'GetValveStates'
         resp = self.ask(cmd, verbose=verbose)
         return resp
-
+    @trim
     def get_lock_word(self, verbose=False):
         cmd = 'GetValveLockStates'
         resp = self.ask(cmd, verbose=verbose)
-        return resp
-
+        if resp:
+            return resp.strip()
+    @trim
     def get_channel_state(self, obj, verbose=False):
         """
             Query the hardware for the channel state
@@ -74,7 +86,7 @@ class PychronGPActuator(GPActuator):
         resp = to_bool(resp)
 
         return resp
-
+    @trim
     def close_channel(self, obj, excl=False):
         """
             Close the channel
@@ -84,7 +96,7 @@ class PychronGPActuator(GPActuator):
         """
         return self._actuate(obj, 'Close')
 
-
+    @trim
     def open_channel(self, obj):
         """
             Open the channel
