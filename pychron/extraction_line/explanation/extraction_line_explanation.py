@@ -43,9 +43,9 @@ class ExplanationAdapter(TabularAdapter):
 
     lock_text = Property
     state_text = Property
-    font = '10'
+    font = '12'
     name_width = Int(40)
-    description_width = Int(130)
+    description_width = Int(175)
     state_width = Int(50)
     lock_width = Int(40)
 

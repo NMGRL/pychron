@@ -737,7 +737,8 @@ def entry_point(modname, klass, setup_version_id='', debug=False):
     """
 
     user = initialize_version(modname, debug)
-    set_commandline_args()
+    if debug:
+        set_commandline_args()
 
     # import app klass and pass to launch function
     if check_dependencies(debug):
@@ -752,6 +753,10 @@ def check_dependencies(debug):
     """
         check the dependencies and install if possible/required
     """
+    # suppress dependency checks temporarily
+    return True
+
+
     with open('ENV.txt', 'r') as fp:
         env = fp.read().strip()
 
