@@ -260,7 +260,6 @@ class ExtractionLineManager(Manager, Consoleable):
                                          name='system_monitor')
             self.monitor.monitor()
 
-        print self.use_network, 'finish loading'
         if self.use_network:
             # p = os.path.join(paths.canvas2D_dir, 'canvas.xml')
             self.network.load(self.canvas_path)
@@ -270,23 +269,24 @@ class ExtractionLineManager(Manager, Consoleable):
         self.status_monitor.stop()
 
     def reload_canvas(self, load_states=False):
+        self.debug('reload canvas')
         self.reload_scene_graph()
-        net = self.network
+        # net = self.network
         vm = self.valve_manager
         # if net:
         #     # p = os.path.join(paths.canvas2D_dir, 'canvas.xml')
         #     net.load(self.canvas_path)
 
-        if net:
-            net.suppress_changes = True
+        # if net:
+        # net.suppress_changes = True
 
         vm.load_valve_states(refresh=False, force_network_change=False)
         vm.load_valve_lock_states(refresh=False)
         if self.mode == 'client':
             self.valve_manager.load_valve_owners(refresh=False)
 
-        if net:
-            net.suppress_changes = False
+        # if net:
+        # net.suppress_changes = False
 
         vm.load_valve_states(refresh=False, force_network_change=True)
 
@@ -315,7 +315,7 @@ class ExtractionLineManager(Manager, Consoleable):
                             vc.state = v.state
 
     def update_valve_state(self, name, state, *args, **kw):
-
+        self.debug('update valve state {} {}'.format(name, state))
         if self.use_network:
             self.network.set_valve_state(name, state)
             for c in self._canvases:

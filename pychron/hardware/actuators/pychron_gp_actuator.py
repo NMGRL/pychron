@@ -74,7 +74,7 @@ class PychronGPActuator(GPActuator):
         resp = self.ask(cmd, verbose=verbose)
         if resp:
             return resp.strip()
-    @trim
+
     def get_channel_state(self, obj, verbose=False):
         """
             Query the hardware for the channel state
@@ -83,10 +83,11 @@ class PychronGPActuator(GPActuator):
         resp = self.ask(cmd, verbose=verbose)
         if resp is not None:
             resp = resp.strip()
+            resp = resp[4:-4]
         resp = to_bool(resp)
 
         return resp
-    @trim
+
     def close_channel(self, obj, excl=False):
         """
             Close the channel
@@ -96,7 +97,6 @@ class PychronGPActuator(GPActuator):
         """
         return self._actuate(obj, 'Close')
 
-    @trim
     def open_channel(self, obj):
         """
             Open the channel
@@ -118,6 +118,7 @@ class PychronGPActuator(GPActuator):
         cmd = '{} {}'.format(action, get_valve_name(obj))
         resp = self.ask(cmd)
         if resp:
+            resp = resp[-4:4].strip()
             if resp.lower().strip() == 'ok':
                 time.sleep(0.05)
                 resp = self.get_channel_state(obj) == state

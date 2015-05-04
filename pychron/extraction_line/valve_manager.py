@@ -195,11 +195,11 @@ class ValveManager(Manager):
             return word
 
     def load_valve_states(self, refresh=True, force_network_change=False):
+        self.debug('Load valve states')
         # elm = self.extraction_line_manager
         word = self.get_state_word()
         changed = False
-
-        if word is not None:
+        if word:
             for k, v in self.valves.iteritems():
                 try:
                     s = word[k]
