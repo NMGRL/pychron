@@ -276,13 +276,14 @@ class ValveManager(Manager):
         if self.actuators:
             actuator = self.actuators[0]
             try:
+
                 word = actuator.get_state_word()
+                if self._validate_checksum(word):
+                    d = self._parse_word(word[:-4])
 
-                d = self._parse_word(word)
-
-                self.debug('Get State Word: {}'.format(word.strip()))
-                self.debug('Parsed State Word: {}'.format(d))
-            except:
+                    self.debug('Get State Word: {}'.format(word.strip()))
+                    self.debug('Parsed State Word: {}'.format(d))
+            except BaseException:
                 pass
 
         return d
@@ -293,7 +294,7 @@ class ValveManager(Manager):
             actuator = self.actuators[0]
             word = actuator.get_lock_word()
             if self._validate_checksum(word):
-                d = self._parse_word(word)
+                d = self._parse_word(word[:-4])
 
                 self.debug('Get Lock Word: {}'.format(word))
                 self.debug('Parsed Lock Word: {}'.format(d))
@@ -576,11 +577,10 @@ class ValveManager(Manager):
 
     def _validate_checksum(self, word):
         # return True
-
         if word is not None:
             checksum = word[-4:]
             data = word[:-4]
-
+            self.debug('{} {}'.format(data, checksum))
             expected = computeCRC(data)
             if expected != checksum:
                 self.warning('The checksum is not correct for this message. Expected: {}, Actual: {}'.format(expected,

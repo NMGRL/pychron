@@ -34,6 +34,7 @@ def trim(func):
     def wrapper(*args, **kw):
         r = func(*args, **kw)
         if r:
+            r = r.strip()
             r = r[4:-4]
         return r
 
@@ -44,6 +45,7 @@ class PychronGPActuator(GPActuator):
     """
         Used to communicate with PyValve valves
     """
+
     @trim
     def get_state_checksum(self, vkeys, verbose=False):
         cmd = 'GetStateChecksum {}'.format(','.join(vkeys))
@@ -58,16 +60,19 @@ class PychronGPActuator(GPActuator):
             resp = resp.strip()
 
         return to_bool(resp)
+
     @trim
     def get_owners_word(self, verbose=False):
         cmd = 'GetValveOwners'
         resp = self.ask(cmd, verbose=verbose)
         return resp
+
     @trim
     def get_state_word(self, verbose=False):
         cmd = 'GetValveStates'
         resp = self.ask(cmd, verbose=verbose)
         return resp
+
     @trim
     def get_lock_word(self, verbose=False):
         cmd = 'GetValveLockStates'
@@ -118,8 +123,8 @@ class PychronGPActuator(GPActuator):
         cmd = '{} {}'.format(action, get_valve_name(obj))
         resp = self.ask(cmd)
         if resp:
-            resp = resp[-4:4].strip()
-            if resp.lower().strip() == 'ok':
+            resp = resp.strip()[4:-4]
+            if resp.lower() == 'ok':
                 time.sleep(0.05)
                 resp = self.get_channel_state(obj) == state
         return resp
