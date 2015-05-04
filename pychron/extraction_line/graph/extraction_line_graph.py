@@ -61,9 +61,10 @@ class ExtractionLineGraph(HasTraits):
     def load(self, p):
 
         cp = CanvasParser(p)
+        print cp.get_root(), p
         if cp.get_root() is None:
             return
-
+        print 'loading'
         nodes = dict()
 
         # =======================================================================
@@ -125,17 +126,19 @@ class ExtractionLineGraph(HasTraits):
             self.set_canvas_states(canvas, ni)
 
     def set_valve_state(self, name, state, *args, **kw):
+        print 'set valve state', name, state, self.nodes
         if name in self.nodes:
             v_node = self.nodes[name]
             v_node.state = 'open' if state else 'closed'
 
     def set_canvas_states(self, canvas, name):
-        if hasattr(canvas, 'scene'):
-            scene = canvas.scene
-        else:
-            scene = canvas.canvas2D.scene
 
         if not self.suppress_changes:
+            if hasattr(canvas, 'scene'):
+                scene = canvas.scene
+            else:
+                scene = canvas.canvas2D.scene
+
             if name in self.nodes:
                 s_node = self.nodes[name]
 

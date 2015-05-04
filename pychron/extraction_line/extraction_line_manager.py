@@ -94,7 +94,7 @@ class ExtractionLineManager(Manager, Consoleable):
             for p in self.valve_manager.pipette_trackers:
                 p.load()
 
-        do_after(200, self._refresh_canvas)
+        # do_after(200, self._refresh_canvas)
 
     def _refresh_canvas(self):
         self.refresh_canvas()
@@ -109,6 +109,7 @@ class ExtractionLineManager(Manager, Consoleable):
         if self.monitor:
             self.monitor.stop()
         self._active = False
+
     def bind_preferences(self):
 
         prefid = 'pychron.extraction_line'
@@ -259,6 +260,7 @@ class ExtractionLineManager(Manager, Consoleable):
                                          name='system_monitor')
             self.monitor.monitor()
 
+        print self.use_network, 'finish loading'
         if self.use_network:
             # p = os.path.join(paths.canvas2D_dir, 'canvas.xml')
             self.network.load(self.canvas_path)
@@ -271,14 +273,14 @@ class ExtractionLineManager(Manager, Consoleable):
         self.reload_scene_graph()
         net = self.network
         vm = self.valve_manager
-        if net:
-            # p = os.path.join(paths.canvas2D_dir, 'canvas.xml')
-            net.load(self.canvas_path)
+        # if net:
+        #     # p = os.path.join(paths.canvas2D_dir, 'canvas.xml')
+        #     net.load(self.canvas_path)
 
         if net:
             net.suppress_changes = True
 
-        vm.load_valve_states(refresh=False, force_network_change=True)
+        vm.load_valve_states(refresh=False, force_network_change=False)
         vm.load_valve_lock_states(refresh=False)
         if self.mode == 'client':
             self.valve_manager.load_valve_owners(refresh=False)
@@ -286,7 +288,7 @@ class ExtractionLineManager(Manager, Consoleable):
         if net:
             net.suppress_changes = False
 
-        # vm.load_valve_states(refresh=False, force_network_change=True)
+        vm.load_valve_states(refresh=False, force_network_change=True)
 
         for p in vm.pipette_trackers:
             self._set_pipette_counts(p.name, p.counts)
