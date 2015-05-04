@@ -51,6 +51,7 @@ class GaugePane(TraitsDockPane):
 
     def traits_view(self):
         v = View(UItem('gauge_manager',
+                       editor=InstanceEditor(),
                        style='custom',
                        height=125,
                        defined_when='gauge_manager'))

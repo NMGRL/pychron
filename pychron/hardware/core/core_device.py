@@ -156,7 +156,7 @@ class CoreDevice(ScanableDevice, HasCommunicator, ConsumerMixin):
 
     def open(self, *args, **kw):
         self.debug('open device')
-        HasCommunicator.open(self, **kw)
+        return HasCommunicator.open(self, **kw)
 
     def initialize(self, *args, **kw):
         a = super(CoreDevice, self).initialize(*args, **kw)

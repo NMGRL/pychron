@@ -94,7 +94,7 @@ class ExtractionLineManager(Manager, Consoleable):
             for p in self.valve_manager.pipette_trackers:
                 p.load()
 
-        # do_after(200, self._refresh_canvas)
+                # do_after(200, self._refresh_canvas)
 
     def _refresh_canvas(self):
         self.refresh_canvas()
@@ -185,7 +185,7 @@ class ExtractionLineManager(Manager, Consoleable):
     # def isolate_chamber(self):
     # # get chamber name
     # sc = self._sample_changer_factory()
-    #     if sc:
+    # if sc:
     #         sc.isolate_chamber()
     #
     # def evacuate_chamber(self):
@@ -258,7 +258,8 @@ class ExtractionLineManager(Manager, Consoleable):
         if self.mode != 'client':
             self.monitor = SystemMonitor(manager=self,
                                          name='system_monitor')
-            self.monitor.monitor()
+            do_after(5000, self.monitor.monitor)
+            # self.monitor.monitor()
 
         if self.use_network:
             # p = os.path.join(paths.canvas2D_dir, 'canvas.xml')
@@ -552,7 +553,7 @@ class ExtractionLineManager(Manager, Consoleable):
                     description = vm.get_valve_by_name(name).description
                     self._log_spec_event(name, action)
                     self.info('{:<6s} Valve-{} ({})'.format(action.upper(), name, description),
-                        color='red' if action == 'close' else 'green')
+                              color='red' if action == 'close' else 'green')
                     vm.actuate_children(name, action, mode)
                     ld = self.link_valve_actuation_dict
                     if ld:
@@ -724,6 +725,11 @@ class ExtractionLineManager(Manager, Consoleable):
     # ===============================================================================
     # defaults
     # ===============================================================================
+    def _gauge_manager_default(self):
+        from pychron.extraction_line.gauge_manager import GaugeManager
+
+        return GaugeManager(application=self.application)
+
     def _status_monitor_default(self):
         sm = StatusMonitor(valve_manager=self.valve_manager)
         return sm
@@ -767,7 +773,7 @@ if __name__ == '__main__':
 # if self.valve_manager is not None:
 # self.status_monitor.valve_manager = self.valve_manager
 # e = self.explanation
-#         if e is not None:
+# if e is not None:
 #             e.load(self.valve_manager.explanable_items)
 #             self.valve_manager.on_trait_change(e.load_item, 'explanable_items[]')
 
