@@ -135,7 +135,6 @@ class CommandProcessor(ConfigLoadable):
     def open(self, *args, **kw):
         """
         """
-        print 'asdfasdfasdfasdfasdf'
         if not globalv.use_ipc:
             return True
 

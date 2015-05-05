@@ -48,8 +48,6 @@ class GaugeManager(Manager):
             return dev.get_pressure(name)
 
     def test_connection(self):
-        print self.devices
-
         for di in self.devices:
             if not di.test_connection():
                 self.debug('Failed connection to "{}" (display_name={})'.format(di.name, di.display_name))
