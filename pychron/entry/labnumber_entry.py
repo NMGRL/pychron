@@ -650,6 +650,9 @@ THIS CHANGE CANNOT BE UNDONE')
                 self._load_holder_positions(holder)
                 self._load_holder_canvas(holder)
                 self._load_canvas_analyses(db, level)
+                self.irradiation_tray = holder.name
+            else:
+                self.irradiation_tray = ''
                 #if debug:
             #    return
             try:
