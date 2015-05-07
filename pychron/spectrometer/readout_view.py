@@ -246,6 +246,7 @@ class ReadoutView(Loggable):
                 rd.query_value()
 
         self.refresh_needed = True
+
         # compare to configuration values
         ne = []
         nd = []
@@ -275,7 +276,7 @@ class ReadoutView(Loggable):
             msg = 'There is a mismatch between the current spectrometer values and the configuration. ' \
                   'Would you like to set the spectrometer to the configuration values?\n\n' \
                   'Name\t\tCurrent\tConfig\n{}'.format(ns)
-            if self.confirmation_dialog(msg):
+            if self.confirmation_dialog(msg, size=(600,600)):
                 self.spectrometer.send_configuration()
                 self.spectrometer.set_debug_configuration_values()
 

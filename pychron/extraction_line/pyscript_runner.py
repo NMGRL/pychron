@@ -81,6 +81,8 @@ class RemoteResource(object):
     def read(self, verbose=True):
         resp = self.handle.ask('Read {}'.format(self.name), verbose=verbose)
         if resp is not None:
+            resp = resp.strip()
+            resp = resp[4:-4]
             return float(resp)
 
     def get(self):

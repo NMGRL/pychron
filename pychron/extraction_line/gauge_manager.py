@@ -84,14 +84,16 @@ class GaugeManager(Manager):
                 time.sleep(0.25)
 
     def traits_view(self):
-
-        v = View(Item('devices', style='custom',
-                      show_label=False,
-                      editor=ListEditor(mutable=False,
-                                        columns=len(self.devices),
-                                        style='custom',
-                                        editor=InstanceEditor(view='gauge_view'))),
-                 height=-100)
+        if self.devices:
+            v = View(Item('devices', style='custom',
+                          show_label=False,
+                          editor=ListEditor(mutable=False,
+                                            columns=len(self.devices),
+                                            style='custom',
+                                            editor=InstanceEditor(view='gauge_view'))),
+                     height=-100)
+        else:
+            v =View()
         return v
 
     def _get_simulation(self):

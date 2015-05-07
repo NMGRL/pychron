@@ -152,7 +152,7 @@ class ValveManager(Manager):
         local = self.calculate_checksum(vkeys)
 
         remote = self.get_state_checksum(vkeys)
-        if local == remote:
+        if local == int(remote):
             return True
         else:
             self.warning('State checksums do not match. Local:{} Remote:{}'.format(local, remote))

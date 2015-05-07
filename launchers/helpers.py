@@ -14,6 +14,9 @@
 # limitations under the License.
 # ===============================================================================
 from PySide import QtCore
+from traits.etsconfig.api import ETSConfig
+ETSConfig.toolkit = "qt4"
+
 from pyface.qt import QtGui
 from traits.trait_base import Undefined
 from traitsui.group import Group
@@ -714,9 +717,6 @@ class _GroupPanel(object):
 # # monkey patch ui_panel
 ui_panel._GroupPanel = _GroupPanel
 
-from traits.etsconfig.api import ETSConfig
-
-ETSConfig.toolkit = "qt4"
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================

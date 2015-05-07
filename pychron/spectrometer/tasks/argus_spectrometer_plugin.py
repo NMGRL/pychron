@@ -67,10 +67,6 @@ class ArgusSpectrometerPlugin(BaseSpectrometerPlugin):
     # ===============================================================================
     # defaults
     # ===============================================================================
-    def _service_offers_default(self):
-        so = self.service_offer_factory(protocol=ReadoutView,
-                                        factory=self._readout_view_factory)
-        return [so]
 
     def _readout_view_factory(self):
         v = ReadoutView(spectrometer=self.spectrometer_manager.spectrometer)

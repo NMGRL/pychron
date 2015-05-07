@@ -33,8 +33,8 @@ class StatusMonitor(Loggable):
     _stop_evt = None
     _clients = 0
 
-    state_freq = Int(1)
-    checksum_freq = Int(1)
+    state_freq = Int(3)
+    checksum_freq = Int(3)
 
     lock_freq = Int(5)
     owner_freq = Int(5)

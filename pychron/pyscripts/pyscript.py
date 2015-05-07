@@ -316,7 +316,7 @@ class PyScript(Loggable):
             if r is not None:
                 self.console_info('invalid syntax')
                 ee = PyscriptError(self.filename, r)
-                print self.text
+                print 'invalid pyscript', self.text
                 raise ee
 
             elif not self._interval_stack.empty():
@@ -873,10 +873,14 @@ class PyScript(Loggable):
             and a ExtractionScript will be different for the same context
         """
         sha1 = hashlib.sha1()
+
+        pos = ctx.get('position')
+        if pos:
+            pos = len(pos)
         for v in (self.__class__,
-                  ctx['duration'],
-                  ctx['cleanup'],
-                  len(ctx['position'])):
+                  ctx.get('duration'),
+                  ctx.get('cleanup'),
+                  pos):
             sha1.update(str(v))
         h = sha1.hexdigest()
         return h
