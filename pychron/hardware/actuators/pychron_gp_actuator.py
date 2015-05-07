@@ -35,7 +35,7 @@ def trim(func):
         r = func(*args, **kw)
         if r:
             r = r.strip()
-            r = r[4:-4]
+            # r = r[4:-4]
         return r
 
     return wrapper
@@ -46,7 +46,8 @@ def trim_bool(func):
         r = func(*args, **kw)
         if r:
             r = r.strip()
-            r = to_bool(r[4:-4])
+            r = to_bool(r)
+            # r = to_bool(r[4:-4])
         return r
 
     return wrapper

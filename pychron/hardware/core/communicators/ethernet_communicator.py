@@ -24,13 +24,38 @@ from pychron.hardware.core.checksum_helper import computeCRC
 from pychron.loggable import Loggable
 
 
+class MessageFrame(object):
+    def __init__(self, message_len=False, nmessage_len=4, checksum=False, nchecksum=4):
+        self.nchecksum = nchecksum
+        self.checksum = checksum
+        self.nmessage_len = nmessage_len
+        self.message_len = message_len
+
+    def set_str(self, s):
+        """
+        L4,-,C4
+        """
+        args = s.split(',')
+        if len(args) == 3:
+            ml = args[0]
+            cs = args[2]
+            self.nmessage_len = int(ml[1:])
+            self.nchecksum = int(cs[1:])
+            self.checksum = True
+            self.message_len = True
+
+
 class Handler(Loggable):
     sock = None
     datasize = 2 ** 12
     address = None
+    message_frame = None
+    # use_message_len_checking = True
+    # use_checksum = True
 
-    # use_message_len_checking = False
-    use_checksum = False
+    def set_frame(self, f):
+        self.message_frame = MessageFrame()
+        self.message_frame.set_str(f)
 
     def get_packet(self, cmd):
         raise NotImplementedError
@@ -46,9 +71,16 @@ class Handler(Loggable):
         sum = 0
 
         # disable message len checking
+        # msg_len = 1
+        # if self.use_message_len_checking:
+        # msg_len = 0
+
         msg_len = 1
-        if globalv.use_message_len_checking:
+        nm = -1
+        frame = self.message_frame
+        if frame.message_len:
             msg_len = 0
+            nm = frame.nmessage_len
 
         while 1:
             s = recv(self.datasize)  # self._sock.recv(2048)
@@ -56,7 +88,7 @@ class Handler(Loggable):
                 break
 
             if not msg_len:
-                msg_len = int(s[:4], 16)
+                msg_len = int(s[:nm], 16)
 
             sum += len(s)
             ss.append(s)
@@ -64,13 +96,14 @@ class Handler(Loggable):
                 break
         data = ''.join(ss)
 
-        if globalv.use_message_len_checking:
+        if frame.message_len:
             # trim off header
-            data = data[4:]
+            data = data[nm:]
 
-        if self.use_checksum:
-            checksum = data[-4:]
-            data = data[:-4]
+        if frame.checksum:
+            nc = frame.nchecksum
+            checksum = data[-nc:]
+            data = data[:-nc]
             if computeCRC(data) != checksum:
                 return
 
@@ -153,6 +186,8 @@ class EthernetCommunicator(Communicator):
     verbose = False
     error = None
 
+    message_frame = None
+
     def load(self, config, path):
         """
         """
@@ -166,6 +201,12 @@ class EthernetCommunicator(Communicator):
         self.test_cmd = self.config_get(config, 'Communications', 'test_cmd', optional=True, default='***')
         self.use_end = self.config_get(config, 'Communications', 'use_end', cast='boolean', optional=True,
                                        default=False)
+        # self.use_message_len_checking = self.config_get(config, 'Communications', 'use_message_len_checking',
+        # cast='boolean', optional=True,
+        # default=True)
+        # self.use_checksum = self.config_get(config, 'Communications', 'use_checksum', cast='boolean', optional=True,
+        # default=True)
+        self.message_frame = self.config_get(config, 'Communications', 'message_frame', optional=True, default=True)
 
         if self.kind is None:
             self.kind = 'UDP'
@@ -215,6 +256,9 @@ class EthernetCommunicator(Communicator):
                 self.handler = h
             else:
                 h = self.handler
+
+        h.set_frame(self.message_frame)
+
         return h
 
     def _reset_connection(self):

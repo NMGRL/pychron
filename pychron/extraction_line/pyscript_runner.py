@@ -82,7 +82,7 @@ class RemoteResource(object):
         resp = self.handle.ask('Read {}'.format(self.name), verbose=verbose)
         if resp is not None:
             resp = resp.strip()
-            resp = resp[4:-4]
+            # resp = resp[4:-4]
             return float(resp)
 
     def get(self):
@@ -128,6 +128,7 @@ class RemotePyScriptRunner(PyScriptRunner):
         handle.host = self.host
         handle.port = self.port
         handle.kind = self.kind
+        handle.message_frame = 'L4,-,C4'
         return handle
 
     def _get_resource(self, name):
