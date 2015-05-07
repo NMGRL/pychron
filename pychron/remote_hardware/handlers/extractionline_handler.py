@@ -117,7 +117,7 @@ class ExtractionlineHandler(BaseRemoteHardwareHandler):
 
         return result
 
-    def GetStateChecksum(self, manager, vnames, *args):
+    def GetStateChecksum(self, manager, vnamestr, *args):
         """
 
         :param manager:
@@ -125,6 +125,7 @@ class ExtractionlineHandler(BaseRemoteHardwareHandler):
         :param args:
         :return:
         """
+        vnames = vnamestr.split(',')
         result = manager.get_state_checksum(vnames)
         return result
 

@@ -372,7 +372,7 @@ class ValveManager(Manager):
                          for k, v in self.valves.iteritems()])
 
     @add_checksum
-    def get_states(self, timeout=1):
+    def get_states(self, timeout=0.25):
         """
             get as many valves states before time expires
             remember last set of valves returned.
@@ -405,6 +405,7 @@ class ValveManager(Manager):
             state = '{}{}'.format(k, int(self._get_state_by(v)))
             states.append(state)
             if time.time() - st > timeout:
+                self.debug('get states timeout')
                 break
         else:
             # if loop completes before timeout dont save keys

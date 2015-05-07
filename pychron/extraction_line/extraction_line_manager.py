@@ -82,6 +82,10 @@ class ExtractionLineManager(Manager, Consoleable):
         if self.mode == 'client':
             self.start_status_monitor()
         else:
+            self.monitor = SystemMonitor(manager=self,
+                                         name='system_monitor')
+            self.monitor.monitor()
+
             if self.gauge_manager:
                 self.info('start gauge scans')
                 self.gauge_manager.start_scans()
@@ -255,11 +259,11 @@ class ExtractionLineManager(Manager, Consoleable):
             ci.refresh()
 
     def finish_loading(self):
-        if self.mode != 'client':
-            self.monitor = SystemMonitor(manager=self,
-                                         name='system_monitor')
-            do_after(5000, self.monitor.monitor)
-            # self.monitor.monitor()
+        # if self.mode != 'client':
+        #     self.monitor = SystemMonitor(manager=self,
+        #                                  name='system_monitor')
+        #     do_after(5000, self.monitor.monitor)
+        #     # self.monitor.monitor()
 
         if self.use_network:
             # p = os.path.join(paths.canvas2D_dir, 'canvas.xml')
