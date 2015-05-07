@@ -41,6 +41,17 @@ def trim(func):
     return wrapper
 
 
+def trim_bool(func):
+    def wrapper(*args, **kw):
+        r = func(*args, **kw)
+        if r:
+            r = r.strip()
+            r = to_bool(r[4:-4])
+        return r
+
+    return wrapper
+
+
 class PychronGPActuator(GPActuator):
     """
         Used to communicate with PyValve valves
@@ -52,46 +63,33 @@ class PychronGPActuator(GPActuator):
         resp = self.ask(cmd, verbose=verbose)
         return resp
 
-    @trim
+    @trim_bool
     def get_lock_state(self, obj, verbose=False):
         cmd = 'GetValveLockState {}'.format(get_valve_name(obj))
-        resp = self.ask(cmd, verbose=verbose)
-        if resp is not None:
-            resp = resp.strip()
-
-        return to_bool(resp)
+        return self.ask(cmd, verbose=verbose)
 
     @trim
     def get_owners_word(self, verbose=False):
         cmd = 'GetValveOwners'
-        resp = self.ask(cmd, verbose=verbose)
-        return resp
+        return self.ask(cmd, verbose=verbose)
 
     @trim
     def get_state_word(self, verbose=False):
         cmd = 'GetValveStates'
-        resp = self.ask(cmd, verbose=verbose)
-        return resp
+        return self.ask(cmd, verbose=verbose)
 
     @trim
     def get_lock_word(self, verbose=False):
         cmd = 'GetValveLockStates'
-        resp = self.ask(cmd, verbose=verbose)
-        if resp:
-            return resp.strip()
+        return self.ask(cmd, verbose=verbose)
 
+    @trim_bool
     def get_channel_state(self, obj, verbose=False):
         """
             Query the hardware for the channel state
         """
         cmd = 'GetValveState {}'.format(get_valve_name(obj))
-        resp = self.ask(cmd, verbose=verbose)
-        if resp is not None:
-            resp = resp.strip()
-            resp = resp[4:-4]
-        resp = to_bool(resp)
-
-        return resp
+        return self.ask(cmd, verbose=verbose)
 
     def close_channel(self, obj, excl=False):
         """
@@ -100,7 +98,7 @@ class PychronGPActuator(GPActuator):
 
             return True if actuation completed successfully
         """
-        return self._actuate(obj, 'Close')
+        return self.actuate(obj, 'Close')
 
     def open_channel(self, obj):
         """
@@ -109,8 +107,14 @@ class PychronGPActuator(GPActuator):
 
             return True if actuation completed successfully
         """
-        return self._actuate(obj, 'Open')
+        return self.actuate(obj, 'Open')
 
+    def actuate(self, obj, action):
+        if self._actuate(obj, action):
+            time.sleep(0.05)
+            return self._check_actuate(obj, action)
+
+    @trim_bool
     def _actuate(self, obj, action):
         """
             obj: valve object
@@ -119,14 +123,11 @@ class PychronGPActuator(GPActuator):
         if self.simulation:
             return True
 
-        state = action == 'Open'
         cmd = '{} {}'.format(action, get_valve_name(obj))
-        resp = self.ask(cmd)
-        if resp:
-            resp = resp.strip()[4:-4]
-            if resp.lower() == 'ok':
-                time.sleep(0.05)
-                resp = self.get_channel_state(obj) == state
-        return resp
+        return self.ask(cmd)
+
+    def _check_actuate(self, obj, action):
+        state = action == 'Open'
+        return self.get_channel_state(obj) == state
 
 # ============= EOF =====================================

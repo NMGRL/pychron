@@ -27,6 +27,12 @@ class HasCommunicator(object):
     id_query = ''
     id_response = ''
 
+    def load_communicator(self, comtype, **kw):
+        communicator = self._communicator_factory(comtype)
+        if communicator is not None:
+            communicator.load_comdict(**kw)
+        self._communicator = communicator
+
     def create_communicator(self, comm_type, port, baudrate):
 
         c = self._communicator_factory(comm_type)
