@@ -103,6 +103,7 @@ class BaseSpectrometerPlugin(BaseTaskPlugin):
         """
         """
         return [dict(name=self.manager_name,
+                     plugin_name=self.name,
                      manager=self.spectrometer_manager)]
 
     def _spectrometer_manager_default(self):

@@ -95,7 +95,7 @@ class Handler(Loggable):
             if sum >= msg_len:
                 break
         data = ''.join(ss)
-
+        data=data.strip()
         if frame.message_len:
             # trim off header
             data = data[nm:]
@@ -104,7 +104,9 @@ class Handler(Loggable):
             nc = frame.nchecksum
             checksum = data[-nc:]
             data = data[:-nc]
-            if computeCRC(data) != checksum:
+            comp = computeCRC(data)
+            if comp != checksum:
+                print 'checksum fail computed={}, expected={}'.format(comp, checksum)
                 return
 
         return data
@@ -181,7 +183,7 @@ class EthernetCommunicator(Communicator):
     port = None
     handler = None
     kind = 'UDP'
-    test_cmd = '***'
+    test_cmd = None
     use_end = True
     verbose = False
     error = None
@@ -198,7 +200,7 @@ class EthernetCommunicator(Communicator):
         self.port = self.config_get(config, 'Communications', 'port', cast='int')
 
         self.kind = self.config_get(config, 'Communications', 'kind', optional=True)
-        self.test_cmd = self.config_get(config, 'Communications', 'test_cmd', optional=True, default='***')
+        self.test_cmd = self.config_get(config, 'Communications', 'test_cmd', optional=True, default='')
         self.use_end = self.config_get(config, 'Communications', 'use_end', cast='boolean', optional=True,
                                        default=False)
         # self.use_message_len_checking = self.config_get(config, 'Communications', 'use_message_len_checking',

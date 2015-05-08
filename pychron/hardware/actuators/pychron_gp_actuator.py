@@ -85,7 +85,7 @@ class PychronGPActuator(GPActuator):
         return self.ask(cmd, verbose=verbose)
 
     @trim_bool
-    def get_channel_state(self, obj, verbose=False):
+    def get_channel_state(self, obj, verbose=True):
         """
             Query the hardware for the channel state
         """

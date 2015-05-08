@@ -295,7 +295,7 @@ class Initializer(Loggable):
                 self.application.register_service(type(man), man)
 
             element = self._get_manager(mi, plugin_name)
-            self._load_elements(element, manager, mi, plugin_name)
+            self._load_elements(element, man, mi, plugin_name)
 
             self.info('finish {} loading'.format(mi))
             man.finish_loading()

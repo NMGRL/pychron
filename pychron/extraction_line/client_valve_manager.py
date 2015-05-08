@@ -118,7 +118,7 @@ class ClientValveManager(ValveManager):
                     d = self._parse_word(word[:-4])
 
                     self.debug('Get State Word: {}'.format(word.strip()))
-                    self.debug('Parsed State Word: {}'.format(d))
+                    # self.debug('Parsed State Word: {}'.format(d))
             except BaseException:
                 pass
 
@@ -133,7 +133,7 @@ class ClientValveManager(ValveManager):
                 d = self._parse_word(word[:-4])
 
                 self.debug('Get Lock Word: {}'.format(word))
-                self.debug('Parsed Lock Word: {}'.format(d))
+                # self.debug('Parsed Lock Word: {}'.format(d))
 
         return d
 
@@ -203,6 +203,7 @@ class ClientValveManager(ValveManager):
                 for vi in vkeys:
                     v = valves[vi]
                     rvstate = act.get_channel_state(v)
+                    print v.state, rvstate, state_word.get(vi,-1)
                     s1, s2, s3 = int(v.state), int(rvstate), int(state_word.get(vi, -1))
                     state = '{}{}'.format(s1, s2)
                     statew = '{}{}'.format(s1, s3)
