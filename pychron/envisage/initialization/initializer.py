@@ -110,7 +110,13 @@ class Initializer(Loggable):
         timed_flags = []
         valve_flags_attrs = []
 
-        mp, name = self._get_plugin(name, plugin_name)
+        # print name, plugin_name
+        # mp, name = self._get_plugin(name, plugin_name)
+        # print mp, name
+        if plugin_name:
+            mp = self._get_plugin(plugin_name)
+        else:
+            mp, name = self._get_plugin_by_name(name)
 
         if mp is not None:
             if not globalv.ignore_initialization_required:
@@ -181,24 +187,20 @@ class Initializer(Loggable):
                        manager,
                        managers,
                        device_dir):
-
         for mi in managers:
             man = None
 
             self.info('load {}'.format(mi))
-            mode, host, port = self.parser.get_rpc_params((mi, manager.name))
-            remote = mode == 'client'
+            # mode, host, port = self.parser.get_rpc_params((mi, manager.name))
+            # remote = mode == 'client'
             try:
                 man = getattr(manager, mi)
                 if man is None:
-                    man = manager.create_manager(mi, host=host,
-                                                 port=port, remote=remote)
+                    man = manager.create_manager(mi)
             except AttributeError, e:
                 self.warning(e)
                 try:
-                    man = manager.create_manager(mi,
-                                                 host=host,
-                                                 port=port, remote=remote)
+                    man = manager.create_manager(mi)
                 except Exception:
                     import traceback
                     traceback.print_exc()
@@ -320,21 +322,26 @@ Do you want to quit to enable {} in the Initialization File?'''.format(name, nam
         self.pd.position = 100, 100
         return pd
 
-    def _get_plugin(self, name, plugin_name):
+    def _get_plugin_by_name(self, name):
         parser = self.parser
-        if plugin_name is None:
-            # remove manager from name
-            name = name.replace('_manager', '')
-            mp = parser.get_plugin(name)
-        else:
-            mp = parser.get_manager(name, plugin_name)
+        name = name.replace('_manager', '')
+        mp = parser.get_plugin(name)
         if mp is None:
             mp = parser.get_root().find('plugins/{}'.format(name))
         return mp, name
 
+    def _get_plugin(self, name):
+        parser = self.parser
+        # name = name.replace('_manager', '')
+        mp = parser.get_plugin(name)
+        return mp
+
     def _get_nsteps(self, name=None, plugin_name=None, **kw):
         parser = self.parser
-        mp, name= self._get_plugin(name, plugin_name)
+        if plugin_name:
+            mp = self._get_plugin(plugin_name)
+        else:
+            mp, name = self._get_plugin_by_name(name)
 
         ns = 0
         if mp is not None:

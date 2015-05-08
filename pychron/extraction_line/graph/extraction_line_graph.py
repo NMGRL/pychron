@@ -130,13 +130,11 @@ class ExtractionLineGraph(HasTraits):
             v_node.state = 'open' if state else 'closed'
 
     def set_canvas_states(self, canvas, name):
-
         if not self.suppress_changes:
             if hasattr(canvas, 'scene'):
                 scene = canvas.scene
             else:
                 scene = canvas.canvas2D.scene
-
             if name in self.nodes:
                 s_node = self.nodes[name]
 
@@ -158,6 +156,7 @@ class ExtractionLineGraph(HasTraits):
                 self._clear_visited()
 
     def _set_state(self, n, scene=None):
+
         if n:
             if n.state == 'closed' and not n.visited:
                 n.visited = True
@@ -266,8 +265,7 @@ class ExtractionLineGraph(HasTraits):
 
         obj = scene.get_item(name)
 
-        if obj is None or \
-                        obj.type_tag in ('turbo', 'tank', 'ionpump'):
+        if obj is None or obj.type_tag in ('turbo', 'tank', 'ionpump'):
             return
 
         if not color and state:

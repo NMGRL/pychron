@@ -30,7 +30,6 @@ from pychron.extraction_line.sample_changer import SampleChanger
 from pychron.globals import globalv
 from pychron.managers.manager import Manager
 from pychron.monitors.system_monitor import SystemMonitor
-from pychron.extraction_line.status_monitor import StatusMonitor
 from pychron.extraction_line.graph.extraction_line_graph import ExtractionLineGraph
 from pychron.pychron_constants import NULL_STR
 
@@ -49,7 +48,7 @@ class ExtractionLineManager(Manager, Consoleable):
 
     valve_manager = Any
     gauge_manager = Any
-    status_monitor = Any
+
     multiplexer_manager = Any
     network = Instance(ExtractionLineGraph)
 
@@ -58,7 +57,6 @@ class ExtractionLineManager(Manager, Consoleable):
 
     mode = 'normal'
 
-    use_status_monitor = Bool
     _update_status_flag = None
     _monitoring_valve_status = False
 
@@ -77,29 +75,28 @@ class ExtractionLineManager(Manager, Consoleable):
     canvas_config_path = File
     valves_path = File
 
+    _active = False
+
     def activate(self):
         self._active = True
-        if self.mode == 'client':
-            self.start_status_monitor()
-        else:
-            self.monitor = SystemMonitor(manager=self,
-                                         name='system_monitor')
-            self.monitor.monitor()
-
-            if self.gauge_manager:
-                self.info('start gauge scans')
-                self.gauge_manager.start_scans()
-
-        self.reload_canvas(load_states=True)
+        self.reload_canvas()
 
         # need to wait until now to load the ptrackers
         # this way our canvases are created
         if self.valve_manager:
+            self.valve_manager.load_valve_states(force_network_change=True)
             for p in self.valve_manager.pipette_trackers:
                 p.load()
 
-                # do_after(200, self._refresh_canvas)
+        self._activate_hook()
 
+    def _activate_hook(self):
+        self.monitor = SystemMonitor(manager=self, name='system_monitor')
+        self.monitor.monitor()
+
+        if self.gauge_manager:
+            self.info('start gauge scans')
+            self.gauge_manager.start_scans()
     def _refresh_canvas(self):
         self.refresh_canvas()
         if self._active:
@@ -259,12 +256,6 @@ class ExtractionLineManager(Manager, Consoleable):
             ci.refresh()
 
     def finish_loading(self):
-        # if self.mode != 'client':
-        #     self.monitor = SystemMonitor(manager=self,
-        #                                  name='system_monitor')
-        #     do_after(5000, self.monitor.monitor)
-        #     # self.monitor.monitor()
-
         if self.use_network:
             # p = os.path.join(paths.canvas2D_dir, 'canvas.xml')
             self.network.load(self.canvas_path)
@@ -287,22 +278,18 @@ class ExtractionLineManager(Manager, Consoleable):
 
         vm.load_valve_states(refresh=False, force_network_change=False)
         vm.load_valve_lock_states(refresh=False)
-        if self.mode == 'client':
-            self.valve_manager.load_valve_owners(refresh=False)
 
         # if net:
         # net.suppress_changes = False
 
-        vm.load_valve_states(refresh=False, force_network_change=True)
+        # vm.load_valve_states(refresh=False, force_network_change=True)
 
         for p in vm.pipette_trackers:
             self._set_pipette_counts(p.name, p.counts)
 
-        self.refresh_canvas()
+        self._reload_canvas_hook()
 
-    def start_status_monitor(self):
-        self.info('starting status monitor')
-        self.status_monitor.start(self.valve_manager)
+        self.refresh_canvas()
 
     def reload_scene_graph(self):
         self.info('reloading canvas scene')
@@ -481,6 +468,9 @@ class ExtractionLineManager(Manager, Consoleable):
     # ===============================================================================
     # private
     # ===============================================================================
+    def _reload_canvas_hook(self):
+        pass
+
     def _log_spec_event(self, name, action):
         sm = self.application.get_service('pychron.spectrometer.scan_manager.ScanManager')
         if sm:
@@ -584,7 +574,7 @@ class ExtractionLineManager(Manager, Consoleable):
 
         return result, change
 
-    def _check_ownership(self, name, requestor):
+    def _check_ownership(self, name, requestor, force=False):
         """
             check if this valve is owned by
             another client 
@@ -595,7 +585,8 @@ class ExtractionLineManager(Manager, Consoleable):
             
         """
         ret = True
-        if self.mode == 'client' or self.check_master_owner:
+
+        if force or self.check_master_owner:
             if requestor is None:
                 requestor = gethostbyname(gethostname())
 
@@ -656,23 +647,7 @@ class ExtractionLineManager(Manager, Consoleable):
     # ===============================================================================
     # handlers
     # ===============================================================================
-    def _use_status_monitor_changed(self):
-        if self.mode == 'client':
-            if self.use_status_monitor:
-                prefid = 'pychron.extraction_line'
-                bind_preference(self.status_monitor, 'state_freq',
-                                '{}.valve_state_frequency'.format(prefid))
-                bind_preference(self.status_monitor, 'checksum_freq',
-                                '{}.checksum_frequency'.format(prefid))
-                bind_preference(self.status_monitor, 'lock_freq',
-                                '{}.valve_lock_frequency'.format(prefid))
-                bind_preference(self.status_monitor, 'owner_freq',
-                                '{}.valve_owner_frequency'.format(prefid))
-                bind_preference(self.status_monitor, 'update_period',
-                                '{}.update_period'.format(prefid))
-            else:
-                if self.status_monitor.isAlive():
-                    self.status_monitor.stop()
+
 
     @on_trait_change('valve_manager:pipette_trackers:counts')
     def _update_pipette_counts(self, obj, name, old, new):
@@ -734,20 +709,20 @@ class ExtractionLineManager(Manager, Consoleable):
 
         return GaugeManager(application=self.application)
 
-    def _status_monitor_default(self):
-        sm = StatusMonitor(valve_manager=self.valve_manager)
-        return sm
-
     def _valve_manager_default(self):
-        from pychron.extraction_line.valve_manager import ValveManager
-        # vm = ValveManager(extraction_line_manager=self)
-        vm = ValveManager(mode=self.mode, application=self.application)
+        klass = self._get_valve_manager_klass()
+        vm = klass(application=self.application)
         vm.on_trait_change(self._handle_state, 'refresh_state')
         vm.on_trait_change(self._handle_lock_state, 'refresh_lock_state')
         vm.on_trait_change(self._handle_owned_state, 'refresh_owned_state')
         vm.on_trait_change(self._handle_refresh_canvas, 'refresh_canvas_needed')
         vm.on_trait_change(self._handle_console_message, 'console_message')
         return vm
+
+    def _get_valve_manager_klass(self):
+        from pychron.extraction_line.valve_manager import ValveManager
+
+        return ValveManager
 
     def _explanation_default(self):
         e = ExtractionLineExplanation()

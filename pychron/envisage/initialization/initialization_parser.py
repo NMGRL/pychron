@@ -307,6 +307,7 @@ class InitializationParser(XMLParser):
 
         if 'Manager' in plugin:
             plugin = plugin.replace('Manager', '')
+
         p = self.get_plugin(plugin)
 
         man = next((pi for pi in p.findall('manager') if pi.text.strip() == name), None)

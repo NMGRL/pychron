@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str, Instance
+from traits.api import Str
 from traitsui.menu import Action
 from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
@@ -25,12 +25,10 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 import os
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_directory2
-from pychron.core.helpers.logger_setup import new_logger
-from pychron.envisage.initialization.initialization_parser import InitializationParser
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.extraction_line.extraction_line_manager import ExtractionLineManager
 from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
-from pychron.extraction_line.pyscript_runner import RemotePyScriptRunner, PyScriptRunner
+from pychron.extraction_line.pyscript_runner import PyScriptRunner
 from pychron.extraction_line.tasks.extraction_line_task import ExtractionLineTask
 from pychron.extraction_line.tasks.extraction_line_actions import RefreshCanvasAction
 from pychron.extraction_line.tasks.extraction_line_preferences import ExtractionLinePreferencesPane, \
@@ -93,7 +91,7 @@ def procedure_action(name, application):
 class ExtractionLinePlugin(BaseTaskPlugin):
     id = 'pychron.extraction_line'
     name = 'ExtractionLine'
-    _extraction_line_manager = Instance(ExtractionLineManager)
+    extraction_line_manager_klass = ExtractionLineManager
 
     def set_preference_defaults(self):
         self._set_preference_defaults((('canvas_path', os.path.join(paths.canvas2D_dir, 'canvas.xml')),
@@ -108,57 +106,19 @@ class ExtractionLinePlugin(BaseTaskPlugin):
         return self._test('test_valve_communication')
 
     def _test(self, func):
+
         man = self.application.get_service(ExtractionLineManager)
         c = getattr(man, func)()
         return 'Passed' if c else 'Failed'
 
     def _factory(self):
-        elm = self._extraction_line_manager
-        if elm is None:
-
-            ip = InitializationParser()
-            try:
-                plugin = ip.get_plugin('ExtractionLine', category='hardware')
-                mode = ip.get_parameter(plugin, 'mode')
-            # mode = plugin.get('mode')
-            except AttributeError:
-                # no epxeriment plugin defined
-                mode = 'normal'
-
-            elm = ExtractionLineManager(mode=mode)
-            elm.bind_preferences()
-            self._extraction_line_manager = elm
+        elm = self.extraction_line_manager_klass(application=self.application)
+        elm.bind_preferences()
 
         return elm
 
     def _runner_factory(self):
-        man = self.application.get_service(ExtractionLineManager)
-        if man.mode == 'client':
-
-            ip = InitializationParser()
-            elm = ip.get_plugin('ExtractionLine', category='hardware')
-            runner = elm.find('runner')
-            if runner is None:
-                man.warning_dialog('Script Runner is not configured in the Initialization file. See documentation')
-                return
-
-            host, port, kind = None, None, None
-
-            if runner is not None:
-                comms = runner.find('communications')
-                host = comms.find('host')
-                port = comms.find('port')
-                kind = comms.find('kind')
-
-            if host is not None:
-                host = host.text  # if host else 'localhost'
-            if port is not None:
-                port = int(port.text)  # if port else 1061
-                kind = kind.text  # if kind else 'udp'
-
-            runner = RemotePyScriptRunner(host, port, kind)
-        else:
-            runner = PyScriptRunner()
+        runner = PyScriptRunner()
         return runner
 
     # defaults
@@ -204,6 +164,7 @@ class ExtractionLinePlugin(BaseTaskPlugin):
         return [
             dict(
                 name='extraction_line',
+                plugin_name=self.name,
                 manager=self.application.get_service(ExtractionLineManager))]
 
     def _tasks_default(self):
