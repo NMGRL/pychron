@@ -324,7 +324,7 @@ class AutomatedRunFactory(PersistenceLoggable):
 
         # db = self.db
         # with db.session_ctx():
-        #     ms = db.get_mass_spectrometer(self.mass_spectrometer)
+        # ms = db.get_mass_spectrometer(self.mass_spectrometer)
         #     ed = db.get_extraction_device(self.extract_device)
         #     self._mass_spectrometers = ms
         #     self._extract_devices = ed
@@ -743,7 +743,7 @@ class AutomatedRunFactory(PersistenceLoggable):
             # db = self.db
             # with db.session_ctx():
             # dbln = db.get_labnumber(self.labnumber)
-            #     if dbln:
+            # if dbln:
             #         dbpos = dbln.irradiation_position
             #         dbhist = db.add_flux_history(dbpos)
             #         dbflux = db.add_flux(float(v), float(e))
@@ -1026,7 +1026,7 @@ class AutomatedRunFactory(PersistenceLoggable):
     # return self._validate_float(d)
     #
     # def _validate_float(self, d):
-    #     try:
+    # try:
     #         return float(d)
     #     except ValueError:
     #         pass
@@ -1372,6 +1372,8 @@ post_equilibration_script:name''')
             if self._load_labnumber_meta(new):
                 if self._set_defaults:
                     self._load_labnumber_defaults(old, new, special)
+            if not special:
+                self.special_labnumber = 'Special Labnumber'
 
     def _project_changed(self):
         self._clear_labnumber()
@@ -1411,6 +1413,7 @@ post_equilibration_script:name''')
             if not self._selected_runs:
                 self.edit_mode = True
         else:
+            self.labnumber = ''
             self._frequency_enabled = False
 
     def _auto_fill_comment_changed(self):
@@ -1611,7 +1614,7 @@ post_equilibration_script:name''')
 # elif PSLICE_REGEX.match(pos):
 # s, e = map(int, pos.split(':'))[:2]
 # elif CSLICE_REGEX.match(pos):
-#            args = pos.split(';')
+# args = pos.split(';')
 #            positions = []
 #            for ai in args:
 #                if '-' in ai:

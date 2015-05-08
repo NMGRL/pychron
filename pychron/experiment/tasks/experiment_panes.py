@@ -20,7 +20,7 @@ from traitsui.api import View, Item, UItem, VGroup, HGroup, spring, \
     EnumEditor, Group, Spring, VFold, Label, InstanceEditor, \
     VSplit, TabularEditor, UReadonly, ListEditor
 from pyface.tasks.traits_dock_pane import TraitsDockPane
-from traitsui.editors import TableEditor
+from traitsui.editors import TableEditor, CheckListEditor
 from traitsui.table_column import ObjectColumn
 from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
@@ -64,10 +64,12 @@ class ExperimentFactoryPane(TraitsDockPane):
     info_label = Property(depends_on='model.run_factory.info_label')
 
     def _get_info_label(self):
-        return '<font size=12, color="green"><b>{}</b></font>'.format(self.model.run_factory.info_label)
+        return '<font size="14" color="green"><b>{}</b></font>'.format(self.model.run_factory.info_label)
 
     def traits_view(self):
-        ss = '''QLabel {font-size: 10px}
+# QLabel {font-size: 10px}
+
+        ss = '''
 QLineEdit {font-size: 10px}
 QGroupBox {
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
@@ -205,13 +207,24 @@ QComboBox {font-size: 10px}
                    # run_factory_item('freq_before', label='Before'),
                    # run_factory_item('freq_after', label='After'),
                    spring),
+
             HGroup(run_factory_item('labnumber',
                                     tooltip='Enter a Labnumber',
-                                    width=100,
-                                    editor=ComboboxEditor(name=run_factory_name('labnumbers'))),
+                                    width=100, ),
+                   run_factory_item('_labnumber', show_label=False,
+                                    editor=CheckListEditor(name=run_factory_name('labnumbers')),
+                                    width=-20),
                    run_factory_item('aliquot',
                                     width=50),
                    spring),
+
+            # HGroup(run_factory_item('labnumber',
+            #                         tooltip='Enter a Labnumber',
+            #                         width=100,
+            #                         editor=ComboboxEditor(name=run_factory_name('labnumbers'))),
+            #        run_factory_item('aliquot',
+            #                         width=50),
+            #        spring),
 
             HGroup(
                 run_factory_item('weight',
