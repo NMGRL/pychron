@@ -206,7 +206,7 @@ class EthernetCommunicator(Communicator):
         # default=True)
         # self.use_checksum = self.config_get(config, 'Communications', 'use_checksum', cast='boolean', optional=True,
         # default=True)
-        self.message_frame = self.config_get(config, 'Communications', 'message_frame', optional=True, default=True)
+        self.message_frame = self.config_get(config, 'Communications', 'message_frame', optional=True, default='')
 
         if self.kind is None:
             self.kind = 'UDP'
