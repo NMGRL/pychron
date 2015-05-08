@@ -64,7 +64,7 @@ class ExperimentFactoryPane(TraitsDockPane):
     info_label = Property(depends_on='model.run_factory.info_label')
 
     def _get_info_label(self):
-        return '<font size="14" color="green"><b>{}</b></font>'.format(self.model.run_factory.info_label)
+        return '<font size="12" color="green"><b>{}</b></font>'.format(self.model.run_factory.info_label)
 
     def traits_view(self):
 # QLabel {font-size: 10px}
@@ -208,23 +208,23 @@ QComboBox {font-size: 10px}
                    # run_factory_item('freq_after', label='After'),
                    spring),
 
-            HGroup(run_factory_item('labnumber',
-                                    tooltip='Enter a Labnumber',
-                                    width=100, ),
-                   run_factory_item('_labnumber', show_label=False,
-                                    editor=CheckListEditor(name=run_factory_name('labnumbers')),
-                                    width=-20),
-                   run_factory_item('aliquot',
-                                    width=50),
-                   spring),
-
             # HGroup(run_factory_item('labnumber',
             #                         tooltip='Enter a Labnumber',
-            #                         width=100,
-            #                         editor=ComboboxEditor(name=run_factory_name('labnumbers'))),
+            #                         width=100, ),
+            #        run_factory_item('_labnumber', show_label=False,
+            #                         editor=CheckListEditor(name=run_factory_name('labnumbers')),
+            #                         width=-20),
             #        run_factory_item('aliquot',
             #                         width=50),
             #        spring),
+
+            HGroup(run_factory_item('labnumber',
+                                    tooltip='Enter a Labnumber',
+                                    width=100,
+                                    editor=ComboboxEditor(name=run_factory_name('labnumbers'))),
+                   run_factory_item('aliquot',
+                                    width=50),
+                   spring),
 
             HGroup(
                 run_factory_item('weight',

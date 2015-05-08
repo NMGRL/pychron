@@ -309,7 +309,8 @@ class Experimentor(Loggable):
     def _set_factory_runs(self, new):
         ef = self.experiment_factory
         rf = ef.run_factory
-        rf.special_labnumber = 'Special Labnumber'
+        # print 'set runs'
+        # rf.special_labnumber = 'Special Labnumber'
 
         rf.suppress_update = True
         rf.set_selected_runs(new)

@@ -133,7 +133,7 @@ class ExperimentFactory(Loggable, ConsumerMixin):
 
     def _add_run(self, *args, **kw):
         positions = [str(pi.positions[0]) for pi in self.selected_positions]
-        print positions
+        self.debug('add run positions= {}'.format(positions))
 
         # load_name = self.queue_factory.load_name
 
@@ -345,7 +345,7 @@ queue_conditionals_name]''')
             rf.special_labnumber = ln
             new_runs, _ = rf.new_runs(q)
             q.add_runs(new_runs, 0)
-            rf.special_labnumber = ''
+            # rf.special_labnumber = ''
             # print 'add special {}, {}'.format(ln, time.time()-tt)
 
         st = time.time()

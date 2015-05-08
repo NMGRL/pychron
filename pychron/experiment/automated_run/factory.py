@@ -692,6 +692,7 @@ class AutomatedRunFactory(PersistenceLoggable):
                 self.labnumber = self.labnumber.replace('##', str(mod))
 
     def _clear_labnumber(self):
+        self.debug('clear labnumber')
         if not self._no_clear_labnumber:
             self.labnumber = ''
 
@@ -1372,8 +1373,10 @@ post_equilibration_script:name''')
             if self._load_labnumber_meta(new):
                 if self._set_defaults:
                     self._load_labnumber_defaults(old, new, special)
-            if not special:
-                self.special_labnumber = 'Special Labnumber'
+            # if not special:
+            #     self.special_labnumber = 'Special Labnumber'
+        else:
+            self.sample = ''
 
     def _project_changed(self):
         self._clear_labnumber()
@@ -1413,6 +1416,7 @@ post_equilibration_script:name''')
             if not self._selected_runs:
                 self.edit_mode = True
         else:
+            self.debug('special labnumber changed else')
             self.labnumber = ''
             self._frequency_enabled = False
 
