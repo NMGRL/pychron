@@ -115,6 +115,7 @@ class BaseLaserPlugin(BaseTaskPlugin):
 
         if self.klass is not None:
             d = [dict(name=self.name,
+                      plugin_name=self.name,
                       manager=self._get_manager())]
 
         return d

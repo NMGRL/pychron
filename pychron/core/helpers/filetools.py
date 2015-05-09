@@ -258,6 +258,8 @@ def to_bool(a):
 
     if isinstance(a, bool):
         return a
+    elif a is None:
+        return False
     elif isinstance(a, (int, float)):
         return bool(a)
 

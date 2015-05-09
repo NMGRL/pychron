@@ -106,8 +106,11 @@ class RemoteHardwareServerManager(Manager):
 #        return names
 
         config = ConfigParser.ConfigParser()
+        print paths.setup_dir
 
         path = os.path.join(paths.setup_dir, 'rhs.cfg')
+        print os.path.isfile(path), path
+
         config.read(path)
 
         servernames = [s.strip() for s in self.config_get(config, 'General', 'servers').split(',')]

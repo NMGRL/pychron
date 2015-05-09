@@ -448,19 +448,19 @@ class FusionsLaserManager(LaserManager):
         return self.record_brightness and self._get_machine_vision() is not None
 
     # ========================= defaults =======================
-    def get_power_database(self):
-        from pychron.database.adapters.power_adapter import PowerAdapter
+    # def get_power_database(self):
+    # from pychron.database.adapters.power_adapter import PowerAdapter
+    #
+    #     db = PowerAdapter(name=self.dbname,
+    #                       kind='sqlite')
+    #     return db
 
-        db = PowerAdapter(name=self.dbname,
-                          kind='sqlite')
-        return db
-
-    def get_power_calibration_database(self):
-        from pychron.database.adapters.power_calibration_adapter import PowerCalibrationAdapter
-
-        db = PowerCalibrationAdapter(name=self.dbname,
-                                     kind='sqlite')
-        return db
+    # def get_power_calibration_database(self):
+    # from pychron.database.adapters.power_calibration_adapter import PowerCalibrationAdapter
+    #
+    #     db = PowerCalibrationAdapter(name=self.dbname,
+    #                                  kind='sqlite')
+    #     return db
 
     #    def _subsystem_default(self):
     #        '''

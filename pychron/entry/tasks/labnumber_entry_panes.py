@@ -39,6 +39,7 @@ class LevelInfoPane(TraitsDockPane):
 
     def traits_view(self):
         v = View(Item('level_production_name', label='Production', style='readonly'),
+                 Item('irradiation_tray', label='Irradiation Tray', style='readonly'),
                  VGroup(UItem('level_note', style='custom', editor=TextEditor(read_only=True)),
                         show_border=True, label='Note'))
         return v
@@ -48,7 +49,6 @@ class ChronologyAdapter(TabularAdapter):
     columns = [('Start', 'start'), ('End', 'end')]
     start_width = Int(150)
     end_width = Int(150)
-
 
 
 class ChronologyPane(TraitsDockPane):
@@ -157,8 +157,8 @@ class IrradiationCanvasPane(TraitsDockPane):
     id = 'pychron.entry.irradiation_canvas'
 
     def traits_view(self):
-        v = View(UItem('canvas',
-                       editor=ComponentEditor()))
+        v = View(VGroup(HGroup(Item('irradiation_tray', style='readonly')),
+                        UItem('canvas', editor=ComponentEditor())))
         return v
 
 

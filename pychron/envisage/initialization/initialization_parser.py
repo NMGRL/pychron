@@ -218,13 +218,26 @@ class InitializationParser(XMLParser):
         return None, None, None
 
     def get_device(self, manager, devname, plugin, element=False):
-        if plugin is None:
-            man = self.get_plugin(manager)
-        else:
-            man = self.get_manager(manager, plugin)
+        if plugin:
+            man = self.get_plugin(plugin)
+            nman = next((d for d in man.findall('manager')
+                    if d.text.strip() == manager), None)
+            if nman is not None:
+                man = nman
 
-        if man is None:
-            man = self.get_plugin_group(manager)
+        else:
+            man = self.get_plugin(manager)
+
+        # print manager, devname, plugin, man.text.strip()
+        # else:
+        #     man = self.get_manager()
+        # if plugin is None:
+        #     man = self.get_plugin(manager)
+        # else:
+        # man = self.get_manager(manager, plugin)
+
+        # if man is None:
+        #     man = self.get_plugin_group(manager)
 
         dev = next((d for d in man.findall('device')
                     if d.text.strip() == devname), None)
@@ -307,6 +320,7 @@ class InitializationParser(XMLParser):
 
         if 'Manager' in plugin:
             plugin = plugin.replace('Manager', '')
+
         p = self.get_plugin(plugin)
 
         man = next((pi for pi in p.findall('manager') if pi.text.strip() == name), None)

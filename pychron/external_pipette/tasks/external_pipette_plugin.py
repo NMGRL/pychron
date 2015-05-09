@@ -52,6 +52,7 @@ class ExternalPipettePlugin(BaseTaskPlugin):
 
     def _managers_default(self):
         return [dict(name='ExternalPipette',
+                     plugin_name='ExternalPipette',
                      manager=self._manager_factory())]
 
     def _tasks_default(self):

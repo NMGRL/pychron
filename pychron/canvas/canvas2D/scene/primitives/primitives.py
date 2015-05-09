@@ -15,12 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import time
+
 from traits.api import HasTraits, Float, Any, Dict, Bool, Str, Property, List, Int, \
     Color, on_trait_change, String, cached_property, Either
 from traitsui.api import View, VGroup, HGroup, Item, Group
 from chaco.default_colormaps import color_map_name_dict
 from chaco.data_range_1d import DataRange1D
 from kiva.fonttools import str_to_font
+
 
 # ============= standard library imports ========================
 import math
@@ -63,6 +66,7 @@ class Primitive(HasTraits):
     identifier = Str
     identifier_visible = True
     type_tag = Str
+    scene_visible = True
 
     x = Float
     y = Float
@@ -78,7 +82,7 @@ class Primitive(HasTraits):
     active_color = Color('(0,255,0)')
     selected_color = Color('blue')
     name_color = Color('black')
-    text_color = None
+    text_color = Color('black')
 
     canvas = Any
 
@@ -103,6 +107,10 @@ class Primitive(HasTraits):
     width = 0
     height = 0
     _initialized = False
+
+    _cached_wh = None
+    _cached_xy = None
+    _layout_needed = True
 
     @cached_property
     def _get_gfont(self):
@@ -165,31 +173,44 @@ class Primitive(HasTraits):
         self.x += dx
         self.y += dy
 
-    def get_xy(self, x=None, y=None):
-        if x is None:
-            x = self.x
-        if y is None:
-            y = self.y
-        # x, y = self.x, self.y
-        offset = 0
-        if self.space == 'data':
-            # if self.canvas is None:
-            # print self
-            if self.canvas:
-                x, y = self.canvas.map_screen([(x, y)])[0]
-                # offset = self.canvas.offset
-                offset = 1
-                x += self.offset_x
-                y += self.offset_y
+    def get_xy(self, x=None, y=None, clear_layout_needed=True):
+        if self._layout_needed or not self._cached_xy:
 
-        return x + offset, y + offset
+            if x is None:
+                x = self.x
+            if y is None:
+                y = self.y
+            # x, y = self.x, self.y
+            offset = 0
+            if self.space == 'data':
+                # if self.canvas is None:
+                # print self
+                if self.canvas:
+                    x, y = self.canvas.map_screen([(x, y)])[0]
+                    # offset = self.canvas.offset
+                    offset = 1
+                    x += self.offset_x
+                    y += self.offset_y
+
+            rx, ry = x + offset, y + offset
+            if clear_layout_needed:
+                self._layout_needed = False
+        else:
+            rx, ry = self._cached_xy
+        self._cached_xy = rx, ry
+
+        return rx, ry
 
     def get_wh(self):
-        w, h = self.width, self.height
-        # w, h = 20, 20
-        if self.space == 'data':
-            (w, h), (ox, oy) = self.canvas.map_screen([(self.width, self.height), (0, 0)])
-            w, h = w - ox, h - oy
+        if self._layout_needed or not self._cached_wh:
+            w, h = self.width, self.height
+            # w, h = 20, 20
+            if self.space == 'data':
+                (w, h), (ox, oy) = self.canvas.map_screen([(self.width, self.height), (0, 0)])
+                w, h = w - ox, h - oy
+        else:
+            w, h = self._cached_wh
+        self._cached_wh = w, h
 
         return w, h
 
@@ -201,8 +222,18 @@ class Primitive(HasTraits):
 
         return w
 
+    bounds = None
+
     def set_canvas(self, canvas):
+        if canvas:
+            self._layout_needed = canvas != self.canvas or self.bounds != canvas.bounds
+
         self.canvas = canvas
+        if canvas:
+            self.bounds = canvas.bounds
+        else:
+            self.bounds = None
+
         for pi in self.primitives:
             pi.set_canvas(canvas)
 
@@ -232,6 +263,7 @@ class Primitive(HasTraits):
         with gc:
             gc.translate_ctm(x, y)
             # gc.set_text_position(x, y)
+            gc.set_fill_color((0,0,0))
             gc.set_text_position(0, 0)
             gc.show_text(t)
 
@@ -263,6 +295,26 @@ class Primitive(HasTraits):
 
     def _get_group(self):
         return
+
+    def is_in_region(self, x1, x2, y1, y2):
+        """
+
+          |------------- x2,y2
+          |       T      |
+          |              |
+        x1,y1------------|    F
+
+
+        check to see if self.x and self.y within region
+        :param x1: float
+        :param x2: float
+        :param y1: float
+        :param y2: float
+        :return: bool
+
+        """
+
+        return x1 <= self.x <= x2 and y1 <= self.y <= y2
 
 
 class QPrimitive(Primitive):
@@ -338,8 +390,10 @@ class Rectangle(QPrimitive):
     use_border = True
 
     def _render_(self, gc):
-        x, y = self.get_xy()
+
+        x, y = self.get_xy(clear_layout_needed=False)
         w, h = self.get_wh()
+
         # gc.set_line_width(self.line_width)
         gc.rect(x, y, w, h)
         if self.fill:
@@ -351,16 +405,8 @@ class Rectangle(QPrimitive):
 
         self._render_name(gc, x, y, w, h)
 
-    # if self.name:
-    # t = str(self.name)
-    # tw = gc.get_full_text_extent(t)[0]
-    # x = x + w / 2.0 - tw / 2.0
-    #            gc.set_text_position(x, y + h / 2 - 6)
-    #            gc.show_text(str(self.name))
-    #            gc.draw_path()
-
     def _render_border(self, gc, x, y, w, h):
-        #        gc.set_stroke_color((0, 0, 0))
+        # gc.set_stroke_color((0, 0, 0))
         gc.rect(x - self.line_width, y - self.line_width,
                 w + self.line_width, h + self.line_width)
         gc.stroke_path()
@@ -376,7 +422,7 @@ class Bordered(Primitive):
             c = self.active_color
 
         c = self._convert_color(c)
-        c = [ci / (2.) for ci in c]
+        c = [ci / 2. for ci in c]
         if len(c) == 4:
             c[3] = 1
 
@@ -407,7 +453,6 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
                                      self.display_name)
             elif not self.display_name == '':
                 self._render_name(gc, x, y, width, height)
-
 
     def _render_border(self, gc, x, y, width, height):
         if self.use_border:
@@ -469,13 +514,6 @@ class Line(QPrimitive):
                 self.primitives[0] = self.start_point
             else:
                 self.primitives.append(self.start_point)
-
-    def set_canvas(self, canvas):
-        super(Line, self).set_canvas(canvas)
-
-        self.start_point.set_canvas(canvas)
-        if self.end_point:
-            self.end_point.set_canvas(canvas)
 
     def _render_(self, gc):
         # gc.begin_path()
@@ -792,8 +830,8 @@ class CalibrationObject(HasTraits):
         self.cy = y
 
 
-#    def set_canvas(self, canvas):
-#        self.canvas = canvas
+# def set_canvas(self, canvas):
+# self.canvas = canvas
 
 
 class Label(QPrimitive):
@@ -807,6 +845,9 @@ class Label(QPrimitive):
     soffset_x = Float
     soffset_y = Float
     label_offsety = Float
+    # def __init__(self, *args, **kw):
+    #     super(Label, self).__init__(*args, **kw)
+    #     self.text_color = 'black'
 
     def _text_changed(self):
         self.request_redraw()
@@ -873,7 +914,7 @@ class ValueLabel(Label):
 class Indicator(QPrimitive):
     hline_length = 0.1
     vline_length = 0.1
-    #use_simple_render = Bool(False)
+    # use_simple_render = Bool(False)
     use_simple_render = Bool(True)
     spot_size = Int(8)
     spot_color = Color('yellow')
@@ -881,8 +922,8 @@ class Indicator(QPrimitive):
 
     def __init__(self, x, y, *args, **kw):
         super(Indicator, self).__init__(x, y, *args, **kw)
-        #print self.x, self.offset_x
-        #self.x=x=self.x+self.offset_x
+        # print self.x, self.offset_x
+        # self.x=x=self.x+self.offset_x
         #self.y=y=self.y+self.offset_y
 
         w = self.hline_length
@@ -903,9 +944,9 @@ class Indicator(QPrimitive):
                 gc.set_stroke_color(sc)
 
             x, y = self.get_xy()
-            #if self.use_simple_render:
+            # if self.use_simple_render:
             # render a simple square at the current location
-            #gc = args[0]
+            # gc = args[0]
             l = self.spot_size
             hl = l / 2.
             x, y = x - hl, y - hl
@@ -925,9 +966,9 @@ class Indicator(QPrimitive):
             #    self.vline.render(*args, **kw)
 
 
-#    def set_canvas(self, canvas):
-#        super(Indicator, self).set_canvas(canvas)
-#        self.hline.set_canvas(canvas)
+# def set_canvas(self, canvas):
+# super(Indicator, self).set_canvas(canvas)
+# self.hline.set_canvas(canvas)
 #        self.vline.set_canvas(canvas)
 
 class PointIndicator(Indicator):
@@ -939,8 +980,7 @@ class PointIndicator(Indicator):
 
     def __init__(self, x, y, *args, **kw):
         super(PointIndicator, self).__init__(x, y, *args, **kw)
-        #self.circle = Circle(self.x, self.y, *args, **kw)
-        #self.primitives.append(self.circle)
+
         if self.identifier:
             self.label_item = Label(self.x, self.y,
                                     text=self.identifier,
@@ -949,20 +989,8 @@ class PointIndicator(Indicator):
                                     *args, **kw)
             self.primitives.append(self.label_item)
 
-    def set_canvas(self, canvas):
-        super(PointIndicator, self).set_canvas(canvas)
-        #        for pi in self.primitives:
-        #            pi.set_canvas(canvas)
-        #
-        #self.circle.set_canvas(canvas)
-        if self.label_item and self.show_label:
-            self.label_item.set_canvas(canvas)
-
     def set_state(self, state):
         self.state = state
-        #self.hline.state = state
-        #self.vline.state = state
-        #self.circle.state = state
 
     def is_in(self, sx, sy):
         x, y = self.get_xy()
@@ -971,16 +999,12 @@ class PointIndicator(Indicator):
 
     def adjust(self, dx, dy):
         super(PointIndicator, self).adjust(dx, dy)
-        #self.hline.adjust(dx, dy)
-        #self.vline.adjust(dx, dy)
-        #self.circle.adjust(dx, dy)
         self.label.adjust(dx, dy)
 
     def _render_(self, gc, *args, **kw):
         super(PointIndicator, self)._render_(gc)
 
         if not self.use_simple_render:
-            #self.circle.render(gc)
 
             if self.label_item and self.show_label:
                 self.label_item.render(gc)
@@ -1219,6 +1243,39 @@ class Image(QPrimitive):
 
         self._cached_image = GraphicsContextArray(data, pix_format=kiva_depth)
         self._image_cache_valid = True
+
+
+class Animation(object):
+    cnt = 0
+    tol = 0.05
+    _last_refresh = None
+    _animate = False
+    cnt_tol = 360
+
+    def toggle_animate(self):
+        self._animate = not self._animate
+        self.cnt = 0
+
+    @property
+    def animate(self):
+        return self._animate and self.refresh_required()
+
+    @animate.setter
+    def set_animate(self, v):
+        self._animate = v
+
+    def reset_cnt(self):
+        self.cnt = 0
+
+    def increment_cnt(self, inc=1):
+        self.cnt += inc
+        if self.cnt >= self.cnt_tol:
+            self.cnt -= self.cnt_tol
+
+    def refresh_required(self):
+        if not self._last_refresh or time.time() - self._last_refresh > self.tol:
+            self._last_refresh = time.time()
+            return True
 
 # ============= EOF ====================================
 # class CalibrationItem(QPrimitive, CalibrationObject):

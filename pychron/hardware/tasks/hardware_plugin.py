@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Bool, Instance, List, Dict
 # from traitsui.api import View, Item
+from pychron.core.helpers.filetools import to_bool
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from envisage.extension_point import ExtensionPoint
 # from pychron.managers.hardware_manager import HardwareManager
@@ -85,9 +86,9 @@ class HardwarePlugin(BaseTaskPlugin):
         afh = self.application.preferences.get('pychron.hardware.auto_find_handle')
         awh = self.application.preferences.get('pychron.hardware.auto_write_handle')
         if afh is not None:
-            toBool = lambda x: True if x == 'True' else False
-            dp.serial_preference.auto_find_handle = toBool(afh)
-            dp.serial_preference.auto_write_handle = toBool(awh)
+            # toBool = lambda x: True if x == 'True' else False
+            dp.serial_preference.auto_find_handle = to_bool(afh)
+            dp.serial_preference.auto_write_handle = to_bool(awh)
 
         ini = Initializer(device_prefs=dp)
         for m in self.managers:
@@ -96,6 +97,7 @@ class HardwarePlugin(BaseTaskPlugin):
         # any loaded managers will be registered as services
         if not ini.run(application=self.application):
             self.application.exit()
+            # self.application.starting
             return
 
         # create the hardware server

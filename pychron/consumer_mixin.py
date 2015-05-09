@@ -159,7 +159,7 @@ class consumable(object):
         self._main = main
 
     def __enter__(self):
-        self._consumer = c = ConsumerMixin()
+        self._consumer = c = ConsumerMixin(auto_start=False)
         c.setup_consumer(func=self._func, main=self._main)
         return c
 

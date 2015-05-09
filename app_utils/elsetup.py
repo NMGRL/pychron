@@ -30,9 +30,11 @@ class App(object):
 
     _valve_path = None
     _canvas_path = None
+    _initialization_path = None
 
     _valve_parser = None
     _canvas_parser = None
+    _initialization_parser = None
     _translation_gen = None
 
     def start(self):
@@ -67,7 +69,8 @@ class App(object):
 
     def _dump(self):
         for par, path in ((self._get_valve_parser(), self._valve_path),
-                          (self._get_canvas_parser(), self._canvas_path)):
+                          (self._get_canvas_parser(), self._canvas_path),
+                          (self._get_initialization_parser(), self._canvas_path)):
             par.write(path, pretty_print=True, method='xml', xml_declaration=True, )
 
     def _default_config(self):
@@ -260,6 +263,8 @@ class App(object):
                 if add:
                     ea = etree.SubElement(vv, 'actuator')
                     ea.text = act
+                    self._add_actuator_to_initialization()
+
 
             # aa = raw_input('Add another valve? [y]/n ')
             if self._get_yes('Add another valve?'):
@@ -270,6 +275,33 @@ class App(object):
         return True
 
     # helpers
+    def _add_actuator_to_initialization(self, act):
+        ip = self._get_initialization_parser()
+
+        root = ip.getroot()
+        plugins = root.find('plugins')
+        if plugins is None:
+            plugins = etree.SubElement(root, 'plugins')
+
+        hw = plugins.find('hardware')
+        if hw is None:
+            hw = etree.SubElement(plugins, 'hardware')
+
+        el = next((e for e in hw.finditer('plugin') if e.etxt == 'ExtractionLine'), None)
+        if el is None:
+            el = etree.SubElement(hw, 'plugin')
+            el.text = 'ExtractionLine'
+
+        vm = next((e for e in el.finditer('manager') if e.text == 'ValveManager'), None)
+        if vm is None:
+            vm = etree.SubElement(el, 'manager', enabled='True')
+            vm.text = 'ValveManager'
+
+        dev = next((d for d in vm.finditer('device') if d.text == act), None)
+        if dev is None:
+            dev = etree.SubElement(vm, 'device', enabled='True')
+            dev.text = act
+
     def _get_port(self, kind):
         while 1:
             port = raw_input('Enter a port: ')
@@ -340,6 +372,18 @@ class App(object):
         for i in range(r):
             for j in range(c):
                 yield '{},{}'.format(i - ro, j - co)
+
+    def _get_initialization_parser(self):
+        if self._initialization_parser is None:
+            if os.path.isfile(self._initialization_path):
+                tree = etree.parse(self._initialization_path)
+            else:
+                tree = etree.ElementTree(etree.Element('root'))
+
+            # tree = etree.ElementTree(etree.Element('root'))
+            self._initialization_parser = tree
+
+        return self._initialization_parser
 
     def _get_valve_parser(self):
         if self._valve_parser is None:

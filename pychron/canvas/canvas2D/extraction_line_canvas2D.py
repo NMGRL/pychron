@@ -24,13 +24,13 @@ from pyface.qt.QtGui import QToolTip
 import os
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.overlays.extraction_line_overlay import ExtractionLineInfoTool, ExtractionLineInfoOverlay
+from pychron.canvas.canvas2D.scene.primitives.lasers import Laser
 from pychron.canvas.canvas2D.scene.primitives.primitives import BorderLine
 from pychron.canvas.scene_viewer import SceneCanvas
 from pychron.canvas.canvas2D.scene.extraction_line_scene import ExtractionLineScene
 from pychron.canvas.canvas2D.scene.primitives.valves import RoughValve, \
     BaseValve
 import weakref
-from pychron.paths import paths
 
 W = 2
 H = 2
@@ -43,6 +43,8 @@ class ExtractionLineAction(Action):
 class ExtractionLineCanvas2D(SceneCanvas):
     """
     """
+    use_backbuffer = True
+    border_visible = False
     #     valves = Dict
     active_item = Any
 
@@ -91,17 +93,20 @@ class ExtractionLineCanvas2D(SceneCanvas):
         valve = self._get_valve_by_name(name)
         if valve is not None:
             valve.state = nstate
+        self.draw_valid = False
 
     def update_valve_owned_state(self, name, owned):
         valve = self._get_valve_by_name(name)
         if valve is not None:
             valve.owned = owned
+        self.draw_valid = False
 
     def update_valve_lock_state(self, name, lockstate):
         valve = self._get_valve_by_name(name)
         if valve is not None:
             valve.soft_lock = lockstate
-            self.request_redraw()
+            # self.request_redraw()
+        self.draw_valid = False
 
     # def load_canvas_file(self, cname, setup_name='canvas', valve_name='valves'):
     #
@@ -132,6 +137,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
     def normal_mouse_move(self, event):
 
         item = self._over_item(event)
+
         if item is not None:
             self.event_state = 'select'
             if item != self.active_item:
@@ -176,6 +182,10 @@ class ExtractionLineCanvas2D(SceneCanvas):
         if item is None:
             return
 
+        if isinstance(item, Laser):
+            self._toggle_laser_state(item)
+            return
+
         if not isinstance(item, BaseValve):
             return
 
@@ -201,6 +211,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
         state = not state
 
         change = False
+        ok = True
         if self.manager is not None:
             mode = 'normal'
             if event.shift_down:
@@ -210,10 +221,8 @@ class ExtractionLineCanvas2D(SceneCanvas):
                 ok, change = self.manager.open_valve(item.name, mode=mode)
             else:
                 ok, change = self.manager.close_valve(item.name, mode=mode)
-        else:
-            ok = True
 
-        if ok and not item.soft_lock:
+        if ok:
             item.state = state
 
         if change:
@@ -237,6 +246,11 @@ class ExtractionLineCanvas2D(SceneCanvas):
 
     def iter_valves(self):
         return (i for i in self.scene.valves.itervalues() if isinstance(i, BaseValve))
+
+    # private
+    def _toggle_laser_state(self, item):
+        item.toggle_animate()
+        self.request_redraw()
 
     def _get_valve_by_name(self, name):
         return next((i for i in self.scene.valves.itervalues()

@@ -22,6 +22,7 @@ from traits.api import Any
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.spectrometer.base_spectrometer_manager import BaseSpectrometerManager
 from pychron.spectrometer.ion_optics_manager import IonOpticsManager
+from pychron.spectrometer.readout_view import ReadoutView
 from pychron.spectrometer.scan_manager import ScanManager
 from pychron.spectrometer.tasks.spectrometer_task import SpectrometerTask
 
@@ -35,11 +36,13 @@ class BaseSpectrometerPlugin(BaseTaskPlugin):
 
     def _inspector_task_factory(self):
         from pychron.spectrometer.tasks.inspector.scan_inspector_task import ScanInspectorTask
-        t= ScanInspectorTask()
+
+        t = ScanInspectorTask()
         return t
 
     def _mass_cal_task_factory(self):
         from pychron.spectrometer.tasks.mass_cal.mass_calibration_task import MassCalibrationTask
+
         t = MassCalibrationTask(spectrometer_manager=self.spectrometer_manager)
         return t
 
@@ -77,7 +80,7 @@ class BaseSpectrometerPlugin(BaseTaskPlugin):
         """
         """
         so = self.service_offer_factory(
-            protocol = BaseSpectrometerManager,
+            protocol=BaseSpectrometerManager,
             # protocol=self.spectrometer_manager_klass,
             factory=self._factory_spectrometer)
         so1 = self.service_offer_factory(
@@ -88,12 +91,19 @@ class BaseSpectrometerPlugin(BaseTaskPlugin):
             protocol=ScanManager,
             factory=self._factory_scan_manager)
 
-        return [so, so1, so2]
+        so3 = self.service_offer_factory(protocol=ReadoutView,
+                                         factory=self._readout_view_factory)
+        return [so, so1, so2, so3]
+
+    def _readout_view_factory(self):
+        v = ReadoutView(spectrometer=self.spectrometer_manager.spectrometer)
+        return v
 
     def _managers_default(self):
         """
         """
         return [dict(name=self.manager_name,
+                     plugin_name=self.name,
                      manager=self.spectrometer_manager)]
 
     def _spectrometer_manager_default(self):

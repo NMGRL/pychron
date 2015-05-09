@@ -34,9 +34,9 @@ class ArgusSource(SpectrometerDevice):
     _y_symmetry = Float  # Range(0.0, 100.)
     _z_symmetry = Float  # Range(0.0, 100.)
 
-    y_symmetry_low = Float(-50.0)
-    y_symmetry_high = Float(50.0)
-    z_symmetry_low = Float(-50.0)
+    y_symmetry_low = Float(-100.0)
+    y_symmetry_high = Float(100.0)
+    z_symmetry_low = Float(-100.0)
     z_symmetry_high = Float(100.0)
 
     _extraction_lens = Float  # Range(0.0, 100.)

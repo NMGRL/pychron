@@ -42,6 +42,7 @@ PACKAGE_DICT = dict(
     ExperimentPlugin='pychron.experiment.tasks.experiment_plugin',
     ExternalPipettePlugin='pychron.external_pipette.tasks.external_pipette_plugin',
     ExtractionLinePlugin='pychron.extraction_line.tasks.extraction_line_plugin',
+    ClientExtractionLinePlugin='pychron.extraction_line.tasks.client_extraction_line_plugin',
     GeoPlugin='pychron.geo.tasks.geo_plugin',
     VideoPlugin='pychron.image.tasks.video_plugin',
     FusionsDiodePlugin='pychron.lasers.tasks.plugins.diode',

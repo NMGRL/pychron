@@ -155,7 +155,7 @@ class _ComboboxEditor(SimpleEditor):
 
                     self.control.setCurrentIndex(index)
                 except BaseException, e:
-                    self.control.setCurrentIndex(-1)
+                    self.control.setEditText(str(self.value))
             else:
                 try:
                     self.control.setEditText(self.str_value)

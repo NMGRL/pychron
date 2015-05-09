@@ -32,7 +32,6 @@ from pychron.hardware.pyrometer_temperature_monitor import PyrometerTemperatureM
 
 from pychron.lasers.laser_managers.vue_metrix_manager import VueMetrixManager
 from pychron.lasers.response_recorder import ResponseRecorder
-from pychron.paths import paths
 from pychron.monitors.fusions_diode_laser_monitor import FusionsDiodeLaserMonitor
 
 from fusions_laser_manager import FusionsLaserManager
@@ -42,7 +41,8 @@ class FusionsDiodeManager(FusionsLaserManager):
     """
     """
     id = 'pychron.fusions.diode'
-    name = 'fusions_diode'
+    # name = 'fusions_diode'
+    name = 'FusionsDiode'
     configuration_dir_name = 'fusions_diode'
 
     pyrometer = Instance(MikronGA140Pyrometer)
@@ -71,8 +71,8 @@ class FusionsDiodeManager(FusionsLaserManager):
     request_powermin = Float(0)
     request_powermax = Float(1500)
 
-    dbname = paths.diodelaser_db
-    db_root = paths.diodelaser_db_root
+    # dbname = paths.diodelaser_db
+    # db_root = paths.diodelaser_db_root
 
     use_calibrated_temperature = Bool(False)
 

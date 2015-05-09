@@ -45,7 +45,9 @@ class ExperimentPlugin(BaseTaskPlugin):
 
     def start(self):
         super(ExperimentPlugin, self).start()
-
+        manager = self.application.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
+        self.experimentor.manager = manager
+        self.experimentor.executor.set_managers()
         self.experimentor.executor.bind_preferences()
 
     def _signal_calculator_factory(self, *args, **kw):
@@ -158,6 +160,7 @@ class ExperimentPlugin(BaseTaskPlugin):
         ip = InitializationParser()
         plugin = ip.get_plugin('Experiment', category='general')
         mode = ip.get_parameter(plugin, 'mode')
+# from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 
         # manager = self.application.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
         dvc = self.application.get_service('pychron.dvc.dvc.DVC')

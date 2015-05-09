@@ -34,6 +34,10 @@ def convert_to_bool(v):
 class Flag(Loggable):
     _set = Bool(False)
     display_state = Property(Bool, depends_on='_set')
+    owner = Str
+
+    def set_owner(self, owner):
+        self.owner = owner
 
     def traits_view(self):
         v = View(

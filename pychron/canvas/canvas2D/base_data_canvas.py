@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-from traits.api import Tuple, Bool, on_trait_change, List
+from traits.api import Tuple, Bool, on_trait_change
 from enable.api import Pointer
 from chaco.api import LinePlot, LinearMapper, DataView, ArrayDataSource
 from chaco.tools.api import ZoomTool, PanTool
@@ -27,11 +27,11 @@ from numpy import hstack
 class BaseDataCanvas(DataView):
     """
     """
-    fill_padding = True
+    # fill_padding = True
     #    bgcolor = (0.9, 0.9, 1.0)
     #    bgcolor = (0, 1.0, 0)
     #    border_visible = True
-    #    use_backbuffer = True
+    # use_backbuffer = True
     #    bgcolor = 'lightblue'
     x_range = Tuple
     y_range = Tuple
@@ -143,6 +143,7 @@ class BaseDataCanvas(DataView):
         #            self.index_axis.visible = False
         self.value_axis.visible = self.show_axes
         self.index_axis.visible = self.show_axes
+
         self.x_grid.visible = self.show_grids
         self.y_grid.visible = self.show_grids
 
@@ -157,7 +158,9 @@ class BaseDataCanvas(DataView):
 
     @on_trait_change('show_grids')
     def change_grid_visibility(self):
+        print 'change visiblity', self.show_grids
         try:
+
             self.x_grid.visible = self.show_grids
             self.y_grid.visible = self.show_grids
             self.request_redraw()
@@ -246,11 +249,11 @@ class BaseDataCanvas(DataView):
         """
         pass
 
-    def draw(self, *args, **kw):
-        """
-        """
-    
-        super(BaseDataCanvas, self).draw(*args, **kw)
-        self._draw_hook(*args, **kw)
+        # def draw(self, *args, **kw):
+        # """
+        #     """
+        #
+        #     super(BaseDataCanvas, self).draw(*args, **kw)
+        #     self._draw_hook(*args, **kw)
 
 # ====================EOF==================

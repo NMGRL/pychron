@@ -17,10 +17,9 @@
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
-from threading import Thread
 # ============= local library imports  ==========================
 from pychron.remote_hardware.errors import InvalidArgumentsErrorCode, InvalidValveErrorCode, \
-    InvalidIPAddressErrorCode, ValveSoftwareLockErrorCode, ValveActuationErrorCode
+    ValveSoftwareLockErrorCode, ValveActuationErrorCode
 from base_remote_hardware_handler import BaseRemoteHardwareHandler
 from dummies import DummyELM
 # from pychron.envisage.core.action_helper import open_manager
@@ -116,6 +115,18 @@ class ExtractionlineHandler(BaseRemoteHardwareHandler):
         else:
             result = ValveActuationErrorCode(vname, 'close', logger=self)
 
+        return result
+
+    def GetStateChecksum(self, manager, vnamestr, *args):
+        """
+
+        :param manager:
+        :param vnames:
+        :param args:
+        :return:
+        """
+        vnames = vnamestr.split(',')
+        result = manager.get_state_checksum(vnames)
         return result
 
     def GetValveState(self, manager, vname, *args):
