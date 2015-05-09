@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 
 from traits.api import Instance, Int, Str, Bool, \
-    Event, Property, Float, Date
+    Event, Property, Float, Date, List, Tuple, CStr
 
 # ============= standard library imports ========================
 from collections import namedtuple
@@ -26,8 +26,8 @@ from pychron.core.helpers.formatting import format_percent_error, floatfmt
 from pychron.core.helpers.logger_setup import new_logger
 from pychron.processing.arar_age import ArArAge
 # from pychron.processing.analyses.analysis_view import AnalysisView
-#from pychron.processing.analyses.summary import AnalysisSummary
-#from pychron.processing.analyses.db_summary import DBAnalysisSummary
+# from pychron.processing.analyses.summary import AnalysisSummary
+# from pychron.processing.analyses.db_summary import DBAnalysisSummary
 from pychron.experiment.utilities.identifier import make_aliquot_step, make_runid
 from pychron.processing.isotope import Isotope
 from pychron.pychron_constants import PLUSMINUS
@@ -40,13 +40,18 @@ logger = new_logger('Analysis')
 
 
 class Analysis(ArArAge):
-    group_id = Int
-    graph_id = Int
-
     analysis_view_klass = ('pychron.processing.analyses.analysis_view', 'AnalysisView')
     analysis_view = Instance('pychron.processing.analyses.analysis_view.AnalysisView')
 
-    labnumber = Str
+    # ids
+    record_id = Property(depends_on='labnumber,aliquot, step')
+    _record_id = Str
+    group_id = Int
+    graph_id = Int
+
+    # collection
+    uuid = Str
+    labnumber = CStr
     aliquot = Int
     step = Str
     aliquot_step_str = Str
@@ -61,9 +66,24 @@ class Analysis(ArArAge):
     cleanup_duration = Float
     extract_duration = Float
     extract_device = Str
-    position = Str
+    position = CStr
     rundate = Date
+    experiment_txt = Str
+    extraction_script_blob = Str
+    measurement_script_blob = Str
+    snapshots = List
+    extraction_script_name = Str
+    measurement_script_name = Str
+    xyz_position = Str
+    collection_time_zero_offset = Float
+    beam_diameter = Float
+    pattern = Str
+    ramp_duration = Float
+    ramp_rate = Float
+    peak_center_data = Tuple
+    collection_version = Str
 
+    # processing
     is_plateau_step = False
     temp_status = Int
     value_filter_omit = Bool
@@ -71,8 +91,6 @@ class Analysis(ArArAge):
     tag = Str
     data_reduction_tag = Str
 
-    record_id = Property(depends_on='labnumber,aliquot, step')
-    _record_id = Str
     status_text = Property
     age_string = Property
 
@@ -81,6 +99,10 @@ class Analysis(ArArAge):
     omit_iso = False
     omit_series = False
 
+    blank_changes = List
+    fit_changes = List
+
+    # meta
     has_raw_data = False
     has_changes = False
 
@@ -113,8 +135,8 @@ class Analysis(ArArAge):
         omit = False
         if omit_key:
             omit = getattr(self, omit_key)
-            #print ai.aliquot, r, omit, ai.filter_omit
-        #return r or ai.filter_omit #or ai.tag == 'omit'
+            # print ai.aliquot, r, omit, ai.filter_omit
+        # return r or ai.filter_omit #or ai.tag == 'omit'
         #omit=False
         return self.is_temp_omitted(include_value_filtered) or omit
 
@@ -138,7 +160,7 @@ class Analysis(ArArAge):
         return
 
     # def _analysis_summary_default(self):
-    #     return self.analysis_summary_klass(model=self)
+    # return self.analysis_summary_klass(model=self)
 
     def _analysis_view_default(self):
 
@@ -211,7 +233,7 @@ class Analysis(ArArAge):
 if __name__ == '__main__':
     pass
     # ============= EOF =============================================
-    #def _sync_irradiation(self, meas_analysis):
+    # def _sync_irradiation(self, meas_analysis):
     #    ln = meas_analysis.labnumber
     #    self.irradiation_info = self._get_irradiation_info(ln)
     #

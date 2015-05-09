@@ -21,8 +21,10 @@ from apptools.preferences.preference_binding import bind_preference
 import os
 from git import Repo
 # ============= local library imports  ==========================
+import yaml
 from pychron.core.helpers.filetools import remove_extension
 from pychron.dvc.defaults import TRIGA, HOLDER_24_SPOKES, LASER221, LASER65
+from pychron.dvc.dvc_analysis import DVCAnalysis
 from pychron.dvc.dvc_database import DVCDatabase
 from pychron.dvc.meta_repo import MetaRepo
 from pychron.github import Organization
@@ -62,6 +64,7 @@ class DVC(Loggable):
 
     def make_analyses(self, records):
         print records
+        records = map(self._make_record, records)
         return records
 
     def synchronize(self, pull=True):
@@ -128,6 +131,17 @@ class DVC(Loggable):
     # def get_load_holder_holes(self, name):
     #     return self.meta_repo.get_load_holder_holes(name)
 
+    def _make_record(self, record):
+        # open a dvcrecordreader
+        # load as a analysis
+        # root = self.project_repo.path
+        path = os.path.join(paths.dvc_dir, 'projects', record.project, '{}.yaml'.format(record.record_id))
+        print path
+        with open(path, 'r') as rfile:
+            yd = yaml.load(rfile)
+            a = DVCAnalysis(yd)
+        return a
+
     # adders db
     def add_analysis(self, **kw):
         with self.db.session_ctx():
@@ -187,14 +201,14 @@ class DVC(Loggable):
         self.meta_repo.add_load_holder(name, path_or_txt)
 
     # updaters
-    def update_chronology(self, name, doses):
-        self.meta_repo.update_chronology(name, doses)
-
-    def update_scripts(self, name, path):
-        self.meta_repo.update_scripts(name, path)
-
-    def update_scripts(self, name, path):
-        self.meta_repo.update_experiment_queue(name, path)
+    # def update_chronology(self, name, doses):
+    # self.meta_repo.update_chronology(name, doses)
+    #
+    # def update_scripts(self, name, path):
+    # self.meta_repo.update_scripts(name, path)
+    #
+    # def update_experiment_queue(self, name, path):
+    #     self.meta_repo.update_experiment_queue(name, path)
 
     def meta_commit(self, msg):
         if self.meta_repo.has_staged():

@@ -17,8 +17,27 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.processing.analyses.analysis import Analysis
 
-__version__ = '0.1'
+ANALYSIS_ATTRS = ('labnumber', 'sample', 'aliquot', 'increment', 'irradiation', 'weight',
+                  'comment', 'irradiation_level', 'mass_spectrometer', 'extract_device',
+                  'username', 'tray', 'queue_conditionals_name', 'extract_value',
+                  'extract_units', 'position', 'xyz_position', 'duration', 'cleanup',
+                  'pattern', 'beam_diameter', 'ramp_duration', 'ramp_rate')
+
+
+class DVCAnalysis(Analysis):
+    def __init__(self, yd, *args, **kw):
+        super(DVCAnalysis, self).__init__(*args, **kw)
+
+        for attr in ANALYSIS_ATTRS:
+            v = yd.get(attr)
+            if v is not None:
+                setattr(self, attr, v)
+
+        self.rundate = yd['timestamp']  # datetime.strptime(yd['timestamp'], '%Y-%m-%dT%H:%M:%S')
+        self.collection_version = yd['collection_version']
+
 # ============= EOF =============================================
 
 

@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import List, Dict, Instance, Str
+from traits.api import List, Dict, Instance, Str, Float
 # ============= standard library imports ========================
 import hashlib
 import os
@@ -25,6 +25,7 @@ from datetime import datetime
 from uncertainties import std_dev
 from uncertainties import nominal_value
 # ============= local library imports  ==========================
+from pychron.dvc.dvc_analysis import ANALYSIS_ATTRS
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.loggable import Loggable
 from pychron.paths import paths
@@ -51,6 +52,30 @@ class DVCPersister(Loggable):
     active_detectors = List
     previous_blank_runid = Str
     load_name = Str
+
+    uuid = Str
+    runid = Str
+    save_as_peak_hop = False
+    arar_age = None
+    positions = List
+    auto_save_detector_ic = Str
+    extraction_positions = List
+    sensitivity_multiplier = Float
+    experiment_queue_name = Str
+    experiment_queue_blob = Str
+    extraction_name = Str
+    extraction_blob = Str
+    # extraction_path= Str
+    measurement_name = Str
+    measurement_blob = Str
+    # measurement_path= Str
+    previous_blank_id = Str
+    previous_blanks = Str
+    previous_blank_runid = Str
+    runscript_name = Str
+    runscript_blob = Str
+    signal_fods = Dict
+    baseline_fods = Dict
 
     def __init__(self, *args, **kw):
         super(DVCPersister, self).__init__(*args, **kw)
@@ -187,12 +212,17 @@ class DVCPersister(Loggable):
 
     def _make_analysis_dict(self):
         rs = self.run_spec
-        attrs = ('sample', 'aliquot', 'increment', 'irradiation', 'weight',
-                 'comment', 'irradiation_level', 'mass_spectrometer', 'extract_device',
-                 'username', 'tray', 'queue_conditionals_name', 'extract_value',
-                 'extract_units', 'position', 'xyz_position', 'duration', 'cleanup',
-                 'pattern', 'beam_diameter', 'ramp_duration', 'ramp_rate')
-        d = {k: getattr(rs, k) for k in attrs}
+        # attrs = ('sample', 'aliquot', 'increment', 'irradiation', 'weight',
+        # 'comment', 'irradiation_level', 'mass_spectrometer', 'extract_device',
+        # 'username', 'tray', 'queue_conditionals_name', 'extract_value',
+        # 'extract_units', 'position', 'xyz_position', 'duration', 'cleanup',
+        # 'pattern', 'beam_diameter', 'ramp_duration', 'ramp_rate')
+        d = {k: getattr(rs, k) for k in ANALYSIS_ATTRS}
+
+        from pychron.experiment import __version__ as eversion
+        from pychron.dvc import __version__ as dversion
+
+        d['collection_version'] = '{}:{}'.format(eversion, dversion)
         return d
 
     def _save_analysis(self, timestamp):
@@ -229,8 +259,8 @@ class DVCPersister(Loggable):
             self.dvc.update_scripts(name, blob)
 
         # save experiment
-        self.dvc.update_experiment(self.experiment_queue_name, self.experiment_queue_blob)
-        self.dvc.meta_commit('repo updated for analysis {}'.format(self.runid))
+        self.dvc.update_experiment_queue(self.experiment_queue_name, self.experiment_queue_blob)
+        self.dvc.meta_commit('repo updated for analysis {}'.format(self.run_spec.runid))
 
         hexsha = self.dvc.get_meta_head()
         obj['commit'] = hexsha
@@ -239,7 +269,7 @@ class DVCPersister(Loggable):
 
     def _make_path(self, name, prefix=None, extension='.yaml'):
         if prefix is None:
-            prefix = '{}'.format(self.runid)
+            prefix = '{}'.format(self.run_spec.runid)
 
         root = self.project_repo.path
         return os.path.join(root, '{}{}{}'.format(prefix, name, extension))
