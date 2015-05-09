@@ -17,16 +17,13 @@
 # ============= enthought library imports =======================
 from pyface.ui.qt4.tasks.advanced_editor_area_pane import EditorWidget
 from traits.api import Any, Instance, on_trait_change
-from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, Tabbed, DockLayout, VSplitter
+from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, VSplitter
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-
-
-from pychron.envisage.tasks.base_task import BaseExtractionLineTask
 from pychron.envisage.tasks.editor_task import EditorTask
 from pychron.spectrometer.tasks.editor import PeakCenterEditor, ScanEditor, CoincidenceEditor
 from pychron.spectrometer.tasks.spectrometer_panes import ControlsPane, \
-    ReadoutPane, IntensitiesPane
+    ReadoutPane, IntensitiesPane, RecordControlsPane, ScannerPane
 
 
 class SpectrometerTask(EditorTask):
@@ -91,6 +88,8 @@ class SpectrometerTask(EditorTask):
     def create_dock_panes(self):
         panes = [
             ControlsPane(model=self.scan_manager),
+            RecordControlsPane(model=self.scan_manager),
+            ScannerPane(model=self.scan_manager),
             ReadoutPane(model=self.scan_manager),
             IntensitiesPane(model=self.scan_manager)]
 
@@ -98,7 +97,7 @@ class SpectrometerTask(EditorTask):
         return panes
 
     # def _active_editor_changed(self, new):
-    #     if not new:
+    # if not new:
     #         try:
     #             self._scan_factory()
     #         except AttributeError:
@@ -119,9 +118,9 @@ class SpectrometerTask(EditorTask):
         return TaskLayout(
             left=Splitter(
                 PaneItem('pychron.spectrometer.controls'),
-                Tabbed(PaneItem('pychron.spectrometer.intensities'),
-                       PaneItem('pychron.spectrometer.readout')),
-                orientation='vertical'))
+                orientation='vertical'),
+            right=VSplitter(PaneItem('pychron.spectrometer.intensities'),
+                            PaneItem('pychron.spectrometer.readout')))
 
         # def create_central_pane(self):
 
