@@ -15,9 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import sys
+
 from traits.api import Any, List
+
 # ============= standard library imports ========================
-import os
 # ============= local library imports  ==========================
 from pychron.envisage.initialization.initialization_parser import InitializationParser
 from pychron.loggable import Loggable
@@ -25,6 +27,10 @@ from pychron.paths import paths
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.core.ui.progress_dialog import myProgressDialog
 from pychron.globals import globalv
+
+
+class InitializerError(BaseException):
+    pass
 
 
 class Initializer(Loggable):
@@ -51,16 +57,19 @@ class Initializer(Loggable):
             nsteps += self._get_nsteps(idict['plugin_name'])
 
         pd = self._setup_progress(nsteps)
+        try:
+            for idict in self.init_list:
+                ok = self._run(**idict)
+                if not ok:
+                    break
 
-        for idict in self.init_list:
-            ok = self._run(**idict)
-            if not ok:
-                break
+            msg = ('Complete' if ok else 'Failed')
+            self.info('Initialization {}'.format(msg))
 
-        msg = ('Complete' if ok else 'Failed')
-        self.info('Initialization {}'.format(msg))
-
-        pd.close()
+            pd.close()
+        except BaseException, e:
+            self.debug('Initializer Exception: {}'.format(e))
+            sys.exit(0)
 
         return ok
 
@@ -295,11 +304,14 @@ class Initializer(Loggable):
                 self.application.register_service(type(man), man)
 
             element = self._get_manager(mi, plugin_name)
+            if not globalv.ignore_initialization_required:
+                if not self._check_required(element):
+                    return False
+
             self._load_elements(element, man, mi, plugin_name)
 
             self.info('finish {} loading'.format(mi))
             man.finish_loading()
-
 
     # helpers
     def _setup_progress(self, n):
@@ -318,9 +330,11 @@ class Initializer(Loggable):
     def _check_required(self, subtree):
         # check the subtree has all required devices enabled
         devs = self.parser.get_devices(subtree, all_=True, element=True)
+        print devs
         for di in devs:
             required = True
             req = self.parser.get_parameter(di, 'required')
+            print di.text.strip(), req
             if req:
                 required = req.strip().lower() == 'true'
 
@@ -333,7 +347,8 @@ class Initializer(Loggable):
 Do you want to quit to enable {} in the Initialization File?'''.format(name, name)
                 result = self.confirmation_dialog(msg, title='Quit Pychron')
                 if result:
-                    os._exit(0)
+                    raise InitializerError()
+                    # os._exit(0)
 
         return True
 
