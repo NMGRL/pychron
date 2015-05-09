@@ -47,6 +47,7 @@ class Initializer(Loggable):
 
     def run(self, application=None):
         self.parser = InitializationParser()
+        self.info('Initialization Path: {}'.format(self.parser.path))
 
         self.application = application
 
