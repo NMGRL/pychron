@@ -16,12 +16,12 @@
 
 # ============= enthought library imports=======================
 from pyface.action.menu_manager import MenuManager
-from traits.api import Property, Int, List, Dict
+from traits.api import Property, Int
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 from pychron.core.configurable_tabular_adapter import ConfigurableMixin
-from pychron.core.helpers.filetools import to_bool
+from pychron.core.helpers.strtools import to_bool
 from pychron.experiment.utilities.identifier import make_aliquot_step
 from pychron.pychron_constants import EXTRACTION_COLOR, MEASUREMENT_COLOR, SUCCESS_COLOR, \
     SKIP_COLOR, NOT_EXECUTABLE_COLOR, CANCELED_COLOR, TRUNCATED_COLOR, \
@@ -122,7 +122,7 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
     def get_row_label(self, section, obj=None):
         return section + 1
 
-    def get_bg_color(self, obj, trait, row, column):
+    def get_bg_color(self, obj, trait, row, column=0):
         item = self.item
         if not item.executable:
             color = NOT_EXECUTABLE_COLOR

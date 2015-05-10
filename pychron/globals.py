@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.core.helpers.filetools import to_bool
+from pychron.core.helpers.strtools import to_bool
 
 
 class Globals(object):
@@ -45,10 +45,10 @@ class Globals(object):
 
     video_test = False
     #    video_test = True
-    video_test_path = '/Users/ross/Sandbox/pos_err/diodefailsnapshot.jpg'
+    # video_test_path = '/Users/ross/Sandbox/pos_err/diodefailsnapshot.jpg'
     #    video_test_path = '/Users/ross/Sandbox/snapshot002-6.662--8.572.jpg'
     #    video_test_path = '/Users/ross/Sandbox/watershed_test.jpg'
-    video_test_path = '/Users/ross/Sandbox/watershed_test2.jpg'
+    # video_test_path = '/Users/ross/Sandbox/watershed_test2.jpg'
     video_test_path = '/Users/ross/Sandbox/snapshot002.jpg'
     #    video_test_path = '/Users/ross/Sandbox/snapshot003-fail.jpg'
     show_autocenter_debug_image = False

@@ -26,7 +26,8 @@ from pychron.dashboard.constants import CRITICAL, NOERROR, WARNING
 from pychron.dashboard.device import DashboardDevice
 from pychron.globals import globalv
 from pychron.hardware.core.i_core_device import ICoreDevice
-from pychron.core.helpers.filetools import to_bool, add_extension
+from pychron.core.helpers.filetools import add_extension
+from pychron.core.helpers.strtools import to_bool
 from pychron.hardware.dummy_device import DummyDevice
 from pychron.loggable import Loggable
 from pychron.messaging.notify.notifier import Notifier

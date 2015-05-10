@@ -22,7 +22,7 @@ import os
 import sys
 import inspect
 # ============= local library imports  ==========================
-from pychron.core.helpers.filetools import to_bool
+from pychron.core.helpers.strtools import to_bool
 from pychron.core.xml.xml_parser import XMLParser
 from pychron.paths import paths
 
@@ -114,8 +114,9 @@ class InitializationParser(XMLParser):
             except AttributeError:
                 plugins = tree.getiterator(tag='plugin')
 
-        return [p if element else p.text.strip()
-                for p in plugins if all_ or to_bool(p.get('enabled'))]
+        if plugins:
+            return [p if element else p.text.strip()
+                    for p in plugins if all_ or to_bool(p.get('enabled'))]
 
     #    def get_plugins_as_elements(self, category):
     #        tree = self._tree.find('plugins')

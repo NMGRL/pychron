@@ -22,7 +22,7 @@ This file defines the text for various default files.
 
 Values are used in pychron.paths when building directory structure
 """
-from pychron.core.helpers.filetools import to_bool
+from pychron.core.helpers.strtools import to_bool
 
 EDIT_UI_DEFAULT = """
 predefined: Simple
