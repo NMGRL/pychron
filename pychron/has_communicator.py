@@ -33,10 +33,10 @@ class HasCommunicator(object):
             communicator.load_comdict(**kw)
         self._communicator = communicator
 
-    def create_communicator(self, comm_type, port, baudrate):
+    def create_communicator(self, comm_type, **kw):
 
         c = self._communicator_factory(comm_type)
-        c.open(port=port, baudrate=baudrate)
+        c.open(**kw)
         self._communicator = c
 
     def _communicator_factory(self, communicator_type):

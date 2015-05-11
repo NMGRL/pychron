@@ -216,6 +216,11 @@ class EthernetCommunicator(Communicator):
         return True
 
     def open(self, *args, **kw):
+
+        for k in ('host','port', 'message_frame', 'kind'):
+            if k in kw:
+                setattr(self, k, kw[k])
+
         return self.test_connection()
 
     def test_connection(self):
