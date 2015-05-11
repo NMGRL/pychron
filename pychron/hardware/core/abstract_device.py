@@ -87,6 +87,10 @@ class AbstractDevice(ScanableDevice, HasCommunicator):
                 self._cdevice.load()
                 return True
 
+    def open(self, *args, **kw):
+        self.debug('open device')
+        return HasCommunicator.open(self, **kw)
+
     def __getattr__(self, attr):
         if hasattr(self._cdevice, attr):
             return getattr(self._cdevice, attr)

@@ -1,11 +1,11 @@
 # ===============================================================================
-# Copyright 2012 Jake Ross
+# Copyright 2015 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,24 +15,23 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import Interface
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+class IChiller(Interface):
+    def get_faults(self):
+        pass
 
+    def get_coolant_out_temperature(self):
+        pass
 
-# class RemoteThermoRack(ThermoRack):
-#
-# @rpc_query
-# def get_coolant_out_temperature(self, **kw):
-#         pass
-#
-#     @rpc_query
-#     def get_faults(self):
-#         pass
-#
-#     @rpc_query
-#     def get_setpoint(self):
-#         pass
+    def get_setpoint(self):
+        pass
 
-
+    def set_setpoint(self, v):
+        pass
 
 # ============= EOF =============================================
+
+
+

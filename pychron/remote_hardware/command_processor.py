@@ -108,6 +108,7 @@ class CommandProcessor(ConfigLoadable):
     _manager_lock = None
 
     use_security = False
+
     _hosts = None
 
     def __init__(self, *args, **kw):
@@ -221,12 +222,16 @@ class CommandProcessor(ConfigLoadable):
 
     def _read(self, sock):
         data = sock.recv(BUFSIZE)
+        l = 2
+        if globalv.use_message_len_checking:
+            l =4
+
         if data:
-            mlen = int(data[:4], 16)
-            while len(data) < (mlen + 4):
+            mlen = int(data[:l], 16)
+            while len(data) < (mlen + l):
                 data += sock.recv(BUFSIZE)
 
-            return data[4:]
+            return data[l:]
 
     def _process(self, sock, data):
         args = data.split('|')

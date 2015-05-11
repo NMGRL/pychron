@@ -207,12 +207,12 @@ class Template(object):
             ins.copy_resource(os.path.join(root, 'resources', nd, sname), name='icons/{}.png'.format(ni))
 
         # copy helper mod
-        for a in ('helpers', ):
-            m = os.path.join(self.root, 'launchers', '{}.py'.format(a))
+        for a in ('helpers.py', 'ENV.txt'):
+            m = os.path.join(self.root, 'launchers', a)
             ins.copy_resource(m)
 
         # for anaconda builds
-        #copy qt.nib
+        # copy qt.nib
         p = '/anaconda/python.app/Contents/Resources/qt_menu.nib'
         if not os.path.isdir(p):
             p = '{}/{}'.format(os.path.expanduser('~'),

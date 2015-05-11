@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -32,6 +32,8 @@ DTR will reset arduino when opening an closing a serial connection
 OPEN = 1
 CLOSE = 0
 
+PIN_MAPPING = {0: 51, 1: 48, 2: 45, 3: 42, 4: 39, 5: 36, 6: 33, 7: 30, 8: 27, 9: 24}
+
 
 class ArduinoGPActuator(GPActuator):
     """
@@ -42,8 +44,8 @@ class ArduinoGPActuator(GPActuator):
     compatible with valvebox3.pde/Messenger.h
     """
 
-    def open(self, **kw):
-        super(ArduinoGPActuator, self).open(**kw)
+    # def open(self, **kw):
+    #     super(ArduinoGPActuator, self).open(**kw)
 
     def _parse_response(self, resp):
         if resp is not None:
@@ -55,7 +57,7 @@ class ArduinoGPActuator(GPActuator):
             return resp
 
     def _build_command(self, cmd, pin, state):
-    #        delimiter = ','
+        #        delimiter = ','
         eol = '\r\n'
         if state is None:
             r = '{} {}{}'.format(cmd, pin, eol)
@@ -64,20 +66,22 @@ class ArduinoGPActuator(GPActuator):
         return r
 
     def open_channel(self, obj):
-        pin = obj.address
+        pin = PIN_MAPPING[int(obj.address)]
+
         cmd = ('w', pin, 1)
         self.repeat_command(cmd, ntries=3, check_val='OK')
         return self._check_actuation(obj, True)
 
     def close_channel(self, obj):
-        pin = obj.address
+        pin = PIN_MAPPING[int(obj.address)]
         cmd = ('w', pin, 0)
         self.repeat_command(cmd, ntries=3, check_val='OK')
         return self._check_actuation(obj, False)
 
     def get_channel_state(self, obj):
-        indicator_open_pin = int(obj.address) - 1
-        indicator_close_pin = int(obj.address) - 2
+        pin = PIN_MAPPING[int(obj.address)]
+        indicator_open_pin = pin - 1
+        indicator_close_pin = pin - 2
 
         opened = self.repeat_command(('r', indicator_open_pin, None),
                                      ntries=3, check_type=int)
@@ -108,11 +112,12 @@ class ArduinoGPActuator(GPActuator):
             time.sleep(obj.check_actuation_delay)
 
         cmd = 'r'
+        pin = PIN_MAPPING[int(obj.address)]
         if request:
             # open pin
-            pin = int(obj.address) - 1
+            pin -= 1
         else:
-            pin = int(obj.address) - 2
+            pin -= 2
 
         state = None
         ntries = 6

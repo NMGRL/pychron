@@ -633,7 +633,7 @@ class Spectrometer(SpectrometerDevice):
                     self.set_parameter(cmd, v)
                 except KeyError:
                     self.debug('$$$$$$$$$$ Not setting {}. Not in command_map'.format(k))
-
+            self.source.sync_parameters()
                     # p = os.path.join(paths.spectrometer_dir, 'config.cfg')
                     # if not os.path.isfile(p):
                     # self.warning('Spectrometer configuration file {} not found'.format(p))

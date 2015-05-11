@@ -225,10 +225,15 @@ class Primitive(HasTraits):
     bounds = None
 
     def set_canvas(self, canvas):
-        self._layout_needed = canvas != self.canvas or self.bounds != canvas.bounds
+        if canvas:
+            self._layout_needed = canvas != self.canvas or self.bounds != canvas.bounds
 
         self.canvas = canvas
-        self.bounds = canvas.bounds
+        if canvas:
+            self.bounds = canvas.bounds
+        else:
+            self.bounds = None
+
         for pi in self.primitives:
             pi.set_canvas(canvas)
 

@@ -32,25 +32,6 @@ class SampleLoadingAction(TaskAction):
     image = icon('arrow_out')
 
 
-# sample change actions
-class IsolateChamberAction(TaskAction):
-    name = 'Isolate Chamber'
-    method = 'isolate_chamber'
-    image = icon('arrow_in')
-
-
-class EvacuateChamberAction(TaskAction):
-    name = 'Evacuate Chamber'
-    method = 'evacuate_chamber'
-    image = icon('arrow_out')
-
-
-class FinishChamberChangeAction(TaskAction):
-    name = 'Finish'
-    method = 'finish_chamber_change'
-    image = icon('tick')
-
-
 class ExtractionLineAction(Action):
     def _get_manager(self, event, app=None):
         EL_PROTOCOL = 'pychron.extraction_line.extraction_line_manager.ExtractionLineManager'

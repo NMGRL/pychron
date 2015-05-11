@@ -15,8 +15,9 @@
 # ===============================================================================
 import hashlib
 import os
-import pickle
+
 from pychron.core.ui import set_qt
+
 
 set_qt()
 
@@ -34,7 +35,7 @@ import yaml
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.paths import paths
 from pychron.envisage.resources import icon
-from pychron.core.helpers.filetools import to_bool
+from pychron.core.helpers.strtools import to_bool
 from pychron.core.ui.tree_editor import TreeEditor
 
 

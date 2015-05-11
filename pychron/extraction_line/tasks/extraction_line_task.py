@@ -70,13 +70,5 @@ class ExtractionLineTask(BaseHardwareTask):
     def do_sample_loading(self):
         self.manager.do_sample_loading()
 
-    def isolate_chamber(self):
-        self.manager.isolate_chamber()
-
-    def evacuate_chamber(self):
-        self.manager.evacuate_chamber()
-
-    def finish_chamber_change(self):
-        self.manager.finish_chamber_change()
 
 # ============= EOF =============================================

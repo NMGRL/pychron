@@ -122,6 +122,7 @@ class ScanManager(Manager):
         plot = self.graph.plots[0]
         plot.value_range.on_trait_change(self._update_graph_limits,
                                          '_low_value, _high_value', remove=True)
+        self.readout_view.stop()
 
     def stop_scan(self):
         self.dump_settings()
@@ -198,7 +199,7 @@ class ScanManager(Manager):
                         try:
                             setattr(self, pi, params[pi])
                         except KeyError, e:
-                            print pi, e
+                            print 'sm load settings', pi, e
 
                 except (pickle.PickleError, EOFError, KeyError):
                     self.detector = self.detectors[-1]
@@ -389,8 +390,8 @@ class ScanManager(Manager):
         if self.use_detector_safety and self.detector:
             threshold = self.detector.protection_threshold
             if threshold:
-                for di in self.detectors:
-                    print di, di.isotope
+                # for di in self.detectors:
+                #     print di, di.isotope
 
                 #find detector that the desired isotope is being measured on
                 det = next((di for di in self.detectors

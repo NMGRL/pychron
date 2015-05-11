@@ -20,7 +20,7 @@ from envisage.ui.tasks.task_extension import TaskExtension
 from pyface.tasks.action.schema import SMenu
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.core.helpers.filetools import to_bool
+from pychron.core.helpers.strtools import to_bool
 from pychron.spectrometer.readout_view import ReadoutView
 from pychron.spectrometer.tasks.base_spectrometer_plugin import BaseSpectrometerPlugin
 from pychron.spectrometer.thermo.spectrometer_manager import ArgusSpectrometerManager
@@ -67,10 +67,6 @@ class ArgusSpectrometerPlugin(BaseSpectrometerPlugin):
     # ===============================================================================
     # defaults
     # ===============================================================================
-    def _service_offers_default(self):
-        so = self.service_offer_factory(protocol=ReadoutView,
-                                        factory=self._readout_view_factory)
-        return [so]
 
     def _readout_view_factory(self):
         v = ReadoutView(spectrometer=self.spectrometer_manager.spectrometer)

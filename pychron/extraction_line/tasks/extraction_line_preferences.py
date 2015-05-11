@@ -66,11 +66,6 @@ class ExtractionLinePreferences(BasePreferencesHelper):
     display_volume = Bool
     volume_key = Str
 
-    use_status_monitor = Bool
-    valve_state_frequency = Int
-    valve_lock_frequency = Int
-    valve_owner_frequency = Int
-    update_period = Int
     gauge_update_period = Int
     use_gauge_update = Bool
 
@@ -83,7 +78,7 @@ class ExtractionLinePreferencesPane(PreferencesPane):
     model_factory = ExtractionLinePreferences
     category = 'ExtractionLine'
 
-    def traits_view(self):
+    def _network_group(self):
         n_grp = VGroup(
             Item('use_network',
                  tooltip='Flood the extraction line with the maximum state color'),
@@ -105,30 +100,28 @@ Hover over section and hit the defined volume key (default="v")'),
                 label='volume',
                 enabled_when='use_network'),
             label='Network')
+        return n_grp
 
-        s_grp = VGroup(Item('use_status_monitor'),
-                       VGroup(Item('update_period', tooltip='Delay between iterations in seconds'),
-                              VGroup(
-                                  Item('valve_state_frequency', label='State',
-                                       tooltip='Check Valve State, i.e Open or Closed every N iterations'),
-                                  Item('checksum_frequency', label='Checksum',
-                                       tooltip='Check the entire extraction line state every N iterations'),
-                                  Item('valve_lock_frequency', label='Lock',
-                                       tooltip='Check Valve Software Lock. i.e Locked or unlocked every N iterations'),
-                                  Item('valve_owner_frequency', label='Owner',
-                                       tooltip='Check Valve Owner every N iterations'),
-                                  label='Frequencies'),
-                              enabled_when='use_status_monitor'),
-                       label='Status Monitor')
-
+    def _get_valve_group(self):
         v_grp = VGroup(
             Item('check_master_owner',
                  label='Check Master Ownership',
                  tooltip='Check valve ownership even if this is the master computer'),
-            n_grp,
-            s_grp,
+            self._network_group(),
             show_border=True,
             label='Valves')
+
+        return v_grp
+
+    def _get_path_group(self):
+        p_grp = VGroup(Item('canvas_path', editor=FileEditor(root_path=os.path.join(paths.canvas2D_dir, 'canvas.xml'))),
+                       Item('canvas_config_path', editor=FileEditor()),
+                       Item('valves_path', editor=FileEditor(root_path=os.path.join(paths.extraction_line_dir,
+                                                                                    'valves.xml'))),
+                       label='Paths')
+        return p_grp
+
+    def _get_gauge_group(self):
         g_grp = VGroup(Item('use_gauge_update',
                             label='Use Gauge Update',
                             tooltip='Start a timer to periodically update the gauge pressures'),
@@ -139,13 +132,16 @@ Hover over section and hit the defined volume key (default="v")'),
                             enabled_when='use_gauge_update'),
                        label='Gauges')
 
-        p_grp = VGroup(Item('canvas_path', editor=FileEditor(root_path=os.path.join(paths.canvas2D_dir, 'canvas.xml'))),
-                       Item('canvas_config_path', editor=FileEditor()),
-                       Item('valves_path', editor=FileEditor(root_path=os.path.join(paths.extraction_line_dir,
-                                                                                    'valves.xml'))),
-                       label='Paths')
+        return g_grp
 
-        return View(Tabbed(p_grp, v_grp, g_grp))
+    def _get_tabs(self):
+        p_grp = self._get_path_group()
+        v_grp = self._get_valve_group()
+        g_grp = self._get_gauge_group()
+        return p_grp, v_grp, g_grp
+
+    def traits_view(self):
+        return View(Tabbed(*self._get_tabs()))
 
 
 # ============= EOF =============================================

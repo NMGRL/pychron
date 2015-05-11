@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 import time
-#from apptools.preferences.preference_binding import bind_preference
+# from apptools.preferences.preference_binding import bind_preference
 from traits.api import Instance, Int, Dict
 
 # ============= standard library imports ========================
@@ -38,11 +38,6 @@ from pychron.system_monitor.tasks.controls import SystemMonitorControls
 """
 
 
-def camel_case(name):
-    args = name.split('_')
-    return ''.join(map(str.capitalize, args))
-
-
 class DashboardEditor(SeriesEditor):
     tool = Instance(SystemMonitorControls)
 
@@ -62,7 +57,6 @@ class DashboardEditor(SeriesEditor):
     def set_measurements(self, keys):
         m = {}
         for ki in keys:
-#            m[ki] = array([(1, 0), (2, 1), (3, 10), (4, 4)])
             m[ki] = None
 
         self.measurements = m

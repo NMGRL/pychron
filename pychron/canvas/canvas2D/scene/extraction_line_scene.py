@@ -27,7 +27,7 @@ from pychron.canvas.canvas2D.scene.primitives.pumps import Turbo
 from pychron.canvas.canvas2D.scene.scene import Scene
 from pychron.canvas.canvas2D.scene.primitives.primitives import RoundedRectangle, \
     Label, BorderLine, Line, Image, ValueLabel
-from pychron.core.helpers.filetools import to_bool
+from pychron.core.helpers.strtools import to_bool
 from pychron.canvas.canvas2D.scene.primitives.valves import RoughValve, Valve
 from pychron.extraction_line.valve_parser import ValveParser
 from pychron.paths import paths

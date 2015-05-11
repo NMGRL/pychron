@@ -90,8 +90,8 @@ class RemoteCommandServer(ConfigLoadable):
     use_ipc = True
 
     def _repeater_default(self):
-        '''
-        '''
+        """
+        """
         if globalv.use_ipc:
             c = CommandRepeater(
                         logger_name='{}_repeater'.format(self.name),

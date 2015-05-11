@@ -172,7 +172,6 @@ class StreamGraph(Graph):
             # mi = max(1, x - dl * self.scan_delays[plotid])
             # ma = max(x*1.05, mi+)
             sw = self.scan_widths[plotid]
-            print sw
             if sw:
                 ma = max(x*1.05, sw)
                 mi = 0

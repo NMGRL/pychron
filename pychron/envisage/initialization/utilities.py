@@ -19,7 +19,7 @@
 # ============= local library imports  ==========================
 import os
 
-from pychron.core.helpers.filetools import to_bool
+from pychron.core.helpers.strtools import to_bool
 from pychron.envisage.initialization.initialization_parser import InitializationParser
 from pychron.envisage.initialization.nodes import Plugin, PluginTree, GlobalTree, GlobalValue, InitializationModel
 
@@ -43,6 +43,7 @@ DESCRIPTION_MAP = {'Experiment': 'Execute sets of automated runs',
                    'Image': 'Use to take snapshots with a connected camera\n'
                             'and save to file or database',
                    'ExtractionLine': 'Control extraction line components',
+                   'ClientExtractionLine': 'Remotely control extraction line components',
                    'ArgusSpectrometer': 'Thermo ArgusVI plugin',
                    'FusionsCO2': 'Photon Machines Fusions CO2',
                    'FusionsDiode': 'Photon Machines Fusions Diode',
@@ -79,6 +80,7 @@ DEFAULT_PLUGINS = (('General', ('Experiment',
                                 'CanvasDesigner')),
                    ('Hardware', ('ArgusSpectrometer',
                                  'ExtractionLine',
+                                 'ClientExtractionLine',
                                  'FusionsCO2',
                                  'FusionsDiode',
                                  'FusionsUV',
@@ -107,19 +109,19 @@ DEFAULTS_MAP = {'Ar Data Reduction': {'globals': ('Use Startup Tests',),
                             'social': None},
                 'Experiment': {'globals': ('Use Startup Tests',),
                                'general': ('Experiment', 'Database', 'ArArConstants', 'PyScript', 'Entry',),
-                               'hardware': ('ArgusSpectrometer', 'ExtractionLine'),
+                               'hardware': ('ArgusSpectrometer', 'ClientExtractionLine'),
                                'social': ('Email',)},
                 'Experiment CO2': {'globals': ('Use Startup Tests',),
                                    'general': ('Experiment', 'Database', 'ArArConstants', 'PyScript'),
-                                   'hardware': ('ArgusSpectrometer', 'ExtractionLine', 'FusionsCO2'),
+                                   'hardware': ('ArgusSpectrometer', 'ClientExtractionLine', 'FusionsCO2'),
                                    'social': ('Email',)},
                 'Experiment Diode': {'globals': ('Use Startup Tests',),
                                      'general': ('Experiment', 'Database', 'ArArConstants', 'PyScript'),
-                                     'hardware': ('ArgusSpectrometer', 'ExtractionLine', 'FusionsDiode'),
+                                     'hardware': ('ArgusSpectrometer', 'ClientExtractionLine', 'FusionsDiode'),
                                      'social': ('Email',)},
                 'Experiment UV': {'globals': ('Use Startup Tests',),
                                   'general': ('Experiment', 'Database', 'ArArConstants', 'PyScript'),
-                                  'hardware': ('ArgusSpectrometer', 'ExtractionLine', 'FusionsUV'),
+                                  'hardware': ('ArgusSpectrometer', 'ClientExtractionLine', 'FusionsUV'),
                                   'social': ('Email',)}}
 
 NOMINAL_DEFAULTS = ['Ar Data Reduction',

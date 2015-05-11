@@ -163,7 +163,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     def __init__(self, *args, **kw):
         super(ExperimentExecutor, self).__init__(*args, **kw)
         self.wait_control_lock = Lock()
-        self.set_managers()
+        # self.set_managers()
         self.notification_manager = NotificationManager()
 
     def set_managers(self):

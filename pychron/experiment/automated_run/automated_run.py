@@ -1971,7 +1971,7 @@ anaylsis_type={}
                 WARNED_SCRIPTS.append(fn)
                 self.warning_dialog('Invalid Script {}\n{}'.format(fn, e))
 
-        self.info('loading script "{}"'.format(fname))
+        self.debug('loading script "{}"'.format(fname))
         func = getattr(self, '_{}_script_factory'.format(name))
         s = func()
         valid = True
