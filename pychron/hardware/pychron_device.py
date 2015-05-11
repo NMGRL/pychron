@@ -29,13 +29,15 @@ class PychronDevice(Loggable):
     connected = False
     port = CInt
     host = Str
+    message_frame = Str
 
     def setup_communicator(self):
         host = self.host
         port = self.port
-
         self.communicator = ec = EthernetCommunicator(host=host,
-                                                      port=port)
+                                                      port=port,
+                                                      message_frame=self.message_frame)
+
         r = ec.open()
         if r:
             self.connected = True
