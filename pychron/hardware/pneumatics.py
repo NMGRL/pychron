@@ -28,6 +28,9 @@ from pychron.remote_hardware.registry import register, RHMixin, registered_funct
 class Pneumatics(AddressableAbstractDevice, RHMixin):
     scan_func = 'get_pressure'
     poly_mapper = None
+    def __init__(self, *args, **kw):
+        super(Pneumatics, self).__init__(*args, **kw)
+        self.register_functions()
 
     def load_additional_args(self, config):
         conv = 'Conversion'

@@ -334,7 +334,6 @@ class Initializer(Loggable):
         for di in devs:
             required = True
             req = self.parser.get_parameter(di, 'required')
-            print di.text.strip(), req
             if req:
                 required = req.strip().lower() == 'true'
 

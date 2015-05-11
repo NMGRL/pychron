@@ -108,8 +108,6 @@ class AbstractDevice(ScanableDevice, HasCommunicator):
 
     def open(self, *args, **kw):
         self.debug('open device')
-        print self._cdevice
-
         return HasCommunicator.open(self, **kw)
 
     def __getattr__(self, attr):
