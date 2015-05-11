@@ -20,7 +20,7 @@ from envisage.ui.tasks.task_extension import TaskExtension
 from pyface.tasks.action.schema import SMenu
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.core.helpers.filetools import to_bool
+from pychron.core.helpers.strtools import to_bool
 from pychron.spectrometer.readout_view import ReadoutView
 from pychron.spectrometer.tasks.base_spectrometer_plugin import BaseSpectrometerPlugin
 from pychron.spectrometer.thermo.spectrometer_manager import ArgusSpectrometerManager

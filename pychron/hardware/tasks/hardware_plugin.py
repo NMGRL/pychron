@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Bool, Instance, List, Dict
 # from traitsui.api import View, Item
-from pychron.core.helpers.filetools import to_bool
+from pychron.core.helpers.strtools import to_bool
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from envisage.extension_point import ExtensionPoint
 # from pychron.managers.hardware_manager import HardwareManager

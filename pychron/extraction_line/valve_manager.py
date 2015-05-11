@@ -26,7 +26,7 @@ import os
 import pickle
 import time
 # =============local library imports  ==========================
-from pychron.core.helpers.filetools import to_bool
+from pychron.core.helpers.strtools import to_bool
 from pychron.globals import globalv
 from pychron.hardware.core.checksum_helper import computeCRC
 from pychron.hardware.core.i_core_device import ICoreDevice

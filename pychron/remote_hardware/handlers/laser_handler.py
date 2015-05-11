@@ -23,7 +23,7 @@ from pychron.remote_hardware.errors import InvalidArgumentsErrorCode
 from pychron.remote_hardware.errors.laser_errors import LogicBoardCommErrorCode, \
     EnableErrorCode, DisableErrorCode, InvalidSampleHolderErrorCode, \
     InvalidMotorErrorCode
-from pychron.core.helpers.filetools import to_bool
+from pychron.core.helpers.strtools import to_bool
 # from pychron.remote_hardware.errors.error import InvalidDirectoryErrorCode
 # from pychron.paths import paths
 # import os

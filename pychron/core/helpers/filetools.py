@@ -247,34 +247,6 @@ def unique_path(root, base, extension='.txt'):
     return p, cnt
 
 
-def to_bool(a):
-    """
-        a: a str or bool object
-
-        if a is string
-            'true', 't', 'yes', 'y', '1', 'ok' ==> True
-            'false', 'f', 'no', 'n', '0' ==> False
-    """
-
-    if isinstance(a, bool):
-        return a
-    elif a is None:
-        return False
-    elif isinstance(a, (int, float)):
-        return bool(a)
-
-    tks = ['true', 't', 'yes', 'y', '1', 'ok']
-    fks = ['false', 'f', 'no', 'n', '0']
-
-    if a is not None:
-        a = str(a).strip().lower()
-
-    if a in tks:
-        return True
-    elif a in fks:
-        return False
-
-
 def parse_xy(p, delimiter=','):
     """
     """

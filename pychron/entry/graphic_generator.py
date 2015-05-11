@@ -20,7 +20,7 @@ set_qt()
 # ============= enthought library imports =======================
 from chaco.abstract_overlay import AbstractOverlay
 from enable.base import str_to_font
-from traits.api import HasTraits, Instance, Any, Float, File, Property, Str
+from traits.api import HasTraits, Instance, Float, File, Property, Str, List
 from traitsui.api import View, Controller, UItem, Item
 from chaco.api import OverlayPlotContainer
 from enable.component_editor import ComponentEditor
@@ -37,10 +37,9 @@ from pychron.paths import paths
 from chaco.plot_graphics_context import PlotGraphicsContext
 from traitsui.menu import Action
 import math
-from pychron.core.helpers.filetools import to_bool
+from pychron.core.helpers.strtools import to_bool
 # ============= local library imports  ==========================
 class myDataLabel(DataLabel):
-    label_position = Any
     show_label_coords = False
     marker_visible = False
     label_position = 'center'
@@ -48,6 +47,7 @@ class myDataLabel(DataLabel):
 
 
 class LabelsOverlay(AbstractOverlay):
+    labels = List
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
         with gc:
             gc.set_font(str_to_font(None, None, '8'))
@@ -262,7 +262,7 @@ class GraphicModel(HasTraits):
 
 
 def make_xml(path, offset=100, default_bounds=(50, 50),
-             default_radius=3, convert_mm=False,
+             default_radius=3.0, convert_mm=False,
              make=True,
              use_label=True,
              rotate=0):

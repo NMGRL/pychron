@@ -23,7 +23,7 @@ from pyface.tasks.task_window_layout import TaskWindowLayout
 # ============= standard library imports ========================
 import weakref
 # ============= local library imports  ==========================
-from pychron.core.helpers.filetools import to_bool
+from pychron.core.helpers.strtools import to_bool
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.hardware.core.i_core_device import ICoreDevice

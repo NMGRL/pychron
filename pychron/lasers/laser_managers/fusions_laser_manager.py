@@ -37,7 +37,7 @@ from pychron.hardware.fiber_light import FiberLight
 from laser_manager import LaserManager
 # from pychron.lasers.laser_managers.brightness_pid_manager import BrightnessPIDManager
 # from pychron.viewable import Viewable
-from pychron.core.helpers.filetools import to_bool
+from pychron.core.helpers.strtools import to_bool
 from pychron.core.ui.thread import Thread
 # from pychron.core.ui.gui import invoke_in_main_thread
 # from pychron.lasers.laser_managers.degas_manager import DegasManager

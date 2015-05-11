@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import CInt, Str, String, on_trait_change, Button, Float, \
+from traits.api import Str, String, on_trait_change, Button, Float, \
     Property, Bool, Instance, Event, Enum, Int, Either, Range, cached_property
 import apptools.sweet_pickle as pickle
 from apptools.preferences.preference_binding import bind_preference
@@ -29,7 +29,7 @@ from pychron.hardware.pychron_device import PychronDevice
 from pychron.lasers.laser_managers.client import UVLaserOpticsClient, UVLaserControlsClient, \
     LaserOpticsClient, LaserControlsClient
 from pychron.lasers.laser_managers.laser_manager import BaseLaserManager
-from pychron.core.helpers.filetools import to_bool
+from pychron.core.helpers.strtools import to_bool
 from pychron.paths import paths
 
 

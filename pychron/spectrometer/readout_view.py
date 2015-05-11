@@ -30,6 +30,7 @@ from pychron.core.helpers.traitsui_shortcuts import listeditor
 
 
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
@@ -117,7 +118,7 @@ class Readout(BaseReadout):
 
     # def _set_value(self, v):
     # if v is not None:
-    #         try:
+    # try:
     #             self.fvalue = float(v)
     #             v = self.format.format(self.fvalue)
     #         except ValueError:
@@ -273,10 +274,10 @@ class ReadoutView(Loggable):
             ns = '{}\n{}'.format(ns, nnn)
 
         if ns:
-            msg = 'There is a mismatch between the current spectrometer values and the configuration. ' \
+            msg = 'There is a mismatch between the current spectrometer values and the configuration.\n' \
                   'Would you like to set the spectrometer to the configuration values?\n\n' \
                   'Name\t\tCurrent\tConfig\n{}'.format(ns)
-            if self.confirmation_dialog(msg, size=(600,600)):
+            if self.confirmation_dialog(msg, size=(725, 300)):
                 self.spectrometer.send_configuration()
                 self.spectrometer.set_debug_configuration_values()
 
