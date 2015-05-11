@@ -17,15 +17,16 @@
 # ============= enthought library imports =======================
 from traits.api import List, Str, Bool, Any, Enum, Button, \
     Int, Property, cached_property, DelegatesTo, Date, Instance, HasTraits, Event
-import apptools.sweet_pickle as pickle
+# import apptools.sweet_pickle as pickle
 # ============= standard library imports ========================
 from datetime import timedelta, datetime
 import os
 import re
+import cPickle as pickle
 # ============= local library imports  ==========================
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.codetools.inspection import caller
-from pychron.core.helpers.filetools import to_bool
+from pychron.core.helpers.strtools import to_bool
 from pychron.core.helpers.iterfuncs import partition
 from pychron.core.progress import progress_loader
 from pychron.envisage.browser.date_selector import DateSelector

@@ -89,30 +89,35 @@ class IrradiationEditor(Loggable):
 
     def edit(self):
         original_name = self.name
-        db = self.dvc.db
-        with db.session_ctx():
-            irrad = db.get_irradiation(original_name)
+        # db = self.dvc.db
+        # with db.session_ctx():
+        # irrad = db.get_irradiation(original_name)
+        # print irrad, original_name
 
-            self.chronology.set_dosages(irrad.chronology.get_doses())
-            v = EditView(model=self)
-            info = v.edit_traits()
-            if info.result:
-                if original_name != self.name:
-                    ret = self.confirmation_dialog('You have changed the irradiation name.\n\n'
-                                                   'Would you like to rename "{}" to "{}" (Yes) '
-                                                   'or make a new irradiation "{}" (No)'.format(original_name,
-                                                                                                self.name, self.name),
-                                                   return_retval=True,
-                                                   cancel=True)
-                    if ret == YES:
-                        irrad.name = self.name
-                    elif ret == NO:
-                        self._add_irradiation()
-                    else:
-                        return
+        # chronology = DVCChronology(self.name)
+        chronology = self.dvc.get_chronology(self.name)
+        self.chronology.set_dosages(chronology.get_doses())
+        v = EditView(model=self)
+        info = v.edit_traits()
+        if info.result:
+            if original_name != self.name:
+                ret = self.confirmation_dialog('You have changed the irradiation name.\n\n'
+                                               'Would you like to rename "{}" to "{}" (Yes) '
+                                               'or make a new irradiation "{}" (No)'.format(original_name,
+                                                                                            self.name, self.name),
+                                               return_retval=True,
+                                               cancel=True)
+                if ret == YES:
+                    print 'asdfadfasd'
+                    # irrad.name = self.name
+                elif ret == NO:
+                    self._add_irradiation()
+                else:
+                    return
 
-                # irrad.chronology.chronology = self.chronology.make_blob()
-                self.dvc.update_chronology(self.name, self.chronology.get_doses())
+            # irrad.chronology.chronology = self.chronology.make_blob()
+            # print self.chronology.get_doses()
+            self.dvc.update_chronology(self.name, self.chronology.get_doses())
         return self.name
 
     def _add_irradiation(self):

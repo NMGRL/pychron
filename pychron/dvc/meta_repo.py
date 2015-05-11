@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import Bool
 # ============= standard library imports ========================
 from datetime import datetime
 import os
@@ -55,7 +56,7 @@ class Chronology(MetaObject):
             end = datetime.strptime(end, '%Y-%m-%d %H:%M:%S')
             ds = (end - start).total_seconds()
             d += ds
-            self._doses.append((power, start, end))
+            self._doses.append((float(power), start, end))
 
         self.duration = d / 3600.
 
@@ -109,7 +110,45 @@ class IrradiationHolder(BaseHolder):
     pass
 
 
+class Cached(object):
+    def __init__(self, clear=None):
+        self.clear = clear
+
+    def __call__(self, func):
+        def wrapper(obj, name, *args, **kw):
+            ret = None
+            # if kw.get('use_cache'):
+            if not hasattr(obj, '__cache__'):
+                obj.__cache__ = {}
+
+            clear = False
+            if self.clear:
+                clear = getattr(obj, self.clear)
+
+            if not clear:
+                if name in obj.__cache__:
+                    ret = obj.__cache__[name]
+                    print 'using chace'
+
+            if ret is None:
+                ret = func(obj, name, *args, **kw)
+
+            if clear:
+                setattr(obj, self.clear, False)
+
+            obj.__cache__[name] = ret
+
+            return ret
+
+        return wrapper
+
+
+cached = Cached
+
+
 class MetaRepo(GitRepoManager):
+    clear_cache = Bool
+
     def __init__(self, *args, **kw):
         super(MetaRepo, self).__init__(*args, **kw)
         self.path = paths.meta_dir
@@ -182,7 +221,9 @@ class MetaRepo(GitRepoManager):
         p = self._chron_name(name)
         Chronology.dump(p, doses)
 
+    @cached('clear_cache')
     def get_chronology(self, name):
+        print 'opening chconolog'
         p = self._chron_name(name)
         return Chronology(p)
 
@@ -203,11 +244,13 @@ class MetaRepo(GitRepoManager):
             prs.append(pr)
         return prs
 
+    @cached('clear_cache')
     def get_irradiation_holder_holes(self, name):
         p = os.path.join(self.path, 'irradiation_holders', '{}.txt'.format(name))
         holder = IrradiationHolder(p)
         return holder.holes
 
+    @cached('clear_cache')
     def get_load_holder_holes(self, name):
         p = os.path.join(self.path, 'load_holders', '{}.txt'.format(name))
         holder = LoadHolder(p)

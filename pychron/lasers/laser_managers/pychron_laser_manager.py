@@ -17,9 +17,10 @@
 # ============= enthought library imports =======================
 from traits.api import Str, String, on_trait_change, Button, Float, \
     Property, Bool, Instance, Event, Enum, Int, Either, Range, cached_property
-import apptools.sweet_pickle as pickle
+# import apptools.sweet_pickle as pickle
 from apptools.preferences.preference_binding import bind_preference
 # ============= standard library imports ========================
+import cPickle as pickle
 import time
 import os
 from threading import Thread

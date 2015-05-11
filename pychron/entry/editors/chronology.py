@@ -58,6 +58,7 @@ class IrradiationDosage(HasTraits):
                                        self.end_date, self.end_time)
 
     def to_tuple(self):
+        print 'tooo'
         return str(self.power), self.start(), self.end()
 
         # def validate_dosage(self, prev_dose):

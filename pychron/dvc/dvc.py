@@ -132,14 +132,15 @@ class DVC(Loggable):
     #     return self.meta_repo.get_load_holder_holes(name)
 
     def _make_record(self, record):
-        # open a dvcrecordreader
-        # load as a analysis
-        # root = self.project_repo.path
         path = os.path.join(paths.dvc_dir, 'projects', record.project, '{}.yaml'.format(record.record_id))
-        print path
         with open(path, 'r') as rfile:
             yd = yaml.load(rfile)
             a = DVCAnalysis(yd)
+
+        # load irradiation
+        chronology = self.meta_repo.get_chronology(a.irradiation)
+        a.set_chronology(chronology)
+
         return a
 
     # adders db

@@ -16,7 +16,8 @@
 
 # ============= enthought library imports =======================
 from traits.api import Instance, DelegatesTo
-import apptools.sweet_pickle as pickle
+# import apptools.sweet_pickle as pickle
+import cPickle as pickle
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.lasers.pattern.patterns import Pattern

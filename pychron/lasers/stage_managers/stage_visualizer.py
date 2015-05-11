@@ -15,11 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import cPickle as pickle
+
 from traits.api import Instance, Str, on_trait_change, \
     Bool, Tuple, Float
 from traitsui.api import View, Item
 from enable.component_editor import ComponentEditor
-import apptools.sweet_pickle as pickle
+
 
 # ============= standard library imports ========================
 import os

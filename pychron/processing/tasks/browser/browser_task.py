@@ -20,7 +20,7 @@ from traits.api import Any, on_trait_change, Date, Time, Instance
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
-from pychron.core.helpers.filetools import to_bool
+from pychron.core.helpers.strtools import to_bool
 from pychron.envisage.tasks.editor_task import BaseEditorTask
 # from pychron.processing.selection.data_selector import DataSelector
 from pychron.processing.tasks.browser.panes import BrowserPane

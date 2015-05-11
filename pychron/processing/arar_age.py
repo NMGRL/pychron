@@ -446,7 +446,7 @@ class ArArAge(Loggable):
 
     def calculate_decay_factors(self):
         arc = self.arar_constants
-        #only calculate decayfactors once
+        # only calculate decayfactors once
         if not self.ar39decayfactor:
             a37df = calculate_decay_factor(arc.lambda_Ar37.nominal_value,
                                            self.chron_segments)

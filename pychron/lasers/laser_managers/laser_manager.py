@@ -16,7 +16,8 @@
 
 # ============= enthought library imports =======================
 from traits.api import Instance, Bool, Str
-import apptools.sweet_pickle as pickle
+# import apptools.sweet_pickle as pickle
+import cPickle as pickle
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================

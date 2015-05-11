@@ -15,12 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import pickle
 
 from traits.api import HasTraits, List, Bool, Int, Instance, Enum, \
     Str, Callable, Button, Property
 from traits.trait_errors import TraitError
 from traitsui.api import View, Item, UItem, CheckListEditor, VGroup, Handler, HGroup, Tabbed
-import apptools.sweet_pickle as pickle
+# import apptools.sweet_pickle as pickle
 # ============= standard library imports ========================
 from datetime import datetime
 import os
