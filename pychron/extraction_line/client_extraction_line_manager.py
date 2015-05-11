@@ -37,8 +37,16 @@ class ClientExtractionLineManager(ExtractionLineManager):
         self.info('starting status monitor')
         self.status_monitor.start(self.valve_manager)
 
+    def stop_status_monitor(self):
+        self.info('stopping status monitor')
+        self.status_monitor.stop()
+
     def _reload_canvas_hook(self):
-        self.valve_manager.load_valve_owners(refresh=False)
+        vm = self.valve_manager
+        if vm:
+            vm.load_valve_states(refresh=False, force_network_change=False)
+            vm.load_valve_lock_states(refresh=False)
+            vm.load_valve_owners(refresh=False)
 
     def _check_ownership(self, name, requestor):
         return super(ClientExtractionLineManager, self)._check_ownership(name, requestor, force=True)
@@ -46,6 +54,10 @@ class ClientExtractionLineManager(ExtractionLineManager):
     def _activate_hook(self):
         if self.use_status_monitor:
             self.start_status_monitor()
+
+    def _deactivate_hook(self):
+        if self.use_status_monitor:
+            self.stop_status_monitor()
 
     def _use_status_monitor_changed(self):
         if self.use_status_monitor:

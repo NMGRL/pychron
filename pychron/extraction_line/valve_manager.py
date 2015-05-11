@@ -144,6 +144,11 @@ class ValveManager(Manager):
     def get_valve_names(self):
         return self.valves.keys()
 
+    def refresh_network(self):
+
+        for k, v in self.valves.iteritems():
+            self.refresh_state = (k, v.state)
+
     @add_checksum
     def get_owners(self):
         """
