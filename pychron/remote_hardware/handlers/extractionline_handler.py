@@ -24,7 +24,7 @@ from base_remote_hardware_handler import BaseRemoteHardwareHandler
 from dummies import DummyELM
 # from pychron.envisage.core.action_helper import open_manager
 from pychron.remote_hardware.errors.extraction_line_errors import InvalidGaugeErrorCode
-from pychron.remote_hardware.registry import FUNC_REGISTRY
+from pychron.remote_hardware.registry import MetaHandler
 
 EL_PROTOCOL = 'pychron.extraction_line.extraction_line_manager.ExtractionLineManager'
 TM_PROTOCOL = 'pychron.social.twitter_manager.TwitterManager'
@@ -35,9 +35,9 @@ class ExtractionlineHandler(BaseRemoteHardwareHandler):
     """
     ``ExtractionlineHandler`` provides a protocol for interacting with an ExtractionLineManager
     """
+    __metaclass__ = MetaHandler
     extraction_line_manager = None
     manager_name = 'extraction_line_manager'
-
 
     def get_manager(self):
 
@@ -211,10 +211,10 @@ class ExtractionlineHandler(BaseRemoteHardwareHandler):
 
         return str(p)
 
-    def __getattr__(self, item):
-        if item in FUNC_REGISTRY:
-            func, obj = FUNC_REGISTRY[item]
-            return lambda manager, *args, **kw: func(obj, *args, **kw)
+        # def __getattr__(self, item):
+        # if item in FUNC_REGISTRY:
+        #         func, obj = FUNC_REGISTRY[item]
+        #         return lambda manager, *args, **kw: func(obj, *args, **kw)
             # ===============================================================================
             # not current used
             # ===============================================================================
