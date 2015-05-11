@@ -529,7 +529,6 @@ class ExtractionLineManager(Manager, Consoleable):
     def _open_close_valve(self, name, action,
                           description=None, address=None, mode='remote', **kw):
         vm = self.valve_manager
-        print 'asdfasfd',vm
         if vm is not None:
             oname = name
             if address:
