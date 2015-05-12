@@ -26,6 +26,9 @@ from uncertainties import std_dev, nominal_value
 
 
 
+
+
+
 # =============local library imports  ==========================
 from pychron.database.orms.massspec_orm import IsotopeResultsTable, \
     AnalysesChangeableItemsTable, BaselinesTable, DetectorTable, \
@@ -739,13 +742,13 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 #        try:
 #            table = globals()[tablename]
 #        except KeyError, e:
-#            print e
+# print 'exception', e
 #            a = None
 #
 #        try:
 #            a = sess.query(table)
 #        except Exception, e:
-#            print e
+# print 'exception', e
 #            a = None
 #        if a is not None:
 #            a.delete()

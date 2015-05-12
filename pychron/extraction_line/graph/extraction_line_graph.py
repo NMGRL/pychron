@@ -318,8 +318,8 @@ if __name__ == '__main__':
     elg.set_valve_state('D', False)
     elg._set_state(elg.nodes['D'])
     # elg.set_canvas_states('D')
-    # print elg.calculate_volumes('Obama')
-    #print elg.calculate_volumes('Bone')
+    # print 'exception', elg.calculate_volumes('Obama')
+    # print 'exception', elg.calculate_volumes('Bone')
     #state, root = elg.set_valve_state('H', True)
     #state, root = elg.set_valve_state('H', False)
 

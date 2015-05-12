@@ -220,7 +220,7 @@
 #        ages = np.asarray(ages)
 #        wm, we = self._weighted_mean(ages, errors)
 #        print ages
-#        print errors
+# print 'exception', errors
 #        print 'waieht', wm, we
 #        for ai, ei in zip(ages, errors):
 #            for j, bj in enumerate(bins):

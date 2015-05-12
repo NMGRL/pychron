@@ -16,12 +16,14 @@
 
 # ============= enthought library imports =======================
 import os
+import cPickle as pickle
 
 from traits.api import Str
-import apptools.sweet_pickle as pickle
 
 from pychron.loggable import Loggable
 from pychron.paths import paths
+
+
 
 
 # ============= standard library imports ========================

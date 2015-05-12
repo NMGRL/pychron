@@ -191,7 +191,7 @@ class LabBookTask(BaseEditorTask):
             try:
                 self.history_model.load_history(new.path)
             except Exception, e:
-                print e
+                print 'exception', e
                 self.debug('failed loading file history for {}'.format(new.path))
 
             labels = self.labeler.load_labels_for_path(os.path.relpath(new.path, paths.labbook_dir))

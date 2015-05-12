@@ -16,21 +16,20 @@
 
 # ============= enthought library imports =======================
 from enable.component_editor import ComponentEditor
-from traits.api import Instance, Property, Int
-from traitsui.api import View, Item, TabularEditor, VGroup, spring, HGroup, \
-    EnumEditor, UItem, Label, VSplit, InstanceEditor, TextEditor
+from traits.api import Instance, Int
+from traitsui.api import View, Item, TabularEditor, VGroup, HGroup, \
+    EnumEditor, UItem, Label, VSplit, TextEditor
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.ui.combobox_editor import ComboboxEditor
-from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.qt.tabular_editors import FilterTabularEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.pane_helpers import spacer
 from pychron.entry.irradiated_position import IrradiatedPositionAdapter
-from pychron.envisage.browser.adapters import ProjectAdapter, LabnumberAdapter, SampleAdapter
+from pychron.envisage.browser.adapters import ProjectAdapter, SampleAdapter
 from pychron.pychron_constants import PLUSMINUS_SIGMA
 
 
@@ -192,8 +191,7 @@ class IrradiationPane(TraitsDockPane):
             icon_button_editor('add_level_button', 'database_add',
                                tooltip='Add level'))
 
-        conn = HGroup(spring, CustomLabel('datasource_url', color='maroon'), spring)
-        v = View(VGroup(conn, irrad, level))
+        v = View(VGroup(irrad, level))
         return v
 
 # ============= EOF =============================================

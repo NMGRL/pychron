@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import List, Button, Any, Int, Str, Enum, Color, String, Property
-from traitsui.api import View, VGroup, UItem, HGroup, Item, spring
+from traitsui.api import View, VGroup, UItem, HGroup, Item
 from apptools.preferences.api import PreferencesHelper
 # ============= standard library imports ========================
 import re
@@ -103,7 +103,7 @@ class GitRepoPreferencesHelper(BasePreferencesHelper):
                 self._connection_hook()
                 return
             except BaseException, e:
-                print e, cmd
+                print 'exception', e, cmd
 
         self._remote_status_color = 'red'
         self._remote_status = 'Invalid'
@@ -167,7 +167,7 @@ class FavoritesPreferencesHelper(BasePreferencesHelper):
 
     def _add_favorite_fired(self):
         if self.fav_name:
-            fv = ','.join(self._get_values())
+            fv = ','.join(map(str, self._get_values()))
             pf = next((f for f in self.favorites
                        if f.split(',')[0] == self.fav_name), None)
             if pf:

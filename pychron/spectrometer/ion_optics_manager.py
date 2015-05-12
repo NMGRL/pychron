@@ -17,10 +17,14 @@
 # ============= enthought library imports =======================
 from threading import Event
 import time
+import cPickle as pickle
+
 from traits.api import Range, Instance, Bool, \
     Button, Any, Str, Float, Enum, HasTraits, List
 from traitsui.api import View, Item, EnumEditor, Handler, HGroup
-import apptools.sweet_pickle as pickle
+
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.managers.manager import Manager

@@ -25,13 +25,13 @@ from pychron.entry.entry_views.entry import BaseEntry
 class MaterialEntry(BaseEntry):
     material = Str
 
-    def _add_item(self, db):
+    def _add_item(self):
         name = self.material
         self.info('Attempting to add Material="{}"'.format(name))
-
-        mat = db.get_material(name)
+        dvc = self.dvc
+        mat = dvc.get_material(name)
         if mat is None:
-            db.add_material(name)
+            dvc.add_material(name)
             return True
         else:
             self.warning_dialog('"{}" already exists'.format(name))

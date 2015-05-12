@@ -261,7 +261,7 @@ class YAMLAnalysisLoader(BaseAnalysisLoader):
                 for d in yaml.load_all(rfile.read()):
                     self._import_analysis(d)
             except yaml.YAMLError, e:
-                print e
+                print 'exception', e
 
     def _import_analysis(self, d):
         self._add_meta(d)

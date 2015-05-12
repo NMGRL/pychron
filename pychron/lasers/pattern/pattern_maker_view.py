@@ -25,7 +25,8 @@ import os
 # ============= enthought library imports =======================
 from traits.api import Property, Enum, Str, on_trait_change
 from traitsui.api import View, Item, InstanceEditor
-import apptools.sweet_pickle as pickle
+import cPickle as pickle
+# import apptools.sweet_pickle as pickle
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.lasers.pattern.patternable import Patternable
@@ -122,7 +123,7 @@ class PatternMakerView(Saveable, Patternable):
             pattern.calculate_transit_time()
             return pattern
         except ImportError, e:
-            print e
+            print 'exception', e
             # ===============================================================================
             # defaults
             # ===============================================================================

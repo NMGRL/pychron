@@ -351,7 +351,7 @@ class StageMap(Loggable):
                 try:
                     cors = pickle.load(f)
                 except pickle.PickleError, e:
-                    print e
+                    print 'exception', e
 
             if cors:
                 self.info('loaded correction file {}'.format(p))

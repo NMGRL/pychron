@@ -214,7 +214,7 @@ class PowerMapProcessor(HasTraits):
         try:
             b = tab._v_attrs['bounds']
         except Exception, e:
-            print e
+            print 'exception', e
             b = 1
 
         metadata['bounds'] = -float(b), float(b)
@@ -222,13 +222,13 @@ class PowerMapProcessor(HasTraits):
         try:
             bd = tab._v_attrs['beam_diameter']
         except Exception, e:
-            print e
+            print 'exception', e
             bd = 0
 
         try:
             po = tab._v_attrs['power']
         except Exception, e:
-            print e
+            print 'exception', e
             po = 0
 
         metadata['beam_diameter'] = bd

@@ -121,7 +121,7 @@ class H5DataManager(DataManager):
         try:
             os.remove(p)
         except Exception, e:
-            print e
+            print 'exception', e
 
     def new_frame_ctx(self, *args, **kw):
         p = self._new_frame_path(*args, **kw)

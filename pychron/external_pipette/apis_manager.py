@@ -74,7 +74,7 @@ class SimpleApisManager(Manager):
         #setup linking
             # v = self.controller.isolation_valve
             # elm = self.application.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
-            # print elm
+            # print 'exception', elm
             # print v
             # if elm:
             #     elm.link_valve_actuation(v, self.isolation_valve_state_change)

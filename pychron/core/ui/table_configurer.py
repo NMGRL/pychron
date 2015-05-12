@@ -15,12 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import pickle
 
-from traits.api import HasTraits, List, Any, Bool, Int, Instance, Enum, \
-    Event, Str, Callable, Button, Property
+from traits.api import HasTraits, List, Bool, Int, Instance, Enum, \
+    Str, Callable, Button, Property
 from traits.trait_errors import TraitError
 from traitsui.api import View, Item, UItem, CheckListEditor, VGroup, Handler, HGroup, Tabbed
-import apptools.sweet_pickle as pickle
+# import apptools.sweet_pickle as pickle
 # ============= standard library imports ========================
 from datetime import datetime
 import os
@@ -286,7 +287,7 @@ class AnalysisTableConfigurer(TableConfigurer):
                         # VGroup(HGroup(Heading('Lower Bound'), UItem('use_low_post')),
                         # UItem('low_post', style='custom', enabled_when='use_low_post')),
                         # VGroup(HGroup(Heading('Upper Bound'), UItem('use_high_post')),
-                        #            UItem('high_post', style='custom', enabled_when='use_high_post')),
+                        # UItem('high_post', style='custom', enabled_when='use_high_post')),
                         #     VGroup(HGroup(Heading('Named Range'), UItem('use_named_date_range')),
                         #            UItem('named_date_range', enabled_when='use_named_date_range'))),
                         Item('omit_invalid'),
@@ -325,16 +326,16 @@ class SampleTableConfigurer(TableConfigurer):
                          style='custom',
                          editor=CheckListEditor(name='available_columns', cols=3)),
                    label='Columns', show_border=True),
-            # Item('filter_non_run_samples',
-            # tooltip='Omit samples that have not been analyzed to date',
-            #      label='Exclude Non-Run')
+            Item('filter_non_run_samples',
+                 tooltip='Omit samples that have not been analyzed to date',
+                 label='Exclude Non-Run')
         ),
-                 buttons=['OK', 'Cancel', 'Revert'],
-                 # kind='modal',
-                 title=self.title,
-                 handler=TableConfigurerHandler,
-                 resizable=True,
-                 width=300)
+            buttons=['OK', 'Cancel', 'Revert'],
+            # kind='modal',
+            title=self.title,
+            handler=TableConfigurerHandler,
+            resizable=True,
+            width=300)
         return v
 
 

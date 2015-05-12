@@ -62,7 +62,7 @@ class PychronTasksPlugin(BasePlugin):
         try:
             self._set_preference_defaults(defaults, 'pychron.general')
         except AttributeError, e:
-            print e
+            print 'exception', e
 
     def start(self):
         self.info('Writing plugin file defaults')

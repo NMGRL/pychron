@@ -95,8 +95,10 @@ class MainView(HasTraits):
         a39 = ar.ar39decayfactor
         a37 = ar.ar37decayfactor
         ms = [
-            MeasurementValue(name='Version',
+            MeasurementValue(name='DR Version',
                              value=an.data_reduction_tag),
+            MeasurementValue(name='DAQ Version',
+                             value=an.collection_version),
             MeasurementValue(name='AnalysisID',
                              value=self.analysis_id),
             MeasurementValue(name='Spectrometer',
@@ -142,10 +144,10 @@ class MainView(HasTraits):
                             value=an.extract_value,
                             units=an.extract_units, ),
             ExtractionValue(name='Duration',
-                            value=an.duration,
+                            value=an.extract_duration,
                             units='s'),
             ExtractionValue(name='Cleanup',
-                            value=an.cleanup,
+                            value=an.cleanup_duration,
                             units='s'),
             ExtractionValue(name='T_o',
                             value=an.collection_time_zero_offset,

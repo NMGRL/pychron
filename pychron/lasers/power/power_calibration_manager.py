@@ -22,7 +22,7 @@ ETSConfig.toolkit = 'qt4'
 from traits.api import HasTraits, Float, Button, Instance, Int, \
      Event, Property, Bool, Any, Enum, on_trait_change, List
 from traitsui.api import View, Item, VGroup, Group
-import apptools.sweet_pickle as pickle
+import cPickle as pickle
 from pyface.timer.do_later import do_later
 # ============= standard library imports ========================
 from numpy import polyfit, linspace, polyval

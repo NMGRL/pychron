@@ -188,7 +188,7 @@ class NewYorkRegressionTest(PearsonRegressionTest, TestCase):
 #         es = np.ones(n)
 #         ys = np.hstack((ys, [5.1]))
 #         es = np.hstack((es, [1000]))
-#         #        print es
+# #        print 'exception', es
 #         self.reg = WeightedMeanRegressor(ys=ys, errors=es)
 
 #    def testMean(self):

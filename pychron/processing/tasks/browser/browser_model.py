@@ -310,7 +310,7 @@ class BrowserModel(BaseBrowserModel):
                         try:
                             yield li.sample.project
                         except AttributeError, e:
-                            print e
+                            print 'exception', e
 
                 ps = sorted(list(set(get_projects())))
                 ps = [ProjectRecordView(p) for p in ps]

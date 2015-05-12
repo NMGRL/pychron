@@ -92,12 +92,9 @@ class ArArAge(Loggable):
     ar37decayfactor = Float
 
     arar_constants = Instance(ArArConstants, ())
-    logger = logger
+
     Ar39_decay_corrected = Either(Variable, AffineScalarFunc)
     Ar37_decay_corrected = Either(Variable, AffineScalarFunc)
-
-    arar_constants = Instance(ArArConstants, ())
-    logger = logger
 
     moles_Ar40 = Property
     sensitivity = Float  # moles/pA
@@ -106,9 +103,10 @@ class ArArAge(Loggable):
     _kca_warning = False
     _kcl_warning = False
 
-    # def __init__(self, *args, **kw):
-    # HasTraits.__init__(self, *args, **kw)
-    #     self.logger = logger
+    def __init__(self, *args, **kw):
+        self.logger = logger
+
+        super(ArArAge, self).__init__(*args, **kw)
 
     def set_j(self, s, e):
         self.j = ufloat(s, std_dev=e)
@@ -349,6 +347,7 @@ class ArArAge(Loggable):
         return Isotope(**kw)
 
     def set_isotope_detector(self, det, iso=None):
+        name = None
         if iso:
             name = iso
 
@@ -644,12 +643,14 @@ class ArArAge(Loggable):
 
     def __getattr__(self, attr):
         if '/' in attr:
-            #treat as ratio
+            # treat as ratio
             n, d = attr.split('/')
             try:
                 return self.get_value(n) / self.get_value(d)
             except (ZeroDivisionError, TypeError):
                 return ufloat(0, 1e-20)
+        else:
+            raise AttributeError(attr)
                 # ===============================================================================
                 #
                 # ===============================================================================

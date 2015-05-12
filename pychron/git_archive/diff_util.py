@@ -128,7 +128,7 @@ c=1
 d=1'''
     b = '''a=12
 b=1'''
-    print extract_line_numbers(a,b)
+    print 'exception', extract_line_numbers(a, b)
 # ============= EOF =============================================
 
 

@@ -19,7 +19,8 @@ from traits.api import Property, List, Event, Instance, Button, cached_property,
     HasTraits, Enum, Bool
 from traits.trait_errors import TraitError
 from traitsui.api import View, Item, EnumEditor, HGroup, UItem, VGroup
-import apptools.sweet_pickle as pickle
+# import apptools.sweet_pickle as pickle
+import cPickle as pickle
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================

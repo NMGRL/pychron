@@ -85,7 +85,7 @@
 #                               access_token_secret='BOea1U7aUoQXJEQ1CldvrK5RkjLImfXGls6PbuQw'
 #                               )
 #        except NameError, e:
-#            print e
+# print 'exception', e
 ##    def get_twitter(self):
 #        # check for dependencies:
 ##        try:

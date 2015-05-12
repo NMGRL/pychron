@@ -17,7 +17,6 @@
 # ============= enthought library imports =======================
 from envisage.ui.tasks.task_extension import TaskExtension
 from traits.api import List
-from envisage.plugin import Plugin
 from envisage.service_offer import ServiceOffer
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -68,7 +67,7 @@ class BaseTaskPlugin(BasePlugin):
         try:
             self.set_preference_defaults()
         except AttributeError, e:
-            print e
+            print 'exception', e
 
     def _set_preference_defaults(self, defaults, prefid):
         """

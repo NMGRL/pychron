@@ -17,9 +17,10 @@
 
 # =============enthought library imports=======================
 from traits.api import Float, Property
-import apptools.sweet_pickle as pickle
+# import apptools.sweet_pickle as pickle
 # =============standard library imports ========================
 import os
+import cPickle as pickle
 # =============local library imports  ==========================
 from fusions_logic_board import FusionsLogicBoard
 from pychron.paths import paths
