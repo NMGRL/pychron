@@ -52,6 +52,15 @@ def get_xml_value(elem, tag, default):
     return ret
 
 
+def set_nfail(elem, kw):
+    nfail = elem.find('nfail')
+    if nfail is not None:
+        try:
+            kw['nfail'] = int(nfail.text.strip())
+        except ValueError:
+            pass
+
+
 class DashboardServer(Loggable):
     devices = List
     selected_device = Instance(DashboardDevice)
@@ -116,42 +125,22 @@ class DashboardServer(Loggable):
         t.setDaemon(1)
         t.start()
 
-    def _load_devices(self):
-        # read devices from config
-        app = self.application
 
+    def _assemble_dev_dicts(self):
         parser = get_parser()
-        ds = []
         for dev in parser.get_elements('device'):
             name = dev.text.strip()
-
             dname = dev.find('name')
             if dname is None:
                 self.warning('no device name for {}. use a <name> tag'.format(name))
                 continue
 
-            dev_name = dname.text.strip()
-            device = None
-            if app:
-                # get device from app
-                device = app.get_service(ICoreDevice,
-                                         query='name=="{}"'.format(dev_name))
-                if device is None:
-                    self.warning('no device named "{}" available'.format(dev_name))
-                    if globalv.dashboard_simulation:
-                        device = DummyDevice(name=dev_name)
-                    else:
-                        continue
+            denabled = dev.find('use')
+            if denabled is not None:
+                denabled = to_bool(denabled.text.strip())
 
-            enabled = dev.find('use')
-            if enabled is not None:
-                enabled = to_bool(enabled.text.strip())
-
-            d = DashboardDevice(name=name, use=bool(enabled),
-                                _device=device)
-
+            vs = []
             for v in dev.findall('value'):
-
                 n = v.text.strip()
                 tag = '<{},{}>'.format(name, n)
 
@@ -167,51 +156,169 @@ class DashboardServer(Loggable):
                 timeout = get_xml_value(v, 'timeout', 120)
                 threshold = float(get_xml_value(v, 'change_threshold', 1e-10))
                 units = get_xml_value(v, 'units', '')
-
-                pv = d.add_value(n, tag, func_name, period, enabled, threshold,
-                                 units, timeout)
-
-                def set_nfail(elem, kw):
-                    nfail = elem.find('nfail')
-                    if nfail is not None:
-                        try:
-                            kw['nfail'] = int(nfail.text.strip())
-                        except ValueError:
-                            pass
-
+                cs = []
                 conds = v.find('conditionals')
                 if conds is not None:
                     for warn in conds.findall('warn'):
-                        teststr = warn.text.strip()
-                        kw = {'teststr': teststr}
-                        set_nfail(warn, kw)
-                        d.add_conditional(pv, WARNING, **kw)
-
+                        cd = {'teststr': warn.text.strip()}
+                        set_nfail(warn, cd)
+                        cs.append((WARNING, cd))
                     for critical in conds.findall('critical'):
                         teststr = critical.text.strip()
-
-                        kw = {'teststr': teststr}
-                        set_nfail(critical, kw)
-
+                        cd = {'teststr': teststr}
+                        set_nfail(critical, cd)
                         script = critical.find('script')
                         if script is not None:
                             sname = script.text.strip()
                             if self._validate_script(sname):
-                                kw['script'] = sname
+                                cd['script'] = sname
                             else:
                                 self.warning('Failed to add condition "{}". '
                                              'Invalid script "scripts/extraction/{}"'.format(teststr, sname))
                                 continue
+                        cs.append((CRITICAL, cd))
 
-                        d.add_conditional(pv, CRITICAL, **kw)
+                vd = ({'name': n,
+                       'tag': tag,
+                       'func_name': func_name,
+                       'period': period,
+                       'enabled': enabled,
+                       'threshold': threshold,
+                       'units': units,
+                       'timeout': timeout},
+                      cs)
+                vs.append(vd)
 
+            dd = {'name': name,
+                  'device': dname.text.strip(),
+                  'enabled': bool(denabled),
+                  'values': vs
+                  }
+            yield dd
+
+    def _load_devices(self, dev_dicts):
+        app = self.application
+        ds = []
+        for dd in dev_dicts:
+            name = dd['name']
+            dev_name = dd['device']
+            device = app.get_service(ICoreDevice, query='name=="{}"'.format(dev_name))
+            if device is None:
+                self.warning('no device named "{}" available'.format(dev_name))
+                if globalv.dashboard_simulation:
+                    device = DummyDevice(name=dev_name)
+                else:
+                    continue
+
+            for args, cs in dd['values']:
+                pv = d.add_value(**args)
+                for level, kw in cs:
+                    d.add_conditional(pv, level, **kw)
+
+            d = DashboardDevice(name=name, use=dd['enabled'], device=device)
             d.setup_graph()
             ds.append(d)
 
         self.devices = ds
 
+    # def _load_devices(self):
+    # # read devices from config
+    # app = self.application
+    #
+    # parser = get_parser()
+    # ds = []
+    #     for dev in parser.get_elements('device'):
+    #         name = dev.text.strip()
+    #
+    #         dname = dev.find('name')
+    #         if dname is None:
+    #             self.warning('no device name for {}. use a <name> tag'.format(name))
+    #             continue
+    #
+    #         dev_name = dname.text.strip()
+    #         device = None
+    #         if app:
+    #             # get device from app
+    #             device = app.get_service(ICoreDevice,
+    #                                      query='name=="{}"'.format(dev_name))
+    #             if device is None:
+    #                 self.warning('no device named "{}" available'.format(dev_name))
+    #                 if globalv.dashboard_simulation:
+    #                     device = DummyDevice(name=dev_name)
+    #                 else:
+    #                     continue
+    #
+    #         enabled = dev.find('use')
+    #         if enabled is not None:
+    #             enabled = to_bool(enabled.text.strip())
+    #
+    #         d = DashboardDevice(name=name, use=bool(enabled),
+    #                             _device=device)
+    #
+    #         for v in dev.findall('value'):
+    #
+    #             n = v.text.strip()
+    #             tag = '<{},{}>'.format(name, n)
+    #
+    #             func_name = get_xml_value(v, 'func', 'get')
+    #             period = get_xml_value(v, 'period', 60)
+    #             if not period == 'on_change':
+    #                 try:
+    #                     period = int(period)
+    #                 except ValueError:
+    #                     period = 60
+    #
+    #             enabled = to_bool(get_xml_value(v, 'enabled', False))
+    #             timeout = get_xml_value(v, 'timeout', 120)
+    #             threshold = float(get_xml_value(v, 'change_threshold', 1e-10))
+    #             units = get_xml_value(v, 'units', '')
+    #
+    #             pv = d.add_value(n, tag, func_name, period, enabled, threshold,
+    #                              units, timeout)
+    #
+    #             def set_nfail(elem, kw):
+    #                 nfail = elem.find('nfail')
+    #                 if nfail is not None:
+    #                     try:
+    #                         kw['nfail'] = int(nfail.text.strip())
+    #                     except ValueError:
+    #                         pass
+    #
+    #             conds = v.find('conditionals')
+    #             if conds is not None:
+    #                 for warn in conds.findall('warn'):
+    #                     teststr = warn.text.strip()
+    #                     kw = {'teststr': teststr}
+    #                     set_nfail(warn, kw)
+    #                     d.add_conditional(pv, WARNING, **kw)
+    #
+    #                 for critical in conds.findall('critical'):
+    #                     teststr = critical.text.strip()
+    #
+    #                     kw = {'teststr': teststr}
+    #                     set_nfail(critical, kw)
+    #
+    #                     script = critical.find('script')
+    #                     if script is not None:
+    #                         sname = script.text.strip()
+    #                         if self._validate_script(sname):
+    #                             kw['script'] = sname
+    #                         else:
+    #                             self.warning('Failed to add condition "{}". '
+    #                                          'Invalid script "scripts/extraction/{}"'.format(teststr, sname))
+    #                             continue
+    #
+    #                     d.add_conditional(pv, CRITICAL, **kw)
+    #
+    #         d.setup_graph()
+    #         ds.append(d)
+    #
+    #     self.devices = ds
+
     def _handle_config(self):
         """
+            called by subscribers requesting the dashboard configuration
+
             return a pickled dictionary string
         """
         config = [pv for dev in self.devices
@@ -250,9 +357,12 @@ class DashboardServer(Loggable):
     # self.notifier.send_message('error {}'.format(msg))
 
     def _validate_script(self, script_name):
-        script = self._script_factory(script_name)
-        if script:
-            return script.syntax_ok()
+        if self.extraction_line_manager:
+            script = self._script_factory(script_name)
+            if script:
+                return script.syntax_ok()
+        else:
+            self.warning('Extraction Line Manager not available. Cannot execute pyscript')
 
     def _script_factory(self, script_name):
         if os.path.isfile(os.path.join(paths.extraction_dir, add_extension(script_name, '.py'))):
@@ -280,7 +390,7 @@ class DashboardServer(Loggable):
 
     # def _update_labspy_devices(self):
     # if self.labspy_client:
-    #         # a = Dev('pneumatic', ('pressure',), ('torr',))
+    # # a = Dev('pneumatic', ('pressure',), ('torr',))
     #         # b = Dev('environment',
     #         #         ('temperature', 'humidity'), ('C', '%'))
     #         # c = Dev('gauge', ('bone_ig',), ('torr',))

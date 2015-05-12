@@ -94,8 +94,8 @@ class DashboardDevice(Loggable):
             self.debug(traceback.format_exc())
             value.use_pv = False
 
-    def add_value(self, n, tag, func_name, period, use, threshold, units, timeout):
-        pv = ProcessValue(name=n,
+    def add_value(self, name, tag, func_name, period, use, threshold, units, timeout):
+        pv = ProcessValue(name=name,
                           tag=tag,
                           func_name=func_name,
                           period=period,
@@ -105,9 +105,9 @@ class DashboardDevice(Loggable):
                           change_threshold=threshold)
 
         if period == 'on_change':
-            self.debug('bind to {}'.format(n))
+            self.debug('bind to {}'.format(name))
             if self._device:
-                self._device.on_trait_change(lambda a, b, c, d: self._handle_change(pv, a, b, c, d), n)
+                self._device.on_trait_change(lambda a, b, c, d: self._handle_change(pv, a, b, c, d), name)
                 # self._device.on_trait_change(lambda new: self._push_value(pv, new), n)
 
         self.values.append(pv)

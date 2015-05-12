@@ -188,7 +188,7 @@ class EthernetCommunicator(Communicator):
     verbose = False
     error = None
 
-    message_frame = None
+    message_frame = ''
 
     def load(self, config, path):
         """

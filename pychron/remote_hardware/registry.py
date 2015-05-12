@@ -18,13 +18,15 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traits.has_traits import MetaHasTraits
+
 from pychron.core.helpers.logger_setup import new_logger
 from pychron.core.helpers.strtools import camel_case, to_list
+
 
 REGISTRY = {}
 FUNC_REGISTRY = {}
 
-# logger = new_logger('DeviceFunctionRegistry')
+logger = new_logger('DeviceFunctionRegistry')
 
 
 class DeviceFunctionRegistry(object):
@@ -40,7 +42,7 @@ class DeviceFunctionRegistry(object):
             if self.camel_case:
                 name = camel_case(name)
 
-        # logger.debug('register function {} as {}'.format(func.func_name, name))
+        logger.debug('register function {} as {}'.format(func.func_name, name))
         REGISTRY[name] = (func.func_name, self.postprocess)
         return func
 
@@ -103,10 +105,11 @@ class RHMixin(object):
         for k, (fname, p) in REGISTRY.items():
 
             if hasattr(self, fname):
-                func = getattr(self, fname)
-                if func is not None:
-                    FUNC_REGISTRY[k] = (func, p)
-                    # logger.debug('Function register {} {}:{}'.format(self.name, k, fname))
+                if fname not in FUNC_REGISTRY:
+                    func = getattr(self, fname)
+                    if func is not None:
+                        FUNC_REGISTRY[k] = (func, p)
+                        logger.debug('Function register {} {}:{}'.format(self.name, k, fname))
 
 if __name__ == '__main__':
     class Handler(object):
