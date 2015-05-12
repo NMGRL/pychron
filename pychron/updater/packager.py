@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from distutils.core import run_setup
 import os
 import shutil
 # ============= standard library imports ========================
@@ -57,8 +56,8 @@ def copy_resources(root, dest, app_name):
         copy_resource(idest, os.path.join(root, 'resources', nd, sname), name='{}.png'.format(ni))
 
     # copy helper mod
-    for a in ('helpers', ):
-        m = os.path.join(root, 'launchers', '{}.py'.format(a))
+    for a in ('helpers.py', 'ENV.txt'):
+        m = os.path.join(root, 'launchers', a)
         copy_resource(rdest, m)
 
     # copy qt_menu.nib

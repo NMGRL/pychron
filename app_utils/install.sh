@@ -202,6 +202,18 @@ git pull
 #install python dependencies
 ${ANACONDA_PREFIX}/bin/conda create --yes -n $CONDA_ENV python
 
+#write the ENV file
+EP=./launchers/ENV.txt
+if [ -e ${EP} ]
+then
+ rm ${EP}
+fi
+
+cat <<EOT >> ${EP}
+${CONDA_ENV}
+${ANACONDA_PREFIX}
+EOT
+
 #write the requirements file
 CREQ=./conda_requirements.txt
 PREQ=./pip_requirements.txt
