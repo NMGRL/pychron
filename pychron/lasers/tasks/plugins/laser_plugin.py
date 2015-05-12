@@ -85,7 +85,7 @@ class BaseLaserPlugin(BaseTaskPlugin):
             params = dict()
             try:
                 tag = ip.get_parameter(plugin, 'communications', element=True)
-                for attr in ['host', 'port', 'kind']:
+                for attr in ['host', 'port', 'kind', 'message_frame']:
                     try:
                         params[attr] = tag.find(attr).text.strip()
                     except Exception, e:

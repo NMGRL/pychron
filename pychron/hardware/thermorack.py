@@ -50,7 +50,7 @@ class ThermoRack(CoreDevice, RHMixin):
     def __init__(self, *args, **kw):
         super(ThermoRack, self).__init__(*args, **kw)
 
-        self.registry_commands()
+        self.register_functions()
     # ===========================================================================
     # icore device interface
     # ===========================================================================
@@ -163,8 +163,11 @@ class ThermoRack(CoreDevice, RHMixin):
         if resp is not None:
             h = resp[2:]
             l = resp[:2]
+            try:
+                resp = int(h + l, 16) * scale
+            except ValueError:
+                return 0
 
-            resp = int(h + l, 16) * scale
             if self.convert_to_C:
                 resp = 5.0 * (resp - 32) / 9.0
 

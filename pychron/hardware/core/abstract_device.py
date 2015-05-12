@@ -23,6 +23,7 @@ from pychron.has_communicator import HasCommunicator
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.core.scanable_device import ScanableDevice
 
+PACKAGES = dict(ProXRADC='pychron.hardware.ncd.adc')
 
 @provides(ICoreDevice)
 class AbstractDevice(ScanableDevice, HasCommunicator):
@@ -31,6 +32,24 @@ class AbstractDevice(ScanableDevice, HasCommunicator):
 
     dev_klass = Property(depends_on='_cdevice')
     graph = DelegatesTo('_cdevice')
+
+    def load_additional_args(self, config):
+        """
+
+        """
+        cklass = self.config_get(config, 'General', 'type')
+
+        # if 'Argus' in klass:
+        #     klass = 'ArgusGPActuator'
+
+        # if klass is not None:
+        #     if 'subsystem' in klass:
+        #         pass
+        #     else:
+        factory = self.get_factory(PACKAGES[cklass], cklass)
+        # self.debug('constructing cdevice: name={}, klass={}'.format(name, klass))
+        self._cdevice = factory(name=cklass, configuration_dir_name=self.configuration_dir_name)
+        return True
 
     @property
     def com_device_name(self):
@@ -107,6 +126,7 @@ class AddressableAbstractDevice(AbstractDevice):
 
     def load_additional_args(self, config):
         self.set_attribute(config, 'address', 'General', 'address')
+        return super(AddressableAbstractDevice, self).load_additional_args(config)
 
     def get(self, *args, **kw):
         if self._cdevice:

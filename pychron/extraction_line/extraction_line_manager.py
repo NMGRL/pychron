@@ -79,12 +79,13 @@ class ExtractionLineManager(Manager, Consoleable):
 
     def activate(self):
         self._active = True
-        self.reload_canvas()
 
         # need to wait until now to load the ptrackers
         # this way our canvases are created
+        self.reload_canvas()
         if self.valve_manager:
-            self.valve_manager.load_valve_states(force_network_change=True)
+            self.valve_manager.refresh_network()
+            # self.valve_manager.load_valve_states(force_network_change=True)
             for p in self.valve_manager.pipette_trackers:
                 p.load()
 
@@ -97,19 +98,23 @@ class ExtractionLineManager(Manager, Consoleable):
         if self.gauge_manager:
             self.info('start gauge scans')
             self.gauge_manager.start_scans()
+
     def _refresh_canvas(self):
         self.refresh_canvas()
         if self._active:
             do_after(200, self._refresh_canvas)
 
     def deactivate(self):
-        self.stop_status_monitor()
         if self.gauge_manager:
             self.gauge_manager.stop_scans()
 
         if self.monitor:
             self.monitor.stop()
         self._active = False
+        self._deactivate_hook()
+
+    def _deactivate_hook(self):
+        pass
 
     def bind_preferences(self):
 
@@ -187,7 +192,7 @@ class ExtractionLineManager(Manager, Consoleable):
     # # get chamber name
     # sc = self._sample_changer_factory()
     # if sc:
-    #         sc.isolate_chamber()
+    # sc.isolate_chamber()
     #
     # def evacuate_chamber(self):
     #     sc = self.sample_changer
@@ -260,32 +265,29 @@ class ExtractionLineManager(Manager, Consoleable):
             # p = os.path.join(paths.canvas2D_dir, 'canvas.xml')
             self.network.load(self.canvas_path)
 
-    def stop_status_monitor(self):
-        self.info('stopping status monitor')
-        self.status_monitor.stop()
 
     def reload_canvas(self, load_states=False):
         self.debug('reload canvas')
         self.reload_scene_graph()
         # net = self.network
-        vm = self.valve_manager
         # if net:
         #     # p = os.path.join(paths.canvas2D_dir, 'canvas.xml')
         #     net.load(self.canvas_path)
 
         # if net:
         # net.suppress_changes = True
-
-        vm.load_valve_states(refresh=False, force_network_change=False)
-        vm.load_valve_lock_states(refresh=False)
+        vm = self.valve_manager
+        # if vm:
+        #     vm.load_valve_states(refresh=False, force_network_change=False)
+        #     vm.load_valve_lock_states(refresh=False)
 
         # if net:
         # net.suppress_changes = False
 
         # vm.load_valve_states(refresh=False, force_network_change=True)
-
-        for p in vm.pipette_trackers:
-            self._set_pipette_counts(p.name, p.counts)
+        if vm:
+            for p in vm.pipette_trackers:
+                self._set_pipette_counts(p.name, p.counts)
 
         self._reload_canvas_hook()
 
@@ -629,7 +631,12 @@ class ExtractionLineManager(Manager, Consoleable):
             package = 'pychron.managers.{}'.format(manager)
         print manager, manager in ('valve_manager', 'gauge_manager', 'multiplexer_manager')
         if manager in ('valve_manager', 'gauge_manager', 'multiplexer_manager'):
-            return getattr(self, manager)
+            if manager == 'valve_manager':
+                man = self._valve_manager_factory()
+                self.valve_manager = man
+                return man
+            else:
+                return getattr(self, manager)
         else:
             class_factory = self.get_manager_factory(package, klass, warn=False)
             if class_factory is None:
@@ -709,7 +716,8 @@ class ExtractionLineManager(Manager, Consoleable):
 
         return GaugeManager(application=self.application)
 
-    def _valve_manager_default(self):
+    def _valve_manager_factory(self):
+    # def _valve_manager_default(self):
         klass = self._get_valve_manager_klass()
         vm = klass(application=self.application)
         vm.on_trait_change(self._handle_state, 'refresh_state')
@@ -753,7 +761,7 @@ if __name__ == '__main__':
 # self.status_monitor.valve_manager = self.valve_manager
 # e = self.explanation
 # if e is not None:
-#             e.load(self.valve_manager.explanable_items)
+# e.load(self.valve_manager.explanable_items)
 #             self.valve_manager.on_trait_change(e.load_item, 'explanable_items[]')
 
 # def _pumping_monitor_default(self):

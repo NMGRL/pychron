@@ -45,7 +45,6 @@ HW_PACKAGE_MAP = {
     'PychronPneumatics': 'pychron.hardware.pneumatics',
 
 
-    # RPC classes
     'RemoteThermoRack': 'pychron.hardware.remote.thermorack',
     'RemoteNewportMotionController': 'pychron.hardware.remote.newport_motion_controller',
 

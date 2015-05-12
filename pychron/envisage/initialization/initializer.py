@@ -331,11 +331,9 @@ class Initializer(Loggable):
     def _check_required(self, subtree):
         # check the subtree has all required devices enabled
         devs = self.parser.get_devices(subtree, all_=True, element=True)
-        print devs
         for di in devs:
             required = True
             req = self.parser.get_parameter(di, 'required')
-            print di.text.strip(), req
             if req:
                 required = req.strip().lower() == 'true'
 

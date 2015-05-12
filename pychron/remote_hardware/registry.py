@@ -17,10 +17,16 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from traits.has_traits import MetaHasTraits
+
+from pychron.core.helpers.logger_setup import new_logger
 from pychron.core.helpers.strtools import camel_case, to_list
+
 
 REGISTRY = {}
 FUNC_REGISTRY = {}
+
+logger = new_logger('DeviceFunctionRegistry')
 
 
 class DeviceFunctionRegistry(object):
@@ -35,7 +41,8 @@ class DeviceFunctionRegistry(object):
             name = func.func_name
             if self.camel_case:
                 name = camel_case(name)
-        print name
+
+        logger.debug('register function {} as {}'.format(func.func_name, name))
         REGISTRY[name] = (func.func_name, self.postprocess)
         return func
 
@@ -44,15 +51,18 @@ register = DeviceFunctionRegistry
 
 
 class RegisteredFunction(object):
-    def __init__(self, camel_case=False, returntype=None):
+    def __init__(self, cmd=None, camel_case=False, returntype=None):
+        self.cmd = cmd
         self.camel_case = camel_case
         self.returntype = returntype
 
     def __call__(self, func):
         def wrapper(obj, *args, **kw):
-            cmd = func.func_name
-            if self.camel_case:
-                cmd = camel_case(cmd)
+            cmd = self.cmd
+            if cmd is None:
+                cmd = func.func_name
+                if self.camel_case:
+                    cmd = camel_case(cmd)
 
             r = obj.ask(cmd)
             if self.returntype:
@@ -71,7 +81,11 @@ registered_function = RegisteredFunction
 
 def make_wrapper(func, postprocess):
     def wrapper(obj, manager, *args, **kw):
-        ret = func(*args, **kw)
+        """
+        handler signature is self, manager, args, sender
+        """
+
+        ret = func(*args[1:], **kw)
         if postprocess:
             ret = postprocess(ret)
         return ret
@@ -79,19 +93,23 @@ def make_wrapper(func, postprocess):
     return wrapper
 
 
-class MetaHandler(type):
+class MetaHandler(MetaHasTraits):
     def __call__(cls, *args, **kw):
         for k, v in FUNC_REGISTRY.items():
             setattr(cls, k, make_wrapper(*v))
-        return type.__call__(cls, *args, **kw)
+        return MetaHasTraits.__call__(cls, *args, **kw)
 
 
 class RHMixin(object):
     def register_functions(self):
         for k, (fname, p) in REGISTRY.items():
-            if hasattr(self, fname):
-                FUNC_REGISTRY[k] = (getattr(self, fname), p)
 
+            if hasattr(self, fname):
+                if fname not in FUNC_REGISTRY:
+                    func = getattr(self, fname)
+                    if func is not None:
+                        FUNC_REGISTRY[k] = (func, p)
+                        logger.debug('Function register {} {}:{}'.format(self.name, k, fname))
 
 if __name__ == '__main__':
     class Handler(object):
@@ -195,7 +213,7 @@ if __name__ == '__main__':
 # class Registry(object):
 # def __init__(self, name=None, camel_case=False, postprocess=None):
 # self.postprocess = postprocess
-#         self.name = name
+# self.name = name
 #         self.camel_case = camel_case
 #
 #     def __call__(self, func):

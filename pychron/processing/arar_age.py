@@ -296,8 +296,6 @@ class ArArAge(Loggable):
         else:
             return 0
 
-    #def get_signal_value(self, k):
-    #    return self._get_arar_result_attr(k)
     def append_data(self, iso, det, x, signal, kind):
         """
             if kind is baseline then key used to match isotope is `detector` not an `isotope_name`
@@ -391,7 +389,6 @@ class ArArAge(Loggable):
                 return iso
             except KeyError:
                 pass
-                #attr = 'name'
         else:
             attr = 'detector'
             value = detector
@@ -412,7 +409,6 @@ class ArArAge(Loggable):
         return niso
 
     def set_blank(self, iso, v):
-        #print 'set blank', iso, v
         if not self.isotopes.has_key(iso):
             niso = Isotope(name=iso)
             self.isotopes[iso] = niso
@@ -421,7 +417,6 @@ class ArArAge(Loggable):
         self.isotopes[iso].blank.set_uvalue(v)
 
     def set_baseline(self, iso, v):
-        #print 'set baseline', iso
         if not self.isotopes.has_key(iso):
             niso = Isotope(name=iso)
             self.isotopes[iso] = niso
@@ -447,7 +442,7 @@ class ArArAge(Loggable):
 
     def calculate_decay_factors(self):
         arc = self.arar_constants
-        #only calculate decayfactors once
+        # only calculate decayfactors once
         if not self.ar39decayfactor:
             a37df = calculate_decay_factor(arc.lambda_Ar37.nominal_value,
                                            self.chron_segments)
@@ -469,7 +464,7 @@ class ArArAge(Loggable):
     #     self.logger.debug(*args, **kw)
 
     def _calculate_kca(self):
-        #self.debug('calculated kca')
+        # self.debug('calculated kca')
 
         k = self.get_computed_value('k39')
         ca = self.get_non_ar_isotope('ca37')

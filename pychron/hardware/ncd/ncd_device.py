@@ -28,10 +28,12 @@ from pychron.hardware.core.core_device import CoreDevice
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+
 class NCDDevice(CoreDevice):
     def initialize(self, *args, **kw):
         super(NCDDevice, self).initialize(*args, **kw)
-        self._communicator.write_terminator = None
+        if self._communicator:
+            self._communicator.write_terminator = None
         return True
 
     def _make_cmdstr(self, *args):

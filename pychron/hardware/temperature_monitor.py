@@ -13,9 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from pychron.core.helpers.logger_setup import logging_setup
-
-logging_setup('dpi32')
 
 # =============enthought library imports=======================
 from traits.api import Float, Property, Str
@@ -101,6 +98,10 @@ class DPi32TemperatureMonitor(ISeriesDevice):
     input_type = Property(depends_on='_input_type')
     _input_type = Str
     id_query = '*R07'
+
+    def load_additional_args(self, config):
+        self.set_attribute(config, 'address','General', 'address', optional=True, default=None)
+        return super(DPi32TemperatureMonitor, self).load_additional_args(config)
 
     def id_response(self, response):
         r = False
@@ -230,6 +231,10 @@ class DPi32TemperatureMonitor(ISeriesDevice):
 
 
 if __name__ == '__main__':
+    from pychron.core.helpers.logger_setup import logging_setup
+
+    logging_setup('dpi32')
+
     a = DPi32TemperatureMonitor()
     a.address = '01'
     a.load_communicator('serial', port='usbserial-FTT3I39P', baudrate=9600)

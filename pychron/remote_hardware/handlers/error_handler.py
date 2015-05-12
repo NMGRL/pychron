@@ -59,6 +59,8 @@ class ErrorHandler:
                 err = result
 
         except TypeError, e:
+            import traceback
+            traceback.print_exc()
             err = FuncCallErrorCode(e, args, logger=self.logger)
 
         return err, '{}'.format(str(result))

@@ -35,6 +35,7 @@ import struct
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.hardware.ncd.ncd_device import NCDDevice
+from pychron.hardware.polyinomial_mapper import PolynomialMapper
 
 
 class ProXRADCExpansion(NCDDevice):
@@ -60,6 +61,7 @@ TWELVE_BIT_BANKS = [196, 197, 198]
 
 class ProXRADC(NCDDevice):
     max_voltage = 5
+
 
     def read_device_info(self):
         cmdstr = self._make_cmdstr(254, 246)
