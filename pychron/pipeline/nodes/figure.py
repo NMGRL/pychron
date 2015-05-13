@@ -28,9 +28,9 @@ class FigureNode(BaseNode):
 
     def run(self, state):
         editor = self.editor_klass()
-        editor.analyses = state.unknowns
-        editor.set_name()
-        editor.rebuild()
+
+        editor.set_items(state.unknowns)
+
         self.editor = editor
         cnt = 1
         oname = editor.name

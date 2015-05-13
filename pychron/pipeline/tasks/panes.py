@@ -37,6 +37,7 @@ from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.nodes.data import DataNode
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode
 from pychron.pipeline.nodes.filter import FilterNode
+from pychron.pipeline.nodes.grouping import GroupingNode
 from pychron.pipeline.nodes.persist import PDFNode
 
 
@@ -76,6 +77,7 @@ class PipelineHandler(Handler):
 
     def add_grouping(self, info, obj):
         info.object.add_grouping(obj)
+
 
 class _TreeNode(TreeNode):
     icon_name = ''
@@ -172,6 +174,9 @@ class PipelinePane(TraitsDockPane):
                                   label='name'),
                  PDFTreeNode(node_for=[PDFNode],
                              label='name'),
+                 GroupingTreeNode(node_for=[GroupingNode],
+                                  menu=data_menu_factory(),
+                                  label='name'),
                  TreeNode(node_for=[BaseNode],
                           label='name')]
 
@@ -182,7 +187,7 @@ class PipelinePane(TraitsDockPane):
                             dclick='dclicked',
                             show_disabled=True,
                             refresh_all_icons='refresh_all_needed',
-                            update='refresh_needed')
+                            update='update_needed')
         v = View(UItem('pipeline',
                        editor=editor),
                  handler=PipelineHandler())
@@ -215,12 +220,12 @@ class UnknownsAdapter(TabularAdapter):
     # def _get_klass_text(self):
     # return self.item.__class__.__name__.split('.')[-1]
 
-    def get_menu(self, object, trait, row, column):
-        return MenuManager(Action(name='Group Selected', action='group_by_selected'),
-                           Action(name='Group by Labnumber', action='group_by_labnumber'),
-                           Action(name='Group by Aliquot', action='group_by_aliquot'),
-                           Action(name='Clear Grouping', action='clear_grouping'),
-                           Action(name='Unselect', action='unselect'))
+    # def get_menu(self, object, trait, row, column):
+    # return MenuManager(Action(name='Group Selected', action='group_by_selected'),
+    #                        Action(name='Group by Labnumber', action='group_by_labnumber'),
+    #                        Action(name='Group by Aliquot', action='group_by_aliquot'),
+    #                        Action(name='Clear Grouping', action='clear_grouping'),
+    #                        Action(name='Unselect', action='unselect'))
 
     def get_bg_color(self, obj, trait, row, column=0):
         c = 'white'
@@ -246,19 +251,22 @@ class UnknownsAdapter(TabularAdapter):
         return r
 
     def get_text_color(self, obj, trait, row, column=0):
-        # n = len(colornames)
-        colors = self.colors
-        n = len(colors)
+        color = 'black'
+        if obj.show_group_colors:
+            # n = len(colornames)
+            colors = self.colors
+            n = len(colors)
 
-        gid = getattr(obj, trait)[row].group_id
-        # gid = obj.items[row].group_id
+            gid = getattr(obj, trait)[row].group_id
+            # gid = obj.items[row].group_id
 
-        cid = gid % n if n else 0
-        try:
-            return colors[cid]
-        except IndexError:
-            return 'black'
-            # return colornames[cid]
+            cid = gid % n if n else 0
+            try:
+                color = colors[cid]
+            except IndexError:
+                pass
+
+        return color
 
 
 class ReferencesAdapter(TabularAdapter):
@@ -272,12 +280,15 @@ class AnalysesPane(TraitsDockPane):
     id = 'pychron.pipeline.analyses'
 
     def traits_view(self):
-        v = View(VGroup(UItem('unknowns', editor=TabularEditor(adapter=UnknownsAdapter(),
-                                                               editable=False)),
+        v = View(VGroup(UItem('unknowns',
+                              editor=TabularEditor(adapter=UnknownsAdapter(),
+                                                   refresh='refresh_table_needed',
+                                                   operations=[])),
                         UItem('references',
                               visible_when='references',
                               editor=TabularEditor(adapter=ReferencesAdapter(),
-                                                   editable=False))))
+                                                   refresh='refresh_table_needed',
+                                                   operations=[]))))
         return v
 
         # ============= EOF =============================================

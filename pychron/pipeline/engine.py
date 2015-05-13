@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Instance, List, Event
+from traits.api import HasTraits, Str, Instance, List, Event, Bool
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 import yaml
@@ -51,7 +51,10 @@ class PipelineEngine(Loggable):
     references = List
     run_needed = Event
     refresh_all_needed = Event
-    refresh_needed = Event
+    update_needed = Event
+    refresh_table_needed = Event
+
+    show_group_colors = Bool
 
     def refresh_analyses(self):
         unks = []
@@ -79,7 +82,7 @@ class PipelineEngine(Loggable):
         self.pipeline.nodes.remove(node)
         self.run_needed = True
 
-    def add_filter(self, node):
+    def add_filter(self, node=None, run=True):
         """
         add filter after this node
         :param node:
@@ -87,34 +90,15 @@ class PipelineEngine(Loggable):
         """
         newnode = FilterNode()
         if newnode.configure():
-            self.pipeline.add_after(node, newnode)
-            self.run_needed = True
+            self._add_node(node, newnode, run)
 
-    def add_spectrum(self, node=None):
-        if node is None:
-            node = self._get_last_node()
+    def add_spectrum(self, node=None, run=True):
+        newnode = SpectrumNode()
+        self._add_node(node, newnode, run)
 
-        if node:
-            ideo_node = SpectrumNode()
-            self.pipeline.add_after(node, ideo_node)
-            self.run_needed = True
-
-    def add_ideogram(self, node=None):
-        if node is None:
-            node = self._get_last_node()
-
-        if node:
-            ideo_node = IdeogramNode()
-            self.pipeline.add_after(node, ideo_node)
-            self.run_needed = True
-
-    def _get_last_node(self, node=None):
-        if node is None:
-            if self.pipeline.nodes:
-                idx = len(self.pipeline.nodes) - 1
-
-                node = self.pipeline.nodes[idx]
-        return node
+    def add_ideogram(self, node=None, run=True):
+        ideo_node = IdeogramNode()
+        self._add_node(node, ideo_node, run)
 
     def select_default(self):
         node = self.pipeline.nodes[0]
@@ -153,17 +137,14 @@ class PipelineEngine(Loggable):
         self.pipeline.nodes.append(UnknownNode(name='default'))
         self.refresh_analyses()
 
-    def add_grouping(self, node=None):
-        newnode = GroupingNode(by_aliquot=True)
-        self._add_node(node, newnode)
+    def add_grouping(self, node=None, run=True):
+        newnode = GroupingNode()
+        if newnode.configure():
+            self._add_node(node, newnode, run)
 
     def add_pdf_figure_node(self, node=None):
         newnode = PDFFigureNode(root='/Users/ross/Sandbox')
         self._add_node(node, newnode)
-
-    def _add_node(self, node, new):
-        node = self._get_last_node(node)
-        self.pipeline.add_after(node, new)
 
     def save_pipeline_template(self, path):
         with open(path, 'w') as wfile:
@@ -183,15 +164,9 @@ class PipelineEngine(Loggable):
 
         self.unknowns = state.unknowns
         self.references = state.references
-        self.refresh_needed = True
 
-    def _selected_changed(self, new):
-        if isinstance(new, UnknownNode):
-            self.unknowns = new.analyses
-        elif isinstance(new, ReferenceNode):
-            self.references = new.analyses
-        elif isinstance(new, FigureNode):
-            self.task.activate_editor(new.editor)
+        self.update_needed = True
+        self.refresh_table_needed = True
 
     def select_node_by_editor(self, editor):
         for node in self.pipeline.nodes:
@@ -201,6 +176,32 @@ class PipelineEngine(Loggable):
                     self.selected = node
                     break
 
+    # private
+    def _add_node(self, node, new, run=True):
+        node = self._get_last_node(node)
+        self.pipeline.add_after(node, new)
+        if run:
+            self.run_needed = new
+
+    def _get_last_node(self, node=None):
+        if node is None:
+            if self.pipeline.nodes:
+                idx = len(self.pipeline.nodes) - 1
+
+                node = self.pipeline.nodes[idx]
+        return node
+
+    # handlers
+    def _selected_changed(self, new):
+        self.show_group_colors = False
+        if isinstance(new, UnknownNode):
+            self.unknowns = new.analyses
+        elif isinstance(new, ReferenceNode):
+            self.references = new.analyses
+        elif isinstance(new, FigureNode):
+            self.show_group_colors = True
+            self.unknowns = new.editor.analyses
+            self.task.activate_editor(new.editor)
 # if __name__ == '__main__':
 # from traitsui.api import TreeNode, Handler
 # from pychron.core.ui.tree_editor import TreeEditor
@@ -208,7 +209,7 @@ class PipelineEngine(Loggable):
 # from pychron.pipeline.nodes.base import BaseNode
 # from traitsui.menu import Action
 # from pychron.envisage.resources import icon
-#     from pychron.core.helpers.logger_setup import logging_setup
+# from pychron.core.helpers.logger_setup import logging_setup
 #
 #     logging_setup('pipeline')
 #     class PipelineHandler(Handler):

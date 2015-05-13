@@ -27,6 +27,9 @@ class DataNode(BaseNode):
     analysis_kind = None
 
     def run(self, state):
+        for ai in self.analyses:
+            ai.group_id = 0
+
         items = getattr(state, self.analysis_kind)
         items.extend(self.analyses)
 

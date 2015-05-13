@@ -21,6 +21,7 @@ from pyface.timer.do_later import do_after
 from traits.api import Instance
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.codetools.inspection import caller
 from pychron.pipeline.engine import PipelineEngine
 from pychron.pipeline.state import EngineState
 from pychron.pipeline.tasks.actions import RunAction, SavePipelineTemplateAction
@@ -52,14 +53,17 @@ class PipelineTask(BaseBrowserTask):
         if new:
             self.engine.select_node_by_editor(new)
 
-    def _handle_run_needed(self):
+    def _handle_run_needed(self, new):
+        self.debug('run needed for {}'.format(new))
         self.run()
 
     def _debug(self):
         self.engine.add_data()
         self.engine.select_default()
-        self.engine.add_grouping()
-        self.engine.add_ideogram()
+        # self.engine.add_grouping(run=False)
+        self.engine.add_test_filter()
+        self.engine.add_ideogram(run=False)
+
         # self.engine.add_test_filter()
         # self.engine.add_ideogram()
         # self.engine.add_pdf_figure_node()
@@ -82,6 +86,7 @@ class PipelineTask(BaseBrowserTask):
         if path:
             self.engine.save_pipeline_template(path)
 
+    @caller
     def run(self):
         self._run_pipeline()
 

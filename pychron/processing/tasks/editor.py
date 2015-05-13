@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Event
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -23,10 +22,10 @@ from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 
 
 class BaseUnknownsEditor(BaseTraitsEditor):
-    refresh_unknowns_table = Event
-    save_event=Event
-    auto_group=True
-    recall_event = Event
+    # refresh_unknowns_table = Event
+    # save_event=Event
+    # auto_group=True
+    # recall_event = Event
 
     def _grouped_name(self, names, delimiter='-'):
         s = names[0]

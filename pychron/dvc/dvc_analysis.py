@@ -56,7 +56,7 @@ class DVCAnalysis(Analysis):
         self.chron_dosages = doses
         self.calculate_decay_factors()
 
-        age = 10 + 0.5 - random.random()
+        age = 10 + 0.4 - random.random()
         age_err = random.random()
         self.age = age
         self.age_err = age_err
