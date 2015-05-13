@@ -82,7 +82,7 @@ class DashboardServer(Loggable):
 
         self.setup_notifier()
 
-        self._load_devices()
+        self.load_devices()
         if self.devices:
             # if self.use_db:
             # self.setup_database()
@@ -125,6 +125,9 @@ class DashboardServer(Loggable):
         t.setDaemon(1)
         t.start()
 
+    def load_devices(self):
+        dd = self._assemble_dev_dicts()
+        self._load_devices(dd)
 
     def _assemble_dev_dicts(self):
         parser = get_parser()
@@ -193,7 +196,7 @@ class DashboardServer(Loggable):
                   'device': dname.text.strip(),
                   'enabled': bool(denabled),
                   'values': vs
-                  }
+            }
             yield dd
 
     def _load_devices(self, dev_dicts):
@@ -210,12 +213,12 @@ class DashboardServer(Loggable):
                 else:
                     continue
 
+            d = DashboardDevice(name=name, use=dd['enabled'], hardware_device=device)
             for args, cs in dd['values']:
                 pv = d.add_value(**args)
                 for level, kw in cs:
                     d.add_conditional(pv, level, **kw)
 
-            d = DashboardDevice(name=name, use=dd['enabled'], device=device)
             d.setup_graph()
             ds.append(d)
 
@@ -227,8 +230,8 @@ class DashboardServer(Loggable):
     #
     # parser = get_parser()
     # ds = []
-    #     for dev in parser.get_elements('device'):
-    #         name = dev.text.strip()
+    # for dev in parser.get_elements('device'):
+    # name = dev.text.strip()
     #
     #         dname = dev.find('name')
     #         if dname is None:
@@ -327,16 +330,19 @@ class DashboardServer(Loggable):
         return pickle.dumps(config)
 
     def _poll(self):
-
-        mperiod = min([v.period for dev in self.devices
-                       for v in dev.values])
-        if mperiod == 'on_change':
+        if any((v.period == 'on_change' for dev in self.devices for v in dev.values)):
             mperiod = 1
+        else:
+            mperiod = min((v.period for dev in self.devices for v in dev.values))
+        # mperiod = min([v.period for dev in self.devices
+        #                for v in dev.values])
+        # if mperiod == 'on_change':
+        #     mperiod = 1
 
         self.debug('min period {}'.format(mperiod))
         while self._alive:
             sst = time.time()
-            self.debug('============= poll iteration start ============')
+            # self.debug('============= poll iteration start ============')
             for dev in self.devices:
                 if not dev.use:
                     continue
@@ -345,13 +351,15 @@ class DashboardServer(Loggable):
 
             st = time.time()
             pp = mperiod - (st - sst)
-            self.debug('sleeping for {}'.format(pp))
+            if pp >= 3:
+                self.debug('sleeping for {}'.format(pp))
+
             while self._alive:
                 if time.time() - st >= pp:
                     break
                 time.sleep(0.1)
-            dur = time.time() - sst
-            self.debug('============= poll iteration finished dur={:0.1f}============'.format(dur))
+            # dur = time.time() - sst
+            # self.debug('============= poll iteration finished dur={:0.1f}============'.format(dur))
 
     # def _set_error_flag(self, obj, msg):
     # self.notifier.send_message('error {}'.format(msg))

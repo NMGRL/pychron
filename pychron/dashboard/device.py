@@ -35,7 +35,7 @@ class DashboardDevice(Loggable):
     use = Bool
 
     values = List
-    _device = Instance(ICoreDevice)
+    hardware_device = Instance(ICoreDevice)
 
     update_value_event = Event
     conditional_event = Event
@@ -66,7 +66,6 @@ class DashboardDevice(Loggable):
         """
             trigger a new value if appropriate
         """
-        self.debug('*********** Triggering values **********')
         for value in self.values:
             if not value.enabled:
                 continue
@@ -82,32 +81,32 @@ class DashboardDevice(Loggable):
 
     def _trigger(self, value, **kw):
         try:
-            self.debug('triggering value device={} value={} func={}'.format(self._device.name,
+            self.debug('triggering value device={} value={} func={}'.format(self.hardware_device.name,
                                                                             value.name,
                                                                             value.func_name))
-            nv = getattr(self._device, value.func_name)(**kw)
+            nv = getattr(self.hardware_device, value.func_name)(**kw)
             self._push_value(value, nv)
         except BaseException:
             import traceback
 
-            print self._device, self._device.name, value.func_name
+            print self.hardware_device, self.hardware_device.name, value.func_name
             self.debug(traceback.format_exc())
             value.use_pv = False
 
-    def add_value(self, name, tag, func_name, period, use, threshold, units, timeout):
+    def add_value(self, name, tag, func_name, period, enabled, threshold, units, timeout):
         pv = ProcessValue(name=name,
                           tag=tag,
                           func_name=func_name,
                           period=period,
-                          enabled=use,
+                          enabled=enabled,
                           timeout=float(timeout),
                           units=units,
                           change_threshold=threshold)
 
         if period == 'on_change':
             self.debug('bind to {}'.format(name))
-            if self._device:
-                self._device.on_trait_change(lambda a, b, c, d: self._handle_change(pv, a, b, c, d), name)
+            if self.hardware_device:
+                self.hardware_device.on_trait_change(lambda a, b, c, d: self._handle_change(pv, a, b, c, d), name)
                 # self._device.on_trait_change(lambda new: self._push_value(pv, new), n)
 
         self.values.append(pv)
