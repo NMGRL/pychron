@@ -16,10 +16,14 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+import base64
+import os
 import random
 import time
 # ============= local library imports  ==========================
 from uncertainties import ufloat
+import yaml
+from pychron.paths import paths
 from pychron.processing.analyses.analysis import Analysis
 from pychron.processing.isotope import Isotope
 
@@ -31,19 +35,40 @@ ANALYSIS_ATTRS = ('labnumber', 'uuid', 'sample', 'project', 'material', 'aliquot
 
 
 class DVCAnalysis(Analysis):
-    def __init__(self, yd, *args, **kw):
+    def __init__(self, record, *args, **kw):
         super(DVCAnalysis, self).__init__(*args, **kw)
 
-        for attr in ANALYSIS_ATTRS:
-            v = yd.get(attr)
-            if v is not None:
-                setattr(self, attr, v)
+        path = os.path.join(paths.dvc_dir, 'projects', record.project, '{}.yaml'.format(record.record_id))
+        self.path = path
+        with open(path, 'r') as rfile:
+            yd = yaml.load(rfile)
 
-        self.rundate = yd['timestamp']  # datetime.strptime(yd['timestamp'], '%Y-%m-%dT%H:%M:%S')
-        self.timestamp = time.mktime(self.rundate.timetuple())
-        self.collection_version = yd['collection_version']
+            for attr in ANALYSIS_ATTRS:
+                v = yd.get(attr)
+                if v is not None:
+                    setattr(self, attr, v)
 
-        self._set_isotopes(yd)
+            self.rundate = yd['timestamp']  # datetime.strptime(yd['timestamp'], '%Y-%m-%dT%H:%M:%S')
+            self.timestamp = time.mktime(self.rundate.timetuple())
+            self.collection_version = yd['collection_version']
+
+            self._set_isotopes(yd)
+
+    def load_raw_data(self, keys):
+        with open(self.path, 'r') as rfile:
+            yd = yaml.load(rfile)
+
+            isos = yd['isotopes']
+            for k in keys:
+                if k in isos:
+                    if k in self.isotopes:
+                        iso = self.isotopes[k]
+                        iso.unpack_data(base64.b64decode(isos[k]['signal']))
+                        iso.baseline.unpack_data(base64.b64decode(isos[k]['baseline']))
+
+    # def _unpack(self, isotope):
+    # xs,ys = []
+    #     return
 
     def set_chronology(self, chron):
         analts = self.rundate

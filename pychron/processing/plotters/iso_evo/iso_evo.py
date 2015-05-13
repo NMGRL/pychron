@@ -15,49 +15,34 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str
-from traitsui.api import Item
 # ============= standard library imports ========================
-import os
 # ============= local library imports  ==========================
-from traitsui.editors import DirectoryEditor
-from pychron.core.helpers.filetools import add_extension
-from pychron.paths import paths
-from pychron.pipeline.nodes.base import BaseNode
+from pychron.processing.plotters.arar_figure import BaseArArFigure
 
 
-class PersistNode(BaseNode):
+class IsoEvo(BaseArArFigure):
     pass
+    # def build(self, plots):
+    # print 'build',plots
+    #
+    def plot(self, plots, legend):
+        for p in plots:
+            self._plot(p)
 
+    def _plot(self, p):
+        ai = self.analyses[0]
+        name = p.name
+        try:
+            xs = ai.isotopes[name].xs
+            ys = ai.isotopes[name].ys
 
-class FileNode(PersistNode):
-    root = Str
-    extension = ''
+            self.graph.new_series(xs, ys, type='scatter')
+        except KeyError:
+            pass
+            # self.graph.new_series([1,2,3,4], [1,2,3,40])
 
-
-class PDFNode(FileNode):
-    extension = '.pdf'
-
-
-class PDFFigureNode(PDFNode):
-    name = 'PDF Figure'
-
-    def traits_view(self):
-
-        return self._view_factory(Item('root', editor=DirectoryEditor(root_path=paths.data_dir)),
-                                  width=500)
-        return v
-
-    def _generate_path(self, ei):
-        name = ei.name.replace(' ', '_')
-        return os.path.join(self.root, add_extension(name, self.extension))
-
-    def run(self, state):
-        for ei in state.editors:
-            if hasattr(ei, 'save_file'):
-                print 'save file to', self._generate_path(ei)
-                ei.save_file(self._generate_path(ei))
-
+            # def post_make(self):
+            #     pass
 
 # ============= EOF =============================================
 

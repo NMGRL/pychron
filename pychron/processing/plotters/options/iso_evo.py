@@ -15,23 +15,23 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Int
+from traits.api import List
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.processing.fits.iso_evo_fit_selector import IsoFilterFit
+from pychron.processing.plotters.options.figure_plotter_options import FigurePlotterOptions
+from pychron.processing.plotters.options.option import AuxPlotOptions
 
-class LayoutItem(HasTraits):
-    row = Int
-    column = Int
-    kind = Str
-    identifier = Str
 
-class FigureLayout(HasTraits):
-    rows = Int(1)
-    columns = Int(2)
-    fixed = Str('cols')
+class IsoFilterFitAuxPlot(AuxPlotOptions, IsoFilterFit):
+    names = List(['Ar40', 'Ar39'])
 
-    def add_item(self, kind):
-        self.items.append(LayoutItem(kind=kind))
+
+class IsotopeEvolutionOptions(FigurePlotterOptions):
+    plot_option_klass = IsoFilterFitAuxPlot
+    # def get_aux_plots(self):
+    # return [IsoFilterFit(name='Ar40', fit='linear')]
+
 
 # ============= EOF =============================================
 

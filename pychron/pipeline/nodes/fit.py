@@ -15,48 +15,39 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str
-from traitsui.api import Item
 # ============= standard library imports ========================
-import os
 # ============= local library imports  ==========================
-from traitsui.editors import DirectoryEditor
-from pychron.core.helpers.filetools import add_extension
-from pychron.paths import paths
-from pychron.pipeline.nodes.base import BaseNode
+from pychron.pipeline.nodes.figure import FigureNode
+from pychron.processing.plotter_options_manager import IsotopeEvolutionOptionsManager
+from pychron.processing.tasks.isotope_evolution.isotope_evolution_editor import IsotopeEvolutionEditor
 
 
-class PersistNode(BaseNode):
-    pass
+# class FitNode(BaseNode):
+# pass
 
 
-class FileNode(PersistNode):
-    root = Str
-    extension = ''
-
-
-class PDFNode(FileNode):
-    extension = '.pdf'
-
-
-class PDFFigureNode(PDFNode):
-    name = 'PDF Figure'
-
-    def traits_view(self):
-
-        return self._view_factory(Item('root', editor=DirectoryEditor(root_path=paths.data_dir)),
-                                  width=500)
-        return v
-
-    def _generate_path(self, ei):
-        name = ei.name.replace(' ', '_')
-        return os.path.join(self.root, add_extension(name, self.extension))
+class IsotopeEvolutionNode(FigureNode):
+    editor_klass = IsotopeEvolutionEditor
+    plotter_options_manager_klass = IsotopeEvolutionOptionsManager
 
     def run(self, state):
-        for ei in state.editors:
-            if hasattr(ei, 'save_file'):
-                print 'save file to', self._generate_path(ei)
-                ei.save_file(self._generate_path(ei))
+        # selector = IsoEvoFitSelector()
+        # selector.load_fits()
+
+        for idx, ai in enumerate(state.unknowns):
+            ai.graph_id = idx
+            po = self.plotter_options
+
+            keys = [pi.name for pi in po.get_aux_plots()]
+            ai.load_raw_data(keys)
+
+        super(IsotopeEvolutionNode, self).run(state)
+
+
+    def post_run(self, state):
+        return
+        # for ai in state.unknowns:
+        #     ai.refit_isotopes(selector.fits)
 
 
 # ============= EOF =============================================

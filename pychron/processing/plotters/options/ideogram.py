@@ -23,8 +23,8 @@ from traitsui.api import Item, HGroup, Group, VGroup, UItem, EnumEditor, Instanc
 # ============= local library imports  ==========================
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.plotters.options.age import AgeOptions
+from pychron.processing.plotters.options.figure_plotter_options import FONTS, SIZES
 from pychron.processing.plotters.options.ideogram_group_options import IdeogramGroupEditor, IdeogramGroupOptions
-from pychron.processing.plotters.options.plotter import FONTS, SIZES
 
 
 class IdeogramOptions(AgeOptions):

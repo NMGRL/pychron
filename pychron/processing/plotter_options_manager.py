@@ -31,8 +31,9 @@ from pychron.processing.plotters.options.base import BasePlotterOptions
 from pychron.processing.plotters.options.composite import CompositeOptions
 from pychron.processing.plotters.options.dashboard import DashboardOptions
 from pychron.processing.plotters.options.ideogram import IdeogramOptions
+from pychron.processing.plotters.options.iso_evo import IsotopeEvolutionOptions
 from pychron.processing.plotters.options.isochron import InverseIsochronOptions
-from pychron.processing.plotters.options.plotter import PlotterOptions
+# from pychron.processing.plotters.options.plotter import PlotterOptions
 from pychron.processing.plotters.options.series import SeriesOptions
 from pychron.processing.plotters.options.spectrum import SpectrumOptions
 from pychron.processing.plotters.options.system_monitor import SystemMonitorOptions
@@ -46,7 +47,7 @@ class PlotterOptionsManager(HasTraits):
     _plotter_options_list_dirty = Event
     plotter_options = Instance(BasePlotterOptions)
     plotter_options_name = 'main'
-    plotter_options_klass = PlotterOptions
+    plotter_options_klass = BasePlotterOptions
 
     delete_options = Button
     add_options = Button
@@ -226,6 +227,7 @@ class PlotterOptionsManager(HasTraits):
                      style='custom')),
             height=700,
             buttons=['OK', 'Cancel'],
+            title='Edit {}'.format(self.plotter_options_klass.__name__),
             resizable=True)
         return v
 
@@ -312,4 +314,9 @@ class CompositeOptionsManager(PlotterOptionsManager):
     persistence_name = 'composite'
     _defaults_path = paths.composites_defaults
 
+
+class IsotopeEvolutionOptionsManager(PlotterOptionsManager):
+    plotter_options_klass = IsotopeEvolutionOptions
+    persistence_name = 'iso_evo'
+    # _defaults_path = paths.ideogram_defaults
 # ============= EOF =============================================

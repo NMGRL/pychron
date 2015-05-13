@@ -32,6 +32,7 @@ class GraphEditor(BaseUnknownsEditor):
     analyses = List
     refresh_needed = Event
     component = Property(depends_on='refresh_needed')
+    basename = ''
 
     def save_file(self, path, force_layout=True, dest_box=None):
         _, tail = os.path.splitext(path)

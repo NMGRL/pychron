@@ -15,23 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Int
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.processing.plotters.figure_panel import FigurePanel
+from pychron.processing.plotters.iso_evo.iso_evo import IsoEvo
 
-class LayoutItem(HasTraits):
-    row = Int
-    column = Int
-    kind = Str
-    identifier = Str
 
-class FigureLayout(HasTraits):
-    rows = Int(1)
-    columns = Int(2)
-    fixed = Str('cols')
-
-    def add_item(self, kind):
-        self.items.append(LayoutItem(kind=kind))
+class IsoEvoPanel(FigurePanel):
+    _figure_klass = IsoEvo
 
 # ============= EOF =============================================
 

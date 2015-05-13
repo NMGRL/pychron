@@ -113,6 +113,8 @@ class PipelineTask(BaseBrowserTask):
             self._close_editor(editor)
             self._open_editor(editor)
 
+        self.engine.post_run(state)
+
     def _default_layout_default(self):
         return TaskLayout(left=Splitter(PaneItem('pychron.pipeline.pane',
                                                  width=200),

@@ -97,6 +97,22 @@ class PipelineHandler(Handler):
     def add_series(self, info, obj):
         pass
 
+    @node_adder
+    def add_isotope_evolution(self, info, obj):
+        pass
+
+    @node_adder
+    def add_blanks(self, info, obj):
+        pass
+
+    @node_adder
+    def add_detector_ic(self, info, obj):
+        pass
+
+    @node_adder
+    def add_flux(self, info, obj):
+        pass
+
 
 class PipelinePane(TraitsDockPane):
     name = 'Pipeline'
@@ -131,19 +147,35 @@ class PipelinePane(TraitsDockPane):
                        action='add_series'),
                 name='Add')
 
+        def fit_menu_factory():
+            return MenuManager(Action(name='Isotope Evolution',
+                                      action='add_isotope_evolution'),
+                               Action(name='Blanks',
+                                      enabled=False,
+                                      action='add_blanks'),
+                               Action(name='Detector IC',
+                                      enabled=False,
+                                      action='add_detector_ic'),
+                               Action(name='Flux',
+                                      enabled=False,
+                                      action='add_flux'),
+                               name='Fit')
+
         def save_menu_factory():
             return MenuManager(Action(name='Save PDF Figure',
                                       action='add_pdf_figure'),
                                name='Save')
 
         def data_menu_factory():
-            return menu_factory(add_menu_factory())
+            return menu_factory(add_menu_factory(), fit_menu_factory())
 
         def filter_menu_factory():
-            return menu_factory(add_menu_factory())
+            return menu_factory(add_menu_factory(), fit_menu_factory())
 
         def figure_menu_factory():
-            return menu_factory(add_menu_factory(), save_menu_factory())
+            return menu_factory(add_menu_factory(),
+                fit_menu_factory(),
+                save_menu_factory())
 
         nodes = [TreeNode(node_for=[Pipeline],
                           children='nodes',
@@ -174,7 +206,7 @@ class PipelinePane(TraitsDockPane):
                   editor=EnumEditor(name='available_pipeline_templates')),
             UItem('pipeline',
                   editor=editor)),
-                 handler=PipelineHandler())
+            handler=PipelineHandler())
         return v
 
 
@@ -207,8 +239,8 @@ class UnknownsAdapter(TabularAdapter):
     # def get_menu(self, object, trait, row, column):
     # return MenuManager(Action(name='Group Selected', action='group_by_selected'),
     # Action(name='Group by Labnumber', action='group_by_labnumber'),
-    #                        Action(name='Group by Aliquot', action='group_by_aliquot'),
-    #                        Action(name='Clear Grouping', action='clear_grouping'),
+    # Action(name='Group by Aliquot', action='group_by_aliquot'),
+    # Action(name='Clear Grouping', action='clear_grouping'),
     #                        Action(name='Unselect', action='unselect'))
 
     def get_bg_color(self, obj, trait, row, column=0):

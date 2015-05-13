@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Bool
+from traitsui.api import View
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -33,8 +34,13 @@ class BaseNode(HasTraits):
     def run(self, state):
         raise NotImplementedError
 
+    def post_run(self, state):
+        pass
+
     def configure(self):
-        raise NotImplementedError
+        info = self.edit_traits()
+        if info.result:
+            return True
 
     def to_template(self):
         d = {'klass': self.__class__.__name__}
@@ -45,6 +51,12 @@ class BaseNode(HasTraits):
     def _to_template(self, d):
         pass
         # return []
+
+    def _view_factory(self, *items, **kw):
+        return View(buttons=['OK', 'Cancel'],
+                    kind='livemodal',
+                    title='Configure'.format(self.name), *items, **kw)
+
 # ============= EOF =============================================
 
 

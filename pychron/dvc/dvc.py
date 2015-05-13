@@ -21,7 +21,6 @@ from apptools.preferences.preference_binding import bind_preference
 import os
 from git import Repo
 # ============= local library imports  ==========================
-import yaml
 from pychron.core.helpers.filetools import remove_extension
 from pychron.dvc.defaults import TRIGA, HOLDER_24_SPOKES, LASER221, LASER65
 from pychron.dvc.dvc_analysis import DVCAnalysis
@@ -131,10 +130,7 @@ class DVC(Loggable):
     #     return self.meta_repo.get_load_holder_holes(name)
 
     def _make_record(self, record):
-        path = os.path.join(paths.dvc_dir, 'projects', record.project, '{}.yaml'.format(record.record_id))
-        with open(path, 'r') as rfile:
-            yd = yaml.load(rfile)
-            a = DVCAnalysis(yd)
+        a = DVCAnalysis(record)
 
         # load irradiation
         chronology = self.meta_repo.get_chronology(a.irradiation)

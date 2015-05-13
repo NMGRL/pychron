@@ -26,6 +26,7 @@ from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode
 from pychron.loggable import Loggable
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, FigureNode, SeriesNode
 from pychron.pipeline.nodes.filter import FilterNode
+from pychron.pipeline.nodes.fit import IsotopeEvolutionNode
 from pychron.pipeline.nodes.grouping import GroupingNode
 from pychron.pipeline.nodes.persist import PDFFigureNode
 from pychron.pipeline.template import PipelineTemplate
@@ -83,49 +84,9 @@ class PipelineEngine(Loggable):
         self.unknowns = unks
         self.references = refs
 
-    def add_test_filter(self):
-        node = self.pipeline.nodes[-1]
-        newnode = FilterNode()
-        filt = newnode.filters[0]
-        filt.attribute = 'uage'
-        filt.comparator = '<'
-        filt.criterion = '10'
-
-        self.pipeline.add_after(node, newnode)
-
     def remove_node(self, node):
         self.pipeline.nodes.remove(node)
         self.run_needed = True
-
-    def add_filter(self, node=None, run=True):
-        """
-        add filter after this node
-        :param node:
-        :return:
-        """
-        newnode = FilterNode()
-        self._add_node(node, newnode, run)
-
-    def add_spectrum(self, node=None, run=True):
-        newnode = SpectrumNode()
-        self._add_node(node, newnode, run)
-
-    def add_ideogram(self, node=None, run=True):
-        ideo_node = IdeogramNode()
-        self._add_node(node, ideo_node, run)
-
-    def add_series(self, node=None, run=True):
-        series_node = SeriesNode()
-        self._add_node(node, series_node, run)
-
-    def select_default(self):
-        node = self.pipeline.nodes[0]
-
-        self.browser_model.select_sample(idx=0)
-        records = self.browser_model.get_analysis_records()
-        analyses = self.dvc.make_analyses(records)
-        node.analyses.extend(analyses)
-        self.refresh_analyses()
 
     # def add_analyses(self, node):
     # """
@@ -158,14 +119,62 @@ class PipelineEngine(Loggable):
                                                browser_model=self.browser_model))
         self.refresh_analyses()
 
+    # debugging
+    def select_default(self):
+        node = self.pipeline.nodes[0]
+
+        self.browser_model.select_sample(idx=0)
+        records = self.browser_model.get_analysis_records()
+        analyses = self.dvc.make_analyses(records)
+        node.analyses.extend(analyses)
+        self.refresh_analyses()
+
+    def add_test_filter(self):
+        node = self.pipeline.nodes[-1]
+        newnode = FilterNode()
+        filt = newnode.filters[0]
+        filt.attribute = 'uage'
+        filt.comparator = '<'
+        filt.criterion = '10'
+
+        self.pipeline.add_after(node, newnode)
+
+    # ============================================================================================================
+    # nodes
+    # ============================================================================================================
+    # preprocess
+    def add_filter(self, node=None, run=True):
+        newnode = FilterNode()
+        self._add_node(node, newnode, run)
+
     def add_grouping(self, node=None, run=True):
         newnode = GroupingNode()
         self._add_node(node, newnode, run)
 
-    def add_pdf_figure(self, node=None):
-        newnode = PDFFigureNode(root='/Users/ross/Sandbox')
-        self._add_node(node, newnode)
+    # figures
+    def add_spectrum(self, node=None, run=True):
+        newnode = SpectrumNode()
+        self._add_node(node, newnode, run)
 
+    def add_ideogram(self, node=None, run=True):
+        ideo_node = IdeogramNode()
+        self._add_node(node, ideo_node, run)
+
+    def add_series(self, node=None, run=True):
+        series_node = SeriesNode()
+        self._add_node(node, series_node, run)
+
+    # fits
+    def add_isotope_evolution(self, node=None, run=True):
+        newnode = IsotopeEvolutionNode()
+        self._add_node(node, newnode, run=run)
+
+    # save
+    def add_pdf_figure(self, node=None, run=True):
+        newnode = PDFFigureNode(root='/Users/ross/Sandbox')
+        self._add_node(node, newnode, run=run)
+
+    # ============================================================================================================
     def save_pipeline_template(self, path):
         self.info('Saving pipeline to {}'.format(path))
         with open(path, 'w') as wfile:
@@ -173,7 +182,7 @@ class PipelineEngine(Loggable):
             yaml.dump(obj, wfile, default_flow_style=False)
 
     def run(self, state):
-        self.debug('pipeline started')
+        self.debug('pipeline run started')
         for idx, node in enumerate(self.pipeline.nodes):
             action = 'skip'
             if node.enabled:
@@ -181,10 +190,20 @@ class PipelineEngine(Loggable):
                 node.run(state)
             self.debug('{} node {:02n}: {}'.format(action, idx, node.name))
 
-        self.debug('pipeline finished')
+        self.debug('pipeline run finished')
 
-        self.unknowns = state.unknowns
-        self.references = state.references
+        # self.unknowns = state.unknowns
+        # self.references = state.references
+
+    def post_run(self, state):
+        self.debug('pipeline run started')
+        for idx, node in enumerate(self.pipeline.nodes):
+            action = 'skip'
+            if node.enabled:
+                action = 'post run'
+                node.post_run(state)
+            self.debug('{} node {:02n}: {}'.format(action, idx, node.name))
+        self.debug('pipeline run finished')
 
         self.update_needed = True
         self.refresh_table_needed = True

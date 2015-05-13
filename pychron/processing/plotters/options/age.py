@@ -20,11 +20,12 @@ from traitsui.api import VGroup, UItem
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.color_generators import colornames
-from pychron.processing.plotters.options.plotter import PlotterOptions, FONTS, SIZES
+# from pychron.processing.plotters.options.plotter import PlotterOptions, FONTS, SIZES
+from pychron.processing.plotters.options.figure_plotter_options import FigurePlotterOptions, FONTS, SIZES
 from pychron.pychron_constants import ERROR_TYPES
 
 
-class GroupablePlotterOptions(PlotterOptions):
+class GroupablePlotterOptions(FigurePlotterOptions):
     groups = List
     group = Property
     group_editor_klass = None
