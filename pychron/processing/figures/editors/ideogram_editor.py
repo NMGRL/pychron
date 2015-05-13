@@ -22,8 +22,8 @@ from traits.api import Instance
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.processing.analyses.file_analysis import InterpretedAgeAnalysis, FileAnalysis
+from pychron.processing.plotters.ideogram.ideogram_model import IdeogramModel
 from pychron.processing.tasks.figures.figure_editor import FigureEditor
-from pychron.processing.plotter_options_manager import IdeogramOptionsManager
 
 
 class Caption(AbstractOverlay):
@@ -49,7 +49,8 @@ class Caption(AbstractOverlay):
 
 
 class IdeogramEditor(FigureEditor):
-    plotter_options_manager = Instance(IdeogramOptionsManager, ())
+    # plotter_options_manager = Instance(IdeogramOptionsManager, ())
+    figure_model_klass = IdeogramModel
     basename = 'ideo'
 
     def plot_interpreted_ages(self, iages):
@@ -74,15 +75,15 @@ class IdeogramEditor(FigureEditor):
                 ap.use = False
                 ap.enabled = False
 
-    def get_component(self, ans, plotter_options):
-        if plotter_options is None:
-            pom = IdeogramOptionsManager()
-            plotter_options = pom.plotter_options
-
-        from pychron.processing.plotters.ideogram.ideogram_model import IdeogramModel
-
-        model, component = self._make_component(IdeogramModel, ans, plotter_options)
-        return model, component
+    # def get_component(self, ans, plotter_options):
+    # if plotter_options is None:
+    #         pom = IdeogramOptionsManager()
+    #         plotter_options = pom.plotter_options
+    #
+    #     from pychron.processing.plotters.ideogram.ideogram_model import IdeogramModel
+    #
+    #     model, component = self._make_component(IdeogramModel, ans, plotter_options)
+    #     return model, component
 
     # def get_component(self, ans, plotter_options):
     # # meta = None

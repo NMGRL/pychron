@@ -20,18 +20,26 @@ from traits.api import Any
 # ============= local library imports  ==========================
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.processing.figures.editors.ideogram_editor import IdeogramEditor
+from pychron.processing.figures.editors.series_editor import SeriesEditor
 from pychron.processing.figures.editors.spectrum_editor import SpectrumEditor
+from pychron.processing.plotter_options_manager import IdeogramOptionsManager, SpectrumOptionsManager, \
+    SeriesOptionsManager
 
 
 class FigureNode(BaseNode):
     editor = Any
+    plotter_options = Any
+    plotter_options_manager_klass = Any
 
     def run(self, state):
         editor = self.editor_klass()
+        if self.plotter_options:
+            editor.plotter_options = self.plotter_options
+
+        self.editor = editor
 
         editor.set_items(state.unknowns)
 
-        self.editor = editor
         cnt = 1
         oname = editor.name
         for e in state.editors:
@@ -43,22 +51,38 @@ class FigureNode(BaseNode):
         state.editors.append(editor)
 
     def configure(self):
+        pom = self.plotter_options_manager_klass()
         if self.editor:
-            pom = self.editor.plotter_options_manager
-            info = pom.edit_traits(kind='livemodal')
-            if info.result:
-                return True
+            pom.plotter_options = self.editor.plotter_options
+
+        info = pom.edit_traits(kind='livemodal')
+        if info.result:
+            self.plotter_options = pom.plotter_options
+            return True
+
+            # pom = self.editor.plotter_options_manager
+
+            # info = pom.edit_traits(kind='livemodal')
+            # if info.result:
+            # return True
 
 
 class IdeogramNode(FigureNode):
     name = 'Ideogram'
     editor_klass = IdeogramEditor
+    plotter_options_manager_klass = IdeogramOptionsManager
 
 
 class SpectrumNode(FigureNode):
     name = 'Spectrum'
     editor_klass = SpectrumEditor
+    plotter_options_manager_klass = SpectrumOptionsManager
 
+
+class SeriesNode(FigureNode):
+    name = 'Series'
+    editor_klass = SeriesEditor
+    plotter_options_manager_klass = SeriesOptionsManager
 
 # ============= EOF =============================================
 

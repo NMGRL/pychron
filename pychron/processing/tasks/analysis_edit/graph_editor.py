@@ -15,9 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+
 from traits.api import List, Property, Event, cached_property
 from traitsui.api import View, UItem
 from enable.component_editor import ComponentEditor as EnableComponentEditor
+
 
 # ============= standard library imports ========================
 from itertools import groupby
@@ -29,6 +32,39 @@ class GraphEditor(BaseUnknownsEditor):
     analyses = List
     refresh_needed = Event
     component = Property(depends_on='refresh_needed')
+
+    def save_file(self, path, force_layout=True, dest_box=None):
+        _, tail = os.path.splitext(path)
+        if tail not in ('.pdf', '.png'):
+            path = '{}.pdf'.format(path)
+
+        c = self.component
+
+        '''
+            chaco becomes less responsive after saving if
+            use_backbuffer is false and using pdf
+        '''
+        from reportlab.lib.pagesizes import letter
+
+        c.do_layout(size=letter, force=force_layout)
+
+        _, tail = os.path.splitext(path)
+        if tail == '.pdf':
+            from chaco.pdf_graphics_context import PdfPlotGraphicsContext
+
+            gc = PdfPlotGraphicsContext(filename=path,
+                                        dest_box=dest_box)
+            gc.render_component(c, valign='center')
+            gc.save()
+
+        else:
+            from chaco.plot_graphics_context import PlotGraphicsContext
+
+            gc = PlotGraphicsContext((int(c.outer_width), int(c.outer_height)))
+            gc.render_component(c)
+            gc.save(path)
+
+            # self.rebuild_graph()
 
     def set_items(self, ans, is_append=False):
         if is_append:
@@ -72,16 +108,21 @@ class GraphEditor(BaseUnknownsEditor):
     def _get_component(self):
         ans = self.analyses
         if ans:
-            po = self.plotter_options_manager.plotter_options
+            return self._component_factory()
+
+            # po = self.plotter_options_manager.plotter_options
             # model, comp = timethis(self.get_component, args=(ans, po),
             # msg='get_component {}'.format(self.__class__.__name__))
-            model, comp = self.get_component(ans, po)
-            if comp:
-                comp.invalidate_and_redraw()
-                self.figure_model = model
-                return comp
+            # model, comp = self.get_component(ans, po)
+            # if comp:
+            # comp.invalidate_and_redraw()
+            #     self.figure_model = model
+            #     return comp
                 # self.component = comp
                 # self.component_changed = True
+
+    def _component_factory(self):
+        raise NotImplementedError
 
     def traits_view(self):
         v = View(UItem('component',

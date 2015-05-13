@@ -19,11 +19,10 @@ from traits.api import HasTraits, Str, Instance, List, Event, Bool
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 import yaml
-from pychron.envisage.browser.view import BrowserView
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode
 from pychron.loggable import Loggable
-from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, FigureNode
+from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, FigureNode, SeriesNode
 from pychron.pipeline.nodes.filter import FilterNode
 from pychron.pipeline.nodes.grouping import GroupingNode
 from pychron.pipeline.nodes.persist import PDFFigureNode
@@ -55,6 +54,11 @@ class PipelineEngine(Loggable):
     refresh_table_needed = Event
 
     show_group_colors = Bool
+
+    def configure(self, node):
+
+        if node.configure():
+            self.run_needed = True
 
     def refresh_analyses(self):
         unks = []
@@ -89,8 +93,7 @@ class PipelineEngine(Loggable):
         :return:
         """
         newnode = FilterNode()
-        if newnode.configure():
-            self._add_node(node, newnode, run)
+        self._add_node(node, newnode, run)
 
     def add_spectrum(self, node=None, run=True):
         newnode = SpectrumNode()
@@ -99,6 +102,10 @@ class PipelineEngine(Loggable):
     def add_ideogram(self, node=None, run=True):
         ideo_node = IdeogramNode()
         self._add_node(node, ideo_node, run)
+
+    def add_series(self, node=None, run=True):
+        series_node = SeriesNode()
+        self._add_node(node, series_node, run)
 
     def select_default(self):
         node = self.pipeline.nodes[0]
@@ -109,38 +116,40 @@ class PipelineEngine(Loggable):
         node.analyses.extend(analyses)
         self.refresh_analyses()
 
-    def add_analyses(self, node):
-        """
-        add analyses to node
+    # def add_analyses(self, node):
+    # """
+    # add analyses to node
+    #
+    #     select analyses from popup browser
+    #     :param node:
+    #     :return:
+    #     """
+    #     browser_view = BrowserView(model=self.browser_model)
+    #     info = browser_view.edit_traits(kind='livemodal')
+    #     if info.result:
+    #         records = self.browser_model.get_analysis_records()
+    #         if records:
+    #             analyses = self.dvc.make_analyses(records)
+    #             node.analyses.extend(analyses)
+    #
+    #             self.refresh_analyses()
 
-        select analyses from popup browser
-        :param node:
-        :return:
-        """
-        browser_view = BrowserView(model=self.browser_model)
-        info = browser_view.edit_traits(kind='livemodal')
-        if info.result:
-            records = self.browser_model.get_analysis_records()
-            if records:
-                analyses = self.dvc.make_analyses(records)
-                node.analyses.extend(analyses)
-
-                self.refresh_analyses()
-
-    def add_data(self):
+    def add_data(self, node=None, run=False):
         """
 
         add a default data node
         :return:
         """
         self.debug('add data node')
-        self.pipeline.nodes.append(UnknownNode(name='default'))
+        # self._add_node()
+        self.pipeline.nodes.append(UnknownNode(name='default',
+                                               dvc=self.dvc,
+                                               browser_model=self.browser_model))
         self.refresh_analyses()
 
     def add_grouping(self, node=None, run=True):
         newnode = GroupingNode()
-        if newnode.configure():
-            self._add_node(node, newnode, run)
+        self._add_node(node, newnode, run)
 
     def add_pdf_figure_node(self, node=None):
         newnode = PDFFigureNode(root='/Users/ross/Sandbox')
@@ -178,10 +187,12 @@ class PipelineEngine(Loggable):
 
     # private
     def _add_node(self, node, new, run=True):
-        node = self._get_last_node(node)
-        self.pipeline.add_after(node, new)
-        if run:
-            self.run_needed = new
+        if new.configure():
+            node = self._get_last_node(node)
+
+            self.pipeline.add_after(node, new)
+            if run:
+                self.run_needed = new
 
     def _get_last_node(self, node=None):
         if node is None:
@@ -202,6 +213,7 @@ class PipelineEngine(Loggable):
             self.show_group_colors = True
             self.unknowns = new.editor.analyses
             self.task.activate_editor(new.editor)
+
 # if __name__ == '__main__':
 # from traitsui.api import TreeNode, Handler
 # from pychron.core.ui.tree_editor import TreeEditor
@@ -211,7 +223,7 @@ class PipelineEngine(Loggable):
 # from pychron.envisage.resources import icon
 # from pychron.core.helpers.logger_setup import logging_setup
 #
-#     logging_setup('pipeline')
+# logging_setup('pipeline')
 #     class PipelineHandler(Handler):
 #         def add_data(self, info, obj):
 #             info.object.add_data()

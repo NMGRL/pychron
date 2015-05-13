@@ -280,7 +280,7 @@ class BaseArArFigure(HasTraits):
     # def _get_mswd(self, ages, errors):
     # mswd = calculate_mswd(ages, errors)
     # n = len(ages)
-    #     valid_mswd = validate_mswd(mswd, n)
+    # valid_mswd = validate_mswd(mswd, n)
     #     return mswd, valid_mswd, n
 
     def _cmp_analyses(self, x):
@@ -457,7 +457,10 @@ class BaseArArFigure(HasTraits):
                                scatter,
                                add_tool=True,
                                value_format=None,
-                               additional_info=None):
+                               additional_info=None,
+                               index_tag=None,
+                               index_attr=None,
+                               convert_index=None):
         if add_tool:
             broadcaster = BroadcasterTool()
             scatter.tools.append(broadcaster)
@@ -471,9 +474,15 @@ class BaseArArFigure(HasTraits):
 
             if value_format is None:
                 value_format = lambda x: '{:0.5f}'.format(x)
+
+            if convert_index is None:
+                convert_index = lambda x: '{:0.3f}'.format(x)
+
             point_inspector = AnalysisPointInspector(scatter,
                                                      analyses=self.sorted_analyses,
-                                                     convert_index=lambda x: '{:0.3f}'.format(x),
+                                                     convert_index=convert_index,
+                                                     index_tag=index_tag,
+                                                     index_attr=index_attr,
                                                      value_format=value_format,
                                                      additional_info=additional_info)
 

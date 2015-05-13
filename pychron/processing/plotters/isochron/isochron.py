@@ -218,7 +218,7 @@ class InverseIsochron(Isochron):
         l.underlays.append(ee)
         l.error_envelope = ee
 
-        def ad(ai):
+        def ad(i, x, y, ai):
             a = ai.isotopes['Ar39'].get_interference_corrected_value()
             b = ai.isotopes['Ar40'].get_interference_corrected_value()
             r = a / b

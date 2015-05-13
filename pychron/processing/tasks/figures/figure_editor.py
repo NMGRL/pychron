@@ -27,9 +27,9 @@ from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 class FigureEditor(GraphEditor):
     # table_editor = Any
     # component = Any
-    plotter_options_manager = Any
+    # plotter_options_manager = Any
     # associated_editors = List
-
+    plotter_options = Any
     # tool = Any
 
     # annotation_tool = Any
@@ -50,12 +50,12 @@ class FigureEditor(GraphEditor):
     # caption_text = None
 
     def enable_aux_plots(self):
-        po = self.plotter_options_manager.plotter_options
+        po = self.plotter_options
         for ap in po.aux_plots:
             ap.enabled = True
 
     def clear_aux_plot_limits(self):
-        po = self.plotter_options_manager.plotter_options
+        po = self.plotter_options
         for ap in po.aux_plots:
             ap.clear_ylimits()
             ap.clear_xlimits()
@@ -63,6 +63,24 @@ class FigureEditor(GraphEditor):
     def set_items(self, *args, **kw):
         self.clear_aux_plot_limits()
         super(FigureEditor, self).set_items(*args, **kw)
+
+    def _component_factory(self):
+        model = self.figure_model
+        if model is None:
+            model = self.figure_model_klass()
+            self.figure_model = model
+
+        model.trait_set(plot_options=self.plotter_options,
+                        # titles=self.titles,
+                        analyses=self.analyses)
+
+        container = self.figure_container
+        if not container:
+            container = FigureContainer(model=model)
+            self.figure_container = container
+
+        # container.refresh()
+        return container.component
 
     # def set_items_from_file(self, p):
     # if os.path.isfile(p):
@@ -237,26 +255,26 @@ class FigureEditor(GraphEditor):
     #             self.component = comp
     #             self.component_changed = True
 
-    def get_component(self, ans, po):
-        raise NotImplementedError
-
-    def _make_component(self, klass, ans, plot_options):
-        model = self.figure_model
-        if model is None:
-            model = klass()
-            self.figure_model = model
-
-        model.trait_set(plot_options=plot_options,
-                        # titles=self.titles,
-                        analyses=ans)
-
-        container = self.figure_container
-        if not container:
-            container = FigureContainer(model=model)
-            self.figure_container = container
-
-        # container.refresh()
-        return model, container.component
+        # def get_component(self, ans, po):
+        # raise NotImplementedError
+        #
+        # def _make_component(self, klass, ans, plot_options):
+        #     model = self.figure_model
+        #     if model is None:
+        #         model = klass()
+        #         self.figure_model = model
+        #
+        #     model.trait_set(plot_options=plot_options,
+        #                     # titles=self.titles,
+        #                     analyses=ans)
+        #
+        #     container = self.figure_container
+        #     if not container:
+        #         container = FigureContainer(model=model)
+        #         self.figure_container = container
+        #
+        #     # container.refresh()
+        #     return model, container.component
 
     # def _set_group(self, idxs, gid, attr, refresh=True):
         # ans = self.analyses

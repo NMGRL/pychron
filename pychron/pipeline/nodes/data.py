@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from traits.api import List
 # ============= standard library imports ========================
+from pychron.envisage.browser.view import BrowserView
 from pychron.pipeline.nodes.base import BaseNode
 
 
@@ -34,7 +35,18 @@ class DataNode(BaseNode):
         items.extend(self.analyses)
 
     def configure(self):
-        return True
+        browser_view = BrowserView(model=self.browser_model)
+        info = browser_view.edit_traits(kind='livemodal')
+        if info.result:
+            records = self.browser_model.get_analysis_records()
+            if records:
+                analyses = self.dvc.make_analyses(records)
+                if browser_view.is_append:
+                    self.analyses.extend(analyses)
+                else:
+                    self.analyses = analyses
+
+                return True
 
 
 class UnknownNode(DataNode):

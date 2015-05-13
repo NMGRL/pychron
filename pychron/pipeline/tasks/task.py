@@ -47,7 +47,7 @@ class PipelineTask(BaseBrowserTask):
 
         self.engine.task = self
         if DEBUG:
-            do_after(1000, self._debug)
+            do_after(500, self._debug)
 
     def _active_editor_changed(self, new):
         if new:
@@ -61,8 +61,9 @@ class PipelineTask(BaseBrowserTask):
         self.engine.add_data()
         self.engine.select_default()
         # self.engine.add_grouping(run=False)
-        self.engine.add_test_filter()
-        self.engine.add_ideogram(run=False)
+        # self.engine.add_test_filter()
+        # self.engine.add_ideogram(run=False)
+        # self.engine.add_series(run=False)
 
         # self.engine.add_test_filter()
         # self.engine.add_ideogram()

@@ -172,7 +172,7 @@ class XYScatterEditor(GraphEditor):
         i_attr = options.index_attr
         fi_attr = self._pretty(i_attr)
 
-        def func(ai):
+        def func(i, x, y, ai):
             uv = ai.get_value(i_attr)
             v = nominal_value(uv)
             e = std_dev(uv)

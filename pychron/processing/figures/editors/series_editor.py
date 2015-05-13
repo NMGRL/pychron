@@ -15,43 +15,41 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.processing.plotters.series.series_model import SeriesModel
 from pychron.processing.tasks.figures.figure_editor import FigureEditor
-from pychron.processing.plotters.figure_container import FigureContainer
-from pychron.processing.plotter_options_manager import SeriesOptionsManager, PlotterOptionsManager
 
 
 class SeriesEditor(FigureEditor):
-    plotter_options_manager = Instance(PlotterOptionsManager)
-    plotter_options_manager_klass = SeriesOptionsManager
+    # plotter_options_manager = Instance(PlotterOptionsManager)
+    # plotter_options_manager_klass = SeriesOptionsManager
+    figure_model_klass = SeriesModel
     pickle_path = 'series'
     basename = 'Series'
-    model_klass = SeriesModel
-    auto_group = False
+    # model_klass = SeriesModel
+    # auto_group = False
 
-    def _plotter_options_manager_default(self):
-        return self.plotter_options_manager_klass()
+    # def _plotter_options_manager_default(self):
+    # return self.plotter_options_manager_klass()
 
     def _update_analyses_hook(self):
-        po = self.plotter_options_manager.plotter_options
-
+        # po = self.plotter_options_manager.plotter_options
+        po = self.plotter_options
         ref = self.analyses[0]
         po.load_aux_plots(ref)
 
         self._set_name()
 
-    def get_component(self, ans, plotter_options):
-        if plotter_options is None:
-            pom = self.plotter_options_manager_klass()
-            plotter_options = pom.plotter_options
-
-        model = self.model_klass(plot_options=plotter_options)
-        model.analyses = ans
-        iv = FigureContainer(model=model)
-
-        return model, iv.component
+        # def get_component(self, ans, plotter_options):
+        # if plotter_options is None:
+        #         pom = self.plotter_options_manager_klass()
+        #         plotter_options = pom.plotter_options
+        #
+        #     model = self.model_klass(plot_options=plotter_options)
+        #     model.analyses = ans
+        #     iv = FigureContainer(model=model)
+        #
+        #     return model, iv.component
 
 # ============= EOF =============================================

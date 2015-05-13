@@ -201,9 +201,10 @@ class ArArAge(Loggable):
         return r
 
     def _get_iso_by_detector(self, det):
-        return (i for i in self.isotopes if i.detector == det)
+        return next((i for i in self.isotopes if i.detector == det), None)
 
     def get_value(self, attr):
+        # print 'get attr', attr, self, self.isotopes
         r = ufloat(0, 0, tag=attr)
         if attr.endswith('bs'):
             iso = attr[:-2]

@@ -19,6 +19,8 @@ from traits.api import HasTraits, Str, Instance
 from traitsui.api import View, UItem, HGroup, VGroup, Group, spring, Spring
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from traitsui.handler import Handler
+from traitsui.menu import Action
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.browser.adapters import LabnumberAdapter, BrowserAdapter
 from pychron.envisage.browser.sample_view import BrowserSampleView
@@ -36,6 +38,16 @@ class AnalysisGroupAdapter(BrowserAdapter):
                ('Modified', 'last_modified')]
 
 
+class BrowserViewHandler(Handler):
+    def append_analyses(self, info):
+        info.ui.context['pane'].is_append = True
+        info.ui.dispose(True)
+
+    def replace_analyses(self, info):
+        info.ui.context['pane'].is_append = False
+        info.ui.dispose(True)
+
+
 class BrowserView(HasTraits):
     name = 'Browser'
     id = 'pychron.browser'
@@ -51,6 +63,7 @@ class BrowserView(HasTraits):
     time_view = Instance(TimeViewModel)
 
     model = Instance(HasTraits)
+    is_append = False
 
     def trait_context(self):
         """ Use the model object for the Traits UI context, if appropriate.
@@ -105,9 +118,13 @@ class BrowserView(HasTraits):
                 main_grp),
             # handler=TablesHandler()
             # handler=UnselectTabularEditorHandler(selected_name='selected_projects')
-            buttons=['OK', 'Cancel'],
-            resizable=True
-        )
+            buttons=[Action(name='Append',
+                            action='append_analyses'),
+                     Action(name='Replace',
+                            action='replace_analyses'),
+                     'Cancel'],
+            handler=BrowserViewHandler(),
+            resizable=True)
 
         return v
 

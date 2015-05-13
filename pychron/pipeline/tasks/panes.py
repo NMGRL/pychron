@@ -31,14 +31,24 @@ from pychron.core.helpers.color_generators import colornames
 from pychron.core.helpers.formatting import floatfmt
 
 from pychron.core.ui.tree_editor import TreeEditor
-from pychron.envisage.resources import icon
 from pychron.pipeline.engine import Pipeline
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.nodes.data import DataNode
-from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode
+from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, SeriesNode
 from pychron.pipeline.nodes.filter import FilterNode
 from pychron.pipeline.nodes.grouping import GroupingNode
 from pychron.pipeline.nodes.persist import PDFNode
+from pychron.pipeline.tasks.tree_node import SeriesTreeNode, PDFTreeNode, GroupingTreeNode, SpectrumTreeNode, \
+    IdeogramTreeNode, FilterTreeNode, DataTreeNode
+
+
+def node_adder(func):
+    def wrapper(obj, info, o):
+        name = func.func_name
+        f = getattr(info.object, name)
+        f(o)
+
+    return wrapper
 
 
 class PipelineHandler(Handler):
@@ -56,62 +66,36 @@ class PipelineHandler(Handler):
         info.object.run_needed = True
         info.object.refresh_all_needed = True
 
+    def configure(self, info, obj):
+        info.object.configure(obj)
+
+    @node_adder
     def add_data(self, info, obj):
-        info.object.add_data()
+        pass
 
-    def configure_data(self, info, obj):
-        if obj.configure():
-            info.object.run_needed = True
+    # @node_adder
+    # def add_analyses(self, info, obj):
+    # pass
 
-    def add_analyses(self, info, obj):
-        info.object.add_analyses(obj)
-
+    @node_adder
     def add_filter(self, info, obj):
-        info.object.add_filter(obj)
+        pass
 
+    @node_adder
     def add_ideogram(self, info, obj):
-        info.object.add_ideogram(obj)
+        pass
 
+    @node_adder
     def add_spectrum(self, info, obj):
-        info.object.add_spectrum(obj)
+        pass
 
+    @node_adder
     def add_grouping(self, info, obj):
-        info.object.add_grouping(obj)
+        pass
 
-
-class _TreeNode(TreeNode):
-    icon_name = ''
-
-    def get_icon(self, object, is_expanded):
-        name = self.icon_name
-        if not object.enabled:
-            name = 'cancel'
-
-        return icon(name)
-
-
-class DataTreeNode(_TreeNode):
-    icon_name = 'table'
-
-
-class FilterTreeNode(_TreeNode):
-    icon_name = 'filter'
-
-
-class IdeogramTreeNode(_TreeNode):
-    icon_name = 'histogram'
-
-
-class SpectrumTreeNode(_TreeNode):
-    icon_name = ''
-
-
-class PDFTreeNode(_TreeNode):
-    icon_name = 'file_pdf'
-
-
-class GroupingTreeNode(_TreeNode):
-    pass
+    @node_adder
+    def add_series(self, info, obj):
+        pass
 
 
 class PipelinePane(TraitsDockPane):
@@ -127,21 +111,24 @@ class PipelinePane(TraitsDockPane):
                 Action(name='Disable',
                        action='disable',
                        visible_when='object.enabled'),
-                Action(name='Configure', action='configure_data'),
+                Action(name='Configure', action='configure'),
                 Action(name='Delete', action='delete_node'),
                 *actions)
 
         def add_menu_factory():
             return MenuManager(
-                Action(name='Add Analyses',
-                       action='add_analyses'),
+                # Action(name='Add Analyses',
+                # action='add_analyses'),
                 Action(name='Add Grouping',
                        action='add_grouping'),
                 Action(name='Add Filter',
                        action='add_filter'),
                 Action(name='Add Ideogram',
                        action='add_ideogram'),
-                Action(name='Add Spectrum'),
+                Action(name='Add Spectrum',
+                       action='add_spectrum'),
+                Action(name='Add Series',
+                       action='add_series'),
                 name='Add')
 
         def data_menu_factory():
@@ -160,25 +147,14 @@ class PipelinePane(TraitsDockPane):
                           auto_open=True,
                           menu=MenuManager(Action(name='Add Data',
                                                   action='add_data'))),
-                 DataTreeNode(node_for=[DataNode],
-                              menu=data_menu_factory(),
-                              label='name'),
-                 FilterTreeNode(node_for=[FilterNode],
-                                menu=filter_menu_factory(),
-                                label='name'),
-                 IdeogramTreeNode(node_for=[IdeogramNode],
-                                  menu=figure_menu_factory(),
-                                  label='name'),
-                 SpectrumTreeNode(node_for=[SpectrumNode],
-                                  menu=figure_menu_factory(),
-                                  label='name'),
-                 PDFTreeNode(node_for=[PDFNode],
-                             label='name'),
-                 GroupingTreeNode(node_for=[GroupingNode],
-                                  menu=data_menu_factory(),
-                                  label='name'),
-                 TreeNode(node_for=[BaseNode],
-                          label='name')]
+                 DataTreeNode(node_for=[DataNode], menu=data_menu_factory()),
+                 FilterTreeNode(node_for=[FilterNode], menu=filter_menu_factory()),
+                 IdeogramTreeNode(node_for=[IdeogramNode], menu=figure_menu_factory()),
+                 SpectrumTreeNode(node_for=[SpectrumNode], menu=figure_menu_factory()),
+                 SeriesTreeNode(node_for=[SeriesNode], menu=figure_menu_factory()),
+                 PDFTreeNode(node_for=[PDFNode], menu=menu_factory()),
+                 GroupingTreeNode(node_for=[GroupingNode], menu=data_menu_factory()),
+                 TreeNode(node_for=[BaseNode], label='name')]
 
         editor = TreeEditor(nodes=nodes,
                             editable=False,
@@ -222,7 +198,7 @@ class UnknownsAdapter(TabularAdapter):
 
     # def get_menu(self, object, trait, row, column):
     # return MenuManager(Action(name='Group Selected', action='group_by_selected'),
-    #                        Action(name='Group by Labnumber', action='group_by_labnumber'),
+    # Action(name='Group by Labnumber', action='group_by_labnumber'),
     #                        Action(name='Group by Aliquot', action='group_by_aliquot'),
     #                        Action(name='Clear Grouping', action='clear_grouping'),
     #                        Action(name='Unselect', action='unselect'))

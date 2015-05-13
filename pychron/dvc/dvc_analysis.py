@@ -21,6 +21,7 @@ import time
 # ============= local library imports  ==========================
 from uncertainties import ufloat
 from pychron.processing.analyses.analysis import Analysis
+from pychron.processing.isotope import Isotope
 
 ANALYSIS_ATTRS = ('labnumber', 'uuid', 'sample', 'project', 'material', 'aliquot', 'increment', 'irradiation', 'weight',
                   'comment', 'irradiation_level', 'mass_spectrometer', 'extract_device',
@@ -39,7 +40,10 @@ class DVCAnalysis(Analysis):
                 setattr(self, attr, v)
 
         self.rundate = yd['timestamp']  # datetime.strptime(yd['timestamp'], '%Y-%m-%dT%H:%M:%S')
+        self.timestamp = time.mktime(self.rundate.timetuple())
         self.collection_version = yd['collection_version']
+
+        self._set_isotopes(yd)
 
     def set_chronology(self, chron):
         analts = self.rundate
@@ -63,6 +67,15 @@ class DVCAnalysis(Analysis):
         self.uage = ufloat(age, age_err)
         # self.uage_wo_j_err = ufloat(age, age_err_wo_j)
 
+    def _set_isotopes(self, yd):
+        isos = yd.get('isotopes')
+        if not isos:
+            return
+
+        for k, v in isos.items():
+            # bsc = v['baseline_corrected']
+            raw = v['raw_intercept']
+            self.isotopes[k] = Isotope(name=k, value=raw['value'], error=raw['error'])
 
 # ============= EOF =============================================
 

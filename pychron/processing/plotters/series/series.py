@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -56,9 +56,9 @@ class Series(BaseArArFigure):
         plots = (pp for pp in plots if pp.use)
         for i, po in enumerate(plots):
             p = graph.new_plot(
-                               # padding=self.padding,
-                               ytitle=po.name,
-                               xtitle='Time')
+                # padding=self.padding,
+                ytitle=po.name,
+                xtitle='Time')
 
             if po.name == 'AnalysisType':
                 p.y_axis.tick_label_formatter = tick_formatter
@@ -79,7 +79,6 @@ class Series(BaseArArFigure):
         graph = self.graph
 
         xs = array([ai.timestamp for ai in self.sorted_analyses])
-        #print plots, xs
         if plots:
             px = plots[0]
 
@@ -87,10 +86,9 @@ class Series(BaseArArFigure):
                 norm = time.time()
             else:
                 norm = xs[-1]
-
             xs -= norm
             if not px.use_time_axis:
-                xs /= 3600
+                xs /= 3600.
             else:
                 graph.convert_index_func = lambda x: '{:0.2f} hrs'.format(x / 3600.)
 
@@ -101,8 +99,8 @@ class Series(BaseArArFigure):
                 for i, po in enumerate(plots):
                     self._plot_series(po, i, omits)
 
-                self.xmi, self.xma=self.min_x(), self.max_x()
-                self.xpad='0.1'
+                self.xmi, self.xma = self.min_x(), self.max_x()
+                self.xpad = '0.1'
 
     def _plot_series(self, po, pid, omits):
         graph = self.graph
@@ -137,12 +135,18 @@ class Series(BaseArArFigure):
             sel += omits
             scatter.index.metadata['selections'] = list(set(sel))
 
-            self._add_scatter_inspector(scatter, value_format=value_format)
+            def af(i, x, y, analysis):
+                return ('Run Date: {}'.format(analysis.rundate.strftime('%m-%d-%Y %H:%M')),
+                        'Rel. Time: {:0.4f}'.format(x))
+
+            self._add_scatter_inspector(scatter,
+                                        additional_info=af,
+                                        value_format=value_format)
 
             if po.use_time_axis:
                 p.x_axis.tick_generator = ScalesTickGenerator(scale=CalendarScaleSystem())
 
-            #p.value_scale = po.scale
+            # p.value_scale = po.scale
             end_caps = True
             if po.y_error and yerr is not None:
                 self._add_error_bars(scatter, yerr, 'y', 2, end_caps, visible=True)

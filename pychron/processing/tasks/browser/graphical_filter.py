@@ -34,7 +34,7 @@ import math
 # ============= local library imports  ==========================
 from pychron.graph.graph import Graph
 from pychron.processing.plotters.series.ticks import tick_formatter, StaticTickGenerator, TICKS
-from pychron.experiment.utilities.identifier import ANALYSIS_MAPPING_INTS, ANALYSIS_MAPPING
+from pychron.experiment.utilities.identifier import ANALYSIS_MAPPING_INTS
 from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
 from pychron.graph.tools.point_inspector import PointInspectorOverlay
 
@@ -111,8 +111,8 @@ class SelectionGraph(Graph):
         point_inspector = AnalysisPointInspector(scatter,
                                                  analyses=ans,
                                                  value_format=get_analysis_type,
-                                                 additional_info=lambda x: ('Time={}'.format(x.rundate),
-                                                                            'Project={}'.format(x.project)))
+                                                 additional_info=lambda i, x, y, ai: ('Time={}'.format(ai.rundate),
+                                                                                      'Project={}'.format(ai.project)))
 
         pinspector_overlay = PointInspectorOverlay(component=scatter,
                                                    tool=point_inspector)
