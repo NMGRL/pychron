@@ -88,9 +88,9 @@ class AnalysisGroup(HasTraits):
     def _get_mswd(self):
         attr = self.attribute
         if attr.startswith('uage'):
-            attr = 'uage_wo_j_err'
+            attr = 'uage'
             if self.include_j_error_in_individual_analyses:
-                attr = 'uage'
+                attr = 'uage_w_j_err'
 
         return self._calculate_mswd(attr)
 
@@ -138,7 +138,7 @@ class AnalysisGroup(HasTraits):
     def _get_weighted_age(self):
         attr = self.attribute
         if attr.startswith('uage'):
-            attr = 'uage' if self.include_j_error_in_individual_analyses else 'uage_wo_j_err'
+            attr = 'uage_w_j_err' if self.include_j_error_in_individual_analyses else 'uage'
         #     if self.include_j_error_in_individual_analyses:
         #         v, e = self._calculate_weighted_mean('uage', self.weighted_age_error_kind)
         #     else:
@@ -285,7 +285,8 @@ class StepHeatAnalysisGroup(AnalysisGroup):
         # for ai in self.analyses:
         #     print ai.record_id, ai.age, ai.uage_wo_j_err
         d = [(ai.age,
-              ai.uage_wo_j_err.std_dev if ai.uage_wo_j_err else 0,
+              # ai.uage_wo_j_err.std_dev if ai.uage_wo_j_err else 0,
+              ai.age_err,
               ai.get_computed_value('k39').nominal_value)
              # ai.get_interference_corrected_value('Ar39').nominal_value)
              for ai in self.clean_analyses()]

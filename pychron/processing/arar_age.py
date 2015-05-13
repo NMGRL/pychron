@@ -80,7 +80,8 @@ class ArArAge(Loggable):
     F_err_wo_irrad = Float
 
     uage = Either(Variable, AffineScalarFunc)
-    uage_wo_j_err = Either(Variable, AffineScalarFunc)
+    # uage_wo_j_err = Either(Variable, AffineScalarFunc)
+    uage_w_j_err = Either(Variable, AffineScalarFunc)
 
     age = Float
     age_err = Float
@@ -591,9 +592,9 @@ class ArArAge(Loggable):
         arc = self.arar_constants
         age = age_equation(j, f, include_decay_error=include_decay_error,
                            arar_constants=arc)
-        self.uage = age
-        self.age = age.nominal_value
-        self.age_err = age.std_dev
+        self.uage_w_j_err = age
+        # self.age = age.nominal_value
+        # self.age_err = age.std_dev
 
         if self.j is not None:
             j = copy(self.j)
@@ -604,23 +605,25 @@ class ArArAge(Loggable):
         age = age_equation(j, f, include_decay_error=include_decay_error,
                            arar_constants=arc)
 
-        self.age_err_wo_j = float(age.std_dev)
-        self.uage_wo_j_err = ufloat(self.age, self.age_err_wo_j)
+        self.age = age.nominal_value
+        self.age_err = age.std_dev
+        # self.age_err_wo_j = float(age.std_dev)
+        self.uage = ufloat(self.age, self.age_err)
 
-        if self.j is not None:
-            j = copy(self.j)
-        else:
-            j = ufloat(1e-4, 1e-7)
-
-        age = age_equation(j, f_wo_irrad, include_decay_error=include_decay_error,
-                           arar_constants=arc)
-
-        self.age_err_wo_irrad = age.std_dev
-        j.std_dev = 0
-        self.age_err_wo_j_irrad = age.std_dev
-
-        for iso in isotopes.itervalues():
-            iso.age_error_component = self.get_error_component(iso.name)
+        # if self.j is not None:
+        # j = copy(self.j)
+        # else:
+        # j = ufloat(1e-4, 1e-7)
+        #
+        # age = age_equation(j, f_wo_irrad, include_decay_error=include_decay_error,
+        #                    arar_constants=arc)
+        #
+        # self.age_err_wo_irrad = age.std_dev
+        # j.std_dev = 0
+        # self.age_err_wo_j_irrad = age.std_dev
+        #
+        # for iso in isotopes.itervalues():
+        #     iso.age_error_component = self.get_error_component(iso.name)
 
     def _get_isotope_keys(self):
         keys = self.isotopes.keys()

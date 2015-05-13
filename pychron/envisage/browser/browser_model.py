@@ -28,7 +28,7 @@ from pychron.core.progress import open_progress, progress_loader
 from pychron.database.records.isotope_record import GraphicalRecordView
 from pychron.envisage.browser.base_browser_model import BaseBrowserModel
 from pychron.envisage.browser.record_views import ProjectRecordView
-from pychron.processing.tasks.browser.analysis_table import AnalysisTable
+from pychron.envisage.browser.analysis_table import AnalysisTable
 from pychron.processing.tasks.browser.graphical_filter_selector import GraphicalFilterSelector
 from pychron.processing.tasks.browser.time_view import TimeViewModel
 from pychron.processing.tasks.browser.util import get_pad
@@ -105,6 +105,12 @@ class BrowserModel(BaseBrowserModel):
 
             self.datasource_url = db.datasource_url
             self.load_browser_selection()
+
+    def get_analysis_records(self):
+        records = self.analysis_table.selected
+        if not records:
+            records = self.analysis_table.analyses
+        return records
 
     def get_selection(self, low_post, high_post, unks=None, selection=None, make_records=True):
         if selection is None:
@@ -503,6 +509,11 @@ class BrowserModel(BaseBrowserModel):
         self.time_view_model.dump_filter()
         super(BrowserModel, self).dump()
 
+    def select_sample(self, idx=None, name=None):
+        if idx:
+            sams = self.samples[idx:idx + 1]
+            self.selected_samples = sams
+
     def _selected_samples_changed(self, new):
         if new:
             at = self.analysis_table
@@ -550,7 +561,7 @@ class BrowserModel(BaseBrowserModel):
                                                      high_post=hp,
                                                      **kw)
                 self.debug('selected samples changed. loading analyses. '
-                           'low={}, high={}, limit={}'.format(lp, hp, lim))
+                           'low={}, high={}, limit={} n={}'.format(lp, hp, lim, len(ans)))
 
             self.analysis_table.set_analyses(ans)
             self.dump_browser()

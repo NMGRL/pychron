@@ -24,7 +24,7 @@ from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout
 import yaml
 
-from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
+from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.processing.tasks.browser.util import browser_pane_item
 from pychron.processing.tasks.interpreted_age.actions import SaveInterpretedAgeGroupAction, \
     OpenInterpretedAgeGroupAction, SaveAsInterpretedAgeGroupAction, MakeGroupFromFileAction, \

@@ -147,11 +147,10 @@ class PlotterOptionsManager(HasTraits):
         return fmt
 
     def _use_formatting_options_changed(self, new):
-        print new
         if not new:
             if self.plotter_options:
                 self.plotter_options.formatting_options = None
-                self.plotter_options.refresh_plot_needed = True
+                # self.plotter_options.refresh_plot_needed = True
         else:
             self._formatting_option_changed(self.formatting_option)
 
@@ -225,6 +224,8 @@ class PlotterOptionsManager(HasTraits):
                 Item('plotter_options',
                      show_label=False,
                      style='custom')),
+            height=700,
+            buttons=['OK', 'Cancel'],
             resizable=True)
         return v
 

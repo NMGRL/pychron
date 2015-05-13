@@ -40,7 +40,7 @@ from pychron.processing.tasks.analysis_edit.named_analysis_grouping import Analy
 from pychron.processing.tasks.analysis_edit.panes import UnknownsPane, ControlsPane, \
     TablePane
 
-from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
+from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.processing.tasks.figures.figure_editor import FigureEditor
 from pychron.processing.tasks.recall.recall_editor import RecallEditor
 from pychron.processing.tasks.analysis_edit.adapters import UnknownsAdapter

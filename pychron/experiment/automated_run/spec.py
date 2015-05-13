@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import imp
 
 from traits.api import Str, Int, Bool, Float, Property, \
     Enum, on_trait_change, CStr, Long, HasTraits
@@ -62,7 +61,7 @@ class AutomatedRunSpec(HasTraits):
     # run id
     # ===========================================================================
     labnumber = Str
-
+    uuid = Str
     aliquot = Property
     _aliquot = Int
     #assigned_aliquot = Int
@@ -276,8 +275,8 @@ class AutomatedRunSpec(HasTraits):
                     getattr(self, '{}_script'.format(si)))
 
         if new_uuid:
-            run.uuid = str(uuid.uuid4())
-
+            run.uuid = u = str(uuid.uuid4())
+            self.uuid = u
             # self._step_heat = bool(self.aliquot)
             # print self._step_heat, bool(self.aliquot), self.aliquot
 

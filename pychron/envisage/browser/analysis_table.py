@@ -15,13 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pyface.action.menu_manager import MenuManager
-from traits.api import HasTraits, List, Any, Str, Enum, Bool, Button, \
-    Event, Property, cached_property, Instance, DelegatesTo, CStr, Int
+from traits.api import HasTraits, List, Any, Str, Enum, Bool, Event, Property, cached_property, Instance, DelegatesTo, \
+    CStr
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from traitsui.menu import Action
-from pychron.envisage.browser.adapters import BrowserAdapter, AnalysisAdapter
+from pychron.envisage.browser.adapters import AnalysisAdapter
 from pychron.envisage.browser.base_browser_model import filter_func
 from pychron.core.ui.table_configurer import AnalysisTableConfigurer
 

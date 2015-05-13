@@ -16,9 +16,9 @@
 
 # ============= enthought library imports =======================
 
-from traits.api import Str, Property, Enum, Button, List, Int, Any, on_trait_change, Instance, Bool
+from traits.api import Str, Property, Enum, Button, List, Int, on_trait_change
 from traitsui.api import View, Item, HGroup, VGroup, Group, \
-    EnumEditor, TableEditor
+    EnumEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 from kiva.fonttools import str_to_font
@@ -29,7 +29,6 @@ from itertools import groupby
 from pychron.core.ui.table_editor import myTableEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.plotters.options.base import FigurePlotterOptions
-from pychron.processing.plotters.options.option import AuxPlotOptions
 from pychron.pychron_constants import ALPHAS
 
 FONTS = ['Helvetica', ]  # 'Courier','Times-Roman']#['modern', 'arial']
@@ -84,7 +83,7 @@ class PlotterOptions(FigurePlotterOptions):
 
     @on_trait_change('aux_plots:name')
     def _handle_name_change(self, obj, name, old, new):
-        print obj, name, old, new
+        # print obj, name, old, new
         obj.clear_ylimits()
 
 

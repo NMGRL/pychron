@@ -63,7 +63,6 @@ class DVC(Loggable):
         self._defaults()
 
     def make_analyses(self, records):
-        print records
         records = map(self._make_record, records)
         return records
 

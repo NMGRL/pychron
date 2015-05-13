@@ -102,7 +102,8 @@ class BaseTasksApplication(TasksApplication, Loggable):
                         win.activate()
                     break
         else:
-            win = self.create_window(TaskWindowLayout(tid))
+            w = TaskWindowLayout(tid)
+            win = self.create_window(w)
             if activate:
                 win.open()
 
@@ -111,8 +112,8 @@ class BaseTasksApplication(TasksApplication, Loggable):
 
             return win.active_task
 
-    def open_task(self, tid):
-        return self.get_task(tid, True)
+    def open_task(self, tid, **kw):
+        return self.get_task(tid, True, **kw)
 
     def add_view(self, ui):
         self.uis.append(weakref.ref(ui)())

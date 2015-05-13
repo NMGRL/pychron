@@ -31,7 +31,6 @@ from pychron.graph.ml_label import MPlotAxis
 from pychron.graph.tools.axis_tool import AxisTool
 from pychron.graph.tools.limits_tool import LimitsTool, LimitOverlay
 from pychron.processing.analyses.analysis_group import AnalysisGroup
-from pychron.processing.plotters.formatting_options import FormattingOptions
 from pychron.processing.plotters.points_label_overlay import PointsLabelOverlay
 from pychron.processing.plotters.sparse_ticks import SparseLogTicks, SparseTicks
 from pychron.core.helpers.formatting import floatfmt, format_percent_error
@@ -227,7 +226,7 @@ class BaseArArFigure(HasTraits):
             options.set_hash()
 
     def _set_options_format(self, pp):
-        print 'using options format'
+        # print 'using options format'
 
         options = self.options
         pp.x_axis.title_font = options.xtitle_font

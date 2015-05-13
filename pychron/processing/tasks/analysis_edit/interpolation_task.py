@@ -32,7 +32,7 @@ from pychron.processing.tasks.analysis_edit.adapters import ReferencesAdapter
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.processing.tasks.browser.browser_task import DEFAULT_AT
+from pychron.envisage.browser.browser_task import DEFAULT_AT
 # from pychron.processing.tasks.browser.panes import AnalysisAdapter
 from pychron.processing.tasks.recall.recall_editor import RecallEditor
 

@@ -16,11 +16,13 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+import random
 import time
 # ============= local library imports  ==========================
+from uncertainties import ufloat
 from pychron.processing.analyses.analysis import Analysis
 
-ANALYSIS_ATTRS = ('labnumber', 'sample', 'project', 'material', 'aliquot', 'increment', 'irradiation', 'weight',
+ANALYSIS_ATTRS = ('labnumber', 'uuid', 'sample', 'project', 'material', 'aliquot', 'increment', 'irradiation', 'weight',
                   'comment', 'irradiation_level', 'mass_spectrometer', 'extract_device',
                   'username', 'tray', 'queue_conditionals_name', 'extract_value',
                   'extract_units', 'position', 'xyz_position', 'duration', 'cleanup',
@@ -53,6 +55,14 @@ class DVCAnalysis(Analysis):
         self.chron_segments = segments
         self.chron_dosages = doses
         self.calculate_decay_factors()
+
+        age = 10 + 0.5 - random.random()
+        age_err = random.random()
+        self.age = age
+        self.age_err = age_err
+        self.uage = ufloat(age, age_err)
+        # self.uage_wo_j_err = ufloat(age, age_err_wo_j)
+
 
 # ============= EOF =============================================
 

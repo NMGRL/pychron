@@ -27,7 +27,7 @@ from pyface.tasks.action.schema import SToolBar, SGroup
 # from pyface.tasks.action.schema import SToolBar
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
+from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.processing.tasks.tables.editors.base_adapter import TableSeparator
 from pychron.processing.tasks.tables.editors.step_heat.step_heat_table_editor import StepHeatTableEditor
 from pychron.processing.tasks.tables.table_actions import ToggleStatusAction, \

@@ -321,6 +321,8 @@ class BaseTask(Task, Loggable, PreferenceMixin):
 
                 action = myTaskWindowLaunchAction(task_id=factory.id,
                                                   checked=checked)
+                # if hasattr(factory, 'size'):
+                # action.size = factory.size
 
                 if hasattr(factory, 'accelerator'):
                     action.accelerator = factory.accelerator

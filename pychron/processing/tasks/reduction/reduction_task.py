@@ -25,7 +25,7 @@ from pychron.processing.analyses.analysis import Analysis
 from pychron.processing.tasks.analysis_edit.adapters import ReferencesAdapter
 from pychron.processing.tasks.analysis_edit.interpolation_task import InterpolationTask
 from pychron.processing.tasks.analysis_edit.panes import ReferencesPane
-from pychron.processing.tasks.browser.browser_task import DEFAULT_AT
+from pychron.envisage.browser.browser_task import DEFAULT_AT
 from pychron.processing.tasks.browser.util import browser_pane_item
 from pychron.processing.tasks.recall.recall_editor import RecallEditor
 from pychron.processing.tasks.reduction.group_entry import ReductionAnalysisGroupEntry

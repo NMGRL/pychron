@@ -16,7 +16,6 @@
 
 # ============= enthought library imports =======================
 from math import isnan
-from chaco.tools.broadcaster import BroadcasterTool
 
 from traits.api import Array, List, Instance
 
@@ -24,11 +23,9 @@ from traits.api import Array, List, Instance
 from numpy import hstack, array
 # ============= local library imports  ==========================
 from uncertainties import nominal_value
-from pychron.graph.ml_label import MPlotAxis
 from pychron.processing.analyses.analysis_group import StepHeatAnalysisGroup
 from pychron.processing.plotters.arar_figure import BaseArArFigure
 from pychron.processing.plotters.flow_label import FlowPlotLabel
-from pychron.processing.plotters.sparse_ticks import SparseLogTicks, SparseTicks
 from pychron.processing.plotters.spectrum.label_overlay import SpectrumLabelOverlay, IntegratedPlotLabel
 from pychron.processing.plotters.spectrum.tools import SpectrumTool, \
     SpectrumErrorOverlay, PlateauTool, PlateauOverlay, SpectrumInspectorOverlay
@@ -411,7 +408,7 @@ class Spectrum(BaseArArFigure):
                             excludes=None,
                             group_id=0,
                             index_key='k39',
-                            value_key='uage_wo_j_err'):
+                            value_key='uage'):
 
         if excludes is None:
             excludes = []

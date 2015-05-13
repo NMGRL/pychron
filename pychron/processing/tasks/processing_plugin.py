@@ -38,7 +38,7 @@ from pychron.processing.tasks.actions.edit_actions import BlankEditAction, \
     FluxAction, IsotopeEvolutionAction, ICFactorAction, \
     TagAction, DatabaseSaveAction, DiscriminationAction, DataReductionTagAction, \
     SelectDataReductionTagAction
-from pychron.processing.tasks.browser.browser_model import BrowserModel
+from pychron.envisage.browser.browser_model import BrowserModel
 from pychron.processing.tasks.figures.actions import RefreshActiveEditorAction
 from pychron.processing.tasks.preferences.offline_preferences import OfflinePreferencesPane
 from pychron.processing.tasks.preferences.processing_preferences import BrowsingPreferencesPane, EasyPreferencesPane

@@ -73,8 +73,8 @@ class Ideogram(BaseArArFigure):
         opt = self.options
         if opt.index_attr:
             index_attr = opt.index_attr
-            if index_attr == 'uage' and not opt.include_j_error:
-                index_attr = 'uage_wo_j_err'
+            if index_attr == 'uage' and opt.include_j_error:
+                index_attr = 'uage_w_j_err'
         else:
             warning(None, 'X Value not set. Defaulting to Age')
             index_attr = 'uage'
@@ -138,7 +138,7 @@ class Ideogram(BaseArArFigure):
         t = index_attr
         if index_attr == 'uF':
             t = 'Ar40*/Ar39k'
-        elif index_attr in ('uage', 'uage_wo_j_err'):
+        elif index_attr in ('uage', 'uage_w_j_err'):
             ref = self.analyses[0]
             age_units = ref.arar_constants.age_units
             t = 'Age ({})'.format(age_units)
@@ -286,9 +286,9 @@ class Ideogram(BaseArArFigure):
         ia = self.options.index_attr
         if ia.startswith('uage'):
             name = 'Age'
-            ia = 'uage_wo_j_err'
+            ia = 'uage'
             if self.options.include_j_error:
-                ia = 'uage'
+                ia = 'uage_w_j_err'
         else:
             name = ia
 

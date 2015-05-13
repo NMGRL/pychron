@@ -23,7 +23,7 @@ from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.helpers.strtools import to_bool
 from pychron.envisage.tasks.editor_task import BaseEditorTask
 # from pychron.processing.selection.data_selector import DataSelector
-from pychron.processing.tasks.browser.panes import BrowserPane
+# from pychron.processing.tasks.browser.panes import BrowserPane
 
 '''
 add toolbar action to open another editor tab
@@ -63,7 +63,7 @@ class BaseBrowserTask(BaseEditorTask):
     # identifier_visible = Property(depends_on='filter_focus')
     # project_visible = Property(depends_on='filter_focus')
     default_task_name = 'Recall'
-    browser_model = Instance('pychron.processing.tasks.browser.browser_model.BrowserModel')
+    browser_model = Instance('pychron.envisage.browser.browser_model.BrowserModel')
     dvc = Instance('pychron.dvc.dvc.DVC')
     # analysis_filter = String(enter_set=True, auto_set=False)
 
@@ -118,9 +118,9 @@ class BaseBrowserTask(BaseEditorTask):
 
     def activated(self):
 
-        model = self._get_browser_model()
-        self.browser_model = model
-        if not model.is_activated:
+        # model = self._get_browser_model()
+        # self.browser_model = model
+        if not self.browser_model.is_activated:
             self._setup_browser_model()
 
         with no_update(self):
@@ -134,7 +134,7 @@ class BaseBrowserTask(BaseEditorTask):
         if to_bool(self.application.preferences.get('pychron.dvc.enabled')):
             self.dvc = self.application.get_service('pychron.dvc.dvc.DVC')
         # if self.browser_model.sample_view_active:
-        # self._activate_sample_browser()
+        self._activate_sample_browser()
         # else:
 
         # self._activate_query_browser()
@@ -164,7 +164,7 @@ class BaseBrowserTask(BaseEditorTask):
         #
         # self.load_browser_selection()
         self.browser_model.activate_sample_browser()
-        self.browser_pane.name = 'Browser/Sample'
+        # self.browser_pane.name = 'Browser/Sample'
         self._activated = True
 
     def _get_selected_analyses(self, **kw):
@@ -178,14 +178,14 @@ class BaseBrowserTask(BaseEditorTask):
         self.debug('Browser model model={}, id={}'.format(model, id(model)))
         return model
 
-    def _create_browser_pane(self, **kw):
-        model = self._get_browser_model()
-        self.browser_pane = BrowserPane(model=model, **kw)
-
-        # self.analysis_table.tabular_adapter = self.browser_pane.analysis_tabular_adapter
-        # self.labnumber_tabular_adapter = self.browser_pane.labnumber_tabular_adapter
-        model.labnumber_tabular_adapter = self.browser_pane.labnumber_tabular_adapter
-        return self.browser_pane
+    # def _create_browser_pane(self, **kw):
+    # model = self._get_browser_model()
+    # self.browser_pane = BrowserPane(model=model, **kw)
+    #
+    #     # self.analysis_table.tabular_adapter = self.browser_pane.analysis_tabular_adapter
+    #     # self.labnumber_tabular_adapter = self.browser_pane.labnumber_tabular_adapter
+    #     model.labnumber_tabular_adapter = self.browser_pane.labnumber_tabular_adapter
+    #     return self.browser_pane
 
     def _ok_ed(self):
         return self.extraction_device not in (DEFAULT_ED, 'None')

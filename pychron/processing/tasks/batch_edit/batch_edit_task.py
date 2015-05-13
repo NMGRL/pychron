@@ -39,9 +39,12 @@ from pychron.paths import paths
 
 
 
+
+
+
 #from pychron.processing.entry.sensitivity_entry import SensitivityEntry
 #from pychron.processing.tasks.entry.sensitivity_entry_panes import SensitivityPane
-from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
+from pychron.envisage.browser.browser_task import BaseBrowserTask
 #from pychron.processing.tasks.figures.panes import MultiSelectAnalysisBrowser
 # ============= standard library imports ========================
 # ============= local library imports  ==========================

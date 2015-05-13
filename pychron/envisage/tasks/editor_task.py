@@ -64,7 +64,6 @@ class BaseEditorTask(BaseManagerTask):
         return (ei for ei in self.editor_area.editors if isinstance(ei, klass))
 
     def close_editor(self, editor):
-        print 'close editor', editor
         self.editor_area.remove_editor(editor)
 
     def activate_editor(self, editor):

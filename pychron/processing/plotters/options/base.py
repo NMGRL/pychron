@@ -101,7 +101,7 @@ class BasePlotterOptions(HasTraits):
 
     # handlers
     def _anytrait_changed(self, name, new):
-        print name, new
+        # print name, new
         if name in self._get_refreshable_attrs():
             if self._process_trait_change(name, new):
                 self.refresh_plot_needed = True

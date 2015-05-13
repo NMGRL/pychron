@@ -194,10 +194,10 @@ class DVCDatabase(DatabaseAdapter):
             q = q.filter(IrradiationPositionTbl.identifier.in_(lns))
 
             if low_post:
-                q = q.filter(AnalysisTbl.timestamp >= low_post)
+                q = q.filter(AnalysisTbl.timestamp >= str(low_post))
 
             if high_post:
-                q = q.filter(AnalysisTbl.timestamp <= high_post)
+                q = q.filter(AnalysisTbl.timestamp <= str(high_post))
 
             if omit_key:
                 q = q.filter(AnalysisTbl.tag != omit_key)
@@ -245,9 +245,9 @@ class DVCDatabase(DatabaseAdapter):
                 q = q.group_by(IrradiationPositionTbl.identifier)
                 q = q.having(count(AnalysisTbl.idanalysisTbl) > 0)
                 if low_post:
-                    q = q.filter(AnalysisTbl.timestamp >= low_post)
+                    q = q.filter(AnalysisTbl.timestamp >= str(low_post))
                 if high_post:
-                    q = q.filter(AnalysisTbl.timestamp <= high_post)
+                    q = q.filter(AnalysisTbl.timestamp <= str(high_post))
 
             if project_names:
                 q = q.filter(ProjectTbl.name.in_(project_names))

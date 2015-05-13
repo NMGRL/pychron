@@ -52,6 +52,7 @@ PACKAGE_DICT = dict(
     CoreLaserPlugin='pychron.lasers.tasks.plugins.laser_plugin',
     MediaServerPlugin='pychron.media_server.tasks.media_server_plugin',
     ProcessingPlugin='pychron.processing.tasks.processing_plugin',
+    PipelinePlugin='pychron.pipeline.tasks.plugin',
     PyScriptPlugin='pychron.pyscripts.tasks.pyscript_plugin',
     ArgusSpectrometerPlugin='pychron.spectrometer.tasks.argus_spectrometer_plugin',
     MapSpectrometerPlugin='pychron.spectrometer.tasks.map_spectrometer_plugin',
