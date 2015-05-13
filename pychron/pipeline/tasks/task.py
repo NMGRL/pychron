@@ -61,6 +61,7 @@ class PipelineTask(BaseBrowserTask):
         self.engine.add_ideogram()
         self.engine.add_test_filter()
         self.engine.add_ideogram()
+        self.engine.add_pdf_figure_node()
         # self.engine.add_spectrum()
 
         self.run()

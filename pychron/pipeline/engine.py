@@ -25,6 +25,7 @@ from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode
 from pychron.loggable import Loggable
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, FigureNode
 from pychron.pipeline.nodes.filter import FilterNode
+from pychron.pipeline.nodes.persist import PDFFigureNode
 
 
 class Pipeline(HasTraits):
@@ -106,11 +107,13 @@ class PipelineEngine(Loggable):
             self.pipeline.add_after(node, ideo_node)
             self.run_needed = True
 
-    def _get_last_node(self):
-        if self.pipeline.nodes:
-            idx = len(self.pipeline.nodes) - 1
+    def _get_last_node(self, node=None):
+        if node is None:
+            if self.pipeline.nodes:
+                idx = len(self.pipeline.nodes) - 1
 
-            return self.pipeline.nodes[idx]
+                node = self.pipeline.nodes[idx]
+        return node
 
     def select_default(self):
         node = self.pipeline.nodes[0]
@@ -153,6 +156,11 @@ class PipelineEngine(Loggable):
     #
     # node = BaseNode(name=name)
     # self.pipeline.nodes.append(node)
+    def add_pdf_figure_node(self, node=None):
+        node = self._get_last_node(node)
+        newnode = PDFFigureNode(root='/Users/ross/Sandbox')
+
+        self.pipeline.add_after(node, newnode)
 
     def save_pipeline_template(self, path):
         with open(path, 'w') as wfile:

@@ -37,6 +37,7 @@ from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.nodes.data import DataNode
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode
 from pychron.pipeline.nodes.filter import FilterNode
+from pychron.pipeline.nodes.persist import PDFNode
 
 
 class PipelineHandler(Handler):
@@ -98,6 +99,10 @@ class SpectrumTreeNode(_TreeNode):
     icon_name = ''
 
 
+class PDFTreeNode(_TreeNode):
+    icon_name = 'file_pdf'
+
+
 class PipelinePane(TraitsDockPane):
     name = 'Pipeline'
     id = 'pychron.pipeline.pane'
@@ -154,6 +159,8 @@ class PipelinePane(TraitsDockPane):
                  SpectrumTreeNode(node_for=[SpectrumNode],
                                   menu=figure_menu_factory(),
                                   label='name'),
+                 PDFTreeNode(node_for=[PDFNode],
+                             label='name'),
                  TreeNode(node_for=[BaseNode],
                           label='name')]
 
