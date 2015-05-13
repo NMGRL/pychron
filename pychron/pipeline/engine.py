@@ -19,6 +19,8 @@ from traits.api import HasTraits, Str, Instance, List, Event, Bool
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 import yaml
+from pychron.core.helpers.filetools import list_directory2
+from pychron.paths import paths
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode
 from pychron.loggable import Loggable
@@ -26,6 +28,7 @@ from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, FigureNode
 from pychron.pipeline.nodes.filter import FilterNode
 from pychron.pipeline.nodes.grouping import GroupingNode
 from pychron.pipeline.nodes.persist import PDFFigureNode
+from pychron.pipeline.template import PipelineTemplate
 
 
 class Pipeline(HasTraits):
@@ -54,6 +57,14 @@ class PipelineEngine(Loggable):
     refresh_table_needed = Event
 
     show_group_colors = Bool
+
+    selected_pipeline_template = Str
+    available_pipeline_templates = List
+
+    def __init__(self, *args, **kw):
+        super(PipelineEngine, self).__init__(*args, **kw)
+
+        self._load_predefined_templates()
 
     def configure(self, node):
 
@@ -151,11 +162,12 @@ class PipelineEngine(Loggable):
         newnode = GroupingNode()
         self._add_node(node, newnode, run)
 
-    def add_pdf_figure_node(self, node=None):
+    def add_pdf_figure(self, node=None):
         newnode = PDFFigureNode(root='/Users/ross/Sandbox')
         self._add_node(node, newnode)
 
     def save_pipeline_template(self, path):
+        self.info('Saving pipeline to {}'.format(path))
         with open(path, 'w') as wfile:
             obj = self.pipeline.to_template()
             yaml.dump(obj, wfile, default_flow_style=False)
@@ -186,6 +198,14 @@ class PipelineEngine(Loggable):
                     break
 
     # private
+    def _load_predefined_templates(self):
+        templates = []
+        for temp in list_directory2(paths.pipeline_template_dir, extension='.yaml',
+                                    remove_extension=True):
+            templates.append(temp)
+
+        self.available_pipeline_templates = templates
+
     def _add_node(self, node, new, run=True):
         if new.configure():
             node = self._get_last_node(node)
@@ -203,6 +223,11 @@ class PipelineEngine(Loggable):
         return node
 
     # handlers
+    def _selected_pipeline_template_changed(self, new):
+        if new:
+            self.debug('Pipeline template {} selected'.format(new))
+            pt = PipelineTemplate(new)
+
     def _selected_changed(self, new):
         self.show_group_colors = False
         if isinstance(new, UnknownNode):

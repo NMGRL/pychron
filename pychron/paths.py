@@ -150,6 +150,8 @@ class Paths(object):
     # processing
     # ==============================================================================
     formatting_dir = None
+    pipeline_dir = None
+    pipeline_template_dir = None
 
     # ==============================================================================
     # lovera exectuables
@@ -334,6 +336,8 @@ class Paths(object):
         # processing
         # ==============================================================================
         self.formatting_dir = join(self.setup_dir, 'formatting')
+        self.pipeline_dir = join(self.setup_dir, 'pipeline')
+        self.pipeline_template_dir = join(self.pipeline_dir, 'templates')
         # ==============================================================================
         # lovera exectuables
         # ==============================================================================

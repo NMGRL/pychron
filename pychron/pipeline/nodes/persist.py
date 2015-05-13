@@ -49,6 +49,8 @@ class PDFFigureNode(PDFNode):
         v = View(Item('root', editor=DirectoryEditor(root_path=paths.data_dir)),
                  title='Configure {}'.format(self.name),
                  kind='livemodal',
+                 width=500,
+                 resizable=True,
                  buttons=['OK', 'Cancel'])
         return v
 

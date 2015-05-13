@@ -15,13 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter
 from pyface.timer.do_later import do_after
 from traits.api import Instance
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.codetools.inspection import caller
+from pychron.paths import paths
 from pychron.pipeline.engine import PipelineEngine
 from pychron.pipeline.state import EngineState
 from pychron.pipeline.tasks.actions import RunAction, SavePipelineTemplateAction
@@ -83,7 +87,8 @@ class PipelineTask(BaseBrowserTask):
     # toolbar actions
     def save_pipeline_template(self):
         # path = self.save_file_dialog()
-        path = '/Users/ross/Sandbox/template.yaml'
+        # path = '/Users/ross/Sandbox/template.yaml'
+        path = os.path.join(paths.pipeline_template_dir, 'teest.yaml')
         if path:
             self.engine.save_pipeline_template(path)
 

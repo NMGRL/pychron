@@ -23,7 +23,7 @@ from traitsui.handler import Handler
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 from traitsui.tree_node import TreeNode
-from traitsui.api import View, UItem, VGroup
+from traitsui.api import View, UItem, VGroup, EnumEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from uncertainties import nominal_value, std_dev
@@ -70,12 +70,12 @@ class PipelineHandler(Handler):
         info.object.configure(obj)
 
     @node_adder
-    def add_data(self, info, obj):
+    def add_pdf_figure(self, info, obj):
         pass
 
-    # @node_adder
-    # def add_analyses(self, info, obj):
-    # pass
+    @node_adder
+    def add_data(self, info, obj):
+        pass
 
     @node_adder
     def add_filter(self, info, obj):
@@ -131,6 +131,11 @@ class PipelinePane(TraitsDockPane):
                        action='add_series'),
                 name='Add')
 
+        def save_menu_factory():
+            return MenuManager(Action(name='Save PDF Figure',
+                                      action='add_pdf_figure'),
+                               name='Save')
+
         def data_menu_factory():
             return menu_factory(add_menu_factory())
 
@@ -138,7 +143,7 @@ class PipelinePane(TraitsDockPane):
             return menu_factory(add_menu_factory())
 
         def figure_menu_factory():
-            return menu_factory(add_menu_factory())
+            return menu_factory(add_menu_factory(), save_menu_factory())
 
         nodes = [TreeNode(node_for=[Pipeline],
                           children='nodes',
@@ -164,8 +169,11 @@ class PipelinePane(TraitsDockPane):
                             show_disabled=True,
                             refresh_all_icons='refresh_all_needed',
                             update='update_needed')
-        v = View(UItem('pipeline',
-                       editor=editor),
+        v = View(VGroup(
+            UItem('selected_pipeline_template',
+                  editor=EnumEditor(name='available_pipeline_templates')),
+            UItem('pipeline',
+                  editor=editor)),
                  handler=PipelineHandler())
         return v
 
