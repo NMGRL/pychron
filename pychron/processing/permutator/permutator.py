@@ -29,7 +29,7 @@ from pychron.core.progress import progress_loader
 from pychron.loggable import Loggable
 from pychron.processing.analyses.file_analysis import FileAnalysis
 from pychron.processing.permutator.view import PermutatorResultsView
-from pychron.processing.tasks.figures.editors.ideogram_editor import IdeogramEditor
+from pychron.processing.figures.editors.ideogram_editor import IdeogramEditor
 from pychron.pychron_constants import ARGON_KEYS
 
 

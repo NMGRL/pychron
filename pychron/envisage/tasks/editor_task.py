@@ -118,6 +118,10 @@ class BaseEditorTask(BaseManagerTask):
                 self.active_editor.dirty = False
                 return True
 
+    def close_all(self):
+        for e in self.editor_area.editors:
+            self.close_editor(e)
+
     def _save_file(self, path):
         pass
 

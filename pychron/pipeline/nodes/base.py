@@ -19,9 +19,16 @@ from traits.api import HasTraits, Bool
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+
 class BaseNode(HasTraits):
     name = 'Base'
     enabled = Bool(True)
+
+    def enable(self):
+        self.enabled = True
+
+    def disable(self):
+        self.enabled = False
 
     def run(self, state):
         raise NotImplementedError

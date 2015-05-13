@@ -34,11 +34,25 @@ from pychron.core.ui.tree_editor import TreeEditor
 from pychron.envisage.resources import icon
 from pychron.pipeline.engine import Pipeline
 from pychron.pipeline.nodes.data import DataNode
-from pychron.pipeline.nodes.figure import FigureNode
+from pychron.pipeline.nodes.figure import FigureNode, IdeogramNode
 from pychron.pipeline.nodes.filter import FilterNode
 
 
 class PipelineHandler(Handler):
+    def delete_node(self, info, obj):
+        info.object.remove_node(obj)
+
+    def enable(self, info, obj):
+        self._toggle_enable(info, obj, True)
+
+    def disable(self, info, obj):
+        self._toggle_enable(info, obj, False)
+
+    def _toggle_enable(self, info, obj, state):
+        obj.enabled = state
+        info.object.run_needed = True
+        info.object.refresh_all_needed = True
+
     def add_data(self, info, obj):
         info.object.add_data()
 
@@ -52,15 +66,31 @@ class PipelineHandler(Handler):
     def add_filter(self, info, obj):
         info.object.add_filter(obj)
 
+    def add_ideogram(self, info, obj):
+        info.object.add_ideogram(obj)
 
-class DataTreeNode(TreeNode):
+
+class _TreeNode(TreeNode):
+    icon_name = ''
+
     def get_icon(self, object, is_expanded):
-        return icon('table')
+        name = self.icon_name
+        if not object.enabled:
+            name = 'cancel'
+
+        return icon(name)
 
 
-class FilterTreeNode(TreeNode):
-    def get_icon(self, object, is_expanded):
-        return icon('filter')
+class DataTreeNode(_TreeNode):
+    icon_name = 'table'
+
+
+class FilterTreeNode(_TreeNode):
+    icon_name = 'filter'
+
+
+class IdeogramTreeNode(_TreeNode):
+    icon_name = 'histogram'
 
 
 class PipelinePane(TraitsDockPane):
@@ -68,9 +98,17 @@ class PipelinePane(TraitsDockPane):
     id = 'pychron.pipeline.pane'
 
     def traits_view(self):
-        def configure_menu_factory(*actions):
-            return MenuManager(Action(name='Configure', action='configure_data', image=icon('cog')), *actions)
-
+        def menu_factory(*actions):
+            return MenuManager(
+                Action(name='Enable',
+                       action='enable',
+                       visible_when='not object.enabled'),
+                Action(name='Disable',
+                       action='disable',
+                       visible_when='object.enabled'),
+                Action(name='Configure', action='configure_data'),
+                Action(name='Delete', action='delete_node'),
+                *actions)
 
         nodes = [TreeNode(node_for=[Pipeline],
                           children='nodes',
@@ -80,18 +118,28 @@ class PipelinePane(TraitsDockPane):
                           menu=MenuManager(Action(name='Add Data',
                                                   action='add_data'))),
                  DataTreeNode(node_for=[DataNode],
-                              menu=configure_menu_factory(
-                                  Action(name='Add Analyses',
-                                         action='add_analyses'),
-                                  Action(name='Add Filter',
-                                         action='add_filter')),
+                              menu=menu_factory(
+                                  MenuManager(
+                                      Action(name='Add Analyses',
+                                             action='add_analyses'),
+                                      Action(name='Add Filter',
+                                             action='add_filter'),
+                                      Action(name='Add Ideogram',
+                                             action='add_ideogram'),
+                                      name='Add', )
+                              ),
                               label='name'),
                  FilterTreeNode(node_for=[FilterNode],
-                                menu=configure_menu_factory(),
+                                menu=menu_factory(),
                                 label='name'),
+                 IdeogramTreeNode(node_for=[IdeogramNode],
+                                  menu=menu_factory(),
+                                  label='name'),
+
                  TreeNode(node_for=[FigureNode],
-                          menu=configure_menu_factory(),
-                          label='name')]
+                          menu=menu_factory(),
+                          label='name')
+                 ]
 
         editor = TreeEditor(nodes=nodes,
                             editable=False,

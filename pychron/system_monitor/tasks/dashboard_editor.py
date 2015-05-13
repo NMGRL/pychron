@@ -25,7 +25,7 @@ from numpy import array, vstack
 from pychron.processing.plotter_options_manager import DashboardOptionsManager
 from pychron.processing.plotters.figure_container import FigureContainer
 from pychron.processing.plotters.series.series_model import DashboardSeriesModel
-from pychron.processing.tasks.figures.editors.series_editor import SeriesEditor
+from pychron.processing.figures.editors.series_editor import SeriesEditor
 from pychron.system_monitor.tasks.controls import SystemMonitorControls
 
 """

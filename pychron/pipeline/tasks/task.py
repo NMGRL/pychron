@@ -83,6 +83,7 @@ class PipelineTask(BaseBrowserTask):
 
         self.engine.run(state)
 
+        self.close_all()
         for editor in state.editors:
             self._close_editor(editor)
             self._open_editor(editor)

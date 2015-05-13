@@ -41,6 +41,7 @@ class PipelineEngine(Loggable):
     unknowns = List
     references = List
     run_needed = Event
+    refresh_all_needed = Event
 
     def refresh_analyses(self):
         unks = []
@@ -60,6 +61,10 @@ class PipelineEngine(Loggable):
         newnode.add_filter('uage', '<', '10')
         self.pipeline.add_after(node, newnode)
 
+    def remove_node(self, node):
+        self.pipeline.nodes.remove(node)
+        self.run_needed = True
+
     def add_filter(self, node):
         """
         add filter after this node
@@ -78,6 +83,7 @@ class PipelineEngine(Loggable):
         if node:
             ideo_node = SpectrumNode()
             self.pipeline.add_after(node, ideo_node)
+            self.run_needed = True
 
     def add_ideogram(self, node=None):
         if node is None:
@@ -86,6 +92,7 @@ class PipelineEngine(Loggable):
         if node:
             ideo_node = IdeogramNode()
             self.pipeline.add_after(node, ideo_node)
+            self.run_needed = True
 
     def _get_last_node(self):
         if self.pipeline.nodes:
@@ -137,8 +144,13 @@ class PipelineEngine(Loggable):
 
     def run(self, state):
         self.debug('pipeline started')
-        for node in self.pipeline.nodes:
-            node.run(state)
+        for idx, node in enumerate(self.pipeline.nodes):
+            action = 'skip'
+            if node.enabled:
+                action = 'run'
+                node.run(state)
+            self.debug('{} node {:02n}: {}'.format(action, idx, node.name))
+
         self.debug('pipeline finished')
 
         self.unknowns = state.unknowns
@@ -148,7 +160,7 @@ class PipelineEngine(Loggable):
 # from traitsui.api import TreeNode, Handler
 # from pychron.core.ui.tree_editor import TreeEditor
 # from pyface.action.menu_manager import MenuManager
-#     from pychron.pipeline.nodes.base import BaseNode
+# from pychron.pipeline.nodes.base import BaseNode
 #     from traitsui.menu import Action
 #     from pychron.envisage.resources import icon
 #     from pychron.core.helpers.logger_setup import logging_setup

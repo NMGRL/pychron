@@ -26,9 +26,9 @@ from pychron.core.helpers.iterfuncs import partition
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.paths import r_mkdir
 from pychron.processing.easy.base_easy import BaseEasy
-from pychron.processing.tasks.figures.editors.ideogram_editor import IdeogramEditor
-from pychron.processing.tasks.figures.editors.isochron_editor import InverseIsochronEditor
-from pychron.processing.tasks.figures.editors.spectrum_editor import SpectrumEditor
+from pychron.processing.figures.editors.ideogram_editor import IdeogramEditor
+from pychron.processing.figures.editors.isochron_editor import InverseIsochronEditor
+from pychron.processing.figures.editors.spectrum_editor import SpectrumEditor
 from pychron.processing.utils.grouping import group_analyses_by_key
 
 

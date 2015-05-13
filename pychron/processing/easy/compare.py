@@ -25,7 +25,7 @@ from pychron.core.helpers.iterfuncs import partition
 from pychron.paths import paths
 from pychron.processing.argon_calculations import calculate_isochron
 from pychron.processing.easy.base_easy import BaseEasy
-from pychron.processing.tasks.figures.editors.isochron_editor import InverseIsochronEditor
+from pychron.processing.figures.editors.isochron_editor import InverseIsochronEditor
 
 
 class CompareIsochronSpec(BaseEasy):

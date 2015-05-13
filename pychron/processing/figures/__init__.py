@@ -15,41 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Any
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.pipeline.nodes.base import BaseNode
-from pychron.processing.figures.editors.ideogram_editor import IdeogramEditor
-from pychron.processing.figures.editors.spectrum_editor import SpectrumEditor
-
-
-class FigureNode(BaseNode):
-    editor = Any
-
-    def run(self, state):
-        editor = self.editor_klass()
-        editor.analyses = state.unknowns
-        editor.set_name()
-        editor.rebuild()
-        self.editor = editor
-        state.editors.append(editor)
-
-    def configure(self):
-        if self.editor:
-            pom = self.editor.plotter_options_manager
-            info = pom.edit_traits(kind='livemodal')
-            if info.result:
-                return True
-
-
-class IdeogramNode(FigureNode):
-    name = 'Ideogram'
-    editor_klass = IdeogramEditor
-
-
-class SpectrumNode(FigureNode):
-    name = 'Spectrum'
-    editor_klass = SpectrumEditor
 
 
 # ============= EOF =============================================
