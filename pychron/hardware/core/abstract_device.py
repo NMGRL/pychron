@@ -108,6 +108,7 @@ class AbstractDevice(ScanableDevice, HasCommunicator):
 
     def open(self, *args, **kw):
         self.debug('open device')
+
         return HasCommunicator.open(self, **kw)
 
     def __getattr__(self, attr):
@@ -128,7 +129,7 @@ class AddressableAbstractDevice(AbstractDevice):
         self.set_attribute(config, 'address', 'General', 'address')
         return super(AddressableAbstractDevice, self).load_additional_args(config)
 
-    def get(self, *args, **kw):
+    def get(self, force=False, *args, **kw):
         if self._cdevice:
             return self._cdevice.read_channel(self.address, *args, **kw)
 
