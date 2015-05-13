@@ -25,6 +25,7 @@ from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode
 from pychron.loggable import Loggable
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, FigureNode
 from pychron.pipeline.nodes.filter import FilterNode
+from pychron.pipeline.nodes.grouping import GroupingNode
 from pychron.pipeline.nodes.persist import PDFFigureNode
 
 
@@ -152,15 +153,17 @@ class PipelineEngine(Loggable):
         self.pipeline.nodes.append(UnknownNode(name='default'))
         self.refresh_analyses()
 
-    # def add_node(self, name):
-    #
-    # node = BaseNode(name=name)
-    # self.pipeline.nodes.append(node)
-    def add_pdf_figure_node(self, node=None):
-        node = self._get_last_node(node)
-        newnode = PDFFigureNode(root='/Users/ross/Sandbox')
+    def add_grouping(self, node=None):
+        newnode = GroupingNode(by_aliquot=True)
+        self._add_node(node, newnode)
 
-        self.pipeline.add_after(node, newnode)
+    def add_pdf_figure_node(self, node=None):
+        newnode = PDFFigureNode(root='/Users/ross/Sandbox')
+        self._add_node(node, newnode)
+
+    def _add_node(self, node, new):
+        node = self._get_last_node(node)
+        self.pipeline.add_after(node, new)
 
     def save_pipeline_template(self, path):
         with open(path, 'w') as wfile:

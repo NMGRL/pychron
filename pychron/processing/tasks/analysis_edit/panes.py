@@ -329,7 +329,7 @@ class UnknownsPane(HistoryTablePane):
         self.group_by(key=lambda x: x.labnumber)
 
     def group_by_aliquot(self):
-        self.group_by(key=lambda x: x.labnumber)
+        self.group_by(key=lambda x: x.aliquot)
 
     def group_by(self, key):
         group_analyses_by_key(self.items, key)

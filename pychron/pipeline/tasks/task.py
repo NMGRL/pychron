@@ -58,10 +58,11 @@ class PipelineTask(BaseBrowserTask):
     def _debug(self):
         self.engine.add_data()
         self.engine.select_default()
+        self.engine.add_grouping()
         self.engine.add_ideogram()
-        self.engine.add_test_filter()
-        self.engine.add_ideogram()
-        self.engine.add_pdf_figure_node()
+        # self.engine.add_test_filter()
+        # self.engine.add_ideogram()
+        # self.engine.add_pdf_figure_node()
         # self.engine.add_spectrum()
 
         self.run()

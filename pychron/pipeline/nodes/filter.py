@@ -48,7 +48,7 @@ class PipelineFilter(HasTraits):
 
 class FilterNode(BaseNode):
     name = Property(depends_on='filters')
-    analysis_name = 'unknowns'
+    analysis_kind = 'unknowns'
     filters = List
     add_filter_button = Button
 
@@ -84,8 +84,8 @@ class FilterNode(BaseNode):
         return func
 
     def run(self, state):
-        vs = filter(self._generate_filter(), getattr(state, self.analysis_name))
-        setattr(state, self.analysis_name, vs)
+        vs = filter(self._generate_filter(), getattr(state, self.analysis_kind))
+        setattr(state, self.analysis_kind, vs)
 
     def add_filter(self, attr, comp, crit):
         self.filters.append(PipelineFilter(attribute=attr, comparator=comp, criterion=crit))

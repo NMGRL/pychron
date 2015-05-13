@@ -15,34 +15,31 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import List
+from traits.api import Bool
 # ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.pipeline.nodes.base import BaseNode
+from pychron.processing.utils.grouping import group_analyses_by_key
 
 
-class DataNode(BaseNode):
-    name = 'Data'
-    analyses = List
+class GroupingNode(BaseNode):
+    by_identifier = Bool
+    by_aliquot = Bool
+    by_sample = Bool
 
-    analysis_kind = None
+    analysis_kind = 'unknowns'
+    name = 'Grouping'
+
+    def _generate_key(self):
+        if self.by_aliquot:
+            key = lambda x: x.aliquot
+        elif self.by_identifier:
+            key = lambda x: x.identifier
+        return key
 
     def run(self, state):
-        items = getattr(state, self.analysis_kind)
-        items.extend(self.analyses)
-
-    def configure(self):
-        return True
-
-
-class UnknownNode(DataNode):
-    analysis_kind = 'unknowns'
-
-
-class ReferenceNode(DataNode):
-    analysis_kind = 'references'
-
-# ============= local library imports  ==========================
-
+        unks = getattr(state, self.analysis_kind)
+        group_analyses_by_key(unks, key=self._generate_key())
 
 # ============= EOF =============================================
 

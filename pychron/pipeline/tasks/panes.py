@@ -71,6 +71,11 @@ class PipelineHandler(Handler):
     def add_ideogram(self, info, obj):
         info.object.add_ideogram(obj)
 
+    def add_spectrum(self, info, obj):
+        info.object.add_spectrum(obj)
+
+    def add_grouping(self, info, obj):
+        info.object.add_grouping(obj)
 
 class _TreeNode(TreeNode):
     icon_name = ''
@@ -103,6 +108,10 @@ class PDFTreeNode(_TreeNode):
     icon_name = 'file_pdf'
 
 
+class GroupingTreeNode(_TreeNode):
+    pass
+
+
 class PipelinePane(TraitsDockPane):
     name = 'Pipeline'
     id = 'pychron.pipeline.pane'
@@ -124,6 +133,8 @@ class PipelinePane(TraitsDockPane):
             return MenuManager(
                 Action(name='Add Analyses',
                        action='add_analyses'),
+                Action(name='Add Grouping',
+                       action='add_grouping'),
                 Action(name='Add Filter',
                        action='add_filter'),
                 Action(name='Add Ideogram',
