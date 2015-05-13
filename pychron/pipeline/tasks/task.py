@@ -23,7 +23,7 @@ from traits.api import Instance
 # ============= local library imports  ==========================
 from pychron.pipeline.engine import PipelineEngine
 from pychron.pipeline.state import EngineState
-from pychron.pipeline.tasks.actions import RunAction
+from pychron.pipeline.tasks.actions import RunAction, SavePipelineTemplateAction
 from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane
 from pychron.envisage.browser.browser_task import BaseBrowserTask
 
@@ -33,7 +33,8 @@ DEBUG = True
 
 class PipelineTask(BaseBrowserTask):
     engine = Instance(PipelineEngine, ())
-    tool_bars = [SToolBar(RunAction())]
+    tool_bars = [SToolBar(RunAction(),
+        SavePipelineTemplateAction())]
 
     def activated(self):
         super(PipelineTask, self).activated()
@@ -47,13 +48,18 @@ class PipelineTask(BaseBrowserTask):
         if DEBUG:
             do_after(1000, self._debug)
 
+    def _active_editor_changed(self, new):
+        if new:
+            self.engine.select_node_by_editor(new)
+
     def _handle_run_needed(self):
         self.run()
 
     def _debug(self):
         self.engine.add_data()
         self.engine.select_default()
-        # self.engine.add_test_filter()
+        self.engine.add_ideogram()
+        self.engine.add_test_filter()
         self.engine.add_ideogram()
         # self.engine.add_spectrum()
 
@@ -68,6 +74,12 @@ class PipelineTask(BaseBrowserTask):
         return panes
 
     # toolbar actions
+    def save_pipeline_template(self):
+        # path = self.save_file_dialog()
+        path = '/Users/ross/Sandbox/template.yaml'
+        if path:
+            self.engine.save_pipeline_template(path)
+
     def run(self):
         self._run_pipeline()
 

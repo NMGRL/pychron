@@ -18,10 +18,12 @@
 from traits.api import HasTraits, Str, Instance, List, Event
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+import yaml
 from pychron.envisage.browser.view import BrowserView
+from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode
 from pychron.loggable import Loggable
-from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode
+from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, FigureNode
 from pychron.pipeline.nodes.filter import FilterNode
 
 
@@ -33,15 +35,21 @@ class Pipeline(HasTraits):
         idx = self.nodes.index(after)
         self.nodes.insert(idx + 1, node)
 
+    def to_template(self):
+        nodes = [ni.to_template() for ni in self.nodes]
+        return nodes
+
 
 class PipelineEngine(Loggable):
     dvc = Instance('pychron.dvc.dvc.DVC')
     pipeline = Instance(Pipeline, ())
+    selected = Instance(BaseNode)
 
     unknowns = List
     references = List
     run_needed = Event
     refresh_all_needed = Event
+    refresh_needed = Event
 
     def refresh_analyses(self):
         unks = []
@@ -56,9 +64,13 @@ class PipelineEngine(Loggable):
         self.references = refs
 
     def add_test_filter(self):
-        node = self.pipeline.nodes[0]
+        node = self.pipeline.nodes[-1]
         newnode = FilterNode()
-        newnode.add_filter('uage', '<', '10')
+        filt = newnode.filters[0]
+        filt.attribute = 'uage'
+        filt.comparator = '<'
+        filt.criterion = '10'
+
         self.pipeline.add_after(node, newnode)
 
     def remove_node(self, node):
@@ -142,6 +154,11 @@ class PipelineEngine(Loggable):
     # node = BaseNode(name=name)
     # self.pipeline.nodes.append(node)
 
+    def save_pipeline_template(self, path):
+        with open(path, 'w') as wfile:
+            obj = self.pipeline.to_template()
+            yaml.dump(obj, wfile, default_flow_style=False)
+
     def run(self, state):
         self.debug('pipeline started')
         for idx, node in enumerate(self.pipeline.nodes):
@@ -155,14 +172,31 @@ class PipelineEngine(Loggable):
 
         self.unknowns = state.unknowns
         self.references = state.references
+        self.refresh_needed = True
+
+    def _selected_changed(self, new):
+        if isinstance(new, UnknownNode):
+            self.unknowns = new.analyses
+        elif isinstance(new, ReferenceNode):
+            self.references = new.analyses
+        elif isinstance(new, FigureNode):
+            self.task.activate_editor(new.editor)
+
+    def select_node_by_editor(self, editor):
+        for node in self.pipeline.nodes:
+            if hasattr(node, 'editor'):
+                if node.editor == editor:
+                    self.unknowns = editor.analyses
+                    self.selected = node
+                    break
 
 # if __name__ == '__main__':
 # from traitsui.api import TreeNode, Handler
 # from pychron.core.ui.tree_editor import TreeEditor
 # from pyface.action.menu_manager import MenuManager
 # from pychron.pipeline.nodes.base import BaseNode
-#     from traitsui.menu import Action
-#     from pychron.envisage.resources import icon
+# from traitsui.menu import Action
+# from pychron.envisage.resources import icon
 #     from pychron.core.helpers.logger_setup import logging_setup
 #
 #     logging_setup('pipeline')

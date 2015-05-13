@@ -36,6 +36,15 @@ class BaseNode(HasTraits):
     def configure(self):
         raise NotImplementedError
 
+    def to_template(self):
+        d = {'klass': self.__class__.__name__}
+        self._to_template(d)
+
+        return d
+
+    def _to_template(self, d):
+        pass
+        # return []
 # ============= EOF =============================================
 
 

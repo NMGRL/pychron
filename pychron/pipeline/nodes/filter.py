@@ -30,7 +30,6 @@ class PipelineFilter(HasTraits):
     criterion = Str
     attributes = ('uage', 'aliquot', 'step')
 
-
     def evaluate(self, item):
         attr = self.attribute
         comp = self.comparator
@@ -81,16 +80,6 @@ class FilterNode(BaseNode):
                     return False
             else:
                 return True
-                # for attr, comp, crit in self.filters:
-                # val = getattr(item, attr)
-                # if comp in ('<','>','<=','>=','!='):
-                #
-                # test = eval('{}{}{}'.format(attr, comp, crit), {attr: val})
-                # print test, val, '{}{}{}'.format(attr, comp, crit)
-                #         if test:
-                #             return False
-                # else:
-                #     return True
 
         return func
 
@@ -104,6 +93,9 @@ class FilterNode(BaseNode):
     def _get_name(self):
         return 'Filter ({})'.format(','.join((fi.to_string() for fi in self.filters)))
 
+    def _to_template(self, d):
+        vs = [fi.to_string() for fi in self.filters] * 3
+        d['filters'] = vs
 # ============= EOF =============================================
 
 

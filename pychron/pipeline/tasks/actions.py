@@ -21,6 +21,11 @@ from pyface.tasks.action.task_action import TaskAction
 from pychron.envisage.resources import icon
 
 
+class SavePipelineTemplateAction(TaskAction):
+    name = 'Save Pipeline Template'
+    method = 'save_pipeline_template'
+
+
 class RunAction(TaskAction):
     name = 'Run'
     method = 'run'

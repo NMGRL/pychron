@@ -32,6 +32,14 @@ class FigureNode(BaseNode):
         editor.set_name()
         editor.rebuild()
         self.editor = editor
+        cnt = 1
+        oname = editor.name
+        for e in state.editors:
+            if e.name == editor.name:
+                editor.name = '{} {:02n}'.format(oname, cnt)
+                cnt += 1
+
+        self.name = editor.name
         state.editors.append(editor)
 
     def configure(self):

@@ -33,8 +33,9 @@ from pychron.core.helpers.formatting import floatfmt
 from pychron.core.ui.tree_editor import TreeEditor
 from pychron.envisage.resources import icon
 from pychron.pipeline.engine import Pipeline
+from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.nodes.data import DataNode
-from pychron.pipeline.nodes.figure import FigureNode, IdeogramNode
+from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode
 from pychron.pipeline.nodes.filter import FilterNode
 
 
@@ -93,6 +94,10 @@ class IdeogramTreeNode(_TreeNode):
     icon_name = 'histogram'
 
 
+class SpectrumTreeNode(_TreeNode):
+    icon_name = ''
+
+
 class PipelinePane(TraitsDockPane):
     name = 'Pipeline'
     id = 'pychron.pipeline.pane'
@@ -110,6 +115,26 @@ class PipelinePane(TraitsDockPane):
                 Action(name='Delete', action='delete_node'),
                 *actions)
 
+        def add_menu_factory():
+            return MenuManager(
+                Action(name='Add Analyses',
+                       action='add_analyses'),
+                Action(name='Add Filter',
+                       action='add_filter'),
+                Action(name='Add Ideogram',
+                       action='add_ideogram'),
+                Action(name='Add Spectrum'),
+                name='Add')
+
+        def data_menu_factory():
+            return menu_factory(add_menu_factory())
+
+        def filter_menu_factory():
+            return menu_factory(add_menu_factory())
+
+        def figure_menu_factory():
+            return menu_factory(add_menu_factory())
+
         nodes = [TreeNode(node_for=[Pipeline],
                           children='nodes',
                           icon_open='',
@@ -118,38 +143,28 @@ class PipelinePane(TraitsDockPane):
                           menu=MenuManager(Action(name='Add Data',
                                                   action='add_data'))),
                  DataTreeNode(node_for=[DataNode],
-                              menu=menu_factory(
-                                  MenuManager(
-                                      Action(name='Add Analyses',
-                                             action='add_analyses'),
-                                      Action(name='Add Filter',
-                                             action='add_filter'),
-                                      Action(name='Add Ideogram',
-                                             action='add_ideogram'),
-                                      name='Add', )
-                              ),
+                              menu=data_menu_factory(),
                               label='name'),
                  FilterTreeNode(node_for=[FilterNode],
-                                menu=menu_factory(),
+                                menu=filter_menu_factory(),
                                 label='name'),
                  IdeogramTreeNode(node_for=[IdeogramNode],
-                                  menu=menu_factory(),
+                                  menu=figure_menu_factory(),
                                   label='name'),
-
-                 TreeNode(node_for=[FigureNode],
-                          menu=menu_factory(),
-                          label='name')
-                 ]
+                 SpectrumTreeNode(node_for=[SpectrumNode],
+                                  menu=figure_menu_factory(),
+                                  label='name'),
+                 TreeNode(node_for=[BaseNode],
+                          label='name')]
 
         editor = TreeEditor(nodes=nodes,
                             editable=False,
-                            selection_mode='extended',
+                            # selection_mode='extended',
                             selected='selected',
                             dclick='dclicked',
                             show_disabled=True,
                             refresh_all_icons='refresh_all_needed',
-                            refresh_icons='refresh_needed'
-                            )
+                            update='refresh_needed')
         v = View(UItem('pipeline',
                        editor=editor),
                  handler=PipelineHandler())
@@ -247,7 +262,7 @@ class AnalysesPane(TraitsDockPane):
                                                    editable=False))))
         return v
 
-# ============= EOF =============================================
+        # ============= EOF =============================================
 
 
 

@@ -30,6 +30,7 @@ class SimpleEditor(_SimpleEditor):
     refresh_all_icons = Event
     collapse_all = Event
     expand_all = Event
+    update = Event
 
     def _collapse_all_fired(self):
         ctrl = self.control
@@ -59,6 +60,9 @@ class SimpleEditor(_SimpleEditor):
                 self._update_icon(item)
             except AttributeError:
                 pass
+
+    def _update_fired(self):
+        self.update_editor()
 
     def _refresh_all_icons_fired(self):
         ctrl = self.control
@@ -92,6 +96,7 @@ class SimpleEditor(_SimpleEditor):
         self.sync_value(self.factory.refresh_all_icons, 'refresh_all_icons', 'from')
         self.sync_value(self.factory.collapse_all, 'collapse_all', 'from')
         self.sync_value(self.factory.expand_all, 'expand_all', 'from')
+        self.sync_value(self.factory.update, 'update', 'from')
 
     def _get_icon(self, node, obj, is_expanded=False):
         if not self.factory.show_disabled and not obj.enabled:
@@ -105,6 +110,7 @@ class TreeEditor(_TreeEditor):
     show_disabled = Bool
     collapse_all = Str
     expand_all = Str
+    update = Str
 
     def _get_simple_editor_class(self):
         """
