@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 
-from traits.api import Any
+from traits.api import Any, List
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -35,6 +35,7 @@ class FigureEditor(GraphEditor):
     # annotation_tool = Any
     figure_model = Any
     figure_container = Any
+    analysis_groups = List
 
     # tag = Event
     # save_db_figure = Event
@@ -71,6 +72,7 @@ class FigureEditor(GraphEditor):
             self.figure_model = model
 
         model.trait_set(plot_options=self.plotter_options,
+                        analysis_groups=self.analysis_groups,
                         # titles=self.titles,
                         analyses=self.analyses)
 

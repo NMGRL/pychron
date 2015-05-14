@@ -15,11 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+
 from traits.api import HasTraits, Str, Instance, List, Event, Bool
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 import yaml
-from pychron.core.helpers.filetools import list_directory2
+from pychron.core.helpers.filetools import list_directory2, add_extension
 from pychron.paths import paths
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode
@@ -47,6 +50,7 @@ class Pipeline(HasTraits):
 
 class PipelineEngine(Loggable):
     dvc = Instance('pychron.dvc.dvc.DVC')
+    browser_model = Instance('pychron.envisage.browser.base_browser_model.BaseBrowserModel')
     pipeline = Instance(Pipeline, ())
     selected = Instance(BaseNode)
 
@@ -87,6 +91,10 @@ class PipelineEngine(Loggable):
     def remove_node(self, node):
         self.pipeline.nodes.remove(node)
         self.run_needed = True
+
+    def set_template(self, name):
+        self._set_template(name)
+
 
     # def add_analyses(self, node):
     # """
@@ -230,6 +238,16 @@ class PipelineEngine(Loggable):
                     break
 
     # private
+    def _set_template(self, name):
+        path = os.path.join(paths.pipeline_template_dir, add_extension(name, '.yaml'))
+        if not os.path.isfile(path):
+            self.warning('Invalid template name. {} does not exist'.format(path))
+            return
+
+        pt = PipelineTemplate(name, path)
+        pt.render(self.pipeline, self.browser_model, self.dvc)
+
+
     def _load_predefined_templates(self):
         templates = []
         for temp in list_directory2(paths.pipeline_template_dir, extension='.yaml',
@@ -258,7 +276,8 @@ class PipelineEngine(Loggable):
     def _selected_pipeline_template_changed(self, new):
         if new:
             self.debug('Pipeline template {} selected'.format(new))
-            pt = PipelineTemplate(new)
+            self._set_template(new)
+            # pt = PipelineTemplate(new)
 
     def _selected_changed(self, new):
         self.show_group_colors = False

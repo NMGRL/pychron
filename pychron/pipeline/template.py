@@ -15,21 +15,43 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import os
 
 from traits.api import HasTraits
 
 # ============= standard library imports ========================
+import yaml
 # ============= local library imports  ==========================
-from pychron.core.helpers.filetools import add_extension
-from pychron.paths import paths
+from pychron.pipeline.nodes.data import DataNode
 
 
 class PipelineTemplate(HasTraits):
-    def __init__(self, name, *args, **kw):
+    def __init__(self, name, path, *args, **kw):
         super(PipelineTemplate, self).__init__(*args, **kw)
 
-        path = os.path.join(paths.pipeline_template_dir, add_extension(name, '.yaml'))
+        self.name = name
+        self.path = path
+
+    def render(self, pipeline, bmodel, dvc):
+
+        # clear
+        pipeline.nodes = []
+
+        with open(self.path, 'r') as rfile:
+            nodes = yaml.load(rfile)
+
+        for ni in nodes:
+            klass = ni['klass']
+            node = self._node_factory(klass, ni)
+            if isinstance(node, DataNode):
+                node.trait_set(browser_model=bmodel, dvc=dvc)
+
+            pipeline.nodes.append(node)
+
+    def _node_factory(self, klass, ni):
+        mod = __import__('pychron.pipeline.nodes', fromlist=[klass])
+        node = getattr(mod, klass)()
+        node.load(ni)
+        return node
 
 # ============= EOF =============================================
 

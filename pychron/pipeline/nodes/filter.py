@@ -18,10 +18,13 @@
 from traits.api import HasTraits, Str, Property, List, Enum, Button
 from traitsui.api import View, UItem, HGroup, EnumEditor, InstanceEditor
 # ============= standard library imports ========================
+import re
 # ============= local library imports  ==========================
 from traitsui.editors import ListEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.pipeline.nodes.base import BaseNode
+
+COMP_RE = re.compile(r'<=|>=|>|<|==')
 
 
 class PipelineFilter(HasTraits):
@@ -29,6 +32,11 @@ class PipelineFilter(HasTraits):
     comparator = Enum('<', '>', '<=', '>=', '!=')
     criterion = Str
     attributes = ('uage', 'aliquot', 'step')
+
+    def __init__(self, txt=None, *args, **kw):
+        super(PipelineFilter, self).__init__(*args, **kw)
+        if txt:
+            self.parse_string(txt)
 
     def evaluate(self, item):
         attr = self.attribute
@@ -45,12 +53,29 @@ class PipelineFilter(HasTraits):
     def to_string(self):
         return '{}{}{}'.format(self.attribute, self.comparator, self.criterion)
 
+    def parse_string(self, s):
+        c = COMP_RE.findall(s)[0]
+        a, b = s.split(c)
+
+        print s
+        print a
+        print c
+        print b
+
+        self.attribute = a
+        self.comparator = c
+        self.criterion = b
+
 
 class FilterNode(BaseNode):
     name = Property(depends_on='filters')
     analysis_kind = 'unknowns'
     filters = List
     add_filter_button = Button
+
+    def load(self, nodedict):
+        fs = [PipelineFilter(fi) for fi in nodedict['filters']]
+        self.filters = fs
 
     def _filters_default(self):
         return [PipelineFilter()]

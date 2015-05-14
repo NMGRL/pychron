@@ -62,8 +62,11 @@ class PipelineTask(BaseBrowserTask):
         self.run()
 
     def _debug(self):
-        self.engine.add_data()
-        self.engine.select_default()
+
+        self.engine.set_template('test2')
+        # self.engine.add_data()
+        # self.engine.select_default()
+        # self.engine.add_is
         # self.engine.add_grouping(run=False)
         # self.engine.add_test_filter()
         # self.engine.add_ideogram(run=False)
@@ -88,7 +91,7 @@ class PipelineTask(BaseBrowserTask):
     def save_pipeline_template(self):
         # path = self.save_file_dialog()
         # path = '/Users/ross/Sandbox/template.yaml'
-        path = os.path.join(paths.pipeline_template_dir, 'teest.yaml')
+        path = os.path.join(paths.pipeline_template_dir, 'test.yaml')
         if path:
             self.engine.save_pipeline_template(path)
 

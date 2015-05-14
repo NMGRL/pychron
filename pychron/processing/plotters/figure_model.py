@@ -31,6 +31,7 @@ class FigureModel(HasTraits):
     titles = List
 
     layout = Instance(FigureLayout, ())
+    analysis_groups = List
 
     def refresh(self):
         for p in self.panels:
@@ -59,12 +60,17 @@ class FigureModel(HasTraits):
         self.panel_gen = (gi for gi in self.panels)
 
     def _make_panels(self):
-        key = lambda x: x.graph_id
-        ans = sorted(self.analyses, key=key)
-        gs = [self._panel_klass(analyses=list(ais),
-                                plot_options=self.plot_options,
-                                graph_id=gid)
-              for gid, ais in groupby(ans, key=key)]
+        if self.analysis_groups:
+            gs = [self._panel_klass(analyses=ag, plot_options=self.plot_options, graph_id=gid) for gid, ag in
+                  enumerate(self.analysis_groups)]
+
+        else:
+            key = lambda x: x.graph_id
+            ans = sorted(self.analyses, key=key)
+            gs = [self._panel_klass(analyses=list(ais),
+                                    plot_options=self.plot_options,
+                                    graph_id=gid)
+                  for gid, ais in groupby(ans, key=key)]
 
         if self.titles:
             for ti, gi in zip(self.titles, gs):

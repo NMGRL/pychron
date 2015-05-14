@@ -25,6 +25,9 @@ class BaseNode(HasTraits):
     name = 'Base'
     enabled = Bool(True)
 
+    def load(self, nodedict):
+        pass
+
     def enable(self):
         self.enabled = True
 

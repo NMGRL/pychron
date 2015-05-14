@@ -18,6 +18,12 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode
+from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, SeriesNode
+from pychron.pipeline.nodes.fit import IsotopeEvolutionNode
+from pychron.pipeline.nodes.persist import DVCPersistNode, PDFFigureNode
+from pychron.pipeline.nodes.grouping import GroupingNode
+from pychron.pipeline.nodes.filter import FilterNode
 
 # ============= EOF =============================================
 

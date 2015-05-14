@@ -36,8 +36,10 @@ class IsotopeEvolutionNode(FigureNode):
     def run(self, state):
         state.saveable_keys = self.plotter_options.get_saveable_plots()
 
+        # graph_ids = [(ai.uuid, idx) for idx, ai in enumerate(state.unknowns)]
+
         for idx, ai in enumerate(state.unknowns):
-            ai.graph_id = idx
+            # ai.graph_id = idx
             po = self.plotter_options
 
             keys = [pi.name for pi in po.get_aux_plots()]
@@ -48,6 +50,9 @@ class IsotopeEvolutionNode(FigureNode):
 
         super(IsotopeEvolutionNode, self).run(state)
 
+        self.editor.analysis_groups = [(ai,) for ai in state.unknowns]
+        for ai in state.unknowns:
+            ai.graph_id = 0
 
     def post_run(self, state):
         return
