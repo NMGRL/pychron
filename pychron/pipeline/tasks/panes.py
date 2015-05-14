@@ -37,9 +37,9 @@ from pychron.pipeline.nodes.data import DataNode
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, SeriesNode
 from pychron.pipeline.nodes.filter import FilterNode
 from pychron.pipeline.nodes.grouping import GroupingNode
-from pychron.pipeline.nodes.persist import PDFNode
+from pychron.pipeline.nodes.persist import PDFNode, DVCPersistNode
 from pychron.pipeline.tasks.tree_node import SeriesTreeNode, PDFTreeNode, GroupingTreeNode, SpectrumTreeNode, \
-    IdeogramTreeNode, FilterTreeNode, DataTreeNode
+    IdeogramTreeNode, FilterTreeNode, DataTreeNode, DBSaveTreeNode
 
 
 def node_adder(func):
@@ -71,6 +71,10 @@ class PipelineHandler(Handler):
 
     @node_adder
     def add_pdf_figure(self, info, obj):
+        pass
+
+    @node_adder
+    def add_iso_evo_persist(self, info, obj):
         pass
 
     @node_adder
@@ -164,6 +168,8 @@ class PipelinePane(TraitsDockPane):
         def save_menu_factory():
             return MenuManager(Action(name='Save PDF Figure',
                                       action='add_pdf_figure'),
+                               Action(name='Save Iso Evo',
+                                      action='add_iso_evo_persist'),
                                name='Save')
 
         def data_menu_factory():
@@ -191,6 +197,7 @@ class PipelinePane(TraitsDockPane):
                  SeriesTreeNode(node_for=[SeriesNode], menu=figure_menu_factory()),
                  PDFTreeNode(node_for=[PDFNode], menu=menu_factory()),
                  GroupingTreeNode(node_for=[GroupingNode], menu=data_menu_factory()),
+                 DBSaveTreeNode(node_for=[DVCPersistNode], menu=data_menu_factory()),
                  TreeNode(node_for=[BaseNode], label='name')]
 
         editor = TreeEditor(nodes=nodes,

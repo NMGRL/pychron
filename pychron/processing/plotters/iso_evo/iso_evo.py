@@ -21,24 +21,29 @@ from pychron.processing.plotters.arar_figure import BaseArArFigure
 
 
 class IsoEvo(BaseArArFigure):
-    pass
-    # def build(self, plots):
-    # print 'build',plots
-    #
-    def plot(self, plots, legend):
-        for p in plots:
-            self._plot(p)
+    ytitle = ''
 
-    def _plot(self, p):
+    def plot(self, plots, legend):
+        for i, p in enumerate(plots):
+            self._plot(i, p)
+
+    def _plot(self, i, p):
         ai = self.analyses[0]
         name = p.name
         try:
-            xs = ai.isotopes[name].xs
-            ys = ai.isotopes[name].ys
+            iso = ai.isotopes[name]
+            xs = iso.xs
+            ys = iso.ys
 
-            self.graph.new_series(xs, ys, type='scatter')
-        except KeyError:
-            pass
+            self.graph.new_series(xs, ys,
+                                  marker=p.marker,
+                                  marker_size=p.marker_size,
+                                  type='scatter',
+                                  plotid=i,
+                                  fit=iso.fit
+                                  )
+        except KeyError, e:
+            print 'asdfasd', ai.record_id, e
             # self.graph.new_series([1,2,3,4], [1,2,3,40])
 
             # def post_make(self):

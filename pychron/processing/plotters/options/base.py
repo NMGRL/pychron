@@ -47,10 +47,10 @@ class BasePlotterOptions(HasTraits):
     plot_bgcolor = Color
     plot_spacing = Range(0, 50)
 
-    padding_left = Int(100, enter_set=True, auto_set=False)
-    padding_right = Int(100, enter_set=True, auto_set=False)
-    padding_top = Int(100, enter_set=True, auto_set=False)
-    padding_bottom = Int(100, enter_set=True, auto_set=False)
+    padding_left = Int(100)  # , enter_set=True, auto_set=False)
+    padding_right = Int(100)  # , enter_set=True, auto_set=False)
+    padding_top = Int(100)  # , enter_set=True, auto_set=False)
+    padding_bottom = Int(100)  # , enter_set=True, auto_set=False)
     index_attr = Str
 
     def __init__(self, root, clean=False, *args, **kw):
@@ -149,7 +149,7 @@ class BasePlotterOptions(HasTraits):
             d = dict()
             attrs = self._get_dump_attrs()
             for t in attrs:
-                d[t] = v = getattr(self, t)
+                d[t] = getattr(self, t)
 
             try:
                 pickle.dump(d, wfile)

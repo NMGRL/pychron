@@ -107,14 +107,14 @@ class BaseArArFigure(HasTraits):
 
             if i == (len(plots) - 1):
                 kw['title'] = title
-            if i == 0:
+
+            if i == 0 and self.ytitle:
                 kw['ytitle'] = self.ytitle
 
             if not po.ytitle_visible:
                 kw['ytitle'] = ''
 
             p = graph.new_plot(**kw)
-
             # set a tag for easy identification
             p.y_axis.tag = po.name
             self._setup_plot(i, p, po)

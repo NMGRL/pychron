@@ -61,6 +61,14 @@ class DVC(Loggable):
         self.db.connect()
         self._defaults()
 
+    # analysis processing
+    def save_fits(self, ai, keys):
+        ai.dump_fits(keys)
+
+        # commit to repo
+        # push
+
+
     def make_analyses(self, records):
         records = map(self._make_record, records)
         return records

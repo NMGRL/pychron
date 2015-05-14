@@ -60,6 +60,10 @@ class PDFTreeNode(_TreeNode):
 class GroupingTreeNode(_TreeNode):
     pass
 
+
+class DBSaveTreeNode(_TreeNode):
+    icon_name = 'database_save'
+
 # ============= EOF =============================================
 
 

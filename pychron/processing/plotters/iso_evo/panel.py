@@ -17,13 +17,14 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.processing.analysis_graph import AnalysisStackedRegressionGraph
 from pychron.processing.plotters.figure_panel import FigurePanel
 from pychron.processing.plotters.iso_evo.iso_evo import IsoEvo
 
 
 class IsoEvoPanel(FigurePanel):
     _figure_klass = IsoEvo
-
+    graph_klass = AnalysisStackedRegressionGraph
 # ============= EOF =============================================
 
 

@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str
+from traits.api import Str, Instance
 from traitsui.api import Item
 # ============= standard library imports ========================
 import os
@@ -57,6 +57,21 @@ class PDFFigureNode(PDFNode):
             if hasattr(ei, 'save_file'):
                 print 'save file to', self._generate_path(ei)
                 ei.save_file(self._generate_path(ei))
+
+
+class DVCPersistNode(PersistNode):
+    dvc = Instance('pychron.dvc.dvc.DVC')
+
+
+class IsotopeEvolutionPersistNode(DVCPersistNode):
+    name = 'Iso Evo'
+
+    def configure(self):
+        return True
+
+    def run(self, state):
+        for ai in state.unknowns:
+            self.dvc.save_fits(ai, state.saveable_keys)
 
 
 # ============= EOF =============================================

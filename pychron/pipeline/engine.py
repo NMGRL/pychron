@@ -28,7 +28,7 @@ from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, FigureNode
 from pychron.pipeline.nodes.filter import FilterNode
 from pychron.pipeline.nodes.fit import IsotopeEvolutionNode
 from pychron.pipeline.nodes.grouping import GroupingNode
-from pychron.pipeline.nodes.persist import PDFFigureNode
+from pychron.pipeline.nodes.persist import PDFFigureNode, IsotopeEvolutionPersistNode
 from pychron.pipeline.template import PipelineTemplate
 
 
@@ -92,7 +92,7 @@ class PipelineEngine(Loggable):
     # """
     # add analyses to node
     #
-    #     select analyses from popup browser
+    # select analyses from popup browser
     #     :param node:
     #     :return:
     #     """
@@ -166,10 +166,23 @@ class PipelineEngine(Loggable):
 
     # fits
     def add_isotope_evolution(self, node=None, run=True):
-        newnode = IsotopeEvolutionNode()
-        self._add_node(node, newnode, run=run)
+        new = IsotopeEvolutionNode()
+        # self._add_node(node, newnode, run=run)
+        if new.configure():
+            node = self._get_last_node(node)
+
+            self.pipeline.add_after(node, new)
+            if new.use_save_node:
+                self.add_iso_evo_persist(new, run=False)
+
+            if run:
+                self.run_needed = new
 
     # save
+    def add_iso_evo_persist(self, node=None, run=True):
+        new = IsotopeEvolutionPersistNode(dvc=self.dvc)
+        self._add_node(node, new, run)
+
     def add_pdf_figure(self, node=None, run=True):
         newnode = PDFFigureNode(root='/Users/ross/Sandbox')
         self._add_node(node, newnode, run=run)
@@ -268,7 +281,7 @@ class PipelineEngine(Loggable):
 # from pychron.core.helpers.logger_setup import logging_setup
 #
 # logging_setup('pipeline')
-#     class PipelineHandler(Handler):
+# class PipelineHandler(Handler):
 #         def add_data(self, info, obj):
 #             info.object.add_data()
 #

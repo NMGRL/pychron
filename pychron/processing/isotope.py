@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Float, Property, Instance, \
-    Array, String, Either, Dict, cached_property, Event, List, Bool, Int
+    String, Either, Dict, cached_property, Event, List, Bool, Int
 # ============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
 from numpy import array, Inf, polyfit
@@ -106,24 +106,24 @@ class BaseMeasurement(HasTraits):
             return self._n
 
     def _set_n(self, v):
-        self._n=v
+        self._n = v
 
     def _get_offset_xs(self):
         return self.xs - self.time_zero_offset
 
     def get_slope(self, n):
-        if len(self.xs) and len(self.ys) and len(self.xs)==len(self.ys):
-            xs=self.xs
-            ys=self.ys
-            if n!=-1:
-                xs=xs[-n:]
-                ys=ys[-n:]
+        if len(self.xs) and len(self.ys) and len(self.xs) == len(self.ys):
+            xs = self.xs
+            ys = self.ys
+            if n != -1:
+                xs = xs[-n:]
+                ys = ys[-n:]
 
             return polyfit(xs, ys, 1)[0]
 
 
 class IsotopicMeasurement(BaseMeasurement):
-    uvalue = Property(depends_on='dirty')  #depends_on='value, error, _value, _error, dirty')
+    uvalue = Property(depends_on='dirty')  # depends_on='value, error, _value, _error, dirty')
 
     # value = Property(depends_on='_value, dirty')
     # error = Property(depends_on='_error, dirty')
@@ -156,7 +156,7 @@ class IsotopicMeasurement(BaseMeasurement):
 
     # __slots__ = ['_fit', '_value', '_error', 'filter_outliers_dict',
     # 'include_baseline_error',
-    #              '_ovalue', '_oerror',
+    # '_ovalue', '_oerror',
     #              'include_baseline_error', 'use_static',
     #              'user_defined_value',
     #              'user_defined_error', 'fit_blocks', 'error_type']
@@ -232,16 +232,17 @@ class IsotopicMeasurement(BaseMeasurement):
                         return f
 
     def set_filter_outliers_dict(self, filter_outliers=True, iterations=1, std_devs=2, notify=True):
-        self.filter_outliers_dict={'filter_outliers':filter_outliers,
-                                   'iterations':iterations,
-                                   'std_devs':std_devs}
-        self.dirty=notify
+        self.filter_outliers_dict = {'filter_outliers': filter_outliers,
+                                     'iterations': iterations,
+                                     'std_devs': std_devs}
+        self.dirty = notify
 
     def set_fit(self, fit, notify=True):
         if fit is not None:
             if isinstance(fit, (int, str)):
                 self.trait_set(fit=fit, trait_change_notify=notify)
             else:
+
                 self.filter_outliers_dict = dict(filter_outliers=bool(fit.filter_outliers),
                                                  iterations=int(fit.filter_outlier_iterations or 0),
                                                  std_devs=int(fit.filter_outlier_std_devs or 0))
@@ -251,6 +252,10 @@ class IsotopicMeasurement(BaseMeasurement):
                                error_type=fit.error_type or 'SEM',
                                trait_change_notify=notify)
                 self.include_baseline_error = fit.include_baseline_error or False
+
+                # self._value = 0
+                # self._error = 0
+                # self.dirty = True
 
     def set_uvalue(self, v, dirty=True):
         if isinstance(v, tuple):
@@ -288,20 +293,21 @@ class IsotopicMeasurement(BaseMeasurement):
     def _get_value(self):
         # if not (self.name.endswith('bs') or self.name.endswith('bk')):
         #     print self.name, self.use_static,self.user_defined_value
-
-        if self.use_static and self._value is not None:
+        print 'get value', self.name, self.use_static, self._value, self.user_defined_value
+        if self.use_static and self._value:
             return self._value
         elif self.user_defined_value:
             return self._value
 
         if len(self.xs) > 1:
             v = self.regressor.predict(0)
+            print 'using regressor', self.regressor, v
             return v
         else:
             return self._value
 
     def _get_error(self):
-        if self.use_static and self._error is not None:
+        if self.use_static and self._error:
             return self._error
         elif self.user_defined_error:
             return self._error
@@ -452,7 +458,7 @@ class Isotope(BaseIsotope):
 
     # __slots__ = ['interference_corrected_value',
     # 'discrimination', 'ic_factor',
-    #              'sniff', 'blank', 'background'
+    # 'sniff', 'blank', 'background'
     #                                'age_error_component']
 
     def get_filtered_data(self):

@@ -246,9 +246,9 @@ class FigurePlotterOptions(BasePlotterOptions):
                 except KeyError, e:
                     print d, attr
 
-    @on_trait_change('use_xgrid, use_ygrid, padding+, bgcolor, plot_bgcolor')
-    def _refresh_handler(self):
-        self.refresh_plot_needed = True
+    # @on_trait_change('use_xgrid, use_ygrid, padding+, bgcolor, plot_bgcolor')
+    # def _refresh_handler(self):
+    # self.refresh_plot_needed = True
 
 
     @on_trait_change('aux_plots:name')

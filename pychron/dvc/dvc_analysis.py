@@ -66,10 +66,6 @@ class DVCAnalysis(Analysis):
                         iso.unpack_data(base64.b64decode(isos[k]['signal']))
                         iso.baseline.unpack_data(base64.b64decode(isos[k]['baseline']))
 
-    # def _unpack(self, isotope):
-    # xs,ys = []
-    #     return
-
     def set_chronology(self, chron):
         analts = self.rundate
 
@@ -92,6 +88,36 @@ class DVCAnalysis(Analysis):
         self.uage = ufloat(age, age_err)
         # self.uage_wo_j_err = ufloat(age, age_err_wo_j)
 
+    def set_fits(self, fitobjs):
+        isos = self.isotopes
+        for fi in fitobjs:
+            try:
+                iso = isos[fi.name]
+            except KeyError:
+                continue
+
+            iso.set_fit(fi)
+
+    def dump_fits(self, keys):
+        with open(self.path, 'r') as rfile:
+            yd = yaml.load(rfile)
+
+        sisos = self.isotopes
+        isos = yd['isotopes']
+        for k in keys:
+            if k in isos and k in sisos:
+                iso = isos[k]
+                siso = sisos[k]
+                iso['fit'] = siso.fit
+
+                # value, error = siso.get_intercept()
+                # print k, siso.value
+                iso['raw_intercept']['value'] = float(siso.value)
+                iso['raw_intercept']['error'] = float(siso.error)
+
+        self._dump(yd)
+
+    # private
     def _set_isotopes(self, yd):
         isos = yd.get('isotopes')
         if not isos:
@@ -100,8 +126,14 @@ class DVCAnalysis(Analysis):
         for k, v in isos.items():
             # bsc = v['baseline_corrected']
             raw = v['raw_intercept']
-            self.isotopes[k] = Isotope(name=k, value=raw['value'], error=raw['error'])
+            self.isotopes[k] = Isotope(name=k, _value=raw['value'], _error=raw['error'])
 
+    def _dump(self, obj, path=None):
+        if path is None:
+            path = self.path
+
+        with open(path, 'w') as wfile:
+            yaml.dump(obj, wfile, default_flow_style=False)
 # ============= EOF =============================================
 
 

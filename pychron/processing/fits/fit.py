@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Bool, Property, List
+from traits.api import HasTraits, Str, Bool, Property, List, Int
 from traitsui.api import View, HGroup, UItem, EnumEditor
 
 # ============= standard library imports ========================
@@ -61,11 +61,28 @@ class Fit(HasTraits):
             UItem('fit',
                   editor=EnumEditor(name='fit_types'),
                   enabled_when='show',
-                  width=-50,
-            ),
-            UItem('use'),
-        )
-        )
+                  width=-50, ),
+            UItem('use')))
         return v
 
-        # ============= EOF =============================================
+
+class FilterFit(Fit):
+    filter_outliers = Bool
+    filter_outlier_iterations = Int
+    filter_outlier_std_devs = Int
+    truncate = Str
+    include_baseline_error = Bool
+
+    def _filter_outliers_changed(self):
+        if self.filter_outliers:
+            if not self.filter_outlier_iterations:
+                self.filter_outlier_iterations = 1
+            if not self.filter_outlier_std_devs:
+                self.filter_outlier_std_devs = 2
+
+
+class IsoFilterFit(FilterFit):
+    use_sniff = Bool
+    time_zero_offset = Int(0)
+
+# ============= EOF =============================================

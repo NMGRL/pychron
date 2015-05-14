@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import Bool
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.pipeline.nodes.figure import FigureNode
@@ -30,9 +31,10 @@ class IsotopeEvolutionNode(FigureNode):
     editor_klass = IsotopeEvolutionEditor
     plotter_options_manager_klass = IsotopeEvolutionOptionsManager
 
+    use_save_node = Bool(True)
+
     def run(self, state):
-        # selector = IsoEvoFitSelector()
-        # selector.load_fits()
+        state.saveable_keys = self.plotter_options.get_saveable_plots()
 
         for idx, ai in enumerate(state.unknowns):
             ai.graph_id = idx
@@ -40,6 +42,9 @@ class IsotopeEvolutionNode(FigureNode):
 
             keys = [pi.name for pi in po.get_aux_plots()]
             ai.load_raw_data(keys)
+
+            fits = [pi for pi in po.get_aux_plots()]
+            ai.set_fits(fits)
 
         super(IsotopeEvolutionNode, self).run(state)
 
