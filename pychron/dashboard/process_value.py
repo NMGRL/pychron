@@ -43,6 +43,9 @@ class ProcessValue(HasTraits):
     conditionals = List(DashboardConditional)
     flag = Enum(NOERROR, WARNING, CRITICAL)
 
+    path = Str
+    record = Bool(False)
+
     def is_different(self, v):
         ret = None
         ct = time.time()

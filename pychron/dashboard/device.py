@@ -23,11 +23,13 @@ import struct
 import time
 import yaml
 # ============= local library imports  ==========================
+from pychron.core.helpers.filetools import unique_path2
 from pychron.dashboard.conditional import DashboardConditional
 from pychron.dashboard.process_value import ProcessValue
 from pychron.graph.stream_graph import StreamStackedGraph
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.loggable import Loggable
+from pychron.paths import paths
 
 
 class DashboardDevice(Loggable):
@@ -61,6 +63,7 @@ class DashboardDevice(Loggable):
             g.new_plot()
             g.new_series(plotid=i)
             g.set_y_title(vi.name, plotid=i)
+            g.set_scan_width(24*60*60, plotid=i)
 
     def trigger(self):
         """
@@ -93,7 +96,7 @@ class DashboardDevice(Loggable):
             self.debug(traceback.format_exc())
             value.use_pv = False
 
-    def add_value(self, name, tag, func_name, period, enabled, threshold, units, timeout):
+    def add_value(self, name, tag, func_name, period, enabled, threshold, units, timeout, record):
         pv = ProcessValue(name=name,
                           tag=tag,
                           func_name=func_name,
@@ -101,7 +104,8 @@ class DashboardDevice(Loggable):
                           enabled=enabled,
                           timeout=float(timeout),
                           units=units,
-                          change_threshold=threshold)
+                          change_threshold=threshold,
+                          record=record)
 
         if period == 'on_change':
             self.debug('bind to {}'.format(name))
@@ -129,7 +133,21 @@ class DashboardDevice(Loggable):
                 # self.update_value_event = '{} {}'.format(pv.tag, new)
 
             self.graph.record(v, plotid=pv.plotid)
+            if pv.record:
+                self._record(pv, v)
+
             self._check_conditional(pv, new)
+
+    def _record(self, pv, v):
+        path = pv.path
+        if not path:
+            path,_ = unique_path2(paths.device_scan_dir, pv.name)
+            pv.path = path
+            self.info('Saving {} to {}'.format(pv.name, path))
+
+        with open(path, 'a') as wfile:
+            wfile.write('{},{}\n'.format(time.time(), v))
+
 
     def _check_conditional(self, pv, new):
         conds = pv.conditionals

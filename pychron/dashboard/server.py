@@ -156,7 +156,8 @@ class DashboardServer(Loggable):
                         period = 60
 
                 enabled = to_bool(get_xml_value(v, 'enabled', False))
-                timeout = get_xml_value(v, 'timeout', 120)
+                record = to_bool(get_xml_value(v, 'record', False))
+                timeout = get_xml_value(v, 'timeout', 60)
                 threshold = float(get_xml_value(v, 'change_threshold', 1e-10))
                 units = get_xml_value(v, 'units', '')
                 cs = []
@@ -188,7 +189,8 @@ class DashboardServer(Loggable):
                        'enabled': enabled,
                        'threshold': threshold,
                        'units': units,
-                       'timeout': timeout},
+                       'timeout': timeout,
+                       'record': record},
                       cs)
                 vs.append(vd)
 
