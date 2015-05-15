@@ -15,58 +15,37 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traitsui.tree_node import TreeNode
+from traits.api import Float
+from traitsui.api import Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.envisage.resources import icon
+from pychron.pipeline.nodes.base import BaseNode
 
 
-class _TreeNode(TreeNode):
-    icon_name = ''
-    label = 'name'
-
-    def get_icon(self, object, is_expanded):
-        name = self.icon_name
-        if not object.enabled:
-            name = 'cancel'
-
-        return icon(name)
-
-
-class DataTreeNode(_TreeNode):
-    icon_name = 'table'
-
-
-class FilterTreeNode(_TreeNode):
-    icon_name = 'filter'
-
-
-class IdeogramTreeNode(_TreeNode):
-    icon_name = 'histogram'
-
-
-class SpectrumTreeNode(_TreeNode):
-    icon_name = ''
-
-
-class SeriesTreeNode(_TreeNode):
-    icon_name = ''
-
-
-class PDFTreeNode(_TreeNode):
-    icon_name = 'file_pdf'
-
-
-class GroupingTreeNode(_TreeNode):
+class FindNode(BaseNode):
     pass
 
 
-class DBSaveTreeNode(_TreeNode):
-    icon_name = 'database_save'
+class FindBlanksNode(FindNode):
+    name = 'Find Blanks'
+    threshold = Float
 
+    def traits_view(self):
+        v = self._view_factory(Item('threshold',
+                                    tooltip='Maximum difference between blank and unknowns in hours',
+                                    label='Threshold (Hrs)'))
 
-class FindTreeNode(_TreeNode):
-    icon_name = 'find'
+        return v
+
+    def run(self, state):
+        # for ai in state.unknowns:
+        # pass
+        atypes = tuple({ai.analysis_type for ai in state.unknowns})
+        times = sorted((ai.timestamp for ai in state.unknowns))
+
+        refs = self.dvc.find_references(times, atypes)
+        state.references = refs
+
 # ============= EOF =============================================
 
 

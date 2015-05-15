@@ -68,6 +68,8 @@ class DVC(Loggable):
         # commit to repo
         # push
 
+    def find_references(self, times, atypes):
+        return []
 
     def make_analyses(self, records):
         records = map(self._make_record, records)

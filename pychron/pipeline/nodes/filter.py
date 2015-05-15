@@ -121,6 +121,8 @@ class FilterNode(BaseNode):
     def _to_template(self, d):
         vs = [fi.to_string() for fi in self.filters] * 3
         d['filters'] = vs
+
+
 # ============= EOF =============================================
 
 

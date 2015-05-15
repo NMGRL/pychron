@@ -29,6 +29,7 @@ from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode
 from pychron.loggable import Loggable
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, FigureNode, SeriesNode
 from pychron.pipeline.nodes.filter import FilterNode
+from pychron.pipeline.nodes.find import FindBlanksNode
 from pychron.pipeline.nodes.fit import IsotopeEvolutionNode
 from pychron.pipeline.nodes.grouping import GroupingNode
 from pychron.pipeline.nodes.persist import PDFFigureNode, IsotopeEvolutionPersistNode
@@ -114,19 +115,6 @@ class PipelineEngine(Loggable):
     #
     #             self.refresh_analyses()
 
-    def add_data(self, node=None, run=False):
-        """
-
-        add a default data node
-        :return:
-        """
-        self.debug('add data node')
-        # self._add_node()
-        self.pipeline.nodes.append(UnknownNode(name='default',
-                                               dvc=self.dvc,
-                                               browser_model=self.browser_model))
-        self.refresh_analyses()
-
     # debugging
     def select_default(self):
         node = self.pipeline.nodes[0]
@@ -150,6 +138,26 @@ class PipelineEngine(Loggable):
     # ============================================================================================================
     # nodes
     # ============================================================================================================
+    # data
+    def add_data(self, node=None, run=False):
+        """
+
+        add a default data node
+        :return:
+        """
+
+        self.debug('add data node')
+        newnode = UnknownNode(name='default', dvc=self.dvc, browser_model=self.browser_model)
+        node = self._get_last_node(node)
+        self.pipeline.add_after(node, newnode)
+
+        self.refresh_analyses()
+
+    def add_references(self, node=None, run=False):
+        newnode = ReferenceNode(name='references', dvc=self.dvc, browser_model=self.browser_model)
+        node = self._get_last_node(node)
+        self.pipeline.add_after(node, newnode)
+
     # preprocess
     def add_filter(self, node=None, run=True):
         newnode = FilterNode()
@@ -158,6 +166,18 @@ class PipelineEngine(Loggable):
     def add_grouping(self, node=None, run=True):
         newnode = GroupingNode()
         self._add_node(node, newnode, run)
+
+    # find
+    def add_find_blanks(self, node=None, run=True):
+        newnode = FindBlanksNode(dvc=self.dvc)
+        if newnode.configure():
+            node = self._get_last_node(node)
+
+            self.pipeline.add_after(node, newnode)
+            self.add_references(newnode, run=False)
+
+            if run:
+                self.run_needed = newnode
 
     # figures
     def add_spectrum(self, node=None, run=True):

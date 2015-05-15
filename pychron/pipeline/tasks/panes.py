@@ -36,10 +36,11 @@ from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.nodes.data import DataNode
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, SeriesNode
 from pychron.pipeline.nodes.filter import FilterNode
+from pychron.pipeline.nodes.find import FindBlanksNode
 from pychron.pipeline.nodes.grouping import GroupingNode
 from pychron.pipeline.nodes.persist import PDFNode, DVCPersistNode
 from pychron.pipeline.tasks.tree_node import SeriesTreeNode, PDFTreeNode, GroupingTreeNode, SpectrumTreeNode, \
-    IdeogramTreeNode, FilterTreeNode, DataTreeNode, DBSaveTreeNode
+    IdeogramTreeNode, FilterTreeNode, DataTreeNode, DBSaveTreeNode, FindTreeNode
 
 
 def node_adder(func):
@@ -117,6 +118,12 @@ class PipelineHandler(Handler):
     def add_flux(self, info, obj):
         pass
 
+    @node_adder
+    def add_find_blanks(self, info, obj):
+        pass
+
+
+
 
 class PipelinePane(TraitsDockPane):
     name = 'Pipeline'
@@ -172,8 +179,14 @@ class PipelinePane(TraitsDockPane):
                                       action='add_iso_evo_persist'),
                                name='Save')
 
+        def find_menu_factory():
+            return MenuManager(Action(name='Blanks',
+                                      action='add_find_blanks'),
+                               Action(name='Air'),
+                               name='Find')
+
         def data_menu_factory():
-            return menu_factory(add_menu_factory(), fit_menu_factory())
+            return menu_factory(add_menu_factory(), fit_menu_factory(), find_menu_factory())
 
         def filter_menu_factory():
             return menu_factory(add_menu_factory(), fit_menu_factory())
@@ -198,6 +211,7 @@ class PipelinePane(TraitsDockPane):
                  PDFTreeNode(node_for=[PDFNode], menu=menu_factory()),
                  GroupingTreeNode(node_for=[GroupingNode], menu=data_menu_factory()),
                  DBSaveTreeNode(node_for=[DVCPersistNode], menu=data_menu_factory()),
+                 FindTreeNode(node_for=[FindBlanksNode]),
                  TreeNode(node_for=[BaseNode], label='name')]
 
         editor = TreeEditor(nodes=nodes,
