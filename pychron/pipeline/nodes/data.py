@@ -50,11 +50,23 @@ class DataNode(BaseNode):
 
 
 class UnknownNode(DataNode):
+    name = 'Unknowns'
     analysis_kind = 'unknowns'
 
 
 class ReferenceNode(DataNode):
+    name = 'References'
     analysis_kind = 'references'
+
+    def run(self, state):
+        items = getattr(state, self.analysis_kind)
+        if not self.analyses:
+            self.analyses = items
+        else:
+            for ai in self.analyses:
+                ai.group_id = 0
+
+            items.extend(self.analyses)
 
 # ============= local library imports  ==========================
 

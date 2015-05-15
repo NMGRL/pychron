@@ -57,11 +57,6 @@ class PipelineFilter(HasTraits):
         c = COMP_RE.findall(s)[0]
         a, b = s.split(c)
 
-        print s
-        print a
-        print c
-        print b
-
         self.attribute = a
         self.comparator = c
         self.criterion = b

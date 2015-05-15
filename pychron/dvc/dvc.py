@@ -69,7 +69,9 @@ class DVC(Loggable):
         # push
 
     def find_references(self, times, atypes):
-        return []
+        print 'times', times
+        records = self.db.find_references(times, atypes)
+        return self.make_analyses(records)
 
     def make_analyses(self, records):
         records = map(self._make_record, records)

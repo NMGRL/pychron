@@ -73,9 +73,8 @@ class PipelineEngine(Loggable):
         self._load_predefined_templates()
 
     def configure(self, node):
-
         if node.configure():
-            self.run_needed = True
+            self.run_needed = node
 
     def refresh_analyses(self):
         unks = []
@@ -233,18 +232,19 @@ class PipelineEngine(Loggable):
 
         self.debug('pipeline run finished')
 
+        self.refresh_analyses()
         # self.unknowns = state.unknowns
         # self.references = state.references
 
     def post_run(self, state):
-        self.debug('pipeline run started')
+        self.debug('pipeline post run started')
         for idx, node in enumerate(self.pipeline.nodes):
             action = 'skip'
             if node.enabled:
                 action = 'post run'
                 node.post_run(state)
             self.debug('{} node {:02n}: {}'.format(action, idx, node.name))
-        self.debug('pipeline run finished')
+        self.debug('pipeline post run finished')
 
         self.update_needed = True
         self.refresh_table_needed = True
@@ -266,7 +266,6 @@ class PipelineEngine(Loggable):
 
         pt = PipelineTemplate(name, path)
         pt.render(self.pipeline, self.browser_model, self.dvc)
-
 
     def _load_predefined_templates(self):
         templates = []

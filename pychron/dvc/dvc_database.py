@@ -15,9 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from datetime import timedelta
+
 from sqlalchemy.sql.functions import count
+from sqlalchemy.util import OrderedSet
 from traits.api import HasTraits, Str, List
 from traitsui.api import View, Item
+
 # ============= standard library imports ========================
 import os
 from sqlalchemy import not_, func
@@ -102,6 +106,38 @@ class DVCDatabase(DatabaseAdapter):
 
             if not self.get_users():
                 self.add_user('root')
+
+    def find_references(self, times, atypes, hours=10):
+        with self.session_ctx() as sess:
+            # delta = 60 * 60 * hours  # seconds
+            delta = timedelta(hours=hours)
+            refs = OrderedSet()
+            ex = None
+            for ti in times:
+                low = ti - delta
+                high = ti + delta
+                rs = self.get_analyses_data_range(low, high, atypes, exclude=ex)
+                refs.update(rs)
+                ex = [r.idanalysisTbl for r in refs]
+                # print rs
+                # print ti, low, high, rs, refs
+            # print 'refs', refs
+            return [ri.record_view() for ri in refs]
+
+    def get_analyses_data_range(self, low, high, atypes, exclude=None):
+        with self.session_ctx() as sess:
+            q = sess.query(AnalysisTbl)
+            q = q.filter(AnalysisTbl.timestamp >= low.strftime('%Y-%m-%d %H:%M:%S'))
+            q = q.filter(AnalysisTbl.timestamp <= high.strftime('%Y-%m-%d %H:%M:%S'))
+
+            if not isinstance(atypes, (list, tuple)) or len(atypes) == 1:
+                q = q.filter(AnalysisTbl.analysis_type == atypes)
+            else:
+                q = q.filter(AnalysisTbl.analysis_type.in_(atypes))
+
+            if exclude:
+                q = q.filter(not_(AnalysisTbl.idanalysisTbl.in_(exclude)))
+            return self._query_all(q, verbose_query=True)
 
     def add_measured_position(self, position=None, load=None, **kw):
         a = MeasuredPositionTbl(**kw)

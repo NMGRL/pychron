@@ -73,6 +73,10 @@ class AnalysisTbl(Base, BaseMixin):
     def analysis_timestamp(self):
         return self.timestamp
 
+    @property
+    def rundate(self):
+        return self.timestamp
+
     def record_view(self):
         iv = IsotopeRecordView()
         iv.extract_script_name = self.extractionName
@@ -84,7 +88,9 @@ class AnalysisTbl(Base, BaseMixin):
         for tag in ('aliquot', 'increment', 'tag', 'uuid',
                     'extract_value', 'cleanup', 'duration',
                     'mass_spectrometer',
-                    'extract_device', 'analysis_type'):
+                    'extract_device',
+                    'rundate',
+                    'analysis_type'):
             setattr(iv, tag, getattr(self, tag))
 
         if self.irradiation_position.sample:

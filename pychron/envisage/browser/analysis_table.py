@@ -58,7 +58,7 @@ class AnalysisTable(HasTraits):
         self._analysis_filter_parameter_changed(True)
 
     def configure_analysis_table(self):
-        self.table_configurer.edit_traits()
+        self.table_configurer.edit_traits(kind='livemodal')
 
     # handlers
     def _analysis_filter_changed(self, new):

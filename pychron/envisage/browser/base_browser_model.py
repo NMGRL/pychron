@@ -524,6 +524,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         pass
 
     def _selected_projects_changed(self, old, new):
+
         if new and self.project_enabled:
             self._recent_low_post = None
             self._recent_mass_spectrometers = None

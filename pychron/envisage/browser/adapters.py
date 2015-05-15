@@ -82,8 +82,6 @@ class LabnumberAdapter(BrowserAdapter):
     material_width = Int(75)
 
     def get_menu(self, obj, trait, row, column):
-        from pychron.processing.tasks.figures.figure_task import FigureTask
-
         if obj.selected_samples:
             psenabled = obj.current_task_name in ('Ideogram','Spectrum')
             # psenabled = isinstance(obj, FigureTask)
@@ -101,7 +99,7 @@ class LabnumberAdapter(BrowserAdapter):
 class AnalysisAdapter(BrowserAdapter):
     all_columns = [('Run ID', 'record_id'),
                    ('Tag', 'tag'),
-                   ('RunDate','rundate'),
+                   ('RunDate', 'rundate'),
                    ('Iso Fits', 'iso_fit_status'),
                    ('Blank', 'blank_fit_status'),
                    ('IC', 'ic_fit_status'),
@@ -122,6 +120,7 @@ class AnalysisAdapter(BrowserAdapter):
     tag_width = Int(65)
     odd_bg_color = 'lightgray'
     font = 'arial 10'
+
 
     def get_menu(self, obj, trait, row, column):
         e = obj.append_replace_enabled

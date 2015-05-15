@@ -123,8 +123,6 @@ class PipelineHandler(Handler):
         pass
 
 
-
-
 class PipelinePane(TraitsDockPane):
     name = 'Pipeline'
     id = 'pychron.pipeline.pane'
@@ -192,9 +190,7 @@ class PipelinePane(TraitsDockPane):
             return menu_factory(add_menu_factory(), fit_menu_factory())
 
         def figure_menu_factory():
-            return menu_factory(add_menu_factory(),
-                fit_menu_factory(),
-                save_menu_factory())
+            return menu_factory(add_menu_factory(), fit_menu_factory(), save_menu_factory())
 
         nodes = [TreeNode(node_for=[Pipeline],
                           children='nodes',
@@ -211,7 +207,7 @@ class PipelinePane(TraitsDockPane):
                  PDFTreeNode(node_for=[PDFNode], menu=menu_factory()),
                  GroupingTreeNode(node_for=[GroupingNode], menu=data_menu_factory()),
                  DBSaveTreeNode(node_for=[DVCPersistNode], menu=data_menu_factory()),
-                 FindTreeNode(node_for=[FindBlanksNode]),
+                 FindTreeNode(node_for=[FindBlanksNode], menu=data_menu_factory()),
                  TreeNode(node_for=[BaseNode], label='name')]
 
         editor = TreeEditor(nodes=nodes,
@@ -226,8 +222,7 @@ class PipelinePane(TraitsDockPane):
             UItem('selected_pipeline_template',
                   editor=EnumEditor(name='available_pipeline_templates')),
             UItem('pipeline',
-                  editor=editor)),
-            handler=PipelineHandler())
+                  editor=editor)), handler=PipelineHandler())
         return v
 
 
@@ -262,7 +257,7 @@ class UnknownsAdapter(TabularAdapter):
     # Action(name='Group by Labnumber', action='group_by_labnumber'),
     # Action(name='Group by Aliquot', action='group_by_aliquot'),
     # Action(name='Clear Grouping', action='clear_grouping'),
-    #                        Action(name='Unselect', action='unselect'))
+    # Action(name='Unselect', action='unselect'))
 
     def get_bg_color(self, obj, trait, row, column=0):
         c = 'white'

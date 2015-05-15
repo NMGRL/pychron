@@ -17,7 +17,8 @@
 # ============= enthought library imports =======================
 import os
 
-from pyface.tasks.action.schema import SToolBar
+from pyface.tasks.action.schema import SToolBar, SMenu
+from pyface.tasks.action.schema_addition import SchemaAddition
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter
 from pyface.timer.do_later import do_after
 from traits.api import Instance
@@ -36,7 +37,13 @@ from pychron.envisage.browser.browser_task import BaseBrowserTask
 DEBUG = True
 
 
+class DataMenu(SMenu):
+    id = 'data.menu'
+    name = 'Data'
+
+
 class PipelineTask(BaseBrowserTask):
+    name = 'Pipeline Processing'
     engine = Instance(PipelineEngine, ())
     tool_bars = [SToolBar(RunAction(),
         SavePipelineTemplateAction())]
@@ -61,11 +68,14 @@ class PipelineTask(BaseBrowserTask):
         self.debug('run needed for {}'.format(new))
         self.run()
 
+        if new in self.engine.pipeline.nodes:
+            self.engine.selected = new
+
     def _debug(self):
 
         self.engine.set_template('test2')
         # self.engine.add_data()
-        # self.engine.select_default()
+        self.engine.select_default()
         # self.engine.add_is
         # self.engine.add_grouping(run=False)
         # self.engine.add_test_filter()
@@ -124,6 +134,21 @@ class PipelineTask(BaseBrowserTask):
                                         PaneItem('pychron.pipeline.analyses',
                                                  width=200)))
 
+    def _extra_actions_default(self):
+        sas = (('MenuBar', DataMenu, {'before': 'tools.menu', 'after': 'view.menu'}),
+               ('MenuBar/data.menu', RunAction, {}))
+        return [self._sa_factory(path, factory, **kw) for path, factory, kw in sas]
+
+    def _sa_factory(self, path, factory, **kw):
+        return SchemaAddition(path=path, factory=factory, **kw)
+
+        # return [SchemaAddition(path='MenuBar',
+        # before='tools.menu',
+        #                        after='view.menu',
+        #                        factory= DataMenu),  # lambda : SMenu(id='data.menu', name='Data')),
+        #
+        #         SchemaAddition(path='MenuBar/data.menu',
+        #                        factory=RunAction)]
 # ============= EOF =============================================
 
 

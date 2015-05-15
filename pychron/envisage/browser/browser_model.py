@@ -24,7 +24,7 @@ from traits.api import Str, Bool, Property, on_trait_change, Button, Enum, List,
 import re
 # ============= local library imports  ==========================
 # from pychron.processing.tasks.browser.browser_task import NCHARS
-from pychron.core.progress import open_progress, progress_loader
+from pychron.core.progress import progress_loader
 from pychron.database.records.isotope_record import GraphicalRecordView
 from pychron.envisage.browser.base_browser_model import BaseBrowserModel
 from pychron.envisage.browser.record_views import ProjectRecordView
@@ -209,8 +209,12 @@ class BrowserModel(BaseBrowserModel):
 
     def _selected_projects_change_hook(self, names):
 
+        self.selected_samples = []
+        self.analysis_table.analyses = []
+
         if not self._top_level_filter:
             self._top_level_filter = 'project'
+
         if names:
             if self._top_level_filter == 'project':
                 db = self.db
@@ -515,6 +519,7 @@ class BrowserModel(BaseBrowserModel):
             self.selected_samples = sams
 
     def _selected_samples_changed(self, new):
+        ans = []
         if new:
             at = self.analysis_table
             lim = at.limit
@@ -522,50 +527,51 @@ class BrowserModel(BaseBrowserModel):
                       include_invalid=not at.omit_invalid,
                       mass_spectrometers=self._recent_mass_spectrometers)
 
-            ss = self.selected_samples
-            xx = ss[:]
+            # ss = self.selected_samples
+            # xx = ss[:]
+
             # if not any(['RECENT' in p for p in self.selected_projects]):
             # sp=self.selected_projects
             # if not hasattr(sp, '__iter__'):
             # sp = (sp, )
 
-            if not any(['RECENT' in p.name for p in self.selected_projects]):
-                reftypes = ('blank_unknown',)
-                if any((si.analysis_type in reftypes
-                        for si in ss)):
-                    with self.db.session_ctx():
-                        ans = []
-                        for si in ss:
-                            if si.analysis_type in reftypes:
-                                xx.remove(si)
-                                dates = list(self._project_date_bins(si.identifier))
-                                print dates
-                                progress = open_progress(len(dates))
-                                for lp, hp in dates:
-                                    progress.change_message('Loading Date Range '
-                                                            '{} to {}'.format(lp.strftime('%m-%d-%Y %H:%M:%S'),
-                                                                              hp.strftime('%m-%d-%Y %H:%M:%S')))
-                                    ais = self._retrieve_sample_analyses([si],
-                                                                         make_records=False,
-                                                                         low_post=lp,
-                                                                         high_post=hp, **kw)
-                                    ans.extend(ais)
-                                progress.close()
-
-                        ans = self._make_records(ans)
+            # if not any(['RECENT' in p.name for p in self.selected_projects]):
+            # reftypes = ('blank_unknown',)
+            #     print 'asfsafasd'
+            #     if any((si.analysis_type in reftypes
+            #             for si in ss)):
+            #         with self.db.session_ctx():
+            #             ans = []
+            #             for si in ss:
+            #                 if si.analysis_type in reftypes:
+            #                     xx.remove(si)
+            #                     dates = list(self._project_date_bins(si.identifier))
+            #                     print dates
+            #                     progress = open_progress(len(dates))
+            #                     for lp, hp in dates:
+            #                         progress.change_message('Loading Date Range '
+            #                                                 '{} to {}'.format(lp.strftime('%m-%d-%Y %H:%M:%S'),
+            #                                                                   hp.strftime('%m-%d-%Y %H:%M:%S')))
+            #                         ais = self._retrieve_sample_analyses([si],
+            #                                                              make_records=False,
+            #                                                              low_post=lp,
+            #                                                              high_post=hp, **kw)
+            #                         ans.extend(ais)
+            #                     progress.close()
+            #
+            #             ans = self._make_records(ans)
                         # print len(ans), len(set([si.record_id for si in ans]))
-            if xx:
-                lp, hp = self.low_post, self.high_post
-                ans = self._retrieve_sample_analyses(xx,
-                                                     low_post=lp,
-                                                     high_post=hp,
-                                                     **kw)
-                self.debug('selected samples changed. loading analyses. '
-                           'low={}, high={}, limit={} n={}'.format(lp, hp, lim, len(ans)))
+            # if xx:
+            lp, hp = self.low_post, self.high_post
+            ans = self._retrieve_sample_analyses(new,
+                                                 low_post=lp,
+                                                 high_post=hp,
+                                                 **kw)
+            self.debug('selected samples changed. loading analyses. '
+                       'low={}, high={}, limit={} n={}'.format(lp, hp, lim, len(ans)))
 
-            self.analysis_table.set_analyses(ans)
-            self.dump_browser()
-
+        self.analysis_table.set_analyses(ans)
+        self.dump_browser()
         self.filter_focus = not bool(new)
 
     @on_trait_change('analysis_table:selected')

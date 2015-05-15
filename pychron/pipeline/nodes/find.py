@@ -37,11 +37,15 @@ class FindBlanksNode(FindNode):
 
         return v
 
+    def load(self, nodedict):
+        self.threshold = nodedict['threshold']
+
     def run(self, state):
         # for ai in state.unknowns:
         # pass
-        atypes = tuple({ai.analysis_type for ai in state.unknowns})
-        times = sorted((ai.timestamp for ai in state.unknowns))
+        # atypes = tuple({ai.analysis_type for ai in state.unknowns})
+        times = sorted((ai.rundate for ai in state.unknowns))
+        atypes = 'blank_unknown'
 
         refs = self.dvc.find_references(times, atypes)
         state.references = refs
