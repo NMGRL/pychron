@@ -25,7 +25,7 @@ from pychron.pipeline.nodes.base import BaseNode
 
 
 class FindNode(BaseNode):
-    user_choice = None
+    user_choice = True
 
     def reset(self):
         self.user_choice = None
@@ -54,27 +54,33 @@ class FindBlanksNode(FindNode):
             return
 
         times = sorted((ai.rundate for ai in state.unknowns))
-        atypes = 'blank_unknown'
+        refs = self.dvc.find_references(times, 'blank_unknown')
+        if refs:
+            review = self.user_choice
+            if self.user_choice is None:
+                # ask if use whats to review
+                review, remember = remember_confirmation_dialog('What you like to review this Node? '
+                                                                '{}'.format(self.name))
+                if remember:
+                    self.user_choice = review
 
-        refs = self.dvc.find_references(times, atypes)
-        review = self.user_choice
-        if self.user_choice is None:
-            # ask if use whats to review
-            review, remember = remember_confirmation_dialog('What you like to review this Node? '
-                                                            '{}'.format(self.name))
-            if remember:
-                self.user_choice = review
+            if review:
+                ans = state.unknowns[:]
+                ans.extend(refs)
+                # refs.extend(state.unknowns)
+                model = GraphicalFilterModel(analyses=ans)
+                model.setup()
+                model.analysis_types = ['Blank Unknown']
+                obj = GraphicalFilterView(model=model)
+                info = obj.edit_traits(kind='livemodal')
+                if info.result:
+                    refs = model.get_filtered_selection()
+                    if obj.is_append:
+                        refs = state.references.extend(refs)
 
-        if review:
-
-            model = GraphicalFilterModel()
-            obj = GraphicalFilterView(model=model)
-            info = obj.edit_traits(kind='livemodal')
-            if info.result:
-                refs = 'asdf'
-
-        state.references = refs
-
+                        # refs = ans
+            state.references = refs
+            state.has_references = True
 # ============= EOF =============================================
 
 

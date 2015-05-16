@@ -47,6 +47,7 @@ class RectSelectionTool(BaseTool):
     hover_metadata_name = Str('hover')
     persistent_hover = False
     selection_metadata_name = Str('selections')
+    # mask_metadata_name = Str('selections_mask')
     #    active = True
     _start_pos = None
     _end_pos = None

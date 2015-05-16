@@ -130,7 +130,11 @@ class DVCDatabase(DatabaseAdapter):
             q = q.filter(AnalysisTbl.timestamp >= low.strftime('%Y-%m-%d %H:%M:%S'))
             q = q.filter(AnalysisTbl.timestamp <= high.strftime('%Y-%m-%d %H:%M:%S'))
 
-            if not isinstance(atypes, (list, tuple)) or len(atypes) == 1:
+            if isinstance(atypes, (list, tuple)):
+                if len(atypes) == 1:
+                    atypes = atypes[0]
+
+            if not isinstance(atypes, (list, tuple)):
                 q = q.filter(AnalysisTbl.analysis_type == atypes)
             else:
                 q = q.filter(AnalysisTbl.analysis_type.in_(atypes))
@@ -226,7 +230,7 @@ class DVCDatabase(DatabaseAdapter):
             q = q.join(IrradiationPositionTbl)
 
             if not hasattr(lns, '__iter__'):
-                lns = (lns, )
+                lns = (lns,)
             q = q.filter(IrradiationPositionTbl.identifier.in_(lns))
 
             if low_post:
@@ -243,7 +247,7 @@ class DVCDatabase(DatabaseAdapter):
 
             if mass_spectrometers:
                 if not hasattr(mass_spectrometers, '__iter__'):
-                    mass_spectrometers = (mass_spectrometers, )
+                    mass_spectrometers = (mass_spectrometers,)
                 q = q.filter(AnalysisTbl.mass_spectrometer.in_(mass_spectrometers))
             tc = q.count()
             return self._query_all(q), tc
@@ -452,7 +456,7 @@ class DVCDatabase(DatabaseAdapter):
 
                 else:
                     if not hasattr(mass_spectrometers, '__iter__'):
-                        mass_spectrometers = (mass_spectrometers, )
+                        mass_spectrometers = (mass_spectrometers,)
 
                     q = q.join(AnalysisTbl)
 
@@ -470,6 +474,3 @@ class DVCDatabase(DatabaseAdapter):
         # private
 
 # ============= EOF =============================================
-
-
-

@@ -60,7 +60,7 @@ class ReferenceNode(DataNode):
 
     def run(self, state):
         items = getattr(state, self.analysis_kind)
-        if not self.analyses:
+        if not self.analyses or state.has_references:
             self.analyses = items
         else:
             for ai in self.analyses:
