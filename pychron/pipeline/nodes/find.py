@@ -15,23 +15,26 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Float, Bool
+from traits.api import Float
 from traitsui.api import Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.confirmation import remember_confirmation_dialog
 from pychron.pipeline.graphical_filter import GraphicalFilterModel, GraphicalFilterView
 from pychron.pipeline.nodes.base import BaseNode
 
 
 class FindNode(BaseNode):
-    pass
+    user_choice = None
+
+    def reset(self):
+        self.user_choice = None
+
 
 
 class FindBlanksNode(FindNode):
     name = 'Find Blanks'
     threshold = Float
-
-    use_review = Bool
 
     def traits_view(self):
         v = self._view_factory(Item('threshold',
@@ -46,17 +49,24 @@ class FindBlanksNode(FindNode):
 
     # def dump(self, obj):
     # obj['threshold'] = self.threshold
-    #
     def run(self, state):
-        # for ai in state.unknowns:
-        # pass
-        # atypes = tuple({ai.analysis_type for ai in state.unknowns})
+        if not state.unknowns:
+            return
+
         times = sorted((ai.rundate for ai in state.unknowns))
         atypes = 'blank_unknown'
 
         refs = self.dvc.find_references(times, atypes)
+        review = self.user_choice
+        if self.user_choice is None:
+            # ask if use whats to review
+            review, remember = remember_confirmation_dialog('What you like to review this Node? '
+                                                            '{}'.format(self.name))
+            if remember:
+                self.user_choice = review
 
-        if self.use_review:
+        if review:
+
             model = GraphicalFilterModel()
             obj = GraphicalFilterView(model=model)
             info = obj.edit_traits(kind='livemodal')

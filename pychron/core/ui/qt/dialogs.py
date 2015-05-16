@@ -17,20 +17,13 @@
 import time
 from threading import Event, currentThread, _MainThread, Thread
 
-from PySide.QtGui import QSizePolicy
+from PySide.QtCore import Qt
+from PySide.QtGui import QSizePolicy, QCheckBox
 from pyface.api import OK, YES
 from pyface.ui.qt4.confirmation_dialog import ConfirmationDialog
 from pyface.message_dialog import MessageDialog
 
 from pychron.core.ui.gui import invoke_in_main_thread
-
-
-
-
-
-
-
-#from pyface.confirmation_dialog import ConfirmationDialog
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
@@ -97,21 +90,23 @@ class myMessageDialog(myMessageMixin, MessageDialog):
     pass
 
 
-class _ConfirmationDialog(ConfirmationDialog):
+class myConfirmationDialog(ConfirmationDialog, myMessageMixin):
     def _create_control(self, parent):
-        dlg = super(_ConfirmationDialog, self)._create_control(parent)
+        dlg = super(myConfirmationDialog, self)._create_control(parent)
+
         dlg.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         if self.size != (-1, -1):
             dlg.resize(*self.size)
             dlg.event = self._handle_evt
 
-        dlg.buttonClicked.connect(self._handle_button)
+        # dlg.buttonClicked.connect(self._handle_button)
+
         return dlg
 
-    def _handle_button(self, evt):
-        if self._closed_evt:
-            self._closed_evt.set()
+    # def _handle_button(self, evt):
+    #     if self._closed_evt:
+    #         self._closed_evt.set()
 
     def _handle_evt(self, evt):
         return True
@@ -129,8 +124,28 @@ class _ConfirmationDialog(ConfirmationDialog):
         return retval
 
 
-class myConfirmationDialog(myMessageMixin, _ConfirmationDialog):
-    pass
+class RememberConfirmationDialog(myConfirmationDialog):
+    def _create_control(self, parent):
+        dlg = super(RememberConfirmationDialog, self)._create_control(parent)
 
+        dlg.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        if self.size != (-1, -1):
+            dlg.resize(*self.size)
+            dlg.event = self._handle_evt
+
+        # dlg.buttonClicked.connect(self._handle_button)
+
+        cb = QCheckBox('Remember this choice')
+        lay = dlg.layout()
+        lay.addWidget(cb)
+        self.cb = cb
+        return dlg
+
+    @property
+    def remember(self):
+        print self.cb.checkState() == Qt.Checked, self.cb.checkState(), Qt.Checked
+
+        return self.cb.checkState() == Qt.Checked
 
 # ============= EOF =============================================

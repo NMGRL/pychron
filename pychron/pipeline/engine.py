@@ -72,6 +72,12 @@ class PipelineEngine(Loggable):
 
         self._load_predefined_templates()
 
+    def review_node(self, node):
+        node.reset()
+        self.run_needed = True
+        # if node.review():
+        #     self.run_needed = True
+
     def configure(self, node):
         if node.configure():
             self.run_needed = node

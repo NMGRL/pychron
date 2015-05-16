@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from datetime import datetime, timedelta
 
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import Str, Bool, Property, on_trait_change, Button, Enum, List, Instance
@@ -24,12 +23,10 @@ from traits.api import Str, Bool, Property, on_trait_change, Button, Enum, List,
 import re
 # ============= local library imports  ==========================
 # from pychron.processing.tasks.browser.browser_task import NCHARS
-from pychron.core.progress import progress_loader
-from pychron.database.records.isotope_record import GraphicalRecordView
+# from pychron.database.records.isotope_record import GraphicalRecordView
 from pychron.envisage.browser.base_browser_model import BaseBrowserModel
 from pychron.envisage.browser.record_views import ProjectRecordView
 from pychron.envisage.browser.analysis_table import AnalysisTable
-from pychron.processing.tasks.browser.graphical_filter_selector import GraphicalFilterSelector
 from pychron.processing.tasks.browser.time_view import TimeViewModel
 from pychron.processing.tasks.browser.util import get_pad
 
@@ -341,69 +338,69 @@ class BrowserModel(BaseBrowserModel):
                     self.irradiation = irrads[0]
 
     # handlers
-    def _graphical_filter_button_fired(self):
-        # print 'ffffassdf'
-        self.debug('doing graphical filter')
-        from pychron.processing.tasks.browser.graphical_filter import GraphicalFilterModel, GraphicalFilterView
-
-        sams = self.selected_samples
-        if not sams:
-            sams = self.samples
-
-        db = self.db
-        with db.session_ctx():
-            if sams:
-                lns = [si.identifier for si in sams]
-                lpost, hpost = db.get_min_max_analysis_timestamp(lns)
-                ams = ms = db.get_analysis_mass_spectrometers(lns)
-                force = False
-            else:
-                force = True
-                lpost = datetime.now() - timedelta(hours=self.search_criteria.recent_hours)
-                hpost = datetime.now()
-                ams = [mi.name for mi in db.get_mass_spectrometers()]
-                ms = ams[:1]
-
-            # if date range > X days make user fine tune range
-            tdays = 3600 * 24 * max(1, self.search_criteria.graphical_filtering_max_days)
-
-            if force or (hpost - lpost).total_seconds() > tdays or len(ms) > 1:
-                d = GraphicalFilterSelector(lpost=lpost, hpost=hpost,
-                                            available_mass_spectrometers=ams,
-                                            mass_spectrometers=ms)
-                info = d.edit_traits(kind='livemodal')
-                if info.result:
-                    lpost, hpost, ms = d.lpost, d.hpost, d.mass_spectrometers
-                    if not ms:
-                        self.warning_dialog('Please select at least one Mass Spectrometer')
-                        return
-                else:
-                    return
-
-            ans = db.get_analyses_date_range(lpost, hpost, order='asc',
-                                             mass_spectrometers=ms)
-            # ans = db.get_date_range_analyses(lpost, hpost,
-            #                                  ordering='asc',
-            #                                  spectrometer=ms)
-
-            def func(xi, prog, i, n):
-                if prog:
-                    prog.change_message('Loading {}-{}. {}'.format(i, n, xi.record_id))
-                return GraphicalRecordView(xi)
-
-            ans = progress_loader(ans, func)
-            if not ans:
-                return
-
-        gm = GraphicalFilterModel(analyses=ans,
-                                  projects=[p.name for p in self.selected_projects])
-        gm.setup()
-        gv = GraphicalFilterView(model=gm)
-        info = gv.edit_traits(kind='livemodal')
-        if info.result:
-            ans = gm.get_selection()
-            self.analysis_table.analyses = ans
-            self._graphical_filter_hook(ans, gm.is_append)
+    # def _graphical_filter_button_fired(self):
+    #     # print 'ffffassdf'
+    #     self.debug('doing graphical filter')
+    #     from pychron.processing.tasks.browser.graphical_filter import GraphicalFilterModel, GraphicalFilterView
+    #
+    #     sams = self.selected_samples
+    #     if not sams:
+    #         sams = self.samples
+    #
+    #     db = self.db
+    #     with db.session_ctx():
+    #         if sams:
+    #             lns = [si.identifier for si in sams]
+    #             lpost, hpost = db.get_min_max_analysis_timestamp(lns)
+    #             ams = ms = db.get_analysis_mass_spectrometers(lns)
+    #             force = False
+    #         else:
+    #             force = True
+    #             lpost = datetime.now() - timedelta(hours=self.search_criteria.recent_hours)
+    #             hpost = datetime.now()
+    #             ams = [mi.name for mi in db.get_mass_spectrometers()]
+    #             ms = ams[:1]
+    #
+    #         # if date range > X days make user fine tune range
+    #         tdays = 3600 * 24 * max(1, self.search_criteria.graphical_filtering_max_days)
+    #
+    #         if force or (hpost - lpost).total_seconds() > tdays or len(ms) > 1:
+    #             d = GraphicalFilterSelector(lpost=lpost, hpost=hpost,
+    #                                         available_mass_spectrometers=ams,
+    #                                         mass_spectrometers=ms)
+    #             info = d.edit_traits(kind='livemodal')
+    #             if info.result:
+    #                 lpost, hpost, ms = d.lpost, d.hpost, d.mass_spectrometers
+    #                 if not ms:
+    #                     self.warning_dialog('Please select at least one Mass Spectrometer')
+    #                     return
+    #             else:
+    #                 return
+    #
+    #         ans = db.get_analyses_date_range(lpost, hpost, order='asc',
+    #                                          mass_spectrometers=ms)
+    #         # ans = db.get_date_range_analyses(lpost, hpost,
+    #         #                                  ordering='asc',
+    #         #                                  spectrometer=ms)
+    #
+    #         def func(xi, prog, i, n):
+    #             if prog:
+    #                 prog.change_message('Loading {}-{}. {}'.format(i, n, xi.record_id))
+    #             return GraphicalRecordView(xi)
+    #
+    #         ans = progress_loader(ans, func)
+    #         if not ans:
+    #             return
+    #
+    #     gm = GraphicalFilterModel(analyses=ans,
+    #                               projects=[p.name for p in self.selected_projects])
+    #     gm.setup()
+    #     gv = GraphicalFilterView(model=gm)
+    #     info = gv.edit_traits(kind='livemodal')
+    #     if info.result:
+    #         ans = gm.get_selection()
+    #         self.analysis_table.analyses = ans
+    #         self._graphical_filter_hook(ans, gm.is_append)
 
     def _irradiation_enabled_changed(self, new):
         if not new:

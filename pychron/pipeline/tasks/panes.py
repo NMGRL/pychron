@@ -53,6 +53,9 @@ def node_adder(func):
 
 
 class PipelineHandler(Handler):
+    def review_node(self, info, obj):
+        info.object.review_node(obj)
+
     def delete_node(self, info, obj):
         info.object.remove_node(obj)
 
@@ -192,6 +195,11 @@ class PipelinePane(TraitsDockPane):
         def figure_menu_factory():
             return menu_factory(add_menu_factory(), fit_menu_factory(), save_menu_factory())
 
+        def ffind_menu_factory():
+            return menu_factory(Action(name='Review',
+                                       action='review_node'),
+                                add_menu_factory(), fit_menu_factory())
+
         nodes = [TreeNode(node_for=[Pipeline],
                           children='nodes',
                           icon_open='',
@@ -207,7 +215,7 @@ class PipelinePane(TraitsDockPane):
                  PDFTreeNode(node_for=[PDFNode], menu=menu_factory()),
                  GroupingTreeNode(node_for=[GroupingNode], menu=data_menu_factory()),
                  DBSaveTreeNode(node_for=[DVCPersistNode], menu=data_menu_factory()),
-                 FindTreeNode(node_for=[FindBlanksNode], menu=data_menu_factory()),
+                 FindTreeNode(node_for=[FindBlanksNode], menu=ffind_menu_factory()),
                  TreeNode(node_for=[BaseNode], label='name')]
 
         editor = TreeEditor(nodes=nodes,
