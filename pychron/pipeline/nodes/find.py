@@ -15,10 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Float
+from traits.api import Float, Bool
 from traitsui.api import Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.pipeline.graphical_filter import GraphicalFilterModel, GraphicalFilterView
 from pychron.pipeline.nodes.base import BaseNode
 
 
@@ -30,16 +31,22 @@ class FindBlanksNode(FindNode):
     name = 'Find Blanks'
     threshold = Float
 
+    use_review = Bool
+
     def traits_view(self):
         v = self._view_factory(Item('threshold',
                                     tooltip='Maximum difference between blank and unknowns in hours',
-                                    label='Threshold (Hrs)'))
+                                    label='Threshold (Hrs)'),
+                               Item('use_review'))
 
         return v
 
     def load(self, nodedict):
         self.threshold = nodedict['threshold']
 
+    # def dump(self, obj):
+    # obj['threshold'] = self.threshold
+    #
     def run(self, state):
         # for ai in state.unknowns:
         # pass
@@ -48,6 +55,14 @@ class FindBlanksNode(FindNode):
         atypes = 'blank_unknown'
 
         refs = self.dvc.find_references(times, atypes)
+
+        if self.use_review:
+            model = GraphicalFilterModel()
+            obj = GraphicalFilterView(model=model)
+            info = obj.edit_traits(kind='livemodal')
+            if info.result:
+                refs = 'asdf'
+
         state.references = refs
 
 # ============= EOF =============================================

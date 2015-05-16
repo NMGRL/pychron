@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import time
 
 # ============= standard library imports ========================
 # import re
@@ -24,35 +23,35 @@ from pychron.experiment.utilities.identifier import make_runid
 from pychron.pychron_constants import ALPHAS
 
 
-class GraphicalRecordView(object):
-    __slots__ = ['uuid', 'rundate', 'timestamp', 'record_id', 'analysis_type',
-                 'tag', 'project', 'sample', 'is_plateau_step', 'mass_spectrometer']
-
-    def __init__(self, dbrecord):
-        self.uuid = dbrecord.uuid
-        ln = dbrecord.labnumber
-        labnumber = str(ln.identifier)
-        aliquot = dbrecord.aliquot
-        step = dbrecord.step
-        self.record_id = make_runid(labnumber, aliquot, step)
-
-        self.rundate = dbrecord.analysis_timestamp
-        self.timestamp = time.mktime(self.rundate.timetuple())
-        self.tag = dbrecord.tag or ''
-        self.is_plateau_step = False
-
-        meas = dbrecord.measurement
-        if meas is not None:
-            if meas.analysis_type:
-                self.analysis_type = meas.analysis_type.name
-            if meas.mass_spectrometer:
-                self.mass_spectrometer = meas.mass_spectrometer.name
-
-        sam = ln.sample
-        if sam:
-            self.sample = sam.name
-            if sam.project:
-                self.project = sam.project.name.lower()
+# class GraphicalRecordView(object):
+# __slots__ = ['uuid', 'rundate', 'timestamp', 'record_id', 'analysis_type',
+#                  'tag', 'project', 'sample', 'is_plateau_step', 'mass_spectrometer']
+#
+#     def __init__(self, dbrecord):
+#         self.uuid = dbrecord.uuid
+#         ln = dbrecord.labnumber
+#         labnumber = str(ln.identifier)
+#         aliquot = dbrecord.aliquot
+#         step = dbrecord.step
+#         self.record_id = make_runid(labnumber, aliquot, step)
+#
+#         self.rundate = dbrecord.analysis_timestamp
+#         self.timestamp = time.mktime(self.rundate.timetuple())
+#         self.tag = dbrecord.tag or ''
+#         self.is_plateau_step = False
+#
+#         meas = dbrecord.measurement
+#         if meas is not None:
+#             if meas.analysis_type:
+#                 self.analysis_type = meas.analysis_type.name
+#             if meas.mass_spectrometer:
+#                 self.mass_spectrometer = meas.mass_spectrometer.name
+#
+#         sam = ln.sample
+#         if sam:
+#             self.sample = sam.name
+#             if sam.project:
+#                 self.project = sam.project.name.lower()
 
 
 def get_flux_fit_status(item):
