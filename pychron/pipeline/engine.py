@@ -67,10 +67,19 @@ class PipelineEngine(Loggable):
     selected_pipeline_template = Str
     available_pipeline_templates = List
 
+    selected_unknowns = List
+    selected_references = List
+
+    recall_analyses_needed = Event
+
     def __init__(self, *args, **kw):
         super(PipelineEngine, self).__init__(*args, **kw)
 
         self._load_predefined_templates()
+
+    def recall_unknowns(self):
+        self.debug('recall unks')
+        self.recall_analyses_needed = self.selected_unknowns
 
     def review_node(self, node):
         node.reset()

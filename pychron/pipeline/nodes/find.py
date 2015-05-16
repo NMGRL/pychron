@@ -25,7 +25,7 @@ from pychron.pipeline.nodes.base import BaseNode
 
 
 class FindNode(BaseNode):
-    user_choice = True
+    user_choice = False
 
     def reset(self):
         self.user_choice = None

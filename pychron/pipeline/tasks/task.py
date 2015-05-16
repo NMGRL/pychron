@@ -32,7 +32,7 @@ from pychron.pipeline.state import EngineState
 from pychron.pipeline.tasks.actions import RunAction, SavePipelineTemplateAction
 from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane
 from pychron.envisage.browser.browser_task import BaseBrowserTask
-
+from pychron.processing.tasks.recall.recall_editor import RecallEditor
 
 DEBUG = True
 
@@ -46,7 +46,7 @@ class PipelineTask(BaseBrowserTask):
     name = 'Pipeline Processing'
     engine = Instance(PipelineEngine, ())
     tool_bars = [SToolBar(RunAction(),
-        SavePipelineTemplateAction())]
+                          SavePipelineTemplateAction())]
 
     def activated(self):
         super(PipelineTask, self).activated()
@@ -55,21 +55,11 @@ class PipelineTask(BaseBrowserTask):
         self.engine.dvc = dvc
         self.engine.browser_model = self.browser_model
         self.engine.on_trait_change(self._handle_run_needed, 'run_needed')
+        self.engine.on_trait_change(self._handle_recall, 'recall_analyses_needed')
 
         self.engine.task = self
         if DEBUG:
             do_after(500, self._debug)
-
-    def _active_editor_changed(self, new):
-        if new:
-            self.engine.select_node_by_editor(new)
-
-    def _handle_run_needed(self, new):
-        self.debug('run needed for {}'.format(new))
-        self.run()
-
-        if new in self.engine.pipeline.nodes:
-            self.engine.selected = new
 
     def _debug(self):
 
@@ -142,6 +132,23 @@ class PipelineTask(BaseBrowserTask):
     def _sa_factory(self, path, factory, **kw):
         return SchemaAddition(path=path, factory=factory, **kw)
 
+    # handlers
+    def _active_editor_changed(self, new):
+        if new:
+            self.engine.select_node_by_editor(new)
+
+    def _handle_run_needed(self, new):
+        self.debug('run needed for {}'.format(new))
+        self.run()
+
+        if new in self.engine.pipeline.nodes:
+            self.engine.selected = new
+
+    def _handle_recall(self, new):
+        print new
+        for ai in new:
+            editor = RecallEditor(model=ai)
+            self._open_editor(editor)
         # return [SchemaAddition(path='MenuBar',
         # before='tools.menu',
         #                        after='view.menu',

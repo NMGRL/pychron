@@ -27,8 +27,8 @@ from pychron.paths import paths
 from pychron.processing.analyses.analysis import Analysis
 from pychron.processing.isotope import Isotope
 
-ANALYSIS_ATTRS = (
-'labnumber', 'analysis_type', 'uuid', 'sample', 'project', 'material', 'aliquot', 'increment', 'irradiation', 'weight',
+ANALYSIS_ATTRS = ('labnumber', 'analysis_type', 'uuid', 'sample', 'project', 'material', 'aliquot', 'increment',
+                  'irradiation', 'weight',
                   'comment', 'irradiation_level', 'mass_spectrometer', 'extract_device',
                   'username', 'tray', 'queue_conditionals_name', 'extract_value',
                   'extract_units', 'position', 'xyz_position', 'duration', 'cleanup',

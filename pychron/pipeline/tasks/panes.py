@@ -260,7 +260,8 @@ class UnknownsAdapter(TabularAdapter):
     # def _get_klass_text(self):
     # return self.item.__class__.__name__.split('.')[-1]
 
-    # def get_menu(self, object, trait, row, column):
+    def get_menu(self, object, trait, row, column):
+        return MenuManager(Action(name='Recall', action='recall_unknowns'))
     # return MenuManager(Action(name='Group Selected', action='group_by_selected'),
     # Action(name='Group by Labnumber', action='group_by_labnumber'),
     # Action(name='Group by Aliquot', action='group_by_aliquot'),
@@ -315,6 +316,10 @@ class ReferencesAdapter(TabularAdapter):
     font = 'arial 10'
 
 
+class AnalysesPaneHandler(Handler):
+    def recall_unknowns(self, info, obj):
+        obj.recall_unknowns()
+
 class AnalysesPane(TraitsDockPane):
     name = 'Analyses'
     id = 'pychron.pipeline.analyses'
@@ -323,12 +328,17 @@ class AnalysesPane(TraitsDockPane):
         v = View(VGroup(UItem('unknowns',
                               editor=TabularEditor(adapter=UnknownsAdapter(),
                                                    refresh='refresh_table_needed',
-                                                   operations=[])),
+                                                   multi_select=True,
+                                                   selected='selected_unknowns',
+                                                   operations=['delete'])),
                         UItem('references',
                               visible_when='references',
                               editor=TabularEditor(adapter=ReferencesAdapter(),
                                                    refresh='refresh_table_needed',
-                                                   operations=[]))))
+                                                   multi_select=True,
+                                                   selected='selected_references',
+                                                   operations=['delete']))),
+                 handler=AnalysesPaneHandler())
         return v
 
         # ============= EOF =============================================
