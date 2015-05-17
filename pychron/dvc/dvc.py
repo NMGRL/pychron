@@ -15,8 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import subprocess
+
 from traits.api import Instance, Str
 from apptools.preferences.preference_binding import bind_preference
+
 # ============= standard library imports ========================
 import os
 from git import Repo
@@ -58,8 +61,43 @@ class DVC(Loggable):
 
         self.synchronize()
 
-        self.db.connect()
         self._defaults()
+
+    # database
+    def load_db(self):
+
+        if self.meta_repo.out_of_date():
+            self.info('rebuilding local database from origin')
+            self.info('pulling changes')
+            self.meta_repo.pull()
+
+            path = paths.meta_db
+            if os.path.isfile(path):
+                self.info('removing current db')
+                os.remove(path)
+
+            txtdb_path = paths.meta_txtdb
+            self.info('loading db into sqlite')
+            ret = subprocess.check_call(['sqlite3', path, '.read {}'.format(txtdb_path)])
+            if ret:
+                self.warning_dialog('There was a problem loading the database')
+                return
+
+        self.db.connect(force=True)
+
+    def dump_db(self, msg=None):
+        if msg is None:
+            msg = 'Updated meta database'
+
+        path = paths.meta_db
+        txtdb = paths.meta_txtdb
+
+        with open(txtdb, 'w') as wfile:
+            subprocess.check_call(['sqlite3', path, '.dump'], stdout=wfile)
+
+        self.meta_repo.add(txtdb, commit=False)
+        self.meta_repo.commit(msg)
+        self.meta_repo.push()
 
     # analysis processing
     def save_fits(self, ai, keys):
@@ -86,7 +124,8 @@ class DVC(Loggable):
         """
         if pull:
             self.meta_repo.pull()
-            self.db.connect(force=True)
+            self.load_db()
+
         else:
             self.meta_repo.push()
 

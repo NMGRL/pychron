@@ -87,6 +87,20 @@ class GitRepoManager(Loggable):
                 self.debug('{} is not a valid repo'.format(path))
                 self._repo = Repo.init(path)
 
+    def out_of_date(self, branchname='master'):
+        repo = self._repo
+        origin = repo.remotes.origin
+        repo.git.fetch(origin, branchname)
+        try:
+            oref = origin.refs[branchname]
+            remote_commit = oref.commit
+        except IndexError:
+            remote_commit = None
+
+        branch = getattr(repo.heads, branchname)
+        local_commit = branch.commit
+        return local_commit != remote_commit
+
     def clone(self, url):
         repo = self._repo
         self._repo = repo.clone_from(url)

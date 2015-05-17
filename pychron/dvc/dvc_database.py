@@ -76,6 +76,7 @@ class DVCDatabase(DatabaseAdapter):
 
         # self._bind_preferences()
         self.path = paths.meta_db
+
         # self.synced_path = '{}.sync'.format(paths.meta_db)
         # self.merge_path = '{}.merge'.format(paths.meta_db)
         # self.remote_path = '/var/pychronmeta.sqlite'
