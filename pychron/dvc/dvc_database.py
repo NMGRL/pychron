@@ -147,7 +147,7 @@ class DVCDatabase(DatabaseAdapter):
     def get_production_name(self, irrad, level):
         with self.session_ctx() as sess:
             dblevel = self.get_irradiation_level(irrad, level)
-            print dblevel, dblevel.productionID, dblevel.production, dblevel.idlevelTbl
+            # print dblevel, dblevel.productionID, dblevel.production, dblevel.idlevelTbl
             return dblevel.production.name
 
     def add_measured_position(self, position=None, load=None, **kw):

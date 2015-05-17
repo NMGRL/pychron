@@ -138,7 +138,6 @@ class Cached(object):
             if not clear:
                 if name in obj.__cache__:
                     ret = obj.__cache__[name]
-                    print 'using chace'
 
             if ret is None:
                 ret = func(obj, name, *args, **kw)

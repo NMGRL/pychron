@@ -59,9 +59,15 @@ class DVC(Loggable):
         super(DVC, self).__init__(*args, **kw)
         self._bind_preferences()
 
-        self.synchronize()
+        # self.synchronize()
+        # self._defaults()
 
+    def initialize(self):
+        self.synchronize()
         self._defaults()
+
+    def fetch_meta(self):
+        self.meta_repo.fetch()
 
     # database
     def load_db(self):

@@ -99,6 +99,8 @@ class GitRepoManager(Loggable):
 
         branch = getattr(repo.heads, branchname)
         local_commit = branch.commit
+
+        self.debug('out of date {} {}'.format(local_commit, remote_commit))
         return local_commit != remote_commit
 
     def clone(self, url):

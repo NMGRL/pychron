@@ -117,16 +117,28 @@ class AnalysisView(HasTraits):
         #                                     selected_view=main_view)
 
     def _make_subviews(self, an):
-        for vname, klass in (('history', HistoryView),
-                             ('experiment', ExperimentView),
-                             ('extraction', ExtractionView),
-                             ('measurement', MeasurementView),
-                             ('interference', InterferencesView),
-                             ('spectrometer', SpectrometerView)):
+        for args in (('history', HistoryView),
+                     ('experiment', ExperimentView, 'experiment_txt'),
+                     ('extraction', ExtractionView, 'extraction_script_blob'),
+                     ('measurement', MeasurementView, 'measurement_script_blob'),
+                     ('interference', InterferencesView, 'interference_corrections'),
+                     ('spectrometer', SpectrometerView, 'source_parameters')):
+
+            if len(args) == 2:
+                vname, klass = args
+                tattr = None
+            else:
+                vname, klass, tattr = args
+
+            if tattr:
+                print tattr, getattr(an, tattr)
+                if not getattr(an, tattr):
+                    continue
+
             name = '{}_view'.format(vname)
-            view = getattr(self, name)
-            if view is None:
-                view = klass(an)
+            # view = getattr(self, name)
+            # if view is None:
+            view = klass(an)
             setattr(self, name, view)
 
         if an.snapshots:
@@ -149,23 +161,43 @@ class AnalysisView(HasTraits):
                                editor=InstanceEditor()), label='Main')
         history_grp = Group(UItem('history_view', style='custom',
                                   editor=InstanceEditor()), label='History')
-        experiment_grp = Group(UItem('experiment_view', defined_when='experiment_view', style='custom',
-                                     editor=InstanceEditor()), label='Experiment')
-        interference_grp = Group(UItem('interference_view', defined_when='interference_view', style='custom',
-                                       editor=InstanceEditor()), label='Interference')
-        measurement_grp = Group(UItem('_view', defined_when='measurement_view', style='custom',
-                                      editor=InstanceEditor()), label='Measurement')
-        extraction_grp = Group(UItem('extraction_view', defined_when='extraction_view', style='custom',
-                                     editor=InstanceEditor()), label='Extraction')
-        snapshot_grp = Group(UItem('snapshot_view', defined_when='snapshot_view', style='custom',
-                                   editor=InstanceEditor()), label='Snapshot')
-        detector_ic_grp = Group(UItem('detector_ic_view', defined_when='detector_ic_view', style='custom',
-                                      editor=InstanceEditor()), label='DetectorIC')
-        spectrometer_grp = Group(UItem('spectrometer_view', defined_when='spectrometer_view', style='custom',
-                                       editor=InstanceEditor()), label='Spectrometer')
+
+        experiment_grp = Group(UItem('experiment_view', style='custom',
+                                     editor=InstanceEditor()), defined_when='experiment_view', label='Experiment')
+        interference_grp = Group(UItem('interference_view', style='custom',
+                                       editor=InstanceEditor()), defined_when='interference_view', label='Interference')
+        measurement_grp = Group(UItem('measurement_view', style='custom',
+                                      editor=InstanceEditor()),
+                                defined_when='measurement_view',
+                                label='Measurement')
+        extraction_grp = Group(UItem('extraction_view', style='custom',
+                                     editor=InstanceEditor()),
+                               defined_when='extraction_view',
+                               label='Extraction')
+        snapshot_grp = Group(UItem('snapshot_view', style='custom',
+                                   editor=InstanceEditor()),
+                             defined_when='snapshot_view',
+                             label='Snapshot')
+        detector_ic_grp = Group(UItem('detector_ic_view', style='custom',
+                                      editor=InstanceEditor()),
+                                defined_when='detector_ic_view',
+                                label='DetectorIC')
+        spectrometer_grp = Group(UItem('spectrometer_view', style='custom',
+                                       editor=InstanceEditor()), defined_when='spectrometer_view', label='Spectrometer')
+
+        peak_center_grp = Group(UItem('peak_center_view', style='custom',
+                                      editor=InstanceEditor()),
+                                defined_when='peak_center_view', label='Peak_center')
         v = View(VGroup(Spring(springy=False, height=-10),
-                        Tabbed(main_grp, history_grp, experiment_grp, interference_grp,
-                               spectrometer_grp, detector_ic_grp)))
+                        Tabbed(main_grp, history_grp,
+                               experiment_grp,
+                               extraction_grp,
+                               measurement_grp,
+                               peak_center_grp,
+                               interference_grp,
+                               spectrometer_grp,
+                               detector_ic_grp,
+                               snapshot_grp)))
         return v
         #
         # v = View(UItem('object.selection_tool.selected_view', style='custom',
@@ -178,6 +210,5 @@ class AnalysisView(HasTraits):
 
 class DBAnalysisView(AnalysisView):
     pass
-
 
 # ============= EOF =============================================
