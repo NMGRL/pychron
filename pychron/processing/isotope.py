@@ -293,7 +293,7 @@ class IsotopicMeasurement(BaseMeasurement):
     def _get_value(self):
         # if not (self.name.endswith('bs') or self.name.endswith('bk')):
         #     print self.name, self.use_static,self.user_defined_value
-        print 'get value', self.name, self.use_static, self._value, self.user_defined_value
+        # print 'get value', self.name, self.use_static, self._value, self.user_defined_value
         if self.use_static and self._value:
             return self._value
         elif self.user_defined_value:

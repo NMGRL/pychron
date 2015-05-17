@@ -148,6 +148,11 @@ class DVC(Loggable):
         chronology = self.meta_repo.get_chronology(a.irradiation)
         a.set_chronology(chronology)
 
+        pname = self.db.get_production_name(a.irradiation, a.irradiation_level)
+        # production = self.meta_repo.get_production(a.irradiation, a.irradiation_level)
+        prod = self.meta_repo.get_production(pname)
+        a.set_production(pname, prod)
+
         return a
 
     # adders db

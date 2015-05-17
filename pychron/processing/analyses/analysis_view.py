@@ -15,13 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, List, Property, Any, Instance, Event, Str
-from traitsui.api import View, UItem, InstanceEditor, TabularEditor, VGroup, Tabbed, Spring, Group
-from traitsui.tabular_adapter import TabularAdapter
+from traits.api import HasTraits, Instance, Event, Str
+from traitsui.api import View, UItem, InstanceEditor, VGroup, Tabbed, Spring, Group
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.processing.analyses.view.detector_ic_view import DetectorICView
+from pychron.processing.analyses.view.error_components_view import ErrorComponentsView
+from pychron.processing.analyses.view.peak_center_view import PeakCenterView
 from pychron.processing.analyses.view.snapshot_view import SnapshotView
 from pychron.processing.analyses.view.spectrometer_view import SpectrometerView
 from pychron.processing.analyses.view.text_view import ExperimentView, ExtractionView, MeasurementView
@@ -30,25 +31,25 @@ from pychron.processing.analyses.view.interferences_view import InterferencesVie
 from pychron.processing.analyses.view.main_view import MainView
 
 
-class ViewAdapter(TabularAdapter):
-    columns = [('', 'view')]
+# class ViewAdapter(TabularAdapter):
+#     columns = [('', 'view')]
+#
+#     view_text = Property
+#
+#     def _get_view_text(self, *args, **kw):
+#         return self.item.name
 
-    view_text = Property
 
-    def _get_view_text(self, *args, **kw):
-        return self.item.name
-
-
-class ViewSelection(HasTraits):
-    subviews = List
-    selected_view = Any
-
-    def traits_view(self):
-        v = View(UItem('subviews', editor=TabularEditor(adapter=ViewAdapter(),
-                                                        editable=False,
-                                                        selected='selected_view')))
-        return v
-
+# class ViewSelection(HasTraits):
+#     subviews = List
+#     selected_view = Any
+#
+#     def traits_view(self):
+#         v = View(UItem('subviews', editor=TabularEditor(adapter=ViewAdapter(),
+#                                                         editable=False,
+#                                                         selected='selected_view')))
+#         return v
+#
 
 class AnalysisView(HasTraits):
     selection_tool = Instance('pychron.processing.analyses.analysis_view.ViewSelection')
@@ -65,6 +66,8 @@ class AnalysisView(HasTraits):
     snapshot_view = Instance(SnapshotView)
     detector_ic_view = Instance(DetectorICView)
     spectrometer_view = Instance(SpectrometerView)
+    peak_center_view = Instance(PeakCenterView)
+    error_comp_view = Instance(ErrorComponentsView)
 
     def update_fontsize(self, view, size):
         if 'main' in view:
@@ -73,7 +76,7 @@ class AnalysisView(HasTraits):
             adapter = getattr(v, '{}_adapter'.format(view))
             adapter.font = 'arial {}'.format(size)
         else:
-            v = getattr(self, '_{}_view'.format(view))
+            v = getattr(self, '{}_view'.format(view))
             if v is not None:
                 v.fontsize = size
 
@@ -84,9 +87,9 @@ class AnalysisView(HasTraits):
         main_view = MainView(an, analysis_type=analysis_type, analysis_id=analysis_id)
         self.main_view = main_view
 
-        history_view = HistoryView(an)
-        self.history_view = history_view
-
+        self._make_subviews(an)
+        # history_view = HistoryView(an)
+        # self.history_view = history_view
         #
         # self.analysis_id = analysis_id
         #
@@ -109,19 +112,13 @@ class AnalysisView(HasTraits):
         # subviews = [main_view,
         #             history_view] + views
         #
-        # if analysis_type in ('unknown', 'cocktail'):
-        #     subviews.append(ErrorComponentsView(an))
-        #
-        # pch = PeakCenterView()
-        # if pch.load(an):
-        #     subviews.append(pch)
 
         # self.selection_tool = ViewSelection(subviews=subviews,
         #                                     selected_view=main_view)
 
     def _make_subviews(self, an):
-        views = []
-        for vname, klass in (('experiment', ExperimentView),
+        for vname, klass in (('history', HistoryView),
+                             ('experiment', ExperimentView),
                              ('extraction', ExtractionView),
                              ('measurement', MeasurementView),
                              ('interference', InterferencesView),
@@ -131,22 +128,21 @@ class AnalysisView(HasTraits):
             if view is None:
                 view = klass(an)
             setattr(self, name, view)
-            views.append(view)
 
-        snapshot_view = self.snapshot_view
-        if snapshot_view is None and an.snapshots:
+        if an.snapshots:
             snapshot_view = SnapshotView(an.snapshots)
             self.snapshot_view = snapshot_view
-            views.append(snapshot_view)
 
         if an.analysis_type == 'detector_ic':
-            det_view = self.detector_ic_view
-            if det_view is None:
-                det_view = DetectorICView(an)
-                self.detector_ic_view = det_view
-                views.append(det_view)
+            det_view = DetectorICView(an)
+            self.detector_ic_view = det_view
 
-        return views
+        if an.analysis_type in ('unknown', 'cocktail'):
+            self.error_comp_view = ErrorComponentsView(an)
+
+        pch = PeakCenterView()
+        if pch.load(an):
+            self.peak_center_view = pch
 
     def traits_view(self):
         main_grp = Group(UItem('main_view', style='custom',
@@ -165,10 +161,11 @@ class AnalysisView(HasTraits):
                                    editor=InstanceEditor()), label='Snapshot')
         detector_ic_grp = Group(UItem('detector_ic_view', defined_when='detector_ic_view', style='custom',
                                       editor=InstanceEditor()), label='DetectorIC')
-        spectrometer_grp = Group(UItem('_view', defined_when='_view', style='custom',
-                                       editor=InstanceEditor()), label='')
+        spectrometer_grp = Group(UItem('spectrometer_view', defined_when='spectrometer_view', style='custom',
+                                       editor=InstanceEditor()), label='Spectrometer')
         v = View(VGroup(Spring(springy=False, height=-10),
-                        Tabbed(main_grp, history_grp, experiment_grp)))
+                        Tabbed(main_grp, history_grp, experiment_grp, interference_grp,
+                               spectrometer_grp, detector_ic_grp)))
         return v
         #
         # v = View(UItem('object.selection_tool.selected_view', style='custom',

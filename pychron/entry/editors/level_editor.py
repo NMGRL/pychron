@@ -29,6 +29,7 @@ from traitsui.api import View, Item, TabularEditor, HGroup, UItem, VSplit, Group
 
 
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
@@ -259,7 +260,7 @@ class LevelEditor(Loggable):
                                                  self.z,
                                                  self.level_note)
 
-                        # self._save_production()
+                        self._save_production()
 
                         return self.name
 
@@ -289,10 +290,10 @@ class LevelEditor(Loggable):
 
             self.productions = ps
 
-            # def _save_production(self):
-            # prod = self.selected_production
-            #     if prod.dirty:
-            #         self.repo.update_production(prod, irradiation=self.irradiation)
+    def _save_production(self):
+        prod = self.selected_production
+        if prod.dirty:
+            self.repo.update_production(prod)
 
             # prod = self.selected_production
             # db = self.db

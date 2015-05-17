@@ -233,7 +233,9 @@ class DVCPersister(Loggable):
             sblob = ''
             isos[iso.name] = {'detector': {'name': iso.detector,
                                            'icFactor': nominal_value(iso.ic_factor),
-                                           'icFactorErr': std_dev(iso.ic_factor)},
+                                           'icFactorErr': std_dev(iso.ic_factor),
+                                           'deflection': self.defl_dict[iso.detector],
+                                           'gain': self.gains[iso.detector]},
                               'fit': iso.fit,
                               'signal': sblob,
                               'blank': {'kind': 'previous',
@@ -251,6 +253,7 @@ class DVCPersister(Loggable):
         obj['isotopes'] = isos
         obj['baselines'] = bs
         obj['timestamp'] = timestamp.isoformat()
+        obj['source'] = self.spec_dict
 
         # save the scripts
         for si in ('measurement', 'extraction'):

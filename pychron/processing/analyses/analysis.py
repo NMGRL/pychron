@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 
 from traits.api import Instance, Int, Str, Bool, \
-    Event, Property, Float, Date, List, Tuple, CStr
+    Event, Property, Float, Date, List, Tuple, CStr, Dict
 
 # ============= standard library imports ========================
 from collections import namedtuple
@@ -82,6 +82,8 @@ class Analysis(ArArAge):
     ramp_rate = Float
     peak_center_data = Tuple
     collection_version = Str
+    source_parameters = Dict
+    deflections = Dict
 
     # processing
     is_plateau_step = False

@@ -118,9 +118,15 @@ class SampleTbl(Base, NameMixin):
     positions = relationship('IrradiationPositionTbl', backref='sample')
 
 
+class ProductionTbl(Base, NameMixin):
+    idproductionTbl = Column(Integer, primary_key=True)
+    levels = relationship('LevelTbl', backref='production')
+
+
 class LevelTbl(Base, NameMixin):
     idlevelTbl = Column(Integer, primary_key=True)
     irradiationID = Column(Integer, ForeignKey('IrradiationTbl.idirradiationTbl'))
+    productionID = Column(Integer, ForeignKey('ProductionTbl.idproductionTbl'))
     holder = Column(String(45))
     z = Column(Float)
 
@@ -146,7 +152,6 @@ class IrradiationPositionTbl(Base, BaseMixin):
     weight = Column(Float)
     j = Column(Float)
     j_err = Column(Float)
-
 
     @property
     def irradiation_position(self):

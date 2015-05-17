@@ -26,6 +26,7 @@ import yaml
 from pychron.paths import paths
 from pychron.processing.analyses.analysis import Analysis
 from pychron.processing.isotope import Isotope
+from pychron.pychron_constants import INTERFERENCE_KEYS
 
 ANALYSIS_ATTRS = ('labnumber', 'analysis_type', 'uuid', 'sample', 'project', 'material', 'aliquot', 'increment',
                   'irradiation', 'weight',
@@ -36,6 +37,7 @@ ANALYSIS_ATTRS = ('labnumber', 'analysis_type', 'uuid', 'sample', 'project', 'ma
 
 
 class DVCAnalysis(Analysis):
+
     def __init__(self, record, *args, **kw):
         super(DVCAnalysis, self).__init__(*args, **kw)
 
@@ -54,6 +56,10 @@ class DVCAnalysis(Analysis):
             self.collection_version = yd['collection_version']
 
             self._set_isotopes(yd)
+            try:
+                self.source_parameters = yd['source']
+            except KeyError:
+                pass
 
     def load_raw_data(self, keys):
         with open(self.path, 'r') as rfile:
@@ -66,6 +72,11 @@ class DVCAnalysis(Analysis):
                         iso = self.isotopes[k]
                         iso.unpack_data(base64.b64decode(isos[k]['signal']))
                         iso.baseline.unpack_data(base64.b64decode(isos[k]['baseline']))
+
+    def set_production(self, prod, r):
+        self.production_name = prod
+        self.production_ratios = r.to_dict(('Ca_K', 'Cl_K'))
+        self.interference_corrections = r.to_dict(INTERFERENCE_KEYS)
 
     def set_chronology(self, chron):
         analts = self.rundate
@@ -127,7 +138,14 @@ class DVCAnalysis(Analysis):
         for k, v in isos.items():
             # bsc = v['baseline_corrected']
             raw = v['raw_intercept']
-            self.isotopes[k] = Isotope(name=k, _value=raw['value'], _error=raw['error'])
+            det = v['detector']
+            detname = det['name']
+
+            self.isotopes[k] = Isotope(name=k,
+                                       detector=detname,
+                                       _value=raw['value'], _error=raw['error'])
+            if detname not in self.deflections:
+                self.deflections[detname] = det['deflection']
 
     def _dump(self, obj, path=None):
         if path is None:

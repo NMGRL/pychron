@@ -204,7 +204,7 @@ class ArArAge(Loggable):
         return next((i for i in self.isotopes if i.detector == det), None)
 
     def get_value(self, attr):
-        # print 'get attr', attr, self, self.isotopes
+        # print 'get attr', attr, self.isotopes
         r = ufloat(0, 0, tag=attr)
         if attr.endswith('bs'):
             iso = attr[:-2]
@@ -231,11 +231,11 @@ class ArArAge(Loggable):
             r = self.isotopes[attr].get_intensity()
         elif hasattr(self, attr):
             r = getattr(self, attr)
-        else:
-            iso = self._get_iso_by_detector(attr)
-            # iso=next((i for i in self.isotopes if i.detector==attr), None)
-            if iso:
-                r = ufloat(iso.ys[-1], tag=attr)
+        # else:
+        #     iso = self._get_iso_by_detector(attr)
+        #     # iso=next((i for i in self.isotopes if i.detector==attr), None)
+        #     if iso:
+        #         r = ufloat(iso.ys[-1], tag=attr)
 
         return r
 

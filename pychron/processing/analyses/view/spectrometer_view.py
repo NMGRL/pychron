@@ -15,12 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change
-from traitsui.api import View, UItem, Item, HGroup, VGroup, TabularEditor, Group
+from traits.api import HasTraits, Str, Int, Any, Property, List
+from traitsui.api import View, UItem, VGroup, TabularEditor, Group
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.helpers.formatting import floatfmt
+from pychron.core.helpers.isotope_utils import sort_detectors
 
 
 class DictTabularAdapter(TabularAdapter):
@@ -35,21 +36,40 @@ class DictTabularAdapter(TabularAdapter):
             return 'Not Recorded'
 
 
-class Value(HasTraits):
-    name = Str
+class DValue(HasTraits):
+    key = Str
     value = Any
+
+    def __init__(self, key, value):
+        self.key = key
+        self.value = value
 
 
 class SpectrometerView(HasTraits):
-    model = Any
+    # model = Any
     name = 'Spectrometer'
+    source_parameters = List
+    deflections = List
 
     def __init__(self, an, *args, **kw):
         super(SpectrometerView, self).__init__(*args, **kw)
-        self.model = an
+        sp = an.source_parameters
 
-    def trait_context(self):
-        return {'object': self.model}
+        keys = ('extraction_lens', 'ysymmetry', 'zsymmetry', 'zfocus')
+        names = ('ExtractionLens', 'Y-Symmetry', 'Z-Symmetry', 'Z-Focus')
+
+        sd = [DValue(n, sp.get(k)) for n, k in zip(names, keys)]
+        self.source_parameters = sd
+
+        defls = an.deflections
+        names = sort_detectors(defls.keys())
+        ds = [DValue(ni, defls[ni] or '---') for ni in names]
+        self.deflections = ds
+
+        # self.model = an
+
+    # def trait_context(self):
+    #     return {'object': self.model}
 
     def traits_view(self):
         g1 = Group(UItem('source_parameters',

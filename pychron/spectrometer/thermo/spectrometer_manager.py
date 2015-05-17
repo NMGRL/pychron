@@ -68,8 +68,10 @@ class ArgusSpectrometerManager(BaseSpectrometerManager):
     def make_parameters_dict(self):
         spec = self.spectrometer
         d = dict()
-        for attr, cmd in [('extraction_lens', 'ExtractionLens'), ('ysymmetry', 'YSymmetry'),
-                          ('zsymmetry', 'ZSymmetry'), ('zfocus', 'ZFocus')]:
+        for attr, cmd in [('extraction_lens', 'ExtractionLens'),
+                          ('ysymmetry', 'YSymmetry'),
+                          ('zsymmetry', 'ZSymmetry'),
+                          ('zfocus', 'ZFocus')]:
             v = spec.get_parameter('Get{}'.format(cmd))
             if v is not None:
                 d[attr] = v

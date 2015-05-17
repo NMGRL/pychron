@@ -21,13 +21,15 @@ from datetime import datetime
 import os
 import shutil
 # ============= local library imports  ==========================
-from pychron.core.helpers.filetools import list_directory2, ilist_directory2
+from uncertainties import ufloat
+from pychron.core.helpers.filetools import list_directory2, ilist_directory2, add_extension
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths
 
 
 class MetaObject(object):
     def __init__(self, path):
+        self.path = path
         with open(path, 'r') as rfile:
             self._load_hook(path, rfile)
 
@@ -70,13 +72,21 @@ class Production(MetaObject):
 
     def _load_hook(self, path, rfile):
         self.name = os.path.splitext(os.path.basename(path))[0]
+        attrs = []
         for line in rfile:
             if line.startswith('#-----'):
                 break
             k, v, e = line.split(',')
             setattr(self, k, float(v))
             setattr(self, '{}_err'.format(k), float(e))
+            attrs.append(k)
+
+        self.attrs = attrs
         self.note = rfile.read()
+
+    def to_dict(self, keys):
+        return {t: ufloat(getattr(self, t), getattr(self, '{}_err'.format(t))) for t in keys}
+        # return {t: getattr(self, t) for a in keys for t in (a, '{}_err'.format(a))}
 
 
 class BaseHolder(MetaObject):
@@ -183,12 +193,13 @@ class MetaRepo(GitRepoManager):
     def update_production(self, prod, irradiation=None):
         # ip = db.get_irradiation_production(prod.name)
         # if ip:
-        if irradiation is None:
-            p = os.path.join(self.path, 'productions', '{}.txt'.format(prod.name))
-        else:
-            p = os.path.join(self.path, irradiation, '{}.production.txt'.format(prod.name))
-
-        ip = Production(p)
+        # if irradiation is None:
+        #     p = os.path.join(self.path, 'productions', '{}.txt'.format(prod.name))
+        # else:
+        #     p = os.path.join(self.path, irradiation, '{}.production.txt'.format(prod.name))
+        #
+        # ip = Production(p)
+        ip = self.get_production(prod.name)
         self.debug('saving production {}'.format(prod.name))
 
         params = prod.get_params()
@@ -197,7 +208,8 @@ class MetaRepo(GitRepoManager):
             setattr(ip, k, v)
 
         ip.note = prod.note
-        self.add(p, commit=False)
+
+        self.add(ip.path, commit=False)
         self.commit('updated production {}'.format(prod.name))
 
     def add_chronology(self, irrad, doses):
@@ -221,15 +233,6 @@ class MetaRepo(GitRepoManager):
         p = self._chron_name(name)
         Chronology.dump(p, doses)
 
-    @cached('clear_cache')
-    def get_chronology(self, name):
-        print 'opening chconolog'
-        p = self._chron_name(name)
-        return Chronology(p)
-
-    def _chron_name(self, name):
-        return os.path.join(self.path, name, 'chronology.txt')
-
     def get_irradiation_holder_names(self):
         return list_directory2(os.path.join(self.path, 'irradiation_holders'),
                                remove_extension=True)
@@ -245,6 +248,18 @@ class MetaRepo(GitRepoManager):
         return prs
 
     @cached('clear_cache')
+    def get_production(self, pname):
+        p = os.path.join(self.path, 'productions', add_extension(pname, '.txt'))
+        ip = Production(p)
+        return ip
+
+    @cached('clear_cache')
+    def get_chronology(self, name):
+        print 'opening chconolog'
+        p = self._chron_name(name)
+        return Chronology(p)
+
+    @cached('clear_cache')
     def get_irradiation_holder_holes(self, name):
         p = os.path.join(self.path, 'irradiation_holders', '{}.txt'.format(name))
         holder = IrradiationHolder(p)
@@ -256,7 +271,8 @@ class MetaRepo(GitRepoManager):
         holder = LoadHolder(p)
         return holder.holes
 
+    # private
+    def _chron_name(self, name):
+        return os.path.join(self.path, name, 'chronology.txt')
+
 # ============= EOF =============================================
-
-
-
