@@ -24,6 +24,7 @@ from pychron.core.helpers.strtools import to_bool
 from pychron.envisage.tasks.editor_task import BaseEditorTask
 # from pychron.processing.selection.data_selector import DataSelector
 # from pychron.processing.tasks.browser.panes import BrowserPane
+from pychron.processing.tasks.recall.recall_editor import RecallEditor
 
 '''
 add toolbar action to open another editor tab
@@ -139,7 +140,52 @@ class BaseBrowserTask(BaseEditorTask):
 
         # self._activate_query_browser()
 
+    def recall(self, records, open_copy=False):
+        """
+            if analysis is already open activate the editor
+            otherwise open a new editor
+
+            if open_copy is True, allow multiple instances of the same analysis
+        """
+        self.debug('recalling records {}'.format(records))
+
+        if not isinstance(records, (list, tuple)):
+            records = [records]
+        elif isinstance(records, tuple):
+            records = list(records)
+
+        if not open_copy:
+            records = self._open_existing_recall_editors(records)
+            if records:
+                # ans = None
+                # if self.browser_model.use_workspace:
+                #     ans = self.workspace.make_analyses(records)
+                # elif self.dvc:
+                ans = self.dvc.make_analyses(records)
+                if ans:
+                    self._open_recall_editors(ans)
+                else:
+                    self.warning('failed making records')
+
     # private
+    def _get_editor_by_uuid(self, uuid):
+        return next((editor for editor in self.editor_area.editors
+                     if isinstance(editor, RecallEditor) and
+                     editor.model and editor.model.uuid == uuid), None)
+
+    def _open_existing_recall_editors(self, records):
+        editor = None
+        # check if record already is open
+        for r in records:
+            editor = self._get_editor_by_uuid(r.uuid)
+            if editor:
+                records.remove(r)
+
+        # activate editor if open
+        if editor:
+            self.activate_editor(editor)
+        return records
+
     def _setup_browser_model(self):
         model = self.browser_model
         model.pattributes += ('irradiation_enabled', 'use_focus_switching')
@@ -199,9 +245,65 @@ class BaseBrowserTask(BaseEditorTask):
     def _graphical_filter_hook(self, ans, is_append):
         pass
 
-    @on_trait_change('analysis_table:selected')
-    def _selected_analysis_changed(self, new):
-        self._set_selected_analysis(new)
+    def _recall_item(self, item, open_copy=False):
+        self.recall(item, open_copy=open_copy)
+
+    def _open_recall_editors(self, ans):
+        existing = [e.basename for e in self.get_recall_editors()]
+        if ans:
+            for rec in ans:
+                av = rec.analysis_view
+                mv = av.main_view
+                # mv.isotope_adapter = self.isotope_adapter
+                # mv.intermediate_adapter = self.intermediate_adapter
+                # mv.show_intermediate = self.recall_configurer.show_intermediate
+
+                # self.recall_configurer.set_fonts(av)
+
+                editor = RecallEditor(model=rec)
+                # editor.set_items(rec)
+                if existing and editor.basename in existing:
+                    editor.instance_id = existing.count(editor.basename)
+
+                try:
+                    self.editor_area.add_editor(editor)
+                except AttributeError:
+                    pass
+        else:
+            self.warning('could not load records')
+
+    def get_recall_editors(self):
+        es = self.editor_area.editors
+        return [e for e in es if isinstance(e, RecallEditor)]
+
+    @on_trait_change('browser_model:[analysis_table:context_menu_event, time_view_model:context_menu_event]')
+    def _handle_analysis_table_context_menu(self, new):
+        if new:
+            sel = self.browser_model.analysis_table.selected
+
+            action, modifiers = new
+            # if action in ('append', 'replace'):
+            #     self._append_replace_unknowns(action == 'append')
+            if action == 'open':
+                if sel:
+                    open_copy = False
+                    if modifiers:
+                        open_copy = modifiers.get('open_copy')
+
+                    for it in sel:
+                        self._recall_item(it, open_copy=open_copy)
+            elif action == 'find_refs':
+                if sel:
+                    self._find_refs(sel[-1])
+
+    @on_trait_change('browser_model:[analysis_table:dclicked]')
+    def _handle_dclicked(self, new):
+        self._recall_item(new.item)
+
+    # @on_trait_change('analysis_table:selected')
+    # def _selected_analysis_changed(self, new):
+    #     print 'asdf', new
+    #     self._set_selected_analysis(new)
 
     @on_trait_change('browser_model:dclicked_sample')
     def _dclicked_sample_changed(self):

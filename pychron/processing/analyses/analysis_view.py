@@ -131,7 +131,6 @@ class AnalysisView(HasTraits):
                 vname, klass, tattr = args
 
             if tattr:
-                print tattr, getattr(an, tattr)
                 if not getattr(an, tattr):
                     continue
 

@@ -15,28 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pyface.tasks.action.task_action import TaskAction
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.envisage.resources import icon
 
 
-class SavePipelineTemplateAction(TaskAction):
-    name = 'Save Pipeline Template'
-    method = 'save_pipeline_template'
-
-
-class RunAction(TaskAction):
-    name = 'Run'
-    method = 'run'
-    image = icon('start')
-
-
-class SwitchToBrowserAction(TaskAction):
-    name = 'To Browser'
-    method = 'switch_to_browser'
-    image = icon('start')
 # ============= EOF =============================================
-
-
-

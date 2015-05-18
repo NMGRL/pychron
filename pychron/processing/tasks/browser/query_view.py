@@ -26,7 +26,7 @@ from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.processing.tasks.browser.pane_model_view import PaneModelView
+from pychron.envisage.browser.pane_model_view import PaneModelView
 
 
 class ResultsAdapter(TabularAdapter):

@@ -121,15 +121,14 @@ class AnalysisAdapter(BrowserAdapter):
     odd_bg_color = 'lightgray'
     font = 'arial 10'
 
-
     def get_menu(self, obj, trait, row, column):
         e = obj.append_replace_enabled
         actions = [Action(name='Configure', action='configure_analysis_table'),
                    Action(name='Unselect', action='unselect_analyses'),
-                   Action(name='Replace', action='replace_items', enabled=e),
-                   Action(name='Append', action='append_items', enabled=e),
+                   # Action(name='Replace', action='replace_items', enabled=e),
+                   # Action(name='Append', action='append_items', enabled=e),
                    Action(name='Open', action='recall_items'),
-                   Action(name='Open Copy', action='recall_copies'),
+                   # Action(name='Open Copy', action='recall_copies'),
                    Action(name='Find References', action='find_refs')]
 
         return MenuManager(*actions)

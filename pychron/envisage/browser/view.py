@@ -48,6 +48,7 @@ class BrowserViewHandler(Handler):
         info.ui.dispose(True)
 
 
+
 class BrowserView(HasTraits):
     name = 'Browser'
     id = 'pychron.browser'
@@ -56,7 +57,7 @@ class BrowserView(HasTraits):
 
     labnumber_tabular_adapter = Instance(LabnumberAdapter, ())
     # analysis_tabular_adapter = Instance(AnalysisAdapter, ())
-    analysis_group_tabular_adapter = Instance(AnalysisGroupAdapter, ())
+    # analysis_group_tabular_adapter = Instance(AnalysisGroupAdapter, ())
 
     sample_view = Instance(BrowserSampleView)
     # query_view = Instance(BrowserQueryView)

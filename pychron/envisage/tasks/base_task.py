@@ -229,6 +229,20 @@ class BaseTask(Task, Loggable, PreferenceMixin):
 
     _full_window = False
 
+    def _activate_task(self, tid):
+        if self.window:
+            for task in self.window.tasks:
+                if task.id == tid:
+                    print 'found task'
+                    break
+            else:
+                print 'add task'
+                task = self.application.create_task(tid)
+                self.window.add_task(task)
+
+            self.window.activate_task(task)
+            return task
+
     def toggle_full_window(self):
         if self._full_window:
             self.window.set_layout(self.default_layout)

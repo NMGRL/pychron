@@ -33,7 +33,7 @@ class RecallEditor(BaseTraitsEditor):
     #
     # name = Str('None')
     # basename = Str
-    # instance_id = 0
+    instance_id = 0
 
     # def _analysis_view_changed(self, av):
     #     if av:
@@ -119,7 +119,12 @@ class RecallEditor(BaseTraitsEditor):
     #     self.basename = self.analysis_view.analysis_id
     #
     def _model_changed(self):
-        self.name = self.model.record_id
+        r = self.model.record_id
+        self.basename = r
+        if self.instance_id:
+            r = '{} #{}'.format(r, self.instance_id + 1)
+
+        self.name = r
 
     def traits_view(self):
         v = View(UItem('analysis_view', style='custom', editor=InstanceEditor()))

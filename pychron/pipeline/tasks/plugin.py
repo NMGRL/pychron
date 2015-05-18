@@ -19,6 +19,7 @@ from envisage.ui.tasks.task_factory import TaskFactory
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
+from pychron.pipeline.tasks.browser_task import BrowserTask
 from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 from pychron.pipeline.tasks.task import PipelineTask
 from pychron.envisage.browser.browser_model import BrowserModel
@@ -28,6 +29,11 @@ class PipelinePlugin(BaseTaskPlugin):
     def _pipeline_factory(self):
         model = self.application.get_service(BrowserModel)
         t = PipelineTask(browser_model=model)
+        return t
+
+    def _browser_factory(self):
+        model = self.application.get_service(BrowserModel)
+        t = BrowserTask(browser_model=model)
         return t
 
     def _browser_model_factory(self):
@@ -49,10 +55,15 @@ class PipelinePlugin(BaseTaskPlugin):
         return []
 
     def _tasks_default(self):
-        return [TaskFactory(id='pychron.pipeline.task.factory',
+        return [TaskFactory(id='pychron.pipeline.task',
                             name='Pipeline',
                             accelerator='Ctrl+p',
-                            factory=self._pipeline_factory)]
+                            factory=self._pipeline_factory),
+                TaskFactory(id='pychron.browser.task',
+                            name='Browser',
+                            accelerator='Ctrl+b',
+                            factory=self._browser_factory)
+                ]
 
 # ============= EOF =============================================
 

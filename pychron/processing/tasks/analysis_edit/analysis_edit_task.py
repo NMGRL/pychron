@@ -208,37 +208,37 @@ class AnalysisEditTask(BaseBrowserTask):
             for e in self.get_recall_editors():
                 tc.set_fonts(e.analysis_view)
 
-    def recall(self, records, open_copy=False):
-        """
-            if analysis is already open activate the editor
-            otherwise open a new editor
-
-            if open_copy is True, allow multiple instances of the same analysis
-        """
-        self.debug('recalling records {}'.format(records))
-
-        if not isinstance(records, (list, tuple)):
-            records = [records]
-        elif isinstance(records, tuple):
-            records = list(records)
-
-        if not open_copy:
-            records = self._open_existing_recall_editors(records)
-            if records:
-                ans = None
-                if self.browser_model.use_workspace:
-                    ans = self.workspace.make_analyses(records)
-                elif self.dvc:
-                    ans = self.dvc.make_analyses(records)
-                # else:
-                # ans = self.manager.make_analyses(records, calculate_age=True, load_aux=True)
-                if ans:
-                    self._open_recall_editors(ans)
-                else:
-                    self.warning('failed making records')
-        else:
-            ans = self.manager.make_analyses(records, use_cache=False, calculate_age=True, load_aux=True)
-            self._open_recall_editors(ans)
+    # def recall(self, records, open_copy=False):
+    #     """
+    #         if analysis is already open activate the editor
+    #         otherwise open a new editor
+    #
+    #         if open_copy is True, allow multiple instances of the same analysis
+    #     """
+    #     self.debug('recalling records {}'.format(records))
+    #
+    #     if not isinstance(records, (list, tuple)):
+    #         records = [records]
+    #     elif isinstance(records, tuple):
+    #         records = list(records)
+    #
+    #     if not open_copy:
+    #         records = self._open_existing_recall_editors(records)
+    #         if records:
+    #             ans = None
+    #             if self.browser_model.use_workspace:
+    #                 ans = self.workspace.make_analyses(records)
+    #             elif self.dvc:
+    #                 ans = self.dvc.make_analyses(records)
+    #             # else:
+    #             # ans = self.manager.make_analyses(records, calculate_age=True, load_aux=True)
+    #             if ans:
+    #                 self._open_recall_editors(ans)
+    #             else:
+    #                 self.warning('failed making records')
+    #     else:
+    #         ans = self.manager.make_analyses(records, use_cache=False, calculate_age=True, load_aux=True)
+    #         self._open_recall_editors(ans)
 
     # def new_ic_factor(self):
     #     from pychron.processing.tasks.detector_calibration.intercalibration_factor_editor import \

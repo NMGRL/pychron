@@ -46,7 +46,12 @@ class PipelineTask(BaseBrowserTask):
     name = 'Pipeline Processing'
     engine = Instance(PipelineEngine, ())
     tool_bars = [SToolBar(RunAction(),
-                          SavePipelineTemplateAction())]
+                          SavePipelineTemplateAction()),
+                 # SToolBar(SwitchToBrowserAction())
+                 ]
+
+    def switch_to_browser(self):
+        self._activate_task('pychron.browser.task')
 
     def activated(self):
         super(PipelineTask, self).activated()

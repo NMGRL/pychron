@@ -15,31 +15,31 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traitsui.api import View, Item, HGroup, UItem, VGroup, EnumEditor, TabularEditor, spring
+from traitsui.api import View, HGroup, UItem, VGroup, EnumEditor, TabularEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.processing.tasks.browser.pane_model_view import PaneModelView
+from pychron.envisage.browser.pane_model_view import PaneModelView
 
 
 class TableView(PaneModelView):
 
     def traits_view(self):
-        group_table = UItem('analysis_groups',
-                            label='Groups',
-                            width=0.6,
-                            editor=TabularEditor(
-                                adapter=self.pane.analysis_group_tabular_adapter,
-                                editable=False,
-                                selected='selected_analysis_groups',
-                                multi_select=True,
-                                dclicked='dclicked_analysis_group',
-                                # column_clicked='column_clicked',
-                                # update='update_sample_table',
-                                # refresh='update_sample_table',
-                                stretch_last_section=False))
+        # group_table = UItem('analysis_groups',
+        #                     label='Groups',
+        #                     width=0.6,
+        #                     editor=TabularEditor(
+        #                         adapter=self.pane.analysis_group_tabular_adapter,
+        #                         editable=False,
+        #                         selected='selected_analysis_groups',
+        #                         multi_select=True,
+        #                         dclicked='dclicked_analysis_group',
+        #                         # column_clicked='column_clicked',
+        #                         # update='update_sample_table',
+        #                         # refresh='update_sample_table',
+        #                         stretch_last_section=False))
 
         sample_tools = HGroup(UItem('sample_filter_parameter',
                                     width=-90, editor=EnumEditor(name='sample_filter_parameters')),
@@ -98,13 +98,13 @@ class TableView(PaneModelView):
     def unselect_samples(self, info, obj):
         obj.selected_samples = []
 
-    def replace_items(self, info, obj):
-        if obj.selected:
-            obj.context_menu_event = ('replace', None)
-
-    def append_items(self, info, obj):
-        if obj.selected:
-            obj.context_menu_event = ('append', None)
+    # def replace_items(self, info, obj):
+    #     if obj.selected:
+    #         obj.context_menu_event = ('replace', None)
+    #
+    # def append_items(self, info, obj):
+    #     if obj.selected:
+    #         obj.context_menu_event = ('append', None)
 
     def recall_items(self, info, obj):
         if obj.selected:
@@ -127,20 +127,20 @@ class TableView(PaneModelView):
     def on_chrono_view(self, info, obj):
         obj.load_chrono_view()
 
-    def plot_selected(self, info, obj):
-        try:
-            obj.plot_selected = False
-            # obj.plot_selected()
-        except AttributeError:
-            pass
-
-    def plot_selected_grouped(self, info, obj):
-        print info, obj
-        try:
-            obj.plot_selected = True
-            # obj.plot_selected_grouped()
-        except AttributeError:
-            pass
+        # def plot_selected(self, info, obj):
+        #     try:
+        #         obj.plot_selected = False
+        #         # obj.plot_selected()
+        #     except AttributeError:
+        #         pass
+        #
+        # def plot_selected_grouped(self, info, obj):
+        #     print info, obj
+        #     try:
+        #         obj.plot_selected = True
+        #         # obj.plot_selected_grouped()
+        #     except AttributeError:
+        #         pass
 
 
 # ============= EOF =============================================
