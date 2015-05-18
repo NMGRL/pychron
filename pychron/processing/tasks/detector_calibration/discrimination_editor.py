@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from traits.api import on_trait_change
 
-from pychron.processing.tasks.analysis_edit.interpolation_editor import InterpolationEditor
+from pychron.processing.plot.editors.interpolation_editor import InterpolationEditor
 
 # ============= standard library imports ========================
 from pychron.core.helpers.isotope_utils import sort_isotopes

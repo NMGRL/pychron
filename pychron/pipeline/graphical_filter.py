@@ -26,7 +26,7 @@ import math
 # ============= local library imports  ==========================
 from pychron.graph.graph import Graph
 from pychron.graph.tools.rect_selection_tool import RectSelectionTool, RectSelectionOverlay
-from pychron.processing.plotters.series.ticks import tick_formatter, StaticTickGenerator, TICKS
+from pychron.processing.plot.plotter.ticks import tick_formatter, StaticTickGenerator, TICKS
 from pychron.experiment.utilities.identifier import ANALYSIS_MAPPING_INTS
 from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
 from pychron.graph.tools.point_inspector import PointInspectorOverlay

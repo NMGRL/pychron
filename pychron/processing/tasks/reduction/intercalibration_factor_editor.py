@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from pychron.pychron_constants import IC_ANALYSIS_TYPE_MAP
-from pychron.processing.tasks.analysis_edit.interpolation_editor import InterpolationEditor
+from pychron.processing.plot.editors.interpolation_editor import InterpolationEditor
 # ============= standard library imports ========================
 from numpy import array
 from pychron.core.helpers.isotope_utils import sort_detectors

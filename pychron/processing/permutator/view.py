@@ -24,7 +24,7 @@ from uncertainties import nominal_value
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.helpers.formatting import floatfmt
 
-from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
+from pychron.processing.plot.editors.graph_editor import GraphEditor
 
 
 class ResultsAdapter(TabularAdapter):

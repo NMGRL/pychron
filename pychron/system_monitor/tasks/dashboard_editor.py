@@ -23,9 +23,9 @@ from traits.api import Instance, Int, Dict
 from numpy import array, vstack
 # ============= local library imports  ==========================
 from pychron.processing.plotter_options_manager import DashboardOptionsManager
-from pychron.processing.plotters.figure_container import FigureContainer
-from pychron.processing.plotters.series.series_model import DashboardSeriesModel
-from pychron.processing.figures.editors.series_editor import SeriesEditor
+from pychron.processing.plot.figure_container import FigureContainer
+from pychron.processing.plot.models.series_model import DashboardSeriesModel
+from pychron.processing.plot.editors.series_editor import SeriesEditor
 from pychron.system_monitor.tasks.controls import SystemMonitorControls
 
 """

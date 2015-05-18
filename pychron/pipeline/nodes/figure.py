@@ -19,9 +19,9 @@ from traits.api import Any
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.pipeline.nodes.base import BaseNode
-from pychron.processing.figures.editors.ideogram_editor import IdeogramEditor
-from pychron.processing.figures.editors.series_editor import SeriesEditor
-from pychron.processing.figures.editors.spectrum_editor import SpectrumEditor
+from pychron.processing.plot.editors.ideogram_editor import IdeogramEditor
+from pychron.processing.plot.editors.series_editor import SeriesEditor
+from pychron.processing.plot.editors.spectrum_editor import SpectrumEditor
 from pychron.processing.plotter_options_manager import IdeogramOptionsManager, SpectrumOptionsManager, \
     SeriesOptionsManager
 
@@ -33,8 +33,11 @@ class FigureNode(BaseNode):
 
     def run(self, state):
         editor = self.editor_klass()
-        if self.plotter_options:
-            editor.plotter_options = self.plotter_options
+        if not self.plotter_options:
+            pom = self.plotter_options_manager_klass()
+            self.plotter_options = pom.plotter_options
+
+        editor.plotter_options = self.plotter_options
 
         self.editor = editor
 

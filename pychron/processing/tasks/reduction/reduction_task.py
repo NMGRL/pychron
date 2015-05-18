@@ -52,7 +52,7 @@ class ReductionTask(InterpolationTask):
     blank_editor_count = 1
 
     def new_blank(self):
-        from pychron.processing.tasks.reduction.blanks_editor import BlanksEditor
+        from pychron.processing.plot.editors.blanks_editor import BlanksEditor
 
         editor = BlanksEditor(name='Blanks {:03d}'.format(self.blank_editor_count),
                               processor=self.manager,

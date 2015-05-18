@@ -19,12 +19,22 @@ from traits.api import Bool
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.pipeline.nodes.figure import FigureNode
-from pychron.processing.plotter_options_manager import IsotopeEvolutionOptionsManager
+from pychron.processing.plotter_options_manager import IsotopeEvolutionOptionsManager, BlanksOptionsManager
 from pychron.processing.tasks.isotope_evolution.isotope_evolution_editor import IsotopeEvolutionEditor
 
 
 # class FitNode(BaseNode):
 # pass
+from pychron.processing.plot.editors.blanks_editor import BlanksEditor
+
+
+class FitBlanksNode(FigureNode):
+    editor_klass = BlanksEditor
+    plotter_options_manager_klass = BlanksOptionsManager
+
+    def run(self, state):
+        super(FitBlanksNode, self).run(state)
+        state.saveable_keys = self.plotter_options.get_saveable_plots()
 
 
 class IsotopeEvolutionNode(FigureNode):
@@ -34,7 +44,6 @@ class IsotopeEvolutionNode(FigureNode):
     use_save_node = Bool(True)
 
     def run(self, state):
-        state.saveable_keys = self.plotter_options.get_saveable_plots()
 
         # graph_ids = [(ai.uuid, idx) for idx, ai in enumerate(state.unknowns)]
 
@@ -50,6 +59,7 @@ class IsotopeEvolutionNode(FigureNode):
 
         super(IsotopeEvolutionNode, self).run(state)
 
+        state.saveable_keys = self.plotter_options.get_saveable_plots()
         self.editor.analysis_groups = [(ai,) for ai in state.unknowns]
         for ai in state.unknowns:
             ai.graph_id = 0

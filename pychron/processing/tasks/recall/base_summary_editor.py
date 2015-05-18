@@ -23,8 +23,8 @@ from traitsui.api import View, UItem, InstanceEditor
 # ============= local library imports  ===========================
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.processing.plotter_options_manager import IdeogramOptionsManager
-from pychron.processing.plotters.ideogram.ideogram_model import IdeogramModel
-from pychron.processing.plotters.ideogram.ideogram_panel import IdeogramPanel
+from pychron.processing.plot.models.ideogram_model import IdeogramModel
+from pychron.processing.plot.panels.ideogram_panel import IdeogramPanel
 
 
 class OptionsView(HasTraits):

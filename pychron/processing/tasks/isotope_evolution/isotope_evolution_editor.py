@@ -20,8 +20,8 @@ from traits.api import Event
 from numpy import polyfit
 # ============= local library imports  ==========================
 from pychron.graph.graph import Graph
-from pychron.processing.plotters.iso_evo.model import IsoEvoModel
-from pychron.processing.tasks.figures.figure_editor import FigureEditor
+from pychron.processing.plot.models.iso_evo_model import IsoEvoModel
+from pychron.processing.plot.editors.figure_editor import FigureEditor
 
 
 def fits_equal(dbfit, fit, fod):

@@ -24,6 +24,9 @@ from pyface.tasks.task_layout import TaskLayout, PaneItem, Tabbed, VSplitter
 
 
 
+
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
@@ -33,7 +36,7 @@ from pychron.experiment.utilities.identifier import ANALYSIS_MAPPING, SPECIAL_MA
 from pychron.globals import globalv
 from pychron.processing.tasks.analysis_edit.panes import ControlsPane
 from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPane
-from pychron.processing.tasks.figures.figure_editor import FigureEditor
+from pychron.processing.plot.editors.figure_editor import FigureEditor
 from pychron.processing.tasks.figures.figure_task import FigureTask
 from pychron.processing.tasks.figures.panes import PlotterOptionsPane
 from pychron.system_monitor.tasks.actions import AddSystemMonitorAction, ClearFigureAction, PauseAction, PlayAction, \

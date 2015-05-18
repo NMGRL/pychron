@@ -50,8 +50,8 @@ class PipelineTask(BaseBrowserTask):
                  # SToolBar(SwitchToBrowserAction())
                  ]
 
-    def switch_to_browser(self):
-        self._activate_task('pychron.browser.task')
+    # def switch_to_browser(self):
+    #     self._activate_task('pychron.browser.task')
 
     def activated(self):
         super(PipelineTask, self).activated()

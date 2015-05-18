@@ -26,19 +26,20 @@ import os
 # ============= local library imports  ==========================
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.globals import globalv
-from pychron.processing.plotters.formatting_options import FormattingOptions
-from pychron.processing.plotters.options.base import BasePlotterOptions
-from pychron.processing.plotters.options.composite import CompositeOptions
-from pychron.processing.plotters.options.dashboard import DashboardOptions
-from pychron.processing.plotters.options.ideogram import IdeogramOptions
-from pychron.processing.plotters.options.iso_evo import IsotopeEvolutionOptions
-from pychron.processing.plotters.options.isochron import InverseIsochronOptions
+from pychron.processing.plot.formatting_options import FormattingOptions
+from pychron.processing.plot.options.base import BasePlotterOptions
+from pychron.processing.plot.options.blanks import BlanksOptions
+from pychron.processing.plot.options.composite import CompositeOptions
+from pychron.processing.plot.options.dashboard import DashboardOptions
+from pychron.processing.plot.options.ideogram import IdeogramOptions
+from pychron.processing.plot.options.iso_evo import IsotopeEvolutionOptions
+from pychron.processing.plot.options.isochron import InverseIsochronOptions
 # from pychron.processing.plotters.options.plotter import PlotterOptions
-from pychron.processing.plotters.options.series import SeriesOptions
-from pychron.processing.plotters.options.spectrum import SpectrumOptions
-from pychron.processing.plotters.options.system_monitor import SystemMonitorOptions
+from pychron.processing.plot.options.series import SeriesOptions
+from pychron.processing.plot.options.spectrum import SpectrumOptions
+from pychron.processing.plot.options.system_monitor import SystemMonitorOptions
 from pychron.paths import paths
-from pychron.processing.plotters.options.xy_scatter import XYScatterOptions
+from pychron.processing.plot.options.xy_scatter import XYScatterOptions
 from pychron.pychron_constants import NULL_STR
 
 
@@ -319,4 +320,9 @@ class IsotopeEvolutionOptionsManager(PlotterOptionsManager):
     plotter_options_klass = IsotopeEvolutionOptions
     persistence_name = 'iso_evo'
     # _defaults_path = paths.ideogram_defaults
+
+
+class BlanksOptionsManager(PlotterOptionsManager):
+    plotter_options_klass = BlanksOptions
+    persistence_name = 'blanks'
 # ============= EOF =============================================

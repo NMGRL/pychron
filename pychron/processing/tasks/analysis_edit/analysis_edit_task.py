@@ -41,7 +41,7 @@ from pychron.processing.tasks.analysis_edit.panes import UnknownsPane, ControlsP
     TablePane
 
 from pychron.envisage.browser.browser_task import BaseBrowserTask
-from pychron.processing.tasks.figures.figure_editor import FigureEditor
+from pychron.processing.plot.editors.figure_editor import FigureEditor
 from pychron.processing.tasks.recall.recall_editor import RecallEditor
 from pychron.processing.tasks.analysis_edit.adapters import UnknownsAdapter
 

@@ -23,7 +23,7 @@ from enable.colors import ColorTrait
 import string
 # ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
-from pychron.processing.plotters.ideogram.mean_indicator_overlay import XYPlotLabel
+from pychron.processing.plot.overlays.mean_indicator_overlay import XYPlotLabel
 
 
 class LimitsTool(BaseTool):

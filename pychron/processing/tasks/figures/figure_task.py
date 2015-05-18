@@ -27,22 +27,22 @@ import os
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.envisage.tasks.actions import ToggleFullWindowAction
 from pychron.paths import paths
-from pychron.processing.plotters.xy.xy_scatter import XYScatterEditor
+from pychron.processing.plot.plotter.xy_scatter import XYScatterEditor
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
 from pychron.processing.tagging.analysis_tags import Tag
 from pychron.processing.tasks.browser.util import browser_pane_item
 from pychron.processing.tasks.figures.db_figure import DBFigure
-from pychron.processing.figures.editors.composite_editor import CompositeEditor
+from pychron.processing.plot.editors.composite_editor import CompositeEditor
 from pychron.processing.tasks.figures.panes import PlotterOptionsPane, \
     FigureSelectorPane
 from pychron.processing.tasks.figures.actions import SavePDFFigureAction, RefreshActiveEditorAction
-from pychron.processing.tasks.figures.figure_editor import FigureEditor
+from pychron.processing.plot.editors.figure_editor import FigureEditor
 from pychron.processing.tasks.figures.save_figure_dialog import SaveFigureDialog
 from pychron.processing.tasks.recall.recall_editor import RecallEditor
 
-from pychron.processing.figures.editors.spectrum_editor import SpectrumEditor
-from pychron.processing.figures.editors.isochron_editor import InverseIsochronEditor
-from pychron.processing.figures.editors.ideogram_editor import IdeogramEditor
+from pychron.processing.plot.editors.spectrum_editor import SpectrumEditor
+from pychron.processing.plot.editors.isochron_editor import InverseIsochronEditor
+from pychron.processing.plot.editors.ideogram_editor import IdeogramEditor
 
 # @todo: add layout editing.
 # @todo: add vertical stack. link x-axes
@@ -284,7 +284,7 @@ class FigureTask(AnalysisEditTask):
                    add_iso=False,
                    add_table=False):
         if klass is None:
-            from pychron.processing.figures.editors.series_editor import SeriesEditor
+            from pychron.processing.plot.editors.series_editor import SeriesEditor
 
             klass = SeriesEditor
 
