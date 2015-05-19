@@ -37,7 +37,7 @@ class ArgusGPActuator(GPActuator):
 #        '''
 #        self._communicator._terminator = chr(10)
 
-    def get_channel_state(self, obj):
+    def get_channel_state(self, obj, verbose=False):
         '''
         
         '''
@@ -50,7 +50,7 @@ class ArgusGPActuator(GPActuator):
 
         cmd = 'GetValveState'
 
-        s = self.ask(cmd)
+        s = self.ask(cmd, verbose=verbose)
 
         if s is not None:
             if s.strip() in 'True':

@@ -439,7 +439,7 @@ class ValveManager(Manager):
     def load_hardware_states(self):
         for k, v in self.valves.iteritems():
             if v.query_state:
-                s = v.get_hardware_state()
+                s = v.get_hardware_state(verbose=False)
                 self.refresh_state = (k, s, False)
 
     def _load_states(self):
