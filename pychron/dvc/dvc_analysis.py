@@ -149,7 +149,7 @@ class DVCAnalysis(Analysis):
 
                 if siso.temporary_blank is not None:
                     blank = iso.get('blank', {})
-                    print blank, float(siso.temporary_blank.value)
+                    # print blank, float(siso.temporary_blank.value)
                     blank['value'] = float(siso.temporary_blank.value)
                     blank['error'] = float(siso.temporary_blank.error)
                     blank['fit'] = siso.temporary_blank.fit

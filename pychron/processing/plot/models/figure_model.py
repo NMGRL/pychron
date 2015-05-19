@@ -39,7 +39,6 @@ class FigureModel(HasTraits):
             self.refresh_panels()
 
         for p in self.panels:
-            print 'p', p.figures
             if not p.figures or force:
                 p.make_graph()
 

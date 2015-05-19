@@ -15,7 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import List
+from pyface.message_dialog import information
+from traits.api import List, Instance, Bool
 # ============= standard library imports ========================
 from pychron.envisage.browser.view import BrowserView
 from pychron.pipeline.nodes.base import BaseNode
@@ -24,12 +25,26 @@ from pychron.pipeline.nodes.base import BaseNode
 class DataNode(BaseNode):
     name = 'Data'
     analyses = List
-
     analysis_kind = None
+    dvc = Instance('pychron.dvc.dvc.DVC')
+    browser_model = Instance('pychron.envisage.browser.browser_model.BrowserModel')
+
+    check_reviewed = Bool(False)
 
     def run(self, state):
-        for ai in self.analyses:
-            ai.group_id = 0
+        review_req = []
+        for attr in ('blanks', 'iso_evo'):
+            for ai in self.analyses:
+                ai.group_id = 0
+                if self.check_reviewed:
+                    # check analyses to see if they have been reviewed
+                    if attr not in review_req:
+                        if not self.dvc.analysis_has_review(ai, attr):
+                            review_req.append(attr)
+
+        if review_req:
+            information(None, 'The current data set has been '
+                              'analyzed and requires {}'.format(','.join(review_req)))
 
         items = getattr(state, self.analysis_kind)
         items.extend(self.analyses)

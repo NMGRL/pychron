@@ -142,7 +142,7 @@ class DVCDatabase(DatabaseAdapter):
 
             if exclude:
                 q = q.filter(not_(AnalysisTbl.idanalysisTbl.in_(exclude)))
-            return self._query_all(q, verbose_query=True)
+            return self._query_all(q, verbose_query=False)
 
     def get_production_name(self, irrad, level):
         with self.session_ctx() as sess:

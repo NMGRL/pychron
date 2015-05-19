@@ -22,6 +22,7 @@ from traits.api import Instance, Str
 from apptools.preferences.preference_binding import bind_preference
 
 
+
 # ============= standard library imports ========================
 import os
 from git import Repo
@@ -36,6 +37,7 @@ from pychron.github import Organization
 from pychron.loggable import Loggable
 from pychron.paths import paths
 
+TESTSTR = {'blanks': 'auto update blanks', 'iso_evo': 'auto update iso_evo'}
 
 class DVCException(BaseException):
     def __init__(self, attr):
@@ -111,7 +113,6 @@ class DVC(Loggable):
         self.meta_repo.push()
 
     # analysis processing
-
     def _get_project_repo(self, project):
         repo = self.project_repo
         path = project_path(project)
@@ -124,6 +125,16 @@ class DVC(Loggable):
             self.project_repo = repo
 
         return repo
+
+    def analysis_has_review(self, ai, attr):
+        test_str = TESTSTR[attr]
+        repo = self._get_project_repo(ai.project)
+        for l in repo.get_log():
+            if l.message.startswith(test_str):
+                self.debug('{} {} reviewed'.format(ai, attr))
+                return True
+        else:
+            self.debug('{} {} not reviewed'.format(ai, attr))
 
     def update_analyses(self, ans, msg):
         key = lambda x: x.project
@@ -160,7 +171,6 @@ class DVC(Loggable):
         ai.dump_fits(keys)
 
     def find_references(self, times, atypes):
-        print 'times', times
         records = self.db.find_references(times, atypes)
         return self.make_analyses(records)
 

@@ -367,6 +367,10 @@ class GitRepoManager(Loggable):
 
         self._add_to_repo(dest, msg, **kw)
 
+    def get_log(self):
+        repo = self._repo
+        return repo.active_branch.log()
+
     # action handlers
     def diff_selected(self):
         if self._validate_diff():
