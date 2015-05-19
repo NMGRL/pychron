@@ -243,30 +243,22 @@ class EthernetCommunicator(Communicator):
 
         return not self.simulation
 
-    def get_handler(self):
-        if self.kind.lower() == 'udp':
-            if self.handler is None:
-                h = UDPHandler()
-                h.open_socket((self.host, self.port))
-            else:
-                h = self.handler
-        else:
-            if self.handler is None:
-                h = TCPHandler()
-                try:
-                    h.open_socket((self.host, self.port))
-                except socket.error, e:
-                    self.debug(str(e))
-                    h = None
-                    self.error = True
+    def get_handler(self, timeout):
+        try:
+            h = self.handler
+            if h is None:
+                if self.kind.lower() == 'udp':
+                    h = UDPHandler()
+                else:
+                    h = TCPHandler()
 
-                self.handler = h
-            else:
-                h = self.handler
-
-        h.set_frame(self.message_frame)
-
-        return h
+            h.open_socket((self.host, self.port), timeout=timeout)
+            h.set_frame(self.message_frame)
+            self.handler = h
+            return h
+        except socket.error, e:
+            self.debug(str(e))
+            self.error = True
 
     def _reset_connection(self):
         self.handler = None
@@ -289,13 +281,24 @@ class EthernetCommunicator(Communicator):
         cmd = '{}{}'.format(cmd, self.write_terminator)
 
         def _ask():
-            handler = self.get_handler()
+            timeout = 2
+            if self.error_mode:
+                timeout = 0.25
+
+            handler = self.get_handler(timeout)
             if not handler:
-                self.simulation = True
+                self.error_mode = True
+                # self.simulation = True
                 return
+            else:
+                self.error_mode = False
+                # self.simulation = False
 
             if handler.send_packet(cmd):
                 return handler.get_packet(cmd)
+
+        if self.error_mode:
+            retries = 1
 
         r = None
         with self._lock:
