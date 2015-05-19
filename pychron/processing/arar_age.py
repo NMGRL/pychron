@@ -124,13 +124,14 @@ class ArArAge(Loggable):
             iso = self.isotopes[k]
             if iso.temporary_blank is not None:
                 tb = iso.temporary_blank
+                print tb.value, v, tb.error, e
                 if abs(tb.value - v) < tol and abs(tb.error - e) < tol:
                     return
                 else:
-                    self.debug('setting temporary blank iso={}, v={}, e={}, fit={}'.format(k, v, e, f))
+                    self.debug('temp blank {}({:0.4f}+/-{:0.4f}) fit={}'.format(k, v, e, f))
                     tb.value, tb.error, tb.fit = v, e, f
             else:
-                self.debug('setting temporary blank iso={}, v={}, e={}, fit={}'.format(k, v, e, f))
+                self.debug('temp blank {}({:0.4f}+/-{:0.4f}) fit={}'.format(k, v, e, f))
                 iso.temporary_blank = Blank(value=v, error=e, fit=f)
 
     def set_j(self, s, e):

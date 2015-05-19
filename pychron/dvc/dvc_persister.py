@@ -238,7 +238,7 @@ class DVCPersister(Loggable):
                                            'gain': self.gains[iso.detector]},
                               'fit': iso.fit,
                               'signal': sblob,
-                              'blank': {'kind': 'previous',
+                              'blank': {'fit': 'previous',
                                         'runids': [self.previous_blank_runid],
                                         'value': iso.blank.value,
                                         'error': iso.blank.error}}

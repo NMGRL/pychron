@@ -15,13 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, List
+from traits.api import HasTraits, List, Bool
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 class EngineState(HasTraits):
     unknowns = List
     references = List
     editors = List
+    has_references = Bool
+    saveable_keys = List
+    saveable_fits = List
+    user_review = Bool
 
 # ============= EOF =============================================
 

@@ -65,7 +65,10 @@ class InfoInspector(BaseTool):
         self.current_screen = None
         self.current_position = None
         self.metadata_changed = True
+        event.window.set_pointer('arrow')
 
+    def normal_mouse_enter(self, event):
+        event.window.set_pointer('arrow')
 
 class InfoOverlay(AbstractOverlay):
     """
@@ -104,8 +107,8 @@ class InfoOverlay(AbstractOverlay):
         rect_width = max(lws) + 4
         rect_height = (max(lhs)+2) * len(lhs)
 
-        xoffset = 5
-        yoffset = -5
+        xoffset = 15
+        yoffset = -15
         gc.translate_ctm(xoffset, yoffset)
 
         # if the box doesnt fit in window
@@ -130,6 +133,9 @@ class InfoOverlay(AbstractOverlay):
         gc.set_fill_color((0, 0, 0))
 
         h = max(lhs)+2
+
+        # this is cause the pointer to change to an IBeam if the cursor is close the the box
+        # increase offsets? as a hack
         for i, mi in enumerate(lines[::-1]):
             gc.set_text_position(0, h * i)
             gc.show_text(mi)

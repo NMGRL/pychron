@@ -102,6 +102,8 @@ class PipelineTask(BaseBrowserTask):
 
     @caller
     def run(self):
+        # t = Thread(target=self._run_pipeline)
+        # t.start()
         self._run_pipeline()
 
     def _close_editor(self, editor):
@@ -116,11 +118,14 @@ class PipelineTask(BaseBrowserTask):
 
         self.engine.run(state)
 
-        self.close_all()
-        for editor in state.editors:
-            self._close_editor(editor)
-            self._open_editor(editor)
+        def prun():
+            self.close_all()
+            for editor in state.editors:
+                self._close_editor(editor)
+                self._open_editor(editor)
 
+        prun()
+        # invoke_in_main_thread(prun)
         self.engine.post_run(state)
 
     def _default_layout_default(self):

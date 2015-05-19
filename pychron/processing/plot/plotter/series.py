@@ -50,16 +50,17 @@ class BaseSeries(BaseArArFigure):
             return self.xs.mean()
         return 0
 
-    def _get_xs(self, plots, ans):
+    def _get_xs(self, plots, ans, tzero=None):
 
         xs = array([ai.timestamp for ai in ans])
         px = plots[0]
+        if tzero is None:
+            if px.normalize == 'now':
+                tzero = time.time()
+            else:
+                tzero = xs[-1]
 
-        if px.normalize == 'now':
-            norm = time.time()
-        else:
-            norm = xs[-1]
-        xs -= norm
+        xs -= tzero
         if not px.use_time_axis:
             xs /= 3600.
         else:

@@ -40,6 +40,9 @@ class FitNode(FigureNode):
 class FitBlanksNode(FitNode):
     editor_klass = BlanksEditor
     plotter_options_manager_klass = BlanksOptionsManager
+    user_review = Bool(True)
+
+    _reviewed_flag = False
 
     def run(self, state):
         super(FitBlanksNode, self).run(state)
@@ -49,6 +52,10 @@ class FitBlanksNode(FitNode):
 
         self._set_saveable(state)
         self.name = '{} Blanks'.format(self.name)
+        if self.user_review and not self._reviewed_flag:
+            self._reviewed_flag = True
+            state.user_review = True
+
 
 
 class IsotopeEvolutionNode(FitNode):

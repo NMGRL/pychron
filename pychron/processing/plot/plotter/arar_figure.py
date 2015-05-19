@@ -465,7 +465,9 @@ class BaseArArFigure(HasTraits):
                                additional_info=None,
                                index_tag=None,
                                index_attr=None,
-                               convert_index=None):
+                               convert_index=None,
+                               items=None
+                               ):
         if add_tool:
             broadcaster = BroadcasterTool()
             scatter.tools.append(broadcaster)
@@ -483,8 +485,10 @@ class BaseArArFigure(HasTraits):
             if convert_index is None:
                 convert_index = lambda x: '{:0.3f}'.format(x)
 
+            if items is None:
+                items = self.sorted_analyses
             point_inspector = AnalysisPointInspector(scatter,
-                                                     analyses=self.sorted_analyses,
+                                                     analyses=items,
                                                      convert_index=convert_index,
                                                      index_tag=index_tag,
                                                      index_attr=index_attr,

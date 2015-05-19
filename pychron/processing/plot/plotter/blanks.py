@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from chaco.array_data_source import ArrayDataSource
-from traits.api import Property, List
+from traits.api import Property, List, Array, on_trait_change
 # ============= standard library imports ========================
 from numpy import array
 # ============= local library imports  ==========================
@@ -30,32 +30,23 @@ class Blanks(BaseSeries):
     sorted_references = Property(depends_on='references')
     show_current = True
     _normalization_factor = 3600.
+    rxs = Array
 
     def post_make(self):
         self.graph.refresh()
 
     def plot(self, plots, legend):
-        # graph =self.graph
-        # xs = array([ai.timestamp for ai in self.sorted_analyses])
         if plots:
-            self.xs = self._get_xs(plots, self.sorted_analyses)
-            self.rxs = self._get_xs(plots, self.sorted_references)
-            #     px = plots[0]
-            #
-            #     if px.normalize == 'now':
-            #         norm = time.time()
-            #     else:
-            #         norm = xs[-1]
-            #     xs -= norm
-            #     if not px.use_time_axis:
-            #         xs /= 3600.
-            #     else:
-            #         graph.convert_index_func = lambda x: '{:0.2f} hrs'.format(x / 3600.)
-            #
-            #     self.xs = xs
+            _, mx = self._get_min_max()
+
+            self.xs = self._get_xs(plots, self.sorted_analyses, tzero=mx)
+            self.rxs = self._get_xs(plots, self.sorted_references, tzero=mx)
+
             for i, p in enumerate(plots):
                 self._new_fit_series(i, p)
-            self.xmi, self.xma = self.min_x(), self.max_x()
+
+            mi, ma = self._get_min_max()
+            self.xmi, self.xma = (mi - ma) / 3600., 0
             self.xpad = '0.1'
 
     def _handle_limits(self):
@@ -129,7 +120,7 @@ class Blanks(BaseSeries):
                                          ys=r_ys,
                                          yserr=r_es,
                                          kind=efit)
-            s, _p = graph.new_series(r_xs, r_ys,
+            scatter, _p = graph.new_series(r_xs, r_ys,
                                      yerror=r_es,
                                      type='scatter',
                                      fit=False,
@@ -141,7 +132,7 @@ class Blanks(BaseSeries):
         else:
 
             # series_id = (series_id+1) * 3
-            _, s, l = graph.new_series(r_xs, r_ys,
+            _, scatter, l = graph.new_series(r_xs, r_ys,
                                        # display_index=ArrayDataSource(data=display_xs),
                                        yerror=ArrayDataSource(data=r_es),
                                        fit=po.fit,
@@ -156,6 +147,19 @@ class Blanks(BaseSeries):
 
                 # self._add_inspector(s, self.sorted_references)
                 # self._add_error_bars(s, array(r_es))
+
+        def af(i, x, y, analysis):
+            return ('Run Date: {}'.format(analysis.rundate.strftime('%m-%d-%Y %H:%M')),
+                    'Rel. Time: {:0.4f}'.format(x))
+
+        self._add_scatter_inspector(scatter,
+                                    add_selection=True,
+                                    additional_info=af,
+                                    items=self.sorted_references)
+        plot = self.graph.plots[pid]
+        plot.isotope = po.name
+        plot.fit = po.fit
+        # scatter.index.on_trait_change(self._update_metadata, 'metadata_changed')
 
         return reg
 
@@ -228,4 +232,51 @@ class Blanks(BaseSeries):
                       key=self._cmp_analyses,
                       reverse=self._reverse_sorted_analyses)
 
+    @on_trait_change('graph:regression_results')
+    def _update_regression(self, new):
+        # return
+        print 'ref'
+        key = 'Unknowns-predicted{}'
+        # necessary to handle user excluding points
+        # if self.binned_analyses:
+        #     gen = self._graph_generator()
+        #
+        #     c = 0
+        #     for j, fit in enumerate(gen):
+        #         for i, g in enumerate(self.binned_analyses):
+        #             try:
+        #                 plotobj, reg = new[c]
+        #             except IndexError:
+        #                 break
+        #
+        #             if issubclass(type(reg), BaseRegressor):
+        #                 k = key.format(i)
+        #                 self._set_values(fit, plotobj, reg, k, g.unknowns)
+        #             c += 1
+        # else:
+        key = key.format(0)
+        # gen = self._graph_generator()
+        # for plotobj, reg in zip(self.graph.plots, new):
+        for plotobj, reg in new:
+            self._set_values(plotobj, reg, key)
+            # for fit, (plotobj, reg) in zip(gen, new):
+            #     if issubclass(type(reg), BaseRegressor):
+            #         self._set_values(fit, plotobj, reg, key)
+
+    def _set_values(self, plotobj, reg, key):
+        iso = plotobj.isotope
+        fit = plotobj.fit
+        if key in plotobj.plots:
+            scatter = plotobj.plots[key][0]
+            p_uys, p_ues = self.set_interpolated_values(iso, reg, fit)
+            scatter.value.set_data(p_uys)
+            scatter.yerror.set_data(p_ues)
+            # def _set_values(self, fit, plotobj, reg, key, ans=None):
+            #
+            #     iso = fit.name
+            #     if key in plotobj.plots:
+            #         scatter = plotobj.plots[key][0]
+            #         p_uys, p_ues = self.set_interpolated_values(iso, reg, ans)
+            #         scatter.value.set_data(p_uys)
+            #         scatter.yerror.set_data(p_ues)
 # ============= EOF =============================================

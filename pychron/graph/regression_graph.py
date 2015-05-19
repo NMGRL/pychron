@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-from traits.api import List, Any, Event, Callable
+from traits.api import List, Any, Event, Callable, Dict
 # ============= standard library imports ========================
 from numpy import linspace
 # ============= local library imports  ==========================
@@ -48,6 +48,8 @@ class NoRegressionCTX(object):
 
 
 class RegressionGraph(Graph, RegressionContextMenuMixin):
+    _cached_hover = Dict
+    _cached_sel = Dict
     indices = List
     filters = List
     selected_component = Any
@@ -103,7 +105,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
 
     def set_fit(self, fi, plotid=0, series=0):
 
-        fi=fi.lower()
+        fi = fi.lower()
         plot = self.plots[plotid]
         # for idx in range(series, -1, -1):
         key = 'data{}'.format(series)
@@ -157,22 +159,46 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         """
             fired when the index metadata changes e.i user selection
         """
+        # don't update if hover metadata change
+        if hasattr(obj, 'suppress_hover_update'):
+            if obj.suppress_hover_update:
+                return
+
+        # sel = obj.metadata.get('selections')
+        # ido = id(obj)
+        # if not sel:
+        #     try:
+        #         a = self._cached_sel[ido]
+        #     except KeyError:
+        #         a = False
+        #
+        #     if not a:
+        #         hover = obj.metadata.get('hover', None)
+        #         if hover:
+        #             self._cached_hover[ido] = True
+        #             return
+        #         elif self._cached_hover[ido]:
+        #             self._cached_hover[ido] = False
+        #             return
+        #     else:
+        #         self._cached_sel[ido] = None
+        # else:
+        #     try:
+        #         if sel == self._cached_sel[ido]:
+        #             return
+        #         else:
+        #             self._cached_sel[ido] = sel
+        #     except KeyError:
+        #         self._cached_sel[ido] = sel
+
         self._update_graph()
-        # sel = obj.metadata.get('selections', None)
-        # if sel:
-        #     obj.was_selected = True
-        #     self._update_graph()
-        # elif hasattr(obj, 'was_selected'):
-        #     if obj.was_selected:
-        #         self._update_graph()
-        #     obj.was_selected = False
 
     def _update_graph(self, *args, **kw):
         # with self._regression_lock:
         # if self.suppress_regression:
         #     return
 
-        #self.regressors = []
+        # self.regressors = []
         regs = []
         for i, plot in enumerate(self.plots):
             ps = plot.plots
@@ -188,7 +214,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                         regs.append((plot, r))
 
             except ValueError, e:
-                #add a float instead of regressor to regs
+                # add a float instead of regressor to regs
                 try:
                     si = ps[ks[0]][0]
                     regs.append((plot, si.value.get_data()[-1]))
@@ -309,6 +335,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
     def _poly_regress(self, scatter, r, fit):
         from pychron.core.regression.ols_regressor import PolynomialRegressor
         from pychron.core.regression.wls_regressor import WeightedPolynomialRegressor
+
         if hasattr(scatter, 'yerror'):
             if r is None or not isinstance(r, WeightedPolynomialRegressor):
                 r = WeightedPolynomialRegressor()
@@ -329,6 +356,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
 
     def _least_square_regress(self, scatter, r, fit):
         from pychron.core.regression.least_squares_regressor import LeastSquaresRegressor
+
         func, initial_guess = fit
         if r is None or not isinstance(r, LeastSquaresRegressor):
             r = LeastSquaresRegressor()
@@ -343,7 +371,8 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
 
     def _mean_regress(self, scatter, r, fit):
         from pychron.core.regression.mean_regressor import MeanRegressor, WeightedMeanRegressor
-        if hasattr(scatter, 'yerror') and fit=='weighted mean':
+
+        if hasattr(scatter, 'yerror') and fit == 'weighted mean':
             if r is None or not isinstance(r, WeightedMeanRegressor):
                 r = WeightedMeanRegressor()
         else:
@@ -510,128 +539,128 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         # def _bind_index(self, *args, **kw):
         #     pass
 
-    # ============= EOF =============================================
-    # @classmethod
-    #     def _apply_block_filter(cls, xs, ys):
-    #         '''
-    #             filter data using stats
-    #
-    #             1. group points into blocks
-    #             2. find mean of block
-    #             3. find outliers
-    #             4. exclude outliers
-    #         '''
-    #
-    #         try:
-    #             import numpy as np
-    #
-    #             sf = StatsFilterParameters()
-    #             blocksize = sf.blocksize
-    #             tolerance_factor = sf.tolerance_factor
-    #
-    #             # group into blocks
-    #             n = ys.shape[0]
-    #             r = n / blocksize
-    #             c = blocksize
-    #
-    #             dev = n - (r * c)
-    #             #            remainder_block = None
-    #             if dev:
-    #                 ys = ys[:-dev]
-    #                 #                remainder_block = ys[-dev:]
-    #             #            remainder_
-    #
-    #             blocks = ys.reshape(r, c)
-    #
-    #             # calculate stats
-    #             block_avgs = average(blocks, axis=1)
-    #             block_stds = np.std(blocks, axis=1)
-    #             devs = (blocks - block_avgs.reshape(r, 1)) ** 2
-    #             #        devs = abs(blocks - block_avgs.reshape(r, 1))
-    #
-    #             # find outliers
-    #             tol = block_stds.reshape(r, 1) * tolerance_factor
-    #             exc_r, exc_c = np.where(devs > tol)
-    #             #            inc_r, inc_c = np.where(devs <= tol)
-    #             #            ny = blocks[inc_r, inc_c]
-    #             #            nx = xs[inc_c + inc_r * blocksize]
-    #             exc_xs = list(exc_c + exc_r * blocksize)
-    #
-    #             #        if remainder_block:
-    #             #        #do filter on remainder block
-    #             #            avg = average(remainder_block)
-    #             #            stds = np.std(remainder_block)
-    #             #            tol = stds * tolerance_factor
-    #             #            devs = (remainder_block - avg) ** 2
-    #             #            exc_i, _ = np.where(devs > tol)
-    #             #            inc_i, _ = np.where(devs < tol)
-    #             #            exc_i = exc_i + n - 1
-    #             #            nnx = xs[inc_i + n - 1]
-    #             #            nny = ys[inc_i + n - 1]
-    #             #
-    #             #            nx = hstack((nx, nnx))
-    #             #            ny = hstack((ny, nny))
-    #             #            exc_xs += exc_i
+        # ============= EOF =============================================
+        # @classmethod
+        #     def _apply_block_filter(cls, xs, ys):
+        #         '''
+        #             filter data using stats
+        #
+        #             1. group points into blocks
+        #             2. find mean of block
+        #             3. find outliers
+        #             4. exclude outliers
+        #         '''
+        #
+        #         try:
+        #             import numpy as np
+        #
+        #             sf = StatsFilterParameters()
+        #             blocksize = sf.blocksize
+        #             tolerance_factor = sf.tolerance_factor
+        #
+        #             # group into blocks
+        #             n = ys.shape[0]
+        #             r = n / blocksize
+        #             c = blocksize
+        #
+        #             dev = n - (r * c)
+        #             #            remainder_block = None
+        #             if dev:
+        #                 ys = ys[:-dev]
+        #                 #                remainder_block = ys[-dev:]
+        #             #            remainder_
+        #
+        #             blocks = ys.reshape(r, c)
+        #
+        #             # calculate stats
+        #             block_avgs = average(blocks, axis=1)
+        #             block_stds = np.std(blocks, axis=1)
+        #             devs = (blocks - block_avgs.reshape(r, 1)) ** 2
+        #             #        devs = abs(blocks - block_avgs.reshape(r, 1))
+        #
+        #             # find outliers
+        #             tol = block_stds.reshape(r, 1) * tolerance_factor
+        #             exc_r, exc_c = np.where(devs > tol)
+        #             #            inc_r, inc_c = np.where(devs <= tol)
+        #             #            ny = blocks[inc_r, inc_c]
+        #             #            nx = xs[inc_c + inc_r * blocksize]
+        #             exc_xs = list(exc_c + exc_r * blocksize)
+        #
+        #             #        if remainder_block:
+        #             #        #do filter on remainder block
+        #             #            avg = average(remainder_block)
+        #             #            stds = np.std(remainder_block)
+        #             #            tol = stds * tolerance_factor
+        #             #            devs = (remainder_block - avg) ** 2
+        #             #            exc_i, _ = np.where(devs > tol)
+        #             #            inc_i, _ = np.where(devs < tol)
+        #             #            exc_i = exc_i + n - 1
+        #             #            nnx = xs[inc_i + n - 1]
+        #             #            nny = ys[inc_i + n - 1]
+        #             #
+        #             #            nx = hstack((nx, nnx))
+        #             #            ny = hstack((ny, nny))
+        #             #            exc_xs += exc_i
         # #        print 'exception', exc_xs
-    #             #        return nx, ny, exc_xs
-    #         except:
-    #             exc_xs = []
-    #
-    #         return exc_xs
-    # def _apply_outlier_filter(self, reg, ox, oy, index, fod):
-    #     try:
-    #         if fod['filter_outliers']:
-    #         #                 t_fx, t_fy = ox[:], oy[:]
-    #             t_fx, t_fy = ox, oy
-    #             niterations = fod['filter_outlier_iterations']
-    #             n = fod['filter_outlier_std_devs']
-    #             for _ in range(niterations):
-    #                 excludes = list(reg.calculate_outliers(nsigma=n))
-    #                 oxcl = excludes[:]
-    #                 sels = index.metadata['selections']
-    #
-    #                 excludes = sorted(list(set(sels + excludes)))
-    #                 index.metadata['filtered'] = oxcl
-    #                 index.metadata['selections'] = excludes
-    #
-    #                 t_fx = delete(t_fx, excludes, 0)
-    #                 t_fy = delete(t_fy, excludes, 0)
-    #                 reg.trait_set(xs=t_fx, ys=t_fy)
-    #
-    #     except (KeyError, TypeError), e:
-    #         print 'apply outlier filter', e
-    #         index.metadata['selections'] = []
-    #         index.metadata['filtered'] = None
-    #
-    #     # return reg
-    #
-    # def _apply_truncation(self, reg, index, filt):
-    #     """
-    #        filt: str   x>10 remove all points greater than 10
-    #        xs: index array
-    #     """
-    #     m = re.match(r'[A-Za-z]+', filt)
-    #     if m:
-    #         k = m.group(0)
-    #         xs,ys=reg.xs, reg.ys
-    #         exclude=eval(filt, {k:xs})
-    #         excludes=list(exclude.nonzero()[0])
-    #
-    #         sels = index.metadata['selections']
-    #         index.metadata['filtered'] = sels
-    #         excludes=list(set(excludes+sels))
-    #         index.metadata['selections'] = excludes
-    #
-    #         t_fx = delete(xs, excludes, 0)
-    #         t_fy = delete(ys, excludes, 0)
-    #         reg.trait_set(xs=t_fx, ys=t_fy)
+        #             #        return nx, ny, exc_xs
+        #         except:
+        #             exc_xs = []
+        #
+        #         return exc_xs
+        # def _apply_outlier_filter(self, reg, ox, oy, index, fod):
+        #     try:
+        #         if fod['filter_outliers']:
+        #         #                 t_fx, t_fy = ox[:], oy[:]
+        #             t_fx, t_fy = ox, oy
+        #             niterations = fod['filter_outlier_iterations']
+        #             n = fod['filter_outlier_std_devs']
+        #             for _ in range(niterations):
+        #                 excludes = list(reg.calculate_outliers(nsigma=n))
+        #                 oxcl = excludes[:]
+        #                 sels = index.metadata['selections']
+        #
+        #                 excludes = sorted(list(set(sels + excludes)))
+        #                 index.metadata['filtered'] = oxcl
+        #                 index.metadata['selections'] = excludes
+        #
+        #                 t_fx = delete(t_fx, excludes, 0)
+        #                 t_fy = delete(t_fy, excludes, 0)
+        #                 reg.trait_set(xs=t_fx, ys=t_fy)
+        #
+        #     except (KeyError, TypeError), e:
+        #         print 'apply outlier filter', e
+        #         index.metadata['selections'] = []
+        #         index.metadata['filtered'] = None
+        #
+        #     # return reg
+        #
+        # def _apply_truncation(self, reg, index, filt):
+        #     """
+        #        filt: str   x>10 remove all points greater than 10
+        #        xs: index array
+        #     """
+        #     m = re.match(r'[A-Za-z]+', filt)
+        #     if m:
+        #         k = m.group(0)
+        #         xs,ys=reg.xs, reg.ys
+        #         exclude=eval(filt, {k:xs})
+        #         excludes=list(exclude.nonzero()[0])
+        #
+        #         sels = index.metadata['selections']
+        #         index.metadata['filtered'] = sels
+        #         excludes=list(set(excludes+sels))
+        #         index.metadata['selections'] = excludes
+        #
+        #         t_fx = delete(xs, excludes, 0)
+        #         t_fy = delete(ys, excludes, 0)
+        #         reg.trait_set(xs=t_fx, ys=t_fy)
 
-    # def set_filter(self, fi, plotid=0, series=0):
-    #     plot = self.plots[plotid]
-    #     scatter = plot.plots['data{}'.format(series)][0]
-    #     scatter.filter = fi
-    #     self.redraw()
-    # def get_filter(self, plotid=0, series=0):
-    #     plot = self.plots[plotid]
-    #     scatter = plot.plots['data{}'.format(series)][0]
-    #     return scatter.filter
+        # def set_filter(self, fi, plotid=0, series=0):
+        #     plot = self.plots[plotid]
+        #     scatter = plot.plots['data{}'.format(series)][0]
+        #     scatter.filter = fi
+        #     self.redraw()
+        # def get_filter(self, plotid=0, series=0):
+        #     plot = self.plots[plotid]
+        #     scatter = plot.plots['data{}'.format(series)][0]
+        #     return scatter.filter

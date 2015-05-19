@@ -155,7 +155,7 @@ class FigurePanel(HasTraits):
                 mi, ma = 0, 100
 
             if not (isinf(mi) or isinf(ma)):
-                # print 'setting xlimits', mi, ma
+                print 'setting xlimits', mi, ma, fig.xpad
                 g.set_x_limits(mi, ma, pad=fig.xpad or 0)
 
             self.figures[0].post_make()

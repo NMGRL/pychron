@@ -89,15 +89,16 @@ class BlanksPersistNode(DVCPersistNode):
         return True
 
     def run(self, state):
-        for ai in state.unknowns:
-            self.dvc.save_blanks(ai, state.saveable_keys, state.references)
+        if not state.user_review:
+            for ai in state.unknowns:
+                self.dvc.save_blanks(ai, state.saveable_keys, state.references)
 
-        msg = self.commit_message
-        if not msg:
-            f = ','.join('{}({})'.format(x, y) for x, y in zip(state.saveable_keys, state.saveable_fits))
-            msg = 'auto update blanks, fits={}'.format(f)
+            msg = self.commit_message
+            if not msg:
+                f = ','.join('{}({})'.format(x, y) for x, y in zip(state.saveable_keys, state.saveable_fits))
+                msg = 'auto update blanks, fits={}'.format(f)
 
-        self.dvc.update_analyses(state.unknowns, msg)
+            self.dvc.update_analyses(state.unknowns, msg)
 # ============= EOF =============================================
 
 
