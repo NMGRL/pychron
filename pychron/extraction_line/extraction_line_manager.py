@@ -16,7 +16,7 @@
 
 # =============enthought library imports=======================
 from pyface.timer.do_later import do_after
-from traits.api import Instance, List, Any, Bool, on_trait_change, Str, Int, Dict, File
+from traits.api import Instance, List, Any, Bool, on_trait_change, Str, Int, Dict, File, Float
 from apptools.preferences.preference_binding import bind_preference
 # =============standard library imports ========================
 import time
@@ -75,6 +75,9 @@ class ExtractionLineManager(Manager, Consoleable):
     canvas_config_path = File
     valves_path = File
 
+    use_hardware_update = Bool
+    hardware_update_period = Float
+
     _active = False
 
     def activate(self):
@@ -99,14 +102,15 @@ class ExtractionLineManager(Manager, Consoleable):
             self.info('start gauge scans')
             self.gauge_manager.start_scans()
 
-        do_after(1000, self._update_states)
-        # t = Thread(target=self._update_states)
-        # t.start()
+        if self.use_hardware_update:
+            do_after(self.hardware_update_period * 1000, self._update_states)
+            # t = Thread(target=self._update_states)
+            # t.start()
 
     def _update_states(self):
         if self.valve_manager:
             self.valve_manager.load_hardware_states()
-            do_after(1000, self._update_states)
+            do_after(self.hardware_update_period * 1000, self._update_states)
 
     def _refresh_canvas(self):
         self.refresh_canvas()
@@ -128,16 +132,26 @@ class ExtractionLineManager(Manager, Consoleable):
     def bind_preferences(self):
 
         prefid = 'pychron.extraction_line'
-        bind_preference(self, 'canvas_path', '{}.canvas_path'.format(prefid))
-        bind_preference(self, 'canvas_config_path', '{}.canvas_config_path'.format(prefid))
-        bind_preference(self, 'valves_path', '{}.valves_path'.format(prefid))
 
-        bind_preference(self, 'check_master_owner',
-                        '{}.check_master_owner'.format(prefid))
-        bind_preference(self, 'use_network',
-                        '{}.use_network'.format(prefid))
-        bind_preference(self.network, 'inherit_state',
-                        '{}.inherit_state'.format(prefid))
+        attrs = ('canvas_path', 'canvas_config_path', 'valves_path',
+                 'use_hardware_update', 'hardware_update_period',
+                 'check_master_owner', 'use_network', 'inherit_state')
+
+        for attr in attrs:
+            bind_preference(self, attr, '{}.{}'.format(prefid, attr))
+
+        # bind_preference(self, 'canvas_path', '{}.canvas_path'.format(prefid))
+        # bind_preference(self, 'canvas_config_path', '{}.canvas_config_path'.format(prefid))
+        # bind_preference(self, 'valves_path', '{}.valves_path'.format(prefid))
+
+        # bind_preference(self, 'use_hardware_update', '{}.use_hardware_update'.format(prefid))
+        # bind_preference(self, 'hardware_update_period', '{}.hardware_update_period'.format(prefid))
+        # bind_preference(self, 'check_master_owner',
+        #                 '{}.check_master_owner'.format(prefid))
+        # bind_preference(self, 'use_network',
+        #                 '{}.use_network'.format(prefid))
+        # bind_preference(self.network, 'inherit_state',
+        #                 '{}.inherit_state'.format(prefid))
 
         self.console_bind_preferences('{}.console'.format(prefid))
 
@@ -273,7 +287,6 @@ class ExtractionLineManager(Manager, Consoleable):
         if self.use_network:
             # p = os.path.join(paths.canvas2D_dir, 'canvas.xml')
             self.network.load(self.canvas_path)
-
 
     def reload_canvas(self, load_states=False):
         self.debug('reload canvas')
@@ -726,7 +739,7 @@ class ExtractionLineManager(Manager, Consoleable):
         return GaugeManager(application=self.application)
 
     def _valve_manager_factory(self):
-    # def _valve_manager_default(self):
+        # def _valve_manager_default(self):
         klass = self._get_valve_manager_klass()
         vm = klass(application=self.application)
         vm.on_trait_change(self._handle_state, 'refresh_state')
