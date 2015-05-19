@@ -99,6 +99,15 @@ class ExtractionLineManager(Manager, Consoleable):
             self.info('start gauge scans')
             self.gauge_manager.start_scans()
 
+        do_after(1000, self._update_states)
+        # t = Thread(target=self._update_states)
+        # t.start()
+
+    def _update_states(self):
+        if self.valve_manager:
+            self.valve_manager.load_hardware_states()
+            do_after(1000, self._update_states)
+
     def _refresh_canvas(self):
         self.refresh_canvas()
         if self._active:
