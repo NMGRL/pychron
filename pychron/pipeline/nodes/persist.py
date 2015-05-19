@@ -61,10 +61,11 @@ class PDFFigureNode(PDFNode):
 
 class DVCPersistNode(PersistNode):
     dvc = Instance('pychron.dvc.dvc.DVC')
+    commit_message = Str
 
 
 class IsotopeEvolutionPersistNode(DVCPersistNode):
-    name = 'Iso Evo'
+    name = 'Save Iso Evo'
 
     def configure(self):
         return True
@@ -73,7 +74,30 @@ class IsotopeEvolutionPersistNode(DVCPersistNode):
         for ai in state.unknowns:
             self.dvc.save_fits(ai, state.saveable_keys)
 
+        msg = self.commit_message
+        if not msg:
+            f = ','.join('{}({})'.format(x, y) for x, y in zip(state.saveable_keys, state.saveable_fits))
+            msg = 'auto update iso evo, fits={}'.format(f)
 
+        self.dvc.update_analyses(state.unknowns, msg)
+
+
+class BlanksPersistNode(DVCPersistNode):
+    name = 'Save Blanks'
+
+    def configure(self):
+        return True
+
+    def run(self, state):
+        for ai in state.unknowns:
+            self.dvc.save_blanks(ai, state.saveable_keys, state.references)
+
+        msg = self.commit_message
+        if not msg:
+            f = ','.join('{}({})'.format(x, y) for x, y in zip(state.saveable_keys, state.saveable_fits))
+            msg = 'auto update blanks, fits={}'.format(f)
+
+        self.dvc.update_analyses(state.unknowns, msg)
 # ============= EOF =============================================
 
 

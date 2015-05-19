@@ -28,20 +28,32 @@ from pychron.processing.tasks.isotope_evolution.isotope_evolution_editor import 
 from pychron.processing.plot.editors.blanks_editor import BlanksEditor
 
 
-class FitBlanksNode(FigureNode):
+class FitNode(FigureNode):
+    use_save_node = Bool(True)
+
+    def _set_saveable(self, state):
+        ps = self.plotter_options.get_saveable_plots()
+        state.saveable_keys = [p.name for p in ps]
+        state.saveable_fits = [p.fit for p in ps]
+
+
+class FitBlanksNode(FitNode):
     editor_klass = BlanksEditor
     plotter_options_manager_klass = BlanksOptionsManager
 
     def run(self, state):
         super(FitBlanksNode, self).run(state)
-        state.saveable_keys = self.plotter_options.get_saveable_plots()
+        if state.references:
+            self.editor.set_references(state.references)
+            self.editor.force_update(force=True)
+
+        self._set_saveable(state)
+        self.name = '{} Blanks'.format(self.name)
 
 
-class IsotopeEvolutionNode(FigureNode):
+class IsotopeEvolutionNode(FitNode):
     editor_klass = IsotopeEvolutionEditor
     plotter_options_manager_klass = IsotopeEvolutionOptionsManager
-
-    use_save_node = Bool(True)
 
     def run(self, state):
 
@@ -59,10 +71,12 @@ class IsotopeEvolutionNode(FigureNode):
 
         super(IsotopeEvolutionNode, self).run(state)
 
-        state.saveable_keys = self.plotter_options.get_saveable_plots()
         self.editor.analysis_groups = [(ai,) for ai in state.unknowns]
         for ai in state.unknowns:
             ai.graph_id = 0
+
+        self._set_saveable(state)
+        self.name = '{} IsoEvo'.format(self.name)
 
     def post_run(self, state):
         return

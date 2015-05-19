@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Float, Instance, Str, Tuple
+from traits.api import Float, Instance, Str, Tuple, Event
 from chaco.abstract_overlay import AbstractOverlay
 from enable.base_tool import BaseTool
 from enable.colors import ColorTrait
@@ -33,6 +33,7 @@ class LimitsTool(BaseTool):
     active = False
 
     entered_value = Str
+    limits_updated = Event
 
     def _set_entered_value(self, c):
         if c == '.' or c in string.digits:
@@ -113,6 +114,7 @@ class LimitsTool(BaseTool):
         event.window.set_pointer(self.pointer)
 
         self.ruler_pos = tuple()
+        self.limits_updated = True
 
     def drag_mouse_move(self, event):
         self._set_ruler_pos(event)

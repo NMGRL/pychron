@@ -454,6 +454,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         if use_error_envelope:
             self._add_error_envelope_overlay(line)
 
+        # print x, y
         if x is not None and y is not None:
             if not self.suppress_regression:
                 self._regress(plot, scatter, line)

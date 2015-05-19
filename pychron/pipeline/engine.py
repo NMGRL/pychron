@@ -30,9 +30,9 @@ from pychron.loggable import Loggable
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, FigureNode, SeriesNode
 from pychron.pipeline.nodes.filter import FilterNode
 from pychron.pipeline.nodes.find import FindBlanksNode
-from pychron.pipeline.nodes.fit import IsotopeEvolutionNode
+from pychron.pipeline.nodes.fit import IsotopeEvolutionNode, FitBlanksNode
 from pychron.pipeline.nodes.grouping import GroupingNode
-from pychron.pipeline.nodes.persist import PDFFigureNode, IsotopeEvolutionPersistNode
+from pychron.pipeline.nodes.persist import PDFFigureNode, IsotopeEvolutionPersistNode, BlanksPersistNode
 from pychron.pipeline.template import PipelineTemplate
 
 
@@ -207,6 +207,16 @@ class PipelineEngine(Loggable):
         self._add_node(node, series_node, run)
 
     # fits
+    def add_blanks(self, node=None, run=True):
+        new = FitBlanksNode()
+        if new.configure():
+            node = self._get_last_node(node)
+            self.pipeline.add_after(node, new)
+            if new.use_save_node:
+                self.add_blanks_persist(new, run=False)
+            if run:
+                self.run_needed = True
+
     def add_isotope_evolution(self, node=None, run=True):
         new = IsotopeEvolutionNode()
         # self._add_node(node, newnode, run=run)
@@ -221,6 +231,10 @@ class PipelineEngine(Loggable):
                 self.run_needed = new
 
     # save
+    def add_blanks_persist(self, node=None, run=True):
+        new = BlanksPersistNode(dvc=self.dvc)
+        self._add_node(node, new, run)
+
     def add_iso_evo_persist(self, node=None, run=True):
         new = IsotopeEvolutionPersistNode(dvc=self.dvc)
         self._add_node(node, new, run)
@@ -239,11 +253,11 @@ class PipelineEngine(Loggable):
     def run(self, state):
         self.debug('pipeline run started')
         for idx, node in enumerate(self.pipeline.nodes):
-            action = 'skip'
             if node.enabled:
-                action = 'run'
+                self.debug('Run node {:02n}: {}'.format(idx, node.name))
                 node.run(state)
-            self.debug('{} node {:02n}: {}'.format(action, idx, node.name))
+            else:
+                self.debug('Skip node {:02n}: {}'.format(idx, node.name))
 
         self.debug('pipeline run finished')
 

@@ -76,7 +76,7 @@ class GraphEditor(BaseUnknownsEditor):
         if self.analyses:
             self._set_name()
             self._compress_groups()
-            self.refresh_needed = True
+            # self.refresh_needed = True
 
     def _set_name(self):
         na = list(set([ni.labnumber for ni in self.analyses]))

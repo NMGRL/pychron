@@ -26,6 +26,7 @@ class FigureModel(HasTraits):
     panels = List
     npanels = Property(depends_on='panels[]')
     analyses = List
+    references = List
     plot_options = Any
     _panel_klass = Instance('pychron.processing.plotters.figure_panel.FigurePanel')
     titles = List
@@ -33,8 +34,15 @@ class FigureModel(HasTraits):
     layout = Instance(FigureLayout, ())
     analysis_groups = List
 
-    def refresh(self):
+    def refresh(self, force=False):
+        if not self.panels or force:
+            self.refresh_panels()
+
         for p in self.panels:
+            print 'p', p.figures
+            if not p.figures or force:
+                p.make_graph()
+
             for f in p.figures:
                 f.replot()
 
@@ -71,6 +79,15 @@ class FigureModel(HasTraits):
                                     plot_options=self.plot_options,
                                     graph_id=gid)
                   for gid, ais in groupby(ans, key=key)]
+
+            # if hasattr(self, 'references'):
+            gg = groupby(self.references, key=key)
+            for gi in gs:
+                gid, ais = gg.next()
+                gi.references = list(ais)
+
+        for gi in gs:
+            gi.make_figures()
 
         if self.titles:
             for ti, gi in zip(self.titles, gs):

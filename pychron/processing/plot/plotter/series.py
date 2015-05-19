@@ -32,9 +32,8 @@ from pychron.processing.plot.plotter.ticks import tick_formatter, StaticTickGene
 N = 500
 
 
-class Series(BaseArArFigure):
+class BaseSeries(BaseArArFigure):
     xs = Array
-    _omit_key = 'omit_series'
 
     def max_x(self, *args):
         if len(self.xs):
@@ -50,6 +49,27 @@ class Series(BaseArArFigure):
         if len(self.xs):
             return self.xs.mean()
         return 0
+
+    def _get_xs(self, plots, ans):
+
+        xs = array([ai.timestamp for ai in ans])
+        px = plots[0]
+
+        if px.normalize == 'now':
+            norm = time.time()
+        else:
+            norm = xs[-1]
+        xs -= norm
+        if not px.use_time_axis:
+            xs /= 3600.
+        else:
+            self.graph.convert_index_func = lambda x: '{:0.2f} hrs'.format(x / 3600.)
+
+        return xs
+
+
+class Series(BaseSeries):
+    _omit_key = 'omit_series'
 
     def build(self, plots):
         graph = self.graph
@@ -78,29 +98,16 @@ class Series(BaseArArFigure):
         omits = self._get_omitted(self.sorted_analyses, omit='omit_series')
         graph = self.graph
 
-        xs = array([ai.timestamp for ai in self.sorted_analyses])
         if plots:
-            px = plots[0]
+            self.xs = self._get_xs(plots, self.sorted_analyses)
 
-            if px.normalize == 'now':
-                norm = time.time()
-            else:
-                norm = xs[-1]
-            xs -= norm
-            if not px.use_time_axis:
-                xs /= 3600.
-            else:
-                graph.convert_index_func = lambda x: '{:0.2f} hrs'.format(x / 3600.)
+            # with graph.no_regression(refresh=True):
+            plots = [po for po in plots if po.use]
+            for i, po in enumerate(plots):
+                self._plot_series(po, i, omits)
 
-            self.xs = xs
-
-            with graph.no_regression(refresh=True):
-                plots = [po for po in plots if po.use]
-                for i, po in enumerate(plots):
-                    self._plot_series(po, i, omits)
-
-                self.xmi, self.xma = self.min_x(), self.max_x()
-                self.xpad = '0.1'
+            self.xmi, self.xma = self.min_x(), self.max_x()
+            self.xpad = '0.1'
 
     def _plot_series(self, po, pid, omits):
         graph = self.graph
@@ -125,6 +132,9 @@ class Series(BaseArArFigure):
                                     plotid=pid,
                                     # type='scatter',
                                     add_inspector=False,
+                                    marker=po.marker,
+                                    marker_size=po.marker_size,
+
                                     **kw)
             if len(args) == 2:
                 scatter, p = args

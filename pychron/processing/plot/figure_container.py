@@ -32,12 +32,9 @@ class FigureContainer(HasTraits):
 
     @caller
     def refresh(self, clear=False):
-        layout = self.model.layout
-        self.model.refresh_panels()
-        n = self.model.npanels
-        comp, r, c = self._component_factory(n, layout)
-        for i in range(r):
-            for j in range(c):
+        comp = self.component
+        for i in range(self.rows):
+            for j in range(self.cols):
                 try:
                     p = self.model.next_panel()
                 except StopIteration:
@@ -49,9 +46,14 @@ class FigureContainer(HasTraits):
                         ap.clear_ylimits()
                         ap.clear_xlimits()
 
-        self.component = comp
-
     def _model_changed(self):
+        layout = self.model.layout
+        self.model.refresh_panels()
+        n = self.model.npanels
+        comp, r, c = self._component_factory(n, layout)
+        self.component = comp
+        self.rows, self.cols = r, c
+
         self.refresh(clear=True)
 
     def _component_factory(self, ngraphs, layout):

@@ -25,6 +25,7 @@ from pychron.processing.plot.editors.graph_editor import GraphEditor
 
 
 class FigureEditor(GraphEditor):
+    references = List
     # table_editor = Any
     # component = Any
     # plotter_options_manager = Any
@@ -65,7 +66,11 @@ class FigureEditor(GraphEditor):
         self.clear_aux_plot_limits()
         super(FigureEditor, self).set_items(*args, **kw)
 
-    def _component_factory(self):
+    def force_update(self, force=False):
+        model = self._figure_model_factory()
+        model.refresh(force=force)
+
+    def _figure_model_factory(self):
         model = self.figure_model
         if model is None:
             model = self.figure_model_klass()
@@ -74,7 +79,12 @@ class FigureEditor(GraphEditor):
         model.trait_set(plot_options=self.plotter_options,
                         analysis_groups=self.analysis_groups,
                         # titles=self.titles,
-                        analyses=self.analyses)
+                        analyses=self.analyses,
+                        references=self.references)
+        return model
+
+    def _component_factory(self):
+        model = self._figure_model_factory()
 
         container = self.figure_container
         if not container:

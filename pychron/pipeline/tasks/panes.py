@@ -37,10 +37,11 @@ from pychron.pipeline.nodes.data import DataNode
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, SeriesNode
 from pychron.pipeline.nodes.filter import FilterNode
 from pychron.pipeline.nodes.find import FindBlanksNode
+from pychron.pipeline.nodes.fit import IsotopeEvolutionNode, FitBlanksNode
 from pychron.pipeline.nodes.grouping import GroupingNode
 from pychron.pipeline.nodes.persist import PDFNode, DVCPersistNode
 from pychron.pipeline.tasks.tree_node import SeriesTreeNode, PDFTreeNode, GroupingTreeNode, SpectrumTreeNode, \
-    IdeogramTreeNode, FilterTreeNode, DataTreeNode, DBSaveTreeNode, FindTreeNode
+    IdeogramTreeNode, FilterTreeNode, DataTreeNode, DBSaveTreeNode, FindTreeNode, FitTreeNode
 
 
 def node_adder(func):
@@ -216,6 +217,7 @@ class PipelinePane(TraitsDockPane):
                  GroupingTreeNode(node_for=[GroupingNode], menu=data_menu_factory()),
                  DBSaveTreeNode(node_for=[DVCPersistNode], menu=data_menu_factory()),
                  FindTreeNode(node_for=[FindBlanksNode], menu=ffind_menu_factory()),
+                 FitTreeNode(node_for=[IsotopeEvolutionNode, FitBlanksNode], menu=ffind_menu_factory()),
                  TreeNode(node_for=[BaseNode], label='name')]
 
         editor = TreeEditor(nodes=nodes,

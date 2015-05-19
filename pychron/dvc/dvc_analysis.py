@@ -36,13 +36,22 @@ ANALYSIS_ATTRS = ('labnumber', 'analysis_type', 'uuid', 'sample', 'project', 'ma
                   'pattern', 'beam_diameter', 'ramp_duration', 'ramp_rate')
 
 
+def analysis_path(record):
+    path = os.path.join(project_path(record.project), '{}.yaml'.format(record.record_id))
+    return path
+
+
+def project_path(project):
+    return os.path.join(paths.dvc_dir, 'projects', project)
+
+
 class DVCAnalysis(Analysis):
 
     def __init__(self, record, *args, **kw):
         super(DVCAnalysis, self).__init__(*args, **kw)
 
-        path = os.path.join(paths.dvc_dir, 'projects', record.project, '{}.yaml'.format(record.record_id))
-        self.path = path
+        self.path = path = analysis_path(record)
+
         with open(path, 'r') as rfile:
             yd = yaml.load(rfile)
 
@@ -111,8 +120,7 @@ class DVCAnalysis(Analysis):
             iso.set_fit(fi)
 
     def dump_fits(self, keys):
-        with open(self.path, 'r') as rfile:
-            yd = yaml.load(rfile)
+        yd = self._get_yd()
 
         sisos = self.isotopes
         isos = yd['isotopes']
@@ -129,7 +137,32 @@ class DVCAnalysis(Analysis):
 
         self._dump(yd)
 
+    def dump_blanks(self, keys, refs):
+        yd = self._get_yd()
+        sisos = self.isotopes
+        isos = yd['isotopes']
+        # print keys
+        for k in keys:
+            if k in isos and k in sisos:
+                iso = isos[k]
+                siso = sisos[k]
+
+                if siso.temporary_blank is not None:
+                    blank = iso.get('blank', {})
+                    print blank, float(siso.temporary_blank.value)
+                    blank['value'] = float(siso.temporary_blank.value)
+                    blank['error'] = float(siso.temporary_blank.error)
+                    blank['fit'] = siso.temporary_blank.fit
+                    iso['blank'] = blank
+
+        self._dump(yd)
+
     # private
+    def _get_yd(self):
+        with open(self.path, 'r') as rfile:
+            yd = yaml.load(rfile)
+        return yd
+
     def _set_isotopes(self, yd):
         isos = yd.get('isotopes')
         if not isos:

@@ -23,6 +23,7 @@ import yaml
 # ============= local library imports  ==========================
 from pychron.pipeline.nodes.data import DataNode
 from pychron.pipeline.nodes.find import FindNode
+from pychron.pipeline.nodes.persist import PersistNode
 
 
 class PipelineTemplate(HasTraits):
@@ -45,7 +46,7 @@ class PipelineTemplate(HasTraits):
             node = self._node_factory(klass, ni)
             if isinstance(node, DataNode):
                 node.trait_set(browser_model=bmodel, dvc=dvc)
-            elif isinstance(node, FindNode):
+            elif isinstance(node, (FindNode, PersistNode)):
                 node.trait_set(dvc=dvc)
 
             pipeline.nodes.append(node)

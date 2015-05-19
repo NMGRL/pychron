@@ -231,6 +231,8 @@ class Analysis(ArArAge):
     def identifier(self):
         return self.labnumber
 
+    def __str__(self):
+        return '{}<{}>'.format(self.record_id, self.__class__.__name__)
 
 if __name__ == '__main__':
     pass

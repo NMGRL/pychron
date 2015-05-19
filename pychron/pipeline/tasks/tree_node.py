@@ -67,6 +67,10 @@ class DBSaveTreeNode(_TreeNode):
 
 class FindTreeNode(_TreeNode):
     icon_name = 'find'
+
+
+class FitTreeNode(_TreeNode):
+    icon_name = 'lightning'
 # ============= EOF =============================================
 
 

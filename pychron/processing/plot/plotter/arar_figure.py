@@ -414,6 +414,10 @@ class BaseArArFigure(HasTraits):
 
         plot.tools.append(t)
         plot.overlays.append(o)
+        t.on_trait_change(self._handle_limits, 'limits_updated')
+
+    def _handle_limits(self):
+        pass
 
     def _add_point_labels(self, scatter):
         labels = []
@@ -456,6 +460,7 @@ class BaseArArFigure(HasTraits):
                                # container,
                                scatter,
                                add_tool=True,
+                               add_selection=True,
                                value_format=None,
                                additional_info=None,
                                index_tag=None,
@@ -464,13 +469,13 @@ class BaseArArFigure(HasTraits):
         if add_tool:
             broadcaster = BroadcasterTool()
             scatter.tools.append(broadcaster)
+            if add_selection:
+                rect_tool = RectSelectionTool(scatter)
+                rect_overlay = RectSelectionOverlay(component=scatter,
+                                                    tool=rect_tool)
 
-            rect_tool = RectSelectionTool(scatter)
-            rect_overlay = RectSelectionOverlay(component=scatter,
-                                                tool=rect_tool)
-
-            scatter.overlays.append(rect_overlay)
-            broadcaster.tools.append(rect_tool)
+                scatter.overlays.append(rect_overlay)
+                broadcaster.tools.append(rect_tool)
 
             if value_format is None:
                 value_format = lambda x: '{:0.5f}'.format(x)
@@ -495,6 +500,8 @@ class BaseArArFigure(HasTraits):
             # u = lambda a, b, c, d: self.update_graph_metadata(a, b, c, d)
             scatter.index.on_trait_change(self.update_graph_metadata, 'metadata_changed')
 
+    def update_graph_metadata(self, obj, name, old, new):
+        pass
     # ===============================================================================
     # labels
     # ===============================================================================

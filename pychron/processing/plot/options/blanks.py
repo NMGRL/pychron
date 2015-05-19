@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from enable.markers import marker_names
 from traitsui.api import View, Item, HGroup, VGroup, EnumEditor, Tabbed, Group
+from traits.api import List
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -26,10 +27,11 @@ from pychron.processing.fits.fit import Fit
 from pychron.processing.plot.options.figure_plotter_options import FigurePlotterOptions, object_column, \
     checkbox_column
 from pychron.processing.plot.options.option import AuxPlotOptions
-from pychron.pychron_constants import FIT_TYPES_INTERPOLATE
+from pychron.pychron_constants import FIT_TYPES_INTERPOLATE, ARGON_KEYS
 
 
 class BlanksFitAuxPlot(AuxPlotOptions, Fit):
+    names = List(ARGON_KEYS)
     def _get_fit_types(self):
         return FIT_TYPES_INTERPOLATE
 
@@ -43,7 +45,7 @@ class BlanksOptions(FigurePlotterOptions):
     #         print p, p.use, p.enabled
 
     def get_saveable_plots(self):
-        return [p.name for p in self.aux_plots if p.use]
+        return [p for p in self.aux_plots if p.use]
 
     def traits_view(self):
         bg_grp = self._get_bg_group()

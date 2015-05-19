@@ -27,7 +27,7 @@ import os
 from pychron.processing.argon_calculations import calculate_F, abundance_sensitivity_correction, age_equation, \
     calculate_decay_factor
 from pychron.processing.arar_constants import ArArConstants
-from pychron.processing.isotope import Isotope, Baseline
+from pychron.processing.isotope import Isotope, Baseline, Blank
 
 from pychron.loggable import Loggable
 from pychron.core.helpers.isotope_utils import sort_isotopes
@@ -108,6 +108,30 @@ class ArArAge(Loggable):
         self.logger = logger
 
         super(ArArAge, self).__init__(*args, **kw)
+
+    def set_ic_factor(self, det, v, e):
+        for iso in self.get_isotopes(det):
+            iso.ic_factor = ufloat(v, e)
+
+    def set_temporary_ic_factor(self, k, v, e):
+        iso = self.get_isotope(detector=k)
+        if iso:
+            iso.temporary_ic_factor = (v, e)
+
+    def set_temporary_blank(self, k, v, e, f):
+        tol = 0.00001
+        if self.isotopes.has_key(k):
+            iso = self.isotopes[k]
+            if iso.temporary_blank is not None:
+                tb = iso.temporary_blank
+                if abs(tb.value - v) < tol and abs(tb.error - e) < tol:
+                    return
+                else:
+                    self.debug('setting temporary blank iso={}, v={}, e={}, fit={}'.format(k, v, e, f))
+                    tb.value, tb.error, tb.fit = v, e, f
+            else:
+                self.debug('setting temporary blank iso={}, v={}, e={}, fit={}'.format(k, v, e, f))
+                iso.temporary_blank = Blank(value=v, error=e, fit=f)
 
     def set_j(self, s, e):
         self.j = ufloat(s, std_dev=e)
@@ -319,7 +343,7 @@ class ArArAge(Loggable):
         isotopes = self.isotopes
         if kind == 'baseline':
             ret = False
-            #get the isotopes that match detector
+            # get the isotopes that match detector
             for i in isotopes.itervalues():
                 if i.detector == det:
                     _append(i)
@@ -546,8 +570,8 @@ class ArArAge(Loggable):
         arc = self.arar_constants
         iso_intensities = abundance_sensitivity_correction(iso_intensities, arc.abundance_sensitivity)
 
-        #assuming all m/z(39) and m/z(37) is radioactive argon
-        #non gettered hydrocarbons will have a multiplicative systematic influence
+        # assuming all m/z(39) and m/z(37) is radioactive argon
+        # non gettered hydrocarbons will have a multiplicative systematic influence
         iso_intensities[1] *= self.ar39decayfactor
         iso_intensities[3] *= self.ar37decayfactor
         return iso_intensities
@@ -655,34 +679,34 @@ class ArArAge(Loggable):
                 return ufloat(0, 1e-20)
         else:
             raise AttributeError(attr)
-                # ===============================================================================
-                #
-                # ===============================================================================
+            # ===============================================================================
+            #
+            # ===============================================================================
 
-                # def _arar_constants_default(self):
-                #     """
-                #         use a global shared arar_constants
-                #     """
-                #
-                #     global arar_constants
-                #     #self.debug('$$$$$$$$$$$$$$$$ {}'.format(arar_constants))
-                #     #print 'asdf', arar_constants
-                #     if arar_constants is None:
-                #         arar_constants = ArArConstants()
-                #         #return ArArConstants()
-                #     return arar_constants
+            # def _arar_constants_default(self):
+            #     """
+            #         use a global shared arar_constants
+            #     """
+            #
+            #     global arar_constants
+            #     #self.debug('$$$$$$$$$$$$$$$$ {}'.format(arar_constants))
+            #     #print 'asdf', arar_constants
+            #     if arar_constants is None:
+            #         arar_constants = ArArConstants()
+            #         #return ArArConstants()
+            #     return arar_constants
 
-                # def _arar_constants_default(self):
-                #     """
-                #         use a global shared arar_constants
-                #     """
-                #
-                #     global arar_constants
-                #     #self.debug('$$$$$$$$$$$$$$$$ {}'.format(arar_constants))
-                #     #print 'asdf', arar_constants
-                #     if arar_constants is None:
-                #         arar_constants = ArArConstants()
-                #         #return ArArConstants()
-                #     return arar_constants
+            # def _arar_constants_default(self):
+            #     """
+            #         use a global shared arar_constants
+            #     """
+            #
+            #     global arar_constants
+            #     #self.debug('$$$$$$$$$$$$$$$$ {}'.format(arar_constants))
+            #     #print 'asdf', arar_constants
+            #     if arar_constants is None:
+            #         arar_constants = ArArConstants()
+            #         #return ArArConstants()
+            #     return arar_constants
 
-                # ============= EOF =============================================
+            # ============= EOF =============================================

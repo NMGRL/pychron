@@ -33,7 +33,7 @@ from pychron.processing.analyses.analysis import Analysis, Fit
 from pychron.processing.analyses.changes import BlankChange, FitChange
 from pychron.processing.analyses.exceptions import NoProductionError
 from pychron.processing.analyses.view.snapshot_view import Snapshot
-from pychron.processing.isotope import Blank, Baseline, Sniff, Isotope
+from pychron.processing.isotope import Baseline, Sniff, Isotope
 from pychron.pychron_constants import INTERFERENCE_KEYS
 
 
@@ -115,20 +115,6 @@ class DBAnalysis(Analysis):
     source_parameters = List
     deflections = List
 
-    def set_ic_factor(self, det, v, e):
-        for iso in self.get_isotopes(det):
-            iso.ic_factor = ufloat(v, e)
-
-    def set_temporary_ic_factor(self, k, v, e):
-        iso = self.get_isotope(detector=k)
-        if iso:
-            iso.temporary_ic_factor = (v, e)
-
-    def set_temporary_blank(self, k, v, e):
-        self.debug('setting temporary blank iso={}, v={}, e={}'.format(k, v, e))
-        if self.isotopes.has_key(k):
-            iso = self.isotopes[k]
-            iso.temporary_blank = Blank(value=v, error=e)
 
     def get_baseline_corrected_signal_dict(self):
         get = lambda iso: iso.get_baseline_corrected_value()

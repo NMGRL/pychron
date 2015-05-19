@@ -15,10 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from itertools import groupby
 import subprocess
 
 from traits.api import Instance, Str
 from apptools.preferences.preference_binding import bind_preference
+
 
 # ============= standard library imports ========================
 import os
@@ -26,9 +28,10 @@ from git import Repo
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import remove_extension
 from pychron.dvc.defaults import TRIGA, HOLDER_24_SPOKES, LASER221, LASER65
-from pychron.dvc.dvc_analysis import DVCAnalysis
+from pychron.dvc.dvc_analysis import DVCAnalysis, project_path, analysis_path
 from pychron.dvc.dvc_database import DVCDatabase
 from pychron.dvc.meta_repo import MetaRepo
+from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.github import Organization
 from pychron.loggable import Loggable
 from pychron.paths import paths
@@ -54,6 +57,8 @@ class DVC(Loggable):
     repo_root = Str
     repo_user = Str
     repo_password = Str
+
+    project_repo = Instance(GitRepoManager)
 
     def __init__(self, *args, **kw):
         super(DVC, self).__init__(*args, **kw)
@@ -106,11 +111,53 @@ class DVC(Loggable):
         self.meta_repo.push()
 
     # analysis processing
-    def save_fits(self, ai, keys):
-        ai.dump_fits(keys)
 
-        # commit to repo
-        # push
+    def _get_project_repo(self, project):
+        repo = self.project_repo
+        path = project_path(project)
+
+        if repo is None or repo.path != path:
+            self.debug('make new repo for {}'.format(path))
+            repo = GitRepoManager()
+            repo.path = path
+            repo.open_repo(path)
+            self.project_repo = repo
+
+        return repo
+
+    def update_analyses(self, ans, msg):
+        key = lambda x: x.project
+        ans = sorted(ans, key=key)
+        for project, ais in groupby(ans, key=key):
+            ais = map(analysis_path, ais)
+            if self.project_add(project, ais):
+                self.project_commit(project, msg)
+
+    def project_add(self, project, paths):
+        if not hasattr(paths, '__iter__'):
+            paths = (paths,)
+
+        repo = self._get_project_repo(project)
+
+        changes = repo.get_local_changes()
+        changed = False
+        for p in paths:
+            if os.path.basename(p) in changes:
+                repo.add(p, commit=False)
+                changed = True
+        return changed
+
+    def project_commit(self, project, msg):
+        repo = self._get_project_repo(project)
+        repo.commit(msg)
+
+    def save_blanks(self, ai, keys, refs):
+        self.info('Saving blanks for {}'.format(ai))
+        ai.dump_blanks(keys, refs)
+
+    def save_fits(self, ai, keys):
+        self.info('Saving fits')
+        ai.dump_fits(keys)
 
     def find_references(self, times, atypes):
         print 'times', times
@@ -201,9 +248,9 @@ class DVC(Loggable):
         return a
 
     # adders db
-    def add_analysis(self, **kw):
-        with self.db.session_ctx():
-            self.db.add_material(**kw)
+    # def add_analysis(self, **kw):
+    #     with self.db.session_ctx():
+    #         self.db.add_material(**kw)
 
     def add_measured_position(self, *args, **kw):
         with self.db.session_ctx():
@@ -288,6 +335,7 @@ class DVC(Loggable):
             for tag, func in (('irradiation holders', self._add_default_irradiation_holders),
                               ('productions', self._add_default_irradiation_productions),
                               ('load holders', self._add_default_load_holders)):
+
                 d = os.path.join(self.meta_repo.path, tag.replace(' ', '_'))
                 if not os.path.isdir(d):
                     os.mkdir(d)
@@ -330,9 +378,6 @@ class DVC(Loggable):
         return DVCDatabase(clear=self.clear_db, auto_add=self.auto_add)
 
     def _meta_repo_default(self):
-        return MetaRepo(auto_add=self.auto_add)
+        return MetaRepo()
 
 # ============= EOF =============================================
-
-
-

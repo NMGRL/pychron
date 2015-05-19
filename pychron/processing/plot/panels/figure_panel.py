@@ -19,7 +19,7 @@ from math import isinf
 
 from chaco.legend import Legend
 from numpy import Inf, inf
-from traits.api import HasTraits, Any, on_trait_change, List, Int, Str
+from traits.api import HasTraits, Any, List, Int, Str
 
 
 # ============= standard library imports ========================
@@ -45,8 +45,11 @@ class FigurePanel(HasTraits):
 
     track_value = True
 
-    @on_trait_change('analyses[]')
-    def _analyses_items_changed(self):
+    # @on_trait_change('analyses[]')
+    # def _analyses_items_changed(self):
+    #     self.figures = self._make_figures()
+
+    def make_figures(self):
         self.figures = self._make_figures()
 
     def _make_figures(self):
