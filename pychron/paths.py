@@ -369,7 +369,7 @@ class Paths(object):
                      (self.simple_ui_file, SIMPLE_UI_DEFAULT),
                      (self.edit_ui_defaults, EDIT_UI_DEFAULT),
                      (self.task_extensions_file, TASK_EXTENSION_DEFAULT)):
-            overwrite = d in (SYSTEM_HEALTH, SIMPLE_UI_DEFAULT, TASK_EXTENSION_DEFAULT)
+            overwrite = d in (SYSTEM_HEALTH, SIMPLE_UI_DEFAULT, )
             # overwrite = d in (SYSTEM_HEALTH, SIMPLE_UI_DEFAULT,)
             # print p
             self._write_default_file(p, d, overwrite)

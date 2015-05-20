@@ -112,7 +112,6 @@ class ViewModel(HasTraits):
                 yl = yaml.load(rfile)
                 for te in self.task_extensions:
                     yd = next((d for d in yl if d['plugin_id'] == te.id), None)
-                    # print yd, te.id, te
                     if yd:
                         for ai in yd['actions']:
                             action, enabled = ai.split(',')
@@ -123,6 +122,7 @@ class ViewModel(HasTraits):
     def dump(self):
         p = paths.task_extensions_file
         obj = [te.dump() for te in self.task_extensions]
+
         with open(p, 'w') as wfile:
             yaml.dump(obj, wfile)
 
