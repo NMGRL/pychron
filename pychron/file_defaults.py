@@ -29,7 +29,7 @@ IDENTIFIERS_DEFAULT = """
   shortname: ba
   extractable: False
   special: True
-- name: Blank Cockctail
+- name: Blank Cocktail
   shortname: bc
   extractable: False
   special: True
