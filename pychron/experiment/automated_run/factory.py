@@ -512,7 +512,7 @@ class AutomatedRunFactory(PersistenceLoggable):
         if excludes is None:
             excludes = []
 
-        if arv.analysis_type in ('blank_unknown', 'pause'):
+        if arv.analysis_type in ('blank_unknown', 'pause', 'blank_extractionline'):
             excludes.extend(('extract_value', 'extract_units', 'pattern', 'beam_diameter'))
             if arv.analysis_type == 'pause':
                 excludes.extend(('cleanup', 'position'))
