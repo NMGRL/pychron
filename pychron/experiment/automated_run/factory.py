@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 import pickle
 from traits.api import String, Str, Property, Any, Float, Instance, Int, List, \
-    cached_property, on_trait_change, Bool, Button, Event, Enum
+    cached_property, on_trait_change, Bool, Button, Event, Enum, Dict
 # ============= standard library imports ========================
 from traits.trait_errors import TraitError
 import yaml
@@ -304,7 +304,7 @@ class AutomatedRunFactory(PersistenceLoggable):
     _spec_klass = AutomatedRunSpec
     _set_defaults = True
     _no_clear_labnumber = False
-
+    _meta_cache = Dict
 
     def setup_files(self):
         self.load_templates()
@@ -812,7 +812,7 @@ class AutomatedRunFactory(PersistenceLoggable):
             return
 
         self.debug('load default scripts for {}'.format(labnumber))
-        self._current_loaded_default_default_scripts_key = labnumber
+        self._current_loaded_default_scripts_key = labnumber
 
         defaults = self._load_default_file()
         if defaults:
@@ -869,42 +869,54 @@ class AutomatedRunFactory(PersistenceLoggable):
         if self.suppress_meta:
             return True
 
-        db = self.db
-        self._aliquot = 0
-        with db.session_ctx():
-            # convert labnumber (a, bg, or 10034 etc)
-            self.debug('load meta')
-            ln = db.get_labnumber(labnumber)
-            if ln:
-                # set sample and irrad info
-                try:
-                    self.sample = ln.sample.name
-                except AttributeError:
-                    pass
+        # self._aliquot = 0
+        if labnumber in self._meta_cache:
+            self.debug('using cached meta values for {}'.format(labnumber))
+            d = self._meta_cache[labnumber]
+            for attr in ('sample','irradiation','comment'):
+                setattr(self, attr, d[attr])
+            return True
+        else:
+            d = dict(sample='')
+            db = self.db
+            with db.session_ctx():
+                # convert labnumber (a, bg, or 10034 etc)
+                self.debug('load meta')
+                ln = db.get_labnumber(labnumber)
+                if ln:
+                    # set sample and irrad info
+                    try:
+                        self.sample = ln.sample.name
+                        d['sample'] = self.sample
+                    except AttributeError:
+                        pass
 
-                try:
-                    a = int(ln.analyses[-1].aliquot + 1)
-                except IndexError, e:
-                    a = 1
+                    # a = db.get_greatest_aliquot(labnumber)
+                    # a = a or 1
+                    # self._aliquot = a
+                    # d['_aliquot'] = a
 
-                self._aliquot = a
+                    self.irradiation = self._make_irrad_level(ln)
+                    d['irradiation'] = self.irradiation
 
-                self.irradiation = self._make_irrad_level(ln)
-
-                if self.auto_fill_comment:
-                    self._set_auto_comment()
-                return True
-            else:
-                self.warning_dialog(
-                    '{} does not exist. Add using "Labnumber Entry" or "Utilities>>Import"'.format(labnumber))
+                    if self.auto_fill_comment:
+                        self._set_auto_comment()
+                    d['comment'] = self.comment
+                    self._meta_cache[labnumber] = d
+                    return True
+                else:
+                    self.warning_dialog(
+                        '{} does not exist. Add using "Labnumber Entry" or "Utilities>>Import"'.format(labnumber))
 
     def _load_labnumber_defaults(self, old, labnumber, special):
-
+        self.debug('load labnumber defaults {} {}'.format(labnumber, special))
         if special:
-            ln = labnumber[:2]
+            ln = labnumber.split('-')[0]
             if ln == 'dg':
                 # self._load_extraction_defaults(ln)
                 self._load_defaults(ln, attrs=('extract_value', 'extract_units'))
+            else:
+                self._load_defaults(ln, attrs=('cleanup','duration'))
         else:
             self._load_defaults(labnumber if special else 'u')
 
