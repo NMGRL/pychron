@@ -95,7 +95,7 @@ class Handler(Loggable):
             if sum >= msg_len:
                 break
         data = ''.join(ss)
-        data=data.strip()
+        data = data.strip()
         if frame.message_len:
             # trim off header
             data = data[nm:]
@@ -144,24 +144,24 @@ class UDPHandler(Handler):
         self.sock.settimeout(timeout)
 
     def get_packet(self, cmd):
-        r = None
+        # r = None
         # cnt = 3
-        cnt = 1
+        # cnt = 1
 
         def recv(ds):
             r, _ = self.sock.recvfrom(ds)
             return r
 
-        for _ in range(cnt):
-            try:
-                r = self._recvall(recv)
-                # r, _address = self.sock.recvfrom(self.datasize)
-                break
-            except socket.error, e:
-                self.debug('get_packet {}'.format(e))
-        else:
-            self.warning('get packet for {} error: {}'.format(cmd, e))
-
+        # for _ in range(cnt):
+        # try:
+        r = self._recvall(recv)
+            # r, _address = self.sock.recvfrom(self.datasize)
+            # break
+        # except socket.error, e:
+            # self.debug('get_packet {}'.format(e))
+            # self.error_mode = True
+        # else:
+        #     self.warning('get packet for {} error: {}'.format(cmd, e))
         return r
 
     def send_packet(self, p):
@@ -187,7 +187,7 @@ class EthernetCommunicator(Communicator):
     use_end = True
     verbose = False
     error = None
-
+    error_mode = False
     message_frame = ''
 
     def load(self, config, path):
@@ -217,7 +217,7 @@ class EthernetCommunicator(Communicator):
 
     def open(self, *args, **kw):
 
-        for k in ('host','port', 'message_frame', 'kind'):
+        for k in ('host', 'port', 'message_frame', 'kind'):
             if k in kw:
                 setattr(self, k, kw[k])
 
@@ -243,7 +243,7 @@ class EthernetCommunicator(Communicator):
 
         return not self.simulation
 
-    def get_handler(self, timeout):
+    def get_handler(self, timeout=3):
         try:
             h = self.handler
             if h is None:
@@ -283,9 +283,11 @@ class EthernetCommunicator(Communicator):
         def _ask():
             timeout = 2
             if self.error_mode:
+                self.handler = None
                 timeout = 0.25
 
             handler = self.get_handler(timeout)
+            # print self.handler, handler, timeout, self.error_mode, cmd
             if not handler:
                 self.error_mode = True
                 # self.simulation = True
@@ -295,7 +297,10 @@ class EthernetCommunicator(Communicator):
                 # self.simulation = False
 
             if handler.send_packet(cmd):
-                return handler.get_packet(cmd)
+                try:
+                    return handler.get_packet(cmd)
+                except socket.error:
+                    self.error_mode = True
 
         if self.error_mode:
             retries = 1

@@ -135,11 +135,13 @@ class ExtractionLineManager(Manager, Consoleable):
 
         attrs = ('canvas_path', 'canvas_config_path', 'valves_path',
                  'use_hardware_update', 'hardware_update_period',
-                 'check_master_owner', 'use_network', 'inherit_state')
+                 'check_master_owner', 'use_network')
 
         for attr in attrs:
-            bind_preference(self, attr, '{}.{}'.format(prefid, attr))
-
+            try:
+                bind_preference(self, attr, '{}.{}'.format(prefid, attr))
+            except BaseException,e:
+                print attr, e
         # bind_preference(self, 'canvas_path', '{}.canvas_path'.format(prefid))
         # bind_preference(self, 'canvas_config_path', '{}.canvas_config_path'.format(prefid))
         # bind_preference(self, 'valves_path', '{}.valves_path'.format(prefid))
@@ -150,8 +152,9 @@ class ExtractionLineManager(Manager, Consoleable):
         #                 '{}.check_master_owner'.format(prefid))
         # bind_preference(self, 'use_network',
         #                 '{}.use_network'.format(prefid))
-        # bind_preference(self.network, 'inherit_state',
-        #                 '{}.inherit_state'.format(prefid))
+
+        bind_preference(self.network, 'inherit_state',
+                        '{}.inherit_state'.format(prefid))
 
         self.console_bind_preferences('{}.console'.format(prefid))
 
