@@ -24,6 +24,7 @@ from traitsui.api import View
 class BaseNode(HasTraits):
     name = 'Base'
     enabled = Bool(True)
+    visited = Bool(False)
 
     def load(self, nodedict):
         pass
@@ -60,6 +61,8 @@ class BaseNode(HasTraits):
                     kind='livemodal',
                     title='Configure'.format(self.name), *items, **kw)
 
+    def __str__(self):
+        return '{}<{}>'.format(self.name, self.__class__.__name__)
 # ============= EOF =============================================
 
 

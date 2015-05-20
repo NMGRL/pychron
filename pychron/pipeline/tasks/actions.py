@@ -30,6 +30,14 @@ class RunAction(TaskAction):
     name = 'Run'
     method = 'run'
     image = icon('start')
+    visible_name = 'run_enabled'
+
+
+class ResumeAction(TaskAction):
+    name = 'Resume'
+    method = 'run'
+    image = icon('resume')
+    visible_name = 'resume_enabled'
 
 
 class SwitchToBrowserAction(TaskAction):

@@ -21,7 +21,7 @@ from pyface.tasks.action.schema import SToolBar, SMenu
 from pyface.tasks.action.schema_addition import SchemaAddition
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter
 from pyface.timer.do_later import do_after
-from traits.api import Instance
+from traits.api import Instance, Bool
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -29,7 +29,7 @@ from pychron.core.codetools.inspection import caller
 from pychron.paths import paths
 from pychron.pipeline.engine import PipelineEngine
 from pychron.pipeline.state import EngineState
-from pychron.pipeline.tasks.actions import RunAction, SavePipelineTemplateAction
+from pychron.pipeline.tasks.actions import RunAction, SavePipelineTemplateAction, ResumeAction
 from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane
 from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.processing.tasks.recall.recall_editor import RecallEditor
@@ -46,10 +46,13 @@ class PipelineTask(BaseBrowserTask):
     name = 'Pipeline Processing'
     engine = Instance(PipelineEngine, ())
     tool_bars = [SToolBar(RunAction(),
+                          ResumeAction(),
                           SavePipelineTemplateAction()),
                  # SToolBar(SwitchToBrowserAction())
                  ]
-
+    state = Instance(EngineState)
+    resume_enabled = Bool(False)
+    run_enabled = Bool(True)
     # def switch_to_browser(self):
     #     self._activate_task('pychron.browser.task')
 
@@ -114,19 +117,29 @@ class PipelineTask(BaseBrowserTask):
 
     def _run_pipeline(self):
         self.debug('run pipeline')
-        state = EngineState()
+        if self.state:
+            self.debug('using previous state')
+            state = self.state
+        else:
+            state = EngineState()
 
-        self.engine.run(state)
+        if not self.engine.run(state):
+            self.state = state
+            self._toggle_run(True)
+        else:
+            self._toggle_run(False)
+            self.state = None
 
-        def prun():
-            self.close_all()
-            for editor in state.editors:
-                self._close_editor(editor)
-                self._open_editor(editor)
+        self.close_all()
+        for editor in state.editors:
+            self._close_editor(editor)
+            self._open_editor(editor)
 
-        prun()
-        # invoke_in_main_thread(prun)
-        self.engine.post_run(state)
+            # self.engine.post_run(state)
+
+    def _toggle_run(self, v):
+        self.resume_enabled = v
+        self.run_enabled = not v
 
     def _default_layout_default(self):
         return TaskLayout(left=Splitter(PaneItem('pychron.pipeline.pane',
@@ -159,14 +172,12 @@ class PipelineTask(BaseBrowserTask):
         for ai in new:
             editor = RecallEditor(model=ai)
             self._open_editor(editor)
-        # return [SchemaAddition(path='MenuBar',
-        # before='tools.menu',
-        #                        after='view.menu',
-        #                        factory= DataMenu),  # lambda : SMenu(id='data.menu', name='Data')),
-        #
-        #         SchemaAddition(path='MenuBar/data.menu',
-        #                        factory=RunAction)]
+            # return [SchemaAddition(path='MenuBar',
+            # before='tools.menu',
+            #                        after='view.menu',
+            #                        factory= DataMenu),  # lambda : SMenu(id='data.menu', name='Data')),
+            #
+            #         SchemaAddition(path='MenuBar/data.menu',
+            #                        factory=RunAction)]
+
 # ============= EOF =============================================
-
-
-

@@ -40,21 +40,20 @@ class FitNode(FigureNode):
 class FitBlanksNode(FitNode):
     editor_klass = BlanksEditor
     plotter_options_manager_klass = BlanksOptionsManager
-    user_review = Bool(True)
+    # user_review = Bool(True)
 
-    _reviewed_flag = False
+    # _reviewed_flag = False
+    name = 'Fit Blanks'
 
     def run(self, state):
         super(FitBlanksNode, self).run(state)
         if state.references:
             self.editor.set_references(state.references)
-            self.editor.force_update(force=True)
+            # self.editor.force_update(force=True)
 
+        self.name = 'Fit Blanks {}'.format(self.name)
         self._set_saveable(state)
-        self.name = '{} Blanks'.format(self.name)
-        if self.user_review and not self._reviewed_flag:
-            self._reviewed_flag = True
-            state.user_review = True
+        state.veto = self
 
 
 

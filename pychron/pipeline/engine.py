@@ -48,6 +48,17 @@ class Pipeline(HasTraits):
         nodes = [ni.to_template() for ni in self.nodes]
         return nodes
 
+    def iternodes(self, start_node=None):
+        if start_node is None:
+            idx = -1
+        else:
+            idx = self.nodes.index(start_node)
+
+        try:
+            return self.nodes[idx + 1:]
+        except IndexError:
+            return []
+
 
 class PipelineEngine(Loggable):
     dvc = Instance('pychron.dvc.dvc.DVC')
@@ -109,7 +120,6 @@ class PipelineEngine(Loggable):
 
     def set_template(self, name):
         self._set_template(name)
-
 
     # def add_analyses(self, node):
     # """
@@ -251,19 +261,34 @@ class PipelineEngine(Loggable):
             yaml.dump(obj, wfile, default_flow_style=False)
 
     def run(self, state):
+        start_node = state.veto
         self.debug('pipeline run started')
-        for idx, node in enumerate(self.pipeline.nodes):
+        if start_node:
+            self.debug('starting at node {}'.format(start_node))
+        state.veto = None
+
+        for idx, node in enumerate(self.pipeline.iternodes(start_node)):
+            self.selected = node
+            node.visited = True
             if node.enabled:
-                self.debug('Run node {:02n}: {}'.format(idx, node.name))
+                self.debug('Run node {:02n}: {}'.format(idx, node))
                 node.run(state)
+
+                if state.veto:
+                    self.debug('pipeline vetoed by {}'.format(node))
+                    self.refresh_analyses()
+                    return
             else:
-                self.debug('Skip node {:02n}: {}'.format(idx, node.name))
+                self.debug('Skip node {:02n}: {}'.format(idx, node))
+        else:
+            self.debug('pipeline run finished')
+            self.refresh_analyses()
+            self.selected = None
 
-        self.debug('pipeline run finished')
+            return True
 
-        self.refresh_analyses()
-        # self.unknowns = state.unknowns
-        # self.references = state.references
+            # self.unknowns = state.unknowns
+            # self.references = state.references
 
     def post_run(self, state):
         self.debug('pipeline post run started')
@@ -335,8 +360,11 @@ class PipelineEngine(Loggable):
             self.references = new.analyses
         elif isinstance(new, FigureNode):
             self.show_group_colors = True
-            self.unknowns = new.editor.analyses
-            self.task.activate_editor(new.editor)
+            if new.editor:
+                self.unknowns = new.editor.analyses
+                self.task.activate_editor(new.editor)
+
+        self.update_needed = True
 
 # if __name__ == '__main__':
 # from traitsui.api import TreeNode, Handler
@@ -389,6 +417,3 @@ class PipelineEngine(Loggable):
 
 
 # ============= EOF =============================================
-
-
-

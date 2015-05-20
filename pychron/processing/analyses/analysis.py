@@ -52,6 +52,7 @@ class Analysis(ArArAge):
     # collection
     uuid = Str
     labnumber = CStr
+    identifier = Property
     aliquot = Int
     step = Str
     aliquot_step_str = Str
@@ -226,14 +227,21 @@ class Analysis(ArArAge):
 
         return r
 
-    # mirror labnumber
-    @property
-    def identifier(self):
+    def _set_identifier(self, v):
+        self.labnumber = v
+
+    def _get_identifier(self):
         return self.labnumber
 
-    @identifier.setter
-    def set_identifier(self, v):
-        self.labnumber = v
+    # mirror labnumber
+    # @property
+    # def identifier(self):
+    #     return self.labnumber
+    #
+    # @identifier.setter
+    # def set_identifier(self, v):
+    #     print 'asfasfffffffff', v
+    #     self.labnumber = v
 
     def __str__(self):
         return '{}<{}>'.format(self.record_id, self.__class__.__name__)

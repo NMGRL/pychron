@@ -20,6 +20,7 @@ import struct
 
 from traits.api import Instance
 
+
 # ============= standard library imports ========================
 import os
 import yaml
@@ -33,6 +34,13 @@ from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pychron_constants import ALPHAS
+
+input_txt = '''
+Foo:
+  - 5000,01
+  - 5000,02
+
+'''
 
 
 class DatabaseExport(Loggable):
@@ -52,11 +60,12 @@ class DatabaseExport(Loggable):
                 yd = yaml.load(rfile)
 
                 for pr in yd:
-                    repo = self._export_project(pr, src, dest)
-                    for idn, aliquot, increment in yd[pr]:
-                        self._export_analysis(src, dest, repo, idn, aliquot, increment)
+                    with dest.session_ctx():
+                        repo = self._export_project(pr, src, dest)
+                        for rec in yd[pr]:
+                            self._export_analysis(src, dest, repo, rec)
 
-                    repo.commit('src import src= {}'.format(src.url))
+                        repo.commit('src import src= {}'.format(src.url))
 
     def _export_project(self, project, src, dest):
         proot = os.path.join(paths.dvc_dir, 'projects', project)
@@ -64,6 +73,9 @@ class DatabaseExport(Loggable):
             os.mkdir(proot)
         repo = GitRepoManager()
         repo.open_repo(proot)
+
+        if not dest.get_project(project):
+            dest.add_project(project)
 
         return repo
 
@@ -110,17 +122,29 @@ class DatabaseExport(Loggable):
                 dd = dest.add_irradiation_position(irradname, levelname, pos)
                 dd.identifier = dblab.identifier
                 dbsam = dblab.sample
-                mat = dbsam.material.name
-                proj = dbsam.project.name
-                if not dest.get_sample(dbsam.name, proj):
+                project = dbsam.project.name
+                if not dest.get_sample(dbsam.name, project):
+                    mat = dbsam.material.name
                     if not dest.get_material(mat):
                         dest.add_material(mat)
                         dest.flush()
-                    dest.add_sample(dbsam.name, proj, mat)
+
+                    if not dest.get_project(project):
+                        dest.add_project(project)
+                        dest.flush()
+
+                    dest.add_sample(dbsam.name, project, mat)
                     dest.flush()
                 dest.flush()
 
-    def _export_analysis(self, src, dest, repo, idn, aliquot, step, overwrite=True):
+    def _export_analysis(self, src, dest, repo, rec, overwrite=True):
+
+        args = rec.split(',')
+        if len(args) == 2:
+            idn, aliquot = args
+            step = None
+        else:
+            idn, aliquot, step = args
 
         dban = src.get_analysis(idn, aliquot, step)
         op = os.path.join(repo.path, add_extension(dban.record_id, '.yaml'))
@@ -128,7 +152,6 @@ class DatabaseExport(Loggable):
             self.debug('{} already exists. skipping'.format(op))
             return
 
-        self._export_to_db(dest, dban)
         self._export_meta(dest, dban)
 
         dblab = dban.labnumber
@@ -144,8 +167,13 @@ class DatabaseExport(Loggable):
         ms = dban.measurement.mass_spectrometer.name
 
         isotopes = self._make_isotopes(dban)
-        inc = ALPHAS.index(step)
-        obj = dict(identifier=idn, aliquot=aliquot, isotopes=isotopes, analysis_type=get_analysis_type(idn),
+        if step is None:
+            inc = None
+        else:
+            inc = ALPHAS.index(step)
+
+        obj = dict(identifier=idn, uuid=dban.uuid, aliquot=aliquot, isotopes=isotopes,
+                   analysis_type=get_analysis_type(idn),
                    collection_version='0.1:0.1', comment='This is a comment', increment=inc, irradiation=irrad,
                    irradiation_level=level, irradiation_position=irradpos, project=project, mass_spectrometer=ms,
                    material=mat, duration=extraction.extract_duration, cleanup=extraction.cleanup_duration,
@@ -158,17 +186,34 @@ class DatabaseExport(Loggable):
                    sample=sample, timestamp=dban.analysis_timestamp, tray=None, username=dban.user.name,
                    xyz_position=None)
 
+        self._save_an_to_db(dest, dban, obj)
         # op = os.path.join(proot, add_extension(dban.record_id, '.yaml'))
         with open(op, 'w') as wfile:
             yaml.dump(obj, wfile)
 
         repo.add(op, commit=False)
 
+    def _save_an_to_db(self, dest, dban, obj):
+        kw = obj.fromkeys(('aliquot', 'uuid',
+                           'weight', 'comment',
+                           'timestamp', 'analysis_type',
+                           'mass_spectrometer', 'extract_device'))
+
+        an = dest.add_analysis(**kw)
+
+        dblab = dban.labnumber
+        irrad = dblab.irradiation_position.level.irradiation.name
+        level = dblab.irradiation_position.level.name
+        irradpos = dblab.irradiation_position.position
+        pos = dest.get_irradiation_position(irrad, level, irradpos)
+        an.irradiation_position = pos
+
     def _make_isotopes(self, dban):
         isos = {}
         for dbiso in dban.isotopes:
             isod = self._make_isotope(dbiso)
             isos[dbiso.molecular_weight.name] = isod
+        return isos
 
     def _make_isotope(self, dbiso):
         isod = dict(fit='', detector=self._make_detector(dbiso),

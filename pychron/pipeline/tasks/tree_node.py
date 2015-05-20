@@ -32,13 +32,16 @@ class _TreeNode(TreeNode):
 
         return icon(name)
 
+    def get_background(self, obj):
+        # print 'get', obj, obj.visited
+        return 'green' if obj.visited else 'white'
 
 class DataTreeNode(_TreeNode):
     icon_name = 'table'
 
 
 class FilterTreeNode(_TreeNode):
-    icon_name = 'filter'
+    icon_name = 'table_filter'
 
 
 class IdeogramTreeNode(_TreeNode):

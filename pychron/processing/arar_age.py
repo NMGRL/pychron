@@ -124,7 +124,6 @@ class ArArAge(Loggable):
             iso = self.isotopes[k]
             if iso.temporary_blank is not None:
                 tb = iso.temporary_blank
-                print tb.value, v, tb.error, e
                 if abs(tb.value - v) < tol and abs(tb.error - e) < tol:
                     return
                 else:
