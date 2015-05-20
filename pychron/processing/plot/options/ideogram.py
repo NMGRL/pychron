@@ -23,67 +23,58 @@ from traitsui.api import Item, HGroup, Group, VGroup, UItem, EnumEditor, Instanc
 # ============= local library imports  ==========================
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.plot.options.age import AgeOptions
+from pychron.processing.plot.options.base import dumpable
 from pychron.processing.plot.options.figure_plotter_options import FONTS, SIZES
 from pychron.processing.plot.options.ideogram_group_options import IdeogramGroupEditor, IdeogramGroupOptions
 
 
+
 class IdeogramOptions(AgeOptions):
-    probability_curve_kind = Enum('cumulative', 'kernel')
-    mean_calculation_kind = Enum('weighted mean', 'kernel')
-
-    use_static_limits = Bool
-    xlow = Float
-    xhigh = Float
-
-    _use_centered_range = Bool
-    centered_range = Float(0.5)
-
-    display_mean_indicator = Bool(True)
-    display_mean = Bool(True)
-    display_percent_error = Bool(True)
-    plot_option_name = 'Ideogram'
-    # index_attr = Enum('Age', 'Ar40*/Ar39k','Ar40/Ar36')
-    # index_attr = String
-
-    use_asymptotic_limits = Bool
-    _use_asymptotic_limits = Bool
-    _suppress_xlimits_clear = Bool
-
-    asymptotic_width = Float
-    asymptotic_percent = Float
-    x_end_caps = Bool(False)
-    y_end_caps = Bool(False)
-    error_bar_nsigma = Enum(1, 2, 3)
-    analysis_number_sorting = Enum('Oldest @Top', 'Youngest @Top')
-    # analysis_label_format = String
-    # analysis_label_display = String
     edit_label_format = Button
-
-    mean_indicator_font = Property
-    mean_indicator_fontname = Enum(*FONTS)
-    mean_indicator_fontsize = Enum(*SIZES)
-
-    mean_sig_figs = Int
-
     refresh_asymptotic_button = Button
 
-    display_inset = Bool
-    inset_location = Enum('Upper Right', 'Upper Left', 'Lower Right', 'Lower Left')
-    inset_width = Int(160)
-    inset_height = Int(100)
+    probability_curve_kind = dumpable(Enum('cumulative', 'kernel'))
+    mean_calculation_kind = dumpable(Enum('weighted mean', 'kernel'))
+    use_centered_range = dumpable(Bool)
+    use_static_limits = dumpable(Bool)
+    xlow = dumpable(Float)
+    xhigh = dumpable(Float)
 
-    # use_filled_line = Bool
-    # fill_color = Color
-    # fill_alpha = Range(0.0, 100.0)
-    # edit_group_fill_color_button = Button
-    # fill_groups = List
-    # fill_group = Property  #(trait=Fill)
+    centered_range = dumpable(Float, 0.5)
+
+    display_mean_indicator = dumpable(Bool, True)
+    display_mean = dumpable(Bool, True)
+    display_percent_error = dumpable(Bool, True)
+    plot_option_name = 'Ideogram'
+
+    use_asymptotic_limits = dumpable(Bool)
+    asymptotic_width = dumpable(Float)
+    asymptotic_percent = dumpable(Float)
+
+    x_end_caps = dumpable(Bool, False)
+    y_end_caps = dumpable(Bool, False)
+    error_bar_nsigma = dumpable(Enum, 1, 2, 3)
+    analysis_number_sorting = dumpable(Enum, 'Oldest @Top', 'Youngest @Top')
+    mean_indicator_font = Property
+    mean_indicator_fontname = dumpable(Enum, *FONTS)
+    mean_indicator_fontsize = dumpable(Enum, *SIZES)
+    mean_sig_figs = dumpable(Int)
+
+    display_inset = dumpable(Bool)
+    inset_location = dumpable(Enum, 'Upper Right', 'Upper Left', 'Lower Right', 'Lower Left')
+    inset_width = dumpable(Int, 160)
+    inset_height = dumpable(Int, 100)
+
+    use_cmap_analysis_number = dumpable(Bool, False)
+    cmap_analysis_number = dumpable(Enum, *[m for m in cmap_d if not m.endswith("_r")])
+    use_latest_overlay = dumpable(Bool, False)
+
     group_editor_klass = IdeogramGroupEditor
     options_klass = IdeogramGroupOptions
 
-    use_cmap_analysis_number = Bool(False)
-    cmap_analysis_number = Enum([m for m in cmap_d if not m.endswith("_r")])
-    use_latest_overlay = Bool(False)
+    _use_centered_range = Bool
+    _use_asymptotic_limits = Bool
+    _suppress_xlimits_clear = Bool
 
     def get_plot_dict(self, group_id):
         # return {}
@@ -295,9 +286,9 @@ class IdeogramOptions(AgeOptions):
                       show_border=True,
                       label='Error Bars')
         main_grp = VGroup(self._get_title_group(),
-            xgrp,
-            grp_grp,
-            g, g2, egrp)
+                          xgrp,
+                          grp_grp,
+                          g, g2, egrp)
 
         orgp = Group(main_grp,
                      # label_grp,
@@ -346,29 +337,29 @@ class IdeogramOptions(AgeOptions):
         attrs.extend(['asymptotic_width', 'asymptotic_percent', 'use_asymptotic_limits'])
         return attrs
 
-    def _get_dump_attrs(self):
-        attrs = super(IdeogramOptions, self)._get_dump_attrs()
-        return attrs + [
-            'probability_curve_kind',
-            'mean_calculation_kind',
-            'error_calc_method',
-            'xlow', 'xhigh',
-            'use_static_limits',
-            'use_centered_range', 'centered_range',
-            'use_asymptotic_limits', 'asymptotic_width', 'asymptotic_percent',
-            'display_mean', 'display_mean_indicator',
-            'x_end_caps', 'y_end_caps', 'index_attr', 'error_bar_nsigma',
-            'analysis_number_sorting',
-            'display_percent_error',
-            'mean_indicator_fontname',
-            'mean_indicator_fontsize',
-            'mean_sig_figs',
-            'display_inset', 'inset_location', 'inset_width', 'inset_height',
-            # 'fill_groups',
-            'label_fontsize',
-            'use_cmap_analysis_number',
-            'cmap_analysis_number',
-            'use_latest_overlay']
+    # def _get_dump_attrs(self):
+    #     attrs = super(IdeogramOptions, self)._get_dump_attrs()
+    #     return attrs + [
+    #         'probability_curve_kind',
+    #         'mean_calculation_kind',
+    #         'error_calc_method',
+    #         'xlow', 'xhigh',
+    #         'use_static_limits',
+    #         'use_centered_range', 'centered_range',
+    #         'use_asymptotic_limits', 'asymptotic_width', 'asymptotic_percent',
+    #         'display_mean', 'display_mean_indicator',
+    #         'x_end_caps', 'y_end_caps', 'index_attr', 'error_bar_nsigma',
+    #         'analysis_number_sorting',
+    #         'display_percent_error',
+    #         'mean_indicator_fontname',
+    #         'mean_indicator_fontsize',
+    #         'mean_sig_figs',
+    #         'display_inset', 'inset_location', 'inset_width', 'inset_height',
+    #         # 'fill_groups',
+    #         'label_fontsize',
+    #         'use_cmap_analysis_number',
+    #         'cmap_analysis_number',
+    #         'use_latest_overlay']
 
     def _load_factory_defaults(self, yd):
         super(IdeogramOptions, self)._load_factory_defaults(yd)
@@ -376,6 +367,5 @@ class IdeogramOptions(AgeOptions):
         self._set_defaults(yd, 'calculations', ('probability_curve_kind', 'mean_calculation_kind'))
         self._set_defaults(yd, 'display', ('mean_indicator_fontsize', 'mean_sig_figs',))
         self._set_defaults(yd, 'general', ('index_attr',))
-
 
 # ============= EOF =============================================

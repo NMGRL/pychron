@@ -24,6 +24,8 @@ import re
 from pychron.envisage.icon_button_editor import icon_button_editor
 
 from pychron.processing.plot.options.age import AgeOptions
+from pychron.processing.plot.options.base import dumpable
+from pychron.processing.plot.options.figure_plotter_options import SIZES
 from pychron.processing.plot.options.spectrum_group_options import SpectrumGroupOptions, SpectrumGroupEditor
 from pychron.processing.plot.options.option import SpectrumPlotOptions
 from pychron.pychron_constants import ERROR_TYPES
@@ -33,48 +35,41 @@ plat_regex = re.compile(r'\w{1,2}-{1}\w{1,2}$')
 
 class SpectrumOptions(AgeOptions):
     label = 'Spectrum'
-    step_nsigma = Int(2)
-    plot_option_klass = SpectrumPlotOptions
-
-    edit_plateau_criteria = Button
-    pc_nsteps = Int(3)
-    pc_gas_fraction = Float(50)
-
-    include_j_error_in_plateau = Bool(True)
-    plateau_age_error_kind = Enum(*ERROR_TYPES)
-    # plateau_steps = Property(Str)
-    # _plateau_steps = Str
-
-    # calculate_fixed_plateau = Bool(False)
-    # calculate_fixed_plateau_start = Str
-    # calculate_fixed_plateau_end = Str
-
     plot_option_name = 'Age'
-    display_extract_value = Bool(False)
-    display_step = Bool(False)
-    display_plateau_info = Bool(True)
-    display_integrated_info = Bool(True)
-    plateau_sig_figs = Int
-    integrated_sig_figs = Int
+    plot_option_klass = SpectrumPlotOptions
+    edit_plateau_criteria = Button
 
-    plateau_font_size = Enum(6, 7, 8, 10, 11, 12, 14, 15, 18, 24, 28, 32)
-    integrated_font_size = Enum(6, 7, 8, 10, 11, 12, 14, 15, 18, 24, 28, 32)
-    step_label_font_size = Enum(6, 7, 8, 10, 11, 12, 14, 15, 18, 24, 28, 32)
-    envelope_alpha = Range(0, 100, style='simple')
-    envelope_color = Color
-    user_envelope_color = Bool
-    center_line_style = Enum('No Line', 'solid', 'dash', 'dot dash', 'dot', 'long dash')
-    extend_plateau_end_caps = Bool(True)
+    step_nsigma = dumpable(Int, 2)
+    pc_nsteps = dumpable(Int, 3)
+    pc_gas_fraction = dumpable(Float, 50)
+    include_j_error_in_plateau = dumpable(Bool, True)
+    plateau_age_error_kind = dumpable(Enum, *ERROR_TYPES)
+
+    display_extract_value = dumpable(Bool, False)
+    display_step = dumpable(Bool, False),
+    display_plateau_info = dumpable(Bool, True)
+    display_integrated_info = dumpable(Bool, True)
+    plateau_sig_figs = dumpable(Int)
+    integrated_sig_figs = dumpable(Int)
+
+    plateau_font_size = dumpable(Enum, *SIZES)
+    integrated_font_size = dumpable(Enum, *SIZES)
+    step_label_font_size = dumpable(Enum, *SIZES)
+    envelope_alpha = dumpable(Range, 0, 100, style='simple')
+    envelope_color = dumpable(Color)
+    user_envelope_color = dumpable(Bool)
+    center_line_style = dumpable(Enum, 'No Line', 'solid', 'dash', 'dot dash', 'dot', 'long dash')
+    extend_plateau_end_caps = dumpable(Bool, True)
     # plateau_line_width = Float
     # plateau_line_color = Color
     # user_plateau_line_color = Bool
 
-    plateau_method = Enum('Fleck 1977', 'Mahon 1996')
+    plateau_method = dumpable(Enum, 'Fleck 1977', 'Mahon 1996')
     error_calc_method = Property
-    use_error_envelope_fill = Bool
+    use_error_envelope_fill = dumpable(Bool)
 
-    include_plateau_sample = Bool
-    include_plateau_identifier = Bool
+    include_plateau_sample = dumpable(Bool)
+    include_plateau_identifier = dumpable(Bool)
 
     # edit_groups_button = Button
     group_editor_klass = SpectrumGroupEditor
@@ -135,39 +130,39 @@ class SpectrumOptions(AgeOptions):
     #         except AssertionError:
     #             pass
 
-    def _get_dump_attrs(self):
-        attrs = super(SpectrumOptions, self)._get_dump_attrs()
-        return attrs + ['step_nsigma',
-                        # 'calculate_fixed_plateau',
-                        # 'calculate_fixed_plateau_start',
-                        # 'calculate_fixed_plateau_end',
-                        'display_extract_value',
-                        'display_step',
-                        'display_plateau_info',
-                        'display_integrated_info',
-                        'plateau_font_size',
-                        'integrated_font_size',
-                        'step_label_font_size',
-                        # 'envelope_alpha',
-                        # 'user_envelope_color', 'envelope_color',
-                        # 'groups',
-                        # '_plateau_steps',
-                        'center_line_style',
-                        'extend_plateau_end_caps',
-                        # 'plateau_line_width',
-                        # 'plateau_line_color',
-                        # 'user_plateau_line_color',
-                        'include_j_error_in_plateau',
-                        'plateau_age_error_kind',
-                        'plateau_sig_figs',
-                        'integrated_sig_figs',
-                        'use_error_envelope_fill',
-                        'plateau_method',
-                        'pc_nsteps',
-                        'pc_gas_fraction',
-                        'legend_location',
-                        'include_legend',
-                        'include_sample_in_legend']
+    # def _get_dump_attrs(self):
+    #     attrs = super(SpectrumOptions, self)._get_dump_attrs()
+    #     return attrs + ['step_nsigma',
+    #                     # 'calculate_fixed_plateau',
+    #                     # 'calculate_fixed_plateau_start',
+    #                     # 'calculate_fixed_plateau_end',
+    #                     'display_extract_value',
+    #                     'display_step',
+    #                     'display_plateau_info',
+    #                     'display_integrated_info',
+    #                     'plateau_font_size',
+    #                     'integrated_font_size',
+    #                     'step_label_font_size',
+    #                     # 'envelope_alpha',
+    #                     # 'user_envelope_color', 'envelope_color',
+    #                     # 'groups',
+    #                     # '_plateau_steps',
+    #                     'center_line_style',
+    #                     'extend_plateau_end_caps',
+    #                     # 'plateau_line_width',
+    #                     # 'plateau_line_color',
+    #                     # 'user_plateau_line_color',
+    #                     'include_j_error_in_plateau',
+    #                     'plateau_age_error_kind',
+    #                     'plateau_sig_figs',
+    #                     'integrated_sig_figs',
+    #                     'use_error_envelope_fill',
+    #                     'plateau_method',
+    #                     'pc_nsteps',
+    #                     'pc_gas_fraction',
+    #                     'legend_location',
+    #                     'include_legend',
+    #                     'include_sample_in_legend']
 
     def _get_groups(self):
         lgrp = VGroup(Item('plateau_method', label='Method'),

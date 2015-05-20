@@ -15,18 +15,19 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Bool, Enum, String, Property, List, on_trait_change, Event
+from traits.api import Bool, Enum, String, Property, List, on_trait_change, Event, Int
 from traitsui.api import VGroup, UItem
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.color_generators import colornames
 # from pychron.processing.plotters.options.plotter import PlotterOptions, FONTS, SIZES
+from pychron.processing.plot.options.base import dumpable
 from pychron.processing.plot.options.figure_plotter_options import FigurePlotterOptions, FONTS, SIZES
 from pychron.pychron_constants import ERROR_TYPES
 
 
 class GroupablePlotterOptions(FigurePlotterOptions):
-    groups = List
+    groups = dumpable(List)
     group = Property
     group_editor_klass = None
     options_klass = None
@@ -54,43 +55,41 @@ class GroupablePlotterOptions(FigurePlotterOptions):
         if self.options_klass:
             return [self.options_klass(color=ci,
                                        line_color=ci,
-                                   group_id=i) for i, ci in enumerate(colornames)]
+                                       group_id=i) for i, ci in enumerate(colornames)]
         else:
             return []
 
 
 class AgeOptions(GroupablePlotterOptions):
-    include_j_error = Bool(False)
-    include_j_error_in_mean = Bool(True)
-    error_calc_method = Enum(*ERROR_TYPES)
+    error_calc_method = dumpable(Enum, *ERROR_TYPES)
+    include_j_error = dumpable(Bool, False)
+    include_j_error_in_mean = dumpable(Bool, True)
+    include_irradiation_error = dumpable(Bool, True)
+    include_decay_error = dumpable(Bool, False)
 
+    nsigma = dumpable(Enum, 1, 2, 3)
+    show_info = dumpable(Bool, True)
+    show_mean_info = dumpable(Bool, True)
+    show_error_type_info = dumpable(Bool, True)
+    label_box = dumpable(Bool, False)
 
-    include_sample_in_legend = Bool(False)
-    legend_location = Enum('Upper Right', 'Upper Left', 'Lower Left', 'Lower Right')
+    index_attr = dumpable(String, 'uage')
 
-    include_irradiation_error = Bool(True)
-    include_decay_error = Bool(False)
-    nsigma = Enum(1, 2, 3)
-    show_info = Bool(True)
-    show_mean_info = Bool(True)
-    show_error_type_info = Bool(True)
-    label_box = Bool(False)
-
-    index_attr = String('uage')
-    use_static_limits = False
-
-    analysis_label_format = String
-    analysis_label_display = String
+    analysis_label_format = dumpable(String)
+    analysis_label_display = dumpable(String)
 
     error_info_font = Property
-    error_info_fontname = Enum(*FONTS)
-    error_info_fontsize = Enum(*SIZES)
+    error_info_fontname = dumpable(Enum, *FONTS)
+    error_info_fontsize = dumpable(Enum, *SIZES)
 
     label_font = Property
-    label_fontname = Enum(*FONTS)
-    label_fontsize = Enum(*SIZES)
+    label_fontname = dumpable(Enum, *FONTS)
+    label_fontsize = dumpable(Enum, *SIZES)
 
-    use_centered_range = Bool
+    display_inset = dumpable(Bool)
+    inset_width = dumpable(Int, 100)
+    inset_height = dumpable(Int, 100)
+    inset_location = dumpable(Enum, 'Upper Right', 'Upper Left', 'Lower Right', 'Lower Left')
 
     def make_legend_key(self, ident, sample):
         key = ident
@@ -115,23 +114,22 @@ class AgeOptions(GroupablePlotterOptions):
                    label='Labels')
         return g
 
-    def _get_dump_attrs(self):
-        attrs = super(AgeOptions, self)._get_dump_attrs()
-        attrs += ['include_j_error',
-                  'include_j_error_in_mean',
-                  'include_irradiation_error',
-                  'include_decay_error',
-                  'nsigma', 'label_box',
-                  'error_calc_method',
-                  'include_legend',
-                  'include_sample_in_legend',
-                  'show_info', 'show_mean_info', 'show_error_type_info',
-                  'analysis_label_display',
-                  'analysis_label_format',
-                  'error_info_fontname',
-                  'error_info_fontsize', 'label_fontsize',
-                  'groups']
-        return attrs
-
+        # def _get_dump_attrs(self):
+        #     attrs = super(AgeOptions, self)._get_dump_attrs()
+        #     attrs += ['include_j_error',
+        #               'include_j_error_in_mean',
+        #               'include_irradiation_error',
+        #               'include_decay_error',
+        #               'nsigma', 'label_box',
+        #               'error_calc_method',
+        #               'include_legend',
+        #               'include_sample_in_legend',
+        #               'show_info', 'show_mean_info', 'show_error_type_info',
+        #               'analysis_label_display',
+        #               'analysis_label_format',
+        #               'error_info_fontname',
+        #               'error_info_fontsize', 'label_fontsize',
+        #               'groups']
+        #     return attrs
 
 # ============= EOF =============================================

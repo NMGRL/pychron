@@ -27,7 +27,7 @@ from traitsui.api import View, Item, EnumEditor, HGroup, VGroup, UItem
 # ============= local library imports  ==========================
 from pychron.core.csv.csv_parser import CSVColumnParser
 from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.processing.plot.options.base import BasePlotterOptions
+from pychron.processing.plot.options.base import BasePlotterOptions, dumpable
 from pychron.pychron_constants import FIT_TYPES, NULL_STR
 
 TIME_SCALARS = {'h': 3600., 'm': 60., 's': 1.0, 'days': (3600. * 24)}
@@ -51,36 +51,25 @@ DATABASE_ATTRS = {'Ar41': '01:Ar41',
 
 
 class XYScatterOptions(BasePlotterOptions):
-    # update_needed = Event
-    auto_refresh = Bool
+    value_attr = dumpable(Str, 'Ar39')
+    marker_size = dumpable(Range, 0.0, 10., 2.0)
+    marker = dumpable(MarkerTrait)
+    marker_color = dumpable(ColorTrait)
+    attrs = dumpable(Dict, DATABASE_ATTRS)
+    index_error = dumpable(Bool)
+    value_error = dumpable(Bool)
+    index_end_caps = dumpable(Bool)
+    value_end_caps = dumpable(Bool)
+    index_nsigma = dumpable(Enum, 1, 2, 3)
+    value_nsigma = dumpable(Enum, 1, 2, 3)
+    index_time_units = dumpable(Enum, 'h', 'm', 's', 'days')
+    value_time_units = dumpable(Enum, 'h', 'm', 's', 'days')
+    fit = dumpable(Enum, [NULL_STR] + FIT_TYPES)
+    datasource = dumpable(Enum, 'Database', 'File')
+    file_source_path = dumpable(Str)
 
-    index_attr = Str('Ar40')
-    value_attr = Str('Ar39')
-
-    marker_size = Range(0.0, 10., 2.0)
-    marker = MarkerTrait
-    marker_color = ColorTrait
-
-    attrs = Dict(DATABASE_ATTRS)
-    index_error = Bool
-    value_error = Bool
-
-    index_end_caps = Bool
-    value_end_caps = Bool
-
-    index_nsigma = Enum(1, 2, 3)
-    value_nsigma = Enum(1, 2, 3)
-
-    index_time_units = Enum('h', 'm', 's', 'days')
     index_time_scalar = Property
-
-    value_time_units = Enum('h', 'm', 's', 'days')
     value_time_scalar = Property
-    fit = Enum([NULL_STR] + FIT_TYPES)
-
-    datasource = Enum('Database', 'File')
-
-    file_source_path = Str
     datasource_name = Property(depends_on='file_source_path')
     use_file_source = Property(depends_on='datasource')
     open_file_button = Button
@@ -115,12 +104,12 @@ class XYScatterOptions(BasePlotterOptions):
         if new == 'Database':
             self.attrs = DATABASE_ATTRS
 
-    def _get_dump_attrs(self):
-        return ['index_attr', 'index_error', 'index_end_caps', 'index_nsigma', 'index_time_units',
-                'value_attr', 'value_error', 'value_end_caps', 'value_nsigma', 'value_time_units',
-                'fit',
-                'marker_color', 'marker', 'marker_size',
-                'auto_refresh', 'datasource', 'file_source_path']
+    # def _get_dump_attrs(self):
+    #     return ['index_attr', 'index_error', 'index_end_caps', 'index_nsigma', 'index_time_units',
+    #             'value_attr', 'value_error', 'value_end_caps', 'value_nsigma', 'value_time_units',
+    #             'fit',
+    #             'marker_color', 'marker', 'marker_size',
+    #             'auto_refresh', 'datasource', 'file_source_path']
 
     def _get_index_time_scalar(self):
         return TIME_SCALARS[self.index_time_units]
@@ -202,6 +191,8 @@ class XYScatterOptions(BasePlotterOptions):
             resizable=True)
         return v
 
+    def _index_attr_default(self):
+        return 'Ar40'
 # ============= EOF =============================================
 
 

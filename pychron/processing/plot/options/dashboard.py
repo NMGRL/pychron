@@ -25,12 +25,6 @@ from pychron.processing.plot.options.series import SeriesOptions
 class DashboardOptions(SeriesOptions):
     plot_option_klass = SystemMonitorPlotOptions
 
-    def _get_dump_attrs(self):
-        attrs = super(DashboardOptions, self)._get_dump_attrs()
-        attrs += ('aux_plots',)
-
-        return attrs
-
     def load_aux_plots(self, keys):
         def f(kii):
             ff = self.plot_option_klass()

@@ -30,7 +30,7 @@ from traitsui.table_column import ObjectColumn
 import yaml
 from pychron.core.ui.table_editor import myTableEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.processing.plot.options.base import BasePlotterOptions
+from pychron.processing.plot.options.base import BasePlotterOptions, dumpable
 from pychron.pychron_constants import NULL_STR, ALPHAS
 
 FONTS = ['Helvetica', ]  # 'Courier','Times-Roman']#['modern', 'arial']
@@ -50,50 +50,51 @@ def checkbox_column(*args, **kw):
     return _table_column(CheckboxColumn, *args, **kw)
 
 
+
 class FigurePlotterOptions(BasePlotterOptions):
     # plot_option_klass = AuxPlotOptions
     # plot_option_name = None
 
-    include_legend = Bool(False)
     refresh_plot = Button
+    edit_title_format = Button
     # refresh_plot_needed = Event
 
-    auto_refresh = Bool(False)
+    include_legend = Bool(False)
+    include_sample_in_legend = dumpable(Bool, False)
+    legend_location = dumpable(Enum, 'Upper Right', 'Upper Left', 'Lower Left', 'Lower Right')
 
-    use_xgrid = Bool(True)
-    use_ygrid = Bool(True)
-
-    title = Str
-    edit_title_format = Button
-    title_formatter = Str
-    title_attribute_keys = List
-    title_delimiter = Str(',')
-    title_leading_text = Str
-    title_trailing_text = Str
+    use_xgrid = dumpable(Bool, True)
+    use_ygrid = dumpable(Bool, True)
+    title = dumpable(Str)
+    title_formatter = dumpable(Str)
+    title_attribute_keys = dumpable(List)
+    title_delimiter = dumpable(Str, ',')
+    title_leading_text = dumpable(Str)
+    title_trailing_text = dumpable(Str)
     # auto_generate_title = Bool
     # data_type = Str('database')
 
     xtick_font = Property
-    xtick_font_size = Enum(*SIZES)
-    xtick_font_name = Enum(*FONTS)
-    xtick_in = Int(1)
-    xtick_out = Int(5)
+    xtick_font_size = dumpable(Enum, *SIZES)
+    xtick_font_name = dumpable(Enum, *FONTS)
+    xtick_in = dumpable(Int, 1)
+    xtick_out = dumpable(Int, 5)
 
     xtitle_font = Property
-    xtitle_font_size = Enum(*SIZES)
-    xtitle_font_name = Enum(*FONTS)
+    xtitle_font_size = dumpable(Enum, *SIZES)
+    xtitle_font_name = dumpable(Enum, *FONTS)
 
     ytick_font = Property
-    ytick_font_size = Enum(*SIZES)
-    ytick_font_name = Enum(*FONTS)
-    ytick_in = Int(1)
-    ytick_out = Int(5)
+    ytick_font_size = dumpable(Enum, *SIZES)
+    ytick_font_name = dumpable(Enum, *FONTS)
+    ytick_in = dumpable(Int, 1)
+    ytick_out = dumpable(Int, 5)
 
     ytitle_font = Property
-    ytitle_font_size = Enum(*SIZES)
-    ytitle_font_name = Enum(*FONTS)
+    ytitle_font_size = dumpable(Enum, *SIZES)
+    ytitle_font_name = dumpable(Enum, *FONTS)
 
-    x_filter_str = Str
+    x_filter_str = dumpable(Str)
 
     def deinitialize(self):
         for po in self.aux_plots:
@@ -179,36 +180,8 @@ class FigurePlotterOptions(BasePlotterOptions):
     # ==============================================================================
     # persistence
     # ===============================================================================
-    def _get_dump_attrs(self):
-        return ['auto_refresh',
-                'aux_plots',
-                'bgcolor', 'plot_bgcolor',
-                'plot_spacing',
-                'padding_left',
-                'padding_right',
-                'padding_top',
-                'padding_bottom',
-                'use_xgrid', 'use_ygrid',
-                'title', 'auto_generate_title',
-                'title_formatter',
-                'title_attribute_keys',
-                'title_delimiter',
-                'title_leading_text',
-                'title_trailing_text',
-                # 'data_type',
-                'xtick_in',
-                'ytick_in',
-                'xtick_out',
-                'ytick_out',
-                'xtick_font_size',
-                'xtick_font_name',
-                'xtitle_font_size',
-                'xtitle_font_name',
-                'ytick_font_size',
-                'ytick_font_name',
-                'ytitle_font_size',
-                'ytitle_font_name',
-                'x_filter_str']
+    # def _get_dump_attrs(self):
+    #     return
 
     def _load_hook(self):
         klass = self.plot_option_klass

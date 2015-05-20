@@ -25,43 +25,5 @@ from pychron.processing.plot.options.series import SeriesOptions
 class SystemMonitorOptions(SeriesOptions):
     plot_option_klass = SystemMonitorPlotOptions
 
-    def _get_dump_attrs(self):
-        attrs = super(SystemMonitorOptions, self)._get_dump_attrs()
-        attrs += ('aux_plots',)
-
-        return attrs
-
-        # def load_aux_plots(self, ref):
-        #     def f(kii):
-        #         ff = self.plot_option_klass()
-        #         ff.trait_set(use=False, fit='',
-        #                      name=kii,
-        #                      trait_change_notify=False)
-        #
-        #         return ff
-        #
-        #     keys = ref.isotope_keys
-        #     keys.extend(['{}bs'.format(ki) for ki in keys])
-        #     if 'Ar40' in keys:
-        #         if 'Ar39' in keys:
-        #             keys.append('Ar40/Ar39')
-        #         if 'Ar36' in keys:
-        #             keys.append('Ar40/Ar36')
-        #
-        #     keys.append('PC')
-        #     #keys.append('Foo')
-        #     #ap = [f(k) for k in keys]
-        #
-        #     aps = []
-        #     for k in keys:
-        #         pp = next((ni for ni in self.aux_plots
-        #                    if ni.name == k), None)
-        #         if pp is None:
-        #             pp = f(k)
-        #
-        #         #pp.use=False
-        #         aps.append(pp)
-        #
-        #     self.aux_plots = aps
 
 # ============= EOF =============================================

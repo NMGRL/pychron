@@ -29,8 +29,13 @@ import cPickle as pickle
 from pychron.processing.plot.options.option import AuxPlotOptions
 
 
+def dumpable(klass, *args, **kw):
+    return klass(dump=True, *args, **kw)
+
+
 class BasePlotterOptions(HasTraits):
-    aux_plots = List
+    auto_refresh = dumpable(Bool, True)
+    aux_plots = dumpable(List)
 
     plot_option_klass = AuxPlotOptions
     plot_option_name = None
@@ -43,15 +48,15 @@ class BasePlotterOptions(HasTraits):
     _hash = None
     formatting_options = None
 
-    bgcolor = Color
-    plot_bgcolor = Color
-    plot_spacing = Range(0, 50)
+    bgcolor = dumpable(Color)
+    plot_bgcolor = dumpable(Color)
+    plot_spacing = dumpable(Range, 0, 50)
+    padding_left = dumpable(Int, 100)  # , enter_set=True, auto_set=False)
+    padding_right = dumpable(Int, 100)  # , enter_set=True, auto_set=False)
+    padding_top = dumpable(Int, 100)  # , enter_set=True, auto_set=False)
+    padding_bottom = dumpable(Int, 100)  # , enter_set=True, auto_set=False)
 
-    padding_left = Int(100)  # , enter_set=True, auto_set=False)
-    padding_right = Int(100)  # , enter_set=True, auto_set=False)
-    padding_top = Int(100)  # , enter_set=True, auto_set=False)
-    padding_bottom = Int(100)  # , enter_set=True, auto_set=False)
-    index_attr = Str
+    index_attr = dumpable(Str)
 
     def __init__(self, root, clean=False, *args, **kw):
         super(BasePlotterOptions, self).__init__(*args, **kw)
@@ -134,10 +139,13 @@ class BasePlotterOptions(HasTraits):
             os.mkdir(root)
 
     def _get_change_attrs(self):
-        raise NotImplementedError
+
+        return [getattr(self, t) for t in self.traits(change=True)]
 
     def _get_dump_attrs(self):
-        raise NotImplementedError
+        return self.traits(dump=True).keys()
+        # return [getattr(self, t) for t in self.traits(dump=True).keys()]
+        # raise NotImplementedError
 
     def _dump(self, root):
         if not self.name:
@@ -149,6 +157,7 @@ class BasePlotterOptions(HasTraits):
             d = dict()
             attrs = self._get_dump_attrs()
             for t in attrs:
+                print t
                 d[t] = getattr(self, t)
 
             try:
