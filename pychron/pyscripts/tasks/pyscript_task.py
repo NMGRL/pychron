@@ -18,7 +18,8 @@
 from pyface.tasks.action.schema import SToolBar
 from traits.api import String, List, Instance, Any, \
     on_trait_change, Bool, Int
-from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
+from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed, VSplitter
+from traitsui.api import View, UItem, EnumEditor
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================
@@ -128,6 +129,13 @@ class PyScriptTask(EditorTask, ExecuteMixin):
             self._open_editor(path='')
             return True
 
+    def kind_select_view(self):
+        v = View(UItem('kind', editor=EnumEditor(name='kinds')),
+                 title='Select Pyscript kind',
+                 buttons=['OK','Cancel'],
+                 kind='livemodal')
+        return v
+
     #task protocol
     def activated(self):
         super(PyScriptTask, self).activated()
@@ -145,6 +153,7 @@ class PyScriptTask(EditorTask, ExecuteMixin):
         self.control_pane = ControlPane(model=self)
         self.script_browser_pane = ScriptBrowserPane()
         self.context_editor_pane = ContextEditorPane()
+
         panes = [
             self.commands_pane,
             self.command_editor_pane,
@@ -152,6 +161,7 @@ class PyScriptTask(EditorTask, ExecuteMixin):
             DescriptionPane(model=self),
             self.script_browser_pane,
             self.context_editor_pane]
+
         if self.use_git_repo:
             self.repo_pane = RepoPane(model=self.repo_manager)
             self.repo_manager.on_trait_change(self._handle_path_change, 'path_dirty')
@@ -438,16 +448,20 @@ class PyScriptTask(EditorTask, ExecuteMixin):
         return GitRepoManager(application=self.application)
 
     def _default_layout_default(self):
-        left = Splitter(Tabbed(PaneItem('pychron.pyscript.commands', height=300, width=125),
-                               PaneItem('pychron.pyscript.script_browser')),
-                        PaneItem('pychron.pyscript.commands_editor', height=100, width=125),
-                        orientation='vertical')
+        # left = Splitter(Tabbed(PaneItem('pychron.pyscript.commands', height=300, width=125),
+        #                        PaneItem('pychron.pyscript.script_browser')),
+        #                 PaneItem('pychron.pyscript.commands_editor', height=100, width=125),
+        #                 orientation='vertical')
         # bottom = PaneItem('pychron.pyscript.description')
+        left = VSplitter(PaneItem('pychron.pyscript.commands'),
+                         PaneItem('pychron.pyscript.commands_editor'))
+
         if self.use_git_repo:
             right = Tabbed(PaneItem('pychron.pyscript.repo'),
                            PaneItem('pychron.pyscript.context_editor'))
         else:
-            right = PaneItem('pychron.pyscript.context_editor')
+            right = VSplitter(PaneItem('pychron.pyscript.context_editor', width=200),
+                              PaneItem('pychron.pyscript.script_browser', width=200))
 
         return TaskLayout(id='pychron.pyscript',
                           left=left,

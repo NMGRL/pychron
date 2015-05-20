@@ -23,7 +23,7 @@ make sure directory exists and build if not
 from os import path, mkdir
 import os
 
-from pychron.file_defaults import TASK_EXTENSION_DEFAULT, SIMPLE_UI_DEFAULT, EDIT_UI_DEFAULT
+from pychron.file_defaults import TASK_EXTENSION_DEFAULT, SIMPLE_UI_DEFAULT, EDIT_UI_DEFAULT, IDENTIFIERS_DEFAULT
 
 
 class Paths(object):
@@ -154,6 +154,7 @@ class Paths(object):
     # ===========================================================================
     # files
     # ===========================================================================
+    identifiers_file = None
     backup_recovery_file = None
     last_experiment = None
     mftable = None
@@ -331,6 +332,7 @@ class Paths(object):
         # =======================================================================
         # files
         # =======================================================================
+        self.identifiers_file = join(self.hidden_dir, 'identifiers.yaml')
         self.backup_recovery_file = join(self.hidden_dir, 'backup_recovery')
         self.last_experiment = join(self.hidden_dir, 'last_experiment')
         self.mftable = join(self.spectrometer_dir, 'mftable.csv')
@@ -368,7 +370,9 @@ class Paths(object):
                      (self.system_health, SYSTEM_HEALTH),
                      (self.simple_ui_file, SIMPLE_UI_DEFAULT),
                      (self.edit_ui_defaults, EDIT_UI_DEFAULT),
-                     (self.task_extensions_file, TASK_EXTENSION_DEFAULT)):
+                     (self.task_extensions_file, TASK_EXTENSION_DEFAULT),
+                     (self.identifiers_file, IDENTIFIERS_DEFAULT)):
+
             overwrite = d in (SYSTEM_HEALTH, SIMPLE_UI_DEFAULT, )
             # overwrite = d in (SYSTEM_HEALTH, SIMPLE_UI_DEFAULT,)
             # print p

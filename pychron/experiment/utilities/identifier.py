@@ -31,7 +31,7 @@ SPECIAL_MAPPING = dict()  # blank_air: ba
 SPECIAL_NAMES = ['Special Labnumber', LINE_STR]  # 'Blank Air'
 SPECIAL_KEYS = []  # ba
 # AGE_TESTABLE = []
-p = os.path.join(paths.setup_dir, 'identifiers.yaml')
+p = os.path.join(paths.hidden_dir, 'identifiers.yaml')
 with open(p, 'r') as rfile:
     yd = yaml.load(rfile)
     for i, idn_d in enumerate(yd):
