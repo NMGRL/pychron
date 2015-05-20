@@ -83,7 +83,9 @@ def alphas(idx):
         return '{}{}'.format(seeds[a], seeds[b])
 
 
-INTERFERENCE_KEYS = ['K4039', 'K3839', 'K3739', 'Ca3937', 'Ca3837', 'Ca3637', 'Cl3638']
+INTERFERENCE_KEYS = ('K4039', 'K3839', 'K3739', 'Ca3937', 'Ca3837', 'Ca3637', 'Cl3638')
+RATIO_KEYS = ('Ca_K', 'Cl_K')
+
 ARGON_KEYS = ('Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36')
 
 ISOTOPES = ARGON_KEYS

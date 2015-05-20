@@ -28,12 +28,12 @@ from pychron.processing.analyses.analysis import Analysis
 from pychron.processing.isotope import Isotope
 from pychron.pychron_constants import INTERFERENCE_KEYS
 
-ANALYSIS_ATTRS = ('labnumber', 'analysis_type', 'uuid', 'sample', 'project', 'material', 'aliquot', 'increment',
+ANALYSIS_ATTRS = ('analysis_type', 'uuid', 'sample', 'project', 'material', 'aliquot', 'increment',
                   'irradiation', 'weight',
                   'comment', 'irradiation_level', 'mass_spectrometer', 'extract_device',
                   'username', 'tray', 'queue_conditionals_name', 'extract_value',
                   'extract_units', 'position', 'xyz_position', 'duration', 'cleanup',
-                  'pattern', 'beam_diameter', 'ramp_duration', 'ramp_rate')
+                  'pattern', 'beam_diameter', 'ramp_duration', 'ramp_rate', 'identifier')
 
 
 def analysis_path(record):

@@ -30,7 +30,7 @@ from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.database.core.query import compile_query
 from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, Base, MassSpectrometerTbl, IrradiationTbl, LevelTbl, SampleTbl, \
     MaterialTbl, IrradiationPositionTbl, UserTbl, ExtractDeviceTbl, LoadTbl, LoadHolderTbl, LoadPositionTbl, \
-    MeasuredPositionTbl
+    MeasuredPositionTbl, ProductionTbl
 from pychron.paths import paths
 
 
@@ -150,6 +150,11 @@ class DVCDatabase(DatabaseAdapter):
             # print dblevel, dblevel.productionID, dblevel.production, dblevel.idlevelTbl
             return dblevel.production.name
 
+    def add_production(self, name):
+        with self.session_ctx():
+            obj = ProductionTbl(name=name)
+            return self._add_item(obj)
+
     def add_measured_position(self, position=None, load=None, **kw):
         a = MeasuredPositionTbl(**kw)
         if position:
@@ -201,13 +206,15 @@ class DVCDatabase(DatabaseAdapter):
         a = IrradiationTbl(name=name)
         return self._add_item(a)
 
-    def add_irradiation_level(self, name, irradiation, holder, z=0, note=''):
+    def add_irradiation_level(self, name, irradiation, holder, production, z=0, note=''):
         irradiation = self.get_irradiation(irradiation)
+        production = self.get_production(production)
         a = LevelTbl(name=name,
                      irradiation=irradiation,
                      holder=holder,
                      z=z,
                      note=note)
+        a.production = production
 
         return self._add_item(a)
 
@@ -329,6 +336,9 @@ class DVCDatabase(DatabaseAdapter):
             q = q.filter(IrradiationPositionTbl.position == pos)
 
         return self._query_one(q)
+
+    def get_production(self, name):
+        return self._retrieve_item(ProductionTbl, name)
 
     def get_project(self, name):
         return self._retrieve_item(ProjectTbl, name)

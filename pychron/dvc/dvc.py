@@ -23,6 +23,7 @@ from apptools.preferences.preference_binding import bind_preference
 
 
 
+
 # ============= standard library imports ========================
 import os
 from git import Repo
@@ -305,10 +306,15 @@ class DVC(Loggable):
 
     def add_irradiation(self, name, doses=None):
         with self.db.session_ctx():
+            if self.db.get_irradiation(name):
+                self.warning('irradiation {} already exists'.format(name))
+                return
+
             self.db.add_irradiation(name)
 
         self.meta_repo.add_irradiation(name)
         self.meta_repo.add_chronology(name, doses)
+        self.meta_repo.commit('added irradiation {}'.format(name))
 
     def add_load_holder(self, name, path_or_txt):
         with self.db.session_ctx():

@@ -226,10 +226,14 @@ class Analysis(ArArAge):
 
         return r
 
-    #mirror labnumber
+    # mirror labnumber
     @property
     def identifier(self):
         return self.labnumber
+
+    @identifier.setter
+    def set_identifier(self, v):
+        self.labnumber = v
 
     def __str__(self):
         return '{}<{}>'.format(self.record_id, self.__class__.__name__)

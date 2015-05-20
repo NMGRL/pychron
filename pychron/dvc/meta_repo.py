@@ -25,13 +25,15 @@ from uncertainties import ufloat
 from pychron.core.helpers.filetools import list_directory2, ilist_directory2, add_extension
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths
+from pychron.pychron_constants import INTERFERENCE_KEYS
 
 
 class MetaObject(object):
     def __init__(self, path):
         self.path = path
-        with open(path, 'r') as rfile:
-            self._load_hook(path, rfile)
+        if os.path.isfile(path):
+            with open(path, 'r') as rfile:
+                self._load_hook(path, rfile)
 
     def _load_hook(self, path, rfile):
         pass
@@ -135,7 +137,8 @@ class Cached(object):
             if self.clear:
                 clear = getattr(obj, self.clear)
 
-            if not clear:
+            force = kw.get('force', None)
+            if not force and not clear:
                 if name in obj.__cache__:
                     ret = obj.__cache__[name]
 
@@ -189,6 +192,14 @@ class MetaRepo(GitRepoManager):
         # hexsha = self.shell('hash-object', '--path', p)
         # return hexsha
 
+    def add_production(self, name, obj):
+        p = self.get_production(name, force=True)
+        for k in INTERFERENCE_KEYS:
+            v = getattr(obj, k)
+            e = getattr(obj, '{}_err'.format(k))
+            setattr(p, k, v)
+            setattr(p, '{}_err', e)
+
     def update_production(self, prod, irradiation=None):
         # ip = db.get_irradiation_production(prod.name)
         # if ip:
@@ -215,10 +226,12 @@ class MetaRepo(GitRepoManager):
         p = os.path.join(self.path, irrad, 'chronology.txt')
         Chronology.dump(p, doses)
         self.add(p, commit=False)
-        self.commit('Added chronology to {}'.format(irrad))
 
     def add_irradiation(self, name):
-        os.mkdir(os.path.join(self.path, name))
+        p = os.path.join(self.path, name)
+        if not os.path.isdir(p):
+            os.mkdir(p)
+            self.add(p, commit=False)
 
     def add_load_holder(self, name, path_or_txt):
         p = os.path.join(self.path, 'load_holders', name)
@@ -247,7 +260,7 @@ class MetaRepo(GitRepoManager):
         return prs
 
     @cached('clear_cache')
-    def get_production(self, pname):
+    def get_production(self, pname, **kw):
         p = os.path.join(self.path, 'productions', add_extension(pname, '.txt'))
         ip = Production(p)
         return ip
