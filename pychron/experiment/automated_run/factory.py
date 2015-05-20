@@ -755,7 +755,7 @@ class AutomatedRunFactory(PersistenceLoggable):
     # ===============================================================================
     #
     # ===============================================================================
-    def _load_defaults(self, ln, attrs=None):
+    def _load_defaults(self, ln, attrs=None, overwrite=True):
         if attrs is None:
             attrs = ('extract_value', 'extract_units',
                      'cleanup', 'duration', 'beam_diameter')
@@ -770,9 +770,10 @@ class AutomatedRunFactory(PersistenceLoggable):
                     grp = grp[ed]
 
                 for attr in attrs:
-                    v = grp.get(attr)
-                    if v is not None:
-                        setattr(self, attr, v)
+                    if overwrite or not getattr(self, attr):
+                        v = grp.get(attr)
+                        if v is not None:
+                            setattr(self, attr, v)
             else:
                 self.unique_warning('L# {} not in defaults.yaml'.format(ln))
         else:
@@ -916,7 +917,7 @@ class AutomatedRunFactory(PersistenceLoggable):
                 # self._load_extraction_defaults(ln)
                 self._load_defaults(ln, attrs=('extract_value', 'extract_units'))
             else:
-                self._load_defaults(ln, attrs=('cleanup','duration'))
+                self._load_defaults(ln, attrs=('cleanup', 'duration'), overwrite=False)
         else:
             self._load_defaults(labnumber if special else 'u')
 
