@@ -51,7 +51,7 @@ from pychron.experiment.utilities.identifier import convert_extract_device
 from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
 from pychron.globals import globalv
 from pychron.paths import paths
-from pychron.pychron_constants import NULL_STR, DEFAULT_INTEGRATION_TIME
+from pychron.pychron_constants import NULL_STR, DEFAULT_INTEGRATION_TIME, LINE_STR
 from pychron.wait.wait_group import WaitGroup
 
 
@@ -1598,7 +1598,7 @@ Use Last "blank_{}"= {}
             else:
                 elm_connectable.connected = True
 
-        if exp.extract_device and exp.extract_device not in (NULL_STR, 'Extract Device'):
+        if exp.extract_device and exp.extract_device not in ('Extract Device', LINE_STR):
             # extract_device = convert_extract_device(exp.extract_device)
             extract_device = exp.extract_device.replace(' ','')
             ed_connectable = Connectable(name=extract_device)
