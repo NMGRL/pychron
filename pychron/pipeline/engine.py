@@ -15,13 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import os
-
-from traits.api import HasTraits, Str, Instance, List, Event, Bool
-
+from traits.api import HasTraits, Str, Instance, List, Event, Bool, on_trait_change
 # ============= standard library imports ========================
-# ============= local library imports  ==========================
+import os
 import yaml
+# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_directory2, add_extension
 from pychron.paths import paths
 from pychron.pipeline.nodes import FindReferencesNode
@@ -40,6 +38,16 @@ from pychron.pipeline.template import PipelineTemplate
 class Pipeline(HasTraits):
     name = Str('Pipeline')
     nodes = List
+
+    @on_trait_change('nodes[]')
+    def _handle_nodes_changed(self):
+        for i, ni in enumerate(self.nodes):
+            for na, nb in ((FitICFactorNode, ICFactorPersistNode),
+                           (FitBlanksNode, BlanksPersistNode)):
+                if isinstance(ni, na):
+                    for nj in self.nodes[i + 1:]:
+                        if isinstance(nj, nb):
+                            ni.has_save_node = True
 
     def add_after(self, after, node):
         if after:

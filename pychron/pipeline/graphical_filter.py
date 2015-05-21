@@ -155,6 +155,7 @@ class GraphicalFilterModel(HasTraits):
     use_project_exclusion = Bool
     use_offset_analyses = Bool(True)
     projects = List
+    always_exclude_unknowns = Bool(False)
     # is_append = True
     # use_all = False
 
@@ -179,10 +180,14 @@ class GraphicalFilterModel(HasTraits):
         ans = self.analyses
         if set_atypes:
             def ff(at):
-                at = at.replace('_', ' ')
-                return at.capitalize()
+                return ' '.join(map(str.capitalize, at.split('_')))
 
             self.available_analysis_types = list({ff(ai.analysis_type) for ai in ans})
+            # if self.always_exclude_unknowns:
+            #     try:
+            #         self.available_analysis_types.remove('Unknown')
+            #     except IndexError:
+            #         pass
             # if 'Unknown' in self.available_analysis_types:
             #     self.analysis_types = ['Unknown']
             # else:
@@ -201,7 +206,7 @@ class GraphicalFilterModel(HasTraits):
     def get_filtered_selection(self):
         selection = self.graph.scatter.index.metadata['selections']
         ans = self.analyses
-        print selection
+        # print selection
         if selection:
             ans = (ai for i, ai in enumerate(ans) if i not in selection)
 
@@ -249,10 +254,11 @@ class GraphicalFilterModel(HasTraits):
         """
             only use analyses with analysis_type in self.analyses_types
         """
-        ats = map(lambda x: x.replace(' ', '_'), map(str.lower, self.analysis_types))
-        f = lambda x: x.analysis_type.lower() in ats
 
-        return filter(f, ans)
+        ats = map(lambda x: x.lower().replace(' ', '_'), map(str.lower, self.analysis_types))
+        f = lambda x: x.analysis_type.lower() in ats
+        ans = filter(f, ans)
+        return ans
 
 
 class GraphicalFilterView(Controller):

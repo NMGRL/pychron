@@ -16,7 +16,10 @@
 
 
 # ============= enthought library imports =======================
+import random
+
 from traits.api import Dict, Property, Instance, Float, Str, List, Either, cached_property
+
 # ============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
 from numpy import hstack
@@ -180,7 +183,9 @@ class ArArAge(Loggable):
             try:
                 return func(n) / func(d)
             except ZeroDivisionError:
-                pass
+                return ufloat(random.random(), random.random())
+        else:
+            return ufloat(random.random(), random.random())
 
     def get_slope(self, attr, n=-1):
         try:

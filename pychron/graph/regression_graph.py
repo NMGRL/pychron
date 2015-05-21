@@ -273,8 +273,11 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                 fy = r.predict(fx)
                 line.regressor = r
 
-                line.index.set_data(fx)
-                line.value.set_data(fy)
+                try:
+                    line.index.set_data(fx)
+                    line.value.set_data(fy)
+                except BaseException:
+                    return
 
                 if hasattr(line, 'error_envelope'):
                     ci = r.calculate_error_envelope(fx, fy)

@@ -53,12 +53,13 @@ class FindReferencesNode(BaseNode):
 
         times = sorted((ai.rundate for ai in state.unknowns))
 
-        atype = self.analysis_type.lower().replace('_', ' ')
+        atype = self.analysis_type.lower().replace(' ', '_')
         refs = self.dvc.find_references(times, atype)
+        # print 'refs', atype, refs
         if refs:
             review = self.user_choice
-            if self.user_choice is None:
-                # ask if use whats to review
+            if not self.user_choice:
+                # ask if use wants to review
                 review, remember = remember_confirmation_dialog('What you like to review this Node? '
                                                                 '{}'.format(self.name))
                 if remember:
@@ -70,17 +71,22 @@ class FindReferencesNode(BaseNode):
                 # refs.extend(state.unknowns)
                 model = GraphicalFilterModel(analyses=ans)
                 model.setup()
+                # print self.analysis_type
+                # print model.available_analysis_types
                 model.analysis_types = [self.analysis_type]
 
                 obj = GraphicalFilterView(model=model)
                 info = obj.edit_traits(kind='livemodal')
                 if info.result:
                     refs = model.get_filtered_selection()
-                    if obj.is_append:
-                        refs = state.references.extend(refs)
 
-                        # refs = ans
-            state.references = refs
+                    if obj.is_append:
+                        state.references.extend(refs)
+                    else:
+                        state.references = list(refs)
+            else:
+                state.references = refs
+
             state.has_references = True
 
     def traits_view(self):

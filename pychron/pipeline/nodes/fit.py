@@ -33,32 +33,38 @@ class FitNode(FigureNode):
         state.saveable_fits = [p.fit for p in ps]
 
 
-class FitBlanksNode(FitNode):
-    editor_klass = 'pychron.processing.plot.editors.blanks_editor,BlanksEditor'
-    plotter_options_manager_klass = BlanksOptionsManager
-    # user_review = Bool(True)
-
-    # _reviewed_flag = False
-    name = 'Fit Blanks'
-
+class FitReferencesNode(FitNode):
+    basename = None
+    has_save_node = False
+    
     def run(self, state):
-        super(FitBlanksNode, self).run(state)
+        super(FitReferencesNode, self).run(state)
         if state.references:
             self.editor.set_references(state.references)
             # self.editor.force_update(force=True)
 
-        self.name = 'Fit Blanks {}'.format(self.name)
+        self.name = 'Fit {} {}'.format(self.basename, self.name)
         self._set_saveable(state)
 
-        if confirmation_dialog('Would you like to review the blanks before saving?'):
-            state.veto = self
+        if self.has_save_node:
+            if confirmation_dialog('Would you like to review the {} before saving?'.format(self.basename)):
+                state.veto = self
 
 
-class FitICFactorNode(FitNode):
+class FitBlanksNode(FitReferencesNode):
+    editor_klass = 'pychron.processing.plot.editors.blanks_editor,BlanksEditor'
+    plotter_options_manager_klass = BlanksOptionsManager
+    name = 'Fit Blanks'
+    basename = 'Blanks'
+
+
+class FitICFactorNode(FitReferencesNode):
     editor_klass = 'pychron.processing.plot.editors.intercalibration_factor_editor,' \
                    'IntercalibrationFactorEditor'
     plotter_options_manager_klass = ICFactorOptionsManager
     name = 'Fit ICFactor'
+    basename = 'ICFactor'
+
 
     # def run(self, state):
     #     pass

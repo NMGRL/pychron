@@ -25,6 +25,7 @@ from pychron.file_defaults import IDENTIFIERS_DEFAULT
 from pychron.pychron_constants import LINE_STR, ALPHAS
 from pychron.paths import paths
 
+ANALYSIS_MAPPING_UNDERSCORE_KEY = dict()  # blank_air: ba
 ANALYSIS_MAPPING = dict()  # ba: 'Blank Air'
 NON_EXTRACTABLE = dict()  # ba: 'Blank Air'
 ANALYSIS_MAPPING_INTS = dict()  # blank_air: 0
@@ -47,6 +48,8 @@ for i, idn_d in enumerate(yd):
     underscore_name = value.lower().replace(' ', '_')
 
     ANALYSIS_MAPPING_INTS[underscore_name] = i
+    ANALYSIS_MAPPING_UNDERSCORE_KEY[underscore_name] = key
+
     if not idn_d['extractable']:
         NON_EXTRACTABLE[key] = value
         # if idn_d['ageable']:

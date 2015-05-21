@@ -17,10 +17,15 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.processing.plot.plotter.arar_figure import BaseArArFigure
+from pychron.processing.plot.plotter.references_series import ReferencesSeries
 
 
-class ICFactor(BaseArArFigure):
-    pass
+class ICFactor(ReferencesSeries):
+    def _set_interpolated_values(self, iso, fit, ans, p_uys, p_ues):
+        pass
+
+    def _get_references_ve(self, name):
+        ys = [ai.get_value(name) for ai in self.sorted_references]
+        return ys
 
 # ============= EOF =============================================

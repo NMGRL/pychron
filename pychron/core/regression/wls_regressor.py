@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from numpy import delete
+from numpy import delete, hstack
 
 from statsmodels.api import WLS
 # ============= local library imports  ==========================
@@ -47,29 +47,34 @@ class WeightedPolynomialRegressor(OLSRegressor):
     #                     weights=ws)
     #     self._result = self._wls.fit()
     def _delete_filtered_hook(self, outliers):
-        self.yserr=delete(self.yserr, outliers)
+        self.yserr = delete(self.yserr, outliers)
 
-    def _engine_factory(self, fy, X):
-        ws=self._get_weights()
-        if self._check_integrity(fy,X, ws):
-            return WLS(fy, X, weights=ws)
+    def _engine_factory(self, fy, X, check_integrity=True):
+        ws = self._get_weights()
+        if not self._check_integrity(fy, X, ws):
+            if len(fy) == 2 and len(X) == 2 and len(ws) == 1:
+                ws = hstack((ws, ws[0]))
+            else:
+                return
+
+        return WLS(fy, X, weights=ws)
 
     def _check_integrity(self, x, y, e=None):
         nx, ny = len(x), len(y)
-        ne=len(e) if e is not None else nx
+        ne = len(e) if e is not None else nx
         # print nx,ny, ne
         if not nx or not ny or not ne:
             return
-        if nx != ny or nx!=ne:
+        if nx != ny or nx != ne:
             return
 
-        if nx == 1 or ny == 1 or ne==1:
+        if nx == 1 or ny == 1 or ne == 1:
             return
 
         return True
 
     def _get_weights(self):
-        es=self.clean_yserr
+        es = self.clean_yserr
         # es = asarray(self._clean_array(self.yserr))
         return es ** -2
 
@@ -77,7 +82,7 @@ class WeightedPolynomialRegressor(OLSRegressor):
 class WeightedMultipleLinearRegressor(WeightedPolynomialRegressor, MultipleLinearRegressor):
     pass
 
-#    def calculate_var_covar(self):
+# def calculate_var_covar(self):
 #        '''
 #            V=[var1        0
 #                    var2

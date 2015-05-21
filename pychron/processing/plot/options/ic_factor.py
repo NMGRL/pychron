@@ -15,12 +15,23 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import List
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.processing.fits.fit import Fit
 from pychron.processing.plot.options.fit import FitOptions
+from pychron.processing.plot.options.option import AuxPlotOptions
+from pychron.pychron_constants import FIT_TYPES_INTERPOLATE
+
+
+class ICFactorAuxPlot(AuxPlotOptions, Fit):
+    names = List(['Ar40/Ar36', ])
+
+    def _get_fit_types(self):
+        return FIT_TYPES_INTERPOLATE
 
 
 class ICFactorOptions(FitOptions):
-    pass
+    plot_option_klass = ICFactorAuxPlot
 
 # ============= EOF =============================================
