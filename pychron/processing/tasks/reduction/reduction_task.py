@@ -63,7 +63,7 @@ class ReductionTask(InterpolationTask):
         self.blank_editor_count += 1
 
     def new_ic_factor(self):
-        from pychron.processing.tasks.reduction.intercalibration_factor_editor import \
+        from pychron.processing.plot.editors.intercalibration_factor_editor import \
             IntercalibrationFactorEditor
 
         editor = IntercalibrationFactorEditor(name='ICFactor {:03d}'.format(self.ic_factor_editor_count),

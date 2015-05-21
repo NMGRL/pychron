@@ -28,6 +28,8 @@ from pyface.tasks.task_layout import PaneItem, TaskLayout, Tabbed, HSplitter, \
 
 
 
+
+
 #from pychron.pychron_constants import MINNA_BLUFF_IRRADIATIONS
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -40,7 +42,7 @@ from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction, Fi
 from pychron.processing.tasks.browser.util import browser_pane_item
 from pychron.processing.tasks.figures.actions import SavePDFFigureAction
 from pychron.processing.tasks.isotope_evolution.find_associated_parameters import FindAssociatedParametersDialog
-from pychron.processing.tasks.isotope_evolution.isotope_evolution_editor import IsotopeEvolutionEditor
+from pychron.processing.plot.editors.isotope_evolution_editor import IsotopeEvolutionEditor
 
 
 class IsotopeEvolutionTask(AnalysisEditTask):

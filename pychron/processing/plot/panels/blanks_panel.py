@@ -17,26 +17,15 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from itertools import groupby
 
 from pychron.processing.analysis_graph import AnalysisStackedRegressionGraph
-from pychron.processing.plot.panels.figure_panel import FigurePanel
+from pychron.processing.plot.panels.references_panel import ReferencesPanel
 from pychron.processing.plot.plotter.blanks import Blanks
 
 
-class BlanksPanel(FigurePanel):
+class BlanksPanel(ReferencesPanel):
     _figure_klass = Blanks
     graph_klass = AnalysisStackedRegressionGraph
 
-    def _make_figures(self):
-        gs = super(BlanksPanel, self)._make_figures()
 
-        key = lambda x: x.group_id
-        refs = sorted(self.references, key=key)
-        gg = groupby(refs, key=key)
-        for gi in gs:
-            _, refs = gg.next()
-            gi.references = list(refs)
-
-        return gs
 # ============= EOF =============================================

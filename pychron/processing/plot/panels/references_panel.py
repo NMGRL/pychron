@@ -15,12 +15,31 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from itertools import groupby
+
+from traits.api import List
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.processing.plot.options.fit import FitOptions
+from pychron.processing.plot.panels.figure_panel import FigurePanel
 
 
-class BlanksOptions(FitOptions):
-    pass
+class ReferencesPanel(FigurePanel):
+    references = List
+
+    def _make_figures(self):
+        gs = super(ReferencesPanel, self)._make_figures()
+
+        key = lambda x: x.group_id
+        refs = sorted(self.references, key=key)
+        gg = groupby(refs, key=key)
+        for gi in gs:
+            try:
+                _, refs = gg.next()
+                gi.references = list(refs)
+            except StopIteration:
+                break
+
+        return gs
 
 # ============= EOF =============================================

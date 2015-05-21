@@ -20,7 +20,8 @@ from traits.api import Bool
 # ============= local library imports  ==========================
 from pychron.core.confirmation import confirmation_dialog
 from pychron.pipeline.nodes.figure import FigureNode
-from pychron.processing.plotter_options_manager import IsotopeEvolutionOptionsManager, BlanksOptionsManager
+from pychron.processing.plotter_options_manager import IsotopeEvolutionOptionsManager, BlanksOptionsManager, \
+    ICFactorOptionsManager
 
 
 class FitNode(FigureNode):
@@ -53,8 +54,17 @@ class FitBlanksNode(FitNode):
             state.veto = self
 
 
+class FitICFactorNode(FitNode):
+    editor_klass = 'pychron.processing.plot.editors.intercalibration_factor_editor,' \
+                   'IntercalibrationFactorEditor'
+    plotter_options_manager_klass = ICFactorOptionsManager
+    name = 'Fit ICFactor'
+
+    # def run(self, state):
+    #     pass
+
 class FitIsotopeEvolutionNode(FitNode):
-    editor_klass = 'pychron.processing.tasks.isotope_evolution.isotope_evolution_editor,' \
+    editor_klass = 'pychron.processing.plot.editors.isotope_evolution_editor,' \
                    'IsotopeEvolutionEditor'
     plotter_options_manager_klass = IsotopeEvolutionOptionsManager
     name = 'Fit IsoEvo'

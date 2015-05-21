@@ -17,10 +17,11 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.processing.plot.options.fit import FitOptions
+from pychron.processing.plot.models.figure_model import FigureModel
+from pychron.processing.plot.panels.icfactor_panel import ICFactorPanel
 
 
-class BlanksOptions(FitOptions):
-    pass
+class ICFactorModel(FigureModel):
+    _panel_klass = ICFactorPanel
 
 # ============= EOF =============================================

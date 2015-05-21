@@ -82,8 +82,11 @@ class FigureModel(HasTraits):
             # if hasattr(self, 'references'):
             gg = groupby(self.references, key=key)
             for gi in gs:
-                gid, ais = gg.next()
-                gi.references = list(ais)
+                try:
+                    gid, ais = gg.next()
+                    gi.references = list(ais)
+                except StopIteration:
+                    break
 
         for gi in gs:
             gi.make_figures()

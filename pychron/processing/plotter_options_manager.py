@@ -31,6 +31,7 @@ from pychron.processing.plot.options.base import BasePlotterOptions
 from pychron.processing.plot.options.blanks import BlanksOptions
 from pychron.processing.plot.options.composite import CompositeOptions
 from pychron.processing.plot.options.dashboard import DashboardOptions
+from pychron.processing.plot.options.ic_factor import ICFactorOptions
 from pychron.processing.plot.options.ideogram import IdeogramOptions
 from pychron.processing.plot.options.iso_evo import IsotopeEvolutionOptions
 from pychron.processing.plot.options.isochron import InverseIsochronOptions
@@ -320,6 +321,11 @@ class IsotopeEvolutionOptionsManager(PlotterOptionsManager):
     plotter_options_klass = IsotopeEvolutionOptions
     persistence_name = 'iso_evo'
     # _defaults_path = paths.ideogram_defaults
+
+
+class ICFactorOptionsManager(PlotterOptionsManager):
+    plotter_options_klass = ICFactorOptions
+    persistence_name = 'ic_factor'
 
 
 class BlanksOptionsManager(PlotterOptionsManager):

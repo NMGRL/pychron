@@ -173,7 +173,9 @@ class BasePlotterOptions(HasTraits):
                 try:
                     obj = pickle.load(rfile)
                     self.trait_set(**obj)
-                except (pickle.PickleError, TypeError, EOFError, TraitError, ImportError), e:
+                except (pickle.PickleError, TypeError, EOFError,
+                        AttributeError,
+                        TraitError, ImportError), e:
                     print 'error loading {}'.format(self.name), e
         self._load_hook()
 

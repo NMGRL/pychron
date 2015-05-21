@@ -20,7 +20,7 @@
 from pychron.processing.plot.options.fit import FitOptions
 
 
-class BlanksOptions(FitOptions):
+class ICFactorOptions(FitOptions):
     pass
 
 # ============= EOF =============================================

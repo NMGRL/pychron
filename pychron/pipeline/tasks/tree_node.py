@@ -36,6 +36,7 @@ class _TreeNode(TreeNode):
         # print 'get', obj, obj.visited
         return 'green' if obj.visited else 'white'
 
+
 class DataTreeNode(_TreeNode):
     icon_name = 'table'
 

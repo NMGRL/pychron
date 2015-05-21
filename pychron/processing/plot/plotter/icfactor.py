@@ -17,10 +17,10 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.processing.plot.options.fit import FitOptions
+from pychron.processing.plot.plotter.arar_figure import BaseArArFigure
 
 
-class BlanksOptions(FitOptions):
+class ICFactor(BaseArArFigure):
     pass
 
 # ============= EOF =============================================

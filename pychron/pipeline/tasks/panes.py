@@ -37,7 +37,7 @@ from pychron.pipeline.nodes.data import DataNode
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, SeriesNode
 from pychron.pipeline.nodes.filter import FilterNode
 from pychron.pipeline.nodes.find import FindBlanksNode
-from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode
+from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode
 from pychron.pipeline.nodes.grouping import GroupingNode
 from pychron.pipeline.nodes.persist import PDFNode, DVCPersistNode
 from pychron.pipeline.tasks.tree_node import SeriesTreeNode, PDFTreeNode, GroupingTreeNode, SpectrumTreeNode, \
@@ -217,7 +217,9 @@ class PipelinePane(TraitsDockPane):
                  GroupingTreeNode(node_for=[GroupingNode], menu=data_menu_factory()),
                  DBSaveTreeNode(node_for=[DVCPersistNode], menu=data_menu_factory()),
                  FindTreeNode(node_for=[FindBlanksNode], menu=ffind_menu_factory()),
-                 FitTreeNode(node_for=[FitIsotopeEvolutionNode, FitBlanksNode], menu=ffind_menu_factory()),
+                 FitTreeNode(node_for=[FitIsotopeEvolutionNode,
+                                       FitICFactorNode,
+                                       FitBlanksNode], menu=ffind_menu_factory()),
                  TreeNode(node_for=[BaseNode], label='name')]
 
         editor = TreeEditor(nodes=nodes,
@@ -317,10 +319,15 @@ class ReferencesAdapter(TabularAdapter):
         ('Run ID', 'record_id'), ]
     font = 'arial 10'
 
+    def get_menu(self, object, trait, row, column):
+        return MenuManager(Action(name='Recall', action='recall_references'))
 
 class AnalysesPaneHandler(Handler):
     def recall_unknowns(self, info, obj):
         obj.recall_unknowns()
+
+    def recall_references(self, info, obj):
+        obj.recall_references()
 
 class AnalysesPane(TraitsDockPane):
     name = 'Analyses'
@@ -331,6 +338,7 @@ class AnalysesPane(TraitsDockPane):
                               editor=TabularEditor(adapter=UnknownsAdapter(),
                                                    refresh='refresh_table_needed',
                                                    multi_select=True,
+                                                   dclicked='dclicked_unknowns',
                                                    selected='selected_unknowns',
                                                    operations=['delete'])),
                         UItem('references',
@@ -338,6 +346,7 @@ class AnalysesPane(TraitsDockPane):
                               editor=TabularEditor(adapter=ReferencesAdapter(),
                                                    refresh='refresh_table_needed',
                                                    multi_select=True,
+                                                   dclicked='dclicked_references',
                                                    selected='selected_references',
                                                    operations=['delete']))),
                  handler=AnalysesPaneHandler())

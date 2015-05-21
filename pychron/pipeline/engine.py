@@ -86,6 +86,8 @@ class PipelineEngine(Loggable):
 
     selected_unknowns = List
     selected_references = List
+    dclicked_unknowns = Event
+    dclicked_references = Event
 
     recall_analyses_needed = Event
 
@@ -97,6 +99,10 @@ class PipelineEngine(Loggable):
     def recall_unknowns(self):
         self.debug('recall unks')
         self.recall_analyses_needed = self.selected_unknowns
+
+    def recall_references(self):
+        self.debug('recall refs')
+        self.recall_analyses_needed = self.selected_references
 
     def review_node(self, node):
         node.reset()
@@ -355,6 +361,12 @@ class PipelineEngine(Loggable):
         return node
 
     # handlers
+    def _dclicked_unknowns_fired(self):
+        self.recall_unknowns()
+
+    def _dclicked_references_fired(self):
+        self.recall_references()
+
     def _selected_pipeline_template_changed(self, new):
         if new:
             self.debug('Pipeline template {} selected'.format(new))

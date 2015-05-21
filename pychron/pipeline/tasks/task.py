@@ -25,7 +25,6 @@ from traits.api import Instance, Bool
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.core.codetools.inspection import caller
 from pychron.paths import paths
 from pychron.pipeline.engine import PipelineEngine
 from pychron.pipeline.state import EngineState
@@ -104,10 +103,7 @@ class PipelineTask(BaseBrowserTask):
         if path:
             self.engine.save_pipeline_template(path)
 
-    @caller
     def run(self):
-        # t = Thread(target=self._run_pipeline)
-        # t.start()
         self._run_pipeline()
 
     def _close_editor(self, editor):
@@ -138,8 +134,7 @@ class PipelineTask(BaseBrowserTask):
 
         self.engine.selected = None
         self.engine.update_needed = True
-        # do_after(2500, self.engine.trait_set, selected=None)
-            # self.engine.post_run(state)
+        # self.engine.post_run(state)
 
     def _toggle_run(self, v):
         self.resume_enabled = v
@@ -166,27 +161,11 @@ class PipelineTask(BaseBrowserTask):
 
     def _handle_run_needed(self, new):
         self.debug('run needed for {}'.format(new))
-        # if self.state:
-        #     self.run_to = self.state.veto
-        # else:
-        #     self.run_to = None
-
         self.run()
 
-        # if new in self.engine.pipeline.nodes:
-        #     self.engine.selected = new
-
     def _handle_recall(self, new):
-        print new
         for ai in new:
             editor = RecallEditor(model=ai)
             self._open_editor(editor)
-            # return [SchemaAddition(path='MenuBar',
-            # before='tools.menu',
-            #                        after='view.menu',
-            #                        factory= DataMenu),  # lambda : SMenu(id='data.menu', name='Data')),
-            #
-            #         SchemaAddition(path='MenuBar/data.menu',
-            #                        factory=RunAction)]
 
 # ============= EOF =============================================

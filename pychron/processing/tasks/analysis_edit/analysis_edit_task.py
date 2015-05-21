@@ -132,7 +132,7 @@ class AnalysisEditTask(BaseBrowserTask):
         if editor:
             self.activate_editor(editor)
         else:
-            from pychron.processing.tasks.isotope_evolution.isotope_evolution_editor import IsotopeEvolutionEditor
+            from pychron.processing.plot.editors.isotope_evolution_editor import IsotopeEvolutionEditor
 
             ieditor = IsotopeEvolutionEditor(name=name, processor=self.manager)
             ieditor.set_items([rec])

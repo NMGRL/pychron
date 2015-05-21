@@ -17,10 +17,14 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.processing.plot.options.fit import FitOptions
+
+from pychron.processing.analysis_graph import AnalysisStackedRegressionGraph
+from pychron.processing.plot.panels.references_panel import ReferencesPanel
+from pychron.processing.plot.plotter.icfactor import ICFactor
 
 
-class BlanksOptions(FitOptions):
-    pass
+class ICFactorPanel(ReferencesPanel):
+    _figure_klass = ICFactor
+    graph_klass = AnalysisStackedRegressionGraph
 
 # ============= EOF =============================================
