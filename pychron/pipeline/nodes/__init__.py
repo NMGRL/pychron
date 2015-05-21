@@ -21,7 +21,7 @@
 from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, SeriesNode
 from pychron.pipeline.nodes.filter import FilterNode
-from pychron.pipeline.nodes.find import FindBlanksNode
+from pychron.pipeline.nodes.find import FindReferencesNode
 from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode
 from pychron.pipeline.nodes.grouping import GroupingNode
 from pychron.pipeline.nodes.persist import DVCPersistNode, PDFFigureNode, BlanksPersistNode, IsotopeEvolutionPersistNode

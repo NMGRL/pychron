@@ -24,12 +24,12 @@ from traits.api import HasTraits, Str, Instance, List, Event, Bool
 import yaml
 from pychron.core.helpers.filetools import list_directory2, add_extension
 from pychron.paths import paths
+from pychron.pipeline.nodes import FindReferencesNode
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode
 from pychron.loggable import Loggable
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, FigureNode, SeriesNode
 from pychron.pipeline.nodes.filter import FilterNode
-from pychron.pipeline.nodes.find import FindBlanksNode
 from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode
 from pychron.pipeline.nodes.grouping import GroupingNode
 from pychron.pipeline.nodes.persist import PDFFigureNode, IsotopeEvolutionPersistNode, BlanksPersistNode
@@ -112,6 +112,7 @@ class PipelineEngine(Loggable):
 
     def configure(self, node):
         node.configure()
+        self.update_needed = True
 
         # if node.configure():
         # node.refresh()
@@ -208,7 +209,7 @@ class PipelineEngine(Loggable):
 
     # find
     def add_find_blanks(self, node=None, run=True):
-        newnode = FindBlanksNode(dvc=self.dvc)
+        newnode = FindReferencesNode(dvc=self.dvc, analysis_type='blank_unknown')
         if newnode.configure():
             node = self._get_last_node(node)
 
@@ -385,7 +386,7 @@ class PipelineEngine(Loggable):
                 self.unknowns = new.editor.analyses
                 self.task.activate_editor(new.editor)
 
-        self.update_needed = True
+                # self.update_needed = True
 
 # if __name__ == '__main__':
 # from traitsui.api import TreeNode, Handler
