@@ -100,14 +100,18 @@ class PychronLaserManager(BaseLaserManager, PychronDevice):
     #     return r
 
     def opened(self):
-        self.update_position()
-        self._opened_hook()
+        self.debug('opened')
+        if self.update_position():
+            self._opened_hook()
+            return True
 
     def update_position(self):
-
+        self.debug('update position')
         pos = self.get_position()
+        self.debug('got position {}'.format(pos))
         if pos:
             self.trait_set(**dict(zip(('_x', '_y', '_z'), pos)))
+            return True
 
         # self.trait_set(**dict(zip(('_x', '_y', '_z'),
         #                           self.get_position())))
@@ -297,7 +301,6 @@ class PychronLaserManager(BaseLaserManager, PychronDevice):
             return globalv.communication_simulation
         else:
             if self.setup_communicator():
-                self.connected = self.communicator.open()
                 self.debug('test connection. connected= {}'.format(self.connected))
             return self.connected
 

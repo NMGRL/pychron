@@ -15,17 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import os
 
-from traits.api import Str, Bool, Int
+from traits.api import Str, Bool, Int, Float
 from traitsui.api import View, Item, VGroup, HGroup, spring
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traitsui.editors import FileEditor
 from traitsui.group import Tabbed
 from traitsui.item import UItem
-
-
 # ============= standard library imports ========================
+import os
 # ============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper, BaseConsolePreferences, \
@@ -73,6 +71,9 @@ class ExtractionLinePreferences(BasePreferencesHelper):
     canvas_config_path = Str
     valves_path = Str
 
+    use_hardware_update = Bool
+    hardware_update_period = Float
+
 
 class ExtractionLinePreferencesPane(PreferencesPane):
     model_factory = ExtractionLinePreferences
@@ -107,6 +108,9 @@ Hover over section and hit the defined volume key (default="v")'),
             Item('check_master_owner',
                  label='Check Master Ownership',
                  tooltip='Check valve ownership even if this is the master computer'),
+            Item('use_hardware_update'),
+            Item('hardware_update_period',
+                 enabled_when='use_hardware_update'),
             self._network_group(),
             show_border=True,
             label='Valves')

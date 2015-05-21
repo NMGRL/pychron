@@ -397,7 +397,7 @@ class ValveManager(Manager):
         if word is not None:
             checksum = word[-4:]
             data = word[:-4]
-            self.debug('{} {}'.format(data, checksum))
+            # self.debug('{} {}'.format(data, checksum))
             expected = computeCRC(data)
             if expected != checksum:
                 self.warning('The checksum is not correct for this message. Expected: {}, Actual: {}'.format(expected,
@@ -435,6 +435,12 @@ class ValveManager(Manager):
                 pass
 
         return d
+
+    def load_hardware_states(self):
+        for k, v in self.valves.iteritems():
+            if v.query_state:
+                s = v.get_hardware_state(verbose=False)
+                self.refresh_state = (k, s, False)
 
     def _load_states(self):
         for k, v in self.valves.iteritems():

@@ -21,64 +21,97 @@ import os
 import yaml
 
 # ============= local library imports  ==========================
+from pychron.file_defaults import IDENTIFIERS_DEFAULT
 from pychron.pychron_constants import LINE_STR, ALPHAS
 from pychron.paths import paths
 
-ANALYSIS_MAPPING = dict(ba='Blank Air', bc='Blank Cocktail', bu='Blank Unknown',
-                        bg='Background', u='Unknown', c='Cocktail', a='Air',
-                        pa='Pause', ic='Detector IC')
-
-ANALYSIS_MAPPING_INTS = dict(unknown=0, background=1,
-                             air=2, cocktail=3,
-                             blank_air=4,
-                             blank_cocktail=5,
-                             blank_unknown=6,
-                             detector_ic=7)
-
-
-# "labnumbers" where extract group is disabled
-NON_EXTRACTABLE = dict(ba='Blank Air', bc='Blank Cocktail', bu='Blank Unknown',
-                       bg='Background', c='Cocktail', a='Air', ic='Detector IC')
-
-AGE_TESTABLE = ('unknown','cocktail')
-SPECIAL_NAMES = ['Special Labnumber', LINE_STR, 'Air', 'Cocktail', 'Blank Unknown',
-                 'Blank Air', 'Blank Cocktail', 'Background', 'Pause', 'Degas', 'Detector IC']
-
-SPECIAL_MAPPING = dict(background='bg',
-                       blank_air='ba',
-                       blank_cocktail='bc',
-                       blank_unknown='bu',
-                       pause='pa',
-                       degas='dg',
-                       detector_ic='ic',
-                       air='a',
-                       cocktail='c',
-                       unknown='u')
-
-p = os.path.join(paths.setup_dir, 'identifiers.yaml')
-differed = []
+ANALYSIS_MAPPING = dict()  # ba: 'Blank Air'
+NON_EXTRACTABLE = dict()  # ba: 'Blank Air'
+ANALYSIS_MAPPING_INTS = dict()  # blank_air: 0
+SPECIAL_MAPPING = dict()  # blank_air: ba
+SPECIAL_NAMES = ['Special Labnumber', LINE_STR]  # 'Blank Air'
+SPECIAL_KEYS = []  # ba
+# AGE_TESTABLE = []
+p = os.path.join(paths.hidden_dir, 'identifiers.yaml')
 if os.path.isfile(p):
     with open(p, 'r') as rfile:
         yd = yaml.load(rfile)
-        for i, (k, v) in enumerate(yd.items()):
-            ANALYSIS_MAPPING[k] = v
+else:
+    yd = yaml.load(IDENTIFIERS_DEFAULT)
 
-            #if : assume '01:Value' where 01 is used for preserving order
-            if ':' in v:
-                a, v = v.split(':')
-                c = int(a)
-                differed.append((c, v))
-                ANALYSIS_MAPPING_INTS[v.lower()] = 7 + c
-            else:
-                SPECIAL_NAMES.append(v)
-                ANALYSIS_MAPPING_INTS[v.lower()] = 7 + i
-            SPECIAL_MAPPING[v.lower()] = k
+for i, idn_d in enumerate(yd):
+    key = idn_d['shortname']
+    value = idn_d['name']
+    ANALYSIS_MAPPING[key] = value
 
-if differed:
-    ds = sorted(differed, key=lambda x: x[0])
-    SPECIAL_NAMES.extend([di[1] for di in ds])
+    underscore_name = value.lower().replace(' ', '_')
 
-SPECIAL_KEYS = map(str.lower, SPECIAL_MAPPING.values())
+    ANALYSIS_MAPPING_INTS[underscore_name] = i
+    if not idn_d['extractable']:
+        NON_EXTRACTABLE[key] = value
+        # if idn_d['ageable']:
+        # AGE_TESTABLE.append(value.lower())
+    if idn_d['special']:
+        SPECIAL_MAPPING[underscore_name] = key
+        SPECIAL_NAMES.append(value)
+        SPECIAL_KEYS.append(key)
+
+
+# ANALYSIS_MAPPING = dict(ba='Blank Air', bc='Blank Cocktail', bu='Blank Unknown',
+# bg='Background', u='Unknown', c='Cocktail', a='Air',
+# pa='Pause', ic='Detector IC')
+#
+# ANALYSIS_MAPPING_INTS = dict(unknown=0, background=1,
+# air=2, cocktail=3,
+# blank_air=4,
+#                              blank_cocktail=5,
+#                              blank_unknown=6,
+#                              detector_ic=7)
+#
+#
+# # "labnumbers" where extract group is disabled
+# NON_EXTRACTABLE = dict(ba='Blank Air', bc='Blank Cocktail', bu='Blank Unknown',
+#                        bg='Background', c='Cocktail', a='Air', ic='Detector IC', be='Blank ExtractionLine')
+#
+# AGE_TESTABLE = ('unknown','cocktail')
+# SPECIAL_NAMES = ['Special Labnumber', LINE_STR, 'Air', 'Cocktail', 'Blank Unknown',
+#                  'Blank Air', 'Blank Cocktail', 'Background', 'Pause', 'Degas', 'Detector IC']
+#
+# SPECIAL_MAPPING = dict(background='bg',
+#                        blank_air='ba',
+#                        blank_cocktail='bc',
+#                        blank_unknown='bu',
+#                        pause='pa',
+#                        degas='dg',
+#                        detector_ic='ic',
+#                        air='a',
+#                        cocktail='c',
+#                        unknown='u')
+#
+# p = os.path.join(paths.setup_dir, 'identifiers.yaml')
+# differed = []
+# if os.path.isfile(p):
+#     with open(p, 'r') as rfile:
+#         yd = yaml.load(rfile)
+#         for i, (k, v) in enumerate(yd.items()):
+#             ANALYSIS_MAPPING[k] = v
+#
+#             #if : assume '01:Value' where 01 is used for preserving order
+#             if ':' in v:
+#                 a, v = v.split(':')
+#                 c = int(a)
+#                 differed.append((c, v))
+#                 ANALYSIS_MAPPING_INTS[v.lower()] = 7 + c
+#             else:
+#                 SPECIAL_NAMES.append(v)
+#                 ANALYSIS_MAPPING_INTS[v.lower()] = 7 + i
+#             SPECIAL_MAPPING[v.lower()] = k
+#
+# if differed:
+#     ds = sorted(differed, key=lambda x: x[0])
+#     SPECIAL_NAMES.extend([di[1] for di in ds])
+#
+# SPECIAL_KEYS = map(str.lower, SPECIAL_MAPPING.values())
 
 
 def convert_identifier_to_int(ln):
@@ -146,7 +179,6 @@ def get_analysis_type(idn):
         idn: str like 'a-...' or '43513'
     """
     idn = idn.lower()
-
     for atype, tag in SPECIAL_MAPPING.iteritems():
         if idn.startswith(tag):
             return atype

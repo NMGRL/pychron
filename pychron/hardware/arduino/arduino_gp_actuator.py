@@ -78,16 +78,16 @@ class ArduinoGPActuator(GPActuator):
         self.repeat_command(cmd, ntries=3, check_val='OK')
         return self._check_actuation(obj, False)
 
-    def get_channel_state(self, obj):
+    def get_channel_state(self, obj, verbose=True):
         pin = PIN_MAPPING[int(obj.address)]
         indicator_open_pin = pin - 1
         indicator_close_pin = pin - 2
 
         opened = self.repeat_command(('r', indicator_open_pin, None),
-                                     ntries=3, check_type=int)
+                                     ntries=3, check_type=int, verbose=verbose)
 
         closed = self.repeat_command(('r', indicator_close_pin, None),
-                                     ntries=3, check_type=int)
+                                     ntries=3, check_type=int, verbose=verbose)
 
         err_msg = '{}-{} not functioning properly\nIc (pin={} state={}) does not agree with Io (pin={} state={})'.format(
             obj.name,

@@ -24,6 +24,53 @@ Values are used in pychron.paths when building directory structure
 """
 from pychron.core.helpers.strtools import to_bool
 
+IDENTIFIERS_DEFAULT = """
+- name: Blank Air
+  shortname: ba
+  extractable: False
+  special: True
+- name: Blank Cocktail
+  shortname: bc
+  extractable: False
+  special: True
+- name: Blank Unknown
+  shortname: bu
+  extractable: False
+  special: True
+- name: Blank ExtractionLine
+  shortname: be
+  extractable: False
+  special: True
+- name: Background
+  shortname: bg
+  extractable: False
+  special: True
+- name: Unknown
+  shortname: u
+  extractable: True
+  special: False
+- name: Cocktail
+  shortname: c
+  extractable: False
+  special: True
+- name: Air
+  shortname: a
+  extractable: False
+  special: True
+- name: Pause
+  shortname: pa
+  extractable: False
+  special: True
+- name: Degas
+  shortname: dg
+  extractable: True
+  special: True
+- name: Detector IC
+  shortname: ic
+  extractable: False
+  special: True
+"""
+
 EDIT_UI_DEFAULT = """
 predefined: Simple
 """

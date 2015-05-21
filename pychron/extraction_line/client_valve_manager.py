@@ -26,14 +26,14 @@ class ClientValveManager(ValveManager):
         if self.actuators:
             actuator = self.actuators[0]
             word = actuator.get_state_checksum(vkeys)
-            self.debug('Get Checksum: {}'.format(word))
+            # self.debug('Get Checksum: {}'.format(word))
             try:
                 return int(word)
             except BaseException:
                 pass
 
     def load_valve_states(self, refresh=True, force_network_change=False):
-        self.debug('Load valve states')
+        # self.debug('Load valve states')
         word = self.get_state_word()
         changed = False
         if word:
@@ -117,7 +117,7 @@ class ClientValveManager(ValveManager):
                 if self._validate_checksum(word):
                     d = self._parse_word(word[:-4])
 
-                    self.debug('Get State Word: {}'.format(word.strip()))
+                    # self.debug('Get State Word: {}'.format(word.strip()))
                     # self.debug('Parsed State Word: {}'.format(d))
             except BaseException:
                 pass
@@ -132,7 +132,7 @@ class ClientValveManager(ValveManager):
             if self._validate_checksum(word):
                 d = self._parse_word(word[:-4])
 
-                self.debug('Get Lock Word: {}'.format(word))
+                # self.debug('Get Lock Word: {}'.format(word))
                 # self.debug('Parsed Lock Word: {}'.format(d))
 
         return d
