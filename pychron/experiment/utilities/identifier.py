@@ -32,24 +32,25 @@ SPECIAL_NAMES = ['Special Labnumber', LINE_STR]  # 'Blank Air'
 SPECIAL_KEYS = []  # ba
 # AGE_TESTABLE = []
 p = os.path.join(paths.hidden_dir, 'identifiers.yaml')
-with open(p, 'r') as rfile:
-    yd = yaml.load(rfile)
-    for i, idn_d in enumerate(yd):
-        key = idn_d['shortname']
-        value = idn_d['name']
-        ANALYSIS_MAPPING[key] = value
+if os.path.isfile(p):
+    with open(p, 'r') as rfile:
+        yd = yaml.load(rfile)
+        for i, idn_d in enumerate(yd):
+            key = idn_d['shortname']
+            value = idn_d['name']
+            ANALYSIS_MAPPING[key] = value
 
-        underscore_name = value.lower().replace(' ', '_')
+            underscore_name = value.lower().replace(' ', '_')
 
-        ANALYSIS_MAPPING_INTS[underscore_name] = i
-        if not idn_d['extractable']:
-            NON_EXTRACTABLE[key] = value
-            # if idn_d['ageable']:
-            # AGE_TESTABLE.append(value.lower())
-        if idn_d['special']:
-            SPECIAL_MAPPING[underscore_name] = key
-            SPECIAL_NAMES.append(value)
-            SPECIAL_KEYS.append(key)
+            ANALYSIS_MAPPING_INTS[underscore_name] = i
+            if not idn_d['extractable']:
+                NON_EXTRACTABLE[key] = value
+                # if idn_d['ageable']:
+                # AGE_TESTABLE.append(value.lower())
+            if idn_d['special']:
+                SPECIAL_MAPPING[underscore_name] = key
+                SPECIAL_NAMES.append(value)
+                SPECIAL_KEYS.append(key)
 
 
 # ANALYSIS_MAPPING = dict(ba='Blank Air', bc='Blank Cocktail', bu='Blank Unknown',
