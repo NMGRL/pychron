@@ -30,9 +30,10 @@ from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode
 from pychron.loggable import Loggable
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, FigureNode, SeriesNode
 from pychron.pipeline.nodes.filter import FilterNode
-from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode
+from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode
 from pychron.pipeline.nodes.grouping import GroupingNode
-from pychron.pipeline.nodes.persist import PDFFigureNode, IsotopeEvolutionPersistNode, BlanksPersistNode
+from pychron.pipeline.nodes.persist import PDFFigureNode, IsotopeEvolutionPersistNode, \
+    BlanksPersistNode, ICFactorPersistNode
 from pychron.pipeline.template import PipelineTemplate
 
 
@@ -208,16 +209,11 @@ class PipelineEngine(Loggable):
         self._add_node(node, newnode, run)
 
     # find
+    def add_find_airs(self, node=None, run=True):
+        self._add_find_node(node, run, 'air')
+
     def add_find_blanks(self, node=None, run=True):
-        newnode = FindReferencesNode(dvc=self.dvc, analysis_type='blank_unknown')
-        if newnode.configure():
-            node = self._get_last_node(node)
-
-            self.pipeline.add_after(node, newnode)
-            self.add_references(newnode, run=False)
-
-            if run:
-                self.run_needed = newnode
+        self._add_find_node(node, run, 'blank_unknown')
 
     # figures
     def add_spectrum(self, node=None, run=True):
@@ -233,6 +229,16 @@ class PipelineEngine(Loggable):
         self._add_node(node, series_node, run)
 
     # fits
+    def add_icfactor(self, node=None, run=True):
+        new = FitICFactorNode()
+        if new.configure():
+            node = self._get_last_node(node)
+            self.pipeline.add_after(node, new)
+            if new.use_save_node:
+                self.add_icfactor_persist(new, run=False)
+            if run:
+                self.run_needed = True
+
     def add_blanks(self, node=None, run=True):
         new = FitBlanksNode()
         if new.configure():
@@ -245,7 +251,6 @@ class PipelineEngine(Loggable):
 
     def add_isotope_evolution(self, node=None, run=True):
         new = FitIsotopeEvolutionNode()
-        # self._add_node(node, newnode, run=run)
         if new.configure():
             node = self._get_last_node(node)
 
@@ -257,6 +262,10 @@ class PipelineEngine(Loggable):
                 self.run_needed = new
 
     # save
+    def add_icfactor_persist(self, node=None, run=True):
+        new = ICFactorPersistNode(dvc=self.dvc)
+        self._add_node(node, new, run)
+
     def add_blanks_persist(self, node=None, run=True):
         new = BlanksPersistNode(dvc=self.dvc)
         self._add_node(node, new, run)
@@ -344,6 +353,17 @@ class PipelineEngine(Loggable):
             templates.append(temp)
 
         self.available_pipeline_templates = templates
+
+    def _add_find_node(self, node, run, analysis_type):
+        newnode = FindReferencesNode(dvc=self.dvc, analysis_type=analysis_type)
+        if newnode.configure():
+            node = self._get_last_node(node)
+
+            self.pipeline.add_after(node, newnode)
+            self.add_references(newnode, run=False)
+
+            if run:
+                self.run_needed = newnode
 
     def _add_node(self, node, new, run=True):
         if new.configure():

@@ -126,6 +126,13 @@ class PipelineHandler(Handler):
     def add_find_blanks(self, info, obj):
         pass
 
+    @node_adder
+    def add_find_airs(self, info, obj):
+        pass
+
+    @node_adder
+    def add_icfactor(self, info, obj):
+        pass
 
 class PipelinePane(TraitsDockPane):
     name = 'Pipeline'
@@ -164,8 +171,9 @@ class PipelinePane(TraitsDockPane):
             return MenuManager(Action(name='Isotope Evolution',
                                       action='add_isotope_evolution'),
                                Action(name='Blanks',
-                                      enabled=False,
                                       action='add_blanks'),
+                               Action(name='IC Factor',
+                                      action='add_icfactor'),
                                Action(name='Detector IC',
                                       enabled=False,
                                       action='add_detector_ic'),
@@ -179,12 +187,17 @@ class PipelinePane(TraitsDockPane):
                                       action='add_pdf_figure'),
                                Action(name='Save Iso Evo',
                                       action='add_iso_evo_persist'),
+                               Action(name='Save Blanks',
+                                      action='add_blanks_persist'),
+                               Action(name='Save ICFactor',
+                                      action='add_icfactor_persist'),
                                name='Save')
 
         def find_menu_factory():
             return MenuManager(Action(name='Blanks',
                                       action='add_find_blanks'),
-                               Action(name='Air'),
+                               Action(name='Airs',
+                                      action='add_find_airs'),
                                name='Find')
 
         def data_menu_factory():

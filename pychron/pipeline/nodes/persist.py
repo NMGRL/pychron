@@ -99,6 +99,26 @@ class BlanksPersistNode(DVCPersistNode):
             msg = 'auto update blanks, fits={}'.format(f)
 
         self.dvc.update_analyses(state.unknowns, msg)
+
+
+class ICFactorPersistNode(DVCPersistNode):
+    name = 'Save ICFactor'
+
+    def configure(self):
+        return True
+
+    def run(self, state):
+        return
+
+        for ai in state.unknowns:
+            self.dvc.save_ic_factors(ai, state.saveable_keys, state.references)
+
+        msg = self.commit_message
+        if not msg:
+            f = ','.join('{}({})'.format(x, y) for x, y in zip(state.saveable_keys, state.saveable_fits))
+            msg = 'auto update ic_factors, fits={}'.format(f)
+
+        self.dvc.update_analyses(state.unknowns, msg)
 # ============= EOF =============================================
 
 
