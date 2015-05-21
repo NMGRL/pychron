@@ -179,7 +179,6 @@ def get_analysis_type(idn):
         idn: str like 'a-...' or '43513'
     """
     idn = idn.lower()
-
     for atype, tag in SPECIAL_MAPPING.iteritems():
         if idn.startswith(tag):
             return atype
