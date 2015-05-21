@@ -51,12 +51,12 @@ class Switch(Loggable):
     def state_str(self):
         return '{}{}{}'.format(self.name, self.state, self.software_lock)
 
-    def get_hardware_state(self):
+    def get_hardware_state(self, verbose=True):
         """
         """
         result = None
         if self.actuator is not None:
-            result = self.actuator.get_channel_state(self)
+            result = self.actuator.get_channel_state(self, verbose=verbose)
             if isinstance(result, bool):
                 self.set_state(result)
             else:

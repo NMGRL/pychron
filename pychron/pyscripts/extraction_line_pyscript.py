@@ -28,7 +28,7 @@ from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.pyscripts.pyscript import verbose_skip, makeRegistry
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.pyscripts.valve_pyscript import ValvePyScript
-from pychron.pychron_constants import EXTRACTION_COLOR
+from pychron.pychron_constants import EXTRACTION_COLOR, LINE_STR
 
 # ELPROTOCOL = 'pychron.extraction_line.extraction_line_manager.ExtractionLineManager'
 
@@ -744,6 +744,9 @@ class ExtractionPyScript(ValvePyScript):
             kw['name'] = self.extract_device
 
         kw['name'] = kw.get('name', self.extract_device) or self.extract_device
+        if kw['name'] in ('Extract Device', LINE_STR):
+            return
+
         # if not 'protocol' in kw:
         #     kw['protocol'] = ILaserManager
         kw['protocol']=kw.get('protocol', ILaserManager) or ILaserManager

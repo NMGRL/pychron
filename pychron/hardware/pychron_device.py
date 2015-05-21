@@ -40,8 +40,8 @@ class PychronDevice(Loggable):
 
         r = ec.open()
         if r:
-            self.connected = True
-            self.opened()
+            r = self.opened()
+            self.connected = bool(r)
 
         return r
 

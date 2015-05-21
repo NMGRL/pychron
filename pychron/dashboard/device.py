@@ -23,11 +23,13 @@ import struct
 import time
 import yaml
 # ============= local library imports  ==========================
+from pychron.core.helpers.filetools import unique_path2
 from pychron.dashboard.conditional import DashboardConditional
 from pychron.dashboard.process_value import ProcessValue
 from pychron.graph.stream_graph import StreamStackedGraph
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.loggable import Loggable
+from pychron.paths import paths
 
 
 class DashboardDevice(Loggable):
@@ -35,7 +37,7 @@ class DashboardDevice(Loggable):
     use = Bool
 
     values = List
-    _device = Instance(ICoreDevice)
+    hardware_device = Instance(ICoreDevice)
 
     update_value_event = Event
     conditional_event = Event
@@ -61,12 +63,12 @@ class DashboardDevice(Loggable):
             g.new_plot()
             g.new_series(plotid=i)
             g.set_y_title(vi.name, plotid=i)
+            g.set_scan_width(24*60*60, plotid=i)
 
     def trigger(self):
         """
             trigger a new value if appropriate
         """
-        self.debug('*********** Triggering values **********')
         for value in self.values:
             if not value.enabled:
                 continue
@@ -82,32 +84,33 @@ class DashboardDevice(Loggable):
 
     def _trigger(self, value, **kw):
         try:
-            self.debug('triggering value device={} value={} func={}'.format(self._device.name,
+            self.debug('triggering value device={} value={} func={}'.format(self.hardware_device.name,
                                                                             value.name,
                                                                             value.func_name))
-            nv = getattr(self._device, value.func_name)(**kw)
+            nv = getattr(self.hardware_device, value.func_name)(**kw)
             self._push_value(value, nv)
         except BaseException:
             import traceback
 
-            print self._device, self._device.name, value.func_name
+            print self.hardware_device, self.hardware_device.name, value.func_name
             self.debug(traceback.format_exc())
             value.use_pv = False
 
-    def add_value(self, name, tag, func_name, period, use, threshold, units, timeout):
+    def add_value(self, name, tag, func_name, period, enabled, threshold, units, timeout, record):
         pv = ProcessValue(name=name,
                           tag=tag,
                           func_name=func_name,
                           period=period,
-                          enabled=use,
+                          enabled=enabled,
                           timeout=float(timeout),
                           units=units,
-                          change_threshold=threshold)
+                          change_threshold=threshold,
+                          record=record)
 
         if period == 'on_change':
             self.debug('bind to {}'.format(name))
-            if self._device:
-                self._device.on_trait_change(lambda a, b, c, d: self._handle_change(pv, a, b, c, d), name)
+            if self.hardware_device:
+                self.hardware_device.on_trait_change(lambda a, b, c, d: self._handle_change(pv, a, b, c, d), name)
                 # self._device.on_trait_change(lambda new: self._push_value(pv, new), n)
 
         self.values.append(pv)
@@ -130,7 +133,21 @@ class DashboardDevice(Loggable):
                 # self.update_value_event = '{} {}'.format(pv.tag, new)
 
             self.graph.record(v, plotid=pv.plotid)
+            if pv.record:
+                self._record(pv, v)
+
             self._check_conditional(pv, new)
+
+    def _record(self, pv, v):
+        path = pv.path
+        if not path:
+            path,_ = unique_path2(paths.device_scan_dir, pv.name)
+            pv.path = path
+            self.info('Saving {} to {}'.format(pv.name, path))
+
+        with open(path, 'a') as wfile:
+            wfile.write('{},{}\n'.format(time.time(), v))
+
 
     def _check_conditional(self, pv, new):
         conds = pv.conditionals

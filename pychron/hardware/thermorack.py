@@ -127,7 +127,7 @@ class ThermoRack(CoreDevice, RHMixin):
         return faults
 
     @register(camel_case=True)
-    def get_coolant_out_temperature(self, **kw):
+    def get_coolant_out_temperature(self, force=False, **kw):
         """
         """
         if not kw.has_key('verbose'):

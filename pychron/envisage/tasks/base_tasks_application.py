@@ -62,6 +62,7 @@ class BaseTasksApplication(TasksApplication, Loggable):
                     tid = yi.get('task_id', '')
                     for ai in yi['actions']:
                         a, e = ai.split(',')
+                        # print tid, a, e
                         if to_bool(e):
                             yield tid, a
 

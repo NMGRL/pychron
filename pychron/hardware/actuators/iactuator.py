@@ -28,7 +28,7 @@ class IActuator(Interface):
     def open_channel(self, obj):
         pass
 
-    def get_channel_state(self, obj):
+    def get_channel_state(self, obj, verbose=False):
         pass
 
     def get_lock_state(self, obj):
