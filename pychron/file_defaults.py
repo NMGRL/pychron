@@ -34,7 +34,7 @@ IDENTIFIERS_DEFAULT = """
   extractable: False
   special: True
 - name: Blank Unknown
-  shortname: bc
+  shortname: bu
   extractable: False
   special: True
 - name: Blank ExtractionLine
@@ -53,8 +53,20 @@ IDENTIFIERS_DEFAULT = """
   shortname: c
   extractable: False
   special: True
+- name: Air
+  shortname: a
+  extractable: False
+  special: True
 - name: Pause
   shortname: pa
+  extractable: False
+  special: True
+- name: Degas
+  shortname: dg
+  extractable: True
+  special: True
+- name: Detector IC
+  shortname: ic
   extractable: False
   special: True
 """
