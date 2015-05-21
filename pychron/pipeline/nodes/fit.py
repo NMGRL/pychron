@@ -18,14 +18,9 @@
 from traits.api import Bool
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.confirmation import confirmation_dialog
 from pychron.pipeline.nodes.figure import FigureNode
 from pychron.processing.plotter_options_manager import IsotopeEvolutionOptionsManager, BlanksOptionsManager
-from pychron.processing.tasks.isotope_evolution.isotope_evolution_editor import IsotopeEvolutionEditor
-
-
-# class FitNode(BaseNode):
-# pass
-from pychron.processing.plot.editors.blanks_editor import BlanksEditor
 
 
 class FitNode(FigureNode):
@@ -38,7 +33,7 @@ class FitNode(FigureNode):
 
 
 class FitBlanksNode(FitNode):
-    editor_klass = BlanksEditor
+    editor_klass = 'pychron.processing.plot.editors.blanks_editor,BlanksEditor'
     plotter_options_manager_klass = BlanksOptionsManager
     # user_review = Bool(True)
 
@@ -53,17 +48,21 @@ class FitBlanksNode(FitNode):
 
         self.name = 'Fit Blanks {}'.format(self.name)
         self._set_saveable(state)
-        state.veto = self
+
+        if confirmation_dialog('Would you like to review the blanks before saving?'):
+            state.veto = self
 
 
-
-class IsotopeEvolutionNode(FitNode):
-    editor_klass = IsotopeEvolutionEditor
+class FitIsotopeEvolutionNode(FitNode):
+    editor_klass = 'pychron.processing.tasks.isotope_evolution.isotope_evolution_editor,' \
+                   'IsotopeEvolutionEditor'
     plotter_options_manager_klass = IsotopeEvolutionOptionsManager
+    name = 'Fit IsoEvo'
 
     def run(self, state):
 
         # graph_ids = [(ai.uuid, idx) for idx, ai in enumerate(state.unknowns)]
+        super(FitIsotopeEvolutionNode, self).run(state)
 
         for idx, ai in enumerate(state.unknowns):
             # ai.graph_id = idx
@@ -75,19 +74,14 @@ class IsotopeEvolutionNode(FitNode):
             fits = [pi for pi in po.get_aux_plots()]
             ai.set_fits(fits)
 
-        super(IsotopeEvolutionNode, self).run(state)
-
         self.editor.analysis_groups = [(ai,) for ai in state.unknowns]
         for ai in state.unknowns:
             ai.graph_id = 0
 
         self._set_saveable(state)
-        self.name = '{} IsoEvo'.format(self.name)
-
-    def post_run(self, state):
-        return
-        # for ai in state.unknowns:
-        #     ai.refit_isotopes(selector.fits)
+        self.name = '{} Fit IsoEvo'.format(self.name)
+        if confirmation_dialog('Would you like to review the iso fits before saving?'):
+            state.veto = self
 
 
 # ============= EOF =============================================

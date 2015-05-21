@@ -27,7 +27,7 @@ from numpy import array, Inf
 # ============= local library imports  ==========================
 from pychron.experiment.utilities.identifier import ANALYSIS_MAPPING_INTS
 from pychron.processing.plot.plotter.arar_figure import BaseArArFigure
-from pychron.processing.plot.plotter.ticks import tick_formatter, StaticTickGenerator, analysis_type_formatter
+
 
 N = 500
 
@@ -73,6 +73,7 @@ class Series(BaseSeries):
     _omit_key = 'omit_series'
 
     def build(self, plots):
+
         graph = self.graph
         plots = (pp for pp in plots if pp.use)
         for i, po in enumerate(plots):
@@ -82,6 +83,7 @@ class Series(BaseSeries):
                 xtitle='Time')
 
             if po.name == 'AnalysisType':
+                from pychron.processing.plot.plotter.ticks import tick_formatter, StaticTickGenerator
                 p.y_axis.tick_label_formatter = tick_formatter
                 p.y_axis.tick_generator = StaticTickGenerator()
                 # p.y_axis.tick_label_rotate_angle = 45
@@ -114,6 +116,7 @@ class Series(BaseSeries):
         graph = self.graph
         try:
             if po.name == 'AnalysisType':
+                from pychron.processing.plot.plotter.ticks import analysis_type_formatter
                 ys = list(self._unpack_attr(po.name))
                 kw = dict(y=ys, colors=ys, type='cmap_scatter', marker_size=4, color_map_name='gist_rainbow')
                 yerr = None

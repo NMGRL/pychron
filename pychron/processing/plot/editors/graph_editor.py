@@ -15,14 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import os
 
-from traits.api import List, Property, Event, cached_property
+from traits.api import List, Property, Event, cached_property, Any
 from traitsui.api import View, UItem
 from enable.component_editor import ComponentEditor as EnableComponentEditor
-
-
 # ============= standard library imports ========================
+import os
 from itertools import groupby
 # ============= local library imports  ==========================
 from pychron.processing.tasks.editor import BaseUnknownsEditor
@@ -33,6 +31,7 @@ class GraphEditor(BaseUnknownsEditor):
     refresh_needed = Event
     component = Property(depends_on='refresh_needed')
     basename = ''
+    figure_model = Any
 
     def save_file(self, path, force_layout=True, dest_box=None):
         _, tail = os.path.splitext(path)
@@ -107,6 +106,7 @@ class GraphEditor(BaseUnknownsEditor):
 
     @cached_property
     def _get_component(self):
+        self.figure_model = None
         ans = self.analyses
         if ans:
             return self._component_factory()

@@ -33,16 +33,28 @@ class PipelineTemplate(HasTraits):
         self.name = name
         self.path = path
 
-    def render(self, pipeline, bmodel, dvc):
+    def render(self, pipeline, bmodel, dvc, clear=False):
+        # if first node is an unknowns node
+        # render into template
 
-        # clear
+        datanode = None
+        try:
+            node = pipeline.nodes[0]
+            if isinstance(node, DataNode):
+                datanode = node
+        except IndexError:
+            pass
+
         pipeline.nodes = []
-
         with open(self.path, 'r') as rfile:
             nodes = yaml.load(rfile)
 
-        for ni in nodes:
+        for i, ni in enumerate(nodes):
             klass = ni['klass']
+            if i == 0 and klass == 'UnknownNode':
+                pipeline.nodes.append(datanode)
+                continue
+
             node = self._node_factory(klass, ni)
             if isinstance(node, DataNode):
                 node.trait_set(browser_model=bmodel, dvc=dvc)
@@ -58,6 +70,3 @@ class PipelineTemplate(HasTraits):
         return node
 
 # ============= EOF =============================================
-
-
-

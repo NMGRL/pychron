@@ -53,6 +53,7 @@ class PipelineTask(BaseBrowserTask):
     state = Instance(EngineState)
     resume_enabled = Bool(False)
     run_enabled = Bool(True)
+    run_to = None
     # def switch_to_browser(self):
     #     self._activate_task('pychron.browser.task')
 
@@ -71,8 +72,8 @@ class PipelineTask(BaseBrowserTask):
 
     def _debug(self):
 
-        self.engine.set_template('test2')
-        # self.engine.add_data()
+        # self.engine.set_template('test2')
+        self.engine.add_data()
         self.engine.select_default()
         # self.engine.add_is
         # self.engine.add_grouping(run=False)
@@ -123,7 +124,7 @@ class PipelineTask(BaseBrowserTask):
         else:
             state = EngineState()
 
-        if not self.engine.run(state):
+        if not self.engine.run(state, self.run_to):
             self.state = state
             self._toggle_run(True)
         else:
@@ -135,6 +136,9 @@ class PipelineTask(BaseBrowserTask):
             self._close_editor(editor)
             self._open_editor(editor)
 
+        self.engine.selected = None
+        self.engine.update_needed = True
+        # do_after(2500, self.engine.trait_set, selected=None)
             # self.engine.post_run(state)
 
     def _toggle_run(self, v):
@@ -162,10 +166,15 @@ class PipelineTask(BaseBrowserTask):
 
     def _handle_run_needed(self, new):
         self.debug('run needed for {}'.format(new))
+        # if self.state:
+        #     self.run_to = self.state.veto
+        # else:
+        #     self.run_to = None
+
         self.run()
 
-        if new in self.engine.pipeline.nodes:
-            self.engine.selected = new
+        # if new in self.engine.pipeline.nodes:
+        #     self.engine.selected = new
 
     def _handle_recall(self, new):
         print new

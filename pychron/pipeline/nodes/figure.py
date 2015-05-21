@@ -19,9 +19,8 @@ from traits.api import Any
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.pipeline.nodes.base import BaseNode
-from pychron.processing.plot.editors.ideogram_editor import IdeogramEditor
-from pychron.processing.plot.editors.series_editor import SeriesEditor
-from pychron.processing.plot.editors.spectrum_editor import SpectrumEditor
+# from pychron.processing.plot.editors.ideogram_editor import IdeogramEditor
+
 from pychron.processing.plotter_options_manager import IdeogramOptionsManager, SpectrumOptionsManager, \
     SeriesOptionsManager
 
@@ -31,8 +30,17 @@ class FigureNode(BaseNode):
     plotter_options = Any
     plotter_options_manager_klass = Any
 
+    def refresh(self):
+        if self.editor:
+            # self.editor.force_update()
+            self.editor.refresh_needed = True
+
     def run(self, state):
-        editor = self.editor_klass()
+        pkg, klass = self.editor_klass.split(',')
+        mod = __import__(pkg, fromlist=[klass])
+        editor = getattr(mod, klass)()
+
+        # editor = self.editor_klass()
         if not self.plotter_options:
             pom = self.plotter_options_manager_klass()
             self.plotter_options = pom.plotter_options
@@ -72,19 +80,20 @@ class FigureNode(BaseNode):
 
 class IdeogramNode(FigureNode):
     name = 'Ideogram'
-    editor_klass = IdeogramEditor
+    editor_klass = 'pychron.processing.plot.editors.ideogram_editor,IdeogramEditor'
     plotter_options_manager_klass = IdeogramOptionsManager
 
 
 class SpectrumNode(FigureNode):
     name = 'Spectrum'
-    editor_klass = SpectrumEditor
+
+    editor_klass = 'pychron.processing.plot.editors.spectrum_editor,SpectrumEditor'
     plotter_options_manager_klass = SpectrumOptionsManager
 
 
 class SeriesNode(FigureNode):
     name = 'Series'
-    editor_klass = SeriesEditor
+    editor_klass = 'pychron.processing.plot.editors.series_editor,SeriesEditor'
     plotter_options_manager_klass = SeriesOptionsManager
 
 # ============= EOF =============================================

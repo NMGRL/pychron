@@ -47,7 +47,7 @@ class IsotopeEvolutionOptions(FigurePlotterOptions):
     #         print p, p.use, p.enabled
 
     def get_saveable_plots(self):
-        return [p.name for p in self.aux_plots if p.use]
+        return [p for p in self.aux_plots if p.use]
 
     def traits_view(self):
         bg_grp = self._get_bg_group()

@@ -30,7 +30,7 @@ from pychron.loggable import Loggable
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, FigureNode, SeriesNode
 from pychron.pipeline.nodes.filter import FilterNode
 from pychron.pipeline.nodes.find import FindBlanksNode
-from pychron.pipeline.nodes.fit import IsotopeEvolutionNode, FitBlanksNode
+from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode
 from pychron.pipeline.nodes.grouping import GroupingNode
 from pychron.pipeline.nodes.persist import PDFFigureNode, IsotopeEvolutionPersistNode, BlanksPersistNode
 from pychron.pipeline.template import PipelineTemplate
@@ -41,23 +41,29 @@ class Pipeline(HasTraits):
     nodes = List
 
     def add_after(self, after, node):
-        idx = self.nodes.index(after)
-        self.nodes.insert(idx + 1, node)
+        if after:
+            idx = self.nodes.index(after)
+            self.nodes.insert(idx + 1, node)
+        else:
+            self.nodes.append(node)
 
     def to_template(self):
         nodes = [ni.to_template() for ni in self.nodes]
         return nodes
 
-    def iternodes(self, start_node=None):
-        if start_node is None:
-            idx = -1
+    def iternodes(self, start_node=None, run_to=None):
+        if run_to:
+            return self.nodes[:self.nodes.index(run_to) + 1]
         else:
-            idx = self.nodes.index(start_node)
+            if start_node is None:
+                idx = -1
+            else:
+                idx = self.nodes.index(start_node)
 
-        try:
-            return self.nodes[idx + 1:]
-        except IndexError:
-            return []
+            try:
+                return self.nodes[idx + 1:]
+            except IndexError:
+                return []
 
 
 class PipelineEngine(Loggable):
@@ -99,8 +105,11 @@ class PipelineEngine(Loggable):
         #     self.run_needed = True
 
     def configure(self, node):
-        if node.configure():
-            self.run_needed = node
+        node.configure()
+
+        # if node.configure():
+        # node.refresh()
+        # self.run_needed = node
 
     def refresh_analyses(self):
         unks = []
@@ -228,7 +237,7 @@ class PipelineEngine(Loggable):
                 self.run_needed = True
 
     def add_isotope_evolution(self, node=None, run=True):
-        new = IsotopeEvolutionNode()
+        new = FitIsotopeEvolutionNode()
         # self._add_node(node, newnode, run=run)
         if new.configure():
             node = self._get_last_node(node)
@@ -260,14 +269,14 @@ class PipelineEngine(Loggable):
             obj = self.pipeline.to_template()
             yaml.dump(obj, wfile, default_flow_style=False)
 
-    def run(self, state):
+    def run(self, state, run_to):
         start_node = state.veto
         self.debug('pipeline run started')
         if start_node:
             self.debug('starting at node {}'.format(start_node))
         state.veto = None
 
-        for idx, node in enumerate(self.pipeline.iternodes(start_node)):
+        for idx, node in enumerate(self.pipeline.iternodes(start_node, run_to)):
             self.selected = node
             node.visited = True
             if node.enabled:
@@ -283,8 +292,8 @@ class PipelineEngine(Loggable):
         else:
             self.debug('pipeline run finished')
             self.refresh_analyses()
-            self.selected = None
-
+            # self.selected = None
+            # self.update_needed = True
             return True
 
             # self.unknowns = state.unknowns

@@ -41,6 +41,7 @@ def confirmation_dialog(msg, return_retval=False,
     if timeout_ret is not None:
         dlg.timeout_return_code = timeout_ret
 
+    print dlg
     retval = dlg.open(timeout)
     from pyface.api import YES, OK
 

@@ -79,6 +79,7 @@ class BaseArArFigure(HasTraits):
     ymis = List
     xmi = Float
     xma = Float
+    xtitle = None
 
     _has_formatting_hash = None
 
@@ -114,6 +115,8 @@ class BaseArArFigure(HasTraits):
             if not po.ytitle_visible:
                 kw['ytitle'] = ''
 
+            if self.xtitle:
+                kw['xtitle'] = self.xtitle
             p = graph.new_plot(**kw)
             # set a tag for easy identification
             p.y_axis.tag = po.name

@@ -301,7 +301,7 @@ class IsotopicMeasurement(BaseMeasurement):
 
         if len(self.xs) > 1:
             v = self.regressor.predict(0)
-            print 'using regressor', self.regressor, v
+            # print 'using regressor', self.regressor, v
             return v
         else:
             return self._value

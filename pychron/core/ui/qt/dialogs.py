@@ -25,6 +25,7 @@ from pyface.message_dialog import MessageDialog
 
 from pychron.core.ui.gui import invoke_in_main_thread
 
+
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -90,7 +91,7 @@ class myMessageDialog(myMessageMixin, MessageDialog):
     pass
 
 
-class myConfirmationDialog(ConfirmationDialog, myMessageMixin):
+class myConfirmationDialog(myMessageMixin, ConfirmationDialog):
     def _create_control(self, parent):
         dlg = super(myConfirmationDialog, self)._create_control(parent)
 

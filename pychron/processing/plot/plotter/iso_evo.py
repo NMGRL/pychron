@@ -22,6 +22,7 @@ from pychron.processing.plot.plotter.arar_figure import BaseArArFigure
 
 class IsoEvo(BaseArArFigure):
     ytitle = ''
+    xtitle = 'Time (s)'
 
     def plot(self, plots, legend):
         for i, p in enumerate(plots):
@@ -50,6 +51,3 @@ class IsoEvo(BaseArArFigure):
             #     pass
 
 # ============= EOF =============================================
-
-
-

@@ -41,9 +41,13 @@ class BaseNode(HasTraits):
     def post_run(self, state):
         pass
 
+    def refresh(self):
+        pass
+
     def configure(self):
         info = self.edit_traits()
         if info.result:
+            self.refresh()
             return True
 
     def to_template(self):

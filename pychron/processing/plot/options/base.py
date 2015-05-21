@@ -157,7 +157,7 @@ class BasePlotterOptions(HasTraits):
             d = dict()
             attrs = self._get_dump_attrs()
             for t in attrs:
-                print t
+                # print t
                 d[t] = getattr(self, t)
 
             try:
@@ -173,7 +173,7 @@ class BasePlotterOptions(HasTraits):
                 try:
                     obj = pickle.load(rfile)
                     self.trait_set(**obj)
-                except (pickle.PickleError, TypeError, EOFError, TraitError), e:
+                except (pickle.PickleError, TypeError, EOFError, TraitError, ImportError), e:
                     print 'error loading {}'.format(self.name), e
         self._load_hook()
 

@@ -234,8 +234,6 @@ class Blanks(BaseSeries):
 
     @on_trait_change('graph:regression_results')
     def _update_regression(self, new):
-        # return
-        print 'ref'
         key = 'Unknowns-predicted{}'
         # necessary to handle user excluding points
         # if self.binned_analyses:

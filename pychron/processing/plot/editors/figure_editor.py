@@ -34,7 +34,7 @@ class FigureEditor(GraphEditor):
     # tool = Any
 
     # annotation_tool = Any
-    figure_model = Any
+
     figure_container = Any
     analysis_groups = List
 
@@ -88,9 +88,10 @@ class FigureEditor(GraphEditor):
 
         container = self.figure_container
         if not container:
-            container = FigureContainer(model=model)
+            container = FigureContainer()
             self.figure_container = container
 
+        container.model = model
         # container.refresh()
         return container.component
 

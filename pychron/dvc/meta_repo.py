@@ -267,7 +267,6 @@ class MetaRepo(GitRepoManager):
 
     @cached('clear_cache')
     def get_chronology(self, name):
-        print 'opening chconolog'
         p = self._chron_name(name)
         return Chronology(p)
 
