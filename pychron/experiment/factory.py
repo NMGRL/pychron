@@ -145,7 +145,7 @@ class ExperimentFactory(Loggable, ConsumerMixin):
 
         if new_runs:
             aruns = q.automated_runs
-            if q.selected:
+            if q.selected and q.selected[-1] in aruns:
                 idx = aruns.index(q.selected[-1])
             else:
                 idx = len(aruns) - 1
