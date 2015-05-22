@@ -348,7 +348,7 @@ class GitRepoManager(Loggable):
         if index:
             index.commit(msg)
 
-    def add(self, p, msg=None, msg_prefix=None, **kw):
+    def add(self, p, msg=None, msg_prefix=None, verbose=True, **kw):
         repo = self._repo
         bp = os.path.basename(p)
         dest = os.path.join(repo.working_dir, p)
@@ -363,7 +363,8 @@ class GitRepoManager(Loggable):
         if msg is None:
             msg = '{}'.format(bp)
         msg = '{} - {}'.format(msg_prefix, msg)
-        self.debug('add to repo msg={} dest={}'.format(msg, dest))
+        if verbose:
+            self.debug('add to repo msg={} dest={}'.format(msg, dest))
 
         self._add_to_repo(dest, msg, **kw)
 

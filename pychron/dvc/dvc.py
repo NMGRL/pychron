@@ -25,6 +25,7 @@ from apptools.preferences.preference_binding import bind_preference
 
 
 
+
 # ============= standard library imports ========================
 import os
 from git import Repo
@@ -156,17 +157,19 @@ class DVC(Loggable):
         changed = False
         for p in paths:
             if os.path.basename(p) in changes:
-                repo.add(p, commit=False)
+                self.debug('Change Index adding: {}'.format(p))
+                repo.add(p, commit=False, verbose=False)
                 changed = True
         return changed
 
     def project_commit(self, project, msg):
+        self.debug('Project commit: {} msg: {}'.format(project, msg))
         repo = self._get_project_repo(project)
         repo.commit(msg)
 
-    def save_icfactors(self, ai, dets, refs):
+    def save_icfactors(self, ai, dets, fits, refs):
         self.info('Saving icfactors for {}'.format(ai))
-        ai.dump_icfactors(dets, refs)
+        ai.dump_icfactors(dets, fits, refs)
 
     def save_blanks(self, ai, keys, refs):
         self.info('Saving blanks for {}'.format(ai))

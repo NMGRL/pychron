@@ -108,10 +108,10 @@ class ICFactorPersistNode(DVCPersistNode):
         return True
 
     def run(self, state):
-        return
-
         for ai in state.unknowns:
-            self.dvc.save_icfactors(ai, state.saveable_keys, state.references)
+            self.dvc.save_icfactors(ai, state.saveable_keys,
+                                    state.saveable_fits,
+                                    state.references)
 
         msg = self.commit_message
         if not msg:

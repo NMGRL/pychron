@@ -22,8 +22,12 @@ from pychron.processing.plot.plotter.references_series import ReferencesSeries
 
 
 class ICFactor(ReferencesSeries):
+
     def _set_interpolated_values(self, iso, fit, ans, p_uys, p_ues):
-        pass
+        n, d = iso.split('/')
+        for ui, v, e in zip(ans, p_uys, p_ues):
+            if v is not None and e is not None:
+                ui.set_temporary_ic_factor(d, v, e)
 
     def _get_current_data(self, po):
         n, d = po.name.split('/')

@@ -34,6 +34,9 @@ class ReferencesSeries(BaseSeries):
 
     _normalization_factor = 3600.
 
+    def _set_interpolated_values(self, iso, fit, ans, p_uys, p_ues):
+        pass
+
     def set_interpolated_values(self, iso, reg, fit):
         mi, ma = self._get_min_max()
         # mi =

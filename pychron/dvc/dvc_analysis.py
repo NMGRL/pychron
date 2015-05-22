@@ -157,24 +157,30 @@ class DVCAnalysis(Analysis):
 
         self._dump(yd)
 
-    def dump_icfactors(self, dkeys, refs):
+    def dump_icfactors(self, dkeys, fits, refs):
         yd = self._get_yd()
 
-        dets = yd['detectors']
-        for dk in dkeys:
+        dets = yd.get('detectors', {})
+        for dk, fi in zip(dkeys, fits):
             v = self.temporary_ic_factors.get(dk)
-            if v is not None:
-                det = dets.get(dk, {})
-                det['ic_factor'] = nominal_value(v)
-                det['ic_factor_err'] = std_dev(v)
-                det['references'] = self._make_ref_list(refs)
+            if v is None:
+                v, e = 1, 0
+            else:
+                v, e = nominal_value(v), std_dev(v)
+
+            det = dets.get(dk, {})
+            det['ic_factor'] = float(v)
+            det['ic_factor_err'] = float(e)
+            det['fit'] = fi
+            det['references'] = self._make_ref_list(refs)
             dets[dk] = det
 
+        yd['detectors'] = dets
         self._dump(yd)
 
     # private
     def _make_ref_list(self, refs):
-        return [{'runid': r.runid, 'exclude': r.temp_status} for r in refs]
+        return [{'record_id': r.record_id, 'uuid': r.uuid, 'exclude': r.temp_status} for r in refs]
 
     def _get_yd(self):
         with open(self.path, 'r') as rfile:

@@ -44,7 +44,6 @@ class FitReferencesNode(FitNode):
         self.plotter_options.set_detectors(state.union_detectors)
         if state.references:
             self.editor.set_references(state.references)
-            # self.editor.force_update(force=True)
 
         self.name = 'Fit {} {}'.format(self.basename, self.name)
         self._set_saveable(state)
@@ -52,6 +51,8 @@ class FitReferencesNode(FitNode):
         if self.has_save_node:
             if confirmation_dialog('Would you like to review the {} before saving?'.format(self.basename)):
                 state.veto = self
+            else:
+                self.editor.force_update(force=True)
 
 
 class FitBlanksNode(FitReferencesNode):
