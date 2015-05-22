@@ -56,6 +56,17 @@ class ICFactorAuxPlot(AuxPlotOptions, Fit):
 class ICFactorOptions(FitOptions):
     plot_option_klass = ICFactorAuxPlot
 
+    def set_aux_plots(self, ps):
+        pp = []
+        for pd in ps:
+            pp.append(self.plot_option_klass(**pd))
+
+        n = 5 - len(pp)
+        if n:
+            pp.extend((self.plot_option_klass() for i in xrange(n)))
+
+        self.aux_plots = pp
+
     def _get_edit_view(self):
         f = VGroup(HGroup(UItem('numerator', editor=EnumEditor(name='detectors')), Label('/'),
                           UItem('denominator', editor=EnumEditor(name='detectors'))),

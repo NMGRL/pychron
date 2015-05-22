@@ -77,7 +77,7 @@ class PipelineTask(BaseBrowserTask):
 
         self.engine.select_default()
 
-        # self.engine.set_template('icfactor')
+        self.engine.set_template('icfactor')
         # self.engine.add_is
         # self.engine.add_grouping(run=False)
         # self.engine.add_test_filter()

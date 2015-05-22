@@ -23,7 +23,8 @@ make sure directory exists and build if not
 from os import path, mkdir
 import os
 
-from pychron.file_defaults import TASK_EXTENSION_DEFAULT, SIMPLE_UI_DEFAULT, EDIT_UI_DEFAULT, IDENTIFIERS_DEFAULT
+from pychron.file_defaults import TASK_EXTENSION_DEFAULT, SIMPLE_UI_DEFAULT, \
+    EDIT_UI_DEFAULT, IDENTIFIERS_DEFAULT
 
 
 class Paths(object):

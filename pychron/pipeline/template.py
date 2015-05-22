@@ -72,4 +72,36 @@ class PipelineTemplate(HasTraits):
         node.load(ni)
         return node
 
+
+ICFACTOR = """
+- klass: UnknownNode
+- klass: FindReferencesNode
+  threshold: 10
+  analysis_type: Blank Unknown
+- klass: ReferenceNode
+- klass: FitICFactorNode
+  fits:
+    - numerator: H1
+      denominator: AX
+      standard_ratio: 295.5
+      analysis_type: Air
+- klass: ICFactorPersistNode
+"""
+
+ISOEVO = """
+- klass: UnknownNode
+- klass: FitIsotopeEvolutionNode
+- klass: IsotopeEvolutionPersistNode
+"""
+
+BLANKS = """
+- klass: UnknownNode
+- klass: FindReferencesNode
+  threshold: 10
+  analysis_type: Blank Unknown
+- klass: ReferenceNode
+- klass: FitBlanksNode
+- klass: BlanksPersistNode
+"""
+
 # ============= EOF =============================================

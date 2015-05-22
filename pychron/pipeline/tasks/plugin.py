@@ -15,17 +15,36 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+
 from envisage.ui.tasks.task_factory import TaskFactory
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.filetools import add_extension
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
+from pychron.paths import paths
 from pychron.pipeline.tasks.browser_task import BrowserTask
 from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 from pychron.pipeline.tasks.task import PipelineTask
 from pychron.envisage.browser.browser_model import BrowserModel
+from pychron.pipeline.template import ICFACTOR, BLANKS, ISOEVO
 
 
 class PipelinePlugin(BaseTaskPlugin):
+    def start(self):
+        super(PipelinePlugin, self).start()
+
+        for p, t in (('icfactor', ICFACTOR),
+                     ('blanks', BLANKS),
+                     ('iso_evo', ISOEVO)):
+            pp = os.path.join(paths.pipeline_template_dir,
+                              add_extension(p, '.yaml'))
+
+            with open(pp, 'w') as wfile:
+                wfile.write(t)
+
+
     def _pipeline_factory(self):
         model = self.application.get_service(BrowserModel)
         t = PipelineTask(browser_model=model)

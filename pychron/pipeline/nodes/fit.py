@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Bool
+from traits.api import Bool, List
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.confirmation import confirmation_dialog
@@ -36,7 +36,7 @@ class FitNode(FigureNode):
 class FitReferencesNode(FitNode):
     basename = None
     has_save_node = False
-    
+
     def run(self, state):
 
         super(FitReferencesNode, self).run(state)
@@ -64,12 +64,17 @@ class FitBlanksNode(FitReferencesNode):
     #     super(FitBlanksNode, self)._set_saveable()
 
 
+ATTRS = ('numerator', 'denominator', 'standard_ratio', 'analysis_type')
+
+
 class FitICFactorNode(FitReferencesNode):
     editor_klass = 'pychron.processing.plot.editors.intercalibration_factor_editor,' \
                    'IntercalibrationFactorEditor'
     plotter_options_manager_klass = ICFactorOptionsManager
     name = 'Fit ICFactor'
     basename = 'ICFactor'
+
+    predefined = List
 
     def set_detectors(self, dets):
         self.plotter_options_manager.set_detectors(dets)
@@ -79,11 +84,19 @@ class FitICFactorNode(FitReferencesNode):
         ps = self.plotter_options.get_saveable_plots()
         state.saveable_keys = [p.denominator for p in ps]
 
-        # for p in self.plotter_options.get_saveable_plots():
-        # self.saveable_icfactors.append(dict(detector=p.denominator))
+    def run(self, state):
+        super(FitICFactorNode, self).run(state)
 
-    # def run(self, state):
-    #     pass
+    def load(self, nodedict):
+        try:
+            fits = nodedict['fits']
+        except KeyError, e:
+            print 'afs', e
+
+        pom = self.plotter_options_manager
+        self.plotter_options = pom.plotter_options
+        self.plotter_options.set_aux_plots(fits)
+
 
 class FitIsotopeEvolutionNode(FitNode):
     editor_klass = 'pychron.processing.plot.editors.isotope_evolution_editor,' \
@@ -115,8 +128,4 @@ class FitIsotopeEvolutionNode(FitNode):
         if confirmation_dialog('Would you like to review the iso fits before saving?'):
             state.veto = self
 
-
 # ============= EOF =============================================
-
-
-
