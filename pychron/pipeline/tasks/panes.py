@@ -74,6 +74,14 @@ class PipelineHandler(Handler):
     def configure(self, info, obj):
         info.object.configure(obj)
 
+    def move_up(self, info, obj):
+        info.object.pipeline.move_up(obj)
+        info.object.selected = obj
+
+    def move_down(self, info, obj):
+        info.object.pipeline.move_down(obj)
+        info.object.selected = obj
+
     @node_adder
     def add_pdf_figure(self, info, obj):
         pass
@@ -148,6 +156,8 @@ class PipelinePane(TraitsDockPane):
                        action='disable',
                        visible_when='object.enabled'),
                 Action(name='Configure', action='configure'),
+                Action(name='Move Up', action='move_up'),
+                Action(name='Move Down', action='move_down'),
                 Action(name='Delete', action='delete_node'),
                 *actions)
 
@@ -240,6 +250,9 @@ class PipelinePane(TraitsDockPane):
                             # selection_mode='extended',
                             selected='selected',
                             dclick='dclicked',
+                            hide_root=True,
+                            lines_mode='on',
+                            # word_wrap=True,
                             show_disabled=True,
                             refresh_all_icons='refresh_all_needed',
                             update='update_needed')

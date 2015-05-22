@@ -49,6 +49,18 @@ class Pipeline(HasTraits):
                         if isinstance(nj, nb):
                             ni.has_save_node = True
 
+    def move_up(self, node):
+        idx = self.nodes.index(node)
+        if idx > 1:
+            self.nodes.remove(node)
+            self.nodes.insert(idx - 1, node)
+
+    def move_down(self, node):
+        idx = self.nodes.index(node)
+        if idx < len(self.nodes) - 1:
+            self.nodes.remove(node)
+            self.nodes.insert(idx + 1, node)
+
     def add_after(self, after, node):
         if after:
             idx = self.nodes.index(after)
