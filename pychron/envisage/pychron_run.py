@@ -193,9 +193,6 @@ def app_factory(klass, user):
     return app
 
 
-
-
-
 def launch(klass, user):
     """
     """
