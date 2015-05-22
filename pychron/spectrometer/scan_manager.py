@@ -393,11 +393,11 @@ class ScanManager(Manager):
                 # for di in self.detectors:
                 #     print di, di.isotope
 
-                #find detector that the desired isotope is being measured on
+                # find detector that the desired isotope is being measured on
                 det = next((di for di in self.detectors
                             if di.isotope == self.isotope), None)
                 if det:
-                    #check that the intensity is less than threshold
+                    # check that the intensity is less than threshold
                     abort = det.intensity > threshold
                     if abort:
                         if not self.confirmation_dialog('Are you sure you want to make this move.\n'
