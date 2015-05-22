@@ -16,7 +16,6 @@
 
 # ============= enthought library imports =======================
 import base64
-import struct
 
 from traits.api import Instance
 
@@ -26,19 +25,19 @@ import os
 import yaml
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import add_extension
+
 from pychron.database.adapters.isotope_adapter import IsotopeAdapter
 from pychron.dvc.dvc_database import DVCDatabase
 from pychron.dvc.meta_repo import MetaRepo
 from pychron.experiment.utilities.identifier import get_analysis_type
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.loggable import Loggable
-from pychron.paths import paths
 from pychron.pychron_constants import ALPHAS
 
-input_txt = '''
+rfile = '''
 Foo:
-  - 5000,01
-  - 5000,02
+  - 19220,01
+  - 19220,02
 
 '''
 
@@ -47,28 +46,29 @@ class DatabaseExport(Loggable):
     meta_repo = Instance(MetaRepo)
 
     def do_export(self):
-        self.meta_repo = MetaRepo()
+        self.meta_repo = MetaRepo('/Users/ross/Sandbox/dvc/meta')
 
-        dest = DVCDatabase()
+        dest = DVCDatabase('/Users/ross/Sandbox/dvc/meta/testdb.sqlite')
 
-        src = IsotopeAdapter()
-        src.trait_set(host='localhost', user='root', password='DBArgon', kind='mysql')
+        src = IsotopeAdapter(host='localhost', username='root', password='Argon',
+                             kind='mysql', name='pychrondata_dev')
+        # src.trait_set()
         src.connect()
-        p = ''
         with src.session_ctx():
-            with open(p, 'r') as rfile:
-                yd = yaml.load(rfile)
+            # with open(p, '') as rfile:
+            yd = yaml.load(rfile)
 
-                for pr in yd:
-                    with dest.session_ctx():
-                        repo = self._export_project(pr, src, dest)
-                        for rec in yd[pr]:
-                            self._export_analysis(src, dest, repo, rec)
+            for pr in yd:
+                with dest.session_ctx():
+                    repo = self._export_project(pr, src, dest)
+                    for rec in yd[pr]:
+                        self._export_analysis(src, dest, repo, rec)
 
-                        repo.commit('src import src= {}'.format(src.url))
+                    repo.commit('src import src= {}'.format(src.url))
 
     def _export_project(self, project, src, dest):
-        proot = os.path.join(paths.dvc_dir, 'projects', project)
+        proot = os.path.join('/Users/ross/Sandbox/dvc/projects', project)
+        # proot = os.path.join(paths.dvc_dir, 'projects', project)
         if not os.path.isdir(proot):
             os.mkdir(proot)
         repo = GitRepoManager()
@@ -119,11 +119,10 @@ class DatabaseExport(Loggable):
 
             # save db irradiation position
             if not dest.get_irradiation_position(irradname, levelname, pos):
-                dd = dest.add_irradiation_position(irradname, levelname, pos)
-                dd.identifier = dblab.identifier
                 dbsam = dblab.sample
                 project = dbsam.project.name
-                if not dest.get_sample(dbsam.name, project):
+                sam = dest.get_sample(dbsam.name, project)
+                if not sam:
                     mat = dbsam.material.name
                     if not dest.get_material(mat):
                         dest.add_material(mat)
@@ -133,8 +132,13 @@ class DatabaseExport(Loggable):
                         dest.add_project(project)
                         dest.flush()
 
-                    dest.add_sample(dbsam.name, project, mat)
+                    sam = dest.add_sample(dbsam.name, project, mat)
                     dest.flush()
+
+                dd = dest.add_irradiation_position(irradname, levelname, pos)
+                dd.identifier = dblab.identifier
+                dd.sample = sam
+
                 dest.flush()
 
     def _export_analysis(self, src, dest, repo, rec, overwrite=True):
@@ -146,7 +150,7 @@ class DatabaseExport(Loggable):
         else:
             idn, aliquot, step = args
 
-        dban = src.get_analysis(idn, aliquot, step)
+        dban = src.get_analysis_runid(idn, aliquot, step)
         op = os.path.join(repo.path, add_extension(dban.record_id, '.yaml'))
         if os.path.isfile(op) and not overwrite:
             self.debug('{} already exists. skipping'.format(op))
@@ -167,12 +171,20 @@ class DatabaseExport(Loggable):
         ms = dban.measurement.mass_spectrometer.name
 
         isotopes = self._make_isotopes(dban)
+        detectors = self._make_detectors(dban)
         if step is None:
             inc = None
         else:
             inc = ALPHAS.index(step)
 
-        obj = dict(identifier=idn, uuid=dban.uuid, aliquot=aliquot, isotopes=isotopes,
+        username = ''
+        if dban.user:
+            username = dban.user.name
+
+        obj = dict(identifier=idn, uuid=dban.uuid,
+                   aliquot=int(aliquot),
+                   detectors=detectors,
+                   isotopes=isotopes,
                    analysis_type=get_analysis_type(idn),
                    collection_version='0.1:0.1', comment='This is a comment', increment=inc, irradiation=irrad,
                    irradiation_level=level, irradiation_position=irradpos, project=project, mass_spectrometer=ms,
@@ -183,7 +195,8 @@ class DatabaseExport(Loggable):
                    position=[{k: getattr(p, k) for k in ('x', 'y', 'z', 'position', 'is_degas')}
                              for p in extraction.positions], weight=extraction.weight,
                    ramp_duration=extraction.ramp_duration, ramp_rate=extraction.ramp_rate, queue_conditionals_name=None,
-                   sample=sample, timestamp=dban.analysis_timestamp, tray=None, username=dban.user.name,
+                   sample=sample, timestamp=dban.analysis_timestamp, tray=None,
+                   username=username,
                    xyz_position=None)
 
         self._save_an_to_db(dest, dban, obj)
@@ -194,10 +207,10 @@ class DatabaseExport(Loggable):
         repo.add(op, commit=False)
 
     def _save_an_to_db(self, dest, dban, obj):
-        kw = obj.fromkeys(('aliquot', 'uuid',
-                           'weight', 'comment',
-                           'timestamp', 'analysis_type',
-                           'mass_spectrometer', 'extract_device'))
+        kw = {k: obj.get(k) for k in ('aliquot', 'uuid',
+                                      'weight', 'comment',
+                                      'timestamp', 'analysis_type',
+                                      'mass_spectrometer', 'extract_device')}
 
         an = dest.add_analysis(**kw)
 
@@ -215,16 +228,33 @@ class DatabaseExport(Loggable):
             isos[dbiso.molecular_weight.name] = isod
         return isos
 
+    def _make_detectors(self, dban):
+        dets = {}
+        for iso in dban.isotopes:
+            det = iso.detector.name
+            if det in dets:
+                continue
+
+            dets[det] = dict(ic_factor=dict(fit='default',
+                                            value=1,
+                                            error=0.001,
+                                            references=[]),
+                             baseline={'signal': '',
+                                       'value': 0,
+                                       'error': 0})
+
+        return dets
+
     def _make_isotope(self, dbiso):
-        isod = dict(fit='', detector=self._make_detector(dbiso),
-                    baseline=self._pack_baseline(dbiso),
-                    signal=self._pack_signal(dbiso),
+
+        d = dbiso.signal.data
+
+        isod = dict(fit='', detector=dbiso.detector.name,
+                    # baseline=self._pack_baseline(dbiso),
+                    signal=base64.b64encode(d),
                     baseline_corrected=self._make_baseline_corrected(dbiso),
                     raw_intercept=self._make_raw_intercept(dbiso))
         return isod
-
-    def _make_detector(self, dbiso):
-        return dict(deflection=0, gain=0, name=dbiso.detector.name)
 
     def _make_baseline_corrected(self, dbiso):
         return dict(value=0, error=0)
@@ -232,15 +262,22 @@ class DatabaseExport(Loggable):
     def _make_raw_intercept(self, dbiso):
         return dict(value=0, error=0)
 
-    def _pack_baseline(self, dbiso):
-        xs, ys = [], []
-        return self._pack_data(xs, ys)
+        # def _pack_baseline(self, dbiso):
+        #     xs, ys = [], []
+        #     return self._pack_data(xs, ys)
+        #
+        # def _pack_signal(self, dbiso):
+        #     xs, ys = [], []
+        #     return self._pack_data(xs, ys)
 
-    def _pack_signal(self, dbiso):
-        xs, ys = [], []
-        return self._pack_data(xs, ys)
+        # def _pack_data(self, xs, ys):
+        #     return base64.b64encode(''.join((struct.pack('>ff', x, y) for x, y in zip(xs, ys))))
 
-    def _pack_data(self, xs, ys):
-        return base64.b64encode(''.join((struct.pack('>ff', x, y) for x, y in zip(xs, ys))))
 
+if __name__ == '__main__':
+    from pychron.core.helpers.logger_setup import logging_setup
+
+    logging_setup('de')
+    e = DatabaseExport()
+    e.do_export()
 # ============= EOF =============================================

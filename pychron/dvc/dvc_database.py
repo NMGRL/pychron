@@ -71,11 +71,14 @@ class DVCDatabase(DatabaseAdapter):
     level = Str
     levels = List
 
-    def __init__(self, clear=False, auto_add=False, *args, **kw):
+    def __init__(self, path=None, clear=False, auto_add=False, *args, **kw):
         super(DVCDatabase, self).__init__(*args, **kw)
 
         # self._bind_preferences()
-        self.path = paths.meta_db
+        if path is None:
+            path = paths.meta_db
+
+        self.path = path
 
         # self.synced_path = '{}.sync'.format(paths.meta_db)
         # self.merge_path = '{}.merge'.format(paths.meta_db)

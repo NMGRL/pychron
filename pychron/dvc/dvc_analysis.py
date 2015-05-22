@@ -169,10 +169,13 @@ class DVCAnalysis(Analysis):
                 v, e = nominal_value(v), std_dev(v)
 
             det = dets.get(dk, {})
-            det['ic_factor'] = float(v)
-            det['ic_factor_err'] = float(e)
-            det['fit'] = fi
-            det['references'] = self._make_ref_list(refs)
+            icf = det.get('ic_factor', {})
+            icf['ic_factor'] = float(v)
+            icf['ic_factor_err'] = float(e)
+            icf['fit'] = fi
+            icf['references'] = self._make_ref_list(refs)
+            det['ic_factor'] = icf
+
             dets[dk] = det
 
         yd['detectors'] = dets
@@ -195,9 +198,7 @@ class DVCAnalysis(Analysis):
         for k, v in isos.items():
             # bsc = v['baseline_corrected']
             raw = v['raw_intercept']
-            det = v['detector']
-            detname = det['name']
-
+            detname = v['detector']
             self.isotopes[k] = Isotope(name=k,
                                        detector=detname,
                                        _value=raw['value'], _error=raw['error'])

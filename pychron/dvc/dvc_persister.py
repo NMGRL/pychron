@@ -238,8 +238,11 @@ class DVCPersister(Loggable):
             sblob = base64.b64encode(iso.pack())
             if iso.detector not in dets:
                 bblob = base64.b64encode(iso.baseline.pack())
-                dets[iso.detector] = {'ic_factor': nominal_value(iso.ic_factor),
-                                      'ic_factor_err': std_dev(iso.ic_factor),
+                dets[iso.detector] = {'ic_factor': {'value': nominal_value(iso.ic_factor),
+                                                    'error': std_dev(iso.ic_factor),
+                                                    'fit': 'default',
+                                                    'references': []},
+
                                       'deflection': self.defl_dict[iso.detector],
                                       'gain': self.gains[iso.detector],
                                       'baseline': {'signal': bblob,
@@ -247,7 +250,7 @@ class DVCPersister(Loggable):
                                                    'value': iso.baseline.value,
                                                    'error': iso.baseline.error}}
 
-            isos[iso.name] = {'detector': {'name': iso.detector},
+            isos[iso.name] = {'detector': iso.detector,
                               'fit': iso.fit,
                               'signal': sblob,
                               'blank': {'fit': 'previous',

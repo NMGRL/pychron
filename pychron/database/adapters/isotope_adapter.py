@@ -1640,7 +1640,7 @@ class IsotopeAdapter(DatabaseAdapter):
                 q = q.filter(meas_AnalysisTable.aliquot == aliquot)
 
             q = q.filter(gen_LabTable.identifier == identifier)
-            return self._query_all(q)
+            return self._query_one(q)
 
     def get_analysis_uuid(self, value):
         #         return self.get_analysis(value, key)

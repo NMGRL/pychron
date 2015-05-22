@@ -26,11 +26,13 @@ from apptools.preferences.preference_binding import bind_preference
 
 
 
+
 # ============= standard library imports ========================
 import os
 from git import Repo
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import remove_extension
+from pychron.core.progress import progress_loader
 from pychron.dvc.defaults import TRIGA, HOLDER_24_SPOKES, LASER221, LASER65
 from pychron.dvc.dvc_analysis import DVCAnalysis, project_path, analysis_path
 from pychron.dvc.dvc_database import DVCDatabase
@@ -184,8 +186,11 @@ class DVC(Loggable):
         return self.make_analyses(records)
 
     def make_analyses(self, records):
-        records = map(self._make_record, records)
-        return records
+        return progress_loader(records, self._make_record, threshold=1)
+
+
+        # records = map(self._make_record, records)
+        # return records
 
     def synchronize(self, pull=True):
         """
@@ -257,7 +262,9 @@ class DVC(Loggable):
     # def get_load_holder_holes(self, name):
     #     return self.meta_repo.get_load_holder_holes(name)
 
-    def _make_record(self, record):
+    def _make_record(self, record, prog, i, n):
+        if prog:
+            prog.change_message('Loading analysis {}. {}/{}'.format(record.record_id, i, n))
         a = DVCAnalysis(record)
 
         # load irradiation
@@ -265,7 +272,7 @@ class DVC(Loggable):
         a.set_chronology(chronology)
 
         pname = self.db.get_production_name(a.irradiation, a.irradiation_level)
-        # production = self.meta_repo.get_production(a.irradiation, a.irradiation_level)
+
         prod = self.meta_repo.get_production(pname)
         a.set_production(pname, prod)
 

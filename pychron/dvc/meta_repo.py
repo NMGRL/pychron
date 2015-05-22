@@ -22,6 +22,7 @@ import os
 import shutil
 # ============= local library imports  ==========================
 from uncertainties import ufloat
+from pychron.core.helpers.datetime_tools import ISO_FORMAT_STR
 from pychron.core.helpers.filetools import list_directory2, ilist_directory2, add_extension
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths
@@ -48,8 +49,16 @@ class Chronology(MetaObject):
             doses = []
 
         with open(path, 'w') as wfile:
-            for ds in doses:
-                wfile.write('{}\n'.format(','.join(ds)))
+            for p, s, e in doses:
+                if not isinstance(s, str):
+                    s = s.strftime(ISO_FORMAT_STR)
+                if not isinstance(s, str):
+                    s = s.strftime(ISO_FORMAT_STR)
+                if not isinstance(p, str):
+                    p = '{:0.3f}'.format(p)
+
+                line = '{},{},{}\n'.format(p, s, e)
+                wfile.write(line)
 
     def _load_hook(self, path, rfile):
         self._doses = []
@@ -161,9 +170,12 @@ cached = Cached
 class MetaRepo(GitRepoManager):
     clear_cache = Bool
 
-    def __init__(self, *args, **kw):
+    def __init__(self, path=None, *args, **kw):
         super(MetaRepo, self).__init__(*args, **kw)
-        self.path = paths.meta_dir
+        if path is None:
+            path = paths.meta_dir
+
+        self.path = path
         self.open_repo(self.path)
 
     def update_script(self, name, path_or_blob):
@@ -224,6 +236,7 @@ class MetaRepo(GitRepoManager):
 
     def add_chronology(self, irrad, doses):
         p = os.path.join(self.path, irrad, 'chronology.txt')
+
         Chronology.dump(p, doses)
         self.add(p, commit=False)
 
@@ -231,7 +244,7 @@ class MetaRepo(GitRepoManager):
         p = os.path.join(self.path, name)
         if not os.path.isdir(p):
             os.mkdir(p)
-            self.add(p, commit=False)
+            # self.add(p, commit=False)
 
     def add_load_holder(self, name, path_or_txt):
         p = os.path.join(self.path, 'load_holders', name)
