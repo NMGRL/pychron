@@ -102,6 +102,7 @@ class ArArAge(Loggable):
 
     moles_Ar40 = Property
     sensitivity = Float  # moles/pA
+    temporary_ic_factors = Dict
 
     _missing_isotope_warned = False
     _kca_warning = False
@@ -117,9 +118,10 @@ class ArArAge(Loggable):
             iso.ic_factor = ufloat(v, e)
 
     def set_temporary_ic_factor(self, k, v, e):
-        iso = self.get_isotope(detector=k)
-        if iso:
-            iso.temporary_ic_factor = (v, e)
+        self.temporary_ic_factors[k] = ufloat(v, e)
+        # iso = self.get_isotope(detector=k)
+        # if iso:
+        #     iso.temporary_ic_factor = (v, e)
 
     def set_temporary_blank(self, k, v, e, f):
         tol = 0.00001

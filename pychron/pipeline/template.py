@@ -42,6 +42,7 @@ class PipelineTemplate(HasTraits):
             node = pipeline.nodes[0]
             if isinstance(node, DataNode):
                 datanode = node
+                datanode.visited = False
         except IndexError:
             pass
 
@@ -60,6 +61,8 @@ class PipelineTemplate(HasTraits):
                 node.trait_set(browser_model=bmodel, dvc=dvc)
             elif isinstance(node, (FindReferencesNode, PersistNode)):
                 node.trait_set(dvc=dvc)
+            # elif isinstance(node, FitICFactorNode):
+            #     node.set_detectors()
 
             pipeline.nodes.append(node)
 

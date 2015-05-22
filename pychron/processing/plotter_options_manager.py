@@ -170,6 +170,10 @@ class PlotterOptionsManager(HasTraits):
             if self.use_formatting_options:
                 fmt = self._formatting_option_factory()
                 new.formatting_options = fmt
+            self._plotter_options_changed_hook(new)
+
+    def _plotter_options_changed_hook(self, new):
+        pass
 
     def _factory_default_fired(self):
         self._factory_default()
@@ -326,7 +330,15 @@ class IsotopeEvolutionOptionsManager(PlotterOptionsManager):
 class ICFactorOptionsManager(PlotterOptionsManager):
     plotter_options_klass = ICFactorOptions
     persistence_name = 'ic_factor'
+    detectors = List
 
+    def set_detectors(self, dets):
+        self.detectors = dets
+        if self.plotter_options:
+            self.plotter_options.set_detectors(self.detectors)
+
+    def _plotter_options_changed_hook(self, new):
+        new.set_detectors(self.detectors)
 
 class BlanksOptionsManager(PlotterOptionsManager):
     plotter_options_klass = BlanksOptions

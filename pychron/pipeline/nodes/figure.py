@@ -29,10 +29,12 @@ class FigureNode(BaseNode):
     editor = Any
     plotter_options = Any
     plotter_options_manager_klass = Any
+    plotter_options_manager = Any
 
     def refresh(self):
         if self.editor:
             # self.editor.force_update()
+            print 'editor refres'
             self.editor.refresh_needed = True
 
     def run(self, state):
@@ -42,8 +44,8 @@ class FigureNode(BaseNode):
 
         # editor = self.editor_klass()
         if not self.plotter_options:
-            pom = self.plotter_options_manager_klass()
-            self.plotter_options = pom.plotter_options
+            # pom = self.plotter_options_manager_klass()
+            self.plotter_options = self.plotter_options_manager.plotter_options
 
         editor.plotter_options = self.plotter_options
 
@@ -62,21 +64,19 @@ class FigureNode(BaseNode):
         state.editors.append(editor)
 
     def configure(self):
-        pom = self.plotter_options_manager_klass()
+        pom = self.plotter_options_manager
+        # pom = self.plotter_options_manager_klass()
         if self.editor:
             pom.plotter_options = self.editor.plotter_options
 
         info = pom.edit_traits(kind='livemodal')
         if info.result:
             self.plotter_options = pom.plotter_options
+            self.refresh()
             return True
 
-            # pom = self.editor.plotter_options_manager
-
-            # info = pom.edit_traits(kind='livemodal')
-            # if info.result:
-            # return True
-
+    def _plotter_options_manager_default(self):
+        return self.plotter_options_manager_klass()
 
 class IdeogramNode(FigureNode):
     name = 'Ideogram'

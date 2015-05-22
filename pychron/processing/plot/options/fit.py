@@ -39,11 +39,10 @@ class FitAuxPlot(AuxPlotOptions, Fit):
 
 class FitOptions(FigurePlotterOptions):
     plot_option_klass = FitAuxPlot
-    # def get_aux_plots(self):
-    # return [IsoFilterFit(name='Ar40', fit='linear')]
-    # def get_aux_plots(self):
-    # for p in self.aux_plots:
-    #         print p, p.use, p.enabled
+
+    def set_detectors(self, dets):
+        for p in self.aux_plots:
+            p.detectors = dets
 
     def get_saveable_plots(self):
         return [p for p in self.aux_plots if p.use]
@@ -59,8 +58,8 @@ class FitOptions(FigurePlotterOptions):
         v = View(Tabbed(p_grp, appear_grp))
         return v
 
-    def _get_aux_plots_group(self):
-        cols = [object_column(name='name', editable=False),
+    def _get_columns(self):
+        return [object_column(name='name'),
                 checkbox_column(name='enabled', label='Plot'),
                 checkbox_column(name='use', label='Save'),
                 object_column(name='fit',
@@ -76,7 +75,8 @@ class FitOptions(FigurePlotterOptions):
                 # checkbox_column(name='include_baseline_error', label='Inc. BsErr')
                 ]
 
-        v = View(VGroup(Item('name', editor=EnumEditor(name='names')),
+    def _get_edit_view(self):
+        return View(VGroup(Item('name', editor=EnumEditor(name='names')),
                         Item('marker', editor=EnumEditor(values=marker_names)),
                         Item('marker_size'),
                         HGroup(Item('ymin', label='Min'),
@@ -85,17 +85,18 @@ class FitOptions(FigurePlotterOptions):
                                label='Y Limits'),
                         show_border=True))
 
+    def _get_aux_plots_group(self):
         aux_plots_grp = Item('aux_plots',
                              style='custom',
                              show_label=False,
-                             editor=myTableEditor(columns=cols,
+                             editor=myTableEditor(columns=self._get_columns(),
                                                   sortable=False,
                                                   deletable=False,
                                                   clear_selection_on_dclicked=True,
                                                   edit_on_first_click=False,
                                                   # on_select=lambda *args: setattr(self, 'selected', True),
                                                   # selected='selected',
-                                                  edit_view=v,
+                                                  edit_view=self._get_edit_view(),
                                                   reorderable=False))
         return Group(aux_plots_grp, label='Fits')
 

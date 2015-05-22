@@ -98,7 +98,7 @@ class FigurePanel(HasTraits):
                                                  spacing=self.plot_spacing or po.plot_spacing,
                                                  bgcolor=bgcolor))
         center, mi, ma = self._get_init_xlimits()
-        plots = list(po.get_aux_plots())
+        plots = list(po.get_plotable_aux_plots())
         if plots:
             if self.plot_options.include_legend:
 

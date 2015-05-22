@@ -26,7 +26,8 @@ class Blanks(ReferencesSeries):
             if v is not None and e is not None:
                 ui.set_temporary_blank(iso, v, e, fit)
 
-    def _get_references_ve(self, name):
+    def _get_reference_data(self, po):
+        name = po.name
         ys = [ai.isotopes[name].get_intensity() for ai in self.sorted_references]
         return ys
 

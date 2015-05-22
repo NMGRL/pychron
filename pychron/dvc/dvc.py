@@ -24,6 +24,7 @@ from apptools.preferences.preference_binding import bind_preference
 
 
 
+
 # ============= standard library imports ========================
 import os
 from git import Repo
@@ -163,6 +164,10 @@ class DVC(Loggable):
         repo = self._get_project_repo(project)
         repo.commit(msg)
 
+    def save_icfactors(self, ai, dets, refs):
+        self.info('Saving icfactors for {}'.format(ai))
+        ai.dump_icfactors(dets, refs)
+
     def save_blanks(self, ai, keys, refs):
         self.info('Saving blanks for {}'.format(ai))
         ai.dump_blanks(keys, refs)
@@ -187,8 +192,13 @@ class DVC(Loggable):
         :return:
         """
         if pull:
-            self.meta_repo.pull()
-            self.load_db()
+            pass
+            # self.meta_repo.pull()
+            # try:
+            #     self.load_db()
+            # except:
+            #     import traceback
+            #     traceback.print_exc()
 
         else:
             self.meta_repo.push()

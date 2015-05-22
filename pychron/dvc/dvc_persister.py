@@ -15,7 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import base64
+
 from traits.api import List, Dict, Instance, Str, Float
+
 # ============= standard library imports ========================
 import hashlib
 import os
@@ -229,27 +232,37 @@ class DVCPersister(Loggable):
         p = self._make_path('')
         isos = {}
         bs = {}
+        dets = {}
         for iso in self.arar_age.isotopes.values():
-            sblob = ''
-            isos[iso.name] = {'detector': {'name': iso.detector,
-                                           'icFactor': nominal_value(iso.ic_factor),
-                                           'icFactorErr': std_dev(iso.ic_factor),
-                                           'deflection': self.defl_dict[iso.detector],
-                                           'gain': self.gains[iso.detector]},
+
+            sblob = base64.b64encode(iso.pack())
+            if iso.detector not in dets:
+                bblob = base64.b64encode(iso.baseline.pack())
+                dets[iso.detector] = {'ic_factor': nominal_value(iso.ic_factor),
+                                      'ic_factor_err': std_dev(iso.ic_factor),
+                                      'deflection': self.defl_dict[iso.detector],
+                                      'gain': self.gains[iso.detector],
+                                      'baseline': {'signal': bblob,
+                                                   'fit': iso.baseline.fit,
+                                                   'value': iso.baseline.value,
+                                                   'error': iso.baseline.error}}
+
+            isos[iso.name] = {'detector': {'name': iso.detector},
                               'fit': iso.fit,
                               'signal': sblob,
                               'blank': {'fit': 'previous',
-                                        'runids': [self.previous_blank_runid],
+                                        'references': [{'runid': self.previous_blank_runid, 'exclude': False}],
                                         'value': iso.blank.value,
                                         'error': iso.blank.error}}
-            if iso.detector not in bs:
-                bblob = ''
-                bs[iso.detector] = {'signal': bblob,
-                                    'fit': iso.baseline.fit,
-                                    'value': iso.baseline.value,
-                                    'error': iso.baseline.error}
+            # if iso.detector not in bs:
+            #     bblob = ''
+            #     bs[iso.detector] = {'signal': bblob,
+            #                         'fit': iso.baseline.fit,
+            #                         'value': iso.baseline.value,
+            #                         'error': iso.baseline.error}
 
         obj = self._make_analysis_dict()
+        obj['detectors'] = dets
         obj['isotopes'] = isos
         obj['baselines'] = bs
         obj['timestamp'] = timestamp.isoformat()
@@ -323,8 +336,4 @@ class DVCPersister(Loggable):
                    deflections=self.defl_dict)
         ydump(obj, path)
 
-
 # ============= EOF =============================================
-
-
-

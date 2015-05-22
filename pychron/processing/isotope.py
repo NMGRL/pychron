@@ -449,7 +449,7 @@ class Isotope(BaseIsotope):
     ic_factor = Either(Variable, AffineScalarFunc)
 
     age_error_component = Float(0.0)
-    temporary_ic_factor = None
+    # temporary_ic_factor = None
     temporary_blank = Instance(Blank)
     decay_corrected = None
 

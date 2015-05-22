@@ -21,7 +21,7 @@ import os
 import random
 import time
 # ============= local library imports  ==========================
-from uncertainties import ufloat
+from uncertainties import ufloat, std_dev, nominal_value
 import yaml
 from pychron.paths import paths
 from pychron.processing.analyses.analysis import Analysis
@@ -46,7 +46,6 @@ def project_path(project):
 
 
 class DVCAnalysis(Analysis):
-
     def __init__(self, record, *args, **kw):
         super(DVCAnalysis, self).__init__(*args, **kw)
 
@@ -153,11 +152,30 @@ class DVCAnalysis(Analysis):
                     blank['value'] = float(siso.temporary_blank.value)
                     blank['error'] = float(siso.temporary_blank.error)
                     blank['fit'] = siso.temporary_blank.fit
+                    blank['references'] = self._make_ref_list(refs)
                     iso['blank'] = blank
 
         self._dump(yd)
 
+    def dump_icfactors(self, dkeys, refs):
+        yd = self._get_yd()
+
+        dets = yd['detectors']
+        for dk in dkeys:
+            v = self.temporary_ic_factors.get(dk)
+            if v is not None:
+                det = dets.get(dk, {})
+                det['ic_factor'] = nominal_value(v)
+                det['ic_factor_err'] = std_dev(v)
+                det['references'] = self._make_ref_list(refs)
+            dets[dk] = det
+
+        self._dump(yd)
+
     # private
+    def _make_ref_list(self, refs):
+        return [{'runid': r.runid, 'exclude': r.temp_status} for r in refs]
+
     def _get_yd(self):
         with open(self.path, 'r') as rfile:
             yd = yaml.load(rfile)
@@ -177,8 +195,8 @@ class DVCAnalysis(Analysis):
             self.isotopes[k] = Isotope(name=k,
                                        detector=detname,
                                        _value=raw['value'], _error=raw['error'])
-            if detname not in self.deflections:
-                self.deflections[detname] = det['deflection']
+            # if detname not in self.deflections:
+            # self.deflections[detname] = det['deflection']
 
     def _dump(self, obj, path=None):
         if path is None:
@@ -186,7 +204,5 @@ class DVCAnalysis(Analysis):
 
         with open(path, 'w') as wfile:
             yaml.dump(obj, wfile, default_flow_style=False)
+
 # ============= EOF =============================================
-
-
-

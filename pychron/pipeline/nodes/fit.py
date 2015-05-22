@@ -38,7 +38,10 @@ class FitReferencesNode(FitNode):
     has_save_node = False
     
     def run(self, state):
+
         super(FitReferencesNode, self).run(state)
+
+        self.plotter_options.set_detectors(state.union_detectors)
         if state.references:
             self.editor.set_references(state.references)
             # self.editor.force_update(force=True)
@@ -56,6 +59,8 @@ class FitBlanksNode(FitReferencesNode):
     plotter_options_manager_klass = BlanksOptionsManager
     name = 'Fit Blanks'
     basename = 'Blanks'
+    # def _set_saveable(self, state):
+    #     super(FitBlanksNode, self)._set_saveable()
 
 
 class FitICFactorNode(FitReferencesNode):
@@ -65,6 +70,16 @@ class FitICFactorNode(FitReferencesNode):
     name = 'Fit ICFactor'
     basename = 'ICFactor'
 
+    def set_detectors(self, dets):
+        self.plotter_options_manager.set_detectors(dets)
+
+    def _set_saveable(self, state):
+        super(FitICFactorNode, self)._set_saveable(state)
+        ps = self.plotter_options.get_saveable_plots()
+        state.saveable_keys = [p.denominator for p in ps]
+
+        # for p in self.plotter_options.get_saveable_plots():
+        # self.saveable_icfactors.append(dict(detector=p.denominator))
 
     # def run(self, state):
     #     pass
@@ -84,10 +99,10 @@ class FitIsotopeEvolutionNode(FitNode):
             # ai.graph_id = idx
             po = self.plotter_options
 
-            keys = [pi.name for pi in po.get_aux_plots()]
+            keys = [pi.name for pi in po.get_saveable_aux_plots()]
             ai.load_raw_data(keys)
 
-            fits = [pi for pi in po.get_aux_plots()]
+            fits = [pi for pi in po.get_saveable_aux_plots()]
             ai.set_fits(fits)
 
         self.editor.analysis_groups = [(ai,) for ai in state.unknowns]

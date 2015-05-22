@@ -111,7 +111,7 @@ class ICFactorPersistNode(DVCPersistNode):
         return
 
         for ai in state.unknowns:
-            self.dvc.save_ic_factors(ai, state.saveable_keys, state.references)
+            self.dvc.save_icfactors(ai, state.saveable_keys, state.references)
 
         msg = self.commit_message
         if not msg:

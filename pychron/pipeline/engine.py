@@ -105,6 +105,22 @@ class PipelineEngine(Loggable):
 
         self._load_predefined_templates()
 
+    def reset(self):
+        for ni in self.pipeline.nodes:
+            ni.visited = False
+
+        self.update_needed = True
+
+    def update_detectors(self):
+        for p in self.pipeline.nodes:
+            if isinstance(p, FitICFactorNode):
+                udets = {iso.detector for ai in self.unknowns
+                         for iso in ai.isotopes.itervalues()}
+                rdets = {iso.detector for ai in self.references
+                         for iso in ai.isotopes.itervalues()}
+
+                p.set_detectors(list(udets.union(rdets)))
+
     def recall_unknowns(self):
         self.debug('recall unks')
         self.recall_analyses_needed = self.selected_unknowns
@@ -196,7 +212,7 @@ class PipelineEngine(Loggable):
         """
 
         self.debug('add data node')
-        newnode = UnknownNode(name='default', dvc=self.dvc, browser_model=self.browser_model)
+        newnode = UnknownNode(dvc=self.dvc, browser_model=self.browser_model)
         node = self._get_last_node(node)
         self.pipeline.add_after(node, newnode)
 
@@ -303,6 +319,7 @@ class PipelineEngine(Loggable):
         for idx, node in enumerate(self.pipeline.iternodes(start_node, run_to)):
             self.selected = node
             node.visited = True
+            self.update_needed = True
             if node.enabled:
                 self.debug('Run node {:02n}: {}'.format(idx, node))
                 node.run(state)
@@ -353,6 +370,9 @@ class PipelineEngine(Loggable):
 
         pt = PipelineTemplate(name, path)
         pt.render(self.pipeline, self.browser_model, self.dvc)
+        self.update_detectors()
+        # self.update_unknowns()
+        # self.update_references()
 
     def _load_predefined_templates(self):
         templates = []
@@ -390,6 +410,28 @@ class PipelineEngine(Loggable):
         return node
 
     # handlers
+    # @on_trait_change('unknowns[]')
+    # def _handle_unknowns(self, name, old, new):
+    #     if not new:
+    #         # only update if deletion
+    #         for n in self.pipeline.nodes:
+    #             try:
+    #                 n.editor.set_items(self.unknowns)
+    #                 n.refresh()
+    #             except AttributeError:
+    #                 pass
+    #
+    # @on_trait_change('references[]')
+    # def _handle_unknowns(self, name, old, new):
+    #     if not new:
+    #         # only update if deletion
+    #         for n in self.pipeline.nodes:
+    #             try:
+    #                 n.editor.set_references(self.references)
+    #                 n.refresh()
+    #             except AttributeError:
+    #                 pass
+
     def _dclicked_unknowns_fired(self):
         self.recall_unknowns()
 

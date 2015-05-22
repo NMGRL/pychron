@@ -21,14 +21,14 @@ from pyface.tasks.action.schema import SToolBar, SMenu
 from pyface.tasks.action.schema_addition import SchemaAddition
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter
 from pyface.timer.do_later import do_after
-from traits.api import Instance, Bool
+from traits.api import Instance, Bool, on_trait_change
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.paths import paths
 from pychron.pipeline.engine import PipelineEngine
 from pychron.pipeline.state import EngineState
-from pychron.pipeline.tasks.actions import RunAction, SavePipelineTemplateAction, ResumeAction
+from pychron.pipeline.tasks.actions import RunAction, SavePipelineTemplateAction, ResumeAction, ResetAction
 from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane
 from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.processing.tasks.recall.recall_editor import RecallEditor
@@ -46,12 +46,14 @@ class PipelineTask(BaseBrowserTask):
     engine = Instance(PipelineEngine, ())
     tool_bars = [SToolBar(RunAction(),
                           ResumeAction(),
+                          ResetAction(),
                           SavePipelineTemplateAction()),
                  # SToolBar(SwitchToBrowserAction())
                  ]
     state = Instance(EngineState)
     resume_enabled = Bool(False)
     run_enabled = Bool(True)
+    # reset_enabled = Bool(False)
     run_to = None
     # def switch_to_browser(self):
     #     self._activate_task('pychron.browser.task')
@@ -66,14 +68,16 @@ class PipelineTask(BaseBrowserTask):
         self.engine.on_trait_change(self._handle_recall, 'recall_analyses_needed')
 
         self.engine.task = self
+        self.engine.add_data()
+
         if DEBUG:
             do_after(500, self._debug)
 
     def _debug(self):
 
-        self.engine.add_data()
         self.engine.select_default()
-        self.engine.set_template('icfactor')
+
+        # self.engine.set_template('icfactor')
         # self.engine.add_is
         # self.engine.add_grouping(run=False)
         # self.engine.add_test_filter()
@@ -85,7 +89,7 @@ class PipelineTask(BaseBrowserTask):
         # self.engine.add_pdf_figure_node()
         # self.engine.add_spectrum()
 
-        self.run()
+        # self.run()
 
     def prepare_destroy(self):
         pass
@@ -96,6 +100,10 @@ class PipelineTask(BaseBrowserTask):
         return panes
 
     # toolbar actions
+    def reset(self):
+        self.state = None
+        self.engine.reset()
+
     def save_pipeline_template(self):
         # path = self.save_file_dialog()
         # path = '/Users/ross/Sandbox/template.yaml'
@@ -155,6 +163,23 @@ class PipelineTask(BaseBrowserTask):
         return SchemaAddition(path=path, factory=factory, **kw)
 
     # handlers
+    @on_trait_change('engine:unknowns[]')
+    def _handle_unknowns(self, name, old, new):
+        if self.active_editor:
+            if not new:
+                self.active_editor.set_items(self.engine.unknowns)
+                self.active_editor.refresh_needed = True
+        self.engine.update_detectors()
+
+    @on_trait_change('engine:references[]')
+    def _handle_references(self, name, old, new):
+        if self.active_editor:
+            # only update if deletion
+            if not new:
+                self.active_editor.set_references(self.engine.references)
+                self.active_editor.refresh_needed = True
+        self.engine.update_detectors()
+
     def _active_editor_changed(self, new):
         if new:
             self.engine.select_node_by_editor(new)

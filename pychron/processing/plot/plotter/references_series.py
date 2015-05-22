@@ -20,7 +20,7 @@ from traits.api import Property, on_trait_change, List, Array
 # ============= standard library imports ========================
 from math import isnan, isinf
 from uncertainties import nominal_value, std_dev
-from numpy import array, zeros_like
+from numpy import zeros_like
 # ============= local library imports  ==========================
 from pychron.core.regression.interpolation_regressor import InterpolationRegressor
 from pychron.processing.plot.plotter.series import BaseSeries
@@ -92,16 +92,16 @@ class ReferencesSeries(BaseSeries):
         ma = max(self.sorted_references[-1].timestamp, self.sorted_analyses[-1].timestamp)
         return mi, ma
 
-    def _get_reference_values(self, name):
-        ys = self._get_references_ve(name)
-        return array(map(nominal_value, ys))
+    # def _get_reference_values(self, name):
+    #     ys = self._get_references_ve(name)
+    #     return array(map(nominal_value, ys))
+    #
+    # def _get_reference_errors(self, name):
+    #     ys = self._get_references_ve(name)
+    #     return array(map(std_dev, ys))
 
-    def _get_reference_errors(self, name):
-        ys = self._get_references_ve(name)
-        return array(map(std_dev, ys))
-
-    def _get_references_ve(self, name):
-        raise NotImplementedError
+    # def _get_references_ve(self, name):
+    #     raise NotImplementedError
 
     def _get_sorted_references(self):
         return sorted(self.references,
@@ -117,14 +117,28 @@ class ReferencesSeries(BaseSeries):
             scatter.value.set_data(p_uys)
             scatter.yerror.set_data(p_ues)
 
+    def reference_data(self, po):
+        rs = self._get_reference_data(po)
+        return map(nominal_value, rs), map(std_dev, rs)
+
+    def current_data(self, po):
+        cs = self._get_current_data(po)
+        return map(nominal_value, cs), map(std_dev, cs)
+
+    def _get_current_data(self, po):
+        return self._unpack_attr(po.name)
+
+    def _get_reference_data(self, po):
+        pass
+
     # plotting
     def _plot_unknowns_current(self, pid, po):
         if self.analyses and self.show_current:
             graph = self.graph
             n = [ai.record_id for ai in self.sorted_analyses]
-            ys = array([ai.nominal_value for ai in self._unpack_attr(po.name)])
-            yerr = array([ai.std_dev for ai in self._unpack_attr(po.name)])
-            kw = dict(y=ys, yerror=yerr, type='scatter')
+
+            ys, ye = self.current_data(po)
+            kw = dict(y=ys, yerror=ye, type='scatter')
 
             args = graph.new_series(x=self.xs,
                                     display_index=ArrayDataSource(data=n),
@@ -185,8 +199,7 @@ class ReferencesSeries(BaseSeries):
         graph = self.graph
         efit = po.fit
         r_xs = self.rxs
-        r_ys = self._get_reference_values(po.name)
-        r_es = self._get_reference_errors(po.name)
+        r_ys, r_es = self.reference_data(po)
 
         reg = None
         kw = dict(add_tools=False, add_inspector=False, color='red',

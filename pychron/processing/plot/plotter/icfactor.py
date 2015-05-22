@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from numpy import array
 # ============= local library imports  ==========================
 from pychron.processing.plot.plotter.references_series import ReferencesSeries
 
@@ -24,8 +25,22 @@ class ICFactor(ReferencesSeries):
     def _set_interpolated_values(self, iso, fit, ans, p_uys, p_ues):
         pass
 
-    def _get_references_ve(self, name):
-        ys = [ai.get_value(name) for ai in self.sorted_references]
-        return ys
+    def _get_current_data(self, po):
+        n, d = po.name.split('/')
+        nys = array([ri.get_ic_factor(n) for ri in self.sorted_analyses])
+        dys = array([ri.get_ic_factor(d) for ri in self.sorted_analyses])
+        return dys / nys
+
+    def _get_reference_data(self, po):
+        n, d = po.name.split('/')
+
+        nys = [ri.get_isotope(detector=n) for ri in self.sorted_references]
+        dys = [ri.get_isotope(detector=d) for ri in self.sorted_references]
+
+        nys = array([ni.get_non_detector_corrected_value() for ni in nys if ni is not None])
+        dys = array([di.get_non_detector_corrected_value() for di in dys if di is not None])
+
+        rys = (nys / dys) / po.standard_ratio
+        return rys
 
 # ============= EOF =============================================

@@ -40,6 +40,13 @@ class ResumeAction(TaskAction):
     visible_name = 'resume_enabled'
 
 
+class ResetAction(TaskAction):
+    name = 'Reset'
+    method = 'reset'
+    image = icon('resume')
+    # enabled_name = 'resume_enabled'
+
+
 class SwitchToBrowserAction(TaskAction):
     name = 'To Browser'
     method = 'switch_to_browser'
