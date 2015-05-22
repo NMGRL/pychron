@@ -25,13 +25,15 @@ from traits.api import Instance, Bool, on_trait_change
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.ui.table_configurer import RecallTableConfigurer
 from pychron.paths import paths
 from pychron.pipeline.engine import PipelineEngine
 from pychron.pipeline.state import EngineState
-from pychron.pipeline.tasks.actions import RunAction, SavePipelineTemplateAction, ResumeAction, ResetAction
+from pychron.pipeline.tasks.actions import RunAction, SavePipelineTemplateAction, ResumeAction, ResetAction, \
+    ConfigureRecallAction
 from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane
 from pychron.envisage.browser.browser_task import BaseBrowserTask
-from pychron.processing.tasks.recall.recall_editor import RecallEditor
+from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter, IntermediateTabularAdapter
 
 DEBUG = True
 
@@ -47,6 +49,7 @@ class PipelineTask(BaseBrowserTask):
     tool_bars = [SToolBar(RunAction(),
                           ResumeAction(),
                           ResetAction(),
+                          ConfigureRecallAction(),
                           SavePipelineTemplateAction()),
                  # SToolBar(SwitchToBrowserAction())
                  ]
@@ -57,6 +60,10 @@ class PipelineTask(BaseBrowserTask):
     run_to = None
     # def switch_to_browser(self):
     #     self._activate_task('pychron.browser.task')
+
+    isotope_adapter = Instance(IsotopeTabularAdapter, ())
+    intermediate_adapter = Instance(IntermediateTabularAdapter, ())
+    recall_configurer = Instance(RecallTableConfigurer)
 
     def activated(self):
         super(PipelineTask, self).activated()
@@ -189,8 +196,12 @@ class PipelineTask(BaseBrowserTask):
         self.run()
 
     def _handle_recall(self, new):
-        for ai in new:
-            editor = RecallEditor(model=ai)
-            self._open_editor(editor)
+        self.recall(new)
 
+    def _recall_configurer_default(self):
+        rc = RecallTableConfigurer()
+        rc.intermediate_table_configurer.adapter = self.intermediate_adapter
+        rc.isotope_table_configurer.adapter = self.isotope_adapter
+        rc.load()
+        return rc
 # ============= EOF =============================================

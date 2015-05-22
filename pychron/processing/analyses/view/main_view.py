@@ -15,15 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, List, Event, Instance, Bool, Any, Property, cached_property
-from traitsui.api import View, UItem, HSplit, VSplit, Handler
+from traits.api import HasTraits, Str, List, Event, Instance, Any, Property, cached_property
+from traitsui.api import View, UItem, Handler, VGroup, HGroup
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from uncertainties import std_dev, nominal_value, ufloat
 from pychron.core.helpers.formatting import floatfmt, format_percent_error
-from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter, ComputedValueTabularAdapter, \
-    DetectorRatioTabularAdapter, ExtractionTabularAdapter, MeasurementTabularAdapter, IntermediateTabularAdapter
+from pychron.processing.analyses.view.adapters import ComputedValueTabularAdapter, \
+    DetectorRatioTabularAdapter, ExtractionTabularAdapter, MeasurementTabularAdapter
 from pychron.processing.analyses.view.values import ExtractionValue, ComputedValue, MeasurementValue, DetectorRatio
 from pychron.core.ui.tabular_editor import myTabularEditor
 
@@ -50,13 +50,9 @@ class MainView(HasTraits):
 
     _corrected_enabled = True
 
-    isotope_adapter = Instance(IsotopeTabularAdapter, ())
-    intermediate_adapter = Instance(IntermediateTabularAdapter, ())
     measurement_adapter = Instance(MeasurementTabularAdapter, ())
     extraction_adapter = Instance(ExtractionTabularAdapter, ())
     computed_adapter = Property(depends_on='analysis_type')
-
-    show_intermediate = Bool(True)
 
     selected = Any
     show_iso_evo_needed = Event
@@ -72,7 +68,7 @@ class MainView(HasTraits):
             self.refresh_needed = True
 
     def _load(self, an):
-        self.isotopes = [an.isotopes[k] for k in an.isotope_keys]
+        # self.isotopes = [an.isotopes[k] for k in an.isotope_keys]
         self.load_computed(an)
         self.load_extraction(an)
         self.load_measurement(an, an)
@@ -378,23 +374,10 @@ class MainView(HasTraits):
         return adapter()
 
     def _get_editors(self):
-        teditor = myTabularEditor(adapter=self.isotope_adapter,
-                                  drag_enabled=False,
-                                  stretch_last_section=False,
-                                  editable=False,
-                                  multi_select=True,
-                                  selected='selected',
-                                  refresh='refresh_needed')
 
         ceditor = myTabularEditor(adapter=self.computed_adapter,
                                   editable=False,
                                   drag_enabled=False,
-                                  refresh='refresh_needed')
-
-        ieditor = myTabularEditor(adapter=self.intermediate_adapter,
-                                  editable=False,
-                                  drag_enabled=False,
-                                  stretch_last_section=False,
                                   refresh='refresh_needed')
 
         eeditor = myTabularEditor(adapter=self.extraction_adapter,
@@ -407,14 +390,14 @@ class MainView(HasTraits):
                                   editable=False,
                                   refresh='refresh_needed')
 
-        return teditor, ieditor, ceditor, eeditor, meditor
+        return ceditor, eeditor, meditor
 
     def traits_view(self):
-        teditor, ieditor, ceditor, eeditor, meditor = self._get_editors()
+        ceditor, eeditor, meditor = self._get_editors()
 
         v = View(
-            VSplit(
-                HSplit(
+            VGroup(
+                HGroup(
                     UItem('measurement_values',
                           editor=meditor,
                           height=200,
@@ -423,18 +406,23 @@ class MainView(HasTraits):
                           editor=eeditor,
                           height=200,
                           width=0.6)),
-                UItem('isotopes',
-                      editor=teditor,
-                      height=0.25),
-                UItem('isotopes',
-                      editor=ieditor,
-                      defined_when='show_intermediate',
-                      height=0.25),
-                HSplit(UItem('computed_values',
+                # VGroup(UItem('isotopes',
+                #       editor=teditor,
+                #       # height=0.25
+                #       ),
+                #        # springy=True
+                #        ),
+                # UItem('isotopes',
+                #       editor=ieditor,
+                #       # defined_when='show_intermediate',
+                #       visible_when='show_intermediate',
+                #       ),
+                HGroup(UItem('computed_values',
                              editor=ceditor,
-                             height=200),
+                             # height=200
+                             ),
                        UItem('corrected_values',
-                             height=200,
+                             # height=200,
                              editor=ceditor))),
             handler=MainViewHandler()
         )

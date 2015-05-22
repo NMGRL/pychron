@@ -15,13 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Instance, Event, Str
+from traits.api import HasTraits, Instance, Event, Str, Bool, List
 from traitsui.api import View, UItem, InstanceEditor, VGroup, Tabbed, Spring, Group
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.ui.tabular_editor import myTabularEditor
+from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter, IntermediateTabularAdapter
 from pychron.processing.analyses.view.detector_ic_view import DetectorICView
 from pychron.processing.analyses.view.error_components_view import ErrorComponentsView
+# from pychron.processing.analyses.view.isotope_view import IsotopeView
 from pychron.processing.analyses.view.peak_center_view import PeakCenterView
 from pychron.processing.analyses.view.snapshot_view import SnapshotView
 from pychron.processing.analyses.view.spectrometer_view import SpectrometerView
@@ -59,6 +62,7 @@ class AnalysisView(HasTraits):
 
     main_view = Instance('pychron.processing.analyses.view.main_view.MainView')
     history_view = Instance('pychron.processing.analyses.view.history_view.HistoryView')
+    # isotopes_view = Instance(IsotopeView)
     experiment_view = Instance(ExperimentView)
     interference_view = Instance(InterferencesView)
     measurement_view = Instance(MeasurementView)
@@ -68,6 +72,11 @@ class AnalysisView(HasTraits):
     spectrometer_view = Instance(SpectrometerView)
     peak_center_view = Instance(PeakCenterView)
     error_comp_view = Instance(ErrorComponentsView)
+
+    isotopes = List
+    isotope_adapter = Instance(IsotopeTabularAdapter, ())
+    intermediate_adapter = Instance(IntermediateTabularAdapter, ())
+    show_intermediate = Bool(True)
 
     def update_fontsize(self, view, size):
         if 'main' in view:
@@ -88,6 +97,9 @@ class AnalysisView(HasTraits):
         self.main_view = main_view
 
         self._make_subviews(an)
+
+        self.isotopes = [an.isotopes[k] for k in an.isotope_keys]
+
         # history_view = HistoryView(an)
         # self.history_view = history_view
         #
@@ -117,7 +129,9 @@ class AnalysisView(HasTraits):
         #                                     selected_view=main_view)
 
     def _make_subviews(self, an):
-        for args in (('history', HistoryView),
+        for args in (
+                # ('isotopes', IsotopeView, 'isotopes'),
+                ('history', HistoryView),
                      ('experiment', ExperimentView, 'experiment_txt'),
                      ('extraction', ExtractionView, 'extraction_script_blob'),
                      ('measurement', MeasurementView, 'measurement_script_blob'),
@@ -158,6 +172,26 @@ class AnalysisView(HasTraits):
     def traits_view(self):
         main_grp = Group(UItem('main_view', style='custom',
                                editor=InstanceEditor()), label='Main')
+
+        teditor = myTabularEditor(adapter=self.isotope_adapter,
+                                  drag_enabled=False,
+                                  stretch_last_section=False,
+                                  editable=False,
+                                  multi_select=True,
+                                  selected='selected',
+                                  refresh='refresh_needed')
+        ieditor = myTabularEditor(adapter=self.intermediate_adapter,
+                                  editable=False,
+                                  drag_enabled=False,
+                                  stretch_last_section=False,
+                                  refresh='refresh_needed')
+        isotope_grp = Group(UItem('isotopes',
+                                  editor=teditor, ),
+                            UItem('isotopes',
+                                  editor=ieditor,
+                                  visible_when='show_intermediate'),
+                            label='Isotopes')
+
         history_grp = Group(UItem('history_view', style='custom',
                                   editor=InstanceEditor()), label='History')
 
@@ -188,7 +222,9 @@ class AnalysisView(HasTraits):
                                       editor=InstanceEditor()),
                                 defined_when='peak_center_view', label='Peak_center')
         v = View(VGroup(Spring(springy=False, height=-10),
-                        Tabbed(main_grp, history_grp,
+                        Tabbed(main_grp,
+                               isotope_grp,
+                               history_grp,
                                experiment_grp,
                                extraction_grp,
                                measurement_grp,

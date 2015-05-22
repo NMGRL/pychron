@@ -17,13 +17,17 @@
 # ============= enthought library imports =======================
 import os
 
+from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
+
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pyface.tasks.action.schema_addition import SchemaAddition
 from pychron.core.helpers.filetools import add_extension
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.paths import paths
+from pychron.pipeline.tasks.actions import ConfigureRecallAction
 from pychron.pipeline.tasks.browser_task import BrowserTask
 from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 from pychron.pipeline.tasks.task import PipelineTask
@@ -71,7 +75,9 @@ class PipelinePlugin(BaseTaskPlugin):
         # return [TaskExtension(actions=[SchemaAddition(id='Flag Manager',
         # factory=OpenFlagManagerAction,
         # path='MenuBar/tools.menu'), ])]
-        return []
+        return [TaskExtension(task_id='pychron.pipeline.task',
+                              actions=[SchemaAddition(factory=ConfigureRecallAction,
+                                                      path='MenuBar/Edit')])]
 
     def _tasks_default(self):
         return [TaskFactory(id='pychron.pipeline.task',

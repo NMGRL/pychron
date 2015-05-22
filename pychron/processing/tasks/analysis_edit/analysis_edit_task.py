@@ -192,21 +192,21 @@ class AnalysisEditTask(BaseBrowserTask):
         if pane:
             pane.items = ans
 
-    def get_recall_editors(self):
-        es = self.editor_area.editors
-        return [e for e in es if isinstance(e, RecallEditor)]
+    # def get_recall_editors(self):
+    #     es = self.editor_area.editors
+    #     return [e for e in es if isinstance(e, RecallEditor)]
 
-    def configure_recall(self):
-        tc = self.recall_configurer
-        info = tc.edit_traits()
-        if info.result:
-            for e in self.get_recall_editors()[:]:
-                if tc.show_intermediate != e.analysis_view.main_view.show_intermediate:
-                    e.close()
-                    self.recall(e.model)
-
-            for e in self.get_recall_editors():
-                tc.set_fonts(e.analysis_view)
+    # def configure_recall(self):
+    #     tc = self.recall_configurer
+    #     info = tc.edit_traits()
+    #     if info.result:
+    #         for e in self.get_recall_editors()[:]:
+    #             if tc.show_intermediate != e.analysis_view.main_view.show_intermediate:
+    #                 e.close()
+    #                 self.recall(e.model)
+    #
+    #         for e in self.get_recall_editors():
+    #             tc.set_fonts(e.analysis_view)
 
     # def recall(self, records, open_copy=False):
     #     """

@@ -51,6 +51,13 @@ class SwitchToBrowserAction(TaskAction):
     name = 'To Browser'
     method = 'switch_to_browser'
     image = icon('start')
+
+
+class ConfigureRecallAction(TaskAction):
+    name = 'Configure Recall'
+    dname = 'Configure Recall'
+    method = 'configure_recall'
+    image = icon('cog')
 # ============= EOF =============================================
 
 

@@ -167,6 +167,16 @@ class BaseBrowserTask(BaseEditorTask):
                 else:
                     self.warning('failed making records')
 
+    def configure_recall(self):
+        tc = self.recall_configurer
+        info = tc.edit_traits()
+        if info.result:
+            for e in self.get_recall_editors()[:]:
+                e.model.analysis_view.isotopes_view.show_intermediate = tc.show_intermediate
+
+            for e in self.get_recall_editors():
+                tc.set_fonts(e.model.analysis_view)
+
     # private
     def _get_editor_by_uuid(self, uuid):
         return next((editor for editor in self.editor_area.editors
@@ -177,7 +187,9 @@ class BaseBrowserTask(BaseEditorTask):
         editor = None
         # check if record already is open
         for r in records:
+
             editor = self._get_editor_by_uuid(r.uuid)
+            print editor, r.uuid, r.record_id
             if editor:
                 records.remove(r)
 
@@ -253,22 +265,22 @@ class BaseBrowserTask(BaseEditorTask):
         if ans:
             for rec in ans:
                 av = rec.analysis_view
-                mv = av.main_view
-                # mv.isotope_adapter = self.isotope_adapter
-                # mv.intermediate_adapter = self.intermediate_adapter
-                # mv.show_intermediate = self.recall_configurer.show_intermediate
+                # mv = av.isotopes_view
+                av.isotope_adapter = self.isotope_adapter
+                av.intermediate_adapter = self.intermediate_adapter
+                av.show_intermediate = self.recall_configurer.show_intermediate
 
-                # self.recall_configurer.set_fonts(av)
+                self.recall_configurer.set_fonts(av)
 
                 editor = RecallEditor(model=rec)
-                # editor.set_items(rec)
                 if existing and editor.basename in existing:
                     editor.instance_id = existing.count(editor.basename)
 
-                try:
-                    self.editor_area.add_editor(editor)
-                except AttributeError:
-                    pass
+                self._open_editor(editor, activate=False)
+                # try:
+                #     self.editor_area.add_editor(editor)
+                # except AttributeError:
+                #     pass
         else:
             self.warning('could not load records')
 
