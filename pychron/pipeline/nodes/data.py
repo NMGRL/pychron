@@ -49,6 +49,8 @@ class DataNode(BaseNode):
         items = getattr(state, self.analysis_kind)
         items.extend(self.analyses)
 
+        state.projects = {ai.project for ai in state.unknowns}
+
     def configure(self):
         browser_view = BrowserView(model=self.browser_model)
         info = browser_view.edit_traits(kind='livemodal')

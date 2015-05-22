@@ -15,21 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from itertools import groupby
-import subprocess
-
 from traits.api import Instance, Str
 from apptools.preferences.preference_binding import bind_preference
-
-
-
-
-
-
-
 # ============= standard library imports ========================
-import os
+from itertools import groupby
 from git import Repo
+import subprocess
+import os
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import remove_extension
 from pychron.core.progress import progress_loader
@@ -61,20 +53,25 @@ class DVC(Loggable):
     clear_db = False
     auto_add = False
 
-    repo_root = Str
-    repo_user = Str
-    repo_password = Str
+    # repo_root = Str
+    meta_repo_name = Str
+    project_root = Str
+    github_user = Str
+    github_password = Str
 
     project_repo = Instance(GitRepoManager)
 
     def __init__(self, *args, **kw):
         super(DVC, self).__init__(*args, **kw)
         self._bind_preferences()
-
         # self.synchronize()
         # self._defaults()
 
     def initialize(self):
+
+        mr = 'https://github.com/{}.git'.format(self.meta_repo_name)
+        self.meta_repo.create_remote(mr, force=True)
+
         self.synchronize()
         self._defaults()
 
@@ -83,7 +80,7 @@ class DVC(Loggable):
 
     # database
     def load_db(self):
-
+        force = False
         if self.meta_repo.out_of_date():
             self.info('rebuilding local database from origin')
             self.info('pulling changes')
@@ -100,10 +97,15 @@ class DVC(Loggable):
             if ret:
                 self.warning_dialog('There was a problem loading the database')
                 return
+            force = True
 
-        self.db.connect(force=True)
+        self.db.connect(force=force)
 
     def dump_db(self, msg=None):
+        if not self.db.modified:
+            self.debug('Database not modified. not dumping database')
+            return
+
         if msg is None:
             msg = 'Updated meta database'
 
@@ -114,8 +116,9 @@ class DVC(Loggable):
             subprocess.check_call(['sqlite3', path, '.dump'], stdout=wfile)
 
         self.meta_repo.add(txtdb, commit=False)
-        self.meta_repo.commit(msg)
-        self.meta_repo.push()
+        if os.path.basename(txtdb) in self.meta_repo.get_local_changes():
+            self.meta_repo.commit(msg)
+            self.meta_repo.push()
 
     # analysis processing
     def _get_project_repo(self, project):
@@ -144,12 +147,36 @@ class DVC(Loggable):
     def update_analyses(self, ans, msg):
         key = lambda x: x.project
         ans = sorted(ans, key=key)
+        mod_projects = []
         for project, ais in groupby(ans, key=key):
             ais = map(analysis_path, ais)
-            if self.project_add(project, ais):
+            if self.project_add_analyses(project, ais):
                 self.project_commit(project, msg)
+                mod_projects.append(project)
+        return mod_projects
 
-    def project_add(self, project, paths):
+    def project_has_staged(self, ps):
+        if not hasattr(ps, '__iter__'):
+            ps = (ps,)
+
+        changed = []
+        repo = GitRepoManager()
+        for p in ps:
+            pp = os.path.join(paths.dvc_dir, 'projects', p)
+            repo.open_repo(pp)
+            if repo.has_unpushed_commits():
+                changed.append(p)
+
+        return changed
+
+    def push_projects(self, ps):
+        repo = GitRepoManager()
+        for p in ps:
+            pp = os.path.join(paths.dvc_dir, 'projects', p)
+            repo.open_repo(pp)
+            repo.push()
+
+    def project_add_analyses(self, project, paths):
         if not hasattr(paths, '__iter__'):
             paths = (paths,)
 
@@ -188,10 +215,6 @@ class DVC(Loggable):
     def make_analyses(self, records):
         return progress_loader(records, self._make_record, threshold=1)
 
-
-        # records = map(self._make_record, records)
-        # return records
-
     def synchronize(self, pull=True):
         """
         pull meta_repo changes
@@ -200,36 +223,16 @@ class DVC(Loggable):
         :return:
         """
         if pull:
-            pass
-            # self.meta_repo.pull()
-            # try:
-            #     self.load_db()
-            # except:
-            #     import traceback
-            #     traceback.print_exc()
+            self.meta_repo.pull()
+            try:
+                self.load_db()
+            except:
+                import traceback
+
+                traceback.print_exc()
 
         else:
             self.meta_repo.push()
-
-    def commit_db(self, msg=None):
-        pass
-        # path, _ = os.path.splitext(self.db.path)
-        # path = '{}.sql'.format(path)
-        # with open(path, 'w') as wfile:
-        # wfile.write(subprocess.check_output(['sqlite3',self.db.path,'.dump']))
-        # path = self.db.path
-        # # self.meta_repo.add(path, commit=False)
-        # if msg is None:
-        # msg = 'updated database'
-        # try:
-        # self.meta_repo.shell('update_index', '--assume-unchanged', path)
-        # except:
-        # self.meta_repo.add(path, commit=False)
-        #
-        # self.meta_repo.commit(msg)
-
-    def session_ctx(self):
-        return self.db.session_ctx()
 
     def __getattr__(self, item):
         try:
@@ -301,7 +304,7 @@ class DVC(Loggable):
 
     # adders db and repo
     def add_project(self, name):
-        org = Organization(self.repo_root, usr=self.repo_user, pwd=self.repo_password)
+        org = Organization(self.project_root, usr=self.github_user, pwd=self.github_password)
 
         # check if project is available
         if name in org.repos:
@@ -363,7 +366,7 @@ class DVC(Loggable):
     # private
     def _bind_preferences(self):
         prefid = 'pychron.dvc'
-        for attr in ('repo_root', 'repo_user', 'repo_password'):
+        for attr in ('meta_repo_name', 'project_root', 'github_user', 'github_password'):
             bind_preference(self, attr, '{}.{}'.format(prefid, attr))
 
     def _defaults(self):
@@ -411,7 +414,8 @@ class DVC(Loggable):
             repo.commit('added default {}'.format(root.replace('_', ' ')))
 
     def _db_default(self):
-        return DVCDatabase(clear=self.clear_db, auto_add=self.auto_add)
+        return DVCDatabase(clear=self.clear_db,
+                           auto_add=self.auto_add)
 
     def _meta_repo_default(self):
         return MetaRepo()

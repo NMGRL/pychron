@@ -27,6 +27,7 @@ from git.exc import GitCommandError
 from git import Repo, Diff
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import fileiter
+from pychron.core.progress import open_progress
 from pychron.git_archive.diff_view import DiffView, DiffModel
 from pychron.loggable import Loggable
 from pychron.git_archive.commit import Commit
@@ -88,9 +89,13 @@ class GitRepoManager(Loggable):
                 self._repo = Repo.init(path)
 
     def out_of_date(self, branchname='master'):
+        pd = open_progress(2)
+
         repo = self._repo
         origin = repo.remotes.origin
+        pd.change_message('Fetching {} {}'.format(origin, branchname))
         repo.git.fetch(origin, branchname)
+        pd.change_message('Complete')
         try:
             oref = origin.refs[branchname]
             remote_commit = oref.commit
@@ -226,6 +231,9 @@ class GitRepoManager(Loggable):
     def has_staged(self):
         return self._repo.is_dirty()
 
+    def has_unpushed_commits(self):
+        return self._repo.git.log('--not', '--remotes', '--oneline')
+
     def add_unstaged(self, root, extension=None, use_diff=False):
         index = self.index
 
@@ -297,8 +305,10 @@ class GitRepoManager(Loggable):
     def create_remote(self, url, name='origin', force=False):
         repo = self._repo
         if repo:
+            self.debug('setting remote {} {}'.format(name, url))
             # only create remote if doesnt exist
             if not hasattr(repo.remotes, name):
+                self.debug('create remote {}'.format(name, url))
                 repo.create_remote(name, url)
             elif force:
                 repo.delete_remote(name)
@@ -368,9 +378,9 @@ class GitRepoManager(Loggable):
 
         self._add_to_repo(dest, msg, **kw)
 
-    def get_log(self):
+    def get_log(self, *args):
         repo = self._repo
-        return repo.active_branch.log()
+        return repo.active_branch.log(*args)
 
     # action handlers
     def diff_selected(self):

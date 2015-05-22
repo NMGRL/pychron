@@ -439,11 +439,18 @@ class BaseTask(Task, Loggable, PreferenceMixin):
             name='Help')
         return menu
 
-    def _confirmation(self, message=''):
+    def _confirmation(self, message='', title='Save Changes?'):
         dialog = ConfirmationDialog(parent=self.window.control,
                                     message=message, cancel=True,
-                                    default=CANCEL, title='Save Changes?')
+                                    default=CANCEL, title=title)
         return dialog.open()
+
+    @on_trait_change('window:opened')
+    def _on_open(self, event):
+        self._opened_hook()
+
+    def _opened_hook(self):
+        pass
 
     @on_trait_change('window:closing')
     def _on_close(self, event):
@@ -453,8 +460,8 @@ class BaseTask(Task, Loggable, PreferenceMixin):
         close = self._prompt_for_save()
         event.veto = not close
 
-    def _handle_prompt_for_save(self, message):
-        result = self._confirmation(message)
+    def _handle_prompt_for_save(self, message, title='Save Changes?'):
+        result = self._confirmation(message, title)
         if result == CANCEL:
             return False
         elif result == YES:

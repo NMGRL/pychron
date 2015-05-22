@@ -20,7 +20,6 @@ from traits.api import Any, on_trait_change, Date, Time, Instance
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
-from pychron.core.helpers.strtools import to_bool
 from pychron.envisage.tasks.editor_task import BaseEditorTask
 # from pychron.processing.selection.data_selector import DataSelector
 # from pychron.processing.tasks.browser.panes import BrowserPane
@@ -117,25 +116,32 @@ class BaseBrowserTask(BaseEditorTask):
                 self.browser_model.use_workspace = workspace.active
                 self.workspace = workspace
 
-    def activated(self):
-
-        # model = self._get_browser_model()
-        # self.browser_model = model
+    def _opened_hook(self):
+        self.dvc.initialize()
         if not self.browser_model.is_activated:
             self._setup_browser_model()
 
         with no_update(self):
             self.browser_model.current_task_name = self.default_task_name
 
-        # self._top_level_filter = None
+        self.browser_model.activated()
+        self._activate_sample_browser()
         self.activate_workspace()
 
-        self.browser_model.activated()
+    def activated(self):
 
-        if to_bool(self.application.preferences.get('pychron.dvc.enabled')):
-            self.dvc = self.application.get_service('pychron.dvc.dvc.DVC')
+        # model = self._get_browser_model()
+        # self.browser_model = model
+
+        # self._top_level_filter = None
+        # self.activate_workspace()
+
+        # self.browser_model.activated()
+
+        # if to_bool(self.application.preferences.get('pychron.dvc.enabled')):
+        self.dvc = self.application.get_service('pychron.dvc.dvc.DVC')
         # if self.browser_model.sample_view_active:
-        self._activate_sample_browser()
+
         # else:
 
         # self._activate_query_browser()

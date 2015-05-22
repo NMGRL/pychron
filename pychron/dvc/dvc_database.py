@@ -95,21 +95,21 @@ class DVCDatabase(DatabaseAdapter):
             # print sess
         # Base.metadata.init(sess.bind)
 
-        with self.session_ctx():
-            if not self.get_mass_spectrometers():
-                if auto_add:
-                    self.add_mass_spectrometer('Jan', 'ArgusVI')
-                else:
-                    while 1:
-                        self.information_dialog('No Mass spectrometer in the database. Add one now')
-                        nv = NewMassSpectrometerView(name='Jan', kind='ArgusVI')
-                        info = nv.edit_traits()
-                        if info.result:
-                            self.add_mass_spectrometer(nv.name, nv.kind)
-                            break
-
-            if not self.get_users():
-                self.add_user('root')
+            # with self.session_ctx():
+            #     if not self.get_mass_spectrometers():
+            #         if auto_add:
+            #             self.add_mass_spectrometer('Jan', 'ArgusVI')
+            #         else:
+            #             while 1:
+            #                 self.information_dialog('No Mass spectrometer in the database. Add one now')
+            #                 nv = NewMassSpectrometerView(name='Jan', kind='ArgusVI')
+            #                 info = nv.edit_traits()
+            #                 if info.result:
+            #                     self.add_mass_spectrometer(nv.name, nv.kind)
+            #                     break
+            #
+            #     if not self.get_users():
+            #         self.add_user('root')
 
     def find_references(self, times, atypes, hours=10):
         with self.session_ctx() as sess:

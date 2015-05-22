@@ -40,7 +40,7 @@ class DVCPlugin(BaseTaskPlugin):
 
     def dvc_factory(self):
         d = DVC()
-        d.initialize()
+        # d.initialize()
 
         return d
 

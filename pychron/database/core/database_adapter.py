@@ -28,6 +28,7 @@ from traits.api import Password, Bool, Str, on_trait_change, Any, Property, cach
 
 
 
+
 # =============standard library imports ========================
 from sqlalchemy import create_engine, distinct, MetaData
 from sqlalchemy.orm import sessionmaker
@@ -40,7 +41,6 @@ from pychron.database.core.query import compile_query
 from pychron.loggable import Loggable
 from pychron.database.core.base_orm import AlembicVersionTable
 from pychron import version
-
 
 ATTR_KEYS = ['kind', 'username', 'host', 'name', 'password']
 
@@ -94,6 +94,7 @@ class SessionCTX(object):
                 # self._parent.debug('$%$%$%$%$%$%$%$ commit {}'.format(self._commit))
                 if self._commit:
                     self._sess.commit()
+                    self._parent.post_commit()
                 else:
                     self._sess.rollback()
 
@@ -156,6 +157,9 @@ class DatabaseAdapter(Loggable):
     verbose = True
     connection_error = Str
     _session_lock = None
+
+    modified = False
+    _trying_to_add = False
     # def __init__(self, *args, **kw):
     #     super(DatabaseAdapter, self).__init__(*args, **kw)
 
@@ -220,7 +224,7 @@ class DatabaseAdapter(Loggable):
         if self.connection_parameters_changed:
             force = True
 
-        #        print not self.isConnected() or force, self.connection_parameters_changed
+        # print not self.isConnected() or force, self.connection_parameters_changed
 
         if not self.connected or force:
             self.connected = True if self.kind == 'sqlite' else False
@@ -283,6 +287,10 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
                 self.sess.commit()
             except:
                 self.sess.rollback()
+
+    def post_commit(self):
+        if self._trying_to_add:
+            self.modified = True
 
     def get_session(self):
         """
@@ -432,9 +440,11 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
         if sess:
             sess.add(obj)
             try:
-
                 if self.autoflush:
                     sess.flush()
+                    self.modified = True
+
+                self._trying_to_add = True
                 return obj
             except SQLAlchemyError, e:
                 import traceback
@@ -460,7 +470,6 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
                     #         sess = self.get_session()
                     #         if sess is not None:
                     #             sess.add(obj)
-
 
     def _add_unique(self, item, attr, name):
         nitem = getattr(self, 'get_{}'.format(attr))(name)
@@ -553,12 +562,12 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
 
             if order is not None:
                 if not isinstance(order, tuple):
-                    order = (order, )
+                    order = (order,)
                 q = q.order_by(*order)
 
             if group_by is not None:
                 if not isinstance(order, tuple):
-                    group_by = (group_by, )
+                    group_by = (group_by,)
                 q = q.group_by(*group_by)
 
             if limit is not None:
@@ -721,14 +730,13 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
         with self.session_ctx() as sess:
             return __retrieve(sess)
 
-
     # @deprecated
     def _get_items(self, table, gtables,
                    join_table=None, filter_str=None,
                    limit=None,
                    order=None,
                    key=None
-    ):
+                   ):
 
         if isinstance(join_table, str):
             join_table = gtables[join_table]
@@ -753,19 +761,19 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
             return [getattr(ri, key) for ri in res]
         return res
 
-    # def selector_factory(self, **kw):
-    #     sel = self._selector_factory(**kw)
-    #     self.selector = weakref.ref(sel)()
-    #     return self.selector
-    #
-    # def _selector_default(self):
-    #     return self._selector_factory()
-    #
-    # def _selector_factory(self, **kw):
-    #     if self.selector_klass:
-    #         s = self.selector_klass(db=self, **kw)
-    #         #            s.load_recent()
-    #         return s
+        # def selector_factory(self, **kw):
+        #     sel = self._selector_factory(**kw)
+        #     self.selector = weakref.ref(sel)()
+        #     return self.selector
+        #
+        # def _selector_default(self):
+        #     return self._selector_factory()
+        #
+        # def _selector_factory(self, **kw):
+        #     if self.selector_klass:
+        #         s = self.selector_klass(db=self, **kw)
+        #         #            s.load_recent()
+        #         return s
 
 
 class PathDatabaseAdapter(DatabaseAdapter):
@@ -793,4 +801,4 @@ class SQLiteDatabaseAdapter(DatabaseAdapter):
     def _build_database(self, sess, meta):
         raise NotImplementedError
 
-# ============= EOF =============================================
+        # ============= EOF =============================================

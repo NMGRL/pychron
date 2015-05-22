@@ -74,12 +74,17 @@ class DVCAnalysis(Analysis):
             yd = yaml.load(rfile)
 
             isos = yd['isotopes']
+            dets = yd['detectors']
             for k in keys:
                 if k in isos:
                     if k in self.isotopes:
                         iso = self.isotopes[k]
-                        iso.unpack_data(base64.b64decode(isos[k]['signal']))
-                        iso.baseline.unpack_data(base64.b64decode(isos[k]['baseline']))
+
+                        signal = isos[k]['signal']
+                        baseline = dets[isos[k]['detector']]['baseline']['signal']
+
+                        iso.unpack_data(base64.b64decode(signal))
+                        iso.baseline.unpack_data(base64.b64decode(baseline))
 
     def set_production(self, prod, r):
         self.production_name = prod

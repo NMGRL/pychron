@@ -20,7 +20,6 @@ import os
 from pyface.tasks.action.schema import SToolBar, SMenu
 from pyface.tasks.action.schema_addition import SchemaAddition
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter
-from pyface.timer.do_later import do_after
 from traits.api import Instance, Bool, on_trait_change
 
 # ============= standard library imports ========================
@@ -65,25 +64,29 @@ class PipelineTask(BaseBrowserTask):
     intermediate_adapter = Instance(IntermediateTabularAdapter, ())
     recall_configurer = Instance(RecallTableConfigurer)
 
+    modified = False
+    dbmodified = False
+    projects = None
+
+    def _opened_hook(self):
+        super(PipelineTask, self)._opened_hook()
+        self._debug()
+        # if DEBUG:
+        #     do_after(500, self._debug)
+
     def activated(self):
         super(PipelineTask, self).activated()
 
-        dvc = self.application.get_service('pychron.dvc.dvc.DVC')
-        self.engine.dvc = dvc
+        self.engine.dvc = self.dvc
         self.engine.browser_model = self.browser_model
         self.engine.on_trait_change(self._handle_run_needed, 'run_needed')
         self.engine.on_trait_change(self._handle_recall, 'recall_analyses_needed')
 
         self.engine.task = self
-        self.engine.add_data()
-
-        if DEBUG:
-            do_after(500, self._debug)
 
     def _debug(self):
-
+        self.engine.add_data()
         self.engine.select_default()
-
         self.engine.set_template('icfactor')
         # self.engine.add_is
         # self.engine.add_grouping(run=False)
@@ -149,6 +152,15 @@ class PipelineTask(BaseBrowserTask):
 
         self.engine.selected = None
         self.engine.update_needed = True
+
+        if state.modified:
+            self.modified = True
+            self.modified_projects = state.modified_projects
+
+        if state.dbmodified:
+            self.dbmodified = True
+
+        self.projects = state.projects
         # self.engine.post_run(state)
 
     def _toggle_run(self, v):
@@ -204,4 +216,31 @@ class PipelineTask(BaseBrowserTask):
         rc.isotope_table_configurer.adapter = self.isotope_adapter
         rc.load()
         return rc
+
+    def _prompt_for_save(self):
+        ret = True
+        # if self.modified:
+        #     m = 'You have changes to analyses. Would you like to share them?'
+        #     ret = self._handle_prompt_for_save(m, 'Share Changes')
+        #     if ret == 'save':
+        #         self.dvc.push_projects(self.modified_projects)
+        #
+        #     if self.dbmodified:
+        #         self.dvc.dump_db()
+        # if self.dbmodified:
+        #     m = 'You have changes to the db analyses. Would you like to share them?'
+        #     ret = self._handle_prompt_for_save(m, 'Share Changes')
+        #     if ret == 'save':
+        #         self.dvc.dump_db()
+
+        ps = self.engine.get_projects()
+        if ps:
+            changed = self.dvc.project_has_staged(ps)
+            if changed:
+                m = 'You have changes to analyses. Would you like to share them?'
+                ret = self._handle_prompt_for_save(m, 'Share Changes')
+                if ret == 'save':
+                    self.dvc.push_projects(ps)
+
+        return ret
 # ============= EOF =============================================

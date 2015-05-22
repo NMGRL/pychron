@@ -63,6 +63,11 @@ class DVCPersistNode(PersistNode):
     dvc = Instance('pychron.dvc.dvc.DVC')
     commit_message = Str
 
+    def _persist(self, state, msg):
+        modp = self.dvc.update_analyses(state.unknowns, msg)
+        if modp:
+            state.modified = True
+            state.modified_projects = state.modified_projects.union(modp)
 
 class IsotopeEvolutionPersistNode(DVCPersistNode):
     name = 'Save Iso Evo'
@@ -79,7 +84,7 @@ class IsotopeEvolutionPersistNode(DVCPersistNode):
             f = ','.join('{}({})'.format(x, y) for x, y in zip(state.saveable_keys, state.saveable_fits))
             msg = 'auto update iso evo, fits={}'.format(f)
 
-        self.dvc.update_analyses(state.unknowns, msg)
+        self._persist(state, msg)
 
 
 class BlanksPersistNode(DVCPersistNode):
@@ -98,8 +103,7 @@ class BlanksPersistNode(DVCPersistNode):
             f = ','.join('{}({})'.format(x, y) for x, y in zip(state.saveable_keys, state.saveable_fits))
             msg = 'auto update blanks, fits={}'.format(f)
 
-        self.dvc.update_analyses(state.unknowns, msg)
-
+        self._persist(state, msg)
 
 class ICFactorPersistNode(DVCPersistNode):
     name = 'Save ICFactor'
@@ -118,7 +122,7 @@ class ICFactorPersistNode(DVCPersistNode):
             f = ','.join('{}({})'.format(x, y) for x, y in zip(state.saveable_keys, state.saveable_fits))
             msg = 'auto update ic_factors, fits={}'.format(f)
 
-        self.dvc.update_analyses(state.unknowns, msg)
+        self._persist(state, msg)
 # ============= EOF =============================================
 
 

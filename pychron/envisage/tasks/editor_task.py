@@ -164,7 +164,7 @@ class BaseEditorTask(BaseManagerTask):
         dirty_editors = dict([(editor.name, editor)
                               for editor in self.editor_area.editors
                               if editor.dirty])
-        if not dirty_editors.keys():
+        if not dirty_editors:
             return True
 
         message = 'You have unsaved files. Would you like to save them?'

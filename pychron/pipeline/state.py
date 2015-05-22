@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, List, Bool, Any, Property, cached_property
+from traits.api import HasTraits, List, Bool, Any, Property, cached_property, Set
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.isotope_utils import sort_isotopes
@@ -36,6 +36,10 @@ class EngineState(HasTraits):
     udetectors = Property(depends_on='unknowns[]')
     rdetectors = Property(depends_on='references[]')
     union_detectors = Property(depends_on='udetectors, rdetectors')
+
+    modified_projects = Set
+    modified = False
+    dbmodified = False
 
     @cached_property
     def _get_udetectors(self):

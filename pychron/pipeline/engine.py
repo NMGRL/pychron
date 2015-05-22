@@ -49,6 +49,13 @@ class Pipeline(HasTraits):
                         if isinstance(nj, nb):
                             ni.has_save_node = True
 
+    def get_projects(self):
+        ps = set()
+        for node in self.nodes:
+            if isinstance(node, UnknownNode):
+                ps = ps.union({ai.project for ai in node.analyses})
+        return ps
+
     def move_up(self, node):
         idx = self.nodes.index(node)
         if idx > 1:
@@ -174,6 +181,8 @@ class PipelineEngine(Loggable):
     def set_template(self, name):
         self._set_template(name)
 
+    def get_projects(self):
+        return self.pipeline.get_projects()
     # def add_analyses(self, node):
     # """
     # add analyses to node
@@ -444,11 +453,13 @@ class PipelineEngine(Loggable):
     #             except AttributeError:
     #                 pass
 
-    def _dclicked_unknowns_fired(self):
-        self.recall_unknowns()
+    def _dclicked_unknowns_changed(self):
+        if self.selected_unknowns:
+            self.recall_unknowns()
 
     def _dclicked_references_fired(self):
-        self.recall_references()
+        if self.selected_references:
+            self.recall_references()
 
     def _selected_pipeline_template_changed(self, new):
         if new:

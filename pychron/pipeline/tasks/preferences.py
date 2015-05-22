@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traitsui.api import View
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -22,12 +23,16 @@ from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 
 class PipelinePreferences(BasePreferencesHelper):
-    pass
+    preferences_path = 'pychron.pipeline'
 
 
 class PipelinePreferencesPane(PreferencesPane):
-    model = BasePreferencesHelper
+    model_factory = PipelinePreferences
+    category = 'Pipeline'
 
+    def traits_view(self):
+        v = View()
+        return v
 # ============= EOF =============================================
 
 
