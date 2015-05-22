@@ -153,15 +153,8 @@ class PipelineTask(BaseBrowserTask):
         self.engine.selected = None
         self.engine.update_needed = True
 
-        if state.modified:
-            self.modified = True
-            self.modified_projects = state.modified_projects
-
         if state.dbmodified:
             self.dbmodified = True
-
-        self.projects = state.projects
-        # self.engine.post_run(state)
 
     def _toggle_run(self, v):
         self.resume_enabled = v
@@ -219,14 +212,7 @@ class PipelineTask(BaseBrowserTask):
 
     def _prompt_for_save(self):
         ret = True
-        # if self.modified:
-        #     m = 'You have changes to analyses. Would you like to share them?'
-        #     ret = self._handle_prompt_for_save(m, 'Share Changes')
-        #     if ret == 'save':
-        #         self.dvc.push_projects(self.modified_projects)
-        #
-        #     if self.dbmodified:
-        #         self.dvc.dump_db()
+
         # if self.dbmodified:
         #     m = 'You have changes to the db analyses. Would you like to share them?'
         #     ret = self._handle_prompt_for_save(m, 'Share Changes')
