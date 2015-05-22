@@ -13,10 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from PySide import QtCore
 from traits.etsconfig.api import ETSConfig
 ETSConfig.toolkit = "qt4"
 
+from PySide import QtCore
 from pyface.qt import QtGui
 from traits.trait_base import Undefined
 from traitsui.group import Group
@@ -737,16 +737,19 @@ def entry_point(modname, klass, setup_version_id='', debug=False):
     """
 
     user = initialize_version(modname, debug)
-    if debug:
-        set_commandline_args()
+    if user:
+        if debug:
+            set_commandline_args()
 
-    # import app klass and pass to launch function
-    if check_dependencies(debug):
-        mod = __import__('pychron.applications.{}'.format(modname), fromlist=[klass])
-        app = getattr(mod, klass)
-        from pychron.envisage.pychron_run import launch
+        # import app klass and pass to launch function
+        if check_dependencies(debug):
+            mod = __import__('pychron.applications.{}'.format(modname), fromlist=[klass])
+            app = getattr(mod, klass)
+            from pychron.envisage.pychron_run import launch
 
-        launch(app, user)
+            launch(app, user)
+    else:
+        logger.critical('Failed to initialize user')
 
 
 def check_dependencies(debug):
@@ -847,7 +850,7 @@ def initialize_version(appname, debug):
     user = get_user()
     if not user:
         logger.info('user login failed')
-        os._exit(0)
+        return
 
     if appname.startswith('py'):
         appname = appname[2:]
@@ -862,21 +865,22 @@ def initialize_version(appname, debug):
 
     cp = ConfigParser()
     cp.read(pref_path)
-
+    proot = None
     try:
         proot = cp.get('pychron.general', 'root_dir')
     except BaseException, e:
         print 'root_dir exception={}'.format(e)
-        proot = None
-        information(None, 'Pychron root directory not set in Preferences/General. Defaulting to "Pychron"')
+        from pyface.directory_dialog import DirectoryDialog
 
-    if proot and not os.path.isdir(proot):
-        information(None, 'Pychron root directory "{}" is not a valid location. Defaulting to "Pychron"'.format(proot))
-        proot = None
+        information(None, 'Pychron root directory not set in Preferences/General. Please select a valid directory')
+        dlg = DirectoryDialog(action='open', default_directory=os.path.expanduser('~'))
+        if dlg.open():
+            proot = str(dlg.path)
 
     if proot is None:
-        proot = os.path.join(os.path.expanduser('~'), 'Pychron')
+        return False
 
+    logger.debug('using Pychron root: {}'.format(proot))
     paths.build(proot)
 
     # build globals
