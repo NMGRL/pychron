@@ -515,6 +515,12 @@ class BrowserModel(BaseBrowserModel):
             sams = self.samples[idx:idx + 1]
             self.selected_samples = sams
 
+    def select_project(self, name):
+        for p in self.projects:
+            if p.name == name:
+                self.selected_projects = [p]
+                break
+
     def _selected_samples_changed(self, new):
         ans = []
         if new:
@@ -557,7 +563,7 @@ class BrowserModel(BaseBrowserModel):
             #                     progress.close()
             #
             #             ans = self._make_records(ans)
-                        # print len(ans), len(set([si.record_id for si in ans]))
+            # print len(ans), len(set([si.record_id for si in ans]))
             # if xx:
             lp, hp = self.low_post, self.high_post
             ans = self._retrieve_sample_analyses(new,
@@ -671,6 +677,3 @@ class BrowserModel(BaseBrowserModel):
         return TimeViewModel(db=self.db)
 
 # ============= EOF =============================================
-
-
-

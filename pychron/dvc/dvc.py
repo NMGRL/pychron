@@ -20,7 +20,6 @@ from apptools.preferences.preference_binding import bind_preference
 # ============= standard library imports ========================
 from itertools import groupby
 from git import Repo
-import subprocess
 import os
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import remove_extension
@@ -36,6 +35,7 @@ from pychron.paths import paths
 
 TESTSTR = {'blanks': 'auto update blanks', 'iso_evo': 'auto update iso_evo'}
 
+
 class DVCException(BaseException):
     def __init__(self, attr):
         self._attr = attr
@@ -50,16 +50,14 @@ class DVCException(BaseException):
 class DVC(Loggable):
     db = Instance('pychron.dvc.dvc_database.DVCDatabase')
     meta_repo = Instance('pychron.dvc.meta_repo.MetaRepo')
-    clear_db = False
-    auto_add = False
 
-    # repo_root = Str
     meta_repo_name = Str
     project_root = Str
     github_user = Str
     github_password = Str
 
     project_repo = Instance(GitRepoManager)
+    auto_add = True
 
     def __init__(self, *args, **kw):
         super(DVC, self).__init__(*args, **kw)
@@ -79,47 +77,6 @@ class DVC(Loggable):
         self.meta_repo.fetch()
 
     # database
-    def load_db(self):
-        force = False
-        if self.meta_repo.out_of_date():
-            self.info('rebuilding local database from origin')
-            self.info('pulling changes')
-            self.meta_repo.pull()
-
-            path = paths.meta_db
-            if os.path.isfile(path):
-                self.info('removing current db')
-                os.remove(path)
-
-            txtdb_path = paths.meta_txtdb
-            self.info('loading db into sqlite')
-            ret = subprocess.check_call(['sqlite3', path, '.read {}'.format(txtdb_path)])
-            if ret:
-                self.warning_dialog('There was a problem loading the database')
-                return
-            force = True
-
-        self.db.connect(force=force)
-
-    def dump_db(self, msg=None):
-        if not self.db.modified:
-            self.debug('Database not modified. not dumping database')
-            return
-
-        if msg is None:
-            msg = 'Updated meta database'
-
-        path = paths.meta_db
-        txtdb = paths.meta_txtdb
-
-        with open(txtdb, 'w') as wfile:
-            subprocess.check_call(['sqlite3', path, '.dump'], stdout=wfile)
-
-        self.meta_repo.add(txtdb, commit=False)
-        if os.path.basename(txtdb) in self.meta_repo.get_local_changes():
-            self.meta_repo.commit(msg)
-            self.meta_repo.push()
-
     # analysis processing
     def _get_project_repo(self, project):
         repo = self.project_repo
@@ -224,13 +181,6 @@ class DVC(Loggable):
         """
         if pull:
             self.meta_repo.pull()
-            try:
-                self.load_db()
-            except:
-                import traceback
-
-                traceback.print_exc()
-
         else:
             self.meta_repo.push()
 
@@ -369,7 +319,15 @@ class DVC(Loggable):
         for attr in ('meta_repo_name', 'project_root', 'github_user', 'github_password'):
             bind_preference(self, attr, '{}.{}'.format(prefid, attr))
 
+        prefid = 'pychron.dvc.db'
+        for attr in ('username', 'password', 'name', 'host'):
+            bind_preference(self.db, attr, '{}.{}'.format(prefid, attr))
+
     def _defaults(self):
+        # self.db.create_all(Base.metadata)
+
+        self.db.connect()
+
         with self.db.session_ctx():
             for tag, func in (('irradiation holders', self._add_default_irradiation_holders),
                               ('productions', self._add_default_irradiation_productions),
@@ -414,8 +372,11 @@ class DVC(Loggable):
             repo.commit('added default {}'.format(root.replace('_', ' ')))
 
     def _db_default(self):
-        return DVCDatabase(clear=self.clear_db,
-                           auto_add=self.auto_add)
+        return DVCDatabase(kind='mysql',
+                           username='root',
+                           password='Argon',
+                           host='localhost',
+                           name='pychronmeta')
 
     def _meta_repo_default(self):
         return MetaRepo()

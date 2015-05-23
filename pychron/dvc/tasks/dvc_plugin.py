@@ -19,7 +19,7 @@
 # ============= local library imports  ==========================
 from pychron.dvc.dvc import DVC
 from pychron.dvc.dvc_persister import DVCPersister
-from pychron.dvc.tasks.preferences import DVCPreferencesPane
+from pychron.dvc.tasks.preferences import DVCPreferencesPane, DVCDBConnectionPreferencesPane
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 
 
@@ -45,7 +45,7 @@ class DVCPlugin(BaseTaskPlugin):
         return d
 
     def _preferences_panes_default(self):
-        return [DVCPreferencesPane]
+        return [DVCPreferencesPane, DVCDBConnectionPreferencesPane]
 
         # def start(self):
         # add = not os.path.isfile(paths.meta_db)

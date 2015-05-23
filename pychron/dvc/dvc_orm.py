@@ -204,6 +204,9 @@ class MeasuredPositionTbl(Base, BaseMixin):
     analysisID = Column(Integer, ForeignKey('AnalysisTbl.idanalysisTbl'))
     loadName = Column(String(45), ForeignKey('LoadTbl.name'))
 
+
+class VersionTbl(Base, BaseMixin):
+    version = Column(String(40), primary_key=True)
 # ============= EOF =============================================
 
 

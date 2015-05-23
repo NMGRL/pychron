@@ -23,15 +23,13 @@ from traits.api import HasTraits, Str, List
 from traitsui.api import View, Item
 
 # ============= standard library imports ========================
-import os
 from sqlalchemy import not_, func
 # ============= local library imports  ==========================
 from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.database.core.query import compile_query
-from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, Base, MassSpectrometerTbl, IrradiationTbl, LevelTbl, SampleTbl, \
+from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, IrradiationTbl, LevelTbl, SampleTbl, \
     MaterialTbl, IrradiationPositionTbl, UserTbl, ExtractDeviceTbl, LoadTbl, LoadHolderTbl, LoadPositionTbl, \
-    MeasuredPositionTbl, ProductionTbl
-from pychron.paths import paths
+    MeasuredPositionTbl, ProductionTbl, VersionTbl
 
 
 class NewMassSpectrometerView(HasTraits):
@@ -64,7 +62,8 @@ class DVCDatabase(DatabaseAdapter):
 
 
     """
-    kind = 'sqlite'
+
+    test_func = 'get_database_version'
 
     irradiation = Str
     irradiations = List
@@ -75,21 +74,21 @@ class DVCDatabase(DatabaseAdapter):
         super(DVCDatabase, self).__init__(*args, **kw)
 
         # self._bind_preferences()
-        if path is None:
-            path = paths.meta_db
+        # if path is None:
+        #     path = paths.meta_db
 
-        self.path = path
+        # self.path = path
 
         # self.synced_path = '{}.sync'.format(paths.meta_db)
         # self.merge_path = '{}.merge'.format(paths.meta_db)
         # self.remote_path = '/var/pychronmeta.sqlite'
-        self.connect()
 
-        if clear and os.path.isfile(self.path):
-            os.remove(self.path)
+        # if clear and os.path.isfile(self.path):
+        #     os.remove(self.path)
 
-        if not os.path.isfile(self.path):
-            self.create_all(Base.metadata)
+        # if not os.path.isfile(self.path):
+        # self.create_all(Base.metadata)
+        # self.connect()
             # else:
             # with self.session_ctx() as sess:
             # print sess
@@ -238,6 +237,13 @@ class DVCDatabase(DatabaseAdapter):
         return self._add_item(a)
 
     # special getters
+    def get_database_version(self, **kw):
+        with self.session_ctx() as sess:
+            # q = self._retrieve_item(VersionTbl, 'version', )
+            q = sess.query(VersionTbl)
+            v = self._query_one(q, **kw)
+            return v.version
+
     def get_labnumber_analyses(self, lns,
                                low_post=None, high_post=None,
                                omit_key=None, exclude_uuids=None,

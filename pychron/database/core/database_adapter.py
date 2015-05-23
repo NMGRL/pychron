@@ -29,6 +29,7 @@ from traits.api import Password, Bool, Str, on_trait_change, Any, Property, cach
 
 
 
+
 # =============standard library imports ========================
 from sqlalchemy import create_engine, distinct, MetaData
 from sqlalchemy.orm import sessionmaker
@@ -373,11 +374,6 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
     def _test_db_connection(self, version_warn):
         with self.session_ctx():
             try:
-                # connected = False
-                # if self.test_func is not None:
-                # self.sess = None
-                #                 self.get_session()
-                #                sess = self.session_factory()
                 self.info('testing database connection {}'.format(self.test_func))
                 ver = getattr(self, self.test_func)(reraise=True)
                 if version_warn:

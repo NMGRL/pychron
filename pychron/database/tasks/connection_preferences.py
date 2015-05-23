@@ -22,14 +22,13 @@ from traits.has_traits import HasTraits
 from traitsui.api import View, Item, Group, VGroup, HGroup, ListStrEditor, spring, Label, Spring
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traitsui.editors import TextEditor
-from traitsui.item import UItem
 
 from pychron.core.pychron_traits import IPAddress
-from pychron.core.ui.animated_png_editor import AnimatedPNGEditor
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper, \
     FavoritesPreferencesHelper, FavoritesAdapter
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
@@ -64,12 +63,7 @@ class ConnectionMixin(HasTraits):
     _connected_color = Color('orange')
     _adapter_klass = 'pychron.database.core.database_adapter.DatabaseAdapter'
     _names = List
-    # def __init__(self, *args, **kw):
-    # super(ConnectionMixin, self).__init__(*args, **kw)
-    #
-    # self.names = show_databases()
-    #
-
+    _test_func = None
 
     def _reset_connection_label(self, d):
         def func():
@@ -95,6 +89,9 @@ class ConnectionMixin(HasTraits):
         klass = self._get_adapter()
         db = klass(**kw)
         self._connected_label = ''
+        if self._test_func:
+            db.test_func = self._test_func
+
         c = db.connect(warn=False)
         if c:
             self._connected_color = 'green'
@@ -107,14 +104,14 @@ class ConnectionMixin(HasTraits):
 class ConnectionPreferences(FavoritesPreferencesHelper, ConnectionMixin):
     preferences_path = 'pychron.database'
 
-    db_name = Str
+    name = Str
 
     username = Str
     password = Password
     host = IPAddress
     kind = Enum('---', 'mysql', 'sqlite')
-    progress_icon = Str('process-working-2')
-    progress_state = Event
+    _progress_icon = Str('process-working-2')
+    _progress_state = Event
 
     def __init__(self, *args, **kw):
         super(ConnectionPreferences, self).__init__(*args, **kw)
@@ -124,13 +121,13 @@ class ConnectionPreferences(FavoritesPreferencesHelper, ConnectionMixin):
         if self.username and self.password and self.host:
             if self.host:
                 def func():
-                    self.progress_state = True
+                    self._progress_state = True
                 do_after(50, func)
 
                 self._names = show_databases(self.host, self.username, self.password)
 
                 def func():
-                    self.progress_state = True
+                    self._progress_state = True
 
                 do_after(50, func)
 
@@ -141,13 +138,13 @@ class ConnectionPreferences(FavoritesPreferencesHelper, ConnectionMixin):
         return dict(username=self.username,
                     host=self.host,
                     password=self.password,
-                    name=self.db_name,
+                    name=self.name,
                     kind=self.kind)
 
     def _selected_change_hook(self):
         self._reset_connection_label(True)
 
-    @on_trait_change('db_name, kind, username, host, password')
+    @on_trait_change('name, kind, username, host, password')
     def db_attribute_changed(self, obj, name, old, new):
         if name in ('username', 'host', 'password'):
             self._load_names()
@@ -156,7 +153,7 @@ class ConnectionPreferences(FavoritesPreferencesHelper, ConnectionMixin):
             idx = ['', 'kind',
                    'username',
                    'host',
-                   'db_name',
+                   'name',
                    'password']
 
             for i, fastr in enumerate(self.favorites):
@@ -172,13 +169,13 @@ class ConnectionPreferences(FavoritesPreferencesHelper, ConnectionMixin):
 
     def _get_attrs(self):
         return ['fav_name', 'kind', 'username',
-                'host', 'db_name', 'password']
+                'host', 'name', 'password']
 
     def _get_values(self):
         return [self.fav_name,
                 self.kind,
                 self.username, self.host,
-                self.db_name,
+                self.name,
                 self.password]
 
 
@@ -225,7 +222,7 @@ class ConnectionPreferencesPane(PreferencesPane):
                              show_labels=False))
 
         db_grp = Group(HGroup(Item('kind', show_label=False),
-                              Item('db_name',
+                              Item('name',
                                    label='Database Name',
                                    editor=ComboboxEditor(name='_names')),
                               # UItem('progress_icon', editor=AnimatedPNGEditor(state='progress_state'))

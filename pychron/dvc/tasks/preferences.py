@@ -20,6 +20,7 @@ from traits.api import Str, Password
 from traitsui.api import View, Item, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.database.tasks.connection_preferences import ConnectionPreferences, ConnectionPreferencesPane
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 
@@ -29,6 +30,16 @@ class DVCPreferences(BasePreferencesHelper):
     project_root = Str
     github_user = Str
     github_password = Password
+
+
+class DVCDBConnectionPreferences(ConnectionPreferences):
+    preferences_path = 'pychron.dvc.db'
+    _adapter_klass = 'pychron.dvc.dvc_database.DVCDatabase'
+
+
+class DVCDBConnectionPreferencesPane(ConnectionPreferencesPane):
+    model_factory = DVCDBConnectionPreferences
+    category = 'DVC'
 
 
 class DVCPreferencesPane(PreferencesPane):

@@ -118,6 +118,7 @@ class BaseBrowserTask(BaseEditorTask):
 
     def _opened_hook(self):
         self.dvc.initialize()
+
         if not self.browser_model.is_activated:
             self._setup_browser_model()
 

@@ -212,13 +212,6 @@ class PipelineTask(BaseBrowserTask):
 
     def _prompt_for_save(self):
         ret = True
-
-        # if self.dbmodified:
-        #     m = 'You have changes to the db analyses. Would you like to share them?'
-        #     ret = self._handle_prompt_for_save(m, 'Share Changes')
-        #     if ret == 'save':
-        #         self.dvc.dump_db()
-
         ps = self.engine.get_projects()
         if ps:
             changed = self.dvc.project_has_staged(ps)

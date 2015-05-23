@@ -156,8 +156,8 @@ class PipelineEngine(Loggable):
 
     def configure(self, node):
         node.configure()
+        self.refresh_analyses()
         self.update_needed = True
-
         # if node.configure():
         # node.refresh()
         # self.run_needed = node
@@ -183,28 +183,12 @@ class PipelineEngine(Loggable):
 
     def get_projects(self):
         return self.pipeline.get_projects()
-    # def add_analyses(self, node):
-    # """
-    # add analyses to node
-    #
-    # select analyses from popup browser
-    #     :param node:
-    #     :return:
-    #     """
-    #     browser_view = BrowserView(model=self.browser_model)
-    #     info = browser_view.edit_traits(kind='livemodal')
-    #     if info.result:
-    #         records = self.browser_model.get_analysis_records()
-    #         if records:
-    #             analyses = self.dvc.make_analyses(records)
-    #             node.analyses.extend(analyses)
-    #
-    #             self.refresh_analyses()
 
     # debugging
     def select_default(self):
         node = self.pipeline.nodes[0]
 
+        self.browser_model.select_project('J')
         self.browser_model.select_sample(idx=0)
         records = self.browser_model.get_analysis_records()
         analyses = self.dvc.make_analyses(records)
