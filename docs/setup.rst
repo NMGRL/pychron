@@ -4,8 +4,7 @@ Setup
 Step 0. Downloads
 ==========================
 
-    A. If installing for development purposes or for machine operation, download and install the excellent
-       python IDE, PyCharm. A free community edition is available at https://www.jetbrains.com/pycharm/
+    A. Download and install the excellent python IDE, PyCharm. A free community edition is available at https://www.jetbrains.com/pycharm/
     #. Install Git. https://git-scm.com/downloads
     #. Download the Anaconda Python Distribution from https://store.continuum.io/cshop/anaconda/. This download includes the Python standard library and numerous open
        source packages for science, engineering and application development. The excellent package manager ``conda`` is
@@ -17,12 +16,12 @@ Step 0. Downloads
 
 Manual
 ===========================
-    #. Create a directory called ``Pychron`` in your Home folder. ie ``/Users/<username>/Pychron`` where <username> is
+    #. Create a directory called ``Pychron`` in your Home folder. ie ``/Users/<username>/Pychron`` where ``<username>`` is
        replaced with your user name, for the remainder of this documentation we will assume the username is ``argonlab``.
-       This location will serve as the root directory for all Pychron files.
+       This location will serve as the root directory for all Pychron configuration and data files.
     #. Create a directory called ``Programming`` in your Home folder. ``/Users/argonlab/Programming``
        This location will hold source files
-    #. Open a terminal. ``/Applications/Utilities/Terminal.app``
+    #. Open a terminal window. ``/Applications/Utilities/Terminal.app``
     #. Execute the following commands. These commands will move you to the ``Programming`` directory, then download the pychron
        source files into a directory called ``pychron``
        ::
@@ -39,6 +38,13 @@ own pychron fork located at https://github.com/UManPychron/pychron.git
          cd ~/Programming/pychron
          ls
 
+    #. Download the Pychron support files.
+       ::
+
+         cd ~/Programming
+         git clone https://github.com/<organization>/support_pychron.git
+
+    #. Move the directories in ``~/Programming/support_pychron`` to ``~/Pychron``
     #. Before you can launch Pychron you must install some dependencies.
        ::
 
