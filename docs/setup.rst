@@ -53,6 +53,12 @@ own pychron fork located at https://github.com/UManPychron/pychron.git
          conda install --yes --file ./conda_requirements.txt
          pip install -r ./pip_requirements.txt
 
+    # checkout the version of Pychron you want to use. The current release is v2.1.0
+       ::
+
+         cd ~/Programming/pychron
+         git checkout release/v2.1.0
+
 Auto (Beta)
 ===========================
 
