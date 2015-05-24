@@ -1,4 +1,4 @@
-Setup
+Install
 -----------------------------
 
 Step 0. Downloads

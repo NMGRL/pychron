@@ -18,7 +18,7 @@ Welcome to Pychron's documentation!
 
   intro
   python
-  setup
+  setup/index
   build
   user_guide/index
   dev_guide/index
