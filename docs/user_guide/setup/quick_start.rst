@@ -1,4 +1,4 @@
-Install
+Quick Start (ish)
 -----------------------------
 
 Step 0. Downloads
@@ -30,7 +30,7 @@ Manual
          git clone https://github.com/<organization>/pychron.git
 
      .. note:: Replace ``<organization>`` with the name of your github organization. For example U. of Manitoba has its
-own pychron fork located at https://github.com/UManPychron/pychron.git
+               own pychron fork located at https://github.com/UManPychron/pychron.git
     5. Check to make sure you have the source files. You should see a number of files and subdirectories after executing
        the following commands
        ::

@@ -38,7 +38,7 @@ Argus
     use_beam_blank=False
     beam_blank_threshold=0.1
 
-2. Set the mftable.csv. Each value in the table is the peak center in DAC space for a given isotope on a given detector.
+2. Set the ``~/Pychron/setupfiles/spectrometer/mftable.csv``. Each value in the table is the peak center in DAC space for a given isotope on a given detector.
 
 .. note :: The DAC value is for a Deflection voltage=0
 
