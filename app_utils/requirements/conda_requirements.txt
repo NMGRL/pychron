@@ -1,0 +1,17 @@
+statsmodels>=0.5.0
+PyYAML>=3
+traits>=4.4
+traitsui>=4.4
+chaco>=4.4
+enable>=4.3
+pyface>=4.4
+envisage
+sqlalchemy
+Reportlab
+lxml
+xlrd
+xlwt
+pip
+PySide
+matplotlib
+pil
