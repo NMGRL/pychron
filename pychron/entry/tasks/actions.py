@@ -131,9 +131,9 @@ class GenerateTrayAction(TaskAction):
     ddescription = 'Make a irradiation tray image from an irradiation tray text file.'
 
 
-class ImportIrradiationLevelAction(TaskAction):
-    name = 'Import Level'
-    dname = 'Import Level'
+class ImportIrradiationFileAction(TaskAction):
+    name = 'Import Irradiation File'
+    dname = 'Import Irradiation File'
     image = icon('file_xls')
 
     method = 'import_irradiation_load_xls'

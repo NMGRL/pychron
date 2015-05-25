@@ -28,7 +28,7 @@ from pychron.entry.tasks.actions import SaveLabbookPDFAction, MakeIrradiationTem
     SensitivityEntryAction, AddMolecularWeightAction, AddFluxMonitorAction, \
     GenerateTrayAction, \
     ImportIrradiationHolderAction, ExportIrradiationAction, ImportIrradiationAction, \
-    TransferJAction, ImportSamplesAction
+    TransferJAction, ImportSamplesAction, ImportIrradiationFileAction
 from pychron.entry.editors.molecular_weight_editor import MolecularWeightEditor
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 
@@ -92,6 +92,8 @@ class EntryPlugin(BaseTaskPlugin):
                   SchemaAddition(id='pychron.entry2.import_irradiation', factory=ImportIrradiationAction, path=g2path),
                   SchemaAddition(id='pychron.entry2.export_irradiation', factory=ExportIrradiationAction, path=g2path),
                   SchemaAddition(id='pychron.entry2.import_samples_from_file', factory=ImportSamplesAction,
+                                 path=g2path),
+                  SchemaAddition(id='pychron.entry2.import_irradiations_from_file', factory=ImportIrradiationFileAction,
                                  path=g2path),
                   SchemaAddition(id='pychron.entry2.generate_tray', factory=GenerateTrayAction, path=g2path, ),
                   SchemaAddition(id='pychron.entry2.save_labbook', factory=SaveLabbookPDFAction, path=g2path),
