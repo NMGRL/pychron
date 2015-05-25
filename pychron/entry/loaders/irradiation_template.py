@@ -37,6 +37,7 @@ class IrradiationTemplate(object):
         self._make_irradiations_sheet(wb)
         self._make_chronologies_sheet(wb)
         self._make_positions_sheet(wb)
+        self._make_configuration_sheet(wb)
         wb.save(p)
 
     def _make_irradiations_sheet(self, wb):
@@ -51,7 +52,7 @@ class IrradiationTemplate(object):
         sheet = wb.add_sheet('Positions')
         self._make_header(sheet, POSITION_COLUMNS)
 
-    def _make_positions_sheet(self, wb):
+    def _make_configuration_sheet(self, wb):
         sheet = wb.add_sheet('Configuration')
         self._make_header(sheet, CONFIG_COLUMNS)
         for i, (ai, vi, di) in enumerate(CONFIG_ATTRS):

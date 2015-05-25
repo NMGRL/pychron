@@ -104,6 +104,9 @@ class GenerateLabnumbersAction(TaskAction):
 
     method = 'generate_labnumbers'
 
+    ddescription = 'Automatically generate labnumbers (aka identifiers) for each irradiation position in the ' \
+                   'currently selected irradiation.'
+
 
 class PreviewGenerateLabnumbersAction(TaskAction):
     name = 'Preview Generate Labnumbers'
@@ -125,14 +128,17 @@ class GenerateTrayAction(TaskAction):
     image = icon('table_lightning')
 
     method = 'generate_tray'
+    ddescription = 'Make a irradiation tray image from an irradiation tray text file.'
 
 
-class ImportIrradiationLevelAction(TaskAction):
-    name = 'Import Level'
-    dname = 'Import Level'
+class ImportIrradiationFileAction(TaskAction):
+    name = 'Import Irradiation File'
+    dname = 'Import Irradiation File'
     image = icon('file_xls')
 
     method = 'import_irradiation_load_xls'
+    ddescription = 'Import irradiation information from an Excel file. Use "Irradiation Template" ' \
+                   'to generate a boilerplate irradiation template'
 
 
 class MakeIrradiationTemplateAction(TaskAction):
@@ -141,12 +147,14 @@ class MakeIrradiationTemplateAction(TaskAction):
     image = icon('file_xls')
 
     method = 'make_irradiation_load_template'
+    ddescription = 'Make an Excel irradiation template that can be used to import irradiation information.'
 
 
 class ImportSamplesAction(TaskAction):
     name = 'Import Sample File'
     dname = 'Import Sample File'
     method = 'import_sample_from_file'
+
 
 class ImportSampleMetadataAction(TaskAction):
     name = 'Import Sample Metadata...'
@@ -165,6 +173,8 @@ class GenerateIrradiationTableAction(Action):
     dname = 'Generate Irradiation Table'
     accelerator = 'Ctrl+0'
 
+    ddescription = 'Do not use!'
+
     def perform(self, event):
         from pychron.entry.irradiation_table_writer import IrradiationTableWriter
 
@@ -176,6 +186,7 @@ class ImportIrradiationHolderAction(Action):
 
     name = 'Import Irradiation Holder'
     dname = 'Import Irradiation Holder'
+
     def perform(self, event):
         from pychron.entry.loaders.irradiation_holder_loader import IrradiationHolderLoader
         from pychron.database.isotope_database_manager import IsotopeDatabaseManager

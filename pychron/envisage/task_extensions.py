@@ -18,7 +18,6 @@ import os
 
 from pychron.core.ui import set_qt
 
-
 set_qt()
 
 # ============= enthought library imports =======================
@@ -27,8 +26,9 @@ from traitsui.menu import Action
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
 from pyface.tasks.action.schema_addition import SchemaAddition
-from traits.api import HasTraits, Str, Instance, Event, Bool, List, Enum
-from traitsui.api import View, UItem, VGroup, TreeNode, Handler, HGroup
+from traits.api import HasTraits, Str, Instance, Event, Bool, List, Enum, Any
+from traitsui.api import View, UItem, VGroup, TreeNode, Handler, HGroup, TextEditor
+
 # ============= standard library imports ========================
 import yaml
 # ============= local library imports  ==========================
@@ -187,8 +187,9 @@ class EEHandler(Handler):
 class EditExtensionsView(HasTraits):
     view_model = Instance(ViewModel, ())
     predefined = Enum('', 'Simple', 'Advanced')
-    selected = List
+    selected = Any
     filter_value = Str
+    description = Str
 
     collapse_all = Event
     expand_all = Event
@@ -221,8 +222,13 @@ class EditExtensionsView(HasTraits):
     def add_additions(self, tid, task_id, name, a):
         adds = []
         for ai in a:
+            d = ''
+            if hasattr(ai.factory, 'ddescription'):
+                d = ai.factory.ddescription
+
             adds.append(AdditionModel(model=ai,
-                                      name=ai.factory.dname))
+                                      name=ai.factory.dname,
+                                      description=d))
         te = self.view_model.get_te_model(tid)
         if te is None:
             te = TaskExtensionModel(name=name,
@@ -266,9 +272,16 @@ class EditExtensionsView(HasTraits):
             self.refresh_all_needed = True
 
     def _dclicked_fired(self):
-        s = self.selected[0]
+        s = self.selected
         s.enabled = not s.enabled
         self.update()
+
+    def _selected_changed(self, new):
+        print new
+        try:
+            self.description = new.description
+        except AttributeError:
+            self.description = ''
 
 
 def edit_task_extensions(ts):
@@ -298,24 +311,33 @@ def edit_task_extensions(ts):
                                                Action(name='Disable',
                                                       visible_when='object.enabled',
                                                       action='set_disabled')))]
-    av = View(VGroup(UItem('predefined', tooltip='List of Predefined UI configurations'),
-                     UItem('filter_value',
-                           tooltip='Filter items by name. Show only items where NAME starts with the specified value'),
+    tgrp = VGroup(UItem('predefined', tooltip='List of Predefined UI configurations'),
+                  UItem('filter_value',
+                        tooltip='Filter items by name. Show only items where NAME starts with the specified value'),
 
-                     HGroup(icon_button_editor('collapse_all', 'collapse'),
-                            icon_button_editor('expand_all', 'collapse'),),
+                  HGroup(icon_button_editor('collapse_all', 'collapse'),
+                         icon_button_editor('expand_all', 'collapse'), ),
 
-                     UItem('view_model',
-                           editor=TreeEditor(nodes=nodes,
-                                             selection_mode='extended',
-                                             selected='selected',
-                                             dclick='dclicked',
-                                             show_disabled=True,
-                                             collapse_all = 'collapse_all',
-                                             expand_all = 'expand_all',
-                                             refresh='refresh_needed',
-                                             refresh_all_icons='refresh_all_needed',
-                                             editable=False))),
+                  UItem('view_model',
+                        height=-400,
+                        editor=TreeEditor(nodes=nodes,
+                                          # selection_mode='extended',
+                                          hide_root=True,
+                                          selected='selected',
+                                          dclick='dclicked',
+                                          show_disabled=True,
+                                          collapse_all='collapse_all',
+                                          expand_all='expand_all',
+                                          refresh='refresh_needed',
+                                          refresh_all_icons='refresh_all_needed',
+                                          editable=False)))
+    dgrp = VGroup(UItem('description',
+                        style='custom',
+                        # height=-100,
+                        editor=TextEditor(read_only=True)),
+                  show_border=True, label='Description')
+
+    av = View(VGroup(tgrp, dgrp),
               title='Edit UI',
               width=500,
               height=700,
@@ -354,6 +376,3 @@ if __name__ == '__main__':
     d = Demo()
     d.configure_traits()
 # ============= EOF =============================================
-
-
-
