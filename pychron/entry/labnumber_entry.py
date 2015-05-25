@@ -663,7 +663,8 @@ THIS CHANGE CANNOT BE UNDONE')
                 if positions:
                     with dirty_ctx(self):
                         self._make_positions(n, positions)
-            except:
+            except BaseException, e:
+                print e
                 self.warning_dialog('Failed loading Irradiation level="{}"'.format(name))
                 sess.rollback()
 
@@ -687,7 +688,7 @@ THIS CHANGE CANNOT BE UNDONE')
             ir.trait_set(labnumber=str(labnumber), hole=position)
 
             item = self.canvas.scene.get_item(str(position))
-            item.fill = ln.identifier
+            item.fill = bool(ln.identifier)
 
             selhist = ln.selected_flux_history
             if selhist:
@@ -749,40 +750,32 @@ THIS CHANGE CANNOT BE UNDONE')
         return materials
 
     def _get_irradiation_tray_image(self):
+
         p = self._get_map_path()
         db = self.db
-        with db.session_ctx():
-            level = db.get_irradiation_level(self.irradiation,
-                                             self.level)
-            holder = None
-            if level:
-                holder = level.holder
-                holder = holder.name if holder else None
-            holder = holder if holder is not None else NULL_STR
-            self.tray_name = holder
-            im = ImageResource('{}.png'.format(holder),
-                               search_path=[p]
-            )
-            return im
+        if db.connected:
+            with db.session_ctx():
+                level = db.get_irradiation_level(self.irradiation,
+                                                 self.level)
+                holder = None
+                if level:
+                    holder = level.holder
+                    holder = holder.name if holder else None
+                holder = holder if holder is not None else NULL_STR
+                self.tray_name = holder
+                im = ImageResource('{}.png'.format(holder),
+                                   search_path=[p])
+                return im
 
     @cached_property
     def _get_trays(self):
         db = self.db
-        with db.session_ctx():
-            hs = db.get_irradiation_holders()
-            ts = [h.name for h in hs]
+        ts = []
+        if db.connected:
+            with db.session_ctx():
+                hs = db.get_irradiation_holders()
+                ts = [h.name for h in hs]
 
-            #p = os.path.join(self._get_map_path(), 'images')
-            #if not os.path.isdir(p):
-            #    self.warning_dialog('{} does not exist'.format(p))
-            #    return Undefined
-            #
-            #ts = [os.path.splitext(pi)[0] for pi in os.listdir(p) if not pi.startswith('.')
-            #      #                    if not (pi.endswith('.png')
-            #      #                            or pi.endswith('.pct')
-            #      #                            or pi.startswith('.'))
-            #]
-            #if ts:
             self.tray = ts[-1]
 
         return ts

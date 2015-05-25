@@ -72,7 +72,8 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     weight = Float
 
     def activated(self):
-        self.load_projects(include_recent=False)
+        if self.db.connected:
+            self.load_projects(include_recent=False)
 
     def transfer_j(self):
         self.info('Transferring J Data')
