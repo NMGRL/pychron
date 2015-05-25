@@ -15,11 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Button
-from traitsui.api import View, Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.menu import Action
+
 from pychron.envisage.resources import icon
 
 
@@ -27,6 +26,7 @@ class BuildApplicationAction(Action):
     name = 'Build'
     dname = 'Build'
     image = icon('bricks')
+
     def perform(self, event):
         app = event.task.window.application
         up = app.get_service('pychron.updater.updater.Updater')
@@ -35,8 +35,10 @@ class BuildApplicationAction(Action):
 
 class CheckForUpdatesAction(Action):
     name = 'Check For Updates'
-    dname = 'Check For Updates'
     image = icon('update-product')
+
+    dname = 'Check For Updates'
+    ddescription = 'Check for updates to Pychron by examining the public Github.'
 
     def perform(self, event):
         app = event.task.window.application

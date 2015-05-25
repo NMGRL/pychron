@@ -610,7 +610,7 @@ class Circle(QPrimitive):
 
         if self.fill:
             if self.fill_color:
-                gc.set_fill_color(self.fill_color)
+                gc.set_fill_color(self._convert_color(self.fill_color))
             gc.arc(x, y, r, 0, 360)
             gc.fill_path()
 
@@ -698,9 +698,10 @@ class Span(Line):
 class LoadIndicator(Circle):
     degas_indicator = False
     measured_indicator = False
-    degas_color = (1, 0.5, 0)
-    measured_color = (0.69, 0.77, 0.87)
+    degas_color = Color('orange')
+    measured_color = Color('purple')
     default_color = 'black'
+    fill_color = Color('lightblue')
     # _text = List
     labnumber_label = None
     weight_label = None
@@ -749,7 +750,7 @@ class LoadIndicator(Circle):
 
     def _render_(self, gc):
         c = (0, 0, 0)
-        if self.fill and self.fill_color and sum(self.fill_color[:3]) < 1.5:
+        if self.fill and self.fill_color and sum(self.fill_color.toTuple()[:3]) < 1.5:
             c = (255, 255, 255)
 
         self.text_color = c
@@ -764,7 +765,6 @@ class LoadIndicator(Circle):
         self.name_offsetx = r - 2
         self.name_offsety = r - 2
 
-        super(LoadIndicator, self)._render_(gc)
         if self.state:
             with gc:
                 gc.set_stroke_color(self._convert_color(self.active_color))
@@ -774,13 +774,14 @@ class LoadIndicator(Circle):
 
         nr = r * 0.25
 
+        super(LoadIndicator, self)._render_(gc)
         if self.degas_indicator:
-            gc.set_fill_color(self.degas_color)
+            gc.set_fill_color(self._convert_color(self.degas_color))
             gc.arc(x, y + 2 * nr, nr, 0, 360)
             gc.fill_path()
 
         if self.measured_indicator:
-            gc.set_fill_color(self.measured_color)
+            gc.set_fill_color(self._convert_color(self.measured_color))
             gc.arc(x, y - 2 * nr, nr, 0, 360)
             gc.fill_path()
 

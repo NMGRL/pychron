@@ -171,6 +171,10 @@ class AutomatedRun(Loggable):
     min_ms_pumptime = Int(60)
     overlap_evt = None
 
+    peak_center_threshold1 = Int(10)
+    peak_center_threshold2 = Int(1.25)
+    peak_center_threshold_window = Int(10)
+
     # ===============================================================================
     # pyscript interface
     # ===============================================================================
@@ -478,12 +482,22 @@ class AutomatedRun(Loggable):
 
         return ret
 
-    def py_peak_center(self, detector=None, save=True, **kw):
+    def py_peak_center(self, detector=None, save=True, isotope=None, **kw):
         if not self._alive:
             return
+
         ion = self.ion_optics_manager
 
         if ion is not None:
+            if self.arar_age:
+                iso = self.arar_age.get_isotope(isotope)
+                v = iso.get_intensity()
+                if v < self.peak_center_threshold1:
+                    self.debug('peak center: {}={}<{}'.format(isotope, self.peak_center_threshold1))
+                    xs = v.xs[-self.peak_center_threshol_window:]
+                    if xs.mean() < self.peak_center_threshold2:
+                        self.warning('Skipping peak center. intensities to small.')
+
             if not self.plot_panel:
                 p = self._new_plot_panel(self.plot_panel, stack_order='top_to_bottom')
                 self.plot_panel = p

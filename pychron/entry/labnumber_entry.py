@@ -308,8 +308,8 @@ class LabnumberEntry(DVCIrradiationable):
 
     def make_irradiation_load_template(self, p):
         loader = XLSIrradiationLoader()
-        n = len(self.irradiated_positions)
-        loader.make_template(p, n, self.level)
+        # n = len(self.irradiated_positions)
+        loader.make_template(p)
 
     def import_irradiation_load_xls(self, p):
         loader = XLSIrradiationLoader(db=self.dvc.db,
@@ -606,39 +606,8 @@ THIS CHANGE CANNOT BE UNDONE')
                 ir.note = dbpos.note or ''
                 ir.weight = dbpos.weight or 0
 
-                # ln = dbpos.labnumber
-                # if ln:
-                # position = int(dbpos.position)
-                #
-                # labnumber = ln.identifier if ln else ''
-                # ir.trait_set(labnumber=str(labnumber), hole=position)
-                #
-                #     item = self.canvas.scene.get_item(str(position))
-                #     item.fill = ln.identifier
-                #
-                #     selhist = ln.selected_flux_history
-                #     if selhist:
-                #         flux = selhist.flux
-                #         if flux:
-                #             ir.j = flux.j
-                #             ir.j_err = flux.j_err
-                #             #
-                #     sample = ln.sample
-                #     if sample:
-                #         ir.sample = sample.name
-                #         material = sample.material
-                #         project = sample.project
-                #         if project:
-                #             ir.project = project.name
-                #         if material:
-                #             ir.material = material.name
-                #
-                #     if dbpos.weight:
-                #         ir.weight = str(dbpos.weight)
-                #
-                #     note = ln.note
-                #     if note:
-                #         ir.note = note
+            item = self.canvas.scene.get_item(str(position))
+            item.fill = bool(ln.identifier)
 
     def _get_irradiation_editor(self, **kw):
         ie = self._irradiation_editor
@@ -702,20 +671,18 @@ THIS CHANGE CANNOT BE UNDONE')
         # hs = db.get_irradiation_holders()
         #     ts = [h.name for h in hs]
 
-        #p = os.path.join(self._get_map_path(), 'images')
-        #if not os.path.isdir(p):
-        # self.warning_dialog('{} does not exist'.format(p))
-        # return Undefined
-        #
-        # ts = [os.path.splitext(pi)[0] for pi in os.listdir(p) if not pi.startswith('.')
-        #      #                    if not (pi.endswith('.png')
-        #      #                            or pi.endswith('.pct')
-        #      #                            or pi.startswith('.'))
-        #]
-        #if ts:
-        #     self.tray = ts[-1]
-        #
-        # return ts
+            #p = os.path.join(self._get_map_path(), 'images')
+            #if not os.path.isdir(p):
+            #    self.warning_dialog('{} does not exist'.format(p))
+            #    return Undefined
+            #
+            #ts = [os.path.splitext(pi)[0] for pi in os.listdir(p) if not pi.startswith('.')
+            #      #                    if not (pi.endswith('.png')
+            #      #                            or pi.endswith('.pct')
+            #      #                            or pi.startswith('.'))
+            #]
+            #if ts:
+            self.tray = ts[-1]
 
     # def _get_map_path(self):
     # return os.path.join(paths.setup_dir, 'irradiation_tray_maps')

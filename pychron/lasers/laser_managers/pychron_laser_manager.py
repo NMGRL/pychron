@@ -26,7 +26,7 @@ import os
 from threading import Thread
 # ============= local library imports  ==========================
 from pychron.globals import globalv
-from pychron.hardware.pychron_device import PychronDevice
+from pychron.hardware.pychron_device import EthernetDeviceMixin
 from pychron.lasers.laser_managers.client import UVLaserOpticsClient, UVLaserControlsClient, \
     LaserOpticsClient, LaserControlsClient
 from pychron.lasers.laser_managers.laser_manager import BaseLaserManager
@@ -34,7 +34,7 @@ from pychron.core.helpers.strtools import to_bool
 from pychron.paths import paths
 
 
-class PychronLaserManager(BaseLaserManager, PychronDevice):
+class PychronLaserManager(BaseLaserManager, EthernetDeviceMixin):
     """
     A PychronLaserManager is used to control an instance of
     pychron remotely.
