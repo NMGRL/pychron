@@ -24,7 +24,7 @@ from pychron.hardware.core.communicators.ethernet_communicator import EthernetCo
 from pychron.loggable import Loggable
 
 
-class PychronDevice(Loggable):
+class EthernetDeviceMixin(Loggable):
     communicator = None
     connected = False
     port = CInt

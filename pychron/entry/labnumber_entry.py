@@ -606,39 +606,8 @@ THIS CHANGE CANNOT BE UNDONE')
                 ir.note = dbpos.note or ''
                 ir.weight = dbpos.weight or 0
 
-                # ln = dbpos.labnumber
-                # if ln:
-                # position = int(dbpos.position)
-                #
-                # labnumber = ln.identifier if ln else ''
-                # ir.trait_set(labnumber=str(labnumber), hole=position)
-                #
-                #     item = self.canvas.scene.get_item(str(position))
-                #     item.fill = ln.identifier
-                #
-                #     selhist = ln.selected_flux_history
-                #     if selhist:
-                #         flux = selhist.flux
-                #         if flux:
-                #             ir.j = flux.j
-                #             ir.j_err = flux.j_err
-                #             #
-                #     sample = ln.sample
-                #     if sample:
-                #         ir.sample = sample.name
-                #         material = sample.material
-                #         project = sample.project
-                #         if project:
-                #             ir.project = project.name
-                #         if material:
-                #             ir.material = material.name
-                #
-                #     if dbpos.weight:
-                #         ir.weight = str(dbpos.weight)
-                #
-                #     note = ln.note
-                #     if note:
-                #         ir.note = note
+            item = self.canvas.scene.get_item(str(position))
+            item.fill = ln.identifier
 
     def _get_irradiation_editor(self, **kw):
         ie = self._irradiation_editor
@@ -692,6 +661,28 @@ THIS CHANGE CANNOT BE UNDONE')
     #         self.tray_name = holder
     #         im = ImageResource('{}.png'.format(holder),
     #                            search_path=[p])
+    #         return im
+
+    # @cached_property
+    # def _get_materials(self):
+    #     materials = [''] + [mi.name for mi in self.db.get_materials()]
+    #     return materials
+    # 
+    # def _get_irradiation_tray_image(self):
+    #     p = self._get_map_path()
+    #     db = self.db
+    #     with db.session_ctx():
+    #         level = db.get_irradiation_level(self.irradiation,
+    #                                          self.level)
+    #         holder = None
+    #         if level:
+    #             holder = level.holder
+    #             holder = holder.name if holder else None
+    #         holder = holder if holder is not None else NULL_STR
+    #         self.tray_name = holder
+    #         im = ImageResource('{}.png'.format(holder),
+    #                            search_path=[p]
+    #         )
     #         return im
 
     @cached_property
