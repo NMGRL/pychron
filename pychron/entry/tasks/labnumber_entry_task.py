@@ -22,6 +22,7 @@ from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, Tabbed
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.filetools import add_extension
 
 from pychron.entry.graphic_generator import GraphicModel, GraphicGeneratorController
 from pychron.entry.tasks.importer_view import ImporterView
@@ -140,11 +141,13 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
             self.manager.import_irradiation_load_xls(path)
 
     def make_irradiation_load_template(self):
-        path = self.open_file_dialog()
+        path = self.save_file_dialog()
         if path:
             #        p = '/Users/ross/Sandbox/irrad_load_template.xls'
+            path = add_extension(path,'.xls')
             self.manager.make_irradiation_load_template(path)
-            #self.information_dialog('Template saved to {}'.format(p))
+
+            self.information_dialog('Template saved to {}'.format(path))
             self.view_xls(path)
 
     def import_sample_from_file(self):

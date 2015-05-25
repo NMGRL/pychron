@@ -285,8 +285,8 @@ class LabnumberEntry(IsotopeDatabaseManager):
 
     def make_irradiation_load_template(self, p):
         loader = XLSIrradiationLoader()
-        n = len(self.irradiated_positions)
-        loader.make_template(p, n, self.level)
+        # n = len(self.irradiated_positions)
+        loader.make_template(p)
 
     def import_irradiation_load_xls(self, p):
         loader = XLSIrradiationLoader(db=self.db,
