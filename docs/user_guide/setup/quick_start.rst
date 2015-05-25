@@ -29,9 +29,9 @@ Manual
          cd ~/Programming
          git clone https://github.com/<organization>/pychron.git
 
-     .. note:: Replace ``<organization>`` with the name of your github organization. For example U. of Manitoba has its
+       .. note:: Replace ``<organization>`` with the name of your github organization. For example U. of Manitoba has its
                own pychron fork located at https://github.com/UManPychron/pychron.git
-    5. Check to make sure you have the source files. You should see a number of files and subdirectories after executing
+    #. Check to make sure you have the source files. You should see a number of files and subdirectories after executing
        the following commands
        ::
 
@@ -42,7 +42,9 @@ Manual
        ::
 
          cd ~/Programming
-         git clone https://github.com/<organization>/support_pychron.git
+         git clone https://github.com/<organization>/support_pychron.gi
+
+       .. note:: Again replace ``<organization>`` with the name of your github organization.
 
     #. Move the directories in ``~/Programming/support_pychron`` to ``~/Pychron``
     #. Before you can launch Pychron you must install some dependencies.
@@ -53,7 +55,7 @@ Manual
          conda install --yes --file ./conda_requirements.txt
          pip install -r ./pip_requirements.txt
 
-    # checkout the version of Pychron you want to use. The current release is v2.1.0
+    #. checkout the version of Pychron you want to use. The current release is v2.1.0
        ::
 
          cd ~/Programming/pychron
