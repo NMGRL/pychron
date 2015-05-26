@@ -490,9 +490,10 @@ class AutomatedRun(Loggable):
                 v = iso.get_intensity()
                 if v < self.peak_center_threshold1:
                     self.debug('peak center: {}={}<{}'.format(isotope, v, self.peak_center_threshold1))
-                    xs = v.xs[-self.peak_center_threshol_window:]
-                    if xs.mean() < self.peak_center_threshold2:
-                        self.warning('Skipping peak center. intensities to small.')
+                    xs = iso.xs[-self.peak_center_threshold_window:]
+                    xm = xs.mean()
+                    if xm < self.peak_center_threshold2:
+                        self.warning('Skipping peak center. intensities to small. {}<{}'.format(xm, self.peak_center_threshold2))
                         return
 
             if not self.plot_panel:
