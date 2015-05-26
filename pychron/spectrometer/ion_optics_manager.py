@@ -226,7 +226,7 @@ class IonOpticsManager(Manager):
                           standalone_graph=True, name='', show_label=False):
 
         self._ointegration_time = self.spectrometer.integration_time
-
+        print detector, isotope
         if detector is None or isotope is None:
             pcc = self.peak_center_config
             pcc.dac = self.spectrometer.magnet.dac
