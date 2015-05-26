@@ -45,7 +45,7 @@ from pychron.graph.tools.data_tool import DataTool, DataToolOverlay
 
 class ScanManager(Manager):
     spectrometer = Any
-    ion_optics_manager = Instance('pychron.spectrometer.ion_optics_manager.IonOpticsManager')
+    ion_optics_manager = Instance('pychron.spectrometer.ion_optics.ion_optics_manager.IonOpticsManager')
 
     graph = Instance(TimeSeriesStreamGraph)
     # graphs = List
@@ -140,7 +140,7 @@ class ScanManager(Manager):
 
         self.load_event_marker_config()
         self.setup_scan()
-        self.readout_view.start()
+        # self.readout_view.start()
 
     def load_event_marker_config(self):
         if self.use_log_events:

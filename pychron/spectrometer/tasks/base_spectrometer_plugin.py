@@ -21,7 +21,7 @@ from traits.api import Any
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.spectrometer.base_spectrometer_manager import BaseSpectrometerManager
-from pychron.spectrometer.ion_optics_manager import IonOpticsManager
+from pychron.spectrometer.ion_optics.ion_optics_manager import IonOpticsManager
 from pychron.spectrometer.readout_view import ReadoutView
 from pychron.spectrometer.scan_manager import ScanManager
 from pychron.spectrometer.tasks.spectrometer_task import SpectrometerTask

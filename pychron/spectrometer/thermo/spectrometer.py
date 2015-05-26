@@ -25,6 +25,7 @@ from traits.api import Instance, Int, Property, List, \
 
 
 
+
 # ============= standard library imports ========================
 import os
 from numpy import array, argmin
@@ -107,6 +108,7 @@ class Spectrometer(SpectrometerDevice):
     _connection_status = False
     _config = None
     _debug_values = None
+    _saved_integration = None
 
     def get_detector_active(self, dname):
         """
@@ -197,6 +199,14 @@ class Spectrometer(SpectrometerDevice):
                     self.integration_time = DEFAULT_INTEGRATION_TIME
 
         return self.integration_time
+
+    def save_integration(self):
+        self._saved_integration = self.integration_time
+
+    def restore_integration(self):
+        if self._saved_integration:
+            self.set_integration_time(self._saved_integration)
+            self._saved_integration = None
 
     def set_integration_time(self, it, force=False):
         """
@@ -575,6 +585,21 @@ class Spectrometer(SpectrometerDevice):
             x = []
         return x
 
+    def clear_cached_config(self):
+        self._config = None
+
+    def update_config(self, **kw):
+        p = os.path.join(paths.spectrometer_dir, 'config.cfg')
+        config = self.get_configuration_writer(p)
+        for k, v in kw.items():
+            for option, value in v:
+                config.set(k, option, value)
+
+        with open(p, 'w') as wfile:
+            config.write(wfile)
+
+        self.clear_cached_config()
+
     def _get_cached_config(self):
         if self._config is None:
             p = os.path.join(paths.spectrometer_dir, 'config.cfg')
@@ -634,29 +659,29 @@ class Spectrometer(SpectrometerDevice):
                 except KeyError:
                     self.debug('$$$$$$$$$$ Not setting {}. Not in command_map'.format(k))
             self.source.sync_parameters()
-                    # p = os.path.join(paths.spectrometer_dir, 'config.cfg')
-                    # if not os.path.isfile(p):
-                    # self.warning('Spectrometer configuration file {} not found'.format(p))
-                    # return
-                    #
-                    # self.info('Sending configuration "{}" to spectrometer'.format(p))
-                    # config = self.get_configuration_writer(p)
-                    #
-                    # for section in config.sections():
-                    # if section in ['Default', 'Protection']:
-                    #         continue
-                    #
-                    #     for attr in config.options(section):
-                    #         v = config.getfloat(section, attr)
-                    #         if v is not None:
-                    #
-                    #             if section == 'Deflections':
-                    #                 cmd = 'SetDeflection'
-                    #                 v = '{},{}'.format(attr.upper(), v)
-                    #             else:
-                    #                 cmd = 'Set{}'.format(command_map[attr])
-                    #
-                    #             self.set_parameter(cmd, v)
+            # p = os.path.join(paths.spectrometer_dir, 'config.cfg')
+            # if not os.path.isfile(p):
+            # self.warning('Spectrometer configuration file {} not found'.format(p))
+            # return
+            #
+            # self.info('Sending configuration "{}" to spectrometer'.format(p))
+            # config = self.get_configuration_writer(p)
+            #
+            # for section in config.sections():
+            # if section in ['Default', 'Protection']:
+            #         continue
+            #
+            #     for attr in config.options(section):
+            #         v = config.getfloat(section, attr)
+            #         if v is not None:
+            #
+            #             if section == 'Deflections':
+            #                 cmd = 'SetDeflection'
+            #                 v = '{},{}'.format(attr.upper(), v)
+            #             else:
+            #                 cmd = 'Set{}'.format(command_map[attr])
+            #
+            #             self.set_parameter(cmd, v)
 
     # ===============================================================================
     # defaults

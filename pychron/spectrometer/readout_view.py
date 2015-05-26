@@ -31,6 +31,7 @@ from pychron.core.helpers.traitsui_shortcuts import listeditor
 
 
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
@@ -156,6 +157,9 @@ class ReadoutView(Loggable):
     def __init__(self, *args, **kw):
         super(ReadoutView, self).__init__(*args, **kw)
         self._load()
+
+        if self.spectrometer:
+            self.spectrometer.on_trait_change()
 
     def _load(self):
 

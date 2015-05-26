@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import List, HasTraits, Str, Bool, Float, Property, Int
+from traits.api import List, HasTraits, Str, Bool, Float, Property
 from traitsui.api import View, UItem, TableEditor
 # ============= standard library imports ========================
 import os
@@ -156,6 +156,8 @@ class CoincidenceScan(BasePeakCenter):
 
                 with open(p, 'w') as wfile:
                     config.write(wfile)
+
+                self.spectrometer.clear_cached_config()
 
 # ============= EOF =============================================
 
