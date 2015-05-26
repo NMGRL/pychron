@@ -137,17 +137,18 @@ class LabnumberEntry(DVCIrradiationable):
         bind_preference(self, 'use_dvc', 'pychron.dvc.enabled')
 
     def activated(self):
-        if not self.irradiations:
-            self.dvc.add_irradiation('NM-300')
-            self.dvc.add_irradiation_level('A', 'NM-300', '24Spokes')
-
-            with self.dvc.session_ctx():
-                self.dvc.add_project('Foo')
-            with self.dvc.session_ctx():
-                self.dvc.add_material('san')
-            with self.dvc.session_ctx():
-                self.dvc.add_sample('bar01', 'Foo', 'san')
-            self.updated = True
+        pass
+        # if not self.irradiations:
+        #     self.dvc.add_irradiation('NM-300')
+        #     self.dvc.add_irradiation_level('A', 'NM-300', '24Spokes')
+        #
+        #     with self.dvc.session_ctx():
+        #         self.dvc.add_project('Foo')
+        #     with self.dvc.session_ctx():
+        #         self.dvc.add_material('san')
+        #     with self.dvc.session_ctx():
+        #         self.dvc.add_sample('bar01', 'Foo', 'san')
+        #     self.updated = True
 
     def transfer_j(self):
         items = self.selected
@@ -606,8 +607,8 @@ THIS CHANGE CANNOT BE UNDONE')
                 ir.note = dbpos.note or ''
                 ir.weight = dbpos.weight or 0
 
-            item = self.canvas.scene.get_item(str(position))
-            item.fill = bool(ln.identifier)
+            item = self.canvas.scene.get_item(str(ir.hole))
+            item.fill = bool(ir.identifier)
 
     def _get_irradiation_editor(self, **kw):
         ie = self._irradiation_editor
@@ -682,7 +683,7 @@ THIS CHANGE CANNOT BE UNDONE')
             #      #                            or pi.startswith('.'))
             #]
             #if ts:
-            self.tray = ts[-1]
+            # self.tray = ts[-1]
 
     # def _get_map_path(self):
     # return os.path.join(paths.setup_dir, 'irradiation_tray_maps')

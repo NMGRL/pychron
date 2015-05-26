@@ -42,7 +42,7 @@ class NameMixin(BaseMixin):
 class AnalysisTbl(Base, BaseMixin):
     idanalysisTbl = Column(Integer, primary_key=True)
     timestamp = Column(TIMESTAMP)
-    tag = Column(String(45))
+    # tag = Column(String(45))
     uuid = Column(String(32))
     analysis_type = Column(String(45))
     aliquot = Column(Integer)

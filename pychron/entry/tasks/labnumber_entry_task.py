@@ -74,9 +74,11 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     weight = Float
 
     def activated(self):
-        if self.db.connected:
-            self.manager.activated()
-            self.load_projects(include_recent=False)
+        print self.manager
+        if self.manager.verify_database_connection(inform=True):
+            if self.db.connected:
+                self.manager.activated()
+                self.load_projects(include_recent=False)
 
     def transfer_j(self):
         self.info('Transferring J Data')
@@ -202,6 +204,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
 
     def _manager_default(self):
         dvc = self.application.get_service('pychron.dvc.dvc.DVC')
+        dvc.connect()
         return LabnumberEntry(application=self.application, dvc=dvc)
 
     # def _importer_default(self):
