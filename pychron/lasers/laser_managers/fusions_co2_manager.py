@@ -42,8 +42,8 @@ class FusionsCO2Manager(FusionsLaserManager):
     monitor_name = 'co2_laser_monitor'
     monitor_klass = FusionsCO2LaserMonitor
 
-    dbname = paths.co2laser_db
-    db_root = paths.co2laser_db_root
+    # dbname = paths.co2laser_db
+    # db_root = paths.co2laser_db_root
 
     _stop_signal = None
 
