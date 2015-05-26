@@ -178,9 +178,13 @@ class IonOpticsManager(Manager):
     # ion_optics_manager=self)
     #     self.open_view(cs.graph)
 
-    def setup_coincidence(self):
+    def setup_coincidence(self, center_dac=None):
         cs = CoincidenceScan(spectrometer=self.spectrometer,
-                             ion_optics_manager=self)
+                             ion_optics_manager=self,
+                             center_dac=center_dac,
+                             reference_detector='H1',
+                             reference_isotope='Ar40',
+                             additional_detectors=['CDD'])
         self.coincidence = cs
         return cs
 

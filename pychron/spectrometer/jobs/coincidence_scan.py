@@ -84,9 +84,9 @@ class CoincidenceScan(BasePeakCenter):
         # def get_peak_center(i, di):
         def get_peak_center(di):
             try:
-                lp = plot.plots[di.name][0]
+                lp = plot.plots[di][0]
             except KeyError:
-                lp = plot.plots['*{}'.format(di.name)][0]
+                lp = plot.plots['*{}'.format(di)][0]
 
             xs = lp.index.get_data()
             ys = lp.value.get_data()
@@ -97,14 +97,14 @@ class CoincidenceScan(BasePeakCenter):
                     result = calculate_peak_center(xs, ys)
                     cx = result[0][1]
                 except PeakCenterError:
-                    self.warning('no peak center for {} {}'.format(di.name, di.isotope))
+                    self.warning('no peak center for {}'.format(di))
 
             return cx
 
         spec = self.spectrometer
         # centers = dict([(di.name, get_peak_center(i, di))
-        #                 for i, di in enumerate(spec.detectors)])
-        centers = {d.name: get_peak_center(d) for d in spec.detectors}
+        # for i, di in enumerate(spec.detectors)])
+        centers = {d: get_peak_center(d) for d in self.active_detectors}
         ref = self.reference_detector
         post = centers[ref]
         if post is None:
@@ -112,7 +112,8 @@ class CoincidenceScan(BasePeakCenter):
 
         no_change = True
         results = []
-        for di in spec.detectors:
+        for di in self.active_detectors:
+            di = spec.get_detector(di)
             cen = centers[di.name]
             if cen is None:
                 continue
@@ -149,7 +150,8 @@ class CoincidenceScan(BasePeakCenter):
                 config.read(p)
                 for v in rv.clean_results:
                     config.set('Deflections', v.name, v.new_deflection)
-                    det = next((d for d in self.detectors if d.name.lower()==v.name.lower()))
+                    det = next((d for d in self.active_detectors if d.lower() == v.name.lower()))
+                    det = spec.get_detector(det)
                     det.deflection = v.new_deflection
 
                 with open(p, 'w') as wfile:
@@ -162,7 +164,7 @@ class CoincidenceScan(BasePeakCenter):
 # stop_mass = 40
 # step_mass = 0.005
 # title = 'Coincidence Scan'
-#     inform = True
+# inform = True
 #
 #     def _reference_detector_changed(self, new):
 #         self.additional_detectors = [di.name for di in self.spectrometer.detectors

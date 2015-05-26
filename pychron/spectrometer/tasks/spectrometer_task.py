@@ -41,7 +41,7 @@ class SpectrometerTask(EditorTask):
         man = self.scan_manager.ion_optics_manager
         name = 'Coincidence {:02d}'.format(i)
 
-        if man.setup_coincidence():
+        if man.setup_coincidence(center_dac=self.scan_manager.magnet.dac):
             self._open_editor(CoincidenceEditor(model=man.coincidence, name=name))
             man.do_coincidence_scan()
 

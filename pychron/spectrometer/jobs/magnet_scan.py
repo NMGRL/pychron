@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Any, Float, DelegatesTo, List, Bool
+from traits.api import Any, Float, DelegatesTo, List, Bool, Property
 from traitsui.api import View, Item, EnumEditor, Group, HGroup, spring, ButtonEditor
 from pyface.timer.do_later import do_after
 # ============= standard library imports ========================
@@ -61,6 +61,7 @@ class MagnetScan(SpectrometerTask):
 
     reference_detector = Any
     additional_detectors = List
+    active_detectors = Property
 
     start_mass = Float(36)
     stop_mass = Float(40)
@@ -89,6 +90,9 @@ class MagnetScan(SpectrometerTask):
 
         self.integration_time = QTEGRA_INTEGRATION_TIMES[5]
         return True
+
+    def _get_active_detectors(self):
+        return [self.reference_detector] + self.additional_detectors
 
     def _iter_dac(self, di, gen, evt, intensities):
         # self.debug('iter dac {}'.format(di))
@@ -167,11 +171,13 @@ class MagnetScan(SpectrometerTask):
         spec = self.spectrometer
         ds = [str(self.reference_detector)] + self.additional_detectors
         intensity = spec.get_intensity(ds)
+        print ds,intensity
         # intensity = intensity[1]
-        if self._peak_generator:
-            # print 'asdfas', intensity
-            v = self._peak_generator.next()
-            intensity = [v+random.random() for i in range(len(ds))]
+        # print self._peak_generator
+        # if self._peak_generator:
+        #     # print 'asdfas', intensity
+        #     v = self._peak_generator.next()
+        #     intensity = [v+random.random() for i in range(len(ds))]
 
         # debug
         # if globalv.experiment_debug:
