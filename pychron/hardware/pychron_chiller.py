@@ -26,6 +26,10 @@ from pychron.remote_hardware.registry import registered_function
 
 @provides(IChiller)
 class PychronChiller(CoreDevice):
+
+    def get(self):
+        return self.get_coolant_out_temperature()
+
     @registered_function(camel_case=True, returntype=to_list)
     def get_faults(self):
         pass
