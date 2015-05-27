@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import sys
 
 from traits.api import Any, List
 
@@ -69,8 +68,10 @@ class Initializer(Loggable):
 
             pd.close()
         except BaseException, e:
+            import traceback
+            traceback.print_exc()
             self.debug('Initializer Exception: {}'.format(e))
-            sys.exit(0)
+            # sys.exit(0)
 
         return ok
 

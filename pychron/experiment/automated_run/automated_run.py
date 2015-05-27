@@ -482,21 +482,23 @@ class AutomatedRun(Loggable):
 
         return ret
 
-    def py_peak_center(self, detector=None, save=True, isotope=None, **kw):
+    def py_peak_center(self, detector=None, save=True, isotope=None, check_intensity=True, **kw):
         if not self._alive:
             return
 
         ion = self.ion_optics_manager
 
         if ion is not None:
-            if self.arar_age:
+            if self.arar_age and check_intensity:
                 iso = self.arar_age.get_isotope(isotope)
                 v = iso.get_intensity()
                 if v < self.peak_center_threshold1:
-                    self.debug('peak center: {}={}<{}'.format(isotope, self.peak_center_threshold1))
-                    xs = v.xs[-self.peak_center_threshol_window:]
-                    if xs.mean() < self.peak_center_threshold2:
-                        self.warning('Skipping peak center. intensities to small.')
+                    self.debug('peak center: {}={}<{}'.format(isotope, v, self.peak_center_threshold1))
+                    xs = iso.xs[-self.peak_center_threshold_window:]
+                    xm = xs.mean()
+                    if xm < self.peak_center_threshold2:
+                        self.warning('Skipping peak center. intensities to small. {}<{}'.format(xm, self.peak_center_threshold2))
+                        return
 
             if not self.plot_panel:
                 p = self._new_plot_panel(self.plot_panel, stack_order='top_to_bottom')
@@ -509,8 +511,10 @@ class AutomatedRun(Loggable):
 
             pc = ion.setup_peak_center(detector=[detector] + ad,
                                        plot_panel=self.plot_panel,
+                                       isotope=isotope,
                                        **kw)
             self.peak_center = pc
+            self.debug('do peak center')
 
             ion.do_peak_center(new_thread=False, save=save, message='automated run peakcenter', timeout=300)
 

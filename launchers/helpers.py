@@ -13,7 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from pyface.constant import OK
 from traits.etsconfig.api import ETSConfig
+
 ETSConfig.toolkit = "qt4"
 
 from PySide import QtCore
@@ -759,7 +761,6 @@ def check_dependencies(debug):
     # suppress dependency checks temporarily
     return True
 
-
     with open('ENV.txt', 'r') as fp:
         env = fp.read().strip()
 
@@ -768,7 +769,7 @@ def check_dependencies(debug):
     for npkg, req in (('uncertainties', '2.1'),
                       ('pint', '0.5'),
                       # ('fant', '0.1')
-                      ):
+    ):
         try:
             pkg = __import__(npkg)
             ver = pkg.__version__
@@ -874,14 +875,19 @@ def initialize_version(appname, debug):
 
         information(None, 'Pychron root directory not set in Preferences/General. Please select a valid directory')
         dlg = DirectoryDialog(action='open', default_directory=os.path.expanduser('~'))
-        if dlg.open():
+        result = dlg.open()
+        if result == OK:
             proot = str(dlg.path)
 
-    if proot is None:
+    if not proot:
         return False
 
     logger.debug('using Pychron root: {}'.format(proot))
     paths.build(proot)
+
+    cp.set('pychron.general', 'root_dir', proot)
+    with open(pref_path, 'w') as wfile:
+        cp.write(wfile)
 
     # build globals
     build_globals(debug)

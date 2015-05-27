@@ -15,34 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.has_traits import provides
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.core.helpers.strtools import to_list
-from pychron.hardware.core.core_device import CoreDevice
-from pychron.hardware.ichiller import IChiller
-from pychron.remote_hardware.registry import registered_function
 
-
-@provides(IChiller)
-class PychronChiller(CoreDevice):
-
-    def get(self):
-        return self.get_coolant_out_temperature()
-
-    @registered_function(camel_case=True, returntype=to_list)
-    def get_faults(self):
-        pass
-
-    @registered_function(camel_case=True, returntype=float)
-    def get_coolant_out_temperature(self):
-        pass
-
-    def get_setpoint(self):
-        pass
-
-    def set_setpoint(self, v):
-        pass
 
 # ============= EOF =============================================
 
