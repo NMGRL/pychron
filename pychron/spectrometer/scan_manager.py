@@ -304,6 +304,9 @@ class ScanManager(Manager):
             self.trait_setq(isotope=iso)
 
     def _check_intensity_no_change(self, signals):
+        if self.spectrometer.simulation:
+            return
+
         if self._no_intensity_change_cnt > 4:
             self.warning_dialog('Something appears to be wrong.\n\n'
                                 'The detector intensities have not changed in 5 iterations. '

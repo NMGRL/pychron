@@ -43,18 +43,19 @@ class PeakCenterConfig(HasTraits):
     use_current_dac = Bool(True)
     integration_time = Enum(QTEGRA_INTEGRATION_TIMES)
     directions = Enum('Increase', 'Decrease', 'Oscillate')
+    pickle_name = 'peak_center_config.p'
 
     def _integration_time_default(self):
         return QTEGRA_INTEGRATION_TIMES[4]  # 1.048576
 
     def dump(self):
-        p = os.path.join(paths.hidden_dir, 'peak_center_config.p')
+        p = os.path.join(paths.hidden_dir, self.pickle_name)
         with open(p, 'wb') as wfile:
             pickle.dump(self, wfile)
 
-    def _detector_changed(self):
-        if self.detector:
-            self.detector_name = self.detector.name
+    def _detector_changed(self, new):
+        if new:
+            self.detector_name = new.name
 
     def traits_view(self):
         v = View(Item('detector', editor=EnumEditor(name='detectors')),

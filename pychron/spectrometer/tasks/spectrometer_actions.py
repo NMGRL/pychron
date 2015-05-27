@@ -180,9 +180,15 @@ class CoincidenceScanAction(TaskAction):
     # man.coincidence_scan_task_factory()
 
 
-class RelativePositionsAction(Action):
-    def perform(self, event):
-        man = get_manager(event, SPECTROMETER_PROTOCOL)
+class StopScanAction(TaskAction):
+    name = 'Stop Scan'
+    method = 'stop_scan'
+    tooltip = 'Stop the current scan'
+
+
+# class RelativePositionsAction(Action):
+#     def perform(self, event):
+#         man = get_manager(event, SPECTROMETER_PROTOCOL)
 
 
 class CDDOperateVoltageAction(Action):

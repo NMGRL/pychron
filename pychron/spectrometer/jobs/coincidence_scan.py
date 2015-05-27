@@ -110,7 +110,7 @@ class CoincidenceScan(BasePeakCenter):
         if post is None:
             return
 
-        no_change = True
+        # no_change = True
         results = []
         for di in self.active_detectors:
             di = spec.get_detector(di)
@@ -127,7 +127,7 @@ class CoincidenceScan(BasePeakCenter):
                 no_change = True
                 continue
 
-            no_change = False
+            # no_change = False
 
             defl = di.map_dac_to_deflection(dac_dev)
             self.info('{} dac dev. {:0.5f}. converted to deflection voltage {:0.1f}.'.format(di.name, dac_dev, defl))
@@ -136,10 +136,12 @@ class CoincidenceScan(BasePeakCenter):
             newdefl = int(curdefl + defl)
             newdefl = max(0, min(newdefl, self.spectrometer.max_deflection))
 
-            if newdefl > 0:
+            if newdefl >= 0:
                 results.append(DeflectionResult(di.name, curdefl, newdefl))
 
-        if no_change and self.inform:
+        # if no_change and self.inform:
+        # else:
+        if not results:
             self.information_dialog('no deflection changes needed')
         else:
             rv = ResultsView(results=results)

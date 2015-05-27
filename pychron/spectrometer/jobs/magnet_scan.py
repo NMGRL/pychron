@@ -25,7 +25,6 @@ import random
 import time
 from threading import Event
 # ============= local library imports  ==========================
-from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES
 from spectrometer_task import SpectrometerTask
 from pychron.core.ui.gui import invoke_in_main_thread
 
@@ -88,7 +87,7 @@ class MagnetScan(SpectrometerTask):
         while not evt.isSet():
             time.sleep(0.01)
 
-        self.integration_time = QTEGRA_INTEGRATION_TIMES[5]
+        # self.integration_time = QTEGRA_INTEGRATION_TIMES[4]
         return True
 
     def _get_active_detectors(self):
@@ -171,7 +170,7 @@ class MagnetScan(SpectrometerTask):
         spec = self.spectrometer
         ds = [str(self.reference_detector)] + self.additional_detectors
         intensity = spec.get_intensity(ds)
-        print ds,intensity
+        # print ds,intensity
         # intensity = intensity[1]
         # print self._peak_generator
         # if self._peak_generator:

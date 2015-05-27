@@ -23,6 +23,7 @@ from traits.api import Range, Instance, Bool, \
 import apptools.sweet_pickle as pickle
 
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.managers.manager import Manager
@@ -156,13 +157,14 @@ class IonOpticsManager(Manager):
         else:
             center_dac = pcc.dac
 
-        self.spectrometer.save_integration()
+        # self.spectrometer.save_integration()
+        # self.spectrometer.set_integration(integration_time)
+
         cs = CoincidenceScan(spectrometer=self.spectrometer,
                              center_dac=center_dac,
                              reference_detector=detector,
                              reference_isotope=isotope,
-                             additional_detectors=detectors,
-                             integration_time=integration_time)
+                             additional_detectors=detectors)
         self.coincidence = cs
         return cs
 
@@ -208,8 +210,10 @@ class IonOpticsManager(Manager):
                           standalone_graph=True, name='', show_label=False):
 
         self.spectrometer.save_integration()
-        print detector, isotope
+        self.debug('setup peak center. detector={}, isotope={}'.format(detector, isotope))
         if detector is None or isotope is None:
+            self.debug('ask user for peak center configuration')
+
             pcc = self.peak_center_config
             pcc.dac = self.spectrometer.magnet.dac
 
@@ -381,7 +385,7 @@ class IonOpticsManager(Manager):
                     config.detector = next((di for di in dets if di.name == config.detector_name), None)
 
             except Exception, e:
-                print 'peak center config', e
+                print 'coincidence config', e
 
         if config is None:
             config = CoincidenceConfig()
@@ -401,7 +405,7 @@ class IonOpticsManager(Manager):
                 with open(p) as rfile:
                     config = pickle.load(rfile)
                     config.detectors = dets = self.spectrometer.detectors
-                    config.detector = next((di for di in dets if di.name == config.detector_name), None)
+                    config.detector = next((di for di in dets if di.name == config.detector), None)
 
             except Exception, e:
                 print 'peak center config', e

@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.tasks.action.schema import SToolBar
 from pyface.ui.qt4.tasks.advanced_editor_area_pane import EditorWidget
 from traits.api import Any, Instance, on_trait_change
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, VSplitter
@@ -22,6 +23,7 @@ from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, VSplitter
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.editor_task import EditorTask
 from pychron.spectrometer.tasks.editor import PeakCenterEditor, ScanEditor, CoincidenceEditor
+from pychron.spectrometer.tasks.spectrometer_actions import StopScanAction
 from pychron.spectrometer.tasks.spectrometer_panes import ControlsPane, \
     ReadoutPane, IntensitiesPane, RecordControlsPane, ScannerPane
 
@@ -31,9 +33,17 @@ class SpectrometerTask(EditorTask):
     name = 'Scan'
     id = 'pychron.spectrometer'
     _scan_editor = Instance(ScanEditor)
+    tool_bars = [SToolBar(StopScanAction(),)]
+
+    def stop_scan(self):
+        self.debug('stop scan fired')
+        editor = self.active_editor
+        if editor:
+            if isinstance(editor, ScanEditor):
+                editor.stop()
 
     def do_coincidence(self):
-        es = [int(e.name.split(' '))
+        es = [int(e.name.split(' ')[-1])
               for e in self.editor_area.editors
               if isinstance(e, CoincidenceEditor)]
 
@@ -77,6 +87,10 @@ class SpectrometerTask(EditorTask):
         self.scan_manager.spectrometer.send_configuration()
 
     def prepare_destroy(self):
+        for e in self.editor_area.editors:
+            if hasattr(e, 'stop'):
+                e.stop()
+
         self.scan_manager.prepare_destroy()
         super(SpectrometerTask, self).prepare_destroy()
 
