@@ -38,15 +38,12 @@ Manual
          cd ~/Programming/pychron
          ls
 
-    #. Download the Pychron support files.
+    #. checkout the version of Pychron you want to use. The current release is v2.1.0
        ::
 
-         cd ~/Programming
-         git clone https://github.com/<organization>/support_pychron.gi
+         cd ~/Programming/pychron
+         git checkout release/v2.1.0
 
-       .. note:: Again replace ``<organization>`` with the name of your github organization.
-
-    #. Move the directories in ``~/Programming/support_pychron`` to ``~/Pychron``
     #. Before you can launch Pychron you must install some dependencies.
        ::
 
@@ -55,11 +52,16 @@ Manual
          conda install --yes --file ./conda_requirements.txt
          pip install -r ./pip_requirements.txt
 
-    #. checkout the version of Pychron you want to use. The current release is v2.1.0
+    #. Download the Pychron support files.
        ::
 
-         cd ~/Programming/pychron
-         git checkout release/v2.1.0
+         cd ~/Programming
+         git clone https://github.com/<organization>/support_pychron.git
+
+       .. note:: Again replace ``<organization>`` with the name of your github organization.
+
+    #. Move the directories in ``~/Programming/support_pychron`` to ``~/Pychron``
+
 
 Auto (Beta)
 ===========================

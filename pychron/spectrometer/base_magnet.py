@@ -15,8 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import os
-from traits.api import HasTraits, Property, Float, Event, Any, Instance, Int
+from traits.api import HasTraits, Property, Float, Event, Any, Instance
 from traitsui.api import View, Item, VGroup, HGroup, Spring, RangeEditor
 # ============= standard library imports ========================
 from scipy import optimize
@@ -53,7 +52,7 @@ class BaseMagnet(HasTraits):
     dac_changed = Event
 
     mftable = Instance('pychron.spectrometer.mftable.MagnetFieldTable', ())
-    confirmation_threshold_mass = Int
+    confirmation_threshold_mass = Float
     use_deflection_correction = True
 
     _suppress_mass_update = False

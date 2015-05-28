@@ -89,7 +89,7 @@ QComboBox {font-size: 10px}
 '''
 
         add_button = icon_button_editor('add_button', 'add',
-                                        enabled_when='ok_add',
+                                        # enabled_when='ok_add',
                                         tooltip='Add run')
 
         save_button = icon_button_editor('save_button', 'disk',

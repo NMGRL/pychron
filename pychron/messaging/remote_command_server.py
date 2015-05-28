@@ -17,7 +17,7 @@
 
 
 # ============= enthought library imports =======================
-from traits.api import  Str, Int, Instance, Bool, Property, Event, Button, String
+from traits.api import Str, Int, Instance, Bool, Property, Event, Button, String
 from traitsui.api import View, Item, Group, HGroup, VGroup, \
     ButtonEditor, Handler
 from pyface.timer.api import Timer
@@ -31,11 +31,14 @@ import os
 from pychron.config_loadable import ConfigLoadable
 from pychron.messaging.command_repeater import CommandRepeater
 from pychron.core.helpers.datetime_tools import diff_timestamp
-from pychron.remote_hardware.command_processor import CommandProcessor
+from pychron.paths import paths
+# from pychron.remote_hardware.command_processor import CommandProcessor
 from pychron.core.ui.led_editor import LED, LEDEditor
 from pychron.globals import globalv
 
 LOCAL = False
+
+
 class RCSHandler(Handler):
     def init(self, info):
         '''
@@ -43,6 +46,7 @@ class RCSHandler(Handler):
         obj = info.object
         if obj._running:
             obj.led.state = 2
+
     def object__running_changed(self, info):
         '''
            
@@ -54,13 +58,14 @@ class RCSHandler(Handler):
             else:
                 obj.led.state = 0
 
+
 class RemoteCommandServer(ConfigLoadable):
     '''
     '''
     simulation = False
     _server = None
     repeater = Instance(CommandRepeater)
-    processor = Instance(CommandProcessor)
+    processor = Instance('pychron.remote_hardware.command_processor.CommandProcessor')
 
     host = Str(enter_set=True, auto_set=False)
     port = Int(enter_set=True, auto_set=False)
@@ -94,9 +99,9 @@ class RemoteCommandServer(ConfigLoadable):
         """
         if globalv.use_ipc:
             c = CommandRepeater(
-                        logger_name='{}_repeater'.format(self.name),
-                        name=self.name,
-                           configuration_dir_name='servers')
+                logger_name='{}_repeater'.format(self.name),
+                name=self.name,
+                config_path=os.path.join(paths.root, 'servers', '{}.cfg'.format(self.name)))
             if c.bootstrap():
                 return c
 
@@ -105,12 +110,11 @@ class RemoteCommandServer(ConfigLoadable):
             self.repeater.led.state = 0
 
     def load(self, *args, **kw):
-        '''
-        '''
+        """
+        """
 
         config = self.get_configuration()
         if config:
-
 
 
             server_class = self.config_get(config, 'General', 'class')
@@ -161,19 +165,17 @@ class RemoteCommandServer(ConfigLoadable):
             self.datasize = ds
             self.processor_type = ptype
 
-
-
             self._server = self.server_factory(server_class, addr, ptype, ds)
 
             # add links
             for link in self.config_get_options(config, 'Links'):
                 # note links cannot be stopped
                 self._server.add_link(link,
-                                       self.config_get(config, 'Links', link))
+                                      self.config_get(config, 'Links', link))
 
             if self._server is not None and self._server.connected:
                 addr = self._server.server_address
-#                saddr = '({})'.format(','.join(addr if isinstance(addr, tuple) else (addr,)))
+                #                saddr = '({})'.format(','.join(addr if isinstance(addr, tuple) else (addr,)))
                 saddr = '({})'.format(addr)
                 msg = '%s - %s' % (server_class, saddr)
                 self.info(msg)
@@ -193,14 +195,14 @@ class RemoteCommandServer(ConfigLoadable):
         module = __import__('pychron.messaging.{}_server'.format(klass[:3].lower()), fromlist=[klass])
         factory = getattr(module, klass)
 
-#        gdict = globals()
-#        if handler in gdict:
-#            handler_klass = gdict[handler]
+        #        gdict = globals()
+        #        if handler in gdict:
+        #            handler_klass = gdict[handler]
 
-#        server = gdict[server_class]
+        #        server = gdict[server_class]
         if ds is None:
             ds = 2 ** 10
-#        return server(self, ptype, ds, addr, handler_klass)
+        #        return server(self, ptype, ds, addr, handler_klass)
         return factory(self, ptype, ds, addr)
 
     def open(self):
@@ -215,89 +217,88 @@ class RemoteCommandServer(ConfigLoadable):
 
     def start_server(self):
         SELECT_TIMEOUT = 1
-#        THREAD_LIMIT = 15
+        #        THREAD_LIMIT = 15
         while self._running:
             try:
                 readySocket = select.select([self._server.socket], [],
-                                            [], SELECT_TIMEOUT)
+                    [], SELECT_TIMEOUT)
                 if readySocket[0]:
                     self._server.handle_request()
-#                    if threading.activeCount() < THREAD_LIMIT:
-#                        self._server.handle_request()
+                #                    if threading.activeCount() < THREAD_LIMIT:
+                #                        self._server.handle_request()
 
             except:
                 pass
-#        self._server.socket.close()
+            #        self._server.socket.close()
 
     def shutdown(self):
-        '''
-        '''
+        """
+        """
         self._connected = False
         if self._server is not None:
-#            self._server.shutdown()
+            #            self._server.shutdown()
             self._server.socket.close()
 
             self._running = False
 
     def traits_view(self):
-        '''
-        '''
+        """
+        """
         cparams = VGroup(
-                        HGroup(
-                                Item('led', show_label=False,
-                                     editor=LEDEditor()),
-                                Item('server_button', show_label=False,
-                                     editor=ButtonEditor(label_value='server_label'),
-                                     enabled_when='_connected'),
-                                ),
+            HGroup(
+                Item('led', show_label=False,
+                     editor=LEDEditor()),
+                Item('server_button', show_label=False,
+                     editor=ButtonEditor(label_value='server_label'),
+                     enabled_when='_connected'),
+            ),
 
-                        Item('host', visible_when='not _running'),
-                        Item('port', visible_when='not _running'),
+            Item('host', visible_when='not _running'),
+            Item('port', visible_when='not _running'),
 
-                        show_border=True,
-                        label='Connection',
-                        )
+            show_border=True,
+            label='Connection',
+        )
         stats = Group(
-                      Item('packets_received', style='readonly'),
-                      Item('cur_rpacket', label='Received', style='readonly'),
-                      Item('packets_sent', style='readonly'),
-                      Item('cur_spacket', label='Sent', style='readonly'),
+            Item('packets_received', style='readonly'),
+            Item('cur_rpacket', label='Received', style='readonly'),
+            Item('packets_sent', style='readonly'),
+            Item('cur_spacket', label='Sent', style='readonly'),
 
-                      Item('repeater_fails', style='readonly'),
-                      Item('run_time', style='readonly'),
-                      show_border=True,
-                      label='Statistics',
-                      visible_when='_connected'
-                      )
+            Item('repeater_fails', style='readonly'),
+            Item('run_time', style='readonly'),
+            show_border=True,
+            label='Statistics',
+            visible_when='_connected'
+        )
 
         buttons = HGroup(
-                         Item('save', show_label=False, enabled_when='_dirty')
-                         )
+            Item('save', show_label=False, enabled_when='_dirty')
+        )
         v = View(VGroup(
-                        cparams,
-                        stats,
-                        buttons
-                        ),
-                handler=RCSHandler,
-               )
+            cparams,
+            stats,
+            buttons
+        ),
+                 handler=RCSHandler,
+        )
         return v
 
     def _run_time_update(self):
         '''
         '''
 
-#        t = datetime.datetime.now() - self.start_time
+        #        t = datetime.datetime.now() - self.start_time
 
-#        h = t.seconds / 3600
-#        m = (t.seconds % 3600) / 60
-#        s = (t.seconds % 3600) % 60
+        #        h = t.seconds / 3600
+        #        m = (t.seconds % 3600) / 60
+        #        s = (t.seconds % 3600) % 60
 
         t, h, m, s = diff_timestamp(datetime.datetime.now(), self.start_time)
 
-
         rt = '{:02d}:{:02d}:{:02d}'.format(h, m, s)
         if t.days:
-            rt = '{} {:02d}:{:02d}:{:02d}' .format(t.days, h, m, s)
+            rt = '{} {:02d}:{:02d}:{:02d}'.format(t.days, h, m, s)
         self.run_time = rt
 
     def __running_changed(self):
@@ -346,13 +347,13 @@ class RemoteCommandServer(ConfigLoadable):
             self.cur_spacket = ''
             self.repeater_fails = 0
 
-#            self._server = self.server_factory('TCPServer',
-#                                               (self.host, self.port),
-#                                               self.handler,
-#                                               self.processor_type,
-#                                               self.datasize
-#                                             )
-#            self.open()
+            #            self._server = self.server_factory('TCPServer',
+            #                                               (self.host, self.port),
+            #                                               self.handler,
+            #                                               self.processor_type,
+            #                                               self.datasize
+            #                                             )
+            #            self.open()
             self.bootstrap()
 
     def _get_server_label(self):

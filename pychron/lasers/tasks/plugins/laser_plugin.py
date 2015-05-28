@@ -124,13 +124,13 @@ class BaseLaserPlugin(BaseTaskPlugin):
 
         return self.application.get_service(ILaserManager, 'name=="{}"'.format(self.name))
 
-    def _preferences_default(self):
-        root = paths.preferences_dir
-        path = os.path.join(root, 'preferences.ini')
-        if not os.path.isfile(path):
-            with open(path, 'w'):
-                pass
-        return ['file://{}'.format(path)]
+    # def _preferences_default(self):
+    #     root = paths.preferences_dir
+    #     path = os.path.join(root, 'preferences.ini')
+    #     if not os.path.isfile(path):
+    #         with open(path, 'w'):
+    #             pass
+    #     return ['file://{}'.format(path)]
 
 
 class FusionsPlugin(BaseLaserPlugin):

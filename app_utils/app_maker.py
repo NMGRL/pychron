@@ -77,6 +77,7 @@ def make():
                                      'pychron.remote_hardware',
                                      'pychron.remote_hardware.errors',
                                      'pychron.core',
+                                     'pychron.hardware.core',
                                      'pychron.core.helpers',
                                      'pychron.core.ui', 'pychron.core.ui.qt',
                                      'pychron.core.xml',
@@ -84,6 +85,7 @@ def make():
                 template.modules = ['pychron.managers.remote_hardware_server_manager',
                                     'pychron.managers.manager',
                                     'pychron.paths',
+                                    'pychron.file_defaults',
                                     'pychron.globals',
                                     'pychron.config_loadable',
                                     'pychron.version',
@@ -92,6 +94,7 @@ def make():
                                     'pychron.viewable',
                                     'pychron.saveable',
                                     'pychron.rpc.rpcable',
+                                    # 'pychron.hardware.core.checksum_helper',
                                     'pychron.utils',
                                     'pychron.application_controller']
             else:

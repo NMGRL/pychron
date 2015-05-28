@@ -71,6 +71,8 @@ class Initializer(Loggable):
             import traceback
             traceback.print_exc()
             self.debug('Initializer Exception: {}'.format(e))
+            raise e
+
             # sys.exit(0)
 
         return ok
