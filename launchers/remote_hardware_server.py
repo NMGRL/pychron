@@ -17,14 +17,30 @@
 from traits.etsconfig.etsconfig import ETSConfig
 
 ETSConfig.toolkit = 'qt4'
+import os
+
+
+def build_directories():
+    from pychron.paths import r_mkdir, paths
+    root=os.path.join(os.path.expanduser('~'), 'RHM')
+
+    if not os.path.isdir(root):
+        os.mkdir(root)
+
+    # servers = os.path.join(root, 'servers')
+    ldir = os.path.join(root, 'log')
+    r_mkdir(ldir)
+    paths.log_dir = ldir
+    paths.root = root
+
+
 if __name__ == '__main__':
 
-    import os
+    root = os.path.dirname(__file__)
+    from helpers import add_eggs
+    add_eggs(root)
 
-    # from helpers import build_version
-
-    # build_version(setup_ver='_dev')
-
+    build_directories()
     from pychron.core.helpers.logger_setup import logging_setup
     from pychron.managers.remote_hardware_server_manager import RemoteHardwareServerManager
 
@@ -32,7 +48,6 @@ if __name__ == '__main__':
     s = RemoteHardwareServerManager()  # handler_klass=AppHandler)
     s.load()
     s.configure_traits()
-
     os._exit(0)
 
 #    launch()
