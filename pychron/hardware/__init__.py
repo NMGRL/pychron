@@ -43,9 +43,9 @@ HW_PACKAGE_MAP = {
 
     'Pneumatics': 'pychron.hardware.pneumatics',
     'PychronPneumatics': 'pychron.hardware.pneumatics',
+    'PychronChiller': 'pychron.hardware.pychron_chiller',
 
-
-    'RemoteThermoRack': 'pychron.hardware.remote.thermorack',
+    #'RemoteThermoRack': 'pychron.hardware.remote.thermorack',
     'RemoteNewportMotionController': 'pychron.hardware.remote.newport_motion_controller',
 
     'TempHumMicroServer':'pychron.hardware.environmental_probe',

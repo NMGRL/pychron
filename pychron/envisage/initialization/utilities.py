@@ -180,10 +180,12 @@ def get_initialization_model():
     for gi in ip.get_plugin_groups():
         tree = get_tree(gi, rtree)
         if tree:
-            for pp in ip.get_plugins(gi, element=True):
-                plugin = get_plugin(pp.text.strip(), tree)
-                if plugin:
-                    plugin.enabled = to_bool(pp.get('enabled'))
+            ps = ip.get_plugins(gi, element=True)
+            if ps:
+                for pp in ps:
+                    plugin = get_plugin(pp.text.strip(), tree)
+                    if plugin:
+                        plugin.enabled = to_bool(pp.get('enabled'))
 
     for gi in ip.get_globals():
         gv = gtree.get_value(gi.tag)

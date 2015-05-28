@@ -14,4 +14,4 @@ xlwt
 pip
 PySide
 matplotlib
-pil
+pillow

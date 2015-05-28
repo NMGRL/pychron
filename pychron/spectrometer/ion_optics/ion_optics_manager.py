@@ -15,75 +15,23 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import Range, Instance, Bool, Button, Any
+# ============= standard library imports ========================
 from threading import Event
 import time
 import cPickle as pickle
-
-from traits.api import Range, Instance, Bool, \
-    Button, Any, Str, Float, Enum, HasTraits, List
-from traitsui.api import View, Item, EnumEditor, Handler, HGroup
-
-
-
-# ============= standard library imports ========================
+import os
 # ============= local library imports  ==========================
 from pychron.managers.manager import Manager
 from pychron.graph.graph import Graph
+from pychron.spectrometer.ion_optics.coincidence_config import CoincidenceConfig
+from pychron.spectrometer.ion_optics.peak_center_config import PeakCenterConfig
 from pychron.spectrometer.jobs.coincidence_scan import CoincidenceScan
 from pychron.spectrometer.jobs.peak_center import PeakCenter
-# from threading import Thread
-from pychron.spectrometer.thermo.detector import Detector
-from pychron.pychron_constants import NULL_STR, QTEGRA_INTEGRATION_TIMES
+from pychron.pychron_constants import NULL_STR
 from pychron.core.ui.thread import Thread
 from pychron.paths import paths
-import os
 from pychron.core.helpers.isotope_utils import sort_isotopes
-# from pychron.core.ui.gui import invoke_in_main_thread
-
-
-class PeakCenterConfigHandler(Handler):
-    def closed(self, info, isok):
-        if isok:
-            info.object.dump()
-        return isok
-
-
-class PeakCenterConfig(HasTraits):
-    detectors = List(transient=True)
-    detector = Instance(Detector, transient=True)
-    detector_name = Str
-    isotope = Str('Ar40')
-    isotopes = List(transient=True)
-    dac = Float
-    use_current_dac = Bool(True)
-    integration_time = Enum(QTEGRA_INTEGRATION_TIMES)
-    directions = Enum('Increase', 'Decrease', 'Oscillate')
-
-    def _integration_time_default(self):
-        return QTEGRA_INTEGRATION_TIMES[4]  # 1.048576
-
-    def dump(self):
-        p = os.path.join(paths.hidden_dir, 'peak_center_config.p')
-        with open(p, 'wb') as wfile:
-            pickle.dump(self, wfile)
-
-    def _detector_changed(self):
-        if self.detector:
-            self.detector_name = self.detector.name
-
-    def traits_view(self):
-        v = View(Item('detector', editor=EnumEditor(name='detectors')),
-                 Item('isotope', editor=EnumEditor(name='isotopes')),
-                 HGroup(Item('use_current_dac',
-                             label='Use Current DAC'),
-                        Item('dac', enabled_when='not use_current_dac')),
-                 Item('integration_time'),
-                 Item('directions'),
-                 buttons=['OK', 'Cancel'],
-                 kind='livemodal',
-                 title='Peak Center',
-                 handler=PeakCenterConfigHandler)
-        return v
 
 
 class IonOpticsManager(Manager):
@@ -98,11 +46,10 @@ class IonOpticsManager(Manager):
     peak_center = Instance(PeakCenter)
     coincidence = Instance(CoincidenceScan)
     peak_center_config = Instance(PeakCenterConfig)
+    coincidence_config = Instance(CoincidenceConfig)
     canceled = False
 
     peak_center_result = None
-
-    _ointegration_time = None
 
     def get_mass(self, isotope_key):
         spec = self.spectrometer
@@ -122,7 +69,7 @@ class IonOpticsManager(Manager):
 
         self.spectrometer.magnet.set_mftable(name)
 
-    def position(self, pos, detector, use_dac=False, update_isotopes=True):
+    def _get_position(self, pos, detector, use_dac=False, update_isotopes=True):
         """
             pos can be str or float
             "Ar40", "39.962", 39.962
@@ -154,19 +101,22 @@ class IonOpticsManager(Manager):
 
                 mag.mass_change(pos)
 
-            # else:
-            # #get nearst isotope
-            # self.debug('rounding mass {} to {}'.format(pos, '  {:n}'.format(round(pos))))
-            #     spec.update_isotopes('  {:n}'.format(round(pos)), detector)
-
             # pos is mass i.e 39.962
             dac = mag.map_mass_to_dac(pos, det.name)
 
-        if det:
-            dac = spec.correct_dac(det, dac)
+        dac = spec.correct_dac(det, dac)
+        return dac
 
-            self.info('positioning {} ({}) on {}'.format(pos, dac, detector))
-            return mag.set_dac(dac)
+    def get_position(self, *args, **kw):
+        kw['update_isotopes']=False
+        return self._get_position(*args, **kw)
+
+    def position(self, pos, detector, *args, **kw):
+        dac = self._get_position(pos, detector, *args, **kw)
+        mag = self.spectrometer.magnet
+
+        self.info('positioning {} ({}) on {}'.format(pos, dac, detector))
+        return mag.set_dac(dac)
 
     def do_coincidence_scan(self, new_thread=True):
 
@@ -176,15 +126,38 @@ class IonOpticsManager(Manager):
             self._thread = t
 
     def _coincidence(self):
-        print self.coincidence.get_peak_center()
-
-    # cs = CoincidenceScan(spectrometer=self.spectrometer,
-    # ion_optics_manager=self)
-    #     self.open_view(cs.graph)
+        self.coincidence.get_peak_center()
+        self.info('coincidence finished')
+        self.spectrometer.restore_integration()
 
     def setup_coincidence(self):
+        pcc = self.coincidence_config
+        pcc.dac = self.spectrometer.magnet.dac
+
+        info = pcc.edit_traits()
+        if not info.result:
+            return
+
+        detector = pcc.detector.name
+        isotope = pcc.isotope
+        detectors = [d for d in pcc.additional_detectors]
+        integration_time = pcc.integration_time
+
+        if pcc.use_nominal_dac:
+            center_dac = self.get_position(isotope, detector)
+        elif pcc.use_current_dac:
+            center_dac = self.spectrometer.magnet.dac
+        else:
+            center_dac = pcc.dac
+
+        # self.spectrometer.save_integration()
+        # self.spectrometer.set_integration(integration_time)
+
         cs = CoincidenceScan(spectrometer=self.spectrometer,
-                             ion_optics_manager=self)
+                             center_dac=center_dac,
+                             reference_detector=detector,
+                             reference_isotope=isotope,
+                             additional_detectors=detectors)
         self.coincidence = cs
         return cs
 
@@ -229,9 +202,11 @@ class IonOpticsManager(Manager):
                           center_dac=None, plot_panel=None, new=False,
                           standalone_graph=True, name='', show_label=False):
 
-        self._ointegration_time = self.spectrometer.integration_time
-
+        self.spectrometer.save_integration()
+        self.debug('setup peak center. detector={}, isotope={}'.format(detector, isotope))
         if detector is None or isotope is None:
+            self.debug('ask user for peak center configuration')
+
             pcc = self.peak_center_config
             pcc.dac = self.spectrometer.magnet.dac
 
@@ -377,8 +352,7 @@ class IonOpticsManager(Manager):
         if timeout:
             evt.set()
 
-        if self._ointegration_time:
-            self.spectrometer.set_integration_time(self._ointegration_time)
+        self.spectrometer.restore_integration()
 
     def close(self):
         self.cancel_peak_center()
@@ -393,6 +367,29 @@ class IonOpticsManager(Manager):
     # ===============================================================================
     # handler
     # ===============================================================================
+    def _coincidence_config_default(self):
+        config = None
+        p = os.path.join(paths.hidden_dir, 'coincidence_config.p')
+        if os.path.isfile(p):
+            try:
+                with open(p) as rfile:
+                    config = pickle.load(rfile)
+                    config.detectors = dets = self.spectrometer.detectors
+                    config.detector = next((di for di in dets if di.name == config.detector_name), None)
+
+            except Exception, e:
+                print 'coincidence config', e
+
+        if config is None:
+            config = CoincidenceConfig()
+            config.detectors = self.spectrometer.detectors
+            config.detector = config.detectors[0]
+
+        keys = self.spectrometer.molecular_weights.keys()
+        config.isotopes = sort_isotopes(keys)
+
+        return config
+
     def _peak_center_config_default(self):
         config = None
         p = os.path.join(paths.hidden_dir, 'peak_center_config.p')
@@ -401,7 +398,7 @@ class IonOpticsManager(Manager):
                 with open(p) as rfile:
                     config = pickle.load(rfile)
                     config.detectors = dets = self.spectrometer.detectors
-                    config.detector = next((di for di in dets if di.name == config.detector_name), None)
+                    config.detector = next((di for di in dets if di.name == config.detector), None)
 
             except Exception, e:
                 print 'peak center config', e

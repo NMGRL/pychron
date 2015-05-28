@@ -40,12 +40,30 @@ Argus
 
 2. Set the ``~/Pychron/setupfiles/spectrometer/mftable.csv``. Each value in the table is the peak center in DAC space for a given isotope on a given detector.
 
-.. note :: The DAC value is for a Deflection voltage=0
+   .. note :: The DAC value is for a Deflection voltage=0
 
-To populate the table,
+   To populate the table,
 
-    1. set the deflection to zero,
-    2. peak center Ar40 on H2
-    3. record the DAC value in the approriate cell
-    4. repeat 1-3 for Ar40 on H1,AX,..., etc
-    5. repeat 1-4 for Ar39,Ar36
+    1. Set the deflection to zero,
+    2. Peak center Ar40 on H2
+    3. Record the DAC value in the approriate cell
+    4. Repeat 1-3 for Ar40 on H1,AX,..., etc
+    5. Repeat 1-4 for Ar39,Ar36
+
+3. Setup the deflection correction files
+
+   1. Create directory ``~/Programming/Pychron/setupfiles/spectrometer/deflections``
+   2. For each detector create a text file using the detector name as the name of the file. e.g AX
+
+      .. note:: Use all capital letters and leave off the .txt extension
+
+   3. The detector files are simple csv files where each row represents a ``deflection,dac`` pair. The dac value is
+      the voltage required to center a reference isotope (Ar40) on this detector for a given deflection. For example
+      the AX file might look like
+      ::
+
+        0,6.003672
+        135,5.99933
+
+     .. note:: you can add as many calibration points as you like, but in practice the deflection voltages do not
+        change over time so you can just define two points, 1) deflection=0 and 2) deflection=<normal operating voltage>
