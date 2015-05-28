@@ -214,7 +214,6 @@ def launch(klass, user):
     except Exception:
         logger.exception('Launching error')
         import traceback
-
         tb = traceback.format_exc()
         gTraceDisplay.add_text(tb)
         gTraceDisplay.edit_traits(kind='livemodal')
