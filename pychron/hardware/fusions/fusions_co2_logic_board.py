@@ -150,7 +150,7 @@ class FusionsCO2LogicBoard(FusionsLogicBoard):
             self.warning(msg)
             return msg
 
-    def _set_laser_power_(self, request_pwr, verbose=True):
+    def set_laser_power(self, request_pwr, verbose=True):
         '''
             
             see Photon Machines Logic Board Command Set Reference
@@ -176,7 +176,7 @@ class FusionsCO2LogicBoard(FusionsLogicBoard):
     def _set_request_power(self, v):
         '''
         '''
-        self._set_laser_power_(v)
+        self.set_laser_power(v)
 
 # ====================== EOF ===========================================
 

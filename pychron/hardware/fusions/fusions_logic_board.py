@@ -347,14 +347,14 @@ class FusionsLogicBoard(CoreDevice):
 
         return True
 
-    def _set_laser_power_(self, *args, **kw):
-        '''
-        '''
+    def set_laser_power(self, *args, **kw):
+        """
+        """
         pass
 
     def set_pointer_onoff(self, onoff):
-        '''
-        '''
+        """
+        """
         if onoff:
             cmd = 'DRV1 1'
         else:
