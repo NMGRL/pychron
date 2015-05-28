@@ -29,7 +29,7 @@ class FusionsDiodeLogicBoard(FusionsLogicBoard):
     def _set_laser_power(self, p, m):
         '''
         '''
-        self.parent._set_laser_power_(p, m)
+        self.parent.set_laser_power(p, m)
 
     def set_enable_onoff(self, onoff):
         '''
