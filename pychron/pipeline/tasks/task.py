@@ -24,7 +24,6 @@ from traits.api import Instance, Bool, on_trait_change
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.core.ui.table_configurer import RecallTableConfigurer
 from pychron.paths import paths
 from pychron.pipeline.engine import PipelineEngine
 from pychron.pipeline.state import EngineState
@@ -32,7 +31,6 @@ from pychron.pipeline.tasks.actions import RunAction, SavePipelineTemplateAction
     ConfigureRecallAction
 from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane
 from pychron.envisage.browser.browser_task import BaseBrowserTask
-from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter, IntermediateTabularAdapter
 
 DEBUG = True
 
@@ -60,9 +58,7 @@ class PipelineTask(BaseBrowserTask):
     # def switch_to_browser(self):
     #     self._activate_task('pychron.browser.task')
 
-    isotope_adapter = Instance(IsotopeTabularAdapter, ())
-    intermediate_adapter = Instance(IntermediateTabularAdapter, ())
-    recall_configurer = Instance(RecallTableConfigurer)
+
 
     modified = False
     dbmodified = False
@@ -203,12 +199,6 @@ class PipelineTask(BaseBrowserTask):
     def _handle_recall(self, new):
         self.recall(new)
 
-    def _recall_configurer_default(self):
-        rc = RecallTableConfigurer()
-        rc.intermediate_table_configurer.adapter = self.intermediate_adapter
-        rc.isotope_table_configurer.adapter = self.isotope_adapter
-        rc.load()
-        return rc
 
     def _prompt_for_save(self):
         ret = True

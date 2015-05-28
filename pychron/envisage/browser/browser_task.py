@@ -20,9 +20,11 @@ from traits.api import Any, on_trait_change, Date, Time, Instance
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
+from pychron.core.ui.table_configurer import RecallTableConfigurer
 from pychron.envisage.tasks.editor_task import BaseEditorTask
 # from pychron.processing.selection.data_selector import DataSelector
 # from pychron.processing.tasks.browser.panes import BrowserPane
+from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter, IntermediateTabularAdapter
 from pychron.processing.tasks.recall.recall_editor import RecallEditor
 
 '''
@@ -65,6 +67,11 @@ class BaseBrowserTask(BaseEditorTask):
     default_task_name = 'Recall'
     browser_model = Instance('pychron.envisage.browser.browser_model.BrowserModel')
     dvc = Instance('pychron.dvc.dvc.DVC')
+
+    isotope_adapter = Instance(IsotopeTabularAdapter, ())
+    intermediate_adapter = Instance(IntermediateTabularAdapter, ())
+    recall_configurer = Instance(RecallTableConfigurer)
+
     # analysis_filter = String(enter_set=True, auto_set=False)
 
     # irradiations = List  # Property #DelegatesTo('manager')
@@ -334,6 +341,13 @@ class BaseBrowserTask(BaseEditorTask):
 
     def _dclicked_sample_hook(self):
         pass
+
+    def _recall_configurer_default(self):
+        rc = RecallTableConfigurer()
+        rc.intermediate_table_configurer.adapter = self.intermediate_adapter
+        rc.isotope_table_configurer.adapter = self.isotope_adapter
+        rc.load()
+        return rc
 
     # ============= EOF =============================================
     # def load_irradiation(self):

@@ -113,14 +113,14 @@ def set_exception_handler(func=None):
 #         logger.addHandler(h)
 
 
-def logging_setup(name, use_archiver=True, **kw):
+def logging_setup(name, use_archiver=True, root=None, **kw):
     """
     """
     # set up deprecation warnings
     # import warnings
     #     warnings.simplefilter('default')
+    bdir = paths.log_dir if root is None else root
 
-    bdir = paths.log_dir
 
     # make sure we have a log directory
     # if not os.path.isdir(bdir):

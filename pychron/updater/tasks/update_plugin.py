@@ -15,14 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import os
 
 from pyface.tasks.action.schema_addition import SchemaAddition
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
-from pychron.paths import paths
 from pychron.updater.tasks.actions import CheckForUpdatesAction, ManageVersionAction, BuildApplicationAction, \
     ManageBranchAction
 from pychron.updater.tasks.update_preferences import UpdatePreferencesPane
@@ -90,7 +88,7 @@ class UpdatePlugin(BaseTaskPlugin):
             return False
 
     def _preferences_default(self):
-        return ['file://{}'.format(os.path.join(paths.preferences_dir, 'update.ini'))]
+        return [self._make_preferences_path('update')]
 
     # private
     def _updater_factory(self):

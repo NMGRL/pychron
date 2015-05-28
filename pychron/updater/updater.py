@@ -24,6 +24,7 @@ from apptools.preferences.preference_binding import bind_preference
 from git import GitCommandError
 from traits.api import Button, Bool, Str, Property, List
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.datetime_tools import get_datetime
@@ -283,14 +284,14 @@ class Updater(Loggable):
             commits = [ci[1:] for ci in txt.split('\n')]
             return self._get_selected_hexsha(commits, lc, rc)
 
-    # def _get_branch(self, name):
-    #     repo = self._get_working_repo()
-    #     try:
-    #         branch = getattr(repo.heads, name)
-    #     except AttributeError:
-    #         oref = repo.remotes.origin.refs[name]
-    #         branch = repo.create_head(name, commit=oref.commit)
-    #     return branch
+    def _get_branch(self, name):
+        repo = self._get_working_repo()
+        try:
+            branch = getattr(repo.heads, name)
+        except AttributeError:
+            oref = repo.remotes.origin.refs[name]
+            branch = repo.create_head(name, commit=oref.commit)
+        return branch
 
     def _get_local_remote_commits(self):
 

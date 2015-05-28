@@ -26,7 +26,6 @@ import cPickle as pickle
 # ============= local library imports  ==========================
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.codetools.inspection import caller
-from pychron.core.helpers.strtools import to_bool
 from pychron.core.helpers.iterfuncs import partition
 from pychron.core.progress import progress_loader
 from pychron.envisage.browser.date_selector import DateSelector
@@ -83,7 +82,6 @@ def extract_mass_spectrometer_name(name):
 
 
 class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
-
     plot_selected = Event
     projects = List
     oprojects = List
@@ -404,7 +402,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
                 lns = [si.labnumber for si in samples]
                 self.debug('retrieving identifiers={}'.format(','.join(lns)))
                 # if low_post is None:
-                #     lps = [si.low_post for si in samples if si.low_post is not None]
+                # lps = [si.low_post for si in samples if si.low_post is not None]
                 #     low_post = min(lps) if lps else None
                 ans, tc = db.get_labnumber_analyses(lns,
                                                     order=order,
@@ -642,11 +640,18 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
     def _get_db(self):
         if self.use_workspace:
-            return self.workspace.index_db
-        elif to_bool(self.application.preferences.get('pychron.dvc.enabled')):
-            return self.application.get_service('pychron.dvc.dvc.DVC')
+            db = self.workspace.index_db
         else:
-            return self.manager.db
+            db = self.application.get_service('pychron.dvc.dvc.DVC')
+
+        if db is None:
+            self.warning_dialog('You need to enable the DVC plugin')
+        else:
+            return db
+            # if to_bool(self.application.preferences.get('pychron.dvc.enabled')):
+            # return
+            # else:
+            #     return self.manager.db
 
     # persistence
     @property

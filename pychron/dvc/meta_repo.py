@@ -26,7 +26,7 @@ from pychron.core.helpers.datetime_tools import ISO_FORMAT_STR
 from pychron.core.helpers.filetools import list_directory2, ilist_directory2, add_extension
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths
-from pychron.pychron_constants import INTERFERENCE_KEYS
+from pychron.pychron_constants import INTERFERENCE_KEYS, RATIO_KEYS
 
 
 class MetaObject(object):
@@ -98,6 +98,13 @@ class Production(MetaObject):
     def to_dict(self, keys):
         return {t: ufloat(getattr(self, t), getattr(self, '{}_err'.format(t))) for t in keys}
         # return {t: getattr(self, t) for a in keys for t in (a, '{}_err'.format(a))}
+
+    def dump(self):
+        attrs = self.attrs
+        with open(self.path, 'w') as wfile:
+            for a in self.attrs:
+                row = ','.join(map(str, (a, getattr(self, a), getattr(self, '{}_err'.format(a)))))
+                wfile.write('{}\n'.format(row))
 
 
 class BaseHolder(MetaObject):
@@ -204,13 +211,18 @@ class MetaRepo(GitRepoManager):
         # hexsha = self.shell('hash-object', '--path', p)
         # return hexsha
 
-    def add_production(self, name, obj):
+    def add_production(self, name, obj, commit=False):
         p = self.get_production(name, force=True)
-        for k in INTERFERENCE_KEYS:
+        p.attrs = []
+        for k in INTERFERENCE_KEYS+RATIO_KEYS:
             v = getattr(obj, k)
             e = getattr(obj, '{}_err'.format(k))
             setattr(p, k, v)
-            setattr(p, '{}_err', e)
+            setattr(p, '{}_err'.format(k), e)
+            p.attrs.append(k)
+
+        p.dump()
+        self.add(p.path, commit=commit)
 
     def update_production(self, prod, irradiation=None):
         # ip = db.get_irradiation_production(prod.name)

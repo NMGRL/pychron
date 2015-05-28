@@ -35,23 +35,52 @@ from pychron.loggable import Loggable
 from pychron.pychron_constants import ALPHAS
 
 rfile = '''
-Foo:
-  - 19220,01
-  - 19220,02
-
+J-Curve:
+  - 24322,01
+  - 24322,02
+  - 24322,03
+  - 24322,04
+  - 24322,05
+  - 24322,06
 '''
 
 
 class DatabaseExport(Loggable):
     meta_repo = Instance(MetaRepo)
+    root = None
+
+    def export_production(self, prodname, db=False):
+        if db:
+            pass
+
+        self.root = os.path.join(os.path.expanduser('~'), 'Pychron_view', 'data', '.dvc')
+        self.meta_repo = MetaRepo(os.path.join(self.root, 'meta'))
+
+        conn = dict(host='129.138.12.160', username='root', password='DBArgon', kind='mysql')
+        # dest = DVCDatabase('/Users/ross/Sandbox/dvc/meta/testdb.sqlite')
+        dest = DVCDatabase(name='pychronmeta', **conn)
+        dest.connect()
+        src = IsotopeAdapter(name='pychrondata', **conn)
+        # src.trait_set()
+        src.connect()
+        with src.session_ctx():
+            if not dest.get_production(prodname):
+                dest.add_production(prodname)
+                dest.flush()
+
+                dbprod = src.get_irradiation_production(prodname)
+                self.meta_repo.add_production(prodname, dbprod)
+                self.meta_repo.commit('added production {}'.format(prodname))
 
     def do_export(self):
-        self.meta_repo = MetaRepo('/Users/ross/Sandbox/dvc/meta')
+        self.root = os.path.join(os.path.expanduser('~'), 'Pychron_view', 'data', '.dvc')
+        self.meta_repo = MetaRepo(os.path.join(self.root, 'meta'))
 
-        dest = DVCDatabase('/Users/ross/Sandbox/dvc/meta/testdb.sqlite')
-
-        src = IsotopeAdapter(host='localhost', username='root', password='Argon',
-                             kind='mysql', name='pychrondata_dev')
+        conn = dict(host='129.138.12.160', username='root', password='DBArgon', kind='mysql')
+        # dest = DVCDatabase('/Users/ross/Sandbox/dvc/meta/testdb.sqlite')
+        dest = DVCDatabase(name='pychronmeta', **conn)
+        dest.connect()
+        src = IsotopeAdapter(name='pychrondata', **conn)
         # src.trait_set()
         src.connect()
         with src.session_ctx():
@@ -67,7 +96,7 @@ class DatabaseExport(Loggable):
                     repo.commit('src import src= {}'.format(src.url))
 
     def _export_project(self, project, src, dest):
-        proot = os.path.join('/Users/ross/Sandbox/dvc/projects', project)
+        proot = os.path.join(self.root, 'projects', project)
         # proot = os.path.join(paths.dvc_dir, 'projects', project)
         if not os.path.isdir(proot):
             os.mkdir(proot)
@@ -92,25 +121,23 @@ class DatabaseExport(Loggable):
         prodname = dblevel.production.name
         pos = dbirradpos.position
 
-        # export irradiation to meta
-        self.meta_repo.add_irradiation(irradname)
-        # export chronology to irrad
-        self.meta_repo.add_chronology(irradname, dbchron.get_doses())
-        # export production
-        self.meta_repo.add_production(prodname, dblevel.production)
-
-        self.meta_repo.commit('added irradiation {}'.format(irradname))
-
         with dest.session_ctx():
             # save db irradiation
             if not dest.get_irradiation(irradname):
                 dest.add_irradiation(irradname)
                 dest.flush()
 
+                self.meta_repo.add_irradiation(irradname)
+                self.meta_repo.add_chronology(irradname, dbchron.get_doses())
+                self.meta_repo.commit('added irradiation {}'.format(irradname))
+
             # save production name to db
             if not dest.get_production(prodname):
                 dest.add_production(prodname)
                 dest.flush()
+
+                self.meta_repo.add_production(prodname, dblevel.production)
+                self.meta_repo.commit('added production {}'.format(prodname))
 
             # save db level
             if not dest.get_irradiation_level(irradname, levelname):
@@ -186,7 +213,7 @@ class DatabaseExport(Loggable):
                    detectors=detectors,
                    isotopes=isotopes,
                    analysis_type=get_analysis_type(idn),
-                   collection_version='0.1:0.1', comment='This is a comment', increment=inc, irradiation=irrad,
+                   collection_version='0.1:0.1', comment=dban.comment, increment=inc, irradiation=irrad,
                    irradiation_level=level, irradiation_position=irradpos, project=project, mass_spectrometer=ms,
                    material=mat, duration=extraction.extract_duration, cleanup=extraction.cleanup_duration,
                    beam_diameter=extraction.beam_diameter, extract_device=extraction.extraction_device.name,
@@ -260,10 +287,17 @@ class DatabaseExport(Loggable):
         return dict(value=0, error=0)
 
     def _make_raw_intercept(self, dbiso):
-        return dict(value=0, error=0)
+        try:
+            r = dbiso.results[-1]
+            v, e = r.signal, r.signal_err
+
+        except BaseException:
+            v, e = 0, 0
+
+        return dict(value=v, error=e)
 
         # def _pack_baseline(self, dbiso):
-        #     xs, ys = [], []
+        # xs, ys = [], []
         #     return self._pack_data(xs, ys)
         #
         # def _pack_signal(self, dbiso):
@@ -277,7 +311,8 @@ class DatabaseExport(Loggable):
 if __name__ == '__main__':
     from pychron.core.helpers.logger_setup import logging_setup
 
-    logging_setup('de')
+    logging_setup('de', root=os.path.join(os.path.expanduser('~'), 'Desktop', 'logs'))
     e = DatabaseExport()
     e.do_export()
+    # e.export_production('Triga PR 275', db=False)
 # ============= EOF =============================================

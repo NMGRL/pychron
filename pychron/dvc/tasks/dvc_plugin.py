@@ -44,6 +44,9 @@ class DVCPlugin(BaseTaskPlugin):
 
         return d
 
+    def _preferences_default(self):
+        return [self._make_preferences_path('dvc')]
+
     def _preferences_panes_default(self):
         return [DVCPreferencesPane, DVCDBConnectionPreferencesPane]
 

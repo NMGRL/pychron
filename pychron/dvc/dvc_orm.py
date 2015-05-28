@@ -85,7 +85,7 @@ class AnalysisTbl(Base, BaseMixin):
         iv.identifier = self.irradiation_position.identifier
         iv.labnumber = iv.identifier
 
-        for tag in ('aliquot', 'increment', 'tag', 'uuid',
+        for tag in ('aliquot', 'increment', 'uuid',
                     'extract_value', 'cleanup', 'duration',
                     'mass_spectrometer',
                     'extract_device',

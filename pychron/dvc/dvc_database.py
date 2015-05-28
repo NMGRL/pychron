@@ -93,22 +93,23 @@ class DVCDatabase(DatabaseAdapter):
             # with self.session_ctx() as sess:
             # print sess
         # Base.metadata.init(sess.bind)
+        if auto_add:
+            if self.connect():
+                with self.session_ctx():
+                    if not self.get_mass_spectrometers():
+                        if auto_add:
+                            self.add_mass_spectrometer('Jan', 'ArgusVI')
+                        else:
+                            while 1:
+                                self.information_dialog('No Mass spectrometer in the database. Add one now')
+                                nv = NewMassSpectrometerView(name='Jan', kind='ArgusVI')
+                                info = nv.edit_traits()
+                                if info.result:
+                                    self.add_mass_spectrometer(nv.name, nv.kind)
+                                    break
 
-            # with self.session_ctx():
-            #     if not self.get_mass_spectrometers():
-            #         if auto_add:
-            #             self.add_mass_spectrometer('Jan', 'ArgusVI')
-            #         else:
-            #             while 1:
-            #                 self.information_dialog('No Mass spectrometer in the database. Add one now')
-            #                 nv = NewMassSpectrometerView(name='Jan', kind='ArgusVI')
-            #                 info = nv.edit_traits()
-            #                 if info.result:
-            #                     self.add_mass_spectrometer(nv.name, nv.kind)
-            #                     break
-            #
-            #     if not self.get_users():
-            #         self.add_user('root')
+                    if not self.get_users():
+                        self.add_user('root')
 
     def find_references(self, times, atypes, hours=10):
         with self.session_ctx() as sess:
@@ -393,6 +394,9 @@ class DVCDatabase(DatabaseAdapter):
         return self._retrieve_first(LoadTbl, order_by=LoadTbl.create_date.desc())
 
     # multi getters
+    def get_analysis_types(self):
+        return []
+
     def get_load_holders(self):
         with self.session_ctx():
             return [ni.name for ni in self._retrieve_items(LoadHolderTbl)]
