@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2011 Jake Ross
+# Copyright 2015 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,28 +15,21 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import random
-import time
-
-from traits.api import Instance, Int, Property, List, \
-    Any, Enum, Str, DelegatesTo, Bool, TraitError, cached_property
-
-
-
-
-
-
+from traits.api import Str, Int, Bool, Any, Property, Instance, List, Enum, DelegatesTo, cached_property
+from traits.trait_errors import TraitError
 # ============= standard library imports ========================
 import os
+import random
 from numpy import array, argmin
+import time
 # ============= local library imports  ==========================
 from pychron.globals import globalv
-from pychron.spectrometer.thermo.source import ArgusSource
-from pychron.spectrometer.thermo.magnet import ArgusMagnet
-from pychron.spectrometer.thermo.detector import Detector
-from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
-from pychron.pychron_constants import NULL_STR, QTEGRA_INTEGRATION_TIMES, DEFAULT_INTEGRATION_TIME
 from pychron.paths import paths
+from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES, DEFAULT_INTEGRATION_TIME, NULL_STR
+from pychron.spectrometer.thermo.detector import Detector
+from pychron.spectrometer.thermo.magnet.base import ThermoMagnet
+from pychron.spectrometer.thermo.source.base import ThermoSource
+from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
 
 
 def normalize_integration_time(it):
@@ -58,18 +51,11 @@ def calculate_radius(m_e, hv, mfield):
     return r
 
 
-class Spectrometer(SpectrometerDevice):
-    """
-    Interface to a Thermo Scientific Argus Mass Spectrometer via Qtegra and RemoteControlServer.cs
-    magnet control provided by ArgusMagnet
-    source control provided by ArgusSource
-
-    direct access to RemoteControlServer.cs API via microcontroller
-    e.g. microcontroller.ask('GetIntegrationTime')
-    """
-
-    magnet = Instance(ArgusMagnet)
-    source = Instance(ArgusSource)
+class ThermoSpectrometer(SpectrometerDevice):
+    magnet = Instance(ThermoMagnet)
+    source = Instance(ThermoSource)
+    magnet_klass = Any
+    source_klass = Any
 
     detectors = List(Detector)
 
@@ -687,10 +673,10 @@ class Spectrometer(SpectrometerDevice):
     # defaults
     # ===============================================================================
     def _magnet_default(self):
-        return ArgusMagnet(spectrometer=self)
+        return self.magnet_klass(spectrometer=self)
 
     def _source_default(self):
-        return ArgusSource(spectrometer=self)
+        return self.source_klass(spectrometer=self)
 
     def _integration_time_default(self):
         return DEFAULT_INTEGRATION_TIME
@@ -730,3 +716,6 @@ class Spectrometer(SpectrometerDevice):
 # print corrected, uncorrected
 
 # ============= EOF =============================================
+
+
+

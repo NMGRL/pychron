@@ -1,11 +1,11 @@
 # ===============================================================================
-# Copyright 2011 Jake Ross
+# Copyright 2015 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,17 +19,16 @@ from traits.api import Any, Property
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================
-from pychron.spectrometer.base_spectrometer_manager import BaseSpectrometerManager
-from pychron.spectrometer.thermo.spectrometer import Spectrometer
 from pychron.paths import paths
 from pychron.spectrometer.jobs.relative_detector_positions import RelativeDetectorPositions
 from pychron.spectrometer.jobs.cdd_operating_voltage_scan import CDDOperatingVoltageScan
 from apptools.preferences.preference_binding import bind_preference
 from pychron.spectrometer.spectrometer_parameters import SpectrometerParameters, \
     SpectrometerParametersView
+from pychron.spectrometer.base_spectrometer_manager import BaseSpectrometerManager
 
 
-class ArgusSpectrometerManager(BaseSpectrometerManager):
+class ThermoSpectrometerManager(BaseSpectrometerManager):
     """
     Top level interface to an Thermo Scientific Argus Mass Spectrometer
 
@@ -37,7 +36,6 @@ class ArgusSpectrometerManager(BaseSpectrometerManager):
     of thermo.spectrometer.Spectrometer
 
     """
-    spectrometer_klass = Spectrometer
     spectrometer_microcontroller = Any
     name = Property(depends_on='spectrometer_microcontroller')
 
@@ -192,14 +190,10 @@ class ArgusSpectrometerManager(BaseSpectrometerManager):
             r = self.spectrometer_microcontroller.name
         return r
 
-        #    def _spectrometer_microcontroller_default(self):
 
-#        return ArgusController()
-
-if __name__ == '__main__':
-    from pychron.core.helpers.logger_setup import logging_setup
-
-    logging_setup('spectrometer')
+# if __name__ == '__main__':
+    # from pychron.core.helpers.logger_setup import logging_setup
+    # logging_setup('spectrometer')
 # #    s = SpectrometerManager()
 #    ini = Initializer()
 #    ini.add_initialization(dict(name='spectrometer_manager',
@@ -209,31 +203,6 @@ if __name__ == '__main__':
 # #    s.magnet_field_calibration()
 #    s.configure_traits()#kind = 'live')
 # ============= EOF =============================================
-#    def _update_hover(self, obj, name, old, new):
-#        if new is not None:
-#            g = Graph(container_dict=dict(padding=[30, 0, 0, 30]))
-#            g.new_plot(padding=5)
-#            g.new_series()
-# #            root = os.path.join(data_dir, 'magfield', 'def_calibration001')
-#            try:
-#                p = os.path.join(self.results_root, self.center_paths[new])
-#            except IndexError:
-#                return
-#            g.read_xy(p, header=True)
-#
-#            xs, ys, mx, my = self.spectrometer.calculate_peak_center(g.get_data(), g.get_data(axis=1))
-#            g.new_series(x=xs, y=ys, type='scatter')
-#            g.new_series(x=mx, y=my, type='scatter')
-#
-#            g.window_width = 250
-#            g.window_height = 250
-#            g.width = 200
-#            g.height = 200
-#            x, y = self.results_graph.current_pos
-#
-#            g.window_x = x + 75
-#
-#            g.window_y = 400 - y
-#
-#            g.edit_traits(kind='popover')
-#
+
+
+

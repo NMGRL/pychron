@@ -24,7 +24,7 @@ from pychron.spectrometer.base_magnet import BaseMagnet, get_float
 from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
 
 
-class ArgusMagnet(BaseMagnet, SpectrometerDevice):
+class ThermoMagnet(BaseMagnet, SpectrometerDevice):
     """
     Magnet interface to Qtegra.
 
