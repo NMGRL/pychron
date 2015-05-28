@@ -60,9 +60,13 @@ class DashboardDevice(Loggable):
         self.graph = g = StreamStackedGraph()
         for i, vi in enumerate(self.values):
             vi.plotid = i
-            g.new_plot()
+            p = g.new_plot()
+            if i==0:
+                p.padding_bottom = 25
+            p.padding_right = 10
+
             g.new_series(plotid=i)
-            g.set_y_title(vi.name, plotid=i)
+            g.set_y_title(vi.display_name, plotid=i)
             g.set_scan_width(24*60*60, plotid=i)
 
     def trigger(self):
@@ -96,7 +100,7 @@ class DashboardDevice(Loggable):
             self.debug(traceback.format_exc())
             value.use_pv = False
 
-    def add_value(self, name, tag, func_name, period, enabled, threshold, units, timeout, record):
+    def add_value(self, name, tag, func_name, period, enabled, threshold, units, timeout, record, bindname):
         pv = ProcessValue(name=name,
                           tag=tag,
                           func_name=func_name,
@@ -108,9 +112,16 @@ class DashboardDevice(Loggable):
                           record=record)
 
         if period == 'on_change':
-            self.debug('bind to {}'.format(name))
+            self.debug('bind to {}'.format(bindname))
             if self.hardware_device:
-                self.hardware_device.on_trait_change(lambda a, b, c, d: self._handle_change(pv, a, b, c, d), name)
+                if bindname:
+                    if hasattr(self.hardware_device, bindname):
+                        self.hardware_device.on_trait_change(lambda a, b, c, d: self._handle_change(pv, a, b, c, d), bindname)
+                    else:
+                        self.debug('{} has not attribute "{}"'.format(self.hardware_device, bindname))
+
+                else:
+                    self.warning('need to set bindname for {}'.format(self.name, name))
                 # self._device.on_trait_change(lambda new: self._push_value(pv, new), n)
 
         self.values.append(pv)
