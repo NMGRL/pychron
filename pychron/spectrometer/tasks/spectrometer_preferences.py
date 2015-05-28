@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Bool, Int
+from traits.api import Bool, Float
 from traitsui.api import View, Item, VGroup
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 # ============= standard library imports ========================
@@ -30,7 +30,7 @@ class SpectrometerPreferences(BasePreferencesHelper):
     send_config_on_startup = Bool
     use_local_mftable_archive = Bool
     use_db_mftable_archive = Bool
-    confirmation_threshold_mass = Int
+    confirmation_threshold_mass = Float
     use_detector_safety = Bool
     use_log_events = Bool
     use_vertical_markers = Bool
