@@ -58,15 +58,13 @@ class PipelineTask(BaseBrowserTask):
     # def switch_to_browser(self):
     #     self._activate_task('pychron.browser.task')
 
-
-
     modified = False
     dbmodified = False
     projects = None
 
-    def _opened_hook(self):
-        super(PipelineTask, self)._opened_hook()
-        self._debug()
+    # def _opened_hook(self):
+        # super(PipelineTask, self)._opened_hook()
+        # self._debug()
         # if DEBUG:
         #     do_after(500, self._debug)
 
@@ -79,6 +77,7 @@ class PipelineTask(BaseBrowserTask):
         self.engine.on_trait_change(self._handle_recall, 'recall_analyses_needed')
 
         self.engine.task = self
+        self.engine.add_data()
 
     def _debug(self):
         self.engine.add_data()

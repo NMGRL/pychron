@@ -238,6 +238,18 @@ class DVCDatabase(DatabaseAdapter):
         return self._add_item(a)
 
     # special getters
+    def get_analysis_runid(self, idn, aliquot, step=None):
+         with self.session_ctx() as sess:
+            q = sess.query(AnalysisTbl)
+            q = q.join(IrradiationPositionTbl)
+            if step:
+                q = q.filter(AnalysisTbl.step == step)
+            if aliquot:
+                q = q.filter(AnalysisTbl.aliquot == aliquot)
+
+            q = q.filter(IrradiationPositionTbl.identifier == idn)
+            return self._query_one(q)
+
     def get_database_version(self, **kw):
         with self.session_ctx() as sess:
             # q = self._retrieve_item(VersionTbl, 'version', )
@@ -248,7 +260,7 @@ class DVCDatabase(DatabaseAdapter):
     def get_labnumber_analyses(self, lns,
                                low_post=None, high_post=None,
                                omit_key=None, exclude_uuids=None,
-                               mass_spectrometers=None, **kw):
+                               mass_spectrometers=None, order='asc', **kw):
         with self.session_ctx() as sess:
             q = sess.query(AnalysisTbl)
             q = q.join(IrradiationPositionTbl)
@@ -273,6 +285,9 @@ class DVCDatabase(DatabaseAdapter):
                 if not hasattr(mass_spectrometers, '__iter__'):
                     mass_spectrometers = (mass_spectrometers,)
                 q = q.filter(AnalysisTbl.mass_spectrometer.in_(mass_spectrometers))
+            if order:
+                q = q.order_by(getattr(AnalysisTbl.timestamp, order)())
+
             tc = q.count()
             return self._query_all(q), tc
 

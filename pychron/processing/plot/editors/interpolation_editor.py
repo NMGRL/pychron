@@ -81,7 +81,7 @@ class BinGroup(HasTraits):
 
 class InterpolationEditor(FigureEditor):
     # tool_klass = InterpolationFitSelector
-    references = List
+    # references = List
 
     def set_references(self, refs):
         self.clear_aux_plot_limits()

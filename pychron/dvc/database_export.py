@@ -44,6 +44,20 @@ J-Curve:
   - 24322,06
 '''
 
+rfile = '''
+Ethiopia:
+  - 61666,01
+  - 61666,02
+  - 61666,03
+  - 61666,04
+  - 61666,05
+  - 61666,06
+  - 61666,07
+  - 61666,08
+  - 61666,09
+  - 61666,19
+'''
+
 
 class DatabaseExport(Loggable):
     meta_repo = Instance(MetaRepo)
@@ -177,7 +191,11 @@ class DatabaseExport(Loggable):
         else:
             idn, aliquot, step = args
 
+        if dest.get_analysis_runid(idn, aliquot, step):
+            return
+
         dban = src.get_analysis_runid(idn, aliquot, step)
+
         op = os.path.join(repo.path, add_extension(dban.record_id, '.yaml'))
         if os.path.isfile(op) and not overwrite:
             self.debug('{} already exists. skipping'.format(op))
@@ -220,7 +238,8 @@ class DatabaseExport(Loggable):
                    extract_units=extraction.extract_units, extract_value=extraction.extract_value,
                    pattern=extraction.pattern,
                    position=[{k: getattr(p, k) for k in ('x', 'y', 'z', 'position', 'is_degas')}
-                             for p in extraction.positions], weight=extraction.weight,
+                             for p in extraction.positions],
+                   weight=extraction.weight,
                    ramp_duration=extraction.ramp_duration, ramp_rate=extraction.ramp_rate, queue_conditionals_name=None,
                    sample=sample, timestamp=dban.analysis_timestamp, tray=None,
                    username=username,
@@ -251,8 +270,9 @@ class DatabaseExport(Loggable):
     def _make_isotopes(self, dban):
         isos = {}
         for dbiso in dban.isotopes:
-            isod = self._make_isotope(dbiso)
-            isos[dbiso.molecular_weight.name] = isod
+            if dbiso.kind == 'signal':
+                isod = self._make_isotope(dbiso)
+                isos[dbiso.molecular_weight.name] = isod
         return isos
 
     def _make_detectors(self, dban):
@@ -298,7 +318,7 @@ class DatabaseExport(Loggable):
 
         # def _pack_baseline(self, dbiso):
         # xs, ys = [], []
-        #     return self._pack_data(xs, ys)
+        # return self._pack_data(xs, ys)
         #
         # def _pack_signal(self, dbiso):
         #     xs, ys = [], []
