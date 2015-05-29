@@ -6,6 +6,9 @@ use_logger = False
 
 
 def suite():
+    from pychron.paths import paths
+    paths.build('_dev')
+
     if use_logger:
         from pychron.core.helpers.logger_setup import logging_setup
         logging_setup('unittests')
