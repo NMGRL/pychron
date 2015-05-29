@@ -160,6 +160,7 @@ class DashboardServer(Loggable):
                 timeout = get_xml_value(v, 'timeout', 60)
                 threshold = float(get_xml_value(v, 'change_threshold', 1e-10))
                 units = get_xml_value(v, 'units', '')
+                bindname = get_xml_value(v, 'bind', '')
                 cs = []
                 conds = v.find('conditionals')
                 if conds is not None:
@@ -190,7 +191,8 @@ class DashboardServer(Loggable):
                        'threshold': threshold,
                        'units': units,
                        'timeout': timeout,
-                       'record': record},
+                       'record': record,
+                       'bindname':bindname},
                       cs)
                 vs.append(vd)
 
