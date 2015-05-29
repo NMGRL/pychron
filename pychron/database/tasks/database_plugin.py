@@ -53,7 +53,11 @@ class DatabasePlugin(BaseTaskPlugin):
 
     def test_pychron_version(self):
         iso = self._get_database_manager()
-        err = iso.db.test_version()
+        try:
+            err = iso.db.test_version()
+        except TypeError:
+            err = 'Not connected'
+
         if err:
             self.test_pychron_version_error = err
 
