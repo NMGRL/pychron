@@ -22,6 +22,7 @@ import os
 from numpy.core.numeric import Inf
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.scene.canvas_parser import get_volume
+from pychron.canvas.canvas2D.scene.primitives.connections import Tee, Fork
 from pychron.canvas.canvas2D.scene.primitives.lasers import Laser
 from pychron.canvas.canvas2D.scene.primitives.pumps import Turbo
 from pychron.canvas.canvas2D.scene.scene import Scene
@@ -65,7 +66,7 @@ class ExtractionLineScene(Scene):
         self._load_markup(cp, origin, color_dict)
 
         # need to load all components that will be connected
-        #    before loading connections
+        # before loading connections
 
         self._load_connections(cp, origin, color_dict)
         self._load_legend(cp, origin, color_dict)
@@ -150,7 +151,73 @@ class ExtractionLineScene(Scene):
 
         return rect
 
-    def _new_connection(self, conn, key, start, end):
+    def _new_tee(self, conn):
+        left = conn.find('left')
+        right = conn.find('right')
+        mid = conn.find('mid')
+        key = '{}-{}-{}'.format(left.text.strip(), mid.text.strip(), right.text.strip())
+
+        # klass = BorderLine
+        tt = Tee(10, 10,
+                 default_color=(204, 204, 204),
+                 name=key,
+                 width=10)
+
+        lf = self.get_item(left.text.strip())
+        rt = self.get_item(right.text.strip())
+        mm = self.get_item(mid.text.strip())
+
+        def get_xy(item, elem):
+            offset = elem.get('offset')
+            ox, oy = 0, 0
+            if offset:
+                ox, oy = map(float, offset.split(','))
+
+            return item.x + ox, item.y + oy
+
+        lx, ly = get_xy(lf, left)
+        rx, ry = get_xy(rt, right)
+        mx, my = get_xy(mm, mid)
+        tt.set_points(lx, ly, rx, ry, mx, my)
+        self.add_item(tt, layer=0)
+
+    def _new_fork(self, conn):
+        left = conn.find('left')
+        right = conn.find('right')
+        mid = conn.find('mid')
+        key = '{}-{}-{}'.format(left.text.strip(), mid.text.strip(), right.text.strip())
+
+        height = 4
+        dim = conn.find('dimension')
+        if dim is not None:
+            height = float(dim.text.strip())
+        # klass = BorderLine
+        tt = Fork(0, 0,
+                  default_color=(204, 204, 204),
+                  name=key, height=height)
+
+        lf = self.get_item(left.text.strip())
+        rt = self.get_item(right.text.strip())
+        mm = self.get_item(mid.text.strip())
+
+        def get_xy(item, elem):
+            offset = elem.get('offset')
+            ox, oy = 0, 0
+            if offset:
+                ox, oy = map(float, offset.split(','))
+
+            return item.x + ox, item.y + oy
+
+        lx, ly = get_xy(lf, left)
+        rx, ry = get_xy(rt, right)
+        mx, my = get_xy(mm, mid)
+        tt.set_points(lx, ly, rx, ry, mx, my)
+        self.add_item(tt, layer=0)
+
+    def _new_connection(self, conn):
+        start = conn.find('start')
+        end = conn.find('end')
+        key = '{}_{}'.format(start.text, end.text)
 
         skey = start.text.strip()
         ekey = end.text.strip()
@@ -354,10 +421,12 @@ class ExtractionLineScene(Scene):
 
     def _load_connections(self, cp, origin, color_dict):
         for i, conn in enumerate(cp.get_elements('connection')):
-            start = conn.find('start')
-            end = conn.find('end')
-            name = '{}_{}'.format(start.text, end.text)
-            self._new_connection(conn, name, start, end)
+            self._new_connection(conn)
+
+        for i, conn in enumerate(cp.get_elements('tee_connection')):
+            self._new_tee(conn)
+        for i, conn in enumerate(cp.get_elements('fork_connection')):
+            self._new_fork(conn)
 
     def _load_rects(self, cp, origin, color_dict):
         for key in ('stage', 'laser', 'spectrometer',

@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -38,8 +38,8 @@ def split_graph(n):
     if len(n.edges) == 2:
         e1, e2 = n.edges
 
-        n1, n2 = e1.get_node(n), e2.get_node(n)
-
+        n1, n2 = e1.get_nodes(n), e2.get_nodes(n)
+        n1, n2 = n1[0], n2[0]
         # ensure first node is a Valve node otherwise states not set correctly
         #see issue #335
         if not isinstance(n1, ValveNode):
@@ -48,7 +48,7 @@ def split_graph(n):
             return n1, n2
     else:
         if n.edges:
-            return n.edges[0].get_node(n),
+            return n.edges[0].get_nodes(n)[0],
         else:
             return []
 
@@ -105,17 +105,39 @@ class ExtractionLineGraph(HasTraits):
             if sa.text in nodes:
                 s_name = sa.text
                 sa = nodes[s_name]
-                edge.a_node = sa
+                edge.nodes.append(sa)
                 sa.add_edge(edge)
 
             e_name = ''
             if ea.text in nodes:
                 e_name = ea.text
                 ea = nodes[e_name]
-                edge.b_node = ea
+                # edge.b_node = ea
+                edge.nodes.append(ea)
                 ea.add_edge(edge)
 
             edge.name = '{}_{}'.format(s_name, e_name)
+
+        for c in ('tee_connection', 'fork_connection'):
+            for conn in cp.get_elements(c):
+                left = conn.find('left')
+                right = conn.find('right')
+                mid = conn.find('mid')
+
+                edge = Edge(vol=get_volume(conn))
+                lt = left.text.strip()
+                rt = right.text.strip()
+                mt = mid.text.strip()
+
+                ns = []
+                for x in (lt, mt, rt):
+                    if x in nodes:
+                        ln = nodes[x]
+                        edge.nodes.append(ln)
+                        ln.add_edge(edge)
+                        ns.append(x)
+
+                edge.name = '-'.join(ns)
 
         self.nodes = nodes
 
@@ -167,7 +189,7 @@ class ExtractionLineGraph(HasTraits):
                     self._set_state(ni, scene)
             else:
                 state, term = self._find_max_state(n)
-                print state, term, n.__class__.__name__, n.name
+                # print state, term, n.__class__.__name__, n.name
                 self.fill(scene, n, state, term)
                 self._clear_fvisited()
 
@@ -199,26 +221,27 @@ class ExtractionLineGraph(HasTraits):
             print '=' * (k + 1), node.name, node.volume, vol
 
         for i, ei in enumerate(node.edges):
-            n = ei.get_node(node)
-            if n is None:
-                continue
+            # ns = ei.get_nodes(node)
+            for n in ei.get_nodes(node):
+                if n is None:
+                    continue
 
-            vol += ei.volume
-            if debug:
-                print '-' * (k + i + 1), ei.name, ei.volume, vol
+                vol += ei.volume
+                if debug:
+                    print '-' * (k + i + 1), ei.name, ei.volume, vol
 
-            if not n.f_visited:
-                n.f_visited = True
-                if n.state == 'closed':
-                    vol += n.volume
-                    if debug:
-                        print 'e' * (k + i + 1), n.name, n.volume, vol
+                if not n.f_visited:
+                    n.f_visited = True
+                    if n.state == 'closed':
+                        vol += n.volume
+                        if debug:
+                            print 'e' * (k + i + 1), n.name, n.volume, vol
 
-                else:
-                    v = self._calculate_volume(n, k=k + 1)
-                    vol += v
-                    if debug:
-                        print 'n' * (k + i + 1), n.name, v, vol
+                    else:
+                        v = self._calculate_volume(n, k=k + 1)
+                        vol += v
+                        if debug:
+                            print 'n' * (k + i + 1), n.name, v, vol
 
         return vol
 
@@ -253,21 +276,21 @@ class ExtractionLineGraph(HasTraits):
     def fill(self, scene, root, state, term):
         self._set_item_state(scene, root.name, state, term)
         for ei in root.edges:
-            n = ei.get_node(root)
-            if n is None:
-                continue
-            self._set_item_state(scene, ei.name, state, term)
+            # n = ei.get_nodes(root)
+            for n in ei.get_nodes(root):
+                if n is None:
+                    continue
+                self._set_item_state(scene, ei.name, state, term)
 
-            if n.state != 'closed' and not n.f_visited:
-                n.f_visited = True
-                self.fill(scene, n, state, term)
+                if n.state != 'closed' and not n.f_visited:
+                    n.f_visited = True
+                    self.fill(scene, n, state, term)
 
     def _set_item_state(self, scene, name, state, term, color=None):
         if not isinstance(name, str):
             raise ValueError('name needs to be a str. provided={}'.format(name))
 
         obj = scene.get_item(name)
-
         if obj is None or obj.type_tag in ('turbo', 'tank', 'ionpump'):
             return
 
