@@ -14,18 +14,16 @@
 # limitations under the License.
 # ===============================================================================
 
-
-
 #========== standard library imports ==========
 
 #========== local library imports =============
 from gp_actuator import GPActuator
 
 
-class ArgusGPActuator(GPActuator):
-    '''
-    
-    '''
+class QtegraGPActuator(GPActuator):
+    """
+
+    """
 
 #    def initialize(self, *args, **kw):
 #        '''
@@ -38,9 +36,8 @@ class ArgusGPActuator(GPActuator):
 #        self._communicator._terminator = chr(10)
 
     def get_channel_state(self, obj, verbose=False):
-        '''
-        
-        '''
+        """
+        """
 
         # returns one if channel close  0 for open
 #        if isinstance(obj, (str, int)):
@@ -48,7 +45,7 @@ class ArgusGPActuator(GPActuator):
 #        else:
 #            addr = obj.address
 
-        cmd = 'GetValveState'
+        cmd = 'GetValveState {}'.format(obj.address)
 
         s = self.ask(cmd, verbose=verbose)
 
@@ -61,19 +58,19 @@ class ArgusGPActuator(GPActuator):
             return False
 
     def close_channel(self, obj):
-        ''' 
-        '''
+        """
+        """
 
-        cmd = 'Close {}'.format(obj.name[-1])
+        cmd = 'Close {}'.format(obj.address)
 
         r = self.ask(cmd)
         if r is not None and r.strip() == 'OK':
             return self.get_channel_state(obj) == False
 
     def open_channel(self, obj):
-        '''
-        '''
-        cmd = 'Open {}'.format(obj.name[-1])
+        """
+        """
+        cmd = 'Open {}'.format(obj.address)
 
         r = self.ask(cmd)
         if r is not None and r.strip() == 'OK':
