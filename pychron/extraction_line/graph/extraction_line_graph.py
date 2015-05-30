@@ -21,7 +21,7 @@ from traits.api import HasTraits, Dict, Bool
 
 from pychron.extraction_line.graph.nodes import ValveNode, RootNode, \
     PumpNode, Edge, SpectrometerNode, LaserNode, TankNode, PipetteNode, \
-    GaugeNode
+    GaugeNode, GetterNode
 
 from pychron.canvas.canvas2D.scene.primitives.valves import Valve
 
@@ -79,7 +79,8 @@ class ExtractionLineGraph(HasTraits):
                          ('laser', LaserNode),
                          ('tank', TankNode),
                          ('pipette', PipetteNode),
-                         ('gauge', GaugeNode)):
+                         ('gauge', GaugeNode),
+                         ('getter', GetterNode)):
             for si in cp.get_elements(t):
                 n = si.text.strip()
                 if t in ('valve', 'rough_valve'):
@@ -238,6 +239,8 @@ class ExtractionLineGraph(HasTraits):
                 m_state, term = 'pipette', ni.name
             elif isinstance(ni, GaugeNode):
                 m_state, term = 'gauge', ni.name
+            elif isinstance(ni, GetterNode):
+                m_state, term = 'getter', ni.name
 
             if m_state not in ('laser', 'pipette'):
                 if isinstance(ni, SpectrometerNode):

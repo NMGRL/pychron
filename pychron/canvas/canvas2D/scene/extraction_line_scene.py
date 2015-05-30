@@ -28,7 +28,7 @@ from pychron.canvas.canvas2D.scene.scene import Scene
 from pychron.canvas.canvas2D.scene.primitives.primitives import RoundedRectangle, \
     Label, BorderLine, Line, Image, ValueLabel
 from pychron.core.helpers.strtools import to_bool
-from pychron.canvas.canvas2D.scene.primitives.valves import RoughValve, Valve
+from pychron.canvas.canvas2D.scene.primitives.valves import RoughValve, Valve, Switch
 from pychron.extraction_line.valve_parser import ValveParser
 from pychron.paths import paths
 
@@ -39,13 +39,15 @@ class ExtractionLineScene(Scene):
     valves = Dict
 
     def load(self, pathname, configpath, valvepath, canvas):
+        print 'fas', canvas
         self.reset_layers()
 
         origin, color_dict = self._load_config(configpath, canvas)
 
         cp = self._get_canvas_parser(pathname)
 
-        self._load_valves(cp, origin, valvepath)
+        self._load_switchables(cp, origin, valvepath)
+
         self._load_rects(cp, origin, color_dict)
 
         # xv = canvas.view_x_range
@@ -56,18 +58,20 @@ class ExtractionLineScene(Scene):
 
         # brect = Rectangle(x, y, width=w-0.1, height=h-0.1,
         # identifier='bounds_rect',
-        #                   fill=False, line_width=20, default_color=(0, 0, 102))
+        # fill=False, line_width=20, default_color=(0, 0, 102))
         # self.add_item(brect)
 
         self._load_pipettes(cp, origin, color_dict)
 
         self._load_markup(cp, origin, color_dict)
 
-        #    need to load all components that will be connected
+        # need to load all components that will be connected
         #    before loading connections
 
         self._load_connections(cp, origin, color_dict)
         self._load_legend(cp, origin, color_dict)
+
+        self.set_canvas(canvas)
 
     def get_is_in(self, px, py, exclude=None):
         if exclude is None:
@@ -76,13 +80,15 @@ class ExtractionLineScene(Scene):
                        BorderLine, ]
 
         for c in self.iteritems(exclude=exclude):
-            x, y = c.get_xy()
-            w, h = c.get_wh()
+            # x, y = c.get_xy()
+            # w, h = c.get_wh()
             if c.identifier in ('bounds_rect', 'legend'):
                 continue
 
-            if x <= px <= x + w and y <= py <= y + h:
+            if c.is_in(px, py):
                 return c
+                # if x <= px <= x + w and y <= py <= y + h:
+                # return c
 
     def _get_floats(self, elem, name):
         return map(float, elem.find(name).text.split(','))
@@ -120,7 +126,7 @@ class ExtractionLineScene(Scene):
         # klass = Turbo
         # elif
         # else:
-        #     klass = RoundedRectangle
+        # klass = RoundedRectangle
 
         klass = KLASS_MAP.get(type_tag, RoundedRectangle)
 
@@ -269,16 +275,36 @@ class ExtractionLineScene(Scene):
             im = Image(x, y, path=path, scale=scale)
             self.add_item(im, 0)
 
-    def _load_valves(self, cp, origin, vpath):
+    def _load_switchables(self, cp, origin, vpath):
         ox, oy = origin
         ndict = dict()
         vp = ValveParser(vpath)
+        for s in cp.get_elements('switch'):
+            key = s.text.strip()
+            x, y = self._get_floats(s, 'translation')
+            radius = 0.75
+            r = s.find('radius')
+            if r:
+                radius = float(r.text.strip())
+
+            v = Switch(x + ox, y + oy, name=key, radius=radius)
+            l = s.find('slabel')
+            if l is not None:
+                label = l.text.strip()
+                if l.get('offset'):
+                    x, y = map(float, l.get('offset').split(','))
+                else:
+                    x = 0
+                    y = 22
+                v.set_label(label, x, y)
+
+            self.add_item(v, layer=1)
 
         for v in cp.get_elements('valve'):
             key = v.text.strip()
             x, y = self._get_floats(v, 'translation')
 
-            #get the description from valves.xml
+            # get the description from valves.xml
             vv = vp.get_valve(key)
             desc = ''
             if vv is not None:
@@ -290,7 +316,7 @@ class ExtractionLineScene(Scene):
                       description=desc,
                       border_width=3)
 
-            v.translate = x + ox, y + oy
+            # v.translate = x + ox, y + oy
             # sync the states
             if key in self.valves:
                 vv = self.valves[key]
@@ -382,7 +408,7 @@ class ExtractionLineScene(Scene):
         if legend is not None:
             lox, loy = self._get_floats(legend, 'origin')
             for b in legend.findall('rect'):
-                #                 print b
+                # print b
                 rect = self._new_rectangle(b, c, bw=5, origin=(ox + lox, oy + loy),
                                            type_tag='rect',
                                            layer='legend')

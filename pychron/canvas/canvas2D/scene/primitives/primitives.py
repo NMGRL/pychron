@@ -202,15 +202,17 @@ class Primitive(HasTraits):
         return rx, ry
 
     def get_wh(self):
-        if self._layout_needed or not self._cached_wh:
-            w, h = self.width, self.height
-            # w, h = 20, 20
-            if self.space == 'data':
-                (w, h), (ox, oy) = self.canvas.map_screen([(self.width, self.height), (0, 0)])
-                w, h = w - ox, h - oy
-        else:
-            w, h = self._cached_wh
-        self._cached_wh = w, h
+        w,h=0,0
+        if self.canvas:
+            if self._layout_needed or not self._cached_wh:
+                w, h = self.width, self.height
+                # w, h = 20, 20
+                if self.space == 'data':
+                    (w, h), (ox, oy) = self.canvas.map_screen([(self.width, self.height), (0, 0)])
+                    w, h = w - ox, h - oy
+            else:
+                w, h = self._cached_wh
+            self._cached_wh = w, h
 
         return w, h
 
@@ -619,8 +621,8 @@ class Circle(QPrimitive):
     def is_in(self, sx, sy):
         x, y = self.get_xy()
         r = self.map_dimension(self.radius)
-        if ((x - sx) ** 2 + (y - sy) ** 2) ** 0.5 < r:
-            return True
+        # print ((x - sx) ** 2 + (y - sy) ** 2) ** 0.5, r
+        return ((x - sx) ** 2 + (y - sy) ** 2) ** 0.5 < r
 
     def _radius_changed(self):
         self.request_redraw()

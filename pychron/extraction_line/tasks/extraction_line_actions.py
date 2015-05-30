@@ -25,6 +25,10 @@ from pyface.tasks.action.task_action import TaskAction
 
 from pychron.envisage.resources import icon
 
+class AutoReloadAction(TaskAction):
+    name = 'Auto Reload'
+    method = 'enable_auto_reload'
+
 
 class SampleLoadingAction(TaskAction):
     name = 'Load Samples'

@@ -23,6 +23,7 @@ import time
 from threading import Thread
 from socket import gethostbyname, gethostname
 # =============local library imports  ==========================
+from pychron.core.file_listener import FileListener
 from pychron.envisage.consoleable import Consoleable
 from pychron.extraction_line.explanation.extraction_line_explanation import ExtractionLineExplanation
 from pychron.extraction_line.extraction_line_canvas import ExtractionLineCanvas
@@ -79,6 +80,8 @@ class ExtractionLineManager(Manager, Consoleable):
     hardware_update_period = Float
 
     _active = False
+    file_listener = None
+
 
     def activate(self):
         self._active = True
@@ -140,7 +143,7 @@ class ExtractionLineManager(Manager, Consoleable):
         for attr in attrs:
             try:
                 bind_preference(self, attr, '{}.{}'.format(prefid, attr))
-            except BaseException,e:
+            except BaseException, e:
                 print attr, e
         # bind_preference(self, 'canvas_path', '{}.canvas_path'.format(prefid))
         # bind_preference(self, 'canvas_config_path', '{}.canvas_config_path'.format(prefid))
@@ -149,9 +152,9 @@ class ExtractionLineManager(Manager, Consoleable):
         # bind_preference(self, 'use_hardware_update', '{}.use_hardware_update'.format(prefid))
         # bind_preference(self, 'hardware_update_period', '{}.hardware_update_period'.format(prefid))
         # bind_preference(self, 'check_master_owner',
-        #                 '{}.check_master_owner'.format(prefid))
+        # '{}.check_master_owner'.format(prefid))
         # bind_preference(self, 'use_network',
-        #                 '{}.use_network'.format(prefid))
+        # '{}.use_network'.format(prefid))
 
         bind_preference(self.network, 'inherit_state',
                         '{}.inherit_state'.format(prefid))
@@ -179,6 +182,14 @@ class ExtractionLineManager(Manager, Consoleable):
         else:
             self.debug('adding name="{}", func="{}" to link_valve_actuation_dict'.format(name, func.func_name))
             self.link_valve_actuation_dict[name] = func
+
+    def enable_auto_reload(self):
+        self.file_listener = fm = FileListener(path=self.canvas_path,
+                                               callback=self.reload_canvas)
+
+    def disable_auto_reload(self):
+        if self.file_listener:
+            self.file_listener.stop()
 
     def do_sample_loading(self):
         """
@@ -221,8 +232,8 @@ class ExtractionLineManager(Manager, Consoleable):
     # sc.isolate_chamber()
     #
     # def evacuate_chamber(self):
-    #     sc = self.sample_changer
-    #     # confirm evacuation if sample chamber is not (not isolated)
+    # sc = self.sample_changer
+    # # confirm evacuation if sample chamber is not (not isolated)
     #     # or check for evacuation fails
     #     msg = None
     #     if sc is None:
@@ -574,7 +585,7 @@ class ExtractionLineManager(Manager, Consoleable):
                     description = vm.get_valve_by_name(name).description
                     self._log_spec_event(name, action)
                     self.info('{:<6s} Valve-{} ({})'.format(action.upper(), name, description),
-                              color='red' if action == 'close' else 'green')
+                        color='red' if action == 'close' else 'green')
                     vm.actuate_children(name, action, mode)
                     ld = self.link_valve_actuation_dict
                     if ld:
@@ -592,13 +603,14 @@ class ExtractionLineManager(Manager, Consoleable):
         if self._check_ownership(name, sender_address):
             func = getattr(self.valve_manager, '{}_by_name'.format(action))
             ret = func(name, mode=mode)
+            if globalv.communication_simulation:
+                ret = True, True
             if ret:
                 result, change = ret
                 if isinstance(result, bool):
                     if change:
                         self.update_valve_state(name, True if action == 'open' else False)
                         self.refresh_canvas()
-
         return result, change
 
     def _check_ownership(self, name, requestor, force=False):
@@ -787,13 +799,13 @@ if __name__ == '__main__':
 # e = self.explanation
 # if e is not None:
 # e.load(self.valve_manager.explanable_items)
-#             self.valve_manager.on_trait_change(e.load_item, 'explanable_items[]')
+# self.valve_manager.on_trait_change(e.load_item, 'explanable_items[]')
 
 # def _pumping_monitor_default(self):
 # '''
 # '''
 # return PumpingMonitor(gauge_manager=self.gauge_manager,
-#                              parent=self)
+# parent=self)
 
 #    def _multruns_report_manager_default(self):
 #        return MultrunsReportManager(application=self.application)
