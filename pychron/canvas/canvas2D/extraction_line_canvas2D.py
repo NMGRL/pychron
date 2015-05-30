@@ -240,7 +240,6 @@ class ExtractionLineCanvas2D(SceneCanvas):
                 else:
                     ok, change = self.manager.close_valve(item.name, mode=mode)
 
-            print 'asdf', ok, change, state
             if ok:
                 item.state = state
 

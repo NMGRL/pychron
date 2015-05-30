@@ -24,7 +24,7 @@ HW_PACKAGE_MAP = {
 
     'ArduinoSubsystem': 'pychron.hardware.subsystems.arduino_subsystem',
     'DPi32TemperatureMonitor': 'pychron.hardware.temperature_monitor',
-    'ValveController': 'pychron.hardware.actuators.valve_controller',
+    'SwitchController': 'pychron.hardware.actuators.switch_controller',
     'AnalogPowerMeter': 'pychron.hardware.analog_power_meter',
     'ADC': 'pychron.hardware.adc.adc_device',
     'AgilentADC': 'pychron.hardware.adc.analog_digital_converter',

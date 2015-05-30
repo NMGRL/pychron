@@ -39,7 +39,6 @@ class ExtractionLineScene(Scene):
     valves = Dict
 
     def load(self, pathname, configpath, valvepath, canvas):
-        print 'fas', canvas
         self.reset_layers()
 
         origin, color_dict = self._load_config(configpath, canvas)

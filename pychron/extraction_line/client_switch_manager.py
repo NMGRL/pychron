@@ -18,10 +18,10 @@
 # ============= standard library imports ========================
 from socket import gethostbyname, gethostname
 # ============= local library imports  ==========================
-from pychron.extraction_line.valve_manager import ValveManager
+from pychron.extraction_line.switch_manager import SwitchManager
 
 
-class ClientValveManager(ValveManager):
+class ClientSwitchManager(SwitchManager):
     def get_state_checksum(self, vkeys):
         if self.actuators:
             actuator = self.actuators[0]

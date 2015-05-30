@@ -167,7 +167,7 @@ class ExtractionLineGraph(HasTraits):
                     self._set_state(ni, scene)
             else:
                 state, term = self._find_max_state(n)
-                # print n, n.name, state, term
+                print state, term, n.__class__.__name__, n.name
                 self.fill(scene, n, state, term)
                 self._clear_fvisited()
 
@@ -228,8 +228,9 @@ class ExtractionLineGraph(HasTraits):
             acumulate the max state at each node
         """
         m_state, term = False, ''
+
         for ni in bft(self, node):
-            #             print '-----', n.name, ni.name
+
             if isinstance(ni, PumpNode):
                 return 'pump', ni.name
 
@@ -237,17 +238,16 @@ class ExtractionLineGraph(HasTraits):
                 m_state, term = 'laser', ni.name
             elif isinstance(ni, PipetteNode):
                 m_state, term = 'pipette', ni.name
-            elif isinstance(ni, GaugeNode):
-                m_state, term = 'gauge', ni.name
-            elif isinstance(ni, GetterNode):
-                m_state, term = 'getter', ni.name
 
             if m_state not in ('laser', 'pipette'):
                 if isinstance(ni, SpectrometerNode):
                     m_state, term = 'spectrometer', ni.name
                 elif isinstance(ni, TankNode):
                     m_state, term = 'tank', ni.name
+                elif isinstance(ni, GetterNode):
+                    m_state, term = 'getter', ni.name
         else:
+
             return m_state, term
 
     def fill(self, scene, root, state, term):

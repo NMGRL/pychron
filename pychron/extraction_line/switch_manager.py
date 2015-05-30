@@ -52,7 +52,7 @@ class ValveGroup(object):
     valves = None
 
 
-class ValveManager(Manager):
+class SwitchManager(Manager):
     """
     Manager to interface with the UHV and HV pneumatic valves
 
@@ -98,13 +98,13 @@ class ValveManager(Manager):
             v.edit_traits()
 
     def kill(self):
-        super(ValveManager, self).kill()
+        super(SwitchManager, self).kill()
         self._save_soft_lock_states()
 
     def create_device(self, name, *args, **kw):
         """
         """
-        dev = super(ValveManager, self).create_device(name, *args, **kw)
+        dev = super(SwitchManager, self).create_device(name, *args, **kw)
         if 'actuator' in name or 'controller' in name:
             if dev is not None:
                 self.actuators.append(dev)
@@ -595,7 +595,7 @@ class ValveManager(Manager):
         if description is not None:
             description = description.text.strip()
 
-        actname = act_elem.text.strip() if act_elem is not None else 'valve_controller'
+        actname = act_elem.text.strip() if act_elem is not None else 'switch_controller'
         actuator = self.get_actuator_by_name(actname)
         if actuator is None:
             if not globalv.ignore_initialization_warnings:
