@@ -19,18 +19,19 @@
 GIT_VERSION=1.9.5
 AUTOCONF_VERSION=2.68
 
-APP_PREFIX=view
-CONDA_ENV=pychron_view
-APP_NAME=view
-VERSION=dev_rc4
-PYCHRONDATA_PREFIX=~/Pychron_view
-URL=https://github.com/NMGRL/pychron.git
+APP_PREFIX=experiment
+CONDA_ENV=pychron_experiment
+APP_NAME=experiment
+VERSION=v2.1.0rc1
+PYCHRONDATA_PREFIX=~/Pychron
+ORGANIZATION=USGSDenverPychron
+URL=https://github.com/${ORGANIZATION}/pychron.git
 ANACONDA_PREFIX=$HOME/anaconda
-BRANCH=develop
+BRANCH=release/v2.1.0
 
 #--------------------------------------------------
-if [ "${APP_NAME}" == "view" ]
-then
+#if [ "${APP_NAME}" == "view" ]
+#then
 #Requirements
 CONDA_REQ="statsmodels>=0.5.0\n
 PyYAML>=3\n
@@ -54,7 +55,7 @@ PIP_REQ="uncertainties\n
 PyMySQL\n
 pint\n
 GitPython"
-fi
+#fi
 
 #--------------------------------------------------
 
@@ -79,6 +80,98 @@ then
  echo Please install git. Goto http://git-scm.com/downloads
  exit
 fi
+
+if type ${ANACONDA_PREFIX}/bin/conda >/dev/null
+then
+
+ echo conda already installed
+ {ANACONDA_PREFIX}/bin/conda update --yes conda
+ echo Conda Updated
+
+else
+ echo conda doesnt exist
+ # install conda
+
+ if ! [ -e ./Anaconda-2.1.0-MacOSX-x86_64.sh ]
+ then
+  echo Downloading conda
+  curl -LO http://09c8d0b2229f813c1b93-c95ac804525aac4b6dba79b00b39d1d3.r79.cf1.rackcdn.com/Anaconda-2.1.0-MacOSX-x86_64.sh
+ fi
+
+ chmod +x ./Anaconda-2.1.0-MacOSX-x86_64.sh
+ echo Installing conda. This may take a few minutes. Please be patient
+ ./Anaconda-2.1.0-MacOSX-x86_64.sh -b
+ echo Conda Installed
+ ${ANACONDA_PREFIX}/bin/conda update --yes conda
+ echo Conda Updated
+fi
+
+#make root
+if [ -d ${PYCHRONDATA_PREFIX} ]
+then
+    echo ${PYCHRONDATA_PREFIX} already exists
+else
+    echo Making root directory ${PYCHRONDATA_PREFIX}
+    mkdir ${PYCHRONDATA_PREFIX}
+    mkdir ${PYCHRONDATA_PREFIX}/.hidden
+    mkdir ${PYCHRONDATA_PREFIX}/.hidden/updates
+#    mkdir ${PYCHRONDATA_PREFIX}/setupfiles
+    git clone ${URL} ${PYCHRONDATA_PREFIX}/.hidden/updates/pychron
+
+    git clone ${SUPPORT_URL} ./tmp
+    mv ./tmp/preferences .
+    mv ./tmp/setupfiles .
+    mv ./tmp/queue_conditionals .
+    mv ./tmp/scripts .
+    mv ./tmp/startup_tests.yaml .
+    rm -rf ./tmp
+
+fi
+
+#update source
+cd ${PYCHRONDATA_PREFIX}/.hidden/updates/pychron
+git checkout ${BRANCH}
+git pull
+
+#install python dependencies
+${ANACONDA_PREFIX}/bin/conda create --yes -n $CONDA_ENV python
+
+#write the requirements file
+CREQ=./conda_requirements.txt
+PREQ=./pip_requirements.txt
+if [ -e ${CREQ} ]
+then
+ rm ${CREQ}
+fi
+
+if [ -e ${PREQ} ]
+then
+ rm ${PREQ}
+fi
+
+echo ${CONDA_REQ} >> ${CREQ}
+echo ${PIP_REQ} >> ${PREQ}
+
+cat ${CREQ}
+cat ${PREQ}
+
+${ANACONDA_PREFIX}/envs/${CONDA_ENV}/bin/conda install -n${CONDA_ENV} --yes --file ./conda_requirements.txt
+${ANACONDA_PREFIX}/envs/${CONDA_ENV}/bin/pip install -r ./pip_requirements.txt
+
+rm ${CREQ}
+rm ${PREQ}
+
+#build application
+${ANACONDA_PREFIX}/envs/${CONDA_ENV}/bin/python ./app_utils/app_maker.py -A$APP_NAME -v$VERSION
+
+#move application to Applications
+if [ -e /Applications/py${APP_NAME}_${VERSION}.app ]
+then
+rm -rf /Applications/py${APP_NAME}_${VERSION}.app
+fi
+mv ./launchers/py${APP_NAME}_${VERSION}.app /Applications
+
+
 
 #if type "autoconf" > /dev/null
 #then
@@ -126,113 +219,31 @@ fi
 #         echo Git Installed
 #     fi
 #fi
-
-if type ${ANACONDA_PREFIX}/bin/conda >/dev/null
-then
-
- echo conda already installed
- {ANACONDA_PREFIX}/bin/conda update --yes conda
- echo Conda Updated
-
-else
- echo conda doesnt exist
- # install conda
-
- if ! [ -e ./Anaconda-2.1.0-MacOSX-x86_64.sh ]
- then
-  echo Downloading conda
-  curl -LO http://09c8d0b2229f813c1b93-c95ac804525aac4b6dba79b00b39d1d3.r79.cf1.rackcdn.com/Anaconda-2.1.0-MacOSX-x86_64.sh
- fi
-
- chmod +x ./Anaconda-2.1.0-MacOSX-x86_64.sh
- echo Installing conda. This may take a few minutes. Please be patient
- ./Anaconda-2.1.0-MacOSX-x86_64.sh -b
- echo Conda Installed
- ${ANACONDA_PREFIX}/bin/conda update --yes conda
- echo Conda Updated
-fi
-
-#make root
-if [ -d ${PYCHRONDATA_PREFIX} ]
-then
-    echo ${PYCHRONDATA_PREFIX} already exists
-else
-    echo Making root directory ${PYCHRONDATA_PREFIX}
-    mkdir ${PYCHRONDATA_PREFIX}
-    mkdir ${PYCHRONDATA_PREFIX}/.hidden
-    mkdir ${PYCHRONDATA_PREFIX}/.hidden/updates
-    mkdir ${PYCHRONDATA_PREFIX}/setupfiles
-
     #write boiler plate xml file
-    cat <<EOT >> ${PYCHRONDATA_PREFIX}/setupfiles/initialization.xml
-<root>
-  <globals>
-  </globals>
-  <plugins>
-    <general>
-      <plugin enabled="true">Database</plugin>
-      <plugin enabled="false">Geo</plugin>
-      <plugin enabled="false">Experiment</plugin>
-      <plugin enabled="true">Processing</plugin>
-      <plugin enabled="true">PyScript</plugin>
-      <plugin enabled="true">ArArConstants</plugin>
-      <plugin enabled="true">Entry</plugin>
-      <plugin enabled="false">SystemMonitor</plugin>
-    </general>
-    <hardware>
-    </hardware>
-    <data>
-    </data>
-    <social>
-      <plugin enabled="false">Email</plugin>
-      <plugin enabled="false">Twitter</plugin>
-    </social>
-  </plugins>
-</root>
-EOT
+#    cat <<EOT >> ${PYCHRONDATA_PREFIX}/setupfiles/initialization.xml
 
-git clone ${URL} ${PYCHRONDATA_PREFIX}/.hidden/updates/pychron
-fi
-
-#update source
-cd ${PYCHRONDATA_PREFIX}/.hidden/updates/pychron
-git checkout ${BRANCH}
-git pull
-
-#install python dependencies
-${ANACONDA_PREFIX}/bin/conda create --yes -n $CONDA_ENV python
-
-#write the requirements file
-CREQ=./conda_requirements.txt
-PREQ=./pip_requirements.txt
-if [ -e ${CREQ} ]
-then
- rm ${CREQ}
-fi
-
-if [ -e ${PREQ} ]
-then
- rm ${PREQ}
-fi
-
-echo ${CONDA_REQ} >> ${CREQ}
-echo ${PIP_REQ} >> ${PREQ}
-
-cat ${CREQ}
-cat ${PREQ}
-
-${ANACONDA_PREFIX}/envs/${CONDA_ENV}/bin/conda install -n${CONDA_ENV} --yes --file ./conda_requirements.txt
-${ANACONDA_PREFIX}/envs/${CONDA_ENV}/bin/pip install -r ./pip_requirements.txt
-
-rm ${CREQ}
-rm ${PREQ}
-
-#build application
-${ANACONDA_PREFIX}/envs/${CONDA_ENV}/bin/python ./app_utils/app_maker.py -A$APP_NAME -v$VERSION
-
-#move application to Applications
-if [ -e /Applications/py${APP_NAME}_${VERSION}.app ]
-then
-rm -rf /Applications/py${APP_NAME}_${VERSION}.app
-fi
-mv ./launchers/py${APP_NAME}_${VERSION}.app /Applications
+#<root>
+#  <globals>
+#  </globals>
+#  <plugins>
+#    <general>
+#      <plugin enabled="true">Database</plugin>
+#      <plugin enabled="false">Geo</plugin>
+#      <plugin enabled="false">Experiment</plugin>
+#      <plugin enabled="true">Processing</plugin>
+#      <plugin enabled="true">PyScript</plugin>
+#      <plugin enabled="true">ArArConstants</plugin>
+#      <plugin enabled="true">Entry</plugin>
+#      <plugin enabled="false">SystemMonitor</plugin>
+#    </general>
+#    <hardware>
+#    </hardware>
+#    <data>
+#    </data>
+#    <social>
+#      <plugin enabled="false">Email</plugin>
+#      <plugin enabled="false">Twitter</plugin>
+#    </social>
+#  </plugins>
+#</root>
+#EOT
