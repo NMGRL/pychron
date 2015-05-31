@@ -80,31 +80,31 @@ class ExtractionLineCanvas2D(SceneCanvas):
         self.overlays.append(overlay)
 
     def toggle_item_identify(self, name):
-        v = self._get_valve_by_name(name)
+        v = self._get_switch_by_name(name)
         if v is not None:
             try:
                 v.identify = not v.identify
             except AttributeError:
                 pass
 
-    def update_valve_state(self, name, nstate, refresh=True, mode=None):
+    def update_switch_state(self, name, nstate, refresh=True, mode=None):
         """
         """
-        valve = self._get_valve_by_name(name)
-        if valve is not None:
-            valve.state = nstate
+        switch = self._get_switch_by_name(name)
+        if switch is not None:
+            switch.state = nstate
         self.draw_valid = False
 
-    def update_valve_owned_state(self, name, owned):
-        valve = self._get_valve_by_name(name)
-        if valve is not None:
-            valve.owned = owned
+    def update_switch_owned_state(self, name, owned):
+        switch = self._get_switch_by_name(name)
+        if switch is not None:
+            switch.owned = owned
         self.draw_valid = False
 
-    def update_valve_lock_state(self, name, lockstate):
-        valve = self._get_valve_by_name(name)
-        if valve is not None:
-            valve.soft_lock = lockstate
+    def update_switch_lock_state(self, name, lockstate):
+        switch = self._get_switch_by_name(name)
+        if switch is not None:
+            switch.soft_lock = lockstate
             # self.request_redraw()
         self.draw_valid = False
 
@@ -270,7 +270,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
         item.toggle_animate()
         self.request_redraw()
 
-    def _get_valve_by_name(self, name):
+    def _get_switch_by_name(self, name):
         return next((i for i in self.iter_valves() if i.name==name), None)
         # return next((i for i in self.scene.valves.itervalues()
         #              if isinstance(i, BaseValve) and i.name == name), None)

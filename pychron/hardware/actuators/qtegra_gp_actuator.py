@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,6 +18,7 @@
 
 #========== local library imports =============
 from gp_actuator import GPActuator
+from pychron.globals import globalv
 
 
 class QtegraGPActuator(GPActuator):
@@ -25,25 +26,9 @@ class QtegraGPActuator(GPActuator):
 
     """
 
-#    def initialize(self, *args, **kw):
-#        '''
-#            @type *args: C{str}
-#            @param *args:
-#
-#            @type **kw: C{str}
-#            @param **kw:
-#        '''
-#        self._communicator._terminator = chr(10)
-
     def get_channel_state(self, obj, verbose=False):
         """
         """
-
-        # returns one if channel close  0 for open
-#        if isinstance(obj, (str, int)):
-#            addr = obj
-#        else:
-#            addr = obj.address
 
         cmd = 'GetValveState {}'.format(obj.address)
 
@@ -64,8 +49,11 @@ class QtegraGPActuator(GPActuator):
         cmd = 'Close {}'.format(obj.address)
 
         r = self.ask(cmd)
+        if r is None and globalv.communication_simulation:
+            return True
+
         if r is not None and r.strip() == 'OK':
-            return self.get_channel_state(obj) == False
+            return self.get_channel_state(obj) is False
 
     def open_channel(self, obj):
         """
@@ -73,6 +61,10 @@ class QtegraGPActuator(GPActuator):
         cmd = 'Open {}'.format(obj.address)
 
         r = self.ask(cmd)
+        if r is None and globalv.communication_simulation:
+            return True
+
         if r is not None and r.strip() == 'OK':
-            return self.get_channel_state(obj) == True
+            return self.get_channel_state(obj) is True
+
 # ============= EOF =====================================

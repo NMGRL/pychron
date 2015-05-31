@@ -15,11 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from kiva import STROKE, JOIN_ROUND
+from kiva import JOIN_ROUND
 from traits.api import Instance
 
 from pychron.canvas.canvas2D.base_data_canvas import BaseDataCanvas
 from pychron.canvas.canvas2D.scene.scene import Scene
+
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -31,8 +32,8 @@ class SceneCanvas(BaseDataCanvas):
     def __init__(self, *args, **kw):
         super(SceneCanvas, self).__init__(*args, **kw)
         self.border_visible = True
-        self.border_color = 'blue'
-        self.border_width = 4
+        self.border_color = 'lightgray'
+        self.border_width = 5
 
     def _scene_changed(self, name, old, new):
 
@@ -69,11 +70,6 @@ class SceneCanvas(BaseDataCanvas):
             self.scene.render_overlays(gc, self)
 
     def _draw_inset_border(self, gc, view_bounds=None, mode="default"):
-        """ Draws the border of a component.
-
-        Unlike the default Enable border, this one is drawn on the inside of
-        the plot instead of around it.
-        """
         if not self.border_visible:
             return
 
@@ -84,8 +80,38 @@ class SceneCanvas(BaseDataCanvas):
             gc.set_stroke_color(self.border_color_)
             gc.set_antialias(0)
             gc.set_line_join(JOIN_ROUND)
-            gc.draw_rect((self.x + border_width / 2.0 - 0.5,
-                          self.y + border_width / 2.0 - 0.5,
-                          self.width - border_width / 2.0 - 0.5,
-                          self.height - border_width / 2.0 - 0.5), STROKE)
+            offset = self.border_width
+            gc.move_to(self.x+offset, self.y+offset)
+            gc.line_to(self.x+offset, self.y2-offset)
+            gc.line_to(self.x2-offset, self.y2-offset)
+            gc.line_to(self.x2-offset, self.y+offset)
+            gc.line_to(self.x+offset, self.y+offset)
+            gc.line_to(self.x+offset, self.y2-offset)
+            gc.close_path()
+            gc.stroke_path()
+            # gc.draw_rect((self.x+10, self.y+100, 50,50))
+            # gc.draw_rect((self.x + border_width / 2.0 - 0.5,
+            #               self.y + border_width / 2.0 - 0.5,
+            #               self.width - border_width / 2.0 - 0.5,
+            #               self.height - border_width / 2.0 - 0.5), STROKE)
+    # def _draw_inset_border(self, gc, view_bounds=None, mode="default"):
+    #     """ Draws the border of a component.
+    #
+    #     Unlike the default Enable border, this one is drawn on the inside of
+    #     the plot instead of around it.
+    #     """
+    #     if not self.border_visible:
+    #         return
+    #
+    #     border_width = self.border_width
+    #     with gc:
+    #         gc.set_line_width(border_width)
+    #         gc.set_line_dash(self.border_dash_)
+    #         gc.set_stroke_color(self.border_color_)
+    #         gc.set_antialias(0)
+    #         gc.set_line_join(JOIN_ROUND)
+    #         gc.draw_rect((self.x + border_width / 2.0 - 0.5,
+    #                       self.y + border_width / 2.0 - 0.5,
+    #                       self.width - border_width / 2.0 - 0.5,
+    #                       self.height - border_width / 2.0 - 0.5), STROKE)
 # ============= EOF =============================================

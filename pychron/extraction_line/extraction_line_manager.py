@@ -338,13 +338,13 @@ class ExtractionLineManager(Manager, Consoleable):
                 # c.load_canvas_file(c.config_name)
 
                 if self.switch_manager:
-                    for k, v in self.switch_manager.valves.iteritems():
+                    for k, v in self.switch_manager.switches.iteritems():
                         vc = c.get_object(k)
                         if vc:
                             vc.soft_lock = v.software_lock
                             vc.state = v.state
 
-    def update_valve_state(self, name, state, *args, **kw):
+    def update_switch_state(self, name, state, *args, **kw):
         # self.debug('update valve state {} {}'.format(name, state))
         if self.use_network:
             self.network.set_valve_state(name, state)
@@ -352,15 +352,15 @@ class ExtractionLineManager(Manager, Consoleable):
                 self.network.set_canvas_states(c, name)
 
         for c in self._canvases:
-            c.update_valve_state(name, state, *args, **kw)
+            c.update_switch_state(name, state, *args, **kw)
 
-    def update_valve_lock_state(self, *args, **kw):
+    def update_switch_lock_state(self, *args, **kw):
         for c in self._canvases:
-            c.update_valve_lock_state(*args, **kw)
+            c.update_switch_lock_state(*args, **kw)
 
-    def update_valve_owned_state(self, *args, **kw):
+    def update_switch_owned_state(self, *args, **kw):
         for c in self._canvases:
-            c.update_valve_owned_state(*args, **kw)
+            c.update_switch_owned_state(*args, **kw)
 
     def set_valve_owner(self, name, owner):
         """
@@ -384,10 +384,10 @@ class ExtractionLineManager(Manager, Consoleable):
             else:
                 self.switch_manager.unlock(name)
 
-            description = self.switch_manager.get_valve_by_name(name).description
-            self.info('Valve-{} ({}) {}'.format(name, description, 'lock' if lock else 'unlock'),
+            description = self.switch_manager.get_switch_by_name(name).description
+            self.info('{} ({}) {}'.format(name, description, 'lock' if lock else 'unlock'),
                       color='blue' if lock else 'black')
-            self.update_valve_lock_state(name, lock)
+            self.update_switch_lock_state(name, lock)
 
     def get_state_checksum(self, vkeys):
         if self.switch_manager is not None:
@@ -414,7 +414,7 @@ class ExtractionLineManager(Manager, Consoleable):
 
     def get_valve_by_name(self, name):
         if self.switch_manager is not None:
-            return self.switch_manager.get_valve_by_name(name)
+            return self.switch_manager.get_switch_by_name(name)
 
     def get_valve_names(self):
         names = []
@@ -453,7 +453,7 @@ class ExtractionLineManager(Manager, Consoleable):
 
     def sample(self, name, **kw):
         def sample():
-            valve = self.switch_manager.get_valve_by_name(name)
+            valve = self.switch_manager.get_switch_by_name(name)
             if valve is not None:
                 self.info('start sample')
                 self.open_valve(name, **kw)
@@ -468,7 +468,7 @@ class ExtractionLineManager(Manager, Consoleable):
     def cycle(self, name, **kw):
         def cycle():
 
-            valve = self.switch_manager.get_valve_by_name(name)
+            valve = self.switch_manager.get_switch_by_name(name)
             if valve is not None:
                 n = valve.cycle_n
                 period = valve.cycle_period
@@ -522,7 +522,7 @@ class ExtractionLineManager(Manager, Consoleable):
         if self.switch_manager:
             valve = self.switch_manager.get_valve_by_description(description)
             if valve is None:
-                valve = self.switch_manager.get_valve_by_name(description)
+                valve = self.switch_manager.get_switch_by_name(description)
 
             if valve is not None:
                 if not state:
@@ -552,13 +552,13 @@ class ExtractionLineManager(Manager, Consoleable):
                 self.warning('Invalid valve name={}, description={}'.format(oname, description))
                 return False
 
-            v = vm.get_valve_by_name(name)
+            v = vm.get_switch_by_name(name)
             if action:
                 v.lock()
             else:
                 v.unlock()
 
-            self.update_valve_lock_state(name, action)
+            self.update_switch_lock_state(name, action)
             self.refresh_canvas()
             return True
 
@@ -578,14 +578,18 @@ class ExtractionLineManager(Manager, Consoleable):
                 self.warning('Invalid valve name={}, description={}'.format(oname, description))
                 return False, False
 
-            result = self._change_valve_state(name, mode, action, **kw)
+            result = self._change_switch_state(name, mode, action, **kw)
 
             if result:
                 if all(result):
-                    description = vm.get_valve_by_name(name).description
+                    valve = vm.get_switch_by_name(name)
+
+                    description = valve.description
                     self._log_spec_event(name, action)
-                    self.info('{:<6s} Valve-{} ({})'.format(action.upper(), name, description),
+
+                    self.info('{:<6s} {} ({})'.format(action.upper(), valve.name, description),
                         color='red' if action == 'close' else 'green')
+
                     vm.actuate_children(name, action, mode)
                     ld = self.link_valve_actuation_dict
                     if ld:
@@ -598,18 +602,17 @@ class ExtractionLineManager(Manager, Consoleable):
 
             return result
 
-    def _change_valve_state(self, name, mode, action, sender_address=None):
+    def _change_switch_state(self, name, mode, action, sender_address=None):
         result, change = False, False
         if self._check_ownership(name, sender_address):
             func = getattr(self.switch_manager, '{}_by_name'.format(action))
             ret = func(name, mode=mode)
-            if globalv.communication_simulation:
-                ret = True, True
+
             if ret:
                 result, change = ret
                 if isinstance(result, bool):
                     if change:
-                        self.update_valve_state(name, True if action == 'open' else False)
+                        self.update_switch_state(name, True if action == 'open' else False)
                         self.refresh_canvas()
         return result, change
 
@@ -631,7 +634,7 @@ class ExtractionLineManager(Manager, Consoleable):
 
             self.debug('checking ownership. requestor={}'.format(requestor))
             try:
-                v = self.switch_manager.valves[name]
+                v = self.switch_manager.switches[name]
                 ret = not (v.owner and v.owner != requestor)
             except KeyError:
                 pass
@@ -711,7 +714,7 @@ class ExtractionLineManager(Manager, Consoleable):
                         item.active_color = item.oactive_color
         else:
             net = self.network
-            for k, vi in self.switch_manager.valves.iteritems():
+            for k, vi in self.switch_manager.switches.iteritems():
                 net.set_valve_state(k, vi.state)
             self.reload_canvas()
 
@@ -721,13 +724,13 @@ class ExtractionLineManager(Manager, Consoleable):
             c.canvas2D.trait_set(**{name: new})
 
     def _handle_state(self, new):
-        self.update_valve_state(*new)
+        self.update_switch_state(*new)
 
     def _handle_lock_state(self, new):
-        self.update_valve_lock_state(*new)
+        self.update_switch_lock_state(*new)
 
     def _handle_owned_state(self, new):
-        self.update_valve_owned_state(*new)
+        self.update_switch_owned_state(*new)
 
     def _handle_refresh_canvas(self, new):
         self.refresh_canvas()
