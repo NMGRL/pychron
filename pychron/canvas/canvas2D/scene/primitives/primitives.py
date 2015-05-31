@@ -18,17 +18,17 @@
 import time
 
 from traits.api import HasTraits, Float, Any, Dict, Bool, Str, Property, List, Int, \
-    Color, on_trait_change, String, cached_property, Either
-from traitsui.api import View, VGroup, HGroup, Item, Group
+    Color, String, Either
+from traitsui.api import VGroup, Item, Group
 from chaco.default_colormaps import color_map_name_dict
 from chaco.data_range_1d import DataRange1D
-from kiva.fonttools import str_to_font
 
 
 # ============= standard library imports ========================
 import math
 from numpy import array
 # ============= local library imports  ==========================
+from pychron.canvas.canvas2D.scene.primitives.base import QPrimitive, Primitive
 from pychron.core.geometry.convex_hull import convex_hull
 from kiva.agg.agg import GraphicsContextArray
 import Image as PImage
@@ -39,324 +39,6 @@ def calc_rotation(x1, y1, x2, y2):
     run = x2 - x1
 
     return math.degrees(math.atan2(rise, run))
-
-
-def rounded_rect(gc, x, y, width, height, corner_radius):
-    with gc:
-        gc.translate_ctm(x, y)  # draw a rounded rectangle
-        x = y = 0
-        gc.begin_path()
-
-        hw = width * 0.5
-        hh = height * 0.5
-        if hw < corner_radius:
-            corner_radius = hw * 0.5
-        elif hh < corner_radius:
-            corner_radius = hh * 0.5
-
-        gc.move_to(x + corner_radius, y)
-        gc.arc_to(x + width, y, x + width, y + corner_radius, corner_radius)
-        gc.arc_to(x + width, y + height, x + width - corner_radius, y + height, corner_radius)
-        gc.arc_to(x, y + height, x, y, corner_radius)
-        gc.arc_to(x, y, x + width + corner_radius, y, corner_radius)
-        gc.draw_path()
-
-
-class Primitive(HasTraits):
-    identifier = Str
-    identifier_visible = True
-    type_tag = Str
-    scene_visible = True
-
-    x = Float
-    y = Float
-    ox = Float
-    oy = Float
-    offset_x = Float
-    offset_y = Float
-
-    state = False
-    selected = False
-
-    default_color = Color('red')
-    active_color = Color('(0,255,0)')
-    selected_color = Color('blue')
-    name_color = Color('black')
-    text_color = Color('black')
-
-    canvas = Any
-
-    line_width = 1
-
-    name = Str
-    name_visible = True
-    name_offsetx = 0
-    name_offsety = 0
-
-    klass_name = Property
-
-    space = 'data'
-    visible = True
-
-    primitives = List
-    label = Property
-    font = Str('modern 14')
-    gfont = Property(depends_on='font')
-    # font = str_to_font('modern 14')
-
-    width = 0
-    height = 0
-    _initialized = False
-
-    _cached_wh = None
-    _cached_xy = None
-    _layout_needed = True
-
-    @cached_property
-    def _get_gfont(self):
-        return str_to_font(self.font)
-
-    def _get_label(self):
-        return '{} {} {}'.format(self.klass_name, self.name, self.identifier)
-
-    def __init__(self, x, y, *args, **kw):
-        self.x = x
-        self.y = y
-        self.ox = x
-        self.oy = y
-        # self.default_color = (1, 0, 0)
-        # self.active_color = (0, 1, 0)
-        super(Primitive, self).__init__(*args, **kw)
-        self._initialized = True
-
-    def render(self, gc):
-
-        with gc:
-            if self.visible:
-                self.set_stroke_color(gc)
-                self.set_fill_color(gc)
-
-                gc.set_font(self.gfont)
-                gc.set_line_width(self.line_width)
-
-                self._render_(gc)
-
-    def _convert_color(self, c):
-        if not isinstance(c, (list, tuple)):
-            c = c.red, c.green, c.blue
-        c = map(lambda x: x / 255., c)
-        return c
-
-    def set_stroke_color(self, gc):
-        if self.state:
-            c = self._convert_color(self.active_color)
-        else:
-            c = self._convert_color(self.default_color)
-
-        gc.set_stroke_color(c)
-
-    def set_fill_color(self, gc):
-        if self.state:
-            c = self._convert_color(self.active_color)
-        else:
-            c = self._convert_color(self.default_color)
-        gc.set_fill_color(c)
-
-    def _render_(self, gc):
-        pass
-
-    def adjust(self, dx, dy):
-        args = self.canvas.map_data((dx, dy))
-        aargs = self.canvas.map_data((0, 0))
-        dx = args[0] - aargs[0]
-        dy = args[1] - aargs[1]
-        self.x += dx
-        self.y += dy
-
-    def get_xy(self, x=None, y=None, clear_layout_needed=True):
-        if self._layout_needed or not self._cached_xy:
-
-            if x is None:
-                x = self.x
-            if y is None:
-                y = self.y
-            # x, y = self.x, self.y
-            offset = 0
-            if self.space == 'data':
-                # if self.canvas is None:
-                # print self
-                if self.canvas:
-                    x, y = self.canvas.map_screen([(x, y)])[0]
-                    # offset = self.canvas.offset
-                    offset = 1
-                    x += self.offset_x
-                    y += self.offset_y
-
-            rx, ry = x + offset, y + offset
-            if clear_layout_needed:
-                self._layout_needed = False
-        else:
-            rx, ry = self._cached_xy
-        self._cached_xy = rx, ry
-
-        return rx, ry
-
-    def get_wh(self):
-        if self._layout_needed or not self._cached_wh:
-            w, h = self.width, self.height
-            # w, h = 20, 20
-            if self.space == 'data':
-                (w, h), (ox, oy) = self.canvas.map_screen([(self.width, self.height), (0, 0)])
-                w, h = w - ox, h - oy
-        else:
-            w, h = self._cached_wh
-        self._cached_wh = w, h
-
-        return w, h
-
-    def map_dimension(self, d, keep_square=False):
-        (w, h), (ox, oy) = self.canvas.map_screen([(d, d), (0, 0)])
-        w, h = w - ox, h - oy
-        if keep_square:
-            w = min(w, h)
-
-        return w
-
-    bounds = None
-
-    def set_canvas(self, canvas):
-        if canvas:
-            self._layout_needed = canvas != self.canvas or self.bounds != canvas.bounds
-
-        self.canvas = canvas
-        if canvas:
-            self.bounds = canvas.bounds
-        else:
-            self.bounds = None
-
-        for pi in self.primitives:
-            pi.set_canvas(canvas)
-
-    def set_state(self, state):
-        self.state = state
-
-    def set_selected(self, selected):
-        self.selected = selected
-
-    def _render_name(self, gc, x, y, w, h):
-        if self.name and self.name_visible:
-            with gc:
-                # c = self.text_color if self.text_color else self.default_color
-                gc.set_fill_color(self._convert_color(self.name_color))
-                txt = str(self.name)
-                self._render_textbox(gc, x, y, w, h, txt)
-
-    def _render_textbox(self, gc, x, y, w, h, txt):
-
-        tw, th, _, _ = gc.get_full_text_extent(txt)
-        x = x + w / 2. - tw / 2.
-        y = y + h / 2. - th / 2.
-
-        self._render_text(gc, txt, x, y)
-
-    def _render_text(self, gc, t, x, y):
-        with gc:
-            gc.translate_ctm(x, y)
-            # gc.set_text_position(x, y)
-            gc.set_fill_color((0,0,0))
-            gc.set_text_position(0, 0)
-            gc.show_text(t)
-
-    @on_trait_change('default_color, active_color, x, y')
-    def _refresh_canvas(self):
-        self.request_redraw()
-
-    def request_redraw(self):
-        if self.canvas:
-            # self.canvas._layout_needed = True
-            self.canvas.request_redraw()
-            # self.canvas._layout_needed = False
-
-    def _get_klass_name(self):
-        return self.__class__.__name__.split('.')[-1]
-
-    def traits_view(self):
-        g = VGroup(Item('name'), Item('klass_name', label='Type'),
-                   Item('default_color'),
-                   Item('active_color'),
-                   HGroup(Item('x', format_str='%0.3f'),
-                          Item('y', format_str='%0.3f')))
-        cg = self._get_group()
-        if cg is not None:
-            g = VGroup(g, cg)
-
-        v = View(g)
-        return v
-
-    def _get_group(self):
-        return
-
-    def is_in_region(self, x1, x2, y1, y2):
-        """
-
-          |------------- x2,y2
-          |       T      |
-          |              |
-        x1,y1------------|    F
-
-
-        check to see if self.x and self.y within region
-        :param x1: float
-        :param x2: float
-        :param y1: float
-        :param y2: float
-        :return: bool
-
-        """
-
-        return x1 <= self.x <= x2 and y1 <= self.y <= y2
-
-
-class QPrimitive(Primitive):
-    def _convert_color(self, c):
-        if not isinstance(c, (list, tuple)):
-            # c = c.red(), c.green(), c.blue()
-            c = c.toTuple()
-
-        c = map(lambda x: x / 255., c)
-        return c
-
-    def is_in(self, x, y):
-        mx, my = self.get_xy()
-        w, h = self.get_wh()
-        if mx <= x <= (mx + w) and my <= y <= (my + h):
-            return True
-
-
-class Connectable(QPrimitive):
-    connections = List
-    volume = Float
-
-    @on_trait_change('x,y')
-    def _update_xy(self):
-        if not self._initialized:
-            return
-
-        # print self.x, self.ox, self.y,self.oy, self.x != self.ox or self.y != self.oy
-
-        # print self.connections
-        cvo = self.x != self.ox
-        cho = self.y != self.oy
-
-        for t, c in self.connections:
-            c.clear_vorientation = cvo
-            c.clear_horientation = cho
-
-            func = getattr(c, 'set_{}point'.format(t))
-            w, h = self.width, self.height
-            func((self.x + w / 2., self.y + h / 2.))
-
-        self.request_redraw()
 
 
 class Point(QPrimitive):
@@ -427,48 +109,6 @@ class Bordered(Primitive):
             c[3] = 1
 
         return c
-
-
-class RoundedRectangle(Rectangle, Connectable, Bordered):
-    corner_radius = 8.0
-    display_name = None
-    fill = True
-
-    def get_tooltip_text(self):
-        return 'Stage={}\nVolume={}'.format(self.name, self.volume)
-
-    def _render_(self, gc):
-        corner_radius = self.corner_radius
-        with gc:
-            width, height = self.get_wh()
-            x, y = self.get_xy()
-            if self.fill:
-                rounded_rect(gc, x, y, width, height, corner_radius)
-
-            self._render_border(gc, x, y, width, height)
-
-            gc.set_fill_color(self._convert_color(self.name_color))
-            if self.display_name:
-                self._render_textbox(gc, x, y, width, height,
-                                     self.display_name)
-            elif not self.display_name == '':
-                self._render_name(gc, x, y, width, height)
-
-    def _render_border(self, gc, x, y, width, height):
-        if self.use_border:
-
-            corner_radius = self.corner_radius
-            with gc:
-                gc.set_line_width(self.border_width)
-                if self.fill:
-                    c = self._get_border_color()
-                else:
-                    c = self.default_color
-                    c = self._convert_color(c)
-                    gc.set_fill_color((0, 0, 0, 0))
-
-                gc.set_stroke_color(c)
-                rounded_rect(gc, x, y, width, height, corner_radius)
 
 
 class Line(QPrimitive):
@@ -619,8 +259,8 @@ class Circle(QPrimitive):
     def is_in(self, sx, sy):
         x, y = self.get_xy()
         r = self.map_dimension(self.radius)
-        if ((x - sx) ** 2 + (y - sy) ** 2) ** 0.5 < r:
-            return True
+        # print ((x - sx) ** 2 + (y - sy) ** 2) ** 0.5, r
+        return ((x - sx) ** 2 + (y - sy) ** 2) ** 0.5 < r
 
     def _radius_changed(self):
         self.request_redraw()
@@ -847,8 +487,8 @@ class Label(QPrimitive):
     soffset_y = Float
     label_offsety = Float
     # def __init__(self, *args, **kw):
-    #     super(Label, self).__init__(*args, **kw)
-    #     self.text_color = 'black'
+    # super(Label, self).__init__(*args, **kw)
+    # self.text_color = 'black'
 
     def _text_changed(self):
         self.request_redraw()
@@ -925,7 +565,7 @@ class Indicator(QPrimitive):
         super(Indicator, self).__init__(x, y, *args, **kw)
         # print self.x, self.offset_x
         # self.x=x=self.x+self.offset_x
-        #self.y=y=self.y+self.offset_y
+        # self.y=y=self.y+self.offset_y
 
         w = self.hline_length
         self.hline = Line(Point(x - w, y, **kw),
@@ -934,8 +574,8 @@ class Indicator(QPrimitive):
         self.vline = Line(Point(x, y - h, **kw),
                           Point(x, y + h, **kw), **kw)
 
-        #self.primitives.append(self.hline)
-        #self.primitives.append(self.vline)
+        # self.primitives.append(self.hline)
+        # self.primitives.append(self.vline)
 
     def _render_(self, gc, *args, **kw):
         with gc:
@@ -955,11 +595,11 @@ class Indicator(QPrimitive):
             gc.rect(x, y, l, l)
             gc.draw_path()
 
-            #else:
-            #    l = self.spot_size
+            # else:
+            # l = self.spot_size
             #
-            #    hl = l / 4.
-            #    x, y = x - hl, y - hl
+            # hl = l / 4.
+            # x, y = x - hl, y - hl
             #
             #    gc.rect(x, y, l/2., l/2.)
             #    gc.draw_path()
@@ -970,11 +610,11 @@ class Indicator(QPrimitive):
 # def set_canvas(self, canvas):
 # super(Indicator, self).set_canvas(canvas)
 # self.hline.set_canvas(canvas)
-#        self.vline.set_canvas(canvas)
+# self.vline.set_canvas(canvas)
 
 class PointIndicator(Indicator):
     radius = 8
-    #    active = Bool(False)
+    # active = Bool(False)
     label_item = Any
     show_label = Bool(True)
     font = Str('modern 8')
@@ -1040,10 +680,10 @@ class PolyLine(QPrimitive):
     lines = List
     identifier = Str
     point_klass = PointIndicator
-    #    start_point=None
+    # start_point=None
     def __init__(self, x, y, z=0, identifier='', **kw):
         super(PolyLine, self).__init__(x, y, **kw)
-        #        self.start_point=PointIndicator(x,y, **kw)
+        # self.start_point=PointIndicator(x,y, **kw)
         self.identifier = identifier
         p = self.point_klass(x, y, z=z, identifier=identifier, **kw)
         self.points.append(p)
@@ -1063,8 +703,8 @@ class PolyLine(QPrimitive):
         p2 = Dot(x, y, z=z, default_color=point_color, **ptargs)
         self._add_point(p2, line_color)
 
-    #        p1 = self.points[-1]
-    #        l = Line(p1, p2, default_color=line_color)
+    # p1 = self.points[-1]
+    # l = Line(p1, p2, default_color=line_color)
     #        self.primitives.append(l)
     #        self.lines.append(l)
     #
@@ -1076,9 +716,9 @@ class PolyLine(QPrimitive):
             pi.render(gc)
 
 
-#        self.start_point.render(gc)
-#        for pt in self.points:
-#            pt.render(gc)
+# self.start_point.render(gc)
+# for pt in self.points:
+# pt.render(gc)
 # #
 #        for l in self.lines:
 #            l.render(gc)

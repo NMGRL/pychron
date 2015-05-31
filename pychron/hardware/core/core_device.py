@@ -283,7 +283,7 @@ class CoreDevice(ScanableDevice, HasCommunicator, ConsumerMixin):
             self._communicator.scheduler = s
 
     def repeat_command(self, cmd, ntries=2, check_val=None, check_type=None,
-                       verbose=True):
+                       verbose=True, **kw):
 
         if isinstance(cmd, tuple):
             cmd = self._build_command(*cmd)

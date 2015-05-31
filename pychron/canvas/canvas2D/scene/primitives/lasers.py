@@ -17,53 +17,53 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.canvas.canvas2D.scene.primitives.primitives import RoundedRectangle, Animation
+from pychron.canvas.canvas2D.scene.primitives.rounded import RoundedRectangle
 
 
-class Laser(RoundedRectangle, Animation):
+class Laser(RoundedRectangle):
     cnt_tol = 5
     radius = 4
 
-    def _render_(self, gc):
-        super(Laser, self)._render_(gc)
-        if self.animate:
-            self._draw_firing(gc)
-
-    def _draw_firing(self, gc):
-        """
-        draw an led stream
-
-        0 X X X X X
-        X 0 X X X X
-        X X 0 X X X
-        X X X 0 X X
-        X X X X 0 X
-        X X X X X 0
-        0 X X X X X
-
-        :param gc:
-        :return:
-        """
-        nleds = self.cnt_tol
-        x, y = self.get_xy()
-        gc.translate_ctm(x, y)
-        radius = self.radius
-        diam = radius * 2
-        for i in range(nleds):
-            gc.translate_ctm(0, -diam - 1)
-            with gc:
-                if i == self.cnt:
-                    color = (1, 0, 0, 1)
-                else:
-                    color = (1, 0.65, 0, 0.6)
-
-                gc.set_fill_color(color)
-                gc.set_stroke_color(color)
-
-                gc.arc(0, 0, radius, 0, 360)
-                gc.draw_path()
-
-        self.increment_cnt()
+    # def _render_(self, gc):
+    #     super(Laser, self)._render_(gc)
+    #     if self.animate:
+    #         self._draw_firing(gc)
+    #
+    # def _draw_firing(self, gc):
+    #     """
+    #     draw an led stream
+    #
+    #     0 X X X X X
+    #     X 0 X X X X
+    #     X X 0 X X X
+    #     X X X 0 X X
+    #     X X X X 0 X
+    #     X X X X X 0
+    #     0 X X X X X
+    #
+    #     :param gc:
+    #     :return:
+    #     """
+    #     nleds = self.cnt_tol
+    #     x, y = self.get_xy()
+    #     gc.translate_ctm(x, y)
+    #     radius = self.radius
+    #     diam = radius * 2
+    #     for i in range(nleds):
+    #         gc.translate_ctm(0, -diam - 1)
+    #         with gc:
+    #             if i == self.cnt:
+    #                 color = (1, 0, 0, 1)
+    #             else:
+    #                 color = (1, 0.65, 0, 0.6)
+    #
+    #             gc.set_fill_color(color)
+    #             gc.set_stroke_color(color)
+    #
+    #             gc.arc(0, 0, radius, 0, 360)
+    #             gc.draw_path()
+    #
+    #     self.increment_cnt()
 
 # ============= EOF =============================================
 

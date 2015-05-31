@@ -131,7 +131,39 @@ class ExperimentFactory(Loggable, ConsumerMixin):
     def set_selected_runs(self, runs):
         self.run_factory.set_selected_runs(runs)
 
+    '''
+    uflag = bool(self.username)
+        msflag = self.mass_spectrometer not in ('', 'Spectrometer', LINE_STR)
+        lflag = True
+        if self.extract_device not in ('', 'Extract Device', LINE_STR):
+            lflag = bool(self.queue_factory.load_name)
+
+        ret = uflag and msflag and lflag
+        if self.run_factory.run_block in ('RunBlock', LINE_STR):
+            ret = ret and self.labnumber
+        return ret
+    '''
     def _add_run(self, *args, **kw):
+
+        if not self.ok_add:
+            missing = []
+            if not bool(self.username):
+                missing.append('"Username"')
+            if self.mass_spectrometer in ('', 'Spectrometer', LINE_STR):
+                missing.append('"Spectrometer"')
+            if self.extract_device not in ('', 'Extact Device', LINE_STR):
+                if not bool(self.queue_factory.load_name):
+                    missing.append('"Load"')
+            if self.run_factory.run_block in ('RunBlock', LINE_STR):
+                if not self.labnumber:
+                    missing.append('"Labnumber"')
+
+            f = 'a value'
+            if len(missing)>1:
+                f = 'values'
+            self.warning_dialog('Please set {} for {}'.format(f, ','.join(missing)))
+            return
+
         positions = [str(pi.positions[0]) for pi in self.selected_positions]
         self.debug('add run positions= {}'.format(positions))
 

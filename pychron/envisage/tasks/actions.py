@@ -213,6 +213,7 @@ class WebAction(PAction):
             return
 
         webbrowser.open_new(url)
+        return True
 
 
 class IssueAction(WebAction):
@@ -223,7 +224,11 @@ class IssueAction(WebAction):
         """
             goto issues page add an request or report bug
         """
-        url = 'https://github.com/NMGRL/pychron/issues/new'
+
+        app = event.task.window.application
+        name = app.preferences.get('pychron.general.organization')
+
+        url = 'https://github.com/{}/pychron/issues/new'.format(name)
         self._open_url(url)
 
 
@@ -267,9 +272,12 @@ class ChangeLogAction(WebAction):
             goto issues page add an request or report bug
         """
         from pychron.version import __version__
-        url = 'https://github.com/NMGRL/pychron/blob/release/v{}/CHANGELOG.md'.format(__version__)
+        app = event.task.window.application
+        org = app.preferences.get('pychron.general.organization')
+
+        url = 'https://github.com/{}/pychron/blob/release/v{}/CHANGELOG.md'.format(org,__version__)
         if not self._open_url(url):
-            url = 'https://github.com/NMGRL/pychron/blob/develop/CHANGELOG.md'
+            url = 'https://github.com/{}/pychron/blob/develop/CHANGELOG.md'.format(org)
             self._open_url(url)
 
 

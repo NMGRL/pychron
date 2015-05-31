@@ -18,10 +18,10 @@
 # ============= standard library imports ========================
 from socket import gethostbyname, gethostname
 # ============= local library imports  ==========================
-from pychron.extraction_line.valve_manager import ValveManager
+from pychron.extraction_line.switch_manager import SwitchManager
 
 
-class ClientValveManager(ValveManager):
+class ClientSwitchManager(SwitchManager):
     def get_state_checksum(self, vkeys):
         if self.actuators:
             actuator = self.actuators[0]
@@ -37,7 +37,7 @@ class ClientValveManager(ValveManager):
         word = self.get_state_word()
         changed = False
         if word:
-            for k, v in self.valves.iteritems():
+            for k, v in self.switches.iteritems():
                 try:
                     s = word[k]
                     if s != v.state or force_network_change:
@@ -51,7 +51,7 @@ class ClientValveManager(ValveManager):
 
         elif force_network_change:
             changed = True
-            for k, v in self.valves.iteritems():
+            for k, v in self.switches.iteritems():
                 self.refresh_state = (k, v.state)
                 # elm.update_valve_state(k, v.state)
 
@@ -65,9 +65,9 @@ class ClientValveManager(ValveManager):
 
         changed = False
         if word is not None:
-            for k in self.valves:
+            for k in self.switches:
                 if k in word:
-                    v = self.get_valve_by_name(k)
+                    v = self.get_switch_by_name(k)
                     s = word[k]
                     if v.software_lock != s:
                         changed = True
@@ -95,7 +95,7 @@ class ClientValveManager(ValveManager):
         for owner, valves in owners:
             if owner != ip:
                 for k in valves:
-                    v = self.get_valve_by_name(k)
+                    v = self.get_switch_by_name(k)
                     if v is not None:
                         if v.owner != owner:
                             v.owner = owner
@@ -182,7 +182,7 @@ class ClientValveManager(ValveManager):
 
         :return: True if local checksum matches remote checksum.
         """
-        valves = self.valves
+        valves = self.switches
         vkeys = valves.keys()
         local = self.calculate_checksum(vkeys)
 

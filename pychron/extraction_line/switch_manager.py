@@ -30,13 +30,13 @@ from pychron.core.helpers.strtools import to_bool
 from pychron.globals import globalv
 from pychron.hardware.core.checksum_helper import computeCRC
 from pychron.hardware.core.i_core_device import ICoreDevice
-from pychron.hardware.switch import Switch
+from pychron.hardware.switch import Switch, ManualSwitch
 from pychron.managers.manager import Manager
 from pychron.extraction_line.explanation.explanable_item import ExplanableValve
 from pychron.hardware.valve import HardwareValve
 from pychron.paths import paths
 from pychron.extraction_line.pipettes.tracking import PipetteTracker
-from valve_parser import ValveParser
+from switch_parser import SwitchParser
 
 
 def add_checksum(func):
@@ -52,13 +52,13 @@ class ValveGroup(object):
     valves = None
 
 
-class ValveManager(Manager):
+class SwitchManager(Manager):
     """
     Manager to interface with the UHV and HV pneumatic valves
 
     """
 
-    valves = Dict
+    switches = Dict
     explanable_items = List
     extraction_line_manager = Any
     pipette_trackers = List(PipetteTracker)
@@ -82,7 +82,7 @@ class ValveManager(Manager):
         """
             actuate all switches that have ``name`` defined as their parent
         """
-        for v in self.valves.values():
+        for v in self.switches.values():
             if v.parent == name:
                 self.debug('actuating child, {}, {}'.format(v.display_name, action))
                 if v.parent_inverted:
@@ -93,18 +93,22 @@ class ValveManager(Manager):
                 func(v.display_name, mode)
 
     def show_valve_properties(self, name):
-        v = self.get_valve_by_name(name)
+        v = self.get_switch_by_name(name)
         if v is not None:
             v.edit_traits()
 
     def kill(self):
-        super(ValveManager, self).kill()
+        super(SwitchManager, self).kill()
+        self._save_states()
+
+    def _save_states(self):
         self._save_soft_lock_states()
+        self._save_manual_states()
 
     def create_device(self, name, *args, **kw):
         """
         """
-        dev = super(ValveManager, self).create_device(name, *args, **kw)
+        dev = super(SwitchManager, self).create_device(name, *args, **kw)
         if 'actuator' in name or 'controller' in name:
             if dev is not None:
                 self.actuators.append(dev)
@@ -125,28 +129,32 @@ class ValveManager(Manager):
 
         if globalv.load_valve_states:
             self._load_states()
+
         if globalv.load_soft_locks:
             self._load_soft_lock_states()
+
+        if globalv.load_manual_states:
+            self._load_manual_states()
 
     def set_child_state(self, name, state):
         self.debug('set states for children of {}. state={}'.format(name, state))
         # elm = self.extraction_line_manager
-        for k, v in self.valves.iteritems():
+        for k, v in self.switches.iteritems():
             if v.parent == name:
                 v.set_state(state)
                 self.refresh_state = (k, state)
                 # elm.update_valve_state(k, state)
 
     def calculate_checksum(self, vkeys):
-        vs = self.valves
+        vs = self.switches
         return binascii.crc32(''.join((vs[k].state_str() for k in vkeys)))
 
     def get_valve_names(self):
-        return self.valves.keys()
+        return self.switches.keys()
 
     def refresh_network(self):
 
-        for k, v in self.valves.iteritems():
+        for k, v in self.switches.iteritems():
             self.refresh_state = (k, v.state)
 
     @add_checksum
@@ -166,7 +174,7 @@ class ValveManager(Manager):
         # self.valves['C'].owner = '129.138.12.135'
         # self.valves['X'].owner = '129.138.12.135'
 
-        vs = [(v.name.split('-')[1], v.owner) for v in self.valves.itervalues()]
+        vs = [(v.name.split('-')[1], v.owner) for v in self.switches.itervalues()]
         key = lambda x: x[1]
         vs = sorted(vs, key=key)
 
@@ -185,7 +193,7 @@ class ValveManager(Manager):
     @add_checksum
     def get_software_locks(self):
         return ','.join(['{}{}'.format(k, int(v.software_lock))
-                         for k, v in self.valves.iteritems()])
+                         for k, v in self.switches.iteritems()])
 
     @add_checksum
     def get_states(self, timeout=0.25):
@@ -206,7 +214,7 @@ class ValveManager(Manager):
             clear_prev_keys = True
             prev_keys = self._prev_keys
 
-        for k, v in self.valves.iteritems():
+        for k, v in self.switches.iteritems():
             '''
                 querying a lot of valves can add up hence timeout.
                 
@@ -243,11 +251,11 @@ class ValveManager(Manager):
         """
         return self._get_valve_by(a, 'description')
 
-    def get_valve_by_name(self, n):
+    def get_switch_by_name(self, n):
         """
         """
-        if n in self.valves:
-            return self.valves[n]
+        if n in self.switches:
+            return self.switches[n]
 
     def get_name_by_address(self, k):
         """
@@ -269,7 +277,7 @@ class ValveManager(Manager):
     def get_state_by_name(self, n):
         """
         """
-        v = self.get_valve_by_name(n)
+        v = self.get_switch_by_name(n)
         state = None
         if v is not None:
             state = self._get_state_by(v)
@@ -301,7 +309,7 @@ class ValveManager(Manager):
         if description:
             v = self.get_valve_by_description(description)
         else:
-            v = self.get_valve_by_name(name)
+            v = self.get_switch_by_name(name)
 
         if v is not None:
             return v.software_lock
@@ -309,14 +317,16 @@ class ValveManager(Manager):
     def _check_soft_interlocks(self, name):
         """
         """
-        cv = self.get_valve_by_name(name)
+        cv = self.get_switch_by_name(name)
         self.debug('check software interlocks {}'.format(name))
         if cv is not None:
             interlocks = cv.interlocks
-            valves = self.valves
+            self.debug('interlocks {}'.format(interlocks))
+            switches = self.switches
             for interlock in interlocks:
-                if interlock in valves:
-                    v = valves[interlock]
+
+                if interlock in switches:
+                    v = switches[interlock]
                     if v.state:
                         self.debug('interlocked {}'.format(interlock))
                         return v
@@ -332,7 +342,7 @@ class ValveManager(Manager):
         return self._close_(name, mode)
 
     def sample(self, name, period):
-        v = self.get_valve_by_name(name)
+        v = self.get_switch_by_name(name)
         if v and not v.state:
             self.info('start sample')
             self.open_by_name(name)
@@ -345,7 +355,7 @@ class ValveManager(Manager):
     def lock(self, name, save=True):
         """
         """
-        v = self.get_valve_by_name(name)
+        v = self.get_switch_by_name(name)
         if v is not None:
             v.lock()
             if save:
@@ -354,14 +364,14 @@ class ValveManager(Manager):
     def unlock(self, name, save=True):
         """
         """
-        v = self.get_valve_by_name(name)
+        v = self.get_switch_by_name(name)
         if v is not None:
             v.unlock()
             if save:
                 self._save_soft_lock_states()
 
     def set_valve_owner(self, name, owner):
-        v = self.get_valve_by_name(name)
+        v = self.get_switch_by_name(name)
         if v is not None:
             v.owner = owner
 
@@ -371,7 +381,7 @@ class ValveManager(Manager):
         else return true
         """
 
-        return next((False for vi in v.interlocks if self.get_valve_by_name(vi).state), True)
+        return next((False for vi in v.interlocks if self.get_switch_by_name(vi).state), True)
 
     # private
     def _get_state_by(self, v):
@@ -389,7 +399,7 @@ class ValveManager(Manager):
         return state
 
     def _get_valve_by(self, a, attr):
-        return next((valve for valve in self.valves.itervalues() \
+        return next((valve for valve in self.switches.itervalues() \
                      if getattr(valve, attr) == a), None)
 
     def _validate_checksum(self, word):
@@ -411,7 +421,7 @@ class ValveManager(Manager):
             try:
                 if ',' in word:
                     packets = word.split(',')
-                    n, nn = len(packets), len(self.valves)
+                    n, nn = len(packets), len(self.switches)
                     if n < nn:
                         self.warning('Valve word length is too short. All valve states will not be updated!'
                                      ' Word:{}, Num Valves: {}'.format(n, nn))
@@ -437,39 +447,62 @@ class ValveManager(Manager):
         return d
 
     def load_hardware_states(self):
-        for k, v in self.valves.iteritems():
+        for k, v in self.switches.iteritems():
             if v.query_state:
                 s = v.get_hardware_state(verbose=False)
                 self.refresh_state = (k, s, False)
 
     def _load_states(self):
-        for k, v in self.valves.iteritems():
+        for k, v in self.switches.iteritems():
             s = v.get_hardware_state()
             self.refresh_state = (k, s, False)
+
+    def _load_manual_states(self):
+        p = os.path.join(paths.hidden_dir, '{}_manual_states'.format(self.name))
+        if os.path.isfile(p):
+            self.info('loading manual states from {}'.format(p))
+
+            with open(p, 'rb') as f:
+                try:
+                    ms = pickle.load(f)
+                except PickleError:
+                    return
+
+                for k, s in self.switches.iteritems():
+                    if k in ms:
+                        s.state = ms[k]
 
     def _load_soft_lock_states(self):
         p = os.path.join(paths.hidden_dir, '{}_soft_lock_state'.format(self.name))
         if os.path.isfile(p):
-            self.info('loading soft lock state from {}'.format(p))
+            self.info('loading soft lock states from {}'.format(p))
 
             with open(p, 'rb') as f:
                 try:
                     sls = pickle.load(f)
                 except PickleError:
-                    pass
+                    return
 
-                for v in self.valves:
+                for v in self.switches:
 
                     if v in sls and sls[v]:
                         self.lock(v, save=False)
                     else:
                         self.unlock(v, save=False)
 
+    def _save_manual_states(self):
+        p = os.path.join(paths.hidden_dir, '{}_manual_states'.format(self.name))
+        self.info('saving manual states to {}'.format(p))
+        with open(p, 'wb') as f:
+            obj = {k:v.state for k, v in self.switches.iteritems() if isinstance(v, ManualSwitch)}
+            pickle.dump(obj, f)
+
     def _save_soft_lock_states(self):
         p = os.path.join(paths.hidden_dir, '{}_soft_lock_state'.format(self.name))
-        self.info('saving soft lock state to {}'.format(p))
+        self.info('saving soft lock states to {}'.format(p))
         with open(p, 'wb') as f:
-            obj = dict([(k, v.software_lock) for k, v in self.valves.iteritems()])
+            obj = {k:v.software_lock for k,v in self.switches.iteritems()}
+            # obj = dict([(k, v.software_lock) for k, v in self.switches.iteritems()])
 
             pickle.dump(obj, f)
 
@@ -510,7 +543,7 @@ class ValveManager(Manager):
         """
         changed = False
         if address is None:
-            v = self.get_valve_by_name(name)
+            v = self.get_switch_by_name(name)
             vid = name
         else:
             v = self.get_valve_by_address(address)
@@ -525,7 +558,8 @@ class ValveManager(Manager):
             else:
                 act = getattr(v, action)
                 result, changed = act(mode='{}-{}'.format(self.mode, mode))
-
+                if isinstance(v, ManualSwitch):
+                    self._save_manual_states()
         else:
             msg = 'Valve {} not available'.format(vid)
             self.console_message = msg, 'red'
@@ -543,10 +577,10 @@ class ValveManager(Manager):
             name, hv = self._switch_factory(v)
             if self.use_explanation:
                 self._load_explanation_valve(hv)
-            self.valves[name] = hv
+            self.switches[name] = hv
             return hv
 
-        parser = ValveParser()
+        parser = SwitchParser()
         if not parser.load(path):
             self.warning_dialog('No valves.xml file located in "{}"'.format(os.path.dirname(path)))
         else:
@@ -559,7 +593,11 @@ class ValveManager(Manager):
 
             for s in parser.get_switches():
                 name, sw = self._switch_factory(s, klass=Switch)
-                self.valves[name] = sw
+                self.switches[name] = sw
+
+            for mv in parser.get_manual_valves():
+                name, sw = self._switch_factory(mv, klass=ManualSwitch)
+                self.switches[name] = sw
 
             ps = []
             for p in parser.get_pipettes():
@@ -575,8 +613,8 @@ class ValveManager(Manager):
         if inner is not None and outer is not None:
             innerk = inner.text.strip()
             outerk = outer.text.strip()
-            if innerk in self.valves \
-                    and outerk in self.valves:
+            if innerk in self.switches \
+                    and outerk in self.switches:
                 return PipetteTracker(
                     name=p.text.strip(),
                     inner=innerk,
@@ -595,7 +633,7 @@ class ValveManager(Manager):
         if description is not None:
             description = description.text.strip()
 
-        actname = act_elem.text.strip() if act_elem is not None else 'valve_controller'
+        actname = act_elem.text.strip() if act_elem is not None else 'switch_controller'
         actuator = self.get_actuator_by_name(actname)
         if actuator is None:
             if not globalv.ignore_initialization_warnings:

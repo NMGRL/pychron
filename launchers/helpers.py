@@ -926,6 +926,7 @@ def add_eggs(root):
             for egg_name in eggs:
                 # sys.path.insert(0, os.path.join(root, egg_name))
                 sys.path.append(os.path.join(root, egg_name))
+                print os.path.join(root, egg_name)
 
 
 def build_globals(debug):

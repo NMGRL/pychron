@@ -365,6 +365,7 @@ class Paths(object):
         self.task_extensions_file = join(self.hidden_dir, 'task_extensions.yaml')
         self.simple_ui_file = join(self.hidden_dir, 'simple_ui.yaml')
         self.edit_ui_defaults = join(self.hidden_dir, 'edit_ui.yaml')
+        build_directories()
 
     def write_defaults(self):
         if os.environ.get('TRAVIS_CI', 'False') == 'False' and \
@@ -414,8 +415,8 @@ def build_directories():
 
 
 paths = Paths()
-paths.build('_dev')
-build_directories()
+# paths.build('_dev')
+# build_directories()
 # ============= EOF ==============================================
 # ==============================================================================
 # # #database

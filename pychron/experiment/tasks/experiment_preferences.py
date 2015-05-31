@@ -77,6 +77,8 @@ class ExperimentPreferences(BasePreferencesHelper):
 
     automated_runs_editable = Bool
 
+    use_xls_persister = Bool
+
     def _get_memory_threshold(self):
         return self._memory_threshold
 
@@ -186,7 +188,8 @@ class ExperimentPreferencesPane(PreferencesPane):
                                  label='Min. Mass Spectrometer Pumptime (s)'),
                             show_border=True,
                             label='Overlap')
-
+        persist_grp = Group(Item('use_xls_persister', label='Save analyses to Excel workbook'),
+                            label='Persist', show_border=True)
         automated_grp = Group(VGroup(Item('send_config_before_run',
                                           tooltip='Set the spectrometer configuration before each analysis',
                                           label='Set Spectrometer Configuration on Start'),
@@ -195,6 +198,7 @@ class ExperimentPreferencesPane(PreferencesPane):
                                           label='Set Integration Time on Start'),
                                      Item('default_integration_time',
                                           enabled_when='set_integration_time_on_start'),
+                                     persist_grp,
                                      monitor_grp, overlap_grp),
                               label='Automated Run')
 

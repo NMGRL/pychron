@@ -20,7 +20,7 @@ from enable.enable_traits import Pointer
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.extraction_line_canvas2D import ExtractionLineCanvas2D
-from pychron.canvas.canvas2D.scene.primitives.primitives import RoundedRectangle
+from pychron.canvas.canvas2D.scene.primitives.rounded import RoundedRectangle
 
 
 def snap_to_grid(dx, dy, interval):

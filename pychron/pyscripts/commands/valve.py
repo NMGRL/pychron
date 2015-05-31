@@ -23,7 +23,7 @@ import re
 # ============= local library imports  ==========================
 from pychron.pyscripts.commands.core import Command
 from pychron.paths import paths
-from pychron.extraction_line.valve_parser import ValveParser
+from pychron.extraction_line.switch_parser import SwitchParser
 
 
 name_re=re.compile(r'''name\s*=\s*["']+\w+["']''')
@@ -67,7 +67,7 @@ class ValveCommand(Command):
     def _get_valve_names(self):
         setup_file = os.path.join(paths.extraction_line_dir, 'valves.xml')
         if os.path.isfile(setup_file):
-            parser = ValveParser(setup_file)
+            parser = SwitchParser(setup_file)
 
             valves = [(v.text.strip(),
                           v.find('description').text.strip())

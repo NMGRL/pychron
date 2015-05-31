@@ -13,28 +13,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-# from traits.api import HasTraits
-import time
-from threading import Event, currentThread, _MainThread, Thread
+# ============= enthought library imports =======================
 
-from PySide.QtGui import QSizePolicy
 from pyface.api import OK, YES
 from pyface.ui.qt4.confirmation_dialog import ConfirmationDialog
 from pyface.message_dialog import MessageDialog
 
+# ============= standard library imports ========================
+import time
+from threading import Event, currentThread, _MainThread, Thread
+# ============= local library imports  ==========================
 from pychron.core.ui.gui import invoke_in_main_thread
 
 
-
-
-
-
-
-#from pyface.confirmation_dialog import ConfirmationDialog
-
-# ============= enthought library imports =======================
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 class myMessageMixin(object):
     """
         makes  message dialogs thread save.
@@ -100,11 +91,11 @@ class myMessageDialog(myMessageMixin, MessageDialog):
 class _ConfirmationDialog(ConfirmationDialog):
     def _create_control(self, parent):
         dlg = super(_ConfirmationDialog, self)._create_control(parent)
-        dlg.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        # dlg.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         if self.size != (-1, -1):
             dlg.resize(*self.size)
-            dlg.event = self._handle_evt
+            # dlg.event = self._handle_evt
 
         dlg.buttonClicked.connect(self._handle_button)
         return dlg
@@ -113,20 +104,23 @@ class _ConfirmationDialog(ConfirmationDialog):
         if self._closed_evt:
             self._closed_evt.set()
 
-    def _handle_evt(self, evt):
-        return True
+    # def _handle_evt(self, evt):
+    #     return True
 
-    def _show_modal(self):
-        self.control.setModal(True)
-        # self.control.setWindowModality(QtCore.Qt.ApplicationModal)
-        retval = self.control.exec_()
-        clicked_button = self.control.clickedButton()
-        if clicked_button in self._button_result_map:
-            retval = self._button_result_map[clicked_button]
-            # else:
-            #     retva
-            # retval = _RESULT_MAP[retval]
-        return retval
+    # def _show_modal(self):
+    #     self.control.setWindowTitle('asdfasdfasdfasdf')
+    #     self.control.resize(600,200)
+    #
+    #     # self.control.setModal(True)
+    #     # self.control.setWindowModality(QtCore.Qt.ApplicationModal)
+    #     retval = self.control.exec_()
+    #     clicked_button = self.control.clickedButton()
+    #     if clicked_button in self._button_result_map:
+    #         retval = self._button_result_map[clicked_button]
+    #         # else:
+    #         #     retva
+    #         # retval = _RESULT_MAP[retval]
+    #     return retval
 
 
 class myConfirmationDialog(myMessageMixin, _ConfirmationDialog):
