@@ -17,7 +17,8 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.canvas.canvas2D.scene.primitives.primitives import QPrimitive, Point, Bordered
+from pychron.canvas.canvas2D.scene.primitives.base import QPrimitive
+from pychron.canvas.canvas2D.scene.primitives.primitives import Point, Bordered
 
 
 def fork(gc, lx, ly, rx, ry, mx, my, h):

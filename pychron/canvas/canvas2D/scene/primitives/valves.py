@@ -15,11 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-
-from pychron.canvas.canvas2D.scene.primitives.primitives import rounded_rect, \
-    RoundedRectangle, Bordered, Connectable, Circle, Label
+from pychron.canvas.canvas2D.scene.primitives.base import Connectable
+from pychron.canvas.canvas2D.scene.primitives.primitives import Bordered, Circle, Label
+from pychron.canvas.canvas2D.scene.primitives.rounded import RoundedRectangle, rounded_rect
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+
 
 class Switch(Connectable, Circle):
     def set_label(self, label, offset_x, offset_y, **kw):

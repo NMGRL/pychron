@@ -26,8 +26,8 @@ from pychron.canvas.canvas2D.scene.primitives.connections import Tee, Fork
 from pychron.canvas.canvas2D.scene.primitives.lasers import Laser
 from pychron.canvas.canvas2D.scene.primitives.pumps import Turbo
 from pychron.canvas.canvas2D.scene.scene import Scene
-from pychron.canvas.canvas2D.scene.primitives.primitives import RoundedRectangle, \
-    Label, BorderLine, Line, Image, ValueLabel
+from pychron.canvas.canvas2D.scene.primitives.primitives import Label, BorderLine, Line, Image, ValueLabel
+from pychron.canvas.canvas2D.scene.primitives.rounded import RoundedRectangle
 from pychron.core.helpers.strtools import to_bool
 from pychron.canvas.canvas2D.scene.primitives.valves import RoughValve, Valve, Switch
 from pychron.extraction_line.valve_parser import ValveParser

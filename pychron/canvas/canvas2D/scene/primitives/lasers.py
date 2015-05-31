@@ -17,7 +17,8 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.canvas.canvas2D.scene.primitives.primitives import RoundedRectangle, Animation
+from pychron.canvas.canvas2D.scene.primitives.primitives import Animation
+from pychron.canvas.canvas2D.scene.primitives.rounded import RoundedRectangle
 
 
 class Laser(RoundedRectangle, Animation):
