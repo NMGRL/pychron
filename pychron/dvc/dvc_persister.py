@@ -165,6 +165,9 @@ class DVCPersister(Loggable):
 
         # stage files
         for p in (spec_path, self._make_path(''),
+
+                  self._make_path('.data'),
+                  self._make_path('.changeable'),
                   self._make_path('.peakcenter'),
                   self._make_path('.extraction'),
                   self._make_path('.monitor')):
@@ -229,40 +232,43 @@ class DVCPersister(Loggable):
         return d
 
     def _save_analysis(self, timestamp):
-        p = self._make_path('')
+
         isos = {}
         bs = {}
         dets = {}
+        signals = {}
+        baselines = {}
+        sniffs = {}
+        cisos = {}
+        cdets = {}
         for iso in self.arar_age.isotopes.values():
 
             sblob = base64.b64encode(iso.pack())
+            snblob = base64.b64encode(iso.sniff.pack())
+            signals[iso.name] = sblob
+            sniffs[iso.name] = snblob
+
+            isos[iso.name] = {'detector': iso.detector}
+
             if iso.detector not in dets:
                 bblob = base64.b64encode(iso.baseline.pack())
-                dets[iso.detector] = {'ic_factor': {'value': nominal_value(iso.ic_factor),
-                                                    'error': std_dev(iso.ic_factor),
-                                                    'fit': 'default',
-                                                    'references': []},
-
-                                      'deflection': self.defl_dict[iso.detector],
+                baselines[iso.detector] = bblob
+                dets[iso.detector] = {'deflection': self.defl_dict[iso.detector],
                                       'gain': self.gains[iso.detector],
-                                      'baseline': {'signal': bblob,
-                                                   'fit': iso.baseline.fit,
-                                                   'value': iso.baseline.value,
-                                                   'error': iso.baseline.error}}
+                                      }
+                cdets[iso.detector] = {'baseline': {'fit': iso.baseline.fit,
+                                                    'value': iso.baseline.value,
+                                                    'error': iso.baseline.error},
+                                       'ic_factor': {'value': nominal_value(iso.ic_factor),
+                                                     'error': std_dev(iso.ic_factor),
+                                                     'fit': 'default',
+                                                     'references': []}}
 
-            isos[iso.name] = {'detector': iso.detector,
-                              'fit': iso.fit,
-                              'signal': sblob,
-                              'blank': {'fit': 'previous',
-                                        'references': [{'runid': self.previous_blank_runid, 'exclude': False}],
-                                        'value': iso.blank.value,
-                                        'error': iso.blank.error}}
-            # if iso.detector not in bs:
-            #     bblob = ''
-            #     bs[iso.detector] = {'signal': bblob,
-            #                         'fit': iso.baseline.fit,
-            #                         'value': iso.baseline.value,
-            #                         'error': iso.baseline.error}
+            cisos[iso.name] = {'fit': iso.fit,
+                               'blank': {'fit': 'previous',
+                                         'references': [{'runid': self.previous_blank_runid, 'exclude': False}],
+                                         'value': iso.blank.value,
+                                         'error': iso.blank.error}}
 
         obj = self._make_analysis_dict()
         obj['detectors'] = dets
@@ -284,7 +290,18 @@ class DVCPersister(Loggable):
         hexsha = self.dvc.get_meta_head()
         obj['commit'] = hexsha
 
+        # dump runid.yaml
+        p = self._make_path('')
         ydump(obj, p)
+
+        # dump runid.changeable.yaml
+        p = self._make_path('.changeable')
+        ydump({'commit':hexsha, 'isotopes': cisos, 'detectors': cdets}, p)
+
+        # dump runid.data.yaml
+        p = self._make_path('.data')
+        data = {'commit':hexsha, 'signals': signals, 'baselines': baselines, 'sniffs': sniffs}
+        ydump(data, p)
 
     def _make_path(self, name, prefix=None, extension='.yaml'):
         if prefix is None:
