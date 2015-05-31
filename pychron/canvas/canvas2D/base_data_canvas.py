@@ -218,7 +218,6 @@ class BaseDataCanvas(DataView):
 
         return w, h
 
-
     def _vertical_line(self, gc, x, y1, y2, color=(0, 0, 0)):
         """
         """
@@ -228,9 +227,8 @@ class BaseDataCanvas(DataView):
         self.line_segment(gc, p1, p2, color)
 
     def _horizontal_line(self, gc, y, x1, x2, color=(0, 0, 0)):
-        '''
-
-        '''
+        """
+        """
         p1 = (x1, y)
         p2 = (x2, y)
         self.line_segment(gc, p1, p2, color)
@@ -245,7 +243,6 @@ class BaseDataCanvas(DataView):
 
     def _draw_hook(self, gc, *args, **kw):
         """
-
         """
         pass
 

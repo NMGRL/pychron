@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,7 +29,7 @@ from pychron.canvas.canvas2D.scene.primitives.primitives import BorderLine
 from pychron.canvas.scene_viewer import SceneCanvas
 from pychron.canvas.canvas2D.scene.extraction_line_scene import ExtractionLineScene
 from pychron.canvas.canvas2D.scene.primitives.valves import RoughValve, \
-    BaseValve
+    BaseValve, Switch
 import weakref
 
 W = 2
@@ -80,31 +80,31 @@ class ExtractionLineCanvas2D(SceneCanvas):
         self.overlays.append(overlay)
 
     def toggle_item_identify(self, name):
-        v = self._get_valve_by_name(name)
+        v = self._get_switch_by_name(name)
         if v is not None:
             try:
                 v.identify = not v.identify
             except AttributeError:
                 pass
 
-    def update_valve_state(self, name, nstate, refresh=True, mode=None):
+    def update_switch_state(self, name, nstate, refresh=True, mode=None):
         """
         """
-        valve = self._get_valve_by_name(name)
-        if valve is not None:
-            valve.state = nstate
+        switch = self._get_switch_by_name(name)
+        if switch is not None:
+            switch.state = nstate
         self.draw_valid = False
 
-    def update_valve_owned_state(self, name, owned):
-        valve = self._get_valve_by_name(name)
-        if valve is not None:
-            valve.owned = owned
+    def update_switch_owned_state(self, name, owned):
+        switch = self._get_switch_by_name(name)
+        if switch is not None:
+            switch.owned = owned
         self.draw_valid = False
 
-    def update_valve_lock_state(self, name, lockstate):
-        valve = self._get_valve_by_name(name)
-        if valve is not None:
-            valve.soft_lock = lockstate
+    def update_switch_lock_state(self, name, lockstate):
+        switch = self._get_switch_by_name(name)
+        if switch is not None:
+            switch.soft_lock = lockstate
             # self.request_redraw()
         self.draw_valid = False
 
@@ -126,6 +126,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
 
         if os.path.isfile(canvas_path):
             self.scene.load(canvas_path, canvas_config_path, valves_path, weakref.ref(self)())
+            self.invalidate_and_redraw()
 
     def _over_item(self, event):
         x, y = event.x, event.y
@@ -142,7 +143,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
             self.event_state = 'select'
             if item != self.active_item:
                 self.active_item = item
-            if isinstance(item, BaseValve):
+            if isinstance(item, (BaseValve, Switch)):
                 event.window.set_pointer(self.select_pointer)
                 if self.manager:
                     self.manager.set_selected_explanation_item(item)
@@ -186,47 +187,64 @@ class ExtractionLineCanvas2D(SceneCanvas):
             self._toggle_laser_state(item)
             return
 
-        if not isinstance(item, BaseValve):
-            return
-
-        if item.soft_lock:
-            return
-
-        state = item.state
-
-        if self.confirm_open and isinstance(item, RoughValve) and not state:
-            event.handled = True
-
-            from pychron.core.ui.dialogs import myConfirmationDialog
-            from pyface.api import NO
-
-            dlg = myConfirmationDialog(
-                message='Are you sure you want to open {}'.format(item.name),
-                title='Verfiy Valve Action',
-                style='modal')
-            retval = dlg.open()
-            if retval == NO:
-                return
-
-        state = not state
-
-        change = False
-        ok = True
-        if self.manager is not None:
+        if isinstance(item, Switch):
+            state = item.state
+            state = not state
             mode = 'normal'
-            if event.shift_down:
-                mode = 'shift_select'
 
             if state:
                 ok, change = self.manager.open_valve(item.name, mode=mode)
             else:
                 ok, change = self.manager.close_valve(item.name, mode=mode)
 
-        if ok:
-            item.state = state
+            # print ok, change, item.name
+            if ok:
+                item.state = state
 
-        if change:
-            self.request_redraw()
+            if change:
+                self.request_redraw()
+
+        else:
+            if not isinstance(item, BaseValve):
+                return
+
+            if item.soft_lock:
+                return
+
+            state = item.state
+
+            if self.confirm_open and isinstance(item, RoughValve) and not state:
+                event.handled = True
+
+                from pychron.core.ui.dialogs import myConfirmationDialog
+                from pyface.api import NO
+
+                dlg = myConfirmationDialog(
+                    message='Are you sure you want to open {}'.format(item.name),
+                    title='Verfiy Valve Action',
+                    style='modal')
+                retval = dlg.open()
+                if retval == NO:
+                    return
+
+            state = not state
+
+            change = False
+            ok = True
+            if self.manager is not None:
+                mode = 'normal'
+                if event.shift_down:
+                    mode = 'shift_select'
+                if state:
+                    ok, change = self.manager.open_valve(item.name, mode=mode)
+                else:
+                    ok, change = self.manager.close_valve(item.name, mode=mode)
+
+            if ok:
+                item.state = state
+
+            if change:
+                self.request_redraw()
 
     def on_lock(self):
         item = self._active_item
@@ -252,9 +270,10 @@ class ExtractionLineCanvas2D(SceneCanvas):
         item.toggle_animate()
         self.request_redraw()
 
-    def _get_valve_by_name(self, name):
-        return next((i for i in self.scene.valves.itervalues()
-                     if isinstance(i, BaseValve) and i.name == name), None)
+    def _get_switch_by_name(self, name):
+        return next((i for i in self.iter_valves() if i.name==name), None)
+        # return next((i for i in self.scene.valves.itervalues()
+        #              if isinstance(i, BaseValve) and i.name == name), None)
 
     def _get_object_by_name(self, name):
         return self.scene.get_item(name)

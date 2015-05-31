@@ -51,11 +51,11 @@ class ExtractionLineCanvas(HasTraits):
         '''
         self._canvas_function('load_canvas_file', *args, **kw)
 
-    def update_valve_state(self, name, state, *args, **kw):
+    def update_switch_state(self, name, state, *args, **kw):
         '''
             do the specific canvas action
         '''
-        self._canvas_function('update_valve_state', name, state)
+        self._canvas_function('update_switch_state', name, state)
 
     def update_valve_lock_state(self, name, state, *args, **kw):
         '''

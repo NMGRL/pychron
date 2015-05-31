@@ -19,18 +19,19 @@
 GIT_VERSION=1.9.5
 AUTOCONF_VERSION=2.68
 
-APP_PREFIX=view
-CONDA_ENV=pychron_view
-APP_NAME=view
-VERSION=dev_rc4
-PYCHRONDATA_PREFIX=~/Pychron_view
-URL=https://github.com/NMGRL/pychron.git
+APP_PREFIX=experiment
+CONDA_ENV=pychron_experiment
+APP_NAME=experiment
+VERSION=v2.1.0rc1
+PYCHRONDATA_PREFIX=~/Pychron
+ORGANIZATION=USGSDenverPychron
+URL=https://github.com/${ORGANIZATION}/pychron.git
 ANACONDA_PREFIX=$HOME/anaconda
-BRANCH=develop
+BRANCH=release/v2.1.0
 
 #--------------------------------------------------
-if [ "${APP_NAME}" == "view" ]
-then
+#if [ "${APP_NAME}" == "view" ]
+#then
 #Requirements
 CONDA_REQ="statsmodels>=0.5.0\n
 PyYAML>=3\n
@@ -54,7 +55,7 @@ PIP_REQ="uncertainties\n
 PyMySQL\n
 pint\n
 GitPython"
-fi
+#fi
 
 #--------------------------------------------------
 
@@ -79,53 +80,6 @@ then
  echo Please install git. Goto http://git-scm.com/downloads
  exit
 fi
-
-#if type "autoconf" > /dev/null
-#then
-# echo autoconf already installed
-#else
-# if type "gcc" > /dev/null
-# then
-#    echo
-#    echo
-#    echo You need to install Xcode !!!!
-#    #exit
-# else
-#     echo Downloading autoconf
-#     # install autoconf
-#     curl -OL http://ftpmirror.gnu.org/autoconf/autoconf-${AUTOCONF_VERSION}.tar.gz
-#     tar xzf autoconf-${AUTOCONF_VERSION}.tar.gz
-#     cd autoconf-${AUTOCONF_VERSION}
-#     ./configure --prefix=/usr/local
-#     make
-#     make install
-#     echo Autoconf Installed
-# fi
-#fi
-#
-#if type "git" > /dev/null
-#then
-# echo git already installed
-#else
-#    if type "gcc" > /dev/null
-#     then
-#        echo
-#        echo
-#        echo You need to install Xcode !!!!
-#        exit
-#     else
-#         echo Downloading git
-#         curl -LO https://github.com/git/git/archive/v${GIT_VERSION}.tar.gz
-#         #curl -LO https://github.com/git/git/releases/tag/v${GIT_VERSION}
-#         tar -xzf v${GIT_VERSION}.tar.gz
-#         cd git-${GIT_VERSION}
-#         make configure
-#         ./configure --prefix=/usr/local
-#         make
-#         make install
-#         echo Git Installed
-#     fi
-#fi
 
 if type ${ANACONDA_PREFIX}/bin/conda >/dev/null
 then
@@ -161,37 +115,17 @@ else
     mkdir ${PYCHRONDATA_PREFIX}
     mkdir ${PYCHRONDATA_PREFIX}/.hidden
     mkdir ${PYCHRONDATA_PREFIX}/.hidden/updates
-    mkdir ${PYCHRONDATA_PREFIX}/setupfiles
+#    mkdir ${PYCHRONDATA_PREFIX}/setupfiles
+    git clone ${URL} ${PYCHRONDATA_PREFIX}/.hidden/updates/pychron
 
-    #write boiler plate xml file
-    cat <<EOT >> ${PYCHRONDATA_PREFIX}/setupfiles/initialization.xml
-<root>
-  <globals>
-  </globals>
-  <plugins>
-    <general>
-      <plugin enabled="true">Database</plugin>
-      <plugin enabled="false">Geo</plugin>
-      <plugin enabled="false">Experiment</plugin>
-      <plugin enabled="true">Processing</plugin>
-      <plugin enabled="true">PyScript</plugin>
-      <plugin enabled="true">ArArConstants</plugin>
-      <plugin enabled="true">Entry</plugin>
-      <plugin enabled="false">SystemMonitor</plugin>
-    </general>
-    <hardware>
-    </hardware>
-    <data>
-    </data>
-    <social>
-      <plugin enabled="false">Email</plugin>
-      <plugin enabled="false">Twitter</plugin>
-    </social>
-  </plugins>
-</root>
-EOT
+    git clone ${SUPPORT_URL} ./tmp
+    mv ./tmp/preferences .
+    mv ./tmp/setupfiles .
+    mv ./tmp/queue_conditionals .
+    mv ./tmp/scripts .
+    mv ./tmp/startup_tests.yaml .
+    rm -rf ./tmp
 
-git clone ${URL} ${PYCHRONDATA_PREFIX}/.hidden/updates/pychron
 fi
 
 #update source
@@ -248,3 +182,80 @@ then
 rm -rf /Applications/py${APP_NAME}_${VERSION}.app
 fi
 mv ./launchers/py${APP_NAME}_${VERSION}.app /Applications
+
+
+
+#if type "autoconf" > /dev/null
+#then
+# echo autoconf already installed
+#else
+# if type "gcc" > /dev/null
+# then
+#    echo
+#    echo
+#    echo You need to install Xcode !!!!
+#    #exit
+# else
+#     echo Downloading autoconf
+#     # install autoconf
+#     curl -OL http://ftpmirror.gnu.org/autoconf/autoconf-${AUTOCONF_VERSION}.tar.gz
+#     tar xzf autoconf-${AUTOCONF_VERSION}.tar.gz
+#     cd autoconf-${AUTOCONF_VERSION}
+#     ./configure --prefix=/usr/local
+#     make
+#     make install
+#     echo Autoconf Installed
+# fi
+#fi
+#
+#if type "git" > /dev/null
+#then
+# echo git already installed
+#else
+#    if type "gcc" > /dev/null
+#     then
+#        echo
+#        echo
+#        echo You need to install Xcode !!!!
+#        exit
+#     else
+#         echo Downloading git
+#         curl -LO https://github.com/git/git/archive/v${GIT_VERSION}.tar.gz
+#         #curl -LO https://github.com/git/git/releases/tag/v${GIT_VERSION}
+#         tar -xzf v${GIT_VERSION}.tar.gz
+#         cd git-${GIT_VERSION}
+#         make configure
+#         ./configure --prefix=/usr/local
+#         make
+#         make install
+#         echo Git Installed
+#     fi
+#fi
+    #write boiler plate xml file
+#    cat <<EOT >> ${PYCHRONDATA_PREFIX}/setupfiles/initialization.xml
+
+#<root>
+#  <globals>
+#  </globals>
+#  <plugins>
+#    <general>
+#      <plugin enabled="true">Database</plugin>
+#      <plugin enabled="false">Geo</plugin>
+#      <plugin enabled="false">Experiment</plugin>
+#      <plugin enabled="true">Processing</plugin>
+#      <plugin enabled="true">PyScript</plugin>
+#      <plugin enabled="true">ArArConstants</plugin>
+#      <plugin enabled="true">Entry</plugin>
+#      <plugin enabled="false">SystemMonitor</plugin>
+#    </general>
+#    <hardware>
+#    </hardware>
+#    <data>
+#    </data>
+#    <social>
+#      <plugin enabled="false">Email</plugin>
+#      <plugin enabled="false">Twitter</plugin>
+#    </social>
+#  </plugins>
+#</root>
+#EOT

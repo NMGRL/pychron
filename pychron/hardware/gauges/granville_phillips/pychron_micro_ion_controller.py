@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Button
-from traitsui.api import View, Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.hardware.gauges.granville_phillips.micro_ion_controller import MicroIonController
@@ -36,6 +34,23 @@ class PychronMicroIonController(MicroIonController):
     def get_convectron_b_pressure(self, **kw):
         return self.ask('GetPressure {} CG2'.format(self.name))
 
+
+class QtegraMicroIonController(MicroIonController):
+    def get_pressure(self, name, **kw):
+        k=''
+        return self.ask('GetParameter {}'.format(k))
+
+    def get_ion_pressure(self, **kw):
+        k=''
+        return self.ask('GetParameter {}'.format(k))
+
+    def get_convectron_a_pressure(self, **kw):
+        k=''
+        return self.ask('GetParameter {}'.format(k))
+
+    def get_convectron_b_pressure(self, **kw):
+        k=''
+        return self.ask('GetParameter {}'.format(k))
 # ============= EOF =============================================
 
 

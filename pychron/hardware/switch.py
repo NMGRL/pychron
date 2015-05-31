@@ -97,6 +97,7 @@ class Switch(Loggable):
             self._software_locked()
         else:
             success = func(mode)
+
             if success:
                 if cur:
                     state_change = True

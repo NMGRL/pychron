@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, List, Str, Instance, Float, Property
+from traits.api import HasTraits, List, Str, Float, Property
 
 # ============= standard library imports ========================
 import weakref
@@ -23,7 +23,7 @@ import weakref
 
 
 def flatten(nested):
-#     print nested
+    #     print nested
     if isinstance(nested, str):
         yield nested
     else:
@@ -38,16 +38,20 @@ def flatten(nested):
 
 class Edge(HasTraits):
     name = Str
-    a_node = Instance('pychron.extraction_line.graph.nodes.Node')
-    b_node = Instance('pychron.extraction_line.graph.nodes.Node')
+    nodes = List
+    # a_node = Instance('pychron.extraction_line.graph.nodes.Node')
+    # b_node = Instance('pychron.extraction_line.graph.nodes.Node')
     visited = False
     volume = Float(1)
 
-    def nodes(self):
-        return self.a_node, self.b_node
+    # def nodes(self):
+    #     return self.a_node, self.b_node
 
-    def get_node(self, n):
-        return self.b_node if self.a_node == n else self.a_node
+    def get_nodes(self, n):
+        return [ni for ni in self.nodes if ni!=n]
+
+
+        # return self.b_node if self.a_node == n else self.a_node
 
 
 class Node(HasTraits):
@@ -64,8 +68,9 @@ class Node(HasTraits):
 
     def __iter__(self):
         for ei in self.edges:
-            n = ei.get_node(self)
-            yield n
+            # n = ei.get_nodes(self)
+            for n in ei.get_nodes(self):
+                yield n
 
 
 class ValveNode(Node):
@@ -95,6 +100,10 @@ class RootNode(Node):
 
 
 class GaugeNode(RootNode):
+    pass
+
+
+class GetterNode(RootNode):
     pass
 
 

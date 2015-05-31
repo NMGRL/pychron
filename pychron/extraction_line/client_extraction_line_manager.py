@@ -35,14 +35,14 @@ class ClientExtractionLineManager(ExtractionLineManager):
 
     def start_status_monitor(self):
         self.info('starting status monitor')
-        self.status_monitor.start(self.valve_manager)
+        self.status_monitor.start(self.switch_manager)
 
     def stop_status_monitor(self):
         self.info('stopping status monitor')
         self.status_monitor.stop()
 
     def _reload_canvas_hook(self):
-        vm = self.valve_manager
+        vm = self.switch_manager
         if vm:
             vm.load_valve_states(refresh=False, force_network_change=False)
             vm.load_valve_lock_states(refresh=False)
@@ -77,13 +77,13 @@ class ClientExtractionLineManager(ExtractionLineManager):
                 self.status_monitor.stop()
 
     def _status_monitor_default(self):
-        sm = StatusMonitor(valve_manager=self.valve_manager)
+        sm = StatusMonitor()
         return sm
 
-    def _get_valve_manager_klass(self):
-        from pychron.extraction_line.client_valve_manager import ClientValveManager
+    def _get_switch_manager_klass(self):
+        from pychron.extraction_line.client_switch_manager import ClientSwitchManager
 
-        return ClientValveManager
+        return ClientSwitchManager
 
 # ============= EOF =============================================
 

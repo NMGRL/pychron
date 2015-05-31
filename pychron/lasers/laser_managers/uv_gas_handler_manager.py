@@ -25,12 +25,12 @@ from pychron.canvas.canvas2D.extraction_line_canvas2D import ExtractionLineCanva
 from pychron.paths import paths
 
 # from pychron.managers.manager import Manager
-from pychron.extraction_line.valve_manager import ValveManager
+from pychron.extraction_line.switch_manager import SwitchManager
 from pyface.timer.timer import Timer
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
-class UVGasHandlerManager(ValveManager):
+class UVGasHandlerManager(SwitchManager):
     canvas = Instance(ExtractionLineCanvas2D)
     controller = Any
     use_explanation = False

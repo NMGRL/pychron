@@ -24,7 +24,7 @@
 from actuator import Actuator
 
 
-class ValveController(Actuator):
+class SwitchController(Actuator):
     def get_open_indicator_state(self, *args, **kw):
         """
         """
