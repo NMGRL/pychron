@@ -113,6 +113,7 @@ class AutomatedRun(Loggable):
     multi_collector = Instance('pychron.experiment.automated_run.multi_collector.MultiCollector')
     peak_hop_collector = Instance('pychron.experiment.automated_run.peak_hop_collector.PeakHopCollector')
     persister = Instance('pychron.experiment.automated_run.persistence.AutomatedRunPersister', ())
+    xls_persister = Instance('pychron.experiment.automated_run.persistence.ExcelPersister')
     system_health = Instance('pychron.experiment.health.series.SystemHealthSeries')
 
     collector = Property
@@ -183,7 +184,18 @@ class AutomatedRun(Loggable):
         return self._whiff(ncounts, conditionals, starttime, starttime_offset, series, fit_series)
 
     def py_reset_data(self):
-        self.persister.pre_measurement_save()
+        # self.persister.pre_measurement_save()
+        self._persister_action('pre_measurement_save')
+
+    def _persister_action(self, func, *args, **kw):
+        getattr(self.persister, func)(*args, **kw)
+        if self.xls_persister:
+            try:
+                getattr(self.xls_persister, func)(*args, **kw)
+            except BaseException, e:
+                self.warning('excel persister action failed. func={}, excp={}'.format(func, e))
+                import traceback
+                traceback.print_exc()
 
     def py_set_integration_time(self, v):
         self.set_integration_time(v)
@@ -460,7 +472,9 @@ class AutomatedRun(Loggable):
                                       _ncycles=cycles,
                                       hops=hops)
 
+        # required for mass spec
         self.persister.save_as_peak_hop = True
+
         self.is_peak_hop = True
 
         self.persister.build_peak_hop_tables(group, hops)
@@ -493,7 +507,8 @@ class AutomatedRun(Loggable):
                     xs = iso.xs[-self.peak_center_threshold_window:]
                     xm = xs.mean()
                     if xm < self.peak_center_threshold2:
-                        self.warning('Skipping peak center. intensities to small. {}<{}'.format(xm, self.peak_center_threshold2))
+                        self.warning(
+                            'Skipping peak center. intensities to small. {}<{}'.format(xm, self.peak_center_threshold2))
                         return
 
             if not self.plot_panel:
@@ -515,7 +530,8 @@ class AutomatedRun(Loggable):
             ion.do_peak_center(new_thread=False, save=save, message='automated run peakcenter', timeout=300)
 
             if pc.result:
-                self.persister.save_peak_center_to_file(pc)
+                self._persister_action('save_peak_center_to_file', pc)
+                # self.persister.save_peak_center_to_file(pc)
 
     def py_coincidence_scan(self):
         pass
@@ -761,7 +777,7 @@ class AutomatedRun(Loggable):
 
     def protect_detector(self, det, protect):
         protect = 'On' if protect else 'Off'
-        self.py_set_spectrometer_parameter('ProtectDetector', '{},{}'.format(det,protect))
+        self.py_set_spectrometer_parameter('ProtectDetector', '{},{}'.format(det, protect))
 
     def wait(self, t, msg=''):
         if self.experiment_executor:
@@ -813,13 +829,18 @@ class AutomatedRun(Loggable):
             if self.spectrometer_manager:
                 # get current spectrometer values
                 # maybe this should be done during pre_measurement_save
-                self.persister.trait_set(spec_dict=self.spectrometer_manager.make_parameters_dict(),
-                                         defl_dict=self.spectrometer_manager.make_deflections_dict(),
-                                         gains=self.spectrometer_manager.make_gains_list(),
-                                         active_detectors=self._active_detectors)
+                # self.persister.trait_set(spec_dict=self.spectrometer_manager.make_parameters_dict(),
+                # defl_dict=self.spectrometer_manager.make_deflections_dict(),
+                # gains=self.spectrometer_manager.make_gains_list(),
+                #                          active_detectors=self._active_detectors)
+                self._persister_action('trait_set', spec_dict=self.spectrometer_manager.make_parameters_dict(),
+                                       defl_dict=self.spectrometer_manager.make_deflections_dict(),
+                                       gains=self.spectrometer_manager.make_gains_list(),
+                                       active_detectors=self._active_detectors)
 
             # save to database
-            self.persister.post_measurement_save()
+            self._persister_action('post_measurement_save')
+            # self.persister.post_measurement_save()
 
             # save analysis. don't cancel immediately
             ret = None
@@ -919,27 +940,45 @@ class AutomatedRun(Loggable):
         if self.extraction_script:
             ext_pos = self.extraction_script.get_extraction_positions()
 
-        self.persister.trait_set(uuid=self.uuid,
-                                 runid=self.runid,
-                                 save_as_peak_hop=False,
-                                 run_spec=self.spec,
-                                 arar_age=self.arar_age,
-                                 positions=self.spec.get_position_list(),
-                                 auto_save_detector_ic=auto_save_detector_ic,
-                                 extraction_positions=ext_pos,
-                                 sensitivity_multiplier=sens,
-                                 experiment_queue_name=eqn,
-                                 experiment_queue_blob=eqb,
-                                 extraction_name=ext_name,
-                                 extraction_blob=ext_blob,
-                                 measurement_name=ms_name,
-                                 measurement_blob=ms_blob,
-                                 previous_blank_id=pb[0],
-                                 previous_blanks=pb[1],
-                                 runscript_name=script_name,
-                                 runscript_blob=script_blob,
-                                 signal_fods=sfods,
-                                 baseline_fods=bsfods)
+        self._persister_action('trait_set', save_as_peak_hop=False,
+                               run_spec=self.spec,
+                               arar_age=self.arar_age,
+                               positions=self.spec.get_position_list(),
+                               auto_save_detector_ic=auto_save_detector_ic,
+                               extraction_positions=ext_pos,
+                               sensitivity_multiplier=sens,
+                               experiment_queue_name=eqn,
+                               experiment_queue_blob=eqb,
+                               extraction_name=ext_name,
+                               extraction_blob=ext_blob,
+                               measurement_name=ms_name,
+                               measurement_blob=ms_blob,
+                               previous_blank_id=pb[0],
+                               previous_blanks=pb[1],
+                               runscript_name=script_name,
+                               runscript_blob=script_blob,
+                               signal_fods=sfods,
+                               baseline_fods=bsfods)
+
+        # self.persister.trait_set(save_as_peak_hop=False,
+        # run_spec=self.spec,
+        #                          arar_age=self.arar_age,
+        #                          positions=self.spec.get_position_list(),
+        #                          auto_save_detector_ic=auto_save_detector_ic,
+        #                          extraction_positions=ext_pos,
+        #                          sensitivity_multiplier=sens,
+        #                          experiment_queue_name=eqn,
+        #                          experiment_queue_blob=eqb,
+        #                          extraction_name=ext_name,
+        #                          extraction_blob=ext_blob,
+        #                          measurement_name=ms_name,
+        #                          measurement_blob=ms_blob,
+        #                          previous_blank_id=pb[0],
+        #                          previous_blanks=pb[1],
+        #                          runscript_name=script_name,
+        #                          runscript_blob=script_blob,
+        #                          signal_fods=sfods,
+        #                          baseline_fods=bsfods)
 
     # ===============================================================================
     # doers
@@ -953,7 +992,8 @@ class AutomatedRun(Loggable):
     def do_extraction(self):
         self.debug('do extraction')
 
-        self.persister.pre_extraction_save()
+        self._persister_action('pre_extraction_save')
+        # self.persister.pre_extraction_save()
 
         self.info_color = EXTRACTION_COLOR
         msg = 'Extraction Started {}'.format(self.extraction_script.name)
@@ -998,7 +1038,8 @@ class AutomatedRun(Loggable):
             oblob = self.extraction_script.get_output_blob()
             snapshots = self.extraction_script.snapshots
 
-            self.persister.post_extraction_save(rblob, oblob, snapshots)
+            self._persister_action('post_extraction_save', rblob, oblob, snapshots)
+            # self.persister.post_extraction_save(rblob, oblob, snapshots)
             self.heading('Extraction Finished')
             self.info_color = None
 
@@ -1043,10 +1084,12 @@ class AutomatedRun(Loggable):
         self.heading('{}'.format(msg))
         self.state = 'measurement'
 
-        self.persister.pre_measurement_save()
+        self._persister_action('pre_measurement_save')
+        # self.persister.pre_measurement_save()
 
         self.measuring = True
-        self.persister.save_enabled = True
+        self._persister_action('trait_set', save_enabled=True)
+        # self.persister.save_enabled = True
 
         if script.execute():
             # mem_log('post measurement execute')
@@ -1180,6 +1223,7 @@ anaylsis_type={}
             if self.arar_age is None:
                 # load arar_age object for age calculation
                 from pychron.processing.arar_age import ArArAge
+
                 self.arar_age = ArArAge()
 
             es = self.extraction_script
@@ -1190,7 +1234,7 @@ anaylsis_type={}
 
             ln = self.spec.labnumber
             ln = convert_identifier(ln)
-            if not self.persister.datahub.load_analysis_backend(ln, self.arar_age):
+            if not self.experiment_executor.datahub.load_analysis_backend(ln, self.arar_age):
                 self.debug('failed load analysis backend')
                 return
 
@@ -1297,8 +1341,8 @@ anaylsis_type={}
                 # with open(p, 'r') as rfile:
                 # yd = yaml.load(rfile)
                 # cs = (('TruncationConditional', 'truncation', 'truncations'),
-                #           ('ActionConditional', 'action', 'actions'),
-                #           ('TerminationConditional', 'termination', 'terminations'),
+                # ('ActionConditional', 'action', 'actions'),
+                # ('TerminationConditional', 'termination', 'terminations'),
                 #           ('CancelationConditional', 'cancelation', 'cancelations'))
                 #     for klass, var, tag in cs:
                 #         yl = yd.get(tag)
@@ -1334,7 +1378,7 @@ anaylsis_type={}
         # start_count = dictgetter(cd, ('start','start_count'))
         # if start_count is None:
         # start_count = 50
-        #     self.debug('defaulting to start_count={}'.format(start_count))
+        # self.debug('defaulting to start_count={}'.format(start_count))
         #
         # self.info('adding {} {} {} {}'.format(name, attr, comp, start_count))
 
@@ -1528,8 +1572,8 @@ anaylsis_type={}
                             # try:
                             # attr = c['attr']
                             # comp = c['check']
-                            #             start = c['start']
-                            #             freq = c.get('frequency', 1)
+                            # start = c['start']
+                            # freq = c.get('frequency', 1)
                             #             acr = c.get('abbreviated_count_ratio', 1)
                             #             self.py_add_truncation(attr, comp, int(start), freq, acr)
                             #         except BaseException:
@@ -1574,6 +1618,7 @@ anaylsis_type={}
 
         if plot_panel is None:
             from pychron.experiment.plot_panel import PlotPanel
+
             plot_panel = PlotPanel(
                 stack_order=stack_order,
                 info_func=self.info,
@@ -1717,7 +1762,8 @@ anaylsis_type={}
         self.collector.clear_temporary_conditionals()
 
         result = self.collector.measurement_result
-        self.persister.whiff_result = result
+        # self.persister.whiff_result = result
+        self._persister_action('trait_set', whiff_result=result)
         self.debug('WHIFF Result={}'.format(result))
         return result
 
@@ -1837,7 +1883,8 @@ anaylsis_type={}
             self.cancel_run()
 
         return not m.canceled
-#
+
+    #
     def _setup_isotope_graph(self, starttime_offset, color, grpname):
         """
             execute in main thread is necessary.
@@ -1903,6 +1950,8 @@ anaylsis_type={}
 
     def _wait_for_min_ms_pumptime(self):
         overlap, mp = self.spec.overlap
+
+        pt = self.experiment_executor.min_ms_pumptime
         if not overlap:
             self.debug('no overlap. not waiting for min ms pumptime')
             return
@@ -1912,8 +1961,8 @@ anaylsis_type={}
             return
 
         if not mp:
-            self.debug('using default min ms pumptime={}'.format(self.min_ms_pumptime))
-            mp = self.min_ms_pumptime
+            self.debug('using default min ms pumptime={}'.format(pt))
+            mp = pt
 
         # ensure mim mass spectrometer pump time
         # wait until pumping started
@@ -1982,7 +2031,6 @@ anaylsis_type={}
         sname = self.script_info.measurement_script_name
         root = paths.measurement_dir
         sname = self._make_script_name(sname)
-
 
         ms = MeasurementPyScript(root=root,
                                  name=sname,
@@ -2054,7 +2102,7 @@ anaylsis_type={}
         return self.spec.runid
         # return make_runid(self.spec.labnumber,
         # self.spec.aliquot,
-        #                   self.spec.step)
+        # self.spec.step)
 
     def _get_collector(self):
         c = self.peak_hop_collector if self.is_peak_hop else self.multi_collector
@@ -2113,15 +2161,18 @@ anaylsis_type={}
 
     def _extraction_script_default(self):
         return self._load_script('extraction')
-#
+
+    #
     def _peak_hop_collector_default(self):
         from pychron.experiment.automated_run.peak_hop_collector import PeakHopCollector
+
         c = PeakHopCollector()
         c.console_bind_preferences('pychron.experiment')
         return c
 
     def _multi_collector_default(self):
         from pychron.experiment.automated_run.multi_collector import MultiCollector
+
         c = MultiCollector()
         c.console_bind_preferences('pychron.experiment')
         return c

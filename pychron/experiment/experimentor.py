@@ -15,10 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance, List, on_trait_change, Bool, Event, Any
+from traits.api import Instance, List, on_trait_change, Bool, Event
 # ============= standard library imports ========================
 from itertools import groupby
 # ============= local library imports  ==========================
+from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.experiment.queue.experiment_queue import ExperimentQueue
 from pychron.experiment.factory import ExperimentFactory
 from pychron.experiment.utilities.aliquot_numbering import renumber_aliquots
@@ -29,7 +30,7 @@ from pychron.loggable import Loggable
 
 
 class Experimentor(Loggable):
-    manager = Any
+    iso_db_manager = Instance(IsotopeDatabaseManager)
     experiment_factory = Instance(ExperimentFactory)
     experiment_queue = Instance(ExperimentQueue)
     executor = Instance(ExperimentExecutor)
@@ -44,7 +45,7 @@ class Experimentor(Loggable):
     # ===========================================================================
     # permissions
     # ===========================================================================
-    #    max_allowable_runs = 10000
+    # max_allowable_runs = 10000
     #    can_edit_scripts = True
     #    _last_ver_time = None
     #    _ver_timeout = 10
@@ -58,7 +59,7 @@ class Experimentor(Loggable):
     save_event = Event
 
     def load(self):
-        self.manager.load()
+        self.iso_db_manager.load()
         self.experiment_factory.queue_factory.db_refresh_needed = True
         self.experiment_factory.run_factory.db_refresh_needed = True
 
@@ -141,7 +142,7 @@ class Experimentor(Loggable):
         """
            return gen_labtable object
         """
-        db = self.manager.db
+        db = self.iso_db_manager.db
         ln = convert_identifier(ln)
         dbln = db.get_labnumber(ln)
 
@@ -159,7 +160,7 @@ class Experimentor(Loggable):
                 if ln not in exclude)
 
     def _get_analysis_info(self, li):
-        dbln = self.manager.db.get_labnumber(li)
+        dbln = self.iso_db_manager.db.get_labnumber(li)
         if not dbln:
             return None
         else:
@@ -183,7 +184,7 @@ class Experimentor(Loggable):
 
     def _set_analysis_metatata(self):
         cache = dict()
-        db = self.manager.db
+        db = self.iso_db_manager.db
         aruns = self._get_all_automated_runs()
 
         with db.session_ctx():
@@ -223,8 +224,11 @@ class Experimentor(Loggable):
         return self.executor.execute()
 
     def verify_database_connection(self, inform=True):
-        return self.manager.verify_database_connection(inform)
-
+        if self.iso_db_manager:
+            return self.iso_db_manager.verify_database_connection(inform)
+        else:
+            self.warning_dialog('Not connected to a database. Currently cannot use run experiments without a database.'
+                                'Make sure the Database plugin is enabled.')
     # ===============================================================================
     # handlers
     # ===============================================================================
@@ -338,9 +342,10 @@ class Experimentor(Loggable):
                 dms = spec.name.capitalize()
 
         e = ExperimentFactory(application=self.application,
-                              db=self.manager.db,
+                              # db=self.manager.db,
                               default_mass_spectrometer=dms)
-
+        if self.iso_db_manager:
+            e.db = self.iso_db_manager.db
         return e
 
 # ============= EOF =============================================

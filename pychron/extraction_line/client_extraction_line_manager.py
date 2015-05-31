@@ -27,6 +27,7 @@ from pychron.extraction_line.status_monitor import StatusMonitor
 class ClientExtractionLineManager(ExtractionLineManager):
     use_status_monitor = Bool
     status_monitor = Any
+    mode = 'client'
 
     def bind_preferences(self):
         super(ClientExtractionLineManager, self).bind_preferences()

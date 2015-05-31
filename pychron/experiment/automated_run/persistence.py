@@ -108,8 +108,23 @@ class BasePersister(Loggable):
     def post_measurement_save(self):
         pass
 
+    def save_peak_center_to_file(self):
+        pass
+
     def _pre_extraction_save_hook(self):
         pass
+
+
+def get_sheet(wb, name):
+    i = 0
+    while 1:
+        try:
+            sh = wb.get_sheet(i)
+            if sh.name == name:
+                return sh
+        except IndexError:
+            return
+        i += 1
 
 
 class ExcelPersister(BasePersister):
@@ -127,26 +142,87 @@ class ExcelPersister(BasePersister):
             self.debug('Not saving extraction to database')
             return
 
-    def pre_measurement_save(self):
-        """
-        """
-        self.info('pre measurement save')
+        self.info('post extraction save')
         wb = self._workbook
-        sheet = wb.add_sheet('Meta')
-        sheet.write(0, 0, 'User')
-        sheet.write(0, 1, self.run_spec.username)
+        sh = wb.add_sheet('Meta')
 
-        sheet.write(1, 0, 'AnalysisType')
-        sheet.write(1, 1, self.run_spec.analysis_type)
+        rs = self.run_spec
+        for i, (tag, attr) in enumerate((('User', 'username'),
+                                         ('AnalysisType', 'analysis_type'),
+                                         ('UUID', 'uud'))):
+            sh.write(i, 0, tag)
+            sh.write(i, 1, getattr(rs, attr))
 
-        sheet.write(2, 0, 'AnalysisType')
-        sheet.write(2, 1, self.run_spec.uuid)
+        sh.write(i+1, 0, 'Load')
+        sh.write(i+1, 1, self.load_name)
+
+    # def pre_measurement_save(self):
+    #     """
+    #     """
+    #     self.info('pre measurement save')
 
     def post_measurement_save(self):
+        if DEBUG:
+            self.debug('Not measurement saving to xls')
+            return
+
+        self.info('post measurement save')
         wb = self._workbook
 
         path = os.path.join(paths.isotope_dir, '{}.xls'.format(self.run_spec.runid))
+        sh = wb.add_sheet('data')
+        self._save_isotopes(sh)
         wb.save(path)
+
+    def _save_isotopes(self, sh):
+        for i,(k, iso) in enumerate(self.arar_age.isotopes.items()):
+
+            sh.write(0, i, '{} time'.format(k))
+            sh.write(0, i+1, '{} intensity'.format(k))
+
+            sh.write(0, i+2, '{} sniff time'.format(k))
+            sh.write(0, i+3, '{} sniff intensity'.format(k))
+            sh.write(0, i+4, '{} baseline time'.format(k))
+            sh.write(0, i+5, '{} baseline intensity'.format(k))
+
+            for j,x in enumerate(iso.xs):
+                sh.write(j+1,i, x)
+            for j,y in enumerate(iso.ys):
+                sh.write(j+1,i+1, y)
+
+            for j,x in enumerate(iso.sniff.xs):
+                sh.write(j+1,i+2, x)
+            for j,y in enumerate(iso.sniff.ys):
+                sh.write(j+1,i+3, y)
+
+            for j,x in enumerate(iso.baseline.xs):
+                sh.write(j+1,i+4, x)
+            for j,y in enumerate(iso.baseline.ys):
+                sh.write(j+1,i+5, y)
+
+    def save_peak_center_to_file(self, pc):
+        wb = self._workbook
+        sh = wb.add_sheet('PeakCenter')
+        xs, ys = pc.graph.get_data(), pc.graph.get_data(axis=1)
+        sh.write(0, 0, 'DAC (V)')
+        sh.write(0, 1, 'Intensity (fA)')
+
+        for i, xi in enumerate(xs):
+            sh.write(i + 1, 0, xi)
+
+        for i, yi in enumerate(ys):
+            sh.write(i + 1, 1, yi)
+
+        xs, ys, _mx, _my = pc.result
+        sh.write(0, 3, 'DAC')
+        sh.write(0, 4, 'Intensity')
+        sh.write(1, 2, 'Low')
+        sh.write(2, 2, 'Center')
+        sh.write(3, 2, 'High')
+        for i, xi in enumerate(xs):
+            sh.write(i, 3, xi)
+        for i, yi in enumerate(ys):
+            sh.write(i, 4, yi)
 
     def _pre_extraction_save_hook(self):
         self._workbook = Workbook()
@@ -305,14 +381,14 @@ class AutomatedRunPersister(BasePersister):
     def writer_ctx(self):
         return self.data_manager.open_file(self._current_data_frame)
 
-    def pre_extraction_save(self):
-        """
-        set runtime and rundate
-        """
-        d = get_datetime()
-        self.runtime = d.time()
-        self.rundate = d.date()
-        self.info('Analysis started at {}'.format(self.runtime))
+    # def pre_extraction_save(self):
+    #     """
+    #     set runtime and rundate
+    #     """
+    #     d = get_datetime()
+    #     self.runtime = d.time()
+    #     self.rundate = d.date()
+    #     self.info('Analysis started at {}'.format(self.runtime))
 
     def post_extraction_save(self, rblob, oblob, snapshots):
         """
@@ -325,6 +401,7 @@ class AutomatedRunPersister(BasePersister):
         if DEBUG:
             self.debug('Not saving extraction to database')
             return
+        self.info('post extraction save')
 
         db = self.datahub.mainstore.db
         if db:
@@ -921,8 +998,8 @@ class AutomatedRunPersister(BasePersister):
                              step=step,
                              collection_path=cp)
             # ldb.commit()
-            #ldb.close()
-            #del ldb
+            # ldb.close()
+            # del ldb
 
     def _local_lab_db_factory(self):
         if self.local_lab_db:
@@ -936,7 +1013,7 @@ class AutomatedRunPersister(BasePersister):
 
         # def _get_default_outlier_filtering(self):
         # return dict(filter_outliers=self.filter_outliers, iterations=self.fo_iterations,
-        #                 std_dev=self.fo_std_dev)
+        # std_dev=self.fo_std_dev)
 
 # ============= EOF =============================================
 
