@@ -19,6 +19,7 @@ from traits.api import Instance, List, on_trait_change, Bool, Event
 # ============= standard library imports ========================
 from itertools import groupby
 # ============= local library imports  ==========================
+from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.experiment.queue.experiment_queue import ExperimentQueue
 from pychron.experiment.factory import ExperimentFactory
 from pychron.experiment.utilities.aliquot_numbering import renumber_aliquots
@@ -28,7 +29,6 @@ from pychron.loggable import Loggable
 
 
 class Experimentor(Loggable):
-    # manager = Any
     experiment_factory = Instance(ExperimentFactory)
     experiment_queue = Instance(ExperimentQueue)
     executor = Instance(ExperimentExecutor)
@@ -57,7 +57,6 @@ class Experimentor(Loggable):
     save_event = Event
 
     def load(self):
-        # self.manager.load()
         self.experiment_factory.queue_factory.db_refresh_needed = True
         self.experiment_factory.run_factory.db_refresh_needed = True
 
@@ -135,17 +134,6 @@ class Experimentor(Loggable):
         self.debug('info updated')
         for qi in queues:
             qi.refresh_table_needed = True
-
-    # def _get_labnumber(self, ln):
-    # """
-    # return gen_labtable object
-    #     """
-    #     # db = self.manager.db
-    #
-    #     ln = convert_identifier(ln)
-    #     dbln = self.dvc.get_labnumber(ln)
-    #
-    #     return dbln
 
     def _group_analyses(self, ans, exclude=None):
         """
@@ -344,7 +332,8 @@ class Experimentor(Loggable):
                               # dvc=self.dvc,
                               db=self.dvc.db,
                               default_mass_spectrometer=dms)
-
+        if self.iso_db_manager:
+            e.db = self.iso_db_manager.db
         return e
 
 # ============= EOF =============================================

@@ -39,6 +39,7 @@ from pychron.database.selectors.isotope_selector import IsotopeAnalysisSelector
 from pychron.envisage.consoleable import Consoleable
 from pychron.envisage.preference_mixin import PreferenceMixin
 # from pychron.experiment.conditional.conditionals_edit_view import TAGS
+from pychron.experiment.automated_run.persistence import ExcelPersister
 from pychron.experiment.conditional.conditional import conditionals_from_file
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.health.series import SystemHealthSeries
@@ -51,7 +52,7 @@ from pychron.experiment.utilities.identifier import convert_extract_device
 from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
 from pychron.globals import globalv
 from pychron.paths import paths
-from pychron.pychron_constants import NULL_STR, DEFAULT_INTEGRATION_TIME, LINE_STR
+from pychron.pychron_constants import DEFAULT_INTEGRATION_TIME, LINE_STR
 from pychron.wait.wait_group import WaitGroup
 
 
@@ -139,7 +140,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     set_integration_time_on_start = Bool(False)
     send_config_before_run = Bool(False)
     default_integration_time = Float(DEFAULT_INTEGRATION_TIME)
-
+    use_xls_persister = Bool(False)
     use_memory_check = Bool(True)
     memory_threshold = Int
     use_dvc = Bool(False)
@@ -187,7 +188,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                  'min_ms_pumptime',
                  'set_integration_time_on_start',
                  'send_config_before_run',
-                 'default_integration_time')
+                 'default_integration_time',
+                 'use_xls_persister')
         self._preference_binder(prefid, attrs)
 
         if self.use_labspy:
@@ -935,19 +937,19 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         '''
         self._add_backup(arun.uuid)
 
-        arun.experiment_executor = weakref.ref(self)()
+        arun.integration_time = 1.04
 
+        arun.experiment_executor = self
         arun.spectrometer_manager = self.spectrometer_manager
         arun.extraction_line_manager = self.extraction_line_manager
         arun.ion_optics_manager = self.ion_optics_manager
         arun.runner = self.pyscript_runner
-        arun.min_ms_pumptime = self.min_ms_pumptime
-
-        arun.use_syn_extraction = True
+        arun.extract_device = exp.extract_device
 
         arun.persister.datahub = self.datahub
-        arun.persister.experiment_identifier = exp.database_identifier
         arun.persister.load_name = exp.load_name
+
+        arun.use_syn_extraction = False
 
         arun.use_dvc = self.use_dvc
         if self.use_dvc:
@@ -962,6 +964,13 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         if self.use_system_health:
             arun.system_health = self.system_health
+
+        if self.use_xls_persister:
+            xls_persister = ExcelPersister()
+            xls_persister.load_name = exp.load_name
+            if mon is not None:
+                xls_persister.monitor = mon
+            arun.xls_persister = xls_persister
 
         return arun
 

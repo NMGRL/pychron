@@ -664,6 +664,28 @@ THIS CHANGE CANNOT BE UNDONE')
     #                            search_path=[p])
     #         return im
 
+    # @cached_property
+    # def _get_materials(self):
+    #     materials = [''] + [mi.name for mi in self.db.get_materials()]
+    #     return materials
+    # 
+    # def _get_irradiation_tray_image(self):
+    #     p = self._get_map_path()
+    #     db = self.db
+    #     with db.session_ctx():
+    #         level = db.get_irradiation_level(self.irradiation,
+    #                                          self.level)
+    #         holder = None
+    #         if level:
+    #             holder = level.holder
+    #             holder = holder.name if holder else None
+    #         holder = holder if holder is not None else NULL_STR
+    #         self.tray_name = holder
+    #         im = ImageResource('{}.png'.format(holder),
+    #                            search_path=[p]
+    #         )
+    #         return im
+
     @cached_property
     def _get_trays(self):
         return self.dvc.meta_repo.get_irradiation_holder_names()

@@ -72,6 +72,7 @@ class Globals(object):
 
     load_valve_states = True
     load_soft_locks = True
+    load_manual_states = True
 
     debug = False
     use_logger_display = True
@@ -99,6 +100,7 @@ class Globals(object):
                            ('video_test', to_bool),
                            ('load_valve_states', to_bool),
                            ('load_soft_locks', to_bool),
+                           ('load_manual_states', to_bool),
                            ('experiment_debug', to_bool),
                            ('experiment_savedb', to_bool),
                            ('recall_debug', to_bool),

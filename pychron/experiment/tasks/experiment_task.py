@@ -147,6 +147,7 @@ class ExperimentEditorTask(EditorTask):
 
                 if not self.manager.executor.is_alive():
                     self.manager.executor.executable = False
+                return True
 
     def execute(self):
         if not self.manager.executor.is_alive():

@@ -19,7 +19,7 @@ import pickle
 
 from traits.api import String, Str, Property, Any, Float, Instance, Int, List, \
     cached_property, on_trait_change, Bool, Button, Event, Enum, Dict
-    
+
 # ============= standard library imports ========================
 from traits.trait_errors import TraitError
 import yaml
@@ -944,8 +944,7 @@ class AutomatedRunFactory(PersistenceLoggable):
     @cached_property
     def _get_irradiations(self):
         db = self.db
-
-        if not db.connected:
+        if db is None or not db.connected:
             return []
 
         irradiations = []
@@ -958,7 +957,7 @@ class AutomatedRunFactory(PersistenceLoggable):
     def _get_levels(self):
         levels = []
         db = self.db
-        if not db.connected:
+        if db is None or not db.connected:
             return []
 
         if self.db:

@@ -89,11 +89,7 @@ class ExtractionLineManager(Manager, Consoleable):
         # need to wait until now to load the ptrackers
         # this way our canvases are created
         self.reload_canvas()
-        if self.switch_manager:
-            self.switch_manager.refresh_network()
-            # self.valve_manager.load_valve_states(force_network_change=True)
-            for p in self.switch_manager.pipette_trackers:
-                p.load()
+
 
         self._activate_hook()
 
@@ -305,6 +301,9 @@ class ExtractionLineManager(Manager, Consoleable):
     def reload_canvas(self, load_states=False):
         self.debug('reload canvas')
         self.reload_scene_graph()
+        if self.use_network:
+            self.network.load(self.canvas_path)
+
         # net = self.network
         # if net:
         #     # p = os.path.join(paths.canvas2D_dir, 'canvas.xml')
@@ -312,7 +311,6 @@ class ExtractionLineManager(Manager, Consoleable):
 
         # if net:
         # net.suppress_changes = True
-        vm = self.switch_manager
         # if vm:
         #     vm.load_valve_states(refresh=False, force_network_change=False)
         #     vm.load_valve_lock_states(refresh=False)
@@ -320,9 +318,16 @@ class ExtractionLineManager(Manager, Consoleable):
         # if net:
         # net.suppress_changes = False
 
+        sm = self.switch_manager
+        if sm:
+            sm.refresh_network()
+            # self.valve_manager.load_valve_states(force_network_change=True)
+            for p in sm.pipette_trackers:
+                p.load()
+
         # vm.load_valve_states(refresh=False, force_network_change=True)
-        if vm:
-            for p in vm.pipette_trackers:
+        # if vm:
+            for p in sm.pipette_trackers:
                 self._set_pipette_counts(p.name, p.counts)
 
         self._reload_canvas_hook()
@@ -613,7 +618,7 @@ class ExtractionLineManager(Manager, Consoleable):
                 if isinstance(result, bool):
                     if change:
                         self.update_switch_state(name, True if action == 'open' else False)
-                        self.refresh_canvas()
+                        # self.refresh_canvas()
         return result, change
 
     def _check_ownership(self, name, requestor, force=False):

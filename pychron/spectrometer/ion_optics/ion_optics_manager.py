@@ -15,12 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Range, Instance, Bool, Button, Any
+from traits.api import Range, Instance, Bool, \
+    Button, Any
 # ============= standard library imports ========================
 from threading import Event
-import time
 import cPickle as pickle
 import os
+import time
 # ============= local library imports  ==========================
 from pychron.managers.manager import Manager
 from pychron.graph.graph import Graph

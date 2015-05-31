@@ -30,13 +30,13 @@ from pychron.core.helpers.strtools import to_bool
 from pychron.globals import globalv
 from pychron.hardware.core.checksum_helper import computeCRC
 from pychron.hardware.core.i_core_device import ICoreDevice
-from pychron.hardware.switch import Switch
+from pychron.hardware.switch import Switch, ManualSwitch
 from pychron.managers.manager import Manager
 from pychron.extraction_line.explanation.explanable_item import ExplanableValve
 from pychron.hardware.valve import HardwareValve
 from pychron.paths import paths
 from pychron.extraction_line.pipettes.tracking import PipetteTracker
-from valve_parser import ValveParser
+from switch_parser import SwitchParser
 
 
 def add_checksum(func):
@@ -99,7 +99,11 @@ class SwitchManager(Manager):
 
     def kill(self):
         super(SwitchManager, self).kill()
+        self._save_states()
+
+    def _save_states(self):
         self._save_soft_lock_states()
+        self._save_manual_states()
 
     def create_device(self, name, *args, **kw):
         """
@@ -125,8 +129,12 @@ class SwitchManager(Manager):
 
         if globalv.load_valve_states:
             self._load_states()
+
         if globalv.load_soft_locks:
             self._load_soft_lock_states()
+
+        if globalv.load_manual_states:
+            self._load_manual_states()
 
     def set_child_state(self, name, state):
         self.debug('set states for children of {}. state={}'.format(name, state))
@@ -317,10 +325,8 @@ class SwitchManager(Manager):
             switches = self.switches
             for interlock in interlocks:
 
-                print interlock, switches.keys()
                 if interlock in switches:
                     v = switches[interlock]
-                    print v,v.name, v.state
                     if v.state:
                         self.debug('interlocked {}'.format(interlock))
                         return v
@@ -451,16 +457,31 @@ class SwitchManager(Manager):
             s = v.get_hardware_state()
             self.refresh_state = (k, s, False)
 
+    def _load_manual_states(self):
+        p = os.path.join(paths.hidden_dir, '{}_manual_states'.format(self.name))
+        if os.path.isfile(p):
+            self.info('loading manual states from {}'.format(p))
+
+            with open(p, 'rb') as f:
+                try:
+                    ms = pickle.load(f)
+                except PickleError:
+                    return
+
+                for k, s in self.switches.iteritems():
+                    if k in ms:
+                        s.state = ms[k]
+
     def _load_soft_lock_states(self):
         p = os.path.join(paths.hidden_dir, '{}_soft_lock_state'.format(self.name))
         if os.path.isfile(p):
-            self.info('loading soft lock state from {}'.format(p))
+            self.info('loading soft lock states from {}'.format(p))
 
             with open(p, 'rb') as f:
                 try:
                     sls = pickle.load(f)
                 except PickleError:
-                    pass
+                    return
 
                 for v in self.switches:
 
@@ -469,11 +490,19 @@ class SwitchManager(Manager):
                     else:
                         self.unlock(v, save=False)
 
+    def _save_manual_states(self):
+        p = os.path.join(paths.hidden_dir, '{}_manual_states'.format(self.name))
+        self.info('saving manual states to {}'.format(p))
+        with open(p, 'wb') as f:
+            obj = {k:v.state for k, v in self.switches.iteritems() if isinstance(v, ManualSwitch)}
+            pickle.dump(obj, f)
+
     def _save_soft_lock_states(self):
         p = os.path.join(paths.hidden_dir, '{}_soft_lock_state'.format(self.name))
-        self.info('saving soft lock state to {}'.format(p))
+        self.info('saving soft lock states to {}'.format(p))
         with open(p, 'wb') as f:
-            obj = dict([(k, v.software_lock) for k, v in self.switches.iteritems()])
+            obj = {k:v.software_lock for k,v in self.switches.iteritems()}
+            # obj = dict([(k, v.software_lock) for k, v in self.switches.iteritems()])
 
             pickle.dump(obj, f)
 
@@ -529,7 +558,8 @@ class SwitchManager(Manager):
             else:
                 act = getattr(v, action)
                 result, changed = act(mode='{}-{}'.format(self.mode, mode))
-
+                if isinstance(v, ManualSwitch):
+                    self._save_manual_states()
         else:
             msg = 'Valve {} not available'.format(vid)
             self.console_message = msg, 'red'
@@ -550,7 +580,7 @@ class SwitchManager(Manager):
             self.switches[name] = hv
             return hv
 
-        parser = ValveParser()
+        parser = SwitchParser()
         if not parser.load(path):
             self.warning_dialog('No valves.xml file located in "{}"'.format(os.path.dirname(path)))
         else:
@@ -563,6 +593,10 @@ class SwitchManager(Manager):
 
             for s in parser.get_switches():
                 name, sw = self._switch_factory(s, klass=Switch)
+                self.switches[name] = sw
+
+            for mv in parser.get_manual_valves():
+                name, sw = self._switch_factory(mv, klass=ManualSwitch)
                 self.switches[name] = sw
 
             ps = []

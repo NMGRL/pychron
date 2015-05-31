@@ -60,10 +60,13 @@ class PersistenceMixin(object):
         except (AttributeError, NotImplementedError):
             self.warning('persistence path not implemented')
 
-    def load(self):
-        self.debug('***************** loading')
+    def load(self, verbose=False):
+
         if not self.pattributes:
             raise NotImplementedError
+
+        if verbose:
+            self.debug('***************** loading')
 
         p = self.get_persistence_path()
         self.debug(p)
@@ -76,11 +79,14 @@ class PersistenceMixin(object):
                 except (pickle.PickleError, EOFError):
                     self.warning('Invalid pickle file {}'.format(p))
             if d:
-                self.debug('***************** loading has d')
+                if verbose:
+                    self.debug('***************** loading pickled object')
+
                 for k in self.pattributes:
                     try:
                         v = d[k]
-                        self.debug('setting {} to {}'.format(k, v))
+                        if verbose:
+                            self.debug('setting {} to {}'.format(k, v))
                         setattr(self, k, v)
                     except KeyError:
                         pass

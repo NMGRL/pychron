@@ -130,7 +130,7 @@ class ExperimentQueueFactory(PersistenceLoggable):
     # @cached_property
     def _get_load_names(self):
         db = self.db
-        if not self.db.connected:
+        if db is None or not db.connected:
             return []
 
         with db.session_ctx():
@@ -151,7 +151,7 @@ class ExperimentQueueFactory(PersistenceLoggable):
     @cached_property
     def _get_usernames(self):
         db = self.db
-        if not db.connected:
+        if db is None or not db.connected:
             return []
 
         with db.session_ctx():

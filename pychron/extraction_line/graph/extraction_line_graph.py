@@ -74,6 +74,7 @@ class ExtractionLineGraph(HasTraits):
                          ('spectrometer', SpectrometerNode),
                          ('valve', ValveNode),
                          ('rough_valve', ValveNode),
+                         ('manual_valve', ValveNode),
                          ('turbo', PumpNode),
                          ('ionpump', PumpNode),
                          ('laser', LaserNode),
@@ -83,7 +84,7 @@ class ExtractionLineGraph(HasTraits):
                          ('getter', GetterNode)):
             for si in cp.get_elements(t):
                 n = si.text.strip()
-                if t in ('valve', 'rough_valve'):
+                if t in ('valve', 'rough_valve', 'manual_valve'):
                     o_vol = get_volume(si, tag='open_volume', default=10)
                     c_vol = get_volume(si, tag='closed_volume', default=5)
                     vol = (o_vol, c_vol)

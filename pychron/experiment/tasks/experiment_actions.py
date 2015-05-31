@@ -19,9 +19,10 @@
 
 from pyface.message_dialog import warning
 from pyface.tasks.task_window_layout import TaskWindowLayout
-from pychron.core.helpers.filetools import get_path
 
+from pychron.core.helpers.filetools import get_path
 from pychron.envisage.tasks.actions import PAction as Action, PTaskAction as TaskAction
+
 
 
 # ============= standard library imports ========================
@@ -198,8 +199,8 @@ class NewExperimentQueueAction(QueueAction):
             application = event.task.window.application
             win = application.create_window(TaskWindowLayout(EXP_ID))
             task = win.active_task
-            task.new()
-            win.open()
+            if task.new():
+                win.open()
 
 
 class OpenLastExperimentQueueAction(QueueAction):

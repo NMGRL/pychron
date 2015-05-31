@@ -74,7 +74,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     weight = Float
 
     def activated(self):
-        print self.manager
+        print 'labnumber entry activated', self.manager
         if self.manager.verify_database_connection(inform=True):
             if self.db.connected:
                 self.manager.activated()
