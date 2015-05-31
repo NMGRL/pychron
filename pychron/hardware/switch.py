@@ -139,7 +139,7 @@ class Switch(Loggable):
 
         if self.settling_time:
             time.sleep(self.settling_time)
-        print self.actuator
+
         return r
 
     def _get_actuator_name(self):

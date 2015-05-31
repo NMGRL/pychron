@@ -70,7 +70,6 @@ class QtegraGPActuator(GPActuator):
     def open_channel(self, obj):
         """
         """
-        print 'asdfasdf'
         cmd = 'Open {}'.format(obj.address)
 
         r = self.ask(cmd)

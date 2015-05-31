@@ -29,6 +29,7 @@ from kiva.fonttools import str_to_font
 import math
 from numpy import array
 # ============= local library imports  ==========================
+# from pychron.canvas.canvas2D.scene.primitives.connections import Fork
 from pychron.core.geometry.convex_hull import convex_hull
 from kiva.agg.agg import GraphicsContextArray
 import Image as PImage
@@ -202,7 +203,7 @@ class Primitive(HasTraits):
         return rx, ry
 
     def get_wh(self):
-        w,h=0,0
+        w, h = 0, 0
         if self.canvas:
             if self._layout_needed or not self._cached_wh:
                 w, h = self.width, self.height
@@ -265,7 +266,7 @@ class Primitive(HasTraits):
         with gc:
             gc.translate_ctm(x, y)
             # gc.set_text_position(x, y)
-            gc.set_fill_color((0,0,0))
+            gc.set_fill_color((0, 0, 0))
             gc.set_text_position(0, 0)
             gc.show_text(t)
 
@@ -435,6 +436,7 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
     corner_radius = 8.0
     display_name = None
     fill = True
+    use_border_gaps = True
 
     def get_tooltip_text(self):
         return 'Stage={}\nVolume={}'.format(self.name, self.volume)
@@ -471,6 +473,55 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
 
                 gc.set_stroke_color(c)
                 rounded_rect(gc, x, y, width, height, corner_radius)
+
+            if self.use_border_gaps:
+                with gc:
+                    for t, c in self.connections:
+                        with gc:
+                            gc.set_line_width(self.border_width + 1)
+                            if isinstance(c, BorderLine):
+                                p1, p2 = c.start_point, c.end_point
+                                p1x, p1y = p1.get_xy()
+                                if p1.x == p2.x:
+                                    yy = y
+                                    if p1.y >= self.y:
+                                        if p1.y - self.y != 1:
+                                            yy = y + height
+
+                                    p1x, p1y = p1.get_xy()
+                                    gc.move_to(p1x - 5, yy)
+                                    gc.line_to(p1x + 5, yy)
+                                else:
+                                    xx = x
+                                    if p1.x >= self.x:
+                                        xx = x + width
+                                    gc.move_to(xx, p1y - 5)
+                                    gc.line_to(xx, p1y + 5)
+
+                            elif c.__class__.__name__ == 'Fork':
+                                yy = y if c.left.y < self.y else y + height
+                                mx = c.get_midx()
+                                gc.move_to(mx - 5, yy)
+                                gc.line_to(mx + 5, yy)
+                            elif c.__class__.__name__ == 'Tee':
+                                if t == 'mid':
+                                    yy = y if c.left.y < self.y else y + height
+                                    mx = c.get_midx()
+                                    gc.move_to(mx - 5, yy)
+                                    gc.line_to(mx + 5, yy)
+                                else:
+                                    gc.set_line_width(self.border_width + 2)
+                                    # gc.set_stroke_color((1,0,0))
+                                    if t == 'left':
+                                        xx, yy = c.left.get_xy()
+                                        xx += 2.5
+                                    else:
+                                        xx, yy = c.right.get_xy()
+
+                                    gc.move_to(xx, yy - 5)
+                                    gc.line_to(xx, yy + 5)
+
+                            gc.draw_path()
 
 
 class Line(QPrimitive):
@@ -849,8 +900,8 @@ class Label(QPrimitive):
     soffset_y = Float
     label_offsety = Float
     # def __init__(self, *args, **kw):
-    #     super(Label, self).__init__(*args, **kw)
-    #     self.text_color = 'black'
+    # super(Label, self).__init__(*args, **kw)
+    # self.text_color = 'black'
 
     def _text_changed(self):
         self.request_redraw()
@@ -927,7 +978,7 @@ class Indicator(QPrimitive):
         super(Indicator, self).__init__(x, y, *args, **kw)
         # print self.x, self.offset_x
         # self.x=x=self.x+self.offset_x
-        #self.y=y=self.y+self.offset_y
+        # self.y=y=self.y+self.offset_y
 
         w = self.hline_length
         self.hline = Line(Point(x - w, y, **kw),
@@ -936,8 +987,8 @@ class Indicator(QPrimitive):
         self.vline = Line(Point(x, y - h, **kw),
                           Point(x, y + h, **kw), **kw)
 
-        #self.primitives.append(self.hline)
-        #self.primitives.append(self.vline)
+        # self.primitives.append(self.hline)
+        # self.primitives.append(self.vline)
 
     def _render_(self, gc, *args, **kw):
         with gc:
@@ -957,11 +1008,11 @@ class Indicator(QPrimitive):
             gc.rect(x, y, l, l)
             gc.draw_path()
 
-            #else:
-            #    l = self.spot_size
+            # else:
+            # l = self.spot_size
             #
-            #    hl = l / 4.
-            #    x, y = x - hl, y - hl
+            # hl = l / 4.
+            # x, y = x - hl, y - hl
             #
             #    gc.rect(x, y, l/2., l/2.)
             #    gc.draw_path()
@@ -972,11 +1023,11 @@ class Indicator(QPrimitive):
 # def set_canvas(self, canvas):
 # super(Indicator, self).set_canvas(canvas)
 # self.hline.set_canvas(canvas)
-#        self.vline.set_canvas(canvas)
+# self.vline.set_canvas(canvas)
 
 class PointIndicator(Indicator):
     radius = 8
-    #    active = Bool(False)
+    # active = Bool(False)
     label_item = Any
     show_label = Bool(True)
     font = Str('modern 8')
@@ -1042,10 +1093,10 @@ class PolyLine(QPrimitive):
     lines = List
     identifier = Str
     point_klass = PointIndicator
-    #    start_point=None
+    # start_point=None
     def __init__(self, x, y, z=0, identifier='', **kw):
         super(PolyLine, self).__init__(x, y, **kw)
-        #        self.start_point=PointIndicator(x,y, **kw)
+        # self.start_point=PointIndicator(x,y, **kw)
         self.identifier = identifier
         p = self.point_klass(x, y, z=z, identifier=identifier, **kw)
         self.points.append(p)
@@ -1065,8 +1116,8 @@ class PolyLine(QPrimitive):
         p2 = Dot(x, y, z=z, default_color=point_color, **ptargs)
         self._add_point(p2, line_color)
 
-    #        p1 = self.points[-1]
-    #        l = Line(p1, p2, default_color=line_color)
+    # p1 = self.points[-1]
+    # l = Line(p1, p2, default_color=line_color)
     #        self.primitives.append(l)
     #        self.lines.append(l)
     #
@@ -1078,9 +1129,9 @@ class PolyLine(QPrimitive):
             pi.render(gc)
 
 
-#        self.start_point.render(gc)
-#        for pt in self.points:
-#            pt.render(gc)
+# self.start_point.render(gc)
+# for pt in self.points:
+# pt.render(gc)
 # #
 #        for l in self.lines:
 #            l.render(gc)

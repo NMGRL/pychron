@@ -151,37 +151,40 @@ class ExtractionLineScene(Scene):
 
         return rect
 
-    def _new_tee(self, conn):
-        left = conn.find('left')
-        right = conn.find('right')
-        mid = conn.find('mid')
-        key = '{}-{}-{}'.format(left.text.strip(), mid.text.strip(), right.text.strip())
+    # def _new_tee(self, conn):
+    #     left = conn.find('left')
+    #     right = conn.find('right')
+    #     mid = conn.find('mid')
+    #     key = '{}-{}-{}'.format(left.text.strip(), mid.text.strip(), right.text.strip())
+    #
+    #     # klass = BorderLine
+    #     tt = Tee(10, 10,
+    #              default_color=(204, 204, 204),
+    #              name=key,
+    #              width=10)
+    #
+    #     lf = self.get_item(left.text.strip())
+    #     rt = self.get_item(right.text.strip())
+    #     mm = self.get_item(mid.text.strip())
+    #     lf.connections.append(('left', tt))
+    #     rt.connections.append(('right', tt))
+    #     mm.connections.append(('mid',tt))
+    #
+    #     def get_xy(item, elem):
+    #         offset = elem.get('offset')
+    #         ox, oy = 0, 0
+    #         if offset:
+    #             ox, oy = map(float, offset.split(','))
+    #
+    #         return item.x + ox, item.y + oy
+    #
+    #     lx, ly = get_xy(lf, left)
+    #     rx, ry = get_xy(rt, right)
+    #     mx, my = get_xy(mm, mid)
+    #     tt.set_points(lx, ly, rx, ry, mx, my)
+    #     self.add_item(tt, layer=0)
 
-        # klass = BorderLine
-        tt = Tee(10, 10,
-                 default_color=(204, 204, 204),
-                 name=key,
-                 width=10)
-
-        lf = self.get_item(left.text.strip())
-        rt = self.get_item(right.text.strip())
-        mm = self.get_item(mid.text.strip())
-
-        def get_xy(item, elem):
-            offset = elem.get('offset')
-            ox, oy = 0, 0
-            if offset:
-                ox, oy = map(float, offset.split(','))
-
-            return item.x + ox, item.y + oy
-
-        lx, ly = get_xy(lf, left)
-        rx, ry = get_xy(rt, right)
-        mx, my = get_xy(mm, mid)
-        tt.set_points(lx, ly, rx, ry, mx, my)
-        self.add_item(tt, layer=0)
-
-    def _new_fork(self, conn):
+    def _new_fork(self, klass, conn):
         left = conn.find('left')
         right = conn.find('right')
         mid = conn.find('mid')
@@ -192,13 +195,16 @@ class ExtractionLineScene(Scene):
         if dim is not None:
             height = float(dim.text.strip())
         # klass = BorderLine
-        tt = Fork(0, 0,
+        tt = klass(0, 0,
                   default_color=(204, 204, 204),
                   name=key, height=height)
 
         lf = self.get_item(left.text.strip())
         rt = self.get_item(right.text.strip())
         mm = self.get_item(mid.text.strip())
+        lf.connections.append(('left', tt))
+        rt.connections.append(('right', tt))
+        mm.connections.append(('mid',tt))
 
         def get_xy(item, elem):
             offset = elem.get('offset')
@@ -424,9 +430,9 @@ class ExtractionLineScene(Scene):
             self._new_connection(conn)
 
         for i, conn in enumerate(cp.get_elements('tee_connection')):
-            self._new_tee(conn)
+            self._new_fork(Tee, conn)
         for i, conn in enumerate(cp.get_elements('fork_connection')):
-            self._new_fork(conn)
+            self._new_fork(Fork, conn)
 
     def _load_rects(self, cp, origin, color_dict):
         for key in ('stage', 'laser', 'spectrometer',

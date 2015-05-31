@@ -91,6 +91,7 @@ class Valve(BaseValve, RoundedRectangle):
     width = 2
     height = 2
     corner_radius = 4
+    use_border_gaps = False
 
     def _render_(self, gc):
 

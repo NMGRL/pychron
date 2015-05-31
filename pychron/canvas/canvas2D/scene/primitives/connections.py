@@ -18,21 +18,23 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.scene.primitives.primitives import QPrimitive, Point, Bordered
+
+
 def fork(gc, lx, ly, rx, ry, mx, my, h):
     # draw left prong
-    gc.move_to(lx,ly)
-    gc.line_to(lx, ly+h)
+    gc.move_to(lx, ly)
+    gc.line_to(lx, ly + h)
 
     # draw right prong
-    gc.move_to(rx,ry)
-    gc.line_to(rx, ry+h)
+    gc.move_to(rx, ry)
+    gc.line_to(rx, ry + h)
 
     # draw connector
-    gc.move_to(lx-5, ly+h-5)
-    gc.line_to(rx+5, ly+h-5)
+    gc.move_to(lx - 5, ly + h - 5)
+    gc.line_to(rx + 5, ly + h - 5)
 
     # draw handle
-    gc.move_to(mx, ly+h)
+    gc.move_to(mx, ly + h)
     gc.line_to(mx, my)
     gc.draw_path()
 
@@ -42,13 +44,19 @@ class Fork(QPrimitive, Bordered):
     right = None
     mid = None
     height = 10
-    inverted=False
+    inverted = False
+
+    def get_midx(self):
+        lx,ly = self.left.get_xy()
+        rx,ry = self.right.get_xy()
+        return lx + (rx-lx)/2.
+
     def set_points(self, lx, ly, rx, ry, mx, my):
         self.left = Point(lx, ly)
         self.right = Point(rx, ry)
         self.mid = Point(mx, my)
 
-        self.inverted = my>ly
+        self.inverted = my > ly
 
     def set_canvas(self, canvas):
         self.left.set_canvas(canvas)
@@ -63,9 +71,9 @@ class Fork(QPrimitive, Bordered):
         # ly, ry = ly - 30, ry - 30
         mx = lx + (rx - lx) / 2.
 
-        w,h = self.get_wh()
+        w, h = self.get_wh()
         # print self.height, h, self.canvas
-        #   M
+        # M
         #   |
         #  _|_
         # |   |
@@ -76,8 +84,8 @@ class Fork(QPrimitive, Bordered):
 
             # gc.set_line_width(5)
             # fill in corners
-            gc.move_to(lx-10, ly+h-5)
-            gc.line_to(rx+10, ly+h-5)
+            gc.move_to(lx - 10, ly + h - 5)
+            gc.line_to(rx + 10, ly + h - 5)
 
             fork(gc, lx, ly, rx, ry, mx, my, h)
 
@@ -86,43 +94,70 @@ class Fork(QPrimitive, Bordered):
         fork(gc, lx, ly, rx, ry, mx, my, h)
 
 
+def tee_h(gc, x1, y1, x2, my, y2):
+    # draw main horizontal
+    gc.move_to(x1, my)
+    gc.line_to(x2, my)
+    # draw vertical
+    gc.move_to(x1, y1)
+    gc.line_to(x1, y2)
+    gc.draw_path()
+
+
+def tee_v(gc, x1, y1, x2, mx, y2):
+    # draw main horizontal
+    gc.move_to(x1, y1)
+    gc.line_to(x2, y1)
+    # draw vertical
+    gc.move_to(mx, y1)
+    gc.line_to(mx, y2)
+    gc.draw_path()
+
+
 class Tee(Fork):
     def _render_(self, gc):
         lx, ly = self.left.get_xy()
         rx, ry = self.right.get_xy()
         mx, my = self.mid.get_xy()
         # ly, ry = ly - 30, ry - 30
+        if ly == ry:
+            self._render_vertical(gc, lx, ly, rx, ry, mx, my)
+        else:
+            self._render_horizontal(gc, lx, ly, rx, ry, mx, my)
+
+    def _render_vertical(self, gc, lx, ly, rx, ry, mx, my):
+        """     M       L _____ R
+                |           |
+             L__|__R  or    |
+                            M
+
+        """
         mx = lx + (rx - lx) / 2.
         with gc:
-            if not self.inverted:
-                # draw main border
-                gc.set_line_width(5)
-                gc.set_stroke_color(self._get_border_color())
-                gc.move_to(lx, ly + 7)
-                gc.line_to(rx, ly + 7)
-
-                gc.move_to(lx, ly - 7)
-                gc.line_to(rx, ly - 7)
-
-                gc.move_to(mx-7, ly-7)
-                gc.line_to(mx-7, my)
-                gc.move_to(mx+7, ly-7)
-                gc.line_to(mx+7, my)
-                gc.draw_path()
+            gc.set_line_width(20)
+            gc.set_stroke_color(self._get_border_color())
+            tee_v(gc, lx, ly, rx, mx, my)
 
         gc.set_line_width(10)
         self.set_fill_color(gc)
-        # gc.set_stroke_color(self._convert_color(self.default_color))
+        tee_v(gc, lx, ly, rx, mx, my)
 
-        # draw main horizontal
-        gc.move_to(lx, ly)
-        gc.line_to(rx, ry)
-        # draw vertical
-        gc.move_to(mx, ly)
-        gc.line_to(mx, my)
-        gc.draw_path()
+    def _render_horizontal(self, gc, lx, ly, rx, ry, mx, my):
+        """
+        L             R
+        |____ M  M____|
+        |             |
+        R             L
+        """
 
+        with gc:
+            gc.set_line_width(20)
+            gc.set_stroke_color(self._get_border_color())
+            tee_h(gc, lx, ly, mx, my, ry)
 
+        gc.set_line_width(10)
+        self.set_fill_color(gc)
+        tee_h(gc, lx, ly, mx, my, ry)
 
 
 # ============= EOF =============================================
