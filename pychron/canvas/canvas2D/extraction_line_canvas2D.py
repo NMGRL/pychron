@@ -29,7 +29,7 @@ from pychron.canvas.canvas2D.scene.primitives.primitives import BorderLine
 from pychron.canvas.scene_viewer import SceneCanvas
 from pychron.canvas.canvas2D.scene.extraction_line_scene import ExtractionLineScene
 from pychron.canvas.canvas2D.scene.primitives.valves import RoughValve, \
-    BaseValve, Switch
+    BaseValve, Switch, ManualSwitch
 import weakref
 
 W = 2
@@ -196,14 +196,6 @@ class ExtractionLineCanvas2D(SceneCanvas):
                 ok, change = self.manager.open_valve(item.name, mode=mode)
             else:
                 ok, change = self.manager.close_valve(item.name, mode=mode)
-
-            # print ok, change, item.name
-            if ok:
-                item.state = state
-
-            if change:
-                self.request_redraw()
-
         else:
             if not isinstance(item, BaseValve):
                 return
@@ -212,20 +204,21 @@ class ExtractionLineCanvas2D(SceneCanvas):
                 return
 
             state = item.state
-
-            if self.confirm_open and isinstance(item, RoughValve) and not state:
-                event.handled = True
-
+            if self.confirm_open:
                 from pychron.core.ui.dialogs import myConfirmationDialog
                 from pyface.api import NO
 
-                dlg = myConfirmationDialog(
-                    message='Are you sure you want to open {}'.format(item.name),
-                    title='Verfiy Valve Action',
-                    style='modal')
-                retval = dlg.open()
-                if retval == NO:
-                    return
+                if isinstance(item, ManualSwitch) or (isinstance(item, RoughValve) and not state):
+                    msg = 'Are you sure you want to {} {}'.format('open' if not state else 'close', item.name)
+                    # event.handled = True
+
+                    dlg = myConfirmationDialog(
+                        message=msg,
+                        title='Verfiy Valve Action',
+                        style='modal')
+                    retval = dlg.open()
+                    if retval == NO:
+                        return
 
             state = not state
 
@@ -240,11 +233,13 @@ class ExtractionLineCanvas2D(SceneCanvas):
                 else:
                     ok, change = self.manager.close_valve(item.name, mode=mode)
 
-            if ok:
-                item.state = state
+        # print 'change, ok, state'
+        # print item, change, ok, state
+        if ok:
+            item.state = state
 
-            if change:
-                self.request_redraw()
+        if change:
+            self.invalidate_and_redraw()
 
     def on_lock(self):
         item = self._active_item

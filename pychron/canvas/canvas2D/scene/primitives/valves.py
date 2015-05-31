@@ -15,9 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import math
+
 from pychron.canvas.canvas2D.scene.primitives.base import Connectable
 from pychron.canvas.canvas2D.scene.primitives.primitives import Bordered, Circle, Label
 from pychron.canvas.canvas2D.scene.primitives.rounded import RoundedRectangle, rounded_rect
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -87,6 +90,39 @@ class BaseValve(Connectable):
         return 'Valve={}\nDesc={}\nState={}'.format(self.name, self.description, state)
 
 
+class ManualSwitch(BaseValve, RoundedRectangle):
+    width = 1.6622795630156608
+    height = 2
+    corner_radius = 4
+    use_border_gaps = False
+
+    def _render_(self, gc):
+        self._rotate(gc, 45)
+        super(ManualSwitch, self)._render_(gc)
+
+    def _rotate(self, gc, angle):
+        x, y = self.get_xy()
+        w, h = self.get_wh()
+        xx=x+w/2
+        yy=y+h/2.
+        gc.translate_ctm(xx,yy)
+        gc.rotate_ctm(math.radians(angle))
+        gc.translate_ctm(-xx,-yy)
+
+    def _render_textbox(self, gc, *args, **kw):
+        with gc:
+            self._rotate(gc, -45)
+            gc.translate_ctm(0, 25)
+            super(ManualSwitch, self)._render_textbox(gc, *args, **kw)
+    # def _render_name(self, gc, x, y, w, h):
+    #     # dont use this render_name
+    #     # this gets call with rotation
+    #     with gc:
+    #         self._rotate(gc, -45)
+    #         gc.translate_ctm(0, 25)
+    #         super(ManualSwitch, self)._render_name(gc,x,y,w,h)
+
+
 # class Valve(RoundedRectangle, BaseValve):
 class Valve(BaseValve, RoundedRectangle):
     width = 2
@@ -95,11 +131,9 @@ class Valve(BaseValve, RoundedRectangle):
     use_border_gaps = False
 
     def _render_(self, gc):
-
-        super(Valve, self)._render_(gc)
-        #
         x, y = self.get_xy()
         w, h = self.get_wh()
+        super(Valve, self)._render_(gc)
 
         self._draw_soft_lock(gc)
 

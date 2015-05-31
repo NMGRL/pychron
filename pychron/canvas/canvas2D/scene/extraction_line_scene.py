@@ -29,8 +29,8 @@ from pychron.canvas.canvas2D.scene.scene import Scene
 from pychron.canvas.canvas2D.scene.primitives.primitives import Label, BorderLine, Line, Image, ValueLabel
 from pychron.canvas.canvas2D.scene.primitives.rounded import RoundedRectangle
 from pychron.core.helpers.strtools import to_bool
-from pychron.canvas.canvas2D.scene.primitives.valves import RoughValve, Valve, Switch
-from pychron.extraction_line.valve_parser import ValveParser
+from pychron.canvas.canvas2D.scene.primitives.valves import RoughValve, Valve, Switch, ManualSwitch
+from pychron.extraction_line.switch_parser import SwitchParser
 from pychron.paths import paths
 
 KLASS_MAP = {'turbo': Turbo, 'laser': Laser}
@@ -40,6 +40,7 @@ class ExtractionLineScene(Scene):
     valves = Dict
 
     def load(self, pathname, configpath, valvepath, canvas):
+        self.overlays = []
         self.reset_layers()
 
         origin, color_dict = self._load_config(configpath, canvas)
@@ -350,7 +351,7 @@ class ExtractionLineScene(Scene):
     def _load_switchables(self, cp, origin, vpath):
         ox, oy = origin
         ndict = dict()
-        vp = ValveParser(vpath)
+        vp = SwitchParser(vpath)
         for s in cp.get_elements('switch'):
             key = s.text.strip()
             x, y = self._get_floats(s, 'translation')
@@ -402,6 +403,21 @@ class ExtractionLineScene(Scene):
             key = rv.text.strip()
             x, y = self._get_floats(rv, 'translation')
             v = RoughValve(x + ox, y + oy, name=key)
+            self.add_item(v, layer=1)
+            ndict[key] = v
+
+        for mv in cp.get_elements('manual_valve'):
+            key = mv.text.strip()
+            x, y = self._get_floats(mv, 'translation')
+            vv = vp.get_manual_valve(key)
+
+            desc = ''
+            if vv is not None:
+                desc = vv.find('description')
+                desc = desc.text.strip() if desc is not None else ''
+            v = ManualSwitch(x + ox, y + oy,
+                             display_name=desc,
+                             name=key)
             self.add_item(v, layer=1)
             ndict[key] = v
 

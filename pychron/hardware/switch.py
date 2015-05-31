@@ -22,15 +22,58 @@ import time
 from pychron.loggable import Loggable
 
 
-class Switch(Loggable):
+class BaseSwitch(Loggable):
     display_name = Str
-    address = Str
-    actuator = Any
-    state = Bool(False)
     description = Str
-    query_state = Bool(True)
+    prefix_name = 'BASE_SWITCH'
+    state = Bool(False)
     software_lock = Bool(False)
     enabled = Bool(True)
+
+    def __init__(self, name, *args, **kw):
+        """
+        """
+        self.display_name = name
+        kw['name'] = '{}-{}'.format(self.prefix_name, name)
+        super(BaseSwitch, self).__init__(*args, **kw)
+
+    def set_state(self, state):
+        self.state = state
+
+    def set_open(self, *args, **kw):
+        pass
+
+    def set_closed(self, *args, **kw):
+        pass
+
+    def lock(self):
+        self.software_lock = True
+
+    def unlock(self):
+        self.software_lock = False
+
+    def get_hardware_state(self):
+        pass
+
+
+class ManualSwitch(BaseSwitch):
+    prefix_name = 'MANUAL_SWITCH'
+
+    def set_open(self, *args, **kw):
+        self.state = True
+        return True, True
+
+    def set_closed(self, *args, **kw):
+        self.state = False
+        return True, True
+
+
+class Switch(BaseSwitch):
+    address = Str
+    actuator = Any
+
+    query_state = Bool(True)
+
 
     actuator_name = Property(depends_on='actuator')
     prefix_name = 'SWITCH'
@@ -40,13 +83,6 @@ class Switch(Loggable):
     settling_time = Float(0)
 
     owner = Str
-
-    def __init__(self, name, *args, **kw):
-        """
-        """
-        self.display_name = name
-        kw['name'] = '{}-{}'.format(self.prefix_name, name)
-        super(Switch, self).__init__(*args, **kw)
 
     def state_str(self):
         return '{}{}{}'.format(self.name, self.state, self.software_lock)
@@ -68,20 +104,13 @@ class Switch(Loggable):
         if self.actuator:
             return self.actuator.get_lock_state(self)
 
-    def set_state(self, state):
-        self.state = state
-
     def set_open(self, mode='normal'):
         return self._actuate_state(self._open, mode, not self.state, True)
 
     def set_closed(self, mode='normal'):
         return self._actuate_state(self._close, mode, self.state, False)
 
-    def lock(self):
-        self.software_lock = True
 
-    def unlock(self):
-        self.software_lock = False
 
     def _actuate_state(self, func, mode, cur, set_value):
         """
