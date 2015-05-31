@@ -22,7 +22,7 @@ import os
 from numpy.core.numeric import Inf
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.scene.canvas_parser import get_volume
-from pychron.canvas.canvas2D.scene.primitives.connections import Tee, Fork
+from pychron.canvas.canvas2D.scene.primitives.connections import Tee, Fork, Elbow
 from pychron.canvas.canvas2D.scene.primitives.lasers import Laser
 from pychron.canvas.canvas2D.scene.primitives.pumps import Turbo
 from pychron.canvas.canvas2D.scene.scene import Scene
@@ -221,7 +221,10 @@ class ExtractionLineScene(Scene):
         tt.set_points(lx, ly, rx, ry, mx, my)
         self.add_item(tt, layer=0)
 
-    def _new_connection(self, conn):
+    def _new_connection(self, conn, klass=None):
+        if klass is None:
+            klass = BorderLine
+
         start = conn.find('start')
         end = conn.find('end')
         key = '{}_{}'.format(start.text, end.text)
@@ -265,7 +268,7 @@ class ExtractionLineScene(Scene):
         elif orient == 'horizontal':
             y1 = y
 
-        klass = BorderLine
+        # klass = BorderLine
         l = klass((x, y), (x1, y1),
                   default_color=(204, 204, 204),
                   name=key,
@@ -444,6 +447,8 @@ class ExtractionLineScene(Scene):
     def _load_connections(self, cp, origin, color_dict):
         for i, conn in enumerate(cp.get_elements('connection')):
             self._new_connection(conn)
+        for i, conn in enumerate(cp.get_elements('elbow')):
+            self._new_connection(conn, Elbow)
 
         for i, conn in enumerate(cp.get_elements('tee_connection')):
             self._new_fork(Tee, conn)

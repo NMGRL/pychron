@@ -18,7 +18,7 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.scene.primitives.base import QPrimitive
-from pychron.canvas.canvas2D.scene.primitives.primitives import Point, Bordered
+from pychron.canvas.canvas2D.scene.primitives.primitives import Point, Bordered, BorderLine
 
 
 def fork(gc, lx, ly, rx, ry, mx, my, h):
@@ -160,6 +160,36 @@ class Tee(Fork):
         self.set_fill_color(gc)
         tee_h(gc, lx, ly, mx, my, ry)
 
+
+def elbow(gc, sx, sy, ex, ey):
+    if ey > sy:
+        x1 = sx
+        y1 = sy
+        x2 = sx
+        y2 = ey
+        x3 = ex
+        y3 = ey
+
+    # elbow(gc, x,y, ex,ey, x2,y2)
+    # draw border
+    gc.move_to(x1, y1)
+    gc.line_to(x2, y2)
+    gc.line_to(x3, y3)
+    gc.stroke_path()
+
+
+class Elbow(BorderLine):
+    def _render_(self, gc):
+        sx, sy = self.start_point.get_xy()
+        ex, ey = self.end_point.get_xy()
+        with gc:
+            gc.set_line_width(20)
+            gc.set_stroke_color(self._get_border_color())
+
+            elbow(gc, sx, sy, ex, ey)
+        gc.set_line_width(10)
+        self.set_fill_color(gc)
+        elbow(gc, sx, sy, ex, ey)
 
 # ============= EOF =============================================
 
