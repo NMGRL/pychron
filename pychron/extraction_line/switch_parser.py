@@ -51,7 +51,7 @@ class SwitchParser(XMLParser):
         return self._get_items('valve', **kw)
 
     def get_pipettes(self, **kw):
-        return self._get_items('pipettes', **kw)
+        return self._get_items('pipette', **kw)
 
     def _get_items(self, attr, group=None, element=True):
         if group is None:
