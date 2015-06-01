@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
-from traitsui.api import View, UItem, VGroup, HGroup, Group
+from traitsui.api import View, UItem, VGroup, HGroup, Group, VSplit
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -39,7 +39,7 @@ class DashboardCentralPane(TraitsTaskPane):
         tgrp = HGroup(url, UItem('clear_button', tooltip='Clear current errors'))
 
         # v = View(
-        #     VGroup(HGroup(url, UItem('clear_button', tooltip='Clear current errors')),
+        # VGroup(HGroup(url, UItem('clear_button', tooltip='Clear current errors')),
         #            UItem('selected_device',
         #                  style='custom'),
         #
@@ -57,7 +57,16 @@ class DashboardDevicePane(TraitsDockPane):
 
         editor = TableEditor(columns=cols,
                              selected='selected_device')
-        v = View(UItem('devices', editor=editor))
+
+        cols = [ObjectColumn(name='name', label='Name'),
+                ObjectColumn(name='last_value', label='Value'),
+                ObjectColumn(name='last_time_str', label='Timestamp')]
+
+        veditor = TableEditor(columns=cols,
+                              editable=False)
+
+        v = View(VSplit(UItem('devices', editor=editor),
+                        UItem('values', editor=veditor)))
         return v
 
         # ============= EOF =============================================

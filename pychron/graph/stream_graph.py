@@ -21,6 +21,7 @@ set_qt()
 from pyface.timer.api import do_after as do_after_timer
 # =============standard library imports ========================
 from numpy import hstack, Inf
+import time
 # =============local library imports  ==========================
 # from pychron.graph.editors.stream_plot_editor import StreamPlotEditor
 from stacked_graph import StackedGraph
@@ -230,7 +231,6 @@ if __name__ == '__main__':
     from traits.has_traits import HasTraits
     from traits.trait_types import Button
     import random
-    import time
     from traitsui.view import View
     class Demo(HasTraits):
         test = Button

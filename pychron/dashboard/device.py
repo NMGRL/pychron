@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import random
 
 from traits.api import Str, Bool, List, Instance, Event
 from traitsui.api import View, ListEditor, InstanceEditor, UItem, VGroup, HGroup, VSplit
@@ -26,6 +27,7 @@ import yaml
 from pychron.core.helpers.filetools import unique_path2
 from pychron.dashboard.conditional import DashboardConditional
 from pychron.dashboard.process_value import ProcessValue
+from pychron.globals import globalv
 from pychron.graph.stream_graph import StreamStackedGraph
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.loggable import Loggable
@@ -91,7 +93,14 @@ class DashboardDevice(Loggable):
             self.debug('triggering value device={} value={} func={}'.format(self.hardware_device.name,
                                                                             value.name,
                                                                             value.func_name))
-            nv = getattr(self.hardware_device, value.func_name)(**kw)
+            nv = None
+            func = getattr(self.hardware_device, value.func_name)
+            if func is not None:
+                nv = func(**kw)
+
+            if nv is None and globalv.dashboard_simulation:
+                nv = random.random()
+
             self._push_value(value, nv)
         except BaseException:
             import traceback
