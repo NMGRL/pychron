@@ -48,9 +48,9 @@ class Fork(QPrimitive, Bordered):
     inverted = False
 
     def get_midx(self):
-        lx,ly = self.left.get_xy()
-        rx,ry = self.right.get_xy()
-        return lx + (rx-lx)/2.
+        lx, ly = self.left.get_xy()
+        rx, ry = self.right.get_xy()
+        return lx + (rx - lx) / 2.
 
     def set_points(self, lx, ly, rx, ry, mx, my):
         self.left = Point(lx, ly)
@@ -75,8 +75,8 @@ class Fork(QPrimitive, Bordered):
         w, h = self.get_wh()
         # print self.height, h, self.canvas
         # M
-        #   |
-        #  _|_
+        # |
+        # _|_
         # |   |
         # L   R
         with gc:
@@ -161,16 +161,24 @@ class Tee(Fork):
         tee_h(gc, lx, ly, mx, my, ry)
 
 
-def elbow(gc, sx, sy, ex, ey):
-    if ey > sy:
-        x1 = sx
-        y1 = sy
+def elbow(gc, sx, sy, ex, ey, corner='ul'):
+    x1 = sx
+    y1 = sy
+    x3 = ex
+    y3 = ey
+    if corner == 'ul':
         x2 = sx
         y2 = ey
-        x3 = ex
-        y3 = ey
+    elif corner == 'lr':
+        x2 = ex
+        y2 = sy
+    elif corner == 'll':
+        x2 = ex
+        y2 = sy
+    else:
+        x2 = sx
+        y2 = ey
 
-    # elbow(gc, x,y, ex,ey, x2,y2)
     # draw border
     gc.move_to(x1, y1)
     gc.line_to(x2, y2)
@@ -179,6 +187,8 @@ def elbow(gc, sx, sy, ex, ey):
 
 
 class Elbow(BorderLine):
+    corner = 'ul'
+
     def _render_(self, gc):
         sx, sy = self.start_point.get_xy()
         ex, ey = self.end_point.get_xy()
@@ -186,10 +196,10 @@ class Elbow(BorderLine):
             gc.set_line_width(20)
             gc.set_stroke_color(self._get_border_color())
 
-            elbow(gc, sx, sy, ex, ey)
+            elbow(gc, sx, sy, ex, ey, self.corner)
         gc.set_line_width(10)
         self.set_fill_color(gc)
-        elbow(gc, sx, sy, ex, ey)
+        elbow(gc, sx, sy, ex, ey, self.corner)
 
 # ============= EOF =============================================
 

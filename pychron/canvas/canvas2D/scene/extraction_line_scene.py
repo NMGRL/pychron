@@ -281,6 +281,7 @@ class ExtractionLineScene(Scene):
             eanchor.connections.append(('end', ref()))
 
         self.add_item(l, layer=0)
+        return l
 
     def _new_line(self, line, name,
                   color=(0, 0, 0), width=2,
@@ -448,7 +449,12 @@ class ExtractionLineScene(Scene):
         for i, conn in enumerate(cp.get_elements('connection')):
             self._new_connection(conn)
         for i, conn in enumerate(cp.get_elements('elbow')):
-            self._new_connection(conn, Elbow)
+            l = self._new_connection(conn, Elbow)
+            corner = conn.find('corner')
+            c = 'ul'
+            if corner is not None:
+                c=corner.text.strip()
+            l.corner = c
 
         for i, conn in enumerate(cp.get_elements('tee_connection')):
             self._new_fork(Tee, conn)
