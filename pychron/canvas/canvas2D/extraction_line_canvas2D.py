@@ -24,6 +24,7 @@ from pyface.qt.QtGui import QToolTip
 import os
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.overlays.extraction_line_overlay import ExtractionLineInfoTool, ExtractionLineInfoOverlay
+from pychron.canvas.canvas2D.scene.primitives.connections import Elbow
 from pychron.canvas.canvas2D.scene.primitives.lasers import Laser
 from pychron.canvas.canvas2D.scene.primitives.primitives import BorderLine
 from pychron.canvas.scene_viewer import SceneCanvas
@@ -130,7 +131,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
 
     def _over_item(self, event):
         x, y = event.x, event.y
-        return self.scene.get_is_in(x, y, exclude=[BorderLine, ])
+        return self.scene.get_is_in(x, y, exclude=[BorderLine, Elbow])
 
     def normal_left_down(self, event):
         pass
@@ -138,7 +139,6 @@ class ExtractionLineCanvas2D(SceneCanvas):
     def normal_mouse_move(self, event):
 
         item = self._over_item(event)
-
         if item is not None:
             self.event_state = 'select'
             if item != self.active_item:

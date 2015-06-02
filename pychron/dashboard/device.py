@@ -100,8 +100,8 @@ class DashboardDevice(Loggable):
 
             if nv is None and globalv.dashboard_simulation:
                 nv = random.random()
-
-            self._push_value(value, nv)
+            if nv is not None:
+                self._push_value(value, nv)
         except BaseException:
             import traceback
 

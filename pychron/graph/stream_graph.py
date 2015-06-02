@@ -200,6 +200,7 @@ class StreamGraph(Graph):
 
             self.set_y_limits(max_=ma,
                               min_=mi,
+                              pad='0.1',
                               plotid=plotid)
 
     def record_multiple(self, ys, plotid=0, track_y=True):
