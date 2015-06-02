@@ -137,6 +137,7 @@ class Paths(object):
     sample_image_dir = None
     sample_image_backup_dir = None
 
+    experiment_dataset_dir = None
     project_dir = None
     meta_dir = None
     meta_db = None
@@ -330,10 +331,11 @@ class Paths(object):
         self.sample_image_backup_dir = join(self.sample_image_dir, 'backup')
 
         self.dvc_dir = join(self.data_dir, '.dvc')
-        self.project_dir = join(self.dvc_dir, 'projects')
+        # self.project_dir = join(self.dvc_dir, 'projects')
+        self.experiment_dataset_dir = join(self.dvc_dir, 'experiments')
         self.meta_dir = join(self.dvc_dir, 'meta')
-        self.meta_db = join(self.meta_dir, 'pychronmeta.sqlite')
-        self.meta_txtdb = join(self.meta_dir, 'pychronmeta.txtdb')
+        # self.meta_db = join(self.meta_dir, 'pychronmeta.sqlite')
+        # self.meta_txtdb = join(self.meta_dir, 'pychronmeta.txtdb')
         # self.vcs_dir = join(self.data_dir, 'vcs')
 
         # ==============================================================================

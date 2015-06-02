@@ -88,6 +88,19 @@ class GitRepoManager(Loggable):
                 self.debug('{} is not a valid repo'.format(path))
                 self._repo = Repo.init(path)
 
+    def add_ignore(self, *args):
+        ignores= []
+        p = os.path.join(self.path, '.gitignore')
+        if os.path.isfile(p):
+            with open(p, 'r') as rfile:
+                ignores = [line.strip() for line in rfile]
+
+        args = [a for a in args if a not in ignores]
+        if args:
+            with open(p, 'a') as afile:
+                for a in args:
+                    afile.write('{}\n'.format(a))
+
     def out_of_date(self, branchname='master'):
         pd = open_progress(2)
 
@@ -229,7 +242,8 @@ class GitRepoManager(Loggable):
         return self._repo.is_dirty()
 
     def has_staged(self):
-        return self._repo.is_dirty()
+        return self._repo.git.diff('--cached','--name-only')
+        # return self._repo.is_dirty()
 
     def has_unpushed_commits(self):
         return self._repo.git.log('--not', '--remotes', '--oneline')
@@ -240,7 +254,7 @@ class GitRepoManager(Loggable):
         def func(ps, extension):
             if extension:
                 if not isinstance(extension, tuple):
-                    extension = (extension, )
+                    extension = (extension,)
                 ps = [pp for pp in ps if os.path.splitext(pp)[1] in extension]
 
             if ps:
@@ -330,7 +344,7 @@ class GitRepoManager(Loggable):
         except AttributeError, e:
             print 'repo man pull', e
             return
-        
+
         if remote:
             try:
                 repo.git.pull(remote, branch)

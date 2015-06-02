@@ -25,7 +25,7 @@ import os
 from pychron.core.helpers.filetools import remove_extension
 from pychron.core.progress import progress_loader
 from pychron.dvc.defaults import TRIGA, HOLDER_24_SPOKES, LASER221, LASER65
-from pychron.dvc.dvc_analysis import DVCAnalysis, project_path, analysis_path
+from pychron.dvc.dvc_analysis import DVCAnalysis, experiment_path, analysis_path
 from pychron.dvc.dvc_database import DVCDatabase
 from pychron.dvc.meta_repo import MetaRepo
 from pychron.git_archive.repo_manager import GitRepoManager
@@ -56,7 +56,7 @@ class DVC(Loggable):
     github_user = Str
     github_password = Str
 
-    project_repo = Instance(GitRepoManager)
+    experiment_repo = Instance(GitRepoManager)
     auto_add = True
 
     def __init__(self, bind=True,*args, **kw):
@@ -80,22 +80,22 @@ class DVC(Loggable):
 
     # database
     # analysis processing
-    def _get_project_repo(self, project):
-        repo = self.project_repo
-        path = project_path(project)
+    def _get_experiment_repo(self, experiment_id):
+        repo = self.experiment_repo
+        path = experiment_path(experiment_id)
 
         if repo is None or repo.path != path:
             self.debug('make new repo for {}'.format(path))
             repo = GitRepoManager()
             repo.path = path
             repo.open_repo(path)
-            self.project_repo = repo
+            self.experiment_repo = repo
 
         return repo
 
     def analysis_has_review(self, ai, attr):
         test_str = TESTSTR[attr]
-        repo = self._get_project_repo(ai.project)
+        repo = self._get_experiment_repo(ai.experiment_id)
         for l in repo.get_log():
             if l.message.startswith(test_str):
                 self.debug('{} {} reviewed'.format(ai, attr))
@@ -104,42 +104,42 @@ class DVC(Loggable):
             self.debug('{} {} not reviewed'.format(ai, attr))
 
     def update_analyses(self, ans, msg):
-        key = lambda x: x.project
+        key = lambda x: x.experiment_id
         ans = sorted(ans, key=key)
-        mod_projects = []
-        for project, ais in groupby(ans, key=key):
+        mod_experiments = []
+        for exp, ais in groupby(ans, key=key):
             ais = map(analysis_path, ais)
-            if self.project_add_analyses(project, ais):
-                self.project_commit(project, msg)
-                mod_projects.append(project)
-        return mod_projects
+            if self.experiment_add_analyses(exp, ais):
+                self.experiment_commit(exp, msg)
+                mod_experiments.append(exp)
+        return mod_experiments
 
-    def project_has_staged(self, ps):
+    def experiment_has_staged(self, ps):
         if not hasattr(ps, '__iter__'):
             ps = (ps,)
 
         changed = []
         repo = GitRepoManager()
         for p in ps:
-            pp = os.path.join(paths.dvc_dir, 'projects', p)
+            pp = os.path.join(paths.experiment_dataset_dir, p)
             repo.open_repo(pp)
             if repo.has_unpushed_commits():
                 changed.append(p)
 
         return changed
 
-    def push_projects(self, ps):
+    def push_experiments(self, ps):
         repo = GitRepoManager()
         for p in ps:
-            pp = os.path.join(paths.dvc_dir, 'projects', p)
+            pp = os.path.join(paths.experiment_dataset_dir, p)
             repo.open_repo(pp)
             repo.push()
 
-    def project_add_analyses(self, project, paths):
+    def experiment_add_analyses(self, project, paths):
         if not hasattr(paths, '__iter__'):
             paths = (paths,)
 
-        repo = self._get_project_repo(project)
+        repo = self._get_experiment_repo(project)
 
         changes = repo.get_local_changes()
         changed = False
@@ -150,9 +150,9 @@ class DVC(Loggable):
                 changed = True
         return changed
 
-    def project_commit(self, project, msg):
+    def experiment_commit(self, project, msg):
         self.debug('Project commit: {} msg: {}'.format(project, msg))
-        repo = self._get_project_repo(project)
+        repo = self._get_experiment_repo(project)
         repo.commit(msg)
 
     def save_icfactors(self, ai, dets, fits, refs):
@@ -266,7 +266,7 @@ class DVC(Loggable):
         with self.db.session_ctx():
             self.db.add_project(name)
 
-        p = os.path.join(paths.project_dir, name)
+        p = os.path.join(paths.experiment_dataset_dir, name)
         os.mkdir(p)
         repo = Repo.init(p)
 
@@ -307,10 +307,13 @@ class DVC(Loggable):
     #     self.meta_repo.update_experiment_queue(name, path)
 
     def meta_commit(self, msg):
-        if self.meta_repo.has_staged():
-            self.debug('meta repo has changes')
+        changes = self.meta_repo.has_staged()
+        if changes:
+            self.debug('meta repo has changes: {}'.format(changes))
             self.meta_repo.report_status()
             self.meta_repo.commit(msg)
+        else:
+            self.debug('no changes to meta repo')
 
     def get_meta_head(self):
         return self.meta_repo.get_head()

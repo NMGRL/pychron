@@ -140,6 +140,8 @@ class AutomatedRunSpec(HasTraits):
     _step_heat = False
     conflicts_checked = False
 
+    experiment_id = Str
+
     @property
     def display_irradiation(self):
         return '{} {}:{}'.format(self.irradiation, self.irradiation_level, self.irradiation_position)

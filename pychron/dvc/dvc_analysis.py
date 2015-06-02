@@ -23,6 +23,7 @@ import time
 # ============= local library imports  ==========================
 from uncertainties import ufloat, std_dev, nominal_value
 import yaml
+from pychron.core.helpers.filetools import add_extension
 from pychron.paths import paths
 from pychron.processing.analyses.analysis import Analysis
 from pychron.processing.isotope import Isotope
@@ -35,15 +36,35 @@ EXTRACTION_ATTRS = ('weight', 'extract_device', 'tray', 'extract_value',
 META_ATTRS = ('analysis_type', 'uuid', 'sample', 'project', 'material', 'aliquot', 'increment',
               'irradiation', 'irradiation_level', 'irradiation_position',
               'comment', 'mass_spectrometer',
-              'username', 'queue_conditionals_name', 'identifier')
+              'username', 'queue_conditionals_name', 'identifier',
+              'experiment_id')
 
 
-def analysis_path(record):
-    path = os.path.join(project_path(record.project), '{}.yaml'.format(record.record_id))
-    return path
+def analysis_path(runid, experiment, modifier=None, extension='.yaml'):
+    head, tail = runid[:3], runid[3:]
+    # if modifier:
+    #     tail = '{}{}'.format(tail, modifier)
+    root = os.path.join(paths.experiment_dataset_dir, experiment, head)
+    if not os.path.isdir(root):
+        os.mkdir(root)
+
+    if modifier:
+        d = os.path.join(root, modifier)
+        if not os.path.isdir(d):
+            os.mkdir(d)
+
+        root = d
+        fmt = '{}.{}'
+        if modifier.startswith('.'):
+            fmt = '{}{}'
+        tail = fmt.format(tail, modifier[:4])
+
+    name = add_extension(tail, extension)
+
+    return os.path.join(root, name)
 
 
-def project_path(project):
+def experiment_path(project):
     return os.path.join(paths.dvc_dir, 'projects', project)
 
 

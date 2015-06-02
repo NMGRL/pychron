@@ -28,7 +28,7 @@ from datetime import datetime
 from uncertainties import std_dev
 from uncertainties import nominal_value
 # ============= local library imports  ==========================
-from pychron.dvc.dvc_analysis import META_ATTRS, EXTRACTION_ATTRS
+from pychron.dvc.dvc_analysis import META_ATTRS, EXTRACTION_ATTRS, analysis_path
 from pychron.experiment.automated_run.persistence import BasePersister
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths
@@ -38,22 +38,26 @@ def ydump(obj, p):
     with open(p, 'w') as wfile:
         yaml.dump(obj, wfile, default_flow_style=False)
 
+def format_project(project):
+    return project.replace('/','_').replace('\\', '_')
+
+
 
 class DVCPersister(BasePersister):
-    project_repo = Instance(GitRepoManager)
+    experiment_repo = Instance(GitRepoManager)
     dvc = Instance('pychron.dvc.dvc.DVC')
 
     # def __init__(self, *args, **kw):
     #     super(DVCPersister, self).__init__(*args, **kw)
     #     self.dvc = self.application.get_service('pychron.dvc.dvc.DVC')
 
-    def per_spec_save(self, pr):
+    def per_spec_save(self, pr, commit=False):
         self.per_spec = pr
         self.initialize(False)
         self.pre_extraction_save()
         self.pre_measurement_save()
         self.post_extraction_save('','', None)
-        self.post_measurement_save()
+        self.post_measurement_save(commit=commit)
 
     def initialize(self, sync=True):
         """
@@ -66,10 +70,12 @@ class DVCPersister(BasePersister):
         :return:
         """
         project = self.per_spec.run_spec.project
-        self.project_repo = GitRepoManager()
-        self.project_repo.open_repo(os.path.join(paths.project_dir, project))
+
+        project = format_project(project)
+        self.experiment_repo = GitRepoManager()
+        self.experiment_repo.open_repo(os.path.join(paths.experiment_dataset_dir, project))
         self.info('pulling changes from project repo: {}'.format(project))
-        self.project_repo.pull()
+        self.experiment_repo.pull()
         if sync:
             self.info('synchronize dvc')
             self.dvc.synchronize()
@@ -81,7 +87,7 @@ class DVCPersister(BasePersister):
         pass
 
     def post_extraction_save(self, rblob, oblob, snapshots):
-        p = self._make_path('.extraction')
+        p = self._make_path(modifier='extraction')
         obj = {'request': rblob,
                'response': oblob}
 
@@ -121,7 +127,7 @@ class DVCPersister(BasePersister):
         pass
 
     def save_peak_center_to_file(self, pc):
-        p = self._make_path('.peakcenter')
+        p = self._make_path(modifier='peakcenter')
         xx, yy = pc.graph.get_data(), pc.graph.get_data(axis=1)
 
         xs, ys, _mx, _my = pc.result
@@ -136,7 +142,7 @@ class DVCPersister(BasePersister):
                'data': ''.join([struct.pack(fmt, di) for di in zip(xx, yy)])}
         ydump(obj, p)
 
-    def post_measurement_save(self):
+    def post_measurement_save(self, commit=True):
         """
         save
             - analysis.yaml
@@ -149,7 +155,8 @@ class DVCPersister(BasePersister):
         """
         # save spectrometer
         spec_sha = self._get_spectrometer_sha()
-        spec_path = self._make_path('.spectrometer', spec_sha)
+        spec_path = os.path.join(self.experiment_repo.path, '{}.yaml'.format(spec_sha))
+        # spec_path = self._make_path('.spectrometer', spec_sha)
         if not os.path.isfile(spec_path):
             self._save_spectrometer_file(spec_path)
 
@@ -163,34 +170,41 @@ class DVCPersister(BasePersister):
         self._save_monitor()
 
         # stage files
-        for p in (spec_path, self._make_path(''),
+        for p in (spec_path, self._make_path(),
 
-                  self._make_path('.data'),
-                  self._make_path('.changeable'),
-                  self._make_path('.peakcenter'),
-                  self._make_path('.extraction'),
-                  self._make_path('.monitor')):
+                  self._make_path(modifier='.data'),
+                  self._make_path(modifier='changeable'),
+                  self._make_path(modifier='peakcenter'),
+                  self._make_path(modifier='extraction'),
+                  self._make_path(modifier='monitor')):
             if os.path.isfile(p):
-                self.project_repo.add(p)
+                self.experiment_repo.add(p)
             else:
                 self.debug('not at valid file {}'.format(p))
 
-        # commit files
-        self.project_repo.commit('added analysis {}'.format(self.per_spec.run_spec.runid))
+        if commit:
+            # commit files
+            self.experiment_repo.commit('added analysis {}'.format(self.per_spec.run_spec.runid))
+            self.dvc.meta_commit('repo updated for analysis {}'.format(self.per_spec.run_spec.runid))
 
-        # push commit
-        self.dvc.synchronize(pull=False)
+            # push commit
+            self.dvc.synchronize(pull=False)
 
     # private
     def _save_analysis_db(self, timestamp):
-
-        d = self._make_analysis_dict(keys=[])
+        rs = self.per_spec.run_spec
+        d = {k:getattr(rs, k) for k in ('uuid', 'analysis_type','aliquot',
+                                     'increment', 'mass_spectrometer',
+                                     'extract_device', 'weight','comment',
+                                     'cleanup','duration','extract_value','extract_units')}
         d['timestamp'] = timestamp
-
         dvc = self.dvc
         with dvc.session_ctx():
-            dvc.add_analysis(**d)
-            self._save_measured_positions()
+            an = dvc.add_analysis(rs.experiment_id, **d)
+            pos = dvc.get_irradiation_position(rs.irradiation, rs.irradiation_level, rs.irradiation_position)
+
+            an.irradiation_position = pos
+            # self._save_measured_positions()
 
     def _save_measured_positions(self):
         dvc = self.dvc
@@ -293,40 +307,42 @@ class DVCPersister(BasePersister):
         # save experiment
         self.dvc.update_experiment_queue(self.per_spec.experiment_queue_name,
                                          self.per_spec.experiment_queue_blob)
-        self.dvc.meta_commit('repo updated for analysis {}'.format(self.per_spec.run_spec.runid))
 
         hexsha = str(self.dvc.get_meta_head())
         obj['commit'] = hexsha
 
         # dump runid.yaml
-        p = self._make_path('')
+        p = self._make_path()
         ydump(obj, p)
 
         # dump runid.changeable.yaml
-        p = self._make_path('.changeable')
+        p = self._make_path(modifier='changeable')
         ydump({'commit': hexsha, 'isotopes': cisos, 'detectors': cdets}, p)
 
         # dump runid.data.yaml
-        p = self._make_path('.data')
+        p = self._make_path(modifier='.data')
         data = {'commit': hexsha,
                 'encoding': 'base64',
                 'format': '{}ff'.format(endianess),
                 'signals': signals, 'baselines': baselines, 'sniffs': sniffs}
         ydump(data, p)
 
-    def _make_path(self, name, prefix=None, extension='.yaml'):
-        if prefix is None:
-            prefix = self.per_spec.run_spec.runid
-            root = self.project_repo.path
-            root = os.path.join(root, prefix[:3])
-            if not os.path.isdir(root):
-                os.mkdir(root)
-            prefix = prefix[3:]
+    def _make_path(self, modifier=None, extension='.yaml'):
+        runid = self.per_spec.run_spec.runid
+        experiment_id = self.per_spec.run_spec.experiment_id
+        return analysis_path(runid, experiment_id, modifier, extension)
 
-        else:
-            root = self.project_repo.path
-
-        return os.path.join(root, '{}{}{}'.format(prefix, name, extension))
+        # if prefix is None:
+        #     root = self.experiment_repo.path
+        #     root = os.path.join(root, prefix[:3])
+        #     if not os.path.isdir(root):
+        #         os.mkdir(root)
+        #     prefix = prefix[3:]
+        #
+        # else:
+        #     root = self.experiment_repo.path
+        #
+        # return os.path.join(root, '{}{}{}'.format(prefix, name, extension))
 
     def _get_spectrometer_sha(self):
         """
@@ -356,7 +372,7 @@ class DVCPersister(BasePersister):
 
     def _save_monitor(self):
         if self.per_spec.monitor:
-            p = self._make_path('.monitor')
+            p = self._make_path(modifier='monitor')
             checks = []
             for ci in self.per_spec.monitor.checks:
                 data = ''.join([struct.pack('>ff', x, y) for x, y in ci.data])

@@ -39,6 +39,22 @@ class NameMixin(BaseMixin):
         return '{}<{}>'.format(self.__class__.__name__, self.name)
 
 
+class ExperimentTbl(Base, BaseMixin):
+    name = Column(String(80), primary_key=True)
+    timestamp = Column(TIMESTAMP, default=func.now())
+    creator = Column(String(80))
+
+    experiment_associations = relationship('ExperimentAssociationTbl', backref='experiment')
+
+
+class ExperimentAssociationTbl(Base, BaseMixin):
+    idexperimentassociationTbl = Column(Integer, primary_key=True)
+    experiment_name = Column(String(80), ForeignKey('ExperimentTbl.name'))
+    analysis_id = Column(Integer, ForeignKey('AnalysisTbl.idanalysisTbl'))
+    # experiments = relationship('ExperimentTbl')
+    # analyses = relationship('AnalysisTbl', backref='experiment_associations')
+
+
 class AnalysisTbl(Base, BaseMixin):
     idanalysisTbl = Column(Integer, primary_key=True)
     timestamp = Column(TIMESTAMP)
@@ -64,6 +80,7 @@ class AnalysisTbl(Base, BaseMixin):
 
     weight = Column(Float)
     comment = Column(String(80))
+    experiment_associations = relationship('ExperimentAssociationTbl', backref='analysis')
 
     @property
     def labnumber(self):
@@ -207,7 +224,5 @@ class MeasuredPositionTbl(Base, BaseMixin):
 
 class VersionTbl(Base, BaseMixin):
     version = Column(String(40), primary_key=True)
+
 # ============= EOF =============================================
-
-
-

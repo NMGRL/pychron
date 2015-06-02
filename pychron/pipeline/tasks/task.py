@@ -203,12 +203,12 @@ class PipelineTask(BaseBrowserTask):
         ret = True
         ps = self.engine.get_projects()
         if ps:
-            changed = self.dvc.project_has_staged(ps)
+            changed = self.dvc.experiment_has_staged(ps)
             if changed:
                 m = 'You have changes to analyses. Would you like to share them?'
                 ret = self._handle_prompt_for_save(m, 'Share Changes')
                 if ret == 'save':
-                    self.dvc.push_projects(ps)
+                    self.dvc.push_experiments(ps)
 
         return ret
 # ============= EOF =============================================

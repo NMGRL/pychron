@@ -29,7 +29,7 @@ from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.database.core.query import compile_query
 from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, IrradiationTbl, LevelTbl, SampleTbl, \
     MaterialTbl, IrradiationPositionTbl, UserTbl, ExtractDeviceTbl, LoadTbl, LoadHolderTbl, LoadPositionTbl, \
-    MeasuredPositionTbl, ProductionTbl, VersionTbl
+    MeasuredPositionTbl, ProductionTbl, VersionTbl, ExperimentAssociationTbl, ExperimentTbl
 
 
 class NewMassSpectrometerView(HasTraits):
@@ -63,7 +63,7 @@ class DVCDatabase(DatabaseAdapter):
 
     """
 
-    test_func = 'get_database_version'
+    # test_func = 'get_database_version'
 
     irradiation = Str
     irradiations = List
@@ -89,9 +89,9 @@ class DVCDatabase(DatabaseAdapter):
         # if not os.path.isfile(self.path):
         # self.create_all(Base.metadata)
         # self.connect()
-            # else:
-            # with self.session_ctx() as sess:
-            # print sess
+        # else:
+        # with self.session_ctx() as sess:
+        # print sess
         # Base.metadata.init(sess.bind)
         if auto_add:
             if self.connect():
@@ -178,8 +178,15 @@ class DVCDatabase(DatabaseAdapter):
         a = UserTbl(name=name, **kw)
         return self._add_item(a)
 
-    def add_analysis(self, **kw):
+    def add_analysis(self, experiment, **kw):
         a = AnalysisTbl(**kw)
+        experiment = self.get_experiment(experiment)
+
+        e = ExperimentAssociationTbl()
+        e.experiment = experiment
+        e.analysis = a
+        self._add_item(e)
+
         return self._add_item(a)
 
     def add_material(self, name):
@@ -201,7 +208,7 @@ class DVCDatabase(DatabaseAdapter):
         # self.debug('SAMPLE {},{} ALREADY EXISTS'.format(name,project))
         return a
 
-    def add_mass_spectrometer(self, name, kind):
+    def add_mass_spectrometer(self, name, kind='Argus'):
         a = MassSpectrometerTbl(name=name, kind=kind)
         return self._add_item(a)
 
@@ -237,9 +244,13 @@ class DVCDatabase(DatabaseAdapter):
         a = LoadPositionTbl(identifier=ln, position=position, weight=weight, note=note)
         return self._add_item(a)
 
+    def add_experiment(self, **kw):
+        a = ExperimentTbl(**kw)
+        return self._add_item(a)
+
     # special getters
     def get_analysis_runid(self, idn, aliquot, step=None):
-         with self.session_ctx() as sess:
+        with self.session_ctx() as sess:
             q = sess.query(AnalysisTbl)
             q = q.join(IrradiationPositionTbl)
             if step:
@@ -338,6 +349,15 @@ class DVCDatabase(DatabaseAdapter):
         return []
 
     # single getters
+    def get_user(self, name):
+        return self._retrieve_item(UserTbl, name)
+
+    def get_mass_spectrometer(self, name):
+        return self._retrieve_item(MassSpectrometerTbl, name)
+
+    def get_experiment(self, name):
+        return self._retrieve_item(ExperimentTbl, name)
+
     def get_loadtable(self, name=None):
         if name is not None:
             lt = self._retrieve_item(LoadTbl, name)
