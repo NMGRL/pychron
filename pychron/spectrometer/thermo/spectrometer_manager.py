@@ -54,9 +54,9 @@ class ArgusSpectrometerManager(BaseSpectrometerManager):
         v = SpectrometerParametersView(model=p)
         v.edit_traits()
 
-    def make_gains_list(self):
+    def make_gains_dict(self):
         spec = self.spectrometer
-        return [(di.name, di.get_gain()) for di in spec.detectors]
+        return {di.name: di.get_gain() for di in spec.detectors}
 
     def set_gains(self, *args, **kw):
         spec=self.spectrometer

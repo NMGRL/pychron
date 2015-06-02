@@ -59,9 +59,11 @@ class DVC(Loggable):
     project_repo = Instance(GitRepoManager)
     auto_add = True
 
-    def __init__(self, *args, **kw):
+    def __init__(self, bind=True,*args, **kw):
         super(DVC, self).__init__(*args, **kw)
-        self._bind_preferences()
+
+        if bind:
+            self._bind_preferences()
         # self.synchronize()
         # self._defaults()
 
@@ -315,6 +317,7 @@ class DVC(Loggable):
 
     # private
     def _bind_preferences(self):
+
         prefid = 'pychron.dvc'
         for attr in ('meta_repo_name', 'project_root', 'github_user', 'github_password'):
             bind_preference(self, attr, '{}.{}'.format(prefid, attr))

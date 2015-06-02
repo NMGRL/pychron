@@ -27,11 +27,17 @@ import yaml
 from pychron.core.helpers.filetools import add_extension
 
 from pychron.database.adapters.isotope_adapter import IsotopeAdapter
+from pychron.database.isotope_database_manager import IsotopeDatabaseManager
+from pychron.database.records.isotope_record import IsotopeRecordView
+from pychron.dvc.dvc import DVC
 from pychron.dvc.dvc_database import DVCDatabase
+from pychron.dvc.dvc_persister import DVCPersister
 from pychron.dvc.meta_repo import MetaRepo
-from pychron.experiment.utilities.identifier import get_analysis_type
+from pychron.experiment.automated_run.persistence_spec import PersistenceSpec
+from pychron.experiment.automated_run.spec import AutomatedRunSpec
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.loggable import Loggable
+from pychron.paths import paths
 from pychron.pychron_constants import ALPHAS
 
 rfile = '''
@@ -59,7 +65,10 @@ Ethiopia:
 '''
 
 
-class DatabaseExport(Loggable):
+class IsoDBTransfer(Loggable):
+    """
+    transfer analyses from an isotope_db database to a dvc database
+    """
     meta_repo = Instance(MetaRepo)
     root = None
 
@@ -67,7 +76,7 @@ class DatabaseExport(Loggable):
         if db:
             pass
 
-        self.root = os.path.join(os.path.expanduser('~'), 'Pychron_view', 'data', '.dvc')
+        self.root = os.path.join(os.path.expanduser('~'), 'Pychron_dev', 'data', '.dvc')
         self.meta_repo = MetaRepo(os.path.join(self.root, 'meta'))
 
         conn = dict(host='129.138.12.160', username='root', password='DBArgon', kind='mysql')
@@ -87,14 +96,22 @@ class DatabaseExport(Loggable):
                 self.meta_repo.commit('added production {}'.format(prodname))
 
     def do_export(self):
-        self.root = os.path.join(os.path.expanduser('~'), 'Pychron_view', 'data', '.dvc')
+        self.root = os.path.join(os.path.expanduser('~'), 'Pychron_dev', 'data', '.dvc')
         self.meta_repo = MetaRepo(os.path.join(self.root, 'meta'))
 
         conn = dict(host='129.138.12.160', username='root', password='DBArgon', kind='mysql')
+        # conn = dict(host='129.138.12.160', username='root', password='DBArgon', kind='mysql')
         # dest = DVCDatabase('/Users/ross/Sandbox/dvc/meta/testdb.sqlite')
-        dest = DVCDatabase(name='pychronmeta', **conn)
+        # dest = DVCDatabase(name='pychronmeta', **conn)
+        self.dvc = DVC(bind=False)
+        self.dvc.db.trait_set(name='pychronmeta', **conn)
+        dest = self.dvc.db
         dest.connect()
-        src = IsotopeAdapter(name='pychrondata', **conn)
+
+        proc = IsotopeDatabaseManager(bind=False, connect=False)
+        proc.db.trait_set(name='pychrondata', **conn)
+        src= proc.db
+        # src = IsotopeAdapter(name='pychrondata', **conn)
         # src.trait_set()
         src.connect()
         with src.session_ctx():
@@ -104,8 +121,9 @@ class DatabaseExport(Loggable):
             for pr in yd:
                 with dest.session_ctx():
                     repo = self._export_project(pr, src, dest)
+                    self.dvc.project_repo=repo
                     for rec in yd[pr]:
-                        self._export_analysis(src, dest, repo, rec)
+                        self._export_analysis(proc, src, dest, repo, rec)
 
                     repo.commit('src import src= {}'.format(src.url))
 
@@ -182,7 +200,8 @@ class DatabaseExport(Loggable):
 
                 dest.flush()
 
-    def _export_analysis(self, src, dest, repo, rec, overwrite=True):
+    def _export_analysis(self, proc, src, dest, repo, rec, overwrite=True):
+        self.persister = DVCPersister(dvc=self.dvc)
 
         args = rec.split(',')
         if len(args) == 2:
@@ -191,10 +210,13 @@ class DatabaseExport(Loggable):
         else:
             idn, aliquot, step = args
 
-        if dest.get_analysis_runid(idn, aliquot, step):
-            return
+        # if dest.get_analysis_runid(idn, aliquot, step):
+        #     return
 
         dban = src.get_analysis_runid(idn, aliquot, step)
+        iv = IsotopeRecordView()
+        iv.uuid = dban.uuid
+        an = proc.make_analysis(iv, unpack=True)
 
         op = os.path.join(repo.path, add_extension(dban.record_id, '.yaml'))
         if os.path.isfile(op) and not overwrite:
@@ -214,11 +236,10 @@ class DatabaseExport(Loggable):
         project = dbsam.project.name
         extraction = dban.extraction
         ms = dban.measurement.mass_spectrometer.name
-
-        isotopes = self._make_isotopes(dban)
-        detectors = self._make_detectors(dban)
+        # isotopes = self._make_isotopes(dban)
+        # detectors = self._make_detectors(dban)
         if step is None:
-            inc = None
+            inc = -1
         else:
             inc = ALPHAS.index(step)
 
@@ -226,31 +247,48 @@ class DatabaseExport(Loggable):
         if dban.user:
             username = dban.user.name
 
-        obj = dict(identifier=idn, uuid=dban.uuid,
-                   aliquot=int(aliquot),
-                   detectors=detectors,
-                   isotopes=isotopes,
-                   analysis_type=get_analysis_type(idn),
-                   collection_version='0.1:0.1', comment=dban.comment, increment=inc, irradiation=irrad,
-                   irradiation_level=level, irradiation_position=irradpos, project=project, mass_spectrometer=ms,
-                   material=mat, duration=extraction.extract_duration, cleanup=extraction.cleanup_duration,
-                   beam_diameter=extraction.beam_diameter, extract_device=extraction.extraction_device.name,
-                   extract_units=extraction.extract_units, extract_value=extraction.extract_value,
-                   pattern=extraction.pattern,
-                   position=[{k: getattr(p, k) for k in ('x', 'y', 'z', 'position', 'is_degas')}
-                             for p in extraction.positions],
-                   weight=extraction.weight,
-                   ramp_duration=extraction.ramp_duration, ramp_rate=extraction.ramp_rate, queue_conditionals_name=None,
-                   sample=sample, timestamp=dban.analysis_timestamp, tray=None,
-                   username=username,
-                   xyz_position=None)
+        rs = AutomatedRunSpec(labnumber=idn,
+                              username=username,
+                              material=mat,
+                              project=project,
+                              sample=sample,
+                              irradiation=irrad,
+                              irradiation_level=level,
+                              irradiation_position=irradpos,
 
-        self._save_an_to_db(dest, dban, obj)
-        # op = os.path.join(proot, add_extension(dban.record_id, '.yaml'))
-        with open(op, 'w') as wfile:
-            yaml.dump(obj, wfile)
+                              mass_spectrometer=ms,
+                              uuid=dban.uuid,
+                              _step=inc,
+                              comment=dban.comment,
+                              aliquot=int(aliquot),
 
-        repo.add(op, commit=False)
+                              extract_device=extraction.extraction_device.name,
+                              duration=extraction.extract_duration,
+                              cleanup=extraction.cleanup_duration,
+                              beam_diameter=extraction.beam_diameter,
+                              extract_units=extraction.extract_units or '',
+                              extract_value=extraction.extract_value,
+                              pattern=extraction.pattern or '',
+                              weight=extraction.weight,
+                              ramp_duration=extraction.ramp_duration or 0,
+                              ramp_rate=extraction.ramp_rate or 0,
+                              timestamp=dban.analysis_timestamp,
+
+                              collection_version='0.1:0.1',
+                              queue_conditionals_name='',
+                              tray='')
+
+        ps = PersistenceSpec(run_spec=rs,
+                             arar_age=an,
+                             positions=[p.position for p in extraction.positions])
+        self.persister.per_spec_save(ps)
+
+        # self._save_an_to_db(dest, dban, obj)
+        # # op = os.path.join(proot, add_extension(dban.record_id, '.yaml'))
+        # with open(op, 'w') as wfile:
+        #     yaml.dump(obj, wfile)
+        #
+        # repo.add(op, commit=False)
 
     def _save_an_to_db(self, dest, dban, obj):
         kw = {k: obj.get(k) for k in ('aliquot', 'uuid',
@@ -330,9 +368,9 @@ class DatabaseExport(Loggable):
 
 if __name__ == '__main__':
     from pychron.core.helpers.logger_setup import logging_setup
-
+    paths.build('_dev')
     logging_setup('de', root=os.path.join(os.path.expanduser('~'), 'Desktop', 'logs'))
-    e = DatabaseExport()
+    e = IsoDBTransfer()
     e.do_export()
     # e.export_production('Triga PR 275', db=False)
 # ============= EOF =============================================

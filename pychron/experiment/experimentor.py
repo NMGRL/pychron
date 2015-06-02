@@ -19,7 +19,6 @@ from traits.api import Instance, List, on_trait_change, Bool, Event
 # ============= standard library imports ========================
 from itertools import groupby
 # ============= local library imports  ==========================
-from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.experiment.queue.experiment_queue import ExperimentQueue
 from pychron.experiment.factory import ExperimentFactory
 from pychron.experiment.utilities.aliquot_numbering import renumber_aliquots
@@ -151,7 +150,7 @@ class Experimentor(Loggable):
         if not dbpos:
             return None
         else:
-            project, sample, material, irradiation = '', '', '', ''
+            project, sample, material, irradiation, level, pos = '', '', '', '', '', ''
             sample = dbpos.sample
             if sample:
                 if sample.project:
@@ -161,11 +160,12 @@ class Experimentor(Loggable):
                     material = sample.material.name
                 sample = sample.name
 
-            level = dbpos.level
-            irradiation = '{} {}:{}'.format(level.irradiation.name,
-                                            level.name, dbpos.position)
+            level = dbpos.level.name
+            pos = dbpos.position
+            # irradiation = '{} {}:{}'.format(level.irradiation.name,
+            #                                 level.name, dbpos.position)
 
-        return project, sample, material, irradiation
+        return project, sample, material, irradiation, level, pos
 
     def _set_analysis_metadata(self):
         cache = dict()
@@ -187,11 +187,14 @@ class Experimentor(Loggable):
                     if not info:
                         cache[ln] = dict(identifier_error=True)
                     else:
-                        project, sample, material, irrad = info
+                        project, sample, material, irrad, level, pos = info
 
                         cache[ln] = dict(project=project or '', sample=sample or '',
                                          material=material or '',
-                                         irradiation=irrad or '', identifier_error=False)
+                                         irradiation=irrad or '',
+                                         irradiation_level=level or '',
+                                         irradiation_position=pos or '',
+                                         identifier_error=False)
 
                 ai.trait_set(**cache[ln])
 

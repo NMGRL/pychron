@@ -34,6 +34,7 @@ from pychron.core.helpers.filetools import add_extension
 # from pychron.core.codetools.memory_usage import mem_log
 
 from pychron.experiment.automated_run.hop_util import parse_hops
+from pychron.experiment.automated_run.persistence_spec import PersistenceSpec
 from pychron.experiment.conditional.conditional import TruncationConditional, \
     ActionConditional, TerminationConditional, conditional_from_dict, CancelationConditional, conditionals_from_file
 from pychron.experiment.utilities.conditionals import test_queue_conditionals_name
@@ -45,7 +46,6 @@ from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR, MEASUREMENT_COLOR, \
     EXTRACTION_COLOR, SCRIPT_KEYS
-
 
 DEBUG = False
 
@@ -176,6 +176,7 @@ class AutomatedRun(Loggable):
     peak_center_threshold2 = Int(1.25)
     peak_center_threshold_window = Int(10)
 
+    persistence_spec = Instance(PersistenceSpec, ())
     # ===============================================================================
     # pyscript interface
     # ===============================================================================
@@ -188,15 +189,23 @@ class AutomatedRun(Loggable):
     def py_reset_data(self):
         # self.persister.pre_measurement_save()
         self._persister_action('pre_measurement_save')
-        
+
+    def _update_persister_spec(self, **kw):
+        self.persistence_spec.trait_set(**kw)
+        for p in (self.persister, self.xls_persister, self.dvc_persister):
+            if p is not None:
+                p.per_spec = self.persistence_spec
+
     def _persister_action(self, func, *args, **kw):
-        getattr(self.persister, func)(*args, **kw)
-        for p in (self.xls_persister, self.dvc_persister):
+        # getattr(self.persister, func)(*args, **kw)
+        for p in (self.persister, self.xls_persister, self.dvc_persister):
             try:
                 getattr(p, func)(*args, **kw)
             except BaseException, e:
-                self.warning('excel persister action failed. func={}, excp={}'.format(func, e))
+                self.warning('{} persister action failed. func={}, excp={}'.format(p.__class__.__name__,
+                                                                                   func, e))
                 import traceback
+
                 traceback.print_exc()
 
     def py_set_integration_time(self, v):
@@ -828,10 +837,10 @@ class AutomatedRun(Loggable):
                 # defl_dict=self.spectrometer_manager.make_deflections_dict(),
                 # gains=self.spectrometer_manager.make_gains_list(),
                 #                          active_detectors=self._active_detectors)
-                self._persister_action('trait_set', spec_dict=self.spectrometer_manager.make_parameters_dict(),
-                                       defl_dict=self.spectrometer_manager.make_deflections_dict(),
-                                       gains=self.spectrometer_manager.make_gains_list(),
-                                       active_detectors=self._active_detectors)
+                self._update_persister_spec(spec_dict=self.spectrometer_manager.make_parameters_dict(),
+                                            defl_dict=self.spectrometer_manager.make_deflections_dict(),
+                                            gains=self.spectrometer_manager.make_gains_list(),
+                                            active_detectors=self._active_detectors)
 
             # save to database
             self._persister_action('post_measurement_save')
@@ -907,18 +916,16 @@ class AutomatedRun(Loggable):
         # setup persister. mirror a few of AutomatedRunsAttributes
         script_name, script_blob = self._assemble_script_blob()
         eqn, eqb = '', ''
-        pb = {}
         auto_save_detector_ic = False
 
         executor = self.experiment_executor
-        if executor:
-            queue = executor.experiment_queue
+        queue = executor.experiment_queue
 
-            eqn = queue.name
-            eqb = executor.experiment_blob()
-            pb = executor.get_prev_blanks()
-            auto_save_detector_ic = queue.auto_save_detector_ic
-            self.debug('$$$$$$$$$$$$$$$ auto_save_detector_ic={}'.format(auto_save_detector_ic))
+        eqn = queue.name
+        eqb = executor.experiment_blob()
+        pb = executor.get_prev_blanks()
+        auto_save_detector_ic = queue.auto_save_detector_ic
+        self.debug('$$$$$$$$$$$$$$$ auto_save_detector_ic={}'.format(auto_save_detector_ic))
 
         ext_name, ext_blob, ext_path = '', '', ''
         if self.extraction_script:
@@ -937,25 +944,26 @@ class AutomatedRun(Loggable):
         if self.extraction_script:
             ext_pos = self.extraction_script.get_extraction_positions()
 
-        self._persister_action('trait_set', save_as_peak_hop=False,
-                               run_spec=self.spec,
-                               arar_age=self.arar_age,
-                               positions=self.spec.get_position_list(),
-                               auto_save_detector_ic=auto_save_detector_ic,
-                               extraction_positions=ext_pos,
-                               sensitivity_multiplier=sens,
-                               experiment_queue_name=eqn,
-                               experiment_queue_blob=eqb,
-                               extraction_name=ext_name,
-                               extraction_blob=ext_blob,
-                               measurement_name=ms_name,
-                               measurement_blob=ms_blob,
-                               previous_blank_id=pb[0],
-                               previous_blanks=pb[1],
-                               runscript_name=script_name,
-                               runscript_blob=script_blob,
-                               signal_fods=sfods,
-                               baseline_fods=bsfods)
+        self._update_persister_spec(save_as_peak_hop=False,
+                                    run_spec=self.spec,
+                                    arar_age=self.arar_age,
+                                    positions=self.spec.get_position_list(),
+                                    auto_save_detector_ic=auto_save_detector_ic,
+                                    extraction_positions=ext_pos,
+                                    sensitivity_multiplier=sens,
+                                    experiment_queue_name=eqn,
+                                    experiment_queue_blob=eqb,
+                                    extraction_name=ext_name,
+                                    extraction_blob=ext_blob,
+                                    measurement_name=ms_name,
+                                    measurement_blob=ms_blob,
+                                    previous_blank_id=pb[0],
+                                    previous_blanks=pb[1],
+                                    previous_blank_runid=pb[2],
+                                    runscript_name=script_name,
+                                    runscript_blob=script_blob,
+                                    signal_fods=sfods,
+                                    baseline_fods=bsfods)
 
     # ===============================================================================
     # doers
@@ -1587,7 +1595,7 @@ anaylsis_type={}
         from pychron.processing.analyses.view.automated_run_view import AutomatedRunAnalysisView
 
         title = self.runid
-        sample, irradiation = self.spec.sample, self.spec.irradiation
+        sample, irradiation = self.spec.sample, self.spec.display_irradiation
         if sample:
             title = '{}   {}'.format(title, sample)
         if irradiation:
@@ -1616,7 +1624,7 @@ anaylsis_type={}
             if ',' in valve:
                 valve = map(str.strip, valve.split(','))
             else:
-                valve = (valve, )
+                valve = (valve,)
         return valve
 
     def _equilibrate(self, evt, eqtime=15, inlet=None, outlet=None,
@@ -1740,7 +1748,8 @@ anaylsis_type={}
 
         result = self.collector.measurement_result
         # self.persister.whiff_result = result
-        self._persister_action('trait_set', whiff_result=result)
+        # self._persister_action('set_persistence_spec', whiff_result=result)
+        self._update_persister_spec(whiff_result=result)
         self.debug('WHIFF Result={}'.format(result))
         return result
 

@@ -118,6 +118,8 @@ class AutomatedRunSpec(HasTraits):
     project = Str
     sample = Str
     irradiation = Str
+    irradiation_level = Str
+    irradiation_position = Int
     material = Str
     data_reduction_tag = ''
 
@@ -137,6 +139,10 @@ class AutomatedRunSpec(HasTraits):
     rundate = Property
     _step_heat = False
     conflicts_checked = False
+
+    @property
+    def display_irradiation(self):
+        return '{} {}:{}'.format(self.irradiation, self.irradiation_level, self.irradiation_position)
 
     def is_detector_ic(self):
         return self.analysis_type == 'detector_ic'

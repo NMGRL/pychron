@@ -28,12 +28,14 @@ from pychron.processing.analyses.analysis import Analysis
 from pychron.processing.isotope import Isotope
 from pychron.pychron_constants import INTERFERENCE_KEYS
 
-ANALYSIS_ATTRS = ('analysis_type', 'uuid', 'sample', 'project', 'material', 'aliquot', 'increment',
-                  'irradiation', 'weight',
-                  'comment', 'irradiation_level', 'mass_spectrometer', 'extract_device',
-                  'username', 'tray', 'queue_conditionals_name', 'extract_value',
-                  'extract_units', 'position', 'xyz_position', 'duration', 'cleanup',
-                  'pattern', 'beam_diameter', 'ramp_duration', 'ramp_rate', 'identifier')
+EXTRACTION_ATTRS = ('weight', 'extract_device', 'tray', 'extract_value',
+                    'extract_units', 'duration', 'cleanup',
+                    'pattern', 'beam_diameter', 'ramp_duration', 'ramp_rate')
+
+META_ATTRS = ('analysis_type', 'uuid', 'sample', 'project', 'material', 'aliquot', 'increment',
+              'irradiation', 'irradiation_level', 'irradiation_position',
+              'comment', 'mass_spectrometer',
+              'username', 'queue_conditionals_name', 'identifier')
 
 
 def analysis_path(record):
@@ -54,7 +56,7 @@ class DVCAnalysis(Analysis):
         with open(path, 'r') as rfile:
             yd = yaml.load(rfile)
 
-            for attr in ANALYSIS_ATTRS:
+            for attr in META_ATTRS:
                 v = yd.get(attr)
                 if v is not None:
                     setattr(self, attr, v)

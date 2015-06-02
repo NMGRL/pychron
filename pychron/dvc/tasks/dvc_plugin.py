@@ -25,11 +25,15 @@ from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 
 class DVCPlugin(BaseTaskPlugin):
     def test_dvc_fetch_meta(self):
-        self.dvc.fetch_meta()
+        dvc = self.application.get_service(DVC)
+        dvc.fetch_meta()
 
     def _service_offers_default(self):
+
         so = self.service_offer_factory(protocol=DVCPersister,
-                                        factory=DVCPersister)
+                                        factory=DVCPersister,
+                                        properties={'dvc': self.dvc_factory()}
+                                        )
         # so1 = self.service_offer_factory(protocol=DVCDatabase,
         # factory=DVCDatabase)
         # so2 = self.service_offer_factory(protocol=MetaRepo,

@@ -215,7 +215,7 @@ class GitRepoManager(Loggable):
     def get_head(self, commit=True, hexsha=True):
         head = self._repo
         if commit:
-            head = head.commit
+            head = head.commit()
 
         if hexsha:
             head = head.hexsha
@@ -344,6 +344,8 @@ class GitRepoManager(Loggable):
         rr = self._get_remote(remote)
         if rr:
             repo.git.push(remote, branch)
+        else:
+            self.warning('No remote called "{}"'.format(remote))
 
     def merge(self, src, dest):
         repo = self._repo
@@ -374,7 +376,7 @@ class GitRepoManager(Loggable):
             msg = '{}'.format(bp)
         msg = '{} - {}'.format(msg_prefix, msg)
         if verbose:
-            self.debug('add to repo msg={} dest={}'.format(msg, dest))
+            self.debug('add to repo msg={}'.format(msg))
 
         self._add_to_repo(dest, msg, **kw)
 
@@ -441,7 +443,10 @@ class GitRepoManager(Loggable):
 
     def _get_remote(self, remote):
         repo = self._repo
-        return getattr(repo.remotes, remote)
+        try:
+            return getattr(repo.remotes, remote)
+        except AttributeError:
+            pass
 
     def _load_branch_history(self):
         pass

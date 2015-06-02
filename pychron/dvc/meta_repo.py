@@ -192,6 +192,10 @@ class MetaRepo(GitRepoManager):
         self._update_text('experiments', name, path_or_blob)
 
     def _update_text(self, tag, name, path_or_blob):
+        if not name:
+            self.debug('cannot update text with no name. tag={} name={}'.format(tag, name))
+            return
+
         root = os.path.join(self.path, tag)
         if not os.path.isdir(root):
             os.mkdir(root)

@@ -64,8 +64,8 @@ def get_selected_history_item(sh, key):
     return ('X' if getattr(sh, key) else '') if sh else ''
 
 
-class IsotopeRecordView(object):
-    pass
+# class IsotopeRecordView(object):
+#     pass
 
 
 #
@@ -80,7 +80,7 @@ class IsotopeRecordView(object):
                  'ic_fit_status',
                  'iso_fit_status', 'is_plateau_step', 'group_id', 'graph_id')
 
-    def __init__(self, dbrecord=None, *args, **kw):
+    def __init__(self, *args, **kw):
         self.is_plateau_step = False
         self.extract_script_name = ''
         self.meas_script_name = ''
@@ -92,6 +92,7 @@ class IsotopeRecordView(object):
         self.labnumber = ''
         self.aliquot = 0
         self._increment = -1
+        self.step=''
         self.tag = ''
         self.uuid = ''
         self.rundate = ''

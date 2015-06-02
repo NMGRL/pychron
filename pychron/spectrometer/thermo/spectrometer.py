@@ -26,6 +26,7 @@ from traits.api import Instance, Int, Property, List, \
 
 
 
+
 # ============= standard library imports ========================
 import os
 from numpy import array, argmin
@@ -171,7 +172,7 @@ class Spectrometer(SpectrometerDevice):
         for di in self.detectors:
             di.set_gain()
 
-        return [(di.name, di.gain) for di in self.detectors]
+        return {di.name:di.gain for di in self.detectors}
 
     def load_current_detector_gains(self):
         """
