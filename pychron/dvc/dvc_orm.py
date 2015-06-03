@@ -186,6 +186,9 @@ class ExtractDeviceTbl(Base, BaseMixin):
 
 class UserTbl(Base, BaseMixin):
     name = Column(String(45), primary_key=True)
+    affiliation = Column(String(80))
+    category = Column(String(80))
+    email = Column(String(80))
 
 
 class LoadTbl(Base, BaseMixin):

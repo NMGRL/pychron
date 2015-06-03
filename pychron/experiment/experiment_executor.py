@@ -27,6 +27,7 @@ from traits.trait_errors import TraitError
 
 
 
+
 # ============= standard library imports ========================
 from threading import Thread, Event as Flag, Lock, currentThread
 import weakref
@@ -1351,11 +1352,26 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             else:
                 return True
 
+    def _sync_repositories(self, prog):
+        experiment_ids = {a.experiment_id for q in self.experiment_queues for a in q.cleaned_automated_runs}
+        for e in experiment_ids:
+            if prog:
+                prog.change_message('Syncing {}'.format(e))
+                if not self.datahub.mainstore.sync_repo(e):
+                    break
+        else:
+            return True
+
     def _pre_execute_check(self, prog=None, inform=True):
         if prog:
             prog.change_message('Checking Experiment Identifiers')
 
         if not self._check_experiment_identifiers():
+            return
+
+        if prog:
+            prog.change_message('Syncing repositories')
+        if not self._sync_repositories(prog):
             return
 
         if self.user_notifier.emailer is None:

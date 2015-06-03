@@ -19,7 +19,6 @@ from traits.api import Instance, Str
 from apptools.preferences.preference_binding import bind_preference
 # ============= standard library imports ========================
 from itertools import groupby
-from git import Repo
 import os
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import remove_extension
@@ -29,7 +28,6 @@ from pychron.dvc.dvc_analysis import DVCAnalysis, experiment_path, analysis_path
 from pychron.dvc.dvc_database import DVCDatabase
 from pychron.dvc.meta_repo import MetaRepo
 from pychron.git_archive.repo_manager import GitRepoManager
-from pychron.github import Organization
 from pychron.loggable import Loggable
 from pychron.paths import paths
 
@@ -52,7 +50,7 @@ class DVC(Loggable):
     meta_repo = Instance('pychron.dvc.meta_repo.MetaRepo')
 
     meta_repo_name = Str
-    project_root = Str
+    organization = Str
     github_user = Str
     github_password = Str
 
@@ -69,7 +67,8 @@ class DVC(Loggable):
 
     def initialize(self):
 
-        mr = 'https://github.com/{}.git'.format(self.meta_repo_name)
+        mr = 'https://github.com/{}/{}.git'.format(self.organization,
+                                                   self.meta_repo_name)
         self.meta_repo.create_remote(mr, force=True)
 
         self.synchronize()
@@ -80,18 +79,7 @@ class DVC(Loggable):
 
     # database
     # analysis processing
-    def _get_experiment_repo(self, experiment_id):
-        repo = self.experiment_repo
-        path = experiment_path(experiment_id)
 
-        if repo is None or repo.path != path:
-            self.debug('make new repo for {}'.format(path))
-            repo = GitRepoManager()
-            repo.path = path
-            repo.open_repo(path)
-            self.experiment_repo = repo
-
-        return repo
 
     def analysis_has_review(self, ai, attr):
         test_str = TESTSTR[attr]
@@ -255,20 +243,20 @@ class DVC(Loggable):
             self.db.add_irradiation_level(*args)
 
     # adders db and repo
-    def add_project(self, name):
-        org = Organization(self.project_root, usr=self.github_user, pwd=self.github_password)
-
-        # check if project is available
-        if name in org.repos:
-            self.warning_dialog('Project "{}" already exists'.format(name))
-            return
-
-        with self.db.session_ctx():
-            self.db.add_project(name)
-
-        p = os.path.join(paths.experiment_dataset_dir, name)
-        os.mkdir(p)
-        repo = Repo.init(p)
+    # def add_project(self, name):
+    #     org = Organization(self.project_root, usr=self.github_user, pwd=self.github_password)
+    #
+    #     # check if project is available
+    #     if name in org.repos:
+    #         self.warning_dialog('Project "{}" already exists'.format(name))
+    #         return
+    #
+    #     with self.db.session_ctx():
+    #         self.db.add_project(name)
+    #
+    #     p = os.path.join(paths.experiment_dataset_dir, name)
+    #     os.mkdir(p)
+    #     repo = Repo.init(p)
 
         # add project to github
         # org.create_repo(name, auto_init=True)
@@ -277,7 +265,7 @@ class DVC(Loggable):
         # url = 'https://github.com/{}/'.format(self.repo_root, name)
         # repo.create_remote('origin', url)
 
-        return True
+        # return True
 
     def add_irradiation(self, name, doses=None):
         with self.db.session_ctx():
@@ -318,11 +306,36 @@ class DVC(Loggable):
     def get_meta_head(self):
         return self.meta_repo.get_head()
 
+    def sync_repo(self, name):
+        """
+        1. open the repo or create and empty one
+        2. create the origin remote
+        3. pull changes from origin
+
+        """
+        repo = self._get_experiment_repo(name)
+        repo.create_remote('https://github.com/{}/{}.git'.format(self.organization, name))
+        repo.pull()
+        return True
+
     # private
+    def _get_experiment_repo(self, experiment_id):
+        repo = self.experiment_repo
+        path = experiment_path(experiment_id)
+
+        if repo is None or repo.path != path:
+            self.debug('make new repo for {}'.format(path))
+            repo = GitRepoManager()
+            repo.path = path
+            repo.open_repo(path)
+            self.experiment_repo = repo
+
+        return repo
+
     def _bind_preferences(self):
 
         prefid = 'pychron.dvc'
-        for attr in ('meta_repo_name', 'project_root', 'github_user', 'github_password'):
+        for attr in ('meta_repo_name', 'organization', 'github_user', 'github_password'):
             bind_preference(self, attr, '{}.{}'.format(prefid, attr))
 
         prefid = 'pychron.dvc.db'

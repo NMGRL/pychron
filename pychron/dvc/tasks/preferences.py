@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Str, Password
-from traitsui.api import View, Item, VGroup
+from traitsui.api import View, Item, VGroup, UItem
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.database.tasks.connection_preferences import ConnectionPreferences, ConnectionPreferencesPane
@@ -27,7 +27,7 @@ from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 class DVCPreferences(BasePreferencesHelper):
     preferences_path = 'pychron.dvc'
     meta_repo_name = Str
-    project_root = Str
+    organization = Str
     github_user = Str
     github_password = Password
 
@@ -47,14 +47,15 @@ class DVCPreferencesPane(PreferencesPane):
     category = 'DVC'
 
     def traits_view(self):
-        repo = VGroup(Item('github_user'),
-                      Item('github_password'),
+        repo = VGroup(Item('github_user', label='Username'),
+                      Item('github_password', label='Password'),
                       label='Credentials', show_border=True)
 
-        meta = VGroup(Item('meta_repo_name'), label='Meta', show_border=True)
-        proj = VGroup(Item('project_root'), label='Projects', show_border=True)
+        org = VGroup(UItem('organization'), label='Organization', show_border=True)
+        meta = VGroup(UItem('meta_repo_name'), label='Meta', show_border=True)
+        # proj = VGroup(Item(''), label='Projects', show_border=True)
 
-        v = View(VGroup(repo, VGroup(meta, proj)))
+        v = View(VGroup(repo, VGroup(org, meta), label='Git', show_border=True))
         return v
 
 # class DVCPreferences(FavoritesPreferencesHelper):
