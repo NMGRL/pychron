@@ -52,7 +52,7 @@ class UserEntry(BaseEntry):
         :param name:
         :return:
         """
-        db = self.db
+        db = self.dvc.db
         with db.session_ctx():
             dbuser = db.get_user(name)
             if dbuser:

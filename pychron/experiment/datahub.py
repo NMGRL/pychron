@@ -24,6 +24,7 @@ import time
 # ============= local library imports  ==========================
 from pychron.database.adapters.massspec_database_adapter import MissingAliquotPychronException
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
+from pychron.dvc.dvc import DVC
 from pychron.experiment.utilities.identifier import make_aliquot_step, make_step, get_analysis_type
 from pychron.experiment.utilities.mass_spec_database_importer import MassSpecDatabaseImporter
 from pychron.loggable import Loggable
@@ -52,7 +53,7 @@ def check_secondary_database_save(identifier):
 
 
 class Datahub(Loggable):
-    mainstore = Instance(IsotopeDatabaseManager)
+    mainstore = Instance(DVC)
     secondarystore = Instance(MassSpecDatabaseImporter, ())
 
     bind_mainstore = True

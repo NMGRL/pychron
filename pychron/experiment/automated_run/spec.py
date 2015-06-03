@@ -141,10 +141,8 @@ class AutomatedRunSpec(HasTraits):
     conflicts_checked = False
 
     experiment_id = Str
+    identifier = Property
 
-    @property
-    def display_irradiation(self):
-        return '{} {}:{}'.format(self.irradiation, self.irradiation_level, self.irradiation_position)
 
     def is_detector_ic(self):
         return self.analysis_type == 'detector_ic'
@@ -456,6 +454,7 @@ class AutomatedRunSpec(HasTraits):
                 args = map(int, v.split(','))
             except ValueError:
                 logger.debug('Invalid overlap string "{}". Should be of the form "10,60" or "10" '.format(v))
+                return
 
         if len(args) == 1:
             self._overlap = args[0]
@@ -466,9 +465,15 @@ class AutomatedRunSpec(HasTraits):
         return self._overlap, self._min_ms_pumptime
 
     #mirror labnumber for now. deprecate labnumber and replace with identifier
-    @property
-    def identifier(self):
+    def _get_identifier(self):
         return self.labnumber
+
+    def _set_identifier(self,v):
+        self.labnumber = v
+
+    @property
+    def display_irradiation(self):
+        return '{} {}:{}'.format(self.irradiation, self.irradiation_level, self.irradiation_position)
 
     @property
     def increment(self):

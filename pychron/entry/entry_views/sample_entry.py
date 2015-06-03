@@ -31,12 +31,12 @@ class SampleEntry(BaseEntry):
     project = Str
     projects = List
 
-    def edit_sample(self, sample, project, material):
-        db = self.db
-        with db.session_ctx():
-            dbsam = db.get_sample(sample, project, material)
-            if dbsam:
-                print 'fffff', dbsam
+    # def edit_sample(self, sample, project, material):
+    #     db = self.db
+    #     with db.session_ctx():
+    #         dbsam = db.get_sample(sample, project, material)
+    #         if dbsam:
+    #             print 'fffff', dbsam
 
     def _add_item(self):
         dvc = self.dvc

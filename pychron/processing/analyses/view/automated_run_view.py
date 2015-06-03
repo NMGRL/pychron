@@ -19,6 +19,8 @@ from traitsui.api import View, UItem, Group
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.ui.tabular_editor import myTabularEditor
+from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter
 from pychron.processing.analyses.view.main_view import MainView
 
 
@@ -46,7 +48,16 @@ class AutomatedRunAnalysisView(MainView):
         return self._j
 
     def traits_view(self):
-        teditor, ieditor, ceditor, eeditor, meditor = es = self._get_editors()
+        teditor = myTabularEditor(adapter=IsotopeTabularAdapter(),
+                                  drag_enabled=False,
+                                  stretch_last_section=False,
+                                  editable=False,
+                                  multi_select=True,
+                                  selected='selected',
+                                  refresh='refresh_needed')
+
+        # teditor, ieditor, ceditor, eeditor, meditor = es = self._get_editors()
+        ceditor, eeditor, meditor = es = self._get_editors()
         for ei in es:
             ei.adapter.font = '10'
 

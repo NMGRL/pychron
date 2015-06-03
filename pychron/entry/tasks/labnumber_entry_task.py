@@ -296,7 +296,9 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
         self.preview_generate_identifiers()
 
     def _add_project_button_fired(self):
+        dvc = self.manager.dvc
         pr = ProjectEntry(dvc=self.manager.dvc)
+        pr.available = dvc.get_project_names()
         if pr.do():
             self.load_projects(include_recent=False)
 
@@ -314,7 +316,9 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
             self._load_associated_samples()
 
     def _add_material_button_fired(self):
-        mat = MaterialEntry(dvc=self.manager.dvc)
+        dvc = self.manager.dvc
+        mat = MaterialEntry(dvc=dvc)
+        mat.available = dvc.get_material_names()
         mat.do()
         # self._load_materials()
 

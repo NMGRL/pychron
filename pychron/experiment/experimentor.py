@@ -33,6 +33,7 @@ class Experimentor(Loggable):
     executor = Instance(ExperimentExecutor)
     experiment_queues = List
     stats = Instance(StatsGroup, ())
+    dvc = Instance('pychron.dvc.dvc.DVC')
 
     mode = None
     # unique_executor_db = False
@@ -332,11 +333,11 @@ class Experimentor(Loggable):
                 dms = spec.name.capitalize()
 
         e = ExperimentFactory(application=self.application,
-                              # dvc=self.dvc,
-                              db=self.dvc.db,
+                              dvc=self.dvc,
+                              # db=self.dvc.db,
                               default_mass_spectrometer=dms)
-        if self.iso_db_manager:
-            e.db = self.iso_db_manager.db
+        # if self.iso_db_manager:
+        #     e.db = self.iso_db_manager.db
         return e
 
 # ============= EOF =============================================

@@ -22,8 +22,8 @@ def upgrade():
 
     op.create_table('ExperimentAssociationTbl',
                     sa.Column('idexperimentassociationTbl', sa.Integer, primary_key=True),
-                    sa.Column('experiment_name', sa.String(80), sa.ForeignKey('ExperimentTbl.name')),
-                    sa.Column('analysis_id', sa.Integer, sa.ForeignKey('AnalysisTbl.idanalysisTbl')))
+                    sa.Column('experimentName', sa.String(80), sa.ForeignKey('ExperimentTbl.name')),
+                    sa.Column('analysisID', sa.Integer, sa.ForeignKey('AnalysisTbl.idanalysisTbl')))
 
 
 def downgrade():

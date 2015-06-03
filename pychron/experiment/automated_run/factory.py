@@ -117,7 +117,7 @@ def generate_positions(pos):
 
 
 class AutomatedRunFactory(PersistenceLoggable):
-    db = Any
+    dvc = Instance('pychron.dvc.dvc.DVC')
     datahub = Instance(Datahub)
     undoer = Any
     edit_event = Event
@@ -378,6 +378,7 @@ class AutomatedRunFactory(PersistenceLoggable):
 
     def set_selected_runs(self, runs):
         self.debug('len selected runs {}'.format(len(runs)))
+        run = None
         if runs:
             run = runs[0]
             self._set_defaults = False
@@ -740,7 +741,7 @@ class AutomatedRunFactory(PersistenceLoggable):
         if self._flux != self.flux or \
                         self._flux_error != self.flux_error:
             v, e = self._flux, self._flux_error
-            self.db.save_flux(self.labnumber, v, e)
+            self.dvc.save_flux(self.labnumber, v, e)
 
             # db = self.db
             # with db.session_ctx():
@@ -880,7 +881,7 @@ class AutomatedRunFactory(PersistenceLoggable):
             return True
         else:
             d = dict(sample='')
-            db = self.db
+            db = self.dvc
             with db.session_ctx():
                 # convert labnumber (a, bg, or 10034 etc)
                 self.debug('load meta')
@@ -943,27 +944,27 @@ class AutomatedRunFactory(PersistenceLoggable):
 
     @cached_property
     def _get_irradiations(self):
-        db = self.db
+        db = self.dvc
         if db is None or not db.connected:
             return []
 
         irradiations = []
-        if self.db:
-            irradiations = [pi.name for pi in self.db.get_irradiations()]
+        if self.dvc:
+            irradiations = [pi.name for pi in self.dvc.get_irradiations()]
 
         return ['Irradiation', LINE_STR] + irradiations
 
     @cached_property
     def _get_levels(self):
         levels = []
-        db = self.db
+        db = self.dvc
         if db is None or not db.connected:
             return []
 
-        if self.db:
-            with self.db.session_ctx():
+        if self.dvc:
+            with self.dvc.session_ctx():
                 if not self.selected_irradiation in ('IRRADIATION', LINE_STR):
-                    irrad = self.db.get_irradiation(self.selected_irradiation)
+                    irrad = self.dvc.get_irradiation(self.selected_irradiation)
                     if irrad:
                         levels = sorted([li.name for li in irrad.levels])
         if levels:
@@ -974,12 +975,12 @@ class AutomatedRunFactory(PersistenceLoggable):
     @cached_property
     def _get_projects(self):
 
-        if self.db:
-            db = self.db
+        if self.dvc:
+            db = self.dvc
             if not db.connected:
                 return dict()
 
-            keys = [(pi, pi.name) for pi in self.db.get_projects()]
+            keys = [(pi, pi.name) for pi in self.dvc.get_projects()]
             keys = [(NULL_STR, NULL_STR)] + keys
             return dict(keys)
         else:
@@ -988,7 +989,7 @@ class AutomatedRunFactory(PersistenceLoggable):
     @cached_property
     def _get_labnumbers(self):
         lns = []
-        db = self.db
+        db = self.dvc
         if db:
             # db=self.db
             if not db.connected:
@@ -1185,9 +1186,9 @@ class AutomatedRunFactory(PersistenceLoggable):
         identifier = self.labnumber
         if not (self.suppress_meta or '-##-' in identifier):
             if identifier:
-                with self.db.session_ctx():
+                with self.dvc.session_ctx():
                     self.debug('load flux')
-                    dbpos = self.db.get_identifier(identifier)
+                    dbpos = self.dvc.get_identifier(identifier)
                     if dbpos:
                         j = getattr(dbpos, attr)
                         # dbln = self.db.get_labnumber(self.labnumber)

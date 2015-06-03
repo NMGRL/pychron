@@ -47,7 +47,7 @@ class ExperimentPlugin(BaseTaskPlugin):
         super(ExperimentPlugin, self).start()
         manager = self.application.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
         self.experimentor.manager = manager
-        self.experimentor.executor.set_managers()
+        # self.experimentor.executor.set_managers()
         self.experimentor.executor.bind_preferences()
 
     def _signal_calculator_factory(self, *args, **kw):

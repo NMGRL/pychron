@@ -49,8 +49,8 @@ class ExperimentTbl(Base, BaseMixin):
 
 class ExperimentAssociationTbl(Base, BaseMixin):
     idexperimentassociationTbl = Column(Integer, primary_key=True)
-    experiment_name = Column(String(80), ForeignKey('ExperimentTbl.name'))
-    analysis_id = Column(Integer, ForeignKey('AnalysisTbl.idanalysisTbl'))
+    experimentName = Column(String(80), ForeignKey('ExperimentTbl.name'))
+    analysisID = Column(Integer, ForeignKey('AnalysisTbl.idanalysisTbl'))
     # experiments = relationship('ExperimentTbl')
     # analyses = relationship('AnalysisTbl', backref='experiment_associations')
 

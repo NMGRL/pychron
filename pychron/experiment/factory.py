@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from pyface.timer.do_later import do_later
 from traits.api import Instance, Button, Bool, Property, \
-    on_trait_change, Any, DelegatesTo, List, Str
+    on_trait_change, DelegatesTo, List, Str
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.progress_dialog import myProgressDialog
@@ -35,7 +35,7 @@ from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 
 
 class ExperimentFactory(Loggable, ConsumerMixin):
-    db = Any
+    dvc = Instance('pychron.dvc.dvc.DVC')
     run_factory = Instance(AutomatedRunFactory)
     queue_factory = Instance(ExperimentQueueFactory)
 
@@ -231,9 +231,13 @@ class ExperimentFactory(Loggable, ConsumerMixin):
     @on_trait_change('''queue_factory:[mass_spectrometer,
 extract_device, delay_+, tray, username, load_name,
 email, use_email, use_group_email,
-queue_conditionals_name]''')
+queue_conditionals_name, experiment_identifier]''')
     def _update_queue(self, name, new):
         self.debug('update queue {}={}'.format(name, new))
+        if self.queue:
+            self.queue.trait_set(**{name: new})
+            self.queue.changed = True
+
         if name == 'mass_spectrometer':
             self.debug('_update_queue "{}"'.format(new))
             self.mass_spectrometer = new
@@ -249,10 +253,6 @@ queue_conditionals_name]''')
             # self.email=new
             # self.queue.username = new
 
-        if self.queue:
-            self.queue.trait_set(**{name: new})
-
-        self.queue.changed = True
         self._auto_save()
 
     def _auto_save(self):
@@ -316,7 +316,7 @@ queue_conditionals_name]''')
         else:
             klass = AutomatedRunFactory
 
-        rf = klass(db=self.db,
+        rf = klass(dvc=self.dvc,
                    application=self.application,
                    extract_device=self.extract_device,
                    mass_spectrometer=self.default_mass_spectrometer)
@@ -331,14 +331,14 @@ queue_conditionals_name]''')
     # handlers
     def _generate_runs_from_load(self, ):
         def gen():
-            db = self.db
+            dvc = self.dvc
             load_name = self.load_name
-            with db.session_ctx():
-                dbload = self.db.get_loadtable(load_name)
+            with dvc.session_ctx():
+                dbload = dvc.get_loadtable(load_name)
                 for poss in dbload.loaded_positions:
                     # print poss
                     ln_id = poss.lab_identifier
-                    dbln = self.db.get_labnumber(ln_id, key='id')
+                    dbln = dvc.get_labnumber(ln_id, key='id')
 
                     yield dbln.identifier, dbln.sample.name, str(poss.position)
 
@@ -439,9 +439,9 @@ queue_conditionals_name]''')
         rf.labnumber = ''
         rf.sample = ''
 
-    def _db_changed(self):
-        self.queue_factory.db = self.db
-        self.run_factory.db = self.db
+    def _dvc_changed(self):
+        self.queue_factory.dvc = self.dvc
+        self.run_factory.dvc = self.dvc
 
     def _application_changed(self):
         self.run_factory.application = self.application
@@ -469,7 +469,7 @@ queue_conditionals_name]''')
         return self._run_factory_factory()
 
     def _queue_factory_default(self):
-        eq = ExperimentQueueFactory(db=self.db,
+        eq = ExperimentQueueFactory(dvc=self.dvc,
                                     application=self.application)
         # eq.activate()
         return eq

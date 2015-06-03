@@ -23,7 +23,7 @@ from traits.api import HasTraits, Str, List
 from traitsui.api import View, Item
 
 # ============= standard library imports ========================
-from sqlalchemy import not_, func
+from sqlalchemy import not_, func, distinct
 # ============= local library imports  ==========================
 from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.database.core.query import compile_query
@@ -249,6 +249,15 @@ class DVCDatabase(DatabaseAdapter):
         return self._add_item(a)
 
     # special getters
+    def get_associated_experiments(self, idn):
+        with self.session_ctx() as sess:
+            q = sess.query(distinct(ExperimentTbl.name), IrradiationPositionTbl.identifier)
+            q = q.join(ExperimentAssociationTbl, AnalysisTbl, IrradiationPositionTbl)
+            q = q.filter(IrradiationPositionTbl.identifier.in_(idn))
+            q = q.order_by(IrradiationPositionTbl.identifier)
+
+            return self._query_all(q, verbose_query=False)
+
     def get_analysis_runid(self, idn, aliquot, step=None):
         with self.session_ctx() as sess:
             q = sess.query(AnalysisTbl)
@@ -467,10 +476,11 @@ class DVCDatabase(DatabaseAdapter):
             users = self._retrieve_items(UserTbl)
             return [ui.name for ui in users]
 
+    def get_project_names(self):
+        return self._get_table_names(ProjectTbl)
+
     def get_material_names(self):
-        with self.session_ctx():
-            names = self._retrieve_items(MaterialTbl)
-            return [ni.name for ni in names]
+        return self._get_table_names(MaterialTbl)
 
     def get_samples(self, project=None, **kw):
         if project:
@@ -536,6 +546,15 @@ class DVCDatabase(DatabaseAdapter):
     def get_mass_spectrometers(self):
         return self._retrieve_items(MassSpectrometerTbl)
 
-        # private
+    def get_experiment_identifiers(self):
+        return self._get_table_names(ExperimentTbl)
+
+    # private
+    def _get_table_names(self, tbl):
+        with self.session_ctx():
+            names = self._retrieve_items(tbl)
+            return [ni.name for ni in names]
+
+
 
 # ============= EOF =============================================

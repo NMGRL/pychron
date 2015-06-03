@@ -581,8 +581,6 @@ class ExperimentEditorTask(EditorTask):
             if self.active_editor:
                 qs.insert(0, self.active_editor.queue)
 
-            # launch execution thread
-            # if successful open an auto figure task
             if self.manager.execute_queues(qs):
                 self._show_pane(self.wait_pane)
                 self._set_last_experiment(self.active_editor.path)

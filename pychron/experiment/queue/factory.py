@@ -16,12 +16,13 @@
 
 # ============= enthought library imports =======================
 from traits.api import Str, Property, cached_property, Int, \
-    Any, String, Event, Bool, Dict, List, Button
+    Any, String, Event, Bool, Dict, List, Button, Instance
 # ============= standard library imports ========================
 import os
 from ConfigParser import ConfigParser
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_directory2
+from pychron.entry.entry_views.experiment_entry import ExperimentIdentifierEntry
 from pychron.entry.entry_views.user_entry import UserEntry
 from pychron.persistence_loggable import PersistenceLoggable
 from pychron.globals import globalv
@@ -30,7 +31,7 @@ from pychron.paths import paths
 
 
 class ExperimentQueueFactory(PersistenceLoggable):
-    db = Any
+    dvc = Instance('pychron.dvc.dvc.DVC')
     application = Any
 
     username = String
@@ -66,9 +67,16 @@ class ExperimentQueueFactory(PersistenceLoggable):
     load_name = Str
     load_names = Property
 
+    experiment_identifier = Str
+    experiment_identifiers = Property(depends_on='experiment_identifier_dirty, db_refresh_needed')
+    add_experiment_identifier = Event
+    experiment_identifier_dirty = Event
+
     ok_make = Property(depends_on='mass_spectrometer, username')
 
-    pattributes = ('mass_spectrometer', 'extract_device',
+    pattributes = ('mass_spectrometer',
+                   'extract_device',
+                   'experiment_identifier',
                    'use_group_email',
                    'delay_between_analyses',
                    'delay_before_analyses',
@@ -104,12 +112,7 @@ class ExperimentQueueFactory(PersistenceLoggable):
         cs = list_directory2(root, remove_extension=True)
         self.available_conditionals = [NULL_STR] + cs
 
-    def _edit_user_fired(self):
-        a = UserEntry(db=self.db)
-        nuser = a.edit(self.username)
-        if nuser:
-            self.users_dirty = True
-            self.username = nuser
+
 
     # ===============================================================================
     # property get/set
@@ -129,7 +132,7 @@ class ExperimentQueueFactory(PersistenceLoggable):
 
     # @cached_property
     def _get_load_names(self):
-        db = self.db
+        db = self.dvc
         if db is None or not db.connected:
             return []
 
@@ -150,15 +153,16 @@ class ExperimentQueueFactory(PersistenceLoggable):
 
     @cached_property
     def _get_usernames(self):
-        db = self.db
+        db = self.dvc
         if db is None or not db.connected:
             return []
 
         with db.session_ctx():
             dbus = db.get_users()
-            us = [ui.name for ui in dbus]
+            us=dbus
+            # us = [ui.name for ui in dbus]
             # self._emails = dict([(ui.name, ui.email or '') for ui in dbus])
-            self._emails = {ui.name: ui.email or '' for ui in dbus}
+            # self._emails = {ui.name: ui.email or '' for ui in dbus}
 
             return [''] + us
 
@@ -169,12 +173,12 @@ class ExperimentQueueFactory(PersistenceLoggable):
             then look for a config file
             then use hardcorded defaults
         """
-        db = self.db
+        db = self.dvc
         cp = os.path.join(paths.setup_dir, 'names')
         if db:
             if not db.connected:
                 return []
-            eds = self.db.get_extraction_devices()
+            eds = self.dvc.get_extraction_devices()
             names = [ei.name for ei in eds]
         elif os.path.isfile(cp):
             names = self._get_names_from_config(cp, 'Extraction Devices')
@@ -189,19 +193,28 @@ class ExperimentQueueFactory(PersistenceLoggable):
             then look for a config file
             then use hardcorded defaults
         """
-        db = self.db
+        db = self.dvc
         cp = os.path.join(paths.setup_dir, 'names')
         if db:
             if not db.connected:
                 return []
-            ms = self.db.get_mass_spectrometers()
+            ms = self.dvc.get_mass_spectrometers()
             names = [mi.name.capitalize() for mi in ms]
+            print 'asdfasdf', names
         elif os.path.isfile(cp):
             names = self._get_names_from_config(cp, 'Mass Spectrometers')
         else:
             names = ['Jan', 'Obama']
 
         return ['Spectrometer', LINE_STR] + names
+
+    @cached_property
+    def _get_experiment_identifiers(self):
+        db = self.dvc
+        ids = []
+        if db and db.connected:
+            ids = self.dvc.get_experiment_identifiers()
+        return ids
 
     def _get_names_from_config(self, cp, section):
         config = ConfigParser()
@@ -210,6 +223,20 @@ class ExperimentQueueFactory(PersistenceLoggable):
             return [config.get(section, option) for option in config.options(section)]
 
     # handlers
+    def _add_experiment_identifier_fired(self):
+        a = ExperimentIdentifierEntry(dvc=self.dvc)
+        a.available = self.dvc.get_experiment_identifiers()
+        if a.do():
+            self.experiment_identifier_dirty = True
+            self.experiment_identifier = a.value
+
+    def _edit_user_fired(self):
+        a = UserEntry(dvc=self.dvc)
+        nuser = a.edit(self.username)
+        if nuser:
+            self.users_dirty = True
+            self.username = nuser
+
     def _mass_spectrometer_changed(self, new):
         self.debug('mass spectrometer ="{}"'.format(new))
 
