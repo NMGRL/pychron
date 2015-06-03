@@ -81,11 +81,10 @@ class GitRepoManager(Loggable):
         if os.path.isdir(path):
             g = os.path.join(path, '.git')
             if os.path.isdir(g):
-                self.debug('initialized repo {}'.format(path))
                 self._repo = Repo(path)
                 return True
             else:
-                self.debug('{} is not a valid repo'.format(path))
+                self.debug('{} is not a valid repo. Initializing now'.format(path))
                 self._repo = Repo.init(path)
 
     def add_ignore(self, *args):

@@ -28,6 +28,7 @@ from traits.trait_errors import TraitError
 
 
 
+
 # ============= standard library imports ========================
 from threading import Thread, Event as Flag, Lock, currentThread
 import weakref
@@ -151,6 +152,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     use_memory_check = Bool(True)
     memory_threshold = Int
     use_dvc = Bool(False)
+    monitor_name = 'FC-2'
 
     baseline_color = Color
     sniff_color = Color
@@ -1314,6 +1316,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     def _check_experiment_identifiers(self):
         db = self.datahub.mainstore.db
+
         with db.session_ctx():
 
             cr = ConflictResolver()
@@ -1332,10 +1335,15 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     if not is_special(identifier):
                         es = experiments[identifier]
                         if ai.experiment_id not in es:
-                            self.debug('Experiment association conflict. '
-                                       'experimentID={} '
-                                       'previous_associations={}'.format(ai.experiment_id, ','.join(es)))
-                            conflicts.append((ai, es))
+                            if ai.sample == self.monitor_name:
+                                ai.experiment_id = ai.irradiation
+
+                            else:
+
+                                self.debug('Experiment association conflict. '
+                                           'experimentID={} '
+                                           'previous_associations={}'.format(ai.experiment_id, ','.join(es)))
+                                conflicts.append((ai, es))
 
                 if conflicts:
                     self.debug('Experiment association warning')

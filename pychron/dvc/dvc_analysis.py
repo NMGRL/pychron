@@ -23,14 +23,18 @@ import time
 # ============= local library imports  ==========================
 from uncertainties import ufloat, std_dev, nominal_value
 import yaml
-from pychron.core.helpers.filetools import add_extension
+from pychron.core.helpers.filetools import add_extension, subdirize
 from pychron.paths import paths
 from pychron.processing.analyses.analysis import Analysis
 from pychron.processing.isotope import Isotope
 from pychron.pychron_constants import INTERFERENCE_KEYS
 
 EXTRACTION_ATTRS = ('weight', 'extract_device', 'tray', 'extract_value',
-                    'extract_units', 'duration', 'cleanup',
+                    'extract_units',
+                    # 'duration',
+                    # 'cleanup',
+                    'extract_duration',
+                    'cleanup_duration',
                     'pattern', 'beam_diameter', 'ramp_duration', 'ramp_rate')
 
 META_ATTRS = ('analysis_type', 'uuid', 'sample', 'project', 'material', 'aliquot', 'increment',
@@ -41,12 +45,15 @@ META_ATTRS = ('analysis_type', 'uuid', 'sample', 'project', 'material', 'aliquot
 
 
 def analysis_path(runid, experiment, modifier=None, extension='.yaml'):
-    head, tail = runid[:3], runid[3:]
-    # if modifier:
-    #     tail = '{}{}'.format(tail, modifier)
-    root = os.path.join(paths.experiment_dataset_dir, experiment, head)
-    if not os.path.isdir(root):
-        os.mkdir(root)
+    root = os.path.join(paths.experiment_dataset_dir, experiment)
+    root, tail = subdirize(root, runid, l=3)
+
+    # head, tail = runid[:3], runid[3:]
+    # # if modifier:
+    # #     tail = '{}{}'.format(tail, modifier)
+    # root = os.path.join(paths.experiment_dataset_dir, experiment, head)
+    # if not os.path.isdir(root):
+    #     os.mkdir(root)
 
     if modifier:
         d = os.path.join(root, modifier)
@@ -65,23 +72,45 @@ def analysis_path(runid, experiment, modifier=None, extension='.yaml'):
 
 
 def experiment_path(project):
-    return os.path.join(paths.dvc_dir, 'projects', project)
+    return os.path.join(paths.dvc_dir, 'experiments', project)
 
 
 class DVCAnalysis(Analysis):
-    def __init__(self, record, *args, **kw):
+    def __init__(self, record_id, experiment_id, *args, **kw):
         super(DVCAnalysis, self).__init__(*args, **kw)
 
-        self.path = path = analysis_path(record)
+        self.path = path = analysis_path(record_id, experiment_id)
+        self.experiment_id = experiment_id
+        root = os.path.dirname(path)
+        bname = os.path.basename(path)
+        head, ext = os.path.splitext(bname)
+        with open(os.path.join(root, 'extraction', '{}.extr{}'.format(head, ext))) as rfile:
+            yd = yaml.load(rfile)
+            for attr in EXTRACTION_ATTRS:
+                tag = attr
+                if attr == 'cleanup_duration':
+                    if attr not in yd:
+                        tag = 'cleanup'
+                elif attr == 'extract_duration':
+                    if attr not in yd:
+                        tag = 'duration'
+                # tag = attr
+                # if attr == 'cleanup':
+                #     tag = 'cleanup_duration'
+                # elif attr == 'duration':
+                #     tag = 'extract_duration'
+
+                v = yd.get(tag)
+                # print attr, tag, v
+                if v is not None:
+                    setattr(self, attr, v)
 
         with open(path, 'r') as rfile:
             yd = yaml.load(rfile)
-
             for attr in META_ATTRS:
                 v = yd.get(attr)
                 if v is not None:
                     setattr(self, attr, v)
-
             self.rundate = yd['timestamp']  # datetime.strptime(yd['timestamp'], '%Y-%m-%dT%H:%M:%S')
             self.timestamp = time.mktime(self.rundate.timetuple())
             self.collection_version = yd['collection_version']
@@ -225,11 +254,13 @@ class DVCAnalysis(Analysis):
 
         for k, v in isos.items():
             # bsc = v['baseline_corrected']
-            raw = v['raw_intercept']
+            # raw = v['raw_intercept']
             detname = v['detector']
             self.isotopes[k] = Isotope(name=k,
                                        detector=detname,
-                                       _value=raw['value'], _error=raw['error'])
+                                       # _value=raw['value'],
+                                       # _error=raw['error']
+                                       )
             # if detname not in self.deflections:
             # self.deflections[detname] = det['deflection']
 

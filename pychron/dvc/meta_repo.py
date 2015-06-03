@@ -290,7 +290,10 @@ class MetaRepo(GitRepoManager):
 
     @cached('clear_cache')
     def get_production(self, pname, **kw):
-        p = os.path.join(self.path, 'productions', add_extension(pname, '.txt'))
+        root = os.path.join(self.path, 'productions')
+        if not os.path.isdir(root):
+            os.mkdir(root)
+        p = os.path.join(root, add_extension(pname, '.txt'))
         ip = Production(p)
         return ip
 

@@ -16,8 +16,10 @@
 
 # ============= enthought library imports =======================
 from itertools import groupby
+import time
 
 from traits.api import Instance
+
 
 
 # ============= standard library imports ========================
@@ -145,16 +147,18 @@ class IsoDBTransfer(Loggable):
                         # repo = self._export_project(pr, src, dest)
                         self.dvc.experiment_repo = repo
                         for a in ans:
+                            st = time.time()
                             self._transfer_analysis(proc, src, dest, repo, a)
+                            print 'transfer time {:0.3f}'.format(time.time() - st)
 
-                    # for rec in yd[pr]:
+                            # for rec in yd[pr]:
 
-                    # repo.commit('src import src= {}'.format(src.url))
+                            # repo.commit('src import src= {}'.format(src.url))
 
     def _transfer_labnumber(self, ln, src, dest):
         dbln = src.get_labnumber(ln)
         exp = dbln.sample.project.name
-        if exp in ('Chevron','J-Curve'):
+        if exp in ('Chevron', 'J-Curve'):
             return
 
         exp = format_project(exp)
@@ -231,7 +235,7 @@ class IsoDBTransfer(Loggable):
             if not dest.get_irradiation_position(irradname, levelname, pos):
                 dbsam = dblab.sample
                 project = dbsam.project.name
-                project = project.replace('/','_').replace('\\','_')
+                project = project.replace('/', '_').replace('\\', '_')
 
                 sam = dest.get_sample(dbsam.name, project)
                 if not sam:
@@ -272,17 +276,21 @@ class IsoDBTransfer(Loggable):
 
         # if dest.get_analysis_runid(idn, aliquot, step):
         #     return
+        st = time.time()
         dban = src.get_analysis_runid(idn, aliquot, step)
         iv = IsotopeRecordView()
         iv.uuid = dban.uuid
-        an = proc.make_analysis(iv, unpack=True)
+        an = proc.make_analysis(iv, unpack=True, use_cache=False)
+        print 'make analysis time {:0.5f}'.format(time.time() - st)
 
         op = os.path.join(repo.path, add_extension(dban.record_id, '.yaml'))
         if os.path.isfile(op) and not overwrite:
             self.debug('{} already exists. skipping'.format(op))
             return
 
+        st = time.time()
         self._transfer_meta(dest, dban)
+        print 'transfer meta {:0.5f}'.format(time.time()-st)
 
         dblab = dban.labnumber
         dbsam = dblab.sample
@@ -346,6 +354,7 @@ class IsoDBTransfer(Loggable):
         ps = PersistenceSpec(run_spec=rs,
                              arar_age=an,
                              positions=[p.position for p in extraction.positions])
+
         self.persister.per_spec_save(ps, commit=False)
 
         # self._save_an_to_db(dest, dban, obj)
@@ -355,82 +364,82 @@ class IsoDBTransfer(Loggable):
         #
         # repo.add(op, commit=False)
 
-    # def _save_an_to_db(self, dest, dban, obj):
-    #     kw = {k: obj.get(k) for k in ('aliquot', 'uuid',
-    #                                   'weight', 'comment',
-    #                                   'timestamp', 'analysis_type',
-    #                                   'mass_spectrometer', 'extract_device',
-    #                                   )}
-    #
-    #     an = dest.add_analysis(**kw)
-    #
-    #     dblab = dban.labnumber
-    #     irrad = dblab.irradiation_position.level.irradiation.name
-    #     level = dblab.irradiation_position.level.name
-    #     irradpos = dblab.irradiation_position.position
-    #
-    #     pos = dest.get_irradiation_position(irrad, level, irradpos)
-    #     an.irradiation_position = pos
+        # def _save_an_to_db(self, dest, dban, obj):
+        #     kw = {k: obj.get(k) for k in ('aliquot', 'uuid',
+        #                                   'weight', 'comment',
+        #                                   'timestamp', 'analysis_type',
+        #                                   'mass_spectrometer', 'extract_device',
+        #                                   )}
+        #
+        #     an = dest.add_analysis(**kw)
+        #
+        #     dblab = dban.labnumber
+        #     irrad = dblab.irradiation_position.level.irradiation.name
+        #     level = dblab.irradiation_position.level.name
+        #     irradpos = dblab.irradiation_position.position
+        #
+        #     pos = dest.get_irradiation_position(irrad, level, irradpos)
+        #     an.irradiation_position = pos
 
-    # def _make_isotopes(self, dban):
-    #     isos = {}
-    #     for dbiso in dban.isotopes:
-    #         if dbiso.kind == 'signal':
-    #             isod = self._make_isotope(dbiso)
-    #             isos[dbiso.molecular_weight.name] = isod
-    #     return isos
-    #
-    # def _make_detectors(self, dban):
-    #     dets = {}
-    #     for iso in dban.isotopes:
-    #         det = iso.detector.name
-    #         if det in dets:
-    #             continue
-    #
-    #         dets[det] = dict(ic_factor=dict(fit='default',
-    #                                         value=1,
-    #                                         error=0.001,
-    #                                         references=[]),
-    #                          baseline={'signal': '',
-    #                                    'value': 0,
-    #                                    'error': 0})
-    #
-    #     return dets
-    #
-    # def _make_isotope(self, dbiso):
-    #
-    #     d = dbiso.signal.data
-    #
-    #     isod = dict(fit='', detector=dbiso.detector.name,
-    #                 # baseline=self._pack_baseline(dbiso),
-    #                 signal=base64.b64encode(d),
-    #                 baseline_corrected=self._make_baseline_corrected(dbiso),
-    #                 raw_intercept=self._make_raw_intercept(dbiso))
-    #     return isod
-    #
-    # def _make_baseline_corrected(self, dbiso):
-    #     return dict(value=0, error=0)
-    #
-    # def _make_raw_intercept(self, dbiso):
-    #     try:
-    #         r = dbiso.results[-1]
-    #         v, e = r.signal, r.signal_err
-    #
-    #     except BaseException:
-    #         v, e = 0, 0
-    #
-    #     return dict(value=v, error=e)
-    #
-    #     # def _pack_baseline(self, dbiso):
-    #     # xs, ys = [], []
-    #     # return self._pack_data(xs, ys)
-    #     #
-    #     # def _pack_signal(self, dbiso):
-    #     #     xs, ys = [], []
-    #     #     return self._pack_data(xs, ys)
-    #
-    #     # def _pack_data(self, xs, ys):
-    #     #     return base64.b64encode(''.join((struct.pack('>ff', x, y) for x, y in zip(xs, ys))))
+        # def _make_isotopes(self, dban):
+        #     isos = {}
+        #     for dbiso in dban.isotopes:
+        #         if dbiso.kind == 'signal':
+        #             isod = self._make_isotope(dbiso)
+        #             isos[dbiso.molecular_weight.name] = isod
+        #     return isos
+        #
+        # def _make_detectors(self, dban):
+        #     dets = {}
+        #     for iso in dban.isotopes:
+        #         det = iso.detector.name
+        #         if det in dets:
+        #             continue
+        #
+        #         dets[det] = dict(ic_factor=dict(fit='default',
+        #                                         value=1,
+        #                                         error=0.001,
+        #                                         references=[]),
+        #                          baseline={'signal': '',
+        #                                    'value': 0,
+        #                                    'error': 0})
+        #
+        #     return dets
+        #
+        # def _make_isotope(self, dbiso):
+        #
+        #     d = dbiso.signal.data
+        #
+        #     isod = dict(fit='', detector=dbiso.detector.name,
+        #                 # baseline=self._pack_baseline(dbiso),
+        #                 signal=base64.b64encode(d),
+        #                 baseline_corrected=self._make_baseline_corrected(dbiso),
+        #                 raw_intercept=self._make_raw_intercept(dbiso))
+        #     return isod
+        #
+        # def _make_baseline_corrected(self, dbiso):
+        #     return dict(value=0, error=0)
+        #
+        # def _make_raw_intercept(self, dbiso):
+        #     try:
+        #         r = dbiso.results[-1]
+        #         v, e = r.signal, r.signal_err
+        #
+        #     except BaseException:
+        #         v, e = 0, 0
+        #
+        #     return dict(value=v, error=e)
+        #
+        #     # def _pack_baseline(self, dbiso):
+        #     # xs, ys = [], []
+        #     # return self._pack_data(xs, ys)
+        #     #
+        #     # def _pack_signal(self, dbiso):
+        #     #     xs, ys = [], []
+        #     #     return self._pack_data(xs, ys)
+        #
+        #     # def _pack_data(self, xs, ys):
+        #     #     return base64.b64encode(''.join((struct.pack('>ff', x, y) for x, y in zip(xs, ys))))
 
 
 if __name__ == '__main__':

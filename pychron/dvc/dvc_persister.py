@@ -69,13 +69,14 @@ class DVCPersister(BasePersister):
         synchronize the database
         :return:
         """
-        project = self.per_spec.run_spec.project
+        if not self.experiment_repo:
+            project = self.per_spec.run_spec.project
+            project = format_project(project)
+            self.experiment_repo = GitRepoManager()
+            self.experiment_repo.open_repo(os.path.join(paths.experiment_dataset_dir, project))
+            self.info('pulling changes from project repo: {}'.format(project))
+            self.experiment_repo.pull()
 
-        project = format_project(project)
-        self.experiment_repo = GitRepoManager()
-        self.experiment_repo.open_repo(os.path.join(paths.experiment_dataset_dir, project))
-        self.info('pulling changes from project repo: {}'.format(project))
-        self.experiment_repo.pull()
         if sync:
             self.info('synchronize dvc')
             self.dvc.synchronize()

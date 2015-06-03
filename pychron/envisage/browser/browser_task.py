@@ -203,7 +203,7 @@ class BaseBrowserTask(BaseEditorTask):
         for r in records:
 
             editor = self._get_editor_by_uuid(r.uuid)
-            print editor, r.uuid, r.record_id
+            # print editor, r.uuid, r.record_id
             if editor:
                 records.remove(r)
 

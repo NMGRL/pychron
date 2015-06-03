@@ -28,6 +28,8 @@ from pychron.file_defaults import TASK_EXTENSION_DEFAULT, SIMPLE_UI_DEFAULT, \
 
 
 class Paths(object):
+    git_base_origin = 'https://github.com'
+
     dissertation = '/Users/ross/Programming/git/dissertation'
     # enthought = path.join(path.expanduser('~'), '.enthought')
     # users_file = path.join(enthought, 'users')

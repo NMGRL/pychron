@@ -15,19 +15,21 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance, Str
+from git import Repo
+from traits.api import Instance, Str, Set, List
 from apptools.preferences.preference_binding import bind_preference
 # ============= standard library imports ========================
 from itertools import groupby
 import os
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import remove_extension
-from pychron.core.progress import progress_loader
+from pychron.core.progress import progress_loader, progress_iterator
 from pychron.dvc.defaults import TRIGA, HOLDER_24_SPOKES, LASER221, LASER65
 from pychron.dvc.dvc_analysis import DVCAnalysis, experiment_path, analysis_path
 from pychron.dvc.dvc_database import DVCDatabase
 from pychron.dvc.meta_repo import MetaRepo
 from pychron.git_archive.repo_manager import GitRepoManager
+from pychron.github import Organization
 from pychron.loggable import Loggable
 from pychron.paths import paths
 
@@ -56,14 +58,16 @@ class DVC(Loggable):
 
     experiment_repo = Instance(GitRepoManager)
     auto_add = True
+    pulled_experiments = Set
+    selected_experiments = List
 
-    def __init__(self, bind=True,*args, **kw):
+    def __init__(self, bind=True, *args, **kw):
         super(DVC, self).__init__(*args, **kw)
 
         if bind:
             self._bind_preferences()
-        # self.synchronize()
-        # self._defaults()
+            # self.synchronize()
+            # self._defaults()
 
     def initialize(self):
 
@@ -79,8 +83,6 @@ class DVC(Loggable):
 
     # database
     # analysis processing
-
-
     def analysis_has_review(self, ai, attr):
         test_str = TESTSTR[attr]
         repo = self._get_experiment_repo(ai.experiment_id)
@@ -160,6 +162,19 @@ class DVC(Loggable):
         return self.make_analyses(records)
 
     def make_analyses(self, records):
+        # load repositories
+        # {r.experiment_id for r in records}
+        exps = {r.experiment_id for r in records}
+        if self.pulled_experiments:
+            exps = exps - self.pulled_experiments
+
+            self.pulled_experiments.union(exps)
+        else:
+            self.pulled_experiments = exps
+
+        progress_iterator(exps,
+                          self._load_repository, threshold=1)
+
         return progress_loader(records, self._make_record, threshold=1)
 
     def synchronize(self, pull=True):
@@ -173,53 +188,6 @@ class DVC(Loggable):
             self.meta_repo.pull()
         else:
             self.meta_repo.push()
-
-    def __getattr__(self, item):
-        try:
-            return getattr(self.db, item)
-        except AttributeError:
-            try:
-                return getattr(self.meta_repo, item)
-            except AttributeError, e:
-                # print e, item
-                raise DVCException(item)
-
-    # def get_mass_spectrometers(self):
-    # return self.db.get_mass_spectrometers()
-    #
-    # def get_projects(self, **kw):
-    # return self.db.get_projects(**kw)
-    #
-    # def get_project(self, name):
-    #     return self.db.get_project(name)
-    #
-    # def get_sample(self, name, project):
-    #     return self.db.get_sample(name, project)
-    #
-    # def get_material(self, name):
-    #     return self.db.get_material(name)
-    #
-    # def get_irradiation(self, name):
-    #     return self.db.get_irradiation(name)
-    #
-    # def get_load_holder_holes(self, name):
-    #     return self.meta_repo.get_load_holder_holes(name)
-
-    def _make_record(self, record, prog, i, n):
-        if prog:
-            prog.change_message('Loading analysis {}. {}/{}'.format(record.record_id, i, n))
-        a = DVCAnalysis(record)
-
-        # load irradiation
-        chronology = self.meta_repo.get_chronology(a.irradiation)
-        a.set_chronology(chronology)
-
-        pname = self.db.get_production_name(a.irradiation, a.irradiation_level)
-
-        prod = self.meta_repo.get_production(pname)
-        a.set_production(pname, prod)
-
-        return a
 
     # adders db
     # def add_analysis(self, **kw):
@@ -242,30 +210,48 @@ class DVC(Loggable):
         with self.db.session_ctx():
             self.db.add_irradiation_level(*args)
 
-    # adders db and repo
-    # def add_project(self, name):
-    #     org = Organization(self.project_root, usr=self.github_user, pwd=self.github_password)
-    #
-    #     # check if project is available
-    #     if name in org.repos:
-    #         self.warning_dialog('Project "{}" already exists'.format(name))
-    #         return
-    #
-    #     with self.db.session_ctx():
-    #         self.db.add_project(name)
-    #
-    #     p = os.path.join(paths.experiment_dataset_dir, name)
-    #     os.mkdir(p)
-    #     repo = Repo.init(p)
+            # adders db and repo
+            # def add_project(self, name):
+            #     org = Organization(self.project_root, usr=self.github_user, pwd=self.github_password)
+            #
+            #     # check if project is available
+            #     if name in org.repos:
+            #         self.warning_dialog('Project "{}" already exists'.format(name))
+            #         return
+            #
+            #     with self.db.session_ctx():
+            #         self.db.add_project(name)
+            #
+            #     p = os.path.join(paths.experiment_dataset_dir, name)
+            #     os.mkdir(p)
+            #     repo = Repo.init(p)
 
-        # add project to github
-        # org.create_repo(name, auto_init=True)
+            # add project to github
+            # org.create_repo(name, auto_init=True)
 
-        # setup remotes
-        # url = 'https://github.com/{}/'.format(self.repo_root, name)
-        # repo.create_remote('origin', url)
+            # setup remotes
+            # url = 'https://github.com/{}/'.format(self.repo_root, name)
+            # repo.create_remote('origin', url)
 
-        # return True
+            # return True
+
+    def add_experiment(self, identifier):
+        org = Organization(self.organization, usr=self.github_user, pwd=self.github_password)
+        if identifier in org.repos:
+            self.warning_dialog('Experiment "{}" already exists'.format(identifier))
+        else:
+            self.info('Creating repository. {}'.format(identifier))
+            org.create_repo(identifier)
+
+            root = os.path.join(paths.experiment_dataset_dir, identifier)
+            if os.path.isdir(root):
+                self.warning_dialog('{} already exists.'.format(root))
+            else:
+                os.mkdir(root)
+                repo = Repo.init(root)
+                url = '{}/{}/{}.git'.format(paths.git_base_origin, self.organization, identifier)
+                self.info('Setting remote origin={}'.format(url))
+                repo.create_remote('origin', url)
 
     def add_irradiation(self, name, doses=None):
         with self.db.session_ctx():
@@ -278,6 +264,8 @@ class DVC(Loggable):
         self.meta_repo.add_irradiation(name)
         self.meta_repo.add_chronology(name, doses)
         self.meta_repo.commit('added irradiation {}'.format(name))
+
+        self.add_experiment(name)
 
     def add_load_holder(self, name, path_or_txt):
         with self.db.session_ctx():
@@ -319,6 +307,60 @@ class DVC(Loggable):
         return True
 
     # private
+    def __getattr__(self, item):
+        try:
+            return getattr(self.db, item)
+        except AttributeError:
+            try:
+                return getattr(self.meta_repo, item)
+            except AttributeError, e:
+                # print e, item
+                raise DVCException(item)
+
+    def _load_repository(self, expid, prog, i, n):
+        if prog:
+            prog.change_message('Loading repository {}. {}/{}'.format(expid, i, n))
+            # repo = GitRepoManager()
+            # repo.open_repo(expid, root=paths.experiment_dataset_dir)
+
+        self.sync_repo(expid)
+
+    def _make_record(self, record, prog, i, n):
+        if prog:
+            prog.change_message('Loading analysis {}. {}/{}'.format(record.record_id, i, n))
+
+        if not record.experiment_id:
+            exps = record.experiment_ids
+            self.debug('Analysis {} is associated multiple experiments '
+                       '{}'.format(record.record_id, ','.join(exps)))
+            expid = None
+            if self.selected_experiments:
+                rr = []
+                for si in self.selected_experiments:
+                    if si in exps:
+                        rr.append(si)
+                if rr:
+                    if len(rr) > 1:
+                        expid = self._get_requested_experiment_id(rr)
+                    else:
+                        expid = rr[0]
+
+            if expid is None:
+                expid = self._get_requested_experiment_id(exps)
+
+        a = DVCAnalysis(record.record_id, expid)
+
+        # load irradiation
+        chronology = self.meta_repo.get_chronology(a.irradiation)
+        a.set_chronology(chronology)
+
+        pname = self.db.get_production_name(a.irradiation, a.irradiation_level)
+
+        prod = self.meta_repo.get_production(pname)
+        a.set_production(pname, prod)
+
+        return a
+
     def _get_experiment_repo(self, experiment_id):
         repo = self.experiment_repo
         path = experiment_path(experiment_id)

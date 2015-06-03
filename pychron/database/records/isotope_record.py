@@ -78,6 +78,8 @@ class IsotopeRecordView(object):
                  'extract_value', 'cleanup', 'duration',
                  'blank_fit_status',
                  'ic_fit_status',
+                 'experiment_id',
+                 'experiment_ids',
                  'iso_fit_status', 'is_plateau_step', 'group_id', 'graph_id')
 
     def __init__(self, *args, **kw):
@@ -92,9 +94,11 @@ class IsotopeRecordView(object):
         self.labnumber = ''
         self.aliquot = 0
         self._increment = -1
-        self.step=''
+        self.step = ''
         self.tag = ''
         self.uuid = ''
+        self.experiment_id = ''
+        self.experiment_ids = None
         self.rundate = ''
         self.timestamp = ''
         # self.record_id = ''

@@ -26,7 +26,7 @@ from pychron.envisage.browser.view import BrowserView
 
 class BrowserPane(TraitsDockPane, BrowserView):
     id = 'pychron.browser.pane'
-    name = 'Browser'
+    name = 'Analysis Selection'
     # def trait_context(self):
     #     return {'object':self.model, 'pane':self}
     #
@@ -42,6 +42,8 @@ class BrowserPane(TraitsDockPane, BrowserView):
 
 
 class BrowserTask(BaseBrowserTask):
+    name = 'Analysis Browser'
+
     model = Instance('pychron.envisage.browser.browser_model.BrowserModel')
     # tool_bars = [SToolBar(ToPipelineAction())]
 

@@ -95,6 +95,8 @@ class MainView(HasTraits):
                              value=an.data_reduction_tag),
             MeasurementValue(name='DAQ Version',
                              value=an.collection_version),
+            MeasurementValue(name='ExperimentID',
+                             value=an.experiment_id),
             # MeasurementValue(name='AnalysisID',
             #                  value=self.analysis_ida),
             MeasurementValue(name='Spectrometer',

@@ -30,6 +30,7 @@ from uncertainties import nominal_value, std_dev
 # from pychron.core.codetools.memory_usage import mem_log
 from xlwt import Workbook
 from pychron.core.helpers.datetime_tools import get_datetime
+from pychron.core.helpers.filetools import subdirize
 from pychron.core.ui.preference_binding import bind_preference
 from pychron.database.adapters.local_lab_adapter import LocalLabAdapter
 from pychron.experiment.automated_run.hop_util import parse_hops
@@ -396,7 +397,9 @@ class AutomatedRunPersister(BasePersister):
         # make a new frame for saving data
 
         name = self.per_spec.run_spec.uuid
-        path = os.path.join(paths.isotope_dir, '{}.h5'.format(name))
+        root, tail = subdirize(paths.isotope_dir, '{}.h5'.format(name))
+        path = os.path.join(root, tail)
+        # path = os.path.join(paths.isotope_dir, '{}.h5'.format(name))
 
         self._current_data_frame = path
         frame = dm.new_frame(path)

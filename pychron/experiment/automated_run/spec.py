@@ -490,4 +490,20 @@ class AutomatedRunSpec(HasTraits):
     @property
     def sensitivity(self):
         return 0
+
+    @property
+    def extract_duration(self):
+        return self.duration
+
+    @property
+    def cleanup_duration(self):
+        return self.cleanup
+
+    @cleanup_duration.setter
+    def set_cleanup(self, v):
+        self.cleanup = v
+
+    @extract_duration.setter
+    def set_duration(self, v):
+        self.duration = v
         # ============= EOF =============================================
