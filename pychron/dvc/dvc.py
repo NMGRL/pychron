@@ -15,9 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import shutil
+
 from git import Repo
 from traits.api import Instance, Str, Set, List
 from apptools.preferences.preference_binding import bind_preference
+
 # ============= standard library imports ========================
 from itertools import groupby
 import os
@@ -27,6 +30,7 @@ from pychron.core.progress import progress_loader, progress_iterator
 from pychron.dvc.defaults import TRIGA, HOLDER_24_SPOKES, LASER221, LASER65
 from pychron.dvc.dvc_analysis import DVCAnalysis, experiment_path, analysis_path
 from pychron.dvc.dvc_database import DVCDatabase
+from pychron.dvc.dvc_persister import PATH_MODIFIERS
 from pychron.dvc.meta_repo import MetaRepo
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.github import Organization
@@ -305,6 +309,27 @@ class DVC(Loggable):
         repo.create_remote('https://github.com/{}/{}.git'.format(self.organization, name))
         repo.pull()
         return True
+
+    def add_experiment_association(self, runspec, expid):
+        db = self.db
+        with db.session_ctx():
+            exps = [expid[0] for expid, _ in db.get_associated_experiments(runspec.identifier)]
+            if expid in exps:
+                return
+            else:
+                dban = db.get_analysis_uuid(runspec.uuid)
+                db.add_experiment_association(expid, dban)
+
+                repo = self._get_experiment_repo(expid)
+
+                src_expid = runspec.experiment_id
+                for m in PATH_MODIFIERS:
+                    src = analysis_path(runspec.record_id, src_expid, modifier=m)
+                    dest = analysis_path(runspec.record_id, expid, modifier=m)
+
+                    shutil.copyfile(src, dest)
+                    repo.add(dest, commit=False)
+                repo.commit('added experiment association')
 
     # private
     def __getattr__(self, item):

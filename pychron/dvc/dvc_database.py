@@ -180,14 +180,16 @@ class DVCDatabase(DatabaseAdapter):
 
     def add_analysis(self, experiment, **kw):
         a = AnalysisTbl(**kw)
-        experiment = self.get_experiment(experiment)
-
-        e = ExperimentAssociationTbl()
-        e.experiment = experiment
-        e.analysis = a
-        self._add_item(e)
+        self.add_experiment_association(experiment, a)
 
         return self._add_item(a)
+
+    def add_experiment_association(self, experiment, analysis):
+        experiment = self.get_experiment(experiment)
+        e = ExperimentAssociationTbl()
+        e.experiment = experiment
+        e.analysis = analysis
+        self._add_item(e)
 
     def add_material(self, name):
         a = self.get_material(name)
@@ -257,6 +259,9 @@ class DVCDatabase(DatabaseAdapter):
             q = q.order_by(IrradiationPositionTbl.identifier)
 
             return self._query_all(q, verbose_query=False)
+
+    def get_analysis_uuid(self, value):
+        return self._retrieve_item(AnalysisTbl, value, key='uuid')
 
     def get_analysis_runid(self, idn, aliquot, step=None):
         with self.session_ctx() as sess:

@@ -17,9 +17,12 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from envisage.ui.tasks.task_factory import TaskFactory
+
 from pychron.dvc.dvc import DVC
 from pychron.dvc.dvc_persister import DVCPersister
 from pychron.dvc.tasks.preferences import DVCPreferencesPane, DVCDBConnectionPreferencesPane
+from pychron.dvc.tasks.repo_task import ExperimentRepoTask
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 
 
@@ -48,12 +51,28 @@ class DVCPlugin(BaseTaskPlugin):
 
         return d
 
+    def _repo_factory(self):
+        dvc = self.application.get_service(DVC)
+        r = ExperimentRepoTask(dvc=dvc)
+        return r
+
     def _preferences_default(self):
         return [self._make_preferences_path('dvc')]
 
     def _preferences_panes_default(self):
         return [DVCPreferencesPane, DVCDBConnectionPreferencesPane]
 
+    # def _tasks_default(self):
+    #     ts = [TaskFactory(id='pychron.canvas_designer',
+    #                       name='Canvas Designer',
+    #                       factory=self._task_factory,
+    #                       accelerator='Ctrl+Shift+D',
+    #     )]
+    #     return ts
+    def _tasks_default(self):
+        return [TaskFactory(id='pychron.experiment_repo.task',
+                            name='Experiment Repositories',
+                            factory=self._repo_factory)]
         # def start(self):
         # add = not os.path.isfile(paths.meta_db)
         #

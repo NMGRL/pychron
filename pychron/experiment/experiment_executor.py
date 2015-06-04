@@ -18,11 +18,14 @@
 from datetime import datetime
 from itertools import groupby
 
-from traits.api import Event, Button, String, Bool, Enum, Property, Instance, Int, List, Any, Color, Dict, \
-    on_trait_change, Long, Float
+from traits.api import Event, Button, String, Bool, Enum, \
+    Property, Instance, Int, List, Any, Color, Dict, \
+    on_trait_change, Long, Float, Str
 from pyface.constant import CANCEL, YES, NO
 from pyface.timer.do_later import do_after
 from traits.trait_errors import TraitError
+
+
 
 
 
@@ -170,6 +173,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     _err_message = String
     _prev_blank_id = Long
     _cv_info = None
+    _cached_runs = List
+    _active_experiment_identifier = Str
 
     def __init__(self, *args, **kw):
         super(ExperimentExecutor, self).__init__(*args, **kw)
@@ -453,7 +458,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     self.debug('stop iteration')
                     break
 
-                if self._pre_run_check():
+                if self._pre_run_check(spec):
                     self.warning('pre run check failed')
                     break
 
@@ -1285,12 +1290,13 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     ed_tray = man.get_tray()
                     return ed_tray != exp.tray
 
-    def _pre_run_check(self):
+    def _pre_run_check(self, spec):
         """
             return True to stop execution loop
         """
-
         self.heading('Pre Run Check')
+        self._retroactive_experiment_identifiers(spec)
+
         ef = self._check_dashboard()
         if ef:
             self._err_message = 'Dashboard error. {}'.format(ef)
@@ -1313,6 +1319,19 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         # timed out. if timed out autosave.
         self._wait_for_save()
         self.heading('Pre Run Check Passed')
+
+    def _retroactive_experiment_identifiers(self, spec):
+        if is_special(spec.identifier):
+            self._cached_runs.append(spec)
+            if self._active_experiment_identifier:
+                spec.experiment_identifier = self._active_experiment_identifier
+        else:
+            exp_id = spec.experiment_identifier
+            if self._cached_runs:
+                for c in self._cached_runs:
+                    self.datahub.maintstore.add_experiment_association(c, exp_id)
+                self._cached_runs = []
+            self._active_experiment_identifier = exp_id
 
     def _check_experiment_identifiers(self):
         db = self.datahub.mainstore.db

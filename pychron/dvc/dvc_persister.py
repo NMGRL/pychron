@@ -38,9 +38,12 @@ def ydump(obj, p):
     with open(p, 'w') as wfile:
         yaml.dump(obj, wfile, default_flow_style=False)
 
-def format_project(project):
-    return project.replace('/','_').replace('\\', '_')
 
+def format_project(project):
+    return project.replace('/', '_').replace('\\', '_')
+
+
+PATH_MODIFIERS = (None, '.data', 'changeable', 'peakcenter', 'extraction', 'monitor')
 
 
 class DVCPersister(BasePersister):
@@ -56,7 +59,7 @@ class DVCPersister(BasePersister):
         self.initialize(False)
         self.pre_extraction_save()
         self.pre_measurement_save()
-        self.post_extraction_save('','', None)
+        self.post_extraction_save('', '', None)
         self.post_measurement_save(commit=commit)
 
     def initialize(self, sync=True):
@@ -171,13 +174,16 @@ class DVCPersister(BasePersister):
         self._save_monitor()
 
         # stage files
-        for p in (spec_path, self._make_path(),
 
-                  self._make_path(modifier='.data'),
-                  self._make_path(modifier='changeable'),
-                  self._make_path(modifier='peakcenter'),
-                  self._make_path(modifier='extraction'),
-                  self._make_path(modifier='monitor')):
+        paths = [spec_path, ] + [self._make_path(modifier=m) for m in PATH_MODIFIERS]
+        # for p in (spec_path, self._make_path(),
+        #
+        #           self._make_path(modifier='.data'),
+        #           self._make_path(modifier='changeable'),
+        #           self._make_path(modifier='peakcenter'),
+        #           self._make_path(modifier='extraction'),
+        #           self._make_path(modifier='monitor')):
+        for p in paths:
             if os.path.isfile(p):
                 self.experiment_repo.add(p)
             else:
@@ -194,10 +200,10 @@ class DVCPersister(BasePersister):
     # private
     def _save_analysis_db(self, timestamp):
         rs = self.per_spec.run_spec
-        d = {k:getattr(rs, k) for k in ('uuid', 'analysis_type','aliquot',
-                                     'increment', 'mass_spectrometer',
-                                     'extract_device', 'weight','comment',
-                                     'cleanup','duration','extract_value','extract_units')}
+        d = {k: getattr(rs, k) for k in ('uuid', 'analysis_type', 'aliquot',
+                                         'increment', 'mass_spectrometer',
+                                         'extract_device', 'weight', 'comment',
+                                         'cleanup', 'duration', 'extract_value', 'extract_units')}
         d['timestamp'] = timestamp
         dvc = self.dvc
         with dvc.session_ctx():

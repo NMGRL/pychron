@@ -108,17 +108,38 @@ class GitRepoManager(Loggable):
         pd.change_message('Fetching {} {}'.format(origin, branchname))
         repo.git.fetch(origin, branchname)
         pd.change_message('Complete')
+        # try:
+        #     oref = origin.refs[branchname]
+        #     remote_commit = oref.commit
+        # except IndexError:
+        #     remote_commit = None
+        #
+        # branch = getattr(repo.heads, branchname)
+        # local_commit = branch.commit
+        local_commit, remote_commit = self._get_local_remote_commit(branchname)
+        self.debug('out of date {} {}'.format(local_commit, remote_commit))
+        return local_commit != remote_commit
+
+    def _get_local_remote_commit(self, branchname=None):
+
+        repo = self._repo
+        origin = repo.remotes.origin
         try:
             oref = origin.refs[branchname]
             remote_commit = oref.commit
         except IndexError:
             remote_commit = None
 
-        branch = getattr(repo.heads, branchname)
-        local_commit = branch.commit
+        if branchname is None:
+            branch = repo.head
+        else:
+            try:
+                branch = repo.heads[branchname]
+            except AttributeError:
+                return None, None
 
-        self.debug('out of date {} {}'.format(local_commit, remote_commit))
-        return local_commit != remote_commit
+        local_commit = branch.commit
+        return local_commit, remote_commit
 
     def clone(self, url):
         repo = self._repo

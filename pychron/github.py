@@ -80,8 +80,10 @@ class Organization(GithubObject):
 
     @property
     def repos(self):
+
         cmd = make_request(self.base_cmd)
         doc = requests.get(cmd)
+
         return [repo['name'] for repo in json.loads(doc.text)]
 
     def create_repo(self, name, **payload):
