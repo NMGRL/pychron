@@ -58,6 +58,7 @@ class IrradiationEditor(Loggable):
 
     """
     chronology = Instance(IrradiationChronology, ())
+    dvc = Instance('pychron.dvc.dvc.DVC')
 
     def add(self):
         v = AddView(model=self)
@@ -136,4 +137,3 @@ class IrradiationEditor(Loggable):
         #     self.repo.add_chronology(self.name, self.chronology)
 
 # ============= EOF =============================================
-

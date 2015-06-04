@@ -52,10 +52,11 @@ from pychron.entry.irradiated_position import IrradiatedPosition
 # self._p.information_dialog('Changes saved to database')
 
 class NeutronDose(HasTraits):
-    def __init__(self, power, start, end):
+    def __init__(self, power, start, end, *args, **kw):
         self.power = power
         self.start = start.strftime('%m-%d-%Y %H:%M')
         self.end = end.strftime('%m-%d-%Y %H:%M')
+        super(NeutronDose, self).__init__(*args, **kw)
 
 
 class dirty_ctx(object):
@@ -221,10 +222,11 @@ class LabnumberEntry(DVCIrradiationable):
             from pychron.entry.loaders.mb_sample_loader import SampleLoader
         except ImportError, e:
             self.warning_dialog(str(e))
-            return
+            SampleLoader = None
 
-        sample_loader = SampleLoader()
-        sample_loader.do_import(self, p)
+        if SampleLoader:
+            sample_loader = SampleLoader()
+            sample_loader.do_import(self, p)
 
     def make_labbook(self, out):
         """
@@ -245,7 +247,7 @@ class LabnumberEntry(DVCIrradiationable):
                                                  order_func='asc')
 
                     n = sum([len(irrad.levels) for irrad in irrads])
-                    prog = self.open_progress(n=n)
+                    prog = open_progress(n=n)
 
                     w.build(out, irrads, progress=prog)
 
@@ -315,7 +317,7 @@ class LabnumberEntry(DVCIrradiationable):
     def import_irradiation_load_xls(self, p):
         loader = XLSIrradiationLoader(db=self.dvc.db,
                                       monitor_name=self.monitor_name)
-        prog = self.open_progress()
+        prog = open_progress()
         loader.progress = prog
         loader.canvas = self.canvas
 
@@ -447,7 +449,7 @@ class LabnumberEntry(DVCIrradiationable):
             j = '-'
         else:
             j = ''
-            #remove leading chars
+            # remove leading chars
             last = name
             head = ''
             while last:
@@ -462,7 +464,6 @@ class LabnumberEntry(DVCIrradiationable):
             return j.join((head, '{:03d}'.format(int(last) + 1)))
         except ValueError:
             return name
-
 
     # ===============================================================================
     # handlers
@@ -485,7 +486,6 @@ class LabnumberEntry(DVCIrradiationable):
     #                     if not obj.project:
     #                         if dbsam.project:
     #                             obj.project = dbsam.project.name
-
 
     @on_trait_change('canvas:selected')
     def _handle_canvas_selected(self, new):
@@ -538,7 +538,7 @@ THIS CHANGE CANNOT BE UNDONE')
                                               limit=1)
                 if dbirrad:
                     lastname = dbirrad[0].name
-                    #try to increment lastname
+                    # try to increment lastname
                     lastname = self._increment(lastname)
 
         return lastname
@@ -689,23 +689,6 @@ THIS CHANGE CANNOT BE UNDONE')
     @cached_property
     def _get_trays(self):
         return self.dvc.meta_repo.get_irradiation_holder_names()
-        # db = self.dvc.db
-        # with db.session_ctx():
-        # hs = db.get_irradiation_holders()
-        #     ts = [h.name for h in hs]
-
-            #p = os.path.join(self._get_map_path(), 'images')
-            #if not os.path.isdir(p):
-            #    self.warning_dialog('{} does not exist'.format(p))
-            #    return Undefined
-            #
-            #ts = [os.path.splitext(pi)[0] for pi in os.listdir(p) if not pi.startswith('.')
-            #      #                    if not (pi.endswith('.png')
-            #      #                            or pi.endswith('.pct')
-            #      #                            or pi.startswith('.'))
-            #]
-            #if ts:
-            # self.tray = ts[-1]
 
     # def _get_map_path(self):
     # return os.path.join(paths.setup_dir, 'irradiation_tray_maps')
@@ -796,4 +779,3 @@ if __name__ == '__main__':
     m = LabnumberEntry()
     m.configure_traits()
 # ============= EOF =============================================
-

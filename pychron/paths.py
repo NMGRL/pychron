@@ -61,7 +61,7 @@ class Paths(object):
     # ==============================================================================
     # root
     # ==============================================================================
-    scripts_dir = scripts_dir = None
+    scripts_dir = None
     experiment_dir = None
     auto_save_experiment_dir = None
 
@@ -97,7 +97,7 @@ class Paths(object):
     # ==============================================================================
     # setup
     # ==============================================================================
-    setup_dir = setup_dir = None
+    setup_dir = None
     device_dir = None
     spectrometer_dir = None
     backup_deflection_dir = None
@@ -379,8 +379,7 @@ class Paths(object):
         build_directories()
 
     def write_defaults(self):
-        if os.environ.get('TRAVIS_CI', 'False') == 'False' and \
-                        os.environ.get('RTD', 'False') == 'False':
+        if os.environ.get('TRAVIS_CI', 'False') == 'False' and os.environ.get('RTD', 'False') == 'False':
             self._write_default_files()
 
     def _write_default_files(self):
@@ -394,8 +393,7 @@ class Paths(object):
                      (self.edit_ui_defaults, EDIT_UI_DEFAULT),
                      (self.task_extensions_file, TASK_EXTENSION_DEFAULT),
                      (self.identifiers_file, IDENTIFIERS_DEFAULT)):
-
-            overwrite = d in (SYSTEM_HEALTH, SIMPLE_UI_DEFAULT, )
+            overwrite = d in (SYSTEM_HEALTH, SIMPLE_UI_DEFAULT,)
             # overwrite = d in (SYSTEM_HEALTH, SIMPLE_UI_DEFAULT,)
             # print p
             self._write_default_file(p, d, overwrite)

@@ -89,7 +89,7 @@ class GitRepoManager(Loggable):
                 self._repo = Repo.init(path)
 
     def add_ignore(self, *args):
-        ignores= []
+        ignores = []
         p = os.path.join(self.path, '.gitignore')
         if os.path.isfile(p):
             with open(p, 'r') as rfile:
@@ -262,7 +262,7 @@ class GitRepoManager(Loggable):
         return self._repo.is_dirty()
 
     def has_staged(self):
-        return self._repo.git.diff('--cached','--name-only')
+        return self._repo.git.diff('--cached', '--name-only')
         # return self._repo.is_dirty()
 
     def has_unpushed_commits(self):
@@ -331,7 +331,7 @@ class GitRepoManager(Loggable):
 
     def create_branch(self, name):
         repo = self._repo
-        if not name in repo.branches:
+        if name not in repo.branches:
             branch = repo.create_head(name)
             branch.commit = repo.head.commit
             self.checkout_branch(name)
@@ -496,9 +496,6 @@ class GitRepoManager(Loggable):
             return getattr(repo.remotes, remote)
         except AttributeError:
             pass
-
-    def _load_branch_history(self):
-        pass
 
     def _get_branch_history(self):
         repo = self._repo

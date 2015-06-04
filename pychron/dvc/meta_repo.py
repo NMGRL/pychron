@@ -183,7 +183,6 @@ class MetaRepo(GitRepoManager):
     #
     #     self.path = path
 
-
     def update_script(self, name, path_or_blob):
         self._update_text('scripts', name, path_or_blob)
 
@@ -272,11 +271,11 @@ class MetaRepo(GitRepoManager):
     def update_chronology(self, name, doses, commit=True, push=True):
         p = self._chron_name(name)
         Chronology.dump(p, doses)
-        self.meta_repo.add(p, commit=False)
+        self.add(p, commit=False)
         if commit:
-            self.meta_repo.commit('Updated {} chronology'.format(name))
+            self.commit('Updated {} chronology'.format(name))
             if push:
-                self.meta_repo.push()
+                self.push()
 
     def get_irradiation_holder_names(self):
         return list_directory2(os.path.join(self.path, 'irradiation_holders'),

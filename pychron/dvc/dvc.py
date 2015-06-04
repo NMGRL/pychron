@@ -188,7 +188,6 @@ class DVC(Loggable):
         """
         pull meta_repo changes
 
-        rsync the database
         :return:
         """
         if pull:
@@ -284,10 +283,11 @@ class DVC(Loggable):
         """
         url = 'https://github.com/{}/{}.git'.format(self.organization, name)
         repo = self._get_experiment_repo(name)
-        if os.path.isdir(os.path.join(paths.experiment_dataset_dir, name, '.git')):
+        root = os.path.join(paths.experiment_dataset_dir, name)
+        if os.path.isdir(os.path.join(root, '.git')):
             repo.pull()
         else:
-            repo.clone(url)
+            repo.clone(url, root)
 
         return True
 
