@@ -335,7 +335,7 @@ class Paths(object):
         self.dvc_dir = join(self.data_dir, '.dvc')
         # self.project_dir = join(self.dvc_dir, 'projects')
         self.experiment_dataset_dir = join(self.dvc_dir, 'experiments')
-        self.meta_dir = join(self.dvc_dir, 'meta')
+        # self.meta_dir = join(self.dvc_dir, 'meta')
         # self.meta_db = join(self.meta_dir, 'pychronmeta.sqlite')
         # self.meta_txtdb = join(self.meta_dir, 'pychronmeta.txtdb')
         # self.vcs_dir = join(self.data_dir, 'vcs')

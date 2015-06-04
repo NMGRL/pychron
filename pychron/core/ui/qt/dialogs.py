@@ -15,7 +15,8 @@
 # ===============================================================================
 # ============= enthought library imports =======================
 
-from PySide.QtGui import QSizePolicy
+from PySide.QtCore import Qt
+from PySide.QtGui import QSizePolicy, QCheckBox
 from pyface.api import OK, YES
 from pyface.ui.qt4.confirmation_dialog import ConfirmationDialog
 from pyface.message_dialog import MessageDialog
@@ -91,7 +92,7 @@ class myMessageDialog(myMessageMixin, MessageDialog):
 
 class myConfirmationDialog(myMessageMixin, ConfirmationDialog):
     def _create_control(self, parent):
-        dlg = super(_ConfirmationDialog, self)._create_control(parent)
+        dlg = super(myConfirmationDialog, self)._create_control(parent)
         dlg.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         if self.size != (-1, -1):
@@ -123,7 +124,6 @@ class myConfirmationDialog(myMessageMixin, ConfirmationDialog):
     #         #     retva
     #         # retval = _RESULT_MAP[retval]
     #     return retval
-
 
 class RememberConfirmationDialog(myConfirmationDialog):
     def _create_control(self, parent):

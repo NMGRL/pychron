@@ -22,6 +22,8 @@ from traits.api import Instance
 
 
 
+
+
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================
@@ -108,10 +110,13 @@ class IsoDBTransfer(Loggable):
         self.dvc = DVC(bind=False)
         self.dvc.db.trait_set(name='pychronmeta', username='root',
                               password='Argon', kind='mysql', host='localhost')
+        if not self.dvc.initialize():
+            self.warning_dialog('Failed to initialize DVC')
+            return
+
         self.persister = DVCPersister(dvc=self.dvc)
 
         dest = self.dvc.db
-        dest.connect()
 
         proc = IsotopeDatabaseManager(bind=False, connect=False)
         proc.db.trait_set(name='pychrondata', **conn)
@@ -150,7 +155,7 @@ class IsoDBTransfer(Loggable):
                             st = time.time()
                             self._transfer_analysis(proc, src, dest, repo, a)
                             print 'transfer time {:0.3f}'.format(time.time() - st)
-
+                break
                             # for rec in yd[pr]:
 
                             # repo.commit('src import src= {}'.format(src.url))

@@ -26,6 +26,7 @@ import time
 from git.exc import GitCommandError
 from git import Repo, Diff
 # ============= local library imports  ==========================
+from pychron.core.codetools.inspection import caller
 from pychron.core.helpers.filetools import fileiter
 from pychron.core.progress import open_progress
 from pychron.git_archive.diff_view import DiffView, DiffModel
@@ -141,9 +142,8 @@ class GitRepoManager(Loggable):
         local_commit = branch.commit
         return local_commit, remote_commit
 
-    def clone(self, url):
-        repo = self._repo
-        self._repo = repo.clone_from(url)
+    def clone(self, url, path):
+        self._repo = Repo.clone_from(url, path)
 
     def unpack_blob(self, hexsha, p):
         """
@@ -354,6 +354,7 @@ class GitRepoManager(Loggable):
             if hasattr(repo.remotes, name):
                 repo.delete_remote(name)
 
+    @caller
     def pull(self, branch='master', remote='origin', handled=True):
         """
             fetch and merge
@@ -366,12 +367,26 @@ class GitRepoManager(Loggable):
             return
 
         if remote:
+            prog = open_progress(3)
+
+            prog.change_message('Fetching {}, branch={}'.format(remote, branch))
             try:
-                repo.git.pull(remote, branch)
+                repo.git.fetch(remote)
             except GitCommandError, e:
                 self.debug(e)
                 if not handled:
                     raise e
+
+            prog.change_message('Merging')
+
+            try:
+                repo.git.merge('FETCH_HEAD')
+            except GitCommandError, e:
+                self.debug(e)
+                if not handled:
+                    raise e
+
+            prog.close()
 
     def push(self, branch='master', remote='origin'):
         repo = self._repo

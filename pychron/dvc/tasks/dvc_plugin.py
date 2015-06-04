@@ -27,12 +27,28 @@ from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 
 
 class DVCPlugin(BaseTaskPlugin):
+    _fetched = False
+
+    def start(self):
+        super(DVCPlugin, self).start()
+
+        dvc = self.application.get_service(DVC)
+        if not self._fetched:
+            dvc.meta_repo.pull()
+
+    # def stop(self):
+    #     dvc = self.application.get_service(DVC)
+    #     prog = open_progress(n=2)
+    #     prog.change_message('Pushing changes to meta repository')
+    #     dvc.meta_repo.cmd('push', '-u','origin','master')
+
     def test_dvc_fetch_meta(self):
         dvc = self.application.get_service(DVC)
-        dvc.fetch_meta()
+        # dvc.fetch_meta()
+        dvc.meta_repo.pull()
+        self._fetched = True
 
     def _service_offers_default(self):
-
         so = self.service_offer_factory(protocol=DVCPersister,
                                         factory=DVCPersister,
                                         properties={'dvc': self.dvc_factory()}
@@ -84,6 +100,3 @@ class DVCPlugin(BaseTaskPlugin):
         #         repo.commit('added {}'.format(db.path))
 
 # ============= EOF =============================================
-
-
-

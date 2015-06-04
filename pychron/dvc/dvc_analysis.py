@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 import base64
+from binascii import unhexlify
 import os
 import random
 import time
@@ -122,21 +123,50 @@ class DVCAnalysis(Analysis):
                 pass
 
     def load_raw_data(self, keys):
-        with open(self.path, 'r') as rfile:
+        def format_blob(blob):
+            return unhexlify(base64.b64decode(blob))
+
+        path = analysis_path(self.record_id, self.experiment_id, modifier='.data')
+        with open(path, 'r') as rfile:
             yd = yaml.load(rfile)
+            signals = yd['signals']
+            baselines = yd['baselines']
+            sniffs = yd['sniffs']
 
-            isos = yd['isotopes']
-            dets = yd['detectors']
-            for k in keys:
-                if k in isos:
-                    if k in self.isotopes:
-                        iso = self.isotopes[k]
+            for sd in signals:
+                isok = sd['isotope']
+                if isok not in keys:
+                    continue
+                iso = self.isotopes.get(isok)
+                if iso:
+                    iso.unpack_data(format_blob(sd['blob']))
+                    # iso.unpack_data(sd['blob'])#base64.b64decode(sd['blob']))
+                    det = sd['detector']
+                    bd = next((b for b in baselines if b['detector'] == det), None)
+                    if bd:
+                        iso.baseline.unpack_data(format_blob(bd['blob']))
 
-                        signal = isos[k]['signal']
-                        baseline = dets[isos[k]['detector']]['baseline']['signal']
+            for sn in sniffs:
+                isok = sn['isotope']
+                if isok not in keys:
+                    continue
 
-                        iso.unpack_data(base64.b64decode(signal))
-                        iso.baseline.unpack_data(base64.b64decode(baseline))
+                iso = self.isotopes.get(isok)
+                if iso:
+                    iso.sniff.unpack_data(format_blob(sn['blob']))
+
+                    # isos = yd['isotopes']
+                    # dets = yd['detectors']
+                    # for k in keys:
+                    #     if k in isos:
+                    #         if k in self.isotopes:
+                    #             iso = self.isotopes[k]
+                    #
+                    #             signal = isos[k]['signal']
+                    #             baseline = dets[isos[k]['detector']]['baseline']['signal']
+                    #
+                    #             iso.unpack_data(base64.b64decode(signal))
+                    #             iso.baseline.unpack_data(base64.b64decode(baseline))
 
     def set_production(self, prod, r):
         self.production_name = prod

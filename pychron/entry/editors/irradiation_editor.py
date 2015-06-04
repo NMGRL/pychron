@@ -118,6 +118,7 @@ class IrradiationEditor(Loggable):
             # irrad.chronology.chronology = self.chronology.make_blob()
             # print self.chronology.get_doses()
             self.dvc.update_chronology(self.name, self.chronology.get_doses())
+
         return self.name
 
     def _add_irradiation(self):

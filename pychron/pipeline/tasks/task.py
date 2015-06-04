@@ -198,7 +198,6 @@ class PipelineTask(BaseBrowserTask):
     def _handle_recall(self, new):
         self.recall(new)
 
-
     def _prompt_for_save(self):
         ret = True
         ps = self.engine.get_projects()

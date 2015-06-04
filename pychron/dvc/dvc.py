@@ -74,16 +74,19 @@ class DVC(Loggable):
             # self._defaults()
 
     def initialize(self):
+        mrepo = self.meta_repo
+        root = os.path.join(paths.dvc_dir, self.meta_repo_name)
+        if os.path.isdir(os.path.join(root, '.git')):
+            mrepo.open_repo(root)
+        else:
+            url = 'https://github.com/{}/{}.git'.format(self.organization, self.meta_repo_name)
+            path = os.path.join(paths.dvc_dir, self.meta_repo_name)
+            self.meta_repo.clone(url, path)
 
-        mr = 'https://github.com/{}/{}.git'.format(self.organization,
-                                                   self.meta_repo_name)
-        self.meta_repo.create_remote(mr, force=True)
-
-        self.synchronize()
-        self._defaults()
-
-    def fetch_meta(self):
-        self.meta_repo.fetch()
+        # self.synchronize()
+        if self.db.connect():
+            self._defaults()
+            return True
 
     # database
     # analysis processing
@@ -176,8 +179,8 @@ class DVC(Loggable):
         else:
             self.pulled_experiments = exps
 
-        progress_iterator(exps,
-                          self._load_repository, threshold=1)
+        if exps:
+            progress_iterator(exps, self._load_repository, threshold=1)
 
         return progress_loader(records, self._make_record, threshold=1)
 
@@ -214,48 +217,21 @@ class DVC(Loggable):
         with self.db.session_ctx():
             self.db.add_irradiation_level(*args)
 
-            # adders db and repo
-            # def add_project(self, name):
-            #     org = Organization(self.project_root, usr=self.github_user, pwd=self.github_password)
-            #
-            #     # check if project is available
-            #     if name in org.repos:
-            #         self.warning_dialog('Project "{}" already exists'.format(name))
-            #         return
-            #
-            #     with self.db.session_ctx():
-            #         self.db.add_project(name)
-            #
-            #     p = os.path.join(paths.experiment_dataset_dir, name)
-            #     os.mkdir(p)
-            #     repo = Repo.init(p)
-
-            # add project to github
-            # org.create_repo(name, auto_init=True)
-
-            # setup remotes
-            # url = 'https://github.com/{}/'.format(self.repo_root, name)
-            # repo.create_remote('origin', url)
-
-            # return True
-
     def add_experiment(self, identifier):
         org = Organization(self.organization, usr=self.github_user, pwd=self.github_password)
         if identifier in org.repos:
             self.warning_dialog('Experiment "{}" already exists'.format(identifier))
         else:
-            self.info('Creating repository. {}'.format(identifier))
-            org.create_repo(identifier)
-
             root = os.path.join(paths.experiment_dataset_dir, identifier)
+
             if os.path.isdir(root):
                 self.warning_dialog('{} already exists.'.format(root))
             else:
-                os.mkdir(root)
-                repo = Repo.init(root)
+                self.info('Creating repository. {}'.format(identifier))
+                org.create_repo(identifier, auto_init=True)
+
                 url = '{}/{}/{}.git'.format(paths.git_base_origin, self.organization, identifier)
-                self.info('Setting remote origin={}'.format(url))
-                repo.create_remote('origin', url)
+                Repo.clone_from(url, root)
 
     def add_irradiation(self, name, doses=None):
         with self.db.session_ctx():
@@ -268,6 +244,7 @@ class DVC(Loggable):
         self.meta_repo.add_irradiation(name)
         self.meta_repo.add_chronology(name, doses)
         self.meta_repo.commit('added irradiation {}'.format(name))
+        self.meta_repo.push()
 
         self.add_experiment(name)
 
@@ -305,9 +282,13 @@ class DVC(Loggable):
         3. pull changes from origin
 
         """
+        url = 'https://github.com/{}/{}.git'.format(self.organization, name)
         repo = self._get_experiment_repo(name)
-        repo.create_remote('https://github.com/{}/{}.git'.format(self.organization, name))
-        repo.pull()
+        if os.path.isdir(os.path.join(paths.experiment_dataset_dir, name, '.git')):
+            repo.pull()
+        else:
+            repo.clone(url)
+
         return True
 
     def add_experiment_association(self, runspec, expid):
@@ -354,7 +335,8 @@ class DVC(Loggable):
         if prog:
             prog.change_message('Loading analysis {}. {}/{}'.format(record.record_id, i, n))
 
-        if not record.experiment_id:
+        expid = record.experiment_id
+        if not expid:
             exps = record.experiment_ids
             self.debug('Analysis {} is associated multiple experiments '
                        '{}'.format(record.record_id, ','.join(exps)))
@@ -411,9 +393,6 @@ class DVC(Loggable):
 
     def _defaults(self):
         # self.db.create_all(Base.metadata)
-
-        self.db.connect()
-
         with self.db.session_ctx():
             for tag, func in (('irradiation holders', self._add_default_irradiation_holders),
                               ('productions', self._add_default_irradiation_productions),

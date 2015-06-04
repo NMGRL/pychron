@@ -80,9 +80,9 @@ class DVCPersister(BasePersister):
             self.info('pulling changes from project repo: {}'.format(project))
             self.experiment_repo.pull()
 
-        if sync:
-            self.info('synchronize dvc')
-            self.dvc.synchronize()
+        # if sync:
+        #     self.info('synchronize dvc')
+            # self.dvc.synchronize()
             # self.meta_repo = GitRepoManager()
             # self.meta_repo.open_repo(paths.meta_dir)
             # self.meta_repo.pull()

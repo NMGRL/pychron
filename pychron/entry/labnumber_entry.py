@@ -733,7 +733,7 @@ THIS CHANGE CANNOT BE UNDONE')
         new_irrad = irrad.add()
         if new_irrad:
             self.irradiation = new_irrad
-            self.updated = True
+            self.updated = 'Irradiation'
 
     def _edit_irradiation_button_fired(self):
         irrad = self._get_irradiation_editor(name=self.irradiation)
@@ -741,7 +741,7 @@ THIS CHANGE CANNOT BE UNDONE')
         new_irrad = irrad.edit()
         if new_irrad:
             self.irradiation = new_irrad
-        self.updated = True
+        self.updated = 'Irradiation'
 
     def _edit_level_button_fired(self):
         editor = self._get_level_editor(name=self.level,
@@ -750,7 +750,7 @@ THIS CHANGE CANNOT BE UNDONE')
         if new_level:
             self.level = new_level
 
-        self.updated = True
+        self.updated = 'Level'
         self._level_changed(self.level)
 
     def _add_level_button_fired(self):
@@ -758,7 +758,11 @@ THIS CHANGE CANNOT BE UNDONE')
         new_level = editor.add()
         if new_level:
             self.level = new_level
-            self.updated = True
+            self.updated = 'Level'
+
+    def _updated_fired(self, new):
+        self.info('Pushing changes to meta repo. {} changed'.format(new))
+        self.dvc.meta_repo.push()
 
     def _irradiation_changed(self):
         # super(LabnumberEntry, self)._irradiation_changed()

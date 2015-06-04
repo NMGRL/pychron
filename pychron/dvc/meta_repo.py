@@ -25,7 +25,6 @@ from uncertainties import ufloat
 from pychron.core.helpers.datetime_tools import ISO_FORMAT_STR
 from pychron.core.helpers.filetools import list_directory2, ilist_directory2, add_extension
 from pychron.git_archive.repo_manager import GitRepoManager
-from pychron.paths import paths
 from pychron.pychron_constants import INTERFERENCE_KEYS, RATIO_KEYS
 
 
@@ -177,13 +176,13 @@ cached = Cached
 class MetaRepo(GitRepoManager):
     clear_cache = Bool
 
-    def __init__(self, path=None, *args, **kw):
-        super(MetaRepo, self).__init__(*args, **kw)
-        if path is None:
-            path = paths.meta_dir
+    # def __init__(self, path=None, *args, **kw):
+    #     super(MetaRepo, self).__init__(*args, **kw)
+    #     if path is None:
+    #         path = paths.meta_dir
+    #
+    #     self.path = path
 
-        self.path = path
-        self.open_repo(self.path)
 
     def update_script(self, name, path_or_blob):
         self._update_text('scripts', name, path_or_blob)
@@ -270,9 +269,14 @@ class MetaRepo(GitRepoManager):
             with open(p, 'w') as wfile:
                 wfile.write(path_or_txt)
 
-    def update_chronology(self, name, doses):
+    def update_chronology(self, name, doses, commit=True, push=True):
         p = self._chron_name(name)
         Chronology.dump(p, doses)
+        self.meta_repo.add(p, commit=False)
+        if commit:
+            self.meta_repo.commit('Updated {} chronology'.format(name))
+            if push:
+                self.meta_repo.push()
 
     def get_irradiation_holder_names(self):
         return list_directory2(os.path.join(self.path, 'irradiation_holders'),
