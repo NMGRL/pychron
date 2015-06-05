@@ -174,15 +174,7 @@ class StreamGraph(Graph):
 
         dl = self.data_limits[plotid]
 
-        lim = -dl
-        new_xd = hstack((xd[lim:], [nx]))
-        new_yd = hstack((yd[lim:], [float(y)]))
 
-        plot.data.set_data(xn, new_xd)
-        plot.data.set_data(yn, new_yd)
-
-        self.cur_max[plotid] = max(self.cur_max[plotid], max(new_yd))
-        self.cur_min[plotid] = min(self.cur_min[plotid], min(new_yd))
         if self.force_track_x_flag or (track_x and (self.track_x_min or self.track_x_max)):
             self._set_xlimits(nx, plotid)
 
@@ -202,6 +194,16 @@ class StreamGraph(Graph):
                               min_=mi,
                               pad='0.1',
                               plotid=plotid)
+        lim = -dl
+
+        new_xd = hstack((xd[lim:], [nx]))
+        new_yd = hstack((yd[lim:], [float(y)]))
+
+        plot.data.set_data(xn, new_xd)
+        plot.data.set_data(yn, new_yd)
+
+        self.cur_max[plotid] = max(self.cur_max[plotid], max(new_yd))
+        self.cur_min[plotid] = min(self.cur_min[plotid], min(new_yd))
 
     def record_multiple(self, ys, plotid=0, track_y=True):
         tg = self.global_time_generator
