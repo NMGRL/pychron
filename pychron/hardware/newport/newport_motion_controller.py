@@ -291,12 +291,12 @@ ABLE TO USE THE HARDWARE JOYSTICK
                          immediate=False, **kw):
         args = (key, value, block, mode, velocity, update, kw)
         if block or immediate:
-            self._single_axis_move(args)
+            self._single_axis_move(*args)
         else:
             self.debug('add {} to consume queue'.format(args))
             self.add_consumable((self._single_axis_move, args))
 
-    def _single_axis_move(self, args):
+    def _single_axis_move(self, *args):
         key, value, block, mode, velocity, update, kw = args
         self.debug('single axis move {}'.format(args))
         x = None
