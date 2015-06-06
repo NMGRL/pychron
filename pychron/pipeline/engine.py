@@ -24,7 +24,7 @@ from pychron.core.helpers.filetools import list_directory2, add_extension
 from pychron.paths import paths
 from pychron.pipeline.nodes import FindReferencesNode
 from pychron.pipeline.nodes.base import BaseNode
-from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode
+from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode, DataNode
 from pychron.loggable import Loggable
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, FigureNode, SeriesNode
 from pychron.pipeline.nodes.filter import FilterNode
@@ -99,6 +99,7 @@ class PipelineEngine(Loggable):
     browser_model = Instance('pychron.envisage.browser.base_browser_model.BaseBrowserModel')
     pipeline = Instance(Pipeline, ())
     selected = Instance(BaseNode)
+    dclicked = Event
 
     unknowns = List
     references = List
@@ -462,6 +463,10 @@ class PipelineEngine(Loggable):
             if new.editor:
                 self.unknowns = new.editor.analyses
                 self.task.activate_editor(new.editor)
+
+    def _dclicked_changed(self, new):
+        if isinstance(new, DataNode):
+            self.configure(new)
 
                 # self.update_needed = True
 
