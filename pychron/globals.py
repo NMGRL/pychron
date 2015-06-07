@@ -78,6 +78,7 @@ class Globals(object):
     use_logger_display = True
     use_warning_display = True
     recall_debug = False
+    pipeline_debug = False
 
     dev_confirm_exit = True
     username = 'root'
@@ -104,6 +105,7 @@ class Globals(object):
                            ('experiment_debug', to_bool),
                            ('experiment_savedb', to_bool),
                            ('recall_debug', to_bool),
+                           ('pipeline_debug', to_bool),
                            ('figure_debug', to_bool),
                            ('communication_simulation', to_bool),
                            ('dashboard_simulation', to_bool),

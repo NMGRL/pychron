@@ -20,6 +20,10 @@ from pyface.tasks.action.task_action import TaskAction
 # ============= local library imports  ==========================
 from pychron.envisage.resources import icon
 
+class GitRollbackAction(TaskAction):
+    name = 'Git Undo'
+    method = 'git_rollback'
+
 
 class SavePipelineTemplateAction(TaskAction):
     name = 'Save Pipeline Template'

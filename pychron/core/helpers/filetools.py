@@ -23,11 +23,14 @@ import shutil
 import re
 
 
-def subdirize(root, name, n=1, l=2):
+def subdirize(root, name, n=1, l=2, mode='r'):
     for i in xrange(n):
         n, name = name[:l], name[l:]
         path = os.path.join(root, n)
         if not os.path.isdir(path):
+            if mode == 'r':
+                return
+
             os.mkdir(path)
 
         root = path
@@ -407,7 +410,6 @@ def get_path(root, name, extensions):
                 # p = os.path.join(root, add_extension(name, ext))
                 # if os.path.isfile(p):
                 #     return p
-
 
 # if __name__ == '__main__':
 #     name = 'b60a449a-0f15-4554-a517-e0b421aaca97.h5'

@@ -28,7 +28,7 @@ from datetime import datetime
 from uncertainties import std_dev
 from uncertainties import nominal_value
 # ============= local library imports  ==========================
-from pychron.dvc.dvc_analysis import META_ATTRS, EXTRACTION_ATTRS, analysis_path
+from pychron.dvc.dvc_analysis import META_ATTRS, EXTRACTION_ATTRS, analysis_path, PATH_MODIFIERS
 from pychron.experiment.automated_run.persistence import BasePersister
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths
@@ -43,7 +43,6 @@ def format_project(project):
     return project.replace('/', '_').replace('\\', '_')
 
 
-PATH_MODIFIERS = (None, '.data', 'changeable', 'peakcenter', 'extraction', 'monitor')
 
 
 class DVCPersister(BasePersister):
@@ -54,13 +53,13 @@ class DVCPersister(BasePersister):
     #     super(DVCPersister, self).__init__(*args, **kw)
     #     self.dvc = self.application.get_service('pychron.dvc.dvc.DVC')
 
-    def per_spec_save(self, pr, commit=False):
+    def per_spec_save(self, pr, commit=False, msg_prefix=None):
         self.per_spec = pr
         self.initialize(False)
         self.pre_extraction_save()
         self.pre_measurement_save()
         self.post_extraction_save('', '', None)
-        self.post_measurement_save(commit=commit)
+        self.post_measurement_save(commit=commit, msg_prefix=msg_prefix)
 
     def initialize(self, sync=True):
         """
@@ -146,7 +145,7 @@ class DVCPersister(BasePersister):
                'data': ''.join([struct.pack(fmt, di) for di in zip(xx, yy)])}
         ydump(obj, p)
 
-    def post_measurement_save(self, commit=True):
+    def post_measurement_save(self, commit=True, msg_prefix='Collection'):
         """
         save
             - analysis.yaml
@@ -174,18 +173,11 @@ class DVCPersister(BasePersister):
         self._save_monitor()
 
         # stage files
-
         paths = [spec_path, ] + [self._make_path(modifier=m) for m in PATH_MODIFIERS]
-        # for p in (spec_path, self._make_path(),
-        #
-        #           self._make_path(modifier='.data'),
-        #           self._make_path(modifier='changeable'),
-        #           self._make_path(modifier='peakcenter'),
-        #           self._make_path(modifier='extraction'),
-        #           self._make_path(modifier='monitor')):
+
         for p in paths:
             if os.path.isfile(p):
-                self.experiment_repo.add(p)
+                self.experiment_repo.add(p, msg_prefix=msg_prefix)
             else:
                 self.debug('not at valid file {}'.format(p))
 
@@ -207,7 +199,14 @@ class DVCPersister(BasePersister):
         d['timestamp'] = timestamp
         dvc = self.dvc
         with dvc.session_ctx():
-            an = dvc.add_analysis(rs.experiment_id, **d)
+            an = dvc.add_analysis(**d)
+
+            # all associations are handled by the ExperimentExecutor._retroactive_experiment_identifiers
+
+            # # special associations are handled by the ExperimentExecutor._retroactive_experiment_identifiers
+            # if not is_special(rs.runid):
+            #     dvc.add_experiment_association(rs.experiment_id, an)
+
             pos = dvc.get_irradiation_position(rs.irradiation, rs.irradiation_level, rs.irradiation_position)
 
             an.irradiation_position = pos
@@ -266,15 +265,15 @@ class DVCPersister(BasePersister):
         endianess = '>'
         for iso in self.per_spec.arar_age.isotopes.values():
 
-            sblob = base64.b64encode(iso.pack(endianess))
-            snblob = base64.b64encode(iso.sniff.pack(endianess))
+            sblob = base64.b64encode(iso.pack(endianess, as_hex=False))
+            snblob = base64.b64encode(iso.sniff.pack(endianess, as_hex=False))
             signals.append({'isotope': iso.name, 'detector': iso.detector, 'blob': sblob})
             sniffs.append({'isotope': iso.name, 'detector': iso.detector, 'blob': snblob})
 
             isos[iso.name] = {'detector': iso.detector}
 
             if iso.detector not in dets:
-                bblob = base64.b64encode(iso.baseline.pack(endianess))
+                bblob = base64.b64encode(iso.baseline.pack(endianess, as_hex=False))
                 baselines.append({'detector': iso.detector, 'blob': bblob})
                 # baselines[iso.detector] = bblob
                 dets[iso.detector] = {'deflection': self.per_spec.defl_dict.get(iso.detector),
@@ -337,7 +336,7 @@ class DVCPersister(BasePersister):
     def _make_path(self, modifier=None, extension='.yaml'):
         runid = self.per_spec.run_spec.runid
         experiment_id = self.per_spec.run_spec.experiment_id
-        return analysis_path(runid, experiment_id, modifier, extension)
+        return analysis_path(runid, experiment_id, modifier, extension, mode='w')
 
         # if prefix is None:
         #     root = self.experiment_repo.path

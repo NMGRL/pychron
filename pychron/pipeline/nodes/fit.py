@@ -15,10 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Bool, List
+from itertools import groupby
+
+from traits.api import Bool, List, HasTraits, Str, Float
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.confirmation import confirmation_dialog
+from pychron.core.helpers.isotope_utils import sort_isotopes
+from pychron.pipeline.editors.results_editor import IsoEvolutionResultsEditor
 from pychron.pipeline.nodes.figure import FigureNode
 from pychron.processing.plotter_options_manager import IsotopeEvolutionOptionsManager, BlanksOptionsManager, \
     ICFactorOptionsManager
@@ -98,6 +103,25 @@ class FitICFactorNode(FitReferencesNode):
         self.plotter_options.set_aux_plots(fits)
 
 
+class IsoEvoResult(HasTraits):
+    record_id = Str
+    isotope = Str
+    fit = Str
+    intercept_value = Float
+    intercept_error = Float
+    regression_str = Str
+    identifier = Str
+    # isotopes = List
+    # fits = List
+
+    # def __init__(self, fits, *args, **kw):
+    #     super(IsoEvoResult, self).__init__(*args, **kw)
+        # self.isotopes = [f.name for f in fits]
+        # for f in fits:
+        #     setattr(self, '{}Fit'.format(f.name), f.fit)
+        # self.fits = [f.fit for f in fits]
+
+
 class FitIsotopeEvolutionNode(FitNode):
     editor_klass = 'pychron.processing.plot.editors.isotope_evolution_editor,' \
                    'IsotopeEvolutionEditor'
@@ -109,6 +133,8 @@ class FitIsotopeEvolutionNode(FitNode):
         # graph_ids = [(ai.uuid, idx) for idx, ai in enumerate(state.unknowns)]
         super(FitIsotopeEvolutionNode, self).run(state)
 
+        fs = []
+
         for idx, ai in enumerate(state.unknowns):
             # ai.graph_id = idx
             po = self.plotter_options
@@ -118,6 +144,18 @@ class FitIsotopeEvolutionNode(FitNode):
 
             fits = [pi for pi in po.get_saveable_aux_plots()]
             ai.set_fits(fits)
+            for f in fits:
+                k = f.name
+                iso = ai.isotopes[k]
+                fs.append(IsoEvoResult(record_id=ai.record_id,
+                                       identifier=ai.identifier,
+                                       intercept_value=iso.value,
+                                       intercept_error=iso.error,
+                                       regression_str=iso.regressor.make_equation(),
+                                       fit=f.fit,
+                                       isotope=k))
+
+            # fs.append(IsoEvoResult(fits, record_id=ai.record_id, identifier=ai.identifier))
 
         self.editor.analysis_groups = [(ai,) for ai in state.unknowns]
         for ai in state.unknowns:
@@ -127,5 +165,16 @@ class FitIsotopeEvolutionNode(FitNode):
         self.name = '{} Fit IsoEvo'.format(self.name)
         if confirmation_dialog('Would you like to review the iso fits before saving?'):
             state.veto = self
+
+        if fs:
+            k = lambda x: x.isotope
+            # c = lambda x,y:
+            # fs = sorted(fs, key=k, cmp=c)
+            fs = sort_isotopes(fs, key=k)
+            fs = [a for _, gs in groupby(fs, key=k)
+                        for x in (gs, (IsoEvoResult(),))
+                            for a in x][:-1]
+            e = IsoEvolutionResultsEditor(fs)
+            state.editors.append(e)
 
 # ============= EOF =============================================

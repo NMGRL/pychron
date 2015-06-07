@@ -28,11 +28,10 @@ import os
 from pychron.core.helpers.filetools import remove_extension
 from pychron.core.progress import progress_loader, progress_iterator
 from pychron.dvc.defaults import TRIGA, HOLDER_24_SPOKES, LASER221, LASER65
-from pychron.dvc.dvc_analysis import DVCAnalysis, experiment_path, analysis_path
+from pychron.dvc.dvc_analysis import DVCAnalysis, experiment_path, analysis_path, PATH_MODIFIERS
 from pychron.dvc.dvc_database import DVCDatabase
-from pychron.dvc.dvc_persister import PATH_MODIFIERS
 from pychron.dvc.meta_repo import MetaRepo
-from pychron.git_archive.repo_manager import GitRepoManager
+from pychron.git_archive.repo_manager import GitRepoManager, format_date
 from pychron.github import Organization
 from pychron.loggable import Loggable
 from pychron.paths import paths
@@ -104,11 +103,16 @@ class DVC(Loggable):
         key = lambda x: x.experiment_id
         ans = sorted(ans, key=key)
         mod_experiments = []
-        for exp, ais in groupby(ans, key=key):
-            ais = map(analysis_path, ais)
-            if self.experiment_add_analyses(exp, ais):
-                self.experiment_commit(exp, msg)
-                mod_experiments.append(exp)
+        for expid, ais in groupby(ans, key=key):
+            ais = map(lambda x: analysis_path(x.record_id, x.experiment_id, modifier='changeable'), ais)
+            if self.experiment_add_analyses(expid, ais):
+                self.experiment_commit(expid, msg)
+                mod_experiments.append(expid)
+
+        #     ais = map(analysis_path, ais)
+        #     if self.experiment_add_analyses(exp, ais):
+        #         self.experiment_commit(exp, msg)
+        #         mod_experiments.append(exp)
         return mod_experiments
 
     def experiment_has_staged(self, ps):
@@ -132,11 +136,11 @@ class DVC(Loggable):
             repo.open_repo(pp)
             repo.push()
 
-    def experiment_add_analyses(self, project, paths):
+    def experiment_add_analyses(self, experiment_id, paths):
         if not hasattr(paths, '__iter__'):
             paths = (paths,)
 
-        repo = self._get_experiment_repo(project)
+        repo = self._get_experiment_repo(experiment_id)
 
         changes = repo.get_local_changes()
         changed = False
@@ -291,26 +295,47 @@ class DVC(Loggable):
 
         return True
 
-    def add_experiment_association(self, runspec, expid):
+    def add_experiment_association(self, expid, runspec):
         db = self.db
         with db.session_ctx():
-            exps = [expid[0] for expid, _ in db.get_associated_experiments(runspec.identifier)]
-            if expid in exps:
-                return
+            dban = db.get_analysis_uuid(runspec.uuid)
+            for e in dban.experiment_associations:
+                if e.experimentName == expid:
+                    break
             else:
-                dban = db.get_analysis_uuid(runspec.uuid)
                 db.add_experiment_association(expid, dban)
 
+            src_expid = runspec.experiment_id
+            if src_expid != expid:
                 repo = self._get_experiment_repo(expid)
 
-                src_expid = runspec.experiment_id
                 for m in PATH_MODIFIERS:
                     src = analysis_path(runspec.record_id, src_expid, modifier=m)
-                    dest = analysis_path(runspec.record_id, expid, modifier=m)
+                    dest = analysis_path(runspec.record_id, expid, modifier=m, mode='w')
 
                     shutil.copyfile(src, dest)
                     repo.add(dest, commit=False)
                 repo.commit('added experiment association')
+
+    def rollback_experiment_repo(self, expid):
+        repo = self._get_experiment_repo(expid)
+
+        cpaths = repo.get_local_changes()
+        # cover changed paths to a list of analyses
+
+        # select paths to revert
+        rpaths = ('.', )
+        repo.cmd('checkout', '--', ' '.join(rpaths))
+        for p in rpaths:
+            self.debug('revert changes for {}'.format(p))
+
+        head = repo.get_head(hexsha=False)
+        msg = 'Changes to {} reverted to Commit: {}\n' \
+              'Date: {}\n' \
+              'Message: {}'.format(expid, head.hexsha[:10],
+                                  format_date(head.committed_date),
+                                  head.message)
+        self.information_dialog(msg)
 
     # private
     def __getattr__(self, item):

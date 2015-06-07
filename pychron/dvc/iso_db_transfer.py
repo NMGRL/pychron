@@ -24,6 +24,7 @@ from traits.api import Instance
 
 
 
+
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================
@@ -360,7 +361,7 @@ class IsoDBTransfer(Loggable):
                              arar_age=an,
                              positions=[p.position for p in extraction.positions])
 
-        self.persister.per_spec_save(ps, commit=False)
+        self.persister.per_spec_save(ps, commit=False, msg_prefix='Database Transfer')
 
         # self._save_an_to_db(dest, dban, obj)
         # # op = os.path.join(proot, add_extension(dban.record_id, '.yaml'))

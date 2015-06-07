@@ -1,11 +1,11 @@
 # ===============================================================================
-# Copyright 2013 Jake Ross
+# Copyright 2015 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,20 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.envisage.tasks.base_editor import BaseTraitsEditor
-
-
-class BaseUnknownsEditor(BaseTraitsEditor):
-    pass
-    # refresh_unknowns_table = Event
-    # save_event=Event
-    # auto_group=True
-    # recall_event = Event
-
 
 
 # ============= EOF =============================================
+
+
 

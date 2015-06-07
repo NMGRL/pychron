@@ -33,6 +33,9 @@ from pychron.git_archive.diff_view import DiffView, DiffModel
 from pychron.loggable import Loggable
 from pychron.git_archive.commit import Commit
 
+def format_date(d):
+    return time.strftime("%m/%d/%Y %H:%M", time.gmtime(d))
+
 
 class GitRepoManager(Loggable):
     """
@@ -513,7 +516,7 @@ class GitRepoManager(Loggable):
             cx = Commit(message=obj.message,
                         hexsha=obj.hexsha,
                         name=p,
-                        date=time.strftime("%m/%d/%Y %H:%M", time.gmtime(obj.committed_date)))
+                        date=format_date(obj.committed_date))
             return cx
 
         return [factory(ci) for ci in hexshas]

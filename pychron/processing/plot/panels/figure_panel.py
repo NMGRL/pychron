@@ -31,7 +31,7 @@ from pychron.processing.analysis_graph import AnalysisStackedGraph
 
 class FigurePanel(HasTraits):
     figures = List
-    graph = Any
+    # graph = Any
     analyses = Any
     plot_options = Any
     _index_attr = ''
@@ -162,7 +162,7 @@ class FigurePanel(HasTraits):
                 for i in range(len(plots)):
                     fig.update_options_limits(i)
 
-        self.graph = g
+        # self.graph = g
         return g.plotcontainer
 
         # ============= EOF =============================================

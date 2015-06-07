@@ -36,6 +36,7 @@ class EngineState(HasTraits):
     udetectors = Property(depends_on='unknowns[]')
     rdetectors = Property(depends_on='references[]')
     union_detectors = Property(depends_on='udetectors, rdetectors')
+    iso_evo_results = List
 
     modified_projects = Set
     modified = False

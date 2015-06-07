@@ -102,7 +102,6 @@ class AnalysisTbl(Base, BaseMixin):
         iv.identifier = self.irradiation_position.identifier
         iv.labnumber = iv.identifier
         iv.experiment_ids = es = [e.experimentName for e in self.experiment_associations]
-        print es
         if len(es) == 1:
             iv.experiment_id = es[0]
 

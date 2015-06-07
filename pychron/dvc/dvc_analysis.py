@@ -44,10 +44,12 @@ META_ATTRS = ('analysis_type', 'uuid', 'sample', 'project', 'material', 'aliquot
               'username', 'queue_conditionals_name', 'identifier',
               'experiment_id')
 
+PATH_MODIFIERS = (None, '.data', 'changeable', 'peakcenter', 'extraction', 'monitor')
 
-def analysis_path(runid, experiment, modifier=None, extension='.yaml'):
+
+def analysis_path(runid, experiment, modifier=None, extension='.yaml', mode='r'):
     root = os.path.join(paths.experiment_dataset_dir, experiment)
-    root, tail = subdirize(root, runid, l=3)
+    root, tail = subdirize(root, runid, l=3, mode=mode)
 
     # head, tail = runid[:3], runid[3:]
     # # if modifier:
@@ -59,6 +61,9 @@ def analysis_path(runid, experiment, modifier=None, extension='.yaml'):
     if modifier:
         d = os.path.join(root, modifier)
         if not os.path.isdir(d):
+            if mode == 'r':
+                return
+
             os.mkdir(d)
 
         root = d
@@ -80,7 +85,7 @@ class DVCAnalysis(Analysis):
     def __init__(self, record_id, experiment_id, *args, **kw):
         super(DVCAnalysis, self).__init__(*args, **kw)
 
-        self.path = path = analysis_path(record_id, experiment_id)
+        path = analysis_path(record_id, experiment_id)
         self.experiment_id = experiment_id
         root = os.path.dirname(path)
         bname = os.path.basename(path)
@@ -122,11 +127,16 @@ class DVCAnalysis(Analysis):
             except KeyError:
                 pass
 
+        with open(analysis_path(record_id, experiment_id, modifier='changeable')) as rfile:
+            yd = yaml.load(rfile)
+            self._set_changeables(yd)
+
     def load_raw_data(self, keys):
         def format_blob(blob):
             return unhexlify(base64.b64decode(blob))
 
-        path = analysis_path(self.record_id, self.experiment_id, modifier='.data')
+        path = self._analysis_path(modifier='.data')
+        # path = analysis_path(self.record_id, self.experiment_id, modifier='.data')
         with open(path, 'r') as rfile:
             yd = yaml.load(rfile)
             signals = yd['signals']
@@ -206,7 +216,7 @@ class DVCAnalysis(Analysis):
             iso.set_fit(fi)
 
     def dump_fits(self, keys):
-        yd = self._get_yd()
+        yd, path = self._get_yd('changeable')
 
         sisos = self.isotopes
         isos = yd['isotopes']
@@ -216,15 +226,11 @@ class DVCAnalysis(Analysis):
                 siso = sisos[k]
                 iso['fit'] = siso.fit
 
-                # value, error = siso.get_intercept()
-                # print k, siso.value
-                iso['raw_intercept']['value'] = float(siso.value)
-                iso['raw_intercept']['error'] = float(siso.error)
-
-        self._dump(yd)
+                iso['raw_intercept'] = dict(value=float(siso.value), error=float(siso.error))
+        self._dump(yd, path)
 
     def dump_blanks(self, keys, refs):
-        yd = self._get_yd()
+        yd, path = self._get_yd('changeable')
         sisos = self.isotopes
         isos = yd['isotopes']
         # print keys
@@ -242,10 +248,10 @@ class DVCAnalysis(Analysis):
                     blank['references'] = self._make_ref_list(refs)
                     iso['blank'] = blank
 
-        self._dump(yd)
+        self._dump(yd, path)
 
     def dump_icfactors(self, dkeys, fits, refs):
-        yd = self._get_yd()
+        yd, path = self._get_yd('changeable')
 
         dets = yd.get('detectors', {})
         for dk, fi in zip(dkeys, fits):
@@ -266,16 +272,53 @@ class DVCAnalysis(Analysis):
             dets[dk] = det
 
         yd['detectors'] = dets
-        self._dump(yd)
+        self._dump(yd, path)
 
     # private
+    def _set_changeables(self, yd):
+        isos = yd.get('isotopes')
+        if not isos:
+            return
+
+        dets = yd.get('detectors')
+        if not dets:
+            return
+
+        for k, v in isos.items():
+            iso = self.isotopes.get(k)
+            if iso:
+                iso.set_fit(v.get('fit'), notify=False)
+
+                b = v.get('blank')
+                if b:
+                    iso.blank.value = b['value']
+                    iso.blank.error = b['error']
+
+                r = v.get('raw_intercept')
+                if r:
+                    iso.value = r['value']
+                    iso.error = r['error']
+
+                det = dets.get(iso.detector)
+                if det:
+                    bs = det['baseline']
+                    if bs:
+                        iso.baseline.value = bs['value']
+                        iso.baseline.error = bs['error']
+
+                    ic = det['ic_factor']
+                    if ic:
+                        self.set_ic_factor(iso.detector, ic['value'], ic['error'])
+
     def _make_ref_list(self, refs):
         return [{'record_id': r.record_id, 'uuid': r.uuid, 'exclude': r.temp_status} for r in refs]
 
-    def _get_yd(self):
-        with open(self.path, 'r') as rfile:
+    def _get_yd(self, modifier):
+        path = self._analysis_path(modifier=modifier)
+        # path = analysis_path(self.record_id, self.experiment_id, modifier=modifier)
+        with open(path, 'r') as rfile:
             yd = yaml.load(rfile)
-        return yd
+        return yd, path
 
     def _set_isotopes(self, yd):
         isos = yd.get('isotopes')
@@ -294,11 +337,17 @@ class DVCAnalysis(Analysis):
             # if detname not in self.deflections:
             # self.deflections[detname] = det['deflection']
 
-    def _dump(self, obj, path=None):
+    def _dump(self, obj, path=None, modifier=None):
         if path is None:
-            path = self.path
+            path = self._analysis_path(modifier)
 
         with open(path, 'w') as wfile:
             yaml.dump(obj, wfile, default_flow_style=False)
+
+    def _analysis_path(self, experiment_id=None, modifier=None, mode='r'):
+        if experiment_id is None:
+            experiment_id = self.experiment_id
+
+        return analysis_path(self.record_id, experiment_id, modifier=modifier, mode=mode)
 
 # ============= EOF =============================================

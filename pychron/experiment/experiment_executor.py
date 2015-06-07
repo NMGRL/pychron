@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from datetime import datetime
-from itertools import groupby
 
 from traits.api import Event, Button, String, Bool, Enum, \
     Property, Instance, Int, List, Any, Color, Dict, \
@@ -24,16 +22,10 @@ from traits.api import Event, Button, String, Bool, Enum, \
 from pyface.constant import CANCEL, YES, NO
 from pyface.timer.do_later import do_after
 from traits.trait_errors import TraitError
-
-
-
-
-
-
-
-
 # ============= standard library imports ========================
 from threading import Thread, Event as Flag, Lock, currentThread
+from datetime import datetime
+from itertools import groupby
 import weakref
 import time
 import os
@@ -59,12 +51,14 @@ from pychron.experiment.stats import StatsGroup
 from pychron.experiment.utilities.conditionals import test_queue_conditionals_name, SYSTEM, QUEUE, RUN, \
     CONDITIONAL_GROUP_TAGS
 from pychron.experiment.utilities.conditionals_results import reset_conditional_results
+from pychron.experiment.utilities.experiment_identifier import retroactive_experiment_identifiers
 from pychron.experiment.utilities.identifier import convert_extract_device, is_special
 from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
 from pychron.globals import globalv
 from pychron.paths import paths
 from pychron.pychron_constants import DEFAULT_INTEGRATION_TIME, LINE_STR
 from pychron.wait.wait_group import WaitGroup
+
 
 
 class ExperimentExecutor(Consoleable, PreferenceMixin):
@@ -912,6 +906,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if not ai.do_post_measurement():
             self._failed_execution_step('Post Measurement Failed')
         else:
+            self._retroactive_experiment_identifiers(ai.spec)
             return True
 
     def _failed_execution_step(self, msg):
@@ -1295,7 +1290,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             return True to stop execution loop
         """
         self.heading('Pre Run Check')
-        self._retroactive_experiment_identifiers(spec)
 
         ef = self._check_dashboard()
         if ef:
@@ -1321,17 +1315,26 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.heading('Pre Run Check Passed')
 
     def _retroactive_experiment_identifiers(self, spec):
-        if is_special(spec.identifier):
-            self._cached_runs.append(spec)
-            if self._active_experiment_identifier:
-                spec.experiment_identifier = self._active_experiment_identifier
-        else:
-            exp_id = spec.experiment_identifier
-            if self._cached_runs:
-                for c in self._cached_runs:
-                    self.datahub.maintstore.add_experiment_association(c, exp_id)
-                self._cached_runs = []
-            self._active_experiment_identifier = exp_id
+        db = self.datahub.mainstore
+        crun, expid = retroactive_experiment_identifiers(spec, self._cached_runs, self._active_experiment_identifier)
+        self._cached_runs, self._active_experiment_identifier = crun, expid
+
+        db.add_experiment_association(spec.experiment_id, spec.runid)
+        if not is_special(spec.identifier) and self._cached_runs:
+            for c in self._cached_runs:
+                db.add_experiment_association(expid, c.runid)
+            self._cached_runs = []
+        # if is_special(spec.identifier):
+        #     self._cached_runs.append(spec)
+        #     if self._active_experiment_identifier:
+        #         spec.experiment_identifier = self._active_experiment_identifier
+        # else:
+        #     exp_id = spec.experiment_identifier
+        #     if self._cached_runs:
+        #         for c in self._cached_runs:
+        #             self.datahub.maintstore.add_experiment_association(c, exp_id)
+        #         self._cached_runs = []
+        #     self._active_experiment_identifier = exp_id
 
     def _check_experiment_identifiers(self):
         db = self.datahub.mainstore.db

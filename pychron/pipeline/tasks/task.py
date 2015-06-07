@@ -24,11 +24,12 @@ from traits.api import Instance, Bool, on_trait_change
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.globals import globalv
 from pychron.paths import paths
 from pychron.pipeline.engine import PipelineEngine
 from pychron.pipeline.state import EngineState
 from pychron.pipeline.tasks.actions import RunAction, SavePipelineTemplateAction, ResumeAction, ResetAction, \
-    ConfigureRecallAction
+    ConfigureRecallAction, GitRollbackAction
 from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane
 from pychron.envisage.browser.browser_task import BaseBrowserTask
 
@@ -48,7 +49,7 @@ class PipelineTask(BaseBrowserTask):
                           ResetAction(),
                           ConfigureRecallAction(),
                           SavePipelineTemplateAction()),
-                 # SToolBar(SwitchToBrowserAction())
+                 SToolBar(GitRollbackAction())
                  ]
     state = Instance(EngineState)
     resume_enabled = Bool(False)
@@ -62,10 +63,11 @@ class PipelineTask(BaseBrowserTask):
     dbmodified = False
     projects = None
 
-    # def _opened_hook(self):
-        # super(PipelineTask, self)._opened_hook()
-        # self._debug()
-        # if DEBUG:
+    def _opened_hook(self):
+        super(PipelineTask, self)._opened_hook()
+        if globalv.pipeline_debug:
+            self._debug()
+        #     from pyface.timer.do_later import do_after
         #     do_after(500, self._debug)
 
     def activated(self):
@@ -73,16 +75,13 @@ class PipelineTask(BaseBrowserTask):
 
         self.engine.dvc = self.dvc
         self.engine.browser_model = self.browser_model
-        self.engine.on_trait_change(self._handle_run_needed, 'run_needed')
-        self.engine.on_trait_change(self._handle_recall, 'recall_analyses_needed')
 
-        self.engine.task = self
         self.engine.add_data()
 
     def _debug(self):
-        self.engine.add_data()
+        # self.engine.add_data()
         self.engine.select_default()
-        self.engine.set_template('icfactor')
+        self.engine.set_template('iso_evo')
         # self.engine.add_is
         # self.engine.add_grouping(run=False)
         # self.engine.add_test_filter()
@@ -105,6 +104,13 @@ class PipelineTask(BaseBrowserTask):
         return panes
 
     # toolbar actions
+    def git_rollback(self):
+        # select experiment
+        expid = 'Cather_McIntosh'
+
+        self.dvc.rollback_experiment_repo(expid)
+
+
     def reset(self):
         self.state = None
         self.engine.reset()
@@ -191,10 +197,12 @@ class PipelineTask(BaseBrowserTask):
         if new:
             self.engine.select_node_by_editor(new)
 
+    @on_trait_change('engine:run_needed')
     def _handle_run_needed(self, new):
         self.debug('run needed for {}'.format(new))
         self.run()
 
+    @on_trait_change('engine:recall_analyses_needed')
     def _handle_recall(self, new):
         self.recall(new)
 
@@ -211,3 +219,6 @@ class PipelineTask(BaseBrowserTask):
 
         return ret
 # ============= EOF =============================================
+# self.engine.on_trait_change(self._handle_run_needed, 'run_needed')
+        # self.engine.on_trait_change(self._handle_recall, 'recall_analyses_needed')
+        # self.engine.on_trait_change(self._)

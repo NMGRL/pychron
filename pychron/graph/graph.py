@@ -18,9 +18,9 @@
 
 from chaco.scales.time_scale import CalendarScaleSystem
 from chaco.scales_tick_generator import ScalesTickGenerator
-from traits.api import Instance, Any, Bool, \
-    List, Str, Property, Dict, Callable, Event
-from traitsui.api import View, Item
+from traits.api import Instance, Bool, \
+    List, Str, Property, Dict, Event
+from traitsui.api import View, UItem
 from enable.component_editor import ComponentEditor
 from chaco.api import OverlayPlotContainer, \
     VPlotContainer, HPlotContainer, GridPlotContainer, \
@@ -30,7 +30,6 @@ from chaco.tools.api import ZoomTool, LineInspector, RangeSelection, \
 from chaco.axis import PlotAxis
 from pyface.api import FileDialog, OK
 from pyface.timer.api import do_after as do_after_timer
-
 
 # =============standard library imports ========================
 import os
@@ -51,7 +50,6 @@ from tools.pan_tool import MyPanTool as PanTool
 from chaco.data_label import DataLabel
 from pychron.graph.context_menu_mixin import ContextMenuMixin
 from chaco.plot_graphics_context import PlotGraphicsContext
-from pychron.viewable import Viewable
 from pychron.graph.tools.point_inspector import PointInspector, \
     PointInspectorOverlay
 from chaco.array_data_source import ArrayDataSource
@@ -63,14 +61,12 @@ VALID_FONTS = [
     'Lucida Grande',
     #               'Times New Roman',
     'Geneva',
-    'Courier'
-
-]
+    'Courier']
 
 
 def name_generator(base):
-    '''
-    '''
+    """
+    """
     i = 0
     while 1:
         n = base + str(i)
@@ -94,7 +90,8 @@ def fmt(data):
 #        info.object.closed()
 
 
-class Graph(Viewable, ContextMenuMixin):
+# class Graph(Viewable, ContextMenuMixin):
+class Graph(ContextMenuMixin):
     """
     """
     name = Str
@@ -104,46 +101,43 @@ class Graph(Viewable, ContextMenuMixin):
 
     selected_plotid = Property(depends_on='selected_plot')
     selected_plot = Instance(Plot)
-    window_title = ''
-    window_width = 600
-    window_height = 500
-    window_x = 500
-    window_y = 250
+    # window_title = ''
+    # window_width = 600
+    # window_height = 500
+    # window_x = 500
+    # window_y = 250
 
-    width = 300
-    height = 300
-    resizable = True
+    # width = 300
+    # height = 300
+    # resizable = True
     # crosshairs_enabled = False
     # editor_enabled = True
 
     line_inspectors_write_metadata = False
     add_context_menu = Bool(True)
 
-    plot_editor = Any
-
+    # plot_editor = Any
     # plot_editor_klass = PlotEditor
-
-    graph_editor = Any
+    # graph_editor = Any
     autoupdate = Bool(False)
 
-    _title = Str
-    _title_font = None
-    _title_size = None
+    # _title = Str
+    # _title_font = None
+    # _title_size = None
 
     _convert_index = None
 
-    _control = None
+    # _control = None
 
     status_text = Str
-    groups = None
+    # groups = None
 
-    current_pos = None
+    # current_pos = None
 
-    view_identifier = None
+    # view_identifier = None
 
     #    ui = Any
-
-    close_func = Callable
+    # close_func = Callable
     x_limits_changed = Event
 
     def __init__(self, *args, **kw):
@@ -153,7 +147,7 @@ class Graph(Viewable, ContextMenuMixin):
         self.clear()
 
         pc = self.plotcontainer
-        #print 'add context menu', self.add_context_menu, pc
+        # print 'add context menu', self.add_context_menu, pc
         if self.add_context_menu:
             menu = ContextualMenuTool(parent=self,
                                       component=pc)
@@ -248,9 +242,9 @@ class Graph(Viewable, ContextMenuMixin):
         scatter.overlays.append(pinspector_overlay)
         scatter.tools.append(point_inspector)
 
-    def closed(self, *args):
-        if self.close_func:
-            self.close_func()
+    # def closed(self, *args):
+    #     if self.close_func:
+    #         self.close_func()
 
     def update_group_attribute(self, plot, attr, value, dataid=0):
         pass
@@ -437,7 +431,6 @@ class Graph(Viewable, ContextMenuMixin):
 
         self.selected_plot = None
 
-
     def set_axis_label_color(self, *args, **kw):
         """
         """
@@ -589,7 +582,6 @@ class Graph(Viewable, ContextMenuMixin):
         self.plots[plotid].plots[label] = plots
         self.plots[plotid].plots.pop(series)
 
-
     def clear_legend(self, keys, plotid=0):
         """
         """
@@ -645,8 +637,8 @@ class Graph(Viewable, ContextMenuMixin):
             self.x_limits_changed = True
 
     def set_x_tracking(self, track, plotid=0):
-        '''
-        '''
+        """
+        """
         plot = self.plots[plotid]
         if track:
             plot.index_range.tracking_amount = track
@@ -657,8 +649,8 @@ class Graph(Viewable, ContextMenuMixin):
             plot.index_range.low_setting = 'auto'
 
     def set_y_tracking(self, track, plotid=0):
-        '''
-        '''
+        """
+        """
         plot = self.plots[plotid]
         if track:
             plot.value_range.tracking_amount = track
@@ -673,8 +665,8 @@ class Graph(Viewable, ContextMenuMixin):
         p.title = t
 
     def set_title(self, t, font='modern', size=None):
-        '''
-        '''
+        """
+        """
         self._title = t
 
         pc = self.plotcontainer
@@ -766,8 +758,8 @@ class Graph(Viewable, ContextMenuMixin):
         plot.delplot(series)
 
     def add_guide(self, value, orientation='h', plotid=0, color=(0, 0, 0)):
-        '''
-        '''
+        """
+        """
         plot = self.plots[plotid]
 
         guide_overlay = GuideOverlay(component=plot,
@@ -801,12 +793,11 @@ class Graph(Viewable, ContextMenuMixin):
         zoom = kw['zoom'] if 'zoom' in kw  else False
         pan = kw['pan'] if 'pan' in kw else False
 
-        contextmenu = kw['contextmenu'] if 'contextmenu' in kw.keys() else True
+        # contextmenu = kw['contextmenu'] if 'contextmenu' in kw.keys() else True
         tools = []
         if zoom:
             nkw = dict(tool_mode='box',
-                       always_on=False
-            )
+                       always_on=False)
             if 'zoom_dict' in kw:
                 zoomargs = kw['zoom_dict']
                 for k in zoomargs:
@@ -848,8 +839,8 @@ class Graph(Viewable, ContextMenuMixin):
         return p
 
     def new_graph(self, *args, **kw):
-        '''
-        '''
+        """
+        """
         raise NotImplementedError
 
     def new_series(self, x=None, y=None,
@@ -918,10 +909,10 @@ class Graph(Viewable, ContextMenuMixin):
 
         return renderer[0], plotobj
 
-    def show_graph_editor(self):
-        """
-        """
-        pass
+    # def show_graph_editor(self):
+    #     """
+    #     """
+    #     pass
         # from editors.graph_editor import GraphEditor
         #
         # g = self.graph_editor
@@ -932,10 +923,10 @@ class Graph(Viewable, ContextMenuMixin):
         #
         # g.edit_traits(parent=self._control)
 
-    def show_plot_editor(self):
-        '''
-        '''
-        self._show_plot_editor()
+    # def show_plot_editor(self):
+    #     """
+    #     """
+    #     self._show_plot_editor()
 
     # def _show_plot_editor(self, **kw):
     #     '''
@@ -950,14 +941,14 @@ class Graph(Viewable, ContextMenuMixin):
     #
     #         p.edit_traits(parent=self._control)
 
-    def auto_update(self, *args, **kw):
-        '''
-        '''
-        pass
+    # def auto_update(self, *args, **kw):
+    #     '''
+    #     '''
+    #     pass
 
     def add_aux_axis(self, po, p, title='', color='black'):
-        '''
-        '''
+        """
+        """
         #        from chaco.axis import PlotAxis
 
         axis = PlotAxis(p, orientation='right',
@@ -965,8 +956,7 @@ class Graph(Viewable, ContextMenuMixin):
                         axis_line_visible=False,
                         tick_color=color,
                         tick_label_color=color,
-                        title_color=color
-        )
+                        title_color=color)
 
         p.underlays.append(axis)
         po.add(p)
@@ -976,8 +966,8 @@ class Graph(Viewable, ContextMenuMixin):
         po.y_grid.visible = False
 
     def add_aux_datum(self, datum, plotid=0, series=1, do_after=False):
-        '''
-        '''
+        """
+        """
 
         def add():
             plot = self.plots[plotid]
@@ -996,8 +986,8 @@ class Graph(Viewable, ContextMenuMixin):
             add()
 
     def add_data(self, data, plotlist=None, **kw):
-        '''
-        '''
+        """
+        """
         if plotlist is None:
             plotlist = xrange(len(data))
 
@@ -1057,20 +1047,20 @@ class Graph(Viewable, ContextMenuMixin):
             #         else:
             #             add(datum)
 
-    def show_crosshairs(self, color='black'):
-        '''
-        '''
-        self.crosshairs_enabled = True
-        self._crosshairs_factory(color=color)
-        self.plotcontainer.request_redraw()
-
-    def destroy_crosshairs(self):
-        '''
-        '''
-        self.crosshairs_enabled = False
-        plot = self.plots[0].plots['plot0'][0]
-        plot.overlays = [o for o in plot.overlays if not isinstance(o, LineInspector)]
-        self.plotcontainer.request_redraw()
+    # def show_crosshairs(self, color='black'):
+    #     """
+    #     """
+    #     self.crosshairs_enabled = True
+    #     self._crosshairs_factory(color=color)
+    #     self.plotcontainer.request_redraw()
+    #
+    # def destroy_crosshairs(self):
+    #     """
+    #     """
+    #     self.crosshairs_enabled = False
+    #     plot = self.plots[0].plots['plot0'][0]
+    #     plot.overlays = [o for o in plot.overlays if not isinstance(o, LineInspector)]
+    #     self.plotcontainer.request_redraw()
 
     def add_range_selector(self, plotid=0, series=0):
         #        plot = self.series[plotid][series]
@@ -1132,20 +1122,19 @@ class Graph(Viewable, ContextMenuMixin):
                       mapper=m,
                       orientation=o,
                       axis_line_visible=False,
-                      **kw
-        )
+                      **kw)
         return ax
 
     def add_minor_xticks(self, plotid=0, **kw):
-        '''
-        '''
+        """
+        """
         p = self.plots[plotid]
         m = MinorTicksOverlay(component=p, orientation='v', **kw)
         p.underlays.append(m)
 
     def add_minor_yticks(self, plotid=0, **kw):
-        '''
-        '''
+        """
+        """
         p = self.plots[plotid]
 
         m = MinorTicksOverlay(component=p, orientation='h', **kw)
@@ -1179,26 +1168,24 @@ class Graph(Viewable, ContextMenuMixin):
 
         return nc
 
-
     def container_factory(self):
-        '''
-        '''
+        """
+        """
         return self._container_factory(**self.container_dict)
 
     def _add_line_inspector(self, plot, axis='x', color='red'):
-        '''
-        '''
+        """
+        """
         plot.overlays.append(LineInspector(component=plot,
                                            axis='index_%s' % axis,
                                            write_metadata=self.line_inspectors_write_metadata,
                                            inspect_mode='indexed',
                                            is_listener=False,
-                                           color=color
-        ))
+                                           color=color))
 
     def _container_factory(self, **kw):
-        '''
-        '''
+        """
+        """
         if 'kind' in kw:
             kind = kw['kind']
         else:
@@ -1215,9 +1202,7 @@ class Graph(Viewable, ContextMenuMixin):
             # padding=25,
             padding=5,
             #                     padding=[40, 10, 60, 10],
-            fill_padding=True,
-            #                      use_backbuffer=True
-        )
+            fill_padding=True)
 
         for k in options:
             if k not in kw.keys():
@@ -1235,13 +1220,13 @@ class Graph(Viewable, ContextMenuMixin):
         # container.tools.append(gt)
         return container
 
-    def _crosshairs_factory(self, plot=None, color='black'):
-        '''
-        '''
-        if plot is None:
-            plot = self.plots[0].plots['plot0'][0]
-        self._add_line_inspector(plot, axis='x', color=color)
-        self._add_line_inspector(plot, axis='y', color=color)
+    # def _crosshairs_factory(self, plot=None, color='black'):
+    #     """
+    #     """
+    #     if plot is None:
+    #         plot = self.plots[0].plots['plot0'][0]
+    #     self._add_line_inspector(plot, axis='x', color=color)
+    #     self._add_line_inspector(plot, axis='y', color=color)
 
     def _plot_factory(self, legend_kw=None, **kw):
         """
@@ -1443,7 +1428,6 @@ class Graph(Viewable, ContextMenuMixin):
         """
         return self._render_to_pdf(save=False, filename='/Users/ross/Sandbox/aaa.pdf', canvas=canvas)
 
-
     def _render_to_pdf(self, save=True, canvas=None, filename=None, dest_box=None):
         """
         """
@@ -1479,22 +1463,22 @@ class Graph(Viewable, ContextMenuMixin):
         gc.save(filename)
 
     def _render_to_clipboard(self):
-        '''
+        """
             on mac osx the bitmap gets copied to the clipboard
-            
-            the contents of clipboard are available to Preview and NeoOffice 
+
+            the contents of clipboard are available to Preview and NeoOffice
             but not Excel
-            
-            More success may be had on windows 
-            
+
+            More success may be had on windows
+
             Copying to clipboard is used to get a Graph into another program
             such as Excel or Illustrator
-            
+
             Save the image as png then Insert Image is probably equivalent but not
             as convenient
-            
+
             not working
-        '''
+        """
 
     #        import wx
     #        p = self.plotcontainer
@@ -1554,8 +1538,8 @@ class Graph(Viewable, ContextMenuMixin):
         self.plotcontainer.request_redraw()
 
     def _get_limits(self, axis, plotid):
-        '''
-        '''
+        """
+        """
         plot = self.plots[plotid]
         try:
             ra = getattr(plot, '%s_range' % axis)
@@ -1670,41 +1654,42 @@ class Graph(Viewable, ContextMenuMixin):
     #     # print 'get selected plotid', r, self.selected_plot
         return r
 
-    def show(self):
-        do_after_timer(1, self.edit_traits)
-
-    def panel_view(self):
-        plot = Item('plotcontainer',
-                    style='custom',
-                    show_label=False,
-                    editor=ComponentEditor(
-                        #size=(self.width,
-                        #      self.height)
-                    ),
-        )
-
-        v = View(plot)
-        return v
-
     def traits_view(self):
-        plot = Item('plotcontainer',
-                    style='custom',
-                    show_label=False,
-                    editor=ComponentEditor(
-                        size=(self.width,
-                              self.height)))
-
-        v = View(plot,
-                 resizable=self.resizable,
-                 title=self.window_title,
-                 width=self.window_width,
-                 height=self.window_height,
-                 x=self.window_x,
-                 y=self.window_y,
-                 handler=self.handler_klass)
-
-        if self.view_identifier:
-            v.id = self.view_identifier
+        v = View(UItem('plotcontainer',
+                       style='custom',
+                       editor=ComponentEditor()))
         return v
+    # def show(self):
+    #     do_after_timer(1, self.edit_traits)
+    #
+    # def panel_view(self):
+    #     plot = Item('plotcontainer',
+    #                 style='custom',
+    #                 show_label=False,
+    #                 editor=ComponentEditor())
+    #
+    #     v = View(plot)
+    #     return v
+    #
+    # def traits_view(self):
+    #     plot = Item('plotcontainer',
+    #                 style='custom',
+    #                 show_label=False,
+    #                 editor=ComponentEditor(
+    #                     size=(self.width,
+    #                           self.height)))
+    #
+    #     v = View(plot,
+    #              resizable=self.resizable,
+    #              title=self.window_title,
+    #              width=self.window_width,
+    #              height=self.window_height,
+    #              x=self.window_x,
+    #              y=self.window_y,
+    #              handler=self.handler_klass)
+    #
+    #     if self.view_identifier:
+    #         v.id = self.view_identifier
+    #     return v
 
         # ============= EOF ====================================

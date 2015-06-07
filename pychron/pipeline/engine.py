@@ -100,6 +100,7 @@ class PipelineEngine(Loggable):
     pipeline = Instance(Pipeline, ())
     selected = Instance(BaseNode)
     dclicked = Event
+    active_editor = Event
 
     unknowns = List
     references = List
@@ -192,7 +193,9 @@ class PipelineEngine(Loggable):
         self.browser_model.select_project('J')
         self.browser_model.select_sample(idx=0)
         records = self.browser_model.get_analysis_records()
-        analyses = self.dvc.make_analyses(records)
+
+        analyses = self.dvc.make_analyses(records[:4])
+        # print len(records),len(analyses)
         node.analyses.extend(analyses)
         self.refresh_analyses()
 
@@ -334,6 +337,7 @@ class PipelineEngine(Loggable):
                     self.debug('pipeline vetoed by {}'.format(node))
                     self.refresh_analyses()
                     return
+
             else:
                 self.debug('Skip node {:02n}: {}'.format(idx, node))
         else:
@@ -462,7 +466,8 @@ class PipelineEngine(Loggable):
             self.show_group_colors = True
             if new.editor:
                 self.unknowns = new.editor.analyses
-                self.task.activate_editor(new.editor)
+                self.active_editor = new.editor
+                # self.task.activate_editor(new.editor)
 
     def _dclicked_changed(self, new):
         if isinstance(new, DataNode):

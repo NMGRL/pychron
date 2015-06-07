@@ -178,10 +178,8 @@ class DVCDatabase(DatabaseAdapter):
         a = UserTbl(name=name, **kw)
         return self._add_item(a)
 
-    def add_analysis(self, experiment, **kw):
+    def add_analysis(self, **kw):
         a = AnalysisTbl(**kw)
-        self.add_experiment_association(experiment, a)
-
         return self._add_item(a)
 
     def add_experiment_association(self, experiment, analysis):

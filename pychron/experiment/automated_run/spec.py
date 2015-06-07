@@ -22,16 +22,15 @@ from traits.api import Str, Int, Bool, Float, Property, \
 # ============= standard library imports ========================
 from datetime import datetime
 import uuid
-import weakref
 # ============= local library imports  ==========================
-#
 from pychron.core.helpers.logger_setup import new_logger
-from pychron.experiment.utilities.identifier import get_analysis_type, make_rid, \
-    make_runid, is_special, convert_extract_device
+from pychron.experiment.utilities.identifier import get_analysis_type, make_rid, make_runid, is_special, \
+    convert_extract_device
 from pychron.experiment.utilities.position_regex import XY_REGEX
 from pychron.pychron_constants import SCRIPT_KEYS, SCRIPT_NAMES, ALPHAS
 
 logger = new_logger('AutomatedRunSpec')
+
 
 class AutomatedRunSpec(HasTraits):
     """
@@ -64,7 +63,7 @@ class AutomatedRunSpec(HasTraits):
     uuid = Str
     aliquot = Property
     _aliquot = Int
-    #assigned_aliquot = Int
+    # assigned_aliquot = Int
 
     user_defined_aliquot = Int
 
@@ -142,7 +141,6 @@ class AutomatedRunSpec(HasTraits):
 
     experiment_id = Str
     identifier = Property
-
 
     def is_detector_ic(self):
         return self.analysis_type == 'detector_ic'
@@ -271,10 +269,7 @@ class AutomatedRunSpec(HasTraits):
             md, klass = '.'.join(args[:-1]), args[-1]
 
             md = __import__(md, fromlist=[klass])
-            # md = imp.find_module(md)
-            run =getattr(md,klass)()
-
-            # run = self.run_klass()
+            run = getattr(md, klass)()
 
         for si in SCRIPT_KEYS:
             setattr(run.script_info, '{}_script_name'.format(si),
@@ -286,7 +281,8 @@ class AutomatedRunSpec(HasTraits):
             # self._step_heat = bool(self.aliquot)
             # print self._step_heat, bool(self.aliquot), self.aliquot
 
-        run.spec = weakref.ref(self)()
+        # run.spec = weakref.ref(self)()
+        run.spec = self
 
         return run
 
@@ -396,20 +392,6 @@ class AutomatedRunSpec(HasTraits):
                 return self.user_defined_aliquot
         return self._aliquot
 
-        # return a
-        # # a=self._aliquot
-        # a = self.user_defined_aliquot
-        # if not self.is_special():
-        #     if not a:
-        #         a = self._aliquot
-        #         # a = self.user_defined_aliquot
-        #
-        # return a
-        #a = self.assigned_aliquot
-        #if not a:
-        #    a = self._aliquot
-        #return a
-
     def _get_analysis_type(self):
         return get_analysis_type(self.labnumber)
 
@@ -464,11 +446,11 @@ class AutomatedRunSpec(HasTraits):
     def _get_overlap(self):
         return self._overlap, self._min_ms_pumptime
 
-    #mirror labnumber for now. deprecate labnumber and replace with identifier
+    # mirror labnumber for now. deprecate labnumber and replace with identifier
     def _get_identifier(self):
         return self.labnumber
 
-    def _set_identifier(self,v):
+    def _set_identifier(self, v):
         self.labnumber = v
 
     @property
@@ -506,4 +488,5 @@ class AutomatedRunSpec(HasTraits):
     @extract_duration.setter
     def set_duration(self, v):
         self.duration = v
-        # ============= EOF =============================================
+
+# ============= EOF =============================================
