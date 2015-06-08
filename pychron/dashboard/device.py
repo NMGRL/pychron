@@ -15,11 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import random
 
 from traits.api import Str, Bool, List, Instance, Event
 from traitsui.api import View, ListEditor, InstanceEditor, UItem, VGroup, HGroup, VSplit
 # ============= standard library imports ========================
+import random
 import struct
 import time
 import yaml
@@ -63,13 +63,14 @@ class DashboardDevice(Loggable):
         for i, vi in enumerate(self.values):
             vi.plotid = i
             p = g.new_plot()
-            if i==0:
+            if i == 0:
                 p.padding_bottom = 25
             p.padding_right = 10
 
             g.new_series(plotid=i)
             g.set_y_title(vi.display_name, plotid=i)
-            g.set_scan_width(24*60*60, plotid=i)
+            g.set_scan_width(24 * 60 * 60, plotid=i)
+            g.set_data_limits(24 * 60 * 60, plotid=i)
 
     def trigger(self):
         """
@@ -88,6 +89,7 @@ class DashboardDevice(Loggable):
             elif dt > value.period:
                 self._trigger(value)
 
+
     def _trigger(self, value, **kw):
         try:
             self.debug('triggering value device={} value={} func={}'.format(self.hardware_device.name,
@@ -100,8 +102,8 @@ class DashboardDevice(Loggable):
 
             if nv is None and globalv.dashboard_simulation:
                 nv = random.random()
-
-            self._push_value(value, nv)
+            if nv is not None:
+                self._push_value(value, nv)
         except BaseException:
             import traceback
 
@@ -125,13 +127,14 @@ class DashboardDevice(Loggable):
             if self.hardware_device:
                 if bindname:
                     if hasattr(self.hardware_device, bindname):
-                        self.hardware_device.on_trait_change(lambda a, b, c, d: self._handle_change(pv, a, b, c, d), bindname)
+                        self.hardware_device.on_trait_change(lambda a, b, c, d: self._handle_change(pv, a, b, c, d),
+                                                             bindname)
                     else:
                         self.debug('{} has not attribute "{}"'.format(self.hardware_device, bindname))
 
                 else:
                     self.warning('need to set bindname for {}'.format(self.name, name))
-                # self._device.on_trait_change(lambda new: self._push_value(pv, new), n)
+                    # self._device.on_trait_change(lambda new: self._push_value(pv, new), n)
 
         self.values.append(pv)
         return pv
@@ -146,6 +149,8 @@ class DashboardDevice(Loggable):
 
     def _push_value(self, pv, new):
         if pv.enabled:
+
+            pv.last_time = time.time()
             v = float(new)
             tripped = pv.is_different(v)
             if tripped:
@@ -161,7 +166,7 @@ class DashboardDevice(Loggable):
     def _record(self, pv, v):
         path = pv.path
         if not path:
-            path,_ = unique_path2(paths.device_scan_dir, pv.name)
+            path, _ = unique_path2(paths.device_scan_dir, pv.name)
             pv.path = path
             self.info('Saving {} to {}'.format(pv.name, path))
 

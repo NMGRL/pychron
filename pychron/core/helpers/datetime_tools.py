@@ -30,27 +30,9 @@ def time_generator(start=None):
         yield time.time() - start
 
 
-def current_time_generator(start):
-    '''
-    '''
-    yt = start
-    prev_time = 0
-    i = 0
-    while (1):
-
-        current_time = time.time()
-        if prev_time != 0:
-            interval = current_time - prev_time
-            yt += interval
-
-        yield (yt)
-        prev_time = current_time
-        i += 1
-
-
 def generate_datetimestamp(resolution='seconds'):
-    '''
-    '''
+    """
+    """
     ti = time.time()
     if resolution == 'seconds':
         r = time.strftime(ISO_FORMAT_STR)

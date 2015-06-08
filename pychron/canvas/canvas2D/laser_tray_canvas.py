@@ -367,17 +367,18 @@ class LaserTrayCanvas(MapCanvas):
         """
         """
         between = lambda mi, v, ma: mi < v <= ma
+
         if between(self.x, x, self.x2) and between(self.y, y, self.y2):
             if self.stage_manager is not None:
                 p = self.stage_manager.stage_controller
-                x, y = self.map_data((x, y))
 
+                x, y = self.map_data((x, y))
                 try:
                     if between(p.xaxes_min, x, p.xaxes_max) and \
                             between(p.yaxes_min, y, p.yaxes_max):
                         return x, y
-                except AttributeError:
-                    pass
+                except AttributeError, e:
+                    print e
 
     def map_offset_position(self, pos):
         """
@@ -464,6 +465,7 @@ class LaserTrayCanvas(MapCanvas):
         y = event.y - self.crosshairs_offsety
 
         pos = self.valid_position(x, y)
+
         if pos:
             self.stage_manager.linear_move(*pos,
                                            check_moving=True,

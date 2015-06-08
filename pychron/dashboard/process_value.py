@@ -62,7 +62,7 @@ class ProcessValue(HasTraits):
             self.last_value = v
             ret = True
 
-        self.last_time = time.time()
+
         return ret
 
     def _get_display_name(self):

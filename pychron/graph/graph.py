@@ -47,10 +47,10 @@ from pychron.graph.context_menu_mixin import ContextMenuMixin
 
 # from chaco.tools.pan_tool import PanTool
 VALID_FONTS = [
-    #                'Helvetica',
+    # 'Helvetica',
     'Arial',
     'Lucida Grande',
-    #               'Times New Roman',
+    # 'Times New Roman',
     'Geneva',
     'Courier']
 
@@ -74,8 +74,8 @@ def fmt(data):
 
 
 # class GraphHandler(Handler):
-#    def init(self, info):
-#        info.object.ui = info.ui
+# def init(self, info):
+# info.object.ui = info.ui
 #
 #    def closed(self, info, isok):
 #        info.object.closed()

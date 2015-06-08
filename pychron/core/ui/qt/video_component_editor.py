@@ -59,7 +59,7 @@ class _VideoComponentEditor(_LaserComponentEditor):
 
     def update(self):
         if self.control:
-            self.value.request_video_redraw()
+            self.value.request_redraw()
             # self.value.draw_valid = False
             # self.control.repaint()
 

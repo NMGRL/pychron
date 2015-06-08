@@ -131,7 +131,7 @@ class Valve(BaseValve, RoundedRectangle):
     use_border_gaps = False
 
     def _render_(self, gc):
-        x, y = self.get_xy()
+        x, y = self.get_xy(clear_layout_needed=False)
         w, h = self.get_wh()
         super(Valve, self)._render_(gc)
 
