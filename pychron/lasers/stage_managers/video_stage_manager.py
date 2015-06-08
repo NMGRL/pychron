@@ -508,7 +508,7 @@ class VideoStageManager(StageManager):
             self.warning('Video not Available')
             video = None
 
-        v = VideoLaserTrayCanvas(parent=self,
+        v = VideoLaserTrayCanvas(stage_manager=self,
                                  padding=30,
                                  video=video,
                                  camera=self.camera)

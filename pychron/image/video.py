@@ -121,7 +121,7 @@ class Video(Image):
                     # ideally an identifier is passed in
                     try:
                         self.cap = get_capture_device()
-                        self.cap.open(int(identifier))
+                        self.cap.open(int(identifier) if identifier else 0)
                     except Exception, e:
                         print 'video.open', e
                         self.cap = None

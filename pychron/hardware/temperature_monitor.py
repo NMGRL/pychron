@@ -16,6 +16,7 @@
 
 # =============enthought library imports=======================
 from traits.api import Float, Property, Str
+from traits.trait_errors import TraitError
 from traitsui.api import Item, EnumEditor, VGroup
 # =============standard library imports ========================
 # import time
@@ -147,7 +148,10 @@ class DPi32TemperatureMonitor(ISeriesDevice):
         cmd = 'V', '01'
         x = self.repeat_command(cmd, check_type=float, **kw)
         if x is not None:
-            self.process_value = x
+            try:
+                self.process_value = x
+            except TraitError:
+                self.process_value = 0
             return x
 
     def set_busformat(self):
