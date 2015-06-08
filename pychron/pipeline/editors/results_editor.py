@@ -15,20 +15,20 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Int, Property, List, Instance
+from traits.api import Int, Property, List, Instance, Event
 from traitsui.api import View, UItem, TabularEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.helpers.formatting import floatfmt
-from pychron.envisage.tasks.base_editor import BaseTraitsEditor
+from pychron.envisage.tasks.base_editor import BaseTraitsEditor, grouped_name
 from pychron.pychron_constants import PLUSMINUS_SIGMA
 
 
 class IsoEvolutionResultsAdapter(TabularAdapter):
-    columns = [('RunID','record_id'), ('Isotope','isotope'), ('Fit', 'fit'),
-               ('Intercept','intercept_value'),
-               (PLUSMINUS_SIGMA,'intercept_error')]
+    columns = [('RunID', 'record_id'), ('Isotope', 'isotope'), ('Fit', 'fit'),
+               ('Intercept', 'intercept_value'),
+               (PLUSMINUS_SIGMA, 'intercept_error')]
     record_id_width = Int(80)
     isotope_width = Int(50)
     fit_width = Int(80)
@@ -56,21 +56,25 @@ class IsoEvolutionResultsAdapter(TabularAdapter):
 class IsoEvolutionResultsEditor(BaseTraitsEditor):
     results = List
     adapter = Instance(IsoEvolutionResultsAdapter, ())
+    dclicked = Event
 
     def __init__(self, results, *args, **kw):
         super(IsoEvolutionResultsEditor, self).__init__(*args, **kw)
-        a = results[0]
 
-        na = self._grouped_name([r.identifier for r in results if r.identifier])
+        na = grouped_name([r.identifier for r in results if r.identifier])
         self.name = 'IsoEvo Results {}'.format(na)
 
         self.results = results
 
+    def _dclicked_fired(self, new):
+        if new:
+            result = new.item
+            result.analysis.show_isotope_evolutions((result.isotope,))
+
     def traits_view(self):
         v = View(UItem('results', editor=TabularEditor(adapter=self.adapter,
-                                                       editable=False)))
+                                                       editable=False,
+                                                       dclicked='dclicked')))
         return v
+
 # ============= EOF =============================================
-
-
-

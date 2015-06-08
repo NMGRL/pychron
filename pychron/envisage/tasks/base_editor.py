@@ -21,8 +21,31 @@ from pyface.tasks.traits_editor import TraitsEditor
 from pychron.loggable import Loggable
 
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+
+
+def grouped_name(names, delimiter='-'):
+    s = names[0]
+    e = names[-1]
+    if s != e:
+        if all([delimiter in x for x in names]):
+            prev = None
+            for x in names:
+                nx = x.split(delimiter)
+                h, t = delimiter.join(nx[:-1]), nx[-1]
+
+                if prev and prev != h:
+                    break
+                prev = h
+            else:
+                s = names[0]
+                e = names[-1].split(delimiter)[-1]
+
+        s = '{} - {}'.format(s, e)
+
+    return s
 
 
 class BaseTraitsEditor(TraitsEditor, Loggable):
@@ -38,27 +61,4 @@ class BaseTraitsEditor(TraitsEditor, Loggable):
     def filter_invalid_analyses(self):
         pass
 
-    def _grouped_name(self, names, delimiter='-'):
-        s = names[0]
-        e = names[-1]
-        if s != e:
-            if all([delimiter in x for x in names]):
-                prev = None
-                for x in names:
-                    nx = x.split(delimiter)
-                    h, t = delimiter.join(nx[:-1]), nx[-1]
-
-                    #h, t = x.split(delimiter)
-                    if prev and prev != h:
-                        #print 'not a group'
-                        break
-                    prev = h
-                else:
-                    #print 'is a group'
-                    s = names[0]
-                    e = names[-1].split(delimiter)[-1]
-
-            s = '{} - {}'.format(s, e)
-
-        return s
 # ============= EOF =============================================

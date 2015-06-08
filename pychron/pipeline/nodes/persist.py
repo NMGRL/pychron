@@ -69,6 +69,7 @@ class DVCPersistNode(PersistNode):
             state.modified = True
             state.modified_projects = state.modified_projects.union(modp)
 
+
 class IsotopeEvolutionPersistNode(DVCPersistNode):
     name = 'Save Iso Evo'
 
@@ -105,6 +106,7 @@ class BlanksPersistNode(DVCPersistNode):
 
         self._persist(state, msg)
 
+
 class ICFactorPersistNode(DVCPersistNode):
     name = 'Save ICFactor'
 
@@ -124,6 +126,3 @@ class ICFactorPersistNode(DVCPersistNode):
 
         self._persist(state, msg)
 # ============= EOF =============================================
-
-
-

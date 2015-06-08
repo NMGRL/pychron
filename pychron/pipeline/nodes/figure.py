@@ -15,9 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Any
+from traits.api import Any, Bool
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.envisage.tasks.base_editor import grouped_name
 from pychron.pipeline.nodes.base import BaseNode
 # from pychron.processing.plot.editors.ideogram_editor import IdeogramEditor
 
@@ -27,9 +28,11 @@ from pychron.processing.plotter_options_manager import IdeogramOptionsManager, S
 
 class FigureNode(BaseNode):
     editor = Any
+    editor_klass = Any
     plotter_options = Any
     plotter_options_manager_klass = Any
     plotter_options_manager = Any
+    _configured = Bool(False)
 
     def refresh(self):
         if self.editor:
@@ -38,32 +41,43 @@ class FigureNode(BaseNode):
             self.editor.refresh_needed = True
 
     def run(self, state):
-        pkg, klass = self.editor_klass.split(',')
-        mod = __import__(pkg, fromlist=[klass])
-        editor = getattr(mod, klass)()
+        if not self.plotter_options or not self._configured:
+            self.configure(refresh=False)
 
-        # editor = self.editor_klass()
-        if not self.plotter_options:
-            # pom = self.plotter_options_manager_klass()
-            self.plotter_options = self.plotter_options_manager.plotter_options
+        po = self.plotter_options
+        if po.use_plotting:
+            pkg, klass = self.editor_klass.split(',')
+            mod = __import__(pkg, fromlist=[klass])
+            editor = getattr(mod, klass)()
 
-        editor.plotter_options = self.plotter_options
+            editor.plotter_options = po
 
-        self.editor = editor
+            self.editor = editor
+            editor.set_items(state.unknowns)
 
-        editor.set_items(state.unknowns)
+            oname = editor.name
+
+            # self.name = editor.name
+            state.editors.append(editor)
+        else:
+            a = list(set([ni.labnumber for ni in state.unknowns]))
+            oname = '{} {}'.format(grouped_name(a), self.name)
+
+        new_name = oname
 
         cnt = 1
-        oname = editor.name
         for e in state.editors:
-            if e.name == editor.name:
-                editor.name = '{} {:02n}'.format(oname, cnt)
+            if e.name == new_name:
+                new_name = '{} {:02n}'.format(oname, cnt)
                 cnt += 1
 
-        self.name = editor.name
-        state.editors.append(editor)
+        self.name = new_name
+        if po.use_plotting:
+            self.editor.name = self.name
 
-    def configure(self):
+    def configure(self, refresh=True):
+        self._configured = True
+
         pom = self.plotter_options_manager
         # pom = self.plotter_options_manager_klass()
         if self.editor:
@@ -72,11 +86,13 @@ class FigureNode(BaseNode):
         info = pom.edit_traits(kind='livemodal')
         if info.result:
             self.plotter_options = pom.plotter_options
-            self.refresh()
+            if refresh:
+                self.refresh()
             return True
 
     def _plotter_options_manager_default(self):
         return self.plotter_options_manager_klass()
+
 
 class IdeogramNode(FigureNode):
     name = 'Ideogram'
@@ -97,6 +113,3 @@ class SeriesNode(FigureNode):
     plotter_options_manager_klass = SeriesOptionsManager
 
 # ============= EOF =============================================
-
-
-

@@ -18,6 +18,7 @@
 from traits.api import List, Any, Event, Bool
 from pyface.file_dialog import FileDialog
 
+from pychron.envisage.tasks.base_editor import grouped_name
 from pychron.processing.tasks.editor import BaseUnknownsEditor
 from pychron.processing.tasks.tables.editors.base_adapter import TableBlank, \
     TableSeparator
@@ -25,12 +26,13 @@ from pychron.core.helpers.filetools import add_extension
 from pychron.paths import paths
 
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
 class BaseTableEditor(BaseUnknownsEditor):
     items = List
-    #oitems = List
+    # oitems = List
     col_widths = List
     selected = Any
     refresh_needed = Event
@@ -52,15 +54,9 @@ class BaseTableEditor(BaseUnknownsEditor):
     def _items_changed(self):
         self._set_name()
 
-    #def _set_name(self):
     def _set_name(self):
         na = list(set([ni.sample for ni in self.items]))
-
-        na = self._grouped_name(na)
-        #if len(na)>1:
-        #    na='{} - {}'.format(na[0], na[-1])
-        ##na = ','.join(na)
-
+        na = grouped_name(na)
         self.name = '{} {}'.format(na, self.basename)
 
     def clean_rows(self):
@@ -88,6 +84,4 @@ class BaseTableEditor(BaseUnknownsEditor):
     def make_csv_table(self, *args, **kw):
         pass
 
-
-
-        # ============= EOF =============================================
+# ============= EOF =============================================

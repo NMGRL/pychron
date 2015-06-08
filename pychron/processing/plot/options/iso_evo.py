@@ -16,13 +16,14 @@
 
 # ============= enthought library imports =======================
 from enable.markers import marker_names
-from traits.api import List
-from traitsui.api import View, Item, Group, VGroup, HGroup, EnumEditor, Tabbed
+from traits.api import List, Bool
+from traitsui.api import View, Item, Group, VGroup, HGroup, EnumEditor, Tabbed, Spring
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.table_editor import myTableEditor
 # from pychron.processing.fits.iso_evo_fit_selector import IsoFilterFit
 from pychron.processing.fits.fit import IsoFilterFit
+from pychron.processing.plot.options.base import dumpable
 from pychron.processing.plot.options.figure_plotter_options import FigurePlotterOptions, checkbox_column, \
     object_column
 # from pychron.processing.plot.options import AuxPlotOptions
@@ -40,6 +41,8 @@ class IsoFilterFitAuxPlot(AuxPlotOptions, IsoFilterFit):
 
 class IsotopeEvolutionOptions(FigurePlotterOptions):
     plot_option_klass = IsoFilterFitAuxPlot
+    use_plotting = dumpable(Bool)
+    confirm_save = dumpable(Bool)
     # def get_aux_plots(self):
     # return [IsoFilterFit(name='Ar40', fit='linear')]
     # def get_aux_plots(self):
@@ -74,8 +77,7 @@ class IsotopeEvolutionOptions(FigurePlotterOptions):
                 object_column(name='filter_outlier_iterations', label='Iter.'),
                 object_column(name='filter_outlier_std_devs', label='SD'),
                 object_column(name='truncate', label='Trunc.'),
-                checkbox_column(name='include_baseline_error', label='Inc. BsErr')
-                ]
+                checkbox_column(name='include_baseline_error', label='Inc. BsErr')]
 
         v = View(VGroup(Item('name', editor=EnumEditor(name='names')),
                         Item('marker', editor=EnumEditor(values=marker_names)),
@@ -98,9 +100,15 @@ class IsotopeEvolutionOptions(FigurePlotterOptions):
                                                   # selected='selected',
                                                   edit_view=v,
                                                   reorderable=False))
-        return Group(aux_plots_grp, label='Fits')
+        ogrp = HGroup(Item('use_plotting',
+                           label='Plot Evolutions',
+                           tooltip='(Checked) Plot the isotope evolutions '
+                                   '(Non-checked) Only calculate new fit results. Do not plot'),
+                      Spring(springy=False, width=-30),
+                      Item('confirm_save', label='Confirm Save', tooltip='Allow user to review evolutions '
+                                                                         'before saving to file'))
+
+        return Group(VGroup(ogrp,
+                            aux_plots_grp), label='Fits')
 
 # ============= EOF =============================================
-
-
-

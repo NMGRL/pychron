@@ -50,7 +50,6 @@ def checkbox_column(*args, **kw):
     return _table_column(CheckboxColumn, *args, **kw)
 
 
-
 class FigurePlotterOptions(BasePlotterOptions):
     # plot_option_klass = AuxPlotOptions
     # plot_option_name = None
@@ -153,10 +152,6 @@ class FigurePlotterOptions(BasePlotterOptions):
         #                  for pi in self.aux_plots
         #                  if pi.name and pi.name != NULL_STR and pi.use])
 
-    def traits_view(self):
-        v = View()
-        return v
-
     def _refresh_plot_fired(self):
         self.refresh_plot_needed = True
 
@@ -226,12 +221,7 @@ class FigurePlotterOptions(BasePlotterOptions):
                 try:
                     setattr(self, attr, d[attr])
                 except KeyError, e:
-                    print d, attr
-
-    # @on_trait_change('use_xgrid, use_ygrid, padding+, bgcolor, plot_bgcolor')
-    # def _refresh_handler(self):
-    # self.refresh_plot_needed = True
-
+                    print 'error seting defaults {} {}'.format(d, attr)
 
     @on_trait_change('aux_plots:name')
     def _handle_name_change(self, obj, name, old, new):
@@ -379,8 +369,8 @@ class FigurePlotterOptions(BasePlotterOptions):
 
     def _get_axes_group(self):
         axis_grp = Group(self._get_x_axis_group(), self._get_y_axis_group(),
-            enabled_when='not formatting_options',
-            layout='tabbed', show_border=True, label='Axes')
+                         enabled_when='not formatting_options',
+                         layout='tabbed', show_border=True, label='Axes')
         grid_grp = VGroup(Item('use_xgrid',
                                label='XGrid Visible'),
                           Item('use_ygrid', label='YGrid Visible'),
@@ -428,9 +418,9 @@ class FigurePlotterOptions(BasePlotterOptions):
 
     def _get_main_group(self):
         main_grp = VGroup(self._get_aux_plots_group(),
-            HGroup(Item('plot_spacing', label='Spacing',
-                        tooltip='Spacing between stacked plots')),
-            label='Plots')
+                          HGroup(Item('plot_spacing', label='Spacing',
+                                      tooltip='Spacing between stacked plots')),
+                          label='Plots')
         return main_grp
 
     def _get_aux_plots_group(self):
@@ -465,7 +455,7 @@ class FigurePlotterOptions(BasePlotterOptions):
                                                   sortable=False,
                                                   deletable=False,
                                                   clear_selection_on_dclicked=True,
-                                                  edit_on_first_click=False,
+                                                  # edit_on_first_click=False,
                                                   # on_select=lambda *args: setattr(self, 'selected', True),
                                                   # selected='selected',
                                                   edit_view=v,
@@ -492,11 +482,8 @@ class FigurePlotterOptions(BasePlotterOptions):
             g = Group(main_grp, bg_grp, pd_grp)
 
         v = View(VGroup(self._get_refresh_group(), g),
-            scrollable=True)
+                 scrollable=True)
         # v = View(VGroup(self._get_refresh_group(),g))
         return v
 
 # ============= EOF =============================================
-
-
-

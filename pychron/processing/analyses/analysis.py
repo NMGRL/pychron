@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from numpy import Inf
 
 from traits.api import Instance, Int, Str, Bool, \
     Event, Property, Float, Date, List, Tuple, CStr, Dict, CFloat
@@ -37,6 +38,63 @@ Fit = namedtuple('Fit', 'fit '
                         'error_type include_baseline_error, time_zero_offset')
 
 logger = new_logger('Analysis')
+
+
+def min_max(a, b, vs):
+    return min(a, vs.min()), max(b, vs.max())
+
+
+def show_evolutions_factory(record_id, isotopes, show_evo=True, show_sniff=False, show_baseline=False):
+    from pychron.graph.stacked_regression_graph import StackedRegressionGraph
+
+    ymi, yma = Inf, -Inf
+
+    if not show_evo:
+        xmi = Inf
+        xma = -Inf
+    else:
+        xmi, xma = 0, -Inf
+
+    g = StackedRegressionGraph()
+    for i, iso in enumerate(isotopes):
+        # iso = next((i for i in self.isotopes if i.name == ni.name))
+        # iso = next((i for i in self.isotopes.itervalues() if i.name == ni.name), None)
+        g.new_plot(padding=[60, 10, 10, 40])
+        if show_sniff:
+            g.new_series(iso.sniff.xs, iso.sniff.ys,
+                         type='scatter',
+                         fit=None,
+                         color='red')
+            ymi, yma = min_max(ymi, yma, iso.sniff.ys)
+            xmi, xma = min_max(xmi, xma, iso.sniff.xs)
+
+        if show_evo:
+            g.new_series(iso.xs, iso.ys,
+                         fit=iso.fit,
+                         filter_outliers_dict=iso.filter_outliers_dict,
+                         color='black')
+            ymi, yma = min_max(ymi, yma, iso.ys)
+            xmi, xma = min_max(xmi, xma, iso.xs)
+
+        if show_baseline:
+            g.new_series(iso.baseline.xs, iso.baseline.ys,
+                         type='scatter', fit=iso.fit,
+                         filter_outliers_dict=iso.filter_outliers_dict,
+                         color='blue')
+            ymi, yma = min_max(ymi, yma, iso.baseline.ys)
+            xmi, xma = min_max(xmi, xma, iso.baseline.xs)
+
+        # ymi = min(ymi, iso.ys.min())
+        # yma = max(yma, iso.ys.max())
+
+        g.set_x_limits(min_=xmi, max_=xma * 1.1)
+        g.set_y_limits(min_=ymi, max_=yma, pad='0.05')
+        g.set_x_title('Time (s)')
+        g.set_y_title('{} Intensity (fA)'.format(iso.name))
+
+    g.refresh()
+    g.window_title = '{} {}'.format(record_id, ','.join([i.name for i in isotopes]))
+    return g
 
 
 class Analysis(ArArAge):
@@ -114,6 +172,21 @@ class Analysis(ArArAge):
     tag_event = Event
     invalid_event = Event
 
+    def show_isotope_evolutions(self, isotopes, **kw):
+        if isotopes and isinstance(isotopes[0], (str, unicode)):
+            isotopes = [self.isotopes[i] for i in isotopes]
+
+        keys = [k.name for k in isotopes]
+
+        self.load_raw_data(keys)
+        g = show_evolutions_factory(self.record_id, isotopes, **kw)
+        if self.application:
+            self.application.open_view(g)
+        else:
+            g.edit_traits()
+
+        return g
+
     def trigger_recall(self):
         self.recall_event = self
 
@@ -139,9 +212,7 @@ class Analysis(ArArAge):
         omit = False
         if omit_key:
             omit = getattr(self, omit_key)
-            # print ai.aliquot, r, omit, ai.filter_omit
-        # return r or ai.filter_omit #or ai.tag == 'omit'
-        #omit=False
+
         return self.is_temp_omitted(include_value_filtered) or omit
 
     def flush(self, *args, **kw):
@@ -234,134 +305,5 @@ class Analysis(ArArAge):
     def _get_identifier(self):
         return self.labnumber
 
-    # mirror labnumber
-    # @property
-    # def identifier(self):
-    #     return self.labnumber
-    #
-    # @identifier.setter
-    # def set_identifier(self, v):
-    #     print 'asfasfffffffff', v
-    #     self.labnumber = v
-
     def __str__(self):
         return '{}<{}>'.format(self.record_id, self.__class__.__name__)
-
-if __name__ == '__main__':
-    pass
-    # ============= EOF =============================================
-    # def _sync_irradiation(self, meas_analysis):
-    #    ln = meas_analysis.labnumber
-    #    self.irradiation_info = self._get_irradiation_info(ln)
-    #
-    #    dbpos = ln.irradiation_position
-    #    if dbpos:
-    #        pos = dbpos.position
-    #        irrad = dbpos.level.irradiation.name
-    #        level = dbpos.level.name
-    #        self.irradiation_str = '{} {}{}'.format(irrad, level, pos)
-    #
-    #    self.j = self._get_j(ln)
-    #    self.production_ratios = self._get_production_ratios(ln)
-
-    #    def _load_timestamp(self, ln):
-    #        ts = self.timestamp
-    #        if not ts:
-    #            ts = ArArAge._load_timestamp(self, ln)
-    #        return ts
-    #
-    #
-    #    def _get_j(self, ln):
-    #        s, e = 1, 0
-    #        if ln.selected_flux_history:
-    #            f = ln.selected_flux_history.flux
-    #            s = f.j
-    #            e = f.j_err
-    #        return ufloat(s, e)
-    #
-    #    def _get_production_ratios(self, ln):
-    #        lev = self._get_irradiation_level(ln)
-    #        cak = 1
-    #        clk = 1
-    #        if lev:
-    #            ir = lev.irradiation
-    #            pr = ir.production
-    #            cak, clk = pr.Ca_K, pr.Cl_K
-    #
-    #        return dict(Ca_K=cak, Cl_K=clk)
-    #
-    #    def _get_irradiation_level(self, ln):
-    #        if ln:
-    #            pos = ln.irradiation_position
-    #            if pos:
-    #                self.irradiation_pos = str(pos.position)
-    #                return pos.level
-    #
-    #
-    #    def _get_irradiation_info(self, ln):
-    #        '''
-    #            return k4039, k3839,k3739, ca3937, ca3837, ca3637, cl3638, chronsegments, decay_time
-    #        '''
-    #        prs = (1, 0), (1, 0), (1, 0), (1, 0), (1, 0), (1, 0), (1, 0), [], 1
-    #        irradiation_level = self._get_irradiation_level(ln)
-    #        if irradiation_level:
-    #            irradiation = irradiation_level.irradiation
-    #            if irradiation:
-    #                self.irradiation = irradiation.name
-    #                self.irradiation_level = irradiation_level.name
-    #
-    #                pr = irradiation.production
-    #                if pr:
-    #                    prs = []
-    #                    for pi in ['K4039', 'K3839', 'K3739', 'Ca3937', 'Ca3837', 'Ca3637', 'Cl3638']:
-    #                        v, e = getattr(pr, pi), getattr(pr, '{}_err'.format(pi))
-    #                        prs.append((v if v is not None else 1, e if e is not None else 0))
-    #
-    #                        #                    prs = [(getattr(pr, pi), getattr(pr, '{}_err'.format(pi)))
-    #                        #                           for pi in ['K4039', 'K3839', 'K3739', 'Ca3937', 'Ca3837', 'Ca3637', 'Cl3638']]
-    #
-    #                chron = irradiation.chronology
-    #                #                def convert_datetime(x):
-    #                #                    try:
-    #                #                        return datetime.datetime.strptime(x, '%Y-%m-%d %H:%M:%S')
-    #                #                    except ValueError:
-    #                #                        pass
-    #                #                convert_datetime = lambda x:datetime.datetime.strptime(x, '%Y-%m-%d %H:%M:%S')
-    #
-    #                convert_days = lambda x: x.total_seconds() / (60. * 60 * 24)
-    #                if chron:
-    #                    doses = chron.get_doses()
-    #                    #                    chronblob = chron.chronology
-    #                    #
-    #                    #                    doses = chronblob.split('$')
-    #                    #                    doses = [di.strip().split('%') for di in doses]
-    #                    #
-    #                    #                    doses = [map(convert_datetime, d) for d in doses if d]
-    #
-    #                    analts = self.timestamp
-    #                    #                     print analts
-    #                    if isinstance(analts, float):
-    #                        analts = datetime.fromtimestamp(analts)
-    #
-    #                    segments = []
-    #                    for st, en in doses:
-    #                        if st is not None and en is not None:
-    #                            dur = en - st
-    #                            dt = analts - st
-    #                            #                             dt = 45
-    #                            segments.append((1, convert_days(dur), convert_days(dt)))
-    #                            #                             segments.append((1, convert_days(dur), dt))
-    #
-    #                    decay_time = 0
-    #                    d_o = doses[0][0]
-    #                    if d_o is not None:
-    #                        decay_time = convert_days(analts - d_o)
-    #
-    #                    #                    segments = [(1, convert_days(ti)) for ti in durs]
-    #                    prs.append(segments)
-    #                    prs.append(decay_time)
-    #                    #                     prs.append(45)
-    #
-    #                    #         print 'aasfaf', ln, prs
-    #
-    #        return prs

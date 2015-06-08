@@ -285,8 +285,9 @@ class BaseBrowserTask(BaseEditorTask):
         existing = [e.basename for e in self.get_recall_editors()]
         if ans:
             for rec in ans:
+                rec.application = self.application
                 av = rec.analysis_view
-                av.application = self.application
+                # av.application = self.application
                 # mv = av.isotopes_view
                 av.isotope_adapter = self.isotope_adapter
                 av.intermediate_adapter = self.intermediate_adapter

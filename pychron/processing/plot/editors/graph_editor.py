@@ -23,6 +23,7 @@ from enable.component_editor import ComponentEditor as EnableComponentEditor
 import os
 from itertools import groupby
 # ============= local library imports  ==========================
+from pychron.envisage.tasks.base_editor import grouped_name
 from pychron.processing.tasks.editor import BaseUnknownsEditor
 
 
@@ -79,7 +80,7 @@ class GraphEditor(BaseUnknownsEditor):
 
     def _set_name(self):
         na = list(set([ni.labnumber for ni in self.analyses]))
-        na = self._grouped_name(na)
+        na = grouped_name(na)
         self.name = '{} {}'.format(na, self.basename)
 
     def _compress_groups(self):
@@ -110,17 +111,6 @@ class GraphEditor(BaseUnknownsEditor):
         ans = self.analyses
         if ans:
             return self._component_factory()
-
-            # po = self.plotter_options_manager.plotter_options
-            # model, comp = timethis(self.get_component, args=(ans, po),
-            # msg='get_component {}'.format(self.__class__.__name__))
-            # model, comp = self.get_component(ans, po)
-            # if comp:
-            # comp.invalidate_and_redraw()
-            #     self.figure_model = model
-            #     return comp
-                # self.component = comp
-                # self.component_changed = True
 
     def _component_factory(self):
         raise NotImplementedError

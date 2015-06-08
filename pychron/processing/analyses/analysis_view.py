@@ -15,10 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Instance, Event, Str, Bool, List, Any
+from traits.api import HasTraits, Instance, Event, Str, Bool, List
 from traitsui.api import View, UItem, InstanceEditor, VGroup, Tabbed, Spring, Group, Handler
 # ============= standard library imports ========================
-from numpy import Inf
 # ============= local library imports  ==========================
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter, IntermediateTabularAdapter
@@ -54,12 +53,8 @@ class AnalysisViewHandler(Handler):
         obj.show_iso_evolutions(show_evo=True, show_sniff=True, show_baseline=True)
 
 
-def min_max(a, b, vs):
-    return min(a, vs.min()), max(b, vs.max())
-
-
 class AnalysisView(HasTraits):
-    application = Any
+    # application = Any
     model = Instance('pychron.processing.analyses.analysis.Analysis')
     # selection_tool = Instance('pychron.processing.analyses.analysis_view.ViewSelection')
     selected = List
@@ -85,59 +80,10 @@ class AnalysisView(HasTraits):
     show_intermediate = Bool(True)
 
     def show_iso_evolutions(self, show_evo=True, show_sniff=False, show_baseline=False):
-        from pychron.graph.stacked_regression_graph import StackedRegressionGraph
+        isotopes = self.selected
 
-        keys = [k.name for k in self.selected]
-        self.model.load_raw_data(keys)
-        ymi, yma = Inf, -Inf
-
-        if not show_evo:
-            xmi = Inf
-            xma = -Inf
-        else:
-            xmi, xma = 0, -Inf
-
-        g = StackedRegressionGraph()
-        for i, ni in enumerate(self.selected[::-1]):
-            iso = next((i for i in self.isotopes if i.name == ni.name))
-            # iso = next((i for i in self.isotopes.itervalues() if i.name == ni.name), None)
-            g.new_plot(padding=[60, 10, 10, 40])
-            if show_sniff:
-                g.new_series(iso.sniff.xs, iso.sniff.ys,
-                             type='scatter',
-                             fit=None,
-                             color='red')
-                ymi, yma = min_max(ymi, yma, iso.sniff.ys)
-                xmi, xma = min_max(xmi, xma, iso.sniff.xs)
-
-            if show_evo:
-                g.new_series(iso.xs, iso.ys,
-                             fit=iso.fit,
-                             filter_outliers_dict=iso.filter_outliers_dict,
-                             color='black')
-                ymi, yma = min_max(ymi, yma, iso.ys)
-                xmi, xma = min_max(xmi, xma, iso.xs)
-
-            if show_baseline:
-                g.new_series(iso.baseline.xs, iso.baseline.ys,
-                             type='scatter', fit=iso.fit,
-                             filter_outliers_dict=iso.filter_outliers_dict,
-                             color='blue')
-                ymi, yma = min_max(ymi, yma, iso.baseline.ys)
-                xmi, xma = min_max(xmi, xma, iso.baseline.xs)
-
-            # ymi = min(ymi, iso.ys.min())
-            # yma = max(yma, iso.ys.max())
-
-            g.set_x_limits(min_=xmi, max_=xma * 1.1)
-            g.set_y_limits(min_=ymi, max_=yma, pad='0.05')
-            g.set_x_title('Time (s)')
-            g.set_y_title('{} Intensity (fA)'.format(iso.name))
-
-        g.refresh()
-
-        g.window_title = '{} {}'.format(self.model.record_id, ','.join([i.name for i in self.selected]))
-        self.application.open_view(g)
+        self.model.show_isotope_evolutions(isotopes, show_evo=show_evo,
+                                           show_sniff=show_sniff, show_baseline=show_baseline)
 
     def update_fontsize(self, view, size):
         if 'main' in view:

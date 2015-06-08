@@ -239,6 +239,9 @@ class IsotopicMeasurement(BaseMeasurement):
 
     def set_fit(self, fit, notify=True):
         if fit is not None:
+            self.user_defined_value = False
+            self.user_defined_error = False
+
             if isinstance(fit, (int, str)):
                 self.trait_set(fit=fit, trait_change_notify=notify)
             else:
@@ -256,7 +259,7 @@ class IsotopicMeasurement(BaseMeasurement):
 
                 # self._value = 0
                 # self._error = 0
-                # self.dirty = True
+            self.dirty = True
 
     def set_uvalue(self, v, dirty=True):
         if isinstance(v, tuple):
@@ -300,7 +303,8 @@ class IsotopicMeasurement(BaseMeasurement):
         elif self.user_defined_value:
             return self._value
 
-        if len(self.xs) > 1:
+        if self.xs.shape[0] > 1:
+            # print 'useing regressor'
             v = self.regressor.predict(0)
             # print 'using regressor', self.regressor, v
             return v
@@ -313,7 +317,7 @@ class IsotopicMeasurement(BaseMeasurement):
         elif self.user_defined_error:
             return self._error
 
-        if len(self.xs) > 1:
+        if self.xs.shape[0] > 1:
             v = self.regressor.predict_error(0)
             return v
         else:
