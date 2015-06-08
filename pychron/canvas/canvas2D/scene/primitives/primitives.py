@@ -742,25 +742,20 @@ class BorderLine(Line, Bordered):
 
     def _render_(self, gc):
         gc.save_state()
-        gc.set_line_width(self.width + self.border_width)
-        #         if self.name in ('C_Bone', 'Bone_C'):
-        #             print self.state, self._get_border_color()
-        gc.set_stroke_color(self._get_border_color())
-        #         gc.set_fill_color(self._get_border_color())
-        #             print self.state, self.name, self.default_color, self.active_color
-        x, y = self.start_point.get_xy()
-        x1, y1 = self.end_point.get_xy()
-        # draw border
-        gc.move_to(x, y)
-        gc.line_to(x1, y1)
-        gc.close_path()
-        gc.draw_path()
-        gc.restore_state()
+        with gc:
+            gc.set_line_width(self.width + self.border_width)
+            #         if self.name in ('C_Bone', 'Bone_C'):
+            #             print self.state, self._get_border_color()
+            gc.set_stroke_color(self._get_border_color())
+            #         gc.set_fill_color(self._get_border_color())
+            #             print self.state, self.name, self.default_color, self.active_color
+            x, y = self.start_point.get_xy()
+            x1, y1 = self.end_point.get_xy()
+            # draw border
+            gc.move_to(x, y)
+            gc.line_to(x1, y1)
+            gc.draw_path()
 
-        #        self.set_stroke_color(gc)
-        #        self.set_fill_color(gc)
-        #        gc.set_line_width(self.line_width)
-        # draw main line
         super(BorderLine, self)._render_(gc)
 
 

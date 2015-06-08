@@ -97,27 +97,28 @@ class ExtractionLineGraph(HasTraits):
         # =======================================================================
         # load edges
         # =======================================================================
-        for ei in cp.get_elements('connection'):
-            sa = ei.find('start')
-            ea = ei.find('end')
-            vol = get_volume(ei)
-            edge = Edge(volume=vol)
-            s_name = ''
-            if sa.text in nodes:
-                s_name = sa.text
-                sa = nodes[s_name]
-                edge.nodes.append(sa)
-                sa.add_edge(edge)
+        for tag in ('connection','elbow'):
+            for ei in cp.get_elements(tag):
+                sa = ei.find('start')
+                ea = ei.find('end')
+                vol = get_volume(ei)
+                edge = Edge(volume=vol)
+                s_name = ''
+                if sa.text in nodes:
+                    s_name = sa.text
+                    sa = nodes[s_name]
+                    edge.nodes.append(sa)
+                    sa.add_edge(edge)
 
-            e_name = ''
-            if ea.text in nodes:
-                e_name = ea.text
-                ea = nodes[e_name]
-                # edge.b_node = ea
-                edge.nodes.append(ea)
-                ea.add_edge(edge)
+                e_name = ''
+                if ea.text in nodes:
+                    e_name = ea.text
+                    ea = nodes[e_name]
+                    # edge.b_node = ea
+                    edge.nodes.append(ea)
+                    ea.add_edge(edge)
 
-            edge.name = '{}_{}'.format(s_name, e_name)
+                edge.name = '{}_{}'.format(s_name, e_name)
 
         for c in ('tee_connection', 'fork_connection'):
             for conn in cp.get_elements(c):

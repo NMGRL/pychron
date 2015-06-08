@@ -63,6 +63,7 @@ def set_nfail(elem, kw):
 
 class DashboardServer(Loggable):
     devices = List
+    values = List
     selected_device = Instance(DashboardDevice)
     # db_manager = Instance(DashboardDBManager, ())
     extraction_line_manager = Instance('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
@@ -220,6 +221,7 @@ class DashboardServer(Loggable):
             d = DashboardDevice(name=name, use=dd['enabled'], hardware_device=device)
             for args, cs in dd['values']:
                 pv = d.add_value(**args)
+                self.values.append(pv)
                 for level, kw in cs:
                     d.add_conditional(pv, level, **kw)
 

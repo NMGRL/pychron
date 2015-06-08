@@ -18,7 +18,7 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.scene.primitives.base import Connectable
-from pychron.canvas.canvas2D.scene.primitives.connections import Tee, Fork
+from pychron.canvas.canvas2D.scene.primitives.connections import Tee, Fork, Elbow
 from pychron.canvas.canvas2D.scene.primitives.primitives import Rectangle, Bordered, BorderLine
 
 
@@ -92,9 +92,27 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
                     for t, c in self.connections:
                         with gc:
                             gc.set_line_width(self.border_width + 1)
-                            if isinstance(c, BorderLine):
+                            if isinstance(c, Elbow):
                                 p1, p2 = c.start_point, c.end_point
-                                p1x, p1y = p1.get_xy()
+
+                                if p1.y < p2.y:
+                                    p1x, p1y = p1.get_xy()
+                                    gc.move_to(p1x - 5, y+height)
+                                    gc.line_to(p1x + 5, y+height)
+
+                                else:
+
+                                    p2x, p2y = p2.get_xy()
+                                    xx = x
+
+                                    if p1.x >= self.x:
+                                        xx = x + width
+                                    gc.move_to(xx, p2y - 5)
+                                    gc.line_to(xx, p2y + 5)
+
+                            elif isinstance(c, BorderLine):
+                                p1, p2 = c.start_point, c.end_point
+                                p2x, p2y = p2.get_xy()
                                 if p1.x == p2.x:
                                     yy = y
                                     if p1.y >= self.y:
@@ -106,10 +124,12 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
                                     gc.line_to(p1x + 5, yy)
                                 else:
                                     xx = x
+
                                     if p1.x >= self.x:
                                         xx = x + width
-                                    gc.move_to(xx, p1y - 5)
-                                    gc.line_to(xx, p1y + 5)
+                                    gc.move_to(xx, p2y - 5)
+                                    gc.line_to(xx, p2y + 5)
+
                             elif isinstance(c, Tee):
                                 if t == 'mid':
                                     yy = y if c.left.y < self.y else y + height
@@ -134,4 +154,5 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
                                 gc.line_to(mx + 5, yy)
 
                             gc.draw_path()
+
 # ============= EOF =============================================

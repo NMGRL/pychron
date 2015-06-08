@@ -231,7 +231,7 @@ class ScanManager(Manager):
     def reset_scan_timer(self):
         self.info('reset scan timer')
 
-        self.graph.set_scan_delay(self.integration_time)
+        # self.graph.set_scan_delay(self.integration_time)
         self.timer = self._timer_factory()
 
     def add_spec_event_marker(self, msg, mode=None, extra=None, bgcolor='white'):
