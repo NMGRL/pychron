@@ -81,6 +81,10 @@ def experiment_path(project):
     return os.path.join(paths.dvc_dir, 'experiments', project)
 
 
+def make_ref_list(refs):
+    return [{'record_id': r.record_id, 'uuid': r.uuid, 'exclude': r.temp_status} for r in refs]
+
+
 class DVCAnalysis(Analysis):
     def __init__(self, record_id, experiment_id, *args, **kw):
         super(DVCAnalysis, self).__init__(*args, **kw)
@@ -136,47 +140,45 @@ class DVCAnalysis(Analysis):
             return unhexlify(base64.b64decode(blob))
 
         path = self._analysis_path(modifier='.data')
-        # path = analysis_path(self.record_id, self.experiment_id, modifier='.data')
+        isotopes = self.isotopes
+        isos = [i for i in isotopes.itervalues() if i.name in keys and not i.xs.shape[0]]
+        if not isos:
+            return
+
         with open(path, 'r') as rfile:
             yd = yaml.load(rfile)
             signals = yd['signals']
             baselines = yd['baselines']
             sniffs = yd['sniffs']
 
+            # isotopes = self.isotopes
             for sd in signals:
                 isok = sd['isotope']
                 if isok not in keys:
                     continue
-                iso = self.isotopes.get(isok)
-                if iso:
-                    iso.unpack_data(format_blob(sd['blob']))
-                    # iso.unpack_data(sd['blob'])#base64.b64decode(sd['blob']))
-                    det = sd['detector']
-                    bd = next((b for b in baselines if b['detector'] == det), None)
-                    if bd:
-                        iso.baseline.unpack_data(format_blob(bd['blob']))
+
+                try:
+                    iso = isotopes[isok]
+                except KeyError:
+                    continue
+
+                iso.unpack_data(format_blob(sd['blob']))
+
+                det = sd['detector']
+                bd = next((b for b in baselines if b['detector'] == det), None)
+                if bd:
+                    iso.baseline.unpack_data(format_blob(bd['blob']))
 
             for sn in sniffs:
                 isok = sn['isotope']
                 if isok not in keys:
                     continue
 
-                iso = self.isotopes.get(isok)
-                if iso:
-                    iso.sniff.unpack_data(format_blob(sn['blob']))
-
-                    # isos = yd['isotopes']
-                    # dets = yd['detectors']
-                    # for k in keys:
-                    #     if k in isos:
-                    #         if k in self.isotopes:
-                    #             iso = self.isotopes[k]
-                    #
-                    #             signal = isos[k]['signal']
-                    #             baseline = dets[isos[k]['detector']]['baseline']['signal']
-                    #
-                    #             iso.unpack_data(base64.b64decode(signal))
-                    #             iso.baseline.unpack_data(base64.b64decode(baseline))
+                try:
+                    iso = isotopes[isok]
+                except KeyError:
+                    continue
+                iso.sniff.unpack_data(format_blob(sn['blob']))
 
     def set_production(self, prod, r):
         self.production_name = prod
@@ -245,7 +247,7 @@ class DVCAnalysis(Analysis):
                     blank['value'] = float(siso.temporary_blank.value)
                     blank['error'] = float(siso.temporary_blank.error)
                     blank['fit'] = siso.temporary_blank.fit
-                    blank['references'] = self._make_ref_list(refs)
+                    blank['references'] = make_ref_list(refs)
                     iso['blank'] = blank
 
         self._dump(yd, path)
@@ -266,7 +268,7 @@ class DVCAnalysis(Analysis):
             icf['ic_factor'] = float(v)
             icf['ic_factor_err'] = float(e)
             icf['fit'] = fi
-            icf['references'] = self._make_ref_list(refs)
+            icf['references'] = make_ref_list(refs)
             det['ic_factor'] = icf
 
             dets[dk] = det
@@ -309,9 +311,6 @@ class DVCAnalysis(Analysis):
                     ic = det['ic_factor']
                     if ic:
                         self.set_ic_factor(iso.detector, ic['value'], ic['error'])
-
-    def _make_ref_list(self, refs):
-        return [{'record_id': r.record_id, 'uuid': r.uuid, 'exclude': r.temp_status} for r in refs]
 
     def _get_yd(self, modifier):
         path = self._analysis_path(modifier=modifier)

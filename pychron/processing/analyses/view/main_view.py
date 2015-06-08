@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Str, List, Event, Instance, Any, Property, cached_property
-from traitsui.api import View, UItem, Handler, VGroup, HGroup
+from traitsui.api import View, UItem, VGroup, HGroup
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -28,10 +28,10 @@ from pychron.processing.analyses.view.values import ExtractionValue, ComputedVal
 from pychron.core.ui.tabular_editor import myTabularEditor
 
 
-class MainViewHandler(Handler):
-    def show_isotope_evolution(self, uiinfo, obj):
-        isos = obj.selected
-        obj.show_iso_evo_needed = isos
+# class MainViewHandler(Handler):
+#     def show_isotope_evolution(self, uiinfo, obj):
+#         isos = obj.selected
+#         obj.show_iso_evo_needed = isos
 
 
 class MainView(HasTraits):
@@ -184,9 +184,9 @@ class MainView(HasTraits):
                 self._load_corrected_values(an, new_list)
 
         elif self.analysis_type in ('air', 'blank_air', 'blank_unknown', 'blank_cocktail'):
-            self._load_air_computed(an, new_list)
+            self._load_air_computed(new_list)
         elif self.analysis_type == 'cocktail':
-            self._load_cocktail_computed(an, new_list)
+            self._load_cocktail_computed(new_list)
 
     def _get_isotope(self, name):
         return next((iso for iso in self.isotopes if iso.name == name), None)
@@ -244,8 +244,11 @@ class MainView(HasTraits):
                 pass
         return ufloat(0, 1e-20), 1
 
-    def _update_ratios(self, an):
+    def _update_ratios(self):
         for ci in self.computed_values:
+            if not isinstance(ci, DetectorRatio):
+                continue
+
             nd = ci.detectors
             n, d = nd.split('/')
             niso, diso = self._get_isotope(n), self._get_isotope(d)
@@ -259,21 +262,21 @@ class MainView(HasTraits):
                          noncorrected_error=std_dev(noncorrected),
                          ic_factor=nominal_value(ic))
 
-    def _load_air_computed(self, an, new_list):
+    def _load_air_computed(self, new_list):
         if new_list:
             ratios = [('40Ar/36Ar', 'Ar40/Ar36', 295.5), ('40Ar/38Ar', 'Ar40/Ar38', 1)]
             cv = self._make_ratios(ratios)
             self.computed_values = cv
 
-        self._update_ratios(an)
+        self._update_ratios()
 
-    def _load_cocktail_computed(self, an, new_list):
+    def _load_cocktail_computed(self, new_list):
         if new_list:
             ratios = [('40Ar/36Ar', 'Ar40/Ar36', 295.5), ('40Ar/39Ar', 'Ar40/Ar39', 1)]
             cv = self._make_ratios(ratios)
             self.computed_values = cv
         else:
-            self._update_ratios(an)
+            self._update_ratios()
 
     def _load_corrected_values(self, an, new_list):
         attrs = (('40/39', 'Ar40/Ar39_decay_corrected'),
@@ -426,7 +429,7 @@ class MainView(HasTraits):
                        UItem('corrected_values',
                              # height=200,
                              editor=ceditor))),
-            handler=MainViewHandler()
+            # handler=MainViewHandler()
         )
         return v
 

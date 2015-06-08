@@ -29,7 +29,7 @@ class MeanRegressor(BaseRegressor):
     def calculate(self, filtering=False, **kw):
         # cxs, cys = self.pre_clean_ys, self.pre_clean_ys
         if not filtering:
-            #prevent infinite recursion
+            # prevent infinite recursion
             self.calculate_filtered_data()
 
     def calculate_outliers(self, nsigma=2):
@@ -101,8 +101,8 @@ sem={}
 
     def calculate_ci(self, fx, fy):
         #         c = self.predict(fx)
-        #fit = self.fit.lower()
-        #ec = 'sem' if fit.endswith('sem') else 'sd'
+        # fit = self.fit.lower()
+        # ec = 'sem' if fit.endswith('sem') else 'sd'
         e = self.predict_error(fx)
         ly = fy - e
         uy = fy + e
@@ -127,7 +127,7 @@ sem={}
         return s
 
     def make_equation(self):
-        return
+        return self.tostring()
 
     def predict_error(self, x, error_calc=None):
         if error_calc is None:
@@ -147,7 +147,7 @@ sem={}
     def calculate_standard_error_fit(self):
         return self.std
 
-    def _check_integrity(self, x, y):
+    def _check_integrity(self, x, y, **kw):
         nx, ny = len(x), len(y)
         if not nx or not ny:
             return

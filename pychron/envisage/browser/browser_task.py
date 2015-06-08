@@ -191,7 +191,14 @@ class BaseBrowserTask(BaseEditorTask):
             for e in self.get_recall_editors():
                 tc.set_fonts(e.model.analysis_view)
 
+    def get_recall_editors(self):
+        es = self.editor_area.editors
+        return [e for e in es if isinstance(e, RecallEditor)]
+
     # private
+    def _find_refs(self, an):
+        self.information_dialog('Finding references not currently implemented')
+
     def _get_editor_by_uuid(self, uuid):
         return next((editor for editor in self.editor_area.editors
                      if isinstance(editor, RecallEditor) and
@@ -259,8 +266,8 @@ class BaseBrowserTask(BaseEditorTask):
     #     model.labnumber_tabular_adapter = self.browser_pane.labnumber_tabular_adapter
     #     return self.browser_pane
 
-    def _ok_ed(self):
-        return self.extraction_device not in (DEFAULT_ED, 'None')
+    # def _ok_ed(self):
+    #     return self.extraction_device not in (DEFAULT_ED, 'None')
 
     def _set_selected_analysis(self, new):
         pass
@@ -279,6 +286,7 @@ class BaseBrowserTask(BaseEditorTask):
         if ans:
             for rec in ans:
                 av = rec.analysis_view
+                av.application = self.application
                 # mv = av.isotopes_view
                 av.isotope_adapter = self.isotope_adapter
                 av.intermediate_adapter = self.intermediate_adapter
@@ -297,10 +305,6 @@ class BaseBrowserTask(BaseEditorTask):
                 #     pass
         else:
             self.warning('could not load records')
-
-    def get_recall_editors(self):
-        es = self.editor_area.editors
-        return [e for e in es if isinstance(e, RecallEditor)]
 
     @on_trait_change('browser_model:[analysis_table:context_menu_event, time_view_model:context_menu_event]')
     def _handle_analysis_table_context_menu(self, new):

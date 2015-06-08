@@ -24,6 +24,7 @@ from traits.api import Instance, Bool, on_trait_change
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.dvc.dvc import experiment_has_staged, push_experiments
 from pychron.globals import globalv
 from pychron.paths import paths
 from pychron.pipeline.engine import PipelineEngine
@@ -109,7 +110,6 @@ class PipelineTask(BaseBrowserTask):
         expid = 'Cather_McIntosh'
 
         self.dvc.rollback_experiment_repo(expid)
-
 
     def reset(self):
         self.state = None
@@ -210,15 +210,12 @@ class PipelineTask(BaseBrowserTask):
         ret = True
         ps = self.engine.get_projects()
         if ps:
-            changed = self.dvc.experiment_has_staged(ps)
+            changed = experiment_has_staged(ps)
             if changed:
                 m = 'You have changes to analyses. Would you like to share them?'
                 ret = self._handle_prompt_for_save(m, 'Share Changes')
                 if ret == 'save':
-                    self.dvc.push_experiments(ps)
+                    push_experiments(ps)
 
         return ret
 # ============= EOF =============================================
-# self.engine.on_trait_change(self._handle_run_needed, 'run_needed')
-        # self.engine.on_trait_change(self._handle_recall, 'recall_analyses_needed')
-        # self.engine.on_trait_change(self._)

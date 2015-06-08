@@ -124,7 +124,6 @@ class ComputedValueTabularAdapter(BaseTabularAdapter):
         return format_percent_error(v, e)
 
 
-
 class IntermediateTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
     all_columns = [('Iso.', 'name'),
                    ('I', 'intercept'),
@@ -171,17 +170,17 @@ class IntermediateTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
     interference_corrected_percent_error_text = Property
     interference_corrected_tooltip = Str('Interference corrected isotopic value')
 
-    bs_corrected_width = Int(60)
-    bs_corrected_error_width = eewidth
-    bs_corrected_percent_error_width = pwidth
+    # bs_corrected_width = Int(60)
+    # bs_corrected_error_width = eewidth
+    # bs_corrected_percent_error_width = pwidth
 
-    bs_bk_corrected_width = Int(60)
-    bs_bk_corrected_error_width = eewidth
-    bs_bk_corrected_percent_error_width = pwidth
+    # bs_bk_corrected_width = Int(60)
+    # bs_bk_corrected_error_width = eewidth
+    # bs_bk_corrected_percent_error_width = pwidth
 
-    disc_corrected_width = Int(60)
-    disc_corrected_error_width = Int(60)
-    disc_corrected_percent_error_width = Int(60)
+    # disc_corrected_width = Int(60)
+    # disc_corrected_error_width = Int(60)
+    # disc_corrected_percent_error_width = Int(60)
 
     name_width = Int(40)
     intercept_width = vwidth
@@ -300,10 +299,7 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
                ('Bk', 'blank_value'),
                (sigmaf('Bk'), 'blank_error'),
                ('%(Bk)', 'blank_percent_error'),
-               ('IC', 'ic_factor'),
-               # ('Disc', 'discrimination'),
-               # ('Error Comp.', 'age_error_component')
-                ]
+               ('IC', 'ic_factor')]
 
     value_tooltip = Str('Baseline, Blank, IC and/or Discrimination corrected')
     value_text = Property
@@ -342,8 +338,19 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
     ic_factor_width = Int(50)
     discrimination_width = Int(50)
 
-    def get_menu(self, object, trait, row, column):
-        return MenuManager(Action(name='Show Isotope Evolution', action='show_isotope_evolution'))
+    def get_menu(self, obj, trait, row, column):
+        return MenuManager(Action(name='Show Isotope Evolution',
+                                  action='show_isotope_evolution'),
+                           Action(name='Show Isotope Evolution w/Equilibration',
+                                  action='show_isotope_evolution_with_sniff'),
+                           Action(name='Show Isotope Evolution w/Baseline',
+                                  action='show_isotope_evolution_with_baseline'),
+                           Action(name='Show Baseline',
+                                  action='show_baseline'),
+                           Action(name='Show Sniff',
+                                  action='show_sniff'),
+                           Action(name='Show All',
+                                  action='show_all'))
 
     def _get_ic_factor_text(self):
         ic = self.item.ic_factor

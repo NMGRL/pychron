@@ -16,10 +16,13 @@
 
 # ============= enthought library imports =======================
 from math import isinf
+import time
 
 from chaco.legend import Legend
 from numpy import Inf, inf
 from traits.api import HasTraits, Any, List, Int, Str
+
+
 
 
 # ============= standard library imports ========================
@@ -36,7 +39,10 @@ class FigurePanel(HasTraits):
     plot_options = Any
     _index_attr = ''
     equi_stack = False
-    graph_klass = AnalysisStackedGraph
+
+    _graph_klass = AnalysisStackedGraph
+    _figure_klass = Any
+
     plot_spacing = Int
     meta = Any
     title = Str
@@ -88,18 +94,21 @@ class FigurePanel(HasTraits):
 
     # @caller
     def make_graph(self):
-        print '----------------------- make graph -----------------------'
+
+        st = time.time()
         po = self.plot_options
 
         bgcolor = po.get_formatting_value('bgcolor')
-        g = self.graph_klass(panel_height=200,
-                             equi_stack=self.equi_stack,
-                             container_dict=dict(padding=0,
-                                                 spacing=self.plot_spacing or po.plot_spacing,
-                                                 bgcolor=bgcolor))
+        g = self._graph_klass(panel_height=200,
+                              equi_stack=self.equi_stack,
+                              container_dict=dict(padding=0,
+                                                  spacing=self.plot_spacing or po.plot_spacing,
+                                                  bgcolor=bgcolor))
         center, mi, ma = self._get_init_xlimits()
         plots = list(po.get_plotable_aux_plots())
         if plots:
+            xpad = None
+
             if self.plot_options.include_legend:
 
                 align = self.plot_options.legend_location
@@ -129,6 +138,7 @@ class FigurePanel(HasTraits):
                 # print fig.xma, fig.xmi
                 ma, mi = max(fig.xma, ma), min(fig.xmi, mi)
                 ymas, ymis = fig.ymas, fig.ymis
+                xpad = fig.xpad
 
             if legend:
                 g.plots[0].overlays.append(legend)
@@ -154,8 +164,8 @@ class FigurePanel(HasTraits):
                 mi, ma = 0, 100
 
             if not (isinf(mi) or isinf(ma)):
-                print 'setting xlimits', mi, ma, fig.xpad
-                g.set_x_limits(mi, ma, pad=fig.xpad or 0)
+                # print 'setting xlimits', mi, ma, fig.xpad
+                g.set_x_limits(mi, ma, pad=xpad or 0)
 
             self.figures[0].post_make()
             for fig in self.figures:
@@ -163,6 +173,7 @@ class FigurePanel(HasTraits):
                     fig.update_options_limits(i)
 
         # self.graph = g
+        print '----------------------- make graph {}'.format(time.time() - st)
         return g.plotcontainer
 
         # ============= EOF =============================================

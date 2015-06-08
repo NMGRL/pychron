@@ -15,10 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Instance, Event, Str, Bool, List
-from traitsui.api import View, UItem, InstanceEditor, VGroup, Tabbed, Spring, Group
-
+from traits.api import HasTraits, Instance, Event, Str, Bool, List, Any
+from traitsui.api import View, UItem, InstanceEditor, VGroup, Tabbed, Spring, Group, Handler
 # ============= standard library imports ========================
+from numpy import Inf
 # ============= local library imports  ==========================
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter, IntermediateTabularAdapter
@@ -34,29 +34,35 @@ from pychron.processing.analyses.view.interferences_view import InterferencesVie
 from pychron.processing.analyses.view.main_view import MainView
 
 
-# class ViewAdapter(TabularAdapter):
-#     columns = [('', 'view')]
-#
-#     view_text = Property
-#
-#     def _get_view_text(self, *args, **kw):
-#         return self.item.name
+class AnalysisViewHandler(Handler):
+    def show_isotope_evolution(self, uiinfo, obj):
+        obj.show_iso_evolutions()
+
+    def show_isotope_evolution_with_sniff(self, uiinfo, obj):
+        obj.show_iso_evolutions(show_sniff=True)
+
+    def show_isotope_evolution_with_baseline(self, uiinfo, obj):
+        obj.show_iso_evolutions(show_baseline=True)
+
+    def show_baseline(self, uiinfo, obj):
+        obj.show_iso_evolutions(show_evo=False, show_baseline=True)
+
+    def show_sniff(self, uiinfo, obj):
+        obj.show_iso_evolutions(show_evo=False, show_sniff=True)
+
+    def show_all(self, uiinfo, obj):
+        obj.show_iso_evolutions(show_evo=True, show_sniff=True, show_baseline=True)
 
 
-# class ViewSelection(HasTraits):
-#     subviews = List
-#     selected_view = Any
-#
-#     def traits_view(self):
-#         v = View(UItem('subviews', editor=TabularEditor(adapter=ViewAdapter(),
-#                                                         editable=False,
-#                                                         selected='selected_view')))
-#         return v
-#
+def min_max(a, b, vs):
+    return min(a, vs.min()), max(b, vs.max())
+
 
 class AnalysisView(HasTraits):
-    selection_tool = Instance('pychron.processing.analyses.analysis_view.ViewSelection')
-
+    application = Any
+    model = Instance('pychron.processing.analyses.analysis.Analysis')
+    # selection_tool = Instance('pychron.processing.analyses.analysis_view.ViewSelection')
+    selected = List
     refresh_needed = Event
     analysis_id = Str
 
@@ -78,6 +84,61 @@ class AnalysisView(HasTraits):
     intermediate_adapter = Instance(IntermediateTabularAdapter, ())
     show_intermediate = Bool(True)
 
+    def show_iso_evolutions(self, show_evo=True, show_sniff=False, show_baseline=False):
+        from pychron.graph.stacked_regression_graph import StackedRegressionGraph
+
+        keys = [k.name for k in self.selected]
+        self.model.load_raw_data(keys)
+        ymi, yma = Inf, -Inf
+
+        if not show_evo:
+            xmi = Inf
+            xma = -Inf
+        else:
+            xmi, xma = 0, -Inf
+
+        g = StackedRegressionGraph()
+        for i, ni in enumerate(self.selected[::-1]):
+            iso = next((i for i in self.isotopes if i.name == ni.name))
+            # iso = next((i for i in self.isotopes.itervalues() if i.name == ni.name), None)
+            g.new_plot(padding=[60, 10, 10, 40])
+            if show_sniff:
+                g.new_series(iso.sniff.xs, iso.sniff.ys,
+                             type='scatter',
+                             fit=None,
+                             color='red')
+                ymi, yma = min_max(ymi, yma, iso.sniff.ys)
+                xmi, xma = min_max(xmi, xma, iso.sniff.xs)
+
+            if show_evo:
+                g.new_series(iso.xs, iso.ys,
+                             fit=iso.fit,
+                             filter_outliers_dict=iso.filter_outliers_dict,
+                             color='black')
+                ymi, yma = min_max(ymi, yma, iso.ys)
+                xmi, xma = min_max(xmi, xma, iso.xs)
+
+            if show_baseline:
+                g.new_series(iso.baseline.xs, iso.baseline.ys,
+                             type='scatter', fit=iso.fit,
+                             filter_outliers_dict=iso.filter_outliers_dict,
+                             color='blue')
+                ymi, yma = min_max(ymi, yma, iso.baseline.ys)
+                xmi, xma = min_max(xmi, xma, iso.baseline.xs)
+
+            # ymi = min(ymi, iso.ys.min())
+            # yma = max(yma, iso.ys.max())
+
+            g.set_x_limits(min_=xmi, max_=xma * 1.1)
+            g.set_y_limits(min_=ymi, max_=yma, pad='0.05')
+            g.set_x_title('Time (s)')
+            g.set_y_title('{} Intensity (fA)'.format(iso.name))
+
+        g.refresh()
+
+        g.window_title = '{} {}'.format(self.model.record_id, ','.join([i.name for i in self.selected]))
+        self.application.open_view(g)
+
     def update_fontsize(self, view, size):
         if 'main' in view:
             v = self.main_view
@@ -90,53 +151,24 @@ class AnalysisView(HasTraits):
                 v.fontsize = size
 
     def load(self, an):
+        self.model = an
         analysis_type = an.analysis_type
         analysis_id = an.record_id
 
         main_view = MainView(an, analysis_type=analysis_type, analysis_id=analysis_id)
         self.main_view = main_view
-
         self._make_subviews(an)
 
         self.isotopes = [an.isotopes[k] for k in an.isotope_keys]
 
-        # history_view = HistoryView(an)
-        # self.history_view = history_view
-        #
-        # self.analysis_id = analysis_id
-        #
-        # history_view = self.history_view
-        # if history_view is None:
-        #     history_view = HistoryView(an)
-        #     self.history_view = history_view
-        #     history_view.on_trait_change(self.handle_blank_right_clicked, 'blank_right_clicked')
-        #
-        # views = self._make_subviews(an)
-        #
-        # main_view = self.main_view
-        # if main_view is None:
-        #     main_view = MainView(an, analysis_type=analysis_type, analysis_id=analysis_id)
-        #     self.main_view = main_view
-        #
-        # else:
-        #     self.main_view.load(an, refresh=True)
-        #
-        # subviews = [main_view,
-        #             history_view] + views
-        #
-
-        # self.selection_tool = ViewSelection(subviews=subviews,
-        #                                     selected_view=main_view)
-
     def _make_subviews(self, an):
         for args in (
-                # ('isotopes', IsotopeView, 'isotopes'),
                 ('history', HistoryView),
-                     ('experiment', ExperimentView, 'experiment_txt'),
-                     ('extraction', ExtractionView, 'extraction_script_blob'),
-                     ('measurement', MeasurementView, 'measurement_script_blob'),
-                     ('interference', InterferencesView, 'interference_corrections'),
-                     ('spectrometer', SpectrometerView, 'source_parameters')):
+                ('experiment', ExperimentView, 'experiment_txt'),
+                ('extraction', ExtractionView, 'extraction_script_blob'),
+                ('measurement', MeasurementView, 'measurement_script_blob'),
+                ('interference', InterferencesView, 'interference_corrections'),
+                ('spectrometer', SpectrometerView, 'source_parameters')):
 
             if len(args) == 2:
                 vname, klass = args
@@ -232,15 +264,9 @@ class AnalysisView(HasTraits):
                                interference_grp,
                                spectrometer_grp,
                                detector_ic_grp,
-                               snapshot_grp)))
+                               snapshot_grp)),
+                 handler=AnalysisViewHandler())
         return v
-        #
-        # v = View(UItem('object.selection_tool.selected_view', style='custom',
-        #                editor=InstanceEditor()))
-        # return v
-
-    def handle_blank_right_clicked(self, new):
-        print 'asdf', new
 
 
 class DBAnalysisView(AnalysisView):

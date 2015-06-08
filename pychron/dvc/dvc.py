@@ -44,10 +44,33 @@ class DVCException(BaseException):
         self._attr = attr
 
     def __repr__(self):
-        return 'DVCException: neither DVCDatbase or MetaRepo have {}'.format(self._attr)
+        return 'DVCException: neither DVCDatabase or MetaRepo have {}'.format(self._attr)
 
     def __str__(self):
         return self.__repr__()
+
+
+def experiment_has_staged(ps):
+    if not hasattr(ps, '__iter__'):
+        ps = (ps,)
+
+    changed = []
+    repo = GitRepoManager()
+    for p in ps:
+        pp = os.path.join(paths.experiment_dataset_dir, p)
+        repo.open_repo(pp)
+        if repo.has_unpushed_commits():
+            changed.append(p)
+
+    return changed
+
+
+def push_experiments(ps):
+    repo = GitRepoManager()
+    for p in ps:
+        pp = os.path.join(paths.experiment_dataset_dir, p)
+        repo.open_repo(pp)
+        repo.push()
 
 
 class DVC(Loggable):
@@ -109,32 +132,11 @@ class DVC(Loggable):
                 self.experiment_commit(expid, msg)
                 mod_experiments.append(expid)
 
-        #     ais = map(analysis_path, ais)
+        # ais = map(analysis_path, ais)
         #     if self.experiment_add_analyses(exp, ais):
         #         self.experiment_commit(exp, msg)
         #         mod_experiments.append(exp)
         return mod_experiments
-
-    def experiment_has_staged(self, ps):
-        if not hasattr(ps, '__iter__'):
-            ps = (ps,)
-
-        changed = []
-        repo = GitRepoManager()
-        for p in ps:
-            pp = os.path.join(paths.experiment_dataset_dir, p)
-            repo.open_repo(pp)
-            if repo.has_unpushed_commits():
-                changed.append(p)
-
-        return changed
-
-    def push_experiments(self, ps):
-        repo = GitRepoManager()
-        for p in ps:
-            pp = os.path.join(paths.experiment_dataset_dir, p)
-            repo.open_repo(pp)
-            repo.push()
 
     def experiment_add_analyses(self, experiment_id, paths):
         if not hasattr(paths, '__iter__'):
@@ -165,7 +167,7 @@ class DVC(Loggable):
         ai.dump_blanks(keys, refs)
 
     def save_fits(self, ai, keys):
-        self.info('Saving fits')
+        self.info('Saving fits for {}'.format(ai))
         ai.dump_fits(keys)
 
     def find_references(self, times, atypes):
@@ -324,7 +326,7 @@ class DVC(Loggable):
         # cover changed paths to a list of analyses
 
         # select paths to revert
-        rpaths = ('.', )
+        rpaths = ('.',)
         repo.cmd('checkout', '--', ' '.join(rpaths))
         for p in rpaths:
             self.debug('revert changes for {}'.format(p))
@@ -333,8 +335,8 @@ class DVC(Loggable):
         msg = 'Changes to {} reverted to Commit: {}\n' \
               'Date: {}\n' \
               'Message: {}'.format(expid, head.hexsha[:10],
-                                  format_date(head.committed_date),
-                                  head.message)
+                                   format_date(head.committed_date),
+                                   head.message)
         self.information_dialog(msg)
 
     # private
@@ -398,7 +400,7 @@ class DVC(Loggable):
         path = experiment_path(experiment_id)
 
         if repo is None or repo.path != path:
-            self.debug('make new repo for {}'.format(path))
+            self.debug('make new repomanager for {}'.format(path))
             repo = GitRepoManager()
             repo.path = path
             repo.open_repo(path)

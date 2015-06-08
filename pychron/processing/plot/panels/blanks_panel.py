@@ -25,7 +25,7 @@ from pychron.processing.plot.plotter.blanks import Blanks
 
 class BlanksPanel(ReferencesPanel):
     _figure_klass = Blanks
-    graph_klass = AnalysisStackedRegressionGraph
+    _graph_klass = AnalysisStackedRegressionGraph
 
 
 # ============= EOF =============================================

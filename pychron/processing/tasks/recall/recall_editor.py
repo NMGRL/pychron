@@ -35,6 +35,10 @@ class RecallEditor(BaseTraitsEditor):
     # basename = Str
     instance_id = 0
 
+    # def _model_changed(self, new):
+    #     if new:
+    #         av = new.analysis_view
+    #         av.application = self.application
     # def _analysis_view_changed(self, av):
     #     if av:
     #         if hasattr(av, 'history_view'):

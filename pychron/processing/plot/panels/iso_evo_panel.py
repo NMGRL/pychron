@@ -25,7 +25,5 @@ from pychron.processing.plot.plotter.iso_evo import IsoEvo
 class IsoEvoPanel(FigurePanel):
     _figure_klass = IsoEvo
     graph_klass = AnalysisStackedRegressionGraph
+    equi_stack = True
 # ============= EOF =============================================
-
-
-

@@ -250,8 +250,9 @@ class IsotopicMeasurement(BaseMeasurement):
                 self.trait_set(fit=fit.fit,
                                time_zero_offset=fit.time_zero_offset or 0,
                                error_type=fit.error_type or 'SEM',
+                               include_baseline_error=fit.include_baseline_error or False,
                                trait_change_notify=notify)
-                self.include_baseline_error = fit.include_baseline_error or False
+                # self.include_baseline_error = fit.include_baseline_error or False
 
                 # self._value = 0
                 # self._error = 0
@@ -332,10 +333,10 @@ class IsotopicMeasurement(BaseMeasurement):
         if 'average' in self.fit.lower():
             reg = self._mean_regressor_factory()
         else:
-            # print 'doing import of regresor {}'.format(self.__class__)
+            # print 'doing import of regressor {}'.format(self.__class__)
             # st=time.time()
             from pychron.core.regression.ols_regressor import PolynomialRegressor
-            # print 'doing import of regresor {}'.format(time.time()-st)
+            # print 'doing import of regressor {}'.format(time.time()-st)
 
             reg = PolynomialRegressor(tag=self.name,
                                       xs=self.offset_xs,
@@ -369,7 +370,7 @@ class IsotopicMeasurement(BaseMeasurement):
         self.regressor.error_calc_type = self.error_type
 
     # ===============================================================================
-    # arthmetic
+    # arithmetic
     # ===============================================================================
     def __add__(self, a):
         return self.uvalue + a
@@ -457,14 +458,6 @@ class Isotope(BaseIsotope):
 
     interference_corrected_value = Either(Variable, AffineScalarFunc)
 
-    # __slots__ = ['interference_corrected_value',
-    # 'discrimination', 'ic_factor',
-    # 'sniff', 'blank', 'background'
-    #                                'age_error_component']
-
-    def get_filtered_data(self):
-        return self.regressor.calculate_filtered_data()
-
     def get_filtered_data(self):
         return self.regressor.calculate_filtered_data()
 
@@ -491,7 +484,7 @@ class Isotope(BaseIsotope):
         """
         v = self.get_disc_corrected_value() * (self.ic_factor or 1.0)
 
-        #this is a temporary hack for handling Minna bluff data
+        # this is a temporary hack for handling Minna bluff data
         if self.detector.lower() == 'faraday':
             v = v - self.blank.uvalue
 
@@ -510,7 +503,7 @@ class Isotope(BaseIsotope):
     def get_non_detector_corrected_value(self):
         v = self.get_baseline_corrected_value()
 
-        #this is a temporary hack for handling Minna bluff data
+        # this is a temporary hack for handling Minna bluff data
         if self.correct_for_blank and self.detector.lower() != 'faraday':
             v = v - self.blank.uvalue
 

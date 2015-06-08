@@ -59,7 +59,7 @@ class WeightedPolynomialRegressor(OLSRegressor):
 
         return WLS(fy, X, weights=ws)
 
-    def _check_integrity(self, x, y, e=None):
+    def _check_integrity(self, x, y, e=None, **kw):
         nx, ny = len(x), len(y)
         ne = len(e) if e is not None else nx
         # print nx,ny, ne

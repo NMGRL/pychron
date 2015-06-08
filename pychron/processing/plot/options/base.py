@@ -168,7 +168,7 @@ class BasePlotterOptions(HasTraits):
     def _load(self, root):
         p = os.path.join(root, self.name)
         if os.path.isfile(p):
-            print 'loading plotter options {}'.format(p)
+            # print 'loading plotter options {}'.format(p)
             with open(p, 'r') as rfile:
                 try:
                     obj = pickle.load(rfile)

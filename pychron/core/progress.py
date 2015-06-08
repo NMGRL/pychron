@@ -26,7 +26,7 @@ class CancelLoadingError(BaseException):
 
 def open_progress(n, close_at_end=True, **kw):
     pd = myProgressDialog(max=n - 1,
-                          #dialog_size=(0,0, 550, 15),
+                          # dialog_size=(0,0, 550, 15),
                           close_at_end=close_at_end,
                           can_cancel=True,
                           can_ok=True, **kw)
@@ -64,7 +64,8 @@ def progress_loader(xs, func, threshold=50, progress=None, reraise_cancel=False)
                     break
                 r = func(x, prog, i, n)
                 if r:
-                    if isinstance(r, (list,tuple)):
+                    # if isinstance(r, (list,tuple)):
+                    if hasattr(r, '__iter__'):
                         for ri in r:
                             yield ri
                     else:
@@ -73,7 +74,8 @@ def progress_loader(xs, func, threshold=50, progress=None, reraise_cancel=False)
             for x in xs:
                 r = func(x, None, 0, 0)
                 if r:
-                    if isinstance(r, (list,tuple)):
+                    # if isinstance(r, (list,tuple)):
+                    if hasattr(r, '__iter__'):
                         for ri in r:
                             yield ri
                     else:
@@ -118,6 +120,3 @@ def progress_iterator(xs, func, threshold=50, progress=None, reraise_cancel=Fals
             raise CancelLoadingError
 
 # ============= EOF =============================================
-
-
-

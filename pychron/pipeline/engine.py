@@ -15,7 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import time
+
 from traits.api import HasTraits, Str, Instance, List, Event, Bool, on_trait_change
+
 # ============= standard library imports ========================
 import os
 import yaml
@@ -331,7 +334,9 @@ class PipelineEngine(Loggable):
             self.update_needed = True
             if node.enabled:
                 self.debug('Run node {:02n}: {}'.format(idx, node))
+                st = time.time()
                 node.run(state)
+                self.debug('Runtime: {:0.4f}'.format(time.time() - st))
 
                 if state.veto:
                     self.debug('pipeline vetoed by {}'.format(node))
@@ -472,8 +477,7 @@ class PipelineEngine(Loggable):
     def _dclicked_changed(self, new):
         if isinstance(new, DataNode):
             self.configure(new)
-
-                # self.update_needed = True
+            # self.update_needed = True
 
 # if __name__ == '__main__':
 # from traitsui.api import TreeNode, Handler

@@ -17,12 +17,20 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from numpy import Inf
+
 from pychron.processing.plot.plotter.arar_figure import BaseArArFigure
+
+
+def min_max(a, b, vs):
+    return min(a, vs.min()), max(b, vs.max())
 
 
 class IsoEvo(BaseArArFigure):
     ytitle = ''
     xtitle = 'Time (s)'
+    show_sniff = True
+    show_baseline = False
 
     def plot(self, plots, legend):
         for i, p in enumerate(plots):
@@ -33,21 +41,49 @@ class IsoEvo(BaseArArFigure):
         name = p.name
         try:
             iso = ai.isotopes[name]
-            xs = iso.xs
-            ys = iso.ys
+        except KeyError, e:
+            print 'asdfasd', ai.record_id, e
+            return
 
+        ymi, yma = Inf, -Inf
+        xmi, xma = 0, -Inf
+
+        if self.show_sniff:
+            xs, ys = iso.sniff.xs, iso.sniff.ys
             self.graph.new_series(xs, ys,
                                   marker=p.marker,
                                   marker_size=p.marker_size,
                                   type='scatter',
                                   plotid=i,
-                                  fit=iso.fit
-                                  )
-        except KeyError, e:
-            print 'asdfasd', ai.record_id, e
-            # self.graph.new_series([1,2,3,4], [1,2,3,40])
+                                  fit=None,
+                                  color='red')
+            ymi, yma = min_max(ymi, yma, iso.sniff.ys)
+            xmi, xma = min_max(xmi, xma, iso.sniff.xs)
 
-            # def post_make(self):
-            #     pass
+        xs = iso.xs
+        ys = iso.ys
+        self.graph.new_series(xs, ys,
+                              marker=p.marker,
+                              marker_size=p.marker_size,
+                              type='scatter',
+                              plotid=i,
+                              fit=iso.fit,
+                              color='black')
+        ymi, yma = min_max(ymi, yma, iso.ys)
+        xmi, xma = min_max(xmi, xma, iso.xs)
+
+        if self.show_baseline:
+            self.graph.new_series(iso.baseline.xs, iso.baseline.ys,
+                                  marker=p.marker,
+                                  marker_size=p.marker_size,
+                                  type='scatter',
+                                  plotid=i,
+                                  fit=iso.baseline.fit,
+                                  color='black')
+            ymi, yma = min_max(ymi, yma, iso.baseline.ys)
+            xmi, xma = min_max(xmi, xma, iso.baseline.xs)
+
+        self.graph.set_x_limits(min_=xmi, max_=xma * 1.05, plotid=i)
+        self.graph.set_y_limits(min_=ymi, max_=yma, pad='0.05', plotid=i)
 
 # ============= EOF =============================================

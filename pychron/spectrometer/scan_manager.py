@@ -238,7 +238,7 @@ class ScanManager(Manager):
         if self.use_log_events and self.log_events_enabled:
             if mode == 'valve' and self._valve_event_list:
                 # check valve name is configured to be displayed
-                if not extra in self._valve_event_list:
+                if extra not in self._valve_event_list:
                     return
 
             self.debug('add spec event marker. {}'.format(msg))
@@ -272,7 +272,7 @@ class ScanManager(Manager):
         #     self.graphs.pop(0)
         # self.graphs.insert(0, self.graph)
 
-        #trigger a timer reset. set to 0 then default
+        # trigger a timer reset. set to 0 then default
         self.reset_scan_timer()
 
     def _update_graph_limits(self, name, new):
@@ -282,16 +282,16 @@ class ScanManager(Manager):
             self._graph_ymin = min(new, self._graph_ymax)
 
     def _toggle_detector(self, obj, name, old, new):
-        self.graph.set_series_visiblity(new, series=obj.name)
+        self.graph.set_series_visibility(new, series=obj.name)
 
     def _update_magnet(self, obj, name, old, new):
         # print obj, name, old, new
         if new and self.magnet.detector:
-            # covnert dac into a mass
+            # convert dac into a mass
             # convert mass to isotope
             #            d = self.magnet.dac
             iso = self.magnet.map_dac_to_isotope(current=False)
-            if not iso in self.isotopes:
+            if iso not in self.isotopes:
                 iso = NULL_STR
 
             if self.use_log_events:
@@ -615,8 +615,7 @@ class ScanManager(Manager):
     # ===============================================================================
     @cached_property
     def _get_isotopes(self):
-        # molweights = self.spectrometer.molecular_weights
-        return [NULL_STR] + self.spectrometer.isotopes  #sorted(molweights.keys(), key=lambda x: int(x[2:]))
+        return [NULL_STR] + self.spectrometer.isotopes
 
     def _validate_graph_ymin(self, v):
         try:
@@ -686,85 +685,4 @@ class ScanManager(Manager):
         rd = ReadoutView(spectrometer=self.spectrometer)
         return rd
 
-
-        # if __name__ == '__main__':
-        # from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS
-        #
-        #     class Magnet(HasTraits):
-        #         dac = Range(0.0, 6.0)
-        #
-        #         def map_mass_to_dac(self, d):
-        #             return d
-        #
-        #     class Source(HasTraits):
-        #         y_symmetry = Float
-        #
-        #     class DummySpectrometer(HasTraits):
-        #         detectors = List
-        #         magnet = Instance(Magnet, ())
-        #         source = Instance(Source, ())
-        #         molecular_weights = MOLECULAR_WEIGHTS
-        #
-        #         def get_intensities(self):
-        #             return [d.name for d in self.detectors], [random.random() + (i * 12.3) for i in range(len(self.detectors))]
-        #
-        #         def get_intensity(self, *args, **kw):
-        #             return 1
-        #
-        #     detectors = [
-        #         Detector(name='H2',
-        #                  color='black',
-        #                  isheader=True
-        #         ),
-        #         Detector(name='H1',
-        #                  color='red'
-        #         ),
-        #         Detector(name='AX',
-        #                  color='violet'
-        #         ),
-        #         Detector(name='L1',
-        #                  color='maroon'
-        #         ),
-        #         Detector(name='L2',
-        #                  color='yellow'
-        #         ),
-        #         Detector(name='CDD',
-        #                  color='lime green',
-        #                  active=False
-        #         ),
-        #
-        #     ]
-        #     sm = ScanManager(
-        #         # detectors=detectors,
-        #         spectrometer=DummySpectrometer(detectors=detectors))
-        #     # sm.load_detectors()
-        #     sm.configure_traits()
-    # ============= EOF =============================================
-    # def _check_detector_protection1(self, prev):
-    # """
-    # used when detector changes
-    # return True if magnet move should be aborted
-    #     """
-    #     return self._check_detector_protection(prev, True)
-    #
-    # def _check_detector_protection2(self, prev):
-    #     """
-    #         used when isotope changes
-    #         return True if magnet move should be aborted
-    #     """
-    #     return self._check_detector_protection(prev, False)
-    #    def _graph_ymin_auto_changed(self, new):
-    #        p = self.graph.plots[0]
-    #        if new:
-    #            p.value_range.low_setting = 'auto'
-    #        else:
-    #            p.value_range.low_setting = self.graph_ymin
-    #        self.graph.redraw()
-    #
-    #    def _graph_ymax_auto_changed(self, new):
-    #        p = self.graph.plots[0]
-    #        if new:
-    #            p.value_range.high_setting = 'auto'
-    #        else:
-    #            p.value_range.high_setting = self.graph_ymax
-    #        self.graph.redraw()
+# ============= EOF =====================================
