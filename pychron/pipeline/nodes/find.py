@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Float, Str, List
+from traits.api import Float, Str, List, Instance, Property, cached_property
 from traitsui.api import Item, EnumEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -25,7 +25,62 @@ from pychron.pipeline.graphical_filter import GraphicalFilterModel, GraphicalFil
 from pychron.pipeline.nodes.base import BaseNode
 
 
-class FindReferencesNode(BaseNode):
+class FindNode(BaseNode):
+    dvc = Instance('pychron.dvc.dvc.DVC')
+
+
+class FindFluxMonitorsNode(FindNode):
+    name = 'Find Flux Monitors'
+
+    monitor_sample_name = Str('BW-2014-3')
+    irradiation = Str
+    irradiations = Property
+
+    level = Str
+    levels = Property(depends_on='irradiation')
+
+    def load(self, nodedict):
+        self.irradiation = nodedict.get('irradiation', '')
+        self.level = nodedict.get('level', '')
+
+    @cached_property
+    def _get_levels(self):
+        if self.irradiation:
+            with self.dvc.session_ctx():
+                irrad = self.dvc.get_irradiation(self.irradiation)
+                return [l.name for l in irrad.levels]
+        else:
+            return []
+
+    @cached_property
+    def _get_irradiations(self):
+        with self.dvc.session_ctx():
+            irrads = self.dvc.get_irradiations()
+            return [i.name for i in irrads]
+
+    def traits_view(self):
+        v = self._view_factory(Item('irradiation', editor=EnumEditor(name='irradiations')),
+                               Item('level', editor=EnumEditor(name='levels')),
+                               width=300,
+                               title='Select Irradiation and Level')
+        return v
+
+    def run(self, state):
+        if not self.irradiation or not self.level:
+            self.configure()
+
+        if not self.irradiation or not self.level:
+            state.veto = self
+        else:
+            dvc = self.dvc
+            with dvc.session_ctx():
+                ans = dvc.get_flux_monitor_analyses(self.irradiation, self.level, self.monitor_sample_name)
+                monitors = self.dvc.make_analyses(ans, calculate_F=True)
+                state.flux_monitors = monitors
+                state.has_flux_monitors = True
+
+
+class FindReferencesNode(FindNode):
     user_choice = False
     threshold = Float
 
@@ -115,6 +170,3 @@ class FindReferencesNode(BaseNode):
 
 
 # ============= EOF =============================================
-
-
-

@@ -136,6 +136,10 @@ class PipelineEngine(Loggable):
         self.update_needed = True
 
     def update_detectors(self):
+        """
+        set valid detectors for FitICFactorNodes
+
+        """
         for p in self.pipeline.nodes:
             if isinstance(p, FitICFactorNode):
                 udets = {iso.detector for ai in self.unknowns
@@ -382,6 +386,9 @@ class PipelineEngine(Loggable):
         if not os.path.isfile(path):
             self.warning('Invalid template name. {} does not exist'.format(path))
             return
+
+        self.unknowns = []
+        self.references = []
 
         pt = PipelineTemplate(name, path)
         pt.render(self.pipeline, self.browser_model, self.dvc)

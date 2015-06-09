@@ -20,6 +20,7 @@ from traits.api import HasTraits, Str, Int, Bool, Any, Float, \
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+
 class PersistenceSpec(HasTraits):
     run_spec = Instance('pychron.experiment.automated_run.spec.AutomatedRunSpec')
     monitor = Instance('pychron.monitors.automated_run_monitor.AutomatedRunMonitor')
@@ -50,7 +51,6 @@ class PersistenceSpec(HasTraits):
     defl_dict = Dict
     gains = Dict
 
-    extraction_positions = List
     active_detectors = List
 
     previous_blank_runid = Str
@@ -64,7 +64,5 @@ class PersistenceSpec(HasTraits):
     cdd_ic_factor = Any
 
     whiff_result = None
+    timestamp = None
 # ============= EOF =============================================
-
-
-

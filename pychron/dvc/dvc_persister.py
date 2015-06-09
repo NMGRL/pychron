@@ -43,8 +43,6 @@ def format_project(project):
     return project.replace('/', '_').replace('\\', '_')
 
 
-
-
 class DVCPersister(BasePersister):
     experiment_repo = Instance(GitRepoManager)
     dvc = Instance('pychron.dvc.dvc.DVC')
@@ -79,8 +77,8 @@ class DVCPersister(BasePersister):
             self.info('pulling changes from project repo: {}'.format(project))
             self.experiment_repo.pull()
 
-        # if sync:
-        #     self.info('synchronize dvc')
+            # if sync:
+            #     self.info('synchronize dvc')
             # self.dvc.synchronize()
             # self.meta_repo = GitRepoManager()
             # self.meta_repo.open_repo(paths.meta_dir)
@@ -196,7 +194,10 @@ class DVCPersister(BasePersister):
                                          'increment', 'mass_spectrometer',
                                          'extract_device', 'weight', 'comment',
                                          'cleanup', 'duration', 'extract_value', 'extract_units')}
-        d['timestamp'] = timestamp
+
+        if not self.per_spec.timestamp:
+            d['timestamp'] = timestamp
+
         dvc = self.dvc
         with dvc.session_ctx():
             an = dvc.add_analysis(**d)
@@ -253,7 +254,7 @@ class DVCPersister(BasePersister):
         d = {k: getattr(rs, k) for k in keys}
         return d
 
-    def _save_analysis(self, **kw):
+    def _save_analysis(self, timestamp, **kw):
 
         isos = {}
         dets = {}
@@ -262,18 +263,18 @@ class DVCPersister(BasePersister):
         sniffs = []
         cisos = {}
         cdets = {}
-        endianess = '>'
         for iso in self.per_spec.arar_age.isotopes.values():
 
-            sblob = base64.b64encode(iso.pack(endianess, as_hex=False))
-            snblob = base64.b64encode(iso.sniff.pack(endianess, as_hex=False))
+            sblob = base64.b64encode(iso.pack(as_hex=False))
+            snblob = base64.b64encode(iso.sniff.pack(as_hex=False))
             signals.append({'isotope': iso.name, 'detector': iso.detector, 'blob': sblob})
             sniffs.append({'isotope': iso.name, 'detector': iso.detector, 'blob': snblob})
 
             isos[iso.name] = {'detector': iso.detector}
 
+            endianness = '>'
             if iso.detector not in dets:
-                bblob = base64.b64encode(iso.baseline.pack(endianess, as_hex=False))
+                bblob = base64.b64encode(iso.baseline.pack(endianness, as_hex=False))
                 baselines.append({'detector': iso.detector, 'blob': bblob})
                 # baselines[iso.detector] = bblob
                 dets[iso.detector] = {'deflection': self.per_spec.defl_dict.get(iso.detector),
@@ -298,6 +299,9 @@ class DVCPersister(BasePersister):
 
         from pychron.experiment import __version__ as eversion
         from pychron.dvc import __version__ as dversion
+
+        if not self.per_spec.timestamp:
+            obj['timestamp'] = timestamp
 
         obj['collection_version'] = '{}:{}'.format(eversion, dversion)
         obj['detectors'] = dets
@@ -329,7 +333,7 @@ class DVCPersister(BasePersister):
         p = self._make_path(modifier='.data')
         data = {'commit': hexsha,
                 'encoding': 'base64',
-                'format': '{}ff'.format(endianess),
+                'format': '{}ff'.format(endianness),
                 'signals': signals, 'baselines': baselines, 'sniffs': sniffs}
         ydump(data, p)
 
@@ -355,7 +359,7 @@ class DVCPersister(BasePersister):
         return a sha-1 hash.
 
         generate using spec_dict, defl_dict, and gains
-        spec_dict: source parameters, cdd operating voltagae
+        spec_dict: source parameters, cdd operating voltage
         defl_dict: detector deflections
         gains: detector gains
 

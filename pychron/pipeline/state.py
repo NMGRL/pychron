@@ -24,11 +24,15 @@ from pychron.core.helpers.isotope_utils import sort_isotopes
 def get_detector_set(ans):
     return {iso.detector for ai in ans for iso in ai.isotopes.itervalues()}
 
+
 class EngineState(HasTraits):
     unknowns = List
     references = List
+    flux_monitors = List
+
     editors = List
     has_references = Bool
+    has_flux_monitors = Bool
     saveable_keys = List
     saveable_fits = List
     # user_review = Bool
@@ -56,6 +60,3 @@ class EngineState(HasTraits):
         return sort_isotopes(x)
 
 # ============= EOF =============================================
-
-
-

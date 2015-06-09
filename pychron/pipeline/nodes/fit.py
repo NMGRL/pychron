@@ -25,6 +25,7 @@ from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.core.progress import progress_loader
 from pychron.pipeline.editors.results_editor import IsoEvolutionResultsEditor
 from pychron.pipeline.nodes.figure import FigureNode
+from pychron.processing.flux.utilities import mean_j
 from pychron.processing.plotter_options_manager import IsotopeEvolutionOptionsManager, BlanksOptionsManager, \
     ICFactorOptionsManager
 
@@ -127,26 +128,13 @@ class IsoEvoResult(HasTraits):
         if self.analysis:
             r = self.analysis.identifier
         return r
-        # identifier = Str
-        # isotopes = List
-        # fits = List
 
-        # def __init__(self, fits, *args, **kw):
-        #     super(IsoEvoResult, self).__init__(*args, **kw)
-        # self.isotopes = [f.name for f in fits]
-        # for f in fits:
-        #     setattr(self, '{}Fit'.format(f.name), f.fit)
-        # self.fits = [f.fit for f in fits]
-
-
-# todo: add ability to not plot. recalculate intercepts within Isotope class
 
 class FitIsotopeEvolutionNode(FitNode):
     editor_klass = 'pychron.processing.plot.editors.isotope_evolution_editor,' \
                    'IsotopeEvolutionEditor'
     plotter_options_manager_klass = IsotopeEvolutionOptionsManager
     name = 'Fit IsoEvo'
-    # confirm_fits = Bool(False)
     _fits = List
 
     def run(self, state):
@@ -196,5 +184,25 @@ class FitIsotopeEvolutionNode(FitNode):
                                regression_str=iso.regressor.make_equation(),
                                fit=f.fit,
                                isotope=k)
+
+
+class FitFluxNode(FitNode):
+    error_kind = 'SD'
+    monitor_age = 28.201
+    lambda_k = 5.464e-10
+
+    def run(self, state):
+        monitors = state.flux_monitors
+        monitor_positions = []
+        if monitors:
+            monage = self.monitor_age
+            lk = self.lambda_k
+            ek = self.error_kind
+
+            key = lambda x: (x.identifier, x.irradiation, x.irradiation_level, x.irradiation_position)
+            for idn, ais in groupby(sorted(monitors, key=key), key=key):
+                mj = mean_j(list(ais), ek, monage, lk)
+                print idn, mj
+                monitor_positions.append((idn, mj))
 
 # ============= EOF =============================================

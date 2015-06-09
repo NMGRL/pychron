@@ -21,23 +21,15 @@ import math
 from copy import deepcopy
 
 from numpy import asarray, average
-from uncertainties import ufloat, umath
+from uncertainties import ufloat, umath, nominal_value
 from numpy import array
-
-from pychron.processing.arar_constants import ArArConstants
-from pychron.core.stats.core import calculate_weighted_mean
-
-
-
-
-
-
-
 
 
 
 
 # ============= local library imports  ==========================
+from pychron.processing.arar_constants import ArArConstants
+from pychron.core.stats.core import calculate_weighted_mean
 from pychron.pychron_constants import ALPHAS
 
 
@@ -194,7 +186,7 @@ def calculate_plateau_age(ages, errors, k39, kind='inverse_variance', method='fl
         return wm, we, pidx
 
 
-def calculate_flux(f, age, arar_constants=None):
+def calculate_flux(f, age, arar_constants=None, lambda_k=None):
     """
         #rad40: radiogenic 40Ar
         #k39: 39Ar from potassium
@@ -203,26 +195,22 @@ def calculate_flux(f, age, arar_constants=None):
 
         solve age equation for J
     """
-    # if isinstance(rad40, (list, tuple)):
-    # rad40 = ufloat(*rad40)
-    # if isinstance(k39, (list, tuple)):
-    # k39 = ufloat(*k39)
 
     if isinstance(f, (list, tuple)):
         f = ufloat(*f)
 
     if isinstance(age, (list, tuple)):
         age = ufloat(*age)
-        #    age = (1 / constants.lambdak) * umath.log(1 + JR)
     try:
-        # r = rad40 / k39
-        if arar_constants is None:
-            arar_constants = ArArConstants()
+        if not lambda_k:
+            if arar_constants is None:
+                arar_constants = ArArConstants()
+            lambda_k = nominal_value(arar_constants.lambda_k)
 
-        j = (umath.exp(age * arar_constants.lambda_k.nominal_value) - 1) / f
-        return j.nominal_value, j.std_dev
+        j = (umath.exp(age * lambda_k) - 1) / f
+        return j
     except ZeroDivisionError:
-        return 1, 0
+        return ufloat(1, 0)
 
 
 # return j
@@ -369,10 +357,10 @@ def calculate_F(isotopes,
     if arar_constants is None:
         arar_constants = ArArConstants()
 
-    #make local copy of interferences
+    # make local copy of interferences
     pr = dict(((k, v.__copy__()) for k, v in interferences.iteritems()))
 
-    #for k,v in pr.iteritems():
+    # for k,v in pr.iteritems():
     #    print k, v
     k37, k38, k39, ca36, ca37, ca38, ca39 = interference_corrections(a40, a39, a38, a37, a36,
                                                                      pr, arar_constants, fixed_k3739)
@@ -381,7 +369,7 @@ def calculate_F(isotopes,
                                         pr,
                                         arar_constants)
 
-    # calculate rodiogenic
+    # calculate radiogenic
     # dont include error in 40/36
     atm40 = atm36 * arar_constants.atm4036.nominal_value
     k40 = k39 * pr.get('k4039', 1)
@@ -410,14 +398,14 @@ def calculate_F(isotopes,
 
     computed = dict(rad40=rad40, rad40_percent=rp,
                     k39=k39, atm40=atm40)
-    #print 'Ar40', a40-k40, a40, k40
-    #print 'Ar39', a39-k39, a39, k39
+    # print 'Ar40', a40-k40, a40, k40
+    # print 'Ar39', a39-k39, a39, k39
     interference_corrected = dict(Ar40=a40 - k40,
                                   Ar39=k39,
-                                  Ar38=a38,  #- k38 - ca38,
-                                  Ar37=a37,  #- ca37 - k37,
+                                  Ar38=a38,  # - k38 - ca38,
+                                  Ar37=a37,  # - ca37 - k37,
                                   Ar36=atm36)
-    ##clear errors in irrad
+    # clear errors in irrad
     for pp in pr.itervalues():
         pp.std_dev = 0
     f_wo_irrad = f
@@ -494,7 +482,7 @@ def calculate_error_t(F, ssF, j, ssJ):
     return sst ** 0.5
 
 # ============= EOF =====================================
-## ============= EOF ====================================
+# ============= EOF ====================================
 # # plateau definition
 # plateau_criteria = {'number_steps': 3}
 #
@@ -681,7 +669,7 @@ def calculate_error_t(F, ssF, j, ssJ):
 #    k4039er, ca3637er, ca3937er = ratio_errs
 # #    a37decayfactor = 1
 # #    a39decayfactor = 1
-#    #convert to ufloats
+#    #convert to ufloat
 #    from uncertainties import ufloat
 #    from uncertainties.umath import log
 #
@@ -753,7 +741,8 @@ def calculate_error_t(F, ssF, j, ssJ):
 #    T = ca3637 * D * T37
 #    G = D3 * T39 - s
 # #    P = mcl * (ca3837 * D * T37 + A3836 * (T36 - T) - D2 * T38 + k3839 * G)
-#    R = (-k4039 * G - A4036 * (T36 - T - mcl * (ca3837 * D * T37 + A3836 * (T36 - T) - D2 * T38 + k3839 * G)) + D4 * T40)
+#    R = (-k4039 * G - A4036 * (T36 - T - mcl * (ca3837 * D * T37 + A3836 *
+#        (T36 - T) - D2 * T38 + k3839 * G)) + D4 * T40)
 #    G2 = G * G
 #
 #    er40 = square(D4 * j / G) * square(Tot40Er)
@@ -788,20 +777,22 @@ def calculate_error_t(F, ssF, j, ssJ):
 #
 #    er4039 = square(j * (s - D3 * T39) / G) * square(k4039er)
 #
-#    er3937 = square((j * (D * k4039 * T37 - A4036 * D * k3839 * mcl * T37)) / G + (D * j * T37 * R) / G2) * square(ca3937er)
+#    er3937 = square((j * (D * k4039 * T37 - A4036 * D * k3839 * mcl * T37)) / G +
+#             (D * j * T37 * R) / G2) * square(ca3937er)
 #
 #    er3637 = square(-((A4036 * j * (-D * T37 + A3836 * D * mcl * T37)) / G)) * square(ca3637er)
 #
 #    erJ = square(R / G) * square(jer)
 #    JRer = (er40 + er39 + er38 + er37 + er36 + erD + er4039 + er3937 + er3637 + erJ) ** 0.5
 #    age_err = (1e-6 / constants.lambdak) * JRer / (1 + ar40rad / k39 * j)
-## ===============================================================================
+# ===============================================================================
 # # error pychron port
-## ===============================================================================
+# ===============================================================================
 # #    s = ca3937 * s37
 # #    T = ca3637 * s37
 # #    G = s39 - s
-# #    R = (-k4039 * G - constants.atm4036 * (s36 - T - mcl * (ca3837 * s37 + constants.atm3836 * (s36 - T) - s38 + k3839 * G)) + s40)
+# #    R = (-k4039 * G - constants.atm4036 * (s36 - T - mcl * (ca3837 * s37 +
+#              constants.atm3836 * (s36 - T) - s38 + k3839 * G)) + s40)
 # #    #ErComp(1) = square(D4 * j / G) * square(Tot40Er)
 # #    er40 = (d ** 4 * j / G) ** 2 * s40er ** 2
 # #
@@ -837,13 +828,15 @@ def calculate_error_t(F, ssF, j, ssJ):
 # #        - 2 * s38 / d))))
 # #        / (s39 / d - s) - (1 * j * (3 * s39 / d - ca3937 * s37 / d)
 # #        * (s40 / d - k4039 * (s40 / d - s)
-# #        - constants.atm4036 * (s36 - T - mcl * (-(s38 / d) + ca3837 * s37 + constants.atm3836 * (s36 - T) + k3839 * (s39 / d - s)))))
+# #        - constants.atm4036 * (s36 - T - mcl * (-(s38 / d) + ca3837 * s37 +
+#             constants.atm3836 * (s36 - T) + k3839 * (s39 / d - s)))))
 # #        / (s39 / d - s) ** 2) ** 2 * der ** 2
 # #    #square(j * (s - D3 * T39) / G) * square(K4039Er)
 # #    er4039 = (j * (s - s39 / d) / G) ** 2 * k4039er ** 2
 # #
 # #    #square((j * (D * K4039 * T37 - A4036 * D * K3839 * MCl * T37)) / G + (D * j * T37 * R) / G2) * square(Ca3937Er)
-# #    er3937 = ((j * (k4039 * s37 - constants.atm4036 * k3839 * mcl * s37)) / G + (j * s37 * R) / G ** 2) ** 2 * ca3937er ** 2
+# #    er3937 = ((j * (k4039 * s37 - constants.atm4036 * k3839 * mcl * s37)) / G +
+#          (j * s37 * R) / G ** 2) ** 2 * ca3937er ** 2
 # #
 # #    #square(-((A4036 * j * (-D * T37 + A3836 * D * MCl * T37)) / G)) * square(Ca3637Er)
 # #    er3637 = (-((constants.atm4036 * j * (-s37 + constants.atm3836 * mcl * s37)) / G)) ** 2 * ca3637er ** 2

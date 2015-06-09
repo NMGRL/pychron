@@ -61,13 +61,12 @@ class BaseNode(HasTraits):
         # return []
 
     def _view_factory(self, *items, **kw):
+        if 'title' not in kw:
+            kw['title'] = 'Configure {}'.format(self.name)
+
         return View(buttons=['OK', 'Cancel'],
-                    kind='livemodal',
-                    title='Configure'.format(self.name), *items, **kw)
+                    kind='livemodal', *items, **kw)
 
     def __str__(self):
         return '{}<{}>'.format(self.name, self.__class__.__name__)
 # ============= EOF =============================================
-
-
-

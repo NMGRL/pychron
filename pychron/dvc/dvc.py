@@ -16,10 +16,13 @@
 
 # ============= enthought library imports =======================
 import shutil
+import time
 
 from git import Repo
 from traits.api import Instance, Str, Set, List
 from apptools.preferences.preference_binding import bind_preference
+
+
 
 # ============= standard library imports ========================
 from itertools import groupby
@@ -111,6 +114,7 @@ class DVC(Loggable):
             return True
 
     # database
+
     # analysis processing
     def analysis_has_review(self, ai, attr):
         test_str = TESTSTR[attr]
@@ -174,7 +178,7 @@ class DVC(Loggable):
         records = self.db.find_references(times, atypes)
         return self.make_analyses(records)
 
-    def make_analyses(self, records):
+    def make_analyses(self, records, calculate_F=False):
         # load repositories
         # {r.experiment_id for r in records}
         exps = {r.experiment_id for r in records}
@@ -188,7 +192,15 @@ class DVC(Loggable):
         if exps:
             progress_iterator(exps, self._load_repository, threshold=1)
 
-        return progress_loader(records, self._make_record, threshold=1)
+        st = time.time()
+        wrapper = lambda *args: self._make_record(calculate_F=calculate_F, *args)
+
+        ret = progress_loader(records, wrapper, threshold=1)
+        et = time.time()-st
+        n = len(records)
+
+        self.debug('Make analysis time, total: {}, n: {}, average: {}'.format(et, n, et/float(n)))
+        return ret
 
     def synchronize(self, pull=True):
         """
@@ -358,7 +370,7 @@ class DVC(Loggable):
 
         self.sync_repo(expid)
 
-    def _make_record(self, record, prog, i, n):
+    def _make_record(self, record, prog, i, n, calculate_F=False):
         if prog:
             prog.change_message('Loading analysis {}. {}/{}'.format(record.record_id, i, n))
 
@@ -392,6 +404,9 @@ class DVC(Loggable):
 
         prod = self.meta_repo.get_production(pname)
         a.set_production(pname, prod)
+
+        if calculate_F:
+            a.calculate_F()
 
         return a
 

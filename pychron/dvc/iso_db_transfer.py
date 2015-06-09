@@ -15,17 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import Instance
+# ============= standard library imports ========================
 from itertools import groupby
 import time
-
-from traits.api import Instance
-
-
-
-
-
-
-# ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import add_extension
@@ -157,9 +150,9 @@ class IsoDBTransfer(Loggable):
                             self._transfer_analysis(proc, src, dest, repo, a)
                             print 'transfer time {:0.3f}'.format(time.time() - st)
                 break
-                            # for rec in yd[pr]:
+                # for rec in yd[pr]:
 
-                            # repo.commit('src import src= {}'.format(src.url))
+                # repo.commit('src import src= {}'.format(src.url))
 
     def _transfer_labnumber(self, ln, src, dest):
         dbln = src.get_labnumber(ln)
@@ -296,7 +289,7 @@ class IsoDBTransfer(Loggable):
 
         st = time.time()
         self._transfer_meta(dest, dban)
-        print 'transfer meta {:0.5f}'.format(time.time()-st)
+        print 'transfer meta {:0.5f}'.format(time.time() - st)
 
         dblab = dban.labnumber
         dbsam = dblab.sample
@@ -351,7 +344,6 @@ class IsoDBTransfer(Loggable):
                               weight=extraction.weight,
                               ramp_duration=extraction.ramp_duration or 0,
                               ramp_rate=extraction.ramp_rate or 0,
-                              timestamp=dban.analysis_timestamp,
 
                               collection_version='0.1:0.1',
                               queue_conditionals_name='',
@@ -359,6 +351,7 @@ class IsoDBTransfer(Loggable):
 
         ps = PersistenceSpec(run_spec=rs,
                              arar_age=an,
+                             timestamp=dban.analysis_timestamp,
                              positions=[p.position for p in extraction.positions])
 
         self.persister.per_spec_save(ps, commit=False, msg_prefix='Database Transfer')

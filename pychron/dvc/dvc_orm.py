@@ -22,6 +22,7 @@ from sqlalchemy.sql.schema import ForeignKey
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy import Column, Integer, String, TIMESTAMP, Float, BLOB, func, Boolean
 from pychron.database.records.isotope_record import IsotopeRecordView
+from pychron.experiment.utilities.identifier import make_runid
 
 Base = declarative_base()
 
@@ -93,6 +94,15 @@ class AnalysisTbl(Base, BaseMixin):
     @property
     def rundate(self):
         return self.timestamp
+
+    @property
+    def experiment_id(self):
+        if self.experiment_associations and len(self.experiment_associations) == 1:
+            return self.experiment_associations[0].experimentName
+
+    @property
+    def record_id(self):
+        return make_runid(self.irradiation_position.identifier, self.aliquot, self.increment)
 
     def record_view(self):
         iv = IsotopeRecordView()

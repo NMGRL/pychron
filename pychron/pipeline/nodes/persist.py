@@ -125,4 +125,11 @@ class ICFactorPersistNode(DVCPersistNode):
             msg = 'auto update ic_factors, fits={}'.format(f)
 
         self._persist(state, msg)
+
+
+class FluxPersistNode(DVCPersistNode):
+    name = 'Save Flux'
+
+    def run(self, state):
+        pass
 # ============= EOF =============================================

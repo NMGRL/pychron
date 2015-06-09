@@ -552,12 +552,30 @@ class DVCDatabase(DatabaseAdapter):
     def get_experiment_identifiers(self):
         return self._get_table_names(ExperimentTbl)
 
+    def get_flux_monitors(self, irradiation, level, sample):
+        with self.session_ctx() as sess:
+            q = sess.query(IrradiationPositionTbl)
+            q = q.join(IrradiationTbl, LevelTbl, SampleTbl)
+            q = q.filter(IrradiationTbl.name == irradiation)
+            q = q.filter(LevelTbl.name == level)
+            q = q.filter(SampleTbl.name == sample)
+
+            return self._query_all(q)
+
+    def get_flux_monitor_analyses(self, irradiation, level, sample):
+        with self.session_ctx() as sess:
+            q = sess.query(AnalysisTbl)
+            q = q.join(IrradiationPositionTbl, LevelTbl, IrradiationTbl, SampleTbl)
+            q = q.filter(IrradiationTbl.name == irradiation)
+            q = q.filter(LevelTbl.name == level)
+            q = q.filter(SampleTbl.name == sample)
+
+            return self._query_all(q, verbose_query=True)
+
     # private
     def _get_table_names(self, tbl):
         with self.session_ctx():
             names = self._retrieve_items(tbl)
             return [ni.name for ni in names]
-
-
 
 # ============= EOF =============================================

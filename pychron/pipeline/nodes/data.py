@@ -18,6 +18,7 @@
 from pyface.message_dialog import information
 from traits.api import List, Instance, Bool
 # ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.envisage.browser.view import BrowserView
 from pychron.pipeline.nodes.base import BaseNode
 
@@ -30,26 +31,6 @@ class DataNode(BaseNode):
     browser_model = Instance('pychron.envisage.browser.browser_model.BrowserModel')
 
     check_reviewed = Bool(False)
-
-    def run(self, state):
-        review_req = []
-        for attr in ('blanks', 'iso_evo'):
-            for ai in self.analyses:
-                ai.group_id = 0
-                if self.check_reviewed:
-                    # check analyses to see if they have been reviewed
-                    if attr not in review_req:
-                        if not self.dvc.analysis_has_review(ai, attr):
-                            review_req.append(attr)
-
-        if review_req:
-            information(None, 'The current data set has been '
-                              'analyzed and requires {}'.format(','.join(review_req)))
-
-        items = getattr(state, self.analysis_kind)
-        items.extend(self.analyses)
-
-        state.projects = {ai.project for ai in state.unknowns}
 
     def configure(self):
         browser_view = BrowserView(model=self.browser_model)
@@ -70,6 +51,27 @@ class UnknownNode(DataNode):
     name = 'Unknowns'
     analysis_kind = 'unknowns'
 
+    def run(self, state):
+        review_req = []
+        for attr in ('blanks', 'iso_evo'):
+            for ai in self.analyses:
+                ai.group_id = 0
+                if self.check_reviewed:
+                    # check analyses to see if they have been reviewed
+                    if attr not in review_req:
+                        if not self.dvc.analysis_has_review(ai, attr):
+                            review_req.append(attr)
+
+        if review_req:
+            information(None, 'The current data set has been '
+                              'analyzed and requires {}'.format(','.join(review_req)))
+
+        # add our analyses to the state
+        items = getattr(state, self.analysis_kind)
+        items.extend(self.analyses)
+
+        state.projects = {ai.project for ai in state.unknowns}
+
 
 class ReferenceNode(DataNode):
     name = 'References'
@@ -85,10 +87,16 @@ class ReferenceNode(DataNode):
 
             items.extend(self.analyses)
 
-# ============= local library imports  ==========================
 
+class FluxMonitorsNode(DataNode):
+    name = 'Flux Monitors'
+    analysis_kind = 'flux_monitors'
+
+    def run(self, state):
+        items = getattr(state, self.analysis_kind)
+        if not self.analyses or state.has_flux_monitors:
+            self.analyses = items
+        else:
+            items.extend(self.analyses)
 
 # ============= EOF =============================================
-
-
-
