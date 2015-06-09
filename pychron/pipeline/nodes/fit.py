@@ -15,7 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Bool, List, HasTraits, Str, Float, Instance
+from numpy import array, vstack
+from traits.api import Bool, List, HasTraits, Str, Float, Instance, Int
 # ============= standard library imports ========================
 from itertools import groupby
 # ============= local library imports  ==========================
@@ -23,6 +24,9 @@ from uncertainties import nominal_value, std_dev
 from pychron.core.confirmation import confirmation_dialog
 from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.core.progress import progress_loader
+from pychron.core.regression.flux_regressor import PlaneFluxRegressor
+from pychron.core.regression.flux_regressor import BowlFluxRegressor
+from pychron.pipeline.editors.flux_results_editor import FluxResultsEditor, FluxPosition
 from pychron.pipeline.editors.results_editor import IsoEvolutionResultsEditor
 from pychron.pipeline.nodes.figure import FigureNode
 from pychron.processing.flux.utilities import mean_j
@@ -97,7 +101,6 @@ class FitICFactorNode(FitReferencesNode):
         try:
             fits = nodedict['fits']
         except KeyError, e:
-            print 'afs', e
             return
 
         pom = self.plotter_options_manager
@@ -190,19 +193,120 @@ class FitFluxNode(FitNode):
     error_kind = 'SD'
     monitor_age = 28.201
     lambda_k = 5.464e-10
+    model_kind = 'Plane'
+
+    predicted_j_error_type = 'SD'
+    use_weighted_fit = Bool(False)
+    monte_carlo_ntrials = Int(10)
+    use_monte_carlo = Bool(False)
 
     def run(self, state):
+        geom = state.geometry
+
         monitors = state.flux_monitors
-        monitor_positions = []
+        # monitor_positions = []
         if monitors:
-            monage = self.monitor_age
+            monage = self.monitor_age * 1e6
             lk = self.lambda_k
             ek = self.error_kind
 
-            key = lambda x: (x.identifier, x.irradiation, x.irradiation_level, x.irradiation_position)
-            for idn, ais in groupby(sorted(monitors, key=key), key=key):
-                mj = mean_j(list(ais), ek, monage, lk)
-                print idn, mj
-                monitor_positions.append((idn, mj))
+            editor = FluxResultsEditor()
+            key = lambda x: x.identifier
+            poss = []
+            for identifier, ais in groupby(sorted(monitors, key=key), key=key):
+                ais = list(ais)
+                n = len(ais)
+
+                ref = ais[0]
+                j = ref.j
+                ip = ref.irradiation_position
+                sample = ref.sample
+
+                x, y, r, idx = geom[ip-1]
+                mj = mean_j(ais, ek, monage, lk)
+                p = FluxPosition(identifier=identifier, sample=sample, hole_id=ip,
+                                 saved_j=nominal_value(j),
+                                 saved_jerr=std_dev(j),
+                                 mean_j=nominal_value(mj),
+                                 mean_jerr=std_dev(mj),
+                                 x=x, y=y,
+                                 n=n)
+                poss.append(p)
+                # print identifier, irradiation_position, j, mj, n
+                # editor.add_position(identifier, ip, sample, j, mj, n)
+            self._predict_values(poss, poss)
+
+            editor.positions = poss
+            state.editors.append(editor)
+
+    def _predict_values(self, monitor_positions, all_positions):
+        try:
+            x, y, z, ze = array([(pos.x, pos.y, pos.mean_j, pos.mean_jerr)
+                                 for pos in monitor_positions
+                                 if pos.use]).T
+
+        except ValueError:
+            # self.debug('no monitor positions to fit')
+            return
+
+        n = x.shape[0]
+        if n > 3:
+            # n = z.shape[0] * 10
+            # r = max((max(abs(x)), max(abs(y))))
+            # r *= 1.25
+            reg = self._regressor_factory(x, y, z, ze)
+            self._regressor = reg
+        else:
+            # self.warning('not enough monitor positions. at least 3 required. Currently only {} active'.format(n))
+            return
+
+        if self.use_monte_carlo:
+            from pychron.core.stats.monte_carlo import monte_carlo_error_estimation
+
+            pts = array([[p.x, p.y] for p in all_positions])
+            nominals = reg.predict(pts)
+            errors = monte_carlo_error_estimation(reg, nominals, pts,
+                                                  ntrials=self.monte_carlo_ntrials)
+            for p, j, je in zip(all_positions, nominals, errors):
+                oj = p.saved_j
+
+                p.j = j
+                p.jerr = je
+
+                p.dev = (oj - j) / j * 100
+        else:
+            for p in all_positions:
+                j = reg.predict([(p.x, p.y)])[0]
+                je = reg.predict_error([[(p.x, p.y)]])[0]
+                oj = p.saved_j
+
+                p.j = j
+                p.jerr = je
+
+                p.dev = (oj - j) / j * 100
+
+    def _regressor_factory(self, x, y, z, ze):
+        if self.model_kind == 'Bowl':
+            # from pychron.core.regression.flux_regressor import BowlFluxRegressor
+            klass = BowlFluxRegressor
+        else:
+            # from pychron.core.regression.flux_regressor import PlaneFluxRegressor
+            klass = PlaneFluxRegressor
+
+        x = array(x)
+        y = array(y)
+        xy = vstack((x, y)).T
+        wf = self.use_weighted_fit
+        if wf:
+            ec = 'SD'
+        else:
+            ec = self.predicted_j_error_type
+
+        reg = klass(xs=xy, ys=z, yserr=ze,
+                    error_calc_type=ec,
+                    use_weighted_fit=wf)
+        # error_calc_type=self.tool.predicted_j_error_type)
+        reg.calculate()
+        return reg
 
 # ============= EOF =============================================

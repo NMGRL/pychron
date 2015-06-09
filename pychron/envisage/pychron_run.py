@@ -16,21 +16,21 @@
 # ============= enthought library imports =======================
 
 from envisage.core_plugin import CorePlugin
-from envisage.api import Plugin
 from pyface.message_dialog import warning
 # ============= standard library imports ========================
 import os
 import logging
 # ============= local library imports  ==========================
+from pyface.qt import QtGui
 from pychron.displays.gdisplays import gTraceDisplay
 from pychron.envisage.key_bindings import update_key_bindings
+from pychron.envisage.tasks.base_plugin import BasePlugin
 from pychron.envisage.tasks.tasks_plugin import PychronTasksPlugin, myTasksPlugin
 from pychron.logger.tasks.logger_plugin import LoggerPlugin
 from pychron.envisage.initialization.initialization_parser import InitializationParser
 from pychron.user.tasks.plugin import UsersPlugin
 
 logger = logging.getLogger()
-
 
 PACKAGE_DICT = dict(
     # CanvasDesignerPlugin='pychron.canvas.tasks.canvas_plugin',
@@ -111,8 +111,8 @@ def get_plugin(pname):
     if not pname.endswith('Plugin'):
         pname = '{}Plugin'.format(pname)
 
-    #print PACKAGE_DICT.keys()
-    #print pname,pname in PACKAGE_DICT.keys()
+    # print PACKAGE_DICT.keys()
+    # print pname,pname in PACKAGE_DICT.keys()
     if pname in PACKAGE_DICT:
         package = PACKAGE_DICT[pname]
         klass = get_klass(package, pname)
@@ -125,7 +125,7 @@ def get_plugin(pname):
 
     if klass is not None:
         plugin = klass()
-        if isinstance(plugin, Plugin):
+        if isinstance(plugin, BasePlugin):
             check = plugin.check()
             if check is True:
                 return plugin
@@ -211,11 +211,20 @@ def launch(klass, user):
     app = app_factory(klass, user)
 
     try:
+
+        root = os.path.dirname(__file__)
+        r = QtGui.QApplication.instance()
+        p = os.path.join(root, 'stylesheets', 'dark.css')
+        with open(p) as rfile:
+            r.setStyleSheet(rfile.read())
+
         app.run()
+
         logger.info('Quitting {}'.format(app.name), extra={'threadName_': 'Launcher'})
     except Exception:
         logger.exception('Launching error')
         import traceback
+
         tb = traceback.format_exc()
         gTraceDisplay.add_text(tb)
         gTraceDisplay.edit_traits(kind='livemodal')
@@ -225,6 +234,5 @@ def launch(klass, user):
         os._exit(0)
 
     return
-
 
 # ============= EOF ====================================

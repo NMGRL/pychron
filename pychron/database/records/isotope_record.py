@@ -73,7 +73,10 @@ class IsotopeRecordView(object):
     __slots__ = ('sample', 'project', 'labnumber', 'identifier', 'aliquot', 'step',
                  '_increment',
                  'uuid', 'rundate',
-                 'timestamp', 'tag', 'irradiation_info', 'mass_spectrometer', 'analysis_type',
+                 'timestamp', 'tag',
+                 'irradiation_position',
+                 'irradiation','irradiation_level',
+                 'irradiation_info', 'mass_spectrometer', 'analysis_type',
                  'meas_script_name', 'extract_script_name', 'extract_device', 'flux_fit_status',
                  'extract_value', 'cleanup', 'duration',
                  'blank_fit_status',
@@ -105,6 +108,9 @@ class IsotopeRecordView(object):
         self.sample = ''
         self.project = ''
         self.irradiation_info = ''
+        self.irradiation = ''
+        self.irradiation_level = ''
+        self.irradiation_position = ''
         self.mass_spectrometer = ''
         self.extract_device = ''
 

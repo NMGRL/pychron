@@ -15,16 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import shutil
-import time
-
-from git import Repo
 from traits.api import Instance, Str, Set, List
 from apptools.preferences.preference_binding import bind_preference
-
-
-
 # ============= standard library imports ========================
+import shutil
+import time
+from git import Repo
 from itertools import groupby
 import os
 # ============= local library imports  ==========================
@@ -194,12 +190,13 @@ class DVC(Loggable):
 
         st = time.time()
         wrapper = lambda *args: self._make_record(calculate_F=calculate_F, *args)
-
+        # print 'records', records
+        # records =ret= map(wrapper, records)
         ret = progress_loader(records, wrapper, threshold=1)
-        et = time.time()-st
+        et = time.time() - st
         n = len(records)
 
-        self.debug('Make analysis time, total: {}, n: {}, average: {}'.format(et, n, et/float(n)))
+        self.debug('Make analysis time, total: {}, n: {}, average: {}'.format(et, n, et / float(n)))
         return ret
 
     def synchronize(self, pull=True):
@@ -351,6 +348,11 @@ class DVC(Loggable):
                                    head.message)
         self.information_dialog(msg)
 
+    def get_irradiation_geometry(self, irrad, level):
+        with self.db.session_ctx():
+            dblevel = self.db.get_irradiation_level(irrad, level)
+            return self.meta_repo.get_irradiation_holder_holes(dblevel.holder)
+
     # private
     def __getattr__(self, item):
         try:
@@ -405,6 +407,10 @@ class DVC(Loggable):
         prod = self.meta_repo.get_production(pname)
         a.set_production(pname, prod)
 
+        a.j = self.meta_repo.get_flux(record.irradiation, record.irradiation_level, record.irradiation_pos)
+
+        # dbir = self.db.get_irradiation_position(a.irradiation, a.irradiation_level, a.irradiation_pos)
+
         if calculate_F:
             a.calculate_F()
 
@@ -434,6 +440,7 @@ class DVC(Loggable):
             bind_preference(self.db, attr, '{}.{}'.format(prefid, attr))
 
     def _defaults(self):
+        self.debug('writing defaults')
         # self.db.create_all(Base.metadata)
         with self.db.session_ctx():
             for tag, func in (('irradiation holders', self._add_default_irradiation_holders),
@@ -443,10 +450,11 @@ class DVC(Loggable):
                 d = os.path.join(self.meta_repo.path, tag.replace(' ', '_'))
                 if not os.path.isdir(d):
                     os.mkdir(d)
-                    if self.auto_add:
-                        func()
-                    elif self.confirmation_dialog('You have no {}. Would you like to add some defaults?'.format(tag)):
-                        func()
+
+                if self.auto_add:
+                    func()
+                elif self.confirmation_dialog('You have no {}. Would you like to add some defaults?'.format(tag)):
+                    func()
 
     def _add_default_irradiation_productions(self):
         ds = (('TRIGA.txt', TRIGA),)

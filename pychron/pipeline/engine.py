@@ -200,11 +200,11 @@ class PipelineEngine(Loggable):
         self.browser_model.select_project('J')
         self.browser_model.select_sample(idx=0)
         records = self.browser_model.get_analysis_records()
-
-        analyses = self.dvc.make_analyses(records[:4])
-        # print len(records),len(analyses)
-        node.analyses.extend(analyses)
-        self.refresh_analyses()
+        if records:
+            analyses = self.dvc.make_analyses(records[:4])
+            # print len(records),len(analyses)
+            node.analyses.extend(analyses)
+            self.refresh_analyses()
 
     def add_test_filter(self):
         node = self.pipeline.nodes[-1]

@@ -22,6 +22,8 @@ import os
 import shutil
 # ============= local library imports  ==========================
 from uncertainties import ufloat
+import yaml
+from pychron.canvas.utils import iter_geom
 from pychron.core.helpers.datetime_tools import ISO_FORMAT_STR
 from pychron.core.helpers.filetools import list_directory2, ilist_directory2, add_extension
 from pychron.git_archive.repo_manager import GitRepoManager
@@ -189,34 +191,10 @@ class MetaRepo(GitRepoManager):
     def update_experiment_queue(self, name, path_or_blob):
         self._update_text('experiments', name, path_or_blob)
 
-    def _update_text(self, tag, name, path_or_blob):
-        if not name:
-            self.debug('cannot update text with no name. tag={} name={}'.format(tag, name))
-            return
-
-        root = os.path.join(self.path, tag)
-        if not os.path.isdir(root):
-            os.mkdir(root)
-
-        p = os.path.join(root, name)
-        # action = 'updated' if os.path.isfile(p) else 'added'
-        if os.path.isfile(path_or_blob):
-            shutil.copyfile(path_or_blob, p)
-        else:
-            with open(p, 'w') as wfile:
-                wfile.write(path_or_blob)
-
-        self.add(p, commit=False)
-        # if self.has_staged():
-        # self.commit('updated {} {}'.format(tag, action, name))
-
-        # hexsha = self.shell('hash-object', '--path', p)
-        # return hexsha
-
     def add_production(self, name, obj, commit=False):
         p = self.get_production(name, force=True)
         p.attrs = []
-        for k in INTERFERENCE_KEYS+RATIO_KEYS:
+        for k in INTERFERENCE_KEYS + RATIO_KEYS:
             v = getattr(obj, k)
             e = getattr(obj, '{}_err'.format(k))
             setattr(p, k, v)
@@ -248,6 +226,16 @@ class MetaRepo(GitRepoManager):
         self.add(ip.path, commit=False)
         self.commit('updated production {}'.format(prod.name))
 
+    def add_level(self, irrad, level):
+        p = self.get_level_path(irrad, level)
+        with open(p, 'r') as rfile:
+            pass
+
+        self.add(p, commit=False)
+
+    def get_level_path(self, irrad, level):
+        return os.path.join(self.path, irrad, '{}.yaml'.format(level))
+
     def add_chronology(self, irrad, doses):
         p = os.path.join(self.path, irrad, 'chronology.txt')
 
@@ -260,13 +248,24 @@ class MetaRepo(GitRepoManager):
             os.mkdir(p)
             # self.add(p, commit=False)
 
-    def add_load_holder(self, name, path_or_txt):
+    def add_irradiation_holder(self, name, blob, commit=False):
+        p = os.path.join(self.path, 'irradiation_holders', add_extension(name))
+        with open(p, 'w') as wfile:
+            holes = list(iter_geom(blob))
+            n = len(holes)
+            wfile.write('{},0.0175\n'.format(n))
+            for idx, (x, y, r) in holes:
+                wfile.write('{:0.4f},{:0.4f},{:0.4f}\n'.format(x, y, r))
+        self.add(p, commit=commit)
+
+    def add_load_holder(self, name, path_or_txt, commit=False):
         p = os.path.join(self.path, 'load_holders', name)
         if os.path.isfile(path_or_txt):
             shutil.copyfile(path_or_txt, p)
         else:
             with open(p, 'w') as wfile:
                 wfile.write(path_or_txt)
+        self.add(p, commit=commit)
 
     def update_chronology(self, name, doses, commit=True, push=True):
         p = self._chron_name(name)
@@ -291,12 +290,26 @@ class MetaRepo(GitRepoManager):
             prs.append(pr)
         return prs
 
+    def get_flux(self, irradiation, level, position):
+        path = os.path.join(self.path, irradiation, add_extension(level, '.yaml'))
+        j, e = 0, 0
+        if os.path.isfile(path):
+            with open(path) as rfile:
+                positions = yaml.load(rfile)
+            try:
+                pos = positions[position - 1]
+                j, e = pos['j'], pos['jerr']
+            except IndexError:
+                pass
+
+        return ufloat(j, e)
+
     @cached('clear_cache')
     def get_production(self, pname, **kw):
         root = os.path.join(self.path, 'productions')
         if not os.path.isdir(root):
             os.mkdir(root)
-        p = os.path.join(root, add_extension(pname, '.txt'))
+        p = os.path.join(root, add_extension(pname))
         ip = Production(p)
         return ip
 
@@ -307,18 +320,42 @@ class MetaRepo(GitRepoManager):
 
     @cached('clear_cache')
     def get_irradiation_holder_holes(self, name):
-        p = os.path.join(self.path, 'irradiation_holders', '{}.txt'.format(name))
+        p = os.path.join(self.path, 'irradiation_holders', add_extension(name))
         holder = IrradiationHolder(p)
         return holder.holes
 
     @cached('clear_cache')
     def get_load_holder_holes(self, name):
-        p = os.path.join(self.path, 'load_holders', '{}.txt'.format(name))
+        p = os.path.join(self.path, 'load_holders', add_extension(name))
         holder = LoadHolder(p)
         return holder.holes
 
     # private
     def _chron_name(self, name):
         return os.path.join(self.path, name, 'chronology.txt')
+
+    def _update_text(self, tag, name, path_or_blob):
+        if not name:
+            self.debug('cannot update text with no name. tag={} name={}'.format(tag, name))
+            return
+
+        root = os.path.join(self.path, tag)
+        if not os.path.isdir(root):
+            os.mkdir(root)
+
+        p = os.path.join(root, name)
+        # action = 'updated' if os.path.isfile(p) else 'added'
+        if os.path.isfile(path_or_blob):
+            shutil.copyfile(path_or_blob, p)
+        else:
+            with open(p, 'w') as wfile:
+                wfile.write(path_or_blob)
+
+        self.add(p, commit=False)
+        # if self.has_staged():
+        # self.commit('updated {} {}'.format(tag, action, name))
+
+        # hexsha = self.shell('hash-object', '--path', p)
+        # return hexsha
 
 # ============= EOF =============================================

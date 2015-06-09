@@ -46,6 +46,8 @@ class EngineState(HasTraits):
     modified = False
     dbmodified = False
 
+    geometry = List
+
     @cached_property
     def _get_udetectors(self):
         return get_detector_set(self.unknowns)

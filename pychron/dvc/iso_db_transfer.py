@@ -21,6 +21,7 @@ from itertools import groupby
 import time
 import os
 # ============= local library imports  ==========================
+import yaml
 from pychron.core.helpers.filetools import add_extension
 
 from pychron.database.adapters.isotope_adapter import IsotopeAdapter
@@ -153,6 +154,29 @@ class IsoDBTransfer(Loggable):
                 # for rec in yd[pr]:
 
                 # repo.commit('src import src= {}'.format(src.url))
+    def transfer_holder(self, name):
+        self.root = os.path.join(os.path.expanduser('~'), 'Pychron_dev', 'data', '.dvc')
+
+        conn = dict(host='129.138.12.160', username='root', password='DBArgon', kind='mysql')
+        # conn = dict(host='129.138.12.160', username='root', password='DBArgon', kind='mysql')
+        # dest = DVCDatabase('/Users/ross/Sandbox/dvc/meta/testdb.sqlite')
+        # dest = DVCDatabase(name='pychronmeta', **conn)
+        # self.dvc = DVC(bind=False)
+        # self.dvc.db.trait_set(name='pychronmeta', username='root',
+        #                       password='Argon', kind='mysql', host='localhost')
+
+        self.meta_repo = MetaRepo()
+        self.meta_repo.open_repo(os.path.join(self.root, 'meta'))
+        proc = IsotopeDatabaseManager(bind=False, connect=False)
+        proc.db.trait_set(name='pychrondata', **conn)
+        src = proc.db
+        # src = IsotopeAdapter(name='pychrondata', **conn)
+        # src.trait_set()
+        src.connect()
+        with src.session_ctx():
+            holder = src.get_irradiation_holder(name)
+
+            self.meta_repo.add_irradiation_holder(name, holder.geometry)
 
     def _transfer_labnumber(self, ln, src, dest):
         dbln = src.get_labnumber(ln)
@@ -230,8 +254,19 @@ class IsoDBTransfer(Loggable):
                 dest.add_irradiation_level(levelname, irradname, holder, prodname)
                 dest.flush()
 
+                self.meta_repo.add_irradiation_holder(holder, dblevel.holder.geometry)
+                self.meta_repo.add_level(irradname, levelname)
+                self.meta_repo.commit('added empty level {}{}'.format(irradname, levelname))
+
+            p = self.meta_repo.get_level_path(irradname, levelname)
             # save db irradiation position
+
             if not dest.get_irradiation_position(irradname, levelname, pos):
+                with open(p, 'r') as rfile:
+                    yd = yaml.load(rfile)
+                if yd is None:
+                    yd = []
+
                 dbsam = dblab.sample
                 project = dbsam.project.name
                 project = project.replace('/', '_').replace('\\', '_')
@@ -255,6 +290,12 @@ class IsoDBTransfer(Loggable):
                 dd.sample = sam
 
                 dest.flush()
+
+                f = dban.labnumber.selected_flux_history.flux
+
+                yd.append({'j': f.j, 'j_err': f.j_err, 'position': dban.labnumber.irradiation_position.position})
+                with open(p, 'w') as wfile:
+                    yaml.dump(yd, wfile, default_flow_style=False)
 
     def _transfer_analysis(self, proc, src, dest, repo, rec, overwrite=True):
         # args = rec.split(',')
@@ -447,6 +488,9 @@ if __name__ == '__main__':
     paths.build('_dev')
     logging_setup('de', root=os.path.join(os.path.expanduser('~'), 'Desktop', 'logs'))
     e = IsoDBTransfer()
-    e.do_export()
+    e.transfer_holder('40_no_spokes')
+    e.transfer_holder('40_hole')
+    e.transfer_holder('24_hole')
+    # e.do_export()
     # e.export_production('Triga PR 275', db=False)
 # ============= EOF =============================================

@@ -84,6 +84,18 @@ class AnalysisTbl(Base, BaseMixin):
     experiment_associations = relationship('ExperimentAssociationTbl', backref='analysis')
 
     @property
+    def irradiation(self):
+        return self.irradiation_position.level.irradiation.name
+
+    @property
+    def irradiation_level(self):
+        return self.irradiation_position.level.name
+
+    @property
+    def irradiation_pos(self):
+        return self.irradiation_position.position
+
+    @property
     def labnumber(self):
         return self.irradiation_position
 
@@ -109,7 +121,12 @@ class AnalysisTbl(Base, BaseMixin):
         iv.extract_script_name = self.extractionName
         iv.meas_script_name = self.measurementName
 
-        iv.identifier = self.irradiation_position.identifier
+        irradpos = self.irradiation_position
+        iv.identifier = irradpos.identifier
+        iv.irradiation = irradpos.level.irradiation.name
+        iv.irradiation_level = irradpos.level.name
+        iv.irradiation_position = irradpos.position
+
         iv.labnumber = iv.identifier
         iv.experiment_ids = es = [e.experimentName for e in self.experiment_associations]
         if len(es) == 1:
@@ -123,10 +140,10 @@ class AnalysisTbl(Base, BaseMixin):
                     'analysis_type'):
             setattr(iv, tag, getattr(self, tag))
 
-        if self.irradiation_position.sample:
-            iv.sample = self.irradiation_position.sample.name
-            if self.irradiation_position.sample.project:
-                iv.project = self.irradiation_position.sample.project.name
+        if irradpos.sample:
+            iv.sample = irradpos.sample.name
+            if irradpos.sample.project:
+                iv.project = irradpos.sample.project.name
 
         return iv
 

@@ -76,6 +76,9 @@ class FindFluxMonitorsNode(FindNode):
             with dvc.session_ctx():
                 ans = dvc.get_flux_monitor_analyses(self.irradiation, self.level, self.monitor_sample_name)
                 monitors = self.dvc.make_analyses(ans, calculate_F=True)
+
+                state.geometry = dvc.get_irradiation_geometry(self.irradiation, self.level)
+
                 state.flux_monitors = monitors
                 state.has_flux_monitors = True
 

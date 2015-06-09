@@ -568,7 +568,8 @@ class DVCDatabase(DatabaseAdapter):
             q = q.join(IrradiationPositionTbl, LevelTbl, IrradiationTbl, SampleTbl)
             q = q.filter(IrradiationTbl.name == irradiation)
             q = q.filter(LevelTbl.name == level)
-            q = q.filter(SampleTbl.name == sample)
+            # q = q.filter(SampleTbl.name == sample)
+            q = q.filter(SampleTbl.name.in_(('BW-2014-3', 'BW-2014-4')))
 
             return self._query_all(q, verbose_query=True)
 
