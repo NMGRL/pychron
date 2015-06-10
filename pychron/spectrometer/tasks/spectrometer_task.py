@@ -64,7 +64,7 @@ class SpectrometerTask(EditorTask):
 
         # i = 1
         self.scan_manager.log_events_enabled = False
-        es = [int(e.name.split(' '))
+        es = [int(e.name.split(' ')[-1])
               for e in self.editor_area.editors
               if isinstance(e, PeakCenterEditor)]
 
