@@ -256,7 +256,7 @@ class CommandProcessor(ConfigLoadable):
             auth_err = self._authenticate(data, sender_addr)
             if auth_err:
                 return auth_err
-
+            request_type = request_type[2:]
             if not request_type in ['Extractionline',
                                     'Diode',
                                     'Synrad',
@@ -264,7 +264,7 @@ class CommandProcessor(ConfigLoadable):
                                     'UV',
                                     'Hardware',
                                     'test']:
-                self.warning('Invalid request type ' + request_type)
+                self.warning('Invalid request type {}'.format(request_type))
                 return
 
             if request_type == 'test':
