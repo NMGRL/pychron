@@ -49,7 +49,7 @@ class ExperimentPlugin(BaseTaskPlugin):
     def start(self):
         super(ExperimentPlugin, self).start()
         manager = self.application.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
-        self.experimentor.manager = manager
+        self.experimentor.iso_db_manager = manager
         self.experimentor.executor.set_managers()
         self.experimentor.executor.bind_preferences()
 
@@ -168,6 +168,7 @@ class ExperimentPlugin(BaseTaskPlugin):
         # manager = self.application.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
         # print 'get exp man', manager
         exp = Experimentor(application=self.application,
+                           # iso_db_manager=manager,
                            # manager=manager,
                            mode=mode)
 
