@@ -195,6 +195,7 @@ class AutomatedRun(Loggable):
             except BaseException, e:
                 self.warning('excel persister action failed. func={}, excp={}'.format(func, e))
                 import traceback
+
                 traceback.print_exc()
 
     def py_set_integration_time(self, v):
@@ -832,7 +833,7 @@ class AutomatedRun(Loggable):
                 # self.persister.trait_set(spec_dict=self.spectrometer_manager.make_parameters_dict(),
                 # defl_dict=self.spectrometer_manager.make_deflections_dict(),
                 # gains=self.spectrometer_manager.make_gains_list(),
-                #                          active_detectors=self._active_detectors)
+                # active_detectors=self._active_detectors)
                 self._persister_action('trait_set', spec_dict=self.spectrometer_manager.make_parameters_dict(),
                                        defl_dict=self.spectrometer_manager.make_deflections_dict(),
                                        gains=self.spectrometer_manager.make_gains_list(),
@@ -941,6 +942,7 @@ class AutomatedRun(Loggable):
             ext_pos = self.extraction_script.get_extraction_positions()
 
         self._persister_action('trait_set', save_as_peak_hop=False,
+                               uuid=self.uuid,
                                run_spec=self.spec,
                                arar_age=self.arar_age,
                                positions=self.spec.get_position_list(),
@@ -962,7 +964,7 @@ class AutomatedRun(Loggable):
 
         # self.persister.trait_set(save_as_peak_hop=False,
         # run_spec=self.spec,
-        #                          arar_age=self.arar_age,
+        # arar_age=self.arar_age,
         #                          positions=self.spec.get_position_list(),
         #                          auto_save_detector_ic=auto_save_detector_ic,
         #                          extraction_positions=ext_pos,
@@ -1343,7 +1345,7 @@ anaylsis_type={}
                 # cs = (('TruncationConditional', 'truncation', 'truncations'),
                 # ('ActionConditional', 'action', 'actions'),
                 # ('TerminationConditional', 'termination', 'terminations'),
-                #           ('CancelationConditional', 'cancelation', 'cancelations'))
+                # ('CancelationConditional', 'cancelation', 'cancelations'))
                 #     for klass, var, tag in cs:
                 #         yl = yd.get(tag)
                 #         if not yl:
@@ -1574,7 +1576,7 @@ anaylsis_type={}
                             # comp = c['check']
                             # start = c['start']
                             # freq = c.get('frequency', 1)
-                            #             acr = c.get('abbreviated_count_ratio', 1)
+                            # acr = c.get('abbreviated_count_ratio', 1)
                             #             self.py_add_truncation(attr, comp, int(start), freq, acr)
                             #         except BaseException:
                             #             self.warning('Failed adding truncation. {}'.format(c))
