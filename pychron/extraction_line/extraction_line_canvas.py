@@ -63,11 +63,11 @@ class ExtractionLineCanvas(HasTraits):
         '''
         self._canvas_function('update_switch_lock_state', name, state)
 
-    def update_valve_owned_state(self, name, state, *args, **kw):
+    def update_switch_owned_state(self, name, state, *args, **kw):
         '''
             do the specific canvas action
         '''
-        self._canvas_function('update_valve_owned_state', name, state)
+        self._canvas_function('update_switch_owned_state', name, state)
 
     def _canvas_function(self, func, *args, **kw):
         c = self.canvas2D
