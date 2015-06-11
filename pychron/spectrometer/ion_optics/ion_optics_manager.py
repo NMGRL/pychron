@@ -312,8 +312,8 @@ class IonOpticsManager(Manager):
 
         if timeout:
             evt = Event()
-            timeout_thread = Thread(target=self._timeout_func, args=(timeout,evt))
-            timeout_thread.start()
+            self.timeout_thread = Thread(target=self._timeout_func, args=(timeout,evt))
+            self.timeout_thread.start()
 
         dac_d = pc.get_peak_center()
 

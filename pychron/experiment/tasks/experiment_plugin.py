@@ -45,8 +45,10 @@ class ExperimentPlugin(BaseTaskPlugin):
 
     def start(self):
         super(ExperimentPlugin, self).start()
-        manager = self.application.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
-        self.experimentor.manager = manager
+        # manager = self.application.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
+        # self.experimentor.iso_db_manager = manager
+        dvc = self.application.get_service('pychron.dvc.dvc.DVC')
+        self.experimentor.dvc = dvc
         self.experimentor.executor.set_managers()
         self.experimentor.executor.bind_preferences()
 
@@ -163,10 +165,9 @@ class ExperimentPlugin(BaseTaskPlugin):
 # from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 
         # manager = self.application.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
-        dvc = self.application.get_service('pychron.dvc.dvc.DVC')
-
+        
         exp = Experimentor(application=self.application,
-                           dvc=dvc,
+                           # dvc=dvc,
                            # manager=manager,
                            mode=mode)
 

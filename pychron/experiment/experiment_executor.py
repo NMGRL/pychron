@@ -171,8 +171,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     def set_managers(self):
         p1 = 'pychron.extraction_line.extraction_line_manager.ExtractionLineManager'
         p2 = 'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager'
-        p3 = 'pychron.spectrometer.ion_optics_manager.IonOpticsManager'
-
+        p3 = 'pychron.spectrometer.ion_optics.ion_optics_manager.IonOpticsManager'
         if self.application:
             self.spectrometer_manager = self.application.get_service(p2)
             self.extraction_line_manager = self.application.get_service(p1)
