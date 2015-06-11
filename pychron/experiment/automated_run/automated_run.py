@@ -1328,7 +1328,7 @@ anaylsis_type={}
                 # cs = (('TruncationConditional', 'truncation', 'truncations'),
                 # ('ActionConditional', 'action', 'actions'),
                 # ('TerminationConditional', 'termination', 'terminations'),
-                #           ('CancelationConditional', 'cancelation', 'cancelations'))
+                # ('CancelationConditional', 'cancelation', 'cancelations'))
                 #     for klass, var, tag in cs:
                 #         yl = yd.get(tag)
                 #         if not yl:
@@ -1559,7 +1559,7 @@ anaylsis_type={}
                             # comp = c['check']
                             # start = c['start']
                             # freq = c.get('frequency', 1)
-                            #             acr = c.get('abbreviated_count_ratio', 1)
+                            # acr = c.get('abbreviated_count_ratio', 1)
                             #             self.py_add_truncation(attr, comp, int(start), freq, acr)
                             #         except BaseException:
                             #             self.warning('Failed adding truncation. {}'.format(c))
