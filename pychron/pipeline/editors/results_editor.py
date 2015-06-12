@@ -28,7 +28,9 @@ from pychron.pychron_constants import PLUSMINUS_SIGMA
 class IsoEvolutionResultsAdapter(TabularAdapter):
     columns = [('RunID', 'record_id'), ('Isotope', 'isotope'), ('Fit', 'fit'),
                ('Intercept', 'intercept_value'),
-               (PLUSMINUS_SIGMA, 'intercept_error')]
+               (PLUSMINUS_SIGMA, 'intercept_error'),
+               ('Regression', 'regression_str')]
+    font = '10'
     record_id_width = Int(80)
     isotope_width = Int(50)
     fit_width = Int(80)

@@ -180,7 +180,7 @@ class GraphicalFilterModel(HasTraits):
         ans = self.analyses
         if set_atypes:
             def ff(at):
-                return ' '.join(map(str.capitalize, at.split('_')))
+                return ' '.join(map(unicode.capitalize, at.split('_')))
 
             self.available_analysis_types = list({ff(ai.analysis_type) for ai in ans})
             # if self.always_exclude_unknowns:

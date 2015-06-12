@@ -103,17 +103,21 @@ class AnalysisPointInspector(PointInspector):
                     rid = analysis.record_id
                     name = component.container.y_axis.title
                     y = ys[ind]
-                    x = xs[ind]
+                    # x = xs[ind]
 
                     if hasattr(component, 'yerror'):
-                        ye = component.yerror.get_data()[ind]
-                        pe = self.percent_error(y, ye)
-                        if self.value_format:
-                            ye = self.value_format(ye)
-                        if self.value_format:
-                            y = self.value_format(y)
+                        try:
+                            ye = component.yerror.get_data()[ind]
+                            pe = self.percent_error(y, ye)
+                            if self.value_format:
+                                ye = self.value_format(ye)
+                            if self.value_format:
+                                y = self.value_format(y)
 
-                        y = u'{} {}{} {}'.format(y, PLUSMINUS, ye, pe)
+                            y = u'{} {}{} {}'.format(y, PLUSMINUS, ye, pe)
+                        except IndexError:
+                            pass
+
                     else:
                         if self.value_format:
                             y = self.value_format(y)
@@ -140,7 +144,7 @@ class AnalysisPointInspector(PointInspector):
                         info.insert(1, 'Status= {}'.format(analysis.status_text))
                     lines.extend(info)
                     if self.additional_info is not None:
-                        ad = self.additional_info(ind, xs[ind], y[ind], analysis)
+                        ad = self.additional_info(ind, xs[ind], ys[ind], analysis)
                         if isinstance(ad, (list, tuple)):
                             lines.extend(ad)
                         else:

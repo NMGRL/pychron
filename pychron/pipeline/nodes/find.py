@@ -32,7 +32,8 @@ class FindNode(BaseNode):
 class FindFluxMonitorsNode(FindNode):
     name = 'Find Flux Monitors'
 
-    monitor_sample_name = Str('BW-2014-3')
+    # monitor_sample_name = Str('BW-2014-3')
+    monitor_sample_name = Str('FC-2')
     irradiation = Str
     irradiations = Property
 
@@ -75,12 +76,14 @@ class FindFluxMonitorsNode(FindNode):
             dvc = self.dvc
             with dvc.session_ctx():
                 ans = dvc.get_flux_monitor_analyses(self.irradiation, self.level, self.monitor_sample_name)
-                monitors = self.dvc.make_analyses(ans, calculate_F=True)
+                monitors = self.dvc.make_analyses(ans, calculate_f_only=False)
 
-                state.geometry = dvc.get_irradiation_geometry(self.irradiation, self.level)
+            state.geometry = dvc.get_irradiation_geometry(self.irradiation, self.level)
 
-                state.flux_monitors = monitors
-                state.has_flux_monitors = True
+            state.flux_monitors = monitors
+            state.has_flux_monitors = True
+            state.irradiation = self.irradiation
+            state.level = self.level
 
 
 class FindReferencesNode(FindNode):

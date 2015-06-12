@@ -15,27 +15,17 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-import sys
-from threading import Lock
-from datetime import datetime, timedelta
 
 from traits.api import Password, Bool, Str, on_trait_change, Any, Property, cached_property
-
-
-
-
-
-
-
-
-
-
 # =============standard library imports ========================
 from sqlalchemy import create_engine, distinct, MetaData
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, StatementError, \
     DBAPIError, OperationalError
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
+from threading import Lock
+from datetime import datetime, timedelta
+import sys
 import os
 # =============local library imports  ==========================
 from pychron.database.core.query import compile_query
@@ -487,10 +477,11 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
         lan = q.order_by(asc).first()
         han = q.order_by(desc).first()
 
+        print 'ffff', lan, han
         lan = datetime.now() if not lan else lan[0]
         han = datetime.now() if not han else han[0]
         td = timedelta(hours=hours)
-
+        print 'cccc', lan, han
         return lan - td, han + td
 
     def _delete_item(self, value, name=None):

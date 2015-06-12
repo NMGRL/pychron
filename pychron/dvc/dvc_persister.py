@@ -23,7 +23,9 @@ from traits.api import Instance
 import hashlib
 import os
 import struct
-import yaml
+# import yaml
+import json
+
 from datetime import datetime
 from uncertainties import std_dev
 from uncertainties import nominal_value
@@ -34,9 +36,9 @@ from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths
 
 
-def ydump(obj, p):
+def jdump(obj, p):
     with open(p, 'w') as wfile:
-        yaml.dump(obj, wfile, default_flow_style=False)
+        json.dump(obj, wfile, indent=4)
 
 
 def format_project(project):
@@ -122,7 +124,7 @@ class DVCPersister(BasePersister):
         hexsha = self.dvc.get_meta_head()
         obj['commit'] = str(hexsha)
 
-        ydump(obj, p)
+        jdump(obj, p)
 
     def pre_measurement_save(self):
         pass
@@ -141,22 +143,22 @@ class DVCPersister(BasePersister):
                'high_signal': ys[2],
                'fmt': fmt,
                'data': ''.join([struct.pack(fmt, di) for di in zip(xx, yy)])}
-        ydump(obj, p)
+        jdump(obj, p)
 
     def post_measurement_save(self, commit=True, msg_prefix='Collection'):
         """
         save
-            - analysis.yaml
-            - analysis.monitor.yaml
+            - analysis.json
+            - analysis.monitor.json
 
-        check if unique spectrometer.yaml
+        check if unique spectrometer.json
         commit changes
         push changes
         :return:
         """
         # save spectrometer
         spec_sha = self._get_spectrometer_sha()
-        spec_path = os.path.join(self.experiment_repo.path, '{}.yaml'.format(spec_sha))
+        spec_path = os.path.join(self.experiment_repo.path, '{}.json'.format(spec_sha))
         # spec_path = self._make_path('.spectrometer', spec_sha)
         if not os.path.isfile(spec_path):
             self._save_spectrometer_file(spec_path)
@@ -197,18 +199,21 @@ class DVCPersister(BasePersister):
 
         if not self.per_spec.timestamp:
             d['timestamp'] = timestamp
+        else:
+            d['timestamp'] = self.per_spec.timestamp
 
-        dvc = self.dvc
-        with dvc.session_ctx():
-            an = dvc.add_analysis(**d)
+        db = self.dvc.db
+        with db.session_ctx():
+            an = db.add_analysis(**d)
 
             # all associations are handled by the ExperimentExecutor._retroactive_experiment_identifiers
 
             # # special associations are handled by the ExperimentExecutor._retroactive_experiment_identifiers
             # if not is_special(rs.runid):
-            #     dvc.add_experiment_association(rs.experiment_id, an)
+            if self.per_spec.use_experiment_association:
+                db.add_experiment_association(rs.experiment_id, an)
 
-            pos = dvc.get_irradiation_position(rs.irradiation, rs.irradiation_level, rs.irradiation_position)
+            pos = db.get_irradiation_position(rs.irradiation, rs.irradiation_level, rs.irradiation_position)
 
             an.irradiation_position = pos
             # self._save_measured_positions()
@@ -263,16 +268,16 @@ class DVCPersister(BasePersister):
         sniffs = []
         cisos = {}
         cdets = {}
+        endianness = '>'
         for iso in self.per_spec.arar_age.isotopes.values():
 
-            sblob = base64.b64encode(iso.pack(as_hex=False))
-            snblob = base64.b64encode(iso.sniff.pack(as_hex=False))
+            sblob = base64.b64encode(iso.pack(endianness, as_hex=False))
+            snblob = base64.b64encode(iso.sniff.pack(endianness, as_hex=False))
             signals.append({'isotope': iso.name, 'detector': iso.detector, 'blob': sblob})
             sniffs.append({'isotope': iso.name, 'detector': iso.detector, 'blob': snblob})
 
             isos[iso.name] = {'detector': iso.detector}
 
-            endianness = '>'
             if iso.detector not in dets:
                 bblob = base64.b64encode(iso.baseline.pack(endianness, as_hex=False))
                 baselines.append({'detector': iso.detector, 'blob': bblob})
@@ -289,6 +294,7 @@ class DVCPersister(BasePersister):
                                                      'references': []}}
 
             cisos[iso.name] = {'fit': iso.fit,
+                               'raw_intercept': {'value': iso.value, 'error': iso.error},
                                'blank': {'fit': 'previous',
                                          'references': [{'runid': self.per_spec.previous_blank_runid,
                                                          'exclude': False}],
@@ -301,7 +307,9 @@ class DVCPersister(BasePersister):
         from pychron.dvc import __version__ as dversion
 
         if not self.per_spec.timestamp:
-            obj['timestamp'] = timestamp
+            obj['timestamp'] = timestamp.isoformat()
+        else:
+            obj['timestamp'] = self.per_spec.timestamp.isoformat()
 
         obj['collection_version'] = '{}:{}'.format(eversion, dversion)
         obj['detectors'] = dets
@@ -321,23 +329,23 @@ class DVCPersister(BasePersister):
         hexsha = str(self.dvc.get_meta_head())
         obj['commit'] = hexsha
 
-        # dump runid.yaml
+        # dump runid.json
         p = self._make_path()
-        ydump(obj, p)
+        jdump(obj, p)
 
-        # dump runid.changeable.yaml
+        # dump runid.changeable.json
         p = self._make_path(modifier='changeable')
-        ydump({'commit': hexsha, 'isotopes': cisos, 'detectors': cdets}, p)
+        jdump({'commit': hexsha, 'isotopes': cisos, 'detectors': cdets}, p)
 
-        # dump runid.data.yaml
+        # dump runid.data.json
         p = self._make_path(modifier='.data')
         data = {'commit': hexsha,
                 'encoding': 'base64',
                 'format': '{}ff'.format(endianness),
                 'signals': signals, 'baselines': baselines, 'sniffs': sniffs}
-        ydump(data, p)
+        jdump(data, p)
 
-    def _make_path(self, modifier=None, extension='.yaml'):
+    def _make_path(self, modifier=None, extension='.json'):
         runid = self.per_spec.run_spec.runid
         experiment_id = self.per_spec.run_spec.experiment_id
         return analysis_path(runid, experiment_id, modifier, extension, mode='w')
@@ -392,7 +400,7 @@ class DVCPersister(BasePersister):
                               data=data)
                 checks.append(params)
 
-            ydump(checks, p)
+            jdump(checks, p)
 
     def _save_spectrometer_file(self, path):
         obj = dict(spectrometer=dict(self.per_spec.spec_dict),
@@ -401,6 +409,6 @@ class DVCPersister(BasePersister):
         hexsha = self.dvc.get_meta_head()
         obj['commit'] = str(hexsha)
 
-        ydump(obj, path)
+        jdump(obj, path)
 
 # ============= EOF =============================================

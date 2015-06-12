@@ -27,8 +27,8 @@ from pychron.processing.plot.panels.figure_panel import FigurePanel
 
 class SeriesPanel(FigurePanel):
     _figure_klass = Series
+    _graph_klass = AnalysisStackedRegressionGraph
     equi_stack = True
-    graph_klass = AnalysisStackedRegressionGraph
     plot_spacing = 5
     use_previous_limits = False
 

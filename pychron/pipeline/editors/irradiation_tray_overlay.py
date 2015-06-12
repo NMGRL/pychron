@@ -16,15 +16,17 @@
 
 # ============= enthought library imports =======================
 from chaco.abstract_overlay import AbstractOverlay
-from traits.api import Bool
+from traits.api import Bool, Dict
 # ============= standard library imports ========================
 from kiva.fonttools import str_to_font
 from numpy import linspace, hstack, vstack, array
 # ============= local library imports  ==========================
 
+
 class IrradiationTrayOverlay(AbstractOverlay):
     _cached_pts = None
     show_labels = Bool(True)
+    _cached_point_xy = Dict
 
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
         with gc:
@@ -42,6 +44,7 @@ class IrradiationTrayOverlay(AbstractOverlay):
     def do_layout(self):
         super(IrradiationTrayOverlay, self).do_layout()
         self._cached_pts = None
+        self._cached_point_xy = {}
 
     def _render_hole(self, gc, label, x, y, pts):
         if self.show_labels:
@@ -50,32 +53,35 @@ class IrradiationTrayOverlay(AbstractOverlay):
                 gc.show_text(label)
 
         with gc:
-            #print x, y
+            # print x, y
             gc.translate_ctm(x, y)
             gc.lines(pts)
-            gc.stroke_path()
-
+            # gc.stroke_path()
 
     def _gather_points(self):
-        pts = []
-        for x, y, r in self.geometry:
+        xy = [(x, y) for x, y, r, _ in self.geometry]
+        xy = self.component.map_screen(xy)
+        pts = [(x, y, self._make_point(r)) for (x, y), (_, _, r, _) in zip(xy, self.geometry)]
+        return pts
+
+    def _make_point(self, r):
+        pt = self._cached_point_xy.get(r)
+        if pt is None:
             rw, ow = self.component.index_mapper.map_screen(array([r, 0]))
             rh, oh = self.component.value_mapper.map_screen(array([r, 0]))
-            x, y = self.component.map_screen([(x, y), ])[0]
             rw = rw - ow
             rh = rh - oh
 
             xs = linspace(-rw, rw, 50)
             xs2 = linspace(rw, -rw, 50)
 
-            ys = rh * ((1 - (xs / rw) ** 2)) ** 0.5
-            ys2 = -rh * ((1 - (xs2 / rw) ** 2)) ** 0.5
+            ys = rh * (1 - (xs / rw) ** 2) ** 0.5
+            ys2 = -rh * (1 - (xs2 / rw) ** 2) ** 0.5
 
             xs = hstack((xs, xs2))
             ys = hstack((ys, ys2))
             pt = vstack((xs, ys)).T
-            pts.append((x, y, pt))
-        return pts
-
+            self._cached_point_xy[r] = pt
+        return pt
 
 # ============= EOF =============================================

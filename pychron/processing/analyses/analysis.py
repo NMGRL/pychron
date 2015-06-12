@@ -16,13 +16,15 @@
 
 # ============= enthought library imports =======================
 from numpy import Inf
+from pyface.message_dialog import information
+from pyface.qt import QtCore
 
-from traits.api import Instance, Int, Str, Bool, \
-    Event, Property, Float, Date, List, Tuple, CStr, Dict, CFloat
+from traits.api import Date
 
 # ============= standard library imports ========================
 from collections import namedtuple
 # ============= local library imports  ==========================
+from traitsui.handler import Handler
 from pychron.core.helpers.formatting import format_percent_error, floatfmt
 from pychron.core.helpers.logger_setup import new_logger
 from pychron.processing.arar_age import ArArAge
@@ -44,7 +46,30 @@ def min_max(a, b, vs):
     return min(a, vs.min()), max(b, vs.max())
 
 
+OX = 50
+OY = 50
+XOFFSET = 25
+YOFFSET = 25
+WINDOW_CNT = 0
+
+
+class CloseHandler(Handler):
+    def closed(self, info, is_ok):
+        global WINDOW_CNT
+        WINDOW_CNT -= 1
+        WINDOW_CNT = max(0, WINDOW_CNT)
+
+    def init(self, info):
+        global WINDOW_CNT
+        WINDOW_CNT += 1
+        info.ui.control.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+
+
 def show_evolutions_factory(record_id, isotopes, show_evo=True, show_sniff=False, show_baseline=False):
+    if WINDOW_CNT > 20:
+        information(None, 'You have too many Isotope Evolution windows open. Close some before proceeding')
+        return
+
     from pychron.graph.stacked_regression_graph import StackedRegressionGraph
 
     ymi, yma = Inf, -Inf
@@ -55,18 +80,23 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_sniff=False
     else:
         xmi, xma = 0, -Inf
 
-    g = StackedRegressionGraph()
+    g = StackedRegressionGraph(resizable=True)
+    g.window_height = min(275 * len(isotopes), 800)
+    g.window_x = OX + XOFFSET * WINDOW_CNT
+    g.window_y = OY + YOFFSET * WINDOW_CNT
+
     for i, iso in enumerate(isotopes):
         # iso = next((i for i in self.isotopes if i.name == ni.name))
         # iso = next((i for i in self.isotopes.itervalues() if i.name == ni.name), None)
         g.new_plot(padding=[60, 10, 10, 40])
         if show_sniff:
-            g.new_series(iso.sniff.xs, iso.sniff.ys,
+            sniff = iso.sniff
+            g.new_series(sniff.xs, sniff.ys,
                          type='scatter',
                          fit=None,
                          color='red')
-            ymi, yma = min_max(ymi, yma, iso.sniff.ys)
-            xmi, xma = min_max(xmi, xma, iso.sniff.xs)
+            ymi, yma = min_max(ymi, yma, sniff.ys)
+            xmi, xma = min_max(xmi, xma, sniff.xs)
 
         if show_evo:
             g.new_series(iso.xs, iso.ys,
@@ -77,12 +107,13 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_sniff=False
             xmi, xma = min_max(xmi, xma, iso.xs)
 
         if show_baseline:
-            g.new_series(iso.baseline.xs, iso.baseline.ys,
-                         type='scatter', fit=iso.fit,
-                         filter_outliers_dict=iso.filter_outliers_dict,
+            baseline = iso.baseline
+            g.new_series(baseline.xs, baseline.ys,
+                         type='scatter', fit=baseline.fit,
+                         filter_outliers_dict=baseline.filter_outliers_dict,
                          color='blue')
-            ymi, yma = min_max(ymi, yma, iso.baseline.ys)
-            xmi, xma = min_max(xmi, xma, iso.baseline.xs)
+            ymi, yma = min_max(ymi, yma, baseline.ys)
+            xmi, xma = min_max(xmi, xma, baseline.xs)
 
         # ymi = min(ymi, iso.ys.min())
         # yma = max(yma, iso.ys.max())
@@ -94,83 +125,91 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_sniff=False
 
     g.refresh()
     g.window_title = '{} {}'.format(record_id, ','.join([i.name for i in isotopes]))
+
     return g
 
 
 class Analysis(ArArAge):
     analysis_view_klass = ('pychron.processing.analyses.analysis_view', 'AnalysisView')
-    analysis_view = Instance('pychron.processing.analyses.analysis_view.AnalysisView')
+    _analysis_view = None  # Instance('pychron.processing.analyses.analysis_view.AnalysisView')
 
     # ids
-    record_id = Property(depends_on='labnumber,aliquot, step')
-    _record_id = Str
-    group_id = Int
-    graph_id = Int
+    # record_id = Property(depends_on='labnumber,aliquot, step')
+    # _record_id = Str
+    group_id = 0  # Int
+    graph_id = 0  # Int
 
     # collection
-    uuid = Str
-    labnumber = CStr
-    identifier = Property
-    aliquot = Int
-    step = Str
-    aliquot_step_str = Str
-    sample = Str
-    material = Str
-    project = Str
-    comment = Str
-    mass_spectrometer = Str
-    analysis_type = Str
-    extract_value = Float
-    extract_units = Str
-    cleanup_duration = Float
-    extract_duration = Float
-    extract_device = Str
-    position = CStr
+    uuid = None  # Str
+    labnumber = ''
+    aliquot = 0
+    step = ''
+    aliquot_step_str = ''
+    sample = ''
+    material = ''
+    project = ''
+    comment = ''
+    mass_spectrometer = ''
+    analysis_type = ''
+    extract_value = 0
+    extract_units = ''
+    cleanup_duration = 0
+    extract_duration = 0
+    extract_device = ''
+    position = ''
     rundate = Date
-    experiment_txt = Str
-    extraction_script_blob = Str
-    measurement_script_blob = Str
-    snapshots = List
-    extraction_script_name = Str
-    measurement_script_name = Str
-    xyz_position = Str
-    collection_time_zero_offset = CFloat
-    beam_diameter = CFloat
-    pattern = Str
-    ramp_duration = CFloat
-    ramp_rate = CFloat
-    peak_center_data = Tuple
-    collection_version = Str
-    source_parameters = Dict
-    deflections = Dict
-    experiment_id = Str
+    experiment_txt = ''
+    extraction_script_blob = ''
+    measurement_script_blob = ''
+    # snapshots = List
+    extraction_script_name = ''
+    measurement_script_name = ''
+    xyz_position = ''
+    collection_time_zero_offset = 0
+    beam_diameter = 0
+    pattern = ''
+    ramp_duration = 0
+    ramp_rate = 0
+    peak_center_data = None
+    collection_version = ''
+    # source_parameters = Dict
+    # deflections = Dict
+    experiment_id = ''
 
     # processing
     is_plateau_step = False
-    temp_status = Int
-    value_filter_omit = Bool
-    table_filter_omit = Bool
-    tag = Str
-    data_reduction_tag = Str
+    temp_status = 0
+    value_filter_omit = False
+    table_filter_omit = False
+    tag = ''
+    data_reduction_tag = ''
 
-    status_text = Property
-    age_string = Property
+    # status_text = Property
+    # age_string = Property
 
     omit_ideo = False
     omit_spec = False
     omit_iso = False
     omit_series = False
 
-    blank_changes = List
-    fit_changes = List
+    # blank_changes = List
+    # fit_changes = List
 
     # meta
     has_raw_data = False
     has_changes = False
 
-    recall_event = Event
-    tag_event = Event
-    invalid_event = Event
+    # recall_event = Event
+    # tag_event = Event
+    # invalid_event = Event
+
+    def __init__(self, *args, **kw):
+        super(Analysis, self).__init__(*args, **kw)
+        self.snapshots = []
+        self.source_parameters = {}
+        self.deflections = {}
+        self.blank_changes = []
+        self.fit_changes = []
 
     def show_isotope_evolutions(self, isotopes, **kw):
         if isotopes and isinstance(isotopes[0], (str, unicode)):
@@ -180,12 +219,13 @@ class Analysis(ArArAge):
 
         self.load_raw_data(keys)
         g = show_evolutions_factory(self.record_id, isotopes, **kw)
-        if self.application:
-            self.application.open_view(g)
-        else:
-            g.edit_traits()
+        if g:
+            if self.application:
+                self.application.open_view(g, handler=CloseHandler())
+            else:
+                g.edit_traits(handler=CloseHandler())
 
-        return g
+            return g
 
     def trigger_recall(self):
         self.recall_event = self
@@ -237,14 +277,19 @@ class Analysis(ArArAge):
     # def _analysis_summary_default(self):
     # return self.analysis_summary_klass(model=self)
 
-    def _analysis_view_default(self):
+    # def _analysis_view_default(self):
+    @property
+    def analysis_view(self):
+        v = self._analysis_view
+        if v is None:
+            mod, klass = self.analysis_view_klass
+            mod = __import__(mod, fromlist=[klass, ])
+            klass = getattr(mod, klass)
+            # v = self.analysis_view_klass()
+            v = klass()
+            self._sync_view(v)
+            self._analysis_view = v
 
-        mod, klass = self.analysis_view_klass
-        mod = __import__(mod, fromlist=[klass, ])
-        klass = getattr(mod, klass)
-        # v = self.analysis_view_klass()
-        v = klass()
-        self._sync_view(v)
         return v
 
     def sync_view(self, **kw):
@@ -261,21 +306,14 @@ class Analysis(ArArAge):
             traceback.print_exc()
             print 'sync view {}'.format(e)
 
-    def _set_record_id(self, v):
-        self._record_id = v
-
-    def _get_record_id(self):
-        record_id = self._record_id
-        if not record_id:
-            record_id = make_runid(self.labnumber, self.aliquot, self.step)
-        return record_id
-
-    def _get_age_string(self):
-        a = self.age
-        e = self.age_err
-        pe = format_percent_error(a, e)
-
-        return u'{} +/-{} ({}%)'.format(floatfmt(a), floatfmt(e), pe)
+    # def _set_record_id(self, v):
+    #     self._record_id = v
+    #
+    # def _get_record_id(self):
+    #     record_id = self._record_id
+    #     if not record_id:
+    #         record_id = make_runid(self.labnumber, self.aliquot, self.step)
+    #     return record_id
 
     def value_string(self, t):
         if t == 'uF':
@@ -290,20 +328,32 @@ class Analysis(ArArAge):
         pe = format_percent_error(a, e)
         return u'{} {}{} ({}%)'.format(floatfmt(a), PLUSMINUS, floatfmt(e), pe)
 
-    def _get_status_text(self):
+    @property
+    def age_string(self):
+        a = self.age
+        e = self.age_err
+        pe = format_percent_error(a, e)
+
+        return u'{} +/-{} ({}%)'.format(floatfmt(a), floatfmt(e), pe)
+
+    @property
+    def status_text(self):
         r = 'OK'
-
         if self.is_omitted():
-            # if self.temp_status != 0 or self.filter_omit:
             r = 'Omitted'
-
         return r
 
-    def _set_identifier(self, v):
+    @property
+    def identifier(self):
+        return self.labnumber
+
+    @identifier.setter
+    def identifier(self, v):
         self.labnumber = v
 
-    def _get_identifier(self):
-        return self.labnumber
+    @property
+    def record_id(self):
+        return make_runid(self.labnumber, self.aliquot, self.step)
 
     def __str__(self):
         return '{}<{}>'.format(self.record_id, self.__class__.__name__)

@@ -22,6 +22,7 @@ import os
 # ============= local library imports  ==========================
 from traitsui.editors import DirectoryEditor
 from pychron.core.helpers.filetools import add_extension
+from pychron.core.progress import progress_iterator
 from pychron.paths import paths
 from pychron.pipeline.nodes.base import BaseNode
 
@@ -77,8 +78,10 @@ class IsotopeEvolutionPersistNode(DVCPersistNode):
         return True
 
     def run(self, state):
-        for ai in state.unknowns:
-            self.dvc.save_fits(ai, state.saveable_keys)
+        wrapper = lambda x, prog, i, n: self._save_fit(x, prog, i, n)
+        progress_iterator(state.unknowns, wrapper)
+        # for ai in state.unknowns:
+        #     self.dvc.save_fits(ai, state.saveable_keys)
 
         msg = self.commit_message
         if not msg:
@@ -96,15 +99,22 @@ class BlanksPersistNode(DVCPersistNode):
 
     def run(self, state):
         # if not state.user_review:
-        for ai in state.unknowns:
-            self.dvc.save_blanks(ai, state.saveable_keys, state.references)
-
+        # for ai in state.unknowns:
+        #     self.dvc.save_blanks(ai, state.saveable_keys, state.references)
+        wrapper = lambda x, prog, i, n: self._save_blanks(x, prog, i, n, state.saveable_keys, state.saveable_fits)
+        progress_iterator(state.unknowns, wrapper, threshold=1)
         msg = self.commit_message
         if not msg:
             f = ','.join('{}({})'.format(x, y) for x, y in zip(state.saveable_keys, state.saveable_fits))
             msg = 'auto update blanks, fits={}'.format(f)
 
         self._persist(state, msg)
+
+    def _save_blanks(self, ai, prog, i, n, saveable_keys, saveable_fits, reference):
+        if prog:
+            prog.change_message('Save IC Factor {} {}/{}'.format(ai.record_id, i, n))
+
+        self.dvc.save_blanks(ai, saveable_keys, saveable_fits, reference)
 
 
 class ICFactorPersistNode(DVCPersistNode):
@@ -114,10 +124,16 @@ class ICFactorPersistNode(DVCPersistNode):
         return True
 
     def run(self, state):
-        for ai in state.unknowns:
-            self.dvc.save_icfactors(ai, state.saveable_keys,
-                                    state.saveable_fits,
-                                    state.references)
+        wrapper = lambda ai, prog, i, n: self._save_icfactors(ai, prog, i, n,
+                                                              state.saveable_keys,
+                                                              state.saveable_fits,
+                                                              state.references)
+        progress_iterator(state.unknowns, wrapper, threshold=1)
+
+        # for ai in state.unknowns:
+        #     self.dvc.save_icfactors(ai, state.saveable_keys,
+        #                             state.saveable_fits,
+        #                             state.references)
 
         msg = self.commit_message
         if not msg:
@@ -126,10 +142,30 @@ class ICFactorPersistNode(DVCPersistNode):
 
         self._persist(state, msg)
 
+    def _save_icfactors(self, ai, prog, i, n, saveable_keys, saveable_fits, reference):
+        if prog:
+            prog.change_message('Save IC Factor {} {}/{}'.format(ai.record_id, i, n))
+
+        self.dvc.save_icfactors(ai, saveable_keys, saveable_fits, reference)
+
 
 class FluxPersistNode(DVCPersistNode):
     name = 'Save Flux'
 
     def run(self, state):
-        pass
+        if state.saveable_irradiation_positions:
+            xs = [x for x in state.saveable_irradiation_positions if x.save]
+            if xs:
+                progress_iterator(xs,
+                                  self._save_j,
+                                  threshold=1)
+                self.dvc.meta_commit('fit flux for {}'.format(state.irradiation, state.level))
+
+    def _save_j(self, irp, prog, i, n):
+        if prog:
+            prog.change_message('save j for {}'.format(irp.identifier))
+
+        self.dvc.save_j(irp.irradiation, irp.level, irp.identifier,
+                        irp.j, irp.j_err)
+
 # ============= EOF =============================================

@@ -63,6 +63,9 @@ class BasePlotterOptions(HasTraits):
         if not clean:
             self._load(root)
 
+    def paddings(self):
+        return self.padding_left, self.padding_right, self.padding_top, self.padding_bottom
+
     def set_aux_plot_height(self, name, height):
         plot = next((ai for ai in self.aux_plots
                      if ai.name == name), None)

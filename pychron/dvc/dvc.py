@@ -170,11 +170,16 @@ class DVC(Loggable):
         self.info('Saving fits for {}'.format(ai))
         ai.dump_fits(keys)
 
+    def save_j(self, irradiation, level, pos, identifier, j, e):
+        self.info('Saving j for {}{}:{} {}, j={} +/-{}'.format(irradiation, level,
+                                                               pos, identifier, j, e))
+        self.meta_repo.update_j(irradiation, level, pos, identifier, j, e)
+
     def find_references(self, times, atypes):
         records = self.db.find_references(times, atypes)
         return self.make_analyses(records)
 
-    def make_analyses(self, records, calculate_F=False):
+    def make_analyses(self, records, calculate_f_only=False):
         # load repositories
         # {r.experiment_id for r in records}
         exps = {r.experiment_id for r in records}
@@ -189,7 +194,7 @@ class DVC(Loggable):
             progress_iterator(exps, self._load_repository, threshold=1)
 
         st = time.time()
-        wrapper = lambda *args: self._make_record(calculate_F=calculate_F, *args)
+        wrapper = lambda *args: self._make_record(calculate_f_only=calculate_f_only, *args)
         # print 'records', records
         # records =ret= map(wrapper, records)
         ret = progress_loader(records, wrapper, threshold=1)
@@ -372,7 +377,9 @@ class DVC(Loggable):
 
         self.sync_repo(expid)
 
-    def _make_record(self, record, prog, i, n, calculate_F=False):
+    def _make_record(self, record, prog, i, n, calculate_f=False, calculate_f_only=False):
+        # def _make_record(self, record, calculate_f=False):
+        ost = time.time()
         if prog:
             prog.change_message('Loading analysis {}. {}/{}'.format(record.record_id, i, n))
 
@@ -383,10 +390,7 @@ class DVC(Loggable):
                        '{}'.format(record.record_id, ','.join(exps)))
             expid = None
             if self.selected_experiments:
-                rr = []
-                for si in self.selected_experiments:
-                    if si in exps:
-                        rr.append(si)
+                rr = [si for si in self.selected_experiments if si in exps]
                 if rr:
                     if len(rr) > 1:
                         expid = self._get_requested_experiment_id(rr)
@@ -396,24 +400,44 @@ class DVC(Loggable):
             if expid is None:
                 expid = self._get_requested_experiment_id(exps)
 
-        a = DVCAnalysis(record.record_id, expid)
+        # func = lambda: DVCAnalysis(record.record_id, expid)
+        # a = timethis(func, )
+        # st = time.time()
+        if isinstance(record, DVCAnalysis):
+            a = record
+        else:
+            a = DVCAnalysis(record.record_id, expid)
+            # cot = time.time() - st
+            # if cot>0.1:
+            #     print 'constructor {}'.format(cot)
 
-        # load irradiation
-        chronology = self.meta_repo.get_chronology(a.irradiation)
-        a.set_chronology(chronology)
+            # load irradiation
+            if a.irradiation:
+                meta_repo = self.meta_repo
+                chronology = meta_repo.get_chronology(a.irradiation)
+                a.set_chronology(chronology)
 
-        pname = self.db.get_production_name(a.irradiation, a.irradiation_level)
+                pname = self.db.get_production_name(a.irradiation, a.irradiation_level)
 
-        prod = self.meta_repo.get_production(pname)
-        a.set_production(pname, prod)
+                prod = meta_repo.get_production(pname)
+                a.set_production(pname, prod)
 
-        a.j = self.meta_repo.get_flux(record.irradiation, record.irradiation_level, record.irradiation_pos)
+                a.j = meta_repo.get_flux(record.irradiation, record.irradiation_level,
+                                         record.irradiation_position_position)
+                if calculate_f_only:
+                    a.calculate_F()
+                else:
+                    a.calculate_age()
 
-        # dbir = self.db.get_irradiation_position(a.irradiation, a.irradiation_level, a.irradiation_pos)
+            et = time.time() - ost
+            if et > 0.1:
+                f = '-------'
 
-        if calculate_F:
-            a.calculate_F()
-
+                print '{} make run {} {} {}'.format(f, i, record.record_id, et)
+                # print 'constructor {}'.format(cot)
+                # print 'chronology {}'.format(ct)
+                # print 'production {}'.format(pt)
+                # print 'flux {}'.format(ft)
         return a
 
     def _get_experiment_repo(self, experiment_id):

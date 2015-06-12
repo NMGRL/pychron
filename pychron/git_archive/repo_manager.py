@@ -33,6 +33,7 @@ from pychron.git_archive.diff_view import DiffView, DiffModel
 from pychron.loggable import Loggable
 from pychron.git_archive.commit import Commit
 
+
 def format_date(d):
     return time.strftime("%m/%d/%Y %H:%M", time.gmtime(d))
 
@@ -65,6 +66,9 @@ class GitRepoManager(Loggable):
             p = os.path.join(root, name)
 
         self.path = p
+
+        self.logger = None
+        self.name = '{}<GitRepo>'.format(os.path.basename(p))
 
         if os.path.isdir(p):
             self.init_repo(p)

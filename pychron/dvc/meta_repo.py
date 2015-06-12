@@ -15,14 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import json
+
 from traits.api import Bool
+
 # ============= standard library imports ========================
 from datetime import datetime
 import os
 import shutil
 # ============= local library imports  ==========================
 from uncertainties import ufloat
-import yaml
 from pychron.canvas.utils import iter_geom
 from pychron.core.helpers.datetime_tools import ISO_FORMAT_STR
 from pychron.core.helpers.filetools import list_directory2, ilist_directory2, add_extension
@@ -228,13 +230,13 @@ class MetaRepo(GitRepoManager):
 
     def add_level(self, irrad, level):
         p = self.get_level_path(irrad, level)
-        with open(p, 'r') as rfile:
-            pass
+        with open(p, 'w') as wfile:
+            json.dump([], wfile)
 
         self.add(p, commit=False)
 
     def get_level_path(self, irrad, level):
-        return os.path.join(self.path, irrad, '{}.yaml'.format(level))
+        return os.path.join(self.path, irrad, '{}.json'.format(level))
 
     def add_chronology(self, irrad, doses):
         p = os.path.join(self.path, irrad, 'chronology.txt')
@@ -267,14 +269,24 @@ class MetaRepo(GitRepoManager):
                 wfile.write(path_or_txt)
         self.add(p, commit=commit)
 
-    def update_chronology(self, name, doses, commit=True, push=True):
+    def update_j(self, irradiation, level, pos, identifier, j, e):
+        p = self.get_level_path(irradiation, level)
+        with open(p, 'r') as rfile:
+            jd = json.load(rfile)
+
+        njd = [ji if ji['position'] != pos else {'position': pos, 'j': j, 'j_err': e} for ji in jd]
+        with open(p, 'w') as wfile:
+            json.dump(njd, wfile)
+        self.add(p, commit=False)
+
+    def update_chronology(self, name, doses):
         p = self._chron_name(name)
         Chronology.dump(p, doses)
         self.add(p, commit=False)
-        if commit:
-            self.commit('Updated {} chronology'.format(name))
-            if push:
-                self.push()
+        # if commit:
+        #     self.commit('Updated {} chronology'.format(name))
+        #     if push:
+        #         self.push()
 
     def get_irradiation_holder_names(self):
         return list_directory2(os.path.join(self.path, 'irradiation_holders'),
@@ -291,14 +303,14 @@ class MetaRepo(GitRepoManager):
         return prs
 
     def get_flux(self, irradiation, level, position):
-        path = os.path.join(self.path, irradiation, add_extension(level, '.yaml'))
+        path = os.path.join(self.path, irradiation, add_extension(level, '.json'))
         j, e = 0, 0
         if os.path.isfile(path):
             with open(path) as rfile:
-                positions = yaml.load(rfile)
+                positions = json.load(rfile)
             try:
                 pos = positions[position - 1]
-                j, e = pos['j'], pos['jerr']
+                j, e = pos['j'], pos['j_err']
             except IndexError:
                 pass
 

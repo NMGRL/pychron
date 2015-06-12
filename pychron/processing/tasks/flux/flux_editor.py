@@ -35,7 +35,7 @@ from pychron.graph.graph import Graph
 from pychron.core.helpers.formatting import floatfmt, calc_percent_error
 from pychron.core.helpers.iterfuncs import partition
 from pychron.processing.plot.editors.graph_editor import GraphEditor
-from pychron.processing.tasks.flux.irradiation_tray_overlay import IrradiationTrayOverlay
+from pychron.pipeline.editors.irradiation_tray_overlay import IrradiationTrayOverlay
 
 # st=time.time()
 from pychron.core.regression.flux_regressor import BowlFluxRegressor, PlaneFluxRegressor
@@ -49,7 +49,7 @@ def make_grid(r, n):
     return meshgrid(xi, yi)
 
 
-#Position = namedtuple('Positon', 'position x y')
+# Position = namedtuple('Positon', 'position x y')
 class FluxMonitorRecordView(RecordView):
     age = Float
     age_err = Float
@@ -151,7 +151,7 @@ class FluxEditor(GraphEditor):
             for pp in self.monitor_positions.itervalues():
                 if pp.save:
                     db.save_flux(pp.identifier, pp.j, pp.jerr, inform=False)
-                    #remove all analyses of this identifier from the cache
+                    # remove all analyses of this identifier from the cache
                     self._remove_analyses(pp.identifier)
 
     def _remove_analyses(self, identifier):
@@ -203,6 +203,7 @@ class FluxEditor(GraphEditor):
         if reg:
             if self.tool.use_monte_carlo:
                 from pychron.core.stats.monte_carlo import monte_carlo_error_estimation
+
                 pts = array([[p.x, p.y] for p in self.positions])
                 nominals = reg.predict(pts)
                 errors = monte_carlo_error_estimation(reg, nominals, pts,
@@ -249,7 +250,7 @@ class FluxEditor(GraphEditor):
             return
 
         if len(x) > 3:
-            #n = z.shape[0] * 10
+            # n = z.shape[0] * 10
             r = max((max(abs(x)), max(abs(y))))
             r *= 1.25
             reg = self._regressor_factory(x, y, z, ze)
@@ -471,9 +472,9 @@ class FluxEditor(GraphEditor):
             column(name='hole_id', label='Hole'),
             column(name='identifier', label='Identifier'),
             column(name='sample', label='Sample', width=115),
-            #column(name='x', label='X', format='%0.3f', width=50),
-            #column(name='y', label='Y', format='%0.3f', width=50),
-            #column(name='theta', label=u'\u03b8', format='%0.3f', width=50),
+            # column(name='x', label='X', format='%0.3f', width=50),
+            # column(name='y', label='Y', format='%0.3f', width=50),
+            # column(name='theta', label=u'\u03b8', format='%0.3f', width=50),
             column(name='n', label='N'),
             column(name='saved_j', label='Saved J',
                    format_func=lambda x: floatfmt(x, n=6, s=4)),

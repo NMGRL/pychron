@@ -346,7 +346,7 @@ class MainView(HasTraits):
                 return ComputedValue(name=n,
                                      tag=a,
                                      value=nominal_value(value) or 0,
-                                     value_tag=value_tag,
+                                     value_tag=value_tag or '',
                                      display_value=display_value,
                                      error=e or 0)
 

@@ -44,11 +44,11 @@ class unique(object):
             msg = args[1]
             hmsg = hash(msg)
             ido = id(obj)
-            if not ido in self._registry:
+            if ido not in self._registry:
                 self._registry[ido] = []
 
             msgs = self._registry[ido]
-            if not hmsg in msgs:
+            if hmsg not in msgs:
                 msgs.append(hmsg)
                 f(*args)
 
@@ -129,7 +129,7 @@ class Loggable(HasTraits):
     def debug(self, msg):
         self._log_('debug', msg)
 
-    #dialogs
+    # dialogs
     def warning_dialog(self, msg, sound=None, title='Warning'):
         from pychron.core.ui.dialogs import myMessageDialog
 
@@ -170,7 +170,7 @@ class Loggable(HasTraits):
 
         self.info(msg)
 
-    #private
+    # private
     def _add_logger(self):
         """
 
@@ -184,8 +184,8 @@ class Loggable(HasTraits):
             name = self.__class__.__name__
 
         if self.logger is None:
-            __gloggers__[name] = self.logger
             self.logger = new_logger(name)
+            __gloggers__[name] = self.logger
 
         c = color_name_gen.next()
         if c in ['gray', 'silver', 'greenyellow']:
@@ -218,7 +218,7 @@ class Loggable(HasTraits):
     def _post_process_msg(self, msg):
         return msg
 
-    #handlers
+    # handlers
     def _name_changed(self):
         self._add_logger()
 

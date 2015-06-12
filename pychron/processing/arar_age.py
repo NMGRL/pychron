@@ -18,10 +18,8 @@
 # ============= enthought library imports =======================
 import random
 
-from traits.api import Dict, Property, Instance, Float, Str, List, Either, cached_property
-
 # ============= standard library imports ========================
-from uncertainties import ufloat, Variable, AffineScalarFunc
+from uncertainties import ufloat
 from numpy import hstack
 from ConfigParser import ConfigParser
 from copy import copy
@@ -32,7 +30,6 @@ from pychron.processing.argon_calculations import calculate_F, abundance_sensiti
 from pychron.processing.arar_constants import ArArConstants
 from pychron.processing.isotope import Isotope, Baseline, Blank
 
-from pychron.loggable import Loggable
 from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.core.helpers.logger_setup import new_logger
 from pychron.paths import paths
@@ -40,78 +37,150 @@ from pychron.pychron_constants import ARGON_KEYS
 
 logger = new_logger('ArArAge')
 # arar_constants = None
+class MLoggable(object):
+    def info(self, msg):
+        logger.info(msg)
+
+    def debug(self, msg):
+        logger.debug(msg)
+
+    def warning(self, msg):
+        logger.warning(msg)
 
 
-class ArArAge(Loggable):
+class ArArAge(MLoggable):
     """
     High level representation of the ArAr attributes of an analysis.
     """
-    j = Either(Variable, AffineScalarFunc)
-    irradiation = Str
-    irradiation_level = Str
-    irradiation_pos = Str
-    irradiation_time = Float
-    production_name = Str
+    # j = Either(Variable, AffineScalarFunc)
+    # irradiation = Str
+    # irradiation_level = Str
+    # irradiation_pos = Str
+    # irradiation_time = Float
+    # production_name = Str
+    #
+    # irradiation_label = Property(depends_on='irradiation, irradiation_level,irradiation_pos')
+    #
+    # chron_segments = List
+    # chron_dosages = List
+    # interference_corrections = Dict
+    # production_ratios = Dict
+    #
+    # fixed_k3739 = None
+    #
+    # timestamp = Float
+    # decay_days = Property(depends_on='timestamp,irradiation_time')
+    #
+    # kca = Either(Variable, AffineScalarFunc)
+    # cak = Either(Variable, AffineScalarFunc)
+    # kcl = Either(Variable, AffineScalarFunc)
+    # clk = Either(Variable, AffineScalarFunc)
+    # rad40_percent = Either(Variable, AffineScalarFunc)
+    #
+    # isotopes = Dict
+    # isotope_keys = Property
+    # non_ar_isotopes = Dict
+    # computed = Dict
+    # corrected_intensities = Dict
+    #
+    # uF = Either(Variable, AffineScalarFunc)
+    # F = Float
+    # F_err = Float
+    # F_err_wo_irrad = Float
+    #
+    # uage = Either(Variable, AffineScalarFunc)
+    # # uage_wo_j_err = Either(Variable, AffineScalarFunc)
+    # uage_w_j_err = Either(Variable, AffineScalarFunc)
+    #
+    # age = Float
+    # age_err = Float
+    # age_err_wo_j = Float
+    # age_err_wo_irrad = Float
+    # age_err_wo_j_irrad = Float
+    #
+    # ar39decayfactor = Float
+    # ar37decayfactor = Float
+    #
+    # arar_constants = Instance(ArArConstants, ())
+    #
+    # Ar39_decay_corrected = Either(Variable, AffineScalarFunc)
+    # Ar37_decay_corrected = Either(Variable, AffineScalarFunc)
+    #
+    # moles_Ar40 = Property
+    # sensitivity = Float  # moles/pA
+    # temporary_ic_factors = Dict
+    j = None
+    irradiation = None
+    irradiation_level = None
+    irradiation_pos = None
+    irradiation_time = None
+    production_name = None
 
-    irradiation_label = Property(depends_on='irradiation, irradiation_level,irradiation_pos')
-
-    chron_segments = List
-    chron_dosages = List
-    interference_corrections = Dict
-    production_ratios = Dict
+    chron_segments = None
+    chron_dosages = None
+    # interference_corrections = Dict
+    # production_ratios = Dict
 
     fixed_k3739 = None
 
-    timestamp = Float
-    decay_days = Property(depends_on='timestamp,irradiation_time')
+    timestamp = None
 
-    kca = Either(Variable, AffineScalarFunc)
-    cak = Either(Variable, AffineScalarFunc)
-    kcl = Either(Variable, AffineScalarFunc)
-    clk = Either(Variable, AffineScalarFunc)
-    rad40_percent = Either(Variable, AffineScalarFunc)
+    kca = None
+    cak = None
+    kcl = None
+    clk = None
+    rad40_percent = None
 
-    isotopes = Dict
-    isotope_keys = Property
-    non_ar_isotopes = Dict
-    computed = Dict
-    corrected_intensities = Dict
+    # isotopes = Dict
+    # non_ar_isotopes = Dict
+    # computed = Dict
+    # corrected_intensities = Dict
 
-    uF = Either(Variable, AffineScalarFunc)
-    F = Float
-    F_err = Float
-    F_err_wo_irrad = Float
+    uF = None
+    F = None
+    F_err = None
+    F_err_wo_irrad = None
 
-    uage = Either(Variable, AffineScalarFunc)
-    # uage_wo_j_err = Either(Variable, AffineScalarFunc)
-    uage_w_j_err = Either(Variable, AffineScalarFunc)
+    uage = None
+    # uage_wo_j_err =None
+    uage_w_j_err = None
 
-    age = Float
-    age_err = Float
-    age_err_wo_j = Float
-    age_err_wo_irrad = Float
-    age_err_wo_j_irrad = Float
+    age = None
+    age_err = None
+    age_err_wo_j = None
+    age_err_wo_irrad = None
+    age_err_wo_j_irrad = None
 
-    ar39decayfactor = Float
-    ar37decayfactor = Float
+    ar39decayfactor = None
+    ar37decayfactor = None
 
-    arar_constants = Instance(ArArConstants, ())
+    # arar_constants =None
 
-    Ar39_decay_corrected = Either(Variable, AffineScalarFunc)
-    Ar37_decay_corrected = Either(Variable, AffineScalarFunc)
+    Ar39_decay_corrected = None
+    Ar37_decay_corrected = None
 
-    moles_Ar40 = Property
-    sensitivity = Float  # moles/pA
-    temporary_ic_factors = Dict
+    sensitivity = None
+    # temporary_ic_factors =None
 
     _missing_isotope_warned = False
     _kca_warning = False
     _kcl_warning = False
 
-    def __init__(self, *args, **kw):
-        self.logger = logger
+    # moles_Ar40 = Property
+    # irradiation_label = Property(depends_on='irradiation, irradiation_level,irradiation_pos')
+    # decay_days = Property(depends_on='timestamp,irradiation_time')
+    # isotope_keys = Property
 
+    def __init__(self, *args, **kw):
         super(ArArAge, self).__init__(*args, **kw)
+        self.arar_constants = ArArConstants()
+        self.isotopes = {}
+        self.non_ar_isotopes = {}
+        self.computed = {}
+        self.corrected_intensities = {}
+        self.interference_corrections = {}
+        self.production_ratios = {}
+        self.temporary_ic_factors = {}
 
     def set_ic_factor(self, det, v, e):
         for iso in self.get_isotopes(det):
@@ -125,7 +194,7 @@ class ArArAge(Loggable):
 
     def set_temporary_blank(self, k, v, e, f):
         tol = 0.00001
-        if self.isotopes.has_key(k):
+        if k in self.isotopes:
             iso = self.isotopes[k]
             if iso.temporary_blank is not None:
                 tb = iso.temporary_blank
@@ -136,7 +205,10 @@ class ArArAge(Loggable):
                     tb.value, tb.error, tb.fit = v, e, f
             else:
                 self.debug('temp blank {}({:0.4f}+/-{:0.4f}) fit={}'.format(k, v, e, f))
-                iso.temporary_blank = Blank(value=v, error=e, fit=f)
+                iso.temporary_blank = b = Blank(k, iso.detector)
+                b.value = v
+                b.error = e
+                b.fit = f
 
     def set_j(self, s, e):
         self.j = ufloat(s, std_dev=e)
@@ -427,30 +499,29 @@ class ArArAge(Loggable):
             return next((iso for iso in self.isotopes.itervalues()
                          if getattr(iso, attr) == value), None)
 
-    def set_isotope(self, iso, v, **kw):
+    def set_isotope(self, iso, detector, **kw):
         # print 'set isotope', iso, v
-        if not self.isotopes.has_key(iso):
-            niso = Isotope(name=iso)
+        if iso not in self.isotopes:
+            niso = Isotope(iso, detector)
             self.isotopes[iso] = niso
         else:
             niso = self.isotopes[iso]
 
-        niso.set_uvalue(v)
-        niso.trait_set(**kw)
+        niso.attr_set(**kw)
 
         return niso
 
     def set_blank(self, iso, v):
-        if not self.isotopes.has_key(iso):
-            niso = Isotope(name=iso)
+        if iso not in self.isotopes:
+            niso = Isotope(iso, None)
             self.isotopes[iso] = niso
 
         self.debug('setting {} blank {}'.format(iso, v))
         self.isotopes[iso].blank.set_uvalue(v)
 
     def set_baseline(self, iso, v):
-        if not self.isotopes.has_key(iso):
-            niso = Isotope(name=iso)
+        if iso not in self.isotopes:
+            niso = Isotope(iso, None)
             self.isotopes[iso] = niso
 
         self.isotopes[iso].baseline.set_uvalue(v)
@@ -460,7 +531,7 @@ class ArArAge(Loggable):
         self._calculate_F()
 
     # @caller
-    def calculate_age(self, force=False, **kw):
+    def calculate_age(self, use_display_age=False, force=False, **kw):
         """
             force: force recalculation of age. necessary if you want error components
         """
@@ -468,7 +539,7 @@ class ArArAge(Loggable):
         if not self.age or force:
             self.calculate_decay_factors()
 
-            self._calculate_age(**kw)
+            self._calculate_age(use_display_age=use_display_age, **kw)
             self._calculate_kca()
             self._calculate_kcl()
 
@@ -552,6 +623,7 @@ class ArArAge(Loggable):
         return [isotopes[ik].get_intensity() for ik in ARGON_KEYS]
 
     def _calculate_F(self, iso_intensities=None):
+
         if iso_intensities is None:
             iso_intensities = self._assemble_isotope_intensities()
 
@@ -562,6 +634,7 @@ class ArArAge(Loggable):
                                                                                   interferences=ifc,
                                                                                   arar_constants=self.arar_constants,
                                                                                   fixed_k3739=self.fixed_k3739)
+
             self.uF = f
             self.F = f.nominal_value
             self.F_err = f.std_dev
@@ -583,7 +656,7 @@ class ArArAge(Loggable):
         iso_intensities[3] *= self.ar37decayfactor
         return iso_intensities
 
-    def _calculate_age(self, include_decay_error=None):
+    def _calculate_age(self, use_display_age=False, include_decay_error=None):
         """
             approx 2/3 of the calculation time is in _assemble_ar_ar_isotopes.
             Isotope.get_intensity takes about 5ms.
@@ -624,6 +697,7 @@ class ArArAge(Loggable):
         arc = self.arar_constants
         age = age_equation(j, f, include_decay_error=include_decay_error,
                            arar_constants=arc)
+        # age = ufloat((1, 0.1))
         self.uage_w_j_err = age
         # self.age = age.nominal_value
         # self.age_err = age.std_dev
@@ -657,23 +731,45 @@ class ArArAge(Loggable):
         # for iso in isotopes.itervalues():
         #     iso.age_error_component = self.get_error_component(iso.name)
 
-    def _get_isotope_keys(self):
+    # def _get_isotope_keys(self):
+    #     keys = self.isotopes.keys()
+    #     return sort_isotopes(keys)
+    #
+    # def _get_irradiation_label(self):
+    #     return '{}{} {}'.format(self.irradiation,
+    #                             self.irradiation_level,
+    #                             self.irradiation_pos)
+    #
+    # def _get_decay_days(self):
+    #     """
+    #         return number of days since irradiation
+    #     """
+    #     return (self.timestamp - self.irradiation_time) / (60 * 60 * 24)
+    #
+    # @cached_property
+    # def _get_moles_Ar40(self):
+    #     return self.sensitivity * self.get_isotope('Ar40').get_intensity()
+
+    @property
+    def isotope_keys(self):
         keys = self.isotopes.keys()
         return sort_isotopes(keys)
 
-    def _get_irradiation_label(self):
+    @property
+    def irradiation_label(self):
         return '{}{} {}'.format(self.irradiation,
                                 self.irradiation_level,
                                 self.irradiation_pos)
 
-    def _get_decay_days(self):
+    @property
+    def decay_days(self):
         """
             return number of days since irradiation
         """
         return (self.timestamp - self.irradiation_time) / (60 * 60 * 24)
 
-    @cached_property
-    def _get_moles_Ar40(self):
+    @property
+    def moles_Ar40(self):
         return self.sensitivity * self.get_isotope('Ar40').get_intensity()
 
     def __getattr__(self, attr):

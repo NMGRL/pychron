@@ -60,6 +60,7 @@ class AnalysisView(HasTraits):
     selected = List
     refresh_needed = Event
     analysis_id = Str
+    dclicked = Event
 
     main_view = Instance('pychron.processing.analyses.view.main_view.MainView')
     history_view = Instance('pychron.processing.analyses.view.history_view.HistoryView')
@@ -147,6 +148,11 @@ class AnalysisView(HasTraits):
         if pch.load(an):
             self.peak_center_view = pch
 
+    def _dclicked_fired(self, new):
+        if new:
+            item = new.item
+            self.model.show_isotope_evolutions((item,))
+
     def traits_view(self):
         main_grp = Group(UItem('main_view', style='custom',
                                editor=InstanceEditor()), label='Main')
@@ -157,6 +163,7 @@ class AnalysisView(HasTraits):
                                   editable=False,
                                   multi_select=True,
                                   selected='selected',
+                                  dclicked='dclicked',
                                   refresh='refresh_needed')
         ieditor = myTabularEditor(adapter=self.intermediate_adapter,
                                   editable=False,

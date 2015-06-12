@@ -91,13 +91,14 @@ class AnalysisTbl(Base, BaseMixin):
     def irradiation_level(self):
         return self.irradiation_position.level.name
 
+    #
     @property
-    def irradiation_pos(self):
+    def irradiation_position_position(self):
         return self.irradiation_position.position
 
-    @property
-    def labnumber(self):
-        return self.irradiation_position
+    # @property
+    # def labnumber(self):
+    #     return self.irradiation_position
 
     @property
     def analysis_timestamp(self):
@@ -125,7 +126,7 @@ class AnalysisTbl(Base, BaseMixin):
         iv.identifier = irradpos.identifier
         iv.irradiation = irradpos.level.irradiation.name
         iv.irradiation_level = irradpos.level.name
-        iv.irradiation_position = irradpos.position
+        iv.irradiation_position_position = irradpos.position
 
         iv.labnumber = iv.identifier
         iv.experiment_ids = es = [e.experimentName for e in self.experiment_associations]
@@ -200,9 +201,9 @@ class IrradiationPositionTbl(Base, BaseMixin):
     j = Column(Float)
     j_err = Column(Float)
 
-    @property
-    def irradiation_position(self):
-        return self
+    # @property
+    # def irradiation_position(self):
+    #     return self
 
 
 class MassSpectrometerTbl(Base, BaseMixin):

@@ -45,10 +45,23 @@ class FigureNode(BaseNode):
             self.configure(refresh=False)
 
         po = self.plotter_options
-        if po.use_plotting:
-            pkg, klass = self.editor_klass.split(',')
-            mod = __import__(pkg, fromlist=[klass])
-            editor = getattr(mod, klass)()
+        if not po:
+            state.canceled = True
+            return
+
+        try:
+            use_plotting = po.use_plotting
+        except AttributeError:
+            use_plotting = True
+
+        if use_plotting:
+            klass = self.editor_klass
+            if isinstance(klass, (str, unicode)):
+                pkg, klass = klass.split(',')
+                mod = __import__(pkg, fromlist=[klass])
+                klass = getattr(mod, klass)
+
+            editor = klass()
 
             editor.plotter_options = po
 
@@ -72,8 +85,10 @@ class FigureNode(BaseNode):
                 cnt += 1
 
         self.name = new_name
-        if po.use_plotting:
+        if use_plotting:
             self.editor.name = self.name
+
+        return editor
 
     def configure(self, refresh=True):
         self._configured = True

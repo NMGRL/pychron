@@ -24,9 +24,6 @@ from numpy import asarray, average
 from uncertainties import ufloat, umath, nominal_value
 from numpy import array
 
-
-
-
 # ============= local library imports  ==========================
 from pychron.processing.arar_constants import ArArConstants
 from pychron.core.stats.core import calculate_weighted_mean
@@ -284,6 +281,7 @@ def interference_corrections(a40, a39, a38, a37, a36,
 
     pr = production_ratios
     k37 = ufloat(0, 1e-20)
+    # print 'aaaa', a40, a39
 
     if arar_constants.k3739_mode.lower() == 'normal' and not fixed_k3739:
         # iteratively calculate 37, 39
@@ -373,7 +371,6 @@ def calculate_F(isotopes,
     # dont include error in 40/36
     atm40 = atm36 * arar_constants.atm4036.nominal_value
     k40 = k39 * pr.get('k4039', 1)
-
     rad40 = a40 - atm40 - k40
     try:
         f = rad40 / k39

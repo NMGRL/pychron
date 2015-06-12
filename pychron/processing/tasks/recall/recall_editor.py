@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance, Any
+from traits.api import Instance, Str, Int
 from traitsui.api import View, UItem, InstanceEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -24,18 +24,26 @@ from pychron.processing.analyses.view.adapters import MeasurementTabularAdapter,
 
 
 class RecallEditor(BaseTraitsEditor):
-    model = Any
+    analysis_view = Instance('pychron.processing.analyses.analysis_view.AnalysisView')
+
     measurement_adapter = Instance(MeasurementTabularAdapter, ())
     extraction_adapter = Instance(ExtractionTabularAdapter, ())
-    # analysis_view = Any#Instance('pychron.processing.analyses.analysis_view.AnalysisView')
-    #
-    # manager = Any
-    #
-    # name = Str('None')
-    # basename = Str
-    instance_id = 0
+    basename = Str
+    instance_id = Int
 
-    # def _model_changed(self, new):
+    def set_name(self, record_id):
+        r = record_id
+        if self.instance_id:
+            r = '{} #{}'.format(r, self.instance_id + 1)
+
+        self.name = r
+
+    def traits_view(self):
+        v = View(UItem('analysis_view', style='custom', editor=InstanceEditor()))
+        return v
+
+        # ============= EOF =============================================
+        # def _model_changed(self, new):
     #     if new:
     #         av = new.analysis_view
     #         av.application = self.application
@@ -122,16 +130,3 @@ class RecallEditor(BaseTraitsEditor):
     #     # set basename
     #     self.basename = self.analysis_view.analysis_id
     #
-    def _model_changed(self):
-        r = self.model.record_id
-        self.basename = r
-        if self.instance_id:
-            r = '{} #{}'.format(r, self.instance_id + 1)
-
-        self.name = r
-
-    def traits_view(self):
-        v = View(UItem('analysis_view', style='custom', editor=InstanceEditor()))
-        return v
-
-# ============= EOF =============================================

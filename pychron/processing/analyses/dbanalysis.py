@@ -115,7 +115,6 @@ class DBAnalysis(Analysis):
     source_parameters = List
     deflections = List
 
-
     def get_baseline_corrected_signal_dict(self):
         get = lambda iso: iso.get_baseline_corrected_value()
         return self._get_isotope_dict(get)
@@ -146,8 +145,7 @@ class DBAnalysis(Analysis):
             sel_fithist = selected_histories.selected_fits
             fits = sel_fithist.fits
             return next((fi for fi in fits
-                         if fi.isotope.kind == kind and \
-                         fi.isotope.molecular_weight.name == name), None)
+                         if fi.isotope.kind == kind and fi.isotope.molecular_weight.name == name), None)
 
         except AttributeError, e:
             print 'exception', e
@@ -204,7 +202,7 @@ class DBAnalysis(Analysis):
     #         self.arar_result.update(d)
     def sync_peak_center(self, meas_analysis):
         pc, data = self._get_peak_center(meas_analysis)
-        self.peak_center = ufloat(pc,0)
+        self.peak_center = ufloat(pc, 0)
         self.peak_center_data = data
 
     def sync_aux(self, dbrecord_tuple, load_changes=True):
@@ -220,7 +218,6 @@ class DBAnalysis(Analysis):
         self._sync_experiment(meas_analysis)
         self._sync_script_blobs(meas_analysis)
         self.has_changes = True
-
 
     def _sync(self, dbrecord_tuple, unpack=True, load_aux=False):
         """
@@ -498,7 +495,7 @@ class DBAnalysis(Analysis):
         # av.load(weakref.ref(self)())
 
     def _sync_detector_info(self, meas_analysis, **kw):
-        #discrimination saved as 1amu disc not 4amu
+        # discrimination saved as 1amu disc not 4amu
         discriminations = self._get_discriminations(meas_analysis)
 
         # self.ic_factors = self._get_ic_factors(meas_analysis)
@@ -520,7 +517,7 @@ class DBAnalysis(Analysis):
                 mass = iso.mass
                 n = mass - refmass
 
-                #calculate discrimination
+                # calculate discrimination
                 idisc = disc ** n
                 e = disc
                 idisc = ufloat(idisc.nominal_value, e.std_dev, tag='{} D'.format(iso.name))
@@ -602,12 +599,21 @@ class DBAnalysis(Analysis):
                     result = iso.results[-1]
                 except IndexError:
                     result = None
-            r = Isotope(mass=mw.mass,
-                        dbrecord=iso,
-                        dbresult=result,
-                        name=isoname,
-                        detector=det,
-                        unpack=unpack)
+            # r = Isotope(mass=mw.mass,
+            #             dbrecord=iso,
+            #             dbresult=result,
+            #             name=isoname,
+            #             detector=det,
+            #             unpack=unpack)
+            r = Isotope(isoname, det)
+            if unpack:
+                r.unpack_data(iso.signal.data)
+
+            r.mass = mw.mass
+            if result:
+                r.value = result.signal_
+                r.error = result.signal_err
+
             if r.unpack_error:
                 self.warning('Bad isotope {} {}. error: {}'.format(self.record_id, key, r.unpack_error))
                 self.temp_status = 1
@@ -633,10 +639,10 @@ class DBAnalysis(Analysis):
             except KeyError:
                 iso = isotopes[name]
 
-            kw = dict(dbrecord=dbiso,
-                      name=name,
-                      detector=det,
-                      unpack=unpack)
+            # kw = dict(dbrecord=dbiso,
+            #           name=name,
+            #           detector=det,
+            #           unpack=unpack)
 
             kind = dbiso.kind
             if kind == 'baseline':
@@ -648,8 +654,14 @@ class DBAnalysis(Analysis):
                     except IndexError:
                         result = None
 
-                kw['name'] = '{} bs'.format(name)
-                r = Baseline(dbresult=result, **kw)
+                # kw['name'] = '{} bs'.format(name)
+                # r = Baseline(dbresult=result, **kw)
+                r = Baseline('{} bs'.format(name), det)
+                if result:
+                    r.value = result.signal_
+                    r.error = result.signal_err
+                if unpack:
+                    r.unpack_data(dbiso.signal.data)
                 fit = self.get_db_fit(meas_analysis, name, 'baseline', selected_histories)
                 if fit is None:
                     fit = default_fit()
@@ -657,7 +669,10 @@ class DBAnalysis(Analysis):
                 r.set_fit(fit, notify=False)
                 iso.baseline = r
             elif kind == 'sniff' and unpack:
-                r = Sniff(**kw)
+                # r = Sniff(**kw)
+                r = Sniff(name, det)
+                if unpack:
+                    r.unpack_data(dbiso.signal.data)
                 iso.sniff = r
 
     def _default_fit_factory(self, fit, error):
@@ -716,9 +731,10 @@ class DBAnalysis(Analysis):
                         # if isok=='Ar40':
                         #     print ba.user_value
                         blank.set_uvalue((ba.user_value,
-                                          ba.user_error), dirty=False)
+                                          ba.user_error))
                         blank.uvalue.tag = n
-                        blank.trait_setq(fit=ba.fit or '')
+                        blank.fit = ba.fit or ''
+                        # blank.trait_setq(fit=ba.fit or '')
                         keys.remove(isok)
                         if not keys:
                             break
@@ -770,8 +786,8 @@ class DBAnalysis(Analysis):
                     self.discrimination = disc = ufloat(dp.disc, dp.disc_error)
                     d[dp.detector.name] = (disc, dp.refmass)
                     # d[dp.detector.name] = (ufloat(1.004, 0.000145), dp.refmass)
-                    #dp=selected_hist.detector_param
-                    #return ufloat(dp.disc, dp.disc_error)
+                    # dp=selected_hist.detector_param
+                    # return ufloat(dp.disc, dp.disc_error)
         return d
 
     def _get_sample(self, meas_analysis):

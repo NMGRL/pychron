@@ -175,6 +175,7 @@ class BaseBrowserTask(BaseEditorTask):
                 # if self.browser_model.use_workspace:
                 #     ans = self.workspace.make_analyses(records)
                 # elif self.dvc:
+
                 ans = self.dvc.make_analyses(records)
                 if ans:
                     self._open_recall_editors(ans)
@@ -287,6 +288,7 @@ class BaseBrowserTask(BaseEditorTask):
             for rec in ans:
                 rec.application = self.application
                 av = rec.analysis_view
+
                 # av.application = self.application
                 # mv = av.isotopes_view
                 av.isotope_adapter = self.isotope_adapter
@@ -295,9 +297,12 @@ class BaseBrowserTask(BaseEditorTask):
 
                 self.recall_configurer.set_fonts(av)
 
-                editor = RecallEditor(model=rec)
+                editor = RecallEditor()
+                editor.analysis_view = rec.analysis_view
+                editor.basename = rec.record_id
                 if existing and editor.basename in existing:
                     editor.instance_id = existing.count(editor.basename)
+                editor.set_name(rec.record_id)
 
                 self._open_editor(editor, activate=False)
                 # try:

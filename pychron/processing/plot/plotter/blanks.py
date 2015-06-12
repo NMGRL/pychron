@@ -31,6 +31,10 @@ class Blanks(ReferencesSeries):
         ys = [ai.isotopes[name].get_intensity() for ai in self.sorted_references]
         return ys
 
+    def _get_current_data(self, po):
+        name = po.name
+        return [ai.isotopes[name].blank.uvalue for ai in self.sorted_analyses]
+
 
 
 # ============= EOF =============================================

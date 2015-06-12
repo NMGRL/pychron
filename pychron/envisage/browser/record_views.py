@@ -34,6 +34,7 @@ class SampleImageRecordView(RecordView):
     name = Str
     record_id = Long
     crete_date = Date
+
     def _create(self, dbrecord):
         self.name = dbrecord.name
         self.record_id = dbrecord.id
@@ -94,8 +95,8 @@ class LabnumberRecordView(RecordView):
 
     def _create(self, dbrecord):
         self.labnumber = dbrecord.identifier or ''
-
-        pos = dbrecord.irradiation_position
+        pos = dbrecord
+        # pos = dbrecord.irradiation_position
         if pos:
             self.irradiation_pos = str(pos.position)
             level = pos.level
@@ -131,7 +132,7 @@ class LabnumberRecordView(RecordView):
             except AttributeError:
                 pass
 
-    #mirror labnumber as identifier
+    # mirror labnumber as identifier
     def _get_identifier(self):
         return self.labnumber
 

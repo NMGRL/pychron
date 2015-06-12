@@ -62,12 +62,14 @@ class IsoEvo(BaseArArFigure):
 
         xs = iso.xs
         ys = iso.ys
+
         self.graph.new_series(xs, ys,
                               marker=p.marker,
                               marker_size=p.marker_size,
                               type='scatter',
                               plotid=i,
                               fit=iso.fit,
+                              filter_outliers_dict=iso.filter_outliers_dict,
                               color='black')
         ymi, yma = min_max(ymi, yma, iso.ys)
         xmi, xma = min_max(xmi, xma, iso.xs)

@@ -457,42 +457,42 @@ class AnalysisEditTask(BaseBrowserTask):
         self.debug('selector {}'.format(new))
         self.recall(new)
 
-    def _open_existing_recall_editors(self, records):
-        editor = None
-        # check if record already is open
-        for r in records:
-            editor = self._get_editor_by_uuid(r.uuid)
-            if editor:
-                records.remove(r)
+    # def _open_existing_recall_editors(self, records):
+    #     editor = None
+    #     # check if record already is open
+    #     for r in records:
+    #         editor = self._get_editor_by_uuid(r.uuid)
+    #         if editor:
+    #             records.remove(r)
+    #
+    #     # activate editor if open
+    #     if editor:
+    #         self.activate_editor(editor)
+    #     return records
 
-        # activate editor if open
-        if editor:
-            self.activate_editor(editor)
-        return records
-
-    def _open_recall_editors(self, ans):
-        existing = [e.basename for e in self.get_recall_editors()]
-        if ans:
-            for rec in ans:
-                av = rec.analysis_view
-                mv = av.main_view
-                mv.isotope_adapter = self.isotope_adapter
-                mv.intermediate_adapter = self.intermediate_adapter
-                mv.show_intermediate = self.recall_configurer.show_intermediate
-
-                self.recall_configurer.set_fonts(av)
-
-                editor = RecallEditor(manager=self.manager)
-                editor.set_items(rec)
-                if existing and editor.basename in existing:
-                    editor.instance_id = existing.count(editor.basename)
-
-                try:
-                    self.editor_area.add_editor(editor)
-                except AttributeError:
-                    pass
-        else:
-            self.warning('could not load records')
+    # def _open_recall_editors(self, ans):
+    #     existing = [e.basename for e in self.get_recall_editors()]
+    #     if ans:
+    #         for rec in ans:
+    #             av = rec.analysis_view
+    #             mv = av.main_view
+    #             mv.isotope_adapter = self.isotope_adapter
+    #             mv.intermediate_adapter = self.intermediate_adapter
+    #             mv.show_intermediate = self.recall_configurer.show_intermediate
+    #
+    #             self.recall_configurer.set_fonts(av)
+    #
+    #             editor = RecallEditor(manager=self.manager)
+    #             editor.set_items(rec)
+    #             if existing and editor.basename in existing:
+    #                 editor.instance_id = existing.count(editor.basename)
+    #
+    #             try:
+    #                 self.editor_area.add_editor(editor)
+    #             except AttributeError:
+    #                 pass
+    #     else:
+    #         self.warning('could not load records')
 
     def _create_control_pane(self):
         return ControlsPane()

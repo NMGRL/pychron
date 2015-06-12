@@ -60,7 +60,6 @@ from pychron.pychron_constants import DEFAULT_INTEGRATION_TIME, LINE_STR
 from pychron.wait.wait_group import WaitGroup
 
 
-
 class ExperimentExecutor(Consoleable, PreferenceMixin):
     """
     ExperimentExecutor coordinates execution of an experiment queue
@@ -185,7 +184,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 prog.change_message('Setting Spectrometer')
             self.spectrometer_manager = self.application.get_service(p2)
             if self.spectrometer_manager is None:
-                self.warning_dialog('Spectrometer Plugin is required')
+                self.warning_dialog('Spectrometer Plugin is required for Experiment')
                 return
             self.ion_optics_manager = self.application.get_service(p3)
 
@@ -193,7 +192,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 prog.change_message('Setting Extraction Line')
             self.extraction_line_manager = self.application.get_service(p1)
             if self.extraction_line_manager is None:
-                self.warning_dialog('Extraction Line Plugin is required')
+                self.warning_dialog('Extraction Line Plugin is required for Experiment')
                 return
         return True
 

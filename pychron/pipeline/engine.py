@@ -27,7 +27,7 @@ from pychron.core.helpers.filetools import list_directory2, add_extension
 from pychron.paths import paths
 from pychron.pipeline.nodes import FindReferencesNode
 from pychron.pipeline.nodes.base import BaseNode
-from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode, DataNode
+from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode, FluxMonitorsNode
 from pychron.loggable import Loggable
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, FigureNode, SeriesNode
 from pychron.pipeline.nodes.filter import FilterNode
@@ -201,7 +201,7 @@ class PipelineEngine(Loggable):
         self.browser_model.select_sample(idx=0)
         records = self.browser_model.get_analysis_records()
         if records:
-            analyses = self.dvc.make_analyses(records[:4])
+            analyses = self.dvc.make_analyses(records)
             # print len(records),len(analyses)
             node.analyses.extend(analyses)
             self.refresh_analyses()
@@ -326,6 +326,7 @@ class PipelineEngine(Loggable):
             yaml.dump(obj, wfile, default_flow_style=False)
 
     def run(self, state, run_to):
+        ost = time.time()
         start_node = state.veto
         self.debug('pipeline run started')
         if start_node:
@@ -337,21 +338,26 @@ class PipelineEngine(Loggable):
             node.visited = True
             self.update_needed = True
             if node.enabled:
-                self.debug('Run node {:02n}: {}'.format(idx, node))
                 st = time.time()
                 node.run(state)
-                self.debug('Runtime: {:0.4f}'.format(time.time() - st))
+                self.debug('{:02n}: {} Runtime: {:0.4f}'.format(idx, node, time.time() - st))
 
                 if state.veto:
                     self.debug('pipeline vetoed by {}'.format(node))
                     self.refresh_analyses()
                     return
 
+                if state.canceled:
+                    self.debug('pipeline canceled by {}'.format(node))
+                    self.refresh_analyses()
+                    return True
+
             else:
                 self.debug('Skip node {:02n}: {}'.format(idx, node))
         else:
             self.debug('pipeline run finished')
             self.refresh_analyses()
+            self.debug('pipeline runtime {}'.format(time.time() - ost))
             # self.selected = None
             # self.update_needed = True
             return True
@@ -470,7 +476,7 @@ class PipelineEngine(Loggable):
 
     def _selected_changed(self, new):
         self.show_group_colors = False
-        if isinstance(new, UnknownNode):
+        if isinstance(new, (UnknownNode, FluxMonitorsNode)):
             self.unknowns = new.analyses
         elif isinstance(new, ReferenceNode):
             self.references = new.analyses
@@ -482,8 +488,8 @@ class PipelineEngine(Loggable):
                 # self.task.activate_editor(new.editor)
 
     def _dclicked_changed(self, new):
-        if isinstance(new, DataNode):
-            self.configure(new)
+        # if isinstance(new, DataNode):
+        self.configure(new)
             # self.update_needed = True
 
 # if __name__ == '__main__':

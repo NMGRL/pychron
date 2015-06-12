@@ -31,6 +31,7 @@ from pychron.processing.plot.options.base import BasePlotterOptions
 from pychron.processing.plot.options.blanks import BlanksOptions
 from pychron.processing.plot.options.composite import CompositeOptions
 from pychron.processing.plot.options.dashboard import DashboardOptions
+from pychron.processing.plot.options.flux import FluxOptions
 from pychron.processing.plot.options.ic_factor import ICFactorOptions
 from pychron.processing.plot.options.ideogram import IdeogramOptions
 from pychron.processing.plot.options.iso_evo import IsotopeEvolutionOptions
@@ -343,4 +344,9 @@ class ICFactorOptionsManager(PlotterOptionsManager):
 class BlanksOptionsManager(PlotterOptionsManager):
     plotter_options_klass = BlanksOptions
     persistence_name = 'blanks'
+
+
+class FluxOptionsManager(PlotterOptionsManager):
+    plotter_options_klass = FluxOptions
+    persistence_name = 'flux'
 # ============= EOF =============================================

@@ -74,8 +74,8 @@ class IsotopeRecordView(object):
                  '_increment',
                  'uuid', 'rundate',
                  'timestamp', 'tag',
-                 'irradiation_position',
-                 'irradiation','irradiation_level',
+                 'irradiation_position_position',
+                 'irradiation', 'irradiation_level',
                  'irradiation_info', 'mass_spectrometer', 'analysis_type',
                  'meas_script_name', 'extract_script_name', 'extract_device', 'flux_fit_status',
                  'extract_value', 'cleanup', 'duration',
@@ -110,7 +110,7 @@ class IsotopeRecordView(object):
         self.irradiation_info = ''
         self.irradiation = ''
         self.irradiation_level = ''
-        self.irradiation_position = ''
+        self.irradiation_position_position = ''
         self.mass_spectrometer = ''
         self.extract_device = ''
 

@@ -37,7 +37,8 @@ from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.nodes.data import DataNode
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, SeriesNode
 from pychron.pipeline.nodes.filter import FilterNode
-from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode
+from pychron.pipeline.nodes.find import FindFluxMonitorsNode
+from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode, FitFluxNode
 from pychron.pipeline.nodes.grouping import GroupingNode
 from pychron.pipeline.nodes.persist import PDFNode, DVCPersistNode
 from pychron.pipeline.tasks.tree_node import SeriesTreeNode, PDFTreeNode, GroupingTreeNode, SpectrumTreeNode, \
@@ -239,10 +240,11 @@ class PipelinePane(TraitsDockPane):
                  PDFTreeNode(node_for=[PDFNode], menu=menu_factory()),
                  GroupingTreeNode(node_for=[GroupingNode], menu=data_menu_factory()),
                  DBSaveTreeNode(node_for=[DVCPersistNode], menu=data_menu_factory()),
-                 FindTreeNode(node_for=[FindReferencesNode], menu=ffind_menu_factory()),
+                 FindTreeNode(node_for=[FindReferencesNode, FindFluxMonitorsNode], menu=ffind_menu_factory()),
                  FitTreeNode(node_for=[FitIsotopeEvolutionNode,
                                        FitICFactorNode,
-                                       FitBlanksNode], menu=ffind_menu_factory()),
+                                       FitBlanksNode,
+                                       FitFluxNode], menu=ffind_menu_factory()),
                  TreeNode(node_for=[BaseNode], label='name')]
 
         editor = TreeEditor(nodes=nodes,
@@ -348,12 +350,14 @@ class ReferencesAdapter(TabularAdapter):
     def get_menu(self, object, trait, row, column):
         return MenuManager(Action(name='Recall', action='recall_references'))
 
+
 class AnalysesPaneHandler(Handler):
     def recall_unknowns(self, info, obj):
         obj.recall_unknowns()
 
     def recall_references(self, info, obj):
         obj.recall_references()
+
 
 class AnalysesPane(TraitsDockPane):
     name = 'Analyses'

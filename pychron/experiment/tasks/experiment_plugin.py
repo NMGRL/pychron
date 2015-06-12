@@ -42,7 +42,6 @@ class ExperimentPlugin(BaseTaskPlugin):
     id = 'pychron.experiment.plugin'
     experimentor = Instance(Experimentor)
 
-
     def start(self):
         super(ExperimentPlugin, self).start()
         # manager = self.application.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')

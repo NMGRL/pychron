@@ -25,6 +25,7 @@ import re
 
 def subdirize(root, name, n=1, l=2, mode='r'):
     for i in xrange(n):
+
         n, name = name[:l], name[l:]
         path = os.path.join(root, n)
         if not os.path.isdir(path):

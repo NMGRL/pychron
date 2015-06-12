@@ -25,6 +25,6 @@ from pychron.processing.plot.plotter.icfactor import ICFactor
 
 class ICFactorPanel(ReferencesPanel):
     _figure_klass = ICFactor
-    graph_klass = AnalysisStackedRegressionGraph
+    _graph_klass = AnalysisStackedRegressionGraph
 
 # ============= EOF =============================================
