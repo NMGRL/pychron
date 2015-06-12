@@ -31,6 +31,6 @@ class PyCO2(PychronApplication):
 
     default_layout = [
         TaskWindowLayout('tasks.hardware'),
-        TaskWindowLayout('pychron.fusions.diode')]
+        TaskWindowLayout('pychron.fusions.co2')]
 
 # ============= EOF =============================================

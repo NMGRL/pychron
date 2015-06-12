@@ -152,8 +152,6 @@ ABLE TO USE THE HARDWARE JOYSTICK
 # RPCable
 # ===============================================================================
     def get_current_position(self, aid):
-        ''' 
-        '''
         if isinstance(aid, str):
             if aid in self.axes:
                 ax = self.axes[aid]
@@ -166,7 +164,7 @@ ABLE TO USE THE HARDWARE JOYSTICK
             axis = ax.name
 
         cmd = self._build_query('TP', xx=aid)
-        f = self.ask(cmd, verbose=False)
+        f = self.ask(cmd, verbose=True)
 
         aname = '_{}_position'.format(axis)
         if f != 'simulation' and f is not None:
@@ -180,8 +178,8 @@ ABLE TO USE THE HARDWARE JOYSTICK
         else:
 #            time.sleep(0.5)
             f = getattr(self, aname)
-
-        self.axes[axis].position = f
+        if f is not None:
+            self.axes[axis].position = f
         return f
 
     def relative_move(self, ax_key, direction):
@@ -189,7 +187,7 @@ ABLE TO USE THE HARDWARE JOYSTICK
         ax = self.axes[ax_key]
 
         v1 = self.parent.canvas.map_data((0, 0))
-        v2 = self.parent.canvas.map_data((5, 5))
+        v2 = self.parent.canvas.map_data((1, 1))
 
         if ax_key == 'y':
             v = (v2[1] - v1[1]) * direction * ax.sign  # + self._y_position
@@ -199,7 +197,7 @@ ABLE TO USE THE HARDWARE JOYSTICK
 
         self.single_axis_move(ax_key, v, block=False, mode='relative',
                               verbose=False,
-                              update=False)
+                              update=True)
 
     def multiple_point_move(self, points, nominal_displacement=0.5):
         gid = self.groupobj.id
