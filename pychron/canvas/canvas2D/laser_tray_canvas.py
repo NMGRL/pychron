@@ -78,8 +78,8 @@ class BoundsOverlay(AbstractOverlay):
         gc.restore_state()
 
 
-DIRECTIONS = {'Left': ('x', 1), 'Right': ('x', -1),
-              'Down': ('y', 1), 'Up': ('y', -1)
+DIRECTIONS = {'Left': ('x', -1), 'Right': ('x', 1),
+              'Down': ('y', -1), 'Up': ('y', 1)
               }
 
 
@@ -193,6 +193,7 @@ class LaserTrayCanvas(MapCanvas):
         super(LaserTrayCanvas, self).__init__(*args, **kw)
         self._add_bounds_rect()
         self._add_crosshairs()
+        self.border_visible = False
 
     def add_image_underlay(self, p, alpha=1.0):
         im = ImageOverlay(path=p, alpha=alpha)
@@ -496,12 +497,16 @@ class LaserTrayCanvas(MapCanvas):
         """
             called from outside by StageCompnentEditor
         """
-        if char in ('left', 'right'):
-            self.stage_manager.stop(ax_key='x', verbose=False)
-            self.stage_manager.update_axes()
-        elif char in ('up', 'down'):
-            self.stage_manager.stop(ax_key='y', verbose=False)
-            self.stage_manager.update_axes()
+        pass
+
+        # if char in ('left', 'right'):
+        #     # self.stage_manager.stop(ax_key='x', update=True, verbose=False)
+        #     self.stage_manager.update_axes()
+        # elif char in ('up', 'down'):
+        #     self.stage_manager.stop(ax_key='y', verbose=False)
+        #     # self.stage_manager.update_axes()
+        sc = self.stage_manager.stage_controller
+        sc.add_consumable((sc.update_axes, tuple()))
 
     def normal_mouse_move(self, event):
         """

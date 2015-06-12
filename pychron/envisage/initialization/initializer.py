@@ -307,6 +307,8 @@ class Initializer(Loggable):
                 man.application = self.application
                 self.application.register_service(type(man), man)
 
+            man.load()
+
             element = self._get_manager(mi, plugin_name)
             if not globalv.ignore_initialization_required:
                 if not self._check_required(element):
