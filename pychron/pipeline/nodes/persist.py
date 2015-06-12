@@ -144,7 +144,7 @@ class ICFactorPersistNode(DVCPersistNode):
 
     def _save_icfactors(self, ai, prog, i, n, saveable_keys, saveable_fits, reference):
         if prog:
-            prog.change_message('Save IC Factor {} {}/{}'.format(ai.record_id, i, n))
+            prog.change_message('Save IC Factor for {} {}/{}'.format(ai.record_id, i, n))
 
         self.dvc.save_icfactors(ai, saveable_keys, saveable_fits, reference)
 
@@ -159,13 +159,16 @@ class FluxPersistNode(DVCPersistNode):
                 progress_iterator(xs,
                                   self._save_j,
                                   threshold=1)
+
+                p = self.dvc.meta_repo.get_level_path(state.irradiation, state.level)
+                self.dvc.meta_repo.add(p)
                 self.dvc.meta_commit('fit flux for {}'.format(state.irradiation, state.level))
 
     def _save_j(self, irp, prog, i, n):
         if prog:
-            prog.change_message('save j for {}'.format(irp.identifier))
+            prog.change_message('Save J for {} {}/{}'.format(irp.identifier, i, n))
 
-        self.dvc.save_j(irp.irradiation, irp.level, irp.identifier,
-                        irp.j, irp.j_err)
+        self.dvc.save_j(irp.irradiation, irp.level, irp.hole_id, irp.identifier,
+                        irp.j, irp.jerr, add=False)
 
 # ============= EOF =============================================

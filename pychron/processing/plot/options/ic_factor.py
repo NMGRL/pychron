@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from enable.markers import marker_names
-from traits.api import List, Property, Str, Float
+from traits.api import List, Property, Str, Float, Int
 from traitsui.api import EnumEditor, View, Item, UItem, VGroup, HGroup, Label
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -55,6 +55,7 @@ class ICFactorAuxPlot(AuxPlotOptions, Fit):
 
 class ICFactorOptions(FitOptions):
     plot_option_klass = ICFactorAuxPlot
+    nsigma = Int(1)
 
     def set_aux_plots(self, ps):
         pp = []
@@ -93,8 +94,8 @@ class ICFactorOptions(FitOptions):
         return [
             object_column(name='numerator', editor=EnumEditor(name='detectors')),
             object_column(name='denominator', editor=EnumEditor(name='detectors')),
-            checkbox_column(name='enabled', label='Plot'),
-            checkbox_column(name='use', label='Save'),
+            checkbox_column(name='plot_enabled', label='Plot'),
+            checkbox_column(name='save_enabled', label='Save'),
 
             object_column(name='fit',
                           editor=EnumEditor(name='fit_types'),

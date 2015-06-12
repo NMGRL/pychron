@@ -20,10 +20,16 @@ from traits.api import Property, on_trait_change, List, Array
 # ============= standard library imports ========================
 from math import isnan, isinf
 from uncertainties import nominal_value, std_dev
-from numpy import zeros_like
+from numpy import zeros_like, array
 # ============= local library imports  ==========================
 from pychron.core.regression.interpolation_regressor import InterpolationRegressor
 from pychron.processing.plot.plotter.series import BaseSeries
+
+
+def calc_limits(ys, ye, n):
+    ymi = (ys - (ye * n)).min()
+    yma = (ys + (ye * n)).max()
+    return ymi, yma
 
 
 class ReferencesSeries(BaseSeries):
@@ -60,6 +66,7 @@ class ReferencesSeries(BaseSeries):
         self.graph.refresh()
 
     def plot(self, plots, legend):
+
         if plots:
             _, mx = self._get_min_max()
 
@@ -84,11 +91,20 @@ class ReferencesSeries(BaseSeries):
     def _handle_limits(self):
         self.graph.refresh()
 
+    def _calc_limits(self, ys, ye):
+        return calc_limits(ys, ye, self.options.nsigma)
+
     def _new_fit_series(self, pid, po):
-        self._plot_unknowns_current(pid, po)
-        reg = self._plot_references(pid, po)
+        ymi, yma = self._plot_unknowns_current(pid, po)
+        reg, a, b = self._plot_references(pid, po)
+        ymi = min(ymi, a)
+        yma = max(yma, b)
         if reg:
-            self._plot_interpolated(pid, po, reg)
+            a, b = self._plot_interpolated(pid, po, reg)
+            ymi = min(ymi, a)
+            yma = max(yma, b)
+
+        self.graph.set_y_limits(ymi, yma, pad='0.05', plotid=pid)
 
     def _get_min_max(self):
         mi = min(self.sorted_references[0].timestamp, self.sorted_analyses[0].timestamp)
@@ -122,11 +138,11 @@ class ReferencesSeries(BaseSeries):
 
     def reference_data(self, po):
         rs = self._get_reference_data(po)
-        return map(nominal_value, rs), map(std_dev, rs)
+        return array(map(nominal_value, rs)), array(map(std_dev, rs))
 
     def current_data(self, po):
         cs = self._get_current_data(po)
-        return map(nominal_value, cs), map(std_dev, cs)
+        return array(map(nominal_value, cs)), array(map(std_dev, cs))
 
     def _get_current_data(self, po):
         return self._unpack_attr(po.name)
@@ -136,11 +152,15 @@ class ReferencesSeries(BaseSeries):
 
     # plotting
     def _plot_unknowns_current(self, pid, po):
+        ymi, yma = 0, 0
+
         if self.analyses and self.show_current:
             graph = self.graph
             n = [ai.record_id for ai in self.sorted_analyses]
 
             ys, ye = self.current_data(po)
+            ymi, yma = self._calc_limits(ys, ye)
+
             kw = dict(y=ys, yerror=ye, type='scatter')
 
             args = graph.new_series(x=self.xs,
@@ -166,18 +186,22 @@ class ReferencesSeries(BaseSeries):
                 return ('Run Date: {}'.format(analysis.rundate.strftime('%m-%d-%Y %H:%M')),
                         'Rel. Time: {:0.4f}'.format(x))
 
+            self._add_error_bars(scatter, ye, 'y', self.options.nsigma, True)
             self._add_scatter_inspector(scatter,
                                         add_selection=False,
                                         additional_info=af)
-
-            # self.graph.new_series([1,2,3,4], [2,3,4,1],
-            #
-            #                       plotid=i)
+        return ymi, yma
+        # self.graph.new_series([1,2,3,4], [2,3,4,1],
+        #
+        #                       plotid=i)
 
     def _plot_interpolated(self, pid, po, reg, series_id=0):
         iso = po.name
         p_uys, p_ues = self.set_interpolated_values(iso, reg, po.fit)
+        ymi, yma = 0, 0
         if len(p_uys):
+            ymi, yma = self._calc_limits(p_uys, p_ues)
+
             graph = self.graph
             # display the predicted values
             s, p = graph.new_series(self.xs,
@@ -196,13 +220,16 @@ class ReferencesSeries(BaseSeries):
             graph.set_series_label('Unknowns-predicted{}'.format(series_id), plotid=pid,
                                    series=series)
 
-            # self._add_error_bars(s, p_ues)
+            self._add_error_bars(s, p_ues, 'y', 1, True)
+        return ymi, yma
 
     def _plot_references(self, pid, po):
         graph = self.graph
         efit = po.fit
         r_xs = self.rxs
         r_ys, r_es = self.reference_data(po)
+
+        ymi, yma = self._calc_limits(r_ys, r_es)
 
         reg = None
         kw = dict(add_tools=False, add_inspector=False, color='red',
@@ -222,7 +249,7 @@ class ReferencesSeries(BaseSeries):
                                            **kw
                                            )
             # self._add_inspector(s, self.sorted_references)
-            # self._add_error_bars(s, r_es)
+            self._add_error_bars(scatter, r_es, 'y', self.options.nsigma, True)
             # series_id = (series_id+1) * 2
         else:
 
@@ -241,7 +268,7 @@ class ReferencesSeries(BaseSeries):
                 # l.regression_bounds = regression_bounds
 
                 # self._add_inspector(s, self.sorted_references)
-                # self._add_error_bars(s, array(r_es))
+            self._add_error_bars(scatter, r_es, 'y', self.options.nsigma, True)
 
         def af(i, x, y, analysis):
             return ('Run Date: {}'.format(analysis.rundate.strftime('%m-%d-%Y %H:%M')),
@@ -256,6 +283,6 @@ class ReferencesSeries(BaseSeries):
         plot.fit = po.fit
         # scatter.index.on_trait_change(self._update_metadata, 'metadata_changed')
 
-        return reg
+        return reg, ymi, yma
 
 # ============= EOF =============================================

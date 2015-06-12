@@ -30,7 +30,8 @@ from pychron.core.stats.core import calculate_mswd, calculate_weighted_mean, val
 
 
 def AGProperty(*depends):
-    d = 'dirty,analyses:[status,temp_status]'
+    # d = 'dirty,analyses:[status,temp_status]'
+    d = 'dirty'  # ,analyses:[status,temp_status]'
     if depends:
         d = '{},{}'.format(','.join(depends), d)
 

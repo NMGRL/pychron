@@ -33,6 +33,7 @@ from pychron.processing.plotter_options_manager import IsotopeEvolutionOptionsMa
 
 class FitNode(FigureNode):
     use_save_node = Bool(True)
+
     def _set_saveable(self, state):
         ps = self.plotter_options.get_saveable_plots()
         state.saveable_keys = [p.name for p in ps]
@@ -92,8 +93,8 @@ class FitICFactorNode(FitReferencesNode):
         ps = self.plotter_options.get_saveable_plots()
         state.saveable_keys = [p.denominator for p in ps]
 
-    def run(self, state):
-        super(FitICFactorNode, self).run(state)
+    # def run(self, state):
+    #     super(FitICFactorNode, self).run(state)
 
     def load(self, nodedict):
         try:
@@ -201,6 +202,7 @@ class FitFluxNode(FitNode):
     def run(self, state):
         editor = super(FitFluxNode, self).run(state)
         if not editor:
+            state.canceled = True
             return
 
         self.name = 'Fit Flux {}'.format(state.irradiation, state.level)
@@ -230,6 +232,7 @@ class FitFluxNode(FitNode):
 
                 x, y, r, idx = geom[ip - 1]
                 mj = mean_j(ais, ek, monage, lk)
+
                 p = FluxPosition(identifier=identifier,
                                  irradiation=state.irradiation,
                                  level=state.level,
@@ -249,7 +252,7 @@ class FitFluxNode(FitNode):
             editor.predict_values()
 
             if self.plotter_options.confirm_save:
-                if confirmation_dialog('Would you like to review the iso fits before saving?'):
+                if confirmation_dialog('Would you like to review the flux fits before saving?'):
                     state.veto = self
 
             state.editors.append(editor)

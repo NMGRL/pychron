@@ -15,12 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import Int
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.processing.plot.options.fit import FitOptions
 
 
 class BlanksOptions(FitOptions):
-    pass
+    nsigma = Int(1)
 
 # ============= EOF =============================================

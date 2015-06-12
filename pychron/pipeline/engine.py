@@ -388,6 +388,8 @@ class PipelineEngine(Loggable):
 
     # private
     def _set_template(self, name):
+        name = name.replace(' ', '_').lower()
+
         path = os.path.join(paths.pipeline_template_dir, add_extension(name, '.yaml'))
         if not os.path.isfile(path):
             self.warning('Invalid template name. {} does not exist'.format(path))
@@ -408,6 +410,10 @@ class PipelineEngine(Loggable):
                                     remove_extension=True):
             templates.append(temp)
 
+        def formatter(t):
+            return ' '.join(map(str.capitalize, t.split('_')))
+
+        templates = map(formatter, templates)
         self.available_pipeline_templates = templates
 
     def _add_find_node(self, node, run, analysis_type):
@@ -485,7 +491,6 @@ class PipelineEngine(Loggable):
             if new.editor:
                 self.unknowns = new.editor.analyses
                 self.active_editor = new.editor
-                # self.task.activate_editor(new.editor)
 
     def _dclicked_changed(self, new):
         # if isinstance(new, DataNode):

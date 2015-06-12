@@ -46,6 +46,9 @@ class PipelineTemplate(HasTraits):
         except IndexError:
             pass
 
+        if not datanode:
+            datanode = DataNode(browser_model=bmodel, dvc=dvc)
+
         pipeline.nodes = []
         with open(self.path, 'r') as rfile:
             nodes = yaml.load(rfile)
@@ -78,12 +81,12 @@ ICFACTOR = """
 - klass: UnknownNode
 - klass: FindReferencesNode
   threshold: 10
-  analysis_type: Blank Unknown
+  analysis_type: Air
 - klass: ReferenceNode
 - klass: FitICFactorNode
   fits:
     - numerator: H1
-      denominator: AX
+      denominator: CDD
       standard_ratio: 295.5
       analysis_type: Air
 - klass: ICFactorPersistNode
@@ -105,4 +108,15 @@ BLANKS = """
 - klass: BlanksPersistNode
 """
 
+IDEO = """- klass: UnknownNode
+- klass: IdeogramNode
+"""
+
+ISOCHRON = """- klass: UnknownNode
+- klass: IsochronNode
+"""
+
+SPEC = """- klass: UnknownNode
+- klass: SpectrumNode
+"""
 # ============= EOF =============================================

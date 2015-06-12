@@ -42,7 +42,9 @@ def mean_j(ans, error_kind, monitor_age, lambda_k):
     # reg.trait_set(ys=fs, yserr=es)
     # uf = (reg.predict([0]), reg.predict_error([0]))
     uf = (av, werr)
-    return calculate_flux(uf, monitor_age, lambda_k=lambda_k)
+    j = calculate_flux(uf, monitor_age, lambda_k=lambda_k)
+    # print age_equation(j, uf, lambda_k=lambda_k, scalar=1)
+    return j
 
 # def calculate_flux(error_kind, monitor_age):
 #

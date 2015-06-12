@@ -15,14 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from chaco.default_colormaps import color_map_name_dict
 from traits.api import List, Bool, Str, Int, Enum
 from traitsui.api import View, Item, VGroup, HGroup, Tabbed
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from traitsui.editors import EnumEditor
 from pychron.processing.fits.fit import IsoFilterFit
 from pychron.processing.plot.options.base import dumpable
 from pychron.processing.plot.options.figure_plotter_options import FigurePlotterOptions
 from pychron.processing.plot.options.option import AuxPlotOptions
+from pychron.pychron_constants import ERROR_TYPES
 
 
 class IsoFilterFitAuxPlot(AuxPlotOptions, IsoFilterFit):
@@ -32,6 +35,10 @@ class IsoFilterFitAuxPlot(AuxPlotOptions, IsoFilterFit):
 
 class FluxOptions(FigurePlotterOptions):
     # plot_option_klass = IsoFilterFitAuxPlot
+    color_map_name = Str('jet')
+    marker_size = Int(5)
+    levels = Int(50, auto_set=False, enter_set=True)
+
     use_plotting = dumpable(Bool(True))
     confirm_save = dumpable(Bool)
 
@@ -39,13 +46,13 @@ class FluxOptions(FigurePlotterOptions):
     monitor_age = 28.201
     lambda_k = 5.464e-10
 
-    model_kind = dumpable(Str('Plane'))
-    predicted_j_error_type = dumpable(Str('SD'))
+    model_kind = dumpable(Enum('Plane', 'Bowl'))
+    predicted_j_error_type = dumpable(Enum(*ERROR_TYPES))
     use_weighted_fit = dumpable(Bool(False))
     monte_carlo_ntrials = dumpable(Int(10))
     use_monte_carlo = dumpable(Bool(False))
     monitor_sample_name = dumpable(Str)
-    plot_kind = dumpable((Enum('Contour', 'Sin')))
+    plot_kind = dumpable((Enum('1D', '2D')))
     # def get_saveable_plots(self):
     #     return [p for p in self.aux_plots if p.use]
 
@@ -97,11 +104,23 @@ class FluxOptions(FigurePlotterOptions):
         #                                           # selected='selected',
         #                                           edit_view=v,
         #                                           reorderable=False))
+        twodgrp = VGroup(HGroup(Item('color_map_name',
+                                     label='Color Map',
+                                     editor=EnumEditor(values=sorted(color_map_name_dict.keys()))),
+                                Item('levels'),
+
+                                ),
+                         Item('model_kind'),
+                         visible_when='plot_kind=="2D"')
+        onedgrp = VGroup(Item('marker_size'),
+                         visible_when='plot_kind=="1D"')
+
         ogrp = HGroup(Item('confirm_save',
                            label='Confirm Save', tooltip='Allow user to review evolutions '
                                                          'before saving to file'))
         grp = VGroup(Item('plot_kind'),
-                     Item('model_kind', ),
+                     twodgrp,
+                     onedgrp,
                      Item('predicted_j_error_type', ),
                      Item('use_weighted_fit', ),
                      Item('monte_carlo_ntrials', ),

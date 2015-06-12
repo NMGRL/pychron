@@ -180,6 +180,8 @@ class BasePlotterOptions(HasTraits):
                         AttributeError,
                         TraitError, ImportError), e:
                     print 'error loading {}'.format(self.name), e
+                    os.remove(p)
+
         self._load_hook()
 
     def _load_hook(self):

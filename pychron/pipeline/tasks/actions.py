@@ -18,7 +18,9 @@
 from pyface.tasks.action.task_action import TaskAction
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from traitsui.menu import Action
 from pychron.envisage.resources import icon
+
 
 class GitRollbackAction(TaskAction):
     name = 'Git Undo'
@@ -62,7 +64,32 @@ class ConfigureRecallAction(TaskAction):
     dname = 'Configure Recall'
     method = 'configure_recall'
     image = icon('cog')
+
+
+# ============= Plotting Actions =============================================
+class PlotAction(Action):
+    def perform(self, event):
+        app = event.task.window.application
+        task = app.get_task('pychron.pipeline.task')
+        if hasattr(task, self.action):
+            getattr(task, self.action)()
+
+
+class IdeogramAction(PlotAction):
+    name = 'Ideogram'
+    action = 'set_ideogram_template'
+    image = icon('histogram')
+
+
+class SpectrumAction(PlotAction):
+    name = 'Spectrum'
+    action = 'set_spectrum_template'
+    # image = icon('histogram')
+
+
+class IsochronAction(PlotAction):
+    name = 'Isochron'
+    action = 'set_isochron_template'
+    # image = icon('histogram')
+
 # ============= EOF =============================================
-
-
-

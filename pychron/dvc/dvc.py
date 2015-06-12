@@ -170,10 +170,10 @@ class DVC(Loggable):
         self.info('Saving fits for {}'.format(ai))
         ai.dump_fits(keys)
 
-    def save_j(self, irradiation, level, pos, identifier, j, e):
+    def save_j(self, irradiation, level, pos, identifier, j, e, add):
         self.info('Saving j for {}{}:{} {}, j={} +/-{}'.format(irradiation, level,
                                                                pos, identifier, j, e))
-        self.meta_repo.update_j(irradiation, level, pos, identifier, j, e)
+        self.meta_repo.update_j(irradiation, level, pos, identifier, j, e, add)
 
     def find_references(self, times, atypes):
         records = self.db.find_references(times, atypes)
@@ -424,6 +424,7 @@ class DVC(Loggable):
 
                 a.j = meta_repo.get_flux(record.irradiation, record.irradiation_level,
                                          record.irradiation_position_position)
+
                 if calculate_f_only:
                     a.calculate_F()
                 else:

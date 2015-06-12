@@ -23,7 +23,8 @@ from pychron.pychron_constants import NULL_STR, FIT_TYPES
 
 
 class AuxPlotOptions(HasTraits):
-    use = Bool
+    save_enabled = Bool
+    plot_enabled = Bool
     name = Str(NULL_STR)
     plot_name = Property(Str, depends_on='name')
 
@@ -55,7 +56,7 @@ class AuxPlotOptions(HasTraits):
     _has_ylimits = Bool(False)
     _has_xlimits = Bool(False)
 
-    enabled = True
+    # enabled = True
 
     marker = Str('circle')
     marker_size = Float(2)
@@ -110,7 +111,7 @@ class AuxPlotOptions(HasTraits):
     def _name_changed(self):
         if self.initialized:
             if self.name != NULL_STR:
-                self.use = True
+                self.plot_enabled = True
 
     def _get_plot_name(self):
         if self.name in self.names:

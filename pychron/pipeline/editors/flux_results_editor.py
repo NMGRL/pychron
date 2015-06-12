@@ -172,7 +172,7 @@ class FluxResultsEditor(BaseTraitsEditor):
 
                 p.dev = (oj - j) / j * 100
 
-        if self.plotter_options.plot_kind == 'Contour':
+        if self.plotter_options.plot_kind == '2D':
             self._graph_contour(x, y, z, r, reg)
         else:
             self._graph_hole_vs_j(x, y, r, reg)

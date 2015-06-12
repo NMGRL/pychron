@@ -42,7 +42,9 @@ class FigureNode(BaseNode):
 
     def run(self, state):
         if not self.plotter_options or not self._configured:
-            self.configure(refresh=False)
+            if not self.configure(refresh=False):
+                state.canceled = True
+                return
 
         po = self.plotter_options
         if not po:

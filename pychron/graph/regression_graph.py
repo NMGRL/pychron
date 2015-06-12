@@ -300,7 +300,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                     # else:
                     line.error_envelope.lower = ly
                     line.error_envelope.upper = uy
-                    # line.error_envelope.invalidate()
+                    line.error_envelope.invalidate()
 
         return r
 

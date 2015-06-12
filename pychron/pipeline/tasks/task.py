@@ -64,12 +64,8 @@ class PipelineTask(BaseBrowserTask):
     dbmodified = False
     projects = None
 
-    def _opened_hook(self):
-        super(PipelineTask, self)._opened_hook()
-        if globalv.pipeline_debug:
-            self._debug()
-        #     from pyface.timer.do_later import do_after
-        #     do_after(500, self._debug)
+    def run(self):
+        self._run_pipeline()
 
     def activated(self):
         super(PipelineTask, self).activated()
@@ -80,9 +76,10 @@ class PipelineTask(BaseBrowserTask):
         self.engine.add_data()
 
     def _debug(self):
+        pass
         # self.engine.add_data()
-        # self.engine.select_default()
-        self.engine.set_template('flux')
+        self.engine.select_default()
+        self.engine.set_template('icfactor')
         # self.engine.set_template('blanks')
         # self.engine.add_is
         # self.engine.add_grouping(run=False)
@@ -123,9 +120,17 @@ class PipelineTask(BaseBrowserTask):
         if path:
             self.engine.save_pipeline_template(path)
 
-    def run(self):
-        self._run_pipeline()
+    # action handlers
+    def set_ideogram_template(self):
+        self.engine.set_template('ideogram')
 
+    def set_spectrum_template(self):
+        self.engine.set_template('spectrum')
+
+    def set_isochron_template(self):
+        self.engine.set_template('isochron')
+
+    # private
     def _close_editor(self, editor):
         for e in self.editor_area.editors:
             if e.name == editor.name:
@@ -169,8 +174,7 @@ class PipelineTask(BaseBrowserTask):
                                                  width=200)))
 
     def _extra_actions_default(self):
-        sas = (('MenuBar', DataMenu, {'before': 'tools.menu', 'after': 'view.menu'}),
-               ('MenuBar/data.menu', RunAction, {}))
+        sas = (('MenuBar/data.menu', RunAction, {}),)
         return [self._sa_factory(path, factory, **kw) for path, factory, kw in sas]
 
     def _sa_factory(self, path, factory, **kw):
@@ -219,4 +223,10 @@ class PipelineTask(BaseBrowserTask):
                     push_experiments(ps)
 
         return ret
+
+    def _opened_hook(self):
+        super(PipelineTask, self)._opened_hook()
+        if globalv.pipeline_debug:
+            self._debug()
+
 # ============= EOF =============================================

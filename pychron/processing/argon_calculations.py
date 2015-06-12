@@ -24,6 +24,7 @@ from numpy import asarray, average
 from uncertainties import ufloat, umath, nominal_value
 from numpy import array
 
+
 # ============= local library imports  ==========================
 from pychron.processing.arar_constants import ArArConstants
 from pychron.core.stats.core import calculate_weighted_mean
@@ -324,8 +325,7 @@ def calculate_atmospheric(a38, a36, k38, ca38, ca36, decay_time,
         arar_constants = ArArConstants()
 
     pr = production_ratios
-
-    m = pr.get('cl3638', 0) * arar_constants.lambda_Cl36.nominal_value * decay_time
+    m = pr.get('Cl3638', 0) * arar_constants.lambda_Cl36.nominal_value * decay_time
     atm36 = ufloat(0, 1e-20)
     for _ in range(5):
         ar38atm = arar_constants.atm3836.nominal_value * atm36
@@ -412,6 +412,8 @@ def calculate_F(isotopes,
 
 def age_equation(j, f,
                  include_decay_error=False,
+                 lambda_k=None,
+                 scalar=None,
                  arar_constants=None):
     if isinstance(j, tuple):
         j = ufloat(*j)
@@ -422,15 +424,21 @@ def age_equation(j, f,
         f = ufloat(*f)
     elif isinstance(f, str):
         f = ufloat(f)
-    if arar_constants is None:
-        arar_constants = ArArConstants()
 
-    scalar = float(arar_constants.age_scalar)
-    lk = arar_constants.lambda_k
+    if not lambda_k:
+        if arar_constants is None:
+            arar_constants = ArArConstants()
+        lambda_k = arar_constants.lambda_k
+
+    if not scalar:
+        if arar_constants is None:
+            arar_constants = ArArConstants()
+        scalar = float(arar_constants.age_scalar)
+
     if not include_decay_error:
-        lk = lk.nominal_value
+        lambda_k = nominal_value(lambda_k)
     try:
-        return (lk ** -1 * umath.log(1 + j * f)) / scalar
+        return (lambda_k ** -1 * umath.log(1 + j * f)) / scalar
     except (ValueError, TypeError):
         return ufloat(0, 0)
 

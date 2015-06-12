@@ -269,15 +269,16 @@ class MetaRepo(GitRepoManager):
                 wfile.write(path_or_txt)
         self.add(p, commit=commit)
 
-    def update_j(self, irradiation, level, pos, identifier, j, e):
+    def update_j(self, irradiation, level, pos, identifier, j, e, add=True):
         p = self.get_level_path(irradiation, level)
         with open(p, 'r') as rfile:
             jd = json.load(rfile)
 
         njd = [ji if ji['position'] != pos else {'position': pos, 'j': j, 'j_err': e} for ji in jd]
         with open(p, 'w') as wfile:
-            json.dump(njd, wfile)
-        self.add(p, commit=False)
+            json.dump(njd, wfile, indent=4)
+        if add:
+            self.add(p, commit=False)
 
     def update_chronology(self, name, doses):
         p = self._chron_name(name)
@@ -308,11 +309,9 @@ class MetaRepo(GitRepoManager):
         if os.path.isfile(path):
             with open(path) as rfile:
                 positions = json.load(rfile)
-            try:
-                pos = positions[position - 1]
+            pos = next((p for p in positions if p['position'] == position), None)
+            if pos:
                 j, e = pos['j'], pos['j_err']
-            except IndexError:
-                pass
 
         return ufloat(j, e)
 

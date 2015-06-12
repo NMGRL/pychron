@@ -140,11 +140,11 @@ class FigurePlotterOptions(BasePlotterOptions):
 
     def get_saveable_aux_plots(self):
         return reversed([pi for pi in self.aux_plots
-                         if pi.name and pi.name != NULL_STR and pi.enabled])
+                         if pi.name and pi.name != NULL_STR and pi.save_enabled])
 
     def get_plotable_aux_plots(self):
         return reversed([pi for pi in self.aux_plots
-                         if pi.name and pi.name != NULL_STR and pi.use])
+                         if pi.name and pi.name != NULL_STR and pi.plot_enabled])
         # def get_aux_plots(self, save=False):
         #     if
 
@@ -424,7 +424,7 @@ class FigurePlotterOptions(BasePlotterOptions):
         return main_grp
 
     def _get_aux_plots_group(self):
-        cols = [checkbox_column(name='use', ),
+        cols = [checkbox_column(name='plot_enabled', label='Use'),
                 object_column(name='name',
                               width=130,
                               editor=EnumEditor(name='names')),

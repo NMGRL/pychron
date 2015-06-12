@@ -23,31 +23,35 @@ from envisage.ui.tasks.task_factory import TaskFactory
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pyface.tasks.action.schema import SMenu, SGroup
 from pyface.tasks.action.schema_addition import SchemaAddition
 from pychron.core.helpers.filetools import add_extension
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.paths import paths
-from pychron.pipeline.tasks.actions import ConfigureRecallAction
+from pychron.pipeline.tasks.actions import ConfigureRecallAction, IdeogramAction, IsochronAction, SpectrumAction
 from pychron.pipeline.tasks.browser_task import BrowserTask
 from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 from pychron.pipeline.tasks.task import PipelineTask
 from pychron.envisage.browser.browser_model import BrowserModel
-from pychron.pipeline.template import ICFACTOR, BLANKS, ISOEVO
+from pychron.pipeline.template import ICFACTOR, BLANKS, ISOEVO, SPEC, IDEO, ISOCHRON
 
 
 class PipelinePlugin(BaseTaskPlugin):
     def start(self):
         super(PipelinePlugin, self).start()
-
-        for p, t in (('icfactor', ICFACTOR),
-                     ('blanks', BLANKS),
-                     ('iso_evo', ISOEVO)):
+        ov = False
+        for p, t, overwrite in (('icfactor', ICFACTOR, ov),
+                                ('blanks', BLANKS, ov),
+                                ('iso_evo', ISOEVO, ov),
+                                ('ideogram', IDEO, ov),
+                                ('spectrum', SPEC, ov),
+                                ('isochron', ISOCHRON, ov)):
             pp = os.path.join(paths.pipeline_template_dir,
                               add_extension(p, '.yaml'))
 
-            with open(pp, 'w') as wfile:
-                wfile.write(t)
-
+            if not os.path.isfile(pp) or overwrite:
+                with open(pp, 'w') as wfile:
+                    wfile.write(t)
 
     def _pipeline_factory(self):
         model = self.application.get_service(BrowserModel)
@@ -72,12 +76,30 @@ class PipelinePlugin(BaseTaskPlugin):
         return [PipelinePreferencesPane]
 
     def _task_extensions_default(self):
-        # return [TaskExtension(actions=[SchemaAddition(id='Flag Manager',
-        # factory=OpenFlagManagerAction,
-        # path='MenuBar/tools.menu'), ])]
+        def data_menu():
+            return SMenu(id='data.menu', name='Data')
+
+        def plot_group():
+            return SGroup(id='plot.group')
+
+        plotting_actions = [SchemaAddition(factory=data_menu,
+                                           path='MenuBar',
+                                           before='tools.menu',
+                                           after='view.menu', ),
+                            SchemaAddition(factory=plot_group,
+                                           path='MenuBar/data.menu'),
+                            SchemaAddition(factory=IdeogramAction,
+                                           path='MenuBar/data.menu/plot.group'),
+                            SchemaAddition(factory=SpectrumAction,
+                                           path='MenuBar/data.menu/plot.group'),
+                            SchemaAddition(factory=IsochronAction,
+                                           path='MenuBar/data.menu/plot.group')]
+
         return [TaskExtension(task_id='pychron.pipeline.task',
                               actions=[SchemaAddition(factory=ConfigureRecallAction,
-                                                      path='MenuBar/Edit')])]
+                                                      path='MenuBar/Edit')]),
+
+                TaskExtension(actions=plotting_actions)]
 
     def _tasks_default(self):
         return [TaskFactory(id='pychron.pipeline.task',
@@ -91,6 +113,3 @@ class PipelinePlugin(BaseTaskPlugin):
                 ]
 
 # ============= EOF =============================================
-
-
-
