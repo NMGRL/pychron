@@ -102,6 +102,7 @@ class MassSpecDatabaseImporter(Loggable):
                 sl = db.add_sample_loading(ms, tray)
                 #sess.flush()
                 #             db.flush()
+                sess.flush()
                 self.sample_loading_id = sl.SampleLoadingID
 
     def add_login_session(self, ms):
@@ -109,7 +110,7 @@ class MassSpecDatabaseImporter(Loggable):
         db = self.db
         with db.session_ctx() as sess:
             ls = db.add_login_session(ms)
-            #sess.flush()
+            sess.flush()
             self.login_session_id = ls.LoginSessionID
 
     def add_data_reduction_session(self):
@@ -117,7 +118,7 @@ class MassSpecDatabaseImporter(Loggable):
             db = self.db
             with db.session_ctx() as sess:
                 dr = db.add_data_reduction_session()
-                #sess.flush()
+                sess.flush()
                 self.data_reduction_session_id = dr.DataReductionSessionID
 
     def create_import_session(self, spectrometer, tray):
@@ -264,7 +265,7 @@ class MassSpecDatabaseImporter(Loggable):
 
         # add the reference detector
         refdbdet = db.add_detector('H1', Label='H1')
-        #sess.flush()
+        sess.flush()
 
         spec.runid = rid
         analysis = db.add_analysis(rid, spec.aliquot, spec.step,
@@ -287,7 +288,7 @@ class MassSpecDatabaseImporter(Loggable):
                                    SampleLoadingID=self.sample_loading_id,
                                    LoginSessionID=self.login_session_id,
                                    RunScriptID=rs.RunScriptID)
-        # sess.flush()
+        sess.flush()
         if spec.update_rundatetime:
             d = datetime.fromtimestamp(spec.timestamp)
             analysis.RunDateTime = d
@@ -301,11 +302,11 @@ class MassSpecDatabaseImporter(Loggable):
 
         self.debug('%%%%%%%%%%%%%%%%%%%% Comment: {} %%%%%%%%%%%%%%%%%%%'.format(spec.comment))
         item.Comment = spec.comment
-        #sess.flush()
+        sess.flush()
         analysis.ChangeableItemsID = item.ChangeableItemsID
 
         self._add_isotopes(analysis, spec, refdbdet, runtype)
-        # sess.flush()
+        sess.flush()
 
         t = time.time() - gst
         self.debug('{} added analysis time {}s'.format(spec.runid, t))
@@ -462,7 +463,7 @@ class MassSpecDatabaseImporter(Loggable):
         return b
 
     def _db_default(self):
-        db = MassSpecDatabaseAdapter(kind='mysql', autoflush=True)
+        db = MassSpecDatabaseAdapter(kind='mysql', autoflush=False)
 
         return db
 

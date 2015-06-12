@@ -339,7 +339,7 @@ def calculate_atmospheric(a38, a36, k38, ca38, ca36, decay_time,
 
     pr = production_ratios
 
-    m = pr.get('cl3638', 0) * arar_constants.lambda_Cl36.nominal_value * decay_time
+    m = pr.get('Cl3638', 0) * arar_constants.lambda_Cl36.nominal_value * decay_time
     atm36 = ufloat(0, 1e-20)
     for _ in range(5):
         ar38atm = arar_constants.atm3836.nominal_value * atm36

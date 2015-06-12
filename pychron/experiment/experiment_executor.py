@@ -405,6 +405,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         self.datahub.add_experiment(exp)
 
+
         # reset conditionals result file
         reset_conditional_results()
 
@@ -933,6 +934,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         arun.persister.datahub = self.datahub
         arun.persister.load_name = exp.load_name
+        arun.persister.experiment_identifier = exp.database_identifier
 
         arun.use_syn_extraction = False
 

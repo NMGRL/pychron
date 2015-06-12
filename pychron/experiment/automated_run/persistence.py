@@ -54,7 +54,7 @@ class BasePersister(Loggable):
 
     save_as_peak_hop = Bool(False)
     save_enabled = Bool(False)
-    experiment_identifier = Int
+    experiment_identifier = Long
     sensitivity_multiplier = Float
     experiment_queue_name = Str
     experiment_queue_blob = Str
