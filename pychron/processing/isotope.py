@@ -26,6 +26,7 @@ import re
 from uncertainties import ufloat
 from numpy import array, Inf, polyfit
 
+
 # ============= local library imports  ==========================
 from pychron.core.helpers.fits import natural_name_fit
 from pychron.core.regression.mean_regressor import MeanRegressor
@@ -507,7 +508,8 @@ class Isotope(BaseIsotope):
     # blank = Instance(Blank)
     # background = Instance(Background)
     # sniff = Instance(Sniff)
-
+    temporary_blank = None
+    ic_factor = None
     correct_for_blank = True
     # ic_factor = Either(Variable, AffineScalarFunc)
 
@@ -524,7 +526,6 @@ class Isotope(BaseIsotope):
         self.blank = Blank(name, detector)
         self.sniff = Sniff(name, detector)
         self.background = Background(name, detector)
-        self.temporary_blank = None
 
     def get_filtered_data(self):
         return self.regressor.calculate_filtered_data()

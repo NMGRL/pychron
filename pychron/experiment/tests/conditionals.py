@@ -88,12 +88,19 @@ class ConditionalsTestCase(unittest.TestCase):
         xs = linspace(0, 100)
         ys = 2 * xs + 4
 
-        ar40 = Isotope(name='Ar40', xs=xs, ys=ys)
+        # ar40 = Isotope(name='Ar40', xs=xs, ys=ys)
+        ar40 = Isotope('Ar40', 'H1')
+        ar40.xs = xs
+        ar40.ys = ys
+        ar40.fit = 'parabolic'
         ar40.baseline.value = 0.25
         ar40.blank.value = 0.75
 
         ys = 2 * xs + 1
-        ar39 = Isotope(name='Ar39', xs=xs, ys=ys)
+        ar39 = Isotope('Ar39', 'AX')
+        ar39.fit = 'parabolic'
+        ar39.xs = xs
+        ar39.ys = ys
         # ar39.baseline.value = 0.25
         # ar39.blank.value = 0.75
         self.arun.arar_age.isotopes = {'Ar40': ar40, 'Ar39': ar39}
